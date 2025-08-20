@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class MediasoupConfig(AppConfig):
+class MediaserverConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'mediasoup'
+    name = 'mediaserver'

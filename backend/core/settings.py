@@ -84,7 +84,7 @@ INSTALLED_APPS = [
     'allauth',
     'organisations',
     'messaging',
-    'mediasoup',
+    'mediaserver',
     'api',
     'configuration',
 ]
@@ -424,9 +424,9 @@ UNFOLD = {
                 "collapsible": True,
                 "items": [
                     {
-                        "title": "Mediasoup Server",
+                        "title": "Media Server",
                         "icon": "videocam",
-                        "link": "/admin/mediasoup/server/",
+                        "link": "/admin/mediaserver/server/",
                     },
                 ],
             },
