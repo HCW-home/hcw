@@ -1,0 +1,13 @@
+[Unit]
+Description=Alephium Dashboard - Background task service
+After=network.target
+
+[Service]
+User=root
+Environment=VIRTUAL_ENV=/usr/share/hcw/venv
+EnvironmentFile=/etc/hcw/hcw.conf
+WorkingDirectory=/usr/share/hcw/
+ExecStart=/usr/share/hcw/venv/bin/python3 manage.py run_discord_bot
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,13 @@
+[Unit]
+Description=HCW - Django Service
+After=network.target
+
+[Service]
+User=hcw
+Environment=VIRTUAL_ENV=/usr/share/hcw/backend/venv
+EnvironmentFile=/etc/hcw/hcw.conf
+WorkingDirectory=/usr/share/hcw/backend/
+ExecStart=/usr/share/hcw/venv/backend/bin/daphne -p 8000 core.asgi:application
+
+[Install]
+WantedBy=multi-user.target

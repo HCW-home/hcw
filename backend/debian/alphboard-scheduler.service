@@ -1,0 +1,14 @@
+[Unit]
+Description=Alephium Dashboard - Scheduler system
+After=network.target
+
+[Service]
+User=hcw
+Environment=VIRTUAL_ENV=/usr/share/hcw/backend/venv
+EnvironmentFile=/etc/hcw/hcw.conf
+WorkingDirectory=/usr/share/hcw/backend/
+ExecStartPre=/usr/bin/rm -f /var/lib/hcw/celerybeat-schedule.db
+ExecStart=/usr/share/hcw/backend/venv/bin/celery -A core beat --loglevel=info -s /var/lib/hcw/celerybeat-schedule
+
+[Install]
+WantedBy=multi-user.target

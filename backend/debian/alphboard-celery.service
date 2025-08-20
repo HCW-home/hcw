@@ -1,0 +1,13 @@
+[Unit]
+Description=Alephium Dashboard - Background task service
+After=network.target
+
+[Service]
+User=root
+Environment=VIRTUAL_ENV=/usr/share/hcw/venv
+EnvironmentFile=/etc/hcw/hcw.conf
+WorkingDirectory=/usr/share/hcw/
+ExecStart=/usr/share/hcw/venv/bin/celery -A core.celery worker --loglevel=info
+
+[Install]
+WantedBy=multi-user.target

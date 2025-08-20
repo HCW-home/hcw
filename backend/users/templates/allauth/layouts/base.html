@@ -1,0 +1,47 @@
+{% load i18n static %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>
+            {% block head_title %}
+            {% endblock head_title %}
+        </title>
+        <link rel="stylesheet" href="{% static 'users/css/styles.css' %}" />
+        {% block extra_head %}
+        {% endblock extra_head %}
+    </head>
+    <body>
+
+        <nav class="navbar">
+            <div class="nav-container">
+                <a href="#" class="nav-logo"><img src="{% static 'users/img/logo-full.svg' %}" /></a>
+            </div>
+        </nav>
+
+
+        {% block body %}
+            {% if messages %}
+            <section class="message">
+                <div class="container">
+                    <div>
+                        <strong>{% trans "Messages:" %}</strong>
+                        <ul>
+                            {% for message in messages %}<li>{{ message }}</li>{% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+            <section class="main">
+                <div class="container">
+                {% block content %}
+                {% endblock content %}
+                </div>
+            </section>
+        {% endblock body %}
+        {% block extra_body %}
+        {% endblock extra_body %}
+    </body>
+</html>
