@@ -3,7 +3,6 @@ from urllib.parse import parse_qs
 from channels.middleware import BaseMiddleware
 from channels.db import database_sync_to_async
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from jwt import decode as InvalidTokenError
 
 
 @database_sync_to_async
