@@ -1,6 +1,5 @@
 flows:
 - deb
-- sonar
 options:
  distrib: "debian"
  codename: "bookworm"

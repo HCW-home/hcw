@@ -20,3 +20,6 @@ install: ${STATIC}/${PROJECT}/${COMPONENT}/venv
 	mkdir -p $(DESTDIR)/etc/${PROJECT}
 	cp .env-dist $(DESTDIR)/etc/${PROJECT}/$${COMPONENT}.conf
 	mkdir -p $(DESTDIR)/${VAR}/${PROJECT}
+
+clean:
+	echo "Nothing to clean"
