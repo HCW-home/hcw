@@ -1,7 +1,6 @@
 STATIC=/usr/share
 VAR=/var
 PROJECT=hcw
-VERSION := $(shell head -n 1 debian/changelog | cut -d\( -f2 | cut -d\) -f1 | cut -d\~ -f1)
 COMPONENT=backend
 
 all:
