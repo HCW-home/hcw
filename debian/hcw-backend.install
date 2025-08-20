@@ -1,2 +1,4 @@
+/usr/share/hcw/backend
+/var/lib/hcw
 /etc/hcw
 debian/nginx /usr/share/doc/hcw
