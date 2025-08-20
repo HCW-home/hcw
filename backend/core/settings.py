@@ -481,11 +481,11 @@ DEFAULT_CONFIGURATIONS = {
 }
 
 # CORS Configuration
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = DEBUG  # Only allow all origins in DEBUG mode
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = [
-    # Add specific origins here if needed instead of allowing all
-]
+CORS_ALLOWED_ORIGINS = []
+# Add specific origins here for production when DEBUG=False
+# Example: 'https://yourdomain.com', 'https://www.yourdomain.com'
 CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',

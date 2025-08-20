@@ -3,6 +3,7 @@ from urllib.parse import parse_qs
 from channels.middleware import BaseMiddleware
 from channels.db import database_sync_to_async
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.conf import settings
 
 
 @database_sync_to_async
@@ -15,8 +16,8 @@ class CorsMiddleware(BaseMiddleware):
     """
     async def __call__(self, scope, receive, send):
         if scope["type"] == "websocket":
-            # Accept the connection regardless of origin (allow all origins)
-            scope["cors_allowed"] = True
+            # Only allow all origins in DEBUG mode
+            scope["cors_allowed"] = settings.DEBUG
             
         return await super().__call__(scope, receive, send)
 
