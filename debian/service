@@ -5,7 +5,7 @@ After=network.target
 [Service]
 User=hcw
 Environment=VIRTUAL_ENV=/usr/share/hcw/backend/venv
-EnvironmentFile=/etc/hcw/hcw.conf
+EnvironmentFile=/etc/hcw/backend.conf
 WorkingDirectory=/usr/share/hcw/backend/
 ExecStart=/usr/share/hcw/venv/backend/bin/daphne -p 8000 core.asgi:application
 

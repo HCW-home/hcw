@@ -5,7 +5,7 @@ After=network.target
 [Service]
 User=root
 Environment=VIRTUAL_ENV=/usr/share/hcw/bakend/venv
-EnvironmentFile=/etc/hcw/hcw.conf
+EnvironmentFile=/etc/hcw/backend.conf
 WorkingDirectory=/usr/share/hcw/bakend/
 ExecStart=/usr/share/hcw/bakend/venv/bin/python3 manage.py run_discord_bot
 
