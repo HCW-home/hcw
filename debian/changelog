@@ -1,3 +1,10 @@
+hcw (0.9.3) bookworm; urgency=medium
+
+  * Add cors
+  * Only allow cors with debug mode
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Wed, 20 Aug 2025 20:52:01 +0200
+
 hcw (0.9.2) bookworm; urgency=medium
 
   * Fix daphne path
