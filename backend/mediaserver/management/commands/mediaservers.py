@@ -22,5 +22,7 @@ class Command(BaseCommand):
         janus = Janus(server)
         await janus.attach()
         await janus.create_room()
-        print(janus.session.plugin_handles)
+        await janus.add_participant("Test")
+        for p in await janus.participants:
+            print(p)
         await janus.destroy_room()
