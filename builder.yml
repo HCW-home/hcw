@@ -2,6 +2,6 @@ flows:
 - deb
 options:
  distrib: "debian"
- codename: "bookworm"
+ codename: "trixie"
 modes:
 - ON_VERSION
