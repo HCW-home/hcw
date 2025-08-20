@@ -2,22 +2,22 @@ STATIC=/usr/share
 VAR=/var
 PROJECT=hcw
 VERSION := $(shell head -n 1 debian/changelog | cut -d\( -f2 | cut -d\) -f1 | cut -d\~ -f1)
+COMPONENT=backend
 
 all:
 	echo "Nothing to prepare"
 
-${STATIC}/${PROJECT}/venv:
-	mkdir -p ${STATIC}/${PROJECT}/venv
-	python3 -m venv ${STATIC}/${PROJECT}/venv
-	. ${STATIC}/${PROJECT}/venv/bin/activate ; pip3 install -r requirements.txt
-	# TODO : test the following line
-	# ${STATIC}/${PROJECT}/venv/bin/python3 manage.py collectstatic
+${STATIC}/${PROJECT}/${COMPONENT}/venv:
+	mkdir -p ${STATIC}/${PROJECT}/${COMPONENT}/venv
+	python3 -m venv ${STATIC}/${PROJECT}/${COMPONENT}/venv
+	. ${STATIC}/${PROJECT}/${COMPONENT}/venv/bin/activate ; pip3 install -r requirements.txt --ignore-requires-python
+	# ${STATIC}/${PROJECT}/${COMPONENT}/venv/bin/python3 manage.py collectstatic
 	mkdir -p $(DESTDIR)/${STATIC}/${PROJECT}
-	mv ${STATIC}/${PROJECT}/venv $(DESTDIR)/${STATIC}/${PROJECT}
+	mv ${STATIC}/${PROJECT}/${COMPONENT}/venv $(DESTDIR)/${STATIC}/${PROJECT}
 
-install: ${STATIC}/${PROJECT}/venv
-	mkdir -p $(DESTDIR)/${STATIC}/${PROJECT}
-	cp -a statics ads alerts api core lptracker market news users manage.py discord_bot sponsors $(DESTDIR)/${STATIC}/${PROJECT}
+install: ${STATIC}/${PROJECT}/${COMPONENT}/venv
+	mkdir -p $(DESTDIR)/${STATIC}/${PROJECT}/${COMPONENT}
+	cp -a manage.py api configuration consultations core mediaserver messaging organisations statics uploads users $(DESTDIR)/${STATIC}/${PROJECT}/${COMPONENT}
 	mkdir -p $(DESTDIR)/etc/${PROJECT}
-	cp .env-dist $(DESTDIR)/etc/${PROJECT}/${PROJECT}.conf
+	cp .env-dist $(DESTDIR)/etc/${PROJECT}/$${COMPONENT}.conf
 	mkdir -p $(DESTDIR)/${VAR}/${PROJECT}

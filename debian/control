@@ -12,12 +12,11 @@ Homepage: <insert the upstream URL, if relevant>
 #Vcs-Browser: https://salsa.debian.org/debian/hcw
 #Vcs-Git: https://salsa.debian.org/debian/hcw.git
 
-Package: hcw
+Package: hcw-backend
 Architecture: any
 Depends:
  ${shlibs:Depends},
  ${misc:Depends},
- python3,
- pandoc
+ python3
 Description: <insert up to 60 chars description>
  <Insert long description, indented with spaces.>

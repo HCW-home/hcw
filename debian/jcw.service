@@ -4,10 +4,10 @@ After=network.target
 
 [Service]
 User=root
-Environment=VIRTUAL_ENV=/usr/share/hcw/venv
+Environment=VIRTUAL_ENV=/usr/share/hcw/bakend/venv
 EnvironmentFile=/etc/hcw/hcw.conf
-WorkingDirectory=/usr/share/hcw/
-ExecStart=/usr/share/hcw/venv/bin/python3 manage.py run_discord_bot
+WorkingDirectory=/usr/share/hcw/bakend/
+ExecStart=/usr/share/hcw/bakend/venv/bin/python3 manage.py run_discord_bot
 
 [Install]
 WantedBy=multi-user.target

@@ -1,0 +1,3 @@
+/usr/share/hcw/backend
+/etc/hcw
+debian/nginx /usr/share/doc/hcw
