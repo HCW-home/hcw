@@ -5,7 +5,7 @@ from django.db import models
 
 class Server(models.Model):
     url = models.URLField()
-    token = models.CharField()
+    api_secret = models.CharField()
     max_session_number = models.IntegerField(default=10)
     is_active = models.BooleanField(default=True)
 
