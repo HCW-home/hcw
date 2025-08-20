@@ -9,6 +9,17 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 def get_user(validated_token):
     return JWTAuthentication().get_user(validated_token)
 
+class CorsMiddleware(BaseMiddleware):
+    """
+    CORS middleware for Django Channels WebSocket connections
+    """
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "websocket":
+            # Accept the connection regardless of origin (allow all origins)
+            scope["cors_allowed"] = True
+            
+        return await super().__call__(scope, receive, send)
+
 class JWTAuthMiddleware(BaseMiddleware):
     async def __call__(self, scope, receive, send):
         query_string = parse_qs(scope["query_string"].decode())
