@@ -1,34 +1,25 @@
-from typing import Dict, Optional, Awaitable, Callable
-from ..models import Server
+# comments in English
+from typing import Optional, Awaitable, Callable
 from janus_client import JanusSession, JanusVideoRoomPlugin
-from janus_client.transport import JanusTransport
 import random
-import logging
 
-logger = logging.getLogger(__name__)
 
-class VideoRoomWithEvents(JanusVideoRoomPlugin):
-    """Subclass that forwards all async events to a user callback."""
-
+class VideoRoomPlugin(JanusVideoRoomPlugin):
     def __init__(self, on_event: Optional[Callable[[dict], Awaitable[None]]] = None):
         super().__init__()
         self._on_event = on_event
 
-    async def on_receive(self, response: dict):
+    async def on_receive(self, evt: dict):
+        # Forward every plugin event (including JSEP offers) to your callback
         if self._on_event:
-            await self._on_event(response)
-        
+            await self._on_event(evt)
 
 
 class Janus:
-
-    def __init__(self, server: Server):
-        self.server = server
-
+    def __init__(self, server, on_event: Optional[Callable[[dict], Awaitable[None]]] = None):
         self.session = JanusSession(
-            base_url=self.server.url, api_secret=self.server.api_secret)
-        
-        self.video_room = VideoRoomWithEvents(on_event=self.handle_event)
+            base_url=server.url, api_secret=server.api_secret)
+        self.video_room = VideoRoomPlugin(on_event=on_event)
         self._room_id: Optional[int] = None
 
     @property
@@ -43,24 +34,37 @@ class Janus:
     async def create_room(self):
         await self.video_room.create_room(room_id=self.room_id)
 
-    async def destroy_room(self) -> None:
-        await self.video_room.destroy_room(self.room_id)
+    async def join(self, display_name: str):
+        # Join as publisher (no JSEP yet)
+        return await self.video_room.join(room_id=self.room_id, display_name=display_name)
 
-    async def add_participant(self, display_name: str, user_id: Optional[str] = None):
-        participant_data = {
-            'display_name': display_name,
-            'room_id': self.room_id
-        }
-        if user_id:
-            participant_data['id'] = user_id
-        
-        return await self.video_room.join(**participant_data)
+    async def publish(self, jsep_offer: dict, audio: bool = True, video: bool = True):
+        # For publishers: send your local SDP offer to Janus
+        return await self.video_room.publish(room_id=self.room_id, jsep=jsep_offer,
+                                             audio=audio, video=video)
 
-    @staticmethod
-    async def handle_event(evt: dict):
-        await print("JANUS EVENT:", evt)
+    async def subscribe(self, feed_id: int):
+        # Create a subscriber; Janus will reply with a JSEP offer (to forward to the client)
+        return await True
+        # return await self.video_room.subscribe_and_start(room_id=self.room_id, streams=[{"feed": feed_id}])
 
-    @property
-    async def participants(self) -> list:
+    async def start(self, jsep_answer: dict):
+        # <-- This is the important relay for subscribers
+        return await self.video_room.subscribe_and_start(room_id=self.room_id, jsep=jsep_answer)
+
+    async def trickle(self, candidate: dict | None):
+        # Relay ICE candidate(s) from client to Janus. Use None to signal end-of-candidates.
+        return await self.video_room.trickle(candidate)
+
+    async def list_participants(self) -> list:
         return await self.video_room.list_participants(self.room_id)
 
+    async def destroy_room(self):
+        await self.video_room.destroy_room(self.room_id)
+
+    async def close(self):
+        try:
+            await self.video_room.leave()
+        finally:
+            await self.video_room.destroy()
+            await self.session.destroy()

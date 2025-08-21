@@ -1,54 +1,71 @@
-# myapp/consumers.py
 # comments in English
-import asyncio
-import json
-from .serializers import ConsultationSerializer
-from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
+from .serializers import ConsultationSerializer
+from mediaserver.manager.janus import Janus
+from mediaserver.models import Server
+from asgiref.sync import sync_to_async
 
 class ConsultationConsumer(AsyncJsonWebsocketConsumer):
-
     async def connect(self):
         consultation_id = self.scope["url_route"]["kwargs"]["consultation_pk"]
         room_group_name = f"consultation_{consultation_id}"
-
         await self.channel_layer.group_add(room_group_name, self.channel_name)
 
         await self.accept()
+        server = await self._get_server()
 
-        await self.consultation_update({"consultation_id": consultation_id})
+        async def on_evt(evt: dict):
+            await self.send_json({"type": "janus_event", "payload": evt})
 
-    async def consultation_update(self, data):
-        consultation_id = data['consultation_id']
-        await self.send_json({
-            "type": "consultation_update",
-            "data": await get_consultation(consultation_id)
-        })
+        self.janus = Janus(server, on_event=on_evt)
+        await self.janus.attach()
 
-    async def disconnect(self, close_code):
-        if hasattr(self, "_stop"):
-            self._stop.set()
-        if hasattr(self, "_task"):
-            try:
-                await asyncio.wait_for(self._task, timeout=2)
-            except Exception:
-                pass
 
     async def receive_json(self, content, **kwargs):
-        """
-        Called when a message is received from the WebSocket client.
-        `content` is already parsed JSON.
-        """
-        message_type = content.get("type")
+        t = content.get("type")
+        data = content.get("data") or {}
 
-        print(content)
+        if t == "create_room":
+            await self.janus.create_room()
+            await self.send_json({"type": "room_created", "room_id": self.janus.room_id})
 
-        if message_type == "ping":
-            await self.send_json({"type": "pong"})
-        
-        if message_type == "join":
-            pass
-        
+        elif t == "join":
+            display = data.get("display_name", "Guest")
+            await self.janus.join(display)
+
+        elif t == "publish":
+            # Client sends its local SDP offer to publish media
+            await self.janus.publish(jsep_offer=data["jsep"])
+
+        elif t == "subscribe":
+            # Subscribe to a remote feed (publisher id)
+            await self.janus.subscribe(feed_id=int(data["feed_id"]))
+
+        elif t == "start":
+            # <-- Relay the client's SDP answer to Janus to start receiving
+            await self.janus.start(jsep_answer=data["jsep"])
+
+        elif t == "trickle":
+            # Relay ICE candidate (or None at end-of-candidates)
+            await self.janus.trickle(candidate=data.get("candidate"))
+
+        elif t == "participants":
+            plist = await self.janus.list_participants()
+            await self.send_json({"type": "participants", "data": plist})
+
+        else:
+            print(content)
+
+
+    async def disconnect(self, code):
+        if hasattr(self, "janus"):
+            await self.janus.destroy_room()
+            await self.janus.close()
+
+    async def _get_server(self):
+        # Fetch any configured Janus server entry
+        return await Server.objects.afirst()
+
 
 @sync_to_async
 def get_consultation(consultation_id):
