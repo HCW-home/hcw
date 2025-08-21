@@ -17,9 +17,7 @@ class Consultation(models.Model):
 
     beneficiary = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
+        on_delete=models.PROTECT,
     )
 
     created_by = models.ForeignKey(

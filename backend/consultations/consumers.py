@@ -34,6 +34,22 @@ class ConsultationConsumer(AsyncJsonWebsocketConsumer):
             except Exception:
                 pass
 
+    async def receive_json(self, content, **kwargs):
+        """
+        Called when a message is received from the WebSocket client.
+        `content` is already parsed JSON.
+        """
+        message_type = content.get("type")
+
+        print(content)
+
+        if message_type == "ping":
+            await self.send_json({"type": "pong"})
+        
+        if message_type == "join":
+            pass
+        
+
 @sync_to_async
 def get_consultation(consultation_id):
     from .models import Consultation

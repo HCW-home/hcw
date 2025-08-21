@@ -1,8 +1,10 @@
 from django.shortcuts import render
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Q
+from rest_framework.permissions import IsAuthenticated, DjangoModelPermissions
+from .permissions import ConsultationPermission
 from .models import Consultation, Group, Appointment, Participant, Message
 from .serializers import (
     ConsultationSerializer, 
@@ -16,29 +18,6 @@ from .serializers import (
 from .services import MessagingService
 from .tasks import send_message_task
 
-class ConsultationPermission(permissions.BasePermission):
-    """
-    Custom permission for consultations.
-    - A user can see their own consultations
-    - A user can see consultations from groups they belong to
-    - A user can create consultations
-    """
-    
-    def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated
-    
-    def has_object_permission(self, request, view, obj):
-        user = request.user
-        
-        # User can always access consultations they created
-        if obj.created_by == user or obj.owned_by == user:
-            return True
-            
-        # User can access consultations from groups they belong to
-        if obj.group and user in obj.group.users.all():
-            return True
-            
-        return False
 
 class ConsultationViewSet(viewsets.ModelViewSet):
     serializer_class = ConsultationSerializer
@@ -173,7 +152,7 @@ class GroupViewSet(viewsets.ReadOnlyModelViewSet):
     Users can only see groups they belong to
     """
     serializer_class = GroupSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
         user = self.request.user
@@ -188,7 +167,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     Users can view/modify appointments from consultations they have access to
     """
     serializer_class = AppointmentSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
         user = self.request.user
@@ -227,7 +206,7 @@ class ParticipantViewSet(viewsets.ModelViewSet):
     ViewSet for participants
     """
     serializer_class = ParticipantSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
         user = self.request.user
@@ -253,7 +232,7 @@ class MessageViewSet(viewsets.ModelViewSet):
     Users can view/modify messages from consultations they have access to
     """
     serializer_class = MessageSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
         user = self.request.user
