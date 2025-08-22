@@ -1,0 +1,208 @@
+.consultations-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  
+  h1 {
+    margin: 0;
+    color: #333;
+    font-size: 28px;
+    font-weight: 500;
+  }
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  gap: 16px;
+  
+  p {
+    color: #666;
+    font-size: 16px;
+  }
+}
+
+.consultations-card {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.consultations-table {
+  width: 100%;
+  
+  th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #333;
+    padding: 16px;
+  }
+  
+  td {
+    padding: 16px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  
+  .consultation-row {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    
+    &:hover {
+      background-color: #f8f9fa;
+    }
+  }
+}
+
+.beneficiary-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  
+  .name {
+    font-weight: 500;
+    color: #333;
+  }
+  
+  .email {
+    font-size: 12px;
+    color: #666;
+  }
+}
+
+.no-patient {
+  color: #999;
+  font-style: italic;
+}
+
+.status-active {
+  background-color: #e8f5e8;
+  color: #2e7d32;
+  
+  .mat-mdc-chip-action-label {
+    color: #2e7d32;
+  }
+}
+
+.status-closed {
+  background-color: #ffebee;
+  color: #c62828;
+  
+  .mat-mdc-chip-action-label {
+    color: #c62828;
+  }
+}
+
+.group-name {
+  color: #667eea;
+  font-weight: 500;
+}
+
+.no-group {
+  color: #999;
+  font-style: italic;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  
+  .view-btn {
+    min-width: auto;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  
+  .join-btn {
+    min-width: auto;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+}
+
+.no-consultations {
+  text-align: center;
+  padding: 48px 24px;
+  
+  .no-data-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    color: #ccc;
+    margin-bottom: 16px;
+  }
+  
+  h3 {
+    margin: 0 0 8px 0;
+    color: #666;
+    font-weight: 500;
+  }
+  
+  p {
+    margin: 0 0 24px 0;
+    color: #999;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+    
+    h1 {
+      text-align: center;
+      font-size: 24px;
+    }
+  }
+  
+  .consultations-table {
+    font-size: 14px;
+    
+    th, td {
+      padding: 12px 8px;
+    }
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .beneficiary-info {
+    .email {
+      display: none;
+    }
+  }
+  
+  // Hide less important columns on mobile
+  .mat-column-group,
+  .mat-column-created_at {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .consultations-container {
+    padding: 0 8px;
+  }
+  
+  .mat-column-beneficiary {
+    display: none;
+  }
+}
