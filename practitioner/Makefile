@@ -7,10 +7,10 @@ PROJECT=jhas
 COMPONENT=frontend
 
 dist/practitioner/browser: node_modules
-	npx yarn
+	npm run build
 
 node_modules:
-	npm i
+	npx yarn
 
 install: dist/practitioner/browser
 	mkdir -p $(DESTDIR)$(STATIC)/$(PROJECT)/$(COMPONENT)/
