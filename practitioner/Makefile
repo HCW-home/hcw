@@ -3,8 +3,8 @@
 STATIC=/usr/share
 VAR=/var
 ETC=/etc
-PROJECT=jhas
-COMPONENT=frontend
+PROJECT=hcw
+COMPONENT=practitioner
 
 dist/practitioner/browser: node_modules
 	npm run build
