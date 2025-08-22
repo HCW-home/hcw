@@ -1,3 +1,15 @@
+hcw (0.9.4) bookworm; urgency=medium
+
+  [ Olivier Bitsch ]
+  * Snapshot
+  * Add several janus event
+  * Adding practitioner interface build
+
+  [ Gor Grigoryan ]
+  * init janus
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Fri, 22 Aug 2025 12:43:14 +0200
+
 hcw (0.9.3) bookworm; urgency=medium
 
   * Add cors
