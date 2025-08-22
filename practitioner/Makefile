@@ -7,7 +7,7 @@ PROJECT=jhas
 COMPONENT=frontend
 
 dist/practitioner/browser: node_modules
-	npm run build
+	npx yarn
 
 node_modules:
 	npm i
