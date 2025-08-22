@@ -7,6 +7,8 @@ Build-Depends:
  debhelper-compat (= 13),
  python3-pip,
  python3-venv,
+ nodejs,
+ npm,
 Standards-Version: 4.6.2
 Homepage: <insert the upstream URL, if relevant>
 #Vcs-Browser: https://salsa.debian.org/debian/hcw
