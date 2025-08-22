@@ -31,8 +31,22 @@ class Janus:
     async def attach(self):
         await self.video_room.attach(self.session)
 
-    async def create_room(self):
-        await self.video_room.create_room(room_id=self.room_id)
+    async def create_room(self, turn_servers=None):
+        # Create room with optional TURN server configuration
+        room_config = {
+            "room_id": self.room_id,
+            "publishers": 10,  # Maximum number of publishers
+            "bitrate": 128000,  # Max bitrate
+            "fir_freq": 10,  # FIR frequency
+            "audiocodec": "opus",
+            "videocodec": "vp8"
+        }
+        
+        # Add TURN servers if provided
+        if turn_servers:
+            room_config["turn_rest_api"] = turn_servers
+            
+        await self.video_room.create_room(**room_config)
 
     async def join(self, display_name: str):
         # Join as publisher (no JSEP yet)
@@ -79,14 +93,26 @@ class Janus:
 
     async def trickle(self, candidate: dict | None):
         # Relay ICE candidate(s) from client to Janus. Use None to signal end-of-candidates.
-        if candidate is None:
-            # End of candidates - send empty candidate
-            return await self.video_room.trickle(sdpMLineIndex=0, candidate="")
-        else:
-            # Send the ICE candidate
-            sdp_m_line_index = candidate.get('sdpMLineIndex', 0)
-            candidate_str = candidate.get('candidate', '')
-            return await self.video_room.trickle(sdpMLineIndex=sdp_m_line_index, candidate=candidate_str)
+        try:
+            if candidate is None:
+                # End of candidates - send completed signal
+                print("Sending end-of-candidates signal to Janus")
+                return await self.video_room.trickle(completed=True)
+            else:
+                # Send the ICE candidate
+                sdp_m_line_index = candidate.get('sdpMLineIndex', candidate.get('sdpMid', 0))
+                candidate_str = candidate.get('candidate', '')
+                
+                # Validate candidate string
+                if not candidate_str or candidate_str == "null":
+                    print("Invalid candidate string, skipping")
+                    return None
+                    
+                print(f"Sending ICE candidate to Janus: sdpMLineIndex={sdp_m_line_index}, candidate={candidate_str[:50]}...")
+                return await self.video_room.trickle(sdpMLineIndex=sdp_m_line_index, candidate=candidate_str)
+        except Exception as e:
+            print(f"Error sending ICE candidate to Janus: {e}")
+            return None
 
     async def list_participants(self) -> list:
         return await self.video_room.list_participants(self.room_id)

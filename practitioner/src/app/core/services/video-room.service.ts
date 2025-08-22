@@ -34,6 +34,9 @@ export class VideoRoomService {
 
   private roomId: number | null = null;
   private isRoomCreated = false;
+  private iceServers: RTCIceServer[] = [
+    { urls: 'stun:stun.l.google.com:19302' }
+  ];
 
   constructor(private consultationService: ConsultationService) {}
 
@@ -62,17 +65,10 @@ export class VideoRoomService {
       });
 
       // Create RTCPeerConnection for publishing
-      // TEMPORARY: Using TURN in frontend for testing until Janus server is configured
       this.publisherPc = new RTCPeerConnection({
-        iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { 
-            urls: 'turn:demo.hcw-at-home.com:3478',
-            username: 'iabsis',
-            credential: 'pfcqopfs'
-          }
-        ],
-        iceCandidatePoolSize: 10
+        iceServers: this.iceServers,
+        iceCandidatePoolSize: 10,
+        iceTransportPolicy: 'all'  // Use both STUN and TURN
       });
 
       // Add local stream to peer connection
@@ -171,17 +167,10 @@ export class VideoRoomService {
     console.log('📺 Subscribing to feed:', feedId);
 
     // Create a new peer connection for this subscriber
-    // TEMPORARY: Using TURN in frontend for testing until Janus server is configured
     const subscriberPc = new RTCPeerConnection({
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { 
-          urls: 'turn:demo.hcw-at-home.com:3478',
-          username: 'iabsis',
-          credential: 'pfcqopfs'
-        }
-      ],
-      iceCandidatePoolSize: 10
+      iceServers: this.iceServers,
+      iceCandidatePoolSize: 10,
+      iceTransportPolicy: 'all'  // Use both STUN and TURN
     });
 
     // Handle remote stream
@@ -313,11 +302,23 @@ export class VideoRoomService {
     console.log('📥 Received video message:', data);
 
     switch (data.type) {
+      case 'ice_config':
+        console.log('🧊 Received ICE configuration from backend:', data.data);
+        if (data.data && data.data.iceServers) {
+          this.iceServers = data.data.iceServers;
+          console.log('✅ Updated ICE servers configuration');
+        }
+        break;
+
       case 'room_created':
         console.log('✅ Room created with ID:', data.room_id);
         this.roomId = data.room_id;
         this.isRoomCreated = true;
         this.events$.next({ type: 'room_created', roomId: data.room_id });
+        break;
+
+      case 'joined':
+        console.log('✅ Joined room as publisher with ID:', data.publisher_id);
         break;
 
       case 'janus_event':
@@ -326,6 +327,10 @@ export class VideoRoomService {
 
       case 'participants':
         this.handleParticipants(data.data);
+        break;
+
+      case 'error':
+        console.error('❌ Error from backend:', data.message);
         break;
 
       default:
