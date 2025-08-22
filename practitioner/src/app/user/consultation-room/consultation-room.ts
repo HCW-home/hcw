@@ -113,7 +113,7 @@ export class ConsultationRoomComponent implements OnInit, OnDestroy {
   }
 
   private isVideoMessage(data: any): boolean {
-    const videoMessageTypes = ['room_created', 'janus_event', 'participants'];
+    const videoMessageTypes = ['room_created', 'janus_event', 'participants', 'ice_config', 'joined', 'error'];
     return videoMessageTypes.includes(data.type);
   }
 

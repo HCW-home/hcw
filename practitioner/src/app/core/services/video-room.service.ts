@@ -24,6 +24,7 @@ export class VideoRoomService {
   private remoteStreams: Map<number, MediaStream> = new Map();
   private publisherPc: RTCPeerConnection | null = null;  // For publishing
   private subscriberPcs: Map<number, RTCPeerConnection> = new Map(); // For each subscriber
+  private subscriberHandleToFeedMap: Map<number, number> = new Map(); // Maps subscriber handle ID to feed ID
 
   private participants$ = new BehaviorSubject<VideoRoomParticipant[]>([]);
   private events$ = new Subject<VideoRoomEvent>();
@@ -58,18 +59,34 @@ export class VideoRoomService {
     try {
       console.log('🎥 Getting user media and starting to publish...');
 
-      // Get user media
-      this.localStream = await navigator.mediaDevices.getUserMedia({
-        video: video,
-        audio: audio
-      });
+      // Get user media with specific constraints to avoid issues
+      const constraints = {
+        video: video ? {
+          width: { ideal: 640, max: 1280 },
+          height: { ideal: 480, max: 720 },
+          frameRate: { ideal: 15, max: 30 }
+        } : false,
+        audio: audio ? {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        } : false
+      };
+      
+      console.log('🎥 Requesting media with constraints:', constraints);
+      this.localStream = await navigator.mediaDevices.getUserMedia(constraints);
+      console.log('🎥 Got local media stream:', this.localStream.getTracks().map(t => `${t.kind}:${t.label}`));
 
       // Create RTCPeerConnection for publishing
       this.publisherPc = new RTCPeerConnection({
         iceServers: this.iceServers,
         iceCandidatePoolSize: 10,
-        iceTransportPolicy: 'all'  // Use both STUN and TURN
+        iceTransportPolicy: 'all',  // Allow all connection types
+        bundlePolicy: 'max-bundle',
+        rtcpMuxPolicy: 'require'
       });
+      
+      console.log('🔧 Publisher PeerConnection created with ICE servers:', this.iceServers);
 
       // Add local stream to peer connection
       this.localStream.getTracks().forEach(track => {
@@ -79,6 +96,8 @@ export class VideoRoomService {
       // Handle ICE candidates
       this.publisherPc.onicecandidate = (event) => {
         if (event.candidate) {
+          console.log('🧊 Publisher ICE candidate type:', event.candidate.type, 'protocol:', event.candidate.protocol);
+          console.log('🧊 Publisher ICE candidate:', event.candidate.candidate);
           this.consultationService.sendVideoMessage({
             type: 'trickle',
             data: {
@@ -90,6 +109,7 @@ export class VideoRoomService {
             }
           });
         } else {
+          console.log('🧊 Publisher ICE candidate gathering complete');
           // End of candidates
           this.consultationService.sendVideoMessage({
             type: 'trickle',
@@ -99,14 +119,29 @@ export class VideoRoomService {
           });
         }
       };
+      
+      // Add ICE gathering state monitoring
+      this.publisherPc.onicegatheringstatechange = () => {
+        console.log('🧊 Publisher ICE gathering state:', this.publisherPc?.iceGatheringState);
+      };
 
       // Monitor ICE connection state
       this.publisherPc.oniceconnectionstatechange = () => {
         const state = this.publisherPc?.iceConnectionState;
         console.log('🧊 Publisher ICE connection state:', state);
         
-        if (state === 'failed' || state === 'disconnected') {
-          console.warn('⚠️ Publisher ICE connection failed/disconnected');
+        if (state === 'failed') {
+          console.error('❌ Publisher ICE connection failed - will restart ICE');
+          this.handleIceFailure('publisher');
+        } else if (state === 'disconnected') {
+          console.warn('⚠️ Publisher ICE connection disconnected - monitoring for recovery');
+          // Set a timeout to detect if we recover or need to restart
+          setTimeout(() => {
+            if (this.publisherPc?.iceConnectionState === 'disconnected') {
+              console.warn('⚠️ Publisher ICE still disconnected after 5s, restarting ICE');
+              this.handleIceFailure('publisher');
+            }
+          }, 5000);
         } else if (state === 'connected' || state === 'completed') {
           console.log('✅ Publisher ICE connection established');
         }
@@ -166,12 +201,22 @@ export class VideoRoomService {
   async subscribeToFeed(feedId: number): Promise<void> {
     console.log('📺 Subscribing to feed:', feedId);
 
+    // Check if we already have a PC for this feed
+    if (this.subscriberPcs.has(feedId)) {
+      console.log('⚠️ Already subscribed to feed:', feedId);
+      return;
+    }
+
     // Create a new peer connection for this subscriber
     const subscriberPc = new RTCPeerConnection({
       iceServers: this.iceServers,
       iceCandidatePoolSize: 10,
-      iceTransportPolicy: 'all'  // Use both STUN and TURN
+      iceTransportPolicy: 'all',  // Allow all connection types
+      bundlePolicy: 'max-bundle',
+      rtcpMuxPolicy: 'require'
     });
+    
+    console.log(`🔧 Subscriber PeerConnection created for feed ${feedId} with ICE servers:`, this.iceServers);
 
     // Handle remote stream
     subscriberPc.ontrack = (event) => {
@@ -189,9 +234,11 @@ export class VideoRoomService {
     // Handle ICE candidates for subscriber
     subscriberPc.onicecandidate = (event) => {
       if (event.candidate) {
+        console.log(`🧊 Subscriber ${feedId} ICE candidate:`, event.candidate.candidate);
         this.consultationService.sendVideoMessage({
           type: 'trickle',
           data: {
+            feed_id: feedId,  // Include feed_id so backend knows which handle to use
             candidate: {
               candidate: event.candidate.candidate,
               sdpMid: event.candidate.sdpMid,
@@ -200,10 +247,12 @@ export class VideoRoomService {
           }
         });
       } else {
+        console.log(`🧊 Subscriber ${feedId} ICE candidate gathering complete`);
         // End of candidates
         this.consultationService.sendVideoMessage({
           type: 'trickle',
           data: {
+            feed_id: feedId,  // Include feed_id so backend knows which handle to use
             candidate: null
           }
         });
@@ -215,8 +264,18 @@ export class VideoRoomService {
       const state = subscriberPc.iceConnectionState;
       console.log(`🧊 Subscriber ${feedId} ICE connection state:`, state);
       
-      if (state === 'failed' || state === 'disconnected') {
-        console.warn(`⚠️ Subscriber ${feedId} ICE connection failed/disconnected`);
+      if (state === 'failed') {
+        console.error(`❌ Subscriber ${feedId} ICE connection failed - will restart ICE`);
+        this.handleIceFailure('subscriber', feedId);
+      } else if (state === 'disconnected') {
+        console.warn(`⚠️ Subscriber ${feedId} ICE connection disconnected - monitoring for recovery`);
+        // Set a timeout to detect if we recover or need to restart
+        setTimeout(() => {
+          if (subscriberPc.iceConnectionState === 'disconnected') {
+            console.warn(`⚠️ Subscriber ${feedId} ICE still disconnected after 5s, restarting ICE`);
+            this.handleIceFailure('subscriber', feedId);
+          }
+        }, 5000);
       } else if (state === 'connected' || state === 'completed') {
         console.log(`✅ Subscriber ${feedId} ICE connection established`);
       }
@@ -244,6 +303,8 @@ export class VideoRoomService {
         feed_id: feedId
       }
     });
+    
+    console.log(`📺 Sent subscribe request for feed ${feedId}`);
   }
 
   async getParticipants(): Promise<void> {
@@ -305,8 +366,15 @@ export class VideoRoomService {
       case 'ice_config':
         console.log('🧊 Received ICE configuration from backend:', data.data);
         if (data.data && data.data.iceServers) {
+          // Update ICE servers configuration with the backend-provided config
           this.iceServers = data.data.iceServers;
-          console.log('✅ Updated ICE servers configuration');
+          console.log('✅ Updated ICE servers configuration:', this.iceServers);
+          
+          // If we have existing peer connections, update their configuration won't work,
+          // but future connections will use the new config
+          if (this.publisherPc || this.subscriberPcs.size > 0) {
+            console.log('ℹ️ ICE servers updated - will apply to new connections');
+          }
         }
         break;
 
@@ -340,6 +408,11 @@ export class VideoRoomService {
 
   private handleJanusEvent(event: any): void {
     console.log('🎬 Janus event:', event);
+    
+    // Log JSEP events specifically for debugging
+    if (event.jsep) {
+      console.log('🔔 JSEP detected in event:', event.jsep.type, 'SDP length:', event.jsep.sdp?.length || 0);
+    }
 
     // Handle hangup events
     if (event.janus === 'hangup') {
@@ -358,8 +431,25 @@ export class VideoRoomService {
     // Handle JSEP (SDP answers from Janus)
     if (event.jsep) {
       // For subscriber events, we need the feed ID from sender context
-      const feedId = event.sender || event.feed_id;
-      console.log('🔄 Handling JSEP for feed:', feedId, 'JSEP type:', event.jsep.type);
+      // For publisher events, feedId will be undefined (which is expected)
+      let feedId = event.sender || event.feed_id;
+      console.log('🔄 Handling JSEP for handle/feed:', feedId, 'JSEP type:', event.jsep.type);
+      
+      // Determine if this is a publisher or subscriber JSEP based on type and context
+      if (event.jsep.type === 'answer' && !feedId) {
+        console.log('📤 This appears to be a publisher JSEP answer');
+      } else if (event.jsep.type === 'offer') {
+        console.log('📥 This appears to be a subscriber JSEP offer');
+        
+        // For subscriber offers, check if we have the actual feed ID from the event
+        if (event.plugindata?.data?.id) {
+          const actualFeedId = event.plugindata.data.id;
+          console.log('📌 Mapping subscriber handle', feedId, 'to feed ID', actualFeedId);
+          this.subscriberHandleToFeedMap.set(feedId, actualFeedId);
+          feedId = actualFeedId; // Use the actual feed ID for PC lookup
+        }
+      }
+      
       this.handleJSEP(event.jsep, feedId);
     }
 
@@ -390,32 +480,57 @@ export class VideoRoomService {
   private async handleJSEP(jsep: any, feedId?: number): Promise<void> {
     console.log('🔄 Handling JSEP:', jsep, 'for feed:', feedId);
 
-    if (jsep.type === 'answer') {
-      // This is an answer to our offer (for publishing)
-      if (this.publisherPc) {
-        await this.publisherPc.setRemoteDescription(new RTCSessionDescription(jsep));
-      }
-    } else if (jsep.type === 'offer') {
-      // This is an offer from Janus (for subscribing to a specific feed)
-      if (feedId && this.subscriberPcs.has(feedId)) {
-        const subscriberPc = this.subscriberPcs.get(feedId)!;
-        await subscriberPc.setRemoteDescription(new RTCSessionDescription(jsep));
-        const answer = await subscriberPc.createAnswer();
-        await subscriberPc.setLocalDescription(answer);
+    try {
+      if (jsep.type === 'answer') {
+        // This is an answer to our offer (for publishing)
+        // Publisher answers don't have a feedId since they come from the main handle
+        console.log('📤 Received JSEP answer for publisher');
+        if (this.publisherPc) {
+          console.log('🔄 Setting remote description on publisher peer connection');
+          await this.publisherPc.setRemoteDescription(new RTCSessionDescription(jsep));
+          console.log('✅ Publisher remote description set successfully');
+          
+          // Check ICE connection state after setting remote description
+          console.log('🧊 Publisher ICE connection state:', this.publisherPc.iceConnectionState);
+          console.log('🧊 Publisher connection state:', this.publisherPc.connectionState);
+        } else {
+          console.error('❌ No publisher peer connection available for JSEP answer');
+        }
+      } else if (jsep.type === 'offer') {
+        // This is an offer from Janus (for subscribing to a specific feed)
+        console.log('📥 Received offer for subscriber feed:', feedId);
+        if (feedId && this.subscriberPcs.has(feedId)) {
+          const subscriberPc = this.subscriberPcs.get(feedId)!;
+          
+          console.log('🔄 Setting remote description for subscriber');
+          await subscriberPc.setRemoteDescription(new RTCSessionDescription(jsep));
+          
+          console.log('🔄 Creating answer for subscriber');
+          const answer = await subscriberPc.createAnswer();
+          await subscriberPc.setLocalDescription(answer);
 
-        // Send answer back
-        this.consultationService.sendVideoMessage({
-          type: 'start',
-          data: {
-            jsep: {
-              type: answer.type,
-              sdp: answer.sdp
+          console.log('📤 Sending answer back to Janus for feed:', feedId);
+          // Send answer back
+          this.consultationService.sendVideoMessage({
+            type: 'start',
+            data: {
+              feed_id: feedId,  // Include feed_id so backend knows which subscriber handle to use
+              jsep: {
+                type: answer.type,
+                sdp: answer.sdp
+              }
             }
-          }
-        });
-      } else {
-        console.error('No subscriber peer connection found for feed:', feedId);
+          });
+        } else {
+          console.error('❌ No subscriber peer connection found for feed:', feedId);
+          // The subscriber PC should have been created when we called subscribeToFeed
+          // This might indicate an issue with the subscription flow
+          console.log('🔍 Available subscriber PCs:', Array.from(this.subscriberPcs.keys()));
+        }
       }
+    } catch (error) {
+      console.error('❌ Error handling JSEP:', error);
+      // Don't throw the error to prevent breaking the event loop
     }
   }
 
@@ -423,19 +538,29 @@ export class VideoRoomService {
     console.log('📺 New publishers:', publishers);
 
     publishers.forEach(publisher => {
+      console.log(`📺 Processing new publisher: ${publisher.display} (ID: ${publisher.id})`);
+      
       // Subscribe to each new publisher
       this.subscribeToFeed(publisher.id);
 
       // Add to participants list
       const participant: VideoRoomParticipant = {
         id: publisher.id,
-        display: publisher.display,
+        display: publisher.display || `User ${publisher.id}`,
         publisher: true
       };
 
       const currentParticipants = this.participants$.value;
-      if (!currentParticipants.find(p => p.id === publisher.id)) {
+      const existingParticipant = currentParticipants.find(p => p.id === publisher.id);
+      
+      if (!existingParticipant) {
+        console.log(`➕ Adding new participant: ${participant.display}`);
         this.participants$.next([...currentParticipants, participant]);
+      } else {
+        console.log(`🔄 Participant ${participant.display} already exists, updating status`);
+        // Update existing participant to ensure they're marked as publisher
+        existingParticipant.publisher = true;
+        this.participants$.next([...currentParticipants]);
       }
     });
   }
@@ -457,16 +582,25 @@ export class VideoRoomService {
   }
 
   private handleParticipants(participants: any[]): void {
-    console.log('👥 Participants list:', participants);
+    console.log('👥 Participants list received:', participants);
 
     const participantList: VideoRoomParticipant[] = participants.map(p => ({
       id: p.id,
-      display: p.display,
+      display: p.display || `User ${p.id}`,
       publisher: p.publisher || false,
       talking: p.talking || false
     }));
 
+    console.log('👥 Processed participant list:', participantList);
     this.participants$.next(participantList);
+
+    // For each publisher in the list, make sure we're subscribed to their feed
+    participants.forEach(participant => {
+      if (participant.publisher && !this.subscriberPcs.has(participant.id)) {
+        console.log(`🔗 Auto-subscribing to existing publisher: ${participant.display} (ID: ${participant.id})`);
+        this.subscribeToFeed(participant.id);
+      }
+    });
   }
 
   private handleHangup(event: any): void {
@@ -534,5 +668,51 @@ export class VideoRoomService {
       type: 'unpublished', // Use existing event type for now
       participant: { id: -1, publisher: false }
     });
+  }
+
+  private async handleIceFailure(type: 'publisher' | 'subscriber', feedId?: number): Promise<void> {
+    console.log(`🔄 Handling ICE failure for ${type}${feedId ? ` (feed ${feedId})` : ''}`);
+    
+    try {
+      if (type === 'publisher' && this.publisherPc) {
+        // Restart ICE for publisher by creating a new offer with iceRestart
+        console.log('🔄 Restarting ICE for publisher...');
+        
+        const offer = await this.publisherPc.createOffer({ iceRestart: true });
+        await this.publisherPc.setLocalDescription(offer);
+        
+        // Send the new offer to restart ICE
+        this.consultationService.sendVideoMessage({
+          type: 'publish',
+          data: {
+            jsep: {
+              type: offer.type,
+              sdp: offer.sdp
+            }
+          }
+        });
+        
+      } else if (type === 'subscriber' && feedId && this.subscriberPcs.has(feedId)) {
+        // For subscribers, we need to resubscribe to the feed
+        console.log(`🔄 Resubscribing to feed ${feedId}...`);
+        
+        // Close the old peer connection
+        const oldPc = this.subscriberPcs.get(feedId);
+        if (oldPc) {
+          oldPc.close();
+          this.subscriberPcs.delete(feedId);
+        }
+        
+        // Remove the old stream
+        this.remoteStreams.delete(feedId);
+        
+        // Resubscribe after a short delay
+        setTimeout(() => {
+          this.subscribeToFeed(feedId);
+        }, 1000);
+      }
+    } catch (error) {
+      console.error(`❌ Error handling ICE failure for ${type}:`, error);
+    }
   }
 }
