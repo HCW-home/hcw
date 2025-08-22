@@ -14,7 +14,7 @@ node_modules:
 
 install: dist/practitioner/browser
 	mkdir -p $(DESTDIR)$(STATIC)/$(PROJECT)/$(COMPONENT)/
-	cp -r dist/* $(DESTDIR)$(STATIC)/$(PROJECT)/$(COMPONENT)/
+	cp -r dist/practitioner/browser/* $(DESTDIR)$(STATIC)/$(PROJECT)/$(COMPONENT)/
 
 build: dist/practitioner/browser
 
