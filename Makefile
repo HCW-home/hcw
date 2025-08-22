@@ -1,4 +1,4 @@
-subdirs = backend
+subdirs = backend practitioner
 
 .PHONY: $(subdirs)
 

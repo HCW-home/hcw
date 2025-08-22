@@ -18,5 +18,14 @@ Depends:
  ${shlibs:Depends},
  ${misc:Depends},
  python3
-Description: <insert up to 60 chars description>
+Description: HCW@Home - Backend and Admin with Django
+ <Insert long description, indented with spaces.>
+
+Package: hcw-practitioner
+Architecture: any
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+ python3
+Description: HCW@Home - Frontend dedicated to Practitioner with Angular
  <Insert long description, indented with spaces.>
