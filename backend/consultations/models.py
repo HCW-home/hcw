@@ -44,7 +44,8 @@ class Consultation(models.Model):
     # )
 
 class Appointment(models.Model):
-    consultation = models.ForeignKey(Consultation, on_delete=models.CASCADE)
+    consultation = models.ForeignKey(
+        Consultation, on_delete=models.CASCADE, related_name='appointments')
     scheduled_at = models.DateTimeField()
     end_expected_at = models.DateTimeField(null=True, blank=True)
 

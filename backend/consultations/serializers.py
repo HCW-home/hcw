@@ -38,25 +38,12 @@ class MessageSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'content', 'created_at', 'created_by'
         ]
-        read_only_fields = [
-            'created_at'
-        ]
 
-class MessageCreateSerializer(serializers.ModelSerializer):
-    
-    class Meta:
-        model = Message
-        fields = [
-            'content', 'attachment',
-        ]
-    
 class ConsultationSerializer(serializers.ModelSerializer):
     created_by = UserSerializer(read_only=True)
     owned_by = UserSerializer(read_only=True)
     beneficiary = UserSerializer(read_only=True)
     group = GroupSerializer(read_only=True)
-    appointments = AppointmentSerializer(source='appointment_set', many=True, read_only=True)
-    messages = MessageSerializer(many=True, read_only=True)
     
     # Write-only fields for creating/updating
     group_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
@@ -67,7 +54,7 @@ class ConsultationSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'created_at', 'updated_at', 'closed_at',
             'beneficiary', 'beneficiary_id', 'created_by', 'owned_by', 
-            'group', 'group_id', 'appointments', 'messages'
+            'group', 'group_id'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'created_by', 'owned_by']
 
