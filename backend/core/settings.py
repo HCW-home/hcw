@@ -435,6 +435,11 @@ UNFOLD = {
                         "icon": "videocam",
                         "link": "/admin/mediaserver/server/",
                     },
+                    {
+                        "title": "Turn Server",
+                        "icon": "router",
+                        "link": "/admin/mediaserver/turn/",
+                    },
                 ],
             },
             {

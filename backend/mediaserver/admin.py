@@ -8,12 +8,16 @@ from unfold.admin import ModelAdmin
 class TurnURLInline(TabularInline):
     model = TurnURL
     fields = ['url']
-
-class TurnInline(TabularInline):
-    model = Turn
-    fields = ['server', 'login', 'password']
     extra = 1
+
+@admin.register(Turn)
+class TurnAdmin(ModelAdmin):
+    list_display = ['turn_urls', 'login']
     inlines = [TurnURLInline]
+    
+    def turn_urls(self, obj):
+        return ', '.join([url.url for url in obj.turnurl_set.all()])
+    turn_urls.short_description = 'URLs'
 
 @admin.register(Server)
 class ServerAdmin(ModelAdmin):
@@ -21,5 +25,3 @@ class ServerAdmin(ModelAdmin):
         "url",
         "is_active",
     ]
-
-    inlines = [TurnInline]

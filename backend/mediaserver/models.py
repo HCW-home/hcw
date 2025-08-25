@@ -12,10 +12,8 @@ class Server(models.Model):
     
 
 class Turn(models.Model):
-    server = models.ForeignKey(Server, on_delete=models.CASCADE)
     login = models.CharField(null=True, blank=True)
-    password = models.CharField(null=True, blank=True)
-
+    credential = models.CharField(null=True, blank=True)
 
 class TurnURL(models.Model):
     turn = models.ForeignKey(Turn, on_delete=models.CASCADE)
