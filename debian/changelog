@@ -1,3 +1,24 @@
+hcw (0.9.5) bookworm; urgency=medium
+
+  [ Gor Grigoryan ]
+  * ice fix
+  * fix video room connection
+
+  [ Olivier Bitsch ]
+  * Adding npm in build deps
+  * Rebuild with nodejs 24
+  * Fix yarn install
+  * Fix install location
+  * Fix install location again
+  * Fix path location and component name
+  * Fix location
+  * Adding turn models
+  * Adding Turn management
+  * Use configured turn/stun instead of hard coded
+  * Cleanup
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Mon, 25 Aug 2025 15:50:47 +0200
+
 hcw (0.9.4) bookworm; urgency=medium
 
   [ Olivier Bitsch ]
