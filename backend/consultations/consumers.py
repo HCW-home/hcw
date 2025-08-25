@@ -1,8 +1,11 @@
 # comments in English
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from .serializers import ConsultationSerializer
+
 from mediaserver.manager.janus import Janus
-from mediaserver.models import Server
+from mediaserver.models import Server, Turn
+from mediaserver.serializers import TurnIceServerSerializer
+
 from asgiref.sync import sync_to_async
 from django.conf import settings
 import asyncio
@@ -32,49 +35,15 @@ class ConsultationConsumer(AsyncJsonWebsocketConsumer):
         
         # Send comprehensive ICE server configuration to frontend
         # Based on Janus Gateway best practices for reliable connectivity
+
         ice_servers = {
-            "iceServers": [
-                # Multiple STUN servers for NAT traversal
-                {"urls": "stun:stun.l.google.com:19302"},
-                {"urls": "stun:stun1.l.google.com:19302"}, 
-                {"urls": "stun:stun2.l.google.com:19302"},
-                {"urls": "stun:stun3.l.google.com:19302"},
-                {"urls": "stun:stun4.l.google.com:19302"},
-                # TURN servers for firewall traversal - both UDP and TCP
-                {
-                    "urls": [
-                        "turn:openrelay.metered.ca:80",
-                        "turn:openrelay.metered.ca:80?transport=tcp", 
-                        "turns:openrelay.metered.ca:443?transport=tcp"
-                    ],
-                    "username": "openrelayproject",
-                    "credential": "openrelayproject"
-                },
-                {
-                    "urls": [
-                        "turn:openrelay.metered.ca:443",
-                        "turn:openrelay.metered.ca:443?transport=tcp",
-                        "turns:openrelay.metered.ca:443?transport=tcp"
-                    ],
-                    "username": "openrelayproject", 
-                    "credential": "openrelayproject"
-                },
-                # Additional reliable TURN server
-                {
-                    "urls": [
-                        "turn:relay1.expressturn.com:3478",
-                        "turn:relay1.expressturn.com:3478?transport=tcp"
-                    ],
-                    "username": "efYF3DIK3OC8OVLS7U",
-                    "credential": "kJFLcXl7JZEQh6rVWq"
-                }
-            ],
-            # Additional ICE configuration for better connectivity
+            "iceServers": await get_turn(),
             "iceCandidatePoolSize": 10,
             "bundlePolicy": "max-bundle",
             "rtcpMuxPolicy": "require",
             "iceTransportPolicy": "all"  # Allow both UDP and TCP
         }
+
         await self.send_json({"type": "ice_config", "data": ice_servers})
         
         await self._get_or_create_shared_session()
@@ -496,3 +465,8 @@ def get_consultation(consultation_id):
     from .models import Consultation
     consultation = Consultation.objects.get(pk=consultation_id)
     return ConsultationSerializer(consultation).data,
+
+@sync_to_async
+def get_turn():
+    turns = Turn.objects.all()
+    return TurnIceServerSerializer(turns, many=True).data

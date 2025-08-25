@@ -17,5 +17,5 @@ class Turn(models.Model):
 
 class TurnURL(models.Model):
     turn = models.ForeignKey(Turn, on_delete=models.CASCADE)
-    url = models.URLField(help_text="turn:// or ")
+    url = models.CharField(help_text="turn:// or ")
 

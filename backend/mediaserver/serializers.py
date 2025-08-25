@@ -28,6 +28,11 @@ class TurnIceServerSerializer(serializers.ModelSerializer):
             representation.pop('credential', None)
             
         return representation
+    
+    @classmethod
+    def serialize_queryset(cls, queryset):
+        """Serialize a QuerySet of Turn objects to ICE server format"""
+        return cls(queryset, many=True).data
 
 
 class IceServersSerializer(serializers.Serializer):
