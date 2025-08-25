@@ -120,7 +120,7 @@ class Janus:
     async def attach(self):
         await self.video_room.attach(self.session)
 
-    async def create_room(self, turn_servers=None):
+    async def create_room(self):
         # Create room with correct janus_client parameters
         try:
             print(f"Creating Janus room {self.room_id}")
