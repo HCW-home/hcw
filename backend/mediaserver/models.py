@@ -1,8 +1,6 @@
 from django.db import models
 
 # Create your models here.
-
-
 class Server(models.Model):
     url = models.URLField()
     api_secret = models.CharField()
@@ -11,3 +9,15 @@ class Server(models.Model):
 
     def __str__(self):
         return self.url
+    
+
+class Turn(models.Model):
+    server = models.ForeignKey(Server, on_delete=models.CASCADE)
+    login = models.CharField(null=True, blank=True)
+    password = models.CharField(null=True, blank=True)
+
+
+class TurnURL(models.Model):
+    turn = models.ForeignKey(Turn, on_delete=models.CASCADE)
+    url = models.URLField(help_text="turn:// or ")
+
