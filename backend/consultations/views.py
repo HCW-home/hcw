@@ -15,8 +15,8 @@ from .serializers import (
     MessageSerializer,
     MessageCreateSerializer
 )
-from .services import MessagingService
-from .tasks import send_message_task
+
+from messaging.tasks import send_message_task
 
 
 class ConsultationViewSet(viewsets.ModelViewSet):
@@ -107,7 +107,7 @@ class ConsultationViewSet(viewsets.ModelViewSet):
             # Create the message
             message = serializer.save(
                 consultation=consultation,
-                sent_by=request.user
+                created_by=request.user
             )
             
             # Set participant if provided
@@ -266,7 +266,7 @@ class MessageViewSet(viewsets.ModelViewSet):
                     
                     message = serializer.save(
                         consultation=consultation,
-                        sent_by=user
+                        created_by=user
                     )
                     
                     # Queue the message for sending via Celery

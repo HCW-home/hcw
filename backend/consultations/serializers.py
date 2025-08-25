@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Consultation, Group, Appointment, Participant, Message, MessageType, MessageStatus
+from .models import Consultation, Group, Appointment, Participant, Message
 
 User = get_user_model()
 
@@ -31,48 +31,25 @@ class AppointmentSerializer(serializers.ModelSerializer):
         fields = ['id', 'scheduled_at', 'end_expected_at', 'participants']
 
 class MessageSerializer(serializers.ModelSerializer):
-    sent_by = UserSerializer(read_only=True)
-    participant = ParticipantSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
     
     class Meta:
         model = Message
         fields = [
-            'id', 'content', 'subject', 'message_type', 'provider_name',
-            'recipient_phone', 'recipient_email', 'status', 
-            'sent_at', 'delivered_at', 'read_at', 'failed_at',
-            'external_message_id', 'error_message', 'sent_by', 'participant',
-            'celery_task_id', 'task_logs', 'task_traceback',
-            'created_at', 'updated_at'
+            'id', 'content', 'created_at', 'created_by'
         ]
         read_only_fields = [
-            'id', 'status', 'sent_at', 'delivered_at', 'read_at', 'failed_at',
-            'external_message_id', 'error_message', 'sent_by', 'celery_task_id',
-            'task_logs', 'task_traceback', 'created_at', 'updated_at'
+            'created_at'
         ]
 
 class MessageCreateSerializer(serializers.ModelSerializer):
-    participant_id = serializers.IntegerField(required=False, allow_null=True)
     
     class Meta:
         model = Message
         fields = [
-            'content', 'subject', 'message_type', 'provider_name',
-            'recipient_phone', 'recipient_email', 'participant_id'
+            'content', 'attachment',
         ]
     
-    def validate(self, data):
-        message_type = data.get('message_type')
-        
-        # Validate recipient based on message type
-        if message_type == MessageType.EMAIL:
-            if not data.get('recipient_email'):
-                raise serializers.ValidationError("Email address is required for email messages")
-        else:  # SMS or WhatsApp
-            if not data.get('recipient_phone'):
-                raise serializers.ValidationError("Phone number is required for SMS/WhatsApp messages")
-        
-        return data
-
 class ConsultationSerializer(serializers.ModelSerializer):
     created_by = UserSerializer(read_only=True)
     owned_by = UserSerializer(read_only=True)
