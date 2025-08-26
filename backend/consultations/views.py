@@ -9,7 +9,7 @@ from core.mixins import CreatedByMixin
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from drf_spectacular.utils import extend_schema
 from .permissions import ConsultationPermission
-from .models import Consultation, Group, Appointment, Participant, Message
+from .models import Consultation, Group, Appointment, Participant, Message, AppointmentStatus
 from django.utils import timezone
 from .serializers import (
     ConsultationSerializer, 
@@ -49,39 +49,39 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
             Q(group__users=user)
         ).distinct()
     
-    # @extend_schema(responses=ConsultationSerializer)
-    # @action(detail=True, methods=['post'])
-    # def close(self, request, pk=None):
-    #     """Close a consultation"""
-    #     consultation = self.get_object()
-    #     if consultation.closed_at is not None:
-    #         return Response(
-    #             {'error': 'This consultation is already closed'}, 
-    #             status=status.HTTP_400_BAD_REQUEST
-    #         )
+    @extend_schema(responses=ConsultationSerializer)
+    @action(detail=True, methods=['post'])
+    def close(self, request, pk=None):
+        """Close a consultation"""
+        consultation = self.get_object()
+        if consultation.closed_at is not None:
+            return Response(
+                {'error': 'This consultation is already closed'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
-    #     consultation.closed_at = timezone.now()
-    #     consultation.save()
+        consultation.closed_at = timezone.now()
+        consultation.save()
         
-    #     serializer = self.get_serializer(consultation)
-    #     return Response(serializer.data)
+        serializer = self.get_serializer(consultation)
+        return Response(serializer.data)
     
-    # @extend_schema(responses=ConsultationSerializer)
-    # @action(detail=True, methods=['post'])
-    # def reopen(self, request, pk=None):
-    #     """Reopen a consultation"""
-    #     consultation = self.get_object()
-    #     if consultation.closed_at is None:
-    #         return Response(
-    #             {'error': 'This consultation is already open'}, 
-    #             status=status.HTTP_400_BAD_REQUEST
-    #         )
+    @extend_schema(responses=ConsultationSerializer)
+    @action(detail=True, methods=['post'])
+    def reopen(self, request, pk=None):
+        """Reopen a consultation"""
+        consultation = self.get_object()
+        if consultation.closed_at is None:
+            return Response(
+                {'error': 'This consultation is already open'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
-    #     consultation.closed_at = None
-    #     consultation.save()
+        consultation.closed_at = None
+        consultation.save()
         
-    #     serializer = self.get_serializer(consultation)
-    #     return Response(serializer.data)
+        serializer = self.get_serializer(consultation)
+        return Response(serializer.data)
     
     @extend_schema(request=AppointmentSerializer, responses=AppointmentSerializer)
     @action(detail=True, methods=['post'])
@@ -240,6 +240,32 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
         
         participant.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @extend_schema(responses=AppointmentSerializer)
+    @action(detail=True, methods=['post'], url_path='appointment/(?P<appointment_id>[^/.]+)/cancel')
+    def cancel_appointment(self, request, pk=None, appointment_id=None):
+        """Cancel a specific appointment in this consultation"""
+        consultation = self.get_object()
+        
+        try:
+            appointment = consultation.appointments.get(id=appointment_id)
+        except Appointment.DoesNotExist:
+            return Response(
+                {'error': 'Appointment not found in this consultation'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        if appointment.status == 'cancelled':
+            return Response(
+                {'error': 'This appointment is already cancelled'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        appointment.status = AppointmentStatus.CANCELLED
+        appointment.save()
+        
+        serializer = AppointmentSerializer(appointment)
+        return Response(serializer.data)
 
 class GroupViewSet(viewsets.ReadOnlyModelViewSet):
     """
