@@ -1,5 +1,5 @@
 from django.contrib import admin
-from unfold.admin import ModelAdmin, TabularInline
+from unfold.admin import ModelAdmin, TabularInline, StackedInline
 from unfold.decorators import display
 from .models import Group, Consultation, Appointment, Participant, Message
 
@@ -26,10 +26,12 @@ class MessageInline(TabularInline):
     fields = ['created_by', 'content', 'attachment']
 
 
-class AppointmentInline(TabularInline):
+class AppointmentInline(StackedInline):
     model = Appointment
     extra = 0
-    fields = ['created_by', 'scheduled_at', 'end_expected_at']
+    fields = ['created_by', 'scheduled_at', 'end_expected_at', 'status']
+    readonly_fields = ['status']
+    show_change_link = True
 
 
 class ParticipantInline(TabularInline):
