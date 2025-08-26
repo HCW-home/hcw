@@ -24,20 +24,23 @@ class ParticipantSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'token', 'is_invited', 'feedback_rate', 'feedback_message']
 
 class AppointmentSerializer(serializers.ModelSerializer):
-    participants = ParticipantSerializer(source='participant_set', many=True, read_only=True)
+    created_by = serializers.HiddenField(
+        default=serializers.CurrentUserDefault())
+    consultation = serializers.PrimaryKeyRelatedField(read_only=True)
     
     class Meta:
         model = Appointment
-        fields = ['id', 'scheduled_at', 'end_expected_at', 'participants']
+        fields = ['id', 'scheduled_at', 'end_expected_at',
+                  'consultation', 'created_by']
 
 class MessageSerializer(serializers.ModelSerializer):
-    created_by = UserSerializer(read_only=True)
+    created_by = serializers.HiddenField(
+        default=serializers.CurrentUserDefault())
+    consultation = serializers.PrimaryKeyRelatedField(read_only=True)
     
     class Meta:
         model = Message
-        fields = [
-            'id', 'content', 'created_at', 'created_by'
-        ]
+        fields = ['id', 'content', 'created_at', 'created_by', 'consultation']
 
 class ConsultationSerializer(serializers.ModelSerializer):
     created_by = UserSerializer(read_only=True)

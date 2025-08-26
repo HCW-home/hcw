@@ -70,33 +70,6 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
         return Response(serializer.data)
     
     @action(detail=True, methods=['post'])
-    def message(self, request, pk=None):
-        """Send a message for this consultation"""
-        consultation = self.get_object()
-
-        print(consultation.pk)
-        
-        serializer = MessageSerializer(
-            data=request.data,
-            context={'request': request, 'consultation': consultation}
-        )
-
-        print(serializer)
-        
-        if serializer.is_valid():
-            message = serializer.save(
-                consultation=consultation,
-                created_by=request.user
-            )
-            
-            message_serializer = MessageSerializer(message)
-            response_data = message_serializer.data
-            
-            return Response(response_data, status=status.HTTP_201_CREATED)
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    @action(detail=True, methods=['post'])
     def appointment(self, request, pk=None):
         """Get all appointment for this consultation"""
         consultation = self.get_object()
@@ -133,6 +106,25 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
         messages = consultation.messages.all()
         serializer = MessageSerializer(messages, many=True)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def message(self, request, pk=None):
+        """Send a message for this consultation"""
+        consultation = self.get_object()
+
+        serializer = MessageSerializer(
+            data=request.data,
+            context={'request': request}
+        )
+
+        if serializer.is_valid():
+            msg = serializer.save(
+                consultation=consultation
+            )
+
+            return Response(MessageSerializer(msg).data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class GroupViewSet(viewsets.ReadOnlyModelViewSet):
     """

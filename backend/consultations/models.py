@@ -48,6 +48,9 @@ class Appointment(models.Model):
         Consultation, on_delete=models.CASCADE, related_name='appointments')
     scheduled_at = models.DateTimeField()
     end_expected_at = models.DateTimeField(null=True, blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
 
 class Participant(models.Model):
     appointement = models.ForeignKey(Appointment, on_delete=models.CASCADE)
