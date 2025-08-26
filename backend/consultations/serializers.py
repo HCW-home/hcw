@@ -58,7 +58,7 @@ class ConsultationSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'created_at', 'updated_at', 'closed_at',
             'beneficiary', 'beneficiary_id', 'created_by', 'owned_by', 
-            'group', 'group_id'
+            'group', 'group_id', 'description', 'title'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'created_by', 'owned_by']
 

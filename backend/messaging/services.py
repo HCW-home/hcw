@@ -1,7 +1,7 @@
 from typing import Optional, Dict, Any
 from django.conf import settings
 from messaging.models import MessagingProvider, ProviderName
-from .models import Message, MessageType, MessageStatus
+from .models import Message, CommunicationMethod, MessageStatus
 import logging
 
 logger = logging.getLogger(__name__)
@@ -210,11 +210,11 @@ class MessagingService:
         """
         Main method to send a message based on its type
         """
-        if message.message_type == MessageType.SMS:
+        if message.message_type == CommunicationMethod.SMS:
             return MessagingService.send_sms(message)
-        elif message.message_type == MessageType.EMAIL:
+        elif message.message_type == CommunicationMethod.EMAIL:
             return MessagingService.send_email(message)
-        elif message.message_type == MessageType.WHATSAPP:
+        elif message.message_type == CommunicationMethod.WHATSAPP:
             return MessagingService.send_whatsapp(message)
         else:
             error_msg = f"Unsupported message type: {message.message_type}"

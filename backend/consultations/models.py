@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
+from messaging.models import CommunicationMethod
 
 # Create your models here.
 
@@ -16,9 +17,14 @@ class Consultation(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     closed_at = models.DateTimeField(null=True, blank=True)
 
+    description = models.CharField(null=True, blank=True)
+    title = models.CharField(null=True, blank=True)
+
     beneficiary = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
+        null=True,
+        blank=True,
     )
 
     created_by = models.ForeignKey(
@@ -54,6 +60,10 @@ class Appointment(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
+class ParticipantRole(models.TextChoices):
+    SCHEDULED = "Scheduled", _("Scheduled")
+    CANCELLED = "Cancelled", _("Cancelled")
+
 class Participant(models.Model):
     appointement = models.ForeignKey(Appointment, on_delete=models.CASCADE)
     user = models.ForeignKey(
@@ -63,8 +73,16 @@ class Participant(models.Model):
         blank=True,
     )
 
-    token = models.CharField(max_length=256)
+    # role = 
+
+    auth_token = models.CharField(max_length=256)
     is_invited = models.BooleanField(default=True)
+
+    email = models.EmailField(null=True, blank=True)
+    phone = models.CharField(null=True, blank=True)
+    message_type = models.CharField(
+        choices=CommunicationMethod.choices, max_length=20)
+
     feedback_rate = models.IntegerField(null=True, blank=True)
     feedback_message = models.TextField(null=True, blank=True)
 
@@ -110,3 +128,13 @@ class Request(models.Model):
     appointment = models.OneToOneField(Appointment, on_delete=models.SET_NULL, null=True, blank=True)
     consultation = models.OneToOneField(
         Consultation, on_delete=models.SET_NULL, null=True, blank=True)
+
+class Slot(models.Model):
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    monday = models.BooleanField()
+    tuesday = models.BooleanField()
+    wednesday = models.BooleanField()
+    thurday = models.BooleanField()
+    friday = models.BooleanField()
+    saturday = models.BooleanField()

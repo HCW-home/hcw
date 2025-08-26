@@ -24,6 +24,9 @@ class Speciality(models.Model):
     class Meta:
         verbose_name_plural = _("specialities")
 
+    def __str__(self):
+        return self.name
+
 class FCMDeviceOverride(AbstractFCMDevice):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

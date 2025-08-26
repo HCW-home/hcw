@@ -37,7 +37,7 @@ class AppointmentInline(StackedInline):
 class ParticipantInline(TabularInline):
     model = Participant
     extra = 0
-    fields = ['user', 'is_invited', 'feedback_rate', 'feedback_message']
+    fields = ['user', 'is_invited', ]
 
 
 @admin.register(Consultation)
@@ -81,5 +81,5 @@ class MessageAdmin(ModelAdmin):
 
 
 @admin.register(Request)
-class MessageAdmin(ModelAdmin):
+class RequestAdmin(ModelAdmin):
     list_display = ['id', 'expected_at', 'consultation', 'created_by', 'expected_with', 'comment']

@@ -22,9 +22,9 @@ class MessagingProviderAdmin(ModelAdmin):
 
 @admin.register(Message)
 class MessageAdmin(ModelAdmin):
-    list_display = ['message_type', 'recipient_display',
+    list_display = ['communication_method', 'recipient_display',
                     'status', 'task_status_display', 'sent_by', 'created_at']
-    list_filter = ['message_type', 'status', 'created_at', 'provider_name']
+    list_filter = ['communication_method', 'status', 'created_at', 'provider_name']
     search_fields = ['content', 'recipient_phone',
                      'recipient_email', 'sent_by__email', 'celery_task_id']
     readonly_fields = ['sent_at', 'delivered_at', 'read_at', 'failed_at',

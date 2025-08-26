@@ -38,11 +38,12 @@ class MessageStatus(models.TextChoices):
     READ = 'read', 'Read'
 
 
-class MessageType(models.TextChoices):
-    SMS = 'sms', 'SMS'
-    EMAIL = 'email', 'Email'
-    WHATSAPP = 'whatsapp', 'WhatsApp'
-    PUSH = 'push', 'Push Notification'
+class CommunicationMethod(models.TextChoices):
+    SMS = 'sms', ('SMS')
+    EMAIL = 'email', ('Email')
+    WHATSAPP = 'whatsapp', ('WhatsApp')
+    PUSH = 'push', ('Push Notification')
+    MANUAL = 'manual', ('Manual')
 
 
 class Message(models.Model):
@@ -51,8 +52,8 @@ class Message(models.Model):
     subject = models.CharField(max_length=200, blank=True)
 
     # Message type and provider
-    message_type = models.CharField(
-        choices=MessageType.choices, max_length=20, default=MessageType.SMS)
+    communication_method = models.CharField(
+        choices=CommunicationMethod.choices, max_length=20, default=CommunicationMethod.SMS)
     provider_name = models.CharField(max_length=50, blank=True)
 
     # Recipients
