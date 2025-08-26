@@ -411,6 +411,11 @@ UNFOLD = {
                         "icon": "message",
                         "link": "/admin/consultations/message/",
                     },
+                    {
+                        "title": "Reasons",
+                        "icon": "list",
+                        "link": "/admin/consultations/reason/",
+                    },
                 ],
             },
             {

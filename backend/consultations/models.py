@@ -39,6 +39,8 @@ class Consultation(models.Model):
         related_name="%(class)s_owned"
     )
 
+    def __str__(self):
+        return f"Consultation #{self.pk}"
 
 class AppointmentStatus(models.TextChoices):
     SCHEDULED = "Scheduled", _("Scheduled")
@@ -92,9 +94,14 @@ class Reason(models.Model):
     duration = models.IntegerField(help_text="Duration in minute", default=30)
     is_active = models.BooleanField(default=True)
 
+class RequestStatus(models.TextChoices):
+    REQUESTED = "Requested", _("Requested")
+    ACCEPTED = "ACCEPTED", _("Accepted")
+    CANCELLED = "Cancelled", _("Cancelled")
 
 class Request(models.Model):
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     expected_at = models.DateTimeField()
     reason = models.ForeignKey(Reason, on_delete=models.PROTECT, related_name='reasons')
-    requested_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     comment = models.TextField()
+    status = models.CharField(choices=RequestStatus.choices, default=RequestStatus.REQUESTED)

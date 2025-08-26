@@ -124,14 +124,14 @@ class ReasonSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'duration', 'group_assignee', 'user_assignee']
 
 class RequestSerializer(serializers.ModelSerializer):
-    requested_by = UserSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
     reason = ReasonSerializer(read_only=True)
     reason_id = serializers.IntegerField(write_only=True)
     
     class Meta:
         model = Request
-        fields = ['id', 'expected_at', 'reason', 'reason_id', 'requested_by', 'comment']
-        read_only_fields = ['id', 'requested_by']
+        fields = ['id', 'expected_at', 'reason', 'reason_id', 'created_by', 'comment', 'status']
+        read_only_fields = ['id', 'created_by', 'status']
 
     def create(self, validated_data):
         reason_id = validated_data.pop('reason_id')
@@ -142,7 +142,7 @@ class RequestSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("This reason does not exist or is not active.")
         
         user = self.context['request'].user
-        validated_data['requested_by'] = user
+        validated_data['created_by'] = user
         
         return super().create(validated_data)
 

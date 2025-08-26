@@ -1,7 +1,7 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin, TabularInline, StackedInline
 from unfold.decorators import display
-from .models import Group, Consultation, Appointment, Participant, Message
+from .models import Group, Consultation, Appointment, Participant, Message, Reason
 
 
 @admin.register(Group)
@@ -73,3 +73,15 @@ class ParticipantAdmin(ModelAdmin):
     list_filter = ['is_invited', 'feedback_rate']
     search_fields = ['user__email', 'appointement__consultation__created_by__email']
 
+@admin.register(Reason)
+class ReasonAdmin(ModelAdmin):
+    list_display = ['id', 'name', 'speciality', 'duration', 'is_active', 'group_assignee', 'user_assignee']
+    list_filter = ['is_active', 'speciality', 'group_assignee']
+    search_fields = ['name', 'speciality__name']
+    readonly_fields = ['created_at']
+
+
+@admin.register(Message)
+class MessageAdmin(ModelAdmin):
+    list_display = ['id', 'consultation', 'created_by', 'content',
+                    'attachment', 'created_at']

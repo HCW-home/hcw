@@ -9,7 +9,7 @@ from core.mixins import CreatedByMixin
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from drf_spectacular.utils import extend_schema
 from .permissions import ConsultationPermission
-from .models import Consultation, Group, Appointment, Participant, Message, AppointmentStatus, Request
+from .models import Consultation, Group, Appointment, Participant, Message, AppointmentStatus, Request, RequestStatus
 from django.utils import timezone
 from .serializers import (
     ConsultationSerializer, 
@@ -286,6 +286,7 @@ class RequestViewSet(CreatedByMixin, viewsets.ModelViewSet):
     """
     serializer_class = RequestSerializer
     permission_classes = [IsAuthenticated]
+    http_method_names = ['get', 'post', 'head', 'options']  # Remove PUT, PATCH, DELETE
     
     def get_queryset(self):
         user = self.request.user
@@ -293,4 +294,22 @@ class RequestViewSet(CreatedByMixin, viewsets.ModelViewSet):
             return Request.objects.none()
         
         # Users can see requests they created
-        return Request.objects.filter(requested_by=user)
+        return Request.objects.filter(created_by=user)
+
+    @extend_schema(responses=RequestSerializer)
+    @action(detail=True, methods=['post'])
+    def cancel(self, request, pk=None):
+        """Cancel a consultation request"""
+        consultation_request = self.get_object()
+        
+        if consultation_request.status == RequestStatus.CANCELLED:
+            return Response(
+                {'error': 'This request is already cancelled'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        consultation_request.status = RequestStatus.CANCELLED
+        consultation_request.save()
+        
+        serializer = self.get_serializer(consultation_request)
+        return Response(serializer.data)
