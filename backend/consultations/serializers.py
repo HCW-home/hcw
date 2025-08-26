@@ -31,7 +31,8 @@ class AppointmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Appointment
         fields = ['id', 'scheduled_at', 'end_expected_at',
-                  'consultation', 'created_by']
+                  'consultation', 'created_by', 'status']
+        read_only_fields = ['id', 'status']
 
 class MessageSerializer(serializers.ModelSerializer):
     created_by = serializers.HiddenField(

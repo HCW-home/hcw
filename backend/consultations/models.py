@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.utils.translation import gettext_lazy as _
 
 # Create your models here.
 
@@ -36,7 +37,13 @@ class Consultation(models.Model):
         related_name="%(class)s_owned"
     )
 
+
+class AppointmentStatus(models.TextChoices):
+    SCHEDULED = "Scheduled", _("Scheduled")
+    CANCELLED = "Cancelled", _("Cancelled")
+
 class Appointment(models.Model):
+    status = models.CharField(choices=AppointmentStatus.choices, default=AppointmentStatus.SCHEDULED)
     consultation = models.ForeignKey(
         Consultation, on_delete=models.CASCADE, related_name='appointments')
     scheduled_at = models.DateTimeField()

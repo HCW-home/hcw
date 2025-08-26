@@ -156,10 +156,10 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @extend_schema(responses=ParticipantSerializer(many=True))
-    @action(detail=True, methods=['get'], url_path='appointment/(?P<appointment_id>[^/.]+)/participants')
-    def appointment_participants(self, request, pk=None, appointment_id=None):
-        """Get all participants for a specific appointment in this consultation"""
+    @extend_schema(responses=AppointmentSerializer)
+    @action(detail=True, methods=['get'], url_path='appointment/(?P<appointment_id>[^/.]+)')
+    def get_appointment(self, request, pk=None, appointment_id=None):
+        """Get a specific appointment for this consultation"""
         consultation = self.get_object()
         
         try:
@@ -170,15 +170,76 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        participants = appointment.participant_set.all()
-        
-        page = self.paginate_queryset(participants)
-        if page is not None:
-            serializer = ParticipantSerializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-        
-        serializer = ParticipantSerializer(participants, many=True)
+        serializer = AppointmentSerializer(appointment)
         return Response(serializer.data)
+
+    @extend_schema(
+        request=ParticipantSerializer, 
+        responses={200: ParticipantSerializer(many=True), 201: ParticipantSerializer}
+    )
+    @action(detail=True, methods=['get', 'post'], url_path='appointment/(?P<appointment_id>[^/.]+)/participants')
+    def appointment_participants(self, request, pk=None, appointment_id=None):
+        """Get all participants for a specific appointment in this consultation or create a new participant"""
+        consultation = self.get_object()
+        
+        try:
+            appointment = consultation.appointments.get(id=appointment_id)
+        except Appointment.DoesNotExist:
+            return Response(
+                {'error': 'Appointment not found in this consultation'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        if request.method == 'GET':
+            participants = appointment.participant_set.all()
+            
+            page = self.paginate_queryset(participants)
+            if page is not None:
+                serializer = ParticipantSerializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+            
+            serializer = ParticipantSerializer(participants, many=True)
+            return Response(serializer.data)
+        
+        elif request.method == 'POST':
+            serializer = ParticipantSerializer(
+                data=request.data,
+                context={'request': request}
+            )
+            
+            if serializer.is_valid():
+                participant = serializer.save(appointement=appointment)
+                return Response(
+                    ParticipantSerializer(participant).data, 
+                    status=status.HTTP_201_CREATED
+                )
+            
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @extend_schema(responses={204: None})
+    @action(detail=True, methods=['delete'], url_path='appointment/(?P<appointment_id>[^/.]+)/participants/(?P<participant_id>[^/.]+)')
+    def delete_participant(self, request, pk=None, appointment_id=None, participant_id=None):
+        """Delete a specific participant from an appointment in this consultation"""
+        consultation = self.get_object()
+        
+        try:
+            appointment = consultation.appointments.get(id=appointment_id)
+        except Appointment.DoesNotExist:
+            return Response(
+                {'error': 'Appointment not found in this consultation'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        try:
+            participant = appointment.participant_set.get(id=participant_id)
+        except Participant.DoesNotExist:
+            return Response(
+                {'error': 'Participant not found in this appointment'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        participant.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 class GroupViewSet(viewsets.ReadOnlyModelViewSet):
     """
