@@ -156,6 +156,30 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @extend_schema(responses=ParticipantSerializer(many=True))
+    @action(detail=True, methods=['get'], url_path='appointment/(?P<appointment_id>[^/.]+)/participants')
+    def appointment_participants(self, request, pk=None, appointment_id=None):
+        """Get all participants for a specific appointment in this consultation"""
+        consultation = self.get_object()
+        
+        try:
+            appointment = consultation.appointments.get(id=appointment_id)
+        except Appointment.DoesNotExist:
+            return Response(
+                {'error': 'Appointment not found in this consultation'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        participants = appointment.participant_set.all()
+        
+        page = self.paginate_queryset(participants)
+        if page is not None:
+            serializer = ParticipantSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = ParticipantSerializer(participants, many=True)
+        return Response(serializer.data)
+
 class GroupViewSet(viewsets.ReadOnlyModelViewSet):
     """
     ViewSet for groups - read only
