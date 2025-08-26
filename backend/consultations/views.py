@@ -9,14 +9,15 @@ from core.mixins import CreatedByMixin
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from drf_spectacular.utils import extend_schema
 from .permissions import ConsultationPermission
-from .models import Consultation, Group, Appointment, Participant, Message, AppointmentStatus
+from .models import Consultation, Group, Appointment, Participant, Message, AppointmentStatus, Request
 from django.utils import timezone
 from .serializers import (
     ConsultationSerializer, 
     GroupSerializer, 
     AppointmentSerializer,
     ParticipantSerializer,
-    MessageSerializer
+    MessageSerializer,
+    RequestSerializer
 )
 
 from messaging.tasks import send_message_task
@@ -277,3 +278,19 @@ class GroupViewSet(viewsets.ReadOnlyModelViewSet):
             return Group.objects.none()
         
         return Group.objects.filter(users=user)
+
+class RequestViewSet(CreatedByMixin, viewsets.ModelViewSet):
+    """
+    ViewSet for consultation requests
+    Users can create requests and view their own requests
+    """
+    serializer_class = RequestSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        user = self.request.user
+        if not user.is_authenticated:
+            return Request.objects.none()
+        
+        # Users can see requests they created
+        return Request.objects.filter(requested_by=user)

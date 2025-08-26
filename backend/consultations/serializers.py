@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Consultation, Group, Appointment, Participant, Message
+from .models import Consultation, Group, Appointment, Participant, Message, Reason, Request
 
 User = get_user_model()
 
@@ -117,5 +117,33 @@ class ConsultationCreateSerializer(serializers.ModelSerializer):
             except User.DoesNotExist:
                 raise serializers.ValidationError("This user does not exist.")
         return value
+
+class ReasonSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Reason
+        fields = ['id', 'name', 'duration', 'group_assignee', 'user_assignee']
+
+class RequestSerializer(serializers.ModelSerializer):
+    requested_by = UserSerializer(read_only=True)
+    reason = ReasonSerializer(read_only=True)
+    reason_id = serializers.IntegerField(write_only=True)
+    
+    class Meta:
+        model = Request
+        fields = ['id', 'expected_at', 'reason', 'reason_id', 'requested_by', 'comment']
+        read_only_fields = ['id', 'requested_by']
+
+    def create(self, validated_data):
+        reason_id = validated_data.pop('reason_id')
+        try:
+            reason = Reason.objects.get(id=reason_id, is_active=True)
+            validated_data['reason'] = reason
+        except Reason.DoesNotExist:
+            raise serializers.ValidationError("This reason does not exist or is not active.")
+        
+        user = self.context['request'].user
+        validated_data['requested_by'] = user
+        
+        return super().create(validated_data)
 
 # Old MessageSerializer removed - replaced with enhanced version above

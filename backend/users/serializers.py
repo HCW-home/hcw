@@ -9,6 +9,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from allauth.account.utils import setup_user_email
 from rest_framework.response import Response
 from rest_framework import status
+from .models import Speciality
 
 UserModel = get_user_model()
 
@@ -66,3 +67,8 @@ class RegisterSerializer(serializers.Serializer):
         user.save()
         setup_user_email(request, user, [])
         return user
+
+class SpecialitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Speciality
+        fields = ['id', 'name']

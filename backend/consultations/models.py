@@ -15,6 +15,8 @@ class Consultation(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     closed_at = models.DateTimeField(null=True, blank=True)
+    request = models.ForeignKey(
+        'Request', on_delete=models.SET_NULL, null=True, blank=True, unique=True)
 
     beneficiary = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -81,11 +83,18 @@ class Message(models.Model):
 
 class Reason(models.Model):
     speciality = models.ForeignKey(
-        'users.Speciality', on_delete=models.CASCADE)
+        'users.Speciality', on_delete=models.CASCADE, related_name='reasons')
     name = models.CharField()
     created_at = models.DateTimeField(auto_now_add=True)
     group_assignee = models.ForeignKey(Group, on_delete=models.CASCADE, null=True, blank=True)
     user_assignee = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
     duration = models.IntegerField(help_text="Duration in minute", default=30)
+    is_active = models.BooleanField(default=True)
 
+
+class Request(models.Model):
+    expected_at = models.DateTimeField()
+    reason = models.ForeignKey(Reason, on_delete=models.PROTECT, related_name='reasons')
+    requested_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    comment = models.TextField()
