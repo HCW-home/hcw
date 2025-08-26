@@ -2,6 +2,7 @@ from django.shortcuts import render
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
 from rest_framework.permissions import IsAuthenticated, DjangoModelPermissions
 from core.mixins import CreatedByMixin
@@ -20,9 +21,19 @@ from .serializers import (
 from messaging.tasks import send_message_task
 
 
+class ConsultationPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+
 class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
     serializer_class = ConsultationSerializer
     permission_classes = [ConsultationPermission]
+    pagination_class = ConsultationPagination
+    filterset_fields = ['group', 'beneficiary', 'created_by', 'owned_by']
+    ordering = ['-created_at']
+    ordering_fields = ['created_at', 'updated_at', 'closed_at']
     
     def get_queryset(self):
         user = self.request.user
