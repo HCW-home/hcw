@@ -1,3 +1,14 @@
+hcw (0.9.6) bookworm; urgency=medium
+
+  * Renaming and refactoring
+  * Fix various endpoints
+  * Do various fixes into appointment
+  * Add page into ConsultationViewSet
+  * Add attachment field
+  * Adding pagination and proper swagger schema
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Tue, 26 Aug 2025 10:44:06 +0200
+
 hcw (0.9.5) bookworm; urgency=medium
 
   [ Gor Grigoryan ]
