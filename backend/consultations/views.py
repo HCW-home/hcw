@@ -7,6 +7,7 @@ from django.db.models import Q
 from rest_framework.permissions import IsAuthenticated, DjangoModelPermissions
 from core.mixins import CreatedByMixin
 from rest_framework.exceptions import PermissionDenied, ValidationError
+from drf_spectacular.utils import extend_schema
 from .permissions import ConsultationPermission
 from .models import Consultation, Group, Appointment, Participant, Message
 from django.utils import timezone
@@ -48,38 +49,41 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
             Q(group__users=user)
         ).distinct()
     
-    @action(detail=True, methods=['post'])
-    def close(self, request, pk=None):
-        """Close a consultation"""
-        consultation = self.get_object()
-        if consultation.closed_at is not None:
-            return Response(
-                {'error': 'This consultation is already closed'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
+    # @extend_schema(responses=ConsultationSerializer)
+    # @action(detail=True, methods=['post'])
+    # def close(self, request, pk=None):
+    #     """Close a consultation"""
+    #     consultation = self.get_object()
+    #     if consultation.closed_at is not None:
+    #         return Response(
+    #             {'error': 'This consultation is already closed'}, 
+    #             status=status.HTTP_400_BAD_REQUEST
+    #         )
         
-        consultation.closed_at = timezone.now()
-        consultation.save()
+    #     consultation.closed_at = timezone.now()
+    #     consultation.save()
         
-        serializer = self.get_serializer(consultation)
-        return Response(serializer.data)
+    #     serializer = self.get_serializer(consultation)
+    #     return Response(serializer.data)
     
-    @action(detail=True, methods=['post'])
-    def reopen(self, request, pk=None):
-        """Reopen a consultation"""
-        consultation = self.get_object()
-        if consultation.closed_at is None:
-            return Response(
-                {'error': 'This consultation is already open'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
+    # @extend_schema(responses=ConsultationSerializer)
+    # @action(detail=True, methods=['post'])
+    # def reopen(self, request, pk=None):
+    #     """Reopen a consultation"""
+    #     consultation = self.get_object()
+    #     if consultation.closed_at is None:
+    #         return Response(
+    #             {'error': 'This consultation is already open'}, 
+    #             status=status.HTTP_400_BAD_REQUEST
+    #         )
         
-        consultation.closed_at = None
-        consultation.save()
+    #     consultation.closed_at = None
+    #     consultation.save()
         
-        serializer = self.get_serializer(consultation)
-        return Response(serializer.data)
+    #     serializer = self.get_serializer(consultation)
+    #     return Response(serializer.data)
     
+    @extend_schema(request=AppointmentSerializer, responses=AppointmentSerializer)
     @action(detail=True, methods=['post'])
     def appointment(self, request, pk=None):
         """Get all appointment for this consultation"""
@@ -102,6 +106,7 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @extend_schema(responses=AppointmentSerializer(many=True))
     @action(detail=True, methods=['get'])
     def appointments(self, request, pk=None):
         """Get all appointment for this consultation"""
@@ -116,6 +121,7 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
         serializer = AppointmentSerializer(appointments, many=True)
         return Response(serializer.data)
 
+    @extend_schema(responses=MessageSerializer(many=True))
     @action(detail=True, methods=['get'])
     def messages(self, request, pk=None):
         """Get all messages for this consultation"""
@@ -130,6 +136,7 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
         serializer = MessageSerializer(messages, many=True)
         return Response(serializer.data)
 
+    @extend_schema(request=MessageSerializer, responses=MessageSerializer)
     @action(detail=True, methods=['post'])
     def message(self, request, pk=None):
         """Send a message for this consultation"""
