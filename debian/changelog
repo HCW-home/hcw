@@ -1,3 +1,11 @@
+hcw (0.9.10) bookworm; urgency=medium
+
+  * Doing some cleanup
+  * Finishing requests
+  * Misc update
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Tue, 26 Aug 2025 20:06:53 +0200
+
 hcw (0.9.9) bookworm; urgency=medium
 
   * Add reasons in admin
