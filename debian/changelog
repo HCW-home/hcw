@@ -1,3 +1,15 @@
+hcw (0.9.7) bookworm; urgency=medium
+
+  * Cleanup
+  * Add ReasonForConsultation
+  * Adding Reason
+  * Endpoint for adding participant
+  * Adding appointment endpoint and status
+  * Adding close and reopened + cancel appointment
+  * Fix endpoint name consistency
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Tue, 26 Aug 2025 11:59:23 +0200
+
 hcw (0.9.6) bookworm; urgency=medium
 
   * Renaming and refactoring
