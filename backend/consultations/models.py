@@ -7,7 +7,7 @@ class Group(models.Model):
     name = models.CharField(max_length=200)
     organisation = models.ManyToManyField(
         'organisations.Organisation')
-    users = models.ManyToManyField('users.User')
+    users = models.ManyToManyField(settings.AUTH_USER_MODEL)
 
 
 class Consultation(models.Model):
@@ -72,12 +72,13 @@ class Message(models.Model):
         upload_to='messages_attachment', null=True, blank=True)
 
 
-class ReasonForConsultation:
-    speciality = models.ForeignKey('users.Specialities', on_delete=models.CASCADE)
+class Reason(models.Model):
+    speciality = models.ForeignKey(
+        'users.Speciality', on_delete=models.CASCADE)
     name = models.CharField()
     created_at = models.DateTimeField(auto_now_add=True)
     group_assignee = models.ForeignKey(Group, on_delete=models.CASCADE, null=True, blank=True)
     user_assignee = models.ForeignKey(
-        'users.User', on_delete=models.CASCADE, null=True, blank=True)
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
     duration = models.IntegerField(help_text="Duration in minute", default=30)
 
