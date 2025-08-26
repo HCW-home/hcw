@@ -40,7 +40,7 @@ class MessageSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Message
-        fields = ['id', 'content', 'created_at', 'created_by', 'consultation']
+        fields = ['id', 'content', 'attachment', 'created_at', 'created_by', 'consultation']
 
 class ConsultationSerializer(serializers.ModelSerializer):
     created_by = UserSerializer(read_only=True)

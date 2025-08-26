@@ -106,8 +106,14 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
     def appointments(self, request, pk=None):
         """Get all appointment for this consultation"""
         consultation = self.get_object()
-        messages = consultation.appointments.all()
-        serializer = AppointmentSerializer(messages, many=True)
+        appointments = consultation.appointments.all()
+        
+        page = self.paginate_queryset(appointments)
+        if page is not None:
+            serializer = AppointmentSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = AppointmentSerializer(appointments, many=True)
         return Response(serializer.data)
 
     @action(detail=True, methods=['get'])
@@ -115,6 +121,12 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
         """Get all messages for this consultation"""
         consultation = self.get_object()
         messages = consultation.messages.all()
+        
+        page = self.paginate_queryset(messages)
+        if page is not None:
+            serializer = MessageSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
         serializer = MessageSerializer(messages, many=True)
         return Response(serializer.data)
 
