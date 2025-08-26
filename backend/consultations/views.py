@@ -83,78 +83,74 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
         serializer = self.get_serializer(consultation)
         return Response(serializer.data)
     
-    @extend_schema(request=AppointmentSerializer, responses=AppointmentSerializer)
-    @action(detail=True, methods=['post'])
-    def appointment(self, request, pk=None):
-        """Get all appointment for this consultation"""
-        consultation = self.get_object()
-        serializer = AppointmentSerializer(
-            data=request.data,
-            context={'request': request, 'consultation': consultation}
-        )
-
-        if serializer.is_valid():
-            appointment = serializer.save(
-                consultation=consultation,
-                created_by=request.user
-            )
-
-            message_serializer = AppointmentSerializer(appointment)
-            response_data = message_serializer.data
-
-            return Response(response_data, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    @extend_schema(responses=AppointmentSerializer(many=True))
-    @action(detail=True, methods=['get'])
+    @extend_schema(
+        request=AppointmentSerializer, 
+        responses={200: AppointmentSerializer(many=True), 201: AppointmentSerializer}
+    )
+    @action(detail=True, methods=['get', 'post'])
     def appointments(self, request, pk=None):
-        """Get all appointment for this consultation"""
+        """Get all appointments for this consultation or create a new appointment"""
         consultation = self.get_object()
-        appointments = consultation.appointments.all()
         
-        page = self.paginate_queryset(appointments)
-        if page is not None:
-            serializer = AppointmentSerializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
+        if request.method == 'GET':
+            appointments = consultation.appointments.all()
+            
+            page = self.paginate_queryset(appointments)
+            if page is not None:
+                serializer = AppointmentSerializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+            
+            serializer = AppointmentSerializer(appointments, many=True)
+            return Response(serializer.data)
         
-        serializer = AppointmentSerializer(appointments, many=True)
-        return Response(serializer.data)
-
-    @extend_schema(responses=MessageSerializer(many=True))
-    @action(detail=True, methods=['get'])
-    def messages(self, request, pk=None):
-        """Get all messages for this consultation"""
-        consultation = self.get_object()
-        messages = consultation.messages.all()
-        
-        page = self.paginate_queryset(messages)
-        if page is not None:
-            serializer = MessageSerializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-        
-        serializer = MessageSerializer(messages, many=True)
-        return Response(serializer.data)
-
-    @extend_schema(request=MessageSerializer, responses=MessageSerializer)
-    @action(detail=True, methods=['post'])
-    def message(self, request, pk=None):
-        """Send a message for this consultation"""
-        consultation = self.get_object()
-
-        serializer = MessageSerializer(
-            data=request.data,
-            context={'request': request}
-        )
-
-        if serializer.is_valid():
-            msg = serializer.save(
-                consultation=consultation
+        elif request.method == 'POST':
+            serializer = AppointmentSerializer(
+                data=request.data,
+                context={'request': request, 'consultation': consultation}
             )
 
-            return Response(MessageSerializer(msg).data, status=status.HTTP_201_CREATED)
+            if serializer.is_valid():
+                appointment = serializer.save(
+                    consultation=consultation,
+                    created_by=request.user
+                )
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                response_serializer = AppointmentSerializer(appointment)
+                return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @extend_schema(
+        request=MessageSerializer, 
+        responses={200: MessageSerializer(many=True), 201: MessageSerializer}
+    )
+    @action(detail=True, methods=['get', 'post'])
+    def messages(self, request, pk=None):
+        """Get all messages for this consultation or create a new message"""
+        consultation = self.get_object()
+        
+        if request.method == 'GET':
+            messages = consultation.messages.all()
+            
+            page = self.paginate_queryset(messages)
+            if page is not None:
+                serializer = MessageSerializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+            
+            serializer = MessageSerializer(messages, many=True)
+            return Response(serializer.data)
+        
+        elif request.method == 'POST':
+            serializer = MessageSerializer(
+                data=request.data,
+                context={'request': request}
+            )
+
+            if serializer.is_valid():
+                message = serializer.save(consultation=consultation)
+                return Response(MessageSerializer(message).data, status=status.HTTP_201_CREATED)
+
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @extend_schema(responses=AppointmentSerializer)
     @action(detail=True, methods=['get'], url_path='appointment/(?P<appointment_id>[^/.]+)')
