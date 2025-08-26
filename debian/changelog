@@ -1,3 +1,9 @@
+hcw (0.9.9) bookworm; urgency=medium
+
+  * Add reasons in admin
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Tue, 26 Aug 2025 14:00:38 +0200
+
 hcw (0.9.8) bookworm; urgency=medium
 
   * Improve admin interface for appointment
