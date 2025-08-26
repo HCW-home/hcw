@@ -1,7 +1,7 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin, TabularInline, StackedInline
 from unfold.decorators import display
-from .models import Group, Consultation, Appointment, Participant, Message, Reason
+from .models import Group, Consultation, Appointment, Participant, Message, Reason, Request
 
 
 @admin.register(Group)
@@ -78,3 +78,8 @@ class ReasonAdmin(ModelAdmin):
 class MessageAdmin(ModelAdmin):
     list_display = ['id', 'consultation', 'created_by', 'content',
                     'attachment', 'created_at']
+
+
+@admin.register(Request)
+class MessageAdmin(ModelAdmin):
+    list_display = ['id', 'expected_at', 'consultation', 'created_by', 'expected_with', 'comment']

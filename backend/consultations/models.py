@@ -15,8 +15,6 @@ class Consultation(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     closed_at = models.DateTimeField(null=True, blank=True)
-    request = models.OneToOneField(
-        'Request', on_delete=models.SET_NULL, null=True, blank=True)
 
     beneficiary = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -108,3 +106,7 @@ class Request(models.Model):
     reason = models.ForeignKey(Reason, on_delete=models.PROTECT, related_name='reasons')
     comment = models.TextField()
     status = models.CharField(choices=RequestStatus.choices, default=RequestStatus.REQUESTED)
+
+    appointment = models.OneToOneField(Appointment, on_delete=models.SET_NULL, null=True, blank=True)
+    consultation = models.OneToOneField(
+        Consultation, on_delete=models.SET_NULL, null=True, blank=True)

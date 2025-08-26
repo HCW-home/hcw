@@ -411,6 +411,11 @@ UNFOLD = {
                         "icon": "list",
                         "link": "/admin/consultations/reason/",
                     },
+                    {
+                        "title": "Requests",
+                        "icon": "inbox",
+                        "link": "/admin/consultations/request/",
+                    },
                 ],
             },
             {
