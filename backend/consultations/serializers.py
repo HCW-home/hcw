@@ -125,21 +125,35 @@ class ReasonSerializer(serializers.ModelSerializer):
 
 class RequestSerializer(serializers.ModelSerializer):
     created_by = UserSerializer(read_only=True)
+    expected_with = UserSerializer(read_only=True)
     reason = ReasonSerializer(read_only=True)
     reason_id = serializers.IntegerField(write_only=True)
+    expected_with_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
     
     class Meta:
         model = Request
-        fields = ['id', 'expected_at', 'reason', 'reason_id', 'created_by', 'comment', 'status']
+        fields = [
+            'id', 'expected_at', 'expected_with', 'expected_with_id', 
+            'reason', 'reason_id', 'created_by', 'comment', 'status'
+        ]
         read_only_fields = ['id', 'created_by', 'status']
 
     def create(self, validated_data):
         reason_id = validated_data.pop('reason_id')
+        expected_with_id = validated_data.pop('expected_with_id', None)
+        
         try:
             reason = Reason.objects.get(id=reason_id, is_active=True)
             validated_data['reason'] = reason
         except Reason.DoesNotExist:
             raise serializers.ValidationError("This reason does not exist or is not active.")
+        
+        if expected_with_id:
+            try:
+                expected_with = User.objects.get(id=expected_with_id)
+                validated_data['expected_with'] = expected_with
+            except User.DoesNotExist:
+                raise serializers.ValidationError("The specified doctor does not exist.")
         
         user = self.context['request'].user
         validated_data['created_by'] = user

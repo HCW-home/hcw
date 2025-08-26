@@ -15,8 +15,8 @@ class Consultation(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     closed_at = models.DateTimeField(null=True, blank=True)
-    request = models.ForeignKey(
-        'Request', on_delete=models.SET_NULL, null=True, blank=True, unique=True)
+    request = models.OneToOneField(
+        'Request', on_delete=models.SET_NULL, null=True, blank=True)
 
     beneficiary = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -100,8 +100,11 @@ class RequestStatus(models.TextChoices):
     CANCELLED = "Cancelled", _("Cancelled")
 
 class Request(models.Model):
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='requests_asrequester')
     expected_at = models.DateTimeField()
+    expected_with = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='requests_asexpected')
     reason = models.ForeignKey(Reason, on_delete=models.PROTECT, related_name='reasons')
     comment = models.TextField()
     status = models.CharField(choices=RequestStatus.choices, default=RequestStatus.REQUESTED)

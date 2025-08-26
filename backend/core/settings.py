@@ -355,6 +355,11 @@ UNFOLD = {
                         "link": "/admin/auth/group/",
                     },
                     {
+                        "title": "Organizations",
+                        "icon": "business",
+                        "link": "/admin/organisations/organisation/",
+                    },
+                    {
                         "title": "Languages",
                         "icon": "language",
                         "link": "/admin/users/language/",
@@ -377,15 +382,10 @@ UNFOLD = {
                 ],
             },
             {
-                "title": "Organizations & Consultations",
+                "title": "Consultations",
                 "separator": True,
                 "collapsible": True,
                 "items": [
-                    {
-                        "title": "Organizations",
-                        "icon": "business",
-                        "link": "/admin/organisations/organisation/",
-                    },
                     {
                         "title": "Consultations",
                         "icon": "event",
@@ -400,11 +400,6 @@ UNFOLD = {
                         "title": "Appointments",
                         "icon": "schedule",
                         "link": "/admin/consultations/appointment/",
-                    },
-                    {
-                        "title": "Participants",
-                        "icon": "people_outline",
-                        "link": "/admin/consultations/participant/",
                     },
                     {
                         "title": "Messages",

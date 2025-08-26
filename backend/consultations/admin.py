@@ -66,13 +66,6 @@ class AppointmentAdmin(ModelAdmin):
     def participants_count(self, obj):
         return obj.participant_set.count()
 
-
-@admin.register(Participant)
-class ParticipantAdmin(ModelAdmin):
-    list_display = ['id', 'user', 'appointement', 'is_invited', 'feedback_rate']
-    list_filter = ['is_invited', 'feedback_rate']
-    search_fields = ['user__email', 'appointement__consultation__created_by__email']
-
 @admin.register(Reason)
 class ReasonAdmin(ModelAdmin):
     list_display = ['id', 'name', 'speciality', 'duration', 'is_active', 'group_assignee', 'user_assignee']
