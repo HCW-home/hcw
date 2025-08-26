@@ -36,13 +36,6 @@ class Consultation(models.Model):
         related_name="%(class)s_owned"
     )
 
-    # message_service = models.ForeignKey(
-    #     'messaging.Service',
-    #     on_delete=models.SET_NULL,
-    #     null=True,
-    #     blank=True,
-    # )
-
 class Appointment(models.Model):
     consultation = models.ForeignKey(
         Consultation, on_delete=models.CASCADE, related_name='appointments')
@@ -77,3 +70,14 @@ class Message(models.Model):
     content = models.TextField(null=True, blank=True)
     attachment = models.FileField(
         upload_to='messages_attachment', null=True, blank=True)
+
+
+class ReasonForConsultation:
+    speciality = models.ForeignKey('users.Specialities', on_delete=models.CASCADE)
+    name = models.CharField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    group_assignee = models.ForeignKey(Group, on_delete=models.CASCADE, null=True, blank=True)
+    user_assignee = models.ForeignKey(
+        'users.User', on_delete=models.CASCADE, null=True, blank=True)
+    duration = models.IntegerField(help_text="Duration in minute", default=30)
+

@@ -29,7 +29,7 @@ class MessageInline(TabularInline):
 class AppointmentInline(TabularInline):
     model = Appointment
     extra = 0
-    fields = ['scheduled_at', 'end_expected_at']
+    fields = ['created_by', 'scheduled_at', 'end_expected_at']
 
 
 class ParticipantInline(TabularInline):
@@ -44,16 +44,6 @@ class ConsultationAdmin(ModelAdmin):
     list_filter = ['created_at', 'closed_at', 'group']
     search_fields = ['created_by__email', 'beneficiary__email', 'group__name']
     readonly_fields = ['created_at', 'updated_at']
-    
-    fieldsets = (
-        (None, {
-            'fields': ('created_by', 'owned_by', 'beneficiary', 'group')
-        }),
-        ('Timestamps', {
-            'fields': ('created_at', 'updated_at', 'closed_at'),
-            'classes': ('collapse',)
-        }),
-    )
     
     inlines = [AppointmentInline, MessageInline]
     

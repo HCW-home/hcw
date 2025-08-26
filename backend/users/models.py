@@ -32,7 +32,7 @@ class User(AbstractUser):
     app_preferences = models.JSONField(null=True, blank=True)
     encrypted = models.BooleanField(default=False)
     languages = models.ManyToManyField(Language)
-    specialites = models.ManyToManyField(Speciality)
+    specialities = models.ManyToManyField(Speciality)
 
     def send_user_notification(self, title, message) -> FirebaseResponseDict:
         # Docs https://fcm-django.readthedocs.io/en/latest/

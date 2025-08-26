@@ -39,12 +39,13 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
         "specialities_display",
     ]
     
-    list_filter = BaseUserAdmin.list_filter + ('languages', 'specialites', 'encrypted')
-    filter_horizontal = ('languages', 'specialites')
+    list_filter = BaseUserAdmin.list_filter + \
+        ('languages', 'specialities', 'encrypted')
+    filter_horizontal = ('languages', 'specialities')
     
     fieldsets = BaseUserAdmin.fieldsets + (
         ('Additional Info', {
-            'fields': ('app_preferences', 'encrypted', 'languages', 'specialites')
+            'fields': ('app_preferences', 'encrypted', 'languages', 'specialities')
         }),
     )
     
@@ -53,7 +54,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
     languages_display.short_description = "Languages"
     
     def specialities_display(self, obj):
-        return ", ".join([spec.name for spec in obj.specialites.all()[:3]]) + ("..." if obj.specialites.count() > 3 else "")
+        return ", ".join([spec.name for spec in obj.specialities.all()[:3]]) + ("..." if obj.specialities.count() > 3 else "")
     specialities_display.short_description = "Specialities"
 
 admin.site.register(User, UserAdmin)
