@@ -7,7 +7,6 @@ router = DefaultRouter()
 router.register(r'specialities', views.SpecialityViewSet)
 
 urlpatterns = [
-    path('home/', views.Home.as_view()),
     path('api/', include(router.urls)),
 ]
 
