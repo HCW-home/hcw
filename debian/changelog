@@ -1,3 +1,11 @@
+hcw (0.9.11) bookworm; urgency=medium
+
+  * Adding Slot in Admin + various schema change
+  * Fix serializer
+  * Fix reset password
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Wed, 27 Aug 2025 13:47:51 +0200
+
 hcw (0.9.10) bookworm; urgency=medium
 
   * Doing some cleanup
