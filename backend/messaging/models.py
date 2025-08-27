@@ -89,6 +89,15 @@ class Message(models.Model):
         related_name='sent_messages'
     )
 
+    # Recipient
+    sent_to = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='received_messages'
+    )
+
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

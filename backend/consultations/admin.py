@@ -1,7 +1,7 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin, TabularInline, StackedInline
 from unfold.decorators import display
-from .models import Group, Consultation, Appointment, Participant, Message, Reason, Request
+from .models import Group, Consultation, Appointment, Participant, Message, Reason, Request, BookingSlot
 
 
 @admin.register(Group)
@@ -83,3 +83,9 @@ class MessageAdmin(ModelAdmin):
 @admin.register(Request)
 class RequestAdmin(ModelAdmin):
     list_display = ['id', 'expected_at', 'consultation', 'created_by', 'expected_with', 'comment']
+
+
+@admin.register(BookingSlot)
+class BookingSlotAdmin(ModelAdmin):
+    list_display = ['id', 'user', 'start_time',
+                    'end_time', 'monday', 'tuesday', 'wednesday', 'thurday', 'friday', 'saturday', 'sunday', 'valid_until']

@@ -416,6 +416,11 @@ UNFOLD = {
                         "icon": "inbox",
                         "link": "/admin/consultations/request/",
                     },
+                    {
+                        "title": "Booking slot",
+                        "icon": "inbox",
+                        "link": "/admin/consultations/bookingslot/",
+                    },
                 ],
             },
             {
