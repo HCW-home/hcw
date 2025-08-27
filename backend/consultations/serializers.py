@@ -21,7 +21,7 @@ class ParticipantSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Participant
-        fields = ['id', 'user', 'token', 'is_invited', 'feedback_rate', 'feedback_message']
+        fields = ['id', 'user', 'is_invited', 'feedback_rate', 'feedback_message']
 
 class AppointmentSerializer(serializers.ModelSerializer):
     created_by = serializers.HiddenField(
