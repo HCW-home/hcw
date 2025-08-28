@@ -226,8 +226,8 @@ class UserConsultationsView(APIView):
                 description='Returns paginated consultations for the user',
                 value={
                     "count": 45,
-                    "next": "http://localhost:8000/api/auth/user/consultations/?page=3",
-                    "previous": "http://localhost:8000/api/auth/user/consultations/?page=1",
+                    "next": "http://localhost:8000/api/user/consultations/?page=3",
+                    "previous": "http://localhost:8000/api/user/consultations/?page=1",
                     "results": [
                         {
                             "id": 1,
@@ -307,7 +307,7 @@ class UserNotificationsView(APIView):
                 description='Returns paginated notifications for the user',
                 value={
                     "count": 25,
-                    "next": "http://localhost:8000/api/auth/user/notifications/?page=2",
+                    "next": "http://localhost:8000/api/user/notifications/?page=2",
                     "previous": None,
                     "results": [
                         {
