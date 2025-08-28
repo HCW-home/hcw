@@ -6,8 +6,6 @@ celery -A core worker --loglevel=info
 
 # In a second console
 python3 manage.py shell
-from market import tasks
-tasks.run_all.delay()
 ```
 
 Create super user
@@ -16,8 +14,17 @@ Create super user
 python3 manage.py createsuperuser
 ```
 
-Get all history
+Add Doctor group role
 
 ```
-python3 manage.py market get_history
+python3 manage.py loaddata initial/Groups.json
 ```
+
+
+
+Dump Doctor group role
+
+```
+python3 manage.py dumpdata auth.group --natural-foreign --natural-primary --indent 2 > initial/Groups.json
+```
+

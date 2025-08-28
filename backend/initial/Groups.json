@@ -1,0 +1,30 @@
+[
+{
+  "model": "auth.group",
+  "fields": {
+    "name": "Doctor",
+    "permissions": [
+      [
+        "add_consultation",
+        "consultations",
+        "consultation"
+      ],
+      [
+        "change_consultation",
+        "consultations",
+        "consultation"
+      ],
+      [
+        "delete_consultation",
+        "consultations",
+        "consultation"
+      ],
+      [
+        "view_consultation",
+        "consultations",
+        "consultation"
+      ]
+    ]
+  }
+}
+]
