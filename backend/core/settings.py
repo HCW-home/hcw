@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',
+    'allauth',
     'allauth.account',
     'django_filters',
     'allauth.socialaccount',
@@ -82,7 +83,6 @@ INSTALLED_APPS = [
     'fcm_django',
     'consultations',
     'users',
-    'allauth',
     'organisations',
     'messaging',
     'mediaserver',
@@ -124,7 +124,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'core.wsgi.application'
-MEDIA_ROOT = os.getenv('MEDIA_ROOT')
+MEDIA_ROOT = os.getenv('MEDIA_ROOT', 'upload')
 MEDIA_URL = '/upload/'
 
 # Database
@@ -416,6 +416,11 @@ UNFOLD = {
                         "icon": "inbox",
                         "link": "/admin/consultations/request/",
                     },
+                    {
+                        "title": "Booking slot",
+                        "icon": "inbox",
+                        "link": "/admin/consultations/bookingslot/",
+                    },
                 ],
             },
             {
@@ -512,3 +517,6 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+
+PRACTITIONER_URL = os.getenv('PRACTITIONER_URL', 'http://localhost:4200')
+PATIENT_URL = os.getenv('PATIENT_URL', 'http://localhost:4201')

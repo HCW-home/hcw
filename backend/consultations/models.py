@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from messaging.models import CommunicationMethod
+from datetime import time
 
 # Create your models here.
 
@@ -112,8 +113,12 @@ class Reason(models.Model):
 
 class RequestStatus(models.TextChoices):
     REQUESTED = "Requested", _("Requested")
-    ACCEPTED = "ACCEPTED", _("Accepted")
+    ACCEPTED = "Accepted", _("Accepted")
     CANCELLED = "Cancelled", _("Cancelled")
+
+class RequestType(models.TextChoices):
+    ONLINE = "Online", _("Online")
+    INPERSON = "InPerson", _("In person")
 
 class Request(models.Model):
     created_by = models.ForeignKey(
@@ -121,6 +126,11 @@ class Request(models.Model):
     expected_at = models.DateTimeField()
     expected_with = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='requests_asexpected')
+    
+    beneficiary = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='requests_asbeneficiary')
+
+    type = models.CharField(choices=RequestType, default=RequestType.ONLINE)
     reason = models.ForeignKey(Reason, on_delete=models.PROTECT, related_name='reasons')
     comment = models.TextField()
     status = models.CharField(choices=RequestStatus.choices, default=RequestStatus.REQUESTED)
@@ -129,12 +139,23 @@ class Request(models.Model):
     consultation = models.OneToOneField(
         Consultation, on_delete=models.SET_NULL, null=True, blank=True)
 
-class Slot(models.Model):
-    start_time = models.TimeField()
-    end_time = models.TimeField()
+class BookingSlot(models.Model):
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='slots')
+    start_time = models.TimeField(default=time(8))
+    end_time = models.TimeField(default=time(18))
+
+    start_break = models.TimeField(default=time(12))
+    end_break = models.TimeField(default=time(14))
+    
     monday = models.BooleanField()
     tuesday = models.BooleanField()
     wednesday = models.BooleanField()
     thurday = models.BooleanField()
     friday = models.BooleanField()
     saturday = models.BooleanField()
+    sunday = models.BooleanField()
+
+    valid_until = models.DateField(help_text="Slot valid until this date", blank=True, null=True)
