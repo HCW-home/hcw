@@ -1,2 +1,8 @@
-* add inactive with true / false / none
-* add coingecko for prices with coingecko field in token
+* [OK] (only email for now) Magic link login, this should accept phone number or email in body, and just send email or sms to that phone number or email It should navigte to /verification?token=xxxxxxx we need verfy patient access token , which should return current accesss token and create user if user doesn't exists with that emil or phone nuber
+
+* [OK] patient active conultations, patient closed consultation, one api with (type|status) filter
+* [OK] / notifications screen
+* [OK] settings, where they can configure notification settings
+* [OK] book an apointnmen button, where they can create consultation
+they can jump to active consultation screen, means consultation room, and messaging, file shareing
+update patient user information

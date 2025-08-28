@@ -16,8 +16,8 @@ from django.conf import settings
 from rest_framework.views import APIView
 from django.core.mail import send_mail
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes, OpenApiExample
-from consultations.models import Consultation
-from consultations.serializers import ConsultationSerializer
+from consultations.models import Consultation, Appointment
+from consultations.serializers import ConsultationSerializer, AppointmentSerializer
 from messaging.models import Message
 from messaging.serializers import MessageSerializer
 
@@ -341,4 +341,86 @@ class UserNotificationsView(APIView):
         paginator = self.pagination_class()
         paginated_notifications = paginator.paginate_queryset(notifications, request)
         serializer = MessageSerializer(paginated_notifications, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+
+class AppointmentsPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+
+class UserAppointmentsView(APIView):
+    permission_classes = [IsAuthenticated]
+    pagination_class = AppointmentsPagination
+    
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="status",
+                description="Filter appointments by status: 'Scheduled' or 'Cancelled'",
+                required=False,
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                enum=['Scheduled', 'Cancelled']
+            ),
+            OpenApiParameter(
+                name="page",
+                description="Page number for pagination",
+                required=False,
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
+                name="page_size",
+                description="Number of results per page (max 100)",
+                required=False,
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+            ),
+        ],
+        responses={
+            200: AppointmentSerializer(many=True),
+        },
+        examples=[
+            OpenApiExample(
+                'Get paginated appointments',
+                description='Returns paginated appointments where user is a participant',
+                value={
+                    "count": 15,
+                    "next": "http://localhost:8000/api/user/appointments/?page=2",
+                    "previous": None,
+                    "results": [
+                        {
+                            "id": 1,
+                            "scheduled_at": "2025-01-16T10:00:00Z",
+                            "end_expected_at": "2025-01-16T10:30:00Z",
+                            "status": "Scheduled",
+                            "created_at": "2025-01-15T08:00:00Z"
+                        }
+                    ]
+                },
+                response_only=True
+            ),
+        ],
+        description="Get paginated appointments where the authenticated user is a participant. Filter by appointment status. Default page size is 20, max 100."
+    )
+    def get(self, request):
+        """Get all appointments where the authenticated user is a participant."""
+        # Get appointments where user is a participant
+        appointments = Appointment.objects.filter(
+            participant__user=request.user
+        ).distinct()
+        
+        # Filter by status if provided
+        status = request.query_params.get('status')
+        if status:
+            appointments = appointments.filter(status=status)
+        
+        appointments = appointments.order_by('-scheduled_at')
+        
+        # Apply pagination
+        paginator = self.pagination_class()
+        paginated_appointments = paginator.paginate_queryset(appointments, request)
+        serializer = AppointmentSerializer(paginated_appointments, many=True)
         return paginator.get_paginated_response(serializer.data)

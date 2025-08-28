@@ -54,16 +54,16 @@ class AppointmentStatus(models.TextChoices):
 class Appointment(models.Model):
     status = models.CharField(choices=AppointmentStatus.choices, default=AppointmentStatus.SCHEDULED)
     consultation = models.ForeignKey(
-        Consultation, on_delete=models.CASCADE, related_name='appointments')
+        Consultation, on_delete=models.CASCADE, related_name='appointments', null=True, blank=True)
     scheduled_at = models.DateTimeField()
     end_expected_at = models.DateTimeField(null=True, blank=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
-class ParticipantRole(models.TextChoices):
-    SCHEDULED = "Scheduled", _("Scheduled")
-    CANCELLED = "Cancelled", _("Cancelled")
+# class ParticipantRole(models.TextChoices):
+#     SCHEDULED = "Scheduled", _("Scheduled")
+#     CANCELLED = "Cancelled", _("Cancelled")
 
 class Participant(models.Model):
     appointement = models.ForeignKey(Appointment, on_delete=models.CASCADE)
@@ -74,10 +74,10 @@ class Participant(models.Model):
         blank=True,
     )
 
-    # role = 
 
     auth_token = models.CharField(max_length=256)
     is_invited = models.BooleanField(default=True)
+    is_confirmed = models.BooleanField(default=False)
 
     email = models.EmailField(null=True, blank=True)
     phone = models.CharField(null=True, blank=True)
