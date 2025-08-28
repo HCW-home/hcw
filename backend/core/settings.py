@@ -364,6 +364,11 @@ UNFOLD = {
                         "link": "/admin/users/user/",
                     },
                     {
+                        "title": "Health Metric",
+                        "icon": "people",
+                        "link": "/admin/users/healthmetric/",
+                    },
+                    {
                         "title": "Groups",
                         "icon": "group",
                         "link": "/admin/auth/group/",

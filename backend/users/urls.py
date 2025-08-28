@@ -13,5 +13,6 @@ urlpatterns = [
     path("api/user/consultations/", views.UserConsultationsView.as_view(), name="user_consultations"),
     path("api/user/notifications/", views.UserNotificationsView.as_view(), name="user_notifications"),
     path("api/user/appointments/", views.UserAppointmentsView.as_view(), name="user_appointments"),
+    path("api/user/healthmetrics/", views.UserHealthMetricsView.as_view(), name="user_healthmetrics"),
 ]
 

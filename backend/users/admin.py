@@ -1,7 +1,7 @@
 from typing import List, Tuple, Union
 
 from django.contrib import admin
-from .models import User, FCMDeviceOverride, Language, Speciality
+from .models import User, FCMDeviceOverride, Language, Speciality, HealthMetric
 from .models import Notification as UserNotification
 from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
@@ -11,7 +11,7 @@ from django.contrib import admin, messages
 from fcm_django.models import FirebaseResponseDict, fcm_error_list
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext_lazy
-from unfold.admin import ModelAdmin
+from unfold.admin import ModelAdmin, TabularInline, StackedInline
 from django.contrib.auth.models import Group
 
 from firebase_admin.messaging import (
@@ -317,3 +317,157 @@ class SpecialityAdmin(ModelAdmin):
     list_display = ['name']
     search_fields = ['name']
     ordering = ['name']
+
+@admin.register(HealthMetric)
+class HealthMetricAdmin(ModelAdmin):
+    list_display = [
+        'user',
+        'measured_at',
+        'created_by',
+        'systolic_bp',
+        'diastolic_bp',
+        'heart_rate_bpm',
+        'temperature_c',
+    ]
+    list_filter = [
+        'measured_at',
+        'created_by',
+        'measured_by',
+        'source',
+    ]
+    search_fields = [
+        'user__email',
+        'user__first_name',
+        'user__last_name',
+        'notes',
+        'source',
+    ]
+    raw_id_fields = ['user', 'created_by', 'measured_by']
+    date_hierarchy = 'measured_at'
+    ordering = ['-measured_at']
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': (
+                'user',
+                'measured_at',
+                'measured_by',
+                'source',
+                'notes',
+            ),
+            'classes': ['tab'],
+        }),
+        ('Anthropometrics', {
+            'fields': (
+                'height_cm',
+                'weight_kg',
+                'waist_cm',
+                'hip_cm',
+                'body_fat_pct',
+            ),
+            'classes': ['tab'],
+        }),
+        ('Vital Signs', {
+            'fields': (
+                'systolic_bp',
+                'diastolic_bp',
+                'heart_rate_bpm',
+                'respiratory_rate',
+                'temperature_c',
+                'spo2_pct',
+                'pain_score_0_10',
+            ),
+            'classes': ['tab'],
+        }),
+        ('Glucose & Diabetes', {
+            'fields': (
+                'glucose_fasting_mgdl',
+                'glucose_random_mgdl',
+                'hba1c_pct',
+            ),
+            'classes': ['tab'],
+        }),
+        ('Lipid Panel', {
+            'fields': (
+                'chol_total_mgdl',
+                'hdl_mgdl',
+                'ldl_mgdl',
+                'triglycerides_mgdl',
+            ),
+            'classes': ['tab'],
+        }),
+        ('Renal Function', {
+            'fields': (
+                'creatinine_mgdl',
+                'egfr_ml_min_1_73m2',
+                'bun_mgdl',
+            ),
+            'classes': ['tab'],
+        }),
+        ('Liver Panel', {
+            'fields': (
+                'alt_u_l',
+                'ast_u_l',
+                'alp_u_l',
+                'bilirubin_total_mgdl',
+            ),
+            'classes': ['tab'],
+        }),
+        ('Electrolytes', {
+            'fields': (
+                'sodium_mmol_l',
+                'potassium_mmol_l',
+                'chloride_mmol_l',
+                'bicarbonate_mmol_l',
+            ),
+            'classes': ['tab'],
+        }),
+        ('Hematology', {
+            'fields': (
+                'hemoglobin_g_dl',
+                'wbc_10e9_l',
+                'platelets_10e9_l',
+                'inr',
+            ),
+            'classes': ['tab'],
+        }),
+        ('Inflammation & Thyroid', {
+            'fields': (
+                'crp_mg_l',
+                'esr_mm_h',
+                'tsh_miu_l',
+                't3_ng_dl',
+                't4_ug_dl',
+            ),
+            'classes': ['tab'],
+        }),
+        ('Urinalysis', {
+            'fields': (
+                'urine_protein',
+                'urine_glucose',
+                'urine_ketones',
+            ),
+            'classes': ['tab'],
+        }),
+        ('Respiratory Function', {
+            'fields': (
+                'peak_flow_l_min',
+                'fev1_l',
+                'fvc_l',
+            ),
+            'classes': ['tab'],
+        }),
+        ('Mental Health', {
+            'fields': (
+                'phq9_score',
+                'gad7_score',
+            ),
+            'classes': ['tab'],
+        }),
+        ('Reproductive Health', {
+            'fields': (
+                'pregnant_test_positive',
+            ),
+            'classes': ['tab'],
+        }),
+    )
