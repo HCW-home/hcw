@@ -229,6 +229,20 @@ SPECTACULAR_SETTINGS = {
     'TITLE': 'HCW@Home API',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
+    "COMPONENTS": {
+        "securitySchemes": {
+            "bearerAuth": {  # OpenAPI 3
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+            }
+        }
+    },
+    "SECURITY": [{"bearerAuth": []}],  # apply globally
+    "SWAGGER_UI_SETTINGS": {
+        "persistAuthorization": True,  # <-- keep JWT after refresh
+        # "tryItOutEnabled": True,     # optional
+    },
 }
 
 SOCIALACCOUNT_PROVIDERS = {
