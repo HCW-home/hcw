@@ -5,6 +5,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
 from django.contrib.auth import get_user_model
 from drf_spectacular.utils import extend_schema
 from .models import Speciality
@@ -21,6 +22,11 @@ from consultations.serializers import ConsultationSerializer
 User = get_user_model()
 
 # Create your views here.
+
+class ConsultationPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 
 User = get_user_model()
 
@@ -171,6 +177,7 @@ class MagicLinkVerifyView(APIView):
 
 class UserConsultationsView(APIView):
     permission_classes = [IsAuthenticated]
+    pagination_class = ConsultationPagination
     
     @extend_schema(
         parameters=[
@@ -182,31 +189,57 @@ class UserConsultationsView(APIView):
                 location=OpenApiParameter.QUERY,
                 enum=['open', 'closed']
             ),
+            OpenApiParameter(
+                name="page",
+                description="Page number for pagination",
+                required=False,
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
+                name="page_size",
+                description="Number of results per page (max 100)",
+                required=False,
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+            ),
         ],
         responses={
-            200: ConsultationSerializer(many=True),
+            200: {
+                'type': 'object',
+                'properties': {
+                    'count': {'type': 'integer'},
+                    'next': {'type': 'string', 'nullable': True},
+                    'previous': {'type': 'string', 'nullable': True},
+                    'results': {
+                        'type': 'array',
+                        'items': ConsultationSerializer().to_representation({})
+                    }
+                }
+            },
         },
         examples=[
             OpenApiExample(
-                'Get all consultations',
-                description='Returns all consultations for the user',
-                value=None,
-                parameter_only=OpenApiParameter.QUERY
-            ),
-            OpenApiExample(
-                'Get open consultations',
-                description='Returns only open consultations (closed_at is null)',
-                value='open',
-                parameter_only=OpenApiParameter.QUERY
-            ),
-            OpenApiExample(
-                'Get closed consultations',
-                description='Returns only closed consultations (closed_at is not null)',
-                value='closed',
-                parameter_only=OpenApiParameter.QUERY
+                'Get paginated consultations',
+                description='Returns paginated consultations for the user',
+                value={
+                    "count": 45,
+                    "next": "http://localhost:8000/api/auth/user/consultations/?page=3",
+                    "previous": "http://localhost:8000/api/auth/user/consultations/?page=1",
+                    "results": [
+                        {
+                            "id": 1,
+                            "title": "Consultation example",
+                            "description": "Sample consultation",
+                            "created_at": "2025-01-15T10:30:00Z",
+                            "closed_at": None
+                        }
+                    ]
+                },
+                response_only=True
             ),
         ],
-        description="Get all consultations where the authenticated user is the beneficiary. Filter by status: 'open' (closed_at is null) or 'closed' (closed_at is not null)."
+        description="Get paginated consultations where the authenticated user is the beneficiary. Filter by status: 'open' (closed_at is null) or 'closed' (closed_at is not null). Default page size is 20, max 100."
     )
     def get(self, request):
         """Get all consultations for the authenticated user as patient/beneficiary."""
@@ -220,5 +253,9 @@ class UserConsultationsView(APIView):
             consultations = consultations.filter(closed_at__isnull=False)
         
         consultations = consultations.order_by('-created_at')
-        serializer = ConsultationSerializer(consultations, many=True)
-        return Response(serializer.data)
+        
+        # Apply pagination
+        paginator = self.pagination_class()
+        paginated_consultations = paginator.paginate_queryset(consultations, request)
+        serializer = ConsultationSerializer(paginated_consultations, many=True)
+        return paginator.get_paginated_response(serializer.data)
