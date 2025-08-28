@@ -124,7 +124,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'core.wsgi.application'
-MEDIA_ROOT = os.getenv('MEDIA_ROOT')
+MEDIA_ROOT = os.getenv('MEDIA_ROOT', 'upload')
 MEDIA_URL = '/upload/'
 
 # Database
@@ -517,3 +517,6 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+
+PRACTITIONER_URL = os.getenv('PRACTITIONER_URL', 'http://localhost:4200')
+PATIENT_URL = os.getenv('PATIENT_URL', 'http://localhost:4201')
