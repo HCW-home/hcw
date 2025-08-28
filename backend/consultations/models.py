@@ -153,7 +153,7 @@ class BookingSlot(models.Model):
     monday = models.BooleanField()
     tuesday = models.BooleanField()
     wednesday = models.BooleanField()
-    thurday = models.BooleanField()
+    thursday = models.BooleanField()
     friday = models.BooleanField()
     saturday = models.BooleanField()
     sunday = models.BooleanField()

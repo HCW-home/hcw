@@ -14,6 +14,7 @@ from . import validators
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from django.utils.translation import gettext_lazy as _
+from messaging.models import CommunicationMethod
 
 class Language(models.Model):
     name = models.CharField(max_length=100)
@@ -36,6 +37,9 @@ class User(AbstractUser):
     encrypted = models.BooleanField(default=False)
     languages = models.ManyToManyField(Language)
     specialities = models.ManyToManyField(Speciality)
+    communication_method = models.CharField(
+        choices=CommunicationMethod.choices, default=CommunicationMethod.EMAIL)
+    mobile_phone_numer = models.CharField(null=True, blank=True)
 
     def send_user_notification(self, title, message) -> FirebaseResponseDict:
         # Docs https://fcm-django.readthedocs.io/en/latest/

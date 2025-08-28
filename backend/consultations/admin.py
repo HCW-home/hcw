@@ -88,4 +88,4 @@ class RequestAdmin(ModelAdmin):
 @admin.register(BookingSlot)
 class BookingSlotAdmin(ModelAdmin):
     list_display = ['id', 'user', 'start_time',
-                    'end_time', 'monday', 'tuesday', 'wednesday', 'thurday', 'friday', 'saturday', 'sunday', 'valid_until']
+                    'end_time', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday', 'valid_until']
