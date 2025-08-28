@@ -10,5 +10,6 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path("api/auth/magic-link/request/", views.MagicLinkRequestView.as_view()),
     path("api/auth/magic-link/verify/", views.MagicLinkVerifyView.as_view()),
+    path("api/auth/user/consultations/", views.UserConsultationsView.as_view(), name="user_consultations"),
 ]
 
