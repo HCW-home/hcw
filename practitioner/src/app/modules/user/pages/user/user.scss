@@ -1,0 +1,19 @@
+.user-layout {
+  display: flex;
+  height: 100vh;
+
+  .user-main {
+    flex-grow: 1;
+    margin-left: 200px;
+    width: calc(100vw - 200px);
+    display: flex;
+    flex-direction: column;
+
+    .user-content {
+      flex-grow: 1;
+      overflow-y: auto;
+      padding: 0;
+    }
+  }
+}
+

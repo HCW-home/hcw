@@ -1,0 +1,14 @@
+<div class="tabs-container">
+  <div class="tabs">
+    @for (tab of tabs(); track tab.id) {
+      <button 
+        class="tab"
+        [ngClass]="{ 'active': activeTab() === tab.id }"
+        (click)="onTabClick(tab.id)">
+        <app-typography [variant]="TypographyTypeEnum['body-medium']">
+          {{ tab.label }}@if (tab.count !== undefined) { ({{ tab.count }}) }
+        </app-typography>
+      </button>
+    }
+  </div>
+</div>

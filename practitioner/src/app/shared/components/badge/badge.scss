@@ -1,0 +1,66 @@
+.badge {
+  gap: 8px;
+  display: flex;
+  padding: 6px 8px;
+  width: fit-content;
+  border-radius: 4px;
+  align-items: center;
+  justify-content: center;
+
+  &.green {
+    background: var(--Green-01);
+
+    .badge-text {
+      color: var(--Green-04);
+    }
+  }
+
+  &.blue {
+    background: var(--Primary-01);
+
+    .badge-text {
+      color: var(--Blue-04);
+    }
+  }
+
+  &.red {
+    background: var(--Red-01);
+
+    .badge-text {
+      color: var(--Red-04);
+    }
+  }
+
+  &.orange {
+    background: var(--Orange-01);
+
+    .badge-text {
+      color: var(--Orange-04);
+    }
+  }
+
+  &.purple {
+    background: var(--Purple-01);
+
+    .badge-text {
+      color: var(--Purple-03);
+    }
+  }
+
+  &.gray {
+    background: var(--Bluish-Gray-02);
+
+    .badge-text {
+      color: var(--Bluish-Gray-10);
+    }
+  }
+
+  .badge-text {
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 16px;
+    letter-spacing: 0.32px;
+    font-family: 'Source Sans Pro', sans-serif;
+  }
+}

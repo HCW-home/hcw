@@ -10,15 +10,16 @@
   },
   "private": true,
   "dependencies": {
-    "@angular/animations": "^20.2.0",
-    "@angular/cdk": "^20.2.0",
+    "@angular/animations": "^20.2.1",
     "@angular/common": "^20.0.0",
     "@angular/compiler": "^20.0.0",
     "@angular/core": "^20.0.0",
     "@angular/forms": "^20.0.0",
-    "@angular/material": "^20.2.0",
     "@angular/platform-browser": "^20.0.0",
     "@angular/router": "^20.0.0",
+    "angular-svg-icon": "^19.1.1",
+    "google-libphonenumber": "^3.2.42",
+    "ngx-mask": "^20.0.3",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
@@ -27,13 +28,22 @@
     "@angular/build": "^20.0.0",
     "@angular/cli": "^20.0.0",
     "@angular/compiler-cli": "^20.0.0",
+    "@types/google-libphonenumber": "^7.4.30",
     "@types/jasmine": "~5.1.0",
+    "angular-eslint": "19.6.0",
+    "eslint": "^9.27.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "eslint-plugin-unused-imports": "^4.1.4",
     "jasmine-core": "~5.7.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
-    "typescript": "~5.8.2"
+    "prettier": "^3.5.3",
+    "prettier-eslint": "^16.4.2",
+    "typescript": "~5.8.2",
+    "typescript-eslint": "8.32.1"
   }
 }

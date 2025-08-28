@@ -1,0 +1,66 @@
+<div class="app-pagination">
+  @if (totalPages()) {
+    <div class="item-per-page">
+      <app-typography
+        color="var(--Bluish-Gray-07)"
+        [variant]="TypographyTypeEnum['body-s-medium']"
+        >Rows per page</app-typography
+      >
+      <select
+        class="app-table-card__page-items-action"
+        id="items-per-page"
+        [(ngModel)]="itemsPerPage"
+        (change)="itemsPerPageChanged()">
+        @for (option of itemsPerPageOptions; track option) {
+          <option [value]="option">
+            {{ option }}
+          </option>
+        }
+      </select>
+    </div>
+
+    @if (totalPages() > 1) {
+      <div class="page-numbers">
+        <app-button
+          [style]="ButtonStyleEnum.text"
+          [state]="ButtonStateEnum.secondary"
+          [size]="ButtonSizeEnum.small"
+          [leftIcon]="'chevron-left'"
+          (click)="previousPage()">
+        </app-button>
+        @for (page of pages; track page) {
+          <app-button
+            [style]="
+              page === currentPage()
+                ? ButtonStyleEnum.primary
+                : ButtonStyleEnum.text
+            "
+            [state]="ButtonStateEnum.secondary"
+            [size]="ButtonSizeEnum.small"
+            [text]="page.toString()"
+            (click)="selectPage(page)">
+          </app-button>
+        }
+        <app-button
+          [style]="ButtonStyleEnum.text"
+          [state]="ButtonStateEnum.secondary"
+          [size]="ButtonSizeEnum.small"
+          [leftIcon]="'chevron-right'"
+          (click)="nextPage()">
+        </app-button>
+      </div>
+    }
+    <div class="showing">
+      <app-typography
+        color="var(--Bluish-Gray-07)"
+        [variant]="TypographyTypeEnum['body-s-medium']"
+        >Showing</app-typography
+      >
+      <app-typography
+        [variant]="TypographyTypeEnum['body-medium']"
+        color="var(--Bluish-Gray-09)">
+        {{ currentItemsLength() }}/{{ totalCount() }}</app-typography
+      >
+    </div>
+  }
+</div>

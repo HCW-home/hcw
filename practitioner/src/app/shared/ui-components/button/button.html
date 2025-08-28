@@ -1,0 +1,27 @@
+<button
+  class="app-button"
+  [type]="type()"
+  [style.color]="color() ? color() : null"
+  [style.background-color]="backgroundColor() ? backgroundColor() : null"
+  [style.box-shadow]="boxShadow() ? boxShadow() : null"
+  [style.padding]="padding() ? padding() : null"
+  [ngClass]="[
+    style(),
+    size(),
+    state(),
+    disabled() ? 'disabled' : '',
+    buttonClass()
+  ]"
+  (click)="onClickHandler($event)"
+  [disabled]="disabled() || loading()">
+  @if (leftIcon()) {
+    <app-svg [src]="'svg/' + leftIcon() + '.svg'"></app-svg>
+  }
+  {{ text() }}
+  @if (rightIcon()) {
+    <app-svg [src]="'svg/' + rightIcon() + '.svg'"></app-svg>
+  }
+  @if (loading()) {
+    <span class="spinner"></span>
+  }
+</button>

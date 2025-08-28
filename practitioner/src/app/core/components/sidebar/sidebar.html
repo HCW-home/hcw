@@ -1,0 +1,40 @@
+<div class="sidebar">
+  <div class="sidebar-header">
+    <app-svg src="svg/logo.svg" [svgStyle]="{'width.px': '100%', 'height.px': 100}"></app-svg>
+  </div>
+
+  <div class="sidebar-main">
+    @for (menuItem of menuItems; track menuItem.path) {
+      <a
+        class="menu-item"
+        [routerLink]="'/' + RoutePaths.USER + menuItem.path"
+        [routerLinkActive]="'active'">
+        <app-svg
+          [src]="'svg/' + menuItem.icon"
+          [svgStyle]="
+            router.isActive('/' + RoutePaths.USER + menuItem.path, {
+              paths: 'exact',
+              matrixParams: 'ignored',
+              queryParams: 'ignored',
+              fragment: 'ignored',
+            })
+              ? { fill: 'var(--Primary-04)' }
+              : { fill: 'var(--Bluish-Gray-07)' }
+          "></app-svg>
+        <app-typography [variant]="TypographyTypeEnum['body-medium']">{{
+          menuItem.name
+        }}</app-typography>
+      </a>
+    }
+  </div>
+
+  <div class="sidebar-footer">
+    <app-button
+      leftIcon="log-out"
+      (buttonClick)="onLogOut()"
+      [size]="ButtonSizeEnum.small"
+      [style]="ButtonStyleEnum.text"
+      [state]="ButtonStateEnum.secondary"
+      text="Logout"></app-button>
+  </div>
+</div>

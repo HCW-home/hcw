@@ -1,0 +1,123 @@
+<div class="consultation-card" [ngClass]="type() + '-card'">
+  <div class="card-header">
+    <div class="patient-info">
+      <div class="patient-avatar">
+        <app-svg src="svg/user.svg" [svgStyle]="{'width.px': 24, 'height.px': 24}"></app-svg>
+      </div>
+      <div class="patient-details">
+        <app-typography [variant]="TypographyTypeEnum['body-l-semibold']">
+          {{ consultation().patient_name }}
+        </app-typography>
+        <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--Bluish-Gray-07)">
+          Age {{ consultation().patient_age }}
+        </app-typography>
+      </div>
+    </div>
+    <app-badge [type]="getStatusBadgeType(consultation().status)">
+      {{ consultation().status }}
+    </app-badge>
+  </div>
+
+  <div class="card-body">
+    <div class="consultation-meta">
+      <div class="meta-item">
+        <app-svg [src]="getConsultationTypeIcon(consultation().consultation_type)"
+                 [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+        <app-typography [variant]="TypographyTypeEnum['body-s-regular']">
+          {{ consultation().consultation_type | titlecase }}
+        </app-typography>
+      </div>
+      <div class="meta-item">
+        <app-svg src="calendar" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+        <app-typography [variant]="TypographyTypeEnum['body-s-regular']">
+          @if (type() === 'active') {
+            {{ consultation().date | date:'MMM dd, h:mm a' }}
+          } @else {
+            {{ consultation().date | date:'MMM dd, yyyy' }}
+          }
+        </app-typography>
+      </div>
+      <div class="meta-item">
+        <app-svg src="clock" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+        <app-typography [variant]="TypographyTypeEnum['body-s-regular']">
+          {{ consultation().duration }} min
+        </app-typography>
+      </div>
+    </div>
+
+    @if (type() === 'active' && consultation().symptoms && consultation().symptoms!.length > 0) {
+      <div class="symptoms">
+        <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--Bluish-Gray-07)">
+          Symptoms:
+        </app-typography>
+        <div class="symptoms-tags">
+          @for (symptom of consultation().symptoms; track symptom) {
+            <span class="symptom-tag">{{ symptom }}</span>
+          }
+        </div>
+      </div>
+    }
+
+    @if (type() === 'past' && consultation().notes) {
+      <div class="consultation-notes">
+        <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--Bluish-Gray-07)">
+          Notes:
+        </app-typography>
+        <app-typography [variant]="TypographyTypeEnum['body-s-regular']">
+          {{ consultation().notes }}
+        </app-typography>
+      </div>
+    }
+
+    @if (type() === 'past' && consultation().follow_up_required) {
+      <div class="follow-up-indicator">
+        <app-svg src="alert-circle" [svgStyle]="{'width.px': 16, 'height.px': 16, 'fill': 'var(--Warning-05)'}"></app-svg>
+        <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--Warning-05)">
+          Follow-up required
+        </app-typography>
+      </div>
+    }
+  </div>
+
+  <div class="card-actions">
+    @if (type() === 'active') {
+      @if (consultation().status === 'active') {
+        <app-button
+          text="Join Now"
+          leftIcon="video"
+          [size]="ButtonSizeEnum.small"
+          [style]="ButtonStyleEnum.primary"
+          (buttonClick)="onJoinConsultation()">
+        </app-button>
+      } @else {
+        <app-button
+          text="Join Soon"
+          [size]="ButtonSizeEnum.small"
+          [style]="ButtonStyleEnum.stroke"
+          [disabled]="true">
+        </app-button>
+      }
+      <app-button
+        text="View Details"
+        [size]="ButtonSizeEnum.small"
+        [style]="ButtonStyleEnum.text"
+        (buttonClick)="onViewDetails()">
+      </app-button>
+    } @else {
+      <app-button
+        text="View Details"
+        [size]="ButtonSizeEnum.small"
+        [style]="ButtonStyleEnum.stroke"
+        (buttonClick)="onViewDetails()">
+      </app-button>
+      @if (consultation().follow_up_required) {
+        <app-button
+          text="Schedule Follow-up"
+          [size]="ButtonSizeEnum.small"
+          [style]="ButtonStyleEnum.text"
+          (buttonClick)="onScheduleFollowUp()">
+        </app-button>
+      }
+    }
+  </div>
+</div>

@@ -1,0 +1,89 @@
+<div class="radio-group-wrapper">
+  @if (label()) {
+    <span class="input-label">{{ label() }}</span>
+  }
+
+  <div class="switch-radio-container" [class.flex-row]="flexRow()">
+    @for (item of items(); track item.value) {
+      <div class="radio-label-wrapper">
+        <label class="radio-button" [class.checked]="value === item.value">
+          <input
+            type="radio"
+            [id]="item.value"
+            [value]="item.value"
+            [ngModel]="value"
+            (ngModelChange)="change($event)"
+            [name]="name"
+            [disabled]="disabled" />
+          @if (value === item.value) {
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none">
+              <circle cx="10" cy="10" r="9" stroke="#2D94FF" stroke-width="2" />
+              <circle cx="10" cy="10" r="5" fill="#2D94FF" />
+            </svg>
+          } @else {
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="21"
+              height="20"
+              viewBox="0 0 21 20"
+              fill="none">
+              <circle
+                cx="10.667"
+                cy="10"
+                r="9"
+                stroke="#CACEDE"
+                stroke-width="2" />
+            </svg>
+          }
+          <div class="radio-inner">
+            <div class="description-wrapper">
+              @if (item.label) {
+                <app-typography
+                  [color]="getLabelColor(item.value)"
+                  [variant]="TypographyTypeEnum['body-medium']"
+                  >{{ item.label }}
+                </app-typography>
+              }
+              @if (item.subtitle) {
+                <app-typography
+                  [color]="getLabelColor(item.value)"
+                  [variant]="TypographyTypeEnum['body-s-regular']"
+                  >{{ item.subtitle }}
+                </app-typography>
+              }
+            </div>
+
+            @if (item.summary) {
+              <app-typography
+                color="var(--Bluish-Gray-09)"
+                [variant]="TypographyTypeEnum['body-medium']"
+                >{{ item.summary }}
+              </app-typography>
+            }
+            @if (item.template) {
+              <ng-container [ngTemplateOutlet]="item.template"></ng-container>
+            }
+            @if (item.template2) {
+              <ng-container [ngTemplateOutlet]="item.template2"></ng-container>
+            }
+          </div>
+        </label>
+
+        @if (item.hint) {
+          <app-typography
+            class="hint"
+            [variant]="TypographyTypeEnum['body-s-medium']"
+            color="var(--Bluish-Gray-07)"
+          >{{ item.hint }}</app-typography
+          >
+        }
+
+      </div>
+    }
+  </div>
+</div>

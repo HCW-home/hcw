@@ -1,0 +1,21 @@
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    @for (crumb of breadcrumbs(); track crumb.label; let last = $last) {
+      <li
+        class="breadcrumb-item"
+        [ngClass]="{ 'active': last }">
+        @if (!last && crumb.url) {
+          <app-typography [routerLink]="crumb.url" [variant]="TypographyTypeEnum['body-medium']"
+                          color="var(--Bluish-Gray-06)" class="pointer">{{ crumb.label }}
+          </app-typography>
+        }
+        @if (last) {
+          <app-typography [variant]="TypographyTypeEnum['body-medium']"
+                          color="var(--Bluish-Gray-09)">{{ crumb.label }}
+          </app-typography>
+        }
+      </li>
+    }
+
+  </ol>
+</nav>

@@ -1,5 +1,3 @@
 export const environment = {
-  production: true,
-  apiUrl: 'https://' + window.location.host +'/api',
-  wsUrl: 'wss://' + window.location.host +'/ws'
+  apiUrl: 'https://hcw.dev.oniabsis.com/api',
 };

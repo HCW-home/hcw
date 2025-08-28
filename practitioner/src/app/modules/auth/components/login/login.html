@@ -1,0 +1,53 @@
+<div class="login-page">
+  <div class="login">
+    <app-typography
+      color="var(--Bluish-Gray-09)"
+      [variant]="TypographyTypeEnum['h6-semibold']"
+      >Sign In</app-typography
+    >
+    <form
+      action=""
+      [formGroup]="form"
+      (ngSubmit)="onSubmit()"
+      class="login-form">
+      <app-input
+        label="Email"
+        name="email"
+        (focus)="validationService.resetInputValidation(form, 'email')"
+        [invalid]="validationService.showError(form, 'email')"
+        [invalidMessage]="getErrorMessage('email')"
+        formControlName="email"
+        type="email"
+        [autocomplete]="'email'"
+        placeholder="example@gmail.com"></app-input>
+      <app-input
+        label="Password"
+        name="password"
+        [invalid]="validationService.showError(form, 'password')"
+        [invalidMessage]="getErrorMessage('password')"
+        type="password"
+        formControlName="password"
+        [autocomplete]="'current-password'"
+        placeholder="********"></app-input>
+      @if (errorMessage) {
+        <app-error-message [message]="errorMessage"></app-error-message>
+      }
+      <div class="remember-me-wrapper">
+        <app-typography
+          [variant]="TypographyTypeEnum['body-semibold']"
+          color="var(--Blue-04)">
+          <a [routerLink]="'/' + RoutePaths.AUTH + '/forgot-password'"
+            >Forgot Password?</a
+          >
+        </app-typography>
+      </div>
+
+      <app-button
+        [type]="ButtonTypeEnum.submit"
+        [block]="true"
+        [style]="ButtonStyleEnum.primary"
+        text="Sign In"
+        [loading]="loadingButton"></app-button>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,14 @@
+<div class="toast toast-{{ toast.type }}" [style.top.px]="i * 100">
+  <app-typography
+    [variant]="TypographyTypeEnum['body-xxl-bold']"
+    class="toast-heading"
+    color="var(--White-and-Black-01)"
+    >{{ toast.title }}
+  </app-typography>
+  <app-typography
+    [variant]="TypographyTypeEnum['body-l-regular']"
+    class="toast-body"
+    color="var(--White-and-Black-01)"
+    >{{ toast.body }}
+  </app-typography>
+</div>

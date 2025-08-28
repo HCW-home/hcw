@@ -1,0 +1,35 @@
+.tabs-container {
+  border-bottom: 1px solid var(--Bluish-Gray-02);
+
+  .tabs {
+    display: flex;
+    gap: 0;
+
+    .tab {
+      padding: 12px 24px 16px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+
+      &:hover {
+        background: var(--Bluish-Gray-01);
+      }
+
+      &.active {
+        border-bottom-color: var(--Primary-05);
+
+        app-typography {
+          color: var(--Primary-05);
+        }
+      }
+
+      app-typography {
+        color: var(--Bluish-Gray-07);
+        transition: color 0.2s ease;
+      }
+    }
+  }
+}

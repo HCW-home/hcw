@@ -1,0 +1,22 @@
+@if (label()) {
+  <span class="input-label" >{{ label() }}</span>
+}
+<label
+  [for]="id"
+  class="switch-container"
+  [class.fixedHeight]="fixedHeight()"
+  [class.checked]="checked">
+  <input
+    [id]="id"
+    class="checkbox-input"
+    type="checkbox"
+    [ngModel]="checked"
+    (ngModelChange)="onModelChange($event)"
+    [disabled]="disabled" />
+  <i></i>
+  <app-typography
+    color="var(--Bluish-Gray-10)"
+    [variant]="TypographyTypeEnum['body-medium']">
+    <ng-content></ng-content>
+  </app-typography>
+</label>

@@ -1,0 +1,464 @@
+.h1-regular {
+  font-size: 48px;
+  font-weight: 400;
+  line-height: 58px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.96px;
+}
+
+.h1-medium {
+  font-size: 48px;
+  font-weight: 400;
+  line-height: 58px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.96px;
+}
+
+.h1-semibold {
+  font-size: 48px;
+  font-weight: 600;
+  line-height: 58px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.96px;
+}
+
+.h1-bold {
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 58px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.96px;
+}
+
+.h2-regular {
+  font-size: 42px;
+  font-weight: 400;
+  line-height: 52px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.84px;
+}
+
+.h2-medium {
+  font-size: 42px;
+  font-weight: 400;
+  font-style: normal;
+  line-height: 52px;
+  color: var(--Gray-10);
+  letter-spacing: 0.84px;
+}
+
+.h2-semibold {
+  font-size: 42px;
+  font-weight: 600;
+  line-height: 52px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.84px;
+}
+
+.h2-bold {
+  font-size: 42px;
+  font-weight: 700;
+  line-height: 52px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.84px;
+}
+
+.h3-regular {
+  font-size: 36px;
+  font-weight: 400;
+  line-height: 44px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.72px;
+}
+
+.h3-medium {
+  font-size: 36px;
+  font-weight: 400;
+  line-height: 44px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.72px;
+}
+
+.h3-semibold {
+  font-size: 36px;
+  font-weight: 600;
+  line-height: 44px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.72px;
+}
+
+.h3-bold {
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 44px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.72px;
+}
+
+.h4-regular {
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 40px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.64px;
+}
+
+.h4-medium {
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 40px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.64px;
+}
+
+.h4-semibold {
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 40px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.64px;
+}
+
+.h4-bold {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 40px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.64px;
+}
+
+.h5-regular {
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 36px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.56px;
+}
+
+.h5-medium {
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 36px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.56px;
+}
+
+.h5-semibold {
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 36px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.56px;
+}
+
+.h5-bold {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 36px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.56px;
+}
+
+.h6-regular {
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 32px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.48px;
+}
+
+.h6-medium {
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 32px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.48px;
+}
+
+.h6-semibold {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 32px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.48px;
+}
+
+.h6-bold {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 32px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.48px;
+}
+
+.body-xxl-regular {
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 26px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.44px;
+}
+
+.body-xxl-medium {
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 26px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.44px;
+}
+
+.body-xxl-semibold {
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 26px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.44px;
+}
+
+.body-xxl-bold {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 26px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.44px;
+}
+
+.body-xl-regular {
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 24px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.4px;
+}
+
+.body-xl-medium {
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 24px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.4px;
+}
+
+.body-xl-semibold {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 24px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.4px;
+}
+
+.body-xl-bold {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 24px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.4px;
+}
+
+.body-l-regular {
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 22px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.36px;
+}
+
+.body-l-medium {
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 22px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.36px;
+}
+
+.body-l-semibold {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 22px;
+  font-style: normal;
+  color: var(--Gray-10);
+  word-break: break-word;
+  letter-spacing: 0.36px;
+
+}
+
+.body-l-bold {
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 22px;
+  color: var(--Gray-10);
+  letter-spacing: 0.36px;
+}
+
+.body-regular {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 20px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.32px;
+}
+
+.body-medium {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 20px;
+  font-style: normal;
+  letter-spacing: 0.32px;
+}
+
+.body-semibold {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 20px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.32px;
+}
+
+.body-bold {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 20px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.32px;
+}
+
+.body-s-regular {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 18px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.28px;
+}
+
+.body-s-medium {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 18px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.28px;
+}
+
+.body-s-semibold {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 18px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.28px;
+}
+
+.body-s-bold {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 18px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.28px;
+}
+
+.body-xs-regular {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.24px;
+}
+
+.body-xs-medium {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.24px;
+}
+
+.body-xs-semibold {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.24px;
+}
+
+.body-xs-bold {
+
+}
+
+
+.body-xxs-regular {
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 14px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.2px;
+}
+
+.body-xxs-medium {
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 14px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.2px;
+}
+
+.body-xxs-semibold {
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 14px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.2px;
+}
+
+.body-xxs-bold {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 14px;
+  font-style: normal;
+  color: var(--Gray-10);
+  letter-spacing: 0.2px;
+}

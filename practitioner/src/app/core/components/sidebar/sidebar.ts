@@ -1,0 +1,56 @@
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { Svg } from '../../../shared/ui-components/svg/svg';
+import { MenuItems } from '../../constants/sidebar';
+import { Typography } from '../../../shared/ui-components/typography/typography';
+import { TypographyTypeEnum } from '../../../shared/constants/typography';
+import { Button } from '../../../shared/ui-components/button/button';
+import {
+  ButtonSizeEnum,
+  ButtonStateEnum,
+  ButtonStyleEnum,
+} from '../../../shared/constants/button';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { RoutePaths } from '../../constants/routes';
+import { IUser } from '../../../modules/user/models/user';
+import { Subscription } from 'rxjs';
+import { AdminService } from '../../services/admin';
+
+@Component({
+  selector: 'app-sidebar',
+  imports: [Svg, Typography, Button, RouterLink, RouterLinkActive],
+  templateUrl: './sidebar.html',
+  styleUrl: './sidebar.scss',
+})
+export class Sidebar implements OnInit, OnDestroy {
+  public router = inject(Router);
+  private adminService = inject(AdminService);
+
+  menuItems = MenuItems;
+  currentUserSubscription!: Subscription;
+  currentUser!: IUser;
+
+  ngOnInit() {
+    this.currentUserSubscription = this.adminService.currentUser$.subscribe(
+      user => {
+        if (user) {
+          this.currentUser = user;
+        }
+      }
+    );
+  }
+
+  onLogOut() {
+    localStorage.clear();
+    this.router.navigate([`${RoutePaths.AUTH}`]);
+  }
+
+  ngOnDestroy() {
+    this.currentUserSubscription.unsubscribe();
+  }
+
+  protected readonly TypographyTypeEnum = TypographyTypeEnum;
+  protected readonly ButtonSizeEnum = ButtonSizeEnum;
+  protected readonly ButtonStyleEnum = ButtonStyleEnum;
+  protected readonly ButtonStateEnum = ButtonStateEnum;
+  protected readonly RoutePaths = RoutePaths;
+}

@@ -1,0 +1,42 @@
+.accordion {
+  display: flex;
+  padding: 16px;
+  cursor: pointer;
+  border-radius: 8px;
+  align-items: center;
+  align-self: stretch;
+  flex-direction: column;
+  justify-content: center;
+  background: var(--Bluish-Gray-01);
+
+  .question {
+    gap: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    align-self: stretch;
+  }
+
+  .answer {
+    gap: 8px;
+    width: 100%;
+    display: flex;
+    overflow: hidden;
+    align-items: flex-start;
+
+
+    .answer-content {
+      gap: 8px;
+      display: flex;
+      flex-direction: column;
+    }
+  }
+}
+
+svg {
+  transition: transform 0.3s ease-in-out;
+}
+
+.rotated {
+  transform: rotate(180deg);
+}

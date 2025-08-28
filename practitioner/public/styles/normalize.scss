@@ -1,0 +1,28 @@
+body {
+  margin: 0;
+  min-height: 100%;
+  font-style: normal;
+  box-sizing: border-box;
+  font-family: 'Source Sans Pro', serif;
+  background-color: var(--Bluish-Gray-02);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin: 0;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding-left: 0;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}

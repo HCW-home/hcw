@@ -1,0 +1,16 @@
+<div class="backdrop" @backdropAnimation></div>
+<div
+  role="button"
+  tabindex="0"
+  class="overlay"
+  (click)="handleOutsideClick($event)">
+  <div class="overlay-content">
+    @if (title()) {
+      <div class="overlay-content-header">
+        <app-typography color="var(--Bluish-Gray-09)" [variant]="TypographyTypeEnum['h6-medium']">{{title()}}</app-typography>
+        <app-button (buttonClick)="onClose($event)" leftIcon="close"  [size]="ButtonSizeEnum.small" [state]="ButtonStateEnum.secondary"></app-button>
+      </div>
+    }
+    <ng-content></ng-content>
+  </div>
+</div>

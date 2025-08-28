@@ -1,0 +1,79 @@
+<app-page>
+  <app-breadcrumb [breadcrumbs]="breadcrumbs"></app-breadcrumb>
+
+  <div class="consultations-container">
+    <!-- Header Section -->
+    <div class="consultations-header">
+      <div class="header-content">
+        <div class="title-section">
+          <app-typography [variant]="TypographyTypeEnum['h2-semibold']">
+            My Consultations
+          </app-typography>
+          <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-07)">
+            Manage and track your patient consultations
+          </app-typography>
+        </div>
+        <app-button
+          text="New Consultation"
+          leftIcon="plus"
+          [size]="ButtonSizeEnum.medium"
+          [style]="ButtonStyleEnum.primary">
+        </app-button>
+      </div>
+
+      <!-- Tabs -->
+      <app-tabs 
+        [tabs]="tabItems" 
+        [activeTab]="activeTab()" 
+        (tabChange)="setActiveTab($event)">
+      </app-tabs>
+    </div>
+
+    <!-- Content Section -->
+    <div class="consultations-content">
+      @if (activeTab() === 'active') {
+        <div class="consultations-grid">
+          @for (consultation of activeConsultations; track consultation.id) {
+            <app-consultation-card 
+              [consultation]="consultation"
+              [type]="'active'"
+              (joinConsultation)="joinConsultation($event)"
+              (viewDetails)="viewConsultationDetails($event)">
+            </app-consultation-card>
+          } @empty {
+            <div class="empty-state">
+              <app-svg src="calendar" [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
+              <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--Bluish-Gray-06)">
+                No active consultations
+              </app-typography>
+              <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-07)">
+                Your upcoming and ongoing consultations will appear here
+              </app-typography>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="consultations-grid">
+          @for (consultation of pastConsultations; track consultation.id) {
+            <app-consultation-card 
+              [consultation]="consultation"
+              [type]="'past'"
+              (viewDetails)="viewConsultationDetails($event)"
+              (scheduleFollowUp)="scheduleFollowUp($event)">
+            </app-consultation-card>
+          } @empty {
+            <div class="empty-state">
+              <app-svg src="history" [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
+              <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--Bluish-Gray-06)">
+                No past consultations
+              </app-typography>
+              <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-07)">
+                Your completed consultations will appear here
+              </app-typography>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</app-page>

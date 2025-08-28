@@ -1,0 +1,17 @@
+.breadcrumb {
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  list-style: none;
+  align-self: stretch;
+  background: transparent;
+  align-items: flex-start;
+
+}
+
+.breadcrumb-item + .breadcrumb-item:before {
+  content: ">";
+  padding: 0 8px 0 0;
+}
+

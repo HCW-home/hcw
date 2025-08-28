@@ -1,0 +1,50 @@
+<div class="input-wrapper">
+  @if (label()) {
+    <label class="input-label" [for]="name()">{{ label() }}</label>
+  }
+
+  <div
+    class="input-container"
+    [class.small]="size() === 'small'"
+    [class.disabled]="disabled"
+    [class.has-value]="!!value">
+    @if (leftIcon()) {
+      <span class="left-icon">
+      <app-svg [src]="'svg/' + leftIcon() + '.svg'"></app-svg>
+    </span>
+    }
+
+    <input
+      #nativeInput
+      [style.width]="width() ? width() : null"
+      [value]="value"
+      [name]="name()"
+      [id]="name()"
+      [class.invalid]="invalid()"
+      [disabled]="disabled"
+      [class.small]="size() === 'small'"
+      [class.has-value]="!!value"
+      [class.has-left-icon]="leftIcon()"
+      [class.has-right-icon]="rightIcon()"
+      type="tel"
+      mask="(000) 000-0000"
+      prefix="+1 "
+      [showMaskTyped]="true"
+      [dropSpecialCharacters]="true"
+      [autocomplete]="autocomplete() || undefined"
+      [placeholder]="placeholder()"
+      (input)="onInput($event)"
+      (focus)="handleFocus($event)"
+      (blur)="onTouched()" />
+
+    @if (rightIcon()) {
+      <span class="right-icon">
+      <app-svg [src]="'svg/' + rightIcon() + '.svg'"></app-svg>
+    </span>
+    }
+  </div>
+
+  @if (invalidMessage() && invalid()) {
+    <app-error-message [message]="invalidMessage()"></app-error-message>
+  }
+</div>

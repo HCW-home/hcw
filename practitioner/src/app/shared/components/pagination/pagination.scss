@@ -1,0 +1,27 @@
+.app-pagination {
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  justify-content: space-between;
+
+
+  .showing {
+    gap: 13px;
+    display: flex;
+    align-items: center;
+  }
+
+  .page-numbers {
+    gap: 16px;
+    display: flex;
+    align-items: center;
+  }
+
+  .item-per-page {
+    gap: 18px;
+    display: flex;
+    align-items: center;
+
+  }
+
+}

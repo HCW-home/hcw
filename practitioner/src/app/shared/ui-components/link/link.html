@@ -1,0 +1,7 @@
+<a
+  [attr.href]="href()"
+  [attr.target]="targetBlank() ? '_blank' : null"
+  [ngClass]="classes()"
+>
+  {{ text() }}
+</a>
