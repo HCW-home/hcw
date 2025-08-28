@@ -27,6 +27,20 @@ from .serializers import (
 
 User = get_user_model()
 
+class DjangoModelPermissionsWithView(DjangoModelPermissions):
+    """
+    Custom permission class that includes view permissions.
+    """
+    perms_map = {
+        'GET': ['%(app_label)s.view_%(model_name)s'],
+        'OPTIONS': [],
+        'HEAD': [],
+        'POST': ['%(app_label)s.add_%(model_name)s'],
+        'PUT': ['%(app_label)s.change_%(model_name)s'],
+        'PATCH': ['%(app_label)s.change_%(model_name)s'],
+        'DELETE': ['%(app_label)s.delete_%(model_name)s'],
+    }
+
 @dataclass
 class Slot:
     date: date
@@ -49,7 +63,7 @@ class ConsultationPagination(PageNumberPagination):
 
 class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
     serializer_class = ConsultationSerializer
-    permission_classes = [ConsultationPermission]
+    permission_classes = [IsAuthenticated, DjangoModelPermissionsWithView]
     pagination_class = ConsultationPagination
     filterset_fields = ['group', 'beneficiary', 'created_by', 'owned_by']
     ordering = ['-created_at']
