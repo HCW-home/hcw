@@ -3,7 +3,8 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     ConsultationViewSet, 
     GroupViewSet,
-    RequestViewSet
+    RequestViewSet,
+    ReasonSlotsView
 )
 
 # DRF router configuration
@@ -14,4 +15,5 @@ router.register(r'requests', RequestViewSet, basename='request')
 
 urlpatterns = [
     path('api/', include(router.urls)),
+    path('api/reasons/<int:id>/slots/', ReasonSlotsView.as_view(), name='reason_slots'),
 ]
