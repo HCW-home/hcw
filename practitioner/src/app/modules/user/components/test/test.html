@@ -1,3 +1,231 @@
 <app-page>
-  <app-breadcrumb [breadcrumbs]="breadcrumbs"></app-breadcrumb>
+  <div class="test-container">
+    <div class="test-header">
+      <div class="header-content">
+        <div class="title-section">
+          <app-typography [variant]="TypographyTypeEnum['h2-semibold']">
+            System Test
+          </app-typography>
+          <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-07)">
+            Test your audio and video equipment before starting consultations
+          </app-typography>
+        </div>
+        <div class="status-indicator">
+          <app-svg
+            [src]="systemStatus() === 'ready' ? 'check' : 'error'"
+            [svgStyle]="{
+              'width.px': 20,
+              'height.px': 20,
+              'color': systemStatus() === 'ready' ? 'var(--Success-05)' : 'var(--Error-05)'
+            }">
+          </app-svg>
+          <app-typography
+            [variant]="TypographyTypeEnum['body-s-medium']"
+            [color]="systemStatus() === 'ready' ? 'var(--Success-05)' : 'var(--Error-05)'">
+            {{systemStatusText()}}
+          </app-typography>
+        </div>
+      </div>
+    </div>
+
+    <!-- Test Cards Grid -->
+    <div class="test-grid">
+      <!-- Camera Test Card -->
+      <div class="test-card">
+        <div class="test-card-header">
+          <div class="test-icon camera">
+            <app-svg src="eye" [svgStyle]="{'width.px': 24, 'height.px': 24}"></app-svg>
+          </div>
+          <div class="test-info">
+            <app-typography [variant]="TypographyTypeEnum['body-l-semibold']">
+              Camera Test
+            </app-typography>
+            <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--Bluish-Gray-07)">
+              Ensure your camera is working properly
+            </app-typography>
+          </div>
+          <div class="test-status" [class.success]="cameraStatus() === 'working'" [class.error]="cameraStatus() === 'error'">
+            <app-svg
+              [src]="cameraStatus() === 'working' ? 'check' : cameraStatus() === 'error' ? 'error' : 'eye'"
+              [svgStyle]="{'width.px': 16, 'height.px': 16}">
+            </app-svg>
+            <span>{{getCameraStatusText()}}</span>
+          </div>
+        </div>
+
+        <div class="test-content">
+          <div class="video-preview" [class.active]="cameraStatus() === 'working'">
+            @if (cameraStatus() === 'working') {
+              <video #videoElement autoplay muted playsinline class="video-element"></video>
+            } @else {
+              <div class="video-placeholder">
+                <app-svg src="eye-crossed" [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
+                <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-06)">
+                  {{getCameraPlaceholderText()}}
+                </app-typography>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="test-actions">
+          <app-button
+            [text]="cameraStatus() === 'testing' ? 'Testing...' : 'Test Camera'"
+            [style]="ButtonStyleEnum.primary"
+            [size]="ButtonSizeEnum.medium"
+            [disabled]="cameraStatus() === 'testing'"
+            (click)="testCamera()">
+          </app-button>
+          @if (cameraStatus() === 'working') {
+            <app-button
+              text="Stop"
+              [style]="ButtonStyleEnum.stroke"
+              [size]="ButtonSizeEnum.medium"
+              (click)="stopCamera()">
+            </app-button>
+          }
+        </div>
+      </div>
+
+      <div class="test-card">
+        <div class="test-card-header">
+          <div class="test-icon microphone">
+            <app-svg src="report" [svgStyle]="{'width.px': 24, 'height.px': 24}"></app-svg>
+          </div>
+          <div class="test-info">
+            <app-typography [variant]="TypographyTypeEnum['body-l-semibold']">
+              Microphone Test
+            </app-typography>
+            <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--Bluish-Gray-07)">
+              Test your microphone and audio levels
+            </app-typography>
+          </div>
+          <div class="test-status" [class.success]="microphoneStatus() === 'working'" [class.error]="microphoneStatus() === 'error'">
+            <app-svg
+              [src]="microphoneStatus() === 'working' ? 'check' : microphoneStatus() === 'error' ? 'error' : 'report'"
+              [svgStyle]="{'width.px': 16, 'height.px': 16}">
+            </app-svg>
+            <span>{{getMicrophoneStatusText()}}</span>
+          </div>
+        </div>
+
+        <div class="test-content">
+          <div class="audio-visualizer">
+            <div class="volume-bars">
+              @for (bar of volumeBars(); track $index) {
+                <div class="volume-bar" [style.height.%]="bar" [class.active]="microphoneStatus() === 'working'"></div>
+              }
+            </div>
+            <div class="audio-info">
+              <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--Bluish-Gray-07)">
+                {{getAudioLevelText()}}
+              </app-typography>
+            </div>
+          </div>
+        </div>
+
+        <div class="test-actions">
+          <app-button
+            [text]="microphoneStatus() === 'testing' ? 'Testing...' : 'Test Microphone'"
+            [style]="ButtonStyleEnum.primary"
+            [size]="ButtonSizeEnum.medium"
+            [disabled]="microphoneStatus() === 'testing'"
+            (click)="testMicrophone()">
+          </app-button>
+          @if (microphoneStatus() === 'working') {
+            <app-button
+              text="Stop"
+              [style]="ButtonStyleEnum.stroke"
+              [size]="ButtonSizeEnum.medium"
+              (click)="stopMicrophone()">
+            </app-button>
+          }
+        </div>
+      </div>
+
+      <div class="test-card">
+        <div class="test-card-header">
+          <div class="test-icon speaker">
+            <app-svg src="approve" [svgStyle]="{'width.px': 24, 'height.px': 24}"></app-svg>
+          </div>
+          <div class="test-info">
+            <app-typography [variant]="TypographyTypeEnum['body-l-semibold']">
+              Speaker Test
+            </app-typography>
+            <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--Bluish-Gray-07)">
+              Check if you can hear audio clearly
+            </app-typography>
+          </div>
+          <div class="test-status" [class.success]="speakerStatus() === 'working'" [class.error]="speakerStatus() === 'error'">
+            <app-svg
+              [src]="speakerStatus() === 'working' ? 'check' : speakerStatus() === 'error' ? 'error' : 'approve'"
+              [svgStyle]="{'width.px': 16, 'height.px': 16}">
+            </app-svg>
+            <span>{{getSpeakerStatusText()}}</span>
+          </div>
+        </div>
+
+        <div class="test-content">
+          <div class="speaker-test-area">
+            @if (speakerStatus() === 'playing') {
+              <div class="sound-waves">
+                @for (wave of soundWaves(); track $index) {
+                  <div class="sound-wave" [style.animation-delay.ms]="$index * 100"></div>
+                }
+              </div>
+            }
+            <div class="speaker-info">
+              <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-06)">
+                {{getSpeakerInfoText()}}
+              </app-typography>
+            </div>
+          </div>
+        </div>
+
+        <div class="test-actions">
+          <app-button
+            [text]="speakerStatus() === 'playing' ? 'Playing...' : 'Test Speakers'"
+            [style]="ButtonStyleEnum.primary"
+            [size]="ButtonSizeEnum.medium"
+            [disabled]="speakerStatus() === 'playing'"
+            (click)="testSpeakers()">
+          </app-button>
+          <app-button
+            text="I can hear it"
+            [style]="ButtonStyleEnum['filled-stroke']"
+            [size]="ButtonSizeEnum.medium"
+            [disabled]="speakerStatus() !== 'playing'"
+            (click)="confirmSpeakers()">
+          </app-button>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-footer">
+      <div class="overall-status">
+        <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--Bluish-Gray-07)">
+          System Check:
+          <span [style.color]="getOverallStatusColor()">{{getOverallStatusText()}}</span>
+        </app-typography>
+      </div>
+
+      @if (allTestsCompleted()) {
+        <app-button
+          text="Start Consultations"
+          leftIcon="check"
+          [style]="ButtonStyleEnum.primary"
+          [size]="ButtonSizeEnum.large"
+          (click)="startConsultations()">
+        </app-button>
+      } @else {
+        <app-button
+          text="Test All Systems"
+          leftIcon="eye"
+          [style]="ButtonStyleEnum.stroke"
+          [size]="ButtonSizeEnum.large"
+          (click)="testAllSystems()">
+        </app-button>
+      }
+    </div>
+  </div>
 </app-page>

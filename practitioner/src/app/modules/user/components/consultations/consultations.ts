@@ -15,7 +15,7 @@ import { Svg } from '../../../../shared/ui-components/svg/svg';
 
 @Component({
   selector: 'app-consultations',
-  imports: [Page, Breadcrumb, Button, Typography, Tabs, ConsultationCard, Svg],
+  imports: [Page, Button, Typography, Tabs, ConsultationCard, Svg],
   templateUrl: './consultations.html',
   styleUrl: './consultations.scss',
 })

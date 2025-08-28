@@ -6,10 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **Start development server**: `ng serve` (serves at http://localhost:4200)
 - **Build application**: `ng build` (outputs to dist/)
+- **Build for production**: `ng build --configuration production`
 - **Run tests**: `ng test` (uses Karma + Jasmine)
-- **Lint code**: `ng lint` (uses Angular ESLint)
+- **Lint code**: `ng lint` (uses Angular ESLint with TypeScript and template rules)
 - **Generate components**: `ng generate component component-name`
 - **Watch build**: `ng build --watch --configuration development`
+- **Extract i18n**: `ng extract-i18n`
 
 ## Project Architecture
 
@@ -47,10 +49,11 @@ This is an Angular 20 application with a modular architecture:
 
 ### Dependencies & Libraries
 - **ngx-mask**: Form input masking
-- **angular-svg-icon**: SVG icon management
-- **google-libphonenumber**: Phone number validation
-- **ESLint**: Code linting with Angular-specific rules
+- **angular-svg-icon**: SVG icon management  
+- **google-libphonenumber**: Phone number validation (CommonJS dependency allowed in build)
+- **ESLint**: Code linting with Angular-specific rules (custom rules: input rename allowed, component class suffix disabled)
 - **Prettier**: Code formatting
+- **TypeScript ESLint**: Advanced TypeScript linting with stylistic rules
 
 ### Testing
 - Karma + Jasmine for unit tests
@@ -94,3 +97,18 @@ The project includes a comprehensive shared UI component library in `src/app/sha
 3. **Typography**: Use `TypographyTypeEnum` constants for consistent text styling
 4. **Icons**: Reference SVG files from `public/svg/` directory in `<app-svg src="icon-name">`
 5. **Validation**: Use `invalid` and `invalidMessage` inputs on form components
+
+## Build Configuration
+
+### Bundle Size Limits
+- **Initial bundle**: Warning at 900kB, Error at 1MB
+- **Component styles**: Warning at 8kB, Error at 16kB
+
+### Environment Files
+- `environment.ts`: Production environment (default)
+- `environment.development.ts`: Development environment with debugging enabled
+
+### ESLint Custom Rules
+- Input renaming is allowed (`@angular-eslint/no-input-rename`: off)
+- Component class suffix requirement is disabled (`@angular-eslint/component-class-suffix`: off)  
+- Negated async pipes in templates are allowed (`@angular-eslint/template/no-negated-async`: off)
