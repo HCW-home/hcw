@@ -18,6 +18,8 @@ from django.core.mail import send_mail
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes, OpenApiExample
 from consultations.models import Consultation
 from consultations.serializers import ConsultationSerializer
+from messaging.models import Message
+from messaging.serializers import MessageSerializer
 
 User = get_user_model()
 
@@ -258,4 +260,85 @@ class UserConsultationsView(APIView):
         paginator = self.pagination_class()
         paginated_consultations = paginator.paginate_queryset(consultations, request)
         serializer = ConsultationSerializer(paginated_consultations, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+
+class NotificationsPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+
+class UserNotificationsView(APIView):
+    permission_classes = [IsAuthenticated]
+    pagination_class = NotificationsPagination
+    
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="status",
+                description="Filter notifications by status: 'read', 'delivered', 'sent', 'pending', 'failed'",
+                required=False,
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                enum=['read', 'delivered', 'sent', 'pending', 'failed']
+            ),
+            OpenApiParameter(
+                name="page",
+                description="Page number for pagination",
+                required=False,
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
+                name="page_size",
+                description="Number of results per page (max 100)",
+                required=False,
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+            ),
+        ],
+        responses={
+            200: MessageSerializer(many=True),
+        },
+        examples=[
+            OpenApiExample(
+                'Get paginated notifications',
+                description='Returns paginated notifications for the user',
+                value={
+                    "count": 25,
+                    "next": "http://localhost:8000/api/auth/user/notifications/?page=2",
+                    "previous": None,
+                    "results": [
+                        {
+                            "id": 1,
+                            "subject": "Consultation reminder",
+                            "content": "Your consultation is scheduled for tomorrow",
+                            "communication_method": "email",
+                            "status": "delivered",
+                            "sent_at": "2025-01-15T10:30:00Z",
+                            "created_at": "2025-01-15T10:29:00Z"
+                        }
+                    ]
+                },
+                response_only=True
+            ),
+        ],
+        description="Get paginated notifications (messages) where the authenticated user is the recipient. Filter by message status. Default page size is 20, max 100."
+    )
+    def get(self, request):
+        """Get all notifications for the authenticated user as recipient."""
+        notifications = Message.objects.filter(sent_to=request.user)
+        
+        # Filter by status if provided
+        status = request.query_params.get('status')
+        if status:
+            notifications = notifications.filter(status=status)
+        
+        notifications = notifications.order_by('-created_at')
+        
+        # Apply pagination
+        paginator = self.pagination_class()
+        paginated_notifications = paginator.paginate_queryset(notifications, request)
+        serializer = MessageSerializer(paginated_notifications, many=True)
         return paginator.get_paginated_response(serializer.data)

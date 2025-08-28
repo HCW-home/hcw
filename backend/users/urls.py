@@ -11,5 +11,6 @@ urlpatterns = [
     path("api/auth/magic-link/request/", views.MagicLinkRequestView.as_view()),
     path("api/auth/magic-link/verify/", views.MagicLinkVerifyView.as_view()),
     path("api/auth/user/consultations/", views.UserConsultationsView.as_view(), name="user_consultations"),
+    path("api/auth/user/notifications/", views.UserNotificationsView.as_view(), name="user_notifications"),
 ]
 
