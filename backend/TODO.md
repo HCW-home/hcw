@@ -6,3 +6,9 @@
 * [OK] book an apointnmen button, where they can create consultation
 they can jump to active consultation screen, means consultation room, and messaging, file shareing
 update patient user information
+
+* Add language endpoint /language/<lang_code>/
+* Add some field in user
+* Add location field
+* Add terms models
+* Add terms for Users

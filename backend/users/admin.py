@@ -41,12 +41,12 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
     ]
     
     list_filter = BaseUserAdmin.list_filter + \
-        ('languages', 'specialities', 'encrypted', 'timezone')
+        ('languages', 'specialities', 'timezone')
     filter_horizontal = ('languages', 'specialities')
     
     fieldsets = BaseUserAdmin.fieldsets + (
         ('Additional Info', {
-            'fields': ('app_preferences', 'encrypted', 'timezone', 'languages', 'specialities')
+            'fields': ('app_preferences', 'timezone', 'preferred_language', 'languages', 'specialities', 'main_organisation', 'organisations')
         }),
     )
     

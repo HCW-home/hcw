@@ -451,7 +451,7 @@ UNFOLD = {
                         "permission": lambda request: request.user.has_perm("consultations.view_request"),
                     },
                     {
-                        "title": "Booking slot",
+                        "title": "Booking slots",
                         "icon": "event",
                         "link": "/admin/consultations/bookingslot/",
                         "permission": lambda request: request.user.has_perm("consultations.view_bookingslot"),

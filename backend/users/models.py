@@ -39,8 +39,12 @@ class User(AbstractUser):
     app_preferences = models.JSONField(null=True, blank=True)
     encrypted = models.BooleanField(default=False)
     languages = models.ManyToManyField(Language, blank=True)
+    preferred_language = models.ForeignKey(
+        Language, blank=True, null=True, on_delete=models.SET_NULL, related_name="users_perferred_language")
     specialities = models.ManyToManyField(Speciality, blank=True)
     organisations = models.ManyToManyField('organisations.Organisation', blank=True)
+    main_organisation = models.ForeignKey(
+        'organisations.Organisation', blank=True, null=True, on_delete=models.SET_NULL, related_name="users_mainorganisation")
     communication_method = models.CharField(
         choices=CommunicationMethod.choices, default=CommunicationMethod.EMAIL)
     mobile_phone_numer = models.CharField(null=True, blank=True)
