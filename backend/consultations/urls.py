@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
     ConsultationViewSet, 
-    GroupViewSet,
+    QueueViewSet,
     RequestViewSet,
     ReasonSlotsView
 )
@@ -10,7 +10,7 @@ from .views import (
 # DRF router configuration
 router = DefaultRouter()
 router.register(r'consultations', ConsultationViewSet, basename='consultation')
-router.register(r'groups', GroupViewSet, basename='group')
+router.register(r'queues', QueueViewSet, basename='queue')
 router.register(r'requests', RequestViewSet, basename='request')
 
 urlpatterns = [

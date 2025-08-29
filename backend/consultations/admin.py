@@ -1,11 +1,11 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin, TabularInline, StackedInline
 from unfold.decorators import display
-from .models import Group, Consultation, Appointment, Participant, Message, Reason, Request, BookingSlot
+from .models import Queue, Consultation, Appointment, Participant, Message, Reason, Request, BookingSlot
 
 
-@admin.register(Group)
-class QueueGroupAdmin(ModelAdmin):
+@admin.register(Queue)
+class QueueAdmin(ModelAdmin):
     list_display = ['name', 'users_count', 'organisations_count']
     search_fields = ['name']
     filter_horizontal = ['users', 'organisation']
@@ -68,8 +68,8 @@ class AppointmentAdmin(ModelAdmin):
 
 @admin.register(Reason)
 class ReasonAdmin(ModelAdmin):
-    list_display = ['id', 'name', 'speciality', 'duration', 'is_active', 'group_assignee', 'user_assignee']
-    list_filter = ['is_active', 'speciality', 'group_assignee']
+    list_display = ['id', 'name', 'speciality', 'duration', 'is_active', 'queue_assignee', 'user_assignee']
+    list_filter = ['is_active', 'speciality', 'queue_assignee']
     search_fields = ['name', 'speciality__name']
     readonly_fields = ['created_at']
 

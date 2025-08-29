@@ -6,7 +6,7 @@ from datetime import time
 
 # Create your models here.
 
-class Group(models.Model):
+class Queue(models.Model):
     name = models.CharField(max_length=200)
     organisation = models.ManyToManyField(
         'organisations.Organisation')
@@ -34,7 +34,7 @@ class Consultation(models.Model):
         related_name="%(class)s_created"
     )
 
-    group = models.ForeignKey(Group, on_delete=models.SET_NULL, null=True, blank=True)
+    group = models.ForeignKey(Queue, on_delete=models.SET_NULL, null=True, blank=True)
 
     owned_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -105,7 +105,7 @@ class Reason(models.Model):
         'users.Speciality', on_delete=models.CASCADE, related_name='reasons')
     name = models.CharField()
     created_at = models.DateTimeField(auto_now_add=True)
-    group_assignee = models.ForeignKey(Group, on_delete=models.CASCADE, null=True, blank=True)
+    queue_assignee = models.ForeignKey(Queue, on_delete=models.CASCADE, null=True, blank=True)
     user_assignee = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
     duration = models.IntegerField(help_text="Duration in minute", default=30)

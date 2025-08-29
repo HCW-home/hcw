@@ -10,7 +10,7 @@ from core.mixins import CreatedByMixin
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes, OpenApiExample
 from .permissions import ConsultationPermission
-from .models import Consultation, Group, Appointment, Participant, Message, AppointmentStatus, Request, RequestStatus, Reason, BookingSlot
+from .models import Consultation, Queue, Appointment, Participant, Message, AppointmentStatus, Request, RequestStatus, Reason, BookingSlot
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from datetime import datetime, timedelta, time, date
@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from typing import List
 from .serializers import (
     ConsultationSerializer, 
-    GroupSerializer, 
+    QueueSerializer, 
     AppointmentSerializer,
     ParticipantSerializer,
     ConsultationMessageSerializer,
@@ -341,20 +341,20 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
         serializer = AppointmentSerializer(appointment)
         return Response(serializer.data)
 
-class GroupViewSet(viewsets.ReadOnlyModelViewSet):
+class QueueViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    ViewSet for groups - read only
-    Users can only see groups they belong to
+    ViewSet for queues - read only
+    Users can only see queues they belong to
     """
-    serializer_class = GroupSerializer
+    serializer_class = QueueSerializer
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
         user = self.request.user
         if not user.is_authenticated:
-            return Group.objects.none()
+            return Queue.objects.none()
         
-        return Group.objects.filter(users=user)
+        return Queue.objects.filter(users=user)
 
 class RequestViewSet(CreatedByMixin, viewsets.ModelViewSet):
     """

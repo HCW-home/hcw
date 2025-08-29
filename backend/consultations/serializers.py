@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Consultation, Group, Appointment, Participant, Message, Reason, Request, BookingSlot
+from .models import Consultation, Queue, Appointment, Participant, Message, Reason, Request, BookingSlot
 
 User = get_user_model()
 
@@ -9,11 +9,11 @@ class ConsultationUserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'email', 'first_name', 'last_name']
 
-class GroupSerializer(serializers.ModelSerializer):
+class QueueSerializer(serializers.ModelSerializer):
     users = ConsultationUserSerializer(many=True, read_only=True)
     
     class Meta:
-        model = Group
+        model = Queue
         fields = ['id', 'name', 'users']
 
 class ParticipantSerializer(serializers.ModelSerializer):
@@ -48,7 +48,7 @@ class ConsultationSerializer(serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(read_only=True)
     owned_by = ConsultationUserSerializer(read_only=True)
     beneficiary = ConsultationUserSerializer(read_only=True)
-    group = GroupSerializer(read_only=True)
+    group = QueueSerializer(read_only=True)
     
     # Write-only fields for creating/updating
     group_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
@@ -76,11 +76,11 @@ class ConsultationSerializer(serializers.ModelSerializer):
         # Set group and beneficiary if provided
         if group_id:
             try:
-                group = Group.objects.get(id=group_id)
+                group = Queue.objects.get(id=group_id)
                 # Verify user has access to this group
                 if user in group.users.all():
                     validated_data['group'] = group
-            except Group.DoesNotExist:
+            except Queue.DoesNotExist:
                 pass
                 
         if beneficiary_id:
@@ -104,10 +104,10 @@ class ConsultationCreateSerializer(serializers.ModelSerializer):
         if value is not None:
             user = self.context['request'].user
             try:
-                group = Group.objects.get(id=value)
+                group = Queue.objects.get(id=value)
                 if user not in group.users.all():
                     raise serializers.ValidationError("You don't have access to this group.")
-            except Group.DoesNotExist:
+            except Queue.DoesNotExist:
                 raise serializers.ValidationError("This group does not exist.")
         return value
 
@@ -122,7 +122,7 @@ class ConsultationCreateSerializer(serializers.ModelSerializer):
 class ReasonSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reason
-        fields = ['id', 'name', 'duration', 'group_assignee', 'user_assignee']
+        fields = ['id', 'name', 'duration', 'queue_assignee', 'user_assignee']
 
 class RequestSerializer(serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(read_only=True)
