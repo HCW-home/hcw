@@ -536,11 +536,11 @@ class ReasonSlotsView(APIView):
             practitioner_slots = booking_slots.filter(user=practitioner)
             
             for booking_slot in practitioner_slots:
-                # Check if slot is valid for the date range
-                if booking_slot.valid_until and booking_slot.valid_until < from_date:
-                    continue
-                
                 for target_date in dates:
+                    # Check if slot is valid for this specific date
+                    if booking_slot.valid_until and booking_slot.valid_until <= target_date:
+                        continue
+                    
                     # Check if this day is enabled in booking slot
                     weekday = target_date.weekday()  # 0=Monday, 6=Sunday
                     day_enabled = False
