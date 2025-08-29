@@ -1,0 +1,330 @@
+.consultation-detail {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  .consultation-header {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 24px;
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      .header-actions {
+        display: flex;
+        gap: 12px;
+      }
+    }
+  }
+
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px;
+    text-align: center;
+  }
+
+  .consultation-info-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    .info-header {
+      .title-section {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+
+        .consultation-status {
+          margin-left: auto;
+        }
+      }
+    }
+
+    .description {
+      margin: 16px 0;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      margin-top: 24px;
+
+      .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+    }
+  }
+
+  .tab-content {
+    margin-top: 24px;
+  }
+
+  .create-form-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    .form-header {
+      margin-bottom: 20px;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 16px;
+
+      &.two-columns {
+        .full-width {
+          flex: 1;
+        }
+      }
+
+      .full-width {
+        width: 100%;
+      }
+    }
+
+    .form-actions {
+      margin-top: 20px;
+      display: flex;
+      justify-content: flex-start;
+    }
+  }
+
+  .appointments-section,
+  .participants-section {
+    .list-header {
+      margin-bottom: 16px;
+    }
+
+    .empty-state,
+    .no-selection {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px;
+      text-align: center;
+      gap: 12px;
+    }
+  }
+
+  .appointments-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+  }
+
+  .appointment-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    &.selected {
+      border-color: var(--Primary-04);
+      background: var(--Primary-01);
+    }
+
+    .appointment-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+
+      .appointment-date {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+    }
+
+    .appointment-end {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .participants-preview {
+      margin-bottom: 16px;
+    }
+
+    .appointment-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+  }
+
+  .selected-appointment-info {
+    background: var(--Primary-01);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+    border-left: 4px solid var(--Primary-04);
+
+    .appointment-summary {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      & > div {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+    }
+  }
+
+  .participants-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+  }
+
+  .participant-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    .participant-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+
+      .participant-info {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+
+        & > div {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+      }
+    }
+
+    .participant-contact {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .participant-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+  }
+
+  // Custom button styles
+  .create-btn,
+  .add-participant-btn,
+  .manage-btn,
+  .cancel-btn,
+  .remove-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  .create-btn,
+  .add-participant-btn {
+    background: var(--Primary-04);
+    color: white;
+
+    &:hover:not(:disabled) {
+      background: var(--Primary-05);
+    }
+  }
+
+  .manage-btn {
+    background: transparent;
+    color: var(--Primary-04);
+    border: 1px solid var(--Primary-04);
+
+    &:hover {
+      background: var(--Primary-01);
+    }
+  }
+
+  .cancel-btn,
+  .remove-btn {
+    background: transparent;
+    color: var(--Error-04);
+    border: 1px solid var(--Error-04);
+
+    &:hover {
+      background: var(--Error-01);
+    }
+  }
+
+  .remove-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .consultation-detail {
+    padding: 16px;
+
+    .consultation-header .header-content {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .info-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .appointments-grid,
+    .participants-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .form-row.two-columns {
+      flex-direction: column;
+    }
+  }
+}

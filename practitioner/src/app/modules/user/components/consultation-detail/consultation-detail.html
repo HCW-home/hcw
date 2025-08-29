@@ -1,0 +1,435 @@
+<app-page>
+  <div class="consultation-detail">
+    <!-- Header -->
+    <div class="consultation-header">
+      <app-back-button></app-back-button>
+
+      <div class="header-content">
+        <app-typography [variant]="TypographyTypeEnum['h1-bold']">
+          Consultation Details
+        </app-typography>
+
+        @if (consultation()) {
+          <div class="header-actions">
+            @if (!consultation()?.closed_at) {
+              <app-button
+                text="Close Consultation"
+                leftIcon="close"
+                [size]="ButtonSizeEnum.medium"
+                [style]="ButtonStyleEnum.stroke"
+                (buttonClick)="closeConsultation()">
+              </app-button>
+            } @else {
+              <app-button
+                text="Reopen Consultation"
+                leftIcon="refresh"
+                [size]="ButtonSizeEnum.medium"
+                [style]="ButtonStyleEnum.primary"
+                (buttonClick)="reopenConsultation()">
+              </app-button>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    @if (isLoadingConsultation()) {
+      <div class="loading-container">
+        <app-loader></app-loader>
+        <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-07)">
+          Loading consultation...
+        </app-typography>
+      </div>
+    } @else if (consultation()) {
+      <!-- Consultation Info -->
+      <div class="consultation-info-card">
+        <div class="info-header">
+          <div class="title-section">
+            <app-typography [variant]="TypographyTypeEnum['h2-semibold']">
+              {{ consultation()?.title || 'Consultation #' + consultation()?.id }}
+            </app-typography>
+            <div class="consultation-status">
+              @if (consultation()?.closed_at) {
+                <app-badge [type]="BadgeTypeEnum.red">
+                  Closed
+                </app-badge>
+              } @else {
+                <app-badge [type]="BadgeTypeEnum.green">
+                  Active
+                </app-badge>
+              }
+            </div>
+          </div>
+
+          <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-07)">
+            Created on {{ formatDateTime(consultation()!.created_at) }}
+          </app-typography>
+        </div>
+
+        @if (consultation()?.description) {
+          <div class="description">
+            <app-typography [variant]="TypographyTypeEnum['body-regular']">
+              {{ consultation()?.description }}
+            </app-typography>
+          </div>
+        }
+
+        <div class="info-grid">
+          @if (consultation()?.created_by) {
+            <div class="info-item">
+              <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
+                Created by
+              </app-typography>
+              <app-typography [variant]="TypographyTypeEnum['body-regular']">
+                {{ consultation()!.created_by.first_name }} {{ consultation()!.created_by.last_name }}
+              </app-typography>
+              <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--Bluish-Gray-07)">
+                {{ consultation()!.created_by.email }}
+              </app-typography>
+            </div>
+          }
+
+          @if (consultation()?.owned_by) {
+            <div class="info-item">
+              <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
+                Owned by
+              </app-typography>
+              <app-typography [variant]="TypographyTypeEnum['body-regular']">
+                {{ consultation()!.owned_by.first_name }} {{ consultation()!.owned_by.last_name }}
+              </app-typography>
+              <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--Bluish-Gray-07)">
+                {{ consultation()!.owned_by.email }}
+              </app-typography>
+            </div>
+          }
+
+          @if (consultation()?.beneficiary) {
+            <div class="info-item">
+              <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
+                Beneficiary
+              </app-typography>
+              <app-typography [variant]="TypographyTypeEnum['body-regular']">
+                {{ consultation()!.beneficiary!.first_name }} {{ consultation()!.beneficiary!.last_name }}
+              </app-typography>
+              <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--Bluish-Gray-07)">
+                {{ consultation()!.beneficiary!.email }}
+              </app-typography>
+            </div>
+          }
+
+          @if (consultation()?.group) {
+            <div class="info-item">
+              <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
+                Queue
+              </app-typography>
+              <app-typography [variant]="TypographyTypeEnum['body-regular']">
+                {{ consultation()!.group!.name }}
+              </app-typography>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <app-tabs
+        [tabs]="tabItems"
+        [activeTab]="activeTab()"
+        (tabChange)="setActiveTab($event)">
+      </app-tabs>
+
+      <!-- Tab Content -->
+      <div class="tab-content">
+        @if (activeTab() === 'appointments') {
+          <!-- Appointments Tab -->
+          <div class="appointments-section">
+            <!-- Create Appointment Form -->
+            <div class="create-form-card">
+              <div class="form-header">
+                <app-typography [variant]="TypographyTypeEnum['h3-semibold']">
+                  Create New Appointment
+                </app-typography>
+              </div>
+
+              <form [formGroup]="appointmentForm" (ngSubmit)="createAppointment()" class="appointment-form">
+                <div class="form-row">
+                  <app-input
+                    label="Scheduled Date & Time"
+                    type="datetime-local"
+                    formControlName="scheduled_at"
+                    [invalid]="(appointmentForm.get('scheduled_at')?.invalid && appointmentForm.get('scheduled_at')?.touched) || false"
+                    invalidMessage="Scheduled date and time is required"
+                    placeholder="Select date and time"
+                    class="full-width">
+                  </app-input>
+                </div>
+
+                <div class="form-row">
+                  <app-input
+                    label="Expected End Time (Optional)"
+                    type="datetime-local"
+                    formControlName="end_expected_at"
+                    placeholder="Select end time"
+                    class="full-width">
+                  </app-input>
+                </div>
+
+                <div class="form-actions">
+                  <app-button
+                    text="Create Appointment"
+                    leftIcon="plus"
+                    [size]="ButtonSizeEnum.medium"
+                    [style]="ButtonStyleEnum.primary"
+                    [disabled]="appointmentForm.invalid"
+                    [type]="ButtonTypeEnum.submit">
+                  </app-button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Appointments List -->
+            @if (isLoadingAppointments()) {
+              <div class="loading-container">
+                <app-loader></app-loader>
+                <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-07)">
+                  Loading appointments...
+                </app-typography>
+              </div>
+            } @else {
+              <div class="appointments-list">
+                <div class="list-header">
+                  <app-typography [variant]="TypographyTypeEnum['h3-semibold']">
+                    Appointments ({{ appointments().length }})
+                  </app-typography>
+                </div>
+
+                @if (appointments().length === 0) {
+                  <div class="empty-state">
+                    <app-svg src="calendar" [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
+                    <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--Bluish-Gray-06)">
+                      No appointments found
+                    </app-typography>
+                    <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-07)">
+                      Create an appointment above to get started
+                    </app-typography>
+                  </div>
+                } @else {
+                  <div class="appointments-grid">
+                    @for (appointment of appointments(); track appointment.id) {
+                      <div class="appointment-card" [class.selected]="selectedAppointment()?.id === appointment.id">
+                        <div class="appointment-header">
+                          <div class="appointment-date">
+                            <app-svg src="calendar" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
+                            <app-typography [variant]="TypographyTypeEnum['body-medium']">
+                              {{ formatDateTime(appointment.scheduled_at) }}
+                            </app-typography>
+                          </div>
+
+                          <app-badge [type]="getAppointmentStatusBadgeType(appointment.status)">
+                            {{ appointment.status }}
+                          </app-badge>
+                        </div>
+
+                        @if (appointment.end_expected_at) {
+                          <div class="appointment-end">
+                            <app-svg src="schedule" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                            <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--Bluish-Gray-07)">
+                              Expected end: {{ formatDateTime(appointment.end_expected_at) }}
+                            </app-typography>
+                          </div>
+                        }
+
+                        <div class="participants-preview">
+                          <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
+                            Participants: {{ appointment.participants.length }}
+                          </app-typography>
+                        </div>
+
+                        <div class="appointment-actions">
+                          <app-button
+                            text="Manage Participants"
+                            leftIcon="users"
+                            [size]="ButtonSizeEnum.small"
+                            [style]="ButtonStyleEnum.text"
+                            (buttonClick)="selectAppointment(appointment)">
+                          </app-button>
+
+                          @if (appointment.status === AppointmentStatus.SCHEDULED) {
+                            <app-button
+                              text="Cancel"
+                              leftIcon="close"
+                              [size]="ButtonSizeEnum.small"
+                              [style]="ButtonStyleEnum.stroke"
+                              (buttonClick)="cancelAppointment(appointment)">
+                            </app-button>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        } @else if (activeTab() === 'participants') {
+          <!-- Participants Tab -->
+          <div class="participants-section">
+            @if (!selectedAppointment()) {
+              <div class="no-selection">
+                <app-svg src="users" [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
+                <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--Bluish-Gray-06)">
+                  No appointment selected
+                </app-typography>
+                <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-07)">
+                  Please select an appointment to manage participants
+                </app-typography>
+              </div>
+            } @else {
+              <!-- Selected Appointment Info -->
+              <div class="selected-appointment-info">
+                <div class="appointment-summary">
+                  <app-svg src="calendar" [svgStyle]="{'width.px': 24, 'height.px': 24}"></app-svg>
+                  <div>
+                    <app-typography [variant]="TypographyTypeEnum['body-l-medium']">
+                      Appointment on {{ formatDateTime(selectedAppointment()!.scheduled_at) }}
+                    </app-typography>
+                    <app-badge [type]="getAppointmentStatusBadgeType(selectedAppointment()!.status)">
+                      {{ selectedAppointment()!.status }}
+                    </app-badge>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Add Participant Form -->
+              <div class="create-form-card">
+                <div class="form-header">
+                  <app-typography [variant]="TypographyTypeEnum['h3-semibold']">
+                    Add Participant
+                  </app-typography>
+                </div>
+
+                <form [formGroup]="participantForm" (ngSubmit)="addParticipant()" class="participant-form">
+                  <div class="form-row two-columns">
+                    <app-input
+                      label="Email"
+                      type="email"
+                      formControlName="email"
+                      [invalid]="(participantForm.get('email')?.invalid && participantForm.get('email')?.touched) || false"
+                      invalidMessage="Please enter a valid email"
+                      placeholder="participant@example.com"
+                      leftIcon="email">
+                    </app-input>
+
+                    <app-input
+                      label="Phone"
+                      [type]="'tel'"
+                      formControlName="phone"
+                      placeholder="+1 234 567 8900"
+                      leftIcon="phone">
+                    </app-input>
+                  </div>
+
+                  <div class="form-row">
+                    <app-select
+                      label="Communication Method"
+                      formControlName="message_type"
+                      [options]="communicationMethods"
+                      [invalid]="(participantForm.get('message_type')?.invalid && participantForm.get('message_type')?.touched) || false"
+                      invalidMessage="Communication method is required"
+                      class="full-width">
+                    </app-select>
+                  </div>
+
+                  <div class="form-actions">
+                    <button
+                      type="submit"
+                      class="add-participant-btn"
+                      [disabled]="participantForm.invalid">
+                      <app-svg src="user"></app-svg>
+                      Add Participant
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              <!-- Participants List -->
+              @if (isLoadingParticipants()) {
+                <div class="loading-container">
+                  <app-loader></app-loader>
+                  <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-07)">
+                    Loading participants...
+                  </app-typography>
+                </div>
+              } @else {
+                <div class="participants-list">
+                  <div class="list-header">
+                    <app-typography [variant]="TypographyTypeEnum['h3-semibold']">
+                      Participants ({{ participants().length }})
+                    </app-typography>
+                  </div>
+
+                  @if (participants().length === 0) {
+                    <div class="empty-state">
+                      <app-svg src="users" [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
+                      <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--Bluish-Gray-06)">
+                        No participants found
+                      </app-typography>
+                      <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-07)">
+                        Add a participant above to get started
+                      </app-typography>
+                    </div>
+                  } @else {
+                    <div class="participants-grid">
+                      @for (participant of participants(); track participant.id) {
+                        <div class="participant-card">
+                          <div class="participant-header">
+                            <div class="participant-info">
+                              <app-svg src="user" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
+                              <div>
+                                <app-typography [variant]="TypographyTypeEnum['body-medium']">
+                                  {{ getUserDisplayName(participant) }}
+                                </app-typography>
+                                @if (participant.email) {
+                                  <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--Bluish-Gray-07)">
+                                    {{ participant.email }}
+                                  </app-typography>
+                                }
+                              </div>
+                            </div>
+
+                            <app-badge
+                              [type]="getParticipantStatusBadgeType(participant.is_confirmed)">
+                              {{ participant.is_confirmed ? 'Confirmed' : 'Pending' }}
+                            </app-badge>
+                          </div>
+
+                          @if (participant.phone) {
+                            <div class="participant-contact">
+                              <app-svg src="phone" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                              <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--Bluish-Gray-07)">
+                                {{ participant.phone }}
+                              </app-typography>
+                            </div>
+                          }
+
+                          <div class="participant-actions">
+                            <app-button
+                              text="Remove"
+                              leftIcon="delete"
+                              [size]="ButtonSizeEnum.small"
+                              [style]="ButtonStyleEnum.stroke"
+                              (buttonClick)="removeParticipant(participant)">
+                            </app-button>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+</app-page>

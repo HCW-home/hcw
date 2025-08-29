@@ -4,6 +4,8 @@ import { User } from './pages/user/user';
 import { RoutePaths } from '../../core/constants/routes';
 import { Dashboard } from './components/dashboard/dashboard';
 import { Consultations } from './components/consultations/consultations';
+import { ConsultationDetail } from './components/consultation-detail/consultation-detail';
+import { UserProfile } from './components/user-profile/user-profile';
 import { Test } from './components/test/test';
 import { Availability } from './components/availability/availability';
 
@@ -29,6 +31,10 @@ const routes: Routes = [
         component: Consultations,
       },
       {
+        path: 'consultations/:id',
+        component: ConsultationDetail,
+      },
+      {
         path: RoutePaths.TEST,
         pathMatch: 'full',
         component: Test,
@@ -37,6 +43,11 @@ const routes: Routes = [
         path: RoutePaths.AVAILABILITY,
         pathMatch: 'full',
         component: Availability,
+      },
+      {
+        path: RoutePaths.PROFILE,
+        pathMatch: 'full',
+        component: UserProfile,
       },
     ],
   },

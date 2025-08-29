@@ -1,0 +1,195 @@
+<app-page>
+  <div class="user-profile">
+    <div class="profile-header">
+      <app-back-button></app-back-button>
+
+      <div class="header-content">
+        <app-typography [variant]="TypographyTypeEnum['h1-bold']">
+          User Profile
+        </app-typography>
+
+        @if (user()) {
+          <div class="header-actions">
+            @if (!isEditing()) {
+              <app-button
+                text="Edit Profile"
+                leftIcon="edit"
+                [size]="ButtonSizeEnum.medium"
+                [style]="ButtonStyleEnum.primary"
+                (buttonClick)="toggleEdit()">
+              </app-button>
+            } @else {
+              <div class="edit-actions">
+                <app-button
+                  text="Cancel"
+                  [size]="ButtonSizeEnum.medium"
+                  [style]="ButtonStyleEnum.text"
+                  (buttonClick)="toggleEdit()">
+                </app-button>
+                <app-button
+                  text="Save Changes"
+                  leftIcon="save"
+                  [size]="ButtonSizeEnum.medium"
+                  [style]="ButtonStyleEnum.primary"
+                  [disabled]="profileForm.invalid || isSaving()"
+                  (buttonClick)="saveProfile()">
+                </app-button>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    @if (isLoadingUser()) {
+      <div class="loading-container">
+        <app-loader></app-loader>
+        <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-07)">
+          Loading profile...
+        </app-typography>
+      </div>
+    } @else if (user()) {
+      <div class="profile-info-card">
+        <div class="info-header">
+          <div class="user-avatar">
+            <app-svg src="svg/user.svg" [svgStyle]="{'width.px': 39, 'height.px': 39}"></app-svg>
+          </div>
+          <div class="user-basic-info">
+            <app-typography [variant]="TypographyTypeEnum['h2-semibold']">
+              {{ user()!.first_name }} {{ user()!.last_name }}
+            </app-typography>
+            <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-07)">
+              {{ user()!.email }}
+            </app-typography>
+          </div>
+        </div>
+
+        @if (!isEditing()) {
+          <div class="profile-details">
+            <div class="info-grid">
+              <div class="info-item">
+                <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
+                  First Name
+                </app-typography>
+                <app-typography [variant]="TypographyTypeEnum['body-regular']">
+                  {{ user()!.first_name }}
+                </app-typography>
+              </div>
+
+              <div class="info-item">
+                <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
+                  Last Name
+                </app-typography>
+                <app-typography [variant]="TypographyTypeEnum['body-regular']">
+                  {{ user()!.last_name }}
+                </app-typography>
+              </div>
+
+              <div class="info-item">
+                <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
+                  Email Address
+                </app-typography>
+                <app-typography [variant]="TypographyTypeEnum['body-regular']">
+                  {{ user()!.email }}
+                </app-typography>
+              </div>
+
+              <div class="info-item">
+                <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
+                  Mobile Phone
+                </app-typography>
+                <app-typography [variant]="TypographyTypeEnum['body-regular']">
+                  {{ user()!.mobile_phone_numer || 'Not provided' }}
+                </app-typography>
+              </div>
+
+              <div class="info-item">
+                <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
+                  Preferred Communication
+                </app-typography>
+                <div class="communication-method">
+                  <app-badge [type]="BadgeTypeEnum.blue">
+                    {{ getCommunicationMethodLabel(user()!.communication_method) }}
+                  </app-badge>
+                </div>
+              </div>
+
+              <div class="info-item">
+                <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
+                  Last Login
+                </app-typography>
+                <app-typography [variant]="TypographyTypeEnum['body-regular']">
+                  {{ formatDate(user()!.last_login) }}
+                </app-typography>
+              </div>
+            </div>
+          </div>
+        } @else {
+          <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="profile-form">
+            <div class="form-section">
+              <app-typography [variant]="TypographyTypeEnum['h3-semibold']">
+                Personal Information
+              </app-typography>
+
+              <div class="form-row two-columns">
+                <app-input
+                  label="First Name"
+                  formControlName="first_name"
+                  [invalid]="(profileForm.get('first_name')?.invalid && profileForm.get('first_name')?.touched) || false"
+                  invalidMessage="First name is required"
+                  placeholder="Enter first name">
+                </app-input>
+
+                <app-input
+                  label="Last Name"
+                  formControlName="last_name"
+                  [invalid]="(profileForm.get('last_name')?.invalid && profileForm.get('last_name')?.touched) || false"
+                  invalidMessage="Last name is required"
+                  placeholder="Enter last name">
+                </app-input>
+              </div>
+
+              <div class="form-row">
+                <app-input
+                  label="Email Address"
+                  type="email"
+                  formControlName="email"
+                  placeholder="Email cannot be changed"
+                  leftIcon="email"
+                  class="readonly-field">
+                </app-input>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <app-typography [variant]="TypographyTypeEnum['h3-semibold']">
+                Contact Information
+              </app-typography>
+
+              <div class="form-row">
+                <app-input
+                  label="Mobile Phone (Optional)"
+                  type="tel"
+                  formControlName="mobile_phone_numer"
+                  placeholder="+1 234 567 8900"
+                  leftIcon="phone">
+                </app-input>
+              </div>
+
+              <div class="form-row">
+                <app-select
+                  label="Preferred Communication Method"
+                  formControlName="communication_method"
+                  [options]="communicationMethods"
+                  [invalid]="(profileForm.get('communication_method')?.invalid && profileForm.get('communication_method')?.touched) || false"
+                  invalidMessage="Communication method is required">
+                </app-select>
+              </div>
+            </div>
+          </form>
+        }
+      </div>
+    }
+  </div>
+</app-page>

@@ -1,4 +1,5 @@
 import { Component, OnInit, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { Page } from '../../../../core/components/page/page';
 import { Breadcrumb } from '../../../../shared/components/breadcrumb/breadcrumb';
 import { Button } from '../../../../shared/ui-components/button/button';
@@ -28,6 +29,8 @@ export class Consultations implements OnInit {
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
+
+  constructor(private router: Router) {}
 
   ngOnInit() {
     this.loadMockData();
@@ -69,7 +72,7 @@ export class Consultations implements OnInit {
   }
 
   viewConsultationDetails(consultation: IConsultation) {
-    console.log('Viewing consultation:', consultation.id);
+    this.router.navigate(['/app/consultations', consultation.id]);
   }
 
   scheduleFollowUp(consultation: IConsultation) {
