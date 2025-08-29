@@ -416,7 +416,7 @@ UNFOLD = {
                 "items": [
                     {
                         "title": "Consultations",
-                        "icon": "event",
+                        "icon": "medical_services",
                         "link": "/admin/consultations/consultation/",
                         "permission": lambda request: request.user.has_perm("consultations.view_consultation"),
                     },
