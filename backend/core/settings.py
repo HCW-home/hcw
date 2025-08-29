@@ -420,9 +420,9 @@ UNFOLD = {
                         "permission": lambda request: request.user.has_perm("consultations.view_consultation"),
                     },
                     {
-                        "title": "Groups",
+                        "title": "Queues",
                         "icon": "group_work",
-                        "link": "/admin/consultations/group/",
+                        "link": "/admin/consultations/queue/",
                         "permission": lambda request: request.user.has_perm("consultations.view_group"),
                     },
                     {
