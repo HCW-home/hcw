@@ -32,6 +32,6 @@ python3 manage.py dumpdata auth.group --natural-foreign --natural-primary --inde
 Get language string to translate
 
 ```
-./manage.py makemessages --locale=fr
-./manage.py compilemessages
+./manage.py makemessages --locale=fr --ignore='venv/*'
+./manage.py compilemessages --ignore='venv/*'
 ```

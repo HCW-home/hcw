@@ -14,20 +14,25 @@ class ProviderName(models.TextChoices):
 
 
 class MessagingProvider(models.Model):
-    name = models.CharField(choices=ProviderName.choices, max_length=20)
-    api_key = models.CharField(max_length=200)
-    source_phone = models.CharField(max_length=50, null=True, blank=True)
-    auth_token = models.CharField(max_length=50, null=True, blank=True)
-    account_sid = models.CharField(max_length=50, null=True, blank=True)
-    priority = models.IntegerField(default=0)
-    is_active = models.BooleanField(default=True)
-
-class Prefix(models.Model):
-    messaging_provider = models.ForeignKey(MessagingProvider, on_delete=models.CASCADE, null=True)
-    start_by = models.CharField(max_length=50)
+    name = models.CharField(_('name'), choices=ProviderName.choices, max_length=20)
+    api_key = models.CharField(_('API key'), max_length=200)
+    source_phone = models.CharField(_('source phone'), max_length=50, null=True, blank=True)
+    auth_token = models.CharField(_('auth token'), max_length=50, null=True, blank=True)
+    account_sid = models.CharField(_('account SID'), max_length=50, null=True, blank=True)
+    priority = models.IntegerField(_('priority'), default=0)
+    is_active = models.BooleanField(_('is active'), default=True)
 
     class Meta:
-        verbose_name_plural = _("prefixes")
+        verbose_name = _('messaging provider')
+        verbose_name_plural = _('messaging providers')
+
+class Prefix(models.Model):
+    messaging_provider = models.ForeignKey(MessagingProvider, on_delete=models.CASCADE, null=True, verbose_name=_('messaging provider'))
+    start_by = models.CharField(_('start by'), max_length=50)
+
+    class Meta:
+        verbose_name = _('prefix')
+        verbose_name_plural = _('prefixes')
 
 
 class MessageStatus(models.TextChoices):
@@ -48,21 +53,21 @@ class CommunicationMethod(models.TextChoices):
 
 class Message(models.Model):
     # Message content
-    content = models.TextField()
-    subject = models.CharField(max_length=200, blank=True)
+    content = models.TextField(_('content'))
+    subject = models.CharField(_('subject'), max_length=200, blank=True)
 
     # Message type and provider
     communication_method = models.CharField(
-        choices=CommunicationMethod.choices, max_length=20, default=CommunicationMethod.SMS)
-    provider_name = models.CharField(max_length=50, blank=True)
+        _('communication method'), choices=CommunicationMethod.choices, max_length=20, default=CommunicationMethod.SMS)
+    provider_name = models.CharField(_('provider name'), max_length=50, blank=True)
 
     # Recipients
-    recipient_phone = models.CharField(max_length=50, blank=True)
-    recipient_email = models.EmailField(blank=True)
+    recipient_phone = models.CharField(_('recipient phone'), max_length=50, blank=True)
+    recipient_email = models.EmailField(_('recipient email'), blank=True)
 
     # Status tracking
     status = models.CharField(
-        choices=MessageStatus.choices, max_length=20, default=MessageStatus.PENDING)
+        _('status'), choices=MessageStatus.choices, max_length=20, default=MessageStatus.PENDING)
     sent_at = models.DateTimeField(null=True, blank=True)
     delivered_at = models.DateTimeField(null=True, blank=True)
     read_at = models.DateTimeField(null=True, blank=True)

@@ -16,6 +16,7 @@ from datetime import timedelta
 from dotenv import load_dotenv
 from celery.schedules import crontab
 from firebase_admin import initialize_app
+from django.utils.translation import gettext_lazy as _
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -342,8 +343,8 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Unfold Admin Configuration
 UNFOLD = {
-    "SITE_TITLE": "HCW@Home Admin",
-    "SITE_HEADER": "HCW@Home Administration",
+    "SITE_TITLE": _("HCW@Home Admin"),
+    "SITE_HEADER": _("HCW@Home Administration"),
     "SITE_URL": "/",
     "SITE_ICON": {
         "light": lambda request: "/static/users/img/logo-full.svg",
@@ -354,65 +355,65 @@ UNFOLD = {
         "show_all_applications": True,
         "navigation": [
             {
-                "title": "Navigation",
+                "title": _("Navigation"),
                 "separator": True,
                 "items": [
                     {
-                        "title": "Dashboard",
+                        "title": _("Dashboard"),
                         "icon": "dashboard",
                         "link": "/admin/",
                     },
                 ],
             },
             {
-                "title": "Users & Authentication",
+                "title": _("Users & Authentication"),
                 "separator": True,
                 "collapsible": True,
                 "items": [
                     {
-                        "title": "Users",
+                        "title": _("Users"),
                         "icon": "people",
                         "link": "/admin/users/user/",
                         "permission": lambda request: request.user.has_perm("users.view_user"),
                     },
                     {
-                        "title": "Health Metric",
+                        "title": _("Health Metric"),
                         "icon": "people",
                         "link": "/admin/users/healthmetric/",
                         "permission": lambda request: request.user.has_perm("users.view_healthmetric"),
                     },
                     {
-                        "title": "Groups",
+                        "title": _("Groups"),
                         "icon": "group",
                         "link": "/admin/auth/group/",
                         "permission": lambda request: request.user.has_perm("auth.view_group"),
                     },
                     {
-                        "title": "Organizations",
+                        "title": _("Organizations"),
                         "icon": "business",
                         "link": "/admin/users/organisation/",
                         "permission": lambda request: request.user.has_perm("organisations.view_organisation"),
                     },
                     {
-                        "title": "Languages",
+                        "title": _("Languages"),
                         "icon": "language",
                         "link": "/admin/users/language/",
                         "permission": lambda request: request.user.has_perm("users.view_language"),
                     },
                     {
-                        "title": "Specialities",
+                        "title": _("Specialities"),
                         "icon": "medical_services",
                         "link": "/admin/users/speciality/",
                         "permission": lambda request: request.user.has_perm("users.view_speciality"),
                     },
                     {
-                        "title": "Notifications",
+                        "title": _("Notifications"),
                         "icon": "notifications",
                         "link": "/admin/users/notification/",
                         "permission": lambda request: request.user.has_perm("users.view_notification"),
                     },
                     {
-                        "title": "FCM Devices",
+                        "title": _("FCM Devices"),
                         "icon": "phone_android",
                         "link": "/admin/users/fcmdeviceoverride/",
                         "permission": lambda request: request.user.has_perm("users.view_fcmdeviceoverride"),
@@ -420,48 +421,48 @@ UNFOLD = {
                 ],
             },
             {
-                "title": "Consultations",
+                "title": _("Consultations"),
                 "separator": True,
                 "collapsible": True,
                 "items": [
                     {
-                        "title": "Consultations",
+                        "title": _("Consultations"),
                         "icon": "medical_services",
                         "link": "/admin/consultations/consultation/",
                         "permission": lambda request: request.user.has_perm("consultations.view_consultation"),
                     },
                     {
-                        "title": "Queues",
+                        "title": _("Queues"),
                         "icon": "group_work",
                         "link": "/admin/consultations/queue/",
                         "permission": lambda request: request.user.has_perm("consultations.view_queue"),
                     },
                     {
-                        "title": "Appointments",
+                        "title": _("Appointments"),
                         "icon": "schedule",
                         "link": "/admin/consultations/appointment/",
                         "permission": lambda request: request.user.has_perm("consultations.view_appointment"),
                     },
                     {
-                        "title": "Messages",
+                        "title": _("Messages"),
                         "icon": "message",
                         "link": "/admin/consultations/message/",
                         "permission": lambda request: request.user.has_perm("consultations.view_message"),
                     },
                     {
-                        "title": "Reasons",
+                        "title": _("Reasons"),
                         "icon": "list",
                         "link": "/admin/consultations/reason/",
                         "permission": lambda request: request.user.has_perm("consultations.view_reason"),
                     },
                     {
-                        "title": "Requests",
+                        "title": _("Requests"),
                         "icon": "inbox",
                         "link": "/admin/consultations/request/",
                         "permission": lambda request: request.user.has_perm("consultations.view_request"),
                     },
                     {
-                        "title": "Booking slots",
+                        "title": _("Booking slots"),
                         "icon": "event",
                         "link": "/admin/consultations/bookingslot/",
                         "permission": lambda request: request.user.has_perm("consultations.view_bookingslot"),
@@ -469,12 +470,12 @@ UNFOLD = {
                 ],
             },
             {
-                "title": "Messaging",
+                "title": _("Messaging"),
                 "separator": True,
                 "collapsible": True,
                 "items": [
                     {
-                        "title": "Messaging Providers",
+                        "title": _("Messaging Providers"),
                         "icon": "message",
                         "link": "/admin/messaging/messagingprovider/",
                         "permission": lambda request: request.user.has_perm("messaging.view_messagingprovider"),
@@ -482,18 +483,18 @@ UNFOLD = {
                 ],
             },
             {
-                "title": "Media & API",
+                "title": _("Media & API"),
                 "separator": True,
                 "collapsible": True,
                 "items": [
                     {
-                        "title": "Media Server",
+                        "title": _("Media Server"),
                         "icon": "videocam",
                         "link": "/admin/mediaserver/server/",
                         "permission": lambda request: request.user.has_perm("mediaserver.view_server"),
                     },
                     {
-                        "title": "Turn Server",
+                        "title": _("TURN Server"),
                         "icon": "router",
                         "link": "/admin/mediaserver/turn/",
                         "permission": lambda request: request.user.has_perm("mediaserver.view_turn"),
@@ -501,12 +502,12 @@ UNFOLD = {
                 ],
             },
             {
-                "title": "Settings",
+                "title": _("Settings"),
                 "separator": True,
                 "collapsible": True,
                 "items": [
                     {
-                        "title": "Configuration",
+                        "title": _("Configuration"),
                         "icon": "settings",
                         "link": "/admin/configuration/configuration/",
                         "permission": lambda request: request.user.has_perm("configuration.view_configuration"),

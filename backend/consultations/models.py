@@ -7,42 +7,53 @@ from datetime import time
 # Create your models here.
 
 class Queue(models.Model):
-    name = models.CharField(max_length=200)
+    name = models.CharField(_('name'), max_length=200)
     organisation = models.ManyToManyField(
-        'users.Organisation', blank=True)
-    users = models.ManyToManyField(settings.AUTH_USER_MODEL)
+        'users.Organisation', blank=True, verbose_name=_('organisation'))
+    users = models.ManyToManyField(settings.AUTH_USER_MODEL, verbose_name=_('users'))
+
+    class Meta:
+        verbose_name = _('queue')
+        verbose_name_plural = _('queues')
 
 
 class Consultation(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    closed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
+    updated_at = models.DateTimeField(_('updated at'), auto_now=True)
+    closed_at = models.DateTimeField(_('closed at'), null=True, blank=True)
 
-    description = models.CharField(null=True, blank=True)
-    title = models.CharField(null=True, blank=True)
+    description = models.CharField(_('description'), null=True, blank=True)
+    title = models.CharField(_('title'), null=True, blank=True)
 
     beneficiary = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         null=True,
         blank=True,
+        verbose_name=_('beneficiary')
     )
 
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="%(class)s_created"
+        related_name="%(class)s_created",
+        verbose_name=_('created by')
     )
 
-    group = models.ForeignKey(Queue, on_delete=models.SET_NULL, null=True, blank=True)
+    group = models.ForeignKey(Queue, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('group'))
 
     owned_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="%(class)s_owned"
+        related_name="%(class)s_owned",
+        verbose_name=_('owned by')
     )
+
+    class Meta:
+        verbose_name = _('consultation')
+        verbose_name_plural = _('consultations')
 
     def __str__(self):
         return f"Consultation #{self.pk}"
@@ -52,14 +63,18 @@ class AppointmentStatus(models.TextChoices):
     CANCELLED = "Cancelled", _("Cancelled")
 
 class Appointment(models.Model):
-    status = models.CharField(choices=AppointmentStatus.choices, default=AppointmentStatus.SCHEDULED)
+    status = models.CharField(_('status'), choices=AppointmentStatus.choices, default=AppointmentStatus.SCHEDULED)
     consultation = models.ForeignKey(
-        Consultation, on_delete=models.CASCADE, related_name='appointments', null=True, blank=True)
-    scheduled_at = models.DateTimeField()
-    end_expected_at = models.DateTimeField(null=True, blank=True)
+        Consultation, on_delete=models.CASCADE, related_name='appointments', null=True, blank=True, verbose_name=_('consultation'))
+    scheduled_at = models.DateTimeField(_('scheduled at'))
+    end_expected_at = models.DateTimeField(_('end expected at'), null=True, blank=True)
     created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name=_('created by'))
+    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
+
+    class Meta:
+        verbose_name = _('appointment')
+        verbose_name_plural = _('appointments')
 
 # class ParticipantRole(models.TextChoices):
 #     SCHEDULED = "Scheduled", _("Scheduled")
@@ -90,26 +105,34 @@ class Participant(models.Model):
 
 class Message(models.Model):
     consultation = models.ForeignKey(
-        Consultation, on_delete=models.CASCADE, related_name='messages')
+        Consultation, on_delete=models.CASCADE, related_name='messages', verbose_name=_('consultation'))
     created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name=_('created by'))
+    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
 
-    content = models.TextField(null=True, blank=True)
+    content = models.TextField(_('content'), null=True, blank=True)
     attachment = models.FileField(
-        upload_to='messages_attachment', null=True, blank=True)
+        _('attachment'), upload_to='messages_attachment', null=True, blank=True)
+
+    class Meta:
+        verbose_name = _('message')
+        verbose_name_plural = _('messages')
 
 
 class Reason(models.Model):
     speciality = models.ForeignKey(
-        'users.Speciality', on_delete=models.CASCADE, related_name='reasons')
-    name = models.CharField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    queue_assignee = models.ForeignKey(Queue, on_delete=models.CASCADE, null=True, blank=True)
+        'users.Speciality', on_delete=models.CASCADE, related_name='reasons', verbose_name=_('speciality'))
+    name = models.CharField(_('name'))
+    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
+    queue_assignee = models.ForeignKey(Queue, on_delete=models.CASCADE, null=True, blank=True, verbose_name=_('queue assignee'))
     user_assignee = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
-    duration = models.IntegerField(help_text="Duration in minute", default=30)
-    is_active = models.BooleanField(default=True)
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, verbose_name=_('user assignee'))
+    duration = models.IntegerField(_('duration'), help_text=_('Duration in minutes'), default=30)
+    is_active = models.BooleanField(_('is active'), default=True)
+
+    class Meta:
+        verbose_name = _('reason')
+        verbose_name_plural = _('reasons')
 
 class RequestStatus(models.TextChoices):
     REQUESTED = "Requested", _("Requested")
