@@ -4,20 +4,20 @@ from .models import Consultation, Group, Appointment, Participant, Message, Reas
 
 User = get_user_model()
 
-class UserSerializer(serializers.ModelSerializer):
+class ConsultationUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'email', 'first_name', 'last_name']
 
 class GroupSerializer(serializers.ModelSerializer):
-    users = UserSerializer(many=True, read_only=True)
+    users = ConsultationUserSerializer(many=True, read_only=True)
     
     class Meta:
         model = Group
         fields = ['id', 'name', 'users']
 
 class ParticipantSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
+    user = ConsultationUserSerializer(read_only=True)
     
     class Meta:
         model = Participant
@@ -35,7 +35,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
                   'consultation', 'created_by', 'status', 'created_at', 'participants']
         read_only_fields = ['id', 'status']
 
-class MessageSerializer(serializers.ModelSerializer):
+class ConsultationMessageSerializer(serializers.ModelSerializer):
     created_by = serializers.HiddenField(
         default=serializers.CurrentUserDefault())
     consultation = serializers.PrimaryKeyRelatedField(read_only=True)
@@ -45,9 +45,9 @@ class MessageSerializer(serializers.ModelSerializer):
         fields = ['id', 'content', 'attachment', 'created_at', 'created_by', 'consultation']
 
 class ConsultationSerializer(serializers.ModelSerializer):
-    created_by = UserSerializer(read_only=True)
-    owned_by = UserSerializer(read_only=True)
-    beneficiary = UserSerializer(read_only=True)
+    created_by = ConsultationUserSerializer(read_only=True)
+    owned_by = ConsultationUserSerializer(read_only=True)
+    beneficiary = ConsultationUserSerializer(read_only=True)
     group = GroupSerializer(read_only=True)
     
     # Write-only fields for creating/updating
@@ -125,8 +125,8 @@ class ReasonSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'duration', 'group_assignee', 'user_assignee']
 
 class RequestSerializer(serializers.ModelSerializer):
-    created_by = UserSerializer(read_only=True)
-    expected_with = UserSerializer(read_only=True)
+    created_by = ConsultationUserSerializer(read_only=True)
+    expected_with = ConsultationUserSerializer(read_only=True)
     reason = ReasonSerializer(read_only=True)
     reason_id = serializers.IntegerField(write_only=True)
     expected_with_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
@@ -162,7 +162,7 @@ class RequestSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 class BookingSlotSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
+    user = ConsultationUserSerializer(read_only=True)
     user_id = serializers.IntegerField(write_only=True, required=False)
     
     class Meta:

@@ -27,7 +27,7 @@ User = get_user_model()
 
 # Create your views here.
 
-class ConsultationPagination(PageNumberPagination):
+class UniversalPagination(PageNumberPagination):
     page_size = 20
     page_size_query_param = 'page_size'
     max_page_size = 100
@@ -93,16 +93,20 @@ class MagicLinkRequestView(APIView):
             }
         },
         responses={
-            200: OpenApiExample(
-                'Success',
-                value={"detail": "Magic link sent."},
-                response_only=True
-            ),
-            404: OpenApiExample(
-                'User not found',
-                value={"detail": "User not found."},
-                response_only=True
-            ),
+            200: {
+                'type': 'object',
+                'properties': {
+                    'detail': {'type': 'string'}
+                },
+                'example': {"detail": "Magic link sent."}
+            },
+            404: {
+                'type': 'object',
+                'properties': {
+                    'detail': {'type': 'string'}
+                },
+                'example': {"detail": "User not found."}
+            },
         },
         examples=[
             OpenApiExample(
@@ -148,19 +152,24 @@ class MagicLinkVerifyView(APIView):
             }
         },
         responses={
-            200: OpenApiExample(
-                'Success',
-                value={
+            200: {
+                'type': 'object',
+                'properties': {
+                    'refresh': {'type': 'string'},
+                    'access': {'type': 'string'}
+                },
+                'example': {
                     "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
                     "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                }
+            },
+            400: {
+                'type': 'object',
+                'properties': {
+                    'detail': {'type': 'string'}
                 },
-                response_only=True
-            ),
-            400: OpenApiExample(
-                'Invalid token',
-                value={"detail": "Invalid or expired link."},
-                response_only=True
-            ),
+                'example': {"detail": "Invalid or expired link."}
+            },
         },
         description="Verify magic link token and return JWT tokens."
     )
@@ -181,7 +190,7 @@ class MagicLinkVerifyView(APIView):
 
 class UserConsultationsView(APIView):
     permission_classes = [IsAuthenticated]
-    pagination_class = ConsultationPagination
+    pagination_class = UniversalPagination
     
     @extend_schema(
         parameters=[
@@ -265,15 +274,9 @@ class UserConsultationsView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
-class NotificationsPagination(PageNumberPagination):
-    page_size = 20
-    page_size_query_param = 'page_size'
-    max_page_size = 100
-
-
 class UserNotificationsView(APIView):
     permission_classes = [IsAuthenticated]
-    pagination_class = NotificationsPagination
+    pagination_class = UniversalPagination
     
     @extend_schema(
         parameters=[
@@ -346,15 +349,9 @@ class UserNotificationsView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
-class AppointmentsPagination(PageNumberPagination):
-    page_size = 20
-    page_size_query_param = 'page_size'
-    max_page_size = 100
-
-
 class UserAppointmentsView(APIView):
     permission_classes = [IsAuthenticated]
-    pagination_class = AppointmentsPagination
+    pagination_class = UniversalPagination
     
     @extend_schema(
         parameters=[
@@ -428,15 +425,9 @@ class UserAppointmentsView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
-class HealthMetricsPagination(PageNumberPagination):
-    page_size = 20
-    page_size_query_param = 'page_size'
-    max_page_size = 100
-
-
 class UserHealthMetricsView(APIView):
     permission_classes = [IsAuthenticated]
-    pagination_class = HealthMetricsPagination
+    pagination_class = UniversalPagination
     
     @extend_schema(
         parameters=[

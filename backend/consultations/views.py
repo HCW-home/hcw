@@ -21,7 +21,7 @@ from .serializers import (
     GroupSerializer, 
     AppointmentSerializer,
     ParticipantSerializer,
-    MessageSerializer,
+    ConsultationMessageSerializer,
     RequestSerializer,
     BookingSlotSerializer
 )
@@ -155,8 +155,8 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @extend_schema(
-        request=MessageSerializer, 
-        responses={200: MessageSerializer(many=True), 201: MessageSerializer}
+        request=ConsultationMessageSerializer, 
+        responses={200: ConsultationMessageSerializer(many=True), 201: ConsultationMessageSerializer}
     )
     @action(detail=True, methods=['get', 'post'])
     def messages(self, request, pk=None):
@@ -168,25 +168,35 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
             
             page = self.paginate_queryset(messages)
             if page is not None:
-                serializer = MessageSerializer(page, many=True)
+                serializer = ConsultationMessageSerializer(page, many=True)
                 return self.get_paginated_response(serializer.data)
             
-            serializer = MessageSerializer(messages, many=True)
+            serializer = ConsultationMessageSerializer(messages, many=True)
             return Response(serializer.data)
         
         elif request.method == 'POST':
-            serializer = MessageSerializer(
+            serializer = ConsultationMessageSerializer(
                 data=request.data,
                 context={'request': request}
             )
 
             if serializer.is_valid():
                 message = serializer.save(consultation=consultation)
-                return Response(MessageSerializer(message).data, status=status.HTTP_201_CREATED)
+                return Response(ConsultationMessageSerializer(message).data, status=status.HTTP_201_CREATED)
 
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @extend_schema(responses=AppointmentSerializer)
+    @extend_schema(
+        responses=AppointmentSerializer,
+        parameters=[
+            OpenApiParameter(
+                name='appointment_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+                description='ID of the appointment to retrieve'
+            )
+        ]
+    )
     @action(detail=True, methods=['get'], url_path='appointment/(?P<appointment_id>[^/.]+)')
     def get_appointment(self, request, pk=None, appointment_id=None):
         """Get a specific appointment for this consultation"""
@@ -205,7 +215,15 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
 
     @extend_schema(
         request=ParticipantSerializer, 
-        responses={200: ParticipantSerializer(many=True), 201: ParticipantSerializer}
+        responses={200: ParticipantSerializer(many=True), 201: ParticipantSerializer},
+        parameters=[
+            OpenApiParameter(
+                name='appointment_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+                description='ID of the appointment'
+            )
+        ]
     )
     @action(detail=True, methods=['get', 'post'], url_path='appointment/(?P<appointment_id>[^/.]+)/participants')
     def appointment_participants(self, request, pk=None, appointment_id=None):
@@ -246,7 +264,23 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
             
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @extend_schema(responses={204: None})
+    @extend_schema(
+        responses={204: None},
+        parameters=[
+            OpenApiParameter(
+                name='appointment_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+                description='ID of the appointment'
+            ),
+            OpenApiParameter(
+                name='participant_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+                description='ID of the participant to delete'
+            )
+        ]
+    )
     @action(detail=True, methods=['delete'], url_path='appointment/(?P<appointment_id>[^/.]+)/participants/(?P<participant_id>[^/.]+)')
     def delete_participant(self, request, pk=None, appointment_id=None, participant_id=None):
         """Delete a specific participant from an appointment in this consultation"""
@@ -271,7 +305,17 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
         participant.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @extend_schema(responses=AppointmentSerializer)
+    @extend_schema(
+        responses=AppointmentSerializer,
+        parameters=[
+            OpenApiParameter(
+                name='appointment_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+                description='ID of the appointment to cancel'
+            )
+        ]
+    )
     @action(detail=True, methods=['post'], url_path='appointment/(?P<appointment_id>[^/.]+)/cancel')
     def cancel_appointment(self, request, pk=None, appointment_id=None):
         """Cancel a specific appointment in this consultation"""

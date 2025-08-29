@@ -37,8 +37,8 @@ class FCMDeviceOverride(AbstractFCMDevice):
 class User(AbstractUser):
     app_preferences = models.JSONField(null=True, blank=True)
     encrypted = models.BooleanField(default=False)
-    languages = models.ManyToManyField(Language, null=True, blank=True)
-    specialities = models.ManyToManyField(Speciality, null=True, blank=True)
+    languages = models.ManyToManyField(Language, blank=True)
+    specialities = models.ManyToManyField(Speciality, blank=True)
     communication_method = models.CharField(
         choices=CommunicationMethod.choices, default=CommunicationMethod.EMAIL)
     mobile_phone_numer = models.CharField(null=True, blank=True)

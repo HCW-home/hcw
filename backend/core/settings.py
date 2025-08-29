@@ -87,7 +87,7 @@ INSTALLED_APPS = [
     'messaging',
     'mediaserver',
     'api',
-    'configuration',
+    # 'configuration',
 ]
 
 MIDDLEWARE = [
