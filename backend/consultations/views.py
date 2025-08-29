@@ -529,6 +529,8 @@ class ReasonSlotsView(APIView):
         
         # Generate available slots
         available_slots = []
+        # Use a set to track unique slots to prevent duplicates from overlapping booking slots
+        seen_slots = set()
         
         for practitioner in practitioners:
             practitioner_slots = booking_slots.filter(user=practitioner)
@@ -593,16 +595,21 @@ class ReasonSlotsView(APIView):
                                 break
                         
                         if not slot_conflicts:
-                            available_slots.append(Slot(
-                                date=target_date,
-                                start_time=current_time,
-                                end_time=slot_end_time,
-                                duration=reason.duration,
-                                user_id=practitioner.id,
-                                user_email=practitioner.email,
-                                user_first_name=practitioner.first_name or '',
-                                user_last_name=practitioner.last_name or ''
-                            ))
+                            # Create unique identifier for this slot to prevent duplicates
+                            slot_key = (target_date, current_time, practitioner.id)
+                            
+                            if slot_key not in seen_slots:
+                                seen_slots.add(slot_key)
+                                available_slots.append(Slot(
+                                    date=target_date,
+                                    start_time=current_time,
+                                    end_time=slot_end_time,
+                                    duration=reason.duration,
+                                    user_id=practitioner.id,
+                                    user_email=practitioner.email,
+                                    user_first_name=practitioner.first_name or '',
+                                    user_last_name=practitioner.last_name or ''
+                                ))
                         
                         # Move to next slot
                         current_time = (datetime.combine(target_date, current_time) + timedelta(minutes=reason.duration)).time()
