@@ -39,6 +39,7 @@ class User(AbstractUser):
     encrypted = models.BooleanField(default=False)
     languages = models.ManyToManyField(Language, blank=True)
     specialities = models.ManyToManyField(Speciality, blank=True)
+    organisations = models.ManyToManyField('organisations.Organisation', blank=True)
     communication_method = models.CharField(
         choices=CommunicationMethod.choices, default=CommunicationMethod.EMAIL)
     mobile_phone_numer = models.CharField(null=True, blank=True)

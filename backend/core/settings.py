@@ -423,7 +423,7 @@ UNFOLD = {
                         "title": "Queues",
                         "icon": "group_work",
                         "link": "/admin/consultations/queue/",
-                        "permission": lambda request: request.user.has_perm("consultations.view_group"),
+                        "permission": lambda request: request.user.has_perm("consultations.view_queue"),
                     },
                     {
                         "title": "Appointments",

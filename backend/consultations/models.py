@@ -9,7 +9,7 @@ from datetime import time
 class Queue(models.Model):
     name = models.CharField(max_length=200)
     organisation = models.ManyToManyField(
-        'organisations.Organisation')
+        'organisations.Organisation', blank=True)
     users = models.ManyToManyField(settings.AUTH_USER_MODEL)
 
 
@@ -147,8 +147,8 @@ class BookingSlot(models.Model):
     start_time = models.TimeField(default=time(8))
     end_time = models.TimeField(default=time(18))
 
-    start_break = models.TimeField(default=time(12))
-    end_break = models.TimeField(default=time(14))
+    start_break = models.TimeField(default=time(12), null=True, blank=True)
+    end_break = models.TimeField(default=time(14), null=True, blank=True)
     
     monday = models.BooleanField()
     tuesday = models.BooleanField()

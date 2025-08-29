@@ -354,7 +354,18 @@ class QueueViewSet(viewsets.ReadOnlyModelViewSet):
         if not user.is_authenticated:
             return Queue.objects.none()
         
-        return Queue.objects.filter(users=user)
+        # Return queues where:
+        # 1. User is directly assigned to the queue, OR
+        # 2. Queue has no organizations (public queues), OR  
+        # 3. Queue belongs to an organization the user is a member of
+        from django.db.models import Q, Count
+        return Queue.objects.annotate(
+            org_count=Count('organisation')
+        ).filter(
+            Q(users=user) |
+            Q(org_count=0) |
+            Q(organisation__in=user.organisations.all())
+        ).distinct()
 
 class RequestViewSet(CreatedByMixin, viewsets.ModelViewSet):
     """
@@ -562,8 +573,9 @@ class ReasonSlotsView(APIView):
                         if slot_end_time > end_time:
                             break
                             
-                        # Skip if slot overlaps with break time
-                        if (current_time < booking_slot.end_break and 
+                        # Skip if slot overlaps with break time (only if break times are set)
+                        if (booking_slot.start_break and booking_slot.end_break and
+                            current_time < booking_slot.end_break and 
                             slot_end_time > booking_slot.start_break):
                             current_time = booking_slot.end_break
                             continue
