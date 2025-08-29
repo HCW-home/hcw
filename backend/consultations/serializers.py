@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Consultation, Group, Appointment, Participant, Message, Reason, Request
+from .models import Consultation, Group, Appointment, Participant, Message, Reason, Request, BookingSlot
 
 User = get_user_model()
 
@@ -161,4 +161,56 @@ class RequestSerializer(serializers.ModelSerializer):
         
         return super().create(validated_data)
 
-# Old MessageSerializer removed - replaced with enhanced version above
+class BookingSlotSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    user_id = serializers.IntegerField(write_only=True, required=False)
+    
+    class Meta:
+        model = BookingSlot
+        fields = [
+            'id', 'user', 'user_id', 'start_time', 'end_time', 'start_break', 'end_break',
+            'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
+            'valid_until'
+        ]
+        read_only_fields = ['id', 'created_by']
+        
+    def validate_user_id(self, value):
+        if value is not None:
+            try:
+                User.objects.get(id=value)
+            except User.DoesNotExist:
+                raise serializers.ValidationError("This user does not exist.")
+        return value
+        
+    def create(self, validated_data):
+        user_id = validated_data.pop('user_id', None)
+        request_user = self.context['request'].user
+        
+        if user_id:
+            if user_id != request_user.id and not request_user.has_perm('consultations.add_bookingslot'):
+                raise serializers.ValidationError("You can only create booking slots for yourself unless you have admin permissions.")
+            try:
+                user = User.objects.get(id=user_id)
+                validated_data['user'] = user
+            except User.DoesNotExist:
+                raise serializers.ValidationError("The specified user does not exist.")
+        else:
+            validated_data['user'] = request_user
+            
+        validated_data['created_by'] = request_user
+        return super().create(validated_data)
+        
+    def update(self, instance, validated_data):
+        user_id = validated_data.pop('user_id', None)
+        request_user = self.context['request'].user
+        
+        if user_id and user_id != instance.user.id:
+            if not request_user.has_perm('consultations.change_bookingslot'):
+                raise serializers.ValidationError("You cannot change the user assignment unless you have admin permissions.")
+            try:
+                user = User.objects.get(id=user_id)
+                validated_data['user'] = user
+            except User.DoesNotExist:
+                raise serializers.ValidationError("The specified user does not exist.")
+                
+        return super().update(instance, validated_data)

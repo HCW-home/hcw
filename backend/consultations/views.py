@@ -22,7 +22,8 @@ from .serializers import (
     AppointmentSerializer,
     ParticipantSerializer,
     MessageSerializer,
-    RequestSerializer
+    RequestSerializer,
+    BookingSlotSerializer
 )
 
 User = get_user_model()
@@ -565,3 +566,54 @@ class ReasonSlotsView(APIView):
             })
         
         return Response(slots_data, status=status.HTTP_200_OK)
+
+
+class BookingSlotViewSet(CreatedByMixin, viewsets.ModelViewSet):
+    serializer_class = BookingSlotSerializer
+    permission_classes = [IsAuthenticated, DjangoModelPermissionsWithView]
+    pagination_class = ConsultationPagination
+    filterset_fields = ['user', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday', 'valid_until']
+    ordering = ['-id']
+    ordering_fields = ['id', 'start_time', 'end_time', 'valid_until']
+    
+    def get_queryset(self):
+        user = self.request.user
+        if not user.is_authenticated:
+            return BookingSlot.objects.none()
+        
+        # Users can only see their own booking slots unless they have view permissions for all
+        if user.has_perm('consultations.view_bookingslot'):
+            return BookingSlot.objects.all()
+        else:
+            return BookingSlot.objects.filter(user=user)
+    
+    def perform_create(self, serializer):
+        # CreatedByMixin will set created_by, but we also need to ensure user permissions
+        user = self.request.user
+        
+        # If user_id is provided in data, validate permission
+        if 'user_id' in serializer.validated_data:
+            user_id = serializer.validated_data.get('user_id')
+            if user_id != user.id and not user.has_perm('consultations.add_bookingslot'):
+                raise PermissionDenied("You can only create booking slots for yourself unless you have admin permissions.")
+        
+        serializer.save()
+    
+    def perform_update(self, serializer):
+        user = self.request.user
+        instance = serializer.instance
+        
+        # Check if user can update this booking slot
+        if instance.user != user and not user.has_perm('consultations.change_bookingslot'):
+            raise PermissionDenied("You can only update your own booking slots unless you have admin permissions.")
+        
+        serializer.save()
+    
+    def perform_destroy(self, instance):
+        user = self.request.user
+        
+        # Check if user can delete this booking slot
+        if instance.user != user and not user.has_perm('consultations.delete_bookingslot'):
+            raise PermissionDenied("You can only delete your own booking slots unless you have admin permissions.")
+        
+        instance.delete()

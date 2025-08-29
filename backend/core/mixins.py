@@ -24,29 +24,29 @@ class CreatedByMixin:
             serializer.save()
 
 
-class OwnedByUserMixin:
-    """
-    Mixin that filters queryset to show only objects created by the current user
-    and sets created_by on creation.
+# class OwnedByUserMixin:
+#     """
+#     Mixin that filters queryset to show only objects created by the current user
+#     and sets created_by on creation.
     
-    Usage:
-        class MyViewSet(OwnedByUserMixin, viewsets.ModelViewSet):
-            ...
-    """
+#     Usage:
+#         class MyViewSet(OwnedByUserMixin, viewsets.ModelViewSet):
+#             ...
+#     """
     
-    def get_queryset(self):
-        """Filter queryset to user's own objects"""
-        queryset = super().get_queryset()
-        if hasattr(queryset.model, 'created_by'):
-            return queryset.filter(created_by=self.request.user)
-        return queryset
+#     def get_queryset(self):
+#         """Filter queryset to user's own objects"""
+#         queryset = super().get_queryset()
+#         if hasattr(queryset.model, 'created_by'):
+#             return queryset.filter(created_by=self.request.user)
+#         return queryset
     
-    def perform_create(self, serializer):
-        """Set created_by field on creation"""
-        if hasattr(self.get_serializer().Meta.model, 'created_by'):
-            serializer.save(created_by=self.request.user)
-        else:
-            serializer.save()
+#     def perform_create(self, serializer):
+#         """Set created_by field on creation"""
+#         if hasattr(self.get_serializer().Meta.model, 'created_by'):
+#             serializer.save(created_by=self.request.user)
+#         else:
+#             serializer.save()
 
 
 class CreatedByReadOnlyMixin:
