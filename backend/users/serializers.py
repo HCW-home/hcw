@@ -32,7 +32,7 @@ class UserDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserModel
         fields = ['pk', UserModel.EMAIL_FIELD,
-                  'first_name', 'last_name', 'app_preferences', 'last_login', 'communication_method', 'mobile_phone_numer']
+                  'first_name', 'last_name', 'app_preferences', 'last_login', 'communication_method', 'mobile_phone_numer', 'timezone']
         read_only_fields = ['email']
 
 class RegisterSerializer(serializers.Serializer):

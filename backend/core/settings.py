@@ -97,6 +97,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'core.middleware.TimezoneMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware'
@@ -451,7 +452,7 @@ UNFOLD = {
                     },
                     {
                         "title": "Booking slot",
-                        "icon": "inbox",
+                        "icon": "event",
                         "link": "/admin/consultations/bookingslot/",
                         "permission": lambda request: request.user.has_perm("consultations.view_bookingslot"),
                     },

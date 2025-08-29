@@ -477,7 +477,8 @@ class ReasonSlotsView(APIView):
             except ValueError:
                 return Response({"error": "Invalid date format. Use YYYY-MM-DD"}, status=status.HTTP_400_BAD_REQUEST)
         else:
-            from_date = date.today()
+            # Use user's timezone to determine today's date
+            from_date = timezone.now().date()
         
         # Parse user_id filter
         user_id_filter = request.query_params.get('user_id')

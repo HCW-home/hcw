@@ -17,6 +17,7 @@ from django.utils.translation import gettext_lazy as _
 from messaging.models import CommunicationMethod
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
+import pytz
 
 class Language(models.Model):
     name = models.CharField(max_length=100)
@@ -43,6 +44,12 @@ class User(AbstractUser):
     communication_method = models.CharField(
         choices=CommunicationMethod.choices, default=CommunicationMethod.EMAIL)
     mobile_phone_numer = models.CharField(null=True, blank=True)
+    timezone = models.CharField(
+        max_length=63,
+        choices=[(tz, tz) for tz in pytz.all_timezones],
+        default='UTC',
+        help_text='User timezone for displaying dates and times'
+    )
 
     def send_user_notification(self, title, message) -> FirebaseResponseDict:
         # Docs https://fcm-django.readthedocs.io/en/latest/
