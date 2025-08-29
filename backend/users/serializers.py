@@ -31,9 +31,17 @@ class UserDetailsSerializer(serializers.ModelSerializer):
     User model w/o password
     """
 
-    main_organisation = OrganisationSerializer(read_only=True, allow_null=True)
+    main_organisation = OrganisationSerializer(read_only=True)
     organisations = OrganisationSerializer(many=True, read_only=True)
-    preferred_language = LanguageSerializer(read_only=True, allow_null=True)
+    preferred_language = LanguageSerializer(read_only=True)
+    languages = LanguageSerializer(many=True, read_only=True)
+    language_ids = serializers.PrimaryKeyRelatedField(
+        many=True, 
+        queryset=Language.objects.all(), 
+        write_only=True, 
+        source='languages',
+        required=False
+    )
 
     @staticmethod
     def validate_username(username):
@@ -49,7 +57,7 @@ class UserDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserModel
         fields = ['pk', UserModel.EMAIL_FIELD,
-                  'first_name', 'last_name', 'app_preferences', 'last_login', 'communication_method', 'mobile_phone_numer', 'timezone', 'main_organisation', 'organisations', 'preferred_language']
+                  'first_name', 'last_name', 'app_preferences', 'last_login', 'communication_method', 'mobile_phone_numer', 'timezone', 'main_organisation', 'organisations', 'preferred_language', 'languages', 'language_ids']
         read_only_fields = ['email']
 
 class RegisterSerializer(serializers.Serializer):
