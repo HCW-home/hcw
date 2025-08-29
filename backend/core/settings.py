@@ -380,7 +380,7 @@ UNFOLD = {
                     {
                         "title": "Organizations",
                         "icon": "business",
-                        "link": "/admin/organisations/organisation/",
+                        "link": "/admin/users/organisation/",
                         "permission": lambda request: request.user.has_perm("organisations.view_organisation"),
                     },
                     {

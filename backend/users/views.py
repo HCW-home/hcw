@@ -8,8 +8,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 from django.contrib.auth import get_user_model
 from drf_spectacular.utils import extend_schema
-from .models import Speciality
-from .serializers import SpecialitySerializer, UserDetailsSerializer
+from .models import Speciality, Language
+from .serializers import SpecialitySerializer, UserDetailsSerializer, LanguageSerializer
 from consultations.serializers import ReasonSerializer
 from itsdangerous import URLSafeTimedSerializer
 from django.conf import settings
@@ -39,6 +39,14 @@ class Home(View):
     
     def get(self, request, *args, **kwargs):
         return render(request, self.template_name)
+
+class LanguageViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for languages - read only
+    """
+    queryset = Language.objects.all()
+    serializer_class = LanguageSerializer
+    permission_classes = [IsAuthenticated]
 
 class SpecialityViewSet(viewsets.ReadOnlyModelViewSet):
     """

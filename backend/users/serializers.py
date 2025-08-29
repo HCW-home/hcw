@@ -9,14 +9,31 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from allauth.account.utils import setup_user_email
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Speciality, HealthMetric
+from .models import Speciality, HealthMetric, Organisation, Language
 
 UserModel = get_user_model()
+
+
+class LanguageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Language
+        fields = ['name', 'code']
+
+class OrganisationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Organisation
+        fields = ['id', 'name', 'logo_large',
+                  'logo_small', 'primary_color', 'default_term', 'location_latitude', 'street', 'city', 'postal_code', 'country']
+
 
 class UserDetailsSerializer(serializers.ModelSerializer):
     """
     User model w/o password
     """
+
+    main_organisation = OrganisationSerializer(read_only=True, allow_null=True)
+    organisations = OrganisationSerializer(many=True, read_only=True)
+    preferred_language = LanguageSerializer(read_only=True, allow_null=True)
 
     @staticmethod
     def validate_username(username):
@@ -32,7 +49,7 @@ class UserDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserModel
         fields = ['pk', UserModel.EMAIL_FIELD,
-                  'first_name', 'last_name', 'app_preferences', 'last_login', 'communication_method', 'mobile_phone_numer', 'timezone']
+                  'first_name', 'last_name', 'app_preferences', 'last_login', 'communication_method', 'mobile_phone_numer', 'timezone', 'main_organisation', 'organisations', 'preferred_language']
         read_only_fields = ['email']
 
 class RegisterSerializer(serializers.Serializer):

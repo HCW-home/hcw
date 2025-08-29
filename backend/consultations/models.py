@@ -9,7 +9,7 @@ from datetime import time
 class Queue(models.Model):
     name = models.CharField(max_length=200)
     organisation = models.ManyToManyField(
-        'organisations.Organisation', blank=True)
+        'users.Organisation', blank=True)
     users = models.ManyToManyField(settings.AUTH_USER_MODEL)
 
 

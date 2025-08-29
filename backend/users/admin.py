@@ -1,7 +1,7 @@
 from typing import List, Tuple, Union
 
 from django.contrib import admin
-from .models import User, FCMDeviceOverride, Language, Speciality, HealthMetric
+from .models import User, FCMDeviceOverride, Language, Speciality, HealthMetric, Organisation
 from .models import Notification as UserNotification
 from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
@@ -318,6 +318,12 @@ class SpecialityAdmin(ModelAdmin):
     list_display = ['name']
     search_fields = ['name']
     ordering = ['name']
+
+
+@admin.register(Organisation)
+class OrganisationAdmin(ModelAdmin):
+    pass
+
 
 @admin.register(HealthMetric)
 class HealthMetricAdmin(ModelAdmin):

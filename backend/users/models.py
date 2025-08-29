@@ -19,8 +19,42 @@ from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 import pytz
 
+from django.db import models
+
+# Create your models here.
+
+class Term(models.Model):
+    name = models.CharField()
+    content = models.TextField()
+    valid_until = models.DateTimeField()
+
+    def __str__(self):
+        return self.name
+
+class Organisation(models.Model):
+    name = models.CharField(max_length=200)
+    logo_large = models.ImageField(
+        upload_to='organisations/', blank=True, null=True)
+    logo_small = models.ImageField(
+        upload_to='organisations/', blank=True, null=True)
+    primary_color = models.CharField(max_length=7, blank=True, null=True)
+    default_term = models.ForeignKey(Term, on_delete=models.SET_NULL, null=True, blank=True)
+    location_latitude = models.DecimalField(max_digits=9, decimal_places=6, help_text="Latitude in decimal degrees", null=True, blank=True)
+    location_longitude = models.DecimalField(max_digits=9, decimal_places=6, help_text="Longitude in decimal degrees", null=True, blank=True)
+    street = models.CharField(max_length=200, blank=True, null=True)
+    city = models.CharField(max_length=50, blank=True, null=True)
+    postal_code = models.CharField(max_length=10, blank=True, null=True)
+    country = models.CharField(max_length=50, blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
 class Language(models.Model):
     name = models.CharField(max_length=100)
+    code = models.CharField(max_length=3, unique=True)
+
+    def __str__(self):
+        return self.name
 
 class Speciality(models.Model):
     name = models.CharField(max_length=100)
@@ -42,9 +76,10 @@ class User(AbstractUser):
     preferred_language = models.ForeignKey(
         Language, blank=True, null=True, on_delete=models.SET_NULL, related_name="users_perferred_language")
     specialities = models.ManyToManyField(Speciality, blank=True)
-    organisations = models.ManyToManyField('organisations.Organisation', blank=True)
+    organisations = models.ManyToManyField('users.Organisation', blank=True)
+    accepted_term = models.ForeignKey(Term, on_delete=models.SET_NULL, null=True, blank=True)
     main_organisation = models.ForeignKey(
-        'organisations.Organisation', blank=True, null=True, on_delete=models.SET_NULL, related_name="users_mainorganisation")
+        'users.Organisation', blank=True, null=True, on_delete=models.SET_NULL, related_name="users_mainorganisation")
     communication_method = models.CharField(
         choices=CommunicationMethod.choices, default=CommunicationMethod.EMAIL)
     mobile_phone_numer = models.CharField(null=True, blank=True)
