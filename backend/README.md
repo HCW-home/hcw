@@ -28,3 +28,10 @@ Dump Doctor group role
 python3 manage.py dumpdata auth.group --natural-foreign --natural-primary --indent 2 > initial/Groups.json
 ```
 
+
+Get language string to translate
+
+```
+./manage.py makemessages --locale=fr
+./manage.py compilemessages
+```

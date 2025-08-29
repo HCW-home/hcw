@@ -3,6 +3,7 @@ from typing import List, Optional
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.forms import ValidationError
+from django.utils.translation import gettext_lazy as _
 from firebase_admin.messaging import Message
 from firebase_admin.messaging import Notification as FireBaseNotification
 from fcm_django.models import FirebaseResponseDict
@@ -57,9 +58,10 @@ class Language(models.Model):
         return self.name
 
 class Speciality(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(_("name"), max_length=100)
 
     class Meta:
+        verbose_name = _("speciality")
         verbose_name_plural = _("specialities")
 
     def __str__(self):
