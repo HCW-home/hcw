@@ -18,6 +18,8 @@ class Queue(models.Model):
         verbose_name = _('queue')
         verbose_name_plural = _('queues')
 
+    def __str__(self):
+        return self.name
 
 class Type(models.TextChoices):
     ONLINE = "Online", _("Online")
