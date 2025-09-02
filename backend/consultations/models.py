@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
+from django.core.exceptions import ValidationError
 from messaging.models import CommunicationMethod
 from datetime import time
 
@@ -102,6 +103,11 @@ class Participant(models.Model):
     feedback_rate = models.IntegerField(null=True, blank=True)
     feedback_message = models.TextField(null=True, blank=True)
 
+    def clean(self):
+        super().clean()
+        if not self.user and not self.email and not self.phone:
+            raise ValidationError(_('At least one of user, email or phone must be provided.'))
+
 
 class Message(models.Model):
     consultation = models.ForeignKey(
@@ -181,4 +187,4 @@ class BookingSlot(models.Model):
     saturday = models.BooleanField()
     sunday = models.BooleanField()
 
-    valid_until = models.DateField(help_text="Slot valid until this date", blank=True, null=True)
+    valid_until = models.DateField(help_text=_("Slot valid until this date"), blank=True, null=True)

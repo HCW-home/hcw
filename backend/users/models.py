@@ -74,9 +74,16 @@ class FCMDeviceOverride(AbstractFCMDevice):
 class User(AbstractUser):
     app_preferences = models.JSONField(null=True, blank=True)
     encrypted = models.BooleanField(default=False)
+
     languages = models.ManyToManyField(Language, blank=True)
-    preferred_language = models.ForeignKey(
-        Language, blank=True, null=True, on_delete=models.SET_NULL, related_name="users_perferred_language")
+
+    preferred_language = models.CharField(
+        max_length=10,
+        choices=settings.LANGUAGES,
+        help_text="Preferred language for the user interface",
+        null=True, blank=True
+    )
+    
     specialities = models.ManyToManyField(Speciality, blank=True)
     organisations = models.ManyToManyField('users.Organisation', blank=True)
     accepted_term = models.ForeignKey(Term, on_delete=models.SET_NULL, null=True, blank=True)
