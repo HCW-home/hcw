@@ -96,8 +96,9 @@ class ConsultationSerializer(serializers.ModelSerializer):
 class ConsultationCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Consultation
-        fields = ['group', 'beneficiary',
+        fields = ['id', 'group', 'beneficiary',
                   'description', 'title']
+        read_only_fields = ['id']
 
 
 class ReasonSerializer(serializers.ModelSerializer):

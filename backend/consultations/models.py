@@ -62,6 +62,7 @@ class Consultation(models.Model):
     class Meta:
         verbose_name = _('consultation')
         verbose_name_plural = _('consultations')
+        ordering = ['-created_at']
 
     def __str__(self):
         return f"Consultation #{self.pk}"
@@ -85,6 +86,7 @@ class Appointment(models.Model):
     class Meta:
         verbose_name = _('appointment')
         verbose_name_plural = _('appointments')
+        ordering = ['-scheduled_at']
 
 # class ParticipantRole(models.TextChoices):
 #     SCHEDULED = "Scheduled", _("Scheduled")
