@@ -5,7 +5,14 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: Django",
+          "command": "npx yarn start",
+          "name": "Start practitioner interface",
+          "request": "launch",
+          "type": "node-terminal",
+          "cwd": "${workspaceFolder}/practitioner"
+        },
+        {
+            "name": "Run django server",
             "type": "debugpy",
             "request": "launch",
             "args": [
@@ -16,7 +23,7 @@
             "program": "${workspaceFolder}/backend/manage.py"
         },
         {
-          "name": "Python Debugger: Celery",
+          "name": "Run celery task manager",
           "type": "debugpy",
           "request": "launch",
           "module": "celery",
