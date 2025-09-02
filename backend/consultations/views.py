@@ -593,7 +593,7 @@ class ReasonSlotsView(APIView):
                     end_time = booking_slot.end_time
                     
                     while current_time < end_time:
-                        slot_start_datetime = datetime.combine(target_date, current_time)
+                        slot_start_datetime = timezone.make_aware(datetime.combine(target_date, current_time))
                         slot_end_time = (datetime.combine(target_date, current_time) + timedelta(minutes=reason.duration)).time()
                         
                         # Check if slot goes beyond end_time
@@ -612,7 +612,7 @@ class ReasonSlotsView(APIView):
                         practitioner_appointments = appointment_lookup.get(practitioner.id, [])
                         
                         for apt_start, apt_end in practitioner_appointments:
-                            slot_end_datetime = datetime.combine(target_date, slot_end_time)
+                            slot_end_datetime = timezone.make_aware(datetime.combine(target_date, slot_end_time))
                             
                             # Check for overlap
                             if (slot_start_datetime < apt_end and slot_end_datetime > apt_start):

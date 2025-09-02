@@ -125,7 +125,7 @@ class ConsultationCreateSerializerTests(BaseTestCase):
         serializer = ConsultationCreateSerializer()
         fields = serializer.fields.keys()
         
-        expected_fields = {'group', 'beneficiary', 'description', 'title'}
+        expected_fields = {'id', 'group', 'beneficiary', 'description', 'title'}
         self.assertEqual(set(fields), expected_fields)
     
     def test_create_serializer_validation(self):

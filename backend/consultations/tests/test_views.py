@@ -184,14 +184,19 @@ class QueueViewSetTests(BaseAPITestCase, PermissionTestMixin):
     
     def test_list_queues_filters_by_user_access(self):
         """Test queue list filters by user access"""
+        from users.models import Organisation
+        
+        # Create other queue with an organization that user doesn't belong to
+        other_org = Organisation.objects.create(name="Other Org")
         other_queue = QueueFactory()
+        other_queue.organisation.add(other_org)
         
         self.authenticate_user(self.user)
         url = reverse('queue-list')
         response = self.client.get(url)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        queue_ids = [q['id'] for q in response.data['results']]
+        queue_ids = [q['id'] for q in response.data]
         self.assertIn(self.queue.id, queue_ids)
         self.assertNotIn(other_queue.id, queue_ids)
 
@@ -237,7 +242,7 @@ class RequestViewSetTests(BaseAPITestCase, PermissionTestMixin):
         response = self.client.get(url)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        request_ids = [r['id'] for r in response.data['results']]
+        request_ids = [r['id'] for r in response.data]
         self.assertIn(self.my_request.id, request_ids)
         self.assertNotIn(self.other_request.id, request_ids)
     
