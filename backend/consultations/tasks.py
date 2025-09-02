@@ -36,7 +36,7 @@ def handle_request(request_id):
         logger.info(f"Processing request {request_id} with assignment method {assignment_method}")
         
         # Load and execute the appropriate assignment handler
-        handler = _get_assignment_handler(assignment_method, request)
+        handler = _get_assignment_handler(request)
         if not handler:
             error_msg = f"No handler found for assignment method {assignment_method}"
             logger.error(error_msg)
@@ -99,34 +99,21 @@ def handle_request(request_id):
         }
 
 
-def _get_assignment_handler(assignment_method, request):
+def _get_assignment_handler(request):
     """
-    Get the appropriate assignment handler for the given method.
+    Get the appropriate assignment handler for the given request.
     
     Args:
-        assignment_method: The assignment method from ReasonAssignmentMethod
         request: The Request instance
         
     Returns:
         BaseAssignmentHandler: The handler instance or None if not found
     """
     try:
-        if assignment_method == ReasonAssignmentMethod.APPOINTMENT:
-            from .assignments.appointment import AppointmentAssignmentHandler
-            return AppointmentAssignmentHandler(request)
-        elif assignment_method == ReasonAssignmentMethod.USER:
-            # TODO: Implement UserAssignmentHandler
-            logger.warning(f"USER assignment method not yet implemented")
-            return None
-        elif assignment_method == ReasonAssignmentMethod.QUEUE:
-            # TODO: Implement QueueAssignmentHandler
-            logger.warning(f"QUEUE assignment method not yet implemented")
-            return None
-        else:
-            logger.error(f"Unknown assignment method: {assignment_method}")
-            return None
-    except ImportError as e:
-        logger.error(f"Failed to import handler for {assignment_method}: {str(e)}")
+        from .assignments import get_assignment_handler
+        return get_assignment_handler(request)
+    except (ImportError, ValueError) as e:
+        logger.error(f"Failed to get assignment handler for request {request.id}: {str(e)}")
         return None
 
 

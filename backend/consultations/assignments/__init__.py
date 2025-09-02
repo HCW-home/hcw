@@ -75,3 +75,33 @@ class BaseAssignmentHandler(ABC):
             is_invited=True,
             is_confirmed=False
         )
+
+
+def get_assignment_handler(request):
+    """
+    Factory function to get the appropriate assignment handler based on the request's reason assignment method.
+    
+    Args:
+        request: Request instance
+        
+    Returns:
+        BaseAssignmentHandler: The appropriate assignment handler
+        
+    Raises:
+        ValueError: If assignment method is unknown
+    """
+    from ..models import ReasonAssignmentMethod
+    
+    assignment_method = request.reason.assignment_method
+    
+    if assignment_method == ReasonAssignmentMethod.USER:
+        from .user import UserAssignmentHandler
+        return UserAssignmentHandler(request)
+    elif assignment_method == ReasonAssignmentMethod.QUEUE:
+        from .queue import QueueAssignmentHandler
+        return QueueAssignmentHandler(request)
+    elif assignment_method == ReasonAssignmentMethod.APPOINTMENT:
+        from .appointment import AppointmentAssignmentHandler
+        return AppointmentAssignmentHandler(request)
+    else:
+        raise ValueError(f"Unknown assignment method: {assignment_method}")
