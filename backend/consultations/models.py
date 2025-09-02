@@ -202,7 +202,7 @@ class Request(models.Model):
 
     appointment = models.OneToOneField(Appointment, on_delete=models.SET_NULL, null=True, blank=True)
     consultation = models.OneToOneField(
-        Consultation, on_delete=models.SET_NULL, null=True, blank=True)
+        Consultation, on_delete=models.SET_NULL, null=True, blank=True, related_name="request")
 
 class BookingSlot(models.Model):
     created_by = models.ForeignKey(
