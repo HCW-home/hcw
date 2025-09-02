@@ -5,6 +5,46 @@
     "name": "Doctor",
     "permissions": [
       [
+        "add_appointment",
+        "consultations",
+        "appointment"
+      ],
+      [
+        "change_appointment",
+        "consultations",
+        "appointment"
+      ],
+      [
+        "delete_appointment",
+        "consultations",
+        "appointment"
+      ],
+      [
+        "view_appointment",
+        "consultations",
+        "appointment"
+      ],
+      [
+        "add_bookingslot",
+        "consultations",
+        "bookingslot"
+      ],
+      [
+        "change_bookingslot",
+        "consultations",
+        "bookingslot"
+      ],
+      [
+        "delete_bookingslot",
+        "consultations",
+        "bookingslot"
+      ],
+      [
+        "view_bookingslot",
+        "consultations",
+        "bookingslot"
+      ],
+      [
         "add_consultation",
         "consultations",
         "consultation"
@@ -23,6 +63,31 @@
         "view_consultation",
         "consultations",
         "consultation"
+      ],
+      [
+        "add_participant",
+        "consultations",
+        "participant"
+      ],
+      [
+        "change_participant",
+        "consultations",
+        "participant"
+      ],
+      [
+        "delete_participant",
+        "consultations",
+        "participant"
+      ],
+      [
+        "view_participant",
+        "consultations",
+        "participant"
+      ],
+      [
+        "view_user",
+        "users",
+        "user"
       ]
     ]
   }
