@@ -568,3 +568,18 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = UniversalPagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['first_name', 'last_name', 'email']
+    
+    @extend_schema(responses=HealthMetricSerializer(many=True))
+    @action(detail=True, methods=['get'])
+    def healthmetric(self, request, pk=None):
+        """Get health metrics for this user"""
+        user = self.get_object()
+        health_metrics = HealthMetric.objects.filter(user=user).order_by('-measured_at')
+        
+        page = self.paginate_queryset(health_metrics)
+        if page is not None:
+            serializer = HealthMetricSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = HealthMetricSerializer(health_metrics, many=True)
+        return Response(serializer.data)
