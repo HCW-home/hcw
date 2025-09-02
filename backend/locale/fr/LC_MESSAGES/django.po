@@ -183,7 +183,7 @@ msgstr "spécialités"
 
 #: consultations/models.py:127
 msgid "queue assignee"
-msgstr "responsable de file"
+msgstr "file d'attente assigné"
 
 #: consultations/models.py:129
 msgid "user assignee"

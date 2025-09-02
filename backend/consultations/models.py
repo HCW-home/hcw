@@ -19,6 +19,10 @@ class Queue(models.Model):
         verbose_name_plural = _('queues')
 
 
+class Type(models.TextChoices):
+    ONLINE = "Online", _("Online")
+    INPERSON = "InPerson", _("In person")
+
 class Consultation(models.Model):
     created_at = models.DateTimeField(_('created at'), auto_now_add=True)
     updated_at = models.DateTimeField(_('updated at'), auto_now=True)
@@ -26,6 +30,8 @@ class Consultation(models.Model):
 
     description = models.CharField(_('description'), null=True, blank=True)
     title = models.CharField(_('title'), null=True, blank=True)
+
+    type = models.CharField(choices=Type.choices, default=Type.ONLINE)
 
     beneficiary = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -146,14 +152,16 @@ class Reason(models.Model):
         verbose_name = _('reason')
         verbose_name_plural = _('reasons')
 
+    def clean(self):
+        super().clean()
+        if self.queue_assignee and self.user_assignee:
+            raise ValidationError(
+                _('Only one of queue assignee or user assignee must be provided.'))
+
 class RequestStatus(models.TextChoices):
     REQUESTED = "Requested", _("Requested")
     ACCEPTED = "Accepted", _("Accepted")
     CANCELLED = "Cancelled", _("Cancelled")
-
-class RequestType(models.TextChoices):
-    ONLINE = "Online", _("Online")
-    INPERSON = "InPerson", _("In person")
 
 class Request(models.Model):
     created_by = models.ForeignKey(
@@ -165,7 +173,7 @@ class Request(models.Model):
     beneficiary = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='requests_asbeneficiary')
 
-    type = models.CharField(choices=RequestType, default=RequestType.ONLINE)
+    type = models.CharField(choices=Type, default=Type.ONLINE)
     reason = models.ForeignKey(Reason, on_delete=models.PROTECT, related_name='reasons')
     comment = models.TextField()
     status = models.CharField(choices=RequestStatus.choices, default=RequestStatus.REQUESTED)

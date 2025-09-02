@@ -59,7 +59,7 @@ class ConsultationSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'created_at', 'updated_at', 'closed_at',
             'beneficiary', 'beneficiary_id', 'created_by', 'owned_by', 
-            'group', 'group_id', 'description', 'title'
+            'group', 'group_id', 'description', 'title', 'type'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'created_by', 'owned_by']
 
@@ -98,7 +98,8 @@ class ConsultationCreateSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Consultation
-        fields = ['group_id', 'beneficiary_id', 'closed_at']
+        fields = ['group_id', 'beneficiary_id',
+                  'closed_at', 'description', 'title', 'type']
 
     def validate_group_id(self, value):
         if value is not None:
