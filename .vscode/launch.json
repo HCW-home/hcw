@@ -14,6 +14,14 @@
             "django": true,
             "autoStartBrowser": false,
             "program": "${workspaceFolder}/backend/manage.py"
+        },
+        {
+          "name": "Python Debugger: Celery",
+          "type": "debugpy",
+          "request": "launch",
+          "module": "celery",
+          "args": ["-A", "core.celery", "worker", "--loglevel=debug"],
+          "cwd": "${workspaceFolder}/backend"
         }
     ]
 }
