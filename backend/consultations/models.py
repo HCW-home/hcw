@@ -139,7 +139,7 @@ class Message(models.Model):
 class ReasonAssignmentMethod(models.TextChoices):
     USER = 'User', _("User")
     QUEUE = 'Queue', _("Queue")
-    APPOINTMENT = 'Appointement', _("Appointement")
+    APPOINTMENT = 'Appointment', _("Appointment")
 
 class Reason(models.Model):
     speciality = models.ForeignKey(
