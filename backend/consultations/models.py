@@ -177,6 +177,11 @@ class Reason(models.Model):
                 raise ValidationError(
                     _(f'User must not be defined if assignment method is {ReasonAssignmentMethod.QUEUE}.'))
 
+        if self.assignment_method == ReasonAssignmentMethod.APPOINTMENT:
+            if self.user_assignee or self.queue_assignee:
+                raise ValidationError(
+                    _(f'User or Queue must not be defined if assignment method is {ReasonAssignmentMethod.APPOINTMENT}.'))
+
 class RequestStatus(models.TextChoices):
     REQUESTED = "Requested", _("Requested")
     ACCEPTED = "Accepted", _("Accepted")
