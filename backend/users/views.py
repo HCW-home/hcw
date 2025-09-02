@@ -10,7 +10,7 @@ from rest_framework import filters
 from django.contrib.auth import get_user_model
 from drf_spectacular.utils import extend_schema
 from .models import Speciality, Language
-from .serializers import SpecialitySerializer, UserDetailsSerializer, LanguageSerializer
+from .serializers import SpecialitySerializer, UserDetailsSerializer, LanguageSerializer, OrganisationSerializer
 from consultations.serializers import ReasonSerializer
 from itsdangerous import URLSafeTimedSerializer
 from django.conf import settings
@@ -87,6 +87,28 @@ class SpecialityViewSet(viewsets.ReadOnlyModelViewSet):
         specialty = self.get_object()
         doctors = User.objects.filter(specialities=specialty)
         serializer = UserDetailsSerializer(doctors, many=True)
+        return Response(serializer.data)
+
+    @extend_schema(responses=OrganisationSerializer(many=True))
+    @action(detail=True, methods=['get'])
+    def organisations(self, request, pk=None):
+        """Get organisations based on users with this specialty"""
+        specialty = self.get_object()
+        # Get users with this specialty who have a main_organisation
+        users_with_specialty = User.objects.filter(
+            specialities=specialty,
+            main_organisation__isnull=False
+        ).select_related('main_organisation')
+        
+        # Extract unique organizations
+        organisations = []
+        seen_org_ids = set()
+        for user in users_with_specialty:
+            if user.main_organisation.id not in seen_org_ids:
+                organisations.append(user.main_organisation)
+                seen_org_ids.add(user.main_organisation.id)
+        
+        serializer = OrganisationSerializer(organisations, many=True)
         return Response(serializer.data)
 
 
