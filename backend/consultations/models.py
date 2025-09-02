@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 from messaging.models import CommunicationMethod
 from datetime import time
+import re
 
 # Create your models here.
 
@@ -107,6 +108,11 @@ class Participant(models.Model):
         super().clean()
         if not self.user and not self.email and not self.phone:
             raise ValidationError(_('At least one of user, email or phone must be provided.'))
+        
+        if self.phone:
+            phone_pattern = r'^(\+\d{1,3}|00\d{1,3})\d{7,14}$'
+            if not re.match(phone_pattern, self.phone.replace(' ', '').replace('-', '')):
+                raise ValidationError(_('Phone number must start with +X or 00X followed by 7-14 digits.'))
 
 
 class Message(models.Model):
