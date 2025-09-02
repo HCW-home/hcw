@@ -4,7 +4,7 @@ from django.views.generic import View
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, DjangoModelPermissions
 from rest_framework.pagination import PageNumberPagination
 from django.contrib.auth import get_user_model
 from drf_spectacular.utils import extend_schema
@@ -24,6 +24,20 @@ from .models import HealthMetric
 from .serializers import HealthMetricSerializer
 
 User = get_user_model()
+
+class DjangoModelPermissionsWithView(DjangoModelPermissions):
+    """
+    Custom permission class that includes view permissions.
+    """
+    perms_map = {
+        'GET': ['%(app_label)s.view_%(model_name)s'],
+        'OPTIONS': [],
+        'HEAD': [],
+        'POST': ['%(app_label)s.add_%(model_name)s'],
+        'PUT': ['%(app_label)s.change_%(model_name)s'],
+        'PATCH': ['%(app_label)s.change_%(model_name)s'],
+        'DELETE': ['%(app_label)s.delete_%(model_name)s'],
+    }
 
 # Create your views here.
 
@@ -540,3 +554,13 @@ class UserHealthMetricsView(APIView):
         paginated_health_metrics = paginator.paginate_queryset(health_metrics, request)
         serializer = HealthMetricSerializer(paginated_health_metrics, many=True)
         return paginator.get_paginated_response(serializer.data)
+
+
+class UserViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for users - read only with GET endpoint
+    """
+    queryset = User.objects.all()
+    serializer_class = UserDetailsSerializer
+    permission_classes = [IsAuthenticated, DjangoModelPermissionsWithView]
+    pagination_class = UniversalPagination

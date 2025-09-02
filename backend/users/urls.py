@@ -7,6 +7,7 @@ from consultations.views import BookingSlotViewSet
 router = DefaultRouter()
 router.register(r'languages', views.LanguageViewSet)
 router.register(r'specialities', views.SpecialityViewSet)
+router.register(r'users', views.UserViewSet)
 
 # Create a separate router for user-specific endpoints
 user_router = DefaultRouter()
