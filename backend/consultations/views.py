@@ -17,7 +17,8 @@ from datetime import datetime, timedelta, time, date
 from dataclasses import dataclass
 from typing import List
 from .serializers import (
-    ConsultationSerializer, 
+    ConsultationSerializer,
+    ConsultationCreateSerializer,
     QueueSerializer, 
     AppointmentSerializer,
     ParticipantSerializer,
@@ -63,12 +64,18 @@ class ConsultationPagination(PageNumberPagination):
 
 
 class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
+    '''Consultation endpoint'''
     serializer_class = ConsultationSerializer
     permission_classes = [IsAuthenticated, DjangoModelPermissionsWithView]
     pagination_class = ConsultationPagination
     filterset_fields = ['group', 'beneficiary', 'created_by', 'owned_by']
     ordering = ['-created_at']
     ordering_fields = ['created_at', 'updated_at', 'closed_at']
+    
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return ConsultationCreateSerializer
+        return ConsultationSerializer
     
     def get_queryset(self):
         user = self.request.user

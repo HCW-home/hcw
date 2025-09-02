@@ -31,8 +31,6 @@ class Consultation(models.Model):
     description = models.CharField(_('description'), null=True, blank=True)
     title = models.CharField(_('title'), null=True, blank=True)
 
-    type = models.CharField(choices=Type.choices, default=Type.ONLINE)
-
     beneficiary = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
@@ -71,6 +69,8 @@ class AppointmentStatus(models.TextChoices):
     CANCELLED = "Cancelled", _("Cancelled")
 
 class Appointment(models.Model):
+
+    type = models.CharField(choices=Type.choices, default=Type.ONLINE)
     status = models.CharField(_('status'), choices=AppointmentStatus.choices, default=AppointmentStatus.SCHEDULED)
     consultation = models.ForeignKey(
         Consultation, on_delete=models.CASCADE, related_name='appointments', null=True, blank=True, verbose_name=_('consultation'))

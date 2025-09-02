@@ -31,18 +31,18 @@ class AppointmentSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Appointment
-        fields = ['id', 'scheduled_at', 'end_expected_at',
+        fields = ['id', 'scheduled_at', 'end_expected_at', 'type',
                   'consultation', 'created_by', 'status', 'created_at', 'participants']
         read_only_fields = ['id', 'status']
 
 class ConsultationMessageSerializer(serializers.ModelSerializer):
     created_by = serializers.HiddenField(
         default=serializers.CurrentUserDefault())
-    consultation = serializers.PrimaryKeyRelatedField(read_only=True)
+    # consultation = serializers.PrimaryKeyRelatedField(read_only=True)
     
     class Meta:
         model = Message
-        fields = ['id', 'content', 'attachment', 'created_at', 'created_by', 'consultation']
+        fields = ['id', 'content', 'attachment', 'created_at', 'created_by']
 
 class ConsultationSerializer(serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(read_only=True)
@@ -57,11 +57,12 @@ class ConsultationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Consultation
         fields = [
-            'id', 'created_at', 'updated_at', 'closed_at',
+            'id', 'created_at', 'updated_at',
             'beneficiary', 'beneficiary_id', 'created_by', 'owned_by', 
-            'group', 'group_id', 'description', 'title', 'type'
+            'group', 'group_id', 'description', 'title'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'created_by', 'owned_by']
+        read_only_fields = ['id', 'created_at', 'updated_at',
+                            'created_by', 'owned_by', 'closed_at']
 
     def create(self, validated_data):
         # Remove write-only fields from validated_data
@@ -93,32 +94,11 @@ class ConsultationSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 class ConsultationCreateSerializer(serializers.ModelSerializer):
-    group_id = serializers.IntegerField(required=False, allow_null=True)
-    beneficiary_id = serializers.IntegerField(required=False, allow_null=True)
-    
     class Meta:
         model = Consultation
-        fields = ['group_id', 'beneficiary_id',
-                  'closed_at', 'description', 'title', 'type']
+        fields = ['group', 'beneficiary',
+                  'description', 'title']
 
-    def validate_group_id(self, value):
-        if value is not None:
-            user = self.context['request'].user
-            try:
-                group = Queue.objects.get(id=value)
-                if user not in group.users.all():
-                    raise serializers.ValidationError("You don't have access to this group.")
-            except Queue.DoesNotExist:
-                raise serializers.ValidationError("This group does not exist.")
-        return value
-
-    def validate_beneficiary_id(self, value):
-        if value is not None:
-            try:
-                User.objects.get(id=value)
-            except User.DoesNotExist:
-                raise serializers.ValidationError("This user does not exist.")
-        return value
 
 class ReasonSerializer(serializers.ModelSerializer):
     class Meta:
