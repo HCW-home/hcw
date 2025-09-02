@@ -286,11 +286,6 @@ ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_REQUIRED = True
 
-MOBULA_API_KEY = os.getenv('MOBULA_API_KEY')
-
-ALEPHIUM_RPC_URL = 'https://node.mainnet.alephium.org'
-ALEPHIUM_EXPLORER_URL = 'https://backend.mainnet.alephium.org'
-
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache" if not DEBUG else 'django.core.cache.backends.dummy.DummyCache',
