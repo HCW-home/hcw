@@ -199,7 +199,7 @@ class Request(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='requests_asbeneficiary')
 
     type = models.CharField(choices=Type, default=Type.ONLINE)
-    reason = models.ForeignKey(Reason, on_delete=models.PROTECT, related_name='reasons')
+    reason = models.ForeignKey(Reason, on_delete=models.PROTECT, related_name='reasons', null=True, blank=True)
     comment = models.TextField()
 
     refused_reason = models.TextField(null=True, blank=True)
