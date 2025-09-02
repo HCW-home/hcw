@@ -136,6 +136,10 @@ class Message(models.Model):
         verbose_name = _('message')
         verbose_name_plural = _('messages')
 
+class ReasonAssignmentMethod(models.TextChoices):
+    USER = 'User', _("User")
+    QUEUE = 'Queue', _("Queue")
+    APPOINTMENT = 'Appointement', _("Appointement")
 
 class Reason(models.Model):
     speciality = models.ForeignKey(
@@ -148,20 +152,36 @@ class Reason(models.Model):
     duration = models.IntegerField(_('duration'), help_text=_('Duration in minutes'), default=30)
     is_active = models.BooleanField(_('is active'), default=True)
 
+    assignment_method = models.CharField(choices=ReasonAssignmentMethod.choices, default=ReasonAssignmentMethod.APPOINTMENT)
+
     class Meta:
         verbose_name = _('reason')
         verbose_name_plural = _('reasons')
 
     def clean(self):
         super().clean()
-        if self.queue_assignee and self.user_assignee:
-            raise ValidationError(
-                _('Only one of queue assignee or user assignee must be provided.'))
+
+        if self.assignment_method == ReasonAssignmentMethod.USER:
+            if self.queue_assignee:
+                raise ValidationError(
+                    _(f'Queue must not be defined if assignment method is {ReasonAssignmentMethod.USER}.'))
+            if not self.user_assignee:
+                raise ValidationError(
+                    _(f'User must be defined if assignment method is {ReasonAssignmentMethod.USER}.'))
+            
+        if self.assignment_method == ReasonAssignmentMethod.QUEUE:
+            if not self.queue_assignee:
+                raise ValidationError(
+                    _(f'Queue must be defined if assignment method is {ReasonAssignmentMethod.QUEUE}.'))
+            if self.user_assignee:
+                raise ValidationError(
+                    _(f'User must not be defined if assignment method is {ReasonAssignmentMethod.QUEUE}.'))
 
 class RequestStatus(models.TextChoices):
     REQUESTED = "Requested", _("Requested")
     ACCEPTED = "Accepted", _("Accepted")
     CANCELLED = "Cancelled", _("Cancelled")
+    REFUSED = "Refused", _("Refused")
 
 class Request(models.Model):
     created_by = models.ForeignKey(
@@ -176,6 +196,8 @@ class Request(models.Model):
     type = models.CharField(choices=Type, default=Type.ONLINE)
     reason = models.ForeignKey(Reason, on_delete=models.PROTECT, related_name='reasons')
     comment = models.TextField()
+
+    refused_reason = models.TextField(null=True, blank=True)
     status = models.CharField(choices=RequestStatus.choices, default=RequestStatus.REQUESTED)
 
     appointment = models.OneToOneField(Appointment, on_delete=models.SET_NULL, null=True, blank=True)

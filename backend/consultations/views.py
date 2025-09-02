@@ -429,6 +429,13 @@ class ReasonSlotsView(APIView):
                 type=OpenApiTypes.INT,
                 location=OpenApiParameter.QUERY,
             ),
+            OpenApiParameter(
+                name="organisation_id",
+                description="Filter slots for practitioners from a specific organisation",
+                required=False,
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+            ),
         ],
         responses={
             200: {
@@ -495,10 +502,20 @@ class ReasonSlotsView(APIView):
             except ValueError:
                 return Response({"error": "Invalid user_id"}, status=status.HTTP_400_BAD_REQUEST)
         
+        # Parse organisation_id filter
+        organisation_id_filter = request.query_params.get('organisation_id')
+        if organisation_id_filter:
+            try:
+                organisation_id_filter = int(organisation_id_filter)
+            except ValueError:
+                return Response({"error": "Invalid organisation_id"}, status=status.HTTP_400_BAD_REQUEST)
+        
         # Get practitioners with the required specialty
         practitioners_query = User.objects.filter(specialities=reason.speciality)
         if user_id_filter:
             practitioners_query = practitioners_query.filter(id=user_id_filter)
+        if organisation_id_filter:
+            practitioners_query = practitioners_query.filter(main_organisation_id=organisation_id_filter)
         
         practitioners = list(practitioners_query)
         if not practitioners:
