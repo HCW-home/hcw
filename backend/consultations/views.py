@@ -2,7 +2,6 @@ from django.shortcuts import render
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.views import APIView
 from django.db.models import Q
 from rest_framework.permissions import IsAuthenticated, DjangoModelPermissions
@@ -11,6 +10,8 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes, OpenApiExample
 from .permissions import ConsultationPermission
 from .models import Consultation, Queue, Appointment, Participant, Message, AppointmentStatus, Request, RequestStatus, Reason, BookingSlot
+from .filters import ConsultationFilter
+from .paginations import ConsultationPagination
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from datetime import datetime, timedelta, time, date
@@ -57,10 +58,6 @@ class Slot:
 from messaging.tasks import send_message_task
 
 
-class ConsultationPagination(PageNumberPagination):
-    page_size = 20
-    page_size_query_param = 'page_size'
-    max_page_size = 100
 
 
 class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
@@ -68,7 +65,7 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
     serializer_class = ConsultationSerializer
     permission_classes = [IsAuthenticated, DjangoModelPermissionsWithView]
     pagination_class = ConsultationPagination
-    filterset_fields = ['group', 'beneficiary', 'created_by', 'owned_by']
+    filterset_class = ConsultationFilter
     ordering = ['-created_at']
     ordering_fields = ['created_at', 'updated_at', 'closed_at']
     
