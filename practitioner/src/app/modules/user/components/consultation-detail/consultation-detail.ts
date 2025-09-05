@@ -353,5 +353,16 @@ export class ConsultationDetail implements OnInit, OnDestroy {
     return isConfirmed ? BadgeTypeEnum.green : BadgeTypeEnum.orange;
   }
 
+  getBeneficiaryDisplayName(): string {
+    const beneficiary = this.consultation()?.beneficiary;
+    if (!beneficiary) return 'No beneficiary assigned';
+    
+    const firstName = beneficiary.first_name?.trim() || '';
+    const lastName = beneficiary.last_name?.trim() || '';
+    const fullName = `${firstName} ${lastName}`.trim();
+    
+    return fullName || beneficiary.email || 'Unknown patient';
+  }
+
   protected readonly ButtonTypeEnum = ButtonTypeEnum;
 }

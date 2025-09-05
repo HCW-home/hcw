@@ -103,19 +103,19 @@
             </div>
           }
 
-          @if (consultation()?.beneficiary) {
-            <div class="info-item">
-              <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
-                Beneficiary
-              </app-typography>
-              <app-typography [variant]="TypographyTypeEnum['body-regular']">
-                {{ consultation()!.beneficiary!.first_name }} {{ consultation()!.beneficiary!.last_name }}
-              </app-typography>
+          <div class="info-item">
+            <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
+              Patient
+            </app-typography>
+            <app-typography [variant]="TypographyTypeEnum['body-regular']">
+              {{ getBeneficiaryDisplayName() }}
+            </app-typography>
+            @if (consultation()?.beneficiary?.email) {
               <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--Bluish-Gray-07)">
                 {{ consultation()!.beneficiary!.email }}
               </app-typography>
-            </div>
-          }
+            }
+          </div>
 
           @if (consultation()?.group) {
             <div class="info-item">

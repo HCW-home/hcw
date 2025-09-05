@@ -24,7 +24,7 @@ import {PaginatedResponse} from '../models/global';
   providedIn: 'root'
 })
 export class ConsultationService {
-  private apiUrl = `${environment.apiUrl}/consultations/api`;
+  private apiUrl = `${environment.apiUrl}`;
 
   constructor(private http: HttpClient) {
   }
@@ -36,6 +36,8 @@ export class ConsultationService {
     beneficiary?: number;
     created_by?: number;
     owned_by?: number;
+    is_closed?: boolean;
+    closed_at?: string;
   }): Observable<PaginatedResponse<Consultation>> {
     let httpParams = new HttpParams();
     if (params) {

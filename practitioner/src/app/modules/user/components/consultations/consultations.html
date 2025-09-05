@@ -26,7 +26,27 @@
     </div>
 
     <div class="consultations-content">
-      @if (activeTab() === 'active') {
+      @if (loading()) {
+        <div class="loading-state">
+          <app-loader></app-loader>
+          <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-07)">
+            Loading consultations...
+          </app-typography>
+        </div>
+      } @else if (error()) {
+        <div class="error-state">
+          <app-svg src="alert-circle" [svgStyle]="{'width.px': 48, 'height.px': 48, 'color': 'var(--Error-05)'}"></app-svg>
+          <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--Error-05)">
+            {{ error() }}
+          </app-typography>
+          <app-button
+            text="Retry"
+            [size]="ButtonSizeEnum.medium"
+            [style]="ButtonStyleEnum.stroke"
+            (click)="retryLoadConsultations()">
+          </app-button>
+        </div>
+      } @else if (activeTab() === 'active') {
         <div class="consultations-grid">
           @for (consultation of activeConsultations; track consultation.id) {
             <app-consultation-card

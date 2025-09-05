@@ -2,13 +2,15 @@ from typing import Optional, Dict, Any
 from django.conf import settings
 from messaging.models import MessagingProvider, ProviderName
 from .models import Message, CommunicationMethod, MessageStatus
+from .providers import ProviderFactory
 import logging
 
 logger = logging.getLogger(__name__)
 
+
 class MessagingService:
     """
-    Service to handle message sending via different providers
+    Service to handle message sending via different providers using the new provider architecture
     """
     
     @staticmethod
@@ -42,48 +44,55 @@ class MessagingService:
     @staticmethod
     def send_sms(message: Message) -> Dict[str, Any]:
         """
-        Send SMS message via provider
-        This is a placeholder - implement actual provider integration
+        Send SMS message via provider using the new provider architecture
         """
         try:
             logger.info(f"Sending SMS message {message.id} to {message.recipient_phone}")
             
-            provider = None
+            provider_config = None
             
             # Get provider by name if specified
             if message.provider_name:
                 logger.info(f"Using specified provider: {message.provider_name}")
-                provider = MessagingService.get_provider_by_name(message.provider_name)
-                if not provider:
+                provider_config = MessagingService.get_provider_by_name(message.provider_name)
+                if not provider_config:
                     logger.warning(f"Specified provider '{message.provider_name}' not found or inactive")
             
             # Otherwise, get best provider for phone number
-            if not provider and message.recipient_phone:
+            if not provider_config and message.recipient_phone:
                 logger.info(f"Finding best provider for phone number: {message.recipient_phone}")
-                provider = MessagingService.get_best_provider_for_phone(message.recipient_phone)
-                if provider:
-                    logger.info(f"Selected provider: {provider.name} (priority: {provider.priority})")
+                provider_config = MessagingService.get_best_provider_for_phone(message.recipient_phone)
+                if provider_config:
+                    logger.info(f"Selected provider: {provider_config.name} (priority: {provider_config.priority})")
             
-            if not provider:
+            if not provider_config:
                 error_msg = "No active messaging provider found"
                 logger.error(f"Message {message.id}: {error_msg}")
                 message.mark_as_failed(error_msg)
                 return {"success": False, "error": error_msg}
             
-            logger.info(f"Sending message {message.id} via {provider.name}")
+            # Create provider instance using factory
+            provider = ProviderFactory.create_provider(provider_config)
+            if not provider:
+                error_msg = f"Failed to create provider instance for {provider_config.name}"
+                logger.error(f"Message {message.id}: {error_msg}")
+                message.mark_as_failed(error_msg)
+                return {"success": False, "error": error_msg}
             
-            # PLACEHOLDER: Implement actual provider API calls
-            result = MessagingService._send_via_provider(provider, message)
+            logger.info(f"Sending message {message.id} via {provider_config.name}")
+            
+            # Send via provider
+            result = provider.send_sms(message)
             
             if result.get("success"):
-                logger.info(f"Message {message.id} sent successfully via {provider.name}. External ID: {result.get('external_id')}")
+                logger.info(f"Message {message.id} sent successfully via {provider_config.name}. External ID: {result.get('external_id')}")
                 message.mark_as_sent(result.get("external_id"))
-                return {"success": True, "external_id": result.get("external_id"), "provider": provider.name}
+                return {"success": True, "external_id": result.get("external_id"), "provider": provider_config.name}
             else:
                 error_msg = result.get("error", "Unknown error")
-                logger.error(f"Message {message.id} failed to send via {provider.name}: {error_msg}")
-                message.mark_as_failed(f"Provider {provider.name}: {error_msg}")
-                return {"success": False, "error": error_msg, "provider": provider.name}
+                logger.error(f"Message {message.id} failed to send via {provider_config.name}: {error_msg}")
+                message.mark_as_failed(f"Provider {provider_config.name}: {error_msg}")
+                return {"success": False, "error": error_msg, "provider": provider_config.name}
                 
         except Exception as e:
             error_msg = f"Error sending SMS: {str(e)}"
@@ -94,18 +103,41 @@ class MessagingService:
     @staticmethod
     def send_email(message: Message) -> Dict[str, Any]:
         """
-        Send email message
-        This is a placeholder - implement actual email sending
+        Send email message using the new provider architecture
         """
         try:
             logger.info(f"Sending email message {message.id} to {message.recipient_email}")
             
-            # PLACEHOLDER: Implement email sending logic
-            # For now, just mark as sent
-            external_id = f"email_{message.id}"
-            logger.info(f"Email message {message.id} sent successfully. External ID: {external_id}")
-            message.mark_as_sent(external_id)
-            return {"success": True, "external_id": external_id, "provider": "EMAIL"}
+            # Get email provider
+            provider_config = MessagingService.get_provider_by_name(ProviderName.EMAIL)
+            if not provider_config:
+                error_msg = "No active email provider found"
+                logger.error(f"Message {message.id}: {error_msg}")
+                message.mark_as_failed(error_msg)
+                return {"success": False, "error": error_msg}
+            
+            # Create provider instance using factory
+            provider = ProviderFactory.create_provider(provider_config)
+            if not provider:
+                error_msg = f"Failed to create email provider instance"
+                logger.error(f"Message {message.id}: {error_msg}")
+                message.mark_as_failed(error_msg)
+                return {"success": False, "error": error_msg}
+            
+            logger.info(f"Sending email {message.id} via EmailProvider")
+            
+            # Send via provider
+            result = provider.send_email(message)
+            
+            if result.get("success"):
+                logger.info(f"Email {message.id} sent successfully. External ID: {result.get('external_id')}")
+                message.mark_as_sent(result.get("external_id"))
+                return {"success": True, "external_id": result.get("external_id"), "provider": "EMAIL"}
+            else:
+                error_msg = result.get("error", "Unknown error")
+                logger.error(f"Email {message.id} failed to send: {error_msg}")
+                message.mark_as_failed(f"Email: {error_msg}")
+                return {"success": False, "error": error_msg, "provider": "EMAIL"}
             
         except Exception as e:
             error_msg = f"Error sending email: {str(e)}"
@@ -116,24 +148,31 @@ class MessagingService:
     @staticmethod
     def send_whatsapp(message: Message) -> Dict[str, Any]:
         """
-        Send WhatsApp message via Twilio
-        This is a placeholder - implement actual WhatsApp integration
+        Send WhatsApp message using the new provider architecture
         """
         try:
             logger.info(f"Sending WhatsApp message {message.id} to {message.recipient_phone}")
             
-            provider = MessagingService.get_provider_by_name(ProviderName.TWILIO_WHATSAPP)
-            
-            if not provider:
+            # Get WhatsApp provider (Twilio)
+            provider_config = MessagingService.get_provider_by_name(ProviderName.TWILIO_WHATSAPP)
+            if not provider_config:
                 error_msg = "No active WhatsApp provider found"
+                logger.error(f"Message {message.id}: {error_msg}")
+                message.mark_as_failed(error_msg)
+                return {"success": False, "error": error_msg}
+            
+            # Create provider instance using factory
+            provider = ProviderFactory.create_provider(provider_config)
+            if not provider:
+                error_msg = f"Failed to create WhatsApp provider instance"
                 logger.error(f"Message {message.id}: {error_msg}")
                 message.mark_as_failed(error_msg)
                 return {"success": False, "error": error_msg}
             
             logger.info(f"Sending WhatsApp message {message.id} via Twilio")
             
-            # PLACEHOLDER: Implement WhatsApp API call
-            result = MessagingService._send_whatsapp_via_twilio(provider, message)
+            # Send via provider
+            result = provider.send_whatsapp(message)
             
             if result.get("success"):
                 logger.info(f"WhatsApp message {message.id} sent successfully. External ID: {result.get('external_id')}")
@@ -152,71 +191,113 @@ class MessagingService:
             return {"success": False, "error": error_msg}
     
     @staticmethod
-    def _send_via_provider(provider: MessagingProvider, message: Message) -> Dict[str, Any]:
-        """
-        PLACEHOLDER: Send message via specific provider
-        Implement actual API calls for each provider
-        """
-        provider_handlers = {
-            ProviderName.SWISSCOM: MessagingService._send_via_swisscom,
-            ProviderName.OVH: MessagingService._send_via_ovh,
-            ProviderName.TWILIO: MessagingService._send_via_twilio,
-            ProviderName.CLICKATEL: MessagingService._send_via_clickatel,
-        }
-        
-        handler = provider_handlers.get(provider.name)
-        if handler:
-            return handler(provider, message)
-        else:
-            return {"success": False, "error": f"Provider {provider.name} not implemented"}
-    
-    @staticmethod
-    def _send_via_swisscom(provider: MessagingProvider, message: Message) -> Dict[str, Any]:
-        """PLACEHOLDER: Implement Swisscom SMS API"""
-        # TODO: Implement actual Swisscom API integration
-        logger.info(f"Sending SMS via Swisscom to {message.recipient_phone}")
-        return {"success": True, "external_id": f"swisscom_{message.id}"}
-    
-    @staticmethod
-    def _send_via_ovh(provider: MessagingProvider, message: Message) -> Dict[str, Any]:
-        """PLACEHOLDER: Implement OVH SMS API"""
-        # TODO: Implement actual OVH API integration
-        logger.info(f"Sending SMS via OVH to {message.recipient_phone}")
-        return {"success": True, "external_id": f"ovh_{message.id}"}
-    
-    @staticmethod
-    def _send_via_twilio(provider: MessagingProvider, message: Message) -> Dict[str, Any]:
-        """PLACEHOLDER: Implement Twilio SMS API"""
-        # TODO: Implement actual Twilio API integration
-        logger.info(f"Sending SMS via Twilio to {message.recipient_phone}")
-        return {"success": True, "external_id": f"twilio_{message.id}"}
-    
-    @staticmethod
-    def _send_via_clickatel(provider: MessagingProvider, message: Message) -> Dict[str, Any]:
-        """PLACEHOLDER: Implement ClickATel SMS API"""
-        # TODO: Implement actual ClickATel API integration
-        logger.info(f"Sending SMS via ClickATel to {message.recipient_phone}")
-        return {"success": True, "external_id": f"clickatel_{message.id}"}
-    
-    @staticmethod
-    def _send_whatsapp_via_twilio(provider: MessagingProvider, message: Message) -> Dict[str, Any]:
-        """PLACEHOLDER: Implement Twilio WhatsApp API"""
-        # TODO: Implement actual Twilio WhatsApp API integration
-        logger.info(f"Sending WhatsApp via Twilio to {message.recipient_phone}")
-        return {"success": True, "external_id": f"twilio_wa_{message.id}"}
-    
-    @staticmethod
     def send_message(message: Message) -> Dict[str, Any]:
         """
-        Main method to send a message based on its type
+        Main method to send a message based on its communication method
         """
-        if message.message_type == CommunicationMethod.SMS:
+        if message.communication_method == CommunicationMethod.SMS:
             return MessagingService.send_sms(message)
-        elif message.message_type == CommunicationMethod.EMAIL:
+        elif message.communication_method == CommunicationMethod.EMAIL:
             return MessagingService.send_email(message)
-        elif message.message_type == CommunicationMethod.WHATSAPP:
+        elif message.communication_method == CommunicationMethod.WHATSAPP:
             return MessagingService.send_whatsapp(message)
         else:
-            error_msg = f"Unsupported message type: {message.message_type}"
+            error_msg = f"Unsupported communication method: {message.communication_method}"
             message.mark_as_failed(error_msg)
             return {"success": False, "error": error_msg}
+    
+    @staticmethod
+    def get_delivery_status(message: Message) -> Dict[str, Any]:
+        """
+        Get delivery status for a message from its provider
+        
+        Args:
+            message (Message): Message to check status for
+            
+        Returns:
+            Dict[str, Any]: Status information
+        """
+        try:
+            if not message.external_message_id:
+                return {
+                    "status": "unknown",
+                    "error": "No external message ID available"
+                }
+            
+            # Determine which provider was used based on message
+            provider_config = None
+            if message.provider_name:
+                provider_config = MessagingService.get_provider_by_name(message.provider_name)
+            
+            if not provider_config:
+                # Try to determine provider from external_message_id format
+                external_id = message.external_message_id
+                if external_id.startswith("swisscom_"):
+                    provider_config = MessagingService.get_provider_by_name(ProviderName.SWISSCOM)
+                elif external_id.startswith("ovh_"):
+                    provider_config = MessagingService.get_provider_by_name(ProviderName.OVH)
+                elif external_id.startswith("twilio_"):
+                    provider_config = MessagingService.get_provider_by_name(ProviderName.TWILIO)
+                elif external_id.startswith("clickatel_"):
+                    provider_config = MessagingService.get_provider_by_name(ProviderName.CLICKATEL)
+                elif external_id.startswith("email_"):
+                    provider_config = MessagingService.get_provider_by_name(ProviderName.EMAIL)
+            
+            if not provider_config:
+                return {
+                    "status": "unknown",
+                    "error": "Cannot determine message provider"
+                }
+            
+            # Create provider instance
+            provider = ProviderFactory.create_provider(provider_config)
+            if not provider:
+                return {
+                    "status": "unknown",
+                    "error": f"Failed to create provider instance for {provider_config.name}"
+                }
+            
+            # Get status from provider
+            return provider.get_delivery_status(message.external_message_id)
+            
+        except Exception as e:
+            logger.error(f"Error getting delivery status for message {message.id}: {e}", exc_info=True)
+            return {
+                "status": "unknown",
+                "error": f"Error checking status: {str(e)}"
+            }
+    
+    @staticmethod
+    def test_provider_connection(provider_name: str) -> Dict[str, Any]:
+        """
+        Test connection to a specific provider
+        
+        Args:
+            provider_name (str): Name of provider to test
+            
+        Returns:
+            Dict[str, Any]: Test result
+        """
+        try:
+            provider_config = MessagingService.get_provider_by_name(provider_name)
+            if not provider_config:
+                return {
+                    "success": False,
+                    "error": f"Provider {provider_name} not found or inactive"
+                }
+            
+            provider = ProviderFactory.create_provider(provider_config)
+            if not provider:
+                return {
+                    "success": False,
+                    "error": f"Failed to create provider instance for {provider_name}"
+                }
+            
+            return provider.test_connection()
+            
+        except Exception as e:
+            logger.error(f"Error testing provider {provider_name}: {e}", exc_info=True)
+            return {
+                "success": False,
+                "error": f"Error testing provider: {str(e)}"
+            }

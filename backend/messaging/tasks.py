@@ -61,7 +61,7 @@ def send_message_task(self, message_id):
             message.celery_task_id = task_id
             message.save()
             
-            logger.info(f"Processing message: {message.message_type} to {message.recipient_phone or message.recipient_email}")
+            logger.info(f"Processing message: {message} to {message.recipient_phone or message.recipient_email}")
             
             # Send the message using the messaging service
             result = MessagingService.send_message(message)

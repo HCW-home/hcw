@@ -466,9 +466,15 @@ UNFOLD = {
                 "collapsible": True,
                 "items": [
                     {
-                        "title": _("Messaging Providers"),
+                        "title": _("Messaging providers"),
                         "icon": "message",
                         "link": "/admin/messaging/messagingprovider/",
+                        "permission": lambda request: request.user.has_perm("messaging.view_messagingprovider"),
+                    },
+                    {
+                        "title": _("Messages"),
+                        "icon": "message",
+                        "link": "/admin/messaging/message/",
                         "permission": lambda request: request.user.has_perm("messaging.view_messagingprovider"),
                     },
                 ],

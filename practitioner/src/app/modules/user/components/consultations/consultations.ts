@@ -1,4 +1,5 @@
 import { Component, OnInit, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
 import { Page } from '../../../../core/components/page/page';
 import { Breadcrumb } from '../../../../shared/components/breadcrumb/breadcrumb';
@@ -13,10 +14,13 @@ import {
 } from '../../../../shared/constants/button';
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
 import { Svg } from '../../../../shared/ui-components/svg/svg';
+import { ConsultationService } from '../../../../core/services/consultation.service';
+import { ConsultationMapperService } from '../../services/consultation-mapper.service';
+import { Loader } from '../../../../shared/components/loader/loader';
 
 @Component({
   selector: 'app-consultations',
-  imports: [Page, Button, Typography, Tabs, ConsultationCard, Svg],
+  imports: [Page, Button, Typography, Tabs, ConsultationCard, Svg, Loader],
   templateUrl: './consultations.html',
   styleUrl: './consultations.scss',
 })
@@ -24,28 +28,31 @@ export class Consultations implements OnInit {
   breadcrumbs = [{ label: 'Consultations' }];
 
   activeTab = signal<'active' | 'past'>('active');
-  consultations = signal<IConsultation[]>([]);
+  activeConsultationsData = signal<IConsultation[]>([]);
+  pastConsultationsData = signal<IConsultation[]>([]);
+  loading = signal<boolean>(false);
+  error = signal<string | null>(null);
 
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private consultationService: ConsultationService,
+    private consultationMapper: ConsultationMapperService
+  ) {}
 
   ngOnInit() {
-    this.loadMockData();
+    this.loadConsultations();
   }
 
   get activeConsultations(): IConsultation[] {
-    return this.consultations().filter(
-      c => c.status === 'scheduled' || c.status === 'active'
-    );
+    return this.activeConsultationsData();
   }
 
   get pastConsultations(): IConsultation[] {
-    return this.consultations().filter(
-      c => c.status === 'completed' || c.status === 'cancelled'
-    );
+    return this.pastConsultationsData();
   }
 
   get tabItems(): TabItem[] {
@@ -79,60 +86,37 @@ export class Consultations implements OnInit {
     console.log('Scheduling follow-up for:', consultation.id);
   }
 
-  private loadMockData() {
-    const mockConsultations: IConsultation[] = [
-      {
-        id: '1',
-        patient_name: 'Sarah Johnson',
-        consultation_type: 'video',
-        date: new Date('2024-12-27T14:30:00'),
-        duration: 30,
-        status: 'scheduled',
-        patient_age: 34,
-        symptoms: ['Headache', 'Fever'],
-        follow_up_required: false,
-        patient_email: 'sarah.j@email.com',
-      },
-      {
-        id: '2',
-        patient_name: 'Michael Chen',
-        consultation_type: 'audio',
-        date: new Date('2024-12-27T16:00:00'),
-        duration: 20,
-        status: 'active',
-        patient_age: 28,
-        symptoms: ['Cough', 'Sore throat'],
-        follow_up_required: true,
-        patient_phone: '+1234567890',
-      },
-      {
-        id: '3',
-        patient_name: 'Emily Davis',
-        consultation_type: 'video',
-        date: new Date('2024-12-26T10:00:00'),
-        duration: 45,
-        status: 'completed',
-        patient_age: 42,
-        symptoms: ['Back pain', 'Muscle stiffness'],
-        follow_up_required: true,
-        prescription: 'Prescribed muscle relaxants and physical therapy',
-        notes: 'Patient responding well to treatment',
-      },
-      {
-        id: '4',
-        patient_name: 'David Wilson',
-        consultation_type: 'chat',
-        date: new Date('2024-12-25T09:30:00'),
-        duration: 15,
-        status: 'completed',
-        patient_age: 55,
-        symptoms: ['Skin rash', 'Itching'],
-        follow_up_required: false,
-        prescription: 'Topical cream recommended',
-        notes: 'Minor allergic reaction, resolved',
-      },
-    ];
+  retryLoadConsultations() {
+    this.loadConsultations();
+  }
 
-    this.consultations.set(mockConsultations);
+  private loadConsultations() {
+    this.loading.set(true);
+    this.error.set(null);
+    
+    // Load active consultations (open ones)
+    const activeConsultations$ = this.consultationService.getConsultations({ is_closed: false });
+    
+    // Load past consultations (closed ones)  
+    const pastConsultations$ = this.consultationService.getConsultations({ is_closed: true });
+    
+    // Load both in parallel
+    Promise.all([
+      firstValueFrom(activeConsultations$),
+      firstValueFrom(pastConsultations$)
+    ]).then(([activeResponse, pastResponse]) => {
+      const activeUiConsultations = this.consultationMapper.mapToUIConsultations(activeResponse.results);
+      const pastUiConsultations = this.consultationMapper.mapToUIConsultations(pastResponse.results);
+      
+      this.activeConsultationsData.set(activeUiConsultations);
+      this.pastConsultationsData.set(pastUiConsultations);
+      this.loading.set(false);
+    }).catch((error) => {
+      console.error('Error loading consultations:', error);
+      this.error.set('Failed to load consultations. Please try again.');
+      this.activeConsultationsData.set([]);
+      this.pastConsultationsData.set([]);
+      this.loading.set(false);
+    });
   }
 }

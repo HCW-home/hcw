@@ -8,9 +8,15 @@
         <app-typography [variant]="TypographyTypeEnum['body-l-semibold']">
           {{ consultation().patient_name }}
         </app-typography>
-        <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--Bluish-Gray-07)">
-          Age {{ consultation().patient_age }}
-        </app-typography>
+        @if (consultation().patient_age) {
+          <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--Bluish-Gray-07)">
+            Age {{ consultation().patient_age }}
+          </app-typography>
+        } @else {
+          <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--Bluish-Gray-07)">
+            {{ consultation().patient_email || 'No contact info' }}
+          </app-typography>
+        }
       </div>
     </div>
     <app-badge [type]="getStatusBadgeType(consultation().status)">
