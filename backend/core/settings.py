@@ -309,10 +309,6 @@ FCM_DJANGO_SETTINGS = {
     "FCM_DEVICE_MODEL": "users.FCMDeviceOverride",
 }
 
-ALEPHIUM_NODE = os.getenv('ALEPHIUM_NODE')
-ALEPHIUM_EXPLORER = os.getenv('ALEPHIUM_EXPLORER')
-ALEPHIUM_PUBLIC_EXPLORER = os.getenv('ALEPHIUM_PUBLIC_EXPLORER')
-
 ENCRYPTION_KEY = os.getenv('ENCRYPTION_KEY')
 
 # Janus Media Server Configuration
