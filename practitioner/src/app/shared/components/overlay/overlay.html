@@ -1,8 +1,10 @@
-<div class="backdrop" @backdropAnimation></div>
+<div class="backdrop" animate.enter="fade-in" animate.leave="fade-out"></div>
 <div
   role="button"
   tabindex="0"
   class="overlay"
+  animate.enter="overlay-enter"
+  animate.leave="overlay-leave"
   (click)="handleOutsideClick($event)">
   <div class="overlay-content">
     @if (title()) {

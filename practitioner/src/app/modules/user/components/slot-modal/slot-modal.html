@@ -1,0 +1,117 @@
+<div class="slot-modal-content">
+  <div class="modal-header">
+    <app-typography [variant]="TypographyTypeEnum['body-l-semibold']">
+      {{modalTitle}}
+    </app-typography>
+    <app-button
+      text="Close"
+      leftIcon="close"
+      [size]="ButtonSizeEnum.small"
+      [style]="ButtonStyleEnum.text"
+      (buttonClick)="closeModal()">
+    </app-button>
+  </div>
+
+  <form [formGroup]="slotForm" (ngSubmit)="saveSlot()" class="modal-form">
+    <div class="form-section">
+      <app-typography [variant]="TypographyTypeEnum['body-l-semibold']" color="var(--Bluish-Gray-08)">
+        Time Settings
+      </app-typography>
+      
+      <div class="time-inputs">
+        <div class="form-field">
+          <app-input
+            label="Start Time"
+            type="time"
+            formControlName="start_time"
+            [invalid]="isFieldInvalid(slotForm, 'start_time')"
+            [invalidMessage]="getFieldError(slotForm, 'start_time')"
+            leftIcon="calendar">
+          </app-input>
+        </div>
+
+        <div class="form-field">
+          <app-input
+            label="End Time"
+            type="time"
+            formControlName="end_time"
+            [invalid]="isFieldInvalid(slotForm, 'end_time')"
+            [invalidMessage]="getFieldError(slotForm, 'end_time')"
+            leftIcon="calendar">
+          </app-input>
+        </div>
+      </div>
+
+      <div class="time-inputs">
+        <div class="form-field">
+          <app-input
+            label="Break Start (Optional)"
+            type="time"
+            formControlName="start_break"
+            leftIcon="pause">
+          </app-input>
+        </div>
+
+        <div class="form-field">
+          <app-input
+            label="Break End (Optional)"
+            type="time"
+            formControlName="end_break"
+            leftIcon="pause">
+          </app-input>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <app-typography [variant]="TypographyTypeEnum['body-l-semibold']" color="var(--Bluish-Gray-08)">
+        Working Days
+      </app-typography>
+      
+      <div class="days-grid">
+        @for (day of weekDays; track day.key) {
+          <div class="day-item">
+            <app-switch
+              [formControlName]="day.key"
+              [label]="day.short">
+            </app-switch>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="form-section">
+      <app-typography [variant]="TypographyTypeEnum['body-l-semibold']" color="var(--Bluish-Gray-08)">
+        Validity Period (Optional)
+      </app-typography>
+      
+      <div class="form-field">
+        <app-input
+          label="Valid Until Date"
+          type="date"
+          formControlName="valid_until"
+          placeholder="Leave empty for permanent slot"
+          leftIcon="calendar">
+        </app-input>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <app-button
+        text="Cancel"
+        [size]="ButtonSizeEnum.medium"
+        [style]="ButtonStyleEnum.stroke"
+        (buttonClick)="closeModal()">
+      </app-button>
+
+      <app-button
+        [text]="modalMode === 'create' ? 'Create Slot' : 'Update Slot'"
+        [leftIcon]="modalMode === 'create' ? 'plus' : 'check'"
+        [size]="ButtonSizeEnum.medium"
+        [style]="ButtonStyleEnum.primary"
+        [disabled]="isSaving"
+        [loading]="isSaving">
+      </app-button>
+    </div>
+  </form>
+</div>

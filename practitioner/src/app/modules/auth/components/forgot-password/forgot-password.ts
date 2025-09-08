@@ -10,13 +10,13 @@ import {
 import { Router, RouterLink } from '@angular/router';
 import { RoutePaths } from '../../../../core/constants/routes';
 import {
+  FormGroup,
+  Validators,
   FormBuilder,
   FormControl,
-  FormGroup,
   ReactiveFormsModule,
-  Validators,
 } from '@angular/forms';
-import { AdminAuth } from '../../../../core/services/admin-auth';
+import { Auth } from '../../../../core/services/auth';
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { ValidationService } from '../../../../core/services/validation.service';
 
@@ -35,7 +35,7 @@ export class ForgotPassword {
   private router = inject(Router);
   private formBuilder = inject(FormBuilder);
   private toaster = inject(ToasterService);
-  private adminAuthService = inject(AdminAuth);
+  private adminAuthService = inject(Auth);
   public validationService = inject(ValidationService);
 
   form: FormGroup<ForgotPasswordForm> = this.formBuilder.nonNullable.group({

@@ -1,0 +1,290 @@
+.consultation-form-container {
+  padding: 32px;
+  background: var(--Background-01);
+  min-height: calc(100vh - 200px);
+
+  .consultation-form-header {
+    margin-bottom: 32px;
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+
+      .title-section {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      @media (max-width: 768px) {
+        flex-direction: column;
+        gap: 16px;
+        align-items: stretch;
+      }
+    }
+  }
+
+  .loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+  }
+
+  .consultation-form-content {
+    .consultation-form {
+      max-width: 1000px;
+
+      .form-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        border: 1px solid var(--Bluish-Gray-02);
+        margin-bottom: 24px;
+        overflow: hidden;
+
+        .card-header {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 20px 24px;
+          background: var(--Bluish-Gray-01);
+          border-bottom: 1px solid var(--Bluish-Gray-02);
+
+          app-svg {
+            color: var(--Primary-05);
+          }
+
+          .header-actions {
+            margin-left: auto;
+          }
+        }
+
+        .card-content {
+          padding: 24px;
+        }
+
+        .form-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 20px;
+
+          .form-field {
+            display: flex;
+            flex-direction: column;
+
+            &.full-width {
+              grid-column: 1 / -1;
+            }
+          }
+
+          @media (max-width: 768px) {
+            grid-template-columns: 1fr;
+            gap: 16px;
+
+            .form-field {
+              grid-column: 1;
+            }
+          }
+        }
+      }
+
+      .appointment-section {
+        border: 2px solid var(--Bluish-Gray-02);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+
+        .appointment-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 20px;
+          padding-bottom: 12px;
+          border-bottom: 1px solid var(--Bluish-Gray-02);
+        }
+
+        .appointment-form {
+          .appointment-times {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
+
+            @media (max-width: 768px) {
+              grid-template-columns: 1fr;
+              gap: 16px;
+            }
+          }
+
+          .participants-section {
+            background: var(--Background-01);
+            border-radius: 8px;
+            padding: 16px;
+
+            .participants-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 16px;
+            }
+
+            .participant-form {
+              display: flex;
+              align-items: flex-end;
+              gap: 16px;
+              padding: 16px;
+              background: white;
+              border-radius: 8px;
+              border: 1px solid var(--Bluish-Gray-02);
+              margin-bottom: 12px;
+
+              &:last-child {
+                margin-bottom: 0;
+              }
+
+              .participant-fields {
+                display: grid;
+                grid-template-columns: 2fr 1fr 1fr;
+                gap: 16px;
+                flex: 1;
+
+                @media (max-width: 768px) {
+                  grid-template-columns: 1fr;
+                  gap: 12px;
+                }
+              }
+
+              .participant-actions {
+                display: flex;
+                align-items: center;
+                margin-left: 12px;
+              }
+            }
+          }
+        }
+      }
+
+      .appointment-divider {
+        height: 1px;
+        background: var(--Bluish-Gray-02);
+        margin: 24px 0;
+      }
+
+      .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 16px;
+        margin-top: 32px;
+        padding: 24px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        border: 1px solid var(--Bluish-Gray-02);
+
+        @media (max-width: 768px) {
+          flex-direction: column;
+          gap: 12px;
+
+          app-button {
+            width: 100%;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 1200px) {
+  .consultation-form-container {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .consultation-form-container {
+    padding: 16px;
+
+    .consultation-form-header {
+      margin-bottom: 24px;
+    }
+
+    .consultation-form-content .consultation-form {
+      .form-card {
+        .card-header {
+          padding: 16px 20px;
+        }
+
+        .card-content {
+          padding: 20px;
+        }
+      }
+
+      .appointment-section {
+        padding: 16px;
+
+        .appointment-form {
+          .participants-section {
+            padding: 12px;
+
+            .participant-form {
+              flex-direction: column;
+              align-items: stretch;
+              gap: 12px;
+
+              .participant-fields {
+                grid-template-columns: 1fr;
+              }
+
+              .participant-actions {
+                margin-left: 0;
+                justify-content: flex-end;
+              }
+            }
+          }
+        }
+      }
+
+      .form-actions {
+        margin-top: 24px;
+        padding: 20px;
+      }
+    }
+  }
+}
+
+// Form field styling
+.form-field {
+  .form-label {
+    margin-bottom: 8px;
+  }
+}
+
+// Hover effects
+.form-card {
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  }
+}
+
+.appointment-section {
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: var(--Primary-04);
+  }
+}
+
+.participant-form {
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: var(--Primary-03);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+}

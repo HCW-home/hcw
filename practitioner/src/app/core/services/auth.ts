@@ -12,7 +12,7 @@ import {
 @Injectable({
   providedIn: 'root'
 })
-export class AdminAuth {
+export class Auth {
   httpClient: HttpClient = inject(HttpClient);
 
   isLoggedIn() {

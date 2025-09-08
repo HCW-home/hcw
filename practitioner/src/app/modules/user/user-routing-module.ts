@@ -5,6 +5,7 @@ import { RoutePaths } from '../../core/constants/routes';
 import { Dashboard } from './components/dashboard/dashboard';
 import { Consultations } from './components/consultations/consultations';
 import { ConsultationDetail } from './components/consultation-detail/consultation-detail';
+import { ConsultationForm } from './components/consultation-form/consultation-form';
 import { UserProfile } from './components/user-profile/user-profile';
 import { Test } from './components/test/test';
 import { Availability } from './components/availability/availability';
@@ -31,7 +32,15 @@ const routes: Routes = [
         component: Consultations,
       },
       {
-        path: 'consultations/:id',
+        path: `${RoutePaths.CONSULTATIONS}/new`,
+        component: ConsultationForm,
+      },
+      {
+        path: `${RoutePaths.CONSULTATIONS}/:id/edit`,
+        component: ConsultationForm,
+      },
+      {
+        path: RoutePaths.CONSULTATION_DETAIL,
         component: ConsultationDetail,
       },
       {

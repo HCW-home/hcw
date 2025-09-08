@@ -23,7 +23,19 @@
     display: flex;
     overflow: hidden;
     align-items: flex-start;
+    transition: height 300ms ease-in-out, opacity 300ms ease-in-out, padding 300ms ease-in-out;
 
+    &.accordion-closed {
+      height: 0;
+      opacity: 0;
+      padding: 0;
+    }
+
+    &.accordion-open {
+      height: auto;
+      opacity: 1;
+      padding: 8px 0;
+    }
 
     .answer-content {
       gap: 8px;

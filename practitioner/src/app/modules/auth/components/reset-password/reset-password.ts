@@ -17,7 +17,7 @@ import {
   ButtonStyleEnum,
 } from '../../../../shared/constants/button';
 
-import { AdminAuth } from '../../../../core/services/admin-auth';
+import { Auth } from '../../../../core/services/auth';
 import { ValidationService } from '../../../../core/services/validation.service';
 import { regexpPasswordSpec } from '../../../../shared/tools/regular-expressions';
 import { ErrorMessage } from '../../../../shared/components/error-message/error-message';
@@ -40,7 +40,7 @@ export class ResetPassword implements OnInit {
   errorMessage = '';
   public mode: 'set' | 'reset' = 'reset';
   private formBuilder = inject(FormBuilder);
-  private adminAuthService = inject(AdminAuth);
+  private adminAuthService = inject(Auth);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private toaster = inject(ToasterService);

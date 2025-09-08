@@ -15,7 +15,7 @@
     </app-svg>
   </div>
   @if (entry()?.answer) {
-    <div class="answer" [@openClose]="entry()?.isOpen ? 'open' : 'closed'">
+    <div class="answer" [class.accordion-open]="entry()?.isOpen" [class.accordion-closed]="!entry()?.isOpen">
       <div class="answer-content">
         <app-typography
           [variant]="TypographyTypeEnum['body-medium']"

@@ -1,6 +1,5 @@
 <app-page>
   <div class="consultation-detail">
-    <!-- Header -->
     <div class="consultation-header">
       <app-back-button></app-back-button>
 
@@ -11,6 +10,14 @@
 
         @if (consultation()) {
           <div class="header-actions">
+            <app-button
+              text="Edit"
+              leftIcon="edit"
+              [size]="ButtonSizeEnum.medium"
+              [style]="ButtonStyleEnum.stroke"
+              (buttonClick)="editConsultation()">
+            </app-button>
+
             @if (!consultation()?.closed_at) {
               <app-button
                 text="Close Consultation"
@@ -41,7 +48,6 @@
         </app-typography>
       </div>
     } @else if (consultation()) {
-      <!-- Consultation Info -->
       <div class="consultation-info-card">
         <div class="info-header">
           <div class="title-section">
@@ -137,12 +143,9 @@
         (tabChange)="setActiveTab($event)">
       </app-tabs>
 
-      <!-- Tab Content -->
       <div class="tab-content">
         @if (activeTab() === 'appointments') {
-          <!-- Appointments Tab -->
           <div class="appointments-section">
-            <!-- Create Appointment Form -->
             <div class="create-form-card">
               <div class="form-header">
                 <app-typography [variant]="TypographyTypeEnum['h3-semibold']">
@@ -186,7 +189,6 @@
               </form>
             </div>
 
-            <!-- Appointments List -->
             @if (isLoadingAppointments()) {
               <div class="loading-container">
                 <app-loader></app-loader>
@@ -271,7 +273,6 @@
             }
           </div>
         } @else if (activeTab() === 'participants') {
-          <!-- Participants Tab -->
           <div class="participants-section">
             @if (!selectedAppointment()) {
               <div class="no-selection">
@@ -284,7 +285,6 @@
                 </app-typography>
               </div>
             } @else {
-              <!-- Selected Appointment Info -->
               <div class="selected-appointment-info">
                 <div class="appointment-summary">
                   <app-svg src="calendar" [svgStyle]="{'width.px': 24, 'height.px': 24}"></app-svg>
@@ -299,7 +299,6 @@
                 </div>
               </div>
 
-              <!-- Add Participant Form -->
               <div class="create-form-card">
                 <div class="form-header">
                   <app-typography [variant]="TypographyTypeEnum['h3-semibold']">
@@ -340,18 +339,18 @@
                   </div>
 
                   <div class="form-actions">
-                    <button
-                      type="submit"
-                      class="add-participant-btn"
-                      [disabled]="participantForm.invalid">
-                      <app-svg src="user"></app-svg>
-                      Add Participant
-                    </button>
+                    <app-button
+                      text="Add Participant"
+                      leftIcon="user"
+                      [size]="ButtonSizeEnum.medium"
+                      [style]="ButtonStyleEnum.primary"
+                      [disabled]="participantForm.invalid"
+                      (buttonClick)="addParticipant()">
+                    </app-button>
                   </div>
                 </form>
               </div>
 
-              <!-- Participants List -->
               @if (isLoadingParticipants()) {
                 <div class="loading-container">
                   <app-loader></app-loader>

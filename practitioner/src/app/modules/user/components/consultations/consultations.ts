@@ -17,10 +17,11 @@ import { Svg } from '../../../../shared/ui-components/svg/svg';
 import { ConsultationService } from '../../../../core/services/consultation.service';
 import { ConsultationMapperService } from '../../services/consultation-mapper.service';
 import { Loader } from '../../../../shared/components/loader/loader';
+import { RoutePaths } from '../../../../core/constants/routes';
 
 @Component({
   selector: 'app-consultations',
-  imports: [Page, Button, Typography, Tabs, ConsultationCard, Svg, Loader],
+  imports: [Page, Breadcrumb, Button, Typography, Tabs, ConsultationCard, Svg, Loader],
   templateUrl: './consultations.html',
   styleUrl: './consultations.scss',
 })
@@ -79,11 +80,15 @@ export class Consultations implements OnInit {
   }
 
   viewConsultationDetails(consultation: IConsultation) {
-    this.router.navigate(['/app/consultations', consultation.id]);
+    this.router.navigate([`/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`, consultation.id]);
   }
 
   scheduleFollowUp(consultation: IConsultation) {
     console.log('Scheduling follow-up for:', consultation.id);
+  }
+
+  createConsultation() {
+    this.router.navigate([`/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}/new`]);
   }
 
   retryLoadConsultations() {
@@ -93,21 +98,18 @@ export class Consultations implements OnInit {
   private loadConsultations() {
     this.loading.set(true);
     this.error.set(null);
-    
-    // Load active consultations (open ones)
+
     const activeConsultations$ = this.consultationService.getConsultations({ is_closed: false });
-    
-    // Load past consultations (closed ones)  
+
     const pastConsultations$ = this.consultationService.getConsultations({ is_closed: true });
-    
-    // Load both in parallel
+
     Promise.all([
       firstValueFrom(activeConsultations$),
       firstValueFrom(pastConsultations$)
     ]).then(([activeResponse, pastResponse]) => {
       const activeUiConsultations = this.consultationMapper.mapToUIConsultations(activeResponse.results);
       const pastUiConsultations = this.consultationMapper.mapToUIConsultations(pastResponse.results);
-      
+
       this.activeConsultationsData.set(activeUiConsultations);
       this.pastConsultationsData.set(pastUiConsultations);
       this.loading.set(false);

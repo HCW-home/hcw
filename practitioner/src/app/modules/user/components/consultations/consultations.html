@@ -1,4 +1,6 @@
 <app-page>
+  <app-breadcrumb [breadcrumbs]="breadcrumbs"></app-breadcrumb>
+
   <div class="consultations-container">
     <div class="consultations-header">
       <div class="header-content">
@@ -14,7 +16,8 @@
           text="New Consultation"
           leftIcon="plus"
           [size]="ButtonSizeEnum.medium"
-          [style]="ButtonStyleEnum.primary">
+          [style]="ButtonStyleEnum.primary"
+          (buttonClick)="createConsultation()">
         </app-button>
       </div>
 

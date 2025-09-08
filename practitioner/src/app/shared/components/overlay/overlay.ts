@@ -1,5 +1,4 @@
 import { Component, input, output } from '@angular/core';
-import { backdropAnimation } from '../../animations/modal';
 import { Typography } from '../../ui-components/typography/typography';
 import { TypographyTypeEnum } from '../../constants/typography';
 import { Button } from '../../ui-components/button/button';
@@ -9,8 +8,7 @@ import { ButtonSizeEnum, ButtonStateEnum, ButtonStyleEnum } from '../../constant
   selector: 'app-overlay',
   imports: [Typography, Button],
   templateUrl: './overlay.html',
-  styleUrl: './overlay.scss',
-  animations: [backdropAnimation],
+  styleUrl: './overlay.scss'
 })
 export class Overlay {
   title = input<string>('');

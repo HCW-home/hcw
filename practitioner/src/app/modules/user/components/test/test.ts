@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, ViewChild, ElementRef, inject } from '@angular/core';
 import { Page } from '../../../../core/components/page/page';
 import { Breadcrumb } from '../../../../shared/components/breadcrumb/breadcrumb';
 import { Button } from '../../../../shared/ui-components/button/button';
@@ -43,7 +43,9 @@ export class Test implements OnInit, OnDestroy {
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
 
-  constructor(private router: Router) {}
+  private router = inject(Router);
+
+  constructor() {}
 
   ngOnInit() {
     this.updateSystemStatus();

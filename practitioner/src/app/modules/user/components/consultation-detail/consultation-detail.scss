@@ -1,7 +1,6 @@
 .consultation-detail {
   padding: 24px;
   max-width: 1200px;
-  margin: 0 auto;
 
   .consultation-header {
     display: flex;
@@ -242,65 +241,6 @@
     }
   }
 
-  // Custom button styles
-  .create-btn,
-  .add-participant-btn,
-  .manage-btn,
-  .cancel-btn,
-  .remove-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
-    border-radius: 8px;
-    border: none;
-    font-weight: 500;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-decoration: none;
-
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-  }
-
-  .create-btn,
-  .add-participant-btn {
-    background: var(--Primary-04);
-    color: white;
-
-    &:hover:not(:disabled) {
-      background: var(--Primary-05);
-    }
-  }
-
-  .manage-btn {
-    background: transparent;
-    color: var(--Primary-04);
-    border: 1px solid var(--Primary-04);
-
-    &:hover {
-      background: var(--Primary-01);
-    }
-  }
-
-  .cancel-btn,
-  .remove-btn {
-    background: transparent;
-    color: var(--Error-04);
-    border: 1px solid var(--Error-04);
-
-    &:hover {
-      background: var(--Error-01);
-    }
-  }
-
-  .remove-btn {
-    padding: 6px 12px;
-    font-size: 12px;
-  }
 }
 
 // Responsive design

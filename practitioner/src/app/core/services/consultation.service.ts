@@ -265,22 +265,22 @@ export class ConsultationService {
         }
       });
     }
-    return this.http.get<PaginatedResponse<BookingSlot>>(`${this.apiUrl}/bookingslots/`, {params: httpParams});
+    return this.http.get<PaginatedResponse<BookingSlot>>(`${this.apiUrl}/user/bookingslots/`, {params: httpParams});
   }
 
   getBookingSlot(id: number): Observable<BookingSlot> {
-    return this.http.get<BookingSlot>(`${this.apiUrl}/bookingslots/${id}/`);
+    return this.http.get<BookingSlot>(`${this.apiUrl}/user/bookingslots/${id}/`);
   }
 
   createBookingSlot(data: CreateBookingSlot): Observable<BookingSlot> {
-    return this.http.post<BookingSlot>(`${this.apiUrl}/bookingslots/`, data);
+    return this.http.post<BookingSlot>(`${this.apiUrl}/user/bookingslots/`, data);
   }
 
   updateBookingSlot(id: number, data: Partial<CreateBookingSlot>): Observable<BookingSlot> {
-    return this.http.patch<BookingSlot>(`${this.apiUrl}/bookingslots/${id}/`, data);
+    return this.http.patch<BookingSlot>(`${this.apiUrl}/user/bookingslots/${id}/`, data);
   }
 
   deleteBookingSlot(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/bookingslots/${id}/`);
+    return this.http.delete<void>(`${this.apiUrl}/user/bookingslots/${id}/`);
   }
 }

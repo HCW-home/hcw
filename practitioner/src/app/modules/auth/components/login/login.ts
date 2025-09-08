@@ -17,7 +17,7 @@ import {
   ReactiveFormsModule,
 } from '@angular/forms';
 import { ValidationService } from '../../../../core/services/validation.service';
-import { AdminAuth } from '../../../../core/services/admin-auth';
+import { Auth } from '../../../../core/services/auth';
 import { ErrorMessage } from '../../../../shared/components/error-message/error-message';
 
 interface LoginForm {
@@ -43,7 +43,7 @@ export class Login {
   loadingButton = false;
   private router = inject(Router);
   private formBuilder = inject(FormBuilder);
-  private adminAuthService = inject(AdminAuth);
+  private adminAuthService = inject(Auth);
   public validationService = inject(ValidationService);
   form: FormGroup<LoginForm> = this.formBuilder.nonNullable.group({
     email: ['info@iabsis.com', [Validators.required, Validators.email]],

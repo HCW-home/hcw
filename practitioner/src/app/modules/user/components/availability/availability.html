@@ -1,3 +1,269 @@
 <app-page>
   <app-breadcrumb [breadcrumbs]="breadcrumbs"></app-breadcrumb>
+
+  <div class="availability-container">
+    <div class="availability-header">
+      <div class="header-content">
+        <div class="title-section">
+          <app-typography [variant]="TypographyTypeEnum['h2-semibold']">
+            Availability Management
+          </app-typography>
+          <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-07)">
+            Manage your weekly schedule and consultation time slots
+          </app-typography>
+        </div>
+      </div>
+
+      <app-tabs
+        [tabs]="tabItems()"
+        [activeTab]="activeTab()"
+        (tabChange)="setActiveTab($event)">
+      </app-tabs>
+    </div>
+
+    <div class="availability-content">
+      @if (isLoading()) {
+        <div class="loading-state">
+          <app-loader></app-loader>
+          <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-07)">
+            Loading availability...
+          </app-typography>
+        </div>
+      } @else {
+        @if (activeTab() === 'schedule') {
+          <div class="schedule-tab">
+            <form [formGroup]="scheduleForm" (ngSubmit)="saveSchedule()" class="schedule-form">
+
+              <div class="schedule-card">
+                <div class="card-header">
+                  <app-svg src="calendar" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
+                  <app-typography [variant]="TypographyTypeEnum['body-l-semibold']">
+                    Working Hours
+                  </app-typography>
+                </div>
+
+                <div class="card-content">
+                  <div class="time-inputs">
+                    <div class="form-field">
+                      <app-input
+                        label="Start Time"
+                        type="time"
+                        formControlName="start_time"
+                        [invalid]="isFieldInvalid(scheduleForm, 'start_time')"
+                        [invalidMessage]="getFieldError(scheduleForm, 'start_time')"
+                        leftIcon="calendar">
+                      </app-input>
+                    </div>
+
+                    <div class="form-field">
+                      <app-input
+                        label="End Time"
+                        type="time"
+                        formControlName="end_time"
+                        [invalid]="isFieldInvalid(scheduleForm, 'end_time')"
+                        [invalidMessage]="getFieldError(scheduleForm, 'end_time')"
+                        leftIcon="calendar">
+                      </app-input>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="schedule-card">
+                <div class="card-header">
+                  <app-svg src="pause" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
+                  <app-typography [variant]="TypographyTypeEnum['body-l-semibold']">
+                    Break Time (Optional)
+                  </app-typography>
+                </div>
+
+                <div class="card-content">
+                  <div class="time-inputs">
+                    <div class="form-field">
+                      <app-input
+                        label="Break Start"
+                        type="time"
+                        formControlName="start_break"
+                        placeholder="12:00"
+                        leftIcon="pause">
+                      </app-input>
+                    </div>
+
+                    <div class="form-field">
+                      <app-input
+                        label="Break End"
+                        type="time"
+                        formControlName="end_break"
+                        placeholder="13:00"
+                        leftIcon="pause">
+                      </app-input>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="schedule-card">
+                <div class="card-header">
+                  <app-svg src="calendar" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
+                  <app-typography [variant]="TypographyTypeEnum['body-l-semibold']">
+                    Working Days
+                  </app-typography>
+                </div>
+
+                <div class="card-content">
+                  <div class="days-grid">
+                    @for (day of weekDays; track day.key) {
+                      <div class="day-item">
+                        <app-switch
+                          [formControlName]="day.key"
+                          [label]="day.label">
+                        </app-switch>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <div class="schedule-card">
+                <div class="card-header">
+                  <app-svg src="calendar" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
+                  <app-typography [variant]="TypographyTypeEnum['body-l-semibold']">
+                    Schedule Validity (Optional)
+                  </app-typography>
+                </div>
+
+                <div class="card-content">
+                  <div class="form-field">
+                    <app-input
+                      label="Valid Until Date"
+                      type="date"
+                      formControlName="valid_until"
+                      placeholder="Leave empty for permanent schedule"
+                      leftIcon="calendar">
+                    </app-input>
+                  </div>
+                </div>
+              </div>
+
+              <div class="schedule-actions">
+                <app-button
+                  [text]="selectedSlot() ? 'Update Schedule' : 'Create Schedule'"
+                  [leftIcon]="selectedSlot() ? 'check' : 'plus'"
+                  [size]="ButtonSizeEnum.large"
+                  [style]="ButtonStyleEnum.primary"
+                  [disabled]="isSaving()"
+                  [loading]="isSaving()">
+                </app-button>
+              </div>
+            </form>
+          </div>
+        }
+
+        @if (activeTab() === 'slots') {
+          <div class="slots-tab">
+            <div class="slots-header">
+              <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--Bluish-Gray-07)">
+                Manage your individual time slots for different schedules
+              </app-typography>
+              <app-button
+                text="Add Time Slot"
+                leftIcon="plus"
+                [size]="ButtonSizeEnum.medium"
+                [style]="ButtonStyleEnum.primary"
+                (buttonClick)="openSlotModal('create')">
+              </app-button>
+            </div>
+
+            <div class="slots-grid">
+              @for (slot of bookingSlots(); track slot.id) {
+                <div class="slot-card">
+                  <div class="slot-header">
+                    <div class="slot-time">
+                      <app-typography [variant]="TypographyTypeEnum['body-l-semibold']">
+                        {{getSlotTimeRange(slot)}}
+                      </app-typography>
+                      <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--Bluish-Gray-06)">
+                        Break: {{getBreakTimeRange(slot)}}
+                      </app-typography>
+                    </div>
+                    <div class="slot-actions">
+                      <app-button
+                        text="Edit"
+                        leftIcon="edit"
+                        [size]="ButtonSizeEnum.small"
+                        [style]="ButtonStyleEnum.stroke"
+                        (buttonClick)="openSlotModal('edit', slot)">
+                      </app-button>
+                      <app-button
+                        text="Delete"
+                        leftIcon="delete"
+                        [size]="ButtonSizeEnum.small"
+                        [style]="ButtonStyleEnum.text"
+                        (buttonClick)="deleteSlot(slot)">
+                      </app-button>
+                    </div>
+                  </div>
+
+                  <div class="slot-content">
+                    <div class="slot-days">
+                      <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
+                        Active Days:
+                      </app-typography>
+                      <div class="days-list">
+                        @for (day of getActiveDaysForSlot(slot); track day) {
+                          <span class="day-tag">{{day}}</span>
+                        } @empty {
+                          <span class="no-days">No active days</span>
+                        }
+                      </div>
+                    </div>
+
+                    @if (slot.valid_until) {
+                      <div class="slot-validity">
+                        <app-svg src="calendar" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
+                        <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--Warning-05)">
+                          Valid until: {{slot.valid_until}}
+                        </app-typography>
+                      </div>
+                    }
+                  </div>
+                </div>
+              } @empty {
+                <div class="empty-state">
+                  <app-svg src="calendar" [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
+                  <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--Bluish-Gray-06)">
+                    No time slots configured
+                  </app-typography>
+                  <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-07)">
+                    Create your first time slot to manage your availability
+                  </app-typography>
+                  <app-button
+                    text="Create First Slot"
+                    leftIcon="plus"
+                    [size]="ButtonSizeEnum.medium"
+                    [style]="ButtonStyleEnum.primary"
+                    (buttonClick)="openSlotModal('create')">
+                  </app-button>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      }
+    </div>
+  </div>
+
+  @if (showSlotModal()) {
+    <app-modal>
+      <app-slot-modal
+        [modalTitle]="modalTitle()"
+        [modalMode]="modalMode()"
+        [slotForm]="slotForm"
+        [weekDays]="weekDays"
+        [isSaving]="isSaving()"
+        (close)="closeSlotModal()"
+        (save)="saveSlot()">
+      </app-slot-modal>
+    </app-modal>
+  }
 </app-page>

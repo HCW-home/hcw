@@ -1,0 +1,241 @@
+<app-page>
+  <app-breadcrumb [breadcrumbs]="breadcrumbs()"></app-breadcrumb>
+
+  <div class="consultation-form-container">
+    <div class="consultation-form-header">
+      <div class="header-content">
+        <div class="title-section">
+          <app-typography [variant]="TypographyTypeEnum['h2-semibold']">
+            {{pageTitle()}}
+          </app-typography>
+          <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-07)">
+            {{pageDescription()}}
+          </app-typography>
+        </div>
+      </div>
+    </div>
+
+    @if (isLoading()) {
+      <div class="loading-container">
+        <app-loader></app-loader>
+      </div>
+    } @else {
+      <div class="consultation-form-content">
+        <form [formGroup]="consultationForm" (ngSubmit)="onSubmit()" class="consultation-form">
+
+          <div class="form-card">
+            <div class="card-header">
+              <app-svg src="user" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
+              <app-typography [variant]="TypographyTypeEnum['body-l-semibold']">
+                Basic Information
+              </app-typography>
+            </div>
+
+            <div class="card-content">
+              <div class="form-grid">
+                <div class="form-field full-width">
+                  <app-input
+                    label="Consultation Title"
+                    type="text"
+                    placeholder="Enter consultation title"
+                    formControlName="title"
+                    [invalid]="isFieldInvalid('title')"
+                    [invalidMessage]="getFieldError('title')"
+                    leftIcon="edit">
+                  </app-input>
+                </div>
+
+                <div class="form-field full-width">
+                  <app-textarea
+                    label="Description (Optional)"
+                    placeholder="Enter consultation description or notes"
+                    formControlName="description"
+                    [invalid]="isFieldInvalid('description')"
+                    [invalidMessage]="getFieldError('description')">
+                  </app-textarea>
+                </div>
+
+                <div class="form-field">
+                  <app-select
+                    label="Assigned Team"
+                    [options]="queueOptions()"
+                    placeholder="Select team"
+                    formControlName="group_id"
+                    [invalid]="isFieldInvalid('group_id')"
+                    [invalidMessage]="getFieldError('group_id')">
+                  </app-select>
+                </div>
+
+                <div class="form-field">
+                  <app-input
+                    label="Beneficiary ID (Optional)"
+                    type="number"
+                    placeholder="Enter patient ID"
+                    formControlName="beneficiary_id"
+                    leftIcon="user">
+                  </app-input>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-card">
+            <div class="card-header">
+              <app-svg src="calendar" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
+              <app-typography [variant]="TypographyTypeEnum['body-l-semibold']">
+                Appointments
+              </app-typography>
+              <div class="header-actions">
+                <app-button
+                  text="Add Appointment"
+                  leftIcon="plus"
+                  [size]="ButtonSizeEnum.small"
+                  [style]="ButtonStyleEnum.stroke"
+                  (buttonClick)="addAppointment()">
+                </app-button>
+              </div>
+            </div>
+
+            <div class="card-content">
+              @if (formReady() && appointmentsFormArray && appointmentsFormArray.length > 0) {
+                @for (appointment of appointmentsFormArray.controls; track $index; let i = $index) {
+                <div class="appointment-section" [formGroupName]="i">
+                  <div class="appointment-header">
+                    <app-typography [variant]="TypographyTypeEnum['body-l-semibold']">
+                      Appointment {{i + 1}}
+                    </app-typography>
+                    @if (appointmentsFormArray.length > 1) {
+                      <app-button
+                        text="Remove"
+                        leftIcon="delete"
+                        [size]="ButtonSizeEnum.small"
+                        [style]="ButtonStyleEnum.text"
+                              (buttonClick)="removeAppointment(i)">
+                      </app-button>
+                    }
+                  </div>
+
+                  <div class="appointment-form">
+                    <div class="appointment-times">
+                      <div class="form-field">
+                        <app-input
+                          label="Scheduled Date & Time"
+                          type="datetime-local"
+                          formControlName="scheduled_at"
+                          [invalid]="isAppointmentFieldInvalid(i, 'scheduled_at')"
+                          invalidMessage="Scheduled time is required"
+                          leftIcon="calendar">
+                        </app-input>
+                      </div>
+
+                      <div class="form-field">
+                        <app-input
+                          label="Expected End Time (Optional)"
+                          type="datetime-local"
+                          formControlName="end_expected_at"
+                          leftIcon="calendar">
+                        </app-input>
+                      </div>
+                    </div>
+
+                    <div class="participants-section" formArrayName="participants">
+                      <div class="participants-header">
+                        <app-typography [variant]="TypographyTypeEnum['body-s-semibold']">
+                          Participants
+                        </app-typography>
+                        <app-button
+                          text="Add Participant"
+                          leftIcon="user"
+                          [size]="ButtonSizeEnum.small"
+                          [style]="ButtonStyleEnum.text"
+                                  (buttonClick)="addParticipantToAppointment(i)">
+                        </app-button>
+                      </div>
+
+                      @for (participant of getParticipantsFormArray(i).controls; track $index; let j = $index) {
+                        <div class="participant-form" [formGroupName]="j">
+                          <div class="participant-fields">
+                            <div class="form-field">
+                              <app-input
+                                label="Email"
+                                type="email"
+                                placeholder="participant@email.com"
+                                formControlName="email"
+                                [invalid]="isParticipantFieldInvalid(i, j, 'email')"
+                                invalidMessage="Please enter a valid email"
+                                leftIcon="user">
+                              </app-input>
+                            </div>
+
+                            <div class="form-field">
+                              <app-input
+                                label="Phone (Optional)"
+                                type="tel"
+                                placeholder="+1234567890"
+                                formControlName="phone"
+                                leftIcon="phone">
+                              </app-input>
+                            </div>
+
+                            <div class="form-field">
+                              <app-select
+                                label="Notification Method"
+                                [options]="communicationMethods"
+                                formControlName="message_type">
+                              </app-select>
+                            </div>
+                          </div>
+
+                          @if (getParticipantsFormArray(i).length > 1) {
+                            <div class="participant-actions">
+                              <app-button
+                                text="Remove"
+                                leftIcon="delete"
+                                [size]="ButtonSizeEnum.small"
+                                [style]="ButtonStyleEnum.text"
+                                              (buttonClick)="removeParticipantFromAppointment(i, j)">
+                              </app-button>
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
+                  </div>
+                </div>
+
+                  @if (i < appointmentsFormArray.length - 1) {
+                    <div class="appointment-divider"></div>
+                  }
+                }
+              } @else {
+                <div class="empty-appointments">
+                  <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-07)">
+                    No appointments configured. Add your first appointment to get started.
+                  </app-typography>
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <app-button
+              text="Cancel"
+              [size]="ButtonSizeEnum.large"
+              [style]="ButtonStyleEnum.stroke"
+              (buttonClick)="cancel()">
+            </app-button>
+
+            <app-button
+              [text]="mode === 'create' ? 'Create Consultation' : 'Update Consultation'"
+              [leftIcon]="mode === 'create' ? 'plus' : 'check'"
+              [size]="ButtonSizeEnum.large"
+              [style]="ButtonStyleEnum.primary"
+              [disabled]="isSaving()"
+              [loading]="isSaving()">
+            </app-button>
+          </div>
+        </form>
+      </div>
+    }
+  </div>
+</app-page>

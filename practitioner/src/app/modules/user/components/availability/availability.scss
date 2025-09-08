@@ -1,0 +1,245 @@
+.availability-container {
+  padding: 24px;
+  max-width: 1200px;
+
+  .availability-header {
+    margin-bottom: 32px;
+
+    .header-content {
+      margin-bottom: 24px;
+
+      .title-section {
+        gap: 8px;
+
+        app-typography:last-child {
+          margin-top: 4px;
+        }
+      }
+    }
+  }
+
+  .availability-content {
+    .loading-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 64px 24px;
+
+      app-loader {
+        margin-bottom: 8px;
+      }
+    }
+
+    .schedule-tab {
+      .schedule-form {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+
+      .schedule-card {
+        background: var(--White);
+        border: 1px solid var(--Bluish-Gray-03);
+        border-radius: 12px;
+        padding: 24px;
+        transition: all 0.2s ease;
+
+        &:hover {
+          border-color: var(--Bluish-Gray-04);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .card-header {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 20px;
+          padding-bottom: 16px;
+          border-bottom: 1px solid var(--Bluish-Gray-02);
+
+          app-svg {
+            color: var(--Primary-05);
+          }
+        }
+
+        .card-content {
+          .time-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+
+            @media (max-width: 768px) {
+              grid-template-columns: 1fr;
+              gap: 16px;
+            }
+
+            .form-field {
+              display: flex;
+              flex-direction: column;
+            }
+          }
+
+          .days-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 16px;
+
+            .day-item {
+              display: flex;
+              align-items: center;
+            }
+          }
+        }
+      }
+
+      .schedule-actions {
+        display: flex;
+        justify-content: center;
+        margin-top: 32px;
+      }
+    }
+
+    .slots-tab {
+      .slots-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 24px;
+        gap: 16px;
+
+        @media (max-width: 768px) {
+          flex-direction: column;
+          align-items: stretch;
+        }
+      }
+
+      .slots-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 20px;
+      }
+
+      .slot-card {
+        background: var(--White);
+        border: 1px solid var(--Bluish-Gray-03);
+        border-radius: 12px;
+        padding: 20px;
+        transition: all 0.2s ease;
+
+        &:hover {
+          border-color: var(--Primary-04);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .slot-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 16px;
+
+          .slot-time {
+            flex: 1;
+          }
+
+          .slot-actions {
+            display: flex;
+            gap: 8px;
+          }
+        }
+
+        .slot-content {
+          .slot-days {
+            margin-bottom: 12px;
+
+            .days-list {
+              display: flex;
+              flex-wrap: wrap;
+              gap: 6px;
+              margin-top: 8px;
+
+              .day-tag {
+                background: var(--Primary-01);
+                color: var(--Primary-06);
+                padding: 4px 8px;
+                border-radius: 6px;
+                font-size: 12px;
+                font-weight: 500;
+              }
+
+              .no-days {
+                color: var(--Bluish-Gray-06);
+                font-style: italic;
+                font-size: 12px;
+              }
+            }
+          }
+
+          .slot-validity {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: var(--Warning-01);
+            border-radius: 6px;
+
+            app-svg {
+              color: var(--Warning-05);
+            }
+          }
+        }
+      }
+
+      .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        padding: 64px 24px;
+        text-align: center;
+
+        app-svg {
+          margin-bottom: 8px;
+        }
+      }
+    }
+  }
+}
+
+
+// Responsive Design
+@media (max-width: 768px) {
+  .availability-container {
+    padding: 16px;
+
+    .schedule-card {
+      padding: 16px !important;
+
+      .card-content .time-inputs {
+        grid-template-columns: 1fr !important;
+      }
+    }
+
+    .slots-grid {
+      grid-template-columns: 1fr !important;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .availability-container {
+    .schedule-card .card-content .days-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .slot-card .slot-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+
+      .slot-actions {
+        align-self: flex-end;
+      }
+    }
+  }
+}

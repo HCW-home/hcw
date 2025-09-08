@@ -5,9 +5,55 @@
   height: 100%;
   z-index: 1040;
   position: fixed;
-  //backdrop-filter: blur(4px);
   background: rgba(0, 0, 0, 0.25);
+}
 
+.fade-in {
+  animation: fadeIn 300ms ease-out;
+}
+
+.fade-out {
+  animation: fadeOut 300ms ease-in;
+}
+
+.modal-enter {
+  animation: modalEnter 300ms ease-out;
+}
+
+.modal-leave {
+  animation: modalLeave 300ms ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes modalEnter {
+  from { 
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+  to { 
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes modalLeave {
+  from { 
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  to { 
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
 }
 
 .modal {

@@ -1,4 +1,4 @@
-<div class="modal-backdrop" @backdropAnimation></div>
-<div class="modal">
+<div class="modal-backdrop" animate.enter="fade-in" animate.leave="fade-out"></div>
+<div class="modal" animate.enter="modal-enter" animate.leave="modal-leave">
   <ng-content></ng-content>
 </div>

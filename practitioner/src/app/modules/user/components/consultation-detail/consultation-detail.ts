@@ -1,10 +1,9 @@
-import { Component, OnInit, OnDestroy, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
 
-// Core services and models
 import { ConsultationService } from '../../../../core/services/consultation.service';
 import { ToasterService } from '../../../../core/services/toaster.service';
 import {
@@ -16,21 +15,18 @@ import {
   CreateParticipantRequest
 } from '../../../../core/models/consultation';
 
-// Shared components
 import { Page } from '../../../../core/components/page/page';
 import { BackButton } from '../../../../shared/components/back-button/back-button';
 import { Tabs, TabItem } from '../../../../shared/components/tabs/tabs';
 import { Badge } from '../../../../shared/components/badge/badge';
 import { Loader } from '../../../../shared/components/loader/loader';
 
-// UI Components
 import { Typography } from '../../../../shared/ui-components/typography/typography';
 import { Button } from '../../../../shared/ui-components/button/button';
 import { Input } from '../../../../shared/ui-components/input/input';
 import { Select } from '../../../../shared/ui-components/select/select';
 import { Svg } from '../../../../shared/ui-components/svg/svg';
 
-// Constants
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
 import {ButtonSizeEnum, ButtonStyleEnum, ButtonTypeEnum} from '../../../../shared/constants/button';
 import { BadgeTypeEnum } from '../../../../shared/constants/badge';
@@ -85,13 +81,13 @@ export class ConsultationDetail implements OnInit, OnDestroy {
     { value: 'whatsapp', label: 'WhatsApp' }
   ];
 
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    private fb: FormBuilder,
-    private consultationService: ConsultationService,
-    private toasterService: ToasterService
-  ) {
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private fb = inject(FormBuilder);
+  private consultationService = inject(ConsultationService);
+  private toasterService = inject(ToasterService);
+
+  constructor() {
     this.appointmentForm = this.fb.group({
       scheduled_at: ['', [Validators.required]],
       end_expected_at: ['']
@@ -325,6 +321,10 @@ export class ConsultationDetail implements OnInit, OnDestroy {
           }
         });
     }
+  }
+
+  editConsultation(): void {
+    this.router.navigate(['/user/consultations', this.consultationId, 'edit']);
   }
 
   formatDateTime(dateString: string): string {

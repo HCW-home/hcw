@@ -13,7 +13,6 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { RoutePaths } from '../../constants/routes';
 import { IUser } from '../../../modules/user/models/user';
 import { Subscription } from 'rxjs';
-import { AdminService } from '../../services/admin';
 
 @Component({
   selector: 'app-sidebar',
@@ -23,20 +22,12 @@ import { AdminService } from '../../services/admin';
 })
 export class Sidebar implements OnInit, OnDestroy {
   public router = inject(Router);
-  private adminService = inject(AdminService);
 
   menuItems = MenuItems;
   currentUserSubscription!: Subscription;
   currentUser!: IUser;
 
   ngOnInit() {
-    this.currentUserSubscription = this.adminService.currentUser$.subscribe(
-      user => {
-        if (user) {
-          this.currentUser = user;
-        }
-      }
-    );
   }
 
   onLogOut() {
@@ -45,7 +36,7 @@ export class Sidebar implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.currentUserSubscription.unsubscribe();
+    this.currentUserSubscription?.unsubscribe();
   }
 
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
