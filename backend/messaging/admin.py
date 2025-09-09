@@ -27,7 +27,8 @@ class MessageAdmin(ModelAdmin):
     list_filter = ['communication_method', 'status', 'created_at', 'provider_name']
     search_fields = ['content', 'recipient_phone',
                      'recipient_email', 'sent_by__email', 'celery_task_id']
-    readonly_fields = ['sent_at', 'delivered_at', 'read_at', 'failed_at',
+    readonly_fields = ['sent_at', 'delivered_at', 'read_at', 'failed_at', 'status', 'task_traceback',
+                        'error_message', 'task_logs',
                        'external_message_id', 'celery_task_id', 'created_at', 'updated_at']
 
     # fieldsets = (

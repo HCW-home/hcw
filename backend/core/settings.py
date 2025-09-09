@@ -470,7 +470,7 @@ UNFOLD = {
                 "items": [
                     {
                         "title": _("Messaging providers"),
-                        "icon": "message",
+                        "icon": "settings_applications",
                         "link": "/admin/messaging/messagingprovider/",
                         "permission": lambda request: request.user.has_perm("messaging.view_messagingprovider"),
                     },
