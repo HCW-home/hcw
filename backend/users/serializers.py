@@ -10,7 +10,6 @@ from allauth.account.utils import setup_user_email
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Speciality, HealthMetric, Organisation, Language
-
 UserModel = get_user_model()
 
 

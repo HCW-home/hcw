@@ -15,6 +15,7 @@ from unfold.admin import ModelAdmin, TabularInline, StackedInline
 from django.contrib.auth.models import Group
 from modeltranslation.admin import TabbedTranslationAdmin
 from unfold.contrib.forms.widgets import WysiwygWidget
+from unfold.widgets import UnfoldAdminColorInputWidget
 
 from firebase_admin.messaging import (
     ErrorInfo,
@@ -330,6 +331,11 @@ class OrganisationAdmin(ModelAdmin):
         }
     }
 
+    def get_form(self, request, obj=None, change=False, **kwargs):
+        print("PASS")
+        form = super().get_form(request, obj, change, **kwargs)
+        form.base_fields["primary_color"].widget = UnfoldAdminColorInputWidget()
+        return form
 
 @admin.register(HealthMetric)
 class HealthMetricAdmin(ModelAdmin):
