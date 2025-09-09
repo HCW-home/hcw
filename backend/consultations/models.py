@@ -12,7 +12,7 @@ class Queue(models.Model):
     name = models.CharField(_('name'), max_length=200)
     organisation = models.ManyToManyField(
         'users.Organisation', blank=True, verbose_name=_('organisation'))
-    users = models.ManyToManyField(settings.AUTH_USER_MODEL, verbose_name=_('users'))
+    users = models.ManyToManyField(settings.AUTH_USER_MODEL, verbose_name=_('users'), blank=True)
 
     class Meta:
         verbose_name = _('queue')
