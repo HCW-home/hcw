@@ -1,5 +1,5 @@
 from typing import List, Tuple, Union
-
+from django.db import models
 from django.contrib import admin
 from .models import User, FCMDeviceOverride, Language, Speciality, HealthMetric, Organisation
 from .models import Notification as UserNotification
@@ -14,6 +14,7 @@ from django.utils.translation import ngettext_lazy
 from unfold.admin import ModelAdmin, TabularInline, StackedInline
 from django.contrib.auth.models import Group
 from modeltranslation.admin import TabbedTranslationAdmin
+from unfold.contrib.forms.widgets import WysiwygWidget
 
 from firebase_admin.messaging import (
     ErrorInfo,
@@ -323,7 +324,11 @@ class SpecialityAdmin(ModelAdmin, TabbedTranslationAdmin):
 
 @admin.register(Organisation)
 class OrganisationAdmin(ModelAdmin):
-    pass
+    formfield_overrides = {
+        models.TextField: {
+            "widget": WysiwygWidget,
+        }
+    }
 
 
 @admin.register(HealthMetric)

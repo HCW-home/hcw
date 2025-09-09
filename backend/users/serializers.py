@@ -22,7 +22,7 @@ class LanguageSerializer(serializers.ModelSerializer):
 class OrganisationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Organisation
-        fields = ['id', 'name', 'logo_large',
+        fields = ['id', 'name', 'logo_large', 'footer',
                   'logo_small', 'primary_color', 'default_term', 'location_latitude', 'street', 'city', 'postal_code', 'country']
 
 
@@ -36,9 +36,9 @@ class UserDetailsSerializer(serializers.ModelSerializer):
     preferred_language = LanguageSerializer(read_only=True)
     languages = LanguageSerializer(many=True, read_only=True)
     language_ids = serializers.PrimaryKeyRelatedField(
-        many=True, 
-        queryset=Language.objects.all(), 
-        write_only=True, 
+        many=True,
+        queryset=Language.objects.all(),
+        write_only=True,
         source='languages',
         required=False
     )
@@ -107,7 +107,7 @@ class HealthMetricSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     created_by = UserSerializer(read_only=True)
     measured_by = UserSerializer(read_only=True)
-    
+
     class Meta:
         model = HealthMetric
         fields = [

@@ -1,17 +1,11 @@
-import json
-from typing import List, Optional
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.forms import ValidationError
 from django.utils.translation import gettext_lazy as _
 from firebase_admin.messaging import Message
 from firebase_admin.messaging import Notification as FireBaseNotification
 from fcm_django.models import FirebaseResponseDict
 from fcm_django.models import AbstractFCMDevice
 from .abstracts import ModelOwnerAbstract
-from .cryptomanager import CryptoManager
-from django.utils import timezone
-from . import validators
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from django.utils.translation import gettext_lazy as _
@@ -46,6 +40,7 @@ class Organisation(models.Model):
     city = models.CharField(max_length=50, blank=True, null=True)
     postal_code = models.CharField(max_length=10, blank=True, null=True)
     country = models.CharField(max_length=50, blank=True, null=True)
+    footer = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -83,7 +78,7 @@ class User(AbstractUser):
         help_text="Preferred language for the user interface",
         null=True, blank=True
     )
-    
+
     specialities = models.ManyToManyField(Speciality, blank=True)
     organisations = models.ManyToManyField('users.Organisation', blank=True)
     accepted_term = models.ForeignKey(Term, on_delete=models.SET_NULL, null=True, blank=True)
