@@ -1,5 +1,5 @@
-<div class="user-layout">
-  <app-sidebar></app-sidebar>
+<div class="user-layout" [class.sidebar-collapsed]="isCollapsed">
+  <app-sidebar (collapsedChange)="onSidebarToggle($event)"></app-sidebar>
   <div class="user-main">
     <app-header></app-header>
     <div class="user-content">

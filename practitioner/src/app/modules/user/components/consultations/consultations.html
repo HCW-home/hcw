@@ -1,6 +1,4 @@
 <app-page>
-  <app-breadcrumb [breadcrumbs]="breadcrumbs"></app-breadcrumb>
-
   <div class="consultations-container">
     <div class="consultations-header">
       <div class="header-content">
@@ -38,7 +36,8 @@
         </div>
       } @else if (error()) {
         <div class="error-state">
-          <app-svg src="alert-circle" [svgStyle]="{'width.px': 48, 'height.px': 48, 'color': 'var(--Error-05)'}"></app-svg>
+          <app-svg src="alert-circle"
+                   [svgStyle]="{'width.px': 48, 'height.px': 48, 'color': 'var(--Error-05)'}"></app-svg>
           <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--Error-05)">
             {{ error() }}
           </app-typography>

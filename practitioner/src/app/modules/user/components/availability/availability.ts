@@ -12,7 +12,6 @@ import {
 } from '../../../../core/models/consultation';
 
 import { Page } from '../../../../core/components/page/page';
-import { Breadcrumb } from '../../../../shared/components/breadcrumb/breadcrumb';
 import { Tabs, TabItem } from '../../../../shared/components/tabs/tabs';
 import { Loader } from '../../../../shared/components/loader/loader';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
@@ -34,14 +33,6 @@ interface WeekDay {
   short: string;
 }
 
-interface TimeSlot {
-  start: string;
-  end: string;
-  hasBreak: boolean;
-  breakStart?: string;
-  breakEnd?: string;
-}
-
 @Component({
   selector: 'app-availability',
   templateUrl: './availability.html',
@@ -55,7 +46,6 @@ interface TimeSlot {
     Switch,
     SlotModal,
     Typography,
-    Breadcrumb,
     CommonModule,
     InputComponent,
     ModalComponent,
@@ -64,8 +54,6 @@ interface TimeSlot {
 })
 export class Availability implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
-
-  breadcrumbs = [{ label: 'Availability' }];
 
   bookingSlots = signal<BookingSlot[]>([]);
   selectedSlot = signal<BookingSlot | null>(null);

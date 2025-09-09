@@ -1,4 +1,4 @@
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, Output, EventEmitter } from '@angular/core';
 import { Svg } from '../../../shared/ui-components/svg/svg';
 import { MenuItems } from '../../constants/sidebar';
 import { Typography } from '../../../shared/ui-components/typography/typography';
@@ -26,8 +26,21 @@ export class Sidebar implements OnInit, OnDestroy {
   menuItems = MenuItems;
   currentUserSubscription!: Subscription;
   currentUser!: IUser;
+  isCollapsed = false;
+  @Output() collapsedChange = new EventEmitter<boolean>();
 
   ngOnInit() {
+    const savedState = localStorage.getItem('sidebar-collapsed');
+    if (savedState !== null) {
+      this.isCollapsed = JSON.parse(savedState);
+      this.collapsedChange.emit(this.isCollapsed);
+    }
+  }
+
+  toggleSidebar() {
+    this.isCollapsed = !this.isCollapsed;
+    localStorage.setItem('sidebar-collapsed', JSON.stringify(this.isCollapsed));
+    this.collapsedChange.emit(this.isCollapsed);
   }
 
   onLogOut() {

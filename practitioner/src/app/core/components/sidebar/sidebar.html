@@ -1,6 +1,15 @@
-<div class="sidebar">
+<div class="sidebar" [class.collapsed]="isCollapsed">
   <div class="sidebar-header">
-    <app-svg src="svg/logo.svg" [svgStyle]="{'width.px': '100%', 'height.px': 100}"></app-svg>
+    <app-svg
+      [src]="isCollapsed ? 'svg/logo.svg' : 'svg/logo.svg'"
+      [svgStyle]="{'width.px': isCollapsed ? 40 : 160, 'height.px': isCollapsed ? 40 : 60, 'transition': 'all 0.3s ease'}">
+    </app-svg>
+    <button class="toggle-btn" (click)="toggleSidebar()">
+      <app-svg
+        [src]="isCollapsed ? 'svg/chevron-right.svg' : 'svg/chevron-left.svg'"
+        [svgStyle]="{'width.px': 20, 'height.px': 20, 'fill': 'var(--Bluish-Gray-06)'}">
+      </app-svg>
+    </button>
   </div>
 
   <div class="sidebar-main">
@@ -8,33 +17,62 @@
       <a
         class="menu-item"
         [routerLink]="'/' + RoutePaths.USER + menuItem.path"
-        [routerLinkActive]="'active'">
-        <app-svg
-          [src]="'svg/' + menuItem.icon"
-          [svgStyle]="
-            router.isActive('/' + RoutePaths.USER + menuItem.path, {
-              paths: 'exact',
-              matrixParams: 'ignored',
-              queryParams: 'ignored',
-              fragment: 'ignored',
-            })
-              ? { fill: 'var(--Primary-04)' }
-              : { fill: 'var(--Bluish-Gray-07)' }
-          "></app-svg>
-        <app-typography [variant]="TypographyTypeEnum['body-medium']">{{
-          menuItem.name
-        }}</app-typography>
+        [routerLinkActive]="'active'"
+        [title]="isCollapsed ? menuItem.name : ''">
+        <div class="menu-item-content">
+          <app-svg
+            class="menu-icon"
+            [src]="'svg/' + menuItem.icon"
+            [svgStyle]="{
+              'width.px': 24,
+              'height.px': 24,
+              'fill': router.isActive('/' + RoutePaths.USER + menuItem.path, {
+                paths: 'exact',
+                matrixParams: 'ignored',
+                queryParams: 'ignored',
+                fragment: 'ignored',
+              })
+                ? 'var(--Primary-04)'
+                : 'var(--Bluish-Gray-06)'
+            }">
+          </app-svg>
+          @if (!isCollapsed) {
+            <app-typography
+              class="menu-label"
+              [variant]="TypographyTypeEnum['body-medium']">
+              {{ menuItem.name }}
+            </app-typography>
+          }
+        </div>
       </a>
     }
   </div>
 
   <div class="sidebar-footer">
+    <div class="user-section">
+      @if (!isCollapsed) {
+        <div class="user-info">
+          <app-typography
+            [variant]="TypographyTypeEnum['body-bold']"
+            color="var(--Bluish-Gray-08)">
+            Dr. Smith
+          </app-typography>
+          <app-typography
+            [variant]="TypographyTypeEnum['body-regular']"
+            color="var(--Bluish-Gray-06)">
+            Practitioner
+          </app-typography>
+        </div>
+      }
+    </div>
     <app-button
-      leftIcon="log-out"
+      [leftIcon]="isCollapsed ? 'log-out' : 'log-out'"
       (buttonClick)="onLogOut()"
       [size]="ButtonSizeEnum.small"
       [style]="ButtonStyleEnum.text"
       [state]="ButtonStateEnum.secondary"
-      text="Logout"></app-button>
+      [text]="isCollapsed ? '' : 'Logout'"
+      [title]="isCollapsed ? 'Logout' : ''">
+    </app-button>
   </div>
 </div>

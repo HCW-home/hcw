@@ -1,6 +1,4 @@
 <app-page>
-  <app-breadcrumb [breadcrumbs]="breadcrumbs"></app-breadcrumb>
-
   <div class="availability-container">
     <div class="availability-header">
       <div class="header-content">
@@ -181,10 +179,10 @@
                   <div class="slot-header">
                     <div class="slot-time">
                       <app-typography [variant]="TypographyTypeEnum['body-l-semibold']">
-                        {{getSlotTimeRange(slot)}}
+                        {{ getSlotTimeRange(slot) }}
                       </app-typography>
                       <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--Bluish-Gray-06)">
-                        Break: {{getBreakTimeRange(slot)}}
+                        Break: {{ getBreakTimeRange(slot) }}
                       </app-typography>
                     </div>
                     <div class="slot-actions">
@@ -212,7 +210,7 @@
                       </app-typography>
                       <div class="days-list">
                         @for (day of getActiveDaysForSlot(slot); track day) {
-                          <span class="day-tag">{{day}}</span>
+                          <span class="day-tag">{{ day }}</span>
                         } @empty {
                           <span class="no-days">No active days</span>
                         }
@@ -223,7 +221,7 @@
                       <div class="slot-validity">
                         <app-svg src="calendar" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
                         <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--Warning-05)">
-                          Valid until: {{slot.valid_until}}
+                          Valid until: {{ slot.valid_until }}
                         </app-typography>
                       </div>
                     }
