@@ -48,6 +48,12 @@ class ConsultationAdmin(ModelAdmin):
     search_fields = ['created_by__email', 'beneficiary__email', 'group__name']
     readonly_fields = ['created_at', 'updated_at']
 
+    autocomplete_fields = [
+        "beneficiary",
+        "group",
+        "owned_by",
+    ]
+
     inlines = [AppointmentInline, MessageInline]
 
     @display(description="Messages")
