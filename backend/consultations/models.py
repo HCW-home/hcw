@@ -19,7 +19,7 @@ class Queue(models.Model):
         verbose_name_plural = _('queues')
 
     def __str__(self):
-        return self.name
+        return f"{self.name}"
 
 class Type(models.TextChoices):
     ONLINE = "Online", _("Online")
@@ -101,7 +101,6 @@ class Participant(models.Model):
         blank=True,
     )
 
-
     auth_token = models.CharField(max_length=256)
     is_invited = models.BooleanField(default=True)
     is_confirmed = models.BooleanField(default=False)
@@ -118,7 +117,7 @@ class Participant(models.Model):
         super().clean()
         if not self.user and not self.email and not self.phone:
             raise ValidationError(_('At least one of user, email or phone must be provided.'))
-        
+
         if self.phone:
             phone_pattern = r'^(\+\d{1,3}|00\d{1,3})\d{7,14}$'
             if not re.match(phone_pattern, self.phone.replace(' ', '').replace('-', '')):
@@ -162,6 +161,9 @@ class Reason(models.Model):
         verbose_name = _('reason')
         verbose_name_plural = _('reasons')
 
+    def __str__(self):
+        return f"{self.name}"
+
     def clean(self):
         super().clean()
 
@@ -172,7 +174,7 @@ class Reason(models.Model):
             if not self.user_assignee:
                 raise ValidationError(
                     _(f'User must be defined if assignment method is {ReasonAssignmentMethod.USER}.'))
-            
+
         if self.assignment_method == ReasonAssignmentMethod.QUEUE:
             if not self.queue_assignee:
                 raise ValidationError(
@@ -198,7 +200,7 @@ class Request(models.Model):
     expected_at = models.DateTimeField(null=True, blank=True)
     expected_with = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='requests_asexpected')
-    
+
     beneficiary = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='requests_asbeneficiary')
 
@@ -223,7 +225,7 @@ class BookingSlot(models.Model):
 
     start_break = models.TimeField(default=time(12), null=True, blank=True)
     end_break = models.TimeField(default=time(14), null=True, blank=True)
-    
+
     monday = models.BooleanField()
     tuesday = models.BooleanField()
     wednesday = models.BooleanField()

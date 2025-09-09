@@ -2,18 +2,19 @@ from django.contrib import admin
 from unfold.admin import ModelAdmin, TabularInline, StackedInline
 from unfold.decorators import display
 from .models import Queue, Consultation, Appointment, Participant, Message, Reason, Request, BookingSlot
+from modeltranslation.admin import TabbedTranslationAdmin
 
 
 @admin.register(Queue)
-class QueueAdmin(ModelAdmin):
+class QueueAdmin(ModelAdmin, TabbedTranslationAdmin):
     list_display = ['name', 'users_count', 'organisations_count']
     search_fields = ['name']
     filter_horizontal = ['users', 'organisation']
-    
+
     @display(description="Users")
     def users_count(self, obj):
         return obj.users.count()
-    
+
     @display(description="Organisations")
     def organisations_count(self, obj):
         return obj.organisation.count()
@@ -46,9 +47,9 @@ class ConsultationAdmin(ModelAdmin):
     list_filter = ['created_at', 'closed_at', 'group']
     search_fields = ['created_by__email', 'beneficiary__email', 'group__name']
     readonly_fields = ['created_at', 'updated_at']
-    
+
     inlines = [AppointmentInline, MessageInline]
-    
+
     @display(description="Messages")
     def messages_count(self, obj):
         return obj.messages.count()
@@ -59,15 +60,15 @@ class AppointmentAdmin(ModelAdmin):
     list_display = ['id', 'consultation', 'scheduled_at', 'end_expected_at', 'participants_count']
     list_filter = ['scheduled_at', 'consultation__group']
     search_fields = ['consultation__created_by__email']
-    
+
     inlines = [ParticipantInline]
-    
+
     @display(description="Participants")
     def participants_count(self, obj):
         return obj.participant_set.count()
 
 @admin.register(Reason)
-class ReasonAdmin(ModelAdmin):
+class ReasonAdmin(ModelAdmin, TabbedTranslationAdmin):
     list_display = ['id', 'name', 'speciality', 'duration', 'is_active', 'queue_assignee', 'user_assignee']
     list_filter = ['is_active', 'speciality', 'queue_assignee']
     search_fields = ['name', 'speciality__name']

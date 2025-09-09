@@ -13,6 +13,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext_lazy
 from unfold.admin import ModelAdmin, TabularInline, StackedInline
 from django.contrib.auth.models import Group
+from modeltranslation.admin import TabbedTranslationAdmin
 
 from firebase_admin.messaging import (
     ErrorInfo,
@@ -39,21 +40,21 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
         "languages_display",
         "specialities_display",
     ]
-    
+
     list_filter = BaseUserAdmin.list_filter + \
         ('languages', 'specialities', 'timezone')
     filter_horizontal = ('languages', 'specialities')
-    
+
     fieldsets = BaseUserAdmin.fieldsets + (
         ('Additional Info', {
             'fields': ('app_preferences', 'timezone', 'preferred_language', 'languages', 'specialities', 'main_organisation', 'organisations')
         }),
     )
-    
+
     def languages_display(self, obj):
         return ", ".join([lang.name for lang in obj.languages.all()[:3]]) + ("..." if obj.languages.count() > 3 else "")
     languages_display.short_description = "Languages"
-    
+
     def specialities_display(self, obj):
         return ", ".join([spec.name for spec in obj.specialities.all()[:3]]) + ("..." if obj.specialities.count() > 3 else "")
     specialities_display.short_description = "Specialities"
@@ -314,7 +315,7 @@ class LanguageAdmin(ModelAdmin):
     ordering = ['name']
 
 @admin.register(Speciality)
-class SpecialityAdmin(ModelAdmin):
+class SpecialityAdmin(ModelAdmin, TabbedTranslationAdmin):
     list_display = ['name']
     search_fields = ['name']
     ordering = ['name']
@@ -352,7 +353,7 @@ class HealthMetricAdmin(ModelAdmin):
     raw_id_fields = ['user', 'created_by', 'measured_by']
     date_hierarchy = 'measured_at'
     ordering = ['-measured_at']
-    
+
     fieldsets = (
         ('Basic Information', {
             'fields': (
