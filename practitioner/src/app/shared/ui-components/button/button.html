@@ -15,11 +15,11 @@
   (click)="onClickHandler($event)"
   [disabled]="disabled() || loading()">
   @if (leftIcon()) {
-    <app-svg [src]="'svg/' + leftIcon() + '.svg'"></app-svg>
+    <app-svg [src]="'svg/' + leftIcon() + '.svg'" [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
   }
   {{ text() }}
   @if (rightIcon()) {
-    <app-svg [src]="'svg/' + rightIcon() + '.svg'"></app-svg>
+    <app-svg [src]="'svg/' + rightIcon() + '.svg'" [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
   }
   @if (loading()) {
     <span class="spinner"></span>

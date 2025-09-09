@@ -96,7 +96,7 @@
               </div>
             </div>
 
-            <div class="card-content">
+            <div class="card-content" formArrayName="appointments">
               @if (formReady() && appointmentsFormArray && appointmentsFormArray.length > 0) {
                 @for (appointment of appointmentsFormArray.controls; track $index; let i = $index) {
                 <div class="appointment-section" [formGroupName]="i">
@@ -116,7 +116,17 @@
                   </div>
 
                   <div class="appointment-form">
-                    <div class="appointment-times">
+                    <div class="appointment-fields">
+                      <div class="form-field">
+                        <app-select
+                          label="Appointment Type"
+                          formControlName="type"
+                          [options]="appointmentTypeOptions"
+                          [invalid]="isAppointmentFieldInvalid(i, 'type')"
+                          invalidMessage="Appointment type is required">
+                        </app-select>
+                      </div>
+                      
                       <div class="form-field">
                         <app-input
                           label="Scheduled Date & Time"
@@ -231,7 +241,8 @@
               [size]="ButtonSizeEnum.large"
               [style]="ButtonStyleEnum.primary"
               [disabled]="isSaving()"
-              [loading]="isSaving()">
+              [loading]="isSaving()"
+              (buttonClick)="onSubmit()">
             </app-button>
           </div>
         </form>

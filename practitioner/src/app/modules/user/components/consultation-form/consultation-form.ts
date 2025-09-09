@@ -13,7 +13,8 @@ import {
   User,
   CreateConsultationRequest,
   CreateAppointmentRequest,
-  CreateParticipantRequest
+  CreateParticipantRequest,
+  AppointmentType
 } from '../../../../core/models/consultation';
 
 import { Page } from '../../../../core/components/page/page';
@@ -97,6 +98,11 @@ export class ConsultationForm implements OnInit, OnDestroy {
     { value: 'email', label: 'Email' },
     { value: 'sms', label: 'SMS' },
     { value: 'whatsapp', label: 'WhatsApp' }
+  ];
+
+  appointmentTypeOptions: SelectOption[] = [
+    { value: AppointmentType.ONLINE, label: 'Online' },
+    { value: AppointmentType.INPERSON, label: 'In Person' }
   ];
 
   private route = inject(ActivatedRoute);
@@ -221,6 +227,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
             const appointmentGroup = this.createAppointmentFormGroup();
             appointmentGroup.patchValue({
               id: appointment.id,
+              type: appointment.type || AppointmentType.ONLINE,
               scheduled_at: this.formatDateTimeForInput(appointment.scheduled_at),
               end_expected_at: appointment.end_expected_at ? this.formatDateTimeForInput(appointment.end_expected_at) : '',
               participants: appointment.participants || []
@@ -243,6 +250,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
   createAppointmentFormGroup(): FormGroup {
     const appointmentGroup = this.fb.group({
       id: [''],
+      type: ['Online', [Validators.required]],
       scheduled_at: ['', [Validators.required]],
       end_expected_at: [''],
       participants: this.fb.array([])
@@ -364,6 +372,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
       .filter(apt => apt.scheduled_at) // Only appointments with scheduled time
       .map(apt => {
         const appointmentData: CreateAppointmentRequest = {
+          type: apt.type || AppointmentType.ONLINE,
           scheduled_at: new Date(apt.scheduled_at).toISOString(),
           end_expected_at: apt.end_expected_at ? new Date(apt.end_expected_at).toISOString() : undefined
         };

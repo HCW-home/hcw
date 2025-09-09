@@ -4,7 +4,6 @@
       {{modalTitle}}
     </app-typography>
     <app-button
-      text="Close"
       leftIcon="close"
       [size]="ButtonSizeEnum.small"
       [style]="ButtonStyleEnum.text"
@@ -17,7 +16,7 @@
       <app-typography [variant]="TypographyTypeEnum['body-l-semibold']" color="var(--Bluish-Gray-08)">
         Time Settings
       </app-typography>
-      
+
       <div class="time-inputs">
         <div class="form-field">
           <app-input
@@ -67,7 +66,7 @@
       <app-typography [variant]="TypographyTypeEnum['body-l-semibold']" color="var(--Bluish-Gray-08)">
         Working Days
       </app-typography>
-      
+
       <div class="days-grid">
         @for (day of weekDays; track day.key) {
           <div class="day-item">
@@ -84,7 +83,7 @@
       <app-typography [variant]="TypographyTypeEnum['body-l-semibold']" color="var(--Bluish-Gray-08)">
         Validity Period (Optional)
       </app-typography>
-      
+
       <div class="form-field">
         <app-input
           label="Valid Until Date"
@@ -110,7 +109,8 @@
         [size]="ButtonSizeEnum.medium"
         [style]="ButtonStyleEnum.primary"
         [disabled]="isSaving"
-        [loading]="isSaving">
+        [loading]="isSaving"
+        (buttonClick)="saveSlot()">
       </app-button>
     </div>
   </form>

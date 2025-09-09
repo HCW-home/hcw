@@ -152,7 +152,8 @@
                   [size]="ButtonSizeEnum.large"
                   [style]="ButtonStyleEnum.primary"
                   [disabled]="isSaving()"
-                  [loading]="isSaving()">
+                  [loading]="isSaving()"
+                  (buttonClick)="saveSchedule()">
                 </app-button>
               </div>
             </form>

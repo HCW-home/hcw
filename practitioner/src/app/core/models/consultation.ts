@@ -13,11 +13,14 @@ export interface Queue {
 
 export interface Participant {
   id: number;
+  appointment?: number;
   user: User | null;
+  auth_token?: string;
   is_invited: boolean;
   is_confirmed: boolean;
   email: string | null;
   phone: string | null;
+  message_type?: string;
   feedback_rate: number | null;
   feedback_message: string | null;
 }
@@ -27,8 +30,14 @@ export enum AppointmentStatus {
   CANCELLED = 'Cancelled'
 }
 
+export enum AppointmentType {
+  ONLINE = 'Online',
+  INPERSON = 'InPerson'
+}
+
 export interface Appointment {
   id: number;
+  type: AppointmentType;
   scheduled_at: string;
   end_expected_at: string | null;
   consultation: number;
@@ -153,6 +162,7 @@ export interface AvailableSlot {
 }
 
 export interface CreateAppointmentRequest {
+  type?: AppointmentType;
   scheduled_at: string;
   end_expected_at?: string;
 }
