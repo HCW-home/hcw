@@ -1,40 +1,35 @@
-import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormArray } from '@angular/forms';
-import { CommonModule } from '@angular/common';
-import { Subject, takeUntil, forkJoin } from 'rxjs';
+import {Component, computed, inject, OnDestroy, OnInit, signal} from '@angular/core';
+import {ActivatedRoute, Router} from '@angular/router';
+import {FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
+import {CommonModule} from '@angular/common';
+import {forkJoin, Subject, takeUntil} from 'rxjs';
 
-import { ConsultationService } from '../../../../core/services/consultation.service';
-import { ToasterService } from '../../../../core/services/toaster.service';
-import { ValidationService } from '../../../../core/services/validation.service';
+import {ConsultationService} from '../../../../core/services/consultation.service';
+import {ToasterService} from '../../../../core/services/toaster.service';
+import {ValidationService} from '../../../../core/services/validation.service';
 import {
+  AppointmentType,
   Consultation,
-  Queue,
-  User,
-  CreateConsultationRequest,
   CreateAppointmentRequest,
-  CreateParticipantRequest,
-  AppointmentType
+  CreateConsultationRequest,
+  Queue
 } from '../../../../core/models/consultation';
 
-import { Page } from '../../../../core/components/page/page';
-import { BackButton } from '../../../../shared/components/back-button/back-button';
-import { Breadcrumb } from '../../../../shared/components/breadcrumb/breadcrumb';
-import { Loader } from '../../../../shared/components/loader/loader';
+import {Page} from '../../../../core/components/page/page';
+import {Loader} from '../../../../shared/components/loader/loader';
 
-import { Typography } from '../../../../shared/ui-components/typography/typography';
-import { Button } from '../../../../shared/ui-components/button/button';
-import { Input as InputComponent } from '../../../../shared/ui-components/input/input';
-import { Textarea } from '../../../../shared/ui-components/textarea/textarea';
-import { Select } from '../../../../shared/ui-components/select/select';
-import { Svg } from '../../../../shared/ui-components/svg/svg';
-import { Accordion } from '../../../../shared/ui-components/accordion/accordion';
+import {Typography} from '../../../../shared/ui-components/typography/typography';
+import {Button} from '../../../../shared/ui-components/button/button';
+import {Input as InputComponent} from '../../../../shared/ui-components/input/input';
+import {Textarea} from '../../../../shared/ui-components/textarea/textarea';
+import {Select} from '../../../../shared/ui-components/select/select';
+import {Svg} from '../../../../shared/ui-components/svg/svg';
 
-import { TypographyTypeEnum } from '../../../../shared/constants/typography';
-import { ButtonSizeEnum, ButtonStyleEnum } from '../../../../shared/constants/button';
-import { SelectOption } from '../../../../shared/models/select';
-import { IBreadcrumb } from '../../../../shared/models/breadcrumb';
-import { RoutePaths } from '../../../../core/constants/routes';
+import {TypographyTypeEnum} from '../../../../shared/constants/typography';
+import {ButtonSizeEnum, ButtonStyleEnum} from '../../../../shared/constants/button';
+import {SelectOption} from '../../../../shared/models/select';
+import {IBreadcrumb} from '../../../../shared/models/breadcrumb';
+import {RoutePaths} from '../../../../core/constants/routes';
 
 @Component({
   selector: 'app-consultation-form',
@@ -44,7 +39,6 @@ import { RoutePaths } from '../../../../core/constants/routes';
     CommonModule,
     ReactiveFormsModule,
     Page,
-    Breadcrumb,
     Loader,
     Typography,
     Button,
@@ -59,7 +53,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
 
   mode: 'create' | 'edit' = 'create';
   consultationId?: number;
-  
+
   consultation = signal<Consultation | null>(null);
   queues = signal<Queue[]>([]);
   isLoading = signal(false);
@@ -67,7 +61,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
   formReady = signal(false);
 
   consultationForm: FormGroup;
-  
+
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
@@ -77,19 +71,19 @@ export class ConsultationForm implements OnInit, OnDestroy {
     { label: this.mode === 'create' ? 'New Consultation' : 'Edit Consultation' }
   ]);
 
-  queueOptions = computed<SelectOption[]>(() => 
+  queueOptions = computed<SelectOption[]>(() =>
     this.queues().map(queue => ({
       value: queue.id.toString(),
       label: queue.name
     }))
   );
 
-  pageTitle = computed(() => 
+  pageTitle = computed(() =>
     this.mode === 'create' ? 'Create New Consultation' : 'Edit Consultation'
   );
 
   pageDescription = computed(() =>
-    this.mode === 'create' 
+    this.mode === 'create'
       ? 'Create a new consultation and schedule appointments with patients'
       : 'Update consultation details and manage appointments'
   );
@@ -124,9 +118,9 @@ export class ConsultationForm implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadQueues();
-    
+
     this.initializeFormArray();
-    
+
     this.route.params.pipe(takeUntil(this.destroy$)).subscribe(params => {
       if (params['id']) {
         this.mode = 'edit';
@@ -145,7 +139,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
       phone: [''],
       message_type: ['email', [Validators.required]]
     });
-    
+
     (appointmentGroup.get('participants') as FormArray).push(participantGroup);
     this.appointmentsFormArray.push(appointmentGroup);
     this.formReady.set(true);
@@ -217,12 +211,10 @@ export class ConsultationForm implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          // Clear existing appointments
           while (this.appointmentsFormArray.length !== 0) {
             this.appointmentsFormArray.removeAt(0);
           }
 
-          // Add existing appointments
           response.results.forEach(appointment => {
             const appointmentGroup = this.createAppointmentFormGroup();
             appointmentGroup.patchValue({
@@ -235,7 +227,6 @@ export class ConsultationForm implements OnInit, OnDestroy {
             this.appointmentsFormArray.push(appointmentGroup);
           });
 
-          // Add one empty appointment if no appointments exist
           if (this.appointmentsFormArray.length === 0) {
             this.addAppointment();
           }
@@ -248,14 +239,13 @@ export class ConsultationForm implements OnInit, OnDestroy {
   }
 
   createAppointmentFormGroup(): FormGroup {
-    const appointmentGroup = this.fb.group({
+    return this.fb.group({
       id: [''],
       type: ['Online', [Validators.required]],
       scheduled_at: ['', [Validators.required]],
       end_expected_at: [''],
       participants: this.fb.array([])
     });
-    return appointmentGroup;
   }
 
 
@@ -296,7 +286,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
   onSubmit(): void {
     if (this.consultationForm.valid) {
       this.isSaving.set(true);
-      
+
       if (this.mode === 'create') {
         this.createConsultation();
       } else {
@@ -322,8 +312,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
       .subscribe({
         next: (consultation) => {
           this.toasterService.show('success', 'Consultation created successfully');
-          
-          // Create appointments if any
+
           if (formValue.appointments?.length > 0) {
             this.createAppointments(consultation.id, formValue.appointments);
           } else {
@@ -376,7 +365,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
           scheduled_at: new Date(apt.scheduled_at).toISOString(),
           end_expected_at: apt.end_expected_at ? new Date(apt.end_expected_at).toISOString() : undefined
         };
-        
+
         return this.consultationService.createConsultationAppointment(consultationId, appointmentData);
       });
 
@@ -405,7 +394,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
 
   formatDateTimeForInput(dateString: string): string {
     const date = new Date(dateString);
-    return date.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:mm
+    return date.toISOString().slice(0, 16);
   }
 
   formatDateTime(dateString: string): string {

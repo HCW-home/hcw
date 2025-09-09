@@ -1,5 +1,4 @@
 import {Component, inject} from '@angular/core';
-import {Svg} from '../../../shared/ui-components/svg/svg';
 import {Button} from '../../../shared/ui-components/button/button';
 import {ButtonStateEnum, ButtonStyleEnum} from '../../../shared/constants/button';
 import {Router} from '@angular/router';
@@ -7,7 +6,7 @@ import {RoutePaths} from '../../constants/routes';
 
 @Component({
   selector: 'app-header',
-  imports: [Svg, Button],
+  imports: [Button],
   templateUrl: './header.html',
   styleUrl: './header.scss',
 })

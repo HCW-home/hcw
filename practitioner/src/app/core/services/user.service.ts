@@ -1,61 +1,51 @@
-import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { environment } from '../../../environments/environment';
+import {Injectable, inject} from '@angular/core';
+import {HttpClient} from '@angular/common/http';
+import {Observable, BehaviorSubject, tap} from 'rxjs';
 import {
-  User,
-  Speciality,
-  HealthMetric,
-  UpdateUserRequest,
-} from '../models/user';
-import { Consultation } from '../models/consultation';
-import { PaginatedResponse } from '../models/global';
-import { toHttpParams } from '../../shared/tools/helper';
+  IUser,
+  ILanguage,
+  ISpeciality,
+  IUserUpdateRequest,
+} from '../../modules/user/models/user';
+import {environment} from '../../../environments/environment';
+import {PaginatedResponse} from '../models/global';
 
 @Injectable({
   providedIn: 'root'
 })
 export class UserService {
-  private httpClient = inject(HttpClient);
-  private readonly apiUrl = environment.apiUrl;
+  private apiUrl = environment.apiUrl;
+  http = inject(HttpClient);
 
-  getCurrentUser(): Observable<User> {
-    return this.httpClient.get<User>(`${this.apiUrl}/auth/user/`);
-  }
+  private currentUserSubject = new BehaviorSubject<IUser | null>(null);
+  public currentUser$ = this.currentUserSubject.asObservable();
 
-  updateProfile(userData: UpdateUserRequest): Observable<User> {
-    return this.httpClient.patch<User>(`${this.apiUrl}/auth/user/`, userData);
-  }
-
-  getUserConsultations(params?: {
-    status?: 'open' | 'closed';
-    page?: number;
-    page_size?: number;
-  }): Observable<PaginatedResponse<Consultation>> {
-    const httpParams = toHttpParams(params || {});
-
-    return this.httpClient.get<PaginatedResponse<Consultation>>(
-      `${this.apiUrl}/user/consultations/`,
-      { params: httpParams }
+  getCurrentUser(): Observable<IUser> {
+    return this.http.get<IUser>(`${this.apiUrl}/auth/user/`).pipe(
+      tap(user => this.currentUserSubject.next(user))
     );
   }
 
-  getUserHealthMetrics(params?: {
-    from_date?: string;
-    to_date?: string;
-    source?: string;
-    page?: number;
-    page_size?: number;
-  }): Observable<PaginatedResponse<HealthMetric>> {
-    const httpParams = toHttpParams(params || {});
-
-    return this.httpClient.get<PaginatedResponse<HealthMetric>>(
-      `${this.apiUrl}/user/healthmetrics/`,
-      { params: httpParams }
+  updateCurrentUser(data: IUserUpdateRequest): Observable<IUser> {
+    return this.http.patch<IUser>(`${this.apiUrl}/auth/user/`, data).pipe(
+      tap(user => this.currentUserSubject.next(user))
     );
   }
 
-  getSpecialities(): Observable<Speciality[]> {
-    return this.httpClient.get<Speciality[]>(`${this.apiUrl}/specialities/`);
+  searchUsers(query: string, page?: number, pageSize?: number): Observable<PaginatedResponse<IUser>> {
+    let params: any = {search: query};
+    if (page) params.page = page;
+    if (pageSize) params.page_size = pageSize;
+
+    return this.http.get<any>(`${this.apiUrl}/user/`, {params});
   }
+
+  getLanguages(): Observable<ILanguage[]> {
+    return this.http.get<ILanguage[]>(`${this.apiUrl}/languages/`);
+  }
+
+  getSpecialities(): Observable<ISpeciality[]> {
+    return this.http.get<ISpeciality[]>(`${this.apiUrl}/specialities/`, {});
+  }
+
 }

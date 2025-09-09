@@ -13,21 +13,21 @@ import {
   providedIn: 'root'
 })
 export class Auth {
-  httpClient: HttpClient = inject(HttpClient);
+  http: HttpClient = inject(HttpClient);
 
   isLoggedIn() {
     return !!localStorage.getItem("token");
   }
 
   login(body: IBodyLogin) {
-    return this.httpClient.post<IResponseLogin>(`${environment.apiUrl}/auth/login/`, body);
+    return this.http.post<IResponseLogin>(`${environment.apiUrl}/auth/login/`, body);
   }
 
   forgotPassword(body: IBodyForgotPassword) {
-    return this.httpClient.post<SuccessResponse>(`${environment.apiUrl}/auth/password/reset/`, body);
+    return this.http.post<SuccessResponse>(`${environment.apiUrl}/auth/password/reset/`, body);
   }
 
   setPassword(params: IBodySetPassword) {
-    return this.httpClient.post<SuccessResponse>(`${environment.apiUrl}/password/recover/confirm`, params);
+    return this.http.post<SuccessResponse>(`${environment.apiUrl}/password/recover/confirm`, params);
   }
 }

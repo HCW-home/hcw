@@ -7,18 +7,4 @@ import { Component } from '@angular/core';
   styleUrl: './modal.component.scss'
 })
 export class ModalComponent {
-  // @Input() title = '';
-  // @Input() description = '';
-  // @Input() buttons: ModalButton[] = [];
-  // @Input() showCloseIcon = false;
-  // @Output() buttonClick = new EventEmitter<ModalButton>();
-  // @Output() backdropClick = new EventEmitter<void>();
-
-  // onButtonClick(button: ModalButton): void {
-  //   this.buttonClick.emit(button);
-  // }
-
-  // onBackdropClick(): void {
-  //   this.backdropClick.emit();
-  // }
 }

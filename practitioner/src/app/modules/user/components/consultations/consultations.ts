@@ -21,7 +21,7 @@ import { RoutePaths } from '../../../../core/constants/routes';
 
 @Component({
   selector: 'app-consultations',
-  imports: [Page, Breadcrumb, Button, Typography, Tabs, ConsultationCard, Svg, Loader],
+  imports: [Page, Button, Typography, Tabs, ConsultationCard, Svg, Loader],
   templateUrl: './consultations.html',
   styleUrl: './consultations.scss',
 })

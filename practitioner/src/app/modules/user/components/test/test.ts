@@ -402,7 +402,6 @@ export class Test implements OnInit, OnDestroy {
     return URL.createObjectURL(blob);
   }
 
-  // Overall Status Methods
   allTestsCompleted(): boolean {
     return this.cameraStatus() === 'working' &&
            this.microphoneStatus() === 'working' &&
@@ -435,7 +434,6 @@ export class Test implements OnInit, OnDestroy {
     return 'var(--Warning-05)';
   }
 
-  // Action Methods
   testAllSystems() {
     if (this.cameraStatus() === 'idle') {
       this.testCamera();

@@ -5,7 +5,8 @@ import { Subject, takeUntil } from 'rxjs';
 
 import { UserService } from '../../../../core/services/user.service';
 import { ToasterService } from '../../../../core/services/toaster.service';
-import { User, UpdateUserRequest } from '../../../../core/models/user';
+import { IUser, IUserUpdateRequest, ILanguage } from '../../models/user';
+import { CommunicationMethodOptions, TimezoneOptions } from '../../constants/user';
 
 import { Page } from '../../../../core/components/page/page';
 import { BackButton } from '../../../../shared/components/back-button/back-button';
@@ -44,25 +45,22 @@ import { SelectOption } from '../../../../shared/models/select';
 export class UserProfile implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
-  user = signal<User | null>(null);
+  user = signal<IUser | null>(null);
+  languages = signal<ILanguage[]>([]);
   isLoadingUser = signal(false);
   isEditing = signal(false);
   isSaving = signal(false);
 
   profileForm: FormGroup;
 
-  // Constants for templates
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
   protected readonly BadgeTypeEnum = BadgeTypeEnum;
 
-  // Communication method options
-  communicationMethods: SelectOption[] = [
-    { value: 'email', label: 'Email' },
-    { value: 'sms', label: 'SMS' },
-    { value: 'whatsapp', label: 'WhatsApp' }
-  ];
+  communicationMethods: SelectOption[] = CommunicationMethodOptions;
+  timezoneOptions: SelectOption[] = TimezoneOptions;
+  languageOptions = signal<SelectOption[]>([]);
 
   constructor(
     private fb: FormBuilder,
@@ -70,16 +68,20 @@ export class UserProfile implements OnInit, OnDestroy {
     private toasterService: ToasterService
   ) {
     this.profileForm = this.fb.group({
-      first_name: ['', [Validators.required]],
-      last_name: ['', [Validators.required]],
+      first_name: ['', [Validators.required, Validators.minLength(2)]],
+      last_name: ['', [Validators.required, Validators.minLength(2)]],
       email: [{ value: '', disabled: true }],
       mobile_phone_numer: [''],
-      communication_method: ['email', [Validators.required]]
+      communication_method: ['email', [Validators.required]],
+      preferred_language: [''],
+      timezone: ['UTC', Validators.required],
+      language_ids: [[]]
     });
   }
 
   ngOnInit(): void {
     this.loadUserProfile();
+    this.loadDropdownData();
   }
 
   ngOnDestroy(): void {
@@ -105,20 +107,24 @@ export class UserProfile implements OnInit, OnDestroy {
       });
   }
 
-  private populateForm(user: User): void {
+  private populateForm(user: IUser): void {
+    const languageCodes = user.languages?.map(lang => lang.code) || [];
+
     this.profileForm.patchValue({
-      first_name: user.first_name,
-      last_name: user.last_name,
+      first_name: user.first_name || '',
+      last_name: user.last_name || '',
       email: user.email,
       mobile_phone_numer: user.mobile_phone_numer || '',
-      communication_method: user.communication_method
+      communication_method: user.communication_method || 'email',
+      preferred_language: user.preferred_language || '',
+      timezone: user.timezone || 'UTC',
+      language_ids: languageCodes
     });
   }
 
   toggleEdit(): void {
     const currentEditState = this.isEditing();
     if (currentEditState) {
-      // Cancel editing - reset form to original values
       if (this.user()) {
         this.populateForm(this.user()!);
       }
@@ -131,14 +137,17 @@ export class UserProfile implements OnInit, OnDestroy {
       this.isSaving.set(true);
 
       const formValue = this.profileForm.value;
-      const updateData: UpdateUserRequest = {
+      const updateData: IUserUpdateRequest = {
         first_name: formValue.first_name,
         last_name: formValue.last_name,
         mobile_phone_numer: formValue.mobile_phone_numer || undefined,
-        communication_method: formValue.communication_method
+        communication_method: formValue.communication_method,
+        preferred_language: formValue.preferred_language,
+        timezone: formValue.timezone,
+        language_ids: this.getLanguageIds(formValue.language_ids)
       };
 
-      this.userService.updateProfile(updateData)
+      this.userService.updateCurrentUser(updateData)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (updatedUser) => {
@@ -165,4 +174,30 @@ export class UserProfile implements OnInit, OnDestroy {
     const option = this.communicationMethods.find(opt => opt.value === method);
     return option?.label || method;
   }
+
+  loadDropdownData(): void {
+    this.userService.getLanguages().toPromise().then(languages => {
+      if (languages) {
+        this.languages.set(languages);
+        this.languageOptions.set(
+          languages.map(lang => ({
+            label: lang.name,
+            value: lang.code
+          }))
+        );
+      }
+    }).catch(error => {
+      console.error('Error loading languages:', error);
+    });
+  }
+
+  private getLanguageIds(languageCodes: string[]): number[] {
+    const languages = this.languages();
+    return languageCodes
+      .map(code => languages.find(lang => lang.code === code))
+      .filter(lang => lang !== undefined)
+      .map(lang => languages.indexOf(lang!) + 1);
+  }
+
+
 }

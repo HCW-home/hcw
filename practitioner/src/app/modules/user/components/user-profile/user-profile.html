@@ -66,68 +66,168 @@
 
         @if (!isEditing()) {
           <div class="profile-details">
-            <div class="info-grid">
-              <div class="info-item">
-                <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
-                  First Name
-                </app-typography>
-                <app-typography [variant]="TypographyTypeEnum['body-regular']">
-                  {{ user()!.first_name }}
-                </app-typography>
-              </div>
-
-              <div class="info-item">
-                <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
-                  Last Name
-                </app-typography>
-                <app-typography [variant]="TypographyTypeEnum['body-regular']">
-                  {{ user()!.last_name }}
-                </app-typography>
-              </div>
-
-              <div class="info-item">
-                <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
-                  Email Address
-                </app-typography>
-                <app-typography [variant]="TypographyTypeEnum['body-regular']">
-                  {{ user()!.email }}
-                </app-typography>
-              </div>
-
-              <div class="info-item">
-                <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
-                  Mobile Phone
-                </app-typography>
-                <app-typography [variant]="TypographyTypeEnum['body-regular']">
-                  {{ user()!.mobile_phone_numer || 'Not provided' }}
-                </app-typography>
-              </div>
-
-              <div class="info-item">
-                <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
-                  Preferred Communication
-                </app-typography>
-                <div class="communication-method">
-                  <app-badge [type]="BadgeTypeEnum.blue">
-                    {{ getCommunicationMethodLabel(user()!.communication_method) }}
-                  </app-badge>
+            <div class="info-section">
+              <app-typography [variant]="TypographyTypeEnum['h6-regular']">
+                Personal Information
+              </app-typography>
+              <div class="info-grid">
+                <div class="info-item">
+                  <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
+                    First Name
+                  </app-typography>
+                  <app-typography [variant]="TypographyTypeEnum['body-regular']">
+                    {{ user()!.first_name }}
+                  </app-typography>
+                </div>
+                <div class="info-item">
+                  <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
+                    Last Name
+                  </app-typography>
+                  <app-typography [variant]="TypographyTypeEnum['body-regular']">
+                    {{ user()!.last_name }}
+                  </app-typography>
+                </div>
+                <div class="info-item">
+                  <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
+                    Email Address
+                  </app-typography>
+                  <app-typography [variant]="TypographyTypeEnum['body-regular']">
+                    {{ user()!.email }}
+                  </app-typography>
                 </div>
               </div>
+            </div>
 
-              <div class="info-item">
-                <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
-                  Last Login
+            <div class="info-section">
+              <app-typography [variant]="TypographyTypeEnum['h6-regular']">
+                Contact Information
+              </app-typography>
+              <div class="info-grid">
+                <div class="info-item">
+                  <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
+                    Email Address
+                  </app-typography>
+                  <app-typography [variant]="TypographyTypeEnum['body-regular']">
+                    {{ user()!.email }}
+                  </app-typography>
+                </div>
+                <div class="info-item">
+                  <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
+                    Mobile Phone
+                  </app-typography>
+                  <app-typography [variant]="TypographyTypeEnum['body-regular']">
+                    {{ user()!.mobile_phone_numer || 'Not provided' }}
+                  </app-typography>
+                </div>
+                <div class="info-item">
+                  <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
+                    Preferred Communication
+                  </app-typography>
+                  <div class="communication-method">
+                    <app-badge [type]="BadgeTypeEnum.blue">
+                      {{ getCommunicationMethodLabel(user()!.communication_method) }}
+                    </app-badge>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="info-section">
+              <app-typography [variant]="TypographyTypeEnum['h6-regular']">
+                Preferences
+              </app-typography>
+              <div class="info-grid">
+                <div class="info-item">
+                  <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
+                    Timezone
+                  </app-typography>
+                  <app-typography [variant]="TypographyTypeEnum['body-regular']">
+                    {{ user()!.timezone || 'UTC' }}
+                  </app-typography>
+                </div>
+                <div class="info-item">
+                  <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
+                    Preferred Language
+                  </app-typography>
+                  <app-typography [variant]="TypographyTypeEnum['body-regular']">
+                    {{ user()!.preferred_language || 'Not set' }}
+                  </app-typography>
+                </div>
+                @if (user()!.languages?.length) {
+                  <div class="info-item full-width">
+                    <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
+                      Available Languages
+                    </app-typography>
+                    <div class="specialities-list">
+                      @for (language of user()!.languages; track language.code) {
+                        <app-badge [type]="BadgeTypeEnum.blue">
+                          {{ language.name }}
+                        </app-badge>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+
+            @if (user()!.specialities?.length) {
+              <div class="info-section">
+                <app-typography [variant]="TypographyTypeEnum['h6-regular']">
+                  Professional Information
                 </app-typography>
-                <app-typography [variant]="TypographyTypeEnum['body-regular']">
-                  {{ formatDate(user()!.last_login) }}
-                </app-typography>
+                <div class="info-grid">
+                  <div class="info-item full-width">
+                    <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
+                      Specialities
+                    </app-typography>
+                    <div class="specialities-list">
+                      @for (speciality of user()!.specialities; track speciality.id) {
+                        <app-badge [type]="BadgeTypeEnum.green">
+                          {{ speciality.name }}
+                        </app-badge>
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+
+            <div class="info-section">
+              <app-typography [variant]="TypographyTypeEnum['h6-regular']" >
+                Account Information
+              </app-typography>
+              <div class="info-grid">
+                <div class="info-item">
+                  <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
+                    Member Since
+                  </app-typography>
+                  <app-typography [variant]="TypographyTypeEnum['body-regular']">
+                    {{ formatDate(user()!.date_joined) }}
+                  </app-typography>
+                </div>
+                <div class="info-item">
+                  <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
+                    Last Login
+                  </app-typography>
+                  <app-typography [variant]="TypographyTypeEnum['body-regular']">
+                    {{ formatDate(user()!.last_login) }}
+                  </app-typography>
+                </div>
+                <div class="info-item">
+                  <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
+                    Account Status
+                  </app-typography>
+                  <app-badge [type]="user()!.is_active ? BadgeTypeEnum.green : BadgeTypeEnum.red">
+                    {{ user()!.is_active ? 'Active' : 'Inactive' }}
+                  </app-badge>
+                </div>
               </div>
             </div>
           </div>
         } @else {
           <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="profile-form">
             <div class="form-section">
-              <app-typography [variant]="TypographyTypeEnum['h3-semibold']">
+              <app-typography [variant]="TypographyTypeEnum['h3-regular']">
                 Personal Information
               </app-typography>
 
@@ -162,13 +262,13 @@
             </div>
 
             <div class="form-section">
-              <app-typography [variant]="TypographyTypeEnum['h3-semibold']">
+              <app-typography [variant]="TypographyTypeEnum['h3-regular']">
                 Contact Information
               </app-typography>
 
               <div class="form-row">
                 <app-input
-                  label="Mobile Phone (Optional)"
+                  label="Mobile Phone"
                   type="tel"
                   formControlName="mobile_phone_numer"
                   placeholder="+1 234 567 8900"
@@ -183,6 +283,39 @@
                   [options]="communicationMethods"
                   [invalid]="(profileForm.get('communication_method')?.invalid && profileForm.get('communication_method')?.touched) || false"
                   invalidMessage="Communication method is required">
+                </app-select>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <app-typography [variant]="TypographyTypeEnum['h3-regular']">
+                System Preferences
+              </app-typography>
+
+              <div class="form-row two-columns">
+                <app-select
+                  label="Timezone"
+                  formControlName="timezone"
+                  [options]="timezoneOptions"
+                  [invalid]="(profileForm.get('timezone')?.invalid && profileForm.get('timezone')?.touched) || false"
+                  invalidMessage="Timezone is required">
+                </app-select>
+
+                <app-select
+                  label="Preferred Interface Language"
+                  formControlName="preferred_language"
+                  [options]="languageOptions()"
+                  placeholder="Select your preferred language">
+                </app-select>
+              </div>
+
+              <div class="form-row">
+                <app-select
+                  label="Available Languages"
+                  formControlName="language_ids"
+                  [options]="languageOptions()"
+                  placeholder="Select languages you can communicate in"
+                  [multiSelect]="true">
                 </app-select>
               </div>
             </div>

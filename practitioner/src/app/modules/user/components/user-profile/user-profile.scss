@@ -1,21 +1,20 @@
 .user-profile {
-  display: flex;
-  flex-direction: column;
   gap: 24px;
+  display: flex;
   padding: 24px;
-  max-width: 800px;
+  flex-direction: column;
 }
 
 .profile-header {
+  gap: 16px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
 
   .header-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
     gap: 16px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
 
     .header-actions {
       display: flex;
@@ -74,6 +73,10 @@
 }
 
 .profile-details {
+  gap: 24px;
+  display: flex;
+  flex-direction: column;
+
   .info-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -87,6 +90,12 @@
       .communication-method {
         display: flex;
         align-items: center;
+      }
+
+      .specialities-list {
+        gap: 8px;
+        display: flex;
+        flex-wrap: wrap;
       }
     }
   }
