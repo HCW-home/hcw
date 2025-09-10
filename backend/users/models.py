@@ -70,6 +70,9 @@ class User(AbstractUser):
     app_preferences = models.JSONField(null=True, blank=True)
     encrypted = models.BooleanField(default=False)
 
+    picture = models.ImageField(
+        upload_to='users/', blank=True, null=True)
+
     languages = models.ManyToManyField(Language, blank=True)
 
     preferred_language = models.CharField(
@@ -86,7 +89,7 @@ class User(AbstractUser):
         'users.Organisation', blank=True, null=True, on_delete=models.SET_NULL, related_name="users_mainorganisation")
     communication_method = models.CharField(
         choices=CommunicationMethod.choices, default=CommunicationMethod.EMAIL)
-    mobile_phone_numer = models.CharField(null=True, blank=True)
+    mobile_phone_number = models.CharField(null=True, blank=True)
     timezone = models.CharField(
         max_length=63,
         choices=[(tz, tz) for tz in pytz.all_timezones],

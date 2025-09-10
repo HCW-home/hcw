@@ -32,8 +32,8 @@ class UserDetailsSerializer(serializers.ModelSerializer):
 
     main_organisation = OrganisationSerializer(read_only=True)
     organisations = OrganisationSerializer(many=True, read_only=True)
-    preferred_language = LanguageSerializer(read_only=True)
-    languages = LanguageSerializer(many=True, read_only=True)
+    preferred_language = LanguageSerializer()
+    languages = LanguageSerializer(many=True)
     language_ids = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=Language.objects.all(),
@@ -55,8 +55,8 @@ class UserDetailsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserModel
-        fields = ['pk', UserModel.EMAIL_FIELD,
-                  'first_name', 'last_name', 'app_preferences', 'last_login', 'communication_method', 'mobile_phone_numer', 'timezone', 'main_organisation', 'organisations', 'preferred_language', 'languages', 'language_ids']
+        fields = ['pk', UserModel.EMAIL_FIELD, 'picture',
+                  'first_name', 'last_name', 'app_preferences', 'last_login', 'communication_method', 'mobile_phone_number', 'timezone', 'main_organisation', 'organisations', 'preferred_language', 'languages', 'language_ids']
         read_only_fields = ['email']
 
 class RegisterSerializer(serializers.Serializer):
