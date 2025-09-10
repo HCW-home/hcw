@@ -1,7 +1,7 @@
-import {inject, Injectable} from '@angular/core';
-import {HttpClient, HttpParams} from '@angular/common/http';
-import {Observable} from 'rxjs';
-import {environment} from '../../../environments/environment';
+import { inject, Injectable } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import {
   Queue,
   Participant,
@@ -17,11 +17,10 @@ import {
   CreateConsultationRequest,
   CreateConsultationRequestPayload,
 } from '../models/consultation';
-import {PaginatedResponse} from '../models/global';
-
+import { PaginatedResponse } from '../models/global';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ConsultationService {
   private apiUrl = `${environment.apiUrl}`;
@@ -45,19 +44,30 @@ export class ConsultationService {
         }
       });
     }
-    return this.http.get<PaginatedResponse<Consultation>>(`${this.apiUrl}/consultations/`, {params: httpParams});
+    return this.http.get<PaginatedResponse<Consultation>>(
+      `${this.apiUrl}/consultations/`,
+      { params: httpParams }
+    );
   }
 
   getConsultation(id: number): Observable<Consultation> {
     return this.http.get<Consultation>(`${this.apiUrl}/consultations/${id}/`);
   }
 
-  createConsultation(data: CreateConsultationRequest): Observable<Consultation> {
+  createConsultation(
+    data: CreateConsultationRequest
+  ): Observable<Consultation> {
     return this.http.post<Consultation>(`${this.apiUrl}/consultations/`, data);
   }
 
-  updateConsultation(id: number, data: Partial<CreateConsultationRequest>): Observable<Consultation> {
-    return this.http.patch<Consultation>(`${this.apiUrl}/consultations/${id}/`, data);
+  updateConsultation(
+    id: number,
+    data: Partial<CreateConsultationRequest>
+  ): Observable<Consultation> {
+    return this.http.patch<Consultation>(
+      `${this.apiUrl}/consultations/${id}/`,
+      data
+    );
   }
 
   deleteConsultation(id: number): Observable<void> {
@@ -65,17 +75,26 @@ export class ConsultationService {
   }
 
   closeConsultation(id: number): Observable<Consultation> {
-    return this.http.post<Consultation>(`${this.apiUrl}/consultations/${id}/close/`, {});
+    return this.http.post<Consultation>(
+      `${this.apiUrl}/consultations/${id}/close/`,
+      {}
+    );
   }
 
   reopenConsultation(id: number): Observable<Consultation> {
-    return this.http.post<Consultation>(`${this.apiUrl}/consultations/${id}/reopen/`, {});
+    return this.http.post<Consultation>(
+      `${this.apiUrl}/consultations/${id}/reopen/`,
+      {}
+    );
   }
 
-  getConsultationAppointments(consultationId: number, params?: {
-    page?: number;
-    page_size?: number;
-  }): Observable<PaginatedResponse<Appointment>> {
+  getConsultationAppointments(
+    consultationId: number,
+    params?: {
+      page?: number;
+      page_size?: number;
+    }
+  ): Observable<PaginatedResponse<Appointment>> {
     let httpParams = new HttpParams();
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -86,7 +105,7 @@ export class ConsultationService {
     }
     return this.http.get<PaginatedResponse<Appointment>>(
       `${this.apiUrl}/consultations/${consultationId}/appointments/`,
-      {params: httpParams}
+      { params: httpParams }
     );
   }
 
@@ -100,13 +119,39 @@ export class ConsultationService {
     );
   }
 
-  getConsultationAppointment(consultationId: number, appointmentId: number): Observable<Appointment> {
+  getConsultationAppointment(
+    consultationId: number,
+    appointmentId: number
+  ): Observable<Appointment> {
     return this.http.get<Appointment>(
       `${this.apiUrl}/consultations/${consultationId}/appointment/${appointmentId}/`
     );
   }
 
-  cancelAppointment(consultationId: number, appointmentId: number): Observable<Appointment> {
+  updateConsultationAppointment(
+    consultationId: number,
+    appointmentId: number,
+    data: Partial<CreateAppointmentRequest>
+  ): Observable<Appointment> {
+    return this.http.patch<Appointment>(
+      `${this.apiUrl}/consultations/${consultationId}/appointment/${appointmentId}/`,
+      data
+    );
+  }
+
+  deleteConsultationAppointment(
+    consultationId: number,
+    appointmentId: number
+  ): Observable<void> {
+    return this.http.delete<void>(
+      `${this.apiUrl}/consultations/${consultationId}/appointment/${appointmentId}/`
+    );
+  }
+
+  cancelAppointment(
+    consultationId: number,
+    appointmentId: number
+  ): Observable<Appointment> {
     return this.http.post<Appointment>(
       `${this.apiUrl}/consultations/${consultationId}/appointment/${appointmentId}/cancel/`,
       {}
@@ -116,7 +161,7 @@ export class ConsultationService {
   getAppointmentParticipants(
     consultationId: number,
     appointmentId: number,
-    params?: { page?: number; page_size?: number; }
+    params?: { page?: number; page_size?: number }
   ): Observable<PaginatedResponse<Participant>> {
     let httpParams = new HttpParams();
     if (params) {
@@ -128,7 +173,7 @@ export class ConsultationService {
     }
     return this.http.get<PaginatedResponse<Participant>>(
       `${this.apiUrl}/consultations/${consultationId}/appointment/${appointmentId}/participants/`,
-      {params: httpParams}
+      { params: httpParams }
     );
   }
 
@@ -139,6 +184,18 @@ export class ConsultationService {
   ): Observable<Participant> {
     return this.http.post<Participant>(
       `${this.apiUrl}/consultations/${consultationId}/appointment/${appointmentId}/participants/`,
+      data
+    );
+  }
+
+  updateAppointmentParticipant(
+    consultationId: number,
+    appointmentId: number,
+    participantId: number,
+    data: Partial<CreateParticipantRequest>
+  ): Observable<Participant> {
+    return this.http.patch<Participant>(
+      `${this.apiUrl}/consultations/${consultationId}/appointment/${appointmentId}/participants/${participantId}/`,
       data
     );
   }
@@ -155,7 +212,7 @@ export class ConsultationService {
 
   getConsultationMessages(
     consultationId: number,
-    params?: { page?: number; page_size?: number; }
+    params?: { page?: number; page_size?: number }
   ): Observable<PaginatedResponse<ConsultationMessage>> {
     let httpParams = new HttpParams();
     if (params) {
@@ -167,7 +224,7 @@ export class ConsultationService {
     }
     return this.http.get<PaginatedResponse<ConsultationMessage>>(
       `${this.apiUrl}/consultations/${consultationId}/messages/`,
-      {params: httpParams}
+      { params: httpParams }
     );
   }
 
@@ -209,25 +266,39 @@ export class ConsultationService {
         }
       });
     }
-    return this.http.get<PaginatedResponse<ConsultationRequest>>(`${this.apiUrl}/requests/`, {params: httpParams});
+    return this.http.get<PaginatedResponse<ConsultationRequest>>(
+      `${this.apiUrl}/requests/`,
+      { params: httpParams }
+    );
   }
 
   getConsultationRequest(id: number): Observable<ConsultationRequest> {
     return this.http.get<ConsultationRequest>(`${this.apiUrl}/requests/${id}/`);
   }
 
-  createConsultationRequest(data: CreateConsultationRequestPayload): Observable<ConsultationRequest> {
-    return this.http.post<ConsultationRequest>(`${this.apiUrl}/requests/`, data);
+  createConsultationRequest(
+    data: CreateConsultationRequestPayload
+  ): Observable<ConsultationRequest> {
+    return this.http.post<ConsultationRequest>(
+      `${this.apiUrl}/requests/`,
+      data
+    );
   }
 
   cancelConsultationRequest(id: number): Observable<ConsultationRequest> {
-    return this.http.post<ConsultationRequest>(`${this.apiUrl}/requests/${id}/cancel/`, {});
+    return this.http.post<ConsultationRequest>(
+      `${this.apiUrl}/requests/${id}/cancel/`,
+      {}
+    );
   }
 
-  getAvailableSlots(reasonId: number, params?: {
-    from_date?: string;
-    user_id?: number;
-  }): Observable<AvailableSlot[]> {
+  getAvailableSlots(
+    reasonId: number,
+    params?: {
+      from_date?: string;
+      user_id?: number;
+    }
+  ): Observable<AvailableSlot[]> {
     let httpParams = new HttpParams();
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -238,7 +309,7 @@ export class ConsultationService {
     }
     return this.http.get<AvailableSlot[]>(
       `${this.apiUrl}/reasons/${reasonId}/slots/`,
-      {params: httpParams}
+      { params: httpParams }
     );
   }
 
@@ -263,19 +334,33 @@ export class ConsultationService {
         }
       });
     }
-    return this.http.get<PaginatedResponse<BookingSlot>>(`${this.apiUrl}/user/bookingslots/`, {params: httpParams});
+    return this.http.get<PaginatedResponse<BookingSlot>>(
+      `${this.apiUrl}/user/bookingslots/`,
+      { params: httpParams }
+    );
   }
 
   getBookingSlot(id: number): Observable<BookingSlot> {
-    return this.http.get<BookingSlot>(`${this.apiUrl}/user/bookingslots/${id}/`);
+    return this.http.get<BookingSlot>(
+      `${this.apiUrl}/user/bookingslots/${id}/`
+    );
   }
 
   createBookingSlot(data: CreateBookingSlot): Observable<BookingSlot> {
-    return this.http.post<BookingSlot>(`${this.apiUrl}/user/bookingslots/`, data);
+    return this.http.post<BookingSlot>(
+      `${this.apiUrl}/user/bookingslots/`,
+      data
+    );
   }
 
-  updateBookingSlot(id: number, data: Partial<CreateBookingSlot>): Observable<BookingSlot> {
-    return this.http.patch<BookingSlot>(`${this.apiUrl}/user/bookingslots/${id}/`, data);
+  updateBookingSlot(
+    id: number,
+    data: Partial<CreateBookingSlot>
+  ): Observable<BookingSlot> {
+    return this.http.patch<BookingSlot>(
+      `${this.apiUrl}/user/bookingslots/${id}/`,
+      data
+    );
   }
 
   deleteBookingSlot(id: number): Observable<void> {

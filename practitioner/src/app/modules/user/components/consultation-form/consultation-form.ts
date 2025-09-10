@@ -1,35 +1,51 @@
-import {Component, computed, inject, OnDestroy, OnInit, signal} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
-import {CommonModule} from '@angular/common';
-import {forkJoin, Subject, takeUntil} from 'rxjs';
+import {
+  Component,
+  computed,
+  inject,
+  OnDestroy,
+  OnInit,
+  signal,
+} from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import {
+  FormArray,
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { forkJoin, Subject, takeUntil } from 'rxjs';
 
-import {ConsultationService} from '../../../../core/services/consultation.service';
-import {ToasterService} from '../../../../core/services/toaster.service';
-import {ValidationService} from '../../../../core/services/validation.service';
+import { ConsultationService } from '../../../../core/services/consultation.service';
+import { ToasterService } from '../../../../core/services/toaster.service';
+import { ValidationService } from '../../../../core/services/validation.service';
 import {
   AppointmentType,
   Consultation,
   CreateAppointmentRequest,
   CreateConsultationRequest,
-  Queue
+  Queue,
 } from '../../../../core/models/consultation';
 
-import {Page} from '../../../../core/components/page/page';
-import {Loader} from '../../../../shared/components/loader/loader';
+import { Page } from '../../../../core/components/page/page';
+import { Loader } from '../../../../shared/components/loader/loader';
 
-import {Typography} from '../../../../shared/ui-components/typography/typography';
-import {Button} from '../../../../shared/ui-components/button/button';
-import {Input as InputComponent} from '../../../../shared/ui-components/input/input';
-import {Textarea} from '../../../../shared/ui-components/textarea/textarea';
-import {Select} from '../../../../shared/ui-components/select/select';
-import {Svg} from '../../../../shared/ui-components/svg/svg';
+import { Typography } from '../../../../shared/ui-components/typography/typography';
+import { Button } from '../../../../shared/ui-components/button/button';
+import { Input as InputComponent } from '../../../../shared/ui-components/input/input';
+import { Textarea } from '../../../../shared/ui-components/textarea/textarea';
+import { Select } from '../../../../shared/ui-components/select/select';
+import { Svg } from '../../../../shared/ui-components/svg/svg';
 
-import {TypographyTypeEnum} from '../../../../shared/constants/typography';
-import {ButtonSizeEnum, ButtonStyleEnum} from '../../../../shared/constants/button';
-import {SelectOption} from '../../../../shared/models/select';
-import {IBreadcrumb} from '../../../../shared/models/breadcrumb';
-import {RoutePaths} from '../../../../core/constants/routes';
+import { TypographyTypeEnum } from '../../../../shared/constants/typography';
+import {
+  ButtonSizeEnum,
+  ButtonStyleEnum,
+} from '../../../../shared/constants/button';
+import { SelectOption } from '../../../../shared/models/select';
+import { IBreadcrumb } from '../../../../shared/models/breadcrumb';
+import { RoutePaths } from '../../../../core/constants/routes';
 
 @Component({
   selector: 'app-consultation-form',
@@ -46,7 +62,7 @@ import {RoutePaths} from '../../../../core/constants/routes';
     Textarea,
     Select,
     Svg,
-  ]
+  ],
 })
 export class ConsultationForm implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
@@ -68,13 +84,15 @@ export class ConsultationForm implements OnInit, OnDestroy {
 
   breadcrumbs = computed<IBreadcrumb[]>(() => [
     { label: 'Consultations', link: '/user/consultations' },
-    { label: this.mode === 'create' ? 'New Consultation' : 'Edit Consultation' }
+    {
+      label: this.mode === 'create' ? 'New Consultation' : 'Edit Consultation',
+    },
   ]);
 
   queueOptions = computed<SelectOption[]>(() =>
     this.queues().map(queue => ({
       value: queue.id.toString(),
-      label: queue.name
+      label: queue.name,
     }))
   );
 
@@ -91,12 +109,12 @@ export class ConsultationForm implements OnInit, OnDestroy {
   communicationMethods: SelectOption[] = [
     { value: 'email', label: 'Email' },
     { value: 'sms', label: 'SMS' },
-    { value: 'whatsapp', label: 'WhatsApp' }
+    { value: 'whatsapp', label: 'WhatsApp' },
   ];
 
   appointmentTypeOptions: SelectOption[] = [
     { value: AppointmentType.ONLINE, label: 'Online' },
-    { value: AppointmentType.INPERSON, label: 'In Person' }
+    { value: AppointmentType.INPERSON, label: 'In Person' },
   ];
 
   private route = inject(ActivatedRoute);
@@ -108,11 +126,18 @@ export class ConsultationForm implements OnInit, OnDestroy {
 
   constructor() {
     this.consultationForm = this.fb.group({
-      title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(200)]],
+      title: [
+        '',
+        [
+          Validators.required,
+          Validators.minLength(3),
+          Validators.maxLength(200),
+        ],
+      ],
       description: ['', [Validators.maxLength(1000)]],
       group_id: [''],
       beneficiary_id: [''],
-      appointments: this.fb.array([])
+      appointments: this.fb.array([]),
     });
   }
 
@@ -137,7 +162,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
     const participantGroup = this.fb.group({
       email: ['', [Validators.email]],
       phone: [''],
-      message_type: ['email', [Validators.required]]
+      message_type: ['email', [Validators.required]],
     });
 
     (appointmentGroup.get('participants') as FormArray).push(participantGroup);
@@ -155,17 +180,21 @@ export class ConsultationForm implements OnInit, OnDestroy {
   }
 
   loadQueues(): void {
-    this.consultationService.getQueues()
+    this.consultationService
+      .getQueues()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (queues) => {
+        next: queues => {
           this.queues.set(queues);
         },
-        error: (error) => {
+        error: error => {
           console.error('Error loading queues:', error);
-          this.toasterService.show('error', 'Error loading teams - please check your connection');
+          this.toasterService.show(
+            'error',
+            'Error loading teams - please check your connection'
+          );
           this.queues.set([]);
-        }
+        },
       });
   }
 
@@ -173,20 +202,23 @@ export class ConsultationForm implements OnInit, OnDestroy {
     if (!this.consultationId) return;
 
     this.isLoading.set(true);
-    this.consultationService.getConsultation(this.consultationId)
+    this.consultationService
+      .getConsultation(this.consultationId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (consultation) => {
+        next: consultation => {
           this.consultation.set(consultation);
           this.populateForm(consultation);
           this.isLoading.set(false);
         },
-        error: (error) => {
+        error: error => {
           console.error('Error loading consultation:', error);
           this.isLoading.set(false);
           this.toasterService.show('error', 'Error loading consultation');
-          this.router.navigate([`/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`]);
-        }
+          this.router.navigate([
+            `/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`,
+          ]);
+        },
       });
   }
 
@@ -195,10 +227,9 @@ export class ConsultationForm implements OnInit, OnDestroy {
       title: consultation.title || '',
       description: consultation.description || '',
       group_id: consultation.group?.id?.toString() || '',
-      beneficiary_id: consultation.beneficiary?.id?.toString() || ''
+      beneficiary_id: consultation.beneficiary?.id?.toString() || '',
     });
 
-    // Load appointments if editing
     if (this.mode === 'edit' && this.consultationId) {
       this.loadAppointments();
     }
@@ -207,10 +238,11 @@ export class ConsultationForm implements OnInit, OnDestroy {
   loadAppointments(): void {
     if (!this.consultationId) return;
 
-    this.consultationService.getConsultationAppointments(this.consultationId)
+    this.consultationService
+      .getConsultationAppointments(this.consultationId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response) => {
+        next: response => {
           while (this.appointmentsFormArray.length !== 0) {
             this.appointmentsFormArray.removeAt(0);
           }
@@ -220,9 +252,13 @@ export class ConsultationForm implements OnInit, OnDestroy {
             appointmentGroup.patchValue({
               id: appointment.id,
               type: appointment.type || AppointmentType.ONLINE,
-              scheduled_at: this.formatDateTimeForInput(appointment.scheduled_at),
-              end_expected_at: appointment.end_expected_at ? this.formatDateTimeForInput(appointment.end_expected_at) : '',
-              participants: appointment.participants || []
+              scheduled_at: this.formatDateTimeForInput(
+                appointment.scheduled_at
+              ),
+              end_expected_at: appointment.end_expected_at
+                ? this.formatDateTimeForInput(appointment.end_expected_at)
+                : '',
+              participants: appointment.participants || [],
             });
             this.appointmentsFormArray.push(appointmentGroup);
           });
@@ -231,10 +267,10 @@ export class ConsultationForm implements OnInit, OnDestroy {
             this.addAppointment();
           }
         },
-        error: (error) => {
+        error: error => {
           console.error('Error loading appointments:', error);
           this.toasterService.show('error', 'Error loading appointments');
-        }
+        },
       });
   }
 
@@ -244,10 +280,9 @@ export class ConsultationForm implements OnInit, OnDestroy {
       type: ['Online', [Validators.required]],
       scheduled_at: ['', [Validators.required]],
       end_expected_at: [''],
-      participants: this.fb.array([])
+      participants: this.fb.array([]),
     });
   }
-
 
   addAppointment(): void {
     const appointmentGroup = this.createAppointmentFormGroup();
@@ -263,20 +298,25 @@ export class ConsultationForm implements OnInit, OnDestroy {
   }
 
   getParticipantsFormArray(appointmentIndex: number): FormArray {
-    return this.appointmentsFormArray.at(appointmentIndex).get('participants') as FormArray;
+    return this.appointmentsFormArray
+      .at(appointmentIndex)
+      .get('participants') as FormArray;
   }
 
   addParticipantToAppointment(appointmentIndex: number): void {
     const participantGroup = this.fb.group({
       email: ['', [Validators.email]],
       phone: [''],
-      message_type: ['email', [Validators.required]]
+      message_type: ['email', [Validators.required]],
     });
 
     this.getParticipantsFormArray(appointmentIndex).push(participantGroup);
   }
 
-  removeParticipantFromAppointment(appointmentIndex: number, participantIndex: number): void {
+  removeParticipantFromAppointment(
+    appointmentIndex: number,
+    participantIndex: number
+  ): void {
     const participantsArray = this.getParticipantsFormArray(appointmentIndex);
     if (participantsArray.length > 1) {
       participantsArray.removeAt(participantIndex);
@@ -294,7 +334,10 @@ export class ConsultationForm implements OnInit, OnDestroy {
       }
     } else {
       this.validationService.validateAllFormFields(this.consultationForm);
-      this.toasterService.show('error', 'Please fill in all required fields correctly');
+      this.toasterService.show(
+        'error',
+        'Please fill in all required fields correctly'
+      );
     }
   }
 
@@ -304,27 +347,37 @@ export class ConsultationForm implements OnInit, OnDestroy {
       title: formValue.title,
       description: formValue.description || undefined,
       group_id: parseInt(formValue.group_id),
-      beneficiary_id: formValue.beneficiary_id ? parseInt(formValue.beneficiary_id) : undefined
+      beneficiary_id: formValue.beneficiary_id
+        ? parseInt(formValue.beneficiary_id)
+        : undefined,
     };
 
-    this.consultationService.createConsultation(consultationData)
+    this.consultationService
+      .createConsultation(consultationData)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (consultation) => {
-          this.toasterService.show('success', 'Consultation created successfully');
+        next: consultation => {
+          this.toasterService.show(
+            'success',
+            'Consultation created successfully'
+          );
 
+          console.log();
           if (formValue.appointments?.length > 0) {
             this.createAppointments(consultation.id, formValue.appointments);
           } else {
             this.isSaving.set(false);
-            this.router.navigate([`/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`, consultation.id]);
+            this.router.navigate([
+              `/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`,
+              consultation.id,
+            ]);
           }
         },
-        error: (error) => {
+        error: error => {
           console.error('Error creating consultation:', error);
           this.isSaving.set(false);
           this.toasterService.show('error', 'Error creating consultation');
-        }
+        },
       });
   }
 
@@ -336,59 +389,88 @@ export class ConsultationForm implements OnInit, OnDestroy {
       title: formValue.title,
       description: formValue.description || undefined,
       group_id: parseInt(formValue.group_id),
-      beneficiary_id: formValue.beneficiary_id ? parseInt(formValue.beneficiary_id) : undefined
+      beneficiary_id: formValue.beneficiary_id
+        ? parseInt(formValue.beneficiary_id)
+        : undefined,
     };
 
-    this.consultationService.updateConsultation(this.consultationId, consultationData)
+    this.consultationService
+      .updateConsultation(this.consultationId, consultationData)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (consultation) => {
+        next: consultation => {
           this.consultation.set(consultation);
-          this.toasterService.show('success', 'Consultation updated successfully');
+          this.toasterService.show(
+            'success',
+            'Consultation updated successfully'
+          );
           this.isSaving.set(false);
-          this.router.navigate([`/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`, consultation.id]);
+          this.router.navigate([
+            `/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`,
+            consultation.id,
+          ]);
         },
-        error: (error) => {
+        error: error => {
           console.error('Error updating consultation:', error);
           this.isSaving.set(false);
           this.toasterService.show('error', 'Error updating consultation');
-        }
+        },
       });
   }
 
   createAppointments(consultationId: number, appointments: any[]): void {
     const appointmentRequests = appointments
-      .filter(apt => apt.scheduled_at) // Only appointments with scheduled time
+      .filter(apt => apt.scheduled_at)
       .map(apt => {
         const appointmentData: CreateAppointmentRequest = {
           type: apt.type || AppointmentType.ONLINE,
           scheduled_at: new Date(apt.scheduled_at).toISOString(),
-          end_expected_at: apt.end_expected_at ? new Date(apt.end_expected_at).toISOString() : undefined
+          end_expected_at: apt.end_expected_at
+            ? new Date(apt.end_expected_at).toISOString()
+            : undefined,
         };
 
-        return this.consultationService.createConsultationAppointment(consultationId, appointmentData);
+        return this.consultationService.createConsultationAppointment(
+          consultationId,
+          appointmentData
+        );
       });
 
     if (appointmentRequests.length === 0) {
       this.isSaving.set(false);
-      this.router.navigate([`/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`, consultationId]);
+      this.router.navigate([
+        `/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`,
+        consultationId,
+      ]);
       return;
     }
 
     forkJoin(appointmentRequests)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (createdAppointments) => {
-          this.toasterService.show('success', `${createdAppointments.length} appointment(s) created successfully`);
+        next: createdAppointments => {
+          this.toasterService.show(
+            'success',
+            `${createdAppointments.length} appointment(s) created successfully`
+          );
           this.isSaving.set(false);
-          this.router.navigate([`/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`, consultationId]);
+          this.router.navigate([
+            `/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`,
+            consultationId,
+          ]);
         },
-        error: (error) => {
+        error: error => {
           console.error('Error creating appointments:', error);
           this.isSaving.set(false);
-          this.toasterService.show('error', 'Consultation created but failed to create some appointments');
-          this.router.navigate([`/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`, consultationId]);
-        }
+          this.toasterService.show(
+            'error',
+            'Consultation created but failed to create some appointments'
+          );
+          this.router.navigate([
+            `/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`,
+            consultationId,
+          ]);
+        },
       });
   }
 
@@ -403,13 +485,15 @@ export class ConsultationForm implements OnInit, OnDestroy {
 
   cancel(): void {
     if (this.mode === 'edit' && this.consultationId) {
-      this.router.navigate([`/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`, this.consultationId]);
+      this.router.navigate([
+        `/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`,
+        this.consultationId,
+      ]);
     } else {
       this.router.navigate([`/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`]);
     }
   }
 
-  // Validation helpers
   isFieldInvalid(fieldName: string): boolean {
     const field = this.consultationForm.get(fieldName);
     return (field?.invalid && field?.touched) || false;
@@ -426,13 +510,20 @@ export class ConsultationForm implements OnInit, OnDestroy {
     return '';
   }
 
-  isAppointmentFieldInvalid(appointmentIndex: number, fieldName: string): boolean {
+  isAppointmentFieldInvalid(
+    appointmentIndex: number,
+    fieldName: string
+  ): boolean {
     const appointmentGroup = this.appointmentsFormArray.at(appointmentIndex);
     const field = appointmentGroup?.get(fieldName);
     return (field?.invalid && field?.touched) || false;
   }
 
-  isParticipantFieldInvalid(appointmentIndex: number, participantIndex: number, fieldName: string): boolean {
+  isParticipantFieldInvalid(
+    appointmentIndex: number,
+    participantIndex: number,
+    fieldName: string
+  ): boolean {
     const participantsArray = this.getParticipantsFormArray(appointmentIndex);
     const participantGroup = participantsArray.at(participantIndex);
     const field = participantGroup?.get(fieldName);
