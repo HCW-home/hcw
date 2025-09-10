@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.db.models.fields import BLANK_CHOICE_DASH
 from django.utils.translation import gettext_lazy as _
 from firebase_admin.messaging import Message
 from firebase_admin.messaging import Notification as FireBaseNotification
@@ -21,7 +22,7 @@ from django.db import models
 class Term(models.Model):
     name = models.CharField()
     content = models.TextField()
-    valid_until = models.DateTimeField()
+    valid_until = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return self.name
