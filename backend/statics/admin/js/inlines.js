@@ -32,7 +32,9 @@
         el.id = el.id.replace(id_regex, replacement);
       }
       if (el.name) {
-        el.name = el.name.replace(id_regex, replacement);
+        // !CHANGED from original
+        // el.name = el.name.replace(id_regex, replacement);
+        el.setAttribute("name", el.name.replace(id_regex, replacement));
       }
     };
     const totalForms = $("#id_" + options.prefix + "-TOTAL_FORMS").prop(
@@ -94,12 +96,23 @@
         .removeClass(options.emptyCssClass)
         .addClass(options.formCssClass)
         .attr("id", options.prefix + "-" + nextIndex);
+
       addInlineDeleteButton(row);
       row.find("*").each(function () {
         updateElementIndex(this, options.prefix, totalForms.val());
       });
+
       // Insert the new form when it has been fully edited.
-      row.insertBefore($(template));
+      // !CHANGED from original
+      if ($(template).parent().is("tbody")) {
+        row
+          .wrap('<tbody class="template"></tbody>')
+          .parent()
+          .insertBefore($(template).parent());
+      } else {
+        row.insertBefore($(template));
+      }
+
       // Update number of total forms.
       $(totalForms).val(parseInt(totalForms.val(), 10) + 1);
       nextIndex += 1;
@@ -181,7 +194,13 @@
       if (prevRow.length && prevRow.hasClass("row-form-errors")) {
         prevRow.remove();
       }
-      row.remove();
+
+      // !CHANGED from original
+      if (deleteButton.parent().parent().parent().parent().is("tbody")) {
+        row.parent().remove();
+      } else {
+        row.remove();
+      }
       nextIndex -= 1;
       // Pass the deleted form to the post-delete callback, if provided.
       if (options.removed) {
@@ -223,15 +242,31 @@
       }
     };
 
-    $this.each(function (i) {
-      $(this)
-        .not("." + options.emptyCssClass)
-        .addClass(options.formCssClass);
-    });
+    // !CHANGED from original. Business logic for tabular inlines is different.
+    if ($this.parent().is("tbody")) {
+      $this
+        .parent()
+        .parent()
+        .find("tr.form-row")
+        .each(function (i) {
+          $(this)
+            .not("." + options.emptyCssClass)
+            .addClass(options.formCssClass);
+        });
+    } else {
+      $this.each(function (i) {
+        $(this)
+          .not("." + options.emptyCssClass)
+          .addClass(options.formCssClass);
+      });
+    }
 
     // Create the delete buttons for all unsaved inlines:
+    // !CHANGED from original, added parent() and used find() instead of filter()
     $this
-      .filter(
+      .parent()
+      .parent()
+      .find(
         "." +
           options.formCssClass +
           ":not(.has_original):not(." +
@@ -275,7 +310,7 @@
   };
 
   // Tabular inlines ---------------------------------------------------------
-  $.fn.tabularFormset = function (selector, options) {
+  $.fn.tabularFormset = function (selector, options, callback = null) {
     const $rows = $(this);
 
     const reinitDateTimeShortCuts = function () {
@@ -335,11 +370,15 @@
       addButton: options.addButton,
     });
 
+    if (typeof callback === "function") {
+      callback();
+    }
+
     return $rows;
   };
 
   // Stacked inlines ---------------------------------------------------------
-  $.fn.stackedFormset = function (selector, options) {
+  $.fn.stackedFormset = function (selector, options, callback = null) {
     const $rows = $(this);
     const updateInlineLabel = function (row) {
       $(selector)
@@ -414,26 +453,47 @@
       addButton: options.addButton,
     });
 
+    if (typeof callback === "function") {
+      callback();
+    }
+
     return $rows;
   };
 
+  $(window).on("htmx:afterSettle", function (event) {
+    if (event.target.classList.contains("js-inline-admin-formset")) {
+      initInlines($(event.target), function () {
+        if (typeof DateTimeShortcuts !== "undefined") {
+          $(".datetimeshortcuts").remove();
+          DateTimeShortcuts.init();
+        }
+
+        $(event.target).find(".admin-autocomplete").djangoAdminSelect2();
+      });
+    }
+  });
+
   $(document).ready(function () {
     $(".js-inline-admin-formset").each(function () {
-      const data = $(this).data(),
-        inlineOptions = data.inlineFormset;
-      let selector;
-      switch (data.inlineType) {
-        case "stacked":
-          selector = inlineOptions.name + "-group .inline-related";
-          $(selector).stackedFormset(selector, inlineOptions.options);
-          break;
-        case "tabular":
-          selector =
-            inlineOptions.name +
-            "-group .tabular.inline-related tbody:last > tr.form-row";
-          $(selector).tabularFormset(selector, inlineOptions.options);
-          break;
-      }
+      initInlines(this);
     });
   });
+
+  function initInlines(el, callback = null) {
+    const data = $(el).data(),
+      inlineOptions = data.inlineFormset;
+    let selector;
+    switch (data.inlineType) {
+      case "stacked":
+        selector = inlineOptions.name + "-group .inline-related";
+        $(selector).stackedFormset(selector, inlineOptions.options, callback);
+        break;
+      case "tabular":
+        selector =
+          inlineOptions.name +
+          "-group .tabular.inline-related tbody:last > tr.form-row";
+        $(selector).tabularFormset(selector, inlineOptions.options, callback);
+        break;
+    }
+  }
 }

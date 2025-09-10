@@ -1,6 +1,4 @@
 window.addEventListener("load", (e) => {
-  submitSearch();
-
   fileInputUpdatePath();
 
   dateTimeShortcutsOverlay();
@@ -28,6 +26,207 @@ const sortRecords = (e) => {
 };
 
 /*************************************************************
+ * Search form
+ *************************************************************/
+function searchForm() {
+  return {
+    applyShortcut(event) {
+      if (
+        event.key === "/" &&
+        document.activeElement.tagName.toLowerCase() !== "input" &&
+        document.activeElement.tagName.toLowerCase() !== "textarea" &&
+        !document.activeElement.isContentEditable
+      ) {
+        event.preventDefault();
+        this.$refs.searchInput.focus();
+      }
+    },
+  };
+}
+
+/*************************************************************
+ * Search dropdown
+ *************************************************************/
+function searchDropdown() {
+  return {
+    openSearchResults: false,
+    currentIndex: 0,
+    applyShortcut(event) {
+      if (
+        event.key === "t" &&
+        document.activeElement.tagName.toLowerCase() !== "input" &&
+        document.activeElement.tagName.toLowerCase() !== "textarea" &&
+        !document.activeElement.isContentEditable
+      ) {
+        event.preventDefault();
+        this.$refs.searchInput.focus();
+      }
+    },
+    nextItem() {
+      if (this.currentIndex < this.maxItem()) {
+        this.currentIndex++;
+      }
+    },
+    prevItem() {
+      if (this.currentIndex > 0) {
+        this.currentIndex--;
+      }
+    },
+    maxItem() {
+      return document.getElementById("search-results").querySelectorAll("li")
+        .length;
+    },
+    selectItem() {
+      const href = this.items[this.currentIndex - 1].querySelector("a").href;
+      window.location = href;
+    },
+  };
+}
+
+/*************************************************************
+ * Search command
+ *************************************************************/
+function searchCommand() {
+  return {
+    el: document.getElementById("command-results"),
+    items: undefined,
+    hasResults: false,
+    openCommandResults: false,
+    currentIndex: 0,
+    commandHistory: JSON.parse(localStorage.getItem("commandHistory") || "[]"),
+    handleOpen() {
+      this.openCommandResults = true;
+      this.toggleBodyOverflow();
+      setTimeout(() => {
+        this.$refs.searchInputCommand.focus();
+      }, 20);
+
+      this.items = document.querySelectorAll("#command-history li");
+    },
+    handleShortcut(event) {
+      if (
+        event.key === "k" &&
+        (event.metaKey || event.ctrlKey) &&
+        document.activeElement.tagName.toLowerCase() !== "input" &&
+        document.activeElement.tagName.toLowerCase() !== "textarea" &&
+        !document.activeElement.isContentEditable
+      ) {
+        event.preventDefault();
+        this.handleOpen();
+      }
+    },
+    handleEscape() {
+      if (this.$refs.searchInputCommand.value === "") {
+        this.toggleBodyOverflow();
+        this.openCommandResults = false;
+        this.el.innerHTML = "";
+        this.items = undefined;
+        this.currentIndex = 0;
+      } else {
+        this.$refs.searchInputCommand.value = "";
+      }
+    },
+    handleContentLoaded(event) {
+      this.items = event.target.querySelectorAll("li");
+      this.currentIndex = 0;
+      this.hasResults = this.items.length > 0;
+
+      if (!this.hasResults) {
+        this.items = document.querySelectorAll("#command-history li");
+      }
+
+      new SimpleBar(event.target);
+    },
+    handleOutsideClick() {
+      this.$refs.searchInputCommand.value = "";
+      this.openCommandResults = false;
+      this.toggleBodyOverflow();
+    },
+    toggleBodyOverflow() {
+      document
+        .getElementsByTagName("body")[0]
+        .classList.toggle("overflow-hidden");
+    },
+    scrollToActiveItem() {
+      const item = this.items[this.currentIndex - 1];
+
+      if (item) {
+        item.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+        });
+      }
+    },
+    nextItem() {
+      if (this.currentIndex < this.items.length) {
+        this.currentIndex++;
+        this.scrollToActiveItem();
+      }
+    },
+    prevItem() {
+      if (this.currentIndex > 1) {
+        this.currentIndex--;
+        this.scrollToActiveItem();
+      }
+    },
+    selectItem(addHistory) {
+      const link = this.items[this.currentIndex - 1].querySelector("a");
+      const data = {
+        title: link.dataset.title,
+        description: link.dataset.description,
+        link: link.href,
+        favorite: false,
+      };
+
+      if (addHistory) {
+        this.addToHistory(data);
+      }
+
+      window.location = link.href;
+    },
+    addToHistory(data) {
+      let commandHistory = JSON.parse(
+        localStorage.getItem("commandHistory") || "[]"
+      );
+
+      for (const [index, item] of commandHistory.entries()) {
+        if (item.link === data.link) {
+          commandHistory.splice(index, 1);
+        }
+      }
+
+      commandHistory.unshift(data);
+      commandHistory = commandHistory.slice(0, 10);
+      this.commandHistory = commandHistory;
+      localStorage.setItem("commandHistory", JSON.stringify(commandHistory));
+    },
+    removeFromHistory(event, index) {
+      event.preventDefault();
+
+      const commandHistory = JSON.parse(
+        localStorage.getItem("commandHistory") || "[]"
+      );
+      commandHistory.splice(index, 1);
+      this.commandHistory = commandHistory;
+      localStorage.setItem("commandHistory", JSON.stringify(commandHistory));
+    },
+    toggleFavorite(event, index) {
+      event.preventDefault();
+
+      const commandHistory = JSON.parse(
+        localStorage.getItem("commandHistory") || "[]"
+      );
+
+      commandHistory[index].favorite = !commandHistory[index].favorite;
+      this.commandHistory = commandHistory.sort(
+        (a, b) => Number(b.favorite) - Number(a.favorite)
+      );
+      localStorage.setItem("commandHistory", JSON.stringify(commandHistory));
+    },
+  };
+}
+
+/*************************************************************
  * Warn without saving
  *************************************************************/
 const warnWithoutSaving = () => {
@@ -39,9 +238,11 @@ const warnWithoutSaving = () => {
       "form.warn-unsaved-form input, form.warn-unsaved-form select, form.warn-unsaved-form textarea"
     );
 
-    Array.from(elements).forEach((field) => {
-      field.addEventListener("input", (e) => (formChanged = true));
-    });
+    for (const field of elements) {
+      field.addEventListener("input", () => {
+        formChanged = true;
+      });
+    }
   };
 
   if (!form) {
@@ -109,7 +310,7 @@ const watchClassChanges = (selector, callback) => {
  *************************************************************/
 const dateTimeShortcutsOverlay = () => {
   const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutationRecord) => {
+    for (const mutationRecord of mutations) {
       const display = mutationRecord.target.style.display;
       const overlay = document.getElementById("modal-overlay");
 
@@ -118,17 +319,17 @@ const dateTimeShortcutsOverlay = () => {
       } else {
         overlay.style.display = "none";
       }
-    });
+    }
   });
 
   const targets = document.querySelectorAll(".calendarbox, .clockbox");
 
-  Array.from(targets).forEach((target) => {
+  for (const target of targets) {
     observer.observe(target, {
       attributes: true,
       attributeFilter: ["style"],
     });
-  });
+  }
 };
 
 /*************************************************************
@@ -162,54 +363,6 @@ const fileInputUpdatePath = () => {
   });
 
   checkInputChanged();
-};
-
-/*************************************************************
- * Search form on changelist view
- *************************************************************/
-const submitSearch = () => {
-  const searchbar = document.getElementById("searchbar");
-  const searchbarSubmit = document.getElementById("searchbar-submit");
-
-  const getQueryParams = (searchString) => {
-    const queryParams = window.location.search
-      .replace("?", "")
-      .split("&")
-      .map((param) => param.split("="))
-      .reduce((values, [key, value]) => {
-        if (key && key !== "q") {
-          values[key] = value;
-        }
-
-        return values;
-      }, {});
-
-    if (searchString) {
-      queryParams["q"] = encodeURIComponent(searchString);
-    }
-
-    const result = Object.entries(queryParams)
-      .map(([key, value]) => `${key}=${value}`)
-      .join("&");
-
-    return `?${result}`;
-  };
-
-  if (searchbar !== null) {
-    searchbar.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") {
-        window.location = getQueryParams(e.target.value);
-        e.preventDefault();
-      }
-    });
-  }
-
-  if (searchbarSubmit !== null && searchbar !== null) {
-    searchbarSubmit.addEventListener("click", (e) => {
-      e.preventDefault();
-      window.location = getQueryParams(searchbar.value);
-    });
-  }
 };
 
 /*************************************************************
@@ -283,11 +436,10 @@ const DEFAULT_CHART_OPTIONS = {
         },
       },
       grid: {
-        lineWidth: function (context) {
+        lineWidth: (context) => {
           if (context.tick.value === 0) {
             return 1;
           }
-
           return 0;
         },
         tickWidth: 0,
@@ -297,38 +449,66 @@ const DEFAULT_CHART_OPTIONS = {
 };
 
 const renderCharts = () => {
-  let charts = [];
+  const charts = [];
 
   const changeDarkModeSettings = () => {
     const hasDarkClass = document
       .querySelector("html")
       .classList.contains("dark");
 
-    charts.forEach((chart) => {
-      chart.options.scales.x.grid.color = hasDarkClass ? "#374151" : "#d1d5db";
-      chart.options.scales.y.grid.color = hasDarkClass ? "#374151" : "#d1d5db";
+    const baseColorDark = getComputedStyle(document.documentElement)
+      .getPropertyValue("--color-base-700")
+      .trim();
+
+    const baseColorLight = getComputedStyle(document.documentElement)
+      .getPropertyValue("--color-base-300")
+      .trim();
+
+    const borderColor = hasDarkClass ? baseColorDark : baseColorLight;
+
+    for (const chart of charts) {
+      chart.options.scales.x.grid.color = borderColor;
+      chart.options.scales.y.grid.color = borderColor;
       chart.update();
-    });
+    }
   };
 
-  Array.from(document.querySelectorAll(".chart")).forEach((chart) => {
+  for (const chart of document.querySelectorAll(".chart")) {
     const ctx = chart.getContext("2d");
     const data = chart.dataset.value;
     const type = chart.dataset.type;
     const options = chart.dataset.options;
 
     if (!data) {
-      return;
+      continue;
+    }
+
+    const parsedData = JSON.parse(chart.dataset.value);
+
+    for (const key in parsedData.datasets) {
+      const dataset = parsedData.datasets[key];
+      const processColor = (colorProp) => {
+        if (dataset?.[colorProp]?.startsWith("var(")) {
+          const cssVar = dataset[colorProp].match(/var\((.*?)\)/)[1];
+          const color = getComputedStyle(document.documentElement)
+            .getPropertyValue(cssVar)
+            .trim();
+          dataset[colorProp] = color;
+        }
+      };
+
+      processColor("borderColor");
+      processColor("backgroundColor");
     }
 
     charts.push(
       new Chart(ctx, {
         type: type || "bar",
-        data: JSON.parse(chart.dataset.value),
+        data: parsedData,
         options: options ? JSON.parse(options) : DEFAULT_CHART_OPTIONS,
       })
     );
-  });
+  }
 
   changeDarkModeSettings();
 
