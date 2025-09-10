@@ -56,8 +56,8 @@ class UserDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserModel
         fields = ['pk', UserModel.EMAIL_FIELD, 'picture',
-                  'first_name', 'last_name', 'app_preferences', 'last_login', 'communication_method', 'mobile_phone_number', 'timezone', 'main_organisation', 'organisations', 'preferred_language', 'languages', 'language_ids']
-        read_only_fields = ['email']
+                  'first_name', 'last_name', 'app_preferences', 'last_login', 'communication_method', 'mobile_phone_numer', 'timezone', 'main_organisation', 'organisations', 'preferred_language', 'languages', 'language_ids', 'is_online']
+        read_only_fields = ['email', 'is_online']
 
 class RegisterSerializer(serializers.Serializer):
     email = serializers.EmailField(required=allauth_account_settings.EMAIL_REQUIRED)

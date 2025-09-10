@@ -83,6 +83,8 @@ class User(AbstractUser):
         null=True, blank=True
     )
 
+    is_online = models.BooleanField(default=False)
+
     specialities = models.ManyToManyField(Speciality, blank=True)
     organisations = models.ManyToManyField('users.Organisation', blank=True)
     accepted_term = models.ForeignKey(Term, on_delete=models.SET_NULL, null=True, blank=True)
@@ -456,10 +458,24 @@ class Notification(ModelOwnerAbstract):
 
     def send_notification(self):
         channel_layer = get_channel_layer()
+        # Send via both old method (for backward compatibility) and new user WebSocket
         async_to_sync(channel_layer.group_send)(
             f'user_{self.user.id}',
             {
                 "type": "send_notification",
                 "data": self.pk
+            }
+        )
+        # Send via new user messaging system
+        async_to_sync(channel_layer.group_send)(
+            f'user_{self.user.id}',
+            {
+                "type": "user_notification",
+                "data": {
+                    "title": self.title,
+                    "message": self.message,
+                    "notification_id": self.pk,
+                    "timestamp": self.created_at.isoformat() if hasattr(self, 'created_at') else None
+                }
             }
         )

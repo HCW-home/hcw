@@ -7,7 +7,7 @@ User = get_user_model()
 class ConsultationUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'email', 'first_name', 'last_name']
+        fields = ['id', 'email', 'first_name', 'last_name', 'is_online']
 
 class QueueSerializer(serializers.ModelSerializer):
     users = ConsultationUserSerializer(many=True, read_only=True)

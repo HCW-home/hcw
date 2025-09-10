@@ -6,6 +6,8 @@ from mediaserver.manager.janus import Janus
 from mediaserver.models import Server, Turn
 from mediaserver.serializers import TurnIceServerSerializer
 
+from users.consumers import UserOnlineStatusMixin
+
 from asgiref.sync import sync_to_async
 from django.conf import settings
 import asyncio
@@ -16,7 +18,7 @@ _active_rooms = {}  # consultation_id -> room_id
 _room_locks = {}
 _active_sessions = {}  # consultation_id -> {'session': janus_instance, 'count': connection_count}
 
-class ConsultationConsumer(AsyncJsonWebsocketConsumer):
+class ConsultationConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.janus = None  # Publisher handle
@@ -31,7 +33,8 @@ class ConsultationConsumer(AsyncJsonWebsocketConsumer):
         room_group_name = f"consultation_{consultation_id}"
         await self.channel_layer.group_add(room_group_name, self.channel_name)
 
-        await self.accept()
+        # Call parent connect to handle user online status tracking
+        await super().connect()
         
         # Send comprehensive ICE server configuration to frontend
         # Based on Janus Gateway best practices for reliable connectivity
@@ -275,6 +278,9 @@ class ConsultationConsumer(AsyncJsonWebsocketConsumer):
         # Remove from channel group
         room_group_name = f"consultation_{self.consultation_id}"
         await self.channel_layer.group_discard(room_group_name, self.channel_name)
+        
+        # Call parent disconnect to handle user online status tracking
+        await super().disconnect(code)
 
     async def _get_server(self):
         # Fetch any configured Janus server entry

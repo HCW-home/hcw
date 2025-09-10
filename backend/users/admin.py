@@ -45,13 +45,14 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
         "first_name",
         "last_name",
         "is_active",
+        "is_online",
         "timezone",
         "languages_display",
         "specialities_display",
     ]
 
     list_filter = BaseUserAdmin.list_filter + \
-        ('languages', 'specialities', 'timezone')
+        ('languages', 'specialities', "is_online")
     filter_horizontal = ('languages', 'specialities')
 
     fieldsets = BaseUserAdmin.fieldsets + (
