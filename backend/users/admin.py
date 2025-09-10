@@ -1,7 +1,7 @@
 from typing import List, Tuple, Union
 from django.db import models
 from django.contrib import admin
-from .models import User, FCMDeviceOverride, Language, Speciality, HealthMetric, Organisation
+from .models import User, FCMDeviceOverride, Language, Speciality, HealthMetric, Organisation, Term
 from .models import Notification as UserNotification
 from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
@@ -31,6 +31,13 @@ admin.site.unregister(Group)
 class GroupAdmin(BaseGroupAdmin, ModelAdmin):
     pass
 
+@admin.register(Term)
+class TermAdmin(ModelAdmin):
+    formfield_overrides = {
+        models.TextField: {
+            "widget": WysiwygWidget,
+        }
+    }
 
 class UserAdmin(BaseUserAdmin, ModelAdmin):
     list_display = [

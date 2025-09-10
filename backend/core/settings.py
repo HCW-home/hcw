@@ -386,7 +386,13 @@ UNFOLD = {
                         "title": _("Organizations"),
                         "icon": "business",
                         "link": "/admin/users/organisation/",
-                        "permission": lambda request: request.user.has_perm("organisations.view_organisation"),
+                        "permission": lambda request: request.user.has_perm("users.view_organisation"),
+                    },
+                    {
+                        "title": _("Terms"),
+                        "icon": "contract",
+                        "link": "/admin/users/term/",
+                        "permission": lambda request: request.user.has_perm("users.view_term"),
                     },
                     {
                         "title": _("Languages"),
@@ -504,6 +510,7 @@ UNFOLD = {
             {
                 "title": _("Celery Tasks"),
                 "collapsible": True,
+                "separator": True,
                 "items": [
                     {
                         "title": _("Clocked"),
