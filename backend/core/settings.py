@@ -87,7 +87,6 @@ INSTALLED_APPS = [
     'fcm_django',
     'consultations',
     'users',
-    'organisations',
     'messaging',
     'mediaserver',
     'api',

@@ -13,8 +13,6 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('organisations', '0001_initial'),
-        ('organisations', '0002_alter_organisation_primary_color'),
         ('users', '0003_rename_specialites_user_specialities'),
         ('users', '0011_organisation_alter_user_main_organisation_and_more'),
         ('users', '0016_alter_speciality_options_alter_speciality_name_and_more'),
