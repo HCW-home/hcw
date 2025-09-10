@@ -1,49 +1,51 @@
-import { Component, OnInit, OnDestroy, signal } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
-import { Subject, takeUntil } from 'rxjs';
+import {Component, OnInit, OnDestroy, signal, inject} from '@angular/core';
+import {FormBuilder, FormGroup, Validators, ReactiveFormsModule} from '@angular/forms';
+import {CommonModule} from '@angular/common';
+import {Subject, takeUntil} from 'rxjs';
 
-import { UserService } from '../../../../core/services/user.service';
-import { ToasterService } from '../../../../core/services/toaster.service';
-import { IUser, IUserUpdateRequest, ILanguage } from '../../models/user';
-import { CommunicationMethodOptions, TimezoneOptions } from '../../constants/user';
+import {UserService} from '../../../../core/services/user.service';
+import {ToasterService} from '../../../../core/services/toaster.service';
+import {IUser, IUserUpdateRequest, ILanguage} from '../../models/user';
+import {CommunicationMethodOptions, TimezoneOptions} from '../../constants/user';
 
-import { Page } from '../../../../core/components/page/page';
-import { BackButton } from '../../../../shared/components/back-button/back-button';
-import { Badge } from '../../../../shared/components/badge/badge';
-import { Loader } from '../../../../shared/components/loader/loader';
+import {Page} from '../../../../core/components/page/page';
+import {BackButton} from '../../../../shared/components/back-button/back-button';
+import {Badge} from '../../../../shared/components/badge/badge';
+import {Loader} from '../../../../shared/components/loader/loader';
 
-import { Typography } from '../../../../shared/ui-components/typography/typography';
-import { Button } from '../../../../shared/ui-components/button/button';
-import { Input } from '../../../../shared/ui-components/input/input';
-import { Select } from '../../../../shared/ui-components/select/select';
-import { Svg } from '../../../../shared/ui-components/svg/svg';
+import {Typography} from '../../../../shared/ui-components/typography/typography';
+import {Button} from '../../../../shared/ui-components/button/button';
+import {Input} from '../../../../shared/ui-components/input/input';
+import {Select} from '../../../../shared/ui-components/select/select';
+import {Svg} from '../../../../shared/ui-components/svg/svg';
 
-import { TypographyTypeEnum } from '../../../../shared/constants/typography';
-import { ButtonSizeEnum, ButtonStyleEnum } from '../../../../shared/constants/button';
-import { BadgeTypeEnum } from '../../../../shared/constants/badge';
-import { SelectOption } from '../../../../shared/models/select';
+import {TypographyTypeEnum} from '../../../../shared/constants/typography';
+import {ButtonSizeEnum, ButtonStyleEnum} from '../../../../shared/constants/button';
+import {BadgeTypeEnum} from '../../../../shared/constants/badge';
+import {SelectOption} from '../../../../shared/models/select';
+import {ValidationService} from '../../../../core/services/validation.service';
 
 @Component({
   selector: 'app-user-profile',
   templateUrl: './user-profile.html',
   styleUrl: './user-profile.scss',
   imports: [
-    CommonModule,
-    ReactiveFormsModule,
+    Svg,
     Page,
-    BackButton,
+    Input,
     Badge,
     Loader,
-    Typography,
     Button,
-    Input,
     Select,
-    Svg
+    Typography,
+    BackButton,
+    CommonModule,
+    ReactiveFormsModule,
   ]
 })
 export class UserProfile implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  public validationService = inject(ValidationService);
 
   user = signal<IUser | null>(null);
   languages = signal<ILanguage[]>([]);
@@ -65,13 +67,13 @@ export class UserProfile implements OnInit, OnDestroy {
   constructor(
     private fb: FormBuilder,
     private userService: UserService,
-    private toasterService: ToasterService
+    private toasterService: ToasterService,
   ) {
     this.profileForm = this.fb.group({
       first_name: ['', [Validators.required, Validators.minLength(2)]],
       last_name: ['', [Validators.required, Validators.minLength(2)]],
-      email: [{ value: '', disabled: true }],
-      mobile_phone_numer: [''],
+      email: [{value: '', disabled: true}],
+      mobile_phone_number: [''],
       communication_method: ['email', [Validators.required]],
       preferred_language: [''],
       timezone: ['UTC', Validators.required],
@@ -114,7 +116,7 @@ export class UserProfile implements OnInit, OnDestroy {
       first_name: user.first_name || '',
       last_name: user.last_name || '',
       email: user.email,
-      mobile_phone_numer: user.mobile_phone_numer || '',
+      mobile_phone_number: user.mobile_phone_number || '',
       communication_method: user.communication_method || 'email',
       preferred_language: user.preferred_language || '',
       timezone: user.timezone || 'UTC',
@@ -140,7 +142,7 @@ export class UserProfile implements OnInit, OnDestroy {
       const updateData: IUserUpdateRequest = {
         first_name: formValue.first_name,
         last_name: formValue.last_name,
-        mobile_phone_numer: formValue.mobile_phone_numer || undefined,
+        mobile_phone_number: formValue.mobile_phone_number || undefined,
         communication_method: formValue.communication_method,
         preferred_language: formValue.preferred_language,
         timezone: formValue.timezone,
@@ -162,12 +164,9 @@ export class UserProfile implements OnInit, OnDestroy {
             this.toasterService.show('error', 'Error updating profile');
           }
         });
+    } else {
+      this.validationService.validateAllFormFields(this.profileForm);
     }
-  }
-
-  formatDate(dateString?: string): string {
-    if (!dateString) return 'Never';
-    return new Date(dateString).toLocaleString();
   }
 
   getCommunicationMethodLabel(method: string): string {

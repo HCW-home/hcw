@@ -46,7 +46,7 @@ export interface IUser {
   last_login?: string;
 
   communication_method: CommunicationMethodType;
-  mobile_phone_numer?: string;
+  mobile_phone_number?: string;
   preferred_language?: string;
   timezone: string;
   languages?: ILanguage[];
@@ -63,7 +63,7 @@ export interface IUser {
 export interface IUserUpdateRequest {
   first_name?: string;
   last_name?: string;
-  mobile_phone_numer?: string;
+  mobile_phone_number?: string;
   communication_method?: CommunicationMethodType;
   preferred_language?: string;
   timezone?: string;

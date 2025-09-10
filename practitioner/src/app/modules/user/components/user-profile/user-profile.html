@@ -31,7 +31,7 @@
                   leftIcon="save"
                   [size]="ButtonSizeEnum.medium"
                   [style]="ButtonStyleEnum.primary"
-                  [disabled]="profileForm.invalid || isSaving()"
+                  [disabled]="isSaving()"
                   (buttonClick)="saveProfile()">
                 </app-button>
               </div>
@@ -116,7 +116,7 @@
                     Mobile Phone
                   </app-typography>
                   <app-typography [variant]="TypographyTypeEnum['body-regular']">
-                    {{ user()!.mobile_phone_numer || 'Not provided' }}
+                    {{ user()!.mobile_phone_number || 'Not provided' }}
                   </app-typography>
                 </div>
                 <div class="info-item">
@@ -191,43 +191,11 @@
                 </div>
               </div>
             }
-
-            <div class="info-section">
-              <app-typography [variant]="TypographyTypeEnum['h6-regular']" >
-                Account Information
-              </app-typography>
-              <div class="info-grid">
-                <div class="info-item">
-                  <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
-                    Member Since
-                  </app-typography>
-                  <app-typography [variant]="TypographyTypeEnum['body-regular']">
-                    {{ formatDate(user()!.date_joined) }}
-                  </app-typography>
-                </div>
-                <div class="info-item">
-                  <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
-                    Last Login
-                  </app-typography>
-                  <app-typography [variant]="TypographyTypeEnum['body-regular']">
-                    {{ formatDate(user()!.last_login) }}
-                  </app-typography>
-                </div>
-                <div class="info-item">
-                  <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
-                    Account Status
-                  </app-typography>
-                  <app-badge [type]="user()!.is_active ? BadgeTypeEnum.green : BadgeTypeEnum.red">
-                    {{ user()!.is_active ? 'Active' : 'Inactive' }}
-                  </app-badge>
-                </div>
-              </div>
-            </div>
           </div>
         } @else {
           <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="profile-form">
             <div class="form-section">
-              <app-typography [variant]="TypographyTypeEnum['h3-regular']">
+              <app-typography [variant]="TypographyTypeEnum['h6-regular']">
                 Personal Information
               </app-typography>
 
@@ -262,7 +230,7 @@
             </div>
 
             <div class="form-section">
-              <app-typography [variant]="TypographyTypeEnum['h3-regular']">
+              <app-typography [variant]="TypographyTypeEnum['h6-regular']">
                 Contact Information
               </app-typography>
 
@@ -270,7 +238,7 @@
                 <app-input
                   label="Mobile Phone"
                   type="tel"
-                  formControlName="mobile_phone_numer"
+                  formControlName="mobile_phone_number"
                   placeholder="+1 234 567 8900"
                   leftIcon="phone">
                 </app-input>
@@ -288,7 +256,7 @@
             </div>
 
             <div class="form-section">
-              <app-typography [variant]="TypographyTypeEnum['h3-regular']">
+              <app-typography [variant]="TypographyTypeEnum['h6-regular']">
                 System Preferences
               </app-typography>
 
