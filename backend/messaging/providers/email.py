@@ -10,8 +10,9 @@ if TYPE_CHECKING:
 class Main(BaseProvider):
 
     display_name = _("Email over Django SMTP")
-    communication_method = "EMAIL"
-    
+    communication_method = "email"
+    required_fields = ['from_email']
+
     def send(self, message: 'Message') -> 'MessageStatus':
         from ..models import MessageStatus
         

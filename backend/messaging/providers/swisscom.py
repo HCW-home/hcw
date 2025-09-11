@@ -9,7 +9,8 @@ if TYPE_CHECKING:
 class Main(BaseProvider):
 
     display_name = "Swisscom SMS"
-    communication_method = "SMS"
+    communication_method = "sms"
+    required_fields = ['client_id', 'client_secret']
     
     def _get_auth_header(self):
         client_id = self.messaging_provider.client_id

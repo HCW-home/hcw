@@ -8,7 +8,8 @@ if TYPE_CHECKING:
 class Main(BaseProvider):
 
     display_name = "Clickatel SMS"
-    communication_method = "SMS"
+    communication_method = "sms"
+    required_fields = ['from_phone', 'api_key']
     
     def send(self, message: 'Message') -> 'MessageStatus':
         from ..models import MessageStatus

@@ -17,6 +17,7 @@ class BaseProvider(ABC):
 
     display_name: str = ''
     communication_method: 'CommunicationMethod'
+    required_fields: List[str] = []
 
     def __init__(self, messaging_provider: 'MessagingProvider'):
         self.messaging_provider = messaging_provider

@@ -10,7 +10,9 @@ if TYPE_CHECKING:
 class Main(BaseProvider):
 
     display_name = "Ovh SMS"
-    communication_method = "SMS"
+    communication_method = "sms"
+    required_fields = ['application_key',
+                       'consumer_key', 'service_name', 'sender_id']
     
     def _get_signature(self, method, query, body, timestamp):
         application_secret = self.messaging_provider.application_secret or ''

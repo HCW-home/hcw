@@ -42,18 +42,14 @@ class MessagingProvider(models.Model):
     from_email = models.EmailField(_('from email'), blank=True, null=True)
     sender_id = models.CharField(_('sender ID'), max_length=50, blank=True, null=True)
     
-    # Legacy field (keeping for backward compatibility)
-    source_phone = models.CharField(_('source phone'), max_length=50, null=True, blank=True)
-    
     priority = models.IntegerField(_('priority'), default=0)
     is_active = models.BooleanField(_('is active'), default=True)
 
     def save(self, *args, **kwargs):
-
         self.communication_method = providers.MAIN_CLASSES.get(
             self.name).communication_method
-         
-        return super().save(*args, **kwargs)
+        
+        return super(MessagingProvider, self).save(*args, **kwargs)
 
     class Meta:
         verbose_name = _('messaging provider')

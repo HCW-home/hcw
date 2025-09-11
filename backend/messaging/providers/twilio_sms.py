@@ -9,7 +9,8 @@ if TYPE_CHECKING:
 class Main(BaseProvider):
 
     display_name = "Twilio SMS"
-    communication_method = "SMS"
+    communication_method = "sms"
+    required_fields = ['account_sid', 'auth_token', 'from_phone']
     
     def _get_auth_header(self):
         account_sid = self.messaging_provider.account_sid

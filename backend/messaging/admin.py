@@ -1,7 +1,9 @@
+from typing import DefaultDict
 from django.contrib import admin
 from .models import MessagingProvider, Prefix, Message, MessageStatus
 from unfold.decorators import display
-
+from . import providers
+from django.utils.functional import cached_property
 # Register your models here.
 from unfold.admin import ModelAdmin, TabularInline
 
@@ -16,9 +18,53 @@ class PrefixInline(TabularInline):
 
 @admin.register(MessagingProvider)
 class MessagingProviderAdmin(ModelAdmin):
-    list_display = ['name', 'source_phone', 'priority', 'is_active']
+    list_display = ['name', 'get_from', 'priority',
+                    'is_active', 'communication_method']
     readonly_fields = ['communication_method']
     inlines = [PrefixInline]
+    
+    # fieldsets = [
+    #     ('Basic Information', {
+    #         'fields': ['name', 'communication_method', 'priority', 'is_active']
+    #     }),
+    #     ('Authentication', {
+    #         'fields': [
+    #             'api_key', 'auth_token', 'account_sid',
+    #             'client_id', 'client_secret',
+    #             'application_key', 'application_secret', 'consumer_key'
+    #         ]
+    #     }),
+    #     ('Configuration', {
+    #         'fields': ['service_name', 'from_phone', 'from_email', 'sender_id']
+    #     })
+    # ]
+    
+    # # Use compressed_fields for conditional display
+    # compressed_fields = MessagingProvider.get_unfold_conditional_fields()
+    
+    @display(description="Send from")
+    def get_from(self, obj):
+        return obj.from_phone or obj.from_email or "-"
+
+    @cached_property
+    def conditional_fields(self):
+
+        field_set = DefaultDict(list)
+        for provider, class_provider in providers.MAIN_CLASSES.items():
+            for field in class_provider.required_fields:
+                field_set[field].append(provider)
+
+        print({key: "name == " + " || name == ".join(values)
+              for key, values in field_set.items()})
+        return {key: "name == '" + "' || name == '".join(values) + "'" for key, values in field_set.items()}
+
+
+        # return field_set
+
+        return {
+            "from_email": "name == 'ovh' || name == 'twilio_sms'"
+        }
+    
 
 
 @admin.register(Message)
