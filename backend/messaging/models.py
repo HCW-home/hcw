@@ -38,6 +38,7 @@ class MessagingProvider(models.Model):
     class Meta:
         verbose_name = _('messaging provider')
         verbose_name_plural = _('messaging providers')
+        unique_together = ['communication_method', 'priority']
 
 class Prefix(models.Model):
     messaging_provider = models.ForeignKey(MessagingProvider, on_delete=models.CASCADE, null=True, verbose_name=_('messaging provider'))

@@ -32,30 +32,6 @@ class MessageAdmin(ModelAdmin):
                         'error_message', 'task_logs',
                        'external_message_id', 'celery_task_id', 'created_at', 'updated_at', 'provider_name']
 
-    # fieldsets = (
-    #     ('Message Content', {
-    #         'fields': ('content', 'subject', 'message_type')
-    #     }),
-    #     ('Recipients', {
-    #         'fields': ('recipient_phone', 'recipient_email')
-    #     }),
-    #     ('Provider Settings', {
-    #         'fields': ('provider_name',)
-    #     }),
-    #     ('Status & Tracking', {
-    #         'fields': ('status', 'sent_at', 'delivered_at', 'read_at', 'failed_at', 'external_message_id', 'error_message'),
-    #         'classes': ('collapse',)
-    #     }),
-    #     ('Celery Task Info', {
-    #         'fields': ('celery_task_id', 'task_logs', 'task_traceback'),
-    #         'classes': ('collapse',)
-    #     }),
-    #     ('Metadata', {
-    #         'fields': ('sent_by', 'created_at', 'updated_at'),
-    #         'classes': ('collapse',)
-    #     }),
-    # )
-
     actions = ['resend_failed_messages', 'mark_as_delivered']
 
     @display(description="Recipient")
