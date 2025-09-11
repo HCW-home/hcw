@@ -1,7 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional
-from ..models import Message, MessagingProvider, CommunicationMethod
+from typing import Dict, Any, Optional, TYPE_CHECKING
 import logging
+
+from ...models import CommunicationMethod
+
+if TYPE_CHECKING:
+    from ...models import Message, MessagingProvider
 
 logger = logging.getLogger(__name__)
 
@@ -11,8 +15,11 @@ class BaseProvider(ABC):
     Abstract base class for messaging providers.
     All messaging providers must implement this interface.
     """
+
+    display_name: str = ''
+    communication_method: CommunicationMethod
     
-    def __init__(self, provider: MessagingProvider):
+    def __init__(self, provider: 'MessagingProvider'):
         """
         Initialize the provider with configuration
         
@@ -24,7 +31,7 @@ class BaseProvider(ABC):
     
     @property
     @abstractmethod
-    def supported_communication_method(self) -> CommunicationMethod:
+    def supported_communication_method(self) -> 'CommunicationMethod':
         """
         Return the communication method supported by this provider
         
@@ -34,7 +41,7 @@ class BaseProvider(ABC):
         pass
     
     @abstractmethod
-    def send(self, message: Message) -> Dict[str, Any]:
+    def send(self, message: 'Message') -> Dict[str, Any]:
         """
         Send message via this provider
         
@@ -120,7 +127,7 @@ class BaseProvider(ABC):
         # Override in specific providers for formatting requirements
         return phone.strip()
     
-    def _handle_api_error(self, response, message: Message) -> Dict[str, Any]:
+    def _handle_api_error(self, response, message: 'Message') -> Dict[str, Any]:
         """
         Handle API error response and return standardized error dict
         

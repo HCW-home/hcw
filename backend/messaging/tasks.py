@@ -4,7 +4,7 @@ import io
 from celery import shared_task
 from django.utils import timezone
 from .models import Message, MessageStatus
-from .services import MessagingService
+# from .services import MessagingService
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -64,7 +64,7 @@ def send_message_task(self, message_id):
             logger.info(f"Processing message: {message} to {message.recipient_phone or message.recipient_email}")
             
             # Send the message using the messaging service
-            result = MessagingService.send_message(message)
+            # result = MessagingService.send_message(message)
             
             # Capture logs
             logs = log_capture.get_logs()

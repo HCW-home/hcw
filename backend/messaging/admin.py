@@ -17,6 +17,7 @@ class PrefixInline(TabularInline):
 @admin.register(MessagingProvider)
 class MessagingProviderAdmin(ModelAdmin):
     list_display = ['name', 'source_phone', 'priority', 'is_active']
+    readonly_fields = ['communication_method']
     inlines = [PrefixInline]
 
 
@@ -29,7 +30,7 @@ class MessageAdmin(ModelAdmin):
                      'recipient_email', 'sent_by__email', 'celery_task_id']
     readonly_fields = ['sent_at', 'delivered_at', 'read_at', 'failed_at', 'status', 'task_traceback',
                         'error_message', 'task_logs',
-                       'external_message_id', 'celery_task_id', 'created_at', 'updated_at']
+                       'external_message_id', 'celery_task_id', 'created_at', 'updated_at', 'provider_name']
 
     # fieldsets = (
     #     ('Message Content', {

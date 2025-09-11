@@ -1,144 +1,67 @@
-from typing import Optional
-from ..models import MessagingProvider, ProviderName
-from .base import BaseProvider
-import logging
+from importlib import import_module
+from pkgutil import iter_modules
+from typing import TYPE_CHECKING, List, Dict, Any, Sequence, Tuple
+from abc import ABC, abstractmethod
 
-logger = logging.getLogger(__name__)
+if TYPE_CHECKING:
+    from ..models import CommunicationMethod, Message
+
+__all__: List[str] = []
 
 
-class ProviderFactory:
+
+class BaseProvider(ABC):
     """
-    Factory class to create messaging provider instances
+    Abstract base class for messaging providers.
+    All messaging providers must implement this interface.
     """
-    
-    _providers = {}
-    
-    @classmethod
-    def register_provider(cls, provider_name: str, provider_class: type):
+
+    display_name: str = ''
+    communication_method: 'CommunicationMethod'
+
+    @abstractmethod
+    def send(self, message: 'Message') -> Dict[str, Any]:
         """
-        Register a provider class for a given provider name
+        Send message via this provider
+        
+        The provider will determine how to send the message based on the
+        message's communication_method field (SMS, WhatsApp, Email, etc.)
         
         Args:
-            provider_name (str): The provider name (from ProviderName choices)
-            provider_class (type): The provider class that extends BaseProvider
-        """
-        if not issubclass(provider_class, BaseProvider):
-            raise ValueError(f"Provider class {provider_class} must extend BaseProvider")
-        
-        cls._providers[provider_name] = provider_class
-        logger.debug(f"Registered provider {provider_name}: {provider_class}")
-    
-    @classmethod
-    def create_provider(cls, provider: MessagingProvider) -> Optional[BaseProvider]:
-        """
-        Create a provider instance for the given provider configuration
-        
-        Args:
-            provider (MessagingProvider): The provider configuration from database
+            message (Message): The message to send
             
         Returns:
-            Optional[BaseProvider]: Provider instance or None if not found
+            Dict[str, Any]: Result dictionary with keys:
+                - success (bool): True if sent successfully
+                - external_id (str, optional): Provider's message ID
+                - error (str, optional): Error message if failed
         """
-        if not provider:
-            logger.error("Provider configuration is None")
-            return None
-            
-        if not provider.is_active:
-            logger.warning(f"Provider {provider.name} is not active")
-            return None
-        
-        provider_class = cls._providers.get(provider.name)
-        if not provider_class:
-            logger.error(f"No provider class registered for {provider.name}")
-            return None
-        
-        try:
-            instance = provider_class(provider)
-            logger.debug(f"Created provider instance: {provider.name}")
-            return instance
-        except Exception as e:
-            logger.error(f"Failed to create provider {provider.name}: {e}")
-            return None
-    
-    @classmethod
-    def get_registered_providers(cls) -> dict:
+        pass
+
+    def test_connection(self) -> Tuple[bool, Any]:
         """
-        Get all registered provider classes
+        Test connection to the provider's API
+        Default implementation just validates configuration
         
         Returns:
-            dict: Dictionary of provider_name -> provider_class
+            - True, True if connection test passed
+            - error (str, optional): Error message if failed
         """
-        return cls._providers.copy()
+
+
+MAIN_CLASSES: Dict[str, BaseProvider] = {}
+MAIN_DISPLAY_NAMES: List[Tuple[str, str]] = []
+
+# __path__ is defined for packages; iter_modules lists names in this package dir
+for _, module_name, _ in iter_modules(__path__):
+    if module_name.startswith("_"):  # skip private modules
+        continue
+    module = import_module(f".{module_name}", __name__)
+    globals()[module_name] = module   # expose as package attribute
+    __all__.append(module_name)
     
-    @classmethod
-    def is_provider_supported(cls, provider_name: str) -> bool:
-        """
-        Check if a provider is supported (registered)
-        
-        Args:
-            provider_name (str): The provider name to check
-            
-        Returns:
-            bool: True if provider is supported
-        """
-        return provider_name in cls._providers
-
-
-# Auto-import and register all providers
-def _register_providers():
-    """
-    Auto-register providers using naming convention
-    """
-    import importlib
-    from ..models import ProviderName
-    
-    # Manual mapping for providers with specific module/class names
-    provider_mapping = {
-        ProviderName.SWISSCOM: ('swisscom', 'SwisscomProvider'),
-        ProviderName.OVH: ('ovh', 'OvhProvider'),
-        ProviderName.CLICKATEL: ('clickatel', 'ClickatelProvider'),
-        ProviderName.TWILIO: ('twilio_sms', 'TwilioSMSProvider'),
-        ProviderName.TWILIO_WHATSAPP: ('twilio_whatsapp', 'TwilioWhatsAppProvider'),
-        ProviderName.EMAIL: ('email', 'EmailProvider'),
-    }
-    
-    for provider_name in ProviderName:
-        if provider_name in provider_mapping:
-            module_name, class_name = provider_mapping[provider_name]
-        else:
-            # Fallback to automatic naming
-            module_name = provider_name.name.lower()
-            class_name = f"{provider_name.name.replace('_', '').title()}Provider"
-        
-        try:
-            module = importlib.import_module(f".{module_name}", __package__)
-            provider_class = getattr(module, class_name)
-            ProviderFactory.register_provider(provider_name, provider_class)
-            logger.debug(f"Registered {provider_name}: {class_name}")
-        except (ImportError, AttributeError) as e:
-            logger.debug(f"Provider {class_name} not available: {e}")
-
-
-def get_provider_class(provider_name: str):
-    """
-    Get the provider class for a given provider name
-    
-    Args:
-        provider_name (str): The provider name
-        
-    Returns:
-        type: The provider class or None if not found
-    """
-    return ProviderFactory._providers.get(provider_name)
-
-
-# Register providers on module import
-_register_providers()
-
-
-# Export commonly used classes and functions
-__all__ = [
-    'ProviderFactory',
-    'BaseProvider',
-    'get_provider_class'
-]
+    # Look for Main class that inherits from BaseProvider
+    if hasattr(module, 'Main') and issubclass(module.Main, BaseProvider):
+        provider_class = module.Main
+        MAIN_CLASSES[module_name] = provider_class
+        MAIN_DISPLAY_NAMES.append((module_name, provider_class.display_name))

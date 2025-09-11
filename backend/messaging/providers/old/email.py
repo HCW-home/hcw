@@ -6,12 +6,14 @@ from ..models import Message, CommunicationMethod
 import logging
 
 
-class EmailProvider(BaseProvider):
+class Main(BaseProvider):
     """
     Email provider implementation using Django's email backend
     
     This provider uses Django's configured email settings
     """
+
+    display_name: str = 'Email'
     
     @property
     def supported_communication_method(self) -> CommunicationMethod:

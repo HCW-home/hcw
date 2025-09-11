@@ -6,12 +6,14 @@ import json
 import base64
 
 
-class TwilioWhatsAppProvider(BaseProvider):
+class Main(BaseProvider):
     """
-    Twilio WhatsApp provider implementation
+    Twilio SMS provider implementation
     
-    API Documentation: https://www.twilio.com/docs/whatsapp
+    API Documentation: https://www.twilio.com/docs/api
     """
+
+    display_name: str = 'Twilio SMS'
     
     BASE_URL = "https://api.twilio.com/2010-04-01"
     
@@ -20,7 +22,7 @@ class TwilioWhatsAppProvider(BaseProvider):
         """
         Return the communication method supported by this provider
         """
-        return CommunicationMethod.WHATSAPP
+        return CommunicationMethod.SMS
     
     def validate_configuration(self) -> Dict[str, Any]:
         """
@@ -51,7 +53,7 @@ class TwilioWhatsAppProvider(BaseProvider):
     
     def send(self, message: Message) -> Dict[str, Any]:
         """
-        Send WhatsApp message via Twilio API
+        Send message via Twilio API
         
         Args:
             message (Message): Message to send
@@ -59,14 +61,14 @@ class TwilioWhatsAppProvider(BaseProvider):
         Returns:
             Dict[str, Any]: Result with success status and external_id or error
         """
-        if message.communication_method != CommunicationMethod.WHATSAPP:
+        if message.communication_method != CommunicationMethod.SMS:
             return {
                 "success": False,
-                "error": f"TwilioWhatsAppProvider only supports WhatsApp, got {message.communication_method}"
+                "error": f"TwilioSMSProvider only supports SMS, got {message.communication_method}"
             }
         
         try:
-            self.logger.info(f"Sending WhatsApp via Twilio to {message.recipient_phone}")
+            self.logger.info(f"Sending SMS via Twilio to {message.recipient_phone}")
             
             # Validate configuration
             validation = self.validate_configuration()
@@ -76,14 +78,10 @@ class TwilioWhatsAppProvider(BaseProvider):
                     "error": f"Configuration error: {', '.join(validation['errors'])}"
                 }
             
-            # Prepare WhatsApp phone numbers (must include whatsapp: prefix)
-            from_number = f"whatsapp:{self.provider.source_phone}"
-            to_number = f"whatsapp:{self._prepare_phone_number(message.recipient_phone)}"
-            
             # Prepare request data
             data = {
-                "From": from_number,
-                "To": to_number,
+                "From": self.provider.source_phone,
+                "To": self._prepare_phone_number(message.recipient_phone),
                 "Body": message.content
             }
             
@@ -106,11 +104,11 @@ class TwilioWhatsAppProvider(BaseProvider):
                     external_id = response_data.get('sid')
                     
                     if not external_id:
-                        self.logger.warning("No SID in Twilio WhatsApp response, using fallback ID")
-                        external_id = f"twilio_wa_{message.id}"
+                        self.logger.warning("No SID in Twilio response, using fallback ID")
+                        external_id = f"twilio_{message.id}"
                     
                     self.logger.info(
-                        f"WhatsApp sent successfully via Twilio. SID: {external_id}"
+                        f"SMS sent successfully via Twilio. SID: {external_id}"
                     )
                     
                     return {
@@ -120,8 +118,8 @@ class TwilioWhatsAppProvider(BaseProvider):
                     
                 except (ValueError, json.JSONDecodeError):
                     # If response is not JSON, assume success with basic ID
-                    external_id = f"twilio_wa_{message.id}"
-                    self.logger.info(f"WhatsApp sent via Twilio (non-JSON response). External ID: {external_id}")
+                    external_id = f"twilio_{message.id}"
+                    self.logger.info(f"SMS sent via Twilio (non-JSON response). External ID: {external_id}")
                     return {
                         "success": True,
                         "external_id": external_id
@@ -130,17 +128,17 @@ class TwilioWhatsAppProvider(BaseProvider):
                 return self._handle_api_error(response, message)
                 
         except requests.exceptions.Timeout:
-            error_msg = "Request timeout while sending WhatsApp via Twilio"
+            error_msg = "Request timeout while sending SMS via Twilio"
             self.logger.error(error_msg)
             return {"success": False, "error": error_msg}
             
         except requests.exceptions.ConnectionError:
-            error_msg = "Connection error while sending WhatsApp via Twilio"
+            error_msg = "Connection error while sending SMS via Twilio"
             self.logger.error(error_msg)
             return {"success": False, "error": error_msg}
             
         except Exception as e:
-            error_msg = f"Unexpected error sending WhatsApp via Twilio: {str(e)}"
+            error_msg = f"Unexpected error sending SMS via Twilio: {str(e)}"
             self.logger.error(error_msg, exc_info=True)
             return {"success": False, "error": error_msg}
     
@@ -175,8 +173,7 @@ class TwilioWhatsAppProvider(BaseProvider):
                         'undelivered': 'failed',
                         'sent': 'sent',
                         'queued': 'pending',
-                        'accepted': 'pending',
-                        'read': 'read'
+                        'accepted': 'pending'
                     }
                     
                     twilio_status = data.get('status', 'unknown').lower()
@@ -214,7 +211,7 @@ class TwilioWhatsAppProvider(BaseProvider):
     
     def _prepare_phone_number(self, phone: str) -> str:
         """
-        Format phone number for Twilio WhatsApp API
+        Format phone number for Twilio API
         
         Args:
             phone (str): Raw phone number
@@ -306,7 +303,7 @@ class TwilioWhatsAppProvider(BaseProvider):
                     pass
             
             self.logger.error(
-                f"Twilio WhatsApp API error sending message {message.id}: {error_msg}",
+                f"Twilio API error sending message {message.id}: {error_msg}",
                 extra={'provider': self.provider.name, 'status_code': response.status_code}
             )
             

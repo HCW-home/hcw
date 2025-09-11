@@ -1,26 +1,39 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
+from typing import Sequence
 
 # Create your models here.
+from . import providers
 
-class ProviderName(models.TextChoices):
-    SWISSCOM = 'Swisscom', 'Swisscom'
-    OVH = 'Ovh', 'Ovh'
-    CLICKATEL = 'ClickATel', 'ClickATel'
-    TWILIO = 'Twilio', 'Twilio'
-    TWILIO_WHATSAPP = 'Twilio Whatsapp', 'Twilio Whatsapp'
-    EMAIL = 'EMAIL', 'Email'
-
+class CommunicationMethod(models.TextChoices):
+    SMS = 'sms', ('SMS')
+    EMAIL = 'email', ('Email')
+    WHATSAPP = 'whatsapp', ('WhatsApp')
+    PUSH = 'push', ('Push Notification')
+    MANUAL = 'manual', ('Manual')
 
 class MessagingProvider(models.Model):
-    name = models.CharField(_('name'), choices=ProviderName.choices, max_length=20)
+
+    @staticmethod
+    def provider_name() -> Sequence[tuple[str, str]]:
+        return providers.MAIN_DISPLAY_NAMES
+
+    name = models.CharField(_('name'), choices=provider_name(), max_length=20)
+    communication_method = models.CharField(choices=CommunicationMethod.choices)
     api_key = models.CharField(_('API key'), max_length=200)
     source_phone = models.CharField(_('source phone'), max_length=50, null=True, blank=True)
     auth_token = models.CharField(_('auth token'), max_length=50, null=True, blank=True)
     account_sid = models.CharField(_('account SID'), max_length=50, null=True, blank=True)
     priority = models.IntegerField(_('priority'), default=0)
     is_active = models.BooleanField(_('is active'), default=True)
+
+    def save(self, *args, **kwargs):
+
+        self.communication_method = providers.MAIN_CLASSES.get(
+            self.name).communication_method
+         
+        return super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = _('messaging provider')
@@ -41,15 +54,6 @@ class MessageStatus(models.TextChoices):
     DELIVERED = 'delivered', 'Delivered'
     FAILED = 'failed', 'Failed'
     READ = 'read', 'Read'
-
-
-class CommunicationMethod(models.TextChoices):
-    SMS = 'sms', ('SMS')
-    EMAIL = 'email', ('Email')
-    WHATSAPP = 'whatsapp', ('WhatsApp')
-    PUSH = 'push', ('Push Notification')
-    MANUAL = 'manual', ('Manual')
-
 
 class Message(models.Model):
     # Message content
@@ -124,27 +128,27 @@ class Message(models.Model):
         Raises:
             MessagingProvider.DoesNotExist: If no active provider supports this communication method
         """
-        from .providers import get_provider_class
+        from . import providers
         
         # Get all active providers and check which ones support this communication method
         all_providers = MessagingProvider.objects.filter(is_active=True).order_by('priority', 'id')
         
-        for provider in all_providers:
-            try:
-                # Get the provider class and check its supported communication method
-                provider_class = get_provider_class(provider.name)
-                if provider_class:
-                    # Create a temporary instance to check supported method
-                    temp_provider = provider_class(provider)
-                    if temp_provider.supported_communication_method == self.communication_method:
-                        return provider
-            except (ImportError, AttributeError):
-                # Skip providers that can't be loaded
-                continue
+        # for provider in all_providers:
+        #     try:
+        #         # Get the provider class and check its supported communication method
+        #         provider_class = get_provider_class(provider.name)
+        #         if provider_class:
+        #             # Create a temporary instance to check supported method
+        #             temp_provider = provider_class(provider)
+        #             if temp_provider.supported_communication_method == self.communication_method:
+        #                 return provider
+        #     except (ImportError, AttributeError):
+        #         # Skip providers that can't be loaded
+        #         continue
         
-        raise MessagingProvider.DoesNotExist(
-            f"No active providers available for communication method: {self.communication_method}"
-        )
+        # raise MessagingProvider.DoesNotExist(
+        #     f"No active providers available for communication method: {self.communication_method}"
+        # )
     
     @property
     def auto_provider_name(self) -> str:

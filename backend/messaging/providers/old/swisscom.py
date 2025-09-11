@@ -5,12 +5,14 @@ from ..models import Message, CommunicationMethod
 import json
 
 
-class SwisscomProvider(BaseProvider):
+class Main(BaseProvider):
     """
     Swisscom SMS provider implementation
     
     API Documentation: https://developer.swisscom.com/
     """
+
+    display_name: str = 'Swisscom SMS'
     
     BASE_URL = "https://api.swisscom.com/messaging/sms/v1"
     
