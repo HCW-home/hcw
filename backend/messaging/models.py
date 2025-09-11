@@ -21,10 +21,30 @@ class MessagingProvider(models.Model):
 
     name = models.CharField(_('name'), choices=provider_name(), max_length=20)
     communication_method = models.CharField(choices=CommunicationMethod.choices)
-    api_key = models.CharField(_('API key'), max_length=200)
+    
+    # Common authentication fields
+    api_key = models.CharField(_('API key'), max_length=200, blank=True)
+    auth_token = models.CharField(_('auth token'), max_length=200, blank=True)
+    account_sid = models.CharField(_('account SID'), max_length=100, blank=True)
+    
+    # OAuth fields
+    client_id = models.CharField(_('client ID'), max_length=200, blank=True)
+    client_secret = models.CharField(_('client secret'), max_length=200, blank=True)
+    
+    # OVH specific fields
+    application_key = models.CharField(_('application key'), max_length=200, blank=True)
+    application_secret = models.CharField(_('application secret'), max_length=200, blank=True)
+    consumer_key = models.CharField(_('consumer key'), max_length=200, blank=True)
+    service_name = models.CharField(_('service name'), max_length=100, blank=True)
+    
+    # Sender/From fields
+    from_phone = models.CharField(_('from phone'), max_length=50, blank=True)
+    from_email = models.EmailField(_('from email'), blank=True)
+    sender_id = models.CharField(_('sender ID'), max_length=50, blank=True)
+    
+    # Legacy field (keeping for backward compatibility)
     source_phone = models.CharField(_('source phone'), max_length=50, null=True, blank=True)
-    auth_token = models.CharField(_('auth token'), max_length=50, null=True, blank=True)
-    account_sid = models.CharField(_('account SID'), max_length=50, null=True, blank=True)
+    
     priority = models.IntegerField(_('priority'), default=0)
     is_active = models.BooleanField(_('is active'), default=True)
 

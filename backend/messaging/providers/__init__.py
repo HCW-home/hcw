@@ -1,13 +1,12 @@
 from importlib import import_module
 from pkgutil import iter_modules
-from typing import TYPE_CHECKING, List, Dict, Any, Sequence, Tuple
+from typing import TYPE_CHECKING, List, Dict, Tuple, Any
 from abc import ABC, abstractmethod
 
 if TYPE_CHECKING:
-    from ..models import CommunicationMethod, Message
+    from ..models import CommunicationMethod, Message, MessageStatus, MessagingProvider
 
 __all__: List[str] = []
-
 
 
 class BaseProvider(ABC):
@@ -19,8 +18,11 @@ class BaseProvider(ABC):
     display_name: str = ''
     communication_method: 'CommunicationMethod'
 
+    def __init__(self, messaging_provider: 'MessagingProvider'):
+        self.messaging_provider = messaging_provider
+
     @abstractmethod
-    def send(self, message: 'Message') -> Dict[str, Any]:
+    def send(self, message: 'Message') -> 'MessageStatus':
         """
         Send message via this provider
         
@@ -31,13 +33,10 @@ class BaseProvider(ABC):
             message (Message): The message to send
             
         Returns:
-            Dict[str, Any]: Result dictionary with keys:
-                - success (bool): True if sent successfully
-                - external_id (str, optional): Provider's message ID
-                - error (str, optional): Error message if failed
+            MessageStatus: Status of the message send operation
         """
-        pass
 
+    @abstractmethod
     def test_connection(self) -> Tuple[bool, Any]:
         """
         Test connection to the provider's API

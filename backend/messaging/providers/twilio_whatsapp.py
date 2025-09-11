@@ -8,8 +8,8 @@ if TYPE_CHECKING:
 
 class Main(BaseProvider):
 
-    display_name = "Twilio SMS"
-    communication_method = "SMS"
+    display_name = "Twilio WhatsApp"
+    communication_method = "WHATSAPP"
     
     def _get_auth_header(self):
         account_sid = self.messaging_provider.account_sid
@@ -32,15 +32,20 @@ class Main(BaseProvider):
                 return MessageStatus.FAILED
                 
             account_sid = self.messaging_provider.account_sid
-            from_phone = self.messaging_provider.from_phone
-            if not from_phone:
+            from_whatsapp = self.messaging_provider.from_phone
+            if not from_whatsapp:
                 return MessageStatus.FAILED
             
             url = f"https://api.twilio.com/2010-04-01/Accounts/{account_sid}/Messages.json"
             
+            # Format phone numbers for WhatsApp (must include whatsapp: prefix)
+            to_whatsapp = f"whatsapp:{message.recipient_phone}"
+            if not from_whatsapp.startswith('whatsapp:'):
+                from_whatsapp = f"whatsapp:{from_whatsapp}"
+            
             data = {
-                'From': from_phone,
-                'To': message.recipient_phone,
+                'From': from_whatsapp,
+                'To': to_whatsapp,
                 'Body': message.content
             }
             
@@ -64,6 +69,10 @@ class Main(BaseProvider):
             auth_header = self._get_auth_header()
             if not auth_header:
                 return (False, "Missing account_sid or auth_token")
+            
+            from_whatsapp = self.messaging_provider.from_phone
+            if not from_whatsapp:
+                return (False, "Missing from_phone")
             
             account_sid = self.messaging_provider.account_sid
             url = f"https://api.twilio.com/2010-04-01/Accounts/{account_sid}.json"
