@@ -422,6 +422,12 @@ UNFOLD = {
                         "link": "/admin/users/fcmdeviceoverride/",
                         "permission": lambda request: request.user.has_perm("users.view_fcmdeviceoverride"),
                     },
+                    {
+                        "title": _("Social applications"),
+                        "icon": "login",
+                        "link": "/admin/socialaccount/socialapp/",
+                        "permission": lambda request: request.user.has_perm("socialaccount.view_socialapp"),
+                    },
                 ],
             },
             {

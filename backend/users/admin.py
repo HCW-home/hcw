@@ -18,6 +18,7 @@ from unfold.contrib.forms.widgets import WysiwygWidget
 from unfold.widgets import UnfoldAdminColorInputWidget
 from unfold.contrib.import_export.forms import ExportForm, ImportForm, SelectableFieldsExportForm
 from import_export.admin import ImportExportModelAdmin
+from allauth.socialaccount.models import SocialApp
 
 from firebase_admin.messaging import (
     ErrorInfo,
@@ -526,7 +527,11 @@ admin.site.unregister(IntervalSchedule)
 admin.site.unregister(CrontabSchedule)
 admin.site.unregister(SolarSchedule)
 admin.site.unregister(ClockedSchedule)
+admin.site.unregister(SocialApp)
 
+@admin.register(SocialApp)
+class SocialAppAdmin(ModelAdmin):
+    pass
 
 class UnfoldTaskSelectWidget(UnfoldAdminSelectWidget, TaskSelectWidget):
     pass
