@@ -23,24 +23,22 @@ class MessagingProviderAdmin(ModelAdmin):
     readonly_fields = ['communication_method']
     inlines = [PrefixInline]
     
-    # fieldsets = [
-    #     ('Basic Information', {
-    #         'fields': ['name', 'communication_method', 'priority', 'is_active']
-    #     }),
-    #     ('Authentication', {
-    #         'fields': [
-    #             'api_key', 'auth_token', 'account_sid',
-    #             'client_id', 'client_secret',
-    #             'application_key', 'application_secret', 'consumer_key'
-    #         ]
-    #     }),
-    #     ('Configuration', {
-    #         'fields': ['service_name', 'from_phone', 'from_email', 'sender_id']
-    #     })
-    # ]
+    fieldsets = [
+        ('Basic Information', {
+            'fields': ['name', 'priority', 'is_active']
+        }),
+        ('Authentication and configuration', {
+            'fields': [
+                'api_key', 'auth_token', 'account_sid',
+                'client_id', 'client_secret',
+                'application_key', 'application_secret', 'consumer_key',
+                'service_name', 'from_phone', 'from_email', 'sender_id'
+            ]
+        })
+    ]
     
-    # # Use compressed_fields for conditional display
-    # compressed_fields = MessagingProvider.get_unfold_conditional_fields()
+    # Use compressed_fields for conditional display
+    compressed_fields = True
     
     @display(description="Send from")
     def get_from(self, obj):
@@ -57,14 +55,6 @@ class MessagingProviderAdmin(ModelAdmin):
         print({key: "name == " + " || name == ".join(values)
               for key, values in field_set.items()})
         return {key: "name == '" + "' || name == '".join(values) + "'" for key, values in field_set.items()}
-
-
-        # return field_set
-
-        return {
-            "from_email": "name == 'ovh' || name == 'twilio_sms'"
-        }
-    
 
 
 @admin.register(Message)
