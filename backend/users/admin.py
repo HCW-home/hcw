@@ -34,7 +34,7 @@ class GroupAdmin(BaseGroupAdmin, ModelAdmin):
     pass
 
 @admin.register(Term)
-class TermAdmin(ModelAdmin):
+class TermAdmin(ModelAdmin, TabbedTranslationAdmin):
     formfield_overrides = {
         models.TextField: {
             "widget": WysiwygWidget,
