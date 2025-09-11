@@ -12,7 +12,7 @@ class Main(BaseProvider):
     display_name = "Ovh SMS"
     communication_method = "sms"
     required_fields = ['application_key',
-                       'consumer_key', 'service_name', 'sender_id']
+                       'consumer_key', 'service_name', 'sender_id', 'application_secret']
     
     def _get_signature(self, method, query, body, timestamp):
         application_secret = self.messaging_provider.application_secret or ''

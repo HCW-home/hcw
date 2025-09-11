@@ -102,7 +102,7 @@ class MessageAdmin(ModelAdmin):
 
     def resend_failed_messages(self, request, queryset):
         """Resend failed messages via Celery"""
-        from .tasks import send_message_task
+        from .tasks import send_message_via_provider
 
         failed_messages = queryset.filter(status=MessageStatus.FAILED)
         queued_count = 0
@@ -114,7 +114,7 @@ class MessageAdmin(ModelAdmin):
             message.save()
 
             # Queue for resending
-            task = send_message_task.delay(message.id)
+            task = send_message_via_provider.delay(message.id)
             message.celery_task_id = task.id
             message.save()
 

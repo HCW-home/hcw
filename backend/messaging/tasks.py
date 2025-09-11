@@ -3,11 +3,115 @@ import traceback
 import io
 from celery import shared_task
 from django.utils import timezone
-from .models import Message, MessageStatus
-# from .services import MessagingService
+from .models import Message, MessageStatus, MessagingProvider
+from . import providers
 
 # Set up logging
 logger = logging.getLogger(__name__)
+
+@shared_task(bind=True)
+def send_message_via_provider(self, message_id):
+    """
+    Celery task to send message by trying providers in priority order
+    
+    Args:
+        message_id (int): The ID of the message to send
+        
+    Returns:
+        dict: Result with success status and details
+    """
+    try:
+        # Get the message
+        message = Message.objects.get(id=message_id)
+    except Message.DoesNotExist:
+        error_msg = f"Message with ID {message_id} not found"
+        logger.error(error_msg)
+        return {"success": False, "error": error_msg}
+    
+    # Update message with task info
+    message.celery_task_id = self.request.id
+    message.save()
+    
+    # Get all active providers for this communication method, ordered by priority
+    messaging_providers = MessagingProvider.objects.filter(
+        communication_method=message.communication_method,
+        is_active=True
+    ).order_by('priority', 'id')
+    
+    if not messaging_providers.exists():
+        error_msg = f"No active providers found for communication method: {message.communication_method}"
+        logger.error(error_msg)
+        message.mark_as_failed(error_msg)
+        return {"success": False, "error": error_msg}
+    
+    logger.info(f"Found {messaging_providers.count()} providers for {message.communication_method}")
+    
+    # Try each provider in order
+    for messaging_provider in messaging_providers:
+        logger.info(f"Trying provider: {messaging_provider.name} (priority: {messaging_provider.priority})")
+        
+        try:
+            # Get the provider class
+            provider_class = providers.MAIN_CLASSES.get(messaging_provider.name)
+            if not provider_class:
+                error_msg = f"Provider class not found for: {messaging_provider.name}"
+                logger.error(error_msg)
+                continue
+            
+            # Create provider instance
+            provider_instance = provider_class(messaging_provider)
+            
+            # Test connection first
+            connection_test = provider_instance.test_connection()
+            if not connection_test[0]:  # connection_test returns (bool, details)
+                error_msg = f"Connection test failed for {messaging_provider.name}: {connection_test[1]}"
+                logger.warning(error_msg)
+                continue
+            
+            logger.info(f"Connection test passed for {messaging_provider.name}")
+            
+            # Attempt to send the message
+            logger.info(f"Sending message via {messaging_provider.name}")
+            status = provider_instance.send(message)
+            
+            # Update message based on status
+            if status == MessageStatus.SENT:
+                logger.info(f"Message sent successfully via {messaging_provider.name}")
+                message.mark_as_sent()
+                message.provider_name = messaging_provider.name
+                message.save()
+                return {"success": True, "provider": messaging_provider.name, "status": status}
+            
+            elif status == MessageStatus.DELIVERED:
+                logger.info(f"Message delivered successfully via {messaging_provider.name}")
+                message.mark_as_delivered()
+                message.provider_name = messaging_provider.name
+                message.save()
+                return {"success": True, "provider": messaging_provider.name, "status": status}
+            
+            elif status == MessageStatus.FAILED:
+                error_msg = f"Provider {messaging_provider.name} failed to send message"
+                logger.warning(error_msg)
+                # Continue to next provider
+                continue
+            
+            else:
+                error_msg = f"Unknown status returned by {messaging_provider.name}: {status}"
+                logger.warning(error_msg)
+                continue
+                
+        except Exception as e:
+            error_msg = f"Exception with provider {messaging_provider.name}: {str(e)}"
+            logger.error(error_msg)
+            logger.error(traceback.format_exc())
+            # Continue to next provider
+            continue
+    
+    # All providers failed
+    final_error = f"All providers failed for communication method: {message.communication_method}"
+    logger.error(final_error)
+    message.mark_as_failed(final_error)
+    return {"success": False, "error": final_error}
 
 class TaskLogCapture:
     """Context manager to capture logs during task execution"""
@@ -63,8 +167,8 @@ def send_message_task(self, message_id):
             
             logger.info(f"Processing message: {message} to {message.recipient_phone or message.recipient_email}")
             
-            # Send the message using the messaging service
-            # result = MessagingService.send_message(message)
+            # Send the message using the new provider structure
+            result = send_message_via_provider(message_id)
             
             # Capture logs
             logs = log_capture.get_logs()
@@ -168,7 +272,7 @@ def resend_failed_messages():
             message.save()
             
             # Queue the message for sending
-            task = send_message_task.delay(message.id)
+            task = send_message_via_provider.delay(message.id)
             message.celery_task_id = task.id
             message.save()
             

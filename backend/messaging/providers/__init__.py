@@ -1,6 +1,6 @@
 from importlib import import_module
 from pkgutil import iter_modules
-from typing import TYPE_CHECKING, List, Dict, Tuple, Any
+from typing import TYPE_CHECKING, List, Dict, Tuple, Any, Type
 from abc import ABC, abstractmethod
 
 if TYPE_CHECKING:
@@ -49,7 +49,7 @@ class BaseProvider(ABC):
         """
 
 
-MAIN_CLASSES: Dict[str, BaseProvider] = {}
+MAIN_CLASSES: Dict[str, Type[BaseProvider]] = {}
 MAIN_DISPLAY_NAMES: List[Tuple[str, str]] = []
 
 # __path__ is defined for packages; iter_modules lists names in this package dir
