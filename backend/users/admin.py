@@ -16,6 +16,8 @@ from django.contrib.auth.models import Group
 from modeltranslation.admin import TabbedTranslationAdmin
 from unfold.contrib.forms.widgets import WysiwygWidget
 from unfold.widgets import UnfoldAdminColorInputWidget
+from unfold.contrib.import_export.forms import ExportForm, ImportForm, SelectableFieldsExportForm
+from import_export.admin import ImportExportModelAdmin
 
 from firebase_admin.messaging import (
     ErrorInfo,
@@ -39,7 +41,12 @@ class TermAdmin(ModelAdmin):
         }
     }
 
-class UserAdmin(BaseUserAdmin, ModelAdmin):
+class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
+
+    import_form_class = ImportForm
+    export_form_class = ExportForm
+    # export_form_class = SelectableFieldsExportForm
+
     list_display = [
         "email",
         "first_name",
