@@ -111,6 +111,53 @@ class Message(models.Model):
 
     def __str__(self):
         return f"Message to {self.recipient_phone or self.recipient_email} - {self.status}"
+    
+    @property
+    def preferred_provider(self) -> MessagingProvider:
+        """
+        Get the preferred messaging provider for this message's communication method
+        based on priority (lower number = higher priority) and availability
+        
+        Returns:
+            MessagingProvider: The preferred active provider
+            
+        Raises:
+            MessagingProvider.DoesNotExist: If no active provider supports this communication method
+        """
+        from .providers import get_provider_class
+        
+        # Get all active providers and check which ones support this communication method
+        all_providers = MessagingProvider.objects.filter(is_active=True).order_by('priority', 'id')
+        
+        for provider in all_providers:
+            try:
+                # Get the provider class and check its supported communication method
+                provider_class = get_provider_class(provider.name)
+                if provider_class:
+                    # Create a temporary instance to check supported method
+                    temp_provider = provider_class(provider)
+                    if temp_provider.supported_communication_method == self.communication_method:
+                        return provider
+            except (ImportError, AttributeError):
+                # Skip providers that can't be loaded
+                continue
+        
+        raise MessagingProvider.DoesNotExist(
+            f"No active providers available for communication method: {self.communication_method}"
+        )
+    
+    @property
+    def auto_provider_name(self) -> str:
+        """
+        Get the automatically determined provider name for this message
+        
+        Returns:
+            str: The provider name
+        """
+        try:
+            return self.preferred_provider.name
+        except MessagingProvider.DoesNotExist:
+            return ""
 
     def mark_as_sent(self, external_id=None):
         """Mark message as sent"""

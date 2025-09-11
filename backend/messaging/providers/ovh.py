@@ -16,6 +16,13 @@ class OvhProvider(BaseProvider):
     
     BASE_URL = "https://eu.api.ovh.com/1.0"
     
+    @property
+    def supported_communication_method(self) -> CommunicationMethod:
+        """
+        Return the communication method supported by this provider
+        """
+        return CommunicationMethod.SMS
+    
     def validate_configuration(self) -> Dict[str, Any]:
         """
         Validate OVH-specific configuration

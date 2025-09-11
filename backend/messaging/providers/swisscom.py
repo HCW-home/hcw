@@ -14,6 +14,13 @@ class SwisscomProvider(BaseProvider):
     
     BASE_URL = "https://api.swisscom.com/messaging/sms/v1"
     
+    @property
+    def supported_communication_method(self) -> CommunicationMethod:
+        """
+        Return the communication method supported by this provider
+        """
+        return CommunicationMethod.SMS
+    
     def validate_configuration(self) -> Dict[str, Any]:
         """
         Validate Swisscom-specific configuration

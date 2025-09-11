@@ -92,18 +92,44 @@ def _register_providers():
     import importlib
     from ..models import ProviderName
     
+    # Manual mapping for providers with specific module/class names
+    provider_mapping = {
+        ProviderName.SWISSCOM: ('swisscom', 'SwisscomProvider'),
+        ProviderName.OVH: ('ovh', 'OvhProvider'),
+        ProviderName.CLICKATEL: ('clickatel', 'ClickatelProvider'),
+        ProviderName.TWILIO: ('twilio_sms', 'TwilioSMSProvider'),
+        ProviderName.TWILIO_WHATSAPP: ('twilio_whatsapp', 'TwilioWhatsAppProvider'),
+        ProviderName.EMAIL: ('email', 'EmailProvider'),
+    }
+    
     for provider_name in ProviderName:
-        # SWISSCOM -> swisscom, SwisscomProvider  
-        module_name = provider_name.name.lower().split('_')[0]  # twilio_whatsapp -> twilio
-        class_name = f"{provider_name.name.split('_')[0].title()}Provider"
+        if provider_name in provider_mapping:
+            module_name, class_name = provider_mapping[provider_name]
+        else:
+            # Fallback to automatic naming
+            module_name = provider_name.name.lower()
+            class_name = f"{provider_name.name.replace('_', '').title()}Provider"
         
         try:
             module = importlib.import_module(f".{module_name}", __package__)
             provider_class = getattr(module, class_name)
             ProviderFactory.register_provider(provider_name, provider_class)
             logger.debug(f"Registered {provider_name}: {class_name}")
-        except (ImportError, AttributeError):
-            logger.debug(f"Provider {class_name} not available")
+        except (ImportError, AttributeError) as e:
+            logger.debug(f"Provider {class_name} not available: {e}")
+
+
+def get_provider_class(provider_name: str):
+    """
+    Get the provider class for a given provider name
+    
+    Args:
+        provider_name (str): The provider name
+        
+    Returns:
+        type: The provider class or None if not found
+    """
+    return ProviderFactory._providers.get(provider_name)
 
 
 # Register providers on module import
@@ -113,5 +139,6 @@ _register_providers()
 # Export commonly used classes and functions
 __all__ = [
     'ProviderFactory',
-    'BaseProvider'
+    'BaseProvider',
+    'get_provider_class'
 ]

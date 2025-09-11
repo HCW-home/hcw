@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional
-from ..models import Message, MessagingProvider
+from ..models import Message, MessagingProvider, CommunicationMethod
 import logging
 
 logger = logging.getLogger(__name__)
@@ -21,6 +21,17 @@ class BaseProvider(ABC):
         """
         self.provider = provider
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+    
+    @property
+    @abstractmethod
+    def supported_communication_method(self) -> CommunicationMethod:
+        """
+        Return the communication method supported by this provider
+        
+        Returns:
+            CommunicationMethod: The supported communication method
+        """
+        pass
     
     @abstractmethod
     def send(self, message: Message) -> Dict[str, Any]:

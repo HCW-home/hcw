@@ -14,6 +14,13 @@ class ClickatelProvider(BaseProvider):
     
     BASE_URL = "https://platform.clickatell.com"
     
+    @property
+    def supported_communication_method(self) -> CommunicationMethod:
+        """
+        Return the communication method supported by this provider
+        """
+        return CommunicationMethod.SMS
+    
     def validate_configuration(self) -> Dict[str, Any]:
         """
         Validate ClickATel-specific configuration

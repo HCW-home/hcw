@@ -13,6 +13,13 @@ class EmailProvider(BaseProvider):
     This provider uses Django's configured email settings
     """
     
+    @property
+    def supported_communication_method(self) -> CommunicationMethod:
+        """
+        Return the communication method supported by this provider
+        """
+        return CommunicationMethod.EMAIL
+    
     def validate_configuration(self) -> Dict[str, Any]:
         """
         Validate email configuration
