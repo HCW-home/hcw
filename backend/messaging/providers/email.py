@@ -2,7 +2,7 @@ from django.core.mail import send_mail, BadHeaderError
 from django.conf import settings
 from typing import Dict, Any
 from .base import BaseProvider
-from ..models import Message
+from ..models import Message, CommunicationMethod
 import logging
 
 
@@ -31,9 +31,9 @@ class EmailProvider(BaseProvider):
             "errors": errors
         }
     
-    def send_email(self, message: Message) -> Dict[str, Any]:
+    def send(self, message: Message) -> Dict[str, Any]:
         """
-        Send email via Django's email backend
+        Send message via Django's email backend
         
         Args:
             message (Message): Message to send
@@ -41,6 +41,11 @@ class EmailProvider(BaseProvider):
         Returns:
             Dict[str, Any]: Result with success status and external_id or error
         """
+        if message.communication_method != CommunicationMethod.EMAIL:
+            return {
+                "success": False,
+                "error": f"EmailProvider only supports Email, got {message.communication_method}"
+            }
         try:
             self.logger.info(f"Sending email to {message.recipient_email}")
             
@@ -103,23 +108,6 @@ class EmailProvider(BaseProvider):
             self.logger.error(error_msg, exc_info=True)
             return {"success": False, "error": error_msg}
     
-    def send_sms(self, message: Message) -> Dict[str, Any]:
-        """
-        SMS not supported by email provider
-        """
-        return {
-            "success": False,
-            "error": "SMS not supported by EmailProvider"
-        }
-    
-    def send_whatsapp(self, message: Message) -> Dict[str, Any]:
-        """
-        WhatsApp not supported by email provider
-        """
-        return {
-            "success": False,
-            "error": "WhatsApp not supported by EmailProvider"
-        }
     
     def get_delivery_status(self, external_id: str) -> Dict[str, Any]:
         """

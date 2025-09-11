@@ -1,7 +1,7 @@
 import requests
 from typing import Dict, Any
 from .base import BaseProvider
-from ..models import Message
+from ..models import Message, CommunicationMethod
 import json
 
 
@@ -31,9 +31,9 @@ class SwisscomProvider(BaseProvider):
             "errors": errors
         }
     
-    def send_sms(self, message: Message) -> Dict[str, Any]:
+    def send(self, message: Message) -> Dict[str, Any]:
         """
-        Send SMS via Swisscom API
+        Send message via Swisscom API
         
         Args:
             message (Message): Message to send
@@ -41,6 +41,11 @@ class SwisscomProvider(BaseProvider):
         Returns:
             Dict[str, Any]: Result with success status and external_id or error
         """
+        if message.communication_method != CommunicationMethod.SMS:
+            return {
+                "success": False,
+                "error": f"SwisscomProvider only supports SMS, got {message.communication_method}"
+            }
         try:
             self.logger.info(f"Sending SMS via Swisscom to {message.recipient_phone}")
             

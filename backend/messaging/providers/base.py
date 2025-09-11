@@ -23,9 +23,12 @@ class BaseProvider(ABC):
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
     
     @abstractmethod
-    def send_sms(self, message: Message) -> Dict[str, Any]:
+    def send(self, message: Message) -> Dict[str, Any]:
         """
-        Send SMS message via this provider
+        Send message via this provider
+        
+        The provider will determine how to send the message based on the
+        message's communication_method field (SMS, WhatsApp, Email, etc.)
         
         Args:
             message (Message): The message to send
@@ -37,38 +40,6 @@ class BaseProvider(ABC):
                 - error (str, optional): Error message if failed
         """
         pass
-    
-    def send_whatsapp(self, message: Message) -> Dict[str, Any]:
-        """
-        Send WhatsApp message via this provider
-        Default implementation returns not supported error
-        
-        Args:
-            message (Message): The message to send
-            
-        Returns:
-            Dict[str, Any]: Result dictionary
-        """
-        return {
-            "success": False, 
-            "error": f"WhatsApp not supported by {self.__class__.__name__}"
-        }
-    
-    def send_email(self, message: Message) -> Dict[str, Any]:
-        """
-        Send email message via this provider
-        Default implementation returns not supported error
-        
-        Args:
-            message (Message): The message to send
-            
-        Returns:
-            Dict[str, Any]: Result dictionary
-        """
-        return {
-            "success": False, 
-            "error": f"Email not supported by {self.__class__.__name__}"
-        }
     
     @abstractmethod
     def get_delivery_status(self, external_id: str) -> Dict[str, Any]:

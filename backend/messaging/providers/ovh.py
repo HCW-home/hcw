@@ -1,7 +1,7 @@
 import requests
 from typing import Dict, Any
 from .base import BaseProvider
-from ..models import Message
+from ..models import Message, CommunicationMethod
 import json
 import hashlib
 import time
@@ -52,9 +52,9 @@ class OvhProvider(BaseProvider):
         pre_hash = f"{self.provider.auth_token}+{self.provider.account_sid}+{method}+{url}+{body}+{timestamp}"
         return f"$1${hashlib.sha1(pre_hash.encode()).hexdigest()}"
     
-    def send_sms(self, message: Message) -> Dict[str, Any]:
+    def send(self, message: Message) -> Dict[str, Any]:
         """
-        Send SMS via OVH API
+        Send message via OVH API
         
         Args:
             message (Message): Message to send
@@ -62,6 +62,11 @@ class OvhProvider(BaseProvider):
         Returns:
             Dict[str, Any]: Result with success status and external_id or error
         """
+        if message.communication_method != CommunicationMethod.SMS:
+            return {
+                "success": False,
+                "error": f"OvhProvider only supports SMS, got {message.communication_method}"
+            }
         try:
             self.logger.info(f"Sending SMS via OVH to {message.recipient_phone}")
             
