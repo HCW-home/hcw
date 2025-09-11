@@ -3,7 +3,9 @@ from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.core.exceptions import ValidationError
 from typing import Sequence
+import jinja2
 
 # Create your models here.
 from . import providers
@@ -65,6 +67,80 @@ class Prefix(models.Model):
     class Meta:
         verbose_name = _('prefix')
         verbose_name_plural = _('prefixes')
+
+
+class Template(models.Model):
+    system_name = models.CharField(_('system name'), max_length=100, unique=True, 
+                                 help_text=_('Unique identifier for the template'))
+    name = models.CharField(_('name'), max_length=200, help_text=_('Human-readable template name'))
+    description = models.TextField(_('description'), blank=True, 
+                                 help_text=_('Description of the template purpose'))
+    template_text = models.TextField(_('template text'), 
+                                   help_text=_('Jinja2 template for message content'))
+    template_subject = models.CharField(_('template subject'), max_length=500, blank=True,
+                                      help_text=_('Jinja2 template for message subject'))
+    communication_method = models.CharField(_('communication method'), 
+                                          choices=CommunicationMethod.choices, max_length=20)
+    is_active = models.BooleanField(_('is active'), default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _('template')
+        verbose_name_plural = _('templates')
+        ordering = ['name']
+
+    def __str__(self):
+        return f"{self.name} ({self.system_name})"
+
+    def clean(self):
+        """Validate Jinja2 template syntax"""
+        super().clean()
+        env = jinja2.Environment()
+        
+        # Validate template_text
+        try:
+            env.parse(self.template_text)
+        except jinja2.TemplateSyntaxError as e:
+            raise ValidationError({
+                'template_text': _('Invalid Jinja2 template syntax: {}').format(str(e))
+            })
+        
+        # Validate template_subject if not empty
+        if self.template_subject:
+            try:
+                env.parse(self.template_subject)
+            except jinja2.TemplateSyntaxError as e:
+                raise ValidationError({
+                    'template_subject': _('Invalid Jinja2 template syntax: {}').format(str(e))
+                })
+
+    def render_from_template(self, context):
+        """
+        Render the template using the provided context
+        
+        Args:
+            context (dict): Dictionary containing template variables
+            
+        Returns:
+            tuple: (rendered_subject, rendered_text)
+            
+        Raises:
+            jinja2.TemplateError: If template rendering fails
+        """
+        env = jinja2.Environment()
+        
+        # Render template text
+        text_template = env.from_string(self.template_text)
+        rendered_text = text_template.render(context)
+        
+        # Render template subject
+        rendered_subject = ""
+        if self.template_subject:
+            subject_template = env.from_string(self.template_subject)
+            rendered_subject = subject_template.render(context)
+        
+        return rendered_subject, rendered_text
 
 
 class MessageStatus(models.TextChoices):

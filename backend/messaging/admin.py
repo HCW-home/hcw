@@ -1,12 +1,13 @@
 from typing import DefaultDict
 from django.contrib import admin
-from .models import MessagingProvider, Prefix, Message, MessageStatus
+from .models import MessagingProvider, Prefix, Message, MessageStatus, Template
 from unfold.decorators import display
 from . import providers
 from django.utils.functional import cached_property
 # Register your models here.
 from unfold.admin import ModelAdmin, TabularInline
-
+from modeltranslation.admin import TabbedTranslationAdmin
+from django.utils.translation import gettext_lazy as _
 
 class PrefixInline(TabularInline):
     model = Prefix
@@ -142,3 +143,41 @@ class MessageAdmin(ModelAdmin):
         )
 
     mark_as_delivered.short_description = "Mark as delivered"
+
+
+@admin.register(Template)
+class TemplateAdmin(ModelAdmin, TabbedTranslationAdmin):
+    list_display = ['name', 'system_name', 'communication_method', 'is_active', 'created_at']
+    list_filter = ['communication_method', 'is_active', 'created_at']
+    search_fields = ['name', 'system_name', 'description']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = [
+        ('Basic Information', {
+            'fields': ['system_name', 'name', 'description', 'communication_method', 'is_active']
+        }),
+        ('Template Content', {
+            'fields': ['template_subject', 'template_text'],
+            'description': 'Use Jinja2 template syntax. Example: Hello {{ user.name }}!'
+        }),
+        ('Timestamps', {
+            'fields': ['created_at', 'updated_at'],
+            'classes': ['collapse']
+        })
+    ]
+    
+    def get_form(self, request, obj=None, **kwargs):
+        """Customize form to show help text for Jinja2 templates"""
+        form = super().get_form(request, obj, **kwargs)
+        for field in form.base_fields.keys():
+            if field.startswith('template_text'):
+                form.base_fields[field].widget.attrs.update({
+                    'rows': 10,
+                    'placeholder': _('Hello {{ recipient.name }}!\n\nYour consultation is scheduled for {{ appointment.date }}.')
+                })
+        
+            if field.startswith('template_subject'):
+                form.base_fields[field].widget.attrs.update({
+                    'placeholder': 'Consultation with {{ practitioner.name }}'
+                })
+        return form

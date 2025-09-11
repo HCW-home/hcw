@@ -490,6 +490,12 @@ UNFOLD = {
                         "link": "/admin/messaging/message/",
                         "permission": lambda request: request.user.has_perm("messaging.view_messagingprovider"),
                     },
+                    {
+                        "title": _("Templates"),
+                        "icon": "description",
+                        "link": "/admin/messaging/template/",
+                        "permission": lambda request: request.user.has_perm("messaging.view_template"),
+                    },
                 ],
             },
             {
