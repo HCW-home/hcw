@@ -2,7 +2,8 @@
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.contrib.auth import get_user_model
-from consultations.models import Consultation, Appointment
+from consultations.models import Consultation, Appointment, Queue, Request
+from users.models import Organisation
 from django.db.models import Count, Q
 from django.utils.translation import gettext_lazy as _
 
@@ -26,6 +27,16 @@ def dashboard_callback(request, context):
     # Appointment metrics
     appointments_last_month = Appointment.objects.filter(created_at__gte=last_month).count()
     appointments_this_week = Appointment.objects.filter(created_at__gte=last_week).count()
+    
+    # Organization metrics
+    total_organisations = Organisation.objects.count()
+    
+    # Queue metrics
+    total_queues = Queue.objects.count()
+    
+    # Request metrics
+    total_requests = Request.objects.count()
+    pending_requests = Request.objects.filter(status='Requested').count()
     
     # Calculate growth percentages
     def calculate_growth(current, previous):
@@ -53,22 +64,41 @@ def dashboard_callback(request, context):
         {
             'title': _('Active Users'),
             'metric': f"{active_users:,}",
-            'footer': f"{active_users} of {total_users:,} users active in last 30 days"
+            'footer': f"{active_users} of {total_users:,} users active in last 30 days",
+            'link': '/admin/users/user/'
         },
         {
             'title': _('Online Now'),
             'metric': f"{online_users:,}",
-            'footer': f"Users currently online"
+            'footer': "Users currently online"
         },
         {
             'title': _('Consultations'),
             'metric': f"{consultations_last_month:,}",
-            'footer': f"Total consultations in last 30 days"
+            'footer': "Total consultations in last 30 days"
         },
         {
             'title': _('Appointments'),
             'metric': f"{appointments_last_month:,}",
-            'footer': f"Total appointments in last 30 days"
+            'footer': "Total appointments in last 30 days"
+        },
+        {
+            'title': _('Organizations'),
+            'metric': f"{total_organisations:,}",
+            'footer': "Total organizations in system",
+            'link': '/admin/users/organisation/'
+        },
+        {
+            'title': _('Queues'),
+            'metric': f"{total_queues:,}",
+            'footer': "Total consultation queues",
+            'link': '/admin/consultations/queue/'
+        },
+        {
+            'title': _('Requests'),
+            'metric': f"{total_requests:,}",
+            'footer': f"Total requests ({pending_requests} pending)",
+            'link': '/admin/consultations/request/'
         }
     ]
     

@@ -26,17 +26,31 @@
             </div>
 
             <!-- Main KPI Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-7 gap-6">
                 {% for stats in kpi %}
-                    {% component "unfold/components/card.html" with label=_("Last 30 days") footer=stats.footer %}
-                        {% component "unfold/components/text.html" with class="text-gray-600 dark:text-gray-400 text-sm mb-2" %}
-                            {{ stats.title }}
-                        {% endcomponent %}
+                    {% if stats.link %}
+                        <a href="{{ stats.link }}" class="block hover:scale-105 transition-transform duration-200">
+                            {% component "unfold/components/card.html" with label=_("Management") footer=stats.footer class="h-full cursor-pointer hover:shadow-lg" %}
+                                {% component "unfold/components/text.html" with class="text-gray-600 dark:text-gray-400 text-sm mb-2" %}
+                                    {{ stats.title }}
+                                {% endcomponent %}
 
-                        {% component "unfold/components/title.html" with class="text-2xl font-bold text-primary-600 dark:text-primary-400" %}
-                            {{ stats.metric }}
+                                {% component "unfold/components/title.html" with class="text-2xl font-bold text-primary-600 dark:text-primary-400" %}
+                                    {{ stats.metric }}
+                                {% endcomponent %}
+                            {% endcomponent %}
+                        </a>
+                    {% else %}
+                        {% component "unfold/components/card.html" with label=_("Real-time") footer=stats.footer class="h-full" %}
+                            {% component "unfold/components/text.html" with class="text-gray-600 dark:text-gray-400 text-sm mb-2" %}
+                                {{ stats.title }}
+                            {% endcomponent %}
+
+                            {% component "unfold/components/title.html" with class="text-2xl font-bold text-primary-600 dark:text-primary-400" %}
+                                {{ stats.metric }}
+                            {% endcomponent %}
                         {% endcomponent %}
-                    {% endcomponent %}
+                    {% endif %}
                 {% endfor %}
             </div>
 
@@ -104,23 +118,6 @@
                 {% endcomponent %}
             </div>
 
-            <!-- Quick Actions -->
-            {% component "unfold/components/card.html" with title=_("Quick Actions") %}
-                <div class="flex flex-wrap gap-4">
-                    {% component "unfold/components/button.html" with href="/admin/users/user/" variant="primary" %}
-                        {% trans "Manage Users" %}
-                    {% endcomponent %}
-                    {% component "unfold/components/button.html" with href="/admin/consultations/consultation/" variant="secondary" %}
-                        {% trans "View Consultations" %}
-                    {% endcomponent %}
-                    {% component "unfold/components/button.html" with href="/admin/consultations/appointment/" variant="secondary" %}
-                        {% trans "View Appointments" %}
-                    {% endcomponent %}
-                    {% component "unfold/components/button.html" with href="/admin/users/organisation/" variant="secondary" %}
-                        {% trans "Manage Organizations" %}
-                    {% endcomponent %}
-                </div>
-            {% endcomponent %}
             
         </div>
     {% endcomponent %}
