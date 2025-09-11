@@ -57,7 +57,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
 
     fieldsets = BaseUserAdmin.fieldsets + (
         ('Additional Info', {
-            'fields': ('app_preferences', 'timezone', 'preferred_language', 'languages', 'specialities', 'main_organisation', 'organisations')
+            'fields': ("location", 'app_preferences', 'timezone', 'preferred_language', 'languages', 'specialities', 'main_organisation', 'organisations')
         }),
     )
 
@@ -340,7 +340,6 @@ class OrganisationAdmin(ModelAdmin):
     }
 
     def get_form(self, request, obj=None, change=False, **kwargs):
-        print("PASS")
         form = super().get_form(request, obj, change, **kwargs)
         form.base_fields["primary_color"].widget = UnfoldAdminColorInputWidget()
         return form

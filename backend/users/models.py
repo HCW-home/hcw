@@ -13,6 +13,7 @@ from django.utils.translation import gettext_lazy as _
 from messaging.models import CommunicationMethod
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
+from location_field.models.plain import PlainLocationField
 import pytz
 
 from django.db import models
@@ -35,8 +36,7 @@ class Organisation(models.Model):
         upload_to='organisations/', blank=True, null=True)
     primary_color = models.CharField(max_length=7, blank=True, null=True)
     default_term = models.ForeignKey(Term, on_delete=models.SET_NULL, null=True, blank=True)
-    location_latitude = models.DecimalField(max_digits=9, decimal_places=6, help_text="Latitude in decimal degrees", null=True, blank=True)
-    location_longitude = models.DecimalField(max_digits=9, decimal_places=6, help_text="Longitude in decimal degrees", null=True, blank=True)
+    location = PlainLocationField(based_fields=['city'], zoom=7, blank=True, null=True)
     street = models.CharField(max_length=200, blank=True, null=True)
     city = models.CharField(max_length=50, blank=True, null=True)
     postal_code = models.CharField(max_length=10, blank=True, null=True)
@@ -99,6 +99,7 @@ class User(AbstractUser):
         default='UTC',
         help_text='User timezone for displaying dates and times'
     )
+    location = PlainLocationField(based_fields=['first_name'], zoom=7, blank=True, null=True)
 
     def send_user_notification(self, title, message) -> FirebaseResponseDict:
         # Docs https://fcm-django.readthedocs.io/en/latest/
