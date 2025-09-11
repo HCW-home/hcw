@@ -342,6 +342,7 @@ UNFOLD = {
     "SITE_TITLE": _("HCW@Home Admin"),
     "SITE_HEADER": _("HCW@Home Administration"),
     "SITE_URL": "/",
+    "DASHBOARD_CALLBACK": "core.views.dashboard_callback",
     "SITE_ICON": {
         "light": lambda request: "/static/users/img/logo-full.svg",
         "dark": lambda request: "/static/users/img/logo-full.svg",

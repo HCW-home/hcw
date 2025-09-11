@@ -1,6 +1,6 @@
 {% extends 'admin/base.html' %}
 
-{% load i18n %}
+{% load i18n unfold %}
 
 {% block title %}
     {% if subtitle %}
@@ -15,5 +15,113 @@
 {% endblock %}
 
 {% block content %}
-    Block dashboard will come here
+    {% include "unfold/helpers/messages.html" %}
+
+    {% component "unfold/components/container.html" %}
+        <div class="flex flex-col gap-8 mb-12">
+
+            <div class="flex flex-col gap-4 sm:flex-row">
+                {% component "unfold/components/navigation.html" with items=navigation %}{% endcomponent %}
+                {% component "unfold/components/navigation.html" with class="sm:ml-auto" items=filters %}{% endcomponent %}
+            </div>
+
+            <!-- Main KPI Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {% for stats in kpi %}
+                    {% component "unfold/components/card.html" with label=_("Last 30 days") footer=stats.footer %}
+                        {% component "unfold/components/text.html" with class="text-gray-600 dark:text-gray-400 text-sm mb-2" %}
+                            {{ stats.title }}
+                        {% endcomponent %}
+
+                        {% component "unfold/components/title.html" with class="text-2xl font-bold text-primary-600 dark:text-primary-400" %}
+                            {{ stats.metric }}
+                        {% endcomponent %}
+                    {% endcomponent %}
+                {% endfor %}
+            </div>
+
+            <!-- Weekly Metrics Row -->
+            {% component "unfold/components/card.html" with title=_("Weekly Activity") %}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {% for metric in weekly_metrics %}
+                        <div class="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            {% component "unfold/components/title.html" with class="text-lg font-semibold mb-2" %}
+                                {{ metric.metric }}
+                            {% endcomponent %}
+                            {% component "unfold/components/text.html" with class="text-sm text-gray-600 dark:text-gray-400 mb-1" %}
+                                {{ metric.title }}
+                            {% endcomponent %}
+                            <div class="text-xs {% if '+' in metric.growth %}text-green-600 dark:text-green-400{% else %}text-red-600 dark:text-red-400{% endif %}">
+                                {{ metric.growth }} vs last week
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endcomponent %}
+
+            <!-- System Health and Recent Activity -->
+            <div class="flex flex-col lg:flex-row gap-6">
+                <!-- System Health -->
+                {% component "unfold/components/card.html" with title=_("System Health") class="lg:w-1/2" %}
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">{% trans "User Activity Rate" %}</span>
+                            <span class="font-semibold">{{ system_health.active_rate }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">{% trans "Online Users Rate" %}</span>
+                            <span class="font-semibold">{{ system_health.online_rate }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">{% trans "Consultation Completion Rate" %}</span>
+                            <span class="font-semibold">{{ system_health.completion_rate }}</span>
+                        </div>
+                    </div>
+                {% endcomponent %}
+
+                <!-- Recent Activity Summary -->
+                {% component "unfold/components/card.html" with title=_("Platform Overview") class="lg:w-1/2" %}
+                    <div class="space-y-3">
+                        {% component "unfold/components/text.html" with class="text-sm text-gray-600 dark:text-gray-400" %}
+                            {% trans "Platform activity summary for healthcare professionals" %}
+                        {% endcomponent %}
+                        
+                        <div class="grid grid-cols-2 gap-4 mt-4">
+                            <div class="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                <div class="text-lg font-bold text-blue-600 dark:text-blue-400">{{ recent_activity.total_users }}</div>
+                                <div class="text-xs text-gray-600 dark:text-gray-400">{% trans "Total Users" %}</div>
+                            </div>
+                            <div class="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                                <div class="text-lg font-bold text-green-600 dark:text-green-400">{{ recent_activity.online_users }}</div>
+                                <div class="text-xs text-gray-600 dark:text-gray-400">{% trans "Online Now" %}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-4 text-center">
+                            {% trans "Last updated:" %} {{ recent_activity.last_updated }}
+                        </div>
+                    </div>
+                {% endcomponent %}
+            </div>
+
+            <!-- Quick Actions -->
+            {% component "unfold/components/card.html" with title=_("Quick Actions") %}
+                <div class="flex flex-wrap gap-4">
+                    {% component "unfold/components/button.html" with href="/admin/users/user/" variant="primary" %}
+                        {% trans "Manage Users" %}
+                    {% endcomponent %}
+                    {% component "unfold/components/button.html" with href="/admin/consultations/consultation/" variant="secondary" %}
+                        {% trans "View Consultations" %}
+                    {% endcomponent %}
+                    {% component "unfold/components/button.html" with href="/admin/consultations/appointment/" variant="secondary" %}
+                        {% trans "View Appointments" %}
+                    {% endcomponent %}
+                    {% component "unfold/components/button.html" with href="/admin/users/organisation/" variant="secondary" %}
+                        {% trans "Manage Organizations" %}
+                    {% endcomponent %}
+                </div>
+            {% endcomponent %}
+            
+        </div>
+    {% endcomponent %}
 {% endblock %}

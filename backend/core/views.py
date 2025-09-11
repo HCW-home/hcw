@@ -1,0 +1,122 @@
+
+from datetime import datetime, timedelta
+from django.utils import timezone
+from django.contrib.auth import get_user_model
+from consultations.models import Consultation, Appointment
+from django.db.models import Count, Q
+from django.utils.translation import gettext_lazy as _
+
+User = get_user_model()
+
+def dashboard_callback(request, context):
+    now = timezone.now()
+    last_month = now - timedelta(days=30)
+    last_week = now - timedelta(days=7)
+    
+    # User metrics
+    total_users = User.objects.count()
+    active_users = User.objects.filter(last_login__gte=last_month).count()
+    online_users = User.objects.filter(is_online=True).count()
+    new_users_this_week = User.objects.filter(date_joined__gte=last_week).count()
+    
+    # Consultation metrics
+    consultations_last_month = Consultation.objects.filter(created_at__gte=last_month).count()
+    consultations_this_week = Consultation.objects.filter(created_at__gte=last_week).count()
+    
+    # Appointment metrics
+    appointments_last_month = Appointment.objects.filter(created_at__gte=last_month).count()
+    appointments_this_week = Appointment.objects.filter(created_at__gte=last_week).count()
+    
+    # Calculate growth percentages
+    def calculate_growth(current, previous):
+        if previous == 0:
+            return "+100%" if current > 0 else "0%"
+        growth = ((current - previous) / previous) * 100
+        return f"+{growth:.1f}%" if growth >= 0 else f"{growth:.1f}%"
+    
+    # Previous periods for comparison
+    prev_week = last_week - timedelta(days=7)
+    prev_month = last_month - timedelta(days=30)
+    
+    consultations_prev_week = Consultation.objects.filter(
+        created_at__gte=prev_week, created_at__lt=last_week
+    ).count()
+    appointments_prev_week = Appointment.objects.filter(
+        created_at__gte=prev_week, created_at__lt=last_week
+    ).count()
+    new_users_prev_week = User.objects.filter(
+        date_joined__gte=prev_week, date_joined__lt=last_week
+    ).count()
+    
+    # Main KPI cards
+    context['kpi'] = [
+        {
+            'title': _('Active Users'),
+            'metric': f"{active_users:,}",
+            'footer': f"{active_users} of {total_users:,} users active in last 30 days"
+        },
+        {
+            'title': _('Online Now'),
+            'metric': f"{online_users:,}",
+            'footer': f"Users currently online"
+        },
+        {
+            'title': _('Consultations'),
+            'metric': f"{consultations_last_month:,}",
+            'footer': f"Total consultations in last 30 days"
+        },
+        {
+            'title': _('Appointments'),
+            'metric': f"{appointments_last_month:,}",
+            'footer': f"Total appointments in last 30 days"
+        }
+    ]
+    
+    # Weekly metrics for detailed view
+    context['weekly_metrics'] = [
+        {
+            'title': _('New Users This Week'),
+            'metric': new_users_this_week,
+            'growth': calculate_growth(new_users_this_week, new_users_prev_week),
+            'description': _('New user registrations')
+        },
+        {
+            'title': _('Consultations This Week'),
+            'metric': consultations_this_week,
+            'growth': calculate_growth(consultations_this_week, consultations_prev_week),
+            'description': _('Consultations started this week')
+        },
+        {
+            'title': _('Appointments This Week'),
+            'metric': appointments_this_week,
+            'growth': calculate_growth(appointments_this_week, appointments_prev_week),
+            'description': _('Appointments scheduled this week')
+        }
+    ]
+    
+    # System health metrics
+    consultation_completion_rate = 0
+    if consultations_last_month > 0:
+        completed_consultations = Consultation.objects.filter(
+            created_at__gte=last_month,
+            status='completed'
+        ).count()
+        consultation_completion_rate = (completed_consultations / consultations_last_month) * 100
+    
+    context['system_health'] = {
+        'completion_rate': f"{consultation_completion_rate:.1f}%",
+        'active_rate': f"{(active_users/total_users*100):.1f}%" if total_users > 0 else "0%",
+        'online_rate': f"{(online_users/total_users*100):.1f}%" if total_users > 0 else "0%"
+    }
+    
+    # Recent activity summary
+    context['recent_activity'] = {
+        'total_users': total_users,
+        'active_users': active_users,
+        'online_users': online_users,
+        'consultations_month': consultations_last_month,
+        'appointments_month': appointments_last_month,
+        'last_updated': now.strftime('%Y-%m-%d %H:%M')
+    }
+    
+    return context
