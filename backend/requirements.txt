@@ -107,7 +107,7 @@ pillow==11.1.0
 prompt_toolkit==3.0.48
 propcache==0.3.0
 proto-plus==1.25.0
-protobuf==5.29.2
+protobuf==5.29.5
 psycopg==3.2.3
 pyasn1==0.6.1
 pyasn1_modules==0.4.1
