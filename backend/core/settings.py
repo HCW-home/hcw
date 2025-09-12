@@ -77,6 +77,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'mfa',
     'allauth',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.openid_connect',
     'allauth.account',
     'django_filters',
     'dj_rest_auth.registration',
@@ -95,10 +97,6 @@ INSTALLED_APPS = [
     'mediaserver',
     'api',
 ]
-
-if os.getenv('OPENID_NAME'):
-    INSTALLED_APPS.append('allauth.socialaccount')
-    INSTALLED_APPS.append('allauth.socialaccount.providers.openid_connect')
 
 
 MIDDLEWARE = [
