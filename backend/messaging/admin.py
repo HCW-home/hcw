@@ -75,6 +75,9 @@ class MessageAdmin(ModelAdmin):
         description=_("Status"),
         label={
             MessageStatus.FAILED: "danger",
+            MessageStatus.SENT: "info",
+            MessageStatus.PENDING: "dark",
+            MessageStatus.DELIVERED: "info",
             MessageStatus.READ: "success",
         },
     )
