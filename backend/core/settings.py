@@ -75,6 +75,7 @@ INSTALLED_APPS = [
     'import_export',
     'django_celery_beat',
     'corsheaders',
+    'mfa',
     'allauth',
     'allauth.account',
     'django_filters',
@@ -83,6 +84,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'dj_rest_auth',
+    'dj_rest_auth_mfa',
     'rest_framework_simplejwt',
     'drf_spectacular',
     'django_celery_results',
@@ -634,3 +636,10 @@ CORS_ALLOW_HEADERS = [
 
 PRACTITIONER_URL = os.getenv('PRACTITIONER_URL', 'http://localhost:4200')
 PATIENT_URL = os.getenv('PATIENT_URL', 'http://localhost:4201')
+
+
+RECOVERY_ITERATION = 720000 
+MFA_MANDATORY = False
+MFA_ADAPTER_CLASS = "dj_rest_auth_mfa.adapters.DjangoMFA2Adapter"
+MFA_GRACE_WINDOW_DAYS = 7
+
