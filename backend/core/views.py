@@ -128,8 +128,7 @@ def dashboard_callback(request, context):
     consultation_completion_rate = 0
     if consultations_last_month > 0:
         completed_consultations = Consultation.objects.filter(
-            created_at__gte=last_month,
-            status='completed'
+            created_at__gte=last_month
         ).count()
         consultation_completion_rate = (completed_consultations / consultations_last_month) * 100
     

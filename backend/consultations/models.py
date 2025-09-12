@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from messaging.models import CommunicationMethod
 from datetime import time
 import re
+import uuid
 
 # Create your models here.
 
@@ -88,10 +89,6 @@ class Appointment(models.Model):
         verbose_name_plural = _('appointments')
         ordering = ['-scheduled_at']
 
-# class ParticipantRole(models.TextChoices):
-#     SCHEDULED = "Scheduled", _("Scheduled")
-#     CANCELLED = "Cancelled", _("Cancelled")
-
 class Participant(models.Model):
     appointement = models.ForeignKey(Appointment, on_delete=models.CASCADE)
     user = models.ForeignKey(
@@ -101,7 +98,8 @@ class Participant(models.Model):
         blank=True,
     )
 
-    auth_token = models.CharField(max_length=256)
+    auth_token = models.CharField(max_length=256, blank=True)
+    is_auth_token_used = models.BooleanField(default=False)
     is_invited = models.BooleanField(default=True)
     is_confirmed = models.BooleanField(default=False)
 
@@ -116,6 +114,11 @@ class Participant(models.Model):
     
     class Meta:
         unique_together = ['appointement', 'user']
+
+    def save(self, *args, **kwargs):
+        if not self.auth_token:
+            self.auth_token = str(uuid.uuid4())
+        super().save(*args, **kwargs)
 
     def clean(self):
         super().clean()

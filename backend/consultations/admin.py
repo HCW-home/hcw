@@ -38,7 +38,8 @@ class AppointmentInline(StackedInline):
 class ParticipantInline(TabularInline):
     model = Participant
     extra = 0
-    fields = ['user', 'display_name', 'email', 'phone', 'is_invited', 'communication_method']
+    fields = ['user', 'display_name', 'email', 'phone',
+              'is_invited', 'communication_method']
 
 
 @admin.register(Consultation)
