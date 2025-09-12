@@ -77,15 +77,15 @@ INSTALLED_APPS = [
     'corsheaders',
     'mfa',
     'allauth',
+    'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.openid_connect',
-    'allauth.account',
     'django_filters',
     'dj_rest_auth.registration',
     'rest_framework',
     'rest_framework.authtoken',
     'dj_rest_auth',
-    'dj_rest_auth_mfa',
+    # 'dj_rest_auth_mfa',
     'rest_framework_simplejwt',
     'drf_spectacular',
     'django_celery_results',
@@ -296,9 +296,8 @@ CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_RESULT_EXTENDED = True
 CELERY_TASK_TRACK_STARTED = True
 
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 
 CACHES = {
     "default": {
@@ -634,8 +633,8 @@ PRACTITIONER_URL = os.getenv('PRACTITIONER_URL', 'http://localhost:4200')
 PATIENT_URL = os.getenv('PATIENT_URL', 'http://localhost:4201')
 
 
-RECOVERY_ITERATION = 720000 
-MFA_MANDATORY = False
-MFA_ADAPTER_CLASS = "dj_rest_auth_mfa.adapters.DjangoMFA2Adapter"
-MFA_GRACE_WINDOW_DAYS = 7
+# RECOVERY_ITERATION = 720000 
+# MFA_MANDATORY = False
+# MFA_ADAPTER_CLASS = "dj_rest_auth_mfa.adapters.DjangoMFA2Adapter"
+# MFA_GRACE_WINDOW_DAYS = 7
 

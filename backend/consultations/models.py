@@ -112,6 +112,9 @@ class Participant(models.Model):
 
     feedback_rate = models.IntegerField(null=True, blank=True)
     feedback_message = models.TextField(null=True, blank=True)
+    
+    class Meta:
+        unique_together = ['appointement', 'user']
 
     def clean(self):
         super().clean()

@@ -160,3 +160,13 @@ class BookingSlotSerializer(serializers.ModelSerializer):
         validated_data['user'] = request_user
         validated_data['created_by'] = request_user
         return super().create(validated_data)
+
+class AppointmentDetailSerializer(serializers.ModelSerializer):
+    created_by = ConsultationUserSerializer(read_only=True)
+    consultation = ConsultationSerializer(read_only=True)
+    participants = ParticipantSerializer(source='participant_set', many=True, read_only=True)
+    
+    class Meta:
+        model = Appointment
+        fields = ['id', 'scheduled_at', 'end_expected_at', 'type',
+                  'consultation', 'created_by', 'status', 'created_at', 'participants']

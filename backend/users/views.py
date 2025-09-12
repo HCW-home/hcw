@@ -11,13 +11,13 @@ from django.contrib.auth import get_user_model
 from drf_spectacular.utils import extend_schema
 from .models import Speciality, Language
 from .serializers import SpecialitySerializer, UserDetailsSerializer, LanguageSerializer, OrganisationSerializer
-from consultations.serializers import ReasonSerializer
+from consultations.serializers import ReasonSerializer, AppointmentDetailSerializer
 from itsdangerous import URLSafeTimedSerializer
 from django.conf import settings
 from rest_framework.views import APIView
 from django.core.mail import send_mail
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes, OpenApiExample
-from consultations.models import Consultation, Appointment
+from consultations.models import Consultation, Appointment, Participant
 from consultations.serializers import ConsultationSerializer, AppointmentSerializer
 from messaging.models import Message
 from messaging.serializers import MessageSerializer
@@ -26,7 +26,7 @@ from .serializers import HealthMetricSerializer
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
 from dj_rest_auth.registration.serializers import SocialLoginSerializer
-from allauth.socialaccount.providers.openid_connect.views import OpenIDConnectAdapter
+from allauth.socialaccount.providers.openid_connect.views import OpenIDConnectOAuth2Adapter
 
 User = get_user_model()
 
@@ -610,13 +610,104 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         serializer = HealthMetricSerializer(health_metrics, many=True)
         return Response(serializer.data)
 
-class MyOIDCAdapter(OpenIDConnectAdapter):
-    def __init__(self, request):
-        # "my-server" doit correspondre au provider_id défini
-        # dans SOCIALACCOUNT_PROVIDERS["openid_connect"]["APPS"]
-        super().__init__(request, provider_id='openid')
+# class MyOIDCAdapter(OpenIDConnectOAuth2Adapter):
+#     def __init__(self, request):
+#         # "my-server" doit correspondre au provider_id défini
+#         # dans SOCIALACCOUNT_PROVIDERS["openid_connect"]["APPS"]
+#         super().__init__(request, provider_id='openid')
 
 class OpenIDView(SocialLoginView):
-    adapter_class = MyOIDCAdapter
+    adapter_class = OpenIDConnectOAuth2Adapter
     serializer_class = SocialLoginSerializer
     client_class = OAuth2Client
+
+
+class UserAppointmentViewSet(viewsets.ReadOnlyModelViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = AppointmentDetailSerializer
+    
+    def get_queryset(self):
+        """Get appointments where the user is a participant."""
+        return Appointment.objects.select_related(
+            'consultation__created_by',
+            'consultation__owned_by', 
+            'consultation__beneficiary',
+            'consultation__group',
+            'created_by'
+        ).prefetch_related(
+            'participant_set__user',
+            'consultation__group__users'
+        ).filter(
+            participant__user=self.request.user
+        ).distinct()
+    
+    @extend_schema(
+        request={
+            'application/json': {
+                'type': 'object',
+                'properties': {
+                    'is_present': {
+                        'type': 'boolean',
+                        'example': True
+                    }
+                },
+                'required': ['is_present']
+            }
+        },
+        responses={
+            200: {
+                'type': 'object',
+                'properties': {
+                    'detail': {'type': 'string'},
+                    'is_confirmed': {'type': 'boolean'}
+                },
+                'example': {"detail": "Presence updated successfully.", "is_confirmed": True}
+            },
+            400: {
+                'type': 'object',
+                'properties': {
+                    'detail': {'type': 'string'}
+                },
+                'example': {"detail": "is_present parameter is required."}
+            },
+            404: {
+                'type': 'object',
+                'properties': {
+                    'detail': {'type': 'string'}
+                },
+                'example': {"detail": "Appointment not found or you are not a participant."}
+            }
+        },
+        description="Update the presence (is_confirmed) of the authenticated user in the appointment."
+    )
+    @action(detail=True, methods=['post'])
+    def presence(self, request, pk=None):
+        """Update participant presence (is_confirmed field)."""
+        is_present = request.data.get('is_present')
+        
+        if is_present is None:
+            return Response(
+                {"detail": "is_present parameter is required."}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        appointment = self.get_object()
+        
+        try:
+            participant = Participant.objects.get(
+                appointement=appointment,
+                user=request.user
+            )
+            participant.is_confirmed = bool(is_present)
+            participant.save()
+            
+            return Response({
+                "detail": "Presence updated successfully.",
+                "is_confirmed": participant.is_confirmed
+            })
+            
+        except Participant.DoesNotExist:
+            return Response(
+                {"detail": "You are not a participant in this appointment."}, 
+                status=status.HTTP_404_NOT_FOUND
+            )

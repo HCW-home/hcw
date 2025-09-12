@@ -12,6 +12,7 @@ router.register(r'users', views.UserViewSet)
 # Create a separate router for user-specific endpoints
 user_router = DefaultRouter()
 user_router.register(r'bookingslots', BookingSlotViewSet, basename='user-bookingslots')
+user_router.register(r'appointments', views.UserAppointmentViewSet, basename='user-appointments')
 
 urlpatterns = [
     path('api/', include(router.urls)),

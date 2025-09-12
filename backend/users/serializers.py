@@ -2,7 +2,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from allauth.utils import get_username_max_length
-from allauth.account import app_settings as allauth_account_settings
+from allauth.account import app_settings
 from allauth.account.adapter import get_adapter
 from allauth.socialaccount.models import  EmailAddress
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -60,7 +60,8 @@ class UserDetailsSerializer(serializers.ModelSerializer):
         read_only_fields = ['email', 'is_online']
 
 class RegisterSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=allauth_account_settings.EMAIL_REQUIRED)
+    email = serializers.EmailField(
+        required=app_settings.SIGNUP_FIELDS['email']['required'])
     password = serializers.CharField(write_only=True)
 
     def validate_email(self, email):
