@@ -23,6 +23,10 @@ from messaging.models import Message
 from messaging.serializers import MessageSerializer
 from .models import HealthMetric
 from .serializers import HealthMetricSerializer
+from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+from dj_rest_auth.registration.views import SocialLoginView
+from dj_rest_auth.registration.serializers import SocialLoginSerializer
+from allauth.socialaccount.providers.openid_connect.views import OpenIDConnectAdapter
 
 User = get_user_model()
 
@@ -605,3 +609,14 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         
         serializer = HealthMetricSerializer(health_metrics, many=True)
         return Response(serializer.data)
+
+class MyOIDCAdapter(OpenIDConnectAdapter):
+    def __init__(self, request):
+        # "my-server" doit correspondre au provider_id défini
+        # dans SOCIALACCOUNT_PROVIDERS["openid_connect"]["APPS"]
+        super().__init__(request, provider_id='openid')
+
+class OpenIDView(SocialLoginView):
+    adapter_class = MyOIDCAdapter
+    serializer_class = SocialLoginSerializer
+    client_class = OAuth2Client

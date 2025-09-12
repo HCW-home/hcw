@@ -527,11 +527,6 @@ admin.site.unregister(IntervalSchedule)
 admin.site.unregister(CrontabSchedule)
 admin.site.unregister(SolarSchedule)
 admin.site.unregister(ClockedSchedule)
-admin.site.unregister(SocialApp)
-
-@admin.register(SocialApp)
-class SocialAppAdmin(ModelAdmin):
-    pass
 
 class UnfoldTaskSelectWidget(UnfoldAdminSelectWidget, TaskSelectWidget):
     pass

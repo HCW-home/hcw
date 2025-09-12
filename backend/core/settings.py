@@ -79,7 +79,6 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'django_filters',
-    'allauth.socialaccount',
     'dj_rest_auth.registration',
     'rest_framework',
     'rest_framework.authtoken',
@@ -96,6 +95,11 @@ INSTALLED_APPS = [
     'mediaserver',
     'api',
 ]
+
+if os.getenv('OPENID_NAME'):
+    INSTALLED_APPS.append('allauth.socialaccount')
+    INSTALLED_APPS.append('allauth.socialaccount.providers.openid_connect')
+
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -268,7 +272,7 @@ SOCIALACCOUNT_PROVIDERS = {
     "openid_connect": {
         "APPS": [
             {
-                "provider_id": os.getenv('OPENID_ID'),
+                "provider_id": 'openid',
                 "name": os.getenv('OPENID_NAME'),
                 "client_id": os.getenv('OPENID_CLIENT_ID'),
                 "secret": os.getenv('OPENID_SECRET'),
@@ -423,12 +427,6 @@ UNFOLD = {
                         "icon": "phone_android",
                         "link": "/admin/users/fcmdeviceoverride/",
                         "permission": lambda request: request.user.has_perm("users.view_fcmdeviceoverride"),
-                    },
-                    {
-                        "title": _("Social applications"),
-                        "icon": "login",
-                        "link": "/admin/socialaccount/socialapp/",
-                        "permission": lambda request: request.user.has_perm("socialaccount.view_socialapp"),
                     },
                 ],
             },
