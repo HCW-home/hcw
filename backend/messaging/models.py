@@ -81,7 +81,7 @@ class Template(models.Model):
     template_subject = models.CharField(_('template subject'), max_length=500, blank=True,
                                       help_text=_('Jinja2 template for message subject'))
     communication_method = models.CharField(_('communication method'), 
-                                          choices=CommunicationMethod.choices, max_length=20)
+                                            choices=CommunicationMethod.choices, max_length=20, blank=True)
     is_active = models.BooleanField(_('is active'), default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
