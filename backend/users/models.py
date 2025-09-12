@@ -23,7 +23,7 @@ from django.db import models
 class Term(models.Model):
     name = models.CharField()
     content = models.TextField()
-    valid_until = models.DateTimeField(null=True, blank=True)
+    # valid_until = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return self.name
