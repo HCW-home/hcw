@@ -61,7 +61,7 @@ class MessagingProviderAdmin(ModelAdmin):
 @admin.register(Message)
 class MessageAdmin(ModelAdmin):
     list_display = ['communication_method', 'recipient_display',
-                    'status', 'task_status_display', 'sent_by', 'created_at']
+                    'display_status', 'sent_by', 'created_at']
     list_filter = ['communication_method', 'status', 'created_at', 'provider_name']
     search_fields = ['content', 'recipient_phone',
                      'recipient_email', 'sent_by__email', 'celery_task_id']
@@ -71,6 +71,17 @@ class MessageAdmin(ModelAdmin):
 
     actions = ['resend_failed_messages', 'mark_as_delivered']
 
+    @display(
+        description=_("Status"),
+        label={
+            MessageStatus.FAILED: "danger",
+            MessageStatus.READ: "success",
+        },
+    )
+    def display_status(self, instance):
+        return instance.status
+
+
     @display(description="Recipient")
     def recipient_display(self, obj):
         if obj.recipient_phone:
@@ -78,28 +89,6 @@ class MessageAdmin(ModelAdmin):
         elif obj.recipient_email:
             return obj.recipient_email
         return "No recipient"
-
-    @display(description="Task Status")
-    def task_status_display(self, obj):
-        if not obj.celery_task_id:
-            return "No task"
-
-        try:
-            from celery.result import AsyncResult
-            result = AsyncResult(obj.celery_task_id)
-
-            if result.state == 'PENDING':
-                return "⏳ Pending"
-            elif result.state == 'SUCCESS':
-                return "✅ Success"
-            elif result.state == 'FAILURE':
-                return "❌ Failed"
-            elif result.state == 'RETRY':
-                return "🔄 Retrying"
-            else:
-                return f"? {result.state}"
-        except Exception:
-            return "? Unknown"
 
     def resend_failed_messages(self, request, queryset):
         """Resend failed messages via Celery"""
