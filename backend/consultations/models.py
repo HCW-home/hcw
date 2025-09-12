@@ -105,9 +105,10 @@ class Participant(models.Model):
     is_invited = models.BooleanField(default=True)
     is_confirmed = models.BooleanField(default=False)
 
+    display_name = models.CharField(null=True, blank=True)
     email = models.EmailField(null=True, blank=True)
     phone = models.CharField(null=True, blank=True)
-    message_type = models.CharField(
+    communication_method = models.CharField(
         choices=CommunicationMethod.choices, max_length=20)
 
     feedback_rate = models.IntegerField(null=True, blank=True)
@@ -134,6 +135,7 @@ class Message(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name=_('created by'))
     created_at = models.DateTimeField(_('created at'), auto_now_add=True)
 
+    event = models.TextField(_('event'), null=True, blank=True)
     content = models.TextField(_('content'), null=True, blank=True)
     attachment = models.FileField(
         _('attachment'), upload_to='messages_attachment', null=True, blank=True)
