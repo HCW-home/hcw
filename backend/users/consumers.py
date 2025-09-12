@@ -35,7 +35,7 @@ class UserOnlineStatusMixin:
         if user and user.is_authenticated:
             self.user_id = user.id
             self.connection_id = async_user_online_service.generate_connection_id()
-            
+
             try:
                 # Track this connection
                 connection_count = await async_user_online_service.add_user_connection(
@@ -221,6 +221,13 @@ class UserStatusConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
             }
         })
     
+    async def consultation(self, event):
+        await self.send_json({
+            "event": "consultation",
+            "consultation_id": event["consultation_id"],
+            "state": event['state']
+        })
+
     async def _handle_send_message(self, data):
         """
         Handle sending a message to another user.

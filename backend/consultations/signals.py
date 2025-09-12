@@ -1,4 +1,4 @@
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -7,22 +7,55 @@ from .models import Consultation, Request, RequestStatus
 from .serializers import ConsultationSerializer
 
 
+def get_users_to_notification_consultation(consultation: Consultation):
+    # Collect users to notify
+    users_to_notify_pks = set()
+
+    # Add owned_by user
+    if consultation.owned_by:
+        users_to_notify_pks.add(consultation.owned_by.pk)
+
+    # Add beneficiary user
+    if consultation.beneficiary:
+        users_to_notify_pks.add(consultation.beneficiary.pk)
+
+    # Add users from group (queue)
+    if consultation.group:
+        for user in consultation.group.users.all():
+            users_to_notify_pks.add(user.pk)
+
+    return users_to_notify_pks
+
 @receiver(post_save, sender=Consultation)
-def consultation_saved(sender, instance, created, **kwargs):
+def consultation_saved(sender, instance: Consultation, created, **kwargs):
     """
     Whenever a Consultation is created/updated, broadcast it over Channels.
     """
     channel_layer = get_channel_layer()
-    group_name = f"consultation_{instance.pk}"
 
-    async_to_sync(channel_layer.group_send)(
-        group_name,
-        {
-            "type": "consultation_update",
-            "consultation_id": instance.pk,
-        }
-    )
+    # Send notifications to each user
+    for user_pk in get_users_to_notification_consultation(instance):
+        async_to_sync(channel_layer.group_send)(
+            f"user_{user_pk}",
+            {
+                "type": "consultation",
+                "consultation_id": instance.pk,
+                "state": "created" if created else "updated"
+            }
+        )
 
+@receiver(post_delete, sender=Consultation)
+def consultation_deleted(sender, instance, **kwargs):
+    channel_layer = get_channel_layer()
+    for user_pk in get_users_to_notification_consultation(instance):
+        async_to_sync(channel_layer.group_send)(
+            f"user_{user_pk}",
+            {
+                "type": "consultation",
+                "consultation_id": instance.pk,
+                "state": "deleted",
+            }
+        )
 
 @receiver(post_save, sender=Request)
 def request_saved(sender, instance, created, **kwargs):
