@@ -38,10 +38,9 @@ daphne==4.1.2
 defusedxml==0.7.1
 diff-match-patch==20241021
 discord.py==2.5.2
-dj-rest-auth==7.0.0
-dj-rest-auth-mfa==0.0.3
+dj-rest-auth==7.0.1
 Django==5.2.6
-django-allauth==0.57.0
+django-allauth==65.11.2
 django-appconf==1.1.0
 django-celery-beat==2.8.1
 django-celery-results==2.5.1
