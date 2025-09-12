@@ -6,6 +6,7 @@ from django.dispatch import receiver
 from django.core.exceptions import ValidationError
 from typing import Sequence
 import jinja2
+from modeltranslation.utils import get_translation_fields
 
 # Create your models here.
 from . import providers
@@ -100,20 +101,24 @@ class Template(models.Model):
         
         # Validate template_text
         try:
-            env.parse(self.template_text)
+            for field_name in get_translation_fields('template_text'):
+                env.parse(getattr(self, field_name))
         except jinja2.TemplateSyntaxError as e:
             raise ValidationError({
-                'template_text': _('Invalid Jinja2 template syntax: {}').format(str(e))
+                field_name: _(
+                    'Invalid Jinja2 template syntax: {}').format(str(e))
             })
         
-        # Validate template_subject if not empty
-        if self.template_subject:
-            try:
-                env.parse(self.template_subject)
-            except jinja2.TemplateSyntaxError as e:
-                raise ValidationError({
-                    'template_subject': _('Invalid Jinja2 template syntax: {}').format(str(e))
-                })
+        # # Validate template_subject if not empty
+        try:
+            for field_name in get_translation_fields('template_subject'):
+                env.parse(getattr(self, field_name))
+        except jinja2.TemplateSyntaxError as e:
+            raise ValidationError({
+                field_name: _(
+                    'Invalid Jinja2 template syntax: {}').format(str(e))
+            })
+
 
     def render_from_template(self, context):
         """
