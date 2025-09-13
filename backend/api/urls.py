@@ -10,8 +10,8 @@ urlpatterns = [
     path('docs/',
          SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('auth/', include('dj_rest_auth.urls')),
-    path('auth/token/', views.anonymous_token_auth, name='anonymous_token_auth'),
-    path('auth/verify/', views.verify_code, name='verify_code'),
+    path('auth/token/', views.AnonymousTokenAuthView.as_view(), name='anonymous_token_auth'),
+    path('auth/verify/', views.VerifyCodeView.as_view(), name='verify_code'),
     
     # router.register(r'tokens/favourites', views.SuperView,
     #                 basename='token_favourites')

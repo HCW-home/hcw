@@ -100,6 +100,8 @@ class Participant(models.Model):
 
     auth_token = models.CharField(max_length=256, blank=True)
     is_auth_token_used = models.BooleanField(default=False)
+    verification_code = models.IntegerField(null=True, blank=True)
+
     is_invited = models.BooleanField(default=True)
     is_confirmed = models.BooleanField(default=False)
 

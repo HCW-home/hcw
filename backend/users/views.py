@@ -610,12 +610,6 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         serializer = HealthMetricSerializer(health_metrics, many=True)
         return Response(serializer.data)
 
-# class MyOIDCAdapter(OpenIDConnectOAuth2Adapter):
-#     def __init__(self, request):
-#         # "my-server" doit correspondre au provider_id défini
-#         # dans SOCIALACCOUNT_PROVIDERS["openid_connect"]["APPS"]
-#         super().__init__(request, provider_id='openid')
-
 class OpenIDView(SocialLoginView):
     adapter_class = OpenIDConnectOAuth2Adapter
     serializer_class = SocialLoginSerializer
