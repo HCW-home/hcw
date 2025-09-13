@@ -46,6 +46,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
 
     import_form_class = ImportForm
     export_form_class = ExportForm
+    list_editable = ['is_active']
     # export_form_class = SelectableFieldsExportForm
 
     list_display = [

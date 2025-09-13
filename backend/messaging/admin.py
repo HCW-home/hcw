@@ -9,6 +9,7 @@ from unfold.admin import ModelAdmin, TabularInline
 from modeltranslation.admin import TabbedTranslationAdmin
 from django.utils.translation import gettext_lazy as _
 from import_export.admin import ImportExportModelAdmin
+from unfold.contrib.import_export.forms import ExportForm, ImportForm
 from .forms import TemplateForm
 
 class PrefixInline(TabularInline):
@@ -146,6 +147,9 @@ class TemplateAdmin(ModelAdmin, TabbedTranslationAdmin, ImportExportModelAdmin):
     search_fields = ['name', 'system_name', 'description']
     readonly_fields = ['created_at', 'updated_at']
     form = TemplateForm
+    import_form_class = ImportForm
+    export_form_class = ExportForm
+    list_editable = ['is_active']
 
     fieldsets = [
         ('Basic Information', {
