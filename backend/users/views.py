@@ -4,7 +4,7 @@ from django.views.generic import View
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, DjangoModelPermissions
+from rest_framework.permissions import IsAuthenticated, DjangoModelPermissions, BasePermission
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import filters
 from django.contrib.auth import get_user_model
@@ -27,6 +27,7 @@ from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
 from dj_rest_auth.registration.serializers import SocialLoginSerializer
 from allauth.socialaccount.providers.openid_connect.views import OpenIDConnectOAuth2Adapter
+from rest_framework_simplejwt.authentication import JWTStatelessUserAuthentication
 
 User = get_user_model()
 
@@ -237,9 +238,18 @@ class MagicLinkVerifyView(APIView):
         })
 
 
+class IsParticipant(BasePermission):
+    """Allows access only to anonymous users."""
+
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.participant_id
+
+
 class UserConsultationsView(APIView):
-    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTStatelessUserAuthentication]
+    permission_classes = [IsParticipant]
     pagination_class = UniversalPagination
+
     
     @extend_schema(
         parameters=[
@@ -304,6 +314,19 @@ class UserConsultationsView(APIView):
         description="Get paginated consultations where the authenticated user is the beneficiary. Filter by status: 'open' (closed_at is null) or 'closed' (closed_at is not null). Default page size is 20, max 100."
     )
     def get(self, request):
+
+        paginator = self.pagination_class()
+
+        if request.user.participant_id:
+            consultation = Participant.objects.get(pk=int(request.user.participant_id)).appointement.consultation
+            serializer = ConsultationSerializer(consultation)
+            return Response({
+                'count': 1,
+                'next': None,
+                'previous': None,
+                'results': [serializer.data]
+            })
+
         """Get all consultations for the authenticated user as patient/beneficiary."""
         consultations = Consultation.objects.filter(beneficiary=request.user)
         
@@ -317,7 +340,7 @@ class UserConsultationsView(APIView):
         consultations = consultations.order_by('-created_at')
         
         # Apply pagination
-        paginator = self.pagination_class()
+        
         paginated_consultations = paginator.paginate_queryset(consultations, request)
         serializer = ConsultationSerializer(paginated_consultations, many=True)
         return paginator.get_paginated_response(serializer.data)
@@ -399,7 +422,8 @@ class UserNotificationsView(APIView):
 
 
 class UserAppointmentsView(APIView):
-    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTStatelessUserAuthentication]
+    permission_classes = [IsParticipant]
     pagination_class = UniversalPagination
     
     @extend_schema(
@@ -454,6 +478,18 @@ class UserAppointmentsView(APIView):
         description="Get paginated appointments where the authenticated user is a participant. Filter by appointment status. Default page size is 20, max 100."
     )
     def get(self, request):
+
+        if request.user.participant_id:
+            consultation = Participant.objects.get(
+                pk=int(request.user.participant_id)).appointement
+            serializer = AppointmentSerializer(consultation)
+            return Response({
+                'count': 1,
+                'next': None,
+                'previous': None,
+                'results': [serializer.data]
+            })
+
         """Get all appointments where the authenticated user is a participant."""
         # Get appointments where user is a participant
         appointments = Appointment.objects.filter(
