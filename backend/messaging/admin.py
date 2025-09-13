@@ -8,6 +8,8 @@ from django.utils.functional import cached_property
 from unfold.admin import ModelAdmin, TabularInline
 from modeltranslation.admin import TabbedTranslationAdmin
 from django.utils.translation import gettext_lazy as _
+from import_export.admin import ImportExportModelAdmin
+from .forms import TemplateForm
 
 class PrefixInline(TabularInline):
     model = Prefix
@@ -138,12 +140,13 @@ class MessageAdmin(ModelAdmin):
 
 
 @admin.register(Template)
-class TemplateAdmin(ModelAdmin, TabbedTranslationAdmin):
+class TemplateAdmin(ModelAdmin, TabbedTranslationAdmin, ImportExportModelAdmin):
     list_display = ['name', 'system_name', 'communication_method', 'is_active', 'created_at']
     list_filter = ['communication_method', 'is_active', 'created_at']
     search_fields = ['name', 'system_name', 'description']
     readonly_fields = ['created_at', 'updated_at']
-    
+    form = TemplateForm
+
     fieldsets = [
         ('Basic Information', {
             'fields': ['system_name', 'name', 'description', 'communication_method', 'is_active']

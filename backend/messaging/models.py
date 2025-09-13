@@ -4,6 +4,7 @@ from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.core.exceptions import ValidationError
+from django.contrib.postgres.fields import ArrayField
 from typing import Sequence
 import jinja2
 from modeltranslation.utils import get_translation_fields
@@ -80,8 +81,11 @@ class Template(models.Model):
                                    help_text=_('Jinja2 template for message content'))
     template_subject = models.CharField(_('template subject'), max_length=500, blank=True,
                                       help_text=_('Jinja2 template for message subject'))
-    communication_method = models.CharField(_('communication method'), 
-                                            choices=CommunicationMethod.choices, max_length=20, blank=True)
+    communication_method = ArrayField(
+        base_field=models.CharField(max_length=10, choices=CommunicationMethod.choices),
+        default=list,
+        blank=True,
+    )
     is_active = models.BooleanField(_('is active'), default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
