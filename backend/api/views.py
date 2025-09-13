@@ -126,7 +126,7 @@ class AnonymousTokenAuthView(APIView):
                     }, status=status.HTTP_202_ACCEPTED)
                 
                 # Verify the provided code
-                if int(participant.verification_code) != verification_code:
+                if int(participant.verification_code) != int(verification_code):
                     return Response({'error': 'Invalid verification_code'}, status=status.HTTP_401_UNAUTHORIZED)
                 
                 # Clear the verification code after successful verification

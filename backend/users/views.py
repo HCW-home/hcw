@@ -17,8 +17,8 @@ from django.conf import settings
 from rest_framework.views import APIView
 from django.core.mail import send_mail
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes, OpenApiExample
-from consultations.models import Consultation, Appointment, Participant
-from consultations.serializers import ConsultationSerializer, AppointmentSerializer
+from consultations.models import Consultation, Appointment, Participant, Message as ConsultationMessage
+from consultations.serializers import ConsultationSerializer, AppointmentSerializer, ConsultationMessageSerializer
 from messaging.models import Message
 from messaging.serializers import MessageSerializer
 from .models import HealthMetric
@@ -245,12 +245,35 @@ class IsParticipant(BasePermission):
         return request.user.is_authenticated and request.user.participant_id
 
 
-class UserConsultationsView(APIView):
+class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
     authentication_classes = [JWTStatelessUserAuthentication]
     permission_classes = [IsParticipant]
     pagination_class = UniversalPagination
+    serializer_class = ConsultationSerializer
 
-    
+    def get_queryset(self):
+        """Get consultations for the authenticated user."""
+        user = self.request.user
+
+        if user.participant_id:
+            # For participants, get the consultation from their appointment
+            participant = Participant.objects.get(pk=int(user.participant_id))
+            print(participant)
+            consultation = participant.appointement.consultation
+            return Consultation.objects.filter(id=consultation.id)
+
+        # For regular users, get consultations where they are the beneficiary
+        consultations = Consultation.objects.filter(beneficiary=user)
+
+        # Filter by status if provided
+        status = self.request.query_params.get('status')
+        if status == 'open':
+            consultations = consultations.filter(closed_at__isnull=True)
+        elif status == 'closed':
+            consultations = consultations.filter(closed_at__isnull=False)
+
+        return consultations.order_by('-created_at')
+
     @extend_schema(
         parameters=[
             OpenApiParameter(
@@ -261,89 +284,127 @@ class UserConsultationsView(APIView):
                 location=OpenApiParameter.QUERY,
                 enum=['open', 'closed']
             ),
-            OpenApiParameter(
-                name="page",
-                description="Page number for pagination",
-                required=False,
-                type=OpenApiTypes.INT,
-                location=OpenApiParameter.QUERY,
-            ),
-            OpenApiParameter(
-                name="page_size",
-                description="Number of results per page (max 100)",
-                required=False,
-                type=OpenApiTypes.INT,
-                location=OpenApiParameter.QUERY,
-            ),
         ],
         responses={
-            200: {
+            200: ConsultationSerializer(many=True),
+        },
+        description="Get paginated consultations where the authenticated user is the beneficiary or participant."
+    )
+    def list(self, request, *args, **kwargs):
+        """List all consultations for the authenticated user."""
+        return super().list(request, *args, **kwargs)
+
+    @extend_schema(
+        responses={
+            200: ConsultationSerializer,
+            404: {
                 'type': 'object',
                 'properties': {
-                    'count': {'type': 'integer'},
-                    'next': {'type': 'string', 'nullable': True},
-                    'previous': {'type': 'string', 'nullable': True},
-                    'results': {
-                        'type': 'array',
-                        'items': ConsultationSerializer().to_representation({})
-                    }
-                }
-            },
-        },
-        examples=[
-            OpenApiExample(
-                'Get paginated consultations',
-                description='Returns paginated consultations for the user',
-                value={
-                    "count": 45,
-                    "next": "http://localhost:8000/api/user/consultations/?page=3",
-                    "previous": "http://localhost:8000/api/user/consultations/?page=1",
-                    "results": [
-                        {
-                            "id": 1,
-                            "title": "Consultation example",
-                            "description": "Sample consultation",
-                            "created_at": "2025-01-15T10:30:00Z",
-                            "closed_at": None
-                        }
-                    ]
+                    'detail': {'type': 'string'}
                 },
-                response_only=True
-            ),
-        ],
-        description="Get paginated consultations where the authenticated user is the beneficiary. Filter by status: 'open' (closed_at is null) or 'closed' (closed_at is not null). Default page size is 20, max 100."
+                'example': {"detail": "Not found."}
+            }
+        },
+        description="Get a specific consultation by ID."
     )
-    def get(self, request):
+    def retrieve(self, request, *args, **kwargs):
+        """Get a specific consultation by ID."""
+        return super().retrieve(request, *args, **kwargs)
 
-        paginator = self.pagination_class()
+    @extend_schema(
+        request=ConsultationMessageSerializer,
+        responses={
+            200: ConsultationMessageSerializer(many=True),
+            201: ConsultationMessageSerializer,
+            404: {
+                'type': 'object',
+                'properties': {
+                    'detail': {'type': 'string'}
+                },
+                'example': {"detail": "Consultation not found."}
+            }
+        },
+        description="Get messages for this consultation (paginated) or create a new message."
+    )
+    @action(detail=True, methods=['get', 'post'])
+    def messages(self, request, pk=None):
+        """Get messages for this consultation or create a new message."""
+        consultation = self.get_object()
 
-        if request.user.participant_id:
-            consultation = Participant.objects.get(pk=int(request.user.participant_id)).appointement.consultation
-            serializer = ConsultationSerializer(consultation)
-            return Response({
-                'count': 1,
-                'next': None,
-                'previous': None,
-                'results': [serializer.data]
-            })
+        if request.method == 'GET':
+            messages = consultation.messages.all().order_by('-created_at')
 
-        """Get all consultations for the authenticated user as patient/beneficiary."""
-        consultations = Consultation.objects.filter(beneficiary=request.user)
-        
-        # Filter by status if provided
-        status = request.query_params.get('status')
-        if status == 'open':
-            consultations = consultations.filter(closed_at__isnull=True)
-        elif status == 'closed':
-            consultations = consultations.filter(closed_at__isnull=False)
-        
-        consultations = consultations.order_by('-created_at')
-        
-        # Apply pagination
-        
-        paginated_consultations = paginator.paginate_queryset(consultations, request)
-        serializer = ConsultationSerializer(paginated_consultations, many=True)
-        return paginator.get_paginated_response(serializer.data)
+            # Apply pagination
+            page = self.paginate_queryset(messages)
+            if page is not None:
+                serializer = ConsultationMessageSerializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+
+            serializer = ConsultationMessageSerializer(messages, many=True)
+            return Response(serializer.data)
+
+        elif request.method == 'POST':
+            serializer = ConsultationMessageSerializer(
+                data=request.data,
+                context={'request': request}
+            )
+
+            if serializer.is_valid():
+                message = serializer.save(consultation=consultation)
+                return Response(
+                    ConsultationMessageSerializer(message).data,
+                    status=status.HTTP_201_CREATED
+                )
+
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @extend_schema(
+        request=ConsultationMessageSerializer,
+        responses={
+            200: ConsultationMessageSerializer,
+            404: {
+                'type': 'object',
+                'properties': {
+                    'detail': {'type': 'string'}
+                },
+                'example': {"detail": "Message not found."}
+            }
+        },
+        parameters=[
+            OpenApiParameter(
+                name='message_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+                description='ID of the message to update'
+            )
+        ],
+        description="Update a specific message in this consultation."
+    )
+    @action(detail=True, methods=['patch'], url_path='messages/(?P<message_id>[^/.]+)')
+    def update_message(self, request, pk=None, message_id=None):
+        """Update a specific message in this consultation."""
+        consultation = self.get_object()
+
+        try:
+            message = consultation.messages.get(id=message_id, created_by=request.user)
+        except ConsultationMessage.DoesNotExist:
+            return Response(
+                {"detail": "Message not found or you don't have permission to update it."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = ConsultationMessageSerializer(
+            message,
+            data=request.data,
+            partial=True,
+            context={'request': request}
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserNotificationsView(APIView):
