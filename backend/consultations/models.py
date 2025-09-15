@@ -246,3 +246,52 @@ class BookingSlot(models.Model):
     sunday = models.BooleanField()
 
     valid_until = models.DateField(help_text=_("Slot valid until this date"), blank=True, null=True)
+
+
+class PrescriptionStatus(models.TextChoices):
+    DRAFT = "Draft", _("Draft")
+    PRESCRIBED = "Prescribed", _("Prescribed")
+    DISPENSED = "Dispensed", _("Dispensed")
+    CANCELLED = "Cancelled", _("Cancelled")
+
+
+class Prescription(models.Model):
+    consultation = models.ForeignKey(
+        Consultation, 
+        on_delete=models.CASCADE, 
+        related_name='prescriptions', 
+        verbose_name=_('consultation')
+    )
+    
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        verbose_name=_('created by')
+    )
+    
+    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
+    updated_at = models.DateTimeField(_('updated at'), auto_now=True)
+    prescribed_at = models.DateTimeField(_('prescribed at'), null=True, blank=True)
+    
+    status = models.CharField(
+        _('status'), 
+        choices=PrescriptionStatus.choices, 
+        default=PrescriptionStatus.DRAFT,
+        max_length=20
+    )
+    
+    medication_name = models.CharField(_('medication name'), max_length=200)
+    dosage = models.CharField(_('dosage'), max_length=100)
+    frequency = models.CharField(_('frequency'), max_length=100)
+    duration = models.CharField(_('duration'), max_length=100, null=True, blank=True)
+    
+    instructions = models.TextField(_('instructions'), null=True, blank=True)
+    notes = models.TextField(_('notes'), null=True, blank=True)
+    
+    class Meta:
+        verbose_name = _('prescription')
+        verbose_name_plural = _('prescriptions')
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Prescription #{self.pk} - {self.medication_name} for {self.patient}"
