@@ -153,7 +153,7 @@ class TemplateAdmin(ModelAdmin, TabbedTranslationAdmin, ImportExportModelAdmin):
 
     fieldsets = [
         ('Basic Information', {
-            'fields': ['system_name', 'name', 'description', 'communication_method', 'is_active']
+            'fields': ['system_name', 'name', 'description', 'communication_method', 'model', 'is_active']
         }),
         ('Template Content', {
             'fields': ['template_subject', 'template_text'],
@@ -180,3 +180,6 @@ class TemplateAdmin(ModelAdmin, TabbedTranslationAdmin, ImportExportModelAdmin):
                     'placeholder': 'Consultation with {{ practitioner.name }}'
                 })
         return form
+
+
+

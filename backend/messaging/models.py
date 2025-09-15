@@ -8,6 +8,7 @@ from django.contrib.postgres.fields import ArrayField
 from typing import Sequence
 import jinja2
 from modeltranslation.utils import get_translation_fields
+from django.apps import apps
 
 # Create your models here.
 from . import providers
@@ -71,14 +72,32 @@ class Prefix(models.Model):
         verbose_name_plural = _('prefixes')
 
 
+
 class Template(models.Model):
-    system_name = models.CharField(_('system name'), max_length=100, unique=True, 
+
+    def get_model_choices():
+        """Get choices for all Django models in the format (app_label.model_name, verbose_name)"""
+        choices = []
+        for model in apps.get_models():
+            app_label = model._meta.app_label
+            model_name = model._meta.model_name
+            verbose_name = model._meta.verbose_name.title()
+            choice_key = f"{app_label}.{model_name}"
+            choice_display = f"{verbose_name} ({app_label})"
+            choices.append((choice_key, choice_display))
+
+        return sorted(choices, key=lambda x: x[1])
+    
+    system_name = models.CharField(_('system name'), max_length=100, unique=True,
                                  help_text=_('Unique identifier for the template'))
     name = models.CharField(_('name'), max_length=200, help_text=_('Human-readable template name'))
     description = models.TextField(_('description'), blank=True, 
                                  help_text=_('Description of the template purpose'))
     template_text = models.TextField(_('template text'), 
                                    help_text=_('Jinja2 template for message content'))
+    
+    model = models.CharField(max_length=100, choices=get_model_choices, help_text="This model will be required to contruct message.")
+
     template_subject = models.CharField(_('template subject'), max_length=500, blank=True,
                                       help_text=_('Jinja2 template for message subject'))
     communication_method = ArrayField(

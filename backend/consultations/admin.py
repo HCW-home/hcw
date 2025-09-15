@@ -4,6 +4,7 @@ from unfold.decorators import display
 from .models import Queue, Consultation, Appointment, Participant, Message, Reason, Request, BookingSlot
 from modeltranslation.admin import TabbedTranslationAdmin
 
+admin.site.register(Participant, ModelAdmin)
 
 @admin.register(Queue)
 class QueueAdmin(ModelAdmin, TabbedTranslationAdmin):
