@@ -14,8 +14,7 @@ from messaging.models import CommunicationMethod
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from location_field.models.plain import PlainLocationField
-import pytz
-
+from zoneinfo import available_timezones
 from django.db import models
 
 # Create your models here.
@@ -95,7 +94,7 @@ class User(AbstractUser):
     mobile_phone_number = models.CharField(null=True, blank=True)
     timezone = models.CharField(
         max_length=63,
-        choices=[(tz, tz) for tz in pytz.all_timezones],
+        choices=[(tz, tz) for tz in sorted(available_timezones())],
         default='UTC',
         help_text='User timezone for displaying dates and times'
     )
