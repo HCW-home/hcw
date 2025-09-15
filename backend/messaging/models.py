@@ -190,6 +190,95 @@ class Template(models.Model):
 
         return rendered_subject, rendered_text
 
+    def _extract_variable_paths(self, node, parent_is_getattr=False):
+        """
+        Recursively extract full variable paths from Jinja2 AST nodes
+
+        Args:
+            node: Jinja2 AST node
+            parent_is_getattr: Boolean to track if parent node is already a Getattr
+
+        Returns:
+            list: List of variable paths
+        """
+        paths = []
+
+        if hasattr(node, '__class__'):
+            class_name = node.__class__.__name__
+
+            # Handle simple variable references ({{ variable }})
+            if class_name == 'Name' and not parent_is_getattr:
+                paths.append(node.name)
+
+            # Handle attribute access ({{ obj.field.subfield }})
+            elif class_name == 'Getattr':
+                # Build the full path by traversing the chain
+                parts = []
+                current = node
+
+                while hasattr(current, 'attr'):
+                    parts.append(current.attr)
+                    current = current.node
+
+                if hasattr(current, 'name'):
+                    parts.append(current.name)
+                    # Reverse to get proper order
+                    full_path = '.'.join(reversed(parts))
+                    paths.append(full_path)
+
+                # Don't recurse into the child nodes of Getattr as we've processed the full chain
+                return paths
+
+        # Recursively process child nodes
+        if hasattr(node, '__iter__') and not isinstance(node, (str, bytes)):
+            try:
+                for child in node:
+                    is_child_of_getattr = hasattr(node, '__class__') and node.__class__.__name__ == 'Getattr'
+                    paths.extend(self._extract_variable_paths(child, is_child_of_getattr))
+            except (TypeError, AttributeError):
+                pass
+
+        # Process attributes that might contain nodes
+        if hasattr(node, '__dict__'):
+            for attr_name, attr_value in node.__dict__.items():
+                if attr_value is not None and attr_value != node and not attr_name.startswith('_'):
+                    # Skip 'node' and 'attr' attributes of Getattr to avoid processing parts of the chain
+                    if hasattr(node, '__class__') and node.__class__.__name__ == 'Getattr' and attr_name in ['node', 'attr']:
+                        continue
+                    paths.extend(self._extract_variable_paths(attr_value, parent_is_getattr))
+
+        return paths
+
+    @property
+    def template_variables(self):
+        """
+        Extract all variable paths used in the Jinja2 templates
+
+        Returns:
+            list: List of variable paths found in both subject and text templates
+                 (e.g., ['participant.appointment.scheduled_at', 'user.name'])
+        """
+        variables = set()
+
+        try:
+            env = jinja2.Environment()
+
+            # Extract variables from template_text
+            if self.template_text:
+                text_ast = env.parse(self.template_text)
+                variables.update(self._extract_variable_paths(text_ast))
+
+            # Extract variables from template_subject
+            if self.template_subject:
+                subject_ast = env.parse(self.template_subject)
+                variables.update(self._extract_variable_paths(subject_ast))
+
+        except jinja2.TemplateSyntaxError:
+            # If template has syntax errors, return empty list
+            pass
+
+        return sorted(list(variables))
+
 
 class MessageStatus(models.TextChoices):
     PENDING = 'pending', 'Pending'

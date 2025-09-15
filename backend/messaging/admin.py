@@ -88,7 +88,7 @@ class MessageAdmin(ModelAdmin):
         return instance.status
 
 
-    @display(description="Recipient")
+    @display(description="Fields")
     def recipient_display(self, obj):
         if obj.recipient_phone:
             return obj.recipient_phone
@@ -142,8 +142,10 @@ class MessageAdmin(ModelAdmin):
 
 @admin.register(Template)
 class TemplateAdmin(ModelAdmin, TabbedTranslationAdmin, ImportExportModelAdmin):
-    list_display = ['name', 'system_name', 'communication_method', 'is_active', 'created_at']
-    list_filter = ['communication_method', 'is_active', 'created_at']
+    list_display = ['name', 'system_name', 'communication_method',
+                    'is_active', 'created_at', 'variables']
+    list_filter = ['communication_method', 'is_active',
+                   'created_at']
     search_fields = ['name', 'system_name', 'description']
     readonly_fields = ['created_at', 'updated_at']
     form = TemplateForm
@@ -164,6 +166,10 @@ class TemplateAdmin(ModelAdmin, TabbedTranslationAdmin, ImportExportModelAdmin):
             'classes': ['collapse']
         })
     ]
+
+    @display(description="Recipient")
+    def variables(self, obj):
+        return obj.template_variables
     
     def get_form(self, request, obj=None, **kwargs):
         """Customize form to show help text for Jinja2 templates"""
