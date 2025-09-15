@@ -94,7 +94,7 @@ class Template(models.Model):
     description = models.TextField(_('description'), blank=True, 
                                  help_text=_('Description of the template purpose'))
     template_text = models.TextField(_('template text'), 
-                                   help_text=_('Jinja2 template for message content'))
+                                   help_text=_('Jinja2 template for message content, use {{ obj }} to get object attributes'))
     
     model = models.CharField(max_length=100, choices=get_model_choices, help_text="This model will be required to contruct message.")
 
