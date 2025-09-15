@@ -17,6 +17,7 @@ from modeltranslation.admin import TabbedTranslationAdmin
 from unfold.contrib.forms.widgets import WysiwygWidget
 from unfold.widgets import UnfoldAdminColorInputWidget
 from unfold.contrib.import_export.forms import ExportForm, ImportForm, SelectableFieldsExportForm
+from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
 from import_export.admin import ImportExportModelAdmin
 from allauth.socialaccount.models import SocialApp
 
@@ -44,6 +45,9 @@ class TermAdmin(ModelAdmin, TabbedTranslationAdmin):
 
 class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
 
+    form = UserChangeForm
+    add_form = UserCreationForm
+    change_password_form = AdminPasswordChangeForm
     import_form_class = ImportForm
     export_form_class = ExportForm
     list_editable = ['is_active']
@@ -62,7 +66,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
 
     list_filter = BaseUserAdmin.list_filter + \
         ('languages', 'specialities', "is_online")
-    filter_horizontal = ('languages', 'specialities')
+    filter_horizontal = BaseUserAdmin.filter_horizontal + ('languages', 'specialities')
 
     fieldsets = BaseUserAdmin.fieldsets + (
         ('Additional Info', {

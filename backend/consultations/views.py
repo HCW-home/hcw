@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated, DjangoModelPermissions
 from core.mixins import CreatedByMixin
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes, OpenApiExample
-from .permissions import ConsultationPermission
+from .permissions import ConsultationAssigneePermission
 from .models import Consultation, Queue, Appointment, Participant, Message, AppointmentStatus, Request, RequestStatus, Reason, BookingSlot
 from .filters import ConsultationFilter
 from .paginations import ConsultationPagination
@@ -63,7 +63,7 @@ from messaging.tasks import send_message_task
 class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
     '''Consultation endpoint'''
     serializer_class = ConsultationSerializer
-    permission_classes = [IsAuthenticated, DjangoModelPermissionsWithView]
+    permission_classes = [IsAuthenticated, ConsultationAssigneePermission]
     pagination_class = ConsultationPagination
     filterset_class = ConsultationFilter
     ordering = ['-created_at']
@@ -236,7 +236,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     ViewSet for appointments - provides CRUD operations
     """
     serializer_class = AppointmentSerializer
-    permission_classes = [IsAuthenticated, DjangoModelPermissionsWithView]
+    permission_classes = [IsAuthenticated, ConsultationAssigneePermission]
     pagination_class = ConsultationPagination
     ordering = ['-created_at']
     ordering_fields = ['created_at', 'updated_at', 'scheduled_at']
@@ -300,7 +300,7 @@ class ParticipantViewSet(viewsets.ModelViewSet):
     ViewSet for participants - provides CRUD operations
     """
     serializer_class = ParticipantSerializer
-    permission_classes = [IsAuthenticated, DjangoModelPermissionsWithView]
+    permission_classes = [IsAuthenticated, ConsultationAssigneePermission]
     pagination_class = ConsultationPagination
     ordering = ['-id']
 
