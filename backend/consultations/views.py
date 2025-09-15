@@ -269,6 +269,64 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @extend_schema(
+        request=ParticipantSerializer,
+        responses=ParticipantSerializer,
+        parameters=[
+            OpenApiParameter(
+                name='appointment_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+                description='ID of the appointment'
+            ),
+            OpenApiParameter(
+                name='participant_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+                description='ID of the participant'
+            )
+        ]
+    )
+    @action(detail=True, methods=['get', 'put', 'patch'], url_path='appointment/(?P<appointment_id>[^/.]+)/participants/(?P<participant_id>[^/.]+)')
+    def participant_detail(self, request, pk=None, appointment_id=None, participant_id=None):
+        """Get, update or partially update a specific participant in an appointment"""
+        consultation = self.get_object()
+
+        try:
+            appointment = consultation.appointments.get(id=appointment_id)
+        except Appointment.DoesNotExist:
+            return Response(
+                {'error': 'Appointment not found in this consultation'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        try:
+            participant = appointment.participant_set.get(id=participant_id)
+        except Participant.DoesNotExist:
+            return Response(
+                {'error': 'Participant not found in this appointment'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        if request.method == 'GET':
+            serializer = ParticipantSerializer(participant)
+            return Response(serializer.data)
+
+        elif request.method in ['PUT', 'PATCH']:
+            partial = request.method == 'PATCH'
+            serializer = ParticipantSerializer(
+                participant,
+                data=request.data,
+                partial=partial,
+                context={'request': request}
+            )
+
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @extend_schema(
         responses={204: None},
         parameters=[
             OpenApiParameter(
@@ -310,40 +368,71 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @extend_schema(
+        request=AppointmentSerializer,
         responses=AppointmentSerializer,
         parameters=[
             OpenApiParameter(
                 name='appointment_id',
                 type=OpenApiTypes.INT,
                 location=OpenApiParameter.PATH,
-                description='ID of the appointment to cancel'
+                description='ID of the appointment to update'
             )
         ]
     )
-    @action(detail=True, methods=['post'], url_path='appointment/(?P<appointment_id>[^/.]+)/cancel')
-    def cancel_appointment(self, request, pk=None, appointment_id=None):
-        """Cancel a specific appointment in this consultation"""
+    @action(detail=True, methods=['put', 'patch'], url_path='appointment/(?P<appointment_id>[^/.]+)')
+    def update_appointment(self, request, pk=None, appointment_id=None):
+        """Update a specific appointment in this consultation"""
         consultation = self.get_object()
-        
+
         try:
             appointment = consultation.appointments.get(id=appointment_id)
         except Appointment.DoesNotExist:
             return Response(
-                {'error': 'Appointment not found in this consultation'}, 
+                {'error': 'Appointment not found in this consultation'},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
-        if appointment.status == 'cancelled':
-            return Response(
-                {'error': 'This appointment is already cancelled'}, 
-                status=status.HTTP_400_BAD_REQUEST
+
+        partial = request.method == 'PATCH'
+        serializer = AppointmentSerializer(
+            appointment,
+            data=request.data,
+            partial=partial,
+            context={'request': request, 'consultation': consultation}
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @extend_schema(
+        responses={204: None},
+        parameters=[
+            OpenApiParameter(
+                name='appointment_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+                description='ID of the appointment to delete'
             )
-        
-        appointment.status = AppointmentStatus.CANCELLED
-        appointment.save()
-        
-        serializer = AppointmentSerializer(appointment)
-        return Response(serializer.data)
+        ]
+    )
+    @action(detail=True, methods=['delete'], url_path='appointment/(?P<appointment_id>[^/.]+)')
+    def delete_appointment(self, request, pk=None, appointment_id=None):
+        """Delete a specific appointment from this consultation"""
+        consultation = self.get_object()
+
+        try:
+            appointment = consultation.appointments.get(id=appointment_id)
+        except Appointment.DoesNotExist:
+            return Response(
+                {'error': 'Appointment not found in this consultation'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        appointment.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class QueueViewSet(viewsets.ReadOnlyModelViewSet):
     """
