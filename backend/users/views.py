@@ -698,13 +698,22 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         """Get health metrics for this user"""
         user = self.get_object()
         health_metrics = HealthMetric.objects.filter(user=user).order_by('-measured_at')
-        
+
         page = self.paginate_queryset(health_metrics)
         if page is not None:
             serializer = HealthMetricSerializer(page, many=True)
             return self.get_paginated_response(serializer.data)
-        
+
         serializer = HealthMetricSerializer(health_metrics, many=True)
+        return Response(serializer.data)
+
+    @extend_schema(responses=SpecialitySerializer(many=True))
+    @action(detail=True, methods=['get'])
+    def specialities(self, request, pk=None):
+        """Get specialities for this user"""
+        user = self.get_object()
+        specialities = user.specialities.all()
+        serializer = SpecialitySerializer(specialities, many=True)
         return Response(serializer.data)
 
 class OpenIDView(SocialLoginView):
