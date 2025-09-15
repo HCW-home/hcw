@@ -5,7 +5,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields import ArrayField
-from typing import Sequence
+from typing import Dict, Optional, Sequence
 import jinja2
 from modeltranslation.utils import get_translation_fields
 from django.apps import apps
@@ -142,32 +142,52 @@ class Template(models.Model):
                     'Invalid Jinja2 template syntax: {}').format(str(e))
             })
 
-
-    def render_from_template(self, context):
+    def render_from_template(self, obj=None, context: Optional[Dict] = None):
         """
-        Render the template using the provided context
-        
+        Render the template using the provided context and object
+
         Args:
             context (dict): Dictionary containing template variables
-            
+            obj: Object instance to validate against the expected model and include in context
+
         Returns:
             tuple: (rendered_subject, rendered_text)
-            
+
         Raises:
             jinja2.TemplateError: If template rendering fails
+            ValidationError: If object is not an instance of the expected model
         """
+        # Validate object if provided and model is specified
+        if obj is not None and self.model:
+            try:
+                app_label, model_name = self.model.split('.', 1)
+                expected_model = apps.get_model(app_label, model_name)
+
+                if not isinstance(obj, expected_model):
+                    raise ValidationError(
+                        f"Object must be an instance of {self.model}, "
+                        f"got {obj.__class__.__module__}.{obj.__class__.__name__}"
+                    )
+            except (ValueError, LookupError) as e:
+                raise ValidationError(f"Invalid model specification '{self.model}': {e}")
+
+        # Create context copy and add object
+        render_context = context.copy() if context else {}
+        if obj is not None:
+            render_context['object'] = obj
+
         env = jinja2.Environment()
-        
+
         # Render template text
         text_template = env.from_string(self.template_text)
-        rendered_text = text_template.render(context)
-        
+        rendered_text = text_template.render(render_context)
+
         # Render template subject
         rendered_subject = ""
         if self.template_subject:
             subject_template = env.from_string(self.template_subject)
-            rendered_subject = subject_template.render(context)
-        
+            rendered_subject = subject_template.render(render_context)
+
         return rendered_subject, rendered_text
 
 
