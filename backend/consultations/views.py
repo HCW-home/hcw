@@ -122,25 +122,25 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
         return Response(serializer.data)
     
     @extend_schema(
-        request=AppointmentSerializer, 
+        request=AppointmentSerializer,
         responses={200: AppointmentSerializer(many=True), 201: AppointmentSerializer}
     )
     @action(detail=True, methods=['get', 'post'])
     def appointments(self, request, pk=None):
         """Get all appointments for this consultation or create a new appointment"""
         consultation = self.get_object()
-        
+
         if request.method == 'GET':
             appointments = consultation.appointments.all()
-            
+
             page = self.paginate_queryset(appointments)
             if page is not None:
                 serializer = AppointmentSerializer(page, many=True)
                 return self.get_paginated_response(serializer.data)
-            
+
             serializer = AppointmentSerializer(appointments, many=True)
             return Response(serializer.data)
-        
+
         elif request.method == 'POST':
             serializer = AppointmentSerializer(
                 data=request.data,
@@ -191,247 +191,136 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @extend_schema(
-        responses=AppointmentSerializer,
-        parameters=[
-            OpenApiParameter(
-                name='appointment_id',
-                type=OpenApiTypes.INT,
-                location=OpenApiParameter.PATH,
-                description='ID of the appointment to retrieve'
-            )
-        ]
+        request=ParticipantSerializer,
+        responses={200: ParticipantSerializer(many=True), 201: ParticipantSerializer}
     )
-    @action(detail=True, methods=['get'], url_path='appointment/(?P<appointment_id>[^/.]+)')
-    def get_appointment(self, request, pk=None, appointment_id=None):
-        """Get a specific appointment for this consultation"""
+    @action(detail=True, methods=['get', 'post'])
+    def participants(self, request, pk=None):
+        """Get all participants for all appointments in this consultation or create a new participant"""
         consultation = self.get_object()
-        
-        try:
-            appointment = consultation.appointments.get(id=appointment_id)
-        except Appointment.DoesNotExist:
-            return Response(
-                {'error': 'Appointment not found in this consultation'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
-        
-        serializer = AppointmentSerializer(appointment)
-        return Response(serializer.data)
 
-    @extend_schema(
-        request=ParticipantSerializer, 
-        responses={200: ParticipantSerializer(many=True), 201: ParticipantSerializer},
-        parameters=[
-            OpenApiParameter(
-                name='appointment_id',
-                type=OpenApiTypes.INT,
-                location=OpenApiParameter.PATH,
-                description='ID of the appointment'
-            )
-        ]
-    )
-    @action(detail=True, methods=['get', 'post'], url_path='appointment/(?P<appointment_id>[^/.]+)/participants')
-    def appointment_participants(self, request, pk=None, appointment_id=None):
-        """Get all participants for a specific appointment in this consultation or create a new participant"""
-        consultation = self.get_object()
-        
-        try:
-            appointment = consultation.appointments.get(id=appointment_id)
-        except Appointment.DoesNotExist:
-            return Response(
-                {'error': 'Appointment not found in this consultation'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
-        
         if request.method == 'GET':
-            participants = appointment.participant_set.all()
-            
+            # Get all participants from all appointments in this consultation
+            participants = Participant.objects.filter(
+                appointement__consultation=consultation
+            )
+
             page = self.paginate_queryset(participants)
             if page is not None:
                 serializer = ParticipantSerializer(page, many=True)
                 return self.get_paginated_response(serializer.data)
-            
+
             serializer = ParticipantSerializer(participants, many=True)
             return Response(serializer.data)
-        
+
         elif request.method == 'POST':
             serializer = ParticipantSerializer(
                 data=request.data,
                 context={'request': request}
             )
-            
+
             if serializer.is_valid():
-                participant = serializer.save(appointement=appointment)
+                # When creating via consultation endpoint, appointement must be provided in request data
+                participant = serializer.save()
                 return Response(
-                    ParticipantSerializer(participant).data, 
+                    ParticipantSerializer(participant).data,
                     status=status.HTTP_201_CREATED
                 )
-            
+
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+class AppointmentViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for appointments - provides CRUD operations
+    """
+    serializer_class = AppointmentSerializer
+    permission_classes = [IsAuthenticated, DjangoModelPermissionsWithView]
+    pagination_class = ConsultationPagination
+    ordering = ['-created_at']
+    ordering_fields = ['created_at', 'updated_at', 'scheduled_at']
+
+    def get_queryset(self):
+        user = self.request.user
+        if not user.is_authenticated:
+            return Appointment.objects.none()
+
+        # Return appointments from consultations the user has access to
+        return Appointment.objects.filter(
+            consultation__in=Consultation.objects.filter(
+                Q(created_by=user) |
+                Q(owned_by=user) |
+                Q(group__users=user)
+            )
+        ).distinct()
+
+    def perform_create(self, serializer):
+        # When creating via direct appointment endpoint, consultation must be provided
+        serializer.save(created_by=self.request.user)
 
     @extend_schema(
         request=ParticipantSerializer,
-        responses=ParticipantSerializer,
-        parameters=[
-            OpenApiParameter(
-                name='appointment_id',
-                type=OpenApiTypes.INT,
-                location=OpenApiParameter.PATH,
-                description='ID of the appointment'
-            ),
-            OpenApiParameter(
-                name='participant_id',
-                type=OpenApiTypes.INT,
-                location=OpenApiParameter.PATH,
-                description='ID of the participant'
-            )
-        ]
+        responses={200: ParticipantSerializer(many=True), 201: ParticipantSerializer}
     )
-    @action(detail=True, methods=['get', 'put', 'patch'], url_path='appointment/(?P<appointment_id>[^/.]+)/participants/(?P<participant_id>[^/.]+)')
-    def participant_detail(self, request, pk=None, appointment_id=None, participant_id=None):
-        """Get, update or partially update a specific participant in an appointment"""
-        consultation = self.get_object()
-
-        try:
-            appointment = consultation.appointments.get(id=appointment_id)
-        except Appointment.DoesNotExist:
-            return Response(
-                {'error': 'Appointment not found in this consultation'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        try:
-            participant = appointment.participant_set.get(id=participant_id)
-        except Participant.DoesNotExist:
-            return Response(
-                {'error': 'Participant not found in this appointment'},
-                status=status.HTTP_404_NOT_FOUND
-            )
+    @action(detail=True, methods=['get', 'post'])
+    def participants(self, request, pk=None):
+        """Get all participants for this appointment or create a new participant"""
+        appointment = self.get_object()
 
         if request.method == 'GET':
-            serializer = ParticipantSerializer(participant)
+            participants = appointment.participant_set.all()
+
+            page = self.paginate_queryset(participants)
+            if page is not None:
+                serializer = ParticipantSerializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+
+            serializer = ParticipantSerializer(participants, many=True)
             return Response(serializer.data)
 
-        elif request.method in ['PUT', 'PATCH']:
-            partial = request.method == 'PATCH'
+        elif request.method == 'POST':
             serializer = ParticipantSerializer(
-                participant,
                 data=request.data,
-                partial=partial,
                 context={'request': request}
             )
 
             if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data)
+                participant = serializer.save(appointement=appointment)
+                return Response(
+                    ParticipantSerializer(participant).data,
+                    status=status.HTTP_201_CREATED
+                )
 
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @extend_schema(
-        responses={204: None},
-        parameters=[
-            OpenApiParameter(
-                name='appointment_id',
-                type=OpenApiTypes.INT,
-                location=OpenApiParameter.PATH,
-                description='ID of the appointment'
-            ),
-            OpenApiParameter(
-                name='participant_id',
-                type=OpenApiTypes.INT,
-                location=OpenApiParameter.PATH,
-                description='ID of the participant to delete'
+
+class ParticipantViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for participants - provides CRUD operations
+    """
+    serializer_class = ParticipantSerializer
+    permission_classes = [IsAuthenticated, DjangoModelPermissionsWithView]
+    pagination_class = ConsultationPagination
+    ordering = ['-id']
+
+    def get_queryset(self):
+        user = self.request.user
+        if not user.is_authenticated:
+            return Participant.objects.none()
+
+        # Return participants from appointments in consultations the user has access to
+        return Participant.objects.filter(
+            appointement__consultation__in=Consultation.objects.filter(
+                Q(created_by=user) |
+                Q(owned_by=user) |
+                Q(group__users=user)
             )
-        ]
-    )
-    @action(detail=True, methods=['delete'], url_path='appointment/(?P<appointment_id>[^/.]+)/participants/(?P<participant_id>[^/.]+)')
-    def delete_participant(self, request, pk=None, appointment_id=None, participant_id=None):
-        """Delete a specific participant from an appointment in this consultation"""
-        consultation = self.get_object()
-        
-        try:
-            appointment = consultation.appointments.get(id=appointment_id)
-        except Appointment.DoesNotExist:
-            return Response(
-                {'error': 'Appointment not found in this consultation'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
-        
-        try:
-            participant = appointment.participant_set.get(id=participant_id)
-        except Participant.DoesNotExist:
-            return Response(
-                {'error': 'Participant not found in this appointment'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
-        
-        participant.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        ).distinct()
 
-    @extend_schema(
-        request=AppointmentSerializer,
-        responses=AppointmentSerializer,
-        parameters=[
-            OpenApiParameter(
-                name='appointment_id',
-                type=OpenApiTypes.INT,
-                location=OpenApiParameter.PATH,
-                description='ID of the appointment to update'
-            )
-        ]
-    )
-    @action(detail=True, methods=['put', 'patch'], url_path='appointment/(?P<appointment_id>[^/.]+)')
-    def update_appointment(self, request, pk=None, appointment_id=None):
-        """Update a specific appointment in this consultation"""
-        consultation = self.get_object()
-
-        try:
-            appointment = consultation.appointments.get(id=appointment_id)
-        except Appointment.DoesNotExist:
-            return Response(
-                {'error': 'Appointment not found in this consultation'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        partial = request.method == 'PATCH'
-        serializer = AppointmentSerializer(
-            appointment,
-            data=request.data,
-            partial=partial,
-            context={'request': request, 'consultation': consultation}
-        )
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    @extend_schema(
-        responses={204: None},
-        parameters=[
-            OpenApiParameter(
-                name='appointment_id',
-                type=OpenApiTypes.INT,
-                location=OpenApiParameter.PATH,
-                description='ID of the appointment to delete'
-            )
-        ]
-    )
-    @action(detail=True, methods=['delete'], url_path='appointment/(?P<appointment_id>[^/.]+)')
-    def delete_appointment(self, request, pk=None, appointment_id=None):
-        """Delete a specific appointment from this consultation"""
-        consultation = self.get_object()
-
-        try:
-            appointment = consultation.appointments.get(id=appointment_id)
-        except Appointment.DoesNotExist:
-            return Response(
-                {'error': 'Appointment not found in this consultation'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        appointment.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    def perform_create(self, serializer):
+        # When creating via direct participant endpoint, appointment must be provided
+        serializer.save()
 
 
 class QueueViewSet(viewsets.ReadOnlyModelViewSet):

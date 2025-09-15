@@ -1,7 +1,9 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
-    ConsultationViewSet, 
+    ConsultationViewSet,
+    AppointmentViewSet,
+    ParticipantViewSet,
     QueueViewSet,
     RequestViewSet,
     ReasonSlotsView
@@ -10,6 +12,8 @@ from .views import (
 # DRF router configuration
 router = DefaultRouter()
 router.register(r'consultations', ConsultationViewSet, basename='consultation')
+router.register(r'appointments', AppointmentViewSet, basename='appointment')
+router.register(r'participants', ParticipantViewSet, basename='participant')
 router.register(r'queues', QueueViewSet, basename='queue')
 router.register(r'requests', RequestViewSet, basename='request')
 
