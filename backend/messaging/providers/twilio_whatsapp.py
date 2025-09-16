@@ -31,6 +31,10 @@ class Main(BaseProvider):
         if not message.recipient_phone:
             raise ProviderException("Missing recipient phone")
         
+        if not self.messaging_provider.matches_phone_prefix(message.recipient_phone):
+            raise ProviderException(
+                f"Unable to send, phone is not matching prefix {message.recipient_phone}")
+
         auth_header = self._get_auth_header()
         if not auth_header:
             raise ProviderException("No authentication header")
