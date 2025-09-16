@@ -160,7 +160,7 @@ class TemplateValidationAdmin(ModelAdmin):
     list_filter = ['status', 'language_code', 'messaging_provider', 'template__communication_method', 'created_at', 'validated_at']
     search_fields = ['template__name', 'template__system_name', 'external_template_id', 'messaging_provider__name', 'language_code']
     readonly_fields = ['created_at', 'updated_at', 'validated_at',
-                       'validation_response', 'external_template_id', 'error_message']
+                       'validation_response', 'external_template_id']
 
     fieldsets = [
         ('Template Information', {
@@ -171,7 +171,7 @@ class TemplateValidationAdmin(ModelAdmin):
             'description': 'This field is automatically populated when the template is submitted for validation'
         }),
         ('Status', {
-            'fields': ['status', 'error_message']
+            'fields': ['status', 'task_logs']
         }),
         ('Validation Response', {
             'fields': ['validation_response'],

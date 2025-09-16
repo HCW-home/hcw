@@ -8,7 +8,7 @@ class ProviderException(Exception):
     ...
 
 if TYPE_CHECKING:
-    from ..models import Message, MessageStatus, TemplateValidation
+    from ..models import Message, TemplateValidationStatus, TemplateValidation
 
 class Main(BaseProvider):
 
@@ -87,48 +87,39 @@ class Main(BaseProvider):
         Returns:
             Tuple[bool, str, Dict[str, Any]]: (success, external_template_id, response_data)
         """
-        try:
-            auth_header = self._get_auth_header()
-            if not auth_header:
-                return (False, "", {"error": "Missing account_sid or auth_token"})
+        auth_header = self._get_auth_header()
+        url = "https://content.twilio.com/v1/Content"
 
-            account_sid = self.messaging_provider.account_sid
-            url = f"https://content.twilio.com/v1/Content"
-
-            # Prepare template data for Twilio Content API
-            # Note: This is a simplified example - you may need to adjust based on your template structure
-            content_data = {
-                'friendly_name': template.name,
-                'language': 'en',  # You might want to make this configurable
-                'variables': {},
-                'types': {
-                    'twilio/text': {
-                        'body': template.template_text
-                    }
+        # Prepare template data for Twilio Content API
+        # Note: This is a simplified example - you may need to adjust based on your template structure
+        content_data = {
+            'friendly_name': template_validation.template.name,
+            'language': template_validation.language_code,
+            'variables': {},
+            'types': {
+                'twilio/text': {
+                    'body': template_validation.template.template_text
                 }
             }
+        }
 
-            # If there's a subject, add it as a header
-            if template.template_subject:
-                content_data['types']['twilio/text']['header'] = template.template_subject
+        # If there's a subject, add it as a header
+        if template_validation.template.template_subject:
+            content_data['types']['twilio/text']['header'] = template_validation.template.template_subject
 
-            headers = {
-                'Authorization': auth_header,
-                'Content-Type': 'application/json'
-            }
+        headers = {
+            'Authorization': auth_header,
+            'Content-Type': 'application/json'
+        }
 
-            response = requests.post(url, json=content_data, headers=headers)
-            response_data = response.json() if response.content else {}
+        response = requests.post(url, json=content_data, headers=headers)
+        response_data = response.json() if response.content else {}
 
-            if response.status_code == 201:
-                # Successfully created content template
-                external_template_id = response_data.get('sid', '')
-                return (True, external_template_id, response_data)
-            else:
-                return (False, "", response_data)
+        template_validation.validation_response = response_data
+        template_validation.external_template_id = response_data['sid']
+        template_validation.status = TemplateValidationStatus.PENDING
+        template_validation.save()
 
-        except Exception as e:
-            return (False, "", {"error": str(e)})
 
     def check_template_validation(self, template_validation: 'TemplateValidation') -> Tuple[bool, str, Dict[str, Any]]:
         """
@@ -140,33 +131,26 @@ class Main(BaseProvider):
         Returns:
             Tuple[bool, str, Dict[str, Any]]: (is_validated, status, response_data)
         """
-        try:
-            auth_header = self._get_auth_header()
-            if not auth_header:
-                return (False, "error", {"error": "Missing account_sid or auth_token"})
 
-            url = f"https://content.twilio.com/v1/Content/{template_validation.external_template_id}"
+        auth_header = self._get_auth_header()
 
-            headers = {'Authorization': auth_header}
-            response = requests.get(url, headers=headers)
-            response_data = response.json() if response.content else {}
+        url = f"https://content.twilio.com/v1/Content/{template_validation.external_template_id}"
 
-            if response.status_code == 200:
-                # Get the status from the response
-                # Twilio Content API returns status in different ways depending on the template state
-                status = response_data.get('status', 'unknown').lower()
+        headers = {'Authorization': auth_header}
+        response = requests.get(url, headers=headers)
+        response_data = response.json() if response.content else {}
 
-                # Map Twilio statuses to our understanding
-                if status in ['approved', 'active']:
-                    return (True, "validated", response_data)
-                elif status in ['pending', 'in_review']:
-                    return (False, "pending", response_data)
-                elif status in ['rejected', 'failed']:
-                    return (False, "rejected", response_data)
-                else:
-                    return (False, status, response_data)
-            else:
-                return (False, "error", response_data)
 
-        except Exception as e:
-            return (False, "error", {"error": str(e)})
+        # Get the status from the response
+        # Twilio Content API returns status in different ways depending on the template state
+        status = response_data.get('status', 'unknown').lower()
+
+        # Map Twilio statuses to our understanding
+        if status in ['approved', 'active']:
+            template_validation.status = TemplateValidationStatus.VALIDATED
+        elif status in ['pending', 'in_review']:
+            template_validation.status = TemplateValidationStatus.PENDING
+        elif status in ['rejected', 'failed']:
+            template_validation.status = TemplateValidationStatus.REJECTED
+        else:
+            template_validation.status = TemplateValidationStatus.UNUSED

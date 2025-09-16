@@ -298,6 +298,7 @@ class TemplateValidationStatus(models.TextChoices):
     PENDING = 'pending', _('Pending')
     VALIDATED = 'validated', _('Validated')
     REJECTED = 'rejected', _('Rejected')
+    FAILED = 'failed', _('Failed')
     OUTDATED = 'outdated', _('Outdated')
     UNUSED = 'unsued', _('Unused')
 
@@ -344,10 +345,6 @@ class TemplateValidation(ModelCeleryAbstract):
         blank=True,
         null=True,
         help_text=_('Response from the messaging provider during validation')
-    )
-    error_message = models.TextField(
-        blank=True,
-        help_text=_('Error message if validation failed')
     )
 
     class Meta:

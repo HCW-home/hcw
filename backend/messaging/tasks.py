@@ -157,16 +157,9 @@ def create_template_validation(template_id, template_created):
 @shared_task(bind=True)
 def template_messaging_provider_task(self, template_validation_id, method):
     try:
+
         template_validation = TemplateValidation.objects.get(
             id=template_validation_id)
-    except TemplateValidation.DoesNotExist:  # fixed wrong exception class
-        logger.error(
-            f"TemplateValidation with ID {template_validation_id} not found")
-        return {"success": False, "error": f"TemplateValidation with ID {template_validation_id} not found"}
-
-    template_validation.celery_task_id = self.request.id
-
-    try:
         # Get the provider instance
         provider_instance = template_validation.messaging_provider.instance
 
@@ -181,9 +174,9 @@ def template_messaging_provider_task(self, template_validation_id, method):
 
     except Exception as e:
         template_validation.task_logs += f"Unable to run {method} on template {template_validation}: {str(e)}"
-        template_validation.status = TemplateValidationStatus.REJECTED
+        template_validation.status = TemplateValidationStatus.FAILED
+        template_validation.task_logs += traceback.format_exc()
         template_validation.save()
         return
 
-    template_validation.status = TemplateValidationStatus.VALIDATED
     template_validation.save()
