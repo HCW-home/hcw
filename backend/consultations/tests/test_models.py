@@ -284,13 +284,13 @@ class ParticipantModelTests(BaseTestCase):
         user = UserFactory()
         
         participant = ParticipantFactory(
-            appointement=appointment,  # Note: typo in model
+            appointment=appointment,  # Note: typo in model
             user=user,
             is_invited=True,
             is_confirmed=False
         )
         
-        self.assertEqual(participant.appointement, appointment)
+        self.assertEqual(participant.appointment, appointment)
         self.assertEqual(participant.user, user)
         self.assertTrue(participant.is_invited)
         self.assertFalse(participant.is_confirmed)
@@ -300,7 +300,7 @@ class ParticipantModelTests(BaseTestCase):
         appointment = AppointmentFactory()
         
         participant = ParticipantFactory(
-            appointement=appointment,
+            appointment=appointment,
             user=None,
             email="participant@example.com",
             message_type='email'
@@ -315,7 +315,7 @@ class ParticipantModelTests(BaseTestCase):
         
         # Valid: has user
         participant = Participant(
-            appointement=appointment,
+            appointment=appointment,
             user=UserFactory(),
             auth_token="test-token",
             message_type='email'
@@ -324,7 +324,7 @@ class ParticipantModelTests(BaseTestCase):
         
         # Valid: has email
         participant = Participant(
-            appointement=appointment,
+            appointment=appointment,
             email="test@example.com",
             auth_token="test-token",
             message_type='email'
@@ -333,7 +333,7 @@ class ParticipantModelTests(BaseTestCase):
         
         # Invalid: no contact method
         participant = Participant(
-            appointement=appointment,
+            appointment=appointment,
             auth_token="test-token",
             message_type='email'
         )
@@ -348,7 +348,7 @@ class ParticipantModelTests(BaseTestCase):
         valid_phones = ['+33123456789', '0033987654321', '+1234567890123']
         for phone in valid_phones:
             participant = Participant(
-                appointement=appointment,
+                appointment=appointment,
                 phone=phone,
                 auth_token="test-token",
                 message_type='sms'
@@ -359,7 +359,7 @@ class ParticipantModelTests(BaseTestCase):
         invalid_phones = ['123', '++33123456789', 'abc123456789', '+123']
         for phone in invalid_phones:
             participant = Participant(
-                appointement=appointment,
+                appointment=appointment,
                 phone=phone,
                 auth_token="test-token",
                 message_type='sms'

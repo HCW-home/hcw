@@ -1,3 +1,4 @@
+import traceback
 from typing import DefaultDict
 from django.contrib import admin
 from .models import MessagingProvider, Message, MessageStatus, Template, TemplateValidation, TemplateValidationStatus
@@ -107,7 +108,7 @@ class MessageAdmin(ModelAdmin):
 @admin.register(Template)
 class TemplateAdmin(ModelAdmin, TabbedTranslationAdmin, ImportExportModelAdmin):
     list_display = ['name', 'system_name', 'communication_method',
-                    'is_active', 'created_at', 'variables']
+                    'is_active', 'created_at', 'variables', 'example']
     list_filter = ['communication_method', 'is_active',
                    'created_at']
     search_fields = ['name', 'system_name', 'description']
@@ -130,6 +131,18 @@ class TemplateAdmin(ModelAdmin, TabbedTranslationAdmin, ImportExportModelAdmin):
             'classes': ['collapse']
         })
     ]
+
+    @display(description="Render example")
+    def example(self, obj):
+        try:
+            rendered_subject, rendered_text = obj.render_from_template(
+                obj=obj.factory_instance.build())
+            if rendered_subject:
+                return rendered_subject, rendered_text
+            return rendered_text
+        except Exception:
+            print(traceback.format_exc())
+            return '-'
 
     @display(description="Recipient")
     def variables(self, obj):
@@ -157,7 +170,7 @@ class TemplateValidationAdmin(ModelAdmin):
     list_display = ['template', 'language_code', 'messaging_provider', 'display_status', 'external_template_id', 'created_at', 'validated_at']
     list_filter = ['status', 'language_code', 'messaging_provider', 'template__communication_method', 'created_at', 'validated_at']
     search_fields = ['template__name', 'template__system_name', 'external_template_id', 'messaging_provider__name', 'language_code']
-    readonly_fields = ['created_at', 'updated_at', 'validated_at',
+    readonly_fields = ['created_at', 'updated_at', 'validated_at', 'task_logs', 'status',
                        'validation_response', 'external_template_id']
 
     fieldsets = [

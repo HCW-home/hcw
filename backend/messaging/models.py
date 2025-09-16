@@ -12,6 +12,7 @@ from modeltranslation.utils import get_translation_fields
 from django.apps import apps
 from .abstracts import ModelCeleryAbstract
 from .providers import BaseProvider
+from factory.django import DjangoModelFactory
 # Create your models here.
 from . import providers
 
@@ -172,9 +173,8 @@ class Template(models.Model):
         choices = []
         for model in apps.get_models():
             app_label = model._meta.app_label
-            model_name = model._meta.model_name
             verbose_name = model._meta.verbose_name.title()
-            choice_key = f"{app_label}.{model_name}"
+            choice_key = f"{app_label}.{model.__name__}"
             choice_display = f"{verbose_name} ({app_label})"
             choices.append((choice_key, choice_display))
 
@@ -200,6 +200,13 @@ class Template(models.Model):
     is_active = models.BooleanField(_('is active'), default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def factory_instance(self) -> Optional[DjangoModelFactory]:
+        if self.model:
+            app_label, model_name = self.model.split('.', 1)
+            factory_module = import_module(f"{app_label}.factories")
+            return getattr(factory_module, f"{model_name}Factory")
 
     class Meta:
         verbose_name = _('template')
@@ -266,7 +273,7 @@ class Template(models.Model):
         # Create context copy and add object
         render_context = context.copy() if context else {}
         if obj is not None:
-            render_context['object'] = obj
+            render_context['obj'] = obj
 
         env = jinja2.Environment()
 

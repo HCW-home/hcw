@@ -62,7 +62,7 @@ class BaseAssignmentHandler(ABC):
         
         # Create participant for requester
         Participant.objects.create(
-            appointement=appointment,  # Note: model has typo 'appointement' instead of 'appointment'
+            appointment=appointment,
             user=self.request.created_by,
             is_invited=True,
             is_confirmed=False
@@ -70,7 +70,7 @@ class BaseAssignmentHandler(ABC):
         
         # Create participant for doctor
         Participant.objects.create(
-            appointement=appointment,  # Note: model has typo 'appointement' instead of 'appointment'
+            appointment=appointment,
             user=doctor,
             is_invited=True,
             is_confirmed=False

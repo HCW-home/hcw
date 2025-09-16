@@ -198,7 +198,7 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
         if request.method == 'GET':
             # Get all participants from all appointments in this consultation
             participants = Participant.objects.filter(
-                appointement__consultation=consultation
+                appointment__consultation=consultation
             )
 
             page = self.paginate_queryset(participants)
@@ -216,7 +216,7 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
             )
 
             if serializer.is_valid():
-                # When creating via consultation endpoint, appointement must be provided in request data
+                # When creating via consultation endpoint, appointment must be provided in request data
                 participant = serializer.save()
                 return Response(
                     ParticipantSerializer(participant).data,
@@ -282,7 +282,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             )
 
             if serializer.is_valid():
-                participant = serializer.save(appointement=appointment)
+                participant = serializer.save(appointment=appointment)
                 return Response(
                     ParticipantSerializer(participant).data,
                     status=status.HTTP_201_CREATED
@@ -307,7 +307,7 @@ class ParticipantViewSet(viewsets.ModelViewSet):
 
         # Return participants from appointments in consultations the user has access to
         return Participant.objects.filter(
-            appointement__consultation__in=Consultation.objects.filter(
+            appointment__consultation__in=Consultation.objects.filter(
                 Q(created_by=user) |
                 Q(owned_by=user) |
                 Q(group__users=user)

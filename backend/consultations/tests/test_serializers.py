@@ -277,8 +277,8 @@ class AppointmentSerializerTests(BaseTestCase):
         )
         
         # Create participants
-        ParticipantFactory(appointement=appointment, user=self.doctor)
-        ParticipantFactory(appointement=appointment, user=self.patient)
+        ParticipantFactory(appointment=appointment, user=self.doctor)
+        ParticipantFactory(appointment=appointment, user=self.patient)
         
         serializer = AppointmentSerializer(appointment)
         data = serializer.data

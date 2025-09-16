@@ -140,12 +140,12 @@ class ParticipantFactory(DjangoModelFactory):
     class Meta:
         model = Participant
     
-    appointement = factory.SubFactory(AppointmentFactory)  # Note: typo in model
+    appointment = factory.SubFactory(AppointmentFactory)
     user = factory.SubFactory(UserFactory)
     auth_token = factory.Faker('uuid4')
     is_invited = True
     is_confirmed = False
-    message_type = 'email'
+    communication_method = 'email'
 
 
 class BookingSlotFactory(DjangoModelFactory):

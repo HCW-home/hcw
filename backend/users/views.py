@@ -259,7 +259,7 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
             # For participants, get the consultation from their appointment
             participant = Participant.objects.get(pk=int(user.participant_id))
             print(participant)
-            consultation = participant.appointement.consultation
+            consultation = participant.appointment.consultation
             return Consultation.objects.filter(id=consultation.id)
 
         # For regular users, get consultations where they are the beneficiary
@@ -542,7 +542,7 @@ class UserAppointmentsView(APIView):
 
         if request.user.participant_id:
             consultation = Participant.objects.get(
-                pk=int(request.user.participant_id)).appointement
+                pk=int(request.user.participant_id)).appointment
             serializer = AppointmentSerializer(consultation)
             return Response({
                 'count': 1,
@@ -795,7 +795,7 @@ class UserAppointmentViewSet(viewsets.ReadOnlyModelViewSet):
         
         try:
             participant = Participant.objects.get(
-                appointement=appointment,
+                appointment=appointment,
                 user=request.user
             )
             participant.is_confirmed = bool(is_present)

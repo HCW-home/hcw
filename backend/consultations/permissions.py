@@ -59,8 +59,8 @@ class ConsultationAssigneePermission(permissions.BasePermission):
         # Handle case where obj might be an Appointment or Participant
         if hasattr(consultation, 'consultation'):
             consultation = consultation.consultation
-        elif hasattr(consultation, 'appointement'):  # For Participant model
-            consultation = consultation.appointement.consultation
+        elif hasattr(consultation, 'appointment'):  # For Participant model
+            consultation = consultation.appointment.consultation
 
         # User can access consultations they created or own
         if consultation.created_by == user or consultation.owned_by == user:

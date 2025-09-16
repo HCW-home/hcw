@@ -97,7 +97,7 @@ class Appointment(models.Model):
         ordering = ['-scheduled_at']
 
 class Participant(models.Model):
-    appointement = models.ForeignKey(Appointment, on_delete=models.CASCADE)
+    appointment = models.ForeignKey(Appointment, on_delete=models.CASCADE)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -122,7 +122,7 @@ class Participant(models.Model):
     feedback_message = models.TextField(null=True, blank=True)
     
     class Meta:
-        unique_together = ['appointement', 'user']
+        unique_together = ['appointment', 'user']
 
     def save(self, *args, **kwargs):
         if not self.auth_token:
