@@ -499,6 +499,12 @@ UNFOLD = {
                         "link": "/admin/messaging/template/",
                         "permission": lambda request: request.user.has_perm("messaging.view_template"),
                     },
+                    {
+                        "title": _("Template Validations"),
+                        "icon": "verified",
+                        "link": "/admin/messaging/templatevalidation/",
+                        "permission": lambda request: request.user.has_perm("messaging.view_templatevalidation"),
+                    },
                 ],
             },
             {

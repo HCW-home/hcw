@@ -3,8 +3,11 @@ import traceback
 import io
 from celery import shared_task
 from django.utils import timezone
-from .models import Message, MessageStatus, MessagingProvider
+from .models import Message, MessageStatus, MessagingProvider, Template, TemplateValidation, TemplateValidationStatus
 from . import providers
+from modeltranslation.utils import get_translation_fields
+from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -16,9 +19,6 @@ def send_message_via_provider(self, message_id):
     
     Args:
         message_id (int): The ID of the message to send
-        
-    Returns:
-        dict: Result with success status and details
     """
     try:
         # Get the message
@@ -39,10 +39,9 @@ def send_message_via_provider(self, message_id):
     ).order_by('priority', 'id')
     
     if not messaging_providers.exists():
-        error_msg = f"No active providers found for communication method: {message.communication_method}"
-        logger.error(error_msg)
-        message.mark_as_failed(error_msg)
-        return {"success": False, "error": error_msg}
+        message.status = MessageStatus.FAILED
+        raise ObjectDoesNotExist(
+            f"No active providers found for communication method: {message.communication_method}")
     
     logger.info(f"Found {messaging_providers.count()} providers for {message.communication_method}")
     
@@ -52,66 +51,21 @@ def send_message_via_provider(self, message_id):
         
         try:
             # Get the provider class
-            provider_class = providers.MAIN_CLASSES.get(messaging_provider.name)
-            if not provider_class:
-                error_msg = f"Provider class not found for: {messaging_provider.name}"
-                logger.error(error_msg)
-                continue
-            
-            # Create provider instance
-            provider_instance = provider_class(messaging_provider)
-            
-            # Test connection first
-            connection_test = provider_instance.test_connection()
-            if not connection_test[0]:  # connection_test returns (bool, details)
-                error_msg = f"Connection test failed for {messaging_provider.name}: {connection_test[1]}"
-                logger.warning(error_msg)
-                continue
-            
-            logger.info(f"Connection test passed for {messaging_provider.name}")
-            
-            # Attempt to send the message
-            logger.info(f"Sending message via {messaging_provider.name}")
-            status = provider_instance.send(message)
-            
-            # Update message based on status
-            if status == MessageStatus.SENT:
-                logger.info(f"Message sent successfully via {messaging_provider.name}")
-                message.mark_as_sent()
-                message.provider_name = messaging_provider.name
-                message.save()
-                return {"success": True, "provider": messaging_provider.name, "status": status}
-            
-            elif status == MessageStatus.DELIVERED:
-                logger.info(f"Message delivered successfully via {messaging_provider.name}")
-                message.mark_as_delivered()
-                message.provider_name = messaging_provider.name
-                message.save()
-                return {"success": True, "provider": messaging_provider.name, "status": status}
-            
-            elif status == MessageStatus.FAILED:
-                error_msg = f"Provider {messaging_provider.name} failed to send message"
-                logger.warning(error_msg)
-                # Continue to next provider
-                continue
-            
-            else:
-                error_msg = f"Unknown status returned by {messaging_provider.name}: {status}"
-                logger.warning(error_msg)
-                continue
+            messaging_provider.instance.send(message)
+            message.status = MessageStatus.SENT
+            message.save()
                 
         except Exception as e:
-            error_msg = f"Exception with provider {messaging_provider.name}: {str(e)}"
+            message.task_logs += f"Exception with provider {messaging_provider.name}: {str(e)}"
+            message.save()
             logger.error(error_msg)
             logger.error(traceback.format_exc())
-            # Continue to next provider
             continue
     
     # All providers failed
-    final_error = f"All providers failed for communication method: {message.communication_method}"
-    logger.error(final_error)
-    message.mark_as_failed(final_error)
-    return {"success": False, "error": final_error}
+    message.task_logs = f"All providers failed for communication method: {message.communication_method}"
+    message.status = MessageStatus.FAILED
+    message.save()
 
 class TaskLogCapture:
     """Context manager to capture logs during task execution"""
@@ -136,157 +90,8 @@ class TaskLogCapture:
     def get_logs(self):
         return self.log_capture.getvalue()
 
-@shared_task(bind=True, max_retries=3, default_retry_delay=300)
-def send_message_task(self, message_id):
-    """
-    Celery task to send a message asynchronously
-    
-    Args:
-        message_id (int): ID of the message to send
-    
-    Returns:
-        dict: Result of the sending operation
-    """
-    task_id = self.request.id
-    
-    with TaskLogCapture() as log_capture:
-        try:
-            logger.info(f"Starting message sending task {task_id} for message {message_id}")
-            
-            # Get the message
-            try:
-                message = Message.objects.get(id=message_id)
-            except Message.DoesNotExist:
-                error_msg = f"Message with ID {message_id} not found"
-                logger.error(error_msg)
-                return {"success": False, "error": error_msg}
-            
-            # Update message with task info
-            message.celery_task_id = task_id
-            message.save()
-            
-            logger.info(f"Processing message: {message} to {message.recipient_phone or message.recipient_email}")
-            
-            # Send the message using the new provider structure
-            result = send_message_via_provider(message_id)
-            
-            # Capture logs
-            logs = log_capture.get_logs()
-            message.task_logs = logs
-            
-            if result.get("success"):
-                logger.info(f"Message {message_id} sent successfully. External ID: {result.get('external_id')}")
-                message.save()
-                return {
-                    "success": True,
-                    "message_id": message_id,
-                    "external_id": result.get("external_id"),
-                    "task_id": task_id
-                }
-            else:
-                error_msg = result.get("error", "Unknown error occurred")
-                logger.error(f"Failed to send message {message_id}: {error_msg}")
-                
-                # Update message with error info
-                message.task_logs = logs
-                message.save()
-                
-                # Retry if we haven't exceeded max retries
-                if self.request.retries < self.max_retries:
-                    logger.info(f"Retrying message {message_id} in {self.default_retry_delay} seconds (attempt {self.request.retries + 1}/{self.max_retries})")
-                    raise self.retry(countdown=self.default_retry_delay)
-                
-                return {
-                    "success": False,
-                    "message_id": message_id,
-                    "error": error_msg,
-                    "task_id": task_id,
-                    "retries_exhausted": True
-                }
-                
-        except Exception as exc:
-            # Capture exception details
-            error_msg = str(exc)
-            tb = traceback.format_exc()
-            logs = log_capture.get_logs()
-            
-            logger.error(f"Exception in send_message_task for message {message_id}: {error_msg}")
-            logger.error(f"Traceback: {tb}")
-            
-            # Update message with error info
-            try:
-                message = Message.objects.get(id=message_id)
-                message.celery_task_id = task_id
-                message.task_logs = logs
-                message.task_traceback = tb
-                
-                # Mark as failed if we've exhausted retries
-                if self.request.retries >= self.max_retries:
-                    message.mark_as_failed(f"Task failed after {self.max_retries} retries: {error_msg}")
-                
-                message.save()
-            except Exception as save_exc:
-                logger.error(f"Failed to update message {message_id} with error info: {save_exc}")
-            
-            # Retry if we haven't exceeded max retries
-            if self.request.retries < self.max_retries:
-                logger.info(f"Retrying message {message_id} due to exception in {self.default_retry_delay} seconds")
-                raise self.retry(countdown=self.default_retry_delay, exc=exc)
-            
-            # All retries exhausted
-            return {
-                "success": False,
-                "message_id": message_id,
-                "error": error_msg,
-                "traceback": tb,
-                "task_id": task_id,
-                "retries_exhausted": True
-            }
-
 @shared_task
-def resend_failed_messages():
-    """
-    Periodic task to retry failed messages
-    
-    This task can be run periodically to retry messages that failed to send
-    """
-    logger.info("Starting resend_failed_messages task")
-    
-    # Get failed messages from the last 24 hours
-    from datetime import timedelta
-    cutoff_time = timezone.now() - timedelta(hours=24)
-    
-    failed_messages = Message.objects.filter(
-        status=MessageStatus.FAILED,
-        created_at__gte=cutoff_time,
-        celery_task_id__isnull=False  # Only messages that were processed by Celery
-    )
-    
-    resent_count = 0
-    for message in failed_messages:
-        try:
-            # Reset message status
-            message.status = MessageStatus.PENDING
-            message.error_message = ''
-            message.task_traceback = ''
-            message.save()
-            
-            # Queue the message for sending
-            task = send_message_via_provider.delay(message.id)
-            message.celery_task_id = task.id
-            message.save()
-            
-            resent_count += 1
-            logger.info(f"Queued message {message.id} for resending with task {task.id}")
-            
-        except Exception as e:
-            logger.error(f"Failed to queue message {message.id} for resending: {e}")
-    
-    logger.info(f"Resend task completed. Queued {resent_count} messages for resending")
-    return {"resent_count": resent_count}
-
-@shared_task
-def cleanup_old_message_logs():
+def cleanup_old_message_logs(days=30):
     """
     Periodic task to clean up old message logs to prevent database bloat
     
@@ -295,7 +100,7 @@ def cleanup_old_message_logs():
     logger.info("Starting cleanup_old_message_logs task")
     
     from datetime import timedelta
-    cutoff_time = timezone.now() - timedelta(days=30)
+    cutoff_time = timezone.now() - timedelta(days=days)
     
     # Clear logs from old messages
     updated_count = Message.objects.filter(
@@ -307,3 +112,78 @@ def cleanup_old_message_logs():
     
     logger.info(f"Cleaned up logs from {updated_count} old messages")
     return {"cleaned_count": updated_count}
+
+@shared_task
+def create_template_validation(template_id, template_created):
+    """
+    Create template validations for all available languages and providers that support validation.
+
+    Args:
+        template_id (int): The ID of the template
+        created (bool): Whether the template was just created
+    """
+
+    try:
+        template = Template.objects.get(id=template_id)
+    except Template.DoesNotExist:
+        logger.error(f"Template with ID {template_id} not found")
+        return {"success": False, "error": f"Template with ID {template_id} not found"}
+
+    templates = []
+
+    for lang, _ in settings.LANGUAGES:
+        if hasattr(template, f"template_text_{lang}"):
+            for communication_method in template.communication_method:
+
+                for messaging_provider in MessagingProvider.objects.filter(communication_method=communication_method):
+                    
+                    provider_module = messaging_provider.module
+                    
+                    if hasattr(provider_module.Main, "validate_template") and callable(getattr(provider_module.Main, "validate_template", None)):
+
+                        template, created = TemplateValidation.objects.update_or_create(
+                            template=template,
+                            messaging_provider=messaging_provider,
+                            language_code=lang,
+                        )
+
+                        if created:
+                            template.status = TemplateValidationStatus.PENDING
+                            template.save()
+                        
+                        templates.append(template)
+
+
+@shared_task(bind=True)
+def template_messaging_provider_task(self, template_validation_id, method):
+    try:
+        template_validation = TemplateValidation.objects.get(
+            id=template_validation_id)
+    except TemplateValidation.DoesNotExist:  # fixed wrong exception class
+        logger.error(
+            f"TemplateValidation with ID {template_validation_id} not found")
+        return {"success": False, "error": f"TemplateValidation with ID {template_validation_id} not found"}
+
+    template_validation.celery_task_id = self.request.id
+
+    try:
+        # Get the provider instance
+        provider_instance = template_validation.messaging_provider.instance
+
+        # Dynamically resolve the method name
+        func = getattr(provider_instance, method, None)
+        if not callable(func):
+            raise AttributeError(
+                f"Method '{method}' not found on {provider_instance.__class__.__name__}")
+
+        # Call the resolved method
+        func(template_validation)
+
+    except Exception as e:
+        template_validation.task_logs += f"Unable to run {method} on template {template_validation}: {str(e)}"
+        template_validation.status = TemplateValidationStatus.REJECTED
+        template_validation.save()
+        return
+
+    template_validation.status = TemplateValidationStatus.VALIDATED
+    template_validation.save()

@@ -55,10 +55,6 @@ class Slot:
     user_first_name: str
     user_last_name: str
 
-from messaging.tasks import send_message_task
-
-
-
 
 class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
     '''Consultation endpoint'''

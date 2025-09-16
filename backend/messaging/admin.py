@@ -1,6 +1,6 @@
 from typing import DefaultDict
 from django.contrib import admin
-from .models import MessagingProvider, Prefix, Message, MessageStatus, Template
+from .models import MessagingProvider, Prefix, Message, MessageStatus, Template, TemplateValidation, TemplateValidationStatus
 from unfold.decorators import display
 from . import providers
 from django.utils.functional import cached_property
@@ -11,6 +11,7 @@ from django.utils.translation import gettext_lazy as _
 from import_export.admin import ImportExportModelAdmin
 from unfold.contrib.import_export.forms import ExportForm, ImportForm
 from .forms import TemplateForm
+from .tasks import template_messaging_provider_task
 
 class PrefixInline(TabularInline):
     model = Prefix
@@ -68,8 +69,8 @@ class MessageAdmin(ModelAdmin):
     list_filter = ['communication_method', 'status', 'created_at', 'provider_name']
     search_fields = ['content', 'recipient_phone',
                      'recipient_email', 'sent_by__email', 'celery_task_id']
-    readonly_fields = ['sent_at', 'delivered_at', 'read_at', 'failed_at', 'status', 'task_traceback',
-                        'error_message', 'task_logs',
+    readonly_fields = ['sent_at', 'delivered_at', 'read_at', 'failed_at', 'status',
+                        'error_message',
                        'external_message_id', 'celery_task_id', 'created_at', 'updated_at', 'provider_name']
 
     actions = ['resend_failed_messages', 'mark_as_delivered']
@@ -100,44 +101,9 @@ class MessageAdmin(ModelAdmin):
         """Resend failed messages via Celery"""
         from .tasks import send_message_via_provider
 
-        failed_messages = queryset.filter(status=MessageStatus.FAILED)
-        queued_count = 0
-
-        for message in failed_messages:
-            message.status = MessageStatus.PENDING
-            message.error_message = ''
-            message.task_traceback = ''
-            message.save()
-
-            # Queue for resending
-            task = send_message_via_provider.delay(message.id)
-            message.celery_task_id = task.id
-            message.save()
-
-            queued_count += 1
-
-        self.message_user(
-            request,
-            f"Queued {queued_count} out of {failed_messages.count()} failed messages for resending."
-        )
-
+        for message in queryset.filter(status=MessageStatus.FAILED):
+            send_message_via_provider.delay(message.pk)
     resend_failed_messages.short_description = "Resend failed messages"
-
-    def mark_as_delivered(self, request, queryset):
-        """Mark selected messages as delivered"""
-        sent_messages = queryset.filter(status=MessageStatus.SENT)
-        count = 0
-
-        for message in sent_messages:
-            message.mark_as_delivered()
-            count += 1
-
-        self.message_user(
-            request,
-            f"Marked {count} messages as delivered."
-        )
-
-    mark_as_delivered.short_description = "Mark as delivered"
 
 
 @admin.register(Template)
@@ -188,4 +154,80 @@ class TemplateAdmin(ModelAdmin, TabbedTranslationAdmin, ImportExportModelAdmin):
         return form
 
 
+@admin.register(TemplateValidation)
+class TemplateValidationAdmin(ModelAdmin):
+    list_display = ['template', 'language_code', 'messaging_provider', 'display_status', 'external_template_id', 'created_at', 'validated_at']
+    list_filter = ['status', 'language_code', 'messaging_provider', 'template__communication_method', 'created_at', 'validated_at']
+    search_fields = ['template__name', 'template__system_name', 'external_template_id', 'messaging_provider__name', 'language_code']
+    readonly_fields = ['created_at', 'updated_at', 'validated_at',
+                       'validation_response', 'external_template_id', 'error_message']
 
+    fieldsets = [
+        ('Template Information', {
+            'fields': ['template', 'messaging_provider', 'language_code']
+        }),
+        ('Validation Details', {
+            'fields': ['external_template_id'],
+            'description': 'This field is automatically populated when the template is submitted for validation'
+        }),
+        ('Status', {
+            'fields': ['status', 'error_message']
+        }),
+        ('Validation Response', {
+            'fields': ['validation_response'],
+            'classes': ['collapse'],
+            'description': 'Raw response data from the messaging provider'
+        }),
+        ('Timestamps', {
+            'fields': ['created_at', 'updated_at', 'validated_at'],
+            'classes': ['collapse']
+        })
+    ]
+
+    actions = ['validate_templates', 'check_validation_status']
+
+    @display(
+        description=_("Status"),
+        label={
+            TemplateValidationStatus.CREATED: "dark",
+            TemplateValidationStatus.PENDING: "warning",
+            TemplateValidationStatus.VALIDATED: "success",
+            TemplateValidationStatus.REJECTED: "danger",
+        },
+    )
+    def display_status(self, instance):
+        return instance.get_status_display()
+
+    def get_queryset(self, request):
+        """Filter templates based on communication method and provider capabilities"""
+        qs = super().get_queryset(request)
+
+        # Only show validations for providers that support template validation
+        provider_names = []
+        for provider_name, provider_class in providers.MAIN_CLASSES.items():
+            # Check if provider has validation methods
+            if (hasattr(provider_class, 'validate_template') and
+                hasattr(provider_class, 'check_template_validation')):
+                provider_names.append(provider_name)
+
+        if provider_names:
+            qs = qs.filter(messaging_provider__name__in=provider_names)
+
+        return qs.select_related('template', 'messaging_provider')
+
+    def validate_templates(self, request, queryset):
+        """Validate templates with their respective providers"""
+
+        for template_validation in queryset:
+            template_messaging_provider_task.delay(
+                template_validation.pk, 'validate_template')
+    validate_templates.short_description = "Validate selected templates"
+
+    def check_validation_status(self, request, queryset):
+        """Check validation status for pending templates"""
+
+        for template_validation in queryset:
+            template_messaging_provider_task.delay(
+                template_validation.pk, 'check_template_validation')
+
+    check_validation_status.short_description = "Check validation status"

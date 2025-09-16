@@ -7,9 +7,11 @@ from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields import ArrayField
 from typing import Dict, Optional, Sequence
 import jinja2
+from importlib import import_module
 from modeltranslation.utils import get_translation_fields
 from django.apps import apps
-
+from .abstracts import ModelCeleryAbstract
+from .providers import BaseProvider
 # Create your models here.
 from . import providers
 
@@ -51,6 +53,17 @@ class MessagingProvider(models.Model):
     
     priority = models.IntegerField(_('priority'), default=0)
     is_active = models.BooleanField(_('is active'), default=True)
+
+    def __str__(self):
+        return f"{self.priority} - {self.name}"
+
+    @property
+    def module(self):
+        return import_module(f"..providers.{self.name}", __name__)
+
+    @property
+    def instance(self) -> BaseProvider:
+        return self.module.Main(self)
 
     def save(self, *args, **kwargs):
         self.communication_method = providers.MAIN_CLASSES.get(
@@ -280,6 +293,73 @@ class Template(models.Model):
         return sorted(list(variables))
 
 
+class TemplateValidationStatus(models.TextChoices):
+    CREATED = 'created', _('Created')
+    PENDING = 'pending', _('Pending')
+    VALIDATED = 'validated', _('Validated')
+    REJECTED = 'rejected', _('Rejected')
+    OUTDATED = 'outdated', _('Outdated')
+    UNUSED = 'unsued', _('Unused')
+
+
+class TemplateValidation(ModelCeleryAbstract):
+    external_template_id = models.CharField(
+        _('external template ID'),
+        max_length=200,
+        blank=True,
+        help_text=_('External template ID from the messaging provider (populated after validation submission)')
+    )
+    messaging_provider = models.ForeignKey(
+        MessagingProvider,
+        on_delete=models.CASCADE,
+        verbose_name=_('messaging provider'),
+        help_text=_('The messaging provider where the template is validated')
+    )
+    template = models.ForeignKey(
+        Template,
+        on_delete=models.CASCADE,
+        verbose_name=_('template'),
+        help_text=_('The local template that needs validation')
+    )
+    language_code = models.CharField(
+        _('language code'),
+        max_length=5,
+        help_text=_('Language code for the template validation (e.g., "en", "fr", "de")')
+    )
+    status = models.CharField(
+        _('status'),
+        max_length=20,
+        choices=TemplateValidationStatus.choices,
+        default=TemplateValidationStatus.CREATED,
+        help_text=_('Current validation status')
+    )
+
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    validated_at = models.DateTimeField(null=True, blank=True, help_text=_('When the template was validated'))
+
+    # Additional validation info
+    validation_response = models.JSONField(
+        blank=True,
+        null=True,
+        help_text=_('Response from the messaging provider during validation')
+    )
+    error_message = models.TextField(
+        blank=True,
+        help_text=_('Error message if validation failed')
+    )
+
+    class Meta:
+        verbose_name = _('template validation')
+        verbose_name_plural = _('template validations')
+        unique_together = ['messaging_provider', 'template', 'language_code']
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.template.name} [{self.language_code}] - {self.messaging_provider.name} ({self.get_status_display()})"
+
+
 class MessageStatus(models.TextChoices):
     PENDING = 'pending', 'Pending'
     SENT = 'sent', 'Sent'
@@ -287,7 +367,8 @@ class MessageStatus(models.TextChoices):
     FAILED = 'failed', 'Failed'
     READ = 'read', 'Read'
 
-class Message(models.Model):
+
+class Message(ModelCeleryAbstract):
     # Message content
     content = models.TextField(_('content'))
     subject = models.CharField(_('subject'), max_length=200, blank=True)
@@ -312,14 +393,6 @@ class Message(models.Model):
     # External provider info
     external_message_id = models.CharField(max_length=200, blank=True)
     error_message = models.TextField(blank=True)
-
-    # Celery task tracking
-    celery_task_id = models.CharField(
-        max_length=255, blank=True, help_text="Celery task ID for async sending")
-    task_logs = models.TextField(
-        blank=True, help_text="Logs from the sending task")
-    task_traceback = models.TextField(
-        blank=True, help_text="Error traceback if task failed")
 
     # Sender
     sent_by = models.ForeignKey(
