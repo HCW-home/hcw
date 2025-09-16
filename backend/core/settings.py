@@ -98,6 +98,22 @@ INSTALLED_APPS = [
     'api',
 ]
 
+NOTIFICATION_MESSAGES = [
+    ('you_have_been_assigned_to_consultation', _(
+        'Message sent to user when assigned to a consultation')),
+    ('an_unprocessed_request_has_been_received', _(
+        'Message sent to user when a consultation request requires manual processing')),
+    ('a_message_has_been_sent_by_beneficiary', _(
+        'Message sent to user when a beneficiary sends a message')),
+    ('invitation_to_join_consultation_now', _(
+        'Message sent to user with invitation to join a consultation immediately')),
+    ('invitation_to_join_consultation_later', _(
+        'Message sent to user with invitation to join a consultation at a later time')),
+    ('your_appointment_is_in_24h', _(
+        'Message sent to user 24 hours before scheduled appointment')),
+    ('your_authentication_code_is_participant', _(
+        'Message sent to participant containing their authentication code')),
+]
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',

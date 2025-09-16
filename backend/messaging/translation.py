@@ -5,4 +5,4 @@ from .models import Template
 
 @register(Template)
 class TemplateTranslation(TranslationOptions):
-    fields = ['name', 'description', 'template_text', 'template_subject']
+    fields = ['template_text', 'template_subject']

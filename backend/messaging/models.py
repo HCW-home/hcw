@@ -180,11 +180,9 @@ class Template(models.Model):
 
         return sorted(choices, key=lambda x: x[1])
     
-    system_name = models.CharField(_('system name'), max_length=100, unique=True,
+    event_type = models.CharField(_('system name'), max_length=100, unique=True, choices=settings.NOTIFICATION_MESSAGES,
                                  help_text=_('Unique identifier for the template'))
-    name = models.CharField(_('name'), max_length=200, help_text=_('Human-readable template name'))
-    description = models.TextField(_('description'), blank=True, 
-                                 help_text=_('Description of the template purpose'))
+    
     template_text = models.TextField(_('template text'), 
                                    help_text=_('Jinja2 template for message content, use {{ obj }} to get object attributes'))
     
@@ -211,10 +209,9 @@ class Template(models.Model):
     class Meta:
         verbose_name = _('template')
         verbose_name_plural = _('templates')
-        ordering = ['name']
 
     def __str__(self):
-        return f"{self.name} ({self.system_name})"
+        return f"{self.event_type}"
 
     def clean(self):
         """Validate Jinja2 template syntax"""

@@ -55,9 +55,7 @@ class TemplateFactory(DjangoModelFactory):
     class Meta:
         model = Template
 
-    system_name = factory.Sequence(lambda n: f"template_{n}")
-    name = factory.Faker('sentence', nb_words=3)
-    description = factory.Faker('text', max_nb_chars=100)
+    event_type = factory.Sequence(lambda n: f"template_{n}")
     template_text = factory.LazyFunction(
         lambda: "Hello {{ object.first_name }}, your appointment is scheduled for {{ object.scheduled_at }}."
     )

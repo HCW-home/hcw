@@ -56,8 +56,6 @@ class MessagingProviderAdmin(ModelAdmin):
             for field in class_provider.required_fields:
                 field_set[field].append(provider)
 
-        print({key: "name == " + " || name == ".join(values)
-              for key, values in field_set.items()})
         return {key: "name == '" + "' || name == '".join(values) + "'" for key, values in field_set.items()}
 
 
@@ -107,11 +105,11 @@ class MessageAdmin(ModelAdmin):
 
 @admin.register(Template)
 class TemplateAdmin(ModelAdmin, TabbedTranslationAdmin, ImportExportModelAdmin):
-    list_display = ['name', 'system_name', 'communication_method',
+    list_display = ['event_type', 'communication_method',
                     'is_active', 'created_at', 'variables', 'example']
     list_filter = ['communication_method', 'is_active',
                    'created_at']
-    search_fields = ['name', 'system_name', 'description']
+    search_fields = ['event_type']
     readonly_fields = ['created_at', 'updated_at']
     form = TemplateForm
     import_form_class = ImportForm
@@ -120,7 +118,7 @@ class TemplateAdmin(ModelAdmin, TabbedTranslationAdmin, ImportExportModelAdmin):
 
     fieldsets = [
         ('Basic Information', {
-            'fields': ['system_name', 'name', 'description', 'communication_method', 'model', 'is_active']
+            'fields': ['event_type', 'communication_method', 'model', 'is_active']
         }),
         ('Template Content', {
             'fields': ['template_subject', 'template_text'],
@@ -169,7 +167,7 @@ class TemplateAdmin(ModelAdmin, TabbedTranslationAdmin, ImportExportModelAdmin):
 class TemplateValidationAdmin(ModelAdmin):
     list_display = ['template', 'language_code', 'messaging_provider', 'display_status', 'external_template_id', 'created_at', 'validated_at']
     list_filter = ['status', 'language_code', 'messaging_provider', 'template__communication_method', 'created_at', 'validated_at']
-    search_fields = ['template__name', 'template__system_name', 'external_template_id', 'messaging_provider__name', 'language_code']
+    search_fields = ['template__system_name', 'external_template_id', 'messaging_provider__name', 'language_code']
     readonly_fields = ['created_at', 'updated_at', 'validated_at', 'task_logs', 'status',
                        'validation_response', 'external_template_id']
 
