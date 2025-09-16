@@ -67,28 +67,28 @@ def send_message_via_provider(self, message_id):
     message.status = MessageStatus.FAILED
     message.save()
 
-class TaskLogCapture:
-    """Context manager to capture logs during task execution"""
+# class TaskLogCapture:
+#     """Context manager to capture logs during task execution"""
     
-    def __init__(self):
-        self.log_capture = io.StringIO()
-        self.handler = logging.StreamHandler(self.log_capture)
-        self.handler.setLevel(logging.INFO)
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        self.handler.setFormatter(formatter)
+#     def __init__(self):
+#         self.log_capture = io.StringIO()
+#         self.handler = logging.StreamHandler(self.log_capture)
+#         self.handler.setLevel(logging.INFO)
+#         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+#         self.handler.setFormatter(formatter)
     
-    def __enter__(self):
-        # Add handler to capture logs
-        logger.addHandler(self.handler)
-        return self
+#     def __enter__(self):
+#         # Add handler to capture logs
+#         logger.addHandler(self.handler)
+#         return self
     
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        # Remove handler and get logs
-        logger.removeHandler(self.handler)
-        self.handler.close()
+#     def __exit__(self, exc_type, exc_val, exc_tb):
+#         # Remove handler and get logs
+#         logger.removeHandler(self.handler)
+#         self.handler.close()
     
-    def get_logs(self):
-        return self.log_capture.getvalue()
+#     def get_logs(self):
+#         return self.log_capture.getvalue()
 
 @shared_task
 def cleanup_old_message_logs(days=30):

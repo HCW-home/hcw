@@ -73,7 +73,7 @@ class MessageAdmin(ModelAdmin):
                         'error_message',
                        'external_message_id', 'celery_task_id', 'created_at', 'updated_at', 'provider_name']
 
-    actions = ['resend_failed_messages', 'mark_as_delivered']
+    actions = ['resend_failed_messages']
 
     @display(
         description=_("Status"),
