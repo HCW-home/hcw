@@ -1,6 +1,6 @@
 from typing import DefaultDict
 from django.contrib import admin
-from .models import MessagingProvider, Prefix, Message, MessageStatus, Template, TemplateValidation, TemplateValidationStatus
+from .models import MessagingProvider, Message, MessageStatus, Template, TemplateValidation, TemplateValidationStatus
 from unfold.decorators import display
 from . import providers
 from django.utils.functional import cached_property
@@ -13,11 +13,6 @@ from unfold.contrib.import_export.forms import ExportForm, ImportForm
 from .forms import TemplateForm
 from .tasks import template_messaging_provider_task
 
-class PrefixInline(TabularInline):
-    model = Prefix
-    extra = 1
-    show_change_link = True
-
 # admin.site.register(MessagingProvider, ModelAdmin)
 
 
@@ -26,7 +21,6 @@ class MessagingProviderAdmin(ModelAdmin):
     list_display = ['name', 'get_from', 'priority',
                     'is_active', 'communication_method']
     readonly_fields = ['communication_method']
-    inlines = [PrefixInline]
     
     fieldsets = [
         ('Basic information', {

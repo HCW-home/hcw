@@ -14,7 +14,8 @@ class Main(BaseProvider):
 
     display_name = "Twilio WhatsApp"
     communication_method = "whatsapp"
-    required_fields = ['account_sid', 'auth_token', 'from_phone']
+    required_fields = ['account_sid', 'auth_token',
+                       'from_phone', 'excluded_prefixes', 'included_prefixes']
     
     def _get_auth_header(self):
         account_sid = self.messaging_provider.account_sid

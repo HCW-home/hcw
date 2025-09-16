@@ -164,15 +164,6 @@ class MessagingProvider(models.Model):
         verbose_name_plural = _('messaging providers')
         unique_together = ['communication_method', 'priority']
 
-class Prefix(models.Model):
-    messaging_provider = models.ForeignKey(MessagingProvider, on_delete=models.CASCADE, null=True, verbose_name=_('messaging provider'))
-    start_by = models.CharField(_('start by'), max_length=50)
-
-    class Meta:
-        verbose_name = _('prefix')
-        verbose_name_plural = _('prefixes')
-
-
 
 class Template(models.Model):
 
