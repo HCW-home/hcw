@@ -13,7 +13,9 @@ from import_export.admin import ImportExportModelAdmin
 from unfold.contrib.import_export.forms import ExportForm, ImportForm
 from .forms import TemplateForm
 from .tasks import template_messaging_provider_task
-
+from django.contrib import messages
+from django.conf import settings
+from .models import CommunicationMethod
 # admin.site.register(MessagingProvider, ModelAdmin)
 
 
@@ -115,6 +117,35 @@ class TemplateAdmin(ModelAdmin, TabbedTranslationAdmin, ImportExportModelAdmin):
     import_form_class = ImportForm
     export_form_class = ExportForm
     list_editable = ['is_active']
+
+    def changelist_view(self, request, extra_context=None):
+
+        # Check coverage of notification messages x communication methods
+        missing_combinations = []
+        notification_messages = [choice[0] for choice in settings.NOTIFICATION_MESSAGES]
+        communication_methods = [choice[0] for choice in CommunicationMethod.choices]
+
+        for event_type in notification_messages:
+            for comm_method in communication_methods:
+                # Check if there's a template for this combination
+                template_exists = Template.objects.filter(
+                    event_type=event_type,
+                    communication_method__contains=[comm_method]
+                ).exists()
+
+                if not template_exists:
+                    missing_combinations.append(f"{event_type} with {comm_method}")
+
+        if missing_combinations:
+            messages.error(
+                request,
+                _(_('Missing template combinations: {}')).format(', '.join(missing_combinations[:10]) +
+                  (', ...' if len(missing_combinations) > 10 else ''))
+            )
+        else:
+            messages.success(request, _('All notification message x communication method combinations are configured'))
+
+        return super().changelist_view(request, extra_context=extra_context)
 
     fieldsets = [
         ('Basic Information', {
