@@ -54,8 +54,56 @@ class MessagingProvider(models.Model):
     priority = models.IntegerField(_('priority'), default=0)
     is_active = models.BooleanField(_('is active'), default=True)
 
+    # Prefix filtering
+    excluded_prefixes = ArrayField(
+        models.CharField(max_length=50),
+        blank=True,
+        default=list,
+        verbose_name=_('excluded prefixes'),
+        help_text=_('Phone prefixes that should NOT use this provider. Separate multiple prefixes with commas (e.g. +33, +41, +1)')
+    )
+    included_prefixes = ArrayField(
+        models.CharField(max_length=50),
+        blank=True,
+        default=list,
+        verbose_name=_('included prefixes'),
+        help_text=_('Phone prefixes that should use this provider. Separate multiple prefixes with commas (e.g. +33, +41). If empty, all prefixes except excluded ones are allowed')
+    )
+
     def __str__(self):
         return f"{self.priority} - {self.name}"
+
+    def matches_phone_prefix(self, phone_number: str) -> bool:
+        """
+        Check if a phone number matches this provider's prefix rules.
+
+        Args:
+            phone_number: The phone number to check
+
+        Returns:
+            bool: True if the phone number can use this provider, False otherwise
+        """
+        if not phone_number:
+            return False
+
+        # Normalize phone number (remove spaces, dashes, etc.)
+        normalized_phone = phone_number.replace(' ', '').replace('-', '').replace('(', '').replace(')', '')
+
+        # Check excluded prefixes first
+        if self.excluded_prefixes:
+            for prefix in self.excluded_prefixes:
+                if normalized_phone.startswith(prefix):
+                    return False
+
+        # If included prefixes are specified, check if phone matches any of them
+        if self.included_prefixes:
+            for prefix in self.included_prefixes:
+                if normalized_phone.startswith(prefix):
+                    return True
+            return False  # Phone doesn't match any included prefix
+
+        # If no included prefixes specified, allow all except excluded ones
+        return True
 
     @property
     def module(self):
@@ -65,10 +113,50 @@ class MessagingProvider(models.Model):
     def instance(self) -> BaseProvider:
         return self.module.Main(self)
 
+    def clean(self):
+        """Validate prefix fields"""
+        super().clean()
+
+        def validate_prefix(prefix, field_name):
+            # Strip newlines for validation
+            clean_prefixes = prefix.replace("\r", '').split("\n")
+
+            for clean_prefix in clean_prefixes:
+
+                if not clean_prefix.startswith('+'):
+                    raise ValidationError({
+                        field_name: _(
+                            'All prefixes must start with "+". Invalid prefix: "{}"').format(clean_prefix)
+                    })
+
+                # Check that the prefix contains only + and digits
+                if not all(c.isdigit() or c == '+' for c in clean_prefix):
+                    raise ValidationError({
+                        field_name: _(
+                            'Prefixes can only contain "+" and digits. Invalid prefix: "{}"').format(clean_prefix)
+                    })
+
+        # Validate excluded_prefixes
+        if self.excluded_prefixes:
+            for prefix in self.excluded_prefixes:
+                validate_prefix(prefix, 'excluded_prefixes')
+
+        # Validate included_prefixes
+        if self.included_prefixes:
+            for prefix in self.included_prefixes:
+                validate_prefix(prefix, 'included_prefixes')
+
     def save(self, *args, **kwargs):
         self.communication_method = providers.MAIN_CLASSES.get(
             self.name).communication_method
-        
+
+        # Clean whitespace from prefix arrays
+        if self.excluded_prefixes:
+            self.excluded_prefixes = [prefix.strip() for prefix in self.excluded_prefixes if prefix.strip()]
+
+        if self.included_prefixes:
+            self.included_prefixes = [prefix.strip() for prefix in self.included_prefixes if prefix.strip()]
+
         return super(MessagingProvider, self).save(*args, **kwargs)
 
     class Meta:

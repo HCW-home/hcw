@@ -29,7 +29,7 @@ class MessagingProviderAdmin(ModelAdmin):
     inlines = [PrefixInline]
     
     fieldsets = [
-        ('Basic Information', {
+        ('Basic information', {
             'fields': ['name', 'priority', 'is_active']
         }),
         ('Authentication and configuration', {
@@ -39,7 +39,11 @@ class MessagingProviderAdmin(ModelAdmin):
                 'application_key', 'application_secret', 'consumer_key',
                 'service_name', 'from_phone', 'from_email', 'sender_id'
             ]
-        })
+        }),
+        ('Phone prefex filtering', {
+            'fields': ['included_prefixes', 'excluded_prefixes'],
+            'description': 'Configure which phone prefixes this provider should handle. Separate multiple prefixes with commas (e.g. +33, +41, +1). Leave included_prefixes empty to allow all except excluded ones.'
+        }),
     ]
     
     # Use compressed_fields for conditional display
