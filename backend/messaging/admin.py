@@ -198,7 +198,7 @@ class TemplateAdmin(ModelAdmin, TabbedTranslationAdmin, ImportExportModelAdmin):
 class TemplateValidationAdmin(ModelAdmin):
     list_display = ['template', 'language_code', 'messaging_provider', 'display_status', 'external_template_id', 'created_at', 'validated_at']
     list_filter = ['status', 'language_code', 'messaging_provider', 'template__communication_method', 'created_at', 'validated_at']
-    search_fields = ['template__system_name', 'external_template_id', 'messaging_provider__name', 'language_code']
+    search_fields = ['template__system_name', 'external_template_id', 'messaging_provider', 'language_code']
     readonly_fields = ['created_at', 'updated_at', 'validated_at', 'task_logs', 'status',
                        'validation_response', 'external_template_id']
 

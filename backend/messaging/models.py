@@ -437,7 +437,7 @@ class TemplateValidation(ModelCeleryAbstract):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.template.name} [{self.language_code}] - {self.messaging_provider.name} ({self.get_status_display()})"
+        return f"{self.template} [{self.language_code}] - {self.messaging_provider.name} ({self.get_status_display()})"
 
 
 class MessageStatus(models.TextChoices):
