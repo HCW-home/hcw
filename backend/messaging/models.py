@@ -501,6 +501,23 @@ class Message(ModelCeleryAbstract):
     def __str__(self):
         return f"Message to {self.recipient_phone or self.recipient_email} - {self.status}"
 
+    def clean(self):
+        """Validate prefix fields"""
+        super().clean()
+
+        if not (self.recipient_email or self.recipient_phone or self.sent_to):
+            raise ValidationError(
+                _("You must specify at least a recipient phone, a recipient email or a user in Sent to"))
+
+        if self.communication_method in [CommunicationMethod.SMS, CommunicationMethod.WHATSAPP] and (not self.recipient_phone or (self.sent_to and not self.sent_to.mobile_phone_number)):
+            raise ValidationError(
+                {"recipient_phone": _("The Sent to user has no phone number, so recipient phone is mandatory")})
+        
+        if self.communication_method == CommunicationMethod.EMAIL and (not self.recipient_email or (self.sent_to and not self.sent_to.email)):
+            raise ValidationError(
+                {"recipient_email": _("The Sent to user has no email, so recipient email is mandatory")})
+
+
 @receiver(post_save, sender=Message)
 def queue_message_sending(sender, instance, created, **kwargs):
     """
