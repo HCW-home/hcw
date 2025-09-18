@@ -1,0 +1,37 @@
+<ion-content class="onboarding-content">
+  <div class="onboarding-container">
+    <div class="skip-button">
+      <ion-button fill="clear" (click)="skip()" class="skip-btn">Skip</ion-button>
+    </div>
+
+    <swiper-container
+      #swiper
+      [pagination]="{ clickable: true }"
+      [speed]="400"
+      class="onboarding-swiper">
+      @for (slide of slides; track slide.title) {
+        <swiper-slide>
+          <div class="slide-content">
+            <div class="slide-image">
+              <img [src]="slide.image" [alt]="slide.title">
+            </div>
+            <div class="slide-text">
+              <ion-text class="slide-title">{{ slide.title }}</ion-text>
+              <ion-text class="slide-subtitle" color="medium">{{ slide.subtitle }}</ion-text>
+            </div>
+          </div>
+        </swiper-slide>
+      }
+    </swiper-container>
+
+    <div class="onboarding-actions">
+      <ion-button
+        expand="block"
+        shape="round"
+        (click)="next()"
+        class="next-button">
+        Next
+      </ion-button>
+    </div>
+  </div>
+</ion-content>

@@ -1,0 +1,201 @@
+ion-header {
+  ion-toolbar {
+    --background: var(--app-background);
+    --border-width: 0;
+    padding: var(--app-spacing-md);
+
+    .custom-title {
+      .greeting-text {
+        font-size: var(--app-font-size-2xl);
+        font-weight: var(--app-font-weight-bold);
+        color: var(--app-text-primary);
+      }
+    }
+
+    .notification-button {
+      position: relative;
+
+      .header-badge {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        font-size: 10px;
+        min-width: 16px;
+        height: 16px;
+        padding: 2px 4px;
+        border-radius: 8px;
+      }
+    }
+  }
+}
+
+.home-content {
+  --background: var(--app-background-secondary);
+
+  .search-container {
+    padding: 0 var(--app-spacing-lg) var(--app-spacing-lg);
+    background: var(--app-background);
+
+    .custom-searchbar {
+      --background: var(--app-input-background);
+      --border-radius: var(--app-button-radius);
+      --box-shadow: none;
+      --placeholder-color: var(--app-input-placeholder);
+    }
+  }
+
+  .section {
+    padding: var(--app-spacing-lg);
+    margin-bottom: var(--app-spacing-md);
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--app-spacing-lg);
+
+      .see-all {
+        font-size: var(--app-font-size-sm);
+        font-weight: var(--app-font-weight-medium);
+        cursor: pointer;
+      }
+    }
+
+    .section-title {
+      display: block;
+      font-size: var(--app-font-size-lg);
+      font-weight: var(--app-font-weight-semibold);
+      color: var(--app-text-primary);
+      margin-bottom: var(--app-spacing-lg);
+    }
+  }
+
+  .quick-actions-section {
+    background: var(--app-background);
+    border-radius: var(--app-card-radius);
+
+    ion-grid {
+      padding: 0;
+    }
+
+    .action-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--app-spacing-md);
+      cursor: pointer;
+      transition: transform 0.2s;
+
+      &:active {
+        transform: scale(0.95);
+      }
+
+      .action-icon {
+        font-size: 32px;
+        margin-bottom: var(--app-spacing-sm);
+      }
+
+      .action-title {
+        font-size: var(--app-font-size-xs);
+        color: var(--app-text-secondary);
+        text-align: center;
+        display: block;
+      }
+    }
+  }
+
+  .appointment-card {
+    margin: 0;
+
+    ion-card-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .appointment-info {
+        flex: 1;
+
+        .appointment-doctor {
+          display: block;
+          font-size: var(--app-font-size-base);
+          font-weight: var(--app-font-weight-semibold);
+          color: var(--app-text-primary);
+          margin-bottom: var(--app-spacing-xs);
+        }
+
+        .appointment-specialty {
+          display: block;
+          font-size: var(--app-font-size-sm);
+          margin-bottom: var(--app-spacing-sm);
+        }
+
+        .appointment-time {
+          display: flex;
+          align-items: center;
+          gap: var(--app-spacing-xs);
+
+          ion-icon {
+            font-size: 16px;
+          }
+
+          .time-text {
+            font-size: var(--app-font-size-sm);
+            color: var(--app-text-primary);
+          }
+        }
+      }
+
+      .view-button {
+        --color: var(--ion-color-primary);
+        font-weight: var(--app-font-weight-medium);
+      }
+    }
+  }
+
+  .doctors-list {
+    margin: 0 calc(var(--app-spacing-lg) * -1);
+    padding: 0 var(--app-spacing-lg);
+  }
+
+  .notifications-list {
+    background: transparent;
+
+    .notification-item {
+      --background: var(--app-background);
+      border-radius: var(--app-card-radius);
+      margin-bottom: var(--app-spacing-sm);
+      --padding-start: var(--app-spacing-md);
+      --padding-end: var(--app-spacing-md);
+      --inner-padding-end: 0;
+
+      .notification-icon {
+        font-size: 24px;
+        margin-right: var(--app-spacing-md);
+      }
+
+      ion-label {
+        display: flex;
+        flex-direction: column;
+        gap: var(--app-spacing-xs);
+
+        .notification-title {
+          font-size: var(--app-font-size-base);
+          font-weight: var(--app-font-weight-medium);
+          color: var(--app-text-primary);
+          display: block;
+        }
+
+        .notification-message {
+          font-size: var(--app-font-size-sm);
+          display: block;
+        }
+
+        .notification-time {
+          font-size: var(--app-font-size-xs);
+          display: block;
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,283 @@
+.health-records-content {
+  --background: var(--app-background);
+
+  ion-segment {
+    margin: 16px;
+    //--background: var(--ion-color-light);
+    //border-radius: 12px;
+    //
+    //ion-segment-button {
+    //  --indicator-color: var(--ion-color-primary);
+    //  --color-checked: white;
+    //  min-height: 40px;
+    //  font-weight: 500;
+    //  text-transform: none;
+    //}
+  }
+
+  .segment-content {
+    padding: 0 16px 16px;
+  }
+
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    gap: 16px;
+
+    ion-spinner {
+      transform: scale(1.2);
+    }
+  }
+
+  .medical-history {
+    .record-card {
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      cursor: pointer;
+      transition: transform 0.2s ease;
+
+      &:active {
+        transform: scale(0.98);
+      }
+
+      ion-card-content {
+        padding: 16px;
+      }
+
+      .record-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+
+        .record-icon-wrapper {
+          width: 48px;
+          height: 48px;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+
+          ion-icon {
+            font-size: 24px;
+          }
+        }
+
+        .record-info {
+          flex: 1;
+
+          .record-title {
+            display: block;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--app-text-primary);
+            margin-bottom: 4px;
+          }
+
+          .record-doctor {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 2px;
+          }
+
+          .record-date {
+            display: block;
+            font-size: 12px;
+          }
+        }
+
+        ion-badge {
+          text-transform: uppercase;
+          font-size: 10px;
+          padding: 4px 8px;
+        }
+      }
+
+      .record-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        padding-top: 8px;
+        border-top: 1px solid var(--app-border-color);
+
+        ion-button {
+          --padding-start: 8px;
+          --padding-end: 8px;
+        }
+      }
+    }
+  }
+
+  .test-results {
+    ion-card {
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+      ion-card-header {
+        padding-bottom: 8px;
+
+        ion-card-title {
+          font-size: 18px;
+          font-weight: 600;
+        }
+      }
+
+      .test-item {
+        --padding-start: 0;
+        --inner-padding-end: 0;
+        margin-bottom: 12px;
+        background: var(--ion-color-light);
+        border-radius: 8px;
+        padding: 12px;
+
+        .test-name {
+          display: block;
+          font-size: 14px;
+          font-weight: 500;
+          color: var(--app-text-primary);
+          margin-bottom: 4px;
+        }
+
+        .test-range {
+          display: block;
+          font-size: 12px;
+        }
+
+        .test-value-wrapper {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+
+          .test-value {
+            font-size: 16px;
+            font-weight: 600;
+          }
+
+          ion-icon {
+            font-size: 16px;
+          }
+        }
+      }
+    }
+  }
+
+  .prescriptions {
+    .section-title {
+      display: block;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--app-text-primary);
+      margin: 16px 0 12px;
+
+      &:first-child {
+        margin-top: 0;
+      }
+    }
+
+    .prescription-card {
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+      &.inactive {
+        opacity: 0.7;
+
+        ion-card-content {
+          background: var(--ion-color-light);
+        }
+      }
+
+      ion-card-content {
+        padding: 16px;
+      }
+
+      .prescription-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+
+        .prescription-info {
+          flex: 1;
+
+          .medication-name {
+            display: block;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--app-text-primary);
+            margin-bottom: 4px;
+          }
+
+          .medication-dosage {
+            display: block;
+            font-size: 16px;
+            font-weight: 500;
+          }
+        }
+
+        ion-badge {
+          font-size: 10px;
+          padding: 4px 8px;
+        }
+      }
+
+      .prescription-details {
+        margin-bottom: 12px;
+
+        ion-item {
+          --padding-start: 0;
+          --inner-padding-end: 0;
+          --min-height: 32px;
+
+          ion-icon {
+            font-size: 18px;
+            margin-right: 12px;
+          }
+
+          ion-text {
+            font-size: 14px;
+          }
+        }
+      }
+
+      .prescription-meta {
+        padding: 8px 0;
+
+        ion-text {
+          font-size: 14px;
+        }
+      }
+
+      ion-button {
+        --border-radius: 8px;
+        margin-top: 8px;
+      }
+    }
+  }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+
+    ion-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+
+    ion-text {
+      font-size: 16px;
+    }
+  }
+
+  ion-fab-button {
+    --background: var(--ion-color-primary);
+    --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}

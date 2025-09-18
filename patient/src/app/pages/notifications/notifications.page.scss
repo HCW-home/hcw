@@ -1,0 +1,141 @@
+ion-header {
+  ion-toolbar {
+    --background: var(--app-background);
+
+    .page-title {
+      font-size: var(--app-font-size-xl);
+      font-weight: var(--app-font-weight-semibold);
+      color: var(--app-text-primary);
+    }
+
+    .mark-read-button {
+      --color: var(--ion-color-primary);
+
+      .mark-read-text {
+        font-size: var(--app-font-size-sm);
+        font-weight: var(--app-font-weight-medium);
+      }
+    }
+
+    .notification-segment {
+      --background: var(--app-background);
+
+      ion-segment-button {
+        --indicator-color: var(--ion-color-primary);
+        --color-checked: var(--ion-color-primary);
+        position: relative;
+
+        .unread-badge {
+          position: absolute;
+          top: 8px;
+          right: 20px;
+          font-size: 10px;
+          min-width: 20px;
+          height: 20px;
+          padding: 2px 6px;
+          border-radius: 10px;
+        }
+      }
+    }
+  }
+}
+
+.notifications-content {
+  --background: var(--app-background-secondary);
+
+  .notifications-list {
+    background: transparent;
+    padding: var(--app-spacing-md);
+
+    .notification-sliding {
+      margin-bottom: var(--app-spacing-sm);
+    }
+
+    .notification-item {
+      --background: var(--app-background);
+      border-radius: var(--app-card-radius);
+      --padding-start: var(--app-spacing-md);
+      --padding-end: var(--app-spacing-md);
+      --padding-top: var(--app-spacing-md);
+      --padding-bottom: var(--app-spacing-md);
+      position: relative;
+
+      &.unread {
+        --background: var(--app-background);
+        border-left: 3px solid var(--ion-color-primary);
+      }
+
+      .notification-indicator {
+        position: absolute;
+        top: 12px;
+        right: 8px;
+        width: 8px;
+        height: 8px;
+        background: var(--ion-color-primary);
+        border-radius: 50%;
+      }
+
+      .notification-icon {
+        font-size: 28px;
+        margin-right: var(--app-spacing-md);
+      }
+
+      ion-label {
+        display: flex;
+        flex-direction: column;
+        gap: var(--app-spacing-xs);
+
+        .notification-title {
+          font-size: var(--app-font-size-base);
+          font-weight: var(--app-font-weight-medium);
+          color: var(--app-text-primary);
+          display: block;
+        }
+
+        .notification-message {
+          font-size: var(--app-font-size-sm);
+          line-height: 1.4;
+          display: block;
+        }
+
+        .notification-time {
+          font-size: var(--app-font-size-xs);
+          display: block;
+          margin-top: var(--app-spacing-xs);
+        }
+      }
+    }
+
+    ion-item-option {
+      border-radius: 0 var(--app-card-radius) var(--app-card-radius) 0;
+    }
+  }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--app-spacing-3xl);
+    height: 60vh;
+
+    .empty-icon {
+      font-size: 64px;
+      margin-bottom: var(--app-spacing-lg);
+    }
+
+    .empty-title {
+      font-size: var(--app-font-size-lg);
+      font-weight: var(--app-font-weight-semibold);
+      margin-bottom: var(--app-spacing-sm);
+      display: block;
+    }
+
+    .empty-subtitle {
+      font-size: var(--app-font-size-sm);
+      text-align: center;
+      display: block;
+      max-width: 250px;
+    }
+  }
+}

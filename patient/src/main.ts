@@ -1,6 +1,152 @@
-import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+import { bootstrapApplication } from '@angular/platform-browser';
+import { RouteReuseStrategy, provideRouter, withPreloading, PreloadAllModules, withComponentInputBinding } from '@angular/router';
+import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalone';
+import { register } from 'swiper/element/bundle';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { importProvidersFrom } from '@angular/core';
+import { IonicStorageModule } from '@ionic/storage-angular';
+import { addIcons } from 'ionicons';
+import {
+  homeOutline,
+  homeSharp,
+  calendarOutline,
+  calendarSharp,
+  calendar,
+  notificationsOutline,
+  notificationsSharp,
+  personOutline,
+  personSharp,
+  medicalOutline,
+  medicalSharp,
+  documentTextOutline,
+  documentTextSharp,
+  documentText,
+  medkitOutline,
+  medkitSharp,
+  medkit,
+  starOutline,
+  star,
+  starSharp,
+  timeOutline,
+  timeSharp,
+  checkmarkCircle,
+  checkmarkCircleOutline,
+  mailOutline,
+  mailSharp,
+  mail,
+  informationCircle,
+  informationCircleOutline,
+  warningOutline,
+  warningSharp,
+  trashOutline,
+  trashSharp,
+  notificationsOffOutline,
+  chevronBackOutline,
+  chevronForwardOutline,
+  eyeOutline,
+  eyeOffOutline,
+  logoGoogle,
+  logoFacebook,
+  logoApple,
+  fitness,
+  lockClosedOutline,
+  settingsOutline, peopleOutline, bodyOutline, heartOutline, pulseOutline, fitnessOutline, locationOutline,
+  videocamOutline, cardOutline, closeCircle, addCircleOutline, refresh, cameraOutline, logOutOutline, helpCircleOutline,
+  callOutline, barbellOutline, resizeOutline, waterOutline, moonOutline, bulbOutline, chatbubblesOutline, flaskOutline,
+  pricetagOutline, trash, shareOutline, arrowUp, downloadOutline, cloudUploadOutline, schoolOutline, briefcaseOutline
+} from 'ionicons/icons';
 
-import { AppModule } from './app/app.module';
+import { routes } from './app/app.routes';
+import { AppComponent } from './app/app.component';
 
-platformBrowserDynamic().bootstrapModule(AppModule)
-  .catch(err => console.log(err));
+register();
+
+addIcons({
+  'home-outline': homeOutline,
+  'home-sharp': homeSharp,
+  'calendar-outline': calendarOutline,
+  'calendar-sharp': calendarSharp,
+  'calendar': calendar,
+  'notifications-outline': notificationsOutline,
+  'notifications-sharp': notificationsSharp,
+  'person-outline': personOutline,
+  'person-sharp': personSharp,
+  'medical-outline': medicalOutline,
+  'medical-sharp': medicalSharp,
+  'document-text-outline': documentTextOutline,
+  'document-text-sharp': documentTextSharp,
+  'document-text': documentText,
+  'medkit-outline': medkitOutline,
+  'medkit-sharp': medkitSharp,
+  'medkit': medkit,
+  'star-outline': starOutline,
+  'star': star,
+  'star-sharp': starSharp,
+  'time-outline': timeOutline,
+  'time-sharp': timeSharp,
+  'checkmark-circle': checkmarkCircle,
+  'checkmark-circle-outline': checkmarkCircleOutline,
+  'mail-outline': mailOutline,
+  'mail-sharp': mailSharp,
+  'mail': mail,
+  'information-circle': informationCircle,
+  'information-circle-outline': informationCircleOutline,
+  'warning-outline': warningOutline,
+  'warning-sharp': warningSharp,
+  'trash-outline': trashOutline,
+  'trash-sharp': trashSharp,
+  'notifications-off-outline': notificationsOffOutline,
+  'chevron-back-outline': chevronBackOutline,
+  'chevron-forward-outline': chevronForwardOutline,
+  'eye-outline': eyeOutline,
+  'eye-off-outline': eyeOffOutline,
+  'logo-google': logoGoogle,
+  'logo-facebook': logoFacebook,
+  'logo-apple': logoApple,
+  'fitness': fitness,
+  'lock-closed-outline': lockClosedOutline,
+  'settings-outline': settingsOutline,
+  'people-outline': peopleOutline,
+  'body-outline': bodyOutline,
+  'heart-outline': heartOutline,
+  'pulse-outline': pulseOutline,
+  'fitness-outline': fitnessOutline,
+  'location-outline': locationOutline,
+  'videocam-outline': videocamOutline,
+  'card-outline': cardOutline,
+  'close-circle': closeCircle,
+  'add-circle-outline': addCircleOutline,
+  'refresh': refresh,
+  'camera-outline': cameraOutline,
+  'log-out-outline': logOutOutline,
+  'help-circle-outline': helpCircleOutline,
+  'call-outline': callOutline,
+  'barbell-outline': barbellOutline,
+  'resize-outline': resizeOutline,
+  'water-outline': waterOutline,
+  'moon-outline': moonOutline,
+  'bulb-outline': bulbOutline,
+  'chatbubble-outline': chatbubblesOutline,
+  'flask-outline': flaskOutline,
+  'pricetag-outline': pricetagOutline,
+  'trash': trash,
+  'share-outline': shareOutline,
+  'arrow-up': arrowUp,
+  'download-outline': downloadOutline,
+  'cloud-upload-outline': cloudUploadOutline,
+  'school-outline': schoolOutline,
+  'briefcase-outline': briefcaseOutline,
+});
+
+bootstrapApplication(AppComponent, {
+  providers: [
+    { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
+    provideIonicAngular(),
+    provideRouter(routes,
+      withPreloading(PreloadAllModules),
+      withComponentInputBinding()
+    ),
+    provideHttpClient(withInterceptorsFromDi()),
+    importProvidersFrom(IonicStorageModule.forRoot())
+  ]
+}).catch(err => console.log(err));

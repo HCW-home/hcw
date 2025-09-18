@@ -1,0 +1,77 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/home"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Find Doctor</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="doctors-content">
+  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="search-section">
+    <ion-searchbar
+      placeholder="Search doctors, specialties..."
+      [(ngModel)]="searchTerm"
+      (ionInput)="searchDoctors($event)"
+      class="custom-searchbar">
+    </ion-searchbar>
+  </div>
+
+  <div class="filters-section">
+    <div class="specialty-chips">
+      @for (specialty of specialities; track specialty.id) {
+        <ion-chip
+          [class.selected]="selectedSpeciality === specialty.name"
+          (click)="filterBySpeciality(specialty.name)">
+          <ion-icon [name]="specialty.icon"></ion-icon>
+          <ion-label>{{ specialty.name }}</ion-label>
+        </ion-chip>
+      }
+    </div>
+  </div>
+
+  @if (isLoading) {
+    <div class="loading-container">
+      <ion-spinner name="crescent" color="primary"></ion-spinner>
+      <ion-text color="medium" class="loading-text">Loading doctors...</ion-text>
+    </div>
+  } @else if (filteredDoctors.length === 0) {
+    <div class="empty-state">
+      <ion-icon name="medical-outline" color="medium" class="empty-icon"></ion-icon>
+      <ion-text color="medium" class="empty-title">No doctors found</ion-text>
+      <ion-text color="medium" class="empty-message">
+        Try adjusting your search or filters
+      </ion-text>
+    </div>
+  } @else {
+    <div class="doctors-list">
+      <ion-grid>
+        <ion-row>
+          @for (doctor of filteredDoctors; track doctor.id) {
+            <ion-col size="12" size-md="6">
+              <app-doctor-card
+                [doctor]="doctor"
+                (doctorClick)="viewDoctorDetails($event)"
+                (bookClick)="bookAppointment($event)">
+              </app-doctor-card>
+            </ion-col>
+          }
+        </ion-row>
+      </ion-grid>
+    </div>
+  }
+
+  <ion-infinite-scroll
+    threshold="100px"
+    (ionInfinite)="loadMore($event)"
+    [disabled]="currentPage >= totalPages">
+    <ion-infinite-scroll-content
+      loadingSpinner="bubbles"
+      loadingText="Loading more doctors...">
+    </ion-infinite-scroll-content>
+  </ion-infinite-scroll>
+</ion-content>

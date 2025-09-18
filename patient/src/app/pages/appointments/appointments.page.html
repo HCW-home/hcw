@@ -1,0 +1,149 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>My Appointments</ion-title>
+    <ion-button slot="end" fill="clear" (click)="bookNewAppointment()">
+      <ion-icon name="add-circle-outline" slot="icon-only"></ion-icon>
+    </ion-button>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="appointments-content">
+  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <ion-segment [(ngModel)]="selectedSegment" (ionChange)="segmentChanged($event)">
+    <ion-segment-button value="upcoming">
+      <ion-label>Upcoming</ion-label>
+    </ion-segment-button>
+    <ion-segment-button value="completed">
+      <ion-label>Completed</ion-label>
+    </ion-segment-button>
+    <ion-segment-button value="cancelled">
+      <ion-label>Cancelled</ion-label>
+    </ion-segment-button>
+  </ion-segment>
+
+  <div class="appointments-container">
+    @if (isLoading) {
+      <div class="loading-container">
+        <ion-spinner name="crescent" color="primary"></ion-spinner>
+        <ion-text color="medium">Loading appointments...</ion-text>
+      </div>
+    } @else if (filteredAppointments.length === 0) {
+      <div class="empty-state">
+        <ion-icon
+          [name]="selectedSegment === 'upcoming' ? 'calendar-outline' : selectedSegment === 'completed' ? 'checkmark-circle-outline' : 'close-circle-outline'"
+          [color]="getStatusColor(selectedSegment)">
+        </ion-icon>
+        <ion-text class="empty-title">No {{ selectedSegment }} appointments</ion-text>
+        <ion-text class="empty-message" color="medium">
+          @if (selectedSegment === 'upcoming') {
+            Book an appointment to get started
+          } @else if (selectedSegment === 'completed') {
+            Your completed appointments will appear here
+          } @else {
+            Your cancelled appointments will appear here
+          }
+        </ion-text>
+        @if (selectedSegment === 'upcoming') {
+          <ion-button (click)="bookNewAppointment()" class="book-button">
+            Find a Doctor
+          </ion-button>
+        }
+      </div>
+    } @else {
+      <ion-list lines="none">
+        @for (appointment of filteredAppointments; track appointment.id) {
+          <ion-card class="appointment-card">
+            <ion-card-content>
+              @if (isUpcomingToday(appointment.date) && appointment.status === 'upcoming') {
+                <ion-chip color="warning" class="today-chip">
+                  <ion-icon name="time-outline"></ion-icon>
+                  <ion-label>Today</ion-label>
+                </ion-chip>
+              }
+
+              <div class="appointment-header">
+                <ion-avatar>
+                  @if (appointment.doctor_photo) {
+                    <img [src]="appointment.doctor_photo" [alt]="appointment.doctor_name">
+                  } @else {
+                    <img src="assets/images/default-doctor.svg" [alt]="appointment.doctor_name">
+                  }
+                </ion-avatar>
+                <div class="doctor-info">
+                  <ion-text class="doctor-name">{{ appointment.doctor_name }}</ion-text>
+                  <ion-text class="doctor-specialty" color="medium">{{ appointment.specialty }}</ion-text>
+                </div>
+                <ion-badge [color]="getStatusColor(appointment.status)">
+                  {{ appointment.status }}
+                </ion-badge>
+              </div>
+
+              <div class="appointment-details">
+                <div class="detail-item">
+                  <ion-icon name="calendar-outline" color="primary"></ion-icon>
+                  <ion-text>{{ formatDate(appointment.date) }}</ion-text>
+                </div>
+                <div class="detail-item">
+                  <ion-icon name="time-outline" color="primary"></ion-icon>
+                  <ion-text>{{ appointment.time }}</ion-text>
+                </div>
+                <div class="detail-item">
+                  <ion-icon [name]="getTypeIcon(appointment.type)" color="primary"></ion-icon>
+                  <ion-text>{{ appointment.type === 'video' ? 'Video Call' : appointment.location }}</ion-text>
+                </div>
+                @if (appointment.consultation_fee) {
+                  <div class="detail-item">
+                    <ion-icon name="card-outline" color="primary"></ion-icon>
+                    <ion-text>${{ appointment.consultation_fee }}</ion-text>
+                  </div>
+                }
+              </div>
+
+              @if (appointment.notes) {
+                <div class="appointment-notes">
+                  <ion-text color="medium">{{ appointment.notes }}</ion-text>
+                </div>
+              }
+
+              <div class="appointment-actions">
+                @if (appointment.status === 'upcoming') {
+                  @if (appointment.type === 'video' && isUpcomingToday(appointment.date)) {
+                    <ion-button size="small" color="success" (click)="joinVideoCall(appointment)">
+                      <ion-icon name="videocam" slot="start"></ion-icon>
+                      Join Call
+                    </ion-button>
+                  }
+                  <ion-button size="small" fill="outline" (click)="rescheduleAppointment(appointment)">
+                    <ion-icon name="calendar" slot="start"></ion-icon>
+                    Reschedule
+                  </ion-button>
+                  <ion-button size="small" color="danger" fill="clear" (click)="cancelAppointment(appointment)">
+                    <ion-icon name="close-circle" slot="start"></ion-icon>
+                    Cancel
+                  </ion-button>
+                } @else if (appointment.status === 'completed') {
+                  <ion-button size="small" fill="outline" (click)="rateAppointment(appointment)">
+                    <ion-icon name="star" slot="start"></ion-icon>
+                    Rate & Review
+                  </ion-button>
+                  <ion-button size="small" fill="clear" (click)="viewDetails(appointment)">
+                    <ion-icon name="document-text" slot="start"></ion-icon>
+                    View Details
+                  </ion-button>
+                } @else {
+                  <ion-button size="small" fill="outline" (click)="bookNewAppointment()">
+                    <ion-icon name="refresh" slot="start"></ion-icon>
+                    Book Again
+                  </ion-button>
+                }
+              </div>
+            </ion-card-content>
+          </ion-card>
+        }
+      </ion-list>
+    }
+  </div>
+</ion-content>

@@ -1,3 +1,5 @@
+@use "theme/variables.scss";
+
 /*
  * App Global CSS
  * ----------------------------------------------------------------------------
@@ -35,3 +37,56 @@
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
 @import "@ionic/angular/css/palettes/dark.system.css";
+
+/* Import custom variables */
+
+/* Global styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--ion-font-family), serif;
+  background-color: var(--app-background);
+  color: var(--app-text-primary);
+}
+
+ion-content {
+  --background: var(--app-background);
+}
+
+ion-card {
+  --background: var(--app-card-background);
+  border-radius: var(--app-card-radius);
+  box-shadow: 0 2px 8px var(--app-card-shadow);
+}
+
+ion-item {
+  --background: transparent;
+  --border-color: var(--app-border-color);
+}
+
+ion-button {
+  --border-radius: var(--app-button-radius);
+  font-weight: var(--app-font-weight-semibold);
+}
+
+// Utility classes
+.text-primary { color: var(--app-text-primary) !important; }
+.text-secondary { color: var(--app-text-secondary) !important; }
+.text-tertiary { color: var(--app-text-tertiary) !important; }
+
+.bg-primary { background-color: var(--ion-color-primary) !important; }
+.bg-secondary { background-color: var(--app-background-secondary) !important; }
+
+.font-xs { font-size: var(--app-font-size-xs) !important; }
+.font-sm { font-size: var(--app-font-size-sm) !important; }
+.font-base { font-size: var(--app-font-size-base) !important; }
+.font-lg { font-size: var(--app-font-size-lg) !important; }
+.font-xl { font-size: var(--app-font-size-xl) !important; }
+.font-2xl { font-size: var(--app-font-size-2xl) !important; }
+
+.font-normal { font-weight: var(--app-font-weight-normal) !important; }
+.font-medium { font-weight: var(--app-font-weight-medium) !important; }
+.font-semibold { font-weight: var(--app-font-weight-semibold) !important; }
+.font-bold { font-weight: var(--app-font-weight-bold) !important; }

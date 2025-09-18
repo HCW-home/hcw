@@ -1,0 +1,203 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Profile</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="profile-content">
+  <div class="profile-header">
+    <ion-card class="profile-card">
+      <ion-card-content>
+        <div class="avatar-section">
+          <ion-avatar class="profile-avatar">
+            @if (currentUser && currentUser.picture) {
+              <img [src]="currentUser.picture" [alt]="currentUser.first_name">
+            } @else {
+              <div class="avatar-placeholder">{{ getInitials() }}</div>
+            }
+          </ion-avatar>
+          <ion-button size="small" fill="clear" class="edit-photo-btn">
+            <ion-icon name="camera-outline"></ion-icon>
+          </ion-button>
+        </div>
+        <div class="user-info">
+          <ion-text class="user-name">
+            {{ currentUser?.first_name }} {{ currentUser?.last_name }}
+          </ion-text>
+          <ion-text class="user-email" color="medium">
+            {{ currentUser?.email }}
+          </ion-text>
+          @if (currentUser && currentUser.phone) {
+            <ion-text class="user-phone" color="medium">
+              {{ currentUser.phone }}
+            </ion-text>
+          }
+        </div>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <div class="quick-info">
+    <ion-card>
+      <ion-card-content>
+        <div class="info-grid">
+          @if (currentUser && currentUser.blood_type) {
+            <div class="info-item">
+              <ion-icon name="water-outline" color="danger"></ion-icon>
+              <ion-text class="info-label">Blood Type</ion-text>
+              <ion-text class="info-value">{{ currentUser.blood_type }}</ion-text>
+            </div>
+          }
+          @if (currentUser && currentUser.date_of_birth) {
+            <div class="info-item">
+              <ion-icon name="calendar-outline" color="primary"></ion-icon>
+              <ion-text class="info-label">Date of Birth</ion-text>
+              <ion-text class="info-value">{{ currentUser.date_of_birth }}</ion-text>
+            </div>
+          }
+          @if (currentUser && currentUser.height) {
+            <div class="info-item">
+              <ion-icon name="resize-outline" color="tertiary"></ion-icon>
+              <ion-text class="info-label">Height</ion-text>
+              <ion-text class="info-value">{{ currentUser.height }}</ion-text>
+            </div>
+          }
+          @if (currentUser && currentUser.weight) {
+            <div class="info-item">
+              <ion-icon name="barbell-outline" color="secondary"></ion-icon>
+              <ion-text class="info-label">Weight</ion-text>
+              <ion-text class="info-value">{{ currentUser.weight }}</ion-text>
+            </div>
+          }
+        </div>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <ion-list class="menu-list">
+    @for (item of profileMenuItems; track item.title) {
+      <ion-item
+        (click)="handleMenuItemClick(item)"
+        [class.danger-item]="item.color === 'danger'">
+        <ion-icon
+          [name]="item.icon"
+          [color]="item.color || 'primary'"
+          slot="start">
+        </ion-icon>
+        <ion-label>
+          <ion-text [color]="item.color">{{ item.title }}</ion-text>
+        </ion-label>
+        @if (item.badge) {
+          <ion-text color="primary" slot="end">{{ item.badge }}</ion-text>
+        }
+        <ion-icon name="chevron-forward-outline" slot="end" color="medium"></ion-icon>
+      </ion-item>
+    }
+  </ion-list>
+
+  <ion-modal [isOpen]="showEditModal" (didDismiss)="closeEditModal()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Edit Profile</ion-title>
+          <ion-buttons slot="start">
+            <ion-button (click)="closeEditModal()">Cancel</ion-button>
+          </ion-buttons>
+          <ion-buttons slot="end">
+            <ion-button (click)="saveProfile()" color="primary">
+              <ion-text>Save</ion-text>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content>
+        <ion-list>
+          <ion-item>
+            <ion-label position="stacked">First Name</ion-label>
+            <ion-input
+              [(ngModel)]="editedUser.first_name"
+              type="text"
+              placeholder="Enter first name">
+            </ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-label position="stacked">Last Name</ion-label>
+            <ion-input
+              [(ngModel)]="editedUser.last_name"
+              type="text"
+              placeholder="Enter last name">
+            </ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-label position="stacked">Email</ion-label>
+            <ion-input
+              [(ngModel)]="editedUser.email"
+              type="email"
+              placeholder="Enter email">
+            </ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-label position="stacked">Phone</ion-label>
+            <ion-input
+              [(ngModel)]="editedUser.phone"
+              type="tel"
+              placeholder="Enter phone number">
+            </ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-label position="stacked">Date of Birth</ion-label>
+            <ion-datetime
+              [(ngModel)]="editedUser.date_of_birth"
+              presentation="date">
+            </ion-datetime>
+          </ion-item>
+          <ion-item>
+            <ion-label position="stacked">Gender</ion-label>
+            <ion-select [(ngModel)]="editedUser.gender">
+              <ion-select-option value="Male">Male</ion-select-option>
+              <ion-select-option value="Female">Female</ion-select-option>
+              <ion-select-option value="Other">Other</ion-select-option>
+            </ion-select>
+          </ion-item>
+          <ion-item>
+            <ion-label position="stacked">Blood Type</ion-label>
+            <ion-select [(ngModel)]="editedUser.blood_type">
+              <ion-select-option value="A+">A+</ion-select-option>
+              <ion-select-option value="A-">A-</ion-select-option>
+              <ion-select-option value="B+">B+</ion-select-option>
+              <ion-select-option value="B-">B-</ion-select-option>
+              <ion-select-option value="AB+">AB+</ion-select-option>
+              <ion-select-option value="AB-">AB-</ion-select-option>
+              <ion-select-option value="O+">O+</ion-select-option>
+              <ion-select-option value="O-">O-</ion-select-option>
+            </ion-select>
+          </ion-item>
+          <ion-item>
+            <ion-label position="stacked">Height</ion-label>
+            <ion-input
+              [(ngModel)]="editedUser.height"
+              type="text"
+              placeholder="Enter height">
+            </ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-label position="stacked">Weight</ion-label>
+            <ion-input
+              [(ngModel)]="editedUser.weight"
+              type="text"
+              placeholder="Enter weight">
+            </ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-label position="stacked">Address</ion-label>
+            <ion-input
+              [(ngModel)]="editedUser.address"
+              type="text"
+              placeholder="Enter address">
+            </ion-input>
+          </ion-item>
+        </ion-list>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+</ion-content>

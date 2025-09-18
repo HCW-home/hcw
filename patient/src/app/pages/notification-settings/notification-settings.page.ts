@@ -1,0 +1,233 @@
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import {
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonButtons,
+  IonBackButton,
+  IonContent,
+  IonList,
+  IonListHeader,
+  IonItem,
+  IonLabel,
+  IonToggle,
+  IonIcon,
+  IonText,
+  IonCard,
+  IonCardContent,
+  IonButton,
+  IonDatetime,
+  IonModal,
+  ToastController
+} from '@ionic/angular/standalone';
+import { Storage } from '@ionic/storage-angular';
+
+interface NotificationSetting {
+  id: string;
+  title: string;
+  description: string;
+  enabled: boolean;
+  icon: string;
+  category: 'appointments' | 'health' | 'messages' | 'promotions';
+}
+
+@Component({
+  selector: 'app-notification-settings',
+  templateUrl: './notification-settings.page.html',
+  styleUrls: ['./notification-settings.page.scss'],
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    IonHeader,
+    IonToolbar,
+    IonTitle,
+    IonButtons,
+    IonBackButton,
+    IonContent,
+    IonList,
+    IonListHeader,
+    IonItem,
+    IonLabel,
+    IonToggle,
+    IonIcon,
+    IonText,
+    IonCard,
+    IonCardContent,
+    IonButton,
+    IonDatetime,
+    IonModal
+  ],
+  providers: [Storage]
+})
+export class NotificationSettingsPage implements OnInit {
+  masterNotifications = true;
+  quietHoursEnabled = false;
+  quietHoursStart = '22:00';
+  quietHoursEnd = '08:00';
+  showTimePicker = false;
+  timePickerMode: 'start' | 'end' = 'start';
+
+  notificationSettings: NotificationSetting[] = [
+    {
+      id: 'appointment_reminder',
+      title: 'Appointment Reminders',
+      description: 'Get reminded about upcoming appointments',
+      enabled: true,
+      icon: 'calendar-outline',
+      category: 'appointments'
+    },
+    {
+      id: 'appointment_confirmation',
+      title: 'Appointment Confirmations',
+      description: 'Receive confirmation when appointments are booked',
+      enabled: true,
+      icon: 'checkmark-circle-outline',
+      category: 'appointments'
+    },
+    {
+      id: 'medication_reminder',
+      title: 'Medication Reminders',
+      description: 'Never miss your medication schedule',
+      enabled: true,
+      icon: 'medical-outline',
+      category: 'health'
+    },
+    {
+      id: 'test_results',
+      title: 'Test Results',
+      description: 'Get notified when test results are available',
+      enabled: true,
+      icon: 'flask-outline',
+      category: 'health'
+    },
+    {
+      id: 'doctor_messages',
+      title: 'Doctor Messages',
+      description: 'Receive messages from your healthcare providers',
+      enabled: true,
+      icon: 'chatbubble-outline',
+      category: 'messages'
+    },
+    {
+      id: 'health_tips',
+      title: 'Health Tips',
+      description: 'Receive helpful health and wellness tips',
+      enabled: false,
+      icon: 'bulb-outline',
+      category: 'promotions'
+    },
+    {
+      id: 'promotional',
+      title: 'Promotional Offers',
+      description: 'Special offers and discounts on health services',
+      enabled: false,
+      icon: 'pricetag-outline',
+      category: 'promotions'
+    }
+  ];
+
+  reminderOptions = [
+    { value: 0, label: 'At time of appointment' },
+    { value: 15, label: '15 minutes before' },
+    { value: 30, label: '30 minutes before' },
+    { value: 60, label: '1 hour before' },
+    { value: 1440, label: '1 day before' }
+  ];
+
+  selectedReminderTime = 60;
+
+  constructor(
+    private toastCtrl: ToastController,
+    private storage: Storage
+  ) {}
+
+  async ngOnInit() {
+    await this.storage.create();
+    await this.loadSettings();
+  }
+
+  async loadSettings() {
+    const settings = await this.storage.get('notificationSettings');
+    if (settings) {
+      this.notificationSettings = settings.notificationSettings || this.notificationSettings;
+      this.masterNotifications = settings.masterNotifications ?? true;
+      this.quietHoursEnabled = settings.quietHoursEnabled ?? false;
+      this.quietHoursStart = settings.quietHoursStart || '22:00';
+      this.quietHoursEnd = settings.quietHoursEnd || '08:00';
+      this.selectedReminderTime = settings.selectedReminderTime || 60;
+    }
+  }
+
+  async saveSettings() {
+    const settings = {
+      notificationSettings: this.notificationSettings,
+      masterNotifications: this.masterNotifications,
+      quietHoursEnabled: this.quietHoursEnabled,
+      quietHoursStart: this.quietHoursStart,
+      quietHoursEnd: this.quietHoursEnd,
+      selectedReminderTime: this.selectedReminderTime
+    };
+
+    await this.storage.set('notificationSettings', settings);
+    this.showToast('Settings saved successfully');
+  }
+
+  toggleMasterNotifications() {
+    if (!this.masterNotifications) {
+      this.notificationSettings.forEach(setting => {
+        setting.enabled = false;
+      });
+    }
+    this.saveSettings();
+  }
+
+  toggleNotification(setting: NotificationSetting) {
+    if (setting.enabled && !this.masterNotifications) {
+      this.masterNotifications = true;
+    }
+    this.saveSettings();
+  }
+
+  toggleQuietHours() {
+    this.saveSettings();
+  }
+
+  openTimePicker(mode: 'start' | 'end') {
+    this.timePickerMode = mode;
+    this.showTimePicker = true;
+  }
+
+  onTimeChange(event: any) {
+    const time = new Date(event.detail.value);
+    const formattedTime = time.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+
+    if (this.timePickerMode === 'start') {
+      this.quietHoursStart = formattedTime;
+    } else {
+      this.quietHoursEnd = formattedTime;
+    }
+
+    this.showTimePicker = false;
+    this.saveSettings();
+  }
+
+  getNotificationsByCategory(category: string): NotificationSetting[] {
+    return this.notificationSettings.filter(s => s.category === category);
+  }
+
+  async showToast(message: string) {
+    const toast = await this.toastCtrl.create({
+      message,
+      duration: 2000,
+      color: 'success'
+    });
+    toast.present();
+  }
+}

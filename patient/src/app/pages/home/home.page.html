@@ -1,0 +1,102 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-title class="custom-title">
+      <ion-text class="greeting-text">Hello, {{ currentUser?.first_name || 'User' }}</ion-text>
+    </ion-title>
+    <ion-buttons slot="end">
+      <ion-button class="notification-button" (click)="goToNotifications()">
+        <ion-icon slot="icon-only" name="notifications-outline"></ion-icon>
+        <ion-badge color="danger" class="header-badge">2</ion-badge>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="home-content">
+  <ion-refresher slot="fixed" (ionRefresh)="refreshData($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <!-- Search Bar -->
+  <div class="search-container">
+    <ion-searchbar
+      placeholder="Search doctors, specialties..."
+      (ionInput)="searchDoctors($event)"
+      class="custom-searchbar">
+    </ion-searchbar>
+  </div>
+
+  <!-- Quick Actions Grid -->
+  <div class="section quick-actions-section">
+    <ion-text class="section-title">Quick Actions</ion-text>
+    <ion-grid>
+      <ion-row>
+        @for (action of quickActions; track action.title) {
+          <ion-col size="4">
+            <div class="action-card" (click)="navigateToAction(action.route)">
+              <ion-icon [name]="action.icon" [color]="action.color" class="action-icon"></ion-icon>
+              <ion-text class="action-title">{{ action.title }}</ion-text>
+            </div>
+          </ion-col>
+        }
+      </ion-row>
+    </ion-grid>
+  </div>
+
+  <!-- Upcoming Appointment -->
+  @if (upcomingAppointment) {
+    <div class="section">
+      <ion-text class="section-title">Upcoming Appointment</ion-text>
+      <ion-card class="appointment-card">
+        <ion-card-content>
+          <div class="appointment-info">
+            <ion-text class="appointment-doctor">Dr. {{ upcomingAppointment.doctor_name }}</ion-text>
+            <ion-text class="appointment-specialty" color="medium">{{ upcomingAppointment.specialty }}</ion-text>
+            <div class="appointment-time">
+              <ion-icon name="time-outline" color="primary"></ion-icon>
+              <ion-text class="time-text">{{ upcomingAppointment.time }}</ion-text>
+            </div>
+          </div>
+          <ion-button size="small" fill="clear" class="view-button">
+            View Details
+          </ion-button>
+        </ion-card-content>
+      </ion-card>
+    </div>
+  }
+
+  <!-- Nearby Doctors -->
+  <div class="section">
+    <div class="section-header">
+      <ion-text class="section-title">Nearby Doctors</ion-text>
+      <ion-text class="see-all" color="primary" (click)="viewAllDoctors()">See All</ion-text>
+    </div>
+
+    <div class="doctors-list">
+      @for (doctor of nearbyDoctors; track doctor.id) {
+        <app-doctor-card
+          [doctor]="doctor"
+          (doctorClick)="viewDoctorDetails($event)"
+          (bookClick)="bookAppointment($event)">
+        </app-doctor-card>
+      }
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="section">
+    <ion-text class="section-title">Recent Activity</ion-text>
+    <ion-list class="notifications-list">
+      @for (notification of recentNotifications; track notification.title) {
+        <ion-item lines="none" class="notification-item">
+          <ion-icon [name]="notification.icon" [color]="notification.color" slot="start" class="notification-icon"></ion-icon>
+          <ion-label>
+            <ion-text class="notification-title">{{ notification.title }}</ion-text>
+            <ion-text class="notification-message" color="medium">{{ notification.message }}</ion-text>
+            <ion-text class="notification-time" color="medium">{{ notification.time }}</ion-text>
+          </ion-label>
+        </ion-item>
+      }
+    </ion-list>
+  </div>
+</ion-content>

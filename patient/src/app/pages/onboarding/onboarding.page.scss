@@ -1,0 +1,101 @@
+.onboarding-content {
+  --background: var(--app-background);
+
+  .onboarding-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: var(--app-spacing-xl);
+
+    .skip-button {
+      text-align: right;
+      margin-top: var(--app-spacing-xl);
+
+      .skip-btn {
+        --color: var(--app-text-secondary);
+        font-weight: var(--app-font-weight-medium);
+      }
+    }
+
+    .onboarding-swiper {
+      flex: 1;
+      width: 100%;
+      display: flex;
+      align-items: center;
+
+      .slide-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        padding: var(--app-spacing-xl);
+
+        .slide-image {
+          width: 280px;
+          height: 280px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 40px;
+
+          img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+          }
+        }
+
+        .slide-text {
+          text-align: center;
+          max-width: 300px;
+
+          .slide-title {
+            display: block;
+            font-size: var(--app-font-size-2xl);
+            font-weight: var(--app-font-weight-bold);
+            color: var(--app-text-primary);
+            margin-bottom: var(--app-spacing-md);
+          }
+
+          .slide-subtitle {
+            display: block;
+            font-size: var(--app-font-size-base);
+            line-height: 1.5;
+          }
+        }
+      }
+    }
+
+    .onboarding-actions {
+      padding-bottom: var(--app-spacing-xl);
+
+      .next-button {
+        --background: var(--ion-color-primary);
+        --padding-top: var(--app-button-padding-vertical);
+        --padding-bottom: var(--app-button-padding-vertical);
+        font-weight: var(--app-font-weight-semibold);
+        font-size: var(--app-font-size-base);
+      }
+    }
+  }
+}
+
+// Swiper pagination styles
+::ng-deep {
+  .swiper-pagination {
+    bottom: 120px !important;
+
+    .swiper-pagination-bullet {
+      background: var(--ion-color-medium-tint);
+      opacity: 1;
+    }
+
+    .swiper-pagination-bullet-active {
+      background: var(--ion-color-primary);
+      width: 24px;
+      border-radius: 4px;
+    }
+  }
+}

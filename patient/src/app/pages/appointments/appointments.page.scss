@@ -1,0 +1,174 @@
+.appointments-content {
+  --background: var(--app-background);
+
+
+  .appointments-container {
+    padding: 0 16px 16px;
+  }
+
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    gap: 16px;
+
+    ion-spinner {
+      transform: scale(1.2);
+    }
+  }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+
+    ion-icon {
+      font-size: 80px;
+      margin-bottom: 20px;
+    }
+
+    .empty-title {
+      display: block;
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--app-text-primary);
+      margin-bottom: 8px;
+    }
+
+    .empty-message {
+      display: block;
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+
+    .book-button {
+      --border-radius: 8px;
+      margin-top: 16px;
+    }
+  }
+
+  ion-list {
+    background: transparent;
+  }
+
+  .appointment-card {
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-radius: 12px;
+
+    ion-card-content {
+      padding: 16px;
+    }
+
+    .today-chip {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      font-size: 12px;
+      height: 28px;
+
+      ion-icon {
+        font-size: 16px;
+        margin-right: 4px;
+      }
+    }
+
+    .appointment-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 16px;
+
+      ion-avatar {
+        width: 60px;
+        height: 60px;
+        margin-right: 12px;
+      }
+
+      .doctor-info {
+        flex: 1;
+
+        .doctor-name {
+          display: block;
+          font-size: 16px;
+          font-weight: 600;
+          color: var(--app-text-primary);
+          margin-bottom: 4px;
+        }
+
+        .doctor-specialty {
+          display: block;
+          font-size: 14px;
+        }
+      }
+
+      ion-badge {
+        text-transform: uppercase;
+        font-size: 10px;
+        padding: 4px 8px;
+        font-weight: 600;
+      }
+    }
+
+    .appointment-details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 12px;
+      background: var(--ion-color-light);
+      border-radius: 8px;
+      margin-bottom: 12px;
+
+      .detail-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        ion-icon {
+          font-size: 18px;
+        }
+
+        ion-text {
+          font-size: 13px;
+          color: var(--app-text-secondary);
+          flex: 1;
+        }
+      }
+    }
+
+    .appointment-notes {
+      padding: 12px;
+      background: var(--ion-color-light);
+      border-radius: 8px;
+      margin-bottom: 12px;
+
+      ion-text {
+        font-size: 13px;
+        line-height: 1.4;
+      }
+    }
+
+    .appointment-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding-top: 8px;
+      border-top: 1px solid var(--app-border-color);
+
+      ion-button {
+        --border-radius: 8px;
+        font-size: 13px;
+        height: 36px;
+
+        ion-icon {
+          font-size: 16px;
+        }
+      }
+    }
+  }
+}

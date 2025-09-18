@@ -1,0 +1,26 @@
+<ion-tabs>
+  <ion-tab-bar slot="bottom" class="tab-bar">
+    <ion-tab-button tab="home" class="tab-button">
+      <ion-icon name="home-outline" class="tab-icon"></ion-icon>
+      <ion-label class="tab-label">Home</ion-label>
+    </ion-tab-button>
+
+    <ion-tab-button tab="appointments" class="tab-button">
+      <ion-icon name="calendar-outline" class="tab-icon"></ion-icon>
+      <ion-label class="tab-label">Appointments</ion-label>
+    </ion-tab-button>
+
+    <ion-tab-button tab="notifications" class="tab-button">
+      <ion-icon name="notifications-outline" class="tab-icon"></ion-icon>
+      <ion-label class="tab-label">Notifications</ion-label>
+      @if (notificationCount > 0) {
+        <ion-badge color="danger" class="notification-badge">{{ notificationCount }}</ion-badge>
+      }
+    </ion-tab-button>
+
+    <ion-tab-button tab="profile" class="tab-button">
+      <ion-icon name="person-outline" class="tab-icon"></ion-icon>
+      <ion-label class="tab-label">Profile</ion-label>
+    </ion-tab-button>
+  </ion-tab-bar>
+</ion-tabs>

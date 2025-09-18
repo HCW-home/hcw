@@ -1,2 +1,157 @@
-// For information on how to create your own theme, please see:
+// Ionic Variables and Theming. For more info, please see:
 // http://ionicframework.com/docs/theming/
+
+/** Ionic CSS Variables **/
+:root {
+  // Primary brand colors based on healthcare blue theme
+  --ion-color-primary: #4A90E2;
+  --ion-color-primary-rgb: 74, 144, 226;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #4180c7;
+  --ion-color-primary-tint: #5c9be5;
+
+  --ion-color-secondary: #3DC2FF;
+  --ion-color-secondary-rgb: 61, 194, 255;
+  --ion-color-secondary-contrast: #ffffff;
+  --ion-color-secondary-contrast-rgb: 255, 255, 255;
+  --ion-color-secondary-shade: #36abe0;
+  --ion-color-secondary-tint: #50c8ff;
+
+  --ion-color-tertiary: #5260FF;
+  --ion-color-tertiary-rgb: 82, 96, 255;
+  --ion-color-tertiary-contrast: #ffffff;
+  --ion-color-tertiary-contrast-rgb: 255, 255, 255;
+  --ion-color-tertiary-shade: #4854e0;
+  --ion-color-tertiary-tint: #6370ff;
+
+  --ion-color-success: #2DD36F;
+  --ion-color-success-rgb: 45, 211, 111;
+  --ion-color-success-contrast: #ffffff;
+  --ion-color-success-contrast-rgb: 255, 255, 255;
+  --ion-color-success-shade: #28ba62;
+  --ion-color-success-tint: #42d77d;
+
+  --ion-color-warning: #FFC409;
+  --ion-color-warning-rgb: 255, 196, 9;
+  --ion-color-warning-contrast: #000000;
+  --ion-color-warning-contrast-rgb: 0, 0, 0;
+  --ion-color-warning-shade: #e0ac08;
+  --ion-color-warning-tint: #ffca22;
+
+  --ion-color-danger: #EB445A;
+  --ion-color-danger-rgb: 235, 68, 90;
+  --ion-color-danger-contrast: #ffffff;
+  --ion-color-danger-contrast-rgb: 255, 255, 255;
+  --ion-color-danger-shade: #cf3c4f;
+  --ion-color-danger-tint: #ed576b;
+
+  --ion-color-dark: #222428;
+  --ion-color-dark-rgb: 34, 36, 40;
+  --ion-color-dark-contrast: #ffffff;
+  --ion-color-dark-contrast-rgb: 255, 255, 255;
+  --ion-color-dark-shade: #1e2023;
+  --ion-color-dark-tint: #383a3e;
+
+  --ion-color-medium: #92949C;
+  --ion-color-medium-rgb: 146, 148, 156;
+  --ion-color-medium-contrast: #ffffff;
+  --ion-color-medium-contrast-rgb: 255, 255, 255;
+  --ion-color-medium-shade: #808289;
+  --ion-color-medium-tint: #9d9fa6;
+
+  --ion-color-light: #F4F5F8;
+  --ion-color-light-rgb: 244, 245, 248;
+  --ion-color-light-contrast: #000000;
+  --ion-color-light-contrast-rgb: 0, 0, 0;
+  --ion-color-light-shade: #d7d8da;
+  --ion-color-light-tint: #f5f6f9;
+
+  // Custom app colors
+  --app-background: #FFFFFF;
+  --app-background-secondary: #F8F9FA;
+  --app-text-primary: #1A1A1A;
+  --app-text-secondary: #6B7280;
+  --app-text-tertiary: #9CA3AF;
+  --app-border-color: #E5E7EB;
+  --app-card-background: #FFFFFF;
+  --app-card-shadow: rgba(0, 0, 0, 0.08);
+
+  // Healthcare specific colors
+  --app-online-indicator: #4CAF50;
+  --app-offline-indicator: #9E9E9E;
+  --app-rating-star: #FFB800;
+
+  // Input and form colors
+  --app-input-background: #F8F9FA;
+  --app-input-border: #E5E7EB;
+  --app-input-focus-border: var(--ion-color-primary);
+  --app-input-text: var(--app-text-primary);
+  --app-input-placeholder: var(--app-text-tertiary);
+
+  // Button variations
+  --app-button-radius: 12px;
+  --app-button-padding-horizontal: 24px;
+  --app-button-padding-vertical: 14px;
+
+  // Card styles
+  --app-card-radius: 12px;
+  --app-card-padding: 16px;
+
+  // Font sizes
+  --app-font-size-xs: 12px;
+  --app-font-size-sm: 14px;
+  --app-font-size-base: 16px;
+  --app-font-size-lg: 18px;
+  --app-font-size-xl: 20px;
+  --app-font-size-2xl: 24px;
+  --app-font-size-3xl: 28px;
+
+  // Font weights
+  --app-font-weight-normal: 400;
+  --app-font-weight-medium: 500;
+  --app-font-weight-semibold: 600;
+  --app-font-weight-bold: 700;
+
+  // Spacing
+  --app-spacing-xs: 4px;
+  --app-spacing-sm: 8px;
+  --app-spacing-md: 12px;
+  --app-spacing-lg: 16px;
+  --app-spacing-xl: 20px;
+  --app-spacing-2xl: 24px;
+  --app-spacing-3xl: 32px;
+
+  // Z-index layers
+  --app-z-index-dropdown: 1000;
+  --app-z-index-modal: 1100;
+  --app-z-index-popover: 1200;
+  --app-z-index-tooltip: 1300;
+  --app-z-index-toast: 1400;
+}
+
+// iOS specific variables
+.ios {
+  --ion-font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Roboto", sans-serif;
+}
+
+// Material Design specific variables
+.md {
+  --ion-font-family: "Roboto", "Helvetica Neue", sans-serif;
+}
+
+// Dark mode variables
+@media (prefers-color-scheme: dark) {
+  :root {
+    --app-background: #1A1A1A;
+    --app-background-secondary: #2A2A2A;
+    --app-text-primary: #FFFFFF;
+    --app-text-secondary: #B0B0B0;
+    --app-text-tertiary: #808080;
+    --app-border-color: #3A3A3A;
+    --app-card-background: #2A2A2A;
+    --app-card-shadow: rgba(0, 0, 0, 0.3);
+    --app-input-background: #2A2A2A;
+    --app-input-border: #3A3A3A;
+  }
+}

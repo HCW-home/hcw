@@ -1,0 +1,305 @@
+.doctor-detail-content {
+  --background: var(--app-background);
+
+  .loading-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+  }
+
+  .doctor-header {
+    .profile-card {
+      margin: 0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+      .profile-section {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 20px;
+
+        .doctor-avatar {
+          width: 80px;
+          height: 80px;
+          border: 3px solid var(--ion-color-primary);
+        }
+
+        .doctor-info {
+          flex: 1;
+
+          .doctor-name {
+            display: block;
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--app-text-primary);
+            margin-bottom: 4px;
+          }
+
+          .doctor-specialty {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 8px;
+          }
+
+          .doctor-meta {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+
+            ion-badge {
+              font-size: 11px;
+              padding: 4px 8px;
+
+              ion-icon {
+                font-size: 12px;
+                margin-right: 4px;
+              }
+            }
+          }
+        }
+      }
+
+      .action-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 16px;
+
+        ion-button {
+          --border-radius: 8px;
+          height: 44px;
+          font-weight: 500;
+        }
+      }
+
+      .consultation-fee {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 16px;
+        border-top: 1px solid var(--app-border-color);
+
+        .fee-amount {
+          font-size: 20px;
+          font-weight: 600;
+          color: var(--ion-color-primary);
+        }
+      }
+    }
+  }
+
+  .content-tabs {
+    padding: 0 16px;
+    background: var(--app-card-background);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+
+  }
+
+  .segment-content {
+    padding: 16px;
+
+    .section-title {
+      display: block;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--app-text-primary);
+      margin-bottom: 12px;
+    }
+
+    .section-content {
+      display: block;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--app-text-secondary);
+    }
+
+    ion-card {
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      border-radius: 12px;
+    }
+  }
+
+  .about-section {
+    .language-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+
+      ion-chip {
+        --background: var(--ion-color-primary-tint);
+        --color: var(--ion-color-primary);
+        height: 32px;
+      }
+    }
+
+    ion-list {
+      ion-item {
+        --padding-start: 0;
+        --inner-padding-end: 0;
+        margin: 8px 0;
+
+        ion-icon {
+          font-size: 20px;
+          margin-right: 12px;
+        }
+
+        ion-label {
+          font-size: 14px;
+          color: var(--app-text-secondary);
+        }
+      }
+    }
+  }
+
+  .availability-section {
+    .calendar-view {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 8px 0;
+
+      &::-webkit-scrollbar {
+        display: none;
+      }
+
+      .day-column {
+        flex-shrink: 0;
+        min-width: 100px;
+        background: var(--ion-color-light);
+        border-radius: 8px;
+        overflow: hidden;
+
+        .day-header {
+          padding: 12px 8px;
+          background: var(--ion-color-light-shade);
+          text-align: center;
+
+          &.today {
+            background: var(--ion-color-primary);
+
+            .day-name,
+            .day-date,
+            .day-month {
+              color: white !important;
+            }
+          }
+
+          .day-name {
+            display: block;
+            font-size: 12px;
+            color: var(--app-text-secondary);
+            margin-bottom: 4px;
+          }
+
+          .day-date {
+            display: block;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--app-text-primary);
+          }
+
+          .day-month {
+            display: block;
+            font-size: 11px;
+            color: var(--app-text-secondary);
+            margin-top: 2px;
+          }
+        }
+
+        .time-slots {
+          padding: 8px;
+
+          .time-slot {
+            background: white;
+            border: 1px solid var(--app-border-color);
+            border-radius: 6px;
+            padding: 6px;
+            margin-bottom: 6px;
+            font-size: 11px;
+            text-align: center;
+            color: var(--app-text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+
+            &:hover {
+              background: var(--ion-color-primary);
+              color: white;
+              border-color: var(--ion-color-primary);
+            }
+          }
+
+          .more-slots {
+            display: block;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 500;
+            padding: 4px;
+          }
+        }
+      }
+    }
+  }
+
+  .reviews-section {
+    .reviews-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .review-item {
+      --background: var(--ion-color-light);
+      border-radius: 8px;
+      margin-bottom: 12px;
+      padding: 12px;
+
+      .review-content {
+        width: 100%;
+
+        .review-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 8px;
+
+          .reviewer-name {
+            font-weight: 600;
+            color: var(--app-text-primary);
+          }
+
+          .rating-stars {
+            display: flex;
+            gap: 2px;
+
+            ion-icon {
+              font-size: 14px;
+            }
+          }
+        }
+
+        .review-comment {
+          display: block;
+          font-size: 14px;
+          line-height: 1.5;
+          color: var(--app-text-secondary);
+          margin-bottom: 8px;
+        }
+
+        .review-date {
+          display: block;
+          font-size: 12px;
+        }
+      }
+    }
+
+    .no-reviews {
+      text-align: center;
+      padding: 40px;
+    }
+  }
+}

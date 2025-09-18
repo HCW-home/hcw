@@ -1,0 +1,48 @@
+<ion-card (click)="onDoctorClick()" class="doctor-card-container">
+  <ion-card-content>
+    <div class="doctor-card">
+      <div class="doctor-image">
+        <ion-avatar>
+          <img [src]="doctor.picture || 'assets/images/default-doctor.svg'" [alt]="doctor.first_name + ' ' + doctor.last_name">
+        </ion-avatar>
+        @if (doctor.is_online) {
+          <div class="online-status">
+            <span class="online-dot"></span>
+          </div>
+        }
+      </div>
+
+      <div class="doctor-info">
+        <ion-text class="doctor-name">Dr. {{ doctor.first_name }} {{ doctor.last_name }}</ion-text>
+        <ion-text class="doctor-specialty" color="medium">{{ getSpecialties() }}</ion-text>
+
+        @if (doctor.rating) {
+          <div class="rating">
+            <ion-icon name="star" class="rating-star"></ion-icon>
+            <ion-text class="rating-value">{{ doctor.rating }}</ion-text>
+            <ion-text class="rating-reviews" color="medium">({{ doctor.reviews_count }} reviews)</ion-text>
+          </div>
+        }
+
+        @if (doctor.experience_years) {
+          <ion-text class="experience" color="medium">
+            {{ doctor.experience_years }} years experience
+          </ion-text>
+        }
+      </div>
+
+      @if (showBookButton) {
+        <div class="doctor-actions">
+          <ion-button
+            (click)="onBookClick($event)"
+            expand="block"
+            size="small"
+            color="primary"
+            class="book-button">
+            Book Appointment
+          </ion-button>
+        </div>
+      }
+    </div>
+  </ion-card-content>
+</ion-card>
