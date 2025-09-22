@@ -16,7 +16,6 @@ django.setup()
 
 from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
-from consultations.routing import websocket_urlpatterns as consultation_patterns
 from users.routing import websocket_urlpatterns as user_patterns
 from .channelsmiddleware import JWTAuthMiddleware, CorsMiddleware
 
@@ -29,7 +28,7 @@ application = ProtocolTypeRouter(
         "http": get_asgi_application(),
         "websocket": CorsMiddleware(
             JWTAuthMiddleware(
-                URLRouter(consultation_patterns + user_patterns)
+                URLRouter(user_patterns)
             )
         ),
     }

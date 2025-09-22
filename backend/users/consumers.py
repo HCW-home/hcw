@@ -31,7 +31,7 @@ class UserOnlineStatusMixin:
         """
         # Get user from scope (set by JWT middleware)
         user = self.scope.get('user')
-        
+
         if user and user.is_authenticated:
             self.user_id = user.id
             self.connection_id = async_user_online_service.generate_connection_id()
@@ -120,7 +120,7 @@ class UserOnlineStatusMixin:
         return False
 
 
-class UserStatusConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
+class WebsocketConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
     """
     A general-purpose WebSocket consumer for user communications.
     
@@ -136,7 +136,7 @@ class UserStatusConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
     async def connect(self):
         """Connect and join a user-specific group and system broadcasts"""
         await super().connect()
-        
+
         if self.user_id:
             # Join user-specific group for notifications and direct messages
             user_group = f"user_{self.user_id}"

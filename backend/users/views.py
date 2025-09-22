@@ -147,7 +147,6 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
         if user.participant_id:
             # For participants, get the consultation from their appointment
             participant = Participant.objects.get(pk=int(user.participant_id))
-            print(participant)
             consultation = participant.appointment.consultation
             return Consultation.objects.filter(id=consultation.id)
 

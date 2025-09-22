@@ -5,7 +5,7 @@ from unittest.mock import patch, MagicMock, AsyncMock
 from users.services import UserOnlineStatusService, UserMessagingService
 from channels.testing import WebsocketCommunicator
 from channels.db import database_sync_to_async
-from users.consumers import UserStatusConsumer
+from users.consumers import WebsocketConsumer
 import redis
 import json
 
@@ -287,7 +287,7 @@ class UserStatusConsumerTest(TestCase):
     
     async def test_websocket_connect_authenticated(self):
         """Test WebSocket connection with authenticated user"""
-        communicator = WebsocketCommunicator(UserStatusConsumer.as_asgi(), "/ws/user/")
+        communicator = WebsocketCommunicator(WebsocketConsumer.as_asgi(), "/ws/user/")
         communicator.scope['user'] = self.user
         
         with patch('users.services.async_user_online_service') as mock_service:
@@ -306,7 +306,7 @@ class UserStatusConsumerTest(TestCase):
         """Test WebSocket connection with unauthenticated user"""
         from django.contrib.auth.models import AnonymousUser
         
-        communicator = WebsocketCommunicator(UserStatusConsumer.as_asgi(), "/ws/user/")
+        communicator = WebsocketCommunicator(WebsocketConsumer.as_asgi(), "/ws/user/")
         communicator.scope['user'] = AnonymousUser()
         
         connected, subprotocol = await communicator.connect()
@@ -314,7 +314,7 @@ class UserStatusConsumerTest(TestCase):
     
     async def test_ping_pong(self):
         """Test ping/pong functionality"""
-        communicator = WebsocketCommunicator(UserStatusConsumer.as_asgi(), "/ws/user/")
+        communicator = WebsocketCommunicator(WebsocketConsumer.as_asgi(), "/ws/user/")
         communicator.scope['user'] = self.user
         
         with patch('users.services.async_user_online_service') as mock_service:
@@ -339,7 +339,7 @@ class UserStatusConsumerTest(TestCase):
     
     async def test_get_status(self):
         """Test getting current status"""
-        communicator = WebsocketCommunicator(UserStatusConsumer.as_asgi(), "/ws/user/")
+        communicator = WebsocketCommunicator(WebsocketConsumer.as_asgi(), "/ws/user/")
         communicator.scope['user'] = self.user
         
         with patch('users.services.async_user_online_service') as mock_service:
@@ -365,7 +365,7 @@ class UserStatusConsumerTest(TestCase):
     
     async def test_send_message_to_user(self):
         """Test sending message to another user"""
-        communicator = WebsocketCommunicator(UserStatusConsumer.as_asgi(), "/ws/user/")
+        communicator = WebsocketCommunicator(WebsocketConsumer.as_asgi(), "/ws/user/")
         communicator.scope['user'] = self.user
         
         with patch('users.services.async_user_online_service') as mock_service:
@@ -396,7 +396,7 @@ class UserStatusConsumerTest(TestCase):
     async def test_broadcast_admin_only(self):
         """Test that broadcast is admin only"""
         # Test with regular user (should fail)
-        communicator = WebsocketCommunicator(UserStatusConsumer.as_asgi(), "/ws/user/")
+        communicator = WebsocketCommunicator(WebsocketConsumer.as_asgi(), "/ws/user/")
         communicator.scope['user'] = self.user
         
         with patch('users.services.async_user_online_service') as mock_service:
@@ -424,7 +424,7 @@ class UserStatusConsumerTest(TestCase):
     
     async def test_broadcast_admin_success(self):
         """Test that admin can broadcast"""
-        communicator = WebsocketCommunicator(UserStatusConsumer.as_asgi(), "/ws/user/")
+        communicator = WebsocketCommunicator(WebsocketConsumer.as_asgi(), "/ws/user/")
         communicator.scope['user'] = self.admin_user
         
         with patch('users.services.async_user_online_service') as mock_service:
@@ -452,7 +452,7 @@ class UserStatusConsumerTest(TestCase):
     
     async def test_join_leave_group(self):
         """Test joining and leaving groups"""
-        communicator = WebsocketCommunicator(UserStatusConsumer.as_asgi(), "/ws/user/")
+        communicator = WebsocketCommunicator(WebsocketConsumer.as_asgi(), "/ws/user/")
         communicator.scope['user'] = self.user
         
         with patch('users.services.async_user_online_service') as mock_service:
@@ -490,7 +490,7 @@ class UserStatusConsumerTest(TestCase):
     
     async def test_invalid_group_name(self):
         """Test joining group with invalid name"""
-        communicator = WebsocketCommunicator(UserStatusConsumer.as_asgi(), "/ws/user/")
+        communicator = WebsocketCommunicator(WebsocketConsumer.as_asgi(), "/ws/user/")
         communicator.scope['user'] = self.user
         
         with patch('users.services.async_user_online_service') as mock_service:
@@ -516,7 +516,7 @@ class UserStatusConsumerTest(TestCase):
     
     async def test_unknown_message_type(self):
         """Test handling unknown message type"""
-        communicator = WebsocketCommunicator(UserStatusConsumer.as_asgi(), "/ws/user/")
+        communicator = WebsocketCommunicator(WebsocketConsumer.as_asgi(), "/ws/user/")
         communicator.scope['user'] = self.user
         
         with patch('users.services.async_user_online_service') as mock_service:
