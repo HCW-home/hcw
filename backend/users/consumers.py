@@ -1,6 +1,7 @@
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from .services import async_user_online_service
 import logging
+from django.contrib.auth import get_user_model
 
 logger = logging.getLogger(__name__)
 
@@ -250,7 +251,6 @@ class WebsocketConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
         
         try:
             # Get sender user info
-            from django.contrib.auth import get_user_model
             User = get_user_model()
             sender = await User.objects.aget(id=self.user_id)
             
@@ -291,7 +291,6 @@ class WebsocketConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
         - message_type: Optional type of message (default: 'system_broadcast')
         """
         # Check if user is staff/admin
-        from django.contrib.auth import get_user_model
         User = get_user_model()
         try:
             user = await User.objects.aget(id=self.user_id)

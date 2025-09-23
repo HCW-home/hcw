@@ -106,9 +106,6 @@ class Participant(models.Model):
         blank=True,
     )
 
-# auth_token and is_auth_token_used fields moved to User model
-    verification_code = models.IntegerField(null=True, blank=True)
-
     is_invited = models.BooleanField(default=True)
     is_confirmed = models.BooleanField(default=False)
 

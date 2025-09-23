@@ -105,6 +105,7 @@ class User(AbstractUser):
     temporary = models.BooleanField(default=False, help_text="Indicates if this is a temporary user created for appointments")
     appointment_auth_token = models.CharField(max_length=256, blank=True, help_text="Authentication token for appointment access")
     is_appointment_auth_token_used = models.BooleanField(default=False, help_text="Whether the appointment auth token has been used before")
+    verification_code = models.IntegerField(null=True, blank=True)
 
     def send_user_notification(self, title, message) -> FirebaseResponseDict:
         # Docs https://fcm-django.readthedocs.io/en/latest/

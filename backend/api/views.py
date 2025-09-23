@@ -6,7 +6,6 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from consultations.models import Participant
 from users.models import User
-from django.contrib.auth.models import AnonymousUser
 from drf_spectacular.utils import extend_schema
 import secrets
 import string
@@ -50,8 +49,7 @@ class AnonymousTokenAuthView(APIView):
                         'example': {
                             'access': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...',
                             'refresh': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...',
-                            'participant_id': 123,
-                            'is_anonymous': True
+                            'user_id': 123
                         }
                     }
                 }
@@ -116,17 +114,17 @@ class AnonymousTokenAuthView(APIView):
 
             # Get the participant for this user (assuming one participant per user for now)
             try:
-                participant = Participant.objects.get(user=user)
+                Participant.objects.get(user=user)
             except Participant.DoesNotExist:
                 return Response({'error': 'No participant found for this auth token'}, status=status.HTTP_401_UNAUTHORIZED)
 
             if user.is_appointment_auth_token_used:
                 # Token has been used, verification code is required
                 if not verification_code:
-                    # Generate and save verification code on participant
-                    participant.verification_code = int(''.join(
+                    # Generate and save verification code on user
+                    user.verification_code = int(''.join(
                         secrets.choice(string.digits) for _ in range(6)))
-                    participant.save()
+                    user.save()
 
                     return Response({
                         'requires_verification': True,
@@ -134,33 +132,25 @@ class AnonymousTokenAuthView(APIView):
                     }, status=status.HTTP_202_ACCEPTED)
 
                 # Verify the provided code
-                if int(participant.verification_code) != int(verification_code):
+                if int(user.verification_code) != int(verification_code):
                     return Response({'error': 'Invalid verification_code'}, status=status.HTTP_401_UNAUTHORIZED)
 
                 # Clear the verification code after successful verification
-                participant.verification_code = None
-                participant.save()
+                user.verification_code = None
+                user.save()
 
             else:
                 # First time using the token
                 user.is_appointment_auth_token_used = True
                 user.save()
 
-            # Generate JWT token for anonymous user
-            anonymous_user = AnonymousUser()
-            refresh = RefreshToken.for_user(anonymous_user)
-            refresh['participant_id'] = participant.id
-            refresh['user_id'] = user.id
-            refresh['is_anonymous'] = True
-            refresh['is_temporary'] = user.temporary
+            # Generate JWT token for the real user
+            refresh = RefreshToken.for_user(user)
 
             return Response({
                 'access': str(refresh.access_token),
                 'refresh': str(refresh),
-                'participant_id': participant.id,
-                'user_id': user.id,
-                'is_anonymous': True,
-                'is_temporary': user.temporary
+                'user_id': user.id
             }, status=status.HTTP_200_OK)
 
         except User.DoesNotExist:
