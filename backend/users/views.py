@@ -27,7 +27,7 @@ from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
 from dj_rest_auth.registration.serializers import SocialLoginSerializer
 from allauth.socialaccount.providers.openid_connect.views import OpenIDConnectOAuth2Adapter
-from rest_framework_simplejwt.authentication import JWTStatelessUserAuthentication
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 User = get_user_model()
 
@@ -135,7 +135,7 @@ class IsParticipant(BasePermission):
 
 
 class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
-    authentication_classes = [JWTStatelessUserAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsParticipant]
     pagination_class = UniversalPagination
     serializer_class = ConsultationSerializer
@@ -371,7 +371,7 @@ class UserNotificationsView(APIView):
 
 
 class UserAppointmentsView(APIView):
-    authentication_classes = [JWTStatelessUserAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsParticipant]
     pagination_class = UniversalPagination
     
