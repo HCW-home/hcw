@@ -59,6 +59,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
         "last_name",
         "is_active",
         "is_online",
+        "temporary",
         "timezone",
         "languages_display",
         "specialities_display",
@@ -70,7 +71,10 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
 
     fieldsets = BaseUserAdmin.fieldsets + (
         ('Additional Info', {
-            'fields': ("location", 'app_preferences', 'timezone', 'preferred_language', 'languages', 'specialities', 'main_organisation', 'organisations')
+            'fields': ('location', 'app_preferences', 'timezone', 'preferred_language', 'languages', 'specialities', 'main_organisation', 'organisations')
+        }),
+        ('Authentication', {
+            'fields': ('appointment_auth_token', 'is_appointment_auth_token_used', 'verification_code')
         }),
     )
 
