@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 from messaging.models import CommunicationMethod
 from datetime import time
+from users.models import User
 import re
 import uuid
 
@@ -126,32 +127,12 @@ class Participant(models.Model):
     def save(self, *args, **kwargs):
         # Create temporary user if no user is provided but email/phone exists
         if not self.user and (self.email or self.phone):
-            from users.models import User
-
-            # Create a temporary user
-            temp_user = User()
-            temp_user.temporary = True
-
-            if self.email:
-                # Check if user with this email already exists
-                existing_user = User.objects.filter(email=self.email).first()
-                if existing_user:
-                    self.user = existing_user
-                else:
-                    temp_user.email = self.email
-                    temp_user.username = self.email  # Use email as username
-            elif self.phone:
-                # Check if user with this phone already exists
-                existing_user = User.objects.filter(mobile_phone_number=self.phone).first()
-                if existing_user:
-                    self.user = existing_user
-                else:
-                    temp_user.mobile_phone_number = self.phone
-                    temp_user.username = f"temp_user_{str(uuid.uuid4())[:8]}"  # Generate unique username
-
-            if not self.user:  # Only save if we didn't find an existing user
-                temp_user.save()  # This will auto-generate auth_token
-                self.user = temp_user
+            
+            self.user, _ = User.objects.update_or_create(
+                email=self.email,
+                mobile_phone_number=self.phone,
+                defaults={'username': self.email if self.email else f"temp_user_{str(uuid.uuid4())[:8]}", 'temporary': True}
+            )
 
         super().save(*args, **kwargs)
 
