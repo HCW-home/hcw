@@ -5,19 +5,20 @@ How to run tasks manually
 celery -A core worker --loglevel=info
 
 # In a second console
-python3 manage.py shell
+./manage.py shell
 ```
 
 Create super user
 
 ```
-python3 manage.py createsuperuser
+./manage.py migrate
+./manage.py createsuperuser
 ```
 
 Add Doctor group role
 
 ```
-python3 manage.py loaddata initial/Groups.json
+./manage.py loaddata initial/Groups.json
 ```
 
 
@@ -25,7 +26,7 @@ python3 manage.py loaddata initial/Groups.json
 Dump Doctor group role
 
 ```
-python3 manage.py dumpdata auth.group --natural-foreign --natural-primary --indent 2 > initial/Groups.json
+./manage.py dumpdata auth.group --natural-foreign --natural-primary --indent 2 > initial/Groups.json
 ```
 
 
@@ -34,4 +35,10 @@ Get language string to translate
 ```
 ./manage.py makemessages --locale=fr --ignore='venv/*'
 ./manage.py compilemessages --ignore='venv/*'
+```
+
+Start the server
+
+```
+./manage.py reset_online_status ; ./manage.py runserver
 ```
