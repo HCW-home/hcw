@@ -127,16 +127,9 @@ def verify_magic_token(token, max_age=900):  # 15 minutes
     return serializer.loads(token, max_age=max_age)
 
 
-class IsParticipant(BasePermission):
-    """Allows access only to anonymous users."""
-
-    def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.participant_id
-
-
 class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsParticipant]
+    permission_classes = [IsAuthenticated]
     pagination_class = UniversalPagination
     serializer_class = ConsultationSerializer
 
@@ -372,7 +365,7 @@ class UserNotificationsView(APIView):
 
 class UserAppointmentsView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsParticipant]
+    permission_classes = [IsAuthenticated]
     pagination_class = UniversalPagination
     
     @extend_schema(
@@ -427,17 +420,6 @@ class UserAppointmentsView(APIView):
         description="Get paginated appointments where the authenticated user is a participant. Filter by appointment status. Default page size is 20, max 100."
     )
     def get(self, request):
-
-        if request.user.participant_id:
-            consultation = Participant.objects.get(
-                pk=int(request.user.participant_id)).appointment
-            serializer = AppointmentSerializer(consultation)
-            return Response({
-                'count': 1,
-                'next': None,
-                'previous': None,
-                'results': [serializer.data]
-            })
 
         """Get all appointments where the authenticated user is a participant."""
         # Get appointments where user is a participant
