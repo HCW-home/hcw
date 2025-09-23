@@ -39,10 +39,26 @@ class ConsultationMessageSerializer(serializers.ModelSerializer):
     created_by = serializers.HiddenField(
         default=serializers.CurrentUserDefault())
     # consultation = serializers.PrimaryKeyRelatedField(read_only=True)
-    
+    attachment = serializers.SerializerMethodField()
+
     class Meta:
         model = Message
         fields = ['id', 'content', 'attachment', 'created_at', 'created_by']
+
+    def get_attachment(self, obj):
+        """Return attachment metadata if attachment exists."""
+        if obj.attachment:
+            import mimetypes
+            import os
+
+            file_name = os.path.basename(obj.attachment.name)
+            mime_type = mimetypes.guess_type(obj.attachment.name)[0] or 'application/octet-stream'
+
+            return {
+                'file_name': file_name,
+                'mime_type': mime_type
+            }
+        return None
 
 class ConsultationSerializer(serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(read_only=True)

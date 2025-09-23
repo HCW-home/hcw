@@ -137,12 +137,6 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
         """Get consultations for the authenticated user."""
         user = self.request.user
 
-        if user.participant_id:
-            # For participants, get the consultation from their appointment
-            participant = Participant.objects.get(pk=int(user.participant_id))
-            consultation = participant.appointment.consultation
-            return Consultation.objects.filter(id=consultation.id)
-
         # For regular users, get consultations where they are the beneficiary
         consultations = Consultation.objects.filter(beneficiary=user)
 
@@ -286,6 +280,70 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
             return Response(serializer.data)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class MessageAttachmentView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        responses={
+            200: {
+                'type': 'object',
+                'properties': {
+                    'attachment': {'type': 'string', 'format': 'uri'}
+                },
+                'example': {"attachment": "/media/messages_attachment/file.pdf"}
+            },
+            404: {
+                'type': 'object',
+                'properties': {
+                    'detail': {'type': 'string'}
+                },
+                'example': {"detail": "Message not found or no attachment."}
+            },
+            403: {
+                'type': 'object',
+                'properties': {
+                    'detail': {'type': 'string'}
+                },
+                'example': {"detail": "You don't have permission to access this message."}
+            }
+        },
+        description="Get attachment for a specific message. User must have access to the consultation containing the message."
+    )
+    def get(self, request, message_id):
+        """Get attachment for a specific message if user has permission."""
+        try:
+            message = ConsultationMessage.objects.select_related('consultation').get(id=message_id)
+        except ConsultationMessage.DoesNotExist:
+            return Response(
+                {"detail": "Message not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Check if user has permission to access this consultation
+        consultation = message.consultation
+        user = request.user
+
+        # Check if user is related to the consultation (same logic as UserConsultationsViewSet)
+        if consultation.beneficiary != user:
+            return Response(
+                {"detail": "You don't have permission to access this message."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Check if message has an attachment
+        if not message.attachment:
+            return Response(
+                {"detail": "Message has no attachment."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Return the attachment URL
+        return Response({
+            'attachment': message.attachment.url if message.attachment else None
+        })
 
 
 class UserNotificationsView(APIView):
