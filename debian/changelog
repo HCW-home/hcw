@@ -1,3 +1,173 @@
+hcw (0.9.12) bookworm; urgency=medium
+
+  [ Olivier Bitsch ]
+  * Finishing magick link login
+  * Add 'my consultation' endpoint with filtering open/closed
+  * Add the missing pagination
+  * Adding notification endpoint for the user
+  * Adding phone number and prefered communication way
+  * Add booking slot availability
+  * Change route to notification etc..
+  * Add permission on Consultation endpoint
+  * Update readme and add initial data
+  * New endpoint to view appointments
+  * Persist jwt in swagger after a page refresh
+  * Adding participant in appointment response
+  * Adding health metric model
+  * Adding health metrics endpoint
+  * Fix sidebar permission based on django permissions
+  * Adding bookingslots endpoint
+  * Code cleanup
+  * Remove user_id from /api/user/bookingslots/
+  * Rename consultation Group to Queue
+  * Add missing sidebar and migration for queue renaming
+  * Break optional
+  * Fix Slot when BookingSlot overlaps
+  * Handle expiry date
+  * Handle user's timezone
+  * Update icons
+  * Add perferred organisation
+  * Adding many info to user profile
+  * Also adding languages
+  * Enable Translation middleware
+  * Working translation in Admin
+  * Translation in french
+  * Add languages and validation on participant
+  * Add phone validation
+  * Adding language selector admin unfold
+  * Add consultation type
+  * Fix consultation serializer
+  * Add users endpoint
+  * Add user endpoint view with search and fix group permission
+  * Add healthmetric
+  * Add organisations
+  * Adding Reason assignment method
+  * Rename related for request
+  * Fix typo
+  * Improve validation on Request
+  * Draft assignment method
+  * Add appointment assignement method
+  * expected_at now optional
+  * Handle queue and user assignment
+  * Add vscode celery debugger
+  * Add run practitioner interface
+  * Add run practitioner interface
+  * Adding test for consultation models
+  * Adding serializer tests
+  * Adding test for tasks
+  * Adding test view
+  * Adding test on assignments
+  * Finishing all tests
+  * Adding closed / opened filter
+  * Adding communication logic
+  * Code cleanup
+  * Adding translation model
+  * Fix mandatory field
+  * Update readonly fields
+  * Bump to lastest django and unfold release
+  * Update some stuff in user model
+  * Improve the org form
+  * Change list user
+  * Add celery beats
+  * Few user fix and addition
+  * Squashing migration
+  * Squashing migration
+  * Big cleanup
+  * Cleanup unused configuration
+  * Update statifcs files
+  * Cleanup files
+  * Ignoring upload files
+  * Fix broken migration
+  * Adding terms editor
+  * Track if user is online
+  * Use location django module
+  * Fix field renaming
+  * Override dashboard home page
+  * Adding nice dashboard
+  * Improve dashboard
+  * Add import/export users feature
+  * Simply communication method
+  * Cleanup providers before rewrite
+  * Big refactor for communication
+  * Draft providers
+  * Now having clean providers module
+  * Make all fields optionals
+  * Make all fields dynamics
+  * Small tweaks
+  * Finishing method
+  * Register terms for translation
+  * Introducing templates
+  * Add social network in admin
+  * Add mfa auth
+  * Finishing openid connect API
+  * Fix model saving
+  * Update admin for messages
+  * Improve label
+  * Notify users on consultation event
+  * Fix package list
+  * Fix with compatibility issue with allauth and mfa (now disabled) - add presence endpoint on appointment
+  * Commit the missing update requirement
+  * ecdsa update
+  * Fix protobuf
+  * Remove valid_until for term since no logic in place yet
+  * Add participant display_name
+  * Add anonymous call
+  * Authentication code
+  * Add Participant auth
+  * Add messages on user consultation
+  * Template can now support several communication method
+  * Add active in table
+  * Add manual assignment method
+  * Add prescription
+  * Fix consultation endpoints
+  * Update endpoints
+  * Add specialities
+  * Rewrite consultation permission for endpoints
+  * Fix requirements
+  * Update the way to get user timezone
+  * Model is required for template
+  * Redering template with obj
+  * Improve help text
+  * Return attributes used by jinja
+  * Tasks and validation flow
+  * Finishing validation logic
+  * Model is optional
+  * Cleanup
+  * Handle prefix in admin and model
+  * Cleanup
+  * Phone now match prefix
+  * Add template rendering example
+  * Remove useless name and description
+  * Show warning when missing combinaison
+  * Cleanup endpoints
+  * Add more validation on email
+  * Temporary user created
+  * Force user mapping in participant
+  * Change user JWT Auth
+  * Move verification code field
+  * Don't reset online status at startup time
+  * Update readme
+  * Admin temporary
+  * Fix permission to get self appintment and consultation
+  * Update attachment way
+  * Adding few additional info
+  * Commit for UserOnline
+
+  [ Gor Grigoryan ]
+  * add  practitioner auth pages
+  * add test page
+  * add consultatin detail and user profile
+  * availablity ui and consultation form
+  * fix consultation form
+  * imporove sidebar
+  * connect user profile and edit ednpoint
+  * imporove profile view and update
+  * imporove consultation detail
+  * updae dependencies
+  * add patient app basic screens, tabs and navigation
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Thu, 13 Nov 2025 16:17:55 +0100
+
 hcw (0.9.11) bookworm; urgency=medium
 
   * Adding Slot in Admin + various schema change
