@@ -6,7 +6,6 @@ dj-rest-auth
 Django
 django-allauth
 django-appconf
-django-appconf
 django-celery-beat
 django-celery-results
 django-cors-headers
