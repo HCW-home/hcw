@@ -1,3 +1,11 @@
+hcw (0.9.13) bookworm; urgency=medium
+
+  * Add back Makefile for practionner interface
+  * Removing useless orgs
+  * Remove again
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Thu, 13 Nov 2025 16:40:47 +0100
+
 hcw (0.9.12) bookworm; urgency=medium
 
   [ Olivier Bitsch ]
