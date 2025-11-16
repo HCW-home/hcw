@@ -74,6 +74,11 @@ class User(AbstractUser):
     picture = models.ImageField(
         upload_to='users/', blank=True, null=True)
 
+    job_title = models.CharField(
+        max_length=200, blank=True, null=True,
+        help_text="Job title or professional designation"
+    )
+
     languages = models.ManyToManyField(Language, blank=True)
 
     preferred_language = models.CharField(
