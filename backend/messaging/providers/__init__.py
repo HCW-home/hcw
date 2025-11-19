@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 __all__: List[str] = []
 
 
-class BaseProvider(ABC):
+class BaseMessagingProvider(ABC):
     """
     Abstract base class for messaging providers.
     All messaging providers must implement this interface.
@@ -71,7 +71,7 @@ class BaseProvider(ABC):
         """
 
 
-MAIN_CLASSES: Dict[str, Type[BaseProvider]] = {}
+MAIN_CLASSES: Dict[str, Type[BaseMessagingProvider]] = {}
 MAIN_DISPLAY_NAMES: List[Tuple[str, str]] = []
 
 # __path__ is defined for packages; iter_modules lists names in this package dir
@@ -83,7 +83,7 @@ for _, module_name, _ in iter_modules(__path__):
     __all__.append(module_name)
     
     # Look for Main class that inherits from BaseProvider
-    if hasattr(module, 'Main') and issubclass(module.Main, BaseProvider):
+    if hasattr(module, 'Main') and issubclass(module.Main, BaseMessagingProvider):
         provider_class = module.Main
         MAIN_CLASSES[module_name] = provider_class
         MAIN_DISPLAY_NAMES.append((module_name, provider_class.display_name))

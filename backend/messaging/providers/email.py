@@ -1,4 +1,4 @@
-from . import BaseProvider
+from . import BaseMessagingProvider
 from django.utils.translation import gettext_lazy as _
 from django.core.mail import send_mail, get_connection
 from django.conf import settings
@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Tuple, Any
 if TYPE_CHECKING:
     from ..models import Message, MessageStatus, MessagingProvider
 
-class Main(BaseProvider):
+class Main(BaseMessagingProvider):
 
     display_name = _("Email over Django SMTP")
     communication_method = "email"

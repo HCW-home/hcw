@@ -11,7 +11,7 @@ from importlib import import_module
 from modeltranslation.utils import get_translation_fields
 from django.apps import apps
 from .abstracts import ModelCeleryAbstract
-from .providers import BaseProvider
+from .providers import BaseMessagingProvider
 from factory.django import DjangoModelFactory
 # Create your models here.
 from . import providers
@@ -111,7 +111,7 @@ class MessagingProvider(models.Model):
         return import_module(f"..providers.{self.name}", __name__)
 
     @property
-    def instance(self) -> BaseProvider:
+    def instance(self) -> BaseMessagingProvider:
         return self.module.Main(self)
 
     def clean(self):

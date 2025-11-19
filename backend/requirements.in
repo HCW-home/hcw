@@ -29,4 +29,4 @@ psycopg
 itsdangerous
 Pillow
 factory-boy
-janus-client @ git+https://github.com/olivierb2/python_janus_client@92c406fe6b9504650b62fcaf415d4b74b6ad7ddf
+livekit-api

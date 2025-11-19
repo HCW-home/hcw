@@ -1,4 +1,4 @@
-from . import BaseProvider
+from . import BaseMessagingProvider
 from typing import TYPE_CHECKING, Tuple, Any
 import requests
 import hashlib
@@ -7,7 +7,7 @@ import time
 if TYPE_CHECKING:
     from ..models import Message, MessageStatus, MessagingProvider
 
-class Main(BaseProvider):
+class Main(BaseMessagingProvider):
 
     display_name = "Ovh SMS"
     communication_method = "sms"

@@ -1,4 +1,4 @@
-from . import BaseProvider
+from . import BaseMessagingProvider
 from typing import TYPE_CHECKING, Tuple, Any, Dict
 import requests
 import base64
@@ -10,7 +10,7 @@ class ProviderException(Exception):
 if TYPE_CHECKING:
     from ..models import Message, TemplateValidationStatus, TemplateValidation
 
-class Main(BaseProvider):
+class Main(BaseMessagingProvider):
 
     display_name = "Twilio WhatsApp"
     communication_method = "whatsapp"

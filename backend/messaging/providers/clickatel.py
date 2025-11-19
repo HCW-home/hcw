@@ -1,11 +1,11 @@
-from . import BaseProvider
+from . import BaseMessagingProvider
 from typing import TYPE_CHECKING, Tuple, Any
 import requests
 
 if TYPE_CHECKING:
     from ..models import Message, MessageStatus, MessagingProvider
 
-class Main(BaseProvider):
+class Main(BaseMessagingProvider):
 
     display_name = "Clickatel SMS"
     communication_method = "sms"
