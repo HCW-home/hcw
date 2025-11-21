@@ -119,47 +119,36 @@ export class ConsultationService {
     );
   }
 
-  getConsultationAppointment(
-    consultationId: number,
-    appointmentId: number
-  ): Observable<Appointment> {
+  getAppointment(appointmentId: number): Observable<Appointment> {
     return this.http.get<Appointment>(
-      `${this.apiUrl}/consultations/${consultationId}/appointment/${appointmentId}/`
+      `${this.apiUrl}/appointments/${appointmentId}/`
     );
   }
 
-  updateConsultationAppointment(
-    consultationId: number,
+  updateAppointment(
     appointmentId: number,
     data: Partial<CreateAppointmentRequest>
   ): Observable<Appointment> {
     return this.http.patch<Appointment>(
-      `${this.apiUrl}/consultations/${consultationId}/appointment/${appointmentId}/`,
+      `${this.apiUrl}/appointments/${appointmentId}/`,
       data
     );
   }
 
-  deleteConsultationAppointment(
-    consultationId: number,
-    appointmentId: number
-  ): Observable<void> {
+  deleteAppointment(appointmentId: number): Observable<void> {
     return this.http.delete<void>(
-      `${this.apiUrl}/consultations/${consultationId}/appointment/${appointmentId}/`
+      `${this.apiUrl}/appointments/${appointmentId}/`
     );
   }
 
-  cancelAppointment(
-    consultationId: number,
-    appointmentId: number
-  ): Observable<Appointment> {
+  cancelAppointment(appointmentId: number): Observable<Appointment> {
     return this.http.post<Appointment>(
-      `${this.apiUrl}/consultations/${consultationId}/appointment/${appointmentId}/cancel/`,
+      `${this.apiUrl}/appointments/${appointmentId}/cancel/`,
       {}
     );
   }
 
   getAppointmentParticipants(
-    consultationId: number,
     appointmentId: number,
     params?: { page?: number; page_size?: number }
   ): Observable<PaginatedResponse<Participant>> {
@@ -172,41 +161,43 @@ export class ConsultationService {
       });
     }
     return this.http.get<PaginatedResponse<Participant>>(
-      `${this.apiUrl}/consultations/${consultationId}/appointment/${appointmentId}/participants/`,
+      `${this.apiUrl}/appointments/${appointmentId}/participants/`,
       { params: httpParams }
     );
   }
 
   addAppointmentParticipant(
-    consultationId: number,
     appointmentId: number,
     data: CreateParticipantRequest
   ): Observable<Participant> {
     return this.http.post<Participant>(
-      `${this.apiUrl}/consultations/${consultationId}/appointment/${appointmentId}/participants/`,
+      `${this.apiUrl}/appointments/${appointmentId}/participants/`,
       data
     );
   }
 
-  updateAppointmentParticipant(
-    consultationId: number,
-    appointmentId: number,
+  getParticipant(participantId: number): Observable<Participant> {
+    return this.http.get<Participant>(
+      `${this.apiUrl}/participants/${participantId}/`
+    );
+  }
+
+  updateParticipant(
     participantId: number,
     data: Partial<CreateParticipantRequest>
   ): Observable<Participant> {
     return this.http.patch<Participant>(
-      `${this.apiUrl}/consultations/${consultationId}/appointment/${appointmentId}/participants/${participantId}/`,
+      `${this.apiUrl}/participants/${participantId}/`,
       data
     );
   }
 
   removeAppointmentParticipant(
-    consultationId: number,
     appointmentId: number,
     participantId: number
   ): Observable<void> {
     return this.http.delete<void>(
-      `${this.apiUrl}/consultations/${consultationId}/appointment/${appointmentId}/participants/${participantId}/`
+      `${this.apiUrl}/participants/${participantId}/`
     );
   }
 

@@ -6,6 +6,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { ConsultationService } from '../../../../core/services/consultation.service';
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { ValidationService } from '../../../../core/services/validation.service';
+import { LoggerService } from '../../../../core/services/logger.service';
 import {
   BookingSlot,
   CreateBookingSlot
@@ -102,7 +103,8 @@ export class Availability implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private consultationService: ConsultationService,
     private toasterService: ToasterService,
-    private validationService: ValidationService
+    private validationService: ValidationService,
+    private logger: LoggerService
   ) {
     this.scheduleForm = this.fb.group({
       start_time: ['08:00', [Validators.required]],
@@ -164,7 +166,7 @@ export class Availability implements OnInit, OnDestroy {
           }
         },
         error: (error) => {
-          console.error('Error loading booking slots:', error);
+          this.logger.error('Error loading booking slots:', error);
           this.isLoading.set(false);
           this.toasterService.show('error', 'Error loading availability');
         }
@@ -223,7 +225,7 @@ export class Availability implements OnInit, OnDestroy {
             this.loadBookingSlots();
           },
           error: (error) => {
-            console.error('Error saving schedule:', error);
+            this.logger.error('Error saving schedule:', error);
             this.isSaving.set(false);
             this.toasterService.show('error', 'Error saving schedule');
           }
@@ -309,7 +311,7 @@ export class Availability implements OnInit, OnDestroy {
             this.loadBookingSlots();
           },
           error: (error) => {
-            console.error('Error saving time slot:', error);
+            this.logger.error('Error saving time slot:', error);
             this.isSaving.set(false);
             this.toasterService.show('error', 'Error saving time slot');
           }
@@ -330,7 +332,7 @@ export class Availability implements OnInit, OnDestroy {
             this.loadBookingSlots();
           },
           error: (error) => {
-            console.error('Error deleting time slot:', error);
+            this.logger.error('Error deleting time slot:', error);
             this.toasterService.show('error', 'Error deleting time slot');
           }
         });

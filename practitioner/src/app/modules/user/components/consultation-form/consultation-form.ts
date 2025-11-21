@@ -15,7 +15,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { forkJoin, Subject, takeUntil } from 'rxjs';
+import { forkJoin, Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 
 import { ConsultationService } from '../../../../core/services/consultation.service';
 import { ToasterService } from '../../../../core/services/toaster.service';
@@ -74,7 +74,9 @@ export class ConsultationForm implements OnInit, OnDestroy {
   queues = signal<Queue[]>([]);
   isLoading = signal(false);
   isSaving = signal(false);
+  isAutoSaving = signal(false);
   formReady = signal(false);
+  lastSaved = signal<Date | null>(null);
 
   consultationForm: FormGroup;
 
@@ -155,17 +157,14 @@ export class ConsultationForm implements OnInit, OnDestroy {
         this.mode = 'create';
       }
     });
+
+    this.setupAutoSave();
   }
 
   private initializeFormArray(): void {
     const appointmentGroup = this.createAppointmentFormGroup();
-    const participantGroup = this.fb.group({
-      email: ['', [Validators.email]],
-      phone: [''],
-      message_type: ['email', [Validators.required]],
-    });
-
-    (appointmentGroup.get('participants') as FormArray).push(participantGroup);
+    const participantsArray = appointmentGroup.get('participants') as FormArray;
+    this.addParticipantToFormArray(participantsArray);
     this.appointmentsFormArray.push(appointmentGroup);
     this.formReady.set(true);
   }
@@ -258,8 +257,23 @@ export class ConsultationForm implements OnInit, OnDestroy {
               end_expected_at: appointment.end_expected_at
                 ? this.formatDateTimeForInput(appointment.end_expected_at)
                 : '',
-              participants: appointment.participants || [],
             });
+
+            const participantsArray = appointmentGroup.get('participants') as FormArray;
+            if (appointment.participants && appointment.participants.length > 0) {
+              appointment.participants.forEach(participant => {
+                const participantGroup = this.fb.group({
+                  id: [participant.id],
+                  email: [participant.email || '', [Validators.email]],
+                  phone: [participant.phone || ''],
+                  message_type: [participant.message_type || 'email', [Validators.required]],
+                });
+                participantsArray.push(participantGroup);
+              });
+            } else {
+              this.addParticipantToFormArray(participantsArray);
+            }
+
             this.appointmentsFormArray.push(appointmentGroup);
           });
 
@@ -292,8 +306,30 @@ export class ConsultationForm implements OnInit, OnDestroy {
   }
 
   removeAppointment(index: number): void {
-    if (this.appointmentsFormArray.length > 1) {
+    const appointmentGroup = this.appointmentsFormArray.at(index) as FormGroup;
+    const appointmentId = appointmentGroup.get('id')?.value;
+
+    if (this.mode === 'edit' && appointmentId) {
+      if (confirm('Are you sure you want to delete this appointment? This action cannot be undone.')) {
+        this.consultationService
+          .deleteAppointment(appointmentId)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: () => {
+              this.appointmentsFormArray.removeAt(index);
+              this.toasterService.show('success', 'Appointment deleted successfully');
+            },
+            error: error => {
+              console.error('Error deleting appointment:', error);
+              this.toasterService.show('error', 'Error deleting appointment');
+            },
+          });
+      }
+    } else {
       this.appointmentsFormArray.removeAt(index);
+      if (this.appointmentsFormArray.length === 0) {
+        this.addAppointment();
+      }
     }
   }
 
@@ -304,13 +340,18 @@ export class ConsultationForm implements OnInit, OnDestroy {
   }
 
   addParticipantToAppointment(appointmentIndex: number): void {
+    const participantsArray = this.getParticipantsFormArray(appointmentIndex);
+    this.addParticipantToFormArray(participantsArray);
+  }
+
+  private addParticipantToFormArray(participantsArray: FormArray): void {
     const participantGroup = this.fb.group({
+      id: [''],
       email: ['', [Validators.email]],
       phone: [''],
       message_type: ['email', [Validators.required]],
     });
-
-    this.getParticipantsFormArray(appointmentIndex).push(participantGroup);
+    participantsArray.push(participantGroup);
   }
 
   removeParticipantFromAppointment(
@@ -318,9 +359,79 @@ export class ConsultationForm implements OnInit, OnDestroy {
     participantIndex: number
   ): void {
     const participantsArray = this.getParticipantsFormArray(appointmentIndex);
-    if (participantsArray.length > 1) {
+    const participantGroup = participantsArray.at(participantIndex) as FormGroup;
+    const participantId = participantGroup.get('id')?.value;
+    const appointmentGroup = this.appointmentsFormArray.at(appointmentIndex) as FormGroup;
+    const appointmentId = appointmentGroup.get('id')?.value;
+
+    if (this.mode === 'edit' && participantId && appointmentId) {
+      if (confirm('Are you sure you want to remove this participant?')) {
+        this.consultationService
+          .removeAppointmentParticipant(appointmentId, participantId)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: () => {
+              participantsArray.removeAt(participantIndex);
+              this.toasterService.show('success', 'Participant removed successfully');
+              if (participantsArray.length === 0) {
+                this.addParticipantToFormArray(participantsArray);
+              }
+            },
+            error: error => {
+              console.error('Error removing participant:', error);
+              this.toasterService.show('error', 'Error removing participant');
+            },
+          });
+      }
+    } else {
       participantsArray.removeAt(participantIndex);
+      if (participantsArray.length === 0) {
+        this.addParticipantToFormArray(participantsArray);
+      }
     }
+  }
+
+  private setupAutoSave(): void {
+    this.consultationForm.valueChanges
+      .pipe(
+        debounceTime(800),
+        distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr)),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => {
+        if (this.mode === 'edit' && this.consultationId && !this.isAutoSaving()) {
+          this.autoSaveConsultation();
+        }
+      });
+  }
+
+  private autoSaveConsultation(): void {
+    if (!this.consultationId || !this.consultationForm.valid) return;
+
+    const formValue = this.consultationForm.value;
+    const consultationData: Partial<CreateConsultationRequest> = {
+      title: formValue.title,
+      description: formValue.description || undefined,
+      group_id: formValue.group_id ? parseInt(formValue.group_id) : undefined,
+      beneficiary_id: formValue.beneficiary_id ? parseInt(formValue.beneficiary_id) : undefined,
+    };
+
+    this.isAutoSaving.set(true);
+
+    this.consultationService
+      .updateConsultation(this.consultationId, consultationData)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: consultation => {
+          this.consultation.set(consultation);
+          this.lastSaved.set(new Date());
+          this.isAutoSaving.set(false);
+        },
+        error: error => {
+          console.error('Error auto-saving consultation:', error);
+          this.isAutoSaving.set(false);
+        },
+      });
   }
 
   onSubmit(): void {
@@ -339,6 +450,63 @@ export class ConsultationForm implements OnInit, OnDestroy {
         'Please fill in all required fields correctly'
       );
     }
+  }
+
+  saveEditChanges(): void {
+    if (!this.consultationId) return;
+
+    if (!this.consultationForm.valid) {
+      this.validationService.validateAllFormFields(this.consultationForm);
+      this.toasterService.show('error', 'Please fill in all required fields correctly');
+      return;
+    }
+
+    this.isSaving.set(true);
+
+    const formValue = this.consultationForm.value;
+    const newAppointments = formValue.appointments?.filter((apt: any) => !apt.id && apt.scheduled_at) || [];
+
+    if (newAppointments.length > 0) {
+      this.createAppointmentsInEditMode(this.consultationId, newAppointments);
+    } else {
+      this.isSaving.set(false);
+      this.toasterService.show('success', 'No new appointments to save');
+    }
+  }
+
+  private createAppointmentsInEditMode(consultationId: number, appointments: any[]): void {
+    const appointmentRequests = appointments.map(apt => {
+      const appointmentData: CreateAppointmentRequest = {
+        type: apt.type || AppointmentType.ONLINE,
+        scheduled_at: new Date(apt.scheduled_at).toISOString(),
+        end_expected_at: apt.end_expected_at
+          ? new Date(apt.end_expected_at).toISOString()
+          : undefined,
+      };
+
+      return this.consultationService.createConsultationAppointment(
+        consultationId,
+        appointmentData
+      );
+    });
+
+    forkJoin(appointmentRequests)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: createdAppointments => {
+          this.toasterService.show(
+            'success',
+            `${createdAppointments.length} appointment(s) created successfully`
+          );
+          this.isSaving.set(false);
+          this.loadAppointments();
+        },
+        error: error => {
+          console.error('Error creating appointments:', error);
+          this.isSaving.set(false);
+          this.toasterService.show('error', 'Error creating some appointments');
+        },
+      });
   }
 
   createConsultation(): void {
@@ -362,7 +530,6 @@ export class ConsultationForm implements OnInit, OnDestroy {
             'Consultation created successfully'
           );
 
-          console.log();
           if (formValue.appointments?.length > 0) {
             this.createAppointments(consultation.id, formValue.appointments);
           } else {

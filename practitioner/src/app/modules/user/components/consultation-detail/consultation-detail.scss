@@ -28,6 +28,63 @@
     text-align: center;
   }
 
+  .consultation-content-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 24px;
+    align-items: start;
+
+    @media (max-width: 1200px) {
+      grid-template-columns: 1fr 350px;
+      gap: 20px;
+    }
+
+    @media (max-width: 968px) {
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+  }
+
+  .main-content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    min-width: 0;
+  }
+
+  .messages-sidebar {
+    position: sticky;
+    top: 24px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    max-height: calc(100vh - 120px);
+    display: flex;
+    flex-direction: column;
+
+    @media (max-width: 968px) {
+      position: static;
+      max-height: 600px;
+    }
+
+    .messages-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--Bluish-Gray-02);
+      background: var(--Bluish-Gray-01);
+    }
+
+    app-message-list {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+  }
+
   .consultation-info-card {
     background: white;
     border-radius: 12px;
@@ -240,6 +297,45 @@
     .participant-actions {
       display: flex;
       justify-content: flex-end;
+    }
+  }
+
+  .consultation-messages-section {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-top: 24px;
+    height: 500px;
+    overflow: hidden;
+  }
+
+  .video-call-section {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 24px;
+    overflow: hidden;
+
+    .video-call-invite {
+      padding: 48px 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      .invite-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 16px;
+        max-width: 500px;
+      }
+    }
+
+    .video-call-active {
+      min-height: 600px;
+      display: flex;
+      flex-direction: column;
     }
   }
 }

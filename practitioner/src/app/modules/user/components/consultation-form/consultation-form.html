@@ -102,15 +102,13 @@
                       <app-typography [variant]="TypographyTypeEnum['body-l-semibold']">
                         Appointment {{ i + 1 }}
                       </app-typography>
-                      @if (appointmentsFormArray.length > 1) {
-                        <app-button
-                          text="Remove"
-                          leftIcon="delete"
-                          [size]="ButtonSizeEnum.small"
-                          [style]="ButtonStyleEnum.text"
-                          (buttonClick)="removeAppointment(i)">
-                        </app-button>
-                      }
+                      <app-button
+                        text="Remove"
+                        leftIcon="delete"
+                        [size]="ButtonSizeEnum.small"
+                        [style]="ButtonStyleEnum.text"
+                        (buttonClick)="removeAppointment(i)">
+                      </app-button>
                     </div>
 
                     <div class="appointment-form">
@@ -194,17 +192,15 @@
                               </div>
                             </div>
 
-                            @if (getParticipantsFormArray(i).length > 1) {
-                              <div class="participant-actions">
-                                <app-button
-                                  text="Remove"
-                                  leftIcon="delete"
-                                  [size]="ButtonSizeEnum.small"
-                                  [style]="ButtonStyleEnum.text"
-                                  (buttonClick)="removeParticipantFromAppointment(i, j)">
-                                </app-button>
-                              </div>
-                            }
+                            <div class="participant-actions">
+                              <app-button
+                                text="Remove"
+                                leftIcon="delete"
+                                [size]="ButtonSizeEnum.small"
+                                [style]="ButtonStyleEnum.text"
+                                (buttonClick)="removeParticipantFromAppointment(i, j)">
+                              </app-button>
+                            </div>
                           </div>
                         }
                       </div>
@@ -226,6 +222,24 @@
           </div>
 
           <div class="form-actions">
+            @if (mode === 'edit' && isAutoSaving()) {
+              <div class="auto-save-indicator">
+                <app-svg src="check" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--Success-05)'}"></app-svg>
+                <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Success-05)">
+                  Saving changes...
+                </app-typography>
+              </div>
+            }
+
+            @if (mode === 'edit' && lastSaved() && !isAutoSaving()) {
+              <div class="auto-save-indicator">
+                <app-svg src="check" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--Success-05)'}"></app-svg>
+                <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
+                  All changes saved
+                </app-typography>
+              </div>
+            }
+
             <app-button
               text="Cancel"
               [size]="ButtonSizeEnum.large"
@@ -233,15 +247,29 @@
               (buttonClick)="cancel()">
             </app-button>
 
-            <app-button
-              [text]="mode === 'create' ? 'Create Consultation' : 'Update Consultation'"
-              [leftIcon]="mode === 'create' ? 'plus' : 'check'"
-              [size]="ButtonSizeEnum.large"
-              [style]="ButtonStyleEnum.primary"
-              [disabled]="isSaving()"
-              [loading]="isSaving()"
-              (buttonClick)="onSubmit()">
-            </app-button>
+            @if (mode === 'create') {
+              <app-button
+                text="Create Consultation"
+                leftIcon="plus"
+                [size]="ButtonSizeEnum.large"
+                [style]="ButtonStyleEnum.primary"
+                [disabled]="isSaving()"
+                [loading]="isSaving()"
+                (buttonClick)="onSubmit()">
+              </app-button>
+            }
+
+            @if (mode === 'edit') {
+              <app-button
+                text="Save Changes"
+                leftIcon="check"
+                [size]="ButtonSizeEnum.large"
+                [style]="ButtonStyleEnum.primary"
+                [disabled]="isSaving()"
+                [loading]="isSaving()"
+                (buttonClick)="saveEditChanges()">
+              </app-button>
+            }
           </div>
         </form>
       </div>

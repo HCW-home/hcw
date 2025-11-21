@@ -50,8 +50,10 @@
         </app-typography>
       </div>
     } @else if (consultation()) {
-      <div class="consultation-info-card">
-        <div class="info-header">
+      <div class="consultation-content-wrapper">
+        <div class="main-content">
+          <div class="consultation-info-card">
+            <div class="info-header">
           <div class="title-section">
             <app-typography [variant]="TypographyTypeEnum['h2-semibold']">
               {{
@@ -153,6 +155,46 @@
           }
         </div>
       </div>
+
+      @if (!consultation()?.closed_at) {
+        <div class="video-call-section">
+          @if (!inCall()) {
+            <div class="video-call-invite">
+              <div class="invite-content">
+                <app-svg
+                  src="video"
+                  [svgStyle]="{
+                    'width.px': 48,
+                    'height.px': 48,
+                  }"></app-svg>
+                <app-typography [variant]="TypographyTypeEnum['h3-semibold']">
+                  Video Consultation
+                </app-typography>
+                <app-typography
+                  [variant]="TypographyTypeEnum['body-regular']"
+                  color="var(--Bluish-Gray-07)">
+                  Start a video call to consult with participants in real-time
+                </app-typography>
+                <app-button
+                  text="Join Video Call"
+                  leftIcon="video"
+                  [size]="ButtonSizeEnum.large"
+                  [style]="ButtonStyleEnum.primary"
+                  (buttonClick)="joinVideoCall()">
+                </app-button>
+              </div>
+            </div>
+          } @else {
+            <div class="video-call-active">
+              <app-video-call
+                [consultationId]="consultationId"
+                [displayName]="displayName"
+                (callEnded)="onCallEnded()">
+              </app-video-call>
+            </div>
+          }
+        </div>
+      }
 
       <div class="tab-content">
         <div class="appointments-section">
@@ -288,6 +330,21 @@
               (ngSubmit)="createAppointment()"
               class="appointment-form">
               <div class="form-row">
+                <app-select
+                  label="Appointment Type"
+                  formControlName="type"
+                  [options]="appointmentTypeOptions"
+                  [invalid]="
+                    (appointmentForm.get('type')?.invalid &&
+                      appointmentForm.get('type')?.touched) ||
+                    false
+                  "
+                  invalidMessage="Appointment type is required"
+                  class="full-width">
+                </app-select>
+              </div>
+
+              <div class="form-row">
                 <app-input
                   label="Scheduled Date & Time"
                   type="datetime-local"
@@ -327,6 +384,26 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <div class="messages-sidebar">
+        <div class="messages-header">
+          <app-typography [variant]="TypographyTypeEnum['h3-semibold']">
+            Messages
+          </app-typography>
+          @if (isWebSocketConnected()) {
+            <app-badge [type]="BadgeTypeEnum.green">Connected</app-badge>
+          } @else {
+            <app-badge [type]="BadgeTypeEnum.red">Disconnected</app-badge>
+          }
+        </div>
+        <app-message-list
+          [messages]="messages()"
+          [isConnected]="isWebSocketConnected()"
+          (sendMessage)="onSendMessage($event)">
+        </app-message-list>
+      </div>
+    </div>
     }
   </div>
 </app-page>

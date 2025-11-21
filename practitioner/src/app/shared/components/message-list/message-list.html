@@ -1,0 +1,47 @@
+<div class="message-list-container">
+  <div class="message-list-header">
+    <app-typography [variant]="TypographyTypeEnum['h6-semibold']">Messages</app-typography>
+    <span class="connection-status" [class.connected]="isConnected" [class.disconnected]="!isConnected">
+      {{ isConnected ? 'Connected' : 'Disconnected' }}
+    </span>
+  </div>
+
+  <div class="message-list-body">
+    @if (messages.length === 0) {
+      <div class="no-messages">
+        <app-typography [variant]="TypographyTypeEnum['body-regular']">No messages yet</app-typography>
+      </div>
+    } @else {
+      @for (message of messages; track message.id) {
+        <div class="message-item" [class.current-user]="message.isCurrentUser" [class.other-user]="!message.isCurrentUser">
+          <div class="message-header">
+            <app-typography [variant]="TypographyTypeEnum['body-s-semibold']">{{ message.username }}</app-typography>
+            <app-typography [variant]="TypographyTypeEnum['body-xs-regular']" class="message-time">
+              {{ formatTime(message.timestamp) }}
+            </app-typography>
+          </div>
+          <div class="message-content">
+            <app-typography [variant]="TypographyTypeEnum['body-s-regular']">{{ message.message }}</app-typography>
+          </div>
+        </div>
+      }
+    }
+  </div>
+
+  <div class="message-list-footer">
+    <app-input
+      [(ngModel)]="newMessage"
+      [placeholder]="'Type a message...'"
+      [disabled]="!isConnected"
+      (keyup.enter)="onSendMessage()"
+    ></app-input>
+    <app-button
+      [size]="ButtonSizeEnum.medium"
+      [style]="ButtonStyleEnum.primary"
+      [disabled]="!newMessage.trim() || !isConnected"
+      (click)="onSendMessage()"
+    >
+      Send
+    </app-button>
+  </div>
+</div>

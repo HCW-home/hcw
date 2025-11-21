@@ -51,12 +51,100 @@
       } @else if (activeTab() === 'active') {
         <div class="consultations-grid">
           @for (consultation of activeConsultations; track consultation.id) {
-            <app-consultation-card
-              [consultation]="consultation"
-              [type]="'active'"
-              (joinConsultation)="joinConsultation($event)"
-              (viewDetails)="viewConsultationDetails($event)">
-            </app-consultation-card>
+            <div class="consultation-card">
+              <div class="card-header">
+                <div class="header-left">
+                  <app-typography [variant]="TypographyTypeEnum['body-l-semibold']">
+                    {{ consultation.title || 'Untitled Consultation' }}
+                  </app-typography>
+                  <app-badge [type]="BadgeTypeEnum.green">
+                    Active
+                  </app-badge>
+                </div>
+                <div class="card-actions">
+                  <app-button
+                    text="Edit"
+                    leftIcon="edit"
+                    [size]="ButtonSizeEnum.small"
+                    [style]="ButtonStyleEnum.text"
+                    (buttonClick)="editConsultation(consultation)">
+                  </app-button>
+                  <app-button
+                    text="View Details"
+                    leftIcon="arrow-right"
+                    [size]="ButtonSizeEnum.small"
+                    [style]="ButtonStyleEnum.primary"
+                    (buttonClick)="viewConsultationDetails(consultation)">
+                  </app-button>
+                </div>
+              </div>
+
+              <div class="card-body">
+                @if (consultation.description) {
+                  <div class="description">
+                    <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--Bluish-Gray-07)">
+                      {{ consultation.description }}
+                    </app-typography>
+                  </div>
+                }
+
+                <div class="consultation-info">
+                  <div class="info-row">
+                    <div class="info-item">
+                      <app-svg src="user" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--Bluish-Gray-06)'}"></app-svg>
+                      <div class="info-content">
+                        <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--Bluish-Gray-07)">
+                          Patient
+                        </app-typography>
+                        <app-typography [variant]="TypographyTypeEnum['body-s-medium']">
+                          {{ getBeneficiaryName(consultation) }}
+                        </app-typography>
+                      </div>
+                    </div>
+
+                    @if (consultation.group) {
+                      <div class="info-item">
+                        <app-svg src="users" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--Bluish-Gray-06)'}"></app-svg>
+                        <div class="info-content">
+                          <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--Bluish-Gray-07)">
+                            Team
+                          </app-typography>
+                          <app-typography [variant]="TypographyTypeEnum['body-s-medium']">
+                            {{ consultation.group.name }}
+                          </app-typography>
+                        </div>
+                      </div>
+                    }
+                  </div>
+
+                  <div class="info-row">
+                    <div class="info-item">
+                      <app-svg src="user-check" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--Bluish-Gray-06)'}"></app-svg>
+                      <div class="info-content">
+                        <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--Bluish-Gray-07)">
+                          Assigned To
+                        </app-typography>
+                        <app-typography [variant]="TypographyTypeEnum['body-s-medium']">
+                          {{ getOwnerName(consultation) }}
+                        </app-typography>
+                      </div>
+                    </div>
+
+                    <div class="info-item">
+                      <app-svg src="calendar" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--Bluish-Gray-06)'}"></app-svg>
+                      <div class="info-content">
+                        <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--Bluish-Gray-07)">
+                          Created
+                        </app-typography>
+                        <app-typography [variant]="TypographyTypeEnum['body-s-medium']">
+                          {{ formatDate(consultation.created_at) }}
+                        </app-typography>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           } @empty {
             <div class="empty-state">
               <app-svg src="calendar" [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
@@ -64,7 +152,7 @@
                 No active consultations
               </app-typography>
               <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-07)">
-                Your upcoming and ongoing consultations will appear here
+                Your active consultations will appear here
               </app-typography>
             </div>
           }
@@ -72,12 +160,95 @@
       } @else {
         <div class="consultations-grid">
           @for (consultation of pastConsultations; track consultation.id) {
-            <app-consultation-card
-              [consultation]="consultation"
-              [type]="'past'"
-              (viewDetails)="viewConsultationDetails($event)"
-              (scheduleFollowUp)="scheduleFollowUp($event)">
-            </app-consultation-card>
+            <div class="consultation-card past-card">
+              <div class="card-header">
+                <div class="header-left">
+                  <app-typography [variant]="TypographyTypeEnum['body-l-semibold']">
+                    {{ consultation.title || 'Untitled Consultation' }}
+                  </app-typography>
+                  <app-badge [type]="BadgeTypeEnum.gray">
+                    Closed
+                  </app-badge>
+                </div>
+                <div class="card-actions">
+                  <app-button
+                    text="View Details"
+                    leftIcon="report"
+                    [size]="ButtonSizeEnum.small"
+                    [style]="ButtonStyleEnum.stroke"
+                    (buttonClick)="viewConsultationDetails(consultation)">
+                  </app-button>
+                </div>
+              </div>
+
+              <div class="card-body">
+                @if (consultation.description) {
+                  <div class="description">
+                    <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--Bluish-Gray-07)">
+                      {{ consultation.description }}
+                    </app-typography>
+                  </div>
+                }
+
+                <div class="consultation-info">
+                  <div class="info-row">
+                    <div class="info-item">
+                      <app-svg src="user" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--Bluish-Gray-06)'}"></app-svg>
+                      <div class="info-content">
+                        <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--Bluish-Gray-07)">
+                          Patient
+                        </app-typography>
+                        <app-typography [variant]="TypographyTypeEnum['body-s-medium']">
+                          {{ getBeneficiaryName(consultation) }}
+                        </app-typography>
+                      </div>
+                    </div>
+
+                    @if (consultation.group) {
+                      <div class="info-item">
+                        <app-svg src="users" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--Bluish-Gray-06)'}"></app-svg>
+                        <div class="info-content">
+                          <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--Bluish-Gray-07)">
+                            Team
+                          </app-typography>
+                          <app-typography [variant]="TypographyTypeEnum['body-s-medium']">
+                            {{ consultation.group.name }}
+                          </app-typography>
+                        </div>
+                      </div>
+                    }
+                  </div>
+
+                  <div class="info-row">
+                    <div class="info-item">
+                      <app-svg src="user-check" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--Bluish-Gray-06)'}"></app-svg>
+                      <div class="info-content">
+                        <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--Bluish-Gray-07)">
+                          Assigned To
+                        </app-typography>
+                        <app-typography [variant]="TypographyTypeEnum['body-s-medium']">
+                          {{ getOwnerName(consultation) }}
+                        </app-typography>
+                      </div>
+                    </div>
+
+                    @if (consultation.closed_at) {
+                      <div class="info-item">
+                        <app-svg src="calendar" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--Bluish-Gray-06)'}"></app-svg>
+                        <div class="info-content">
+                          <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--Bluish-Gray-07)">
+                            Closed
+                          </app-typography>
+                          <app-typography [variant]="TypographyTypeEnum['body-s-medium']">
+                            {{ formatDate(consultation.closed_at) }}
+                          </app-typography>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
           } @empty {
             <div class="empty-state">
               <app-svg src="history" [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>

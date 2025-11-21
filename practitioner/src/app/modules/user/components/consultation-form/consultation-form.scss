@@ -186,6 +186,7 @@
       .form-actions {
         display: flex;
         justify-content: flex-end;
+        align-items: center;
         gap: 16px;
         margin-top: 32px;
         padding: 24px;
@@ -194,9 +195,25 @@
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         border: 1px solid var(--Bluish-Gray-02);
 
+        .auto-save-indicator {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-right: auto;
+          padding: 8px 12px;
+          background: var(--Success-01);
+          border-radius: 8px;
+        }
+
         @media (max-width: 768px) {
           flex-direction: column;
           gap: 12px;
+
+          .auto-save-indicator {
+            margin-right: 0;
+            width: 100%;
+            justify-content: center;
+          }
 
           app-button {
             width: 100%;
