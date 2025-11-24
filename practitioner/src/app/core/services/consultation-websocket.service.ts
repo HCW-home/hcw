@@ -61,7 +61,7 @@ export class ConsultationWebSocketService {
     this.consultationId = consultationId;
     this.stateSubject.next(WebSocketState.CONNECTING);
 
-    const wsUrl = `${environment.wsUrl}/consultation/${consultationId}/?token=${token}`;
+    const wsUrl = `${environment.wsUrl}/user/?token=${token}`;
 
     try {
       this.ws = new WebSocket(wsUrl);
@@ -76,6 +76,15 @@ export class ConsultationWebSocketService {
   disconnect(): void {
     this.clearReconnectTimer();
     this.reconnectAttempts = 0;
+
+    if (this.ws && this.ws.readyState === WebSocket.OPEN && this.consultationId) {
+      this.send({
+        type: 'leave_group',
+        data: {
+          group_name: `consultation_${this.consultationId}`
+        }
+      });
+    }
 
     if (this.ws) {
       this.ws.close(1000, 'Client disconnect');
@@ -143,7 +152,15 @@ export class ConsultationWebSocketService {
       console.log('Consultation WebSocket connected');
       this.stateSubject.next(WebSocketState.CONNECTED);
       this.reconnectAttempts = 0;
-      this.getParticipants();
+
+      if (this.consultationId) {
+        this.send({
+          type: 'join_group',
+          data: {
+            group_name: `consultation_${this.consultationId}`
+          }
+        });
+      }
     };
 
     this.ws.onmessage = (event: MessageEvent) => {
@@ -175,6 +192,11 @@ export class ConsultationWebSocketService {
   private handleMessage(message: ConsultationIncomingEvent): void {
     this.allEventsSubject.next(message);
 
+    if ('event' in message && message.event === 'consultation') {
+      console.log('Consultation event received:', message);
+      return;
+    }
+
     switch (message.type) {
       case 'participants':
         this.participantsSubject.next(message.data);
@@ -186,16 +208,19 @@ export class ConsultationWebSocketService {
 
       case 'participant_joined':
         this.participantJoinedSubject.next(message);
-        this.getParticipants();
         break;
 
       case 'participant_left':
         this.participantLeftSubject.next(message);
-        this.getParticipants();
         break;
 
       case 'appointment_updated':
         this.appointmentUpdatedSubject.next(message);
+        break;
+
+      case 'group_joined':
+      case 'group_left':
+        console.log('Group operation:', message.type, message.data);
         break;
 
       case 'error':

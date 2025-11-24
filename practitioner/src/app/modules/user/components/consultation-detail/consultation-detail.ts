@@ -420,27 +420,7 @@ export class ConsultationDetail implements OnInit, OnDestroy {
   }
 
   async joinVideoCall(): Promise<void> {
-    const consultation = this.consultation();
-    if (!consultation) return;
-
-    const owner = consultation.owned_by;
-    this.displayName = owner
-      ? `${owner.first_name} ${owner.last_name}`.trim() || owner.email
-      : 'Practitioner';
-
-    try {
-      await this.webrtcService.initializeMedia({
-        audio: true,
-        video: true,
-      });
-
-      await this.webrtcService.joinRoom(this.displayName);
-      await this.webrtcService.publishStream();
-
-      this.inCall.set(true);
-    } catch (error) {
-      this.toasterService.show('error', 'Failed to join video call');
-    }
+    this.toasterService.show('warning', 'Video call feature is not yet available');
   }
 
   onCallEnded(): void {

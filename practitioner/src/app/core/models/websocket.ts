@@ -234,6 +234,8 @@ export type ConsultationIncomingEvent =
   | ParticipantLeftEvent
   | AppointmentUpdatedEvent
   | JanusEventData
+  | GroupJoinedEvent
+  | GroupLeftEvent
   | ErrorEvent;
 
 export interface WebSocketConfig {
