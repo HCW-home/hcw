@@ -7,7 +7,7 @@
       leftIcon="close"
       [size]="ButtonSizeEnum.small"
       [style]="ButtonStyleEnum.text"
-      (buttonClick)="closeModal()">
+      (buttonClick)="onCloseModal()">
     </app-button>
   </div>
 
@@ -100,7 +100,7 @@
         text="Cancel"
         [size]="ButtonSizeEnum.medium"
         [style]="ButtonStyleEnum.stroke"
-        (buttonClick)="closeModal()">
+        (buttonClick)="onCloseModal()">
       </app-button>
 
       <app-button

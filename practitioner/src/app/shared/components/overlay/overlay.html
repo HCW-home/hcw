@@ -5,7 +5,9 @@
   class="overlay"
   animate.enter="overlay-enter"
   animate.leave="overlay-leave"
-  (click)="handleOutsideClick($event)">
+  (click)="handleOutsideClick($event)"
+  (keydown.enter)="handleOutsideClick($event)"
+  (keydown.escape)="handleOutsideClick($event)">
   <div class="overlay-content">
     @if (title()) {
       <div class="overlay-content-header">

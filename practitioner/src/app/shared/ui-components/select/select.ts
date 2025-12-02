@@ -42,7 +42,7 @@ export class Select implements ControlValueAccessor, OnChanges {
   createOptionLabel = input<string>('');
   createItem = output<boolean>();
 
-  value: any = null;
+  value: string | number | null = null;
   display = '';
   selectedValues: SelectOption[] = [];
   hoverIndex: number | null = null;
@@ -53,8 +53,8 @@ export class Select implements ControlValueAccessor, OnChanges {
 
   constructor(private elementRef: ElementRef<HTMLElement>) {}
 
-  private onChange = (v: any) => {};
-  private onTouched = () => {};
+  private onChange: (value: string | number | (string | number)[] | null) => void = () => undefined;
+  private onTouched: () => void = () => undefined;
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['options'] && !changes['options'].firstChange) {
@@ -62,21 +62,22 @@ export class Select implements ControlValueAccessor, OnChanges {
     }
   }
 
-  writeValue(obj: any): void {
+  writeValue(obj: string | number | (string | number)[] | null): void {
     if (this.multiSelect()) {
-      this.selectedValues = this.options().filter(o => obj?.includes(o.value));
+      const arr = Array.isArray(obj) ? obj : [];
+      this.selectedValues = this.options().filter(o => arr.includes(o.value));
     } else {
-      this.value = obj;
+      this.value = Array.isArray(obj) ? null : obj;
       const match = this.options().find(o => o.value === obj);
       this.display = match ? match.label : '';
     }
   }
 
-  registerOnChange(fn: any): void {
+  registerOnChange(fn: (value: string | number | (string | number)[] | null) => void): void {
     this.onChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(fn: () => void): void {
     this.onTouched = fn;
   }
 

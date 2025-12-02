@@ -52,7 +52,7 @@ export interface IUser {
   languages?: ILanguage[];
   language_ids?: number[];
 
-  app_preferences?: any;
+  app_preferences?: Record<string, unknown>;
   encrypted?: boolean;
   main_organisation?: IOrganisation;
   organisations?: IOrganisation[];

@@ -18,8 +18,8 @@ export class Typography {
   fontStyle = input<string>();
   letterSpacing = input<string>();
 
-  get styles(): Record<string, string> {
-    const s: Record<string, any> = {};
+  get styles(): Record<string, string | number | undefined> {
+    const s: Record<string, string | number | undefined> = {};
     if (this.color) {
       s['color'] = this.color();
     }

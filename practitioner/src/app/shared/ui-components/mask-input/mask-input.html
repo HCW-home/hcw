@@ -49,6 +49,8 @@
       <span
         class="right-icon pointer"
         (click)="togglePasswordVisibility()"
+        (keydown.enter)="togglePasswordVisibility()"
+        (keydown.space)="togglePasswordVisibility()"
         tabindex="0"
         role="button"
         aria-label="Toggle password visibility">

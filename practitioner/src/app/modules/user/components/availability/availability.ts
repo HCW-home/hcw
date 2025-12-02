@@ -217,7 +217,7 @@ export class Availability implements OnInit, OnDestroy {
 
       operation.pipe(takeUntil(this.destroy$))
         .subscribe({
-          next: (updatedSlot) => {
+          next: () => {
             this.toasterService.show('success',
               this.selectedSlot() ? 'Schedule updated successfully' : 'Schedule created successfully'
             );

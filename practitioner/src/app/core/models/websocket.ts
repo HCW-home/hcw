@@ -214,11 +214,11 @@ export interface JanusEventData {
     feed_id?: number;
     plugindata?: {
       data?: {
-        publishers?: Array<{
+        publishers?: {
           id: number;
           display: string;
           publisher?: boolean;
-        }>;
+        }[];
         unpublished?: number;
       };
     };

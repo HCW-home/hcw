@@ -9,5 +9,5 @@ import { SvgIconComponent } from 'angular-svg-icon';
 })
 export class Svg {
   src = input<string>();
-  svgStyle = input<Record<string, any> | null | undefined>();
+  svgStyle = input<Record<string, string | number> | null | undefined>();
 }

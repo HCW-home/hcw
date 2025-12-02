@@ -3,10 +3,11 @@ import {Button} from '../../../shared/ui-components/button/button';
 import {ButtonStateEnum, ButtonStyleEnum} from '../../../shared/constants/button';
 import {Router} from '@angular/router';
 import {RoutePaths} from '../../constants/routes';
+import {LanguageSelector} from '../../../shared/components/language-selector/language-selector';
 
 @Component({
   selector: 'app-header',
-  imports: [Button],
+  imports: [Button, LanguageSelector],
   templateUrl: './header.html',
   styleUrl: './header.scss',
 })

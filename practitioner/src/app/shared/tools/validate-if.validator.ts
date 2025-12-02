@@ -56,20 +56,6 @@ function setupRevalidation(control: AbstractControl, dependencyControlName: stri
   revalidationState.set(control, { setup: true, subscription });
   return subscription;
 }
-/**
- * Shallow comparison of form values (suitable for plain FormGroup values).
- */
-function compareObjects(a: any, b: any): boolean {
-  if (!a || !b) return a === b;
-  const aKeys = Object.keys(a);
-  const bKeys = Object.keys(b);
-  if (aKeys.length !== bKeys.length) return false;
-
-  for (const key of aKeys) {
-    if (a[key] !== b[key]) return false;
-  }
-  return true;
-}
 
 /**
  * Ensures at least one of the current control or another field has a value.

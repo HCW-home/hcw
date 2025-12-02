@@ -224,7 +224,6 @@
   }
 }
 
-// Responsive adjustments
 @media (max-width: 1200px) {
   .consultation-form-container {
     padding: 24px;
@@ -283,36 +282,13 @@
   }
 }
 
-// Form field styling
 .form-field {
   .form-label {
     margin-bottom: 8px;
   }
 }
 
-// Hover effects
-.form-card {
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  }
-}
-
-.appointment-section {
-  transition: all 0.3s ease;
-
-  &:hover {
-    border-color: var(--Primary-04);
-  }
-}
-
-.participant-form {
-  transition: all 0.3s ease;
-
-  &:hover {
-    border-color: var(--Primary-03);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  }
+.form-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }

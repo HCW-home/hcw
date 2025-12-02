@@ -66,12 +66,8 @@ export class MaskInput {
   value = '';
   disabled = false;
 
-  onChange: (value: string) => void = () => {
-    //
-  };
-  onTouched: () => void = () => {
-    //
-  };
+  onChange: (value: string) => void = () => undefined;
+  onTouched: () => void = () => undefined;
 
   onInput(event: Event): void {
     const newValue = (event.target as HTMLInputElement).value;
@@ -79,16 +75,16 @@ export class MaskInput {
     this.onChange(newValue);
   }
 
-  writeValue(obj: any): void {
+  writeValue(obj: string | null | undefined): void {
     this.maskDir.writeValue(obj);
   }
 
-  registerOnChange(fn: any): void {
+  registerOnChange(fn: (value: string) => void): void {
     this.onChange = fn;
     this.maskDir.registerOnChange(fn);
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(fn: () => void): void {
     this.onTouched = fn;
     this.maskDir.registerOnTouched(fn);
   }

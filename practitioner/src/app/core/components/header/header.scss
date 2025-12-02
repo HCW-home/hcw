@@ -5,4 +5,10 @@
   align-self: stretch;
   justify-content: space-between;
   background: var(--White-and-Black-01);
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
 }

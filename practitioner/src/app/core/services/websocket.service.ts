@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
-import { filter, map } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
 import {
   WebSocketState,
   WebSocketConfig,
-  WebSocketMessage,
   UserIncomingEvent,
   UserOutgoingMessage,
 } from '../models/websocket';
@@ -32,7 +31,6 @@ export class WebSocketService {
   public messages$: Observable<UserIncomingEvent> =
     this.messageSubject.asObservable();
 
-  constructor() {}
 
   connect(config: WebSocketConfig): void {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -32,7 +32,7 @@ import { AuthService } from '../../core/services/auth.service';
     IonText
   ]
 })
-export class LoginPage implements OnInit {
+export class LoginPage {
   loginForm: FormGroup;
   showPassword = false;
 
@@ -48,8 +48,6 @@ export class LoginPage implements OnInit {
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
   }
-
-  ngOnInit() {}
 
   togglePassword() {
     this.showPassword = !this.showPassword;

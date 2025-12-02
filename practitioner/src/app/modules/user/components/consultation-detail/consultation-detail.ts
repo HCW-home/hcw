@@ -169,7 +169,7 @@ export class ConsultationDetail implements OnInit, OnDestroy {
       this.loadParticipants(this.selectedAppointment()!);
     });
 
-    this.wsService.appointmentUpdated$.pipe(takeUntil(this.destroy$)).subscribe(event => {
+    this.wsService.appointmentUpdated$.pipe(takeUntil(this.destroy$)).subscribe(() => {
       this.toasterService.show('success', 'Appointment Updated', 'An appointment has been updated');
       this.loadAppointments();
     });

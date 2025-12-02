@@ -464,7 +464,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
     this.isSaving.set(true);
 
     const formValue = this.consultationForm.value;
-    const newAppointments = formValue.appointments?.filter((apt: any) => !apt.id && apt.scheduled_at) || [];
+    const newAppointments = formValue.appointments?.filter((apt: { id?: string; scheduled_at?: string }) => !apt.id && apt.scheduled_at) || [];
 
     if (newAppointments.length > 0) {
       this.createAppointmentsInEditMode(this.consultationId, newAppointments);
@@ -474,10 +474,10 @@ export class ConsultationForm implements OnInit, OnDestroy {
     }
   }
 
-  private createAppointmentsInEditMode(consultationId: number, appointments: any[]): void {
+  private createAppointmentsInEditMode(consultationId: number, appointments: { type?: string; scheduled_at: string; end_expected_at?: string }[]): void {
     const appointmentRequests = appointments.map(apt => {
       const appointmentData: CreateAppointmentRequest = {
-        type: apt.type || AppointmentType.ONLINE,
+        type: (apt.type as AppointmentType) || AppointmentType.ONLINE,
         scheduled_at: new Date(apt.scheduled_at).toISOString(),
         end_expected_at: apt.end_expected_at
           ? new Date(apt.end_expected_at).toISOString()
@@ -585,12 +585,12 @@ export class ConsultationForm implements OnInit, OnDestroy {
       });
   }
 
-  createAppointments(consultationId: number, appointments: any[]): void {
+  createAppointments(consultationId: number, appointments: { type?: string; scheduled_at: string; end_expected_at?: string }[]): void {
     const appointmentRequests = appointments
       .filter(apt => apt.scheduled_at)
       .map(apt => {
         const appointmentData: CreateAppointmentRequest = {
-          type: apt.type || AppointmentType.ONLINE,
+          type: (apt.type as AppointmentType) || AppointmentType.ONLINE,
           scheduled_at: new Date(apt.scheduled_at).toISOString(),
           end_expected_at: apt.end_expected_at
             ? new Date(apt.end_expected_at).toISOString()

@@ -1,5 +1,8 @@
 <header class="header">
   <div></div>
-  <app-button (buttonClick)="openProfile()" [style]="ButtonStyleEnum.stroke" [state]="ButtonStateEnum.secondary" text="Profile"
-              [leftIcon]="'profile'"></app-button>
+  <div class="header-actions">
+    <app-language-selector></app-language-selector>
+    <app-button (buttonClick)="openProfile()" [style]="ButtonStyleEnum.stroke" [state]="ButtonStateEnum.secondary" text="Profile"
+                [leftIcon]="'profile'"></app-button>
+  </div>
 </header>

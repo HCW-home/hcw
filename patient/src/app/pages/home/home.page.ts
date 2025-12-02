@@ -19,9 +19,6 @@ import {
   IonCard,
   IonCardContent,
   IonText,
-  IonList,
-  IonItem,
-  IonLabel,
   IonSpinner,
   NavController
 } from '@ionic/angular/standalone';
@@ -60,9 +57,6 @@ import { DoctorCardComponent } from '../../shared/components/doctor-card/doctor-
     IonCard,
     IonCardContent,
     IonText,
-    IonList,
-    IonItem,
-    IonLabel,
     IonSpinner,
     DoctorCardComponent
   ]

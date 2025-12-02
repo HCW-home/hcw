@@ -33,11 +33,11 @@ export class UserService {
   }
 
   searchUsers(query: string, page?: number, pageSize?: number): Observable<PaginatedResponse<IUser>> {
-    let params: any = {search: query};
-    if (page) params.page = page;
-    if (pageSize) params.page_size = pageSize;
+    const params: Record<string, string | number> = {search: query};
+    if (page) params['page'] = page;
+    if (pageSize) params['page_size'] = pageSize;
 
-    return this.http.get<any>(`${this.apiUrl}/user/`, {params});
+    return this.http.get<PaginatedResponse<IUser>>(`${this.apiUrl}/user/`, {params});
   }
 
   getLanguages(): Observable<ILanguage[]> {

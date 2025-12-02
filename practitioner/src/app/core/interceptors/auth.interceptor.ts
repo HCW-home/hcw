@@ -1,7 +1,7 @@
 import { HttpInterceptorFn, HttpRequest } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 
-export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, next) => {
+export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next) => {
   if (!req.url.startsWith(environment.apiUrl)) {
     return next(req);
   }

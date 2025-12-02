@@ -1,9 +1,9 @@
 import { HttpParams } from '@angular/common/http';
 
-export function toHttpParams(obj: Record<string, any>): HttpParams {
+export function toHttpParams(obj: Record<string, unknown>): HttpParams {
   let params = new HttpParams();
 
-  const appendParam = (key: string, value: any) => {
+  const appendParam = (key: string, value: unknown) => {
     const stringValue =
       value instanceof Date ? value.toISOString() : String(value);
     params = params.append(key, stringValue);
@@ -39,13 +39,13 @@ export function toFormData<T extends object>(data: Partial<T>): FormData {
     } else if (Array.isArray(value)) {
       value.forEach(v => {
         if (v !== null && v !== undefined) {
-          formData.append(`${key}[]`, v as any);
+          formData.append(`${key}[]`, String(v));
         }
       });
     } else if (typeof value === 'boolean') {
       formData.append(key, value.toString());
     } else {
-      formData.append(key, value as any);
+      formData.append(key, String(value));
     }
   });
 

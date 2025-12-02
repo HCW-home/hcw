@@ -1,0 +1,30 @@
+<div class="language-selector">
+  <button
+    type="button"
+    class="selector-trigger"
+    [class.open]="isOpen()"
+    (click)="toggleDropdown()"
+    (keydown.enter)="toggleDropdown()"
+    (keydown.escape)="isOpen.set(false)">
+    <app-svg src="svg/globe.svg" [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
+    <span class="current-lang">{{ currentLanguage?.code?.toUpperCase() }}</span>
+    <app-svg src="svg/chevron-down.svg" [svgStyle]="{'width.px': 14, 'height.px': 14}" class="chevron" [class.rotated]="isOpen()"></app-svg>
+  </button>
+
+  @if (isOpen()) {
+    <div class="dropdown-menu">
+      @for (lang of availableLanguages; track lang.code) {
+        <button
+          type="button"
+          class="dropdown-item"
+          [class.selected]="isSelected(lang)"
+          (click)="selectLanguage(lang)">
+          <span class="lang-name">{{ lang.nativeName }}</span>
+          @if (isSelected(lang)) {
+            <app-svg src="svg/check.svg" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+          }
+        </button>
+      }
+    </div>
+  }
+</div>

@@ -37,7 +37,7 @@ export class SlotModal {
   @Input() weekDays: WeekDay[] = [];
   @Input() isSaving = false;
 
-  @Output() close = new EventEmitter<void>();
+  @Output() closeModal = new EventEmitter<void>();
   @Output() save = new EventEmitter<void>();
 
   private validationService = inject(ValidationService);
@@ -46,8 +46,8 @@ export class SlotModal {
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
 
-  closeModal(): void {
-    this.close.emit();
+  onCloseModal(): void {
+    this.closeModal.emit();
   }
 
   saveSlot(): void {

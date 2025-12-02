@@ -23,7 +23,7 @@ export class Overlay {
     this.close();
   }
 
-  handleOutsideClick(event: MouseEvent) {
+  handleOutsideClick(event: Event) {
     if ((event.target as HTMLElement).classList.contains('overlay')) {
       this.close();
     }

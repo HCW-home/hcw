@@ -16,25 +16,25 @@ export class LoggerService {
     ? LogLevel.Warn
     : LogLevel.Debug;
 
-  error(message: string, ...args: any[]): void {
+  error(message: string, ...args: unknown[]): void {
     if (this.logLevel >= LogLevel.Error) {
       console.error(`[ERROR] ${message}`, ...args);
     }
   }
 
-  warn(message: string, ...args: any[]): void {
+  warn(message: string, ...args: unknown[]): void {
     if (this.logLevel >= LogLevel.Warn) {
       console.warn(`[WARN] ${message}`, ...args);
     }
   }
 
-  info(message: string, ...args: any[]): void {
+  info(message: string, ...args: unknown[]): void {
     if (this.logLevel >= LogLevel.Info) {
       console.info(`[INFO] ${message}`, ...args);
     }
   }
 
-  debug(message: string, ...args: any[]): void {
+  debug(message: string, ...args: unknown[]): void {
     if (this.logLevel >= LogLevel.Debug) {
       console.log(`[DEBUG] ${message}`, ...args);
     }

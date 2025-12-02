@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -32,7 +32,7 @@ import { AuthService } from '../../core/services/auth.service';
     IonText
   ]
 })
-export class RegisterPage implements OnInit {
+export class RegisterPage {
   registerForm: FormGroup;
   showPassword = false;
   showConfirmPassword = false;
@@ -53,8 +53,6 @@ export class RegisterPage implements OnInit {
       password2: ['', [Validators.required]]
     }, { validators: this.passwordMatchValidator });
   }
-
-  ngOnInit() {}
 
   passwordMatchValidator(form: FormGroup) {
     const password = form.get('password1');

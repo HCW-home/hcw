@@ -21,7 +21,6 @@ import {
   IonChip,
   IonProgressBar,
   IonAvatar,
-  IonSpinner,
   NavController,
   LoadingController,
   ToastController,
@@ -65,8 +64,7 @@ interface AppointmentSlot {
     IonTextarea,
     IonChip,
     IonProgressBar,
-    IonAvatar,
-    IonSpinner
+    IonAvatar
   ]
 })
 export class BookAppointmentPage implements OnInit {

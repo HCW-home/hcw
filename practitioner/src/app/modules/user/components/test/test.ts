@@ -1,6 +1,5 @@
 import { Component, OnInit, OnDestroy, signal, ViewChild, ElementRef, inject } from '@angular/core';
 import { Page } from '../../../../core/components/page/page';
-import { Breadcrumb } from '../../../../shared/components/breadcrumb/breadcrumb';
 import { Button } from '../../../../shared/ui-components/button/button';
 import { Typography } from '../../../../shared/ui-components/typography/typography';
 import { Svg } from '../../../../shared/ui-components/svg/svg';
@@ -44,8 +43,6 @@ export class Test implements OnInit, OnDestroy {
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
 
   private router = inject(Router);
-
-  constructor() {}
 
   ngOnInit() {
     this.updateSystemStatus();
