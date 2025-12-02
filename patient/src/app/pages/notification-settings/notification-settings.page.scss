@@ -1,6 +1,57 @@
 .notification-settings-content {
   --background: var(--app-background);
 
+  .push-notification-card {
+    margin: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    background: linear-gradient(135deg, var(--ion-color-primary-shade), var(--ion-color-primary));
+
+    ion-item {
+      --background: transparent;
+      --padding-start: 16px;
+      --padding-end: 16px;
+      --inner-padding-end: 0;
+
+      ion-icon {
+        font-size: 24px;
+        margin-right: 16px;
+        color: white;
+      }
+
+      .setting-title {
+        display: block;
+        font-size: 16px;
+        font-weight: 600;
+        color: white;
+        margin-bottom: 4px;
+      }
+
+      .setting-description {
+        display: block;
+        font-size: 14px;
+        line-height: 1.3;
+        color: rgba(255, 255, 255, 0.8);
+      }
+
+      ion-toggle {
+        --track-background: rgba(255, 255, 255, 0.3);
+        --track-background-checked: white;
+        --handle-background: white;
+        --handle-background-checked: var(--ion-color-primary);
+      }
+    }
+
+    .test-notification {
+      padding: 0 16px 16px;
+
+      ion-button {
+        --background: white;
+        --color: var(--ion-color-primary);
+        --border-color: white;
+      }
+    }
+  }
+
   .master-toggle-card {
     margin: 16px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);

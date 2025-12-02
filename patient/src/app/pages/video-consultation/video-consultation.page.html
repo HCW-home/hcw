@@ -1,0 +1,142 @@
+<ion-content class="video-consultation-content" [scrollY]="false" (click)="onVideoAreaTap()">
+  <div class="video-container">
+    <div class="remote-video-wrapper">
+      @if (callState === 'connected' && !remoteParticipant.isVideoOff) {
+        <video #remoteVideo autoplay playsinline class="remote-video"></video>
+      } @else {
+        <div class="video-placeholder">
+          <ion-avatar class="participant-avatar">
+            @if (remoteParticipant.avatar) {
+              <img [src]="remoteParticipant.avatar" alt="Participant">
+            } @else {
+              <div class="avatar-initials">{{ remoteParticipant.name.charAt(0) }}</div>
+            }
+          </ion-avatar>
+          <ion-text class="participant-name">{{ remoteParticipant.name }}</ion-text>
+          @if (callState !== 'connected') {
+            <ion-text class="status-message" color="light">{{ getCallStateMessage() }}</ion-text>
+            @if (callState === 'connecting' || callState === 'reconnecting') {
+              <ion-spinner name="crescent" color="light"></ion-spinner>
+            }
+          }
+        </div>
+      }
+
+      @if (remoteParticipant.isMuted && callState === 'connected') {
+        <div class="mute-indicator remote">
+          <ion-icon name="mic-off"></ion-icon>
+        </div>
+      }
+    </div>
+
+    <div class="local-video-wrapper" [class.video-off]="isVideoOff">
+      @if (!isVideoOff) {
+        <video #localVideo autoplay playsinline muted class="local-video"></video>
+      } @else {
+        <div class="local-video-placeholder">
+          <ion-icon name="videocam-off"></ion-icon>
+        </div>
+      }
+      @if (isAudioMuted) {
+        <div class="mute-indicator local">
+          <ion-icon name="mic-off"></ion-icon>
+        </div>
+      }
+    </div>
+
+    @if (showControls || callState !== 'connected') {
+      <div class="top-bar" @if (callState === 'connected') { [@fadeInOut] }>
+        <div class="call-info">
+          @if (callState === 'connected') {
+            <ion-chip color="success" class="duration-chip">
+              <ion-icon name="ellipse" class="recording-dot"></ion-icon>
+              <ion-text>{{ formattedDuration }}</ion-text>
+            </ion-chip>
+          }
+          @if (isScreenSharing) {
+            <ion-chip color="warning">
+              <ion-icon name="desktop-outline"></ion-icon>
+              <ion-text>Sharing</ion-text>
+            </ion-chip>
+          }
+        </div>
+        <div class="top-actions">
+          <ion-button fill="clear" color="light" (click)="switchCamera(); $event.stopPropagation()">
+            <ion-icon name="camera-reverse-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </div>
+      </div>
+
+      <div class="controls-bar" @if (callState === 'connected') { [@fadeInOut] }>
+        <div class="controls-wrapper">
+          <ion-button
+            [color]="isAudioMuted ? 'danger' : 'light'"
+            class="control-button"
+            (click)="toggleAudio(); $event.stopPropagation()">
+            <ion-icon [name]="isAudioMuted ? 'mic-off' : 'mic'" slot="icon-only"></ion-icon>
+          </ion-button>
+
+          <ion-button
+            [color]="isVideoOff ? 'danger' : 'light'"
+            class="control-button"
+            (click)="toggleVideo(); $event.stopPropagation()">
+            <ion-icon [name]="isVideoOff ? 'videocam-off' : 'videocam'" slot="icon-only"></ion-icon>
+          </ion-button>
+
+          <ion-button
+            color="danger"
+            class="control-button end-call"
+            (click)="endCall(); $event.stopPropagation()">
+            <ion-icon name="call" slot="icon-only"></ion-icon>
+          </ion-button>
+
+          <ion-button
+            [color]="isSpeakerOn ? 'light' : 'medium'"
+            class="control-button"
+            (click)="toggleSpeaker(); $event.stopPropagation()">
+            <ion-icon [name]="isSpeakerOn ? 'volume-high' : 'volume-mute'" slot="icon-only"></ion-icon>
+          </ion-button>
+
+          <ion-button
+            [color]="isScreenSharing ? 'primary' : 'light'"
+            class="control-button"
+            (click)="toggleScreenShare(); $event.stopPropagation()">
+            <ion-icon name="desktop-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </div>
+
+        <div class="secondary-controls">
+          <ion-button
+            fill="clear"
+            color="light"
+            class="secondary-button"
+            (click)="openChat(); $event.stopPropagation()">
+            <ion-icon name="chatbubble-outline" slot="start"></ion-icon>
+            Chat
+          </ion-button>
+        </div>
+      </div>
+    }
+
+    @if (callState === 'ended') {
+      <div class="call-ended-overlay">
+        <ion-icon name="checkmark-circle" color="success"></ion-icon>
+        <ion-text>Consultation Ended</ion-text>
+        <ion-text color="medium">Duration: {{ formattedDuration }}</ion-text>
+      </div>
+    }
+
+    @if (callState === 'failed') {
+      <div class="call-failed-overlay">
+        <ion-icon name="alert-circle" color="danger"></ion-icon>
+        <ion-text>Connection Failed</ion-text>
+        <ion-button fill="outline" color="light" (click)="initializeCall()">
+          Try Again
+        </ion-button>
+        <ion-button fill="clear" color="light" (click)="navCtrl.back()">
+          Go Back
+        </ion-button>
+      </div>
+    }
+  </div>
+</ion-content>

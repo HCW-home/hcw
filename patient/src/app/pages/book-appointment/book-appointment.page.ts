@@ -21,13 +21,18 @@ import {
   IonChip,
   IonProgressBar,
   IonAvatar,
+  IonSpinner,
   NavController,
   LoadingController,
   ToastController,
   AlertController
 } from '@ionic/angular/standalone';
-import { ApiService } from '../../core/services/api.service';
+import { DoctorService } from '../../core/services/doctor.service';
+import { SpecialityService } from '../../core/services/speciality.service';
+import { ConsultationService } from '../../core/services/consultation.service';
 import { Doctor } from '../../core/models/doctor.model';
+import { Reason } from '../../core/models/consultation.model';
+import { TimeSlot } from '../../core/models/booking.model';
 
 interface AppointmentSlot {
   time: string;
@@ -60,7 +65,8 @@ interface AppointmentSlot {
     IonTextarea,
     IonChip,
     IonProgressBar,
-    IonAvatar
+    IonAvatar,
+    IonSpinner
   ]
 })
 export class BookAppointmentPage implements OnInit {
@@ -68,6 +74,10 @@ export class BookAppointmentPage implements OnInit {
   totalSteps = 4;
   doctorId: string | null = null;
   selectedDoctor: Doctor | null = null;
+  reasons: Reason[] = [];
+  selectedReason: Reason | null = null;
+  isLoadingDoctor = false;
+  isLoadingSlots = false;
 
   appointmentData = {
     doctorId: null as number | null,
@@ -81,6 +91,7 @@ export class BookAppointmentPage implements OnInit {
 
   selectedDate = '';
   availableSlots: AppointmentSlot[] = [];
+  rawTimeSlots: TimeSlot[] = [];
   minDate: string;
   maxDate: string;
 
@@ -95,7 +106,9 @@ export class BookAppointmentPage implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private navCtrl: NavController,
-    private apiService: ApiService,
+    private doctorService: DoctorService,
+    private specialityService: SpecialityService,
+    private consultationService: ConsultationService,
     private loadingCtrl: LoadingController,
     private toastCtrl: ToastController,
     private alertCtrl: AlertController
@@ -116,38 +129,109 @@ export class BookAppointmentPage implements OnInit {
     }
   }
 
-  async loadDoctorInfo() {
+  loadDoctorInfo(): void {
     if (!this.doctorId) return;
 
-    try {
-      const doctor = await this.apiService.get<Doctor>(`/practitioners/${this.doctorId}/`).toPromise();
-      if (doctor) {
+    this.isLoadingDoctor = true;
+    this.doctorService.getDoctorById(parseInt(this.doctorId)).subscribe({
+      next: (doctor) => {
         this.selectedDoctor = doctor;
+        this.isLoadingDoctor = false;
+        this.loadReasons();
+      },
+      error: () => {
+        this.isLoadingDoctor = false;
+        this.showToast('Failed to load doctor information');
       }
-    } catch (error) {
-      console.error('Error loading doctor:', error);
-      this.loadMockDoctor();
+    });
+  }
+
+  loadReasons(): void {
+    if (!this.selectedDoctor?.specialities?.length) return;
+
+    const specialityId = this.selectedDoctor.specialities[0].id;
+    this.specialityService.getReasonsBySpeciality(specialityId).subscribe({
+      next: (reasons) => {
+        this.reasons = reasons;
+        if (reasons.length > 0) {
+          this.selectedReason = reasons[0];
+          this.loadAvailableSlots();
+        }
+      },
+      error: () => {
+        this.reasons = [];
+      }
+    });
+  }
+
+  loadAvailableSlots(): void {
+    if (!this.selectedReason) {
+      this.generateDefaultSlots();
+      return;
+    }
+
+    this.isLoadingSlots = true;
+    this.doctorService.getAvailableSlots(this.selectedReason.id).subscribe({
+      next: (slots) => {
+        this.rawTimeSlots = slots;
+        this.updateSlotsForDate();
+        this.isLoadingSlots = false;
+      },
+      error: () => {
+        this.generateDefaultSlots();
+        this.isLoadingSlots = false;
+      }
+    });
+  }
+
+  private updateSlotsForDate(): void {
+    if (!this.selectedDate) {
+      this.availableSlots = [];
+      return;
+    }
+
+    const dateStr = new Date(this.selectedDate).toISOString().split('T')[0];
+    const slotsForDate = this.rawTimeSlots.filter(slot => slot.date === dateStr);
+
+    if (slotsForDate.length > 0) {
+      this.availableSlots = slotsForDate.map(slot => ({
+        time: this.formatTime(slot.start_time),
+        available: slot.is_available,
+        selected: false
+      }));
+    } else {
+      this.generateDefaultSlots();
     }
   }
 
-  loadMockDoctor() {
-    this.selectedDoctor = {
-      id: parseInt(this.doctorId!),
-      first_name: 'John',
-      last_name: 'Smith',
-      email: 'john.smith@clinic.com',
-      specialities: [{ id: 2, name: 'Cardiology' }],
-      rating: 4.8,
-      consultation_fee: 150
-    } as Doctor;
+  private generateDefaultSlots(): void {
+    const defaultSlots = [
+      '09:00', '09:30', '10:00', '10:30',
+      '11:00', '11:30', '14:00', '14:30',
+      '15:00', '15:30', '16:00', '16:30'
+    ];
+
+    this.availableSlots = defaultSlots.map((time, index) => ({
+      time: this.formatTime(time),
+      available: index % 3 !== 0,
+      selected: false
+    }));
   }
 
-  nextStep() {
+  private formatTime(time: string): string {
+    const [hours, minutes] = time.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${minutes || '00'} ${ampm}`;
+  }
+
+  nextStep(): void {
     if (this.validateCurrentStep()) {
       if (this.currentStep < this.totalSteps) {
         this.currentStep++;
-        if (this.currentStep === 2) {
-          this.generateTimeSlots();
+        if (this.currentStep === 2 && this.availableSlots.length === 0) {
+          this.loadAvailableSlots();
         }
       } else {
         this.submitAppointment();
@@ -155,7 +239,7 @@ export class BookAppointmentPage implements OnInit {
     }
   }
 
-  previousStep() {
+  previousStep(): void {
     if (this.currentStep > 1) {
       this.currentStep--;
     }
@@ -188,32 +272,15 @@ export class BookAppointmentPage implements OnInit {
     }
   }
 
-  onDateChange(event: any) {
+  onDateChange(event: CustomEvent): void {
     this.selectedDate = event.detail.value;
     this.appointmentData.date = this.selectedDate;
-    this.generateTimeSlots();
+    this.appointmentData.time = '';
+    this.availableSlots.forEach(s => s.selected = false);
+    this.updateSlotsForDate();
   }
 
-  generateTimeSlots() {
-    const slots: AppointmentSlot[] = [
-      { time: '09:00 AM', available: true },
-      { time: '09:30 AM', available: true },
-      { time: '10:00 AM', available: false },
-      { time: '10:30 AM', available: true },
-      { time: '11:00 AM', available: true },
-      { time: '11:30 AM', available: false },
-      { time: '02:00 PM', available: true },
-      { time: '02:30 PM', available: true },
-      { time: '03:00 PM', available: true },
-      { time: '03:30 PM', available: false },
-      { time: '04:00 PM', available: true },
-      { time: '04:30 PM', available: true }
-    ];
-
-    this.availableSlots = slots;
-  }
-
-  selectTimeSlot(slot: AppointmentSlot) {
+  selectTimeSlot(slot: AppointmentSlot): void {
     if (!slot.available) return;
 
     this.availableSlots.forEach(s => s.selected = false);
@@ -221,7 +288,7 @@ export class BookAppointmentPage implements OnInit {
     this.appointmentData.time = slot.time;
   }
 
-  toggleSymptom(symptom: string) {
+  toggleSymptom(symptom: string): void {
     const index = this.selectedSymptoms.indexOf(symptom);
     if (index > -1) {
       this.selectedSymptoms.splice(index, 1);
@@ -230,30 +297,50 @@ export class BookAppointmentPage implements OnInit {
     }
   }
 
-  async submitAppointment() {
+  selectReason(reason: Reason): void {
+    this.selectedReason = reason;
+    this.appointmentData.reason = reason.name;
+    this.loadAvailableSlots();
+  }
+
+  async submitAppointment(): Promise<void> {
     const loading = await this.loadingCtrl.create({
       message: 'Booking appointment...'
     });
     await loading.present();
 
-    try {
-      this.appointmentData.symptoms = this.selectedSymptoms.join(', ');
-
-      const response = await this.apiService.post('/appointments/', this.appointmentData).toPromise();
-
-      loading.dismiss();
-      this.showSuccessAlert();
-    } catch (error) {
-      console.error('Error booking appointment:', error);
-      loading.dismiss();
-      this.showSuccessAlert();
+    const scheduledDate = new Date(this.appointmentData.date);
+    const timeParts = this.appointmentData.time.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    if (timeParts) {
+      let hours = parseInt(timeParts[1]);
+      const minutes = parseInt(timeParts[2]);
+      const ampm = timeParts[3].toUpperCase();
+      if (ampm === 'PM' && hours !== 12) hours += 12;
+      if (ampm === 'AM' && hours === 12) hours = 0;
+      scheduledDate.setHours(hours, minutes, 0, 0);
     }
+
+    const appointmentRequest = {
+      type: this.appointmentData.appointmentType === 'video' ? 'ONLINE' as const : 'IN_PERSON' as const,
+      scheduled_at: scheduledDate.toISOString()
+    };
+
+    this.consultationService.createAppointment(appointmentRequest).subscribe({
+      next: () => {
+        loading.dismiss();
+        this.showSuccessAlert();
+      },
+      error: () => {
+        loading.dismiss();
+        this.showToast('Failed to book appointment. Please try again.');
+      }
+    });
   }
 
-  async showSuccessAlert() {
+  async showSuccessAlert(): Promise<void> {
     const alert = await this.alertCtrl.create({
       header: 'Appointment Booked!',
-      message: 'Your appointment has been successfully booked. You will receive a confirmation email shortly.',
+      message: 'Your appointment has been successfully booked. You will receive a confirmation shortly.',
       buttons: [
         {
           text: 'View Appointments',
@@ -267,7 +354,7 @@ export class BookAppointmentPage implements OnInit {
     await alert.present();
   }
 
-  async showToast(message: string) {
+  async showToast(message: string): Promise<void> {
     const toast = await this.toastCtrl.create({
       message,
       duration: 2000,

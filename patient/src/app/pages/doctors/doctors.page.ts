@@ -23,7 +23,8 @@ import {
   IonInfiniteScrollContent,
   NavController,
 } from '@ionic/angular/standalone';
-import { ApiService, PaginatedResponse } from '../../core/services/api.service';
+import { DoctorService } from '../../core/services/doctor.service';
+import { SpecialityService } from '../../core/services/speciality.service';
 import { Doctor, Speciality } from '../../core/models/doctor.model';
 import { DoctorCardComponent } from '../../shared/components/doctor-card/doctor-card.component';
 
@@ -60,161 +61,142 @@ import { DoctorCardComponent } from '../../shared/components/doctor-card/doctor-
 export class DoctorsPage implements OnInit {
   doctors: Doctor[] = [];
   filteredDoctors: Doctor[] = [];
-  specialities: Speciality[] = [
-    { id: 1, name: 'All', icon: 'medical-outline' },
-    { id: 2, name: 'Cardiology', icon: 'heart-outline' },
-    { id: 3, name: 'Dermatology', icon: 'body-outline' },
-    { id: 4, name: 'Pediatrics', icon: 'people-outline' },
-    { id: 5, name: 'Neurology', icon: 'pulse-outline' },
-    { id: 6, name: 'Orthopedics', icon: 'fitness-outline' }
-  ];
+  specialities: (Speciality & { icon?: string })[] = [];
   selectedSpeciality = 'All';
+  selectedSpecialityId: number | null = null;
   searchTerm = '';
   isLoading = true;
+  isLoadingSpecialities = true;
   currentPage = 1;
   totalPages = 1;
 
+  private specialityIcons: Record<string, string> = {
+    'cardiology': 'heart-outline',
+    'dermatology': 'body-outline',
+    'pediatrics': 'people-outline',
+    'neurology': 'pulse-outline',
+    'orthopedics': 'fitness-outline',
+    'general': 'medical-outline',
+    'default': 'medical-outline'
+  };
+
   constructor(
     private navCtrl: NavController,
-    private apiService: ApiService,
+    private doctorService: DoctorService,
+    private specialityService: SpecialityService,
   ) {}
 
   ngOnInit() {
+    this.loadSpecialities();
     this.loadDoctors();
   }
 
-  async loadDoctors(event?: any) {
-    try {
-      if (!event) {
-        this.isLoading = true;
+  loadSpecialities(): void {
+    this.isLoadingSpecialities = true;
+    this.specialityService.getSpecialities().subscribe({
+      next: (specialities) => {
+        this.specialities = [
+          { id: 0, name: 'All', icon: 'medical-outline' },
+          ...specialities.map(s => ({
+            ...s,
+            icon: this.getIconForSpeciality(s.name)
+          }))
+        ];
+        this.isLoadingSpecialities = false;
+      },
+      error: () => {
+        this.specialities = [{ id: 0, name: 'All', icon: 'medical-outline' }];
+        this.isLoadingSpecialities = false;
       }
+    });
+  }
 
-      const response = await this.apiService.get<PaginatedResponse<Doctor>>('/practitioners/', {
-        page: this.currentPage,
-        limit: 20
-      }).toPromise();
+  private getIconForSpeciality(name: string): string {
+    const key = name.toLowerCase();
+    return this.specialityIcons[key] || this.specialityIcons['default'];
+  }
 
-      if (response) {
-        if (event?.target?.ionInfinite) {
+  async loadDoctors(event?: { target: { complete: () => void; disabled?: boolean } }): Promise<void> {
+    if (!event) {
+      this.isLoading = true;
+    }
+
+    const filters: Record<string, number | string | undefined> = {
+      page: this.currentPage,
+      limit: 20
+    };
+
+    if (this.selectedSpecialityId) {
+      filters['speciality'] = this.selectedSpecialityId;
+    }
+
+    this.doctorService.getDoctors(filters).subscribe({
+      next: (response) => {
+        if (event?.target) {
           this.doctors = [...this.doctors, ...response.results];
         } else {
           this.doctors = response.results;
         }
         this.totalPages = Math.ceil(response.count / 20);
         this.applyFilters();
-      }
-    } catch (error) {
-      console.error('Error loading doctors:', error);
-      this.loadMockData();
-    } finally {
-      this.isLoading = false;
-      if (event?.target) {
-        event.target.complete();
-        if (this.currentPage >= this.totalPages) {
-          event.target.disabled = true;
+        this.isLoading = false;
+        if (event?.target) {
+          event.target.complete();
+          if (this.currentPage >= this.totalPages) {
+            event.target.disabled = true;
+          }
+        }
+      },
+      error: () => {
+        this.isLoading = false;
+        if (event?.target) {
+          event.target.complete();
         }
       }
-    }
+    });
   }
 
-  loadMockData() {
-    this.doctors = [
-      {
-        id: 1,
-        first_name: 'John',
-        last_name: 'Smith',
-        email: 'john.smith@clinic.com',
-        specialities: [{ id: 2, name: 'Cardiology' }],
-        is_online: true,
-        rating: 4.8,
-        reviews_count: 127,
-        experience_years: 15,
-        consultation_fee: 150,
-        about: 'Experienced cardiologist with over 15 years of practice'
-      },
-      {
-        id: 2,
-        first_name: 'Sarah',
-        last_name: 'Johnson',
-        email: 'sarah.j@clinic.com',
-        specialities: [{ id: 3, name: 'Dermatology' }],
-        is_online: false,
-        rating: 4.9,
-        reviews_count: 89,
-        experience_years: 12,
-        consultation_fee: 120,
-        about: 'Specialist in skin conditions and cosmetic dermatology'
-      },
-      {
-        id: 3,
-        first_name: 'Michael',
-        last_name: 'Chen',
-        email: 'mchen@clinic.com',
-        specialities: [{ id: 4, name: 'Pediatrics' }],
-        is_online: true,
-        rating: 4.7,
-        reviews_count: 156,
-        experience_years: 10,
-        consultation_fee: 100,
-        about: 'Caring pediatrician focused on child wellness'
-      },
-      {
-        id: 4,
-        first_name: 'Emily',
-        last_name: 'Davis',
-        email: 'emily.davis@clinic.com',
-        specialities: [{ id: 5, name: 'Neurology' }],
-        is_online: false,
-        rating: 4.9,
-        reviews_count: 93,
-        experience_years: 18,
-        consultation_fee: 200,
-        about: 'Expert in neurological disorders and brain health'
-      }
-    ] as Doctor[];
-    this.filteredDoctors = [...this.doctors];
-  }
-
-  handleRefresh(event: any) {
+  handleRefresh(event: { target: { complete: () => void } }): void {
     this.currentPage = 1;
     this.doctors = [];
     this.loadDoctors(event);
   }
 
-  loadMore(event: any) {
+  loadMore(event: { target: { complete: () => void; disabled?: boolean } }): void {
     this.currentPage++;
     this.loadDoctors(event);
   }
 
-  searchDoctors(event: any) {
-    this.searchTerm = event.target.value.toLowerCase();
+  searchDoctors(event: CustomEvent): void {
+    this.searchTerm = ((event.detail?.value as string) || '').toLowerCase();
     this.applyFilters();
   }
 
-  filterBySpeciality(speciality: string) {
-    this.selectedSpeciality = speciality;
-    this.applyFilters();
+  filterBySpeciality(speciality: Speciality & { icon?: string }): void {
+    this.selectedSpeciality = speciality.name;
+    this.selectedSpecialityId = speciality.id === 0 ? null : speciality.id;
+
+    this.currentPage = 1;
+    this.doctors = [];
+    this.loadDoctors();
   }
 
-  applyFilters() {
+  applyFilters(): void {
     this.filteredDoctors = this.doctors.filter(doctor => {
       const matchesSearch = !this.searchTerm ||
         doctor.first_name.toLowerCase().includes(this.searchTerm) ||
         doctor.last_name.toLowerCase().includes(this.searchTerm) ||
         doctor.specialities?.some(s => s.name.toLowerCase().includes(this.searchTerm));
 
-      const matchesSpeciality = this.selectedSpeciality === 'All' ||
-        doctor.specialities?.some(s => s.name === this.selectedSpeciality);
-
-      return matchesSearch && matchesSpeciality;
+      return matchesSearch;
     });
   }
 
-  viewDoctorDetails(doctor: Doctor) {
+  viewDoctorDetails(doctor: Doctor): void {
     this.navCtrl.navigateForward(`/doctor/${doctor.id}`);
   }
 
-  bookAppointment(doctor: Doctor) {
+  bookAppointment(doctor: Doctor): void {
     this.navCtrl.navigateForward(`/book-appointment?doctorId=${doctor.id}`);
   }
 }

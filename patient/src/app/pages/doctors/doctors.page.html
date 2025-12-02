@@ -26,7 +26,7 @@
       @for (specialty of specialities; track specialty.id) {
         <ion-chip
           [class.selected]="selectedSpeciality === specialty.name"
-          (click)="filterBySpeciality(specialty.name)">
+          (click)="filterBySpeciality(specialty)">
           <ion-icon [name]="specialty.icon"></ion-icon>
           <ion-label>{{ specialty.name }}</ion-label>
         </ion-chip>

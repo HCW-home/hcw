@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   IonHeader,
@@ -17,10 +17,14 @@ import {
   IonIcon,
   IonItemOptions,
   IonItemOption,
-  NavController
+  NavController,
+  ToastController
 } from '@ionic/angular/standalone';
+import { Subscription } from 'rxjs';
+import { NotificationService, Notification as AppNotification } from '../../core/services/notification.service';
+import { UserWebSocketService } from '../../core/services/user-websocket.service';
 
-interface Notification {
+interface DisplayNotification {
   id: number;
   title: string;
   message: string;
@@ -56,93 +60,158 @@ interface Notification {
     IonItemOption
   ]
 })
-export class NotificationsPage implements OnInit {
-  notifications: Notification[] = [
-    {
-      id: 1,
-      title: 'Appointment Reminder',
-      message: 'Your appointment with Dr. Smith is scheduled for tomorrow at 10:00 AM',
-      icon: 'calendar',
-      color: 'primary',
-      time: '2 hours ago',
-      isRead: false,
-      type: 'appointment'
-    },
-    {
-      id: 2,
-      title: 'Test Results Available',
-      message: 'Your recent blood test results have been reviewed by your doctor',
-      icon: 'document-text',
-      color: 'success',
-      time: '5 hours ago',
-      isRead: false,
-      type: 'health'
-    },
-    {
-      id: 3,
-      title: 'New Message',
-      message: 'Dr. Johnson has sent you a message regarding your treatment plan',
-      icon: 'mail',
-      color: 'secondary',
-      time: '1 day ago',
-      isRead: true,
-      type: 'message'
-    },
-    {
-      id: 4,
-      title: 'Prescription Ready',
-      message: 'Your prescription is ready for pickup at the pharmacy',
-      icon: 'medkit',
-      color: 'tertiary',
-      time: '2 days ago',
-      isRead: true,
-      type: 'health'
-    },
-    {
-      id: 5,
-      title: 'Health Tip',
-      message: 'Remember to take your medication as prescribed',
-      icon: 'information-circle',
-      color: 'warning',
-      time: '3 days ago',
-      isRead: true,
-      type: 'system'
-    }
-  ];
+export class NotificationsPage implements OnInit, OnDestroy {
+  notifications: DisplayNotification[] = [];
+  isLoading = true;
+  private subscriptions: Subscription[] = [];
 
-  constructor(private navCtrl: NavController) { }
+  constructor(
+    private navCtrl: NavController,
+    private toastCtrl: ToastController,
+    private notificationService: NotificationService,
+    private userWs: UserWebSocketService
+  ) {}
 
   ngOnInit() {
     this.loadNotifications();
+    this.setupRealtimeNotifications();
   }
 
-  ionViewWillEnter() {
+  ngOnDestroy() {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
-  loadNotifications() {
+  loadNotifications(event?: { target: { complete: () => void } }): void {
+    this.isLoading = !event;
+    this.notificationService.getNotifications().subscribe({
+      next: (response) => {
+        this.notifications = response.results.map(n => this.mapNotification(n));
+        this.isLoading = false;
+        event?.target.complete();
+      },
+      error: () => {
+        this.isLoading = false;
+        event?.target.complete();
+      }
+    });
+  }
+
+  private setupRealtimeNotifications(): void {
+    const sub = this.userWs.notifications$.subscribe(data => {
+      const notification: AppNotification = {
+        id: Date.now(),
+        title: (data['title'] as string) || 'New Notification',
+        message: (data['message'] as string) || '',
+        status: 'pending',
+        created_at: new Date().toISOString()
+      };
+      this.notifications.unshift(this.mapNotification(notification));
+    });
+    this.subscriptions.push(sub);
+  }
+
+  private mapNotification(n: AppNotification): DisplayNotification {
+    const type = this.determineType(n);
+    return {
+      id: n.id,
+      title: n.title || n.subject || 'Notification',
+      message: n.message || n.content || '',
+      icon: this.getIconForType(type),
+      color: this.getColorForType(type),
+      time: this.formatTime(n.created_at),
+      isRead: n.status === 'read',
+      type
+    };
+  }
+
+  private determineType(n: AppNotification): 'appointment' | 'message' | 'health' | 'system' {
+    const title = (n.title || n.subject || '').toLowerCase();
+    if (title.includes('appointment') || title.includes('schedule')) {
+      return 'appointment';
+    } else if (title.includes('message')) {
+      return 'message';
+    } else if (title.includes('health') || title.includes('test') || title.includes('prescription')) {
+      return 'health';
+    }
+    return 'system';
+  }
+
+  private getIconForType(type: string): string {
+    switch (type) {
+      case 'appointment': return 'calendar';
+      case 'message': return 'mail';
+      case 'health': return 'medkit';
+      default: return 'information-circle';
+    }
+  }
+
+  private getColorForType(type: string): string {
+    switch (type) {
+      case 'appointment': return 'primary';
+      case 'message': return 'secondary';
+      case 'health': return 'success';
+      default: return 'warning';
+    }
+  }
+
+  private formatTime(dateString: string): string {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / (1000 * 60));
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes} min ago`;
+    if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return `${days} days ago`;
+    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
   }
 
   openNotificationSettings() {
     this.navCtrl.navigateForward('/notification-settings');
   }
 
-  markAllAsRead() {
-    setTimeout(() => {
-      this.notifications.forEach(n => n.isRead = true);
-    }, 2000);
+  async markAllAsRead() {
+    const unreadNotifications = this.notifications.filter(n => !n.isRead);
+    if (unreadNotifications.length === 0) {
+      return;
+    }
+
+    this.notifications.forEach(n => n.isRead = true);
+    this.notificationService.markAllAsRead().subscribe({
+      next: async () => {
+        const toast = await this.toastCtrl.create({
+          message: 'All notifications marked as read',
+          duration: 2000,
+          position: 'top',
+          color: 'success'
+        });
+        await toast.present();
+      },
+      error: async () => {
+        const toast = await this.toastCtrl.create({
+          message: 'Failed to mark notifications as read',
+          duration: 2000,
+          position: 'top',
+          color: 'danger'
+        });
+        await toast.present();
+      }
+    });
   }
 
-  deleteNotification(notification: Notification) {
+  deleteNotification(notification: DisplayNotification) {
     const index = this.notifications.indexOf(notification);
     if (index > -1) {
       this.notifications.splice(index, 1);
+      this.notificationService.deleteNotification(notification.id).subscribe();
     }
   }
 
-  refreshNotifications(event: any) {
-    setTimeout(() => {
-      this.loadNotifications();
-      event.target.complete();
-    }, 1000);
+  refreshNotifications(event: { target: { complete: () => void } }) {
+    this.loadNotifications(event);
   }
 }

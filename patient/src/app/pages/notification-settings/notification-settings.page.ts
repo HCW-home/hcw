@@ -20,9 +20,12 @@ import {
   IonButton,
   IonDatetime,
   IonModal,
-  ToastController
+  IonSpinner,
+  ToastController,
+  AlertController
 } from '@ionic/angular/standalone';
 import { Storage } from '@ionic/storage-angular';
+import { PushNotificationService } from '../../core/services/push-notification.service';
 
 interface NotificationSetting {
   id: string;
@@ -58,11 +61,14 @@ interface NotificationSetting {
     IonCardContent,
     IonButton,
     IonDatetime,
-    IonModal
+    IonModal,
+    IonSpinner
   ],
   providers: [Storage]
 })
 export class NotificationSettingsPage implements OnInit {
+  pushNotificationsEnabled = false;
+  pushPermissionChecking = true;
   masterNotifications = true;
   quietHoursEnabled = false;
   quietHoursStart = '22:00';
@@ -141,15 +147,51 @@ export class NotificationSettingsPage implements OnInit {
 
   constructor(
     private toastCtrl: ToastController,
-    private storage: Storage
+    private alertCtrl: AlertController,
+    private storage: Storage,
+    private pushService: PushNotificationService
   ) {}
 
   async ngOnInit() {
     await this.storage.create();
     await this.loadSettings();
+    await this.checkPushPermission();
   }
 
-  async loadSettings() {
+  async checkPushPermission(): Promise<void> {
+    this.pushPermissionChecking = true;
+    this.pushNotificationsEnabled = await this.pushService.checkPermission();
+    this.pushPermissionChecking = false;
+  }
+
+  async togglePushNotifications(): Promise<void> {
+    if (!this.pushNotificationsEnabled) {
+      const granted = await this.pushService.requestPermission();
+
+      if (!granted) {
+        const alert = await this.alertCtrl.create({
+          header: 'Permission Required',
+          message: 'Please enable notifications in your device settings to receive push notifications.',
+          buttons: ['OK']
+        });
+        await alert.present();
+        this.pushNotificationsEnabled = false;
+      } else {
+        this.pushNotificationsEnabled = true;
+        this.showToast('Push notifications enabled');
+      }
+    } else {
+      const alert = await this.alertCtrl.create({
+        header: 'Disable Push Notifications',
+        message: 'To disable push notifications, please go to your device settings.',
+        buttons: ['OK']
+      });
+      await alert.present();
+      this.pushNotificationsEnabled = true;
+    }
+  }
+
+  async loadSettings(): Promise<void> {
     const settings = await this.storage.get('notificationSettings');
     if (settings) {
       this.notificationSettings = settings.notificationSettings || this.notificationSettings;
@@ -161,7 +203,7 @@ export class NotificationSettingsPage implements OnInit {
     }
   }
 
-  async saveSettings() {
+  async saveSettings(): Promise<void> {
     const settings = {
       notificationSettings: this.notificationSettings,
       masterNotifications: this.masterNotifications,
@@ -172,10 +214,10 @@ export class NotificationSettingsPage implements OnInit {
     };
 
     await this.storage.set('notificationSettings', settings);
-    this.showToast('Settings saved successfully');
+    this.showToast('Settings saved');
   }
 
-  toggleMasterNotifications() {
+  toggleMasterNotifications(): void {
     if (!this.masterNotifications) {
       this.notificationSettings.forEach(setting => {
         setting.enabled = false;
@@ -184,23 +226,23 @@ export class NotificationSettingsPage implements OnInit {
     this.saveSettings();
   }
 
-  toggleNotification(setting: NotificationSetting) {
+  toggleNotification(setting: NotificationSetting): void {
     if (setting.enabled && !this.masterNotifications) {
       this.masterNotifications = true;
     }
     this.saveSettings();
   }
 
-  toggleQuietHours() {
+  toggleQuietHours(): void {
     this.saveSettings();
   }
 
-  openTimePicker(mode: 'start' | 'end') {
+  openTimePicker(mode: 'start' | 'end'): void {
     this.timePickerMode = mode;
     this.showTimePicker = true;
   }
 
-  onTimeChange(event: any) {
+  onTimeChange(event: CustomEvent): void {
     const time = new Date(event.detail.value);
     const formattedTime = time.toLocaleTimeString('en-US', {
       hour: '2-digit',
@@ -222,7 +264,15 @@ export class NotificationSettingsPage implements OnInit {
     return this.notificationSettings.filter(s => s.category === category);
   }
 
-  async showToast(message: string) {
+  async testPushNotification(): Promise<void> {
+    await this.pushService.showLocalNotification(
+      'Test Notification',
+      'This is a test notification from the app.'
+    );
+    this.showToast('Test notification sent');
+  }
+
+  async showToast(message: string): Promise<void> {
     const toast = await this.toastCtrl.create({
       message,
       duration: 2000,

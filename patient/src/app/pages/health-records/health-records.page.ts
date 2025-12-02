@@ -24,30 +24,25 @@ import {
   IonFabButton,
   IonSpinner,
   IonBadge,
+  IonRefresher,
+  IonRefresherContent,
   NavController,
-  ToastController
+  ToastController,
+  AlertController
 } from '@ionic/angular/standalone';
+import { HealthService, HealthMetric } from '../../core/services/health.service';
+import { ConsultationService } from '../../core/services/consultation.service';
+import { Prescription } from '../../core/models/consultation.model';
 
-interface MedicalRecord {
-  id: number;
-  type: 'lab' | 'prescription' | 'report' | 'vaccination';
-  title: string;
-  doctor: string;
-  date: string;
-  status?: 'normal' | 'abnormal' | 'critical';
-  icon: string;
-  color: string;
-}
-
-interface Prescription {
-  id: number;
-  medication: string;
-  dosage: string;
-  frequency: string;
-  duration: string;
-  doctor: string;
-  date: string;
-  active: boolean;
+interface GroupedMetrics {
+  category: string;
+  metrics: {
+    name: string;
+    value: string;
+    unit: string;
+    date: string;
+    status: 'normal' | 'high' | 'low';
+  }[];
 }
 
 @Component({
@@ -79,167 +74,229 @@ interface Prescription {
     IonFab,
     IonFabButton,
     IonSpinner,
-    IonBadge
+    IonBadge,
+    IonRefresher,
+    IonRefresherContent
   ]
 })
 export class HealthRecordsPage implements OnInit {
-  selectedSegment = 'medical-history';
+  selectedSegment = 'metrics';
   isLoading = false;
+  isLoadingPrescriptions = false;
 
-  medicalRecords: MedicalRecord[] = [
-    {
-      id: 1,
-      type: 'lab',
-      title: 'Complete Blood Count',
-      doctor: 'Dr. John Smith',
-      date: '2024-01-15',
-      status: 'normal',
-      icon: 'flask-outline',
-      color: 'success'
-    },
-    {
-      id: 2,
-      type: 'report',
-      title: 'Chest X-Ray',
-      doctor: 'Dr. Sarah Johnson',
-      date: '2024-01-10',
-      status: 'normal',
-      icon: 'body-outline',
-      color: 'primary'
-    },
-    {
-      id: 3,
-      type: 'lab',
-      title: 'Lipid Profile',
-      doctor: 'Dr. John Smith',
-      date: '2023-12-20',
-      status: 'abnormal',
-      icon: 'flask-outline',
-      color: 'warning'
-    },
-    {
-      id: 4,
-      type: 'vaccination',
-      title: 'COVID-19 Booster',
-      doctor: 'Dr. Emily Davis',
-      date: '2023-11-15',
-      icon: 'medical-outline',
-      color: 'tertiary'
-    }
-  ];
-
-  prescriptions: Prescription[] = [
-    {
-      id: 1,
-      medication: 'Metformin',
-      dosage: '500mg',
-      frequency: 'Twice daily',
-      duration: '30 days',
-      doctor: 'Dr. John Smith',
-      date: '2024-01-15',
-      active: true
-    },
-    {
-      id: 2,
-      medication: 'Lisinopril',
-      dosage: '10mg',
-      frequency: 'Once daily',
-      duration: '90 days',
-      doctor: 'Dr. John Smith',
-      date: '2024-01-15',
-      active: true
-    },
-    {
-      id: 3,
-      medication: 'Amoxicillin',
-      dosage: '250mg',
-      frequency: 'Three times daily',
-      duration: '7 days',
-      doctor: 'Dr. Sarah Johnson',
-      date: '2023-12-01',
-      active: false
-    }
-  ];
-
-  testResults = [
-    {
-      category: 'Blood Tests',
-      tests: [
-        { name: 'Hemoglobin', value: '14.5', unit: 'g/dL', range: '13.5-17.5', status: 'normal' },
-        { name: 'White Blood Cells', value: '7.2', unit: 'K/uL', range: '4.5-11', status: 'normal' },
-        { name: 'Platelets', value: '250', unit: 'K/uL', range: '150-400', status: 'normal' }
-      ]
-    },
-    {
-      category: 'Lipid Profile',
-      tests: [
-        { name: 'Total Cholesterol', value: '210', unit: 'mg/dL', range: '<200', status: 'high' },
-        { name: 'LDL Cholesterol', value: '140', unit: 'mg/dL', range: '<100', status: 'high' },
-        { name: 'HDL Cholesterol', value: '45', unit: 'mg/dL', range: '>40', status: 'normal' },
-        { name: 'Triglycerides', value: '160', unit: 'mg/dL', range: '<150', status: 'high' }
-      ]
-    }
-  ];
+  healthMetrics: HealthMetric[] = [];
+  groupedMetrics: GroupedMetrics[] = [];
+  prescriptions: Prescription[] = [];
 
   constructor(
     private navCtrl: NavController,
-    private toastCtrl: ToastController
+    private toastCtrl: ToastController,
+    private alertCtrl: AlertController,
+    private healthService: HealthService,
+    private consultationService: ConsultationService
   ) {}
 
   ngOnInit() {
-    this.loadHealthRecords();
+    this.loadHealthMetrics();
   }
 
-  segmentChanged(event: any) {
+  segmentChanged(event: CustomEvent): void {
     this.selectedSegment = event.detail.value;
+    if (this.selectedSegment === 'prescriptions' && this.prescriptions.length === 0) {
+      this.loadPrescriptions();
+    }
   }
 
-  loadHealthRecords() {
-    this.isLoading = true;
-    setTimeout(() => {
-      this.isLoading = false;
-    }, 1000);
+  loadHealthMetrics(event?: { target: { complete: () => void } }): void {
+    this.isLoading = !event;
+    this.healthService.getHealthMetrics().subscribe({
+      next: (response) => {
+        this.healthMetrics = response.results;
+        this.groupMetrics();
+        this.isLoading = false;
+        event?.target.complete();
+      },
+      error: () => {
+        this.healthMetrics = [];
+        this.groupedMetrics = [];
+        this.isLoading = false;
+        event?.target.complete();
+      }
+    });
   }
 
-  viewRecord(record: MedicalRecord) {
-    this.showToast(`Viewing ${record.title}`);
+  private groupMetrics(): void {
+    const groups: Map<string, GroupedMetrics['metrics']> = new Map();
+
+    this.healthMetrics.forEach(metric => {
+      const category = this.getCategoryForMetric(metric.metric_type);
+      if (!groups.has(category)) {
+        groups.set(category, []);
+      }
+      groups.get(category)?.push({
+        name: this.formatMetricName(metric.metric_type),
+        value: metric.value,
+        unit: metric.unit || '',
+        date: metric.measured_at,
+        status: this.getMetricStatus(metric)
+      });
+    });
+
+    this.groupedMetrics = Array.from(groups.entries()).map(([category, metrics]) => ({
+      category,
+      metrics
+    }));
   }
 
-  downloadRecord(record: MedicalRecord, event: Event) {
-    event.stopPropagation();
-    this.showToast(`Downloading ${record.title}`);
+  private getCategoryForMetric(type: string): string {
+    const lowerType = type.toLowerCase();
+    if (lowerType.includes('blood') || lowerType.includes('hemoglobin') || lowerType.includes('platelet')) {
+      return 'Blood Tests';
+    }
+    if (lowerType.includes('cholesterol') || lowerType.includes('lipid') || lowerType.includes('triglyceride')) {
+      return 'Lipid Profile';
+    }
+    if (lowerType.includes('glucose') || lowerType.includes('sugar') || lowerType.includes('hba1c')) {
+      return 'Blood Sugar';
+    }
+    if (lowerType.includes('pressure') || lowerType.includes('heart') || lowerType.includes('pulse')) {
+      return 'Vitals';
+    }
+    return 'Other';
   }
 
-  shareRecord(record: MedicalRecord, event: Event) {
-    event.stopPropagation();
-    this.showToast(`Share options for ${record.title}`);
+  private formatMetricName(type: string): string {
+    return type
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, l => l.toUpperCase());
   }
 
-  refillPrescription(prescription: Prescription) {
-    this.showToast(`Refill request sent for ${prescription.medication}`);
+  private getMetricStatus(metric: HealthMetric): 'normal' | 'high' | 'low' {
+    return 'normal';
   }
 
-  uploadDocument() {
-    this.showToast('Document upload feature coming soon');
+  loadPrescriptions(): void {
+    this.isLoadingPrescriptions = true;
+    this.consultationService.getMyConsultations().subscribe({
+      next: (response) => {
+        this.prescriptions = [];
+        response.results.forEach(consultation => {
+          if (consultation.prescriptions) {
+            this.prescriptions.push(...consultation.prescriptions);
+          }
+        });
+        this.isLoadingPrescriptions = false;
+      },
+      error: () => {
+        this.prescriptions = [];
+        this.isLoadingPrescriptions = false;
+      }
+    });
+  }
+
+  async addHealthMetric(): Promise<void> {
+    const alert = await this.alertCtrl.create({
+      header: 'Add Health Metric',
+      inputs: [
+        {
+          name: 'metric_type',
+          type: 'text',
+          placeholder: 'Metric Type (e.g., Blood Pressure)'
+        },
+        {
+          name: 'value',
+          type: 'text',
+          placeholder: 'Value (e.g., 120/80)'
+        },
+        {
+          name: 'unit',
+          type: 'text',
+          placeholder: 'Unit (e.g., mmHg)'
+        }
+      ],
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel'
+        },
+        {
+          text: 'Save',
+          handler: (data) => {
+            if (data.metric_type && data.value) {
+              this.saveHealthMetric(data);
+            }
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  private saveHealthMetric(data: { metric_type: string; value: string; unit?: string }): void {
+    this.healthService.createHealthMetric({
+      metric_type: data.metric_type,
+      value: data.value,
+      unit: data.unit
+    }).subscribe({
+      next: () => {
+        this.showToast('Health metric saved successfully');
+        this.loadHealthMetrics();
+      },
+      error: () => {
+        this.showToast('Failed to save health metric');
+      }
+    });
+  }
+
+  async deleteMetric(metric: HealthMetric): Promise<void> {
+    const alert = await this.alertCtrl.create({
+      header: 'Delete Metric',
+      message: 'Are you sure you want to delete this metric?',
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel'
+        },
+        {
+          text: 'Delete',
+          handler: () => {
+            this.healthService.deleteHealthMetric(metric.id).subscribe({
+              next: () => {
+                this.showToast('Metric deleted');
+                this.loadHealthMetrics();
+              },
+              error: () => {
+                this.showToast('Failed to delete metric');
+              }
+            });
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  refillPrescription(prescription: Prescription): void {
+    this.showToast(`Refill request sent for ${prescription.medication_name}`);
   }
 
   getStatusColor(status: string): string {
     switch (status) {
       case 'normal': return 'success';
       case 'high': return 'warning';
-      case 'abnormal': return 'warning';
-      case 'critical': return 'danger';
+      case 'low': return 'warning';
       default: return 'medium';
     }
   }
 
-  getRecordIcon(type: string): string {
-    switch (type) {
-      case 'lab': return 'flask-outline';
-      case 'prescription': return 'medical-outline';
-      case 'report': return 'document-text-outline';
-      case 'vaccination': return 'medkit-outline';
-      default: return 'document-outline';
+  getPrescriptionStatusColor(status: string): string {
+    switch (status) {
+      case 'PRESCRIBED': return 'primary';
+      case 'DISPENSED': return 'success';
+      case 'CANCELLED': return 'danger';
+      default: return 'medium';
     }
   }
 
@@ -252,7 +309,16 @@ export class HealthRecordsPage implements OnInit {
     });
   }
 
-  async showToast(message: string) {
+  handleRefresh(event: { target: { complete: () => void } }): void {
+    if (this.selectedSegment === 'metrics') {
+      this.loadHealthMetrics(event);
+    } else {
+      this.loadPrescriptions();
+      event.target.complete();
+    }
+  }
+
+  async showToast(message: string): Promise<void> {
     const toast = await this.toastCtrl.create({
       message,
       duration: 2000,

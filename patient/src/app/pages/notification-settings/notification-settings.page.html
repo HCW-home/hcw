@@ -13,13 +13,42 @@
 </ion-header>
 
 <ion-content class="notification-settings-content">
+  <ion-card class="push-notification-card">
+    <ion-item lines="none">
+      <ion-icon name="phone-portrait-outline" slot="start" color="primary"></ion-icon>
+      <ion-label>
+        <ion-text class="setting-title">Push Notifications</ion-text>
+        <ion-text class="setting-description" color="medium">
+          Receive notifications when app is closed
+        </ion-text>
+      </ion-label>
+      @if (pushPermissionChecking) {
+        <ion-spinner name="crescent" slot="end"></ion-spinner>
+      } @else {
+        <ion-toggle
+          [checked]="pushNotificationsEnabled"
+          (ionChange)="togglePushNotifications()"
+          color="primary">
+        </ion-toggle>
+      }
+    </ion-item>
+    @if (pushNotificationsEnabled) {
+      <div class="test-notification">
+        <ion-button size="small" fill="outline" (click)="testPushNotification()">
+          <ion-icon name="notifications-outline" slot="start"></ion-icon>
+          Test Notification
+        </ion-button>
+      </div>
+    }
+  </ion-card>
+
   <ion-card class="master-toggle-card">
     <ion-item lines="none">
       <ion-icon name="notifications-outline" slot="start" color="primary"></ion-icon>
       <ion-label>
         <ion-text class="setting-title">All Notifications</ion-text>
         <ion-text class="setting-description" color="medium">
-          Master toggle for all notifications
+          Master toggle for in-app notifications
         </ion-text>
       </ion-label>
       <ion-toggle

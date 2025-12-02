@@ -6,7 +6,9 @@
     <ion-buttons slot="end">
       <ion-button class="notification-button" (click)="goToNotifications()">
         <ion-icon slot="icon-only" name="notifications-outline"></ion-icon>
-        <ion-badge color="danger" class="header-badge">2</ion-badge>
+        @if (unreadNotifications > 0) {
+          <ion-badge color="danger" class="header-badge">{{ unreadNotifications }}</ion-badge>
+        }
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
@@ -17,7 +19,6 @@
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
-  <!-- Search Bar -->
   <div class="search-container">
     <ion-searchbar
       placeholder="Search doctors, specialties..."
@@ -26,7 +27,6 @@
     </ion-searchbar>
   </div>
 
-  <!-- Quick Actions Grid -->
   <div class="section quick-actions-section">
     <ion-text class="section-title">Quick Actions</ion-text>
     <ion-grid>
@@ -43,18 +43,17 @@
     </ion-grid>
   </div>
 
-  <!-- Upcoming Appointment -->
   @if (upcomingAppointment) {
     <div class="section">
       <ion-text class="section-title">Upcoming Appointment</ion-text>
-      <ion-card class="appointment-card">
+      <ion-card class="appointment-card" (click)="viewAppointment()">
         <ion-card-content>
           <div class="appointment-info">
-            <ion-text class="appointment-doctor">Dr. {{ upcomingAppointment.doctor_name }}</ion-text>
-            <ion-text class="appointment-specialty" color="medium">{{ upcomingAppointment.specialty }}</ion-text>
+            <ion-text class="appointment-doctor">{{ getAppointmentDoctor(upcomingAppointment) }}</ion-text>
+            <ion-text class="appointment-specialty" color="medium">{{ upcomingAppointment.type === 'ONLINE' ? 'Video Consultation' : 'In-Person Visit' }}</ion-text>
             <div class="appointment-time">
               <ion-icon name="time-outline" color="primary"></ion-icon>
-              <ion-text class="time-text">{{ upcomingAppointment.time }}</ion-text>
+              <ion-text class="time-text">{{ formatAppointmentDate(upcomingAppointment.scheduled_at) }}</ion-text>
             </div>
           </div>
           <ion-button size="small" fill="clear" class="view-button">
@@ -65,38 +64,30 @@
     </div>
   }
 
-  <!-- Nearby Doctors -->
   <div class="section">
     <div class="section-header">
-      <ion-text class="section-title">Nearby Doctors</ion-text>
+      <ion-text class="section-title">Available Doctors</ion-text>
       <ion-text class="see-all" color="primary" (click)="viewAllDoctors()">See All</ion-text>
     </div>
 
-    <div class="doctors-list">
-      @for (doctor of nearbyDoctors; track doctor.id) {
-        <app-doctor-card
-          [doctor]="doctor"
-          (doctorClick)="viewDoctorDetails($event)"
-          (bookClick)="bookAppointment($event)">
-        </app-doctor-card>
-      }
-    </div>
-  </div>
-
-  <!-- Recent Activity -->
-  <div class="section">
-    <ion-text class="section-title">Recent Activity</ion-text>
-    <ion-list class="notifications-list">
-      @for (notification of recentNotifications; track notification.title) {
-        <ion-item lines="none" class="notification-item">
-          <ion-icon [name]="notification.icon" [color]="notification.color" slot="start" class="notification-icon"></ion-icon>
-          <ion-label>
-            <ion-text class="notification-title">{{ notification.title }}</ion-text>
-            <ion-text class="notification-message" color="medium">{{ notification.message }}</ion-text>
-            <ion-text class="notification-time" color="medium">{{ notification.time }}</ion-text>
-          </ion-label>
-        </ion-item>
-      }
-    </ion-list>
+    @if (isLoadingDoctors) {
+      <div class="loading-doctors">
+        <ion-spinner name="crescent" color="primary"></ion-spinner>
+      </div>
+    } @else if (nearbyDoctors.length === 0) {
+      <div class="empty-doctors">
+        <ion-text color="medium">No doctors available at the moment</ion-text>
+      </div>
+    } @else {
+      <div class="doctors-list">
+        @for (doctor of nearbyDoctors; track doctor.id) {
+          <app-doctor-card
+            [doctor]="doctor"
+            (doctorClick)="viewDoctorDetails($event)"
+            (bookClick)="bookAppointment($event)">
+          </app-doctor-card>
+        }
+      </div>
+    }
   </div>
 </ion-content>

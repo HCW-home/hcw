@@ -41,5 +41,9 @@ export const routes: Routes = [
   {
     path: 'notification-settings',
     loadComponent: () => import('./pages/notification-settings/notification-settings.page').then(m => m.NotificationSettingsPage)
+  },
+  {
+    path: 'consultation/:id/video',
+    loadComponent: () => import('./pages/video-consultation/video-consultation.page').then(m => m.VideoConsultationPage)
   }
 ];

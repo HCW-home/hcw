@@ -1,17 +1,27 @@
 export interface Consultation {
   id: number;
+  title?: string;
+  description?: string;
   beneficiary?: User;
   created_by: User;
   owned_by?: User;
-  group?: any;
+  group?: Queue;
   created_at: string;
   modified_at: string;
   started_at?: string;
   finished_at?: string;
+  closed_at?: string;
   status: 'REQUESTED' | 'ACTIVE' | 'CLOSED' | 'CANCELLED';
   reason?: Reason;
   notes?: string;
   prescriptions?: Prescription[];
+  appointments?: Appointment[];
+  messages?: ConsultationMessage[];
+}
+
+export interface Queue {
+  id: number;
+  name: string;
 }
 
 export interface Reason {
@@ -19,32 +29,36 @@ export interface Reason {
   name: string;
   description?: string;
   speciality?: number;
+  duration?: number;
+  is_active?: boolean;
 }
 
 export interface Prescription {
   id: number;
   consultation: number;
   created_by: number;
-  status: 'DRAFT' | 'ISSUED' | 'DISPENSED';
+  status: 'DRAFT' | 'PRESCRIBED' | 'DISPENSED' | 'CANCELLED';
   medication_name: string;
   dosage: string;
   frequency: string;
   duration?: string;
   instructions?: string;
+  notes?: string;
   created_at: string;
+  updated_at?: string;
+  prescribed_at?: string;
 }
 
 export interface Appointment {
   id: number;
-  title: string;
-  description?: string;
-  start_time: string;
-  end_time: string;
-  location?: string;
-  status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
-  participants?: Participant[];
-  meeting_url?: string;
+  consultation?: number;
+  type: 'ONLINE' | 'IN_PERSON';
+  status: 'SCHEDULED' | 'CANCELLED';
+  scheduled_at: string;
+  end_expected_at?: string;
   created_by: User;
+  created_at: string;
+  participants?: Participant[];
 }
 
 export interface Participant {
@@ -54,20 +68,37 @@ export interface Participant {
   email?: string;
   phone?: string;
   display_name?: string;
+  communication_method?: string;
   is_invited: boolean;
   is_confirmed: boolean;
   feedback_rate?: number;
   feedback_message?: string;
 }
 
+export interface ConsultationMessage {
+  id: number;
+  consultation: number;
+  created_by: User;
+  created_at: string;
+  event?: string;
+  content: string;
+  attachment?: string;
+}
+
 export interface ConsultationRequest {
-  beneficiary?: number;
-  expected_with?: number;
-  reason: number;
+  id?: number;
+  created_by?: User;
+  beneficiary?: User | number;
+  expected_with?: User | number;
+  expected_at?: string;
+  reason: Reason | number;
   type: 'ONLINE' | 'IN_PERSON';
-  notes?: string;
-  preferred_date?: string;
-  preferred_time?: string;
+  comment?: string;
+  status?: 'REQUESTED' | 'ACCEPTED' | 'CANCELLED' | 'REFUSED';
+  refused_reason?: string;
+  appointment?: Appointment;
+  consultation?: Consultation;
+  created_at?: string;
 }
 
 export interface User {

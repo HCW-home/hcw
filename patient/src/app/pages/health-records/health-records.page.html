@@ -8,12 +8,13 @@
 </ion-header>
 
 <ion-content class="health-records-content">
+  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
   <ion-segment [(ngModel)]="selectedSegment" (ionChange)="segmentChanged($event)">
-    <ion-segment-button value="medical-history">
-      <ion-label>Medical History</ion-label>
-    </ion-segment-button>
-    <ion-segment-button value="test-results">
-      <ion-label>Test Results</ion-label>
+    <ion-segment-button value="metrics">
+      <ion-label>Health Metrics</ion-label>
     </ion-segment-button>
     <ion-segment-button value="prescriptions">
       <ion-label>Prescriptions</ion-label>
@@ -28,146 +29,94 @@
       </div>
     } @else {
       @switch (selectedSegment) {
-        @case ('medical-history') {
-          <div class="medical-history">
-            @if (medicalRecords.length > 0) {
-              <ion-list lines="none">
-                @for (record of medicalRecords; track record.id) {
-                  <ion-card (click)="viewRecord(record)" class="record-card">
-                    <ion-card-content>
-                      <div class="record-header">
-                        <div class="record-icon-wrapper" [style.background-color]="'var(--ion-color-' + record.color + '-tint)'">
-                          <ion-icon [name]="record.icon" [color]="record.color"></ion-icon>
-                        </div>
-                        <div class="record-info">
-                          <ion-text class="record-title">{{ record.title }}</ion-text>
-                          <ion-text class="record-doctor" color="medium">{{ record.doctor }}</ion-text>
-                          <ion-text class="record-date" color="medium">{{ formatDate(record.date) }}</ion-text>
-                        </div>
-                        @if (record.status) {
-                          <ion-badge [color]="getStatusColor(record.status)">
-                            {{ record.status }}
-                          </ion-badge>
-                        }
-                      </div>
-                      <div class="record-actions">
-                        <ion-button size="small" fill="clear" (click)="downloadRecord(record, $event)">
-                          <ion-icon name="download-outline" slot="icon-only"></ion-icon>
-                        </ion-button>
-                        <ion-button size="small" fill="clear" (click)="shareRecord(record, $event)">
-                          <ion-icon name="share-outline" slot="icon-only"></ion-icon>
-                        </ion-button>
-                      </div>
-                    </ion-card-content>
-                  </ion-card>
-                }
-              </ion-list>
+        @case ('metrics') {
+          <div class="health-metrics">
+            @if (groupedMetrics.length > 0) {
+              @for (group of groupedMetrics; track group.category) {
+                <ion-card>
+                  <ion-card-header>
+                    <ion-card-title>{{ group.category }}</ion-card-title>
+                  </ion-card-header>
+                  <ion-card-content>
+                    <ion-list lines="none">
+                      @for (metric of group.metrics; track metric.name + metric.date) {
+                        <ion-item class="metric-item">
+                          <ion-label>
+                            <ion-text class="metric-name">{{ metric.name }}</ion-text>
+                            <ion-text class="metric-date" color="medium">{{ formatDate(metric.date) }}</ion-text>
+                          </ion-label>
+                          <div slot="end" class="metric-value-wrapper">
+                            <ion-text class="metric-value" [color]="getStatusColor(metric.status)">
+                              {{ metric.value }} {{ metric.unit }}
+                            </ion-text>
+                          </div>
+                        </ion-item>
+                      }
+                    </ion-list>
+                  </ion-card-content>
+                </ion-card>
+              }
             } @else {
               <div class="empty-state">
-                <ion-icon name="document-text-outline" color="medium"></ion-icon>
-                <ion-text color="medium">No medical records found</ion-text>
+                <ion-icon name="fitness-outline" color="medium"></ion-icon>
+                <ion-text color="medium">No health metrics recorded</ion-text>
+                <ion-text color="medium" class="empty-subtitle">Tap the + button to add your first metric</ion-text>
               </div>
-            }
-          </div>
-        }
-
-        @case ('test-results') {
-          <div class="test-results">
-            @for (category of testResults; track category.category) {
-              <ion-card>
-                <ion-card-header>
-                  <ion-card-title>{{ category.category }}</ion-card-title>
-                </ion-card-header>
-                <ion-card-content>
-                  <ion-list lines="none">
-                    @for (test of category.tests; track test.name) {
-                      <ion-item class="test-item">
-                        <ion-label>
-                          <ion-text class="test-name">{{ test.name }}</ion-text>
-                          <ion-text class="test-range" color="medium">Normal: {{ test.range }} {{ test.unit }}</ion-text>
-                        </ion-label>
-                        <div slot="end" class="test-value-wrapper">
-                          <ion-text class="test-value" [color]="getStatusColor(test.status)">
-                            {{ test.value }} {{ test.unit }}
-                          </ion-text>
-                          @if (test.status === 'high' || test.status === 'low') {
-                            <ion-icon
-                              [name]="test.status === 'high' ? 'arrow-up' : 'arrow-down'"
-                              [color]="getStatusColor(test.status)">
-                            </ion-icon>
-                          }
-                        </div>
-                      </ion-item>
-                    }
-                  </ion-list>
-                </ion-card-content>
-              </ion-card>
             }
           </div>
         }
 
         @case ('prescriptions') {
           <div class="prescriptions">
-            @if (prescriptions.length > 0) {
+            @if (isLoadingPrescriptions) {
+              <div class="loading-container">
+                <ion-spinner name="crescent" color="primary"></ion-spinner>
+              </div>
+            } @else if (prescriptions.length > 0) {
               <div class="prescription-sections">
-                <ion-text class="section-title">Active Prescriptions</ion-text>
                 @for (prescription of prescriptions; track prescription.id) {
-                  @if (prescription.active) {
-                    <ion-card class="prescription-card">
-                      <ion-card-content>
-                        <div class="prescription-header">
-                          <div class="prescription-info">
-                            <ion-text class="medication-name">{{ prescription.medication }}</ion-text>
-                            <ion-text class="medication-dosage" color="primary">{{ prescription.dosage }}</ion-text>
-                          </div>
-                          <ion-badge color="success">Active</ion-badge>
+                  <ion-card class="prescription-card" [class.inactive]="prescription.status === 'DISPENSED' || prescription.status === 'CANCELLED'">
+                    <ion-card-content>
+                      <div class="prescription-header">
+                        <div class="prescription-info">
+                          <ion-text class="medication-name">{{ prescription.medication_name }}</ion-text>
+                          <ion-text class="medication-dosage" color="primary">{{ prescription.dosage }}</ion-text>
                         </div>
-                        <div class="prescription-details">
-                          <ion-item lines="none">
-                            <ion-icon name="time-outline" slot="start" color="medium"></ion-icon>
-                            <ion-label>
-                              <ion-text color="medium">{{ prescription.frequency }}</ion-text>
-                            </ion-label>
-                          </ion-item>
+                        <ion-badge [color]="getPrescriptionStatusColor(prescription.status)">
+                          {{ prescription.status }}
+                        </ion-badge>
+                      </div>
+                      <div class="prescription-details">
+                        <ion-item lines="none">
+                          <ion-icon name="time-outline" slot="start" color="medium"></ion-icon>
+                          <ion-label>
+                            <ion-text color="medium">{{ prescription.frequency }}</ion-text>
+                          </ion-label>
+                        </ion-item>
+                        @if (prescription.duration) {
                           <ion-item lines="none">
                             <ion-icon name="calendar-outline" slot="start" color="medium"></ion-icon>
                             <ion-label>
                               <ion-text color="medium">{{ prescription.duration }}</ion-text>
                             </ion-label>
                           </ion-item>
+                        }
+                        @if (prescription.instructions) {
                           <ion-item lines="none">
-                            <ion-icon name="person-outline" slot="start" color="medium"></ion-icon>
+                            <ion-icon name="information-circle-outline" slot="start" color="medium"></ion-icon>
                             <ion-label>
-                              <ion-text color="medium">{{ prescription.doctor }}</ion-text>
+                              <ion-text color="medium">{{ prescription.instructions }}</ion-text>
                             </ion-label>
                           </ion-item>
-                        </div>
+                        }
+                      </div>
+                      @if (prescription.status === 'PRESCRIBED') {
                         <ion-button expand="block" size="small" (click)="refillPrescription(prescription)">
                           Request Refill
                         </ion-button>
-                      </ion-card-content>
-                    </ion-card>
-                  }
-                }
-
-                <ion-text class="section-title">Past Prescriptions</ion-text>
-                @for (prescription of prescriptions; track prescription.id) {
-                  @if (!prescription.active) {
-                    <ion-card class="prescription-card inactive">
-                      <ion-card-content>
-                        <div class="prescription-header">
-                          <div class="prescription-info">
-                            <ion-text class="medication-name">{{ prescription.medication }}</ion-text>
-                            <ion-text class="medication-dosage" color="medium">{{ prescription.dosage }}</ion-text>
-                          </div>
-                          <ion-badge color="medium">Completed</ion-badge>
-                        </div>
-                        <div class="prescription-meta">
-                          <ion-text color="medium">{{ prescription.doctor }} • {{ formatDate(prescription.date) }}</ion-text>
-                        </div>
-                      </ion-card-content>
-                    </ion-card>
-                  }
+                      }
+                    </ion-card-content>
+                  </ion-card>
                 }
               </div>
             } @else {
@@ -183,8 +132,8 @@
   </div>
 
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button (click)="uploadDocument()">
-      <ion-icon name="cloud-upload-outline"></ion-icon>
+    <ion-fab-button (click)="addHealthMetric()">
+      <ion-icon name="add"></ion-icon>
     </ion-fab-button>
   </ion-fab>
 </ion-content>

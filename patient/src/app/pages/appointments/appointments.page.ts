@@ -25,9 +25,10 @@ import {
   AlertController,
   ToastController
 } from '@ionic/angular/standalone';
-import { ApiService } from '../../core/services/api.service';
+import { ConsultationService } from '../../core/services/consultation.service';
+import { Appointment } from '../../core/models/consultation.model';
 
-interface Appointment {
+interface DisplayAppointment {
   id: number;
   doctor_name: string;
   doctor_photo?: string;
@@ -38,7 +39,8 @@ interface Appointment {
   status: 'upcoming' | 'completed' | 'cancelled';
   location?: string;
   notes?: string;
-  consultation_fee: number;
+  consultation_fee?: number;
+  originalAppointment: Appointment;
 }
 
 @Component({
@@ -72,71 +74,13 @@ interface Appointment {
 })
 export class AppointmentsPage implements OnInit {
   selectedSegment = 'upcoming';
-  appointments: Appointment[] = [];
-  filteredAppointments: Appointment[] = [];
+  appointments: DisplayAppointment[] = [];
+  filteredAppointments: DisplayAppointment[] = [];
   isLoading = false;
-
-  mockAppointments: Appointment[] = [
-    {
-      id: 1,
-      doctor_name: 'Dr. John Smith',
-      specialty: 'Cardiologist',
-      date: '2024-02-15',
-      time: '10:00 AM',
-      type: 'in-person',
-      status: 'upcoming',
-      location: 'Heart Care Center, Room 302',
-      consultation_fee: 150
-    },
-    {
-      id: 2,
-      doctor_name: 'Dr. Sarah Johnson',
-      specialty: 'Dermatologist',
-      date: '2024-02-20',
-      time: '2:30 PM',
-      type: 'video',
-      status: 'upcoming',
-      consultation_fee: 120
-    },
-    {
-      id: 3,
-      doctor_name: 'Dr. Michael Chen',
-      specialty: 'General Physician',
-      date: '2024-01-10',
-      time: '11:00 AM',
-      type: 'in-person',
-      status: 'completed',
-      location: 'City Medical Center',
-      notes: 'Regular checkup completed',
-      consultation_fee: 100
-    },
-    {
-      id: 4,
-      doctor_name: 'Dr. Emily Davis',
-      specialty: 'Neurologist',
-      date: '2024-01-05',
-      time: '3:00 PM',
-      type: 'video',
-      status: 'completed',
-      notes: 'Follow-up consultation',
-      consultation_fee: 200
-    },
-    {
-      id: 5,
-      doctor_name: 'Dr. Robert Wilson',
-      specialty: 'Orthopedist',
-      date: '2024-01-25',
-      time: '9:00 AM',
-      type: 'in-person',
-      status: 'cancelled',
-      location: 'Bone & Joint Clinic',
-      consultation_fee: 180
-    }
-  ];
 
   constructor(
     private navCtrl: NavController,
-    private apiService: ApiService,
+    private consultationService: ConsultationService,
     private alertCtrl: AlertController,
     private toastCtrl: ToastController
   ) {}
@@ -149,35 +93,73 @@ export class AppointmentsPage implements OnInit {
     this.loadAppointments();
   }
 
-  segmentChanged(event: any) {
+  segmentChanged(event: CustomEvent): void {
     this.selectedSegment = event.detail.value;
     this.filterAppointments();
   }
 
-  async loadAppointments() {
+  async loadAppointments(): Promise<void> {
     this.isLoading = true;
-    try {
-      const response = await this.apiService.get<any>('/appointments/').toPromise();
-      if (response) {
-        this.appointments = response.results || [];
+    this.consultationService.getMyAppointments().subscribe({
+      next: (response) => {
+        this.appointments = response.results.map(apt => this.mapAppointment(apt));
         this.filterAppointments();
+        this.isLoading = false;
+      },
+      error: () => {
+        this.appointments = [];
+        this.filterAppointments();
+        this.isLoading = false;
       }
-    } catch (error) {
-      // Use mock data for now
-      this.appointments = this.mockAppointments;
-      this.filterAppointments();
-    } finally {
-      this.isLoading = false;
-    }
+    });
   }
 
-  filterAppointments() {
+  private mapAppointment(apt: Appointment): DisplayAppointment {
+    const scheduledDate = new Date(apt.scheduled_at);
+    const now = new Date();
+    const isPast = scheduledDate < now;
+
+    let displayStatus: 'upcoming' | 'completed' | 'cancelled';
+    if (apt.status === 'CANCELLED') {
+      displayStatus = 'cancelled';
+    } else if (isPast) {
+      displayStatus = 'completed';
+    } else {
+      displayStatus = 'upcoming';
+    }
+
+    const doctorParticipant = apt.participants?.find(p => p.user && p.user.id !== apt.created_by.id);
+    const doctorName = doctorParticipant?.user
+      ? `Dr. ${doctorParticipant.user.first_name} ${doctorParticipant.user.last_name}`
+      : `Dr. ${apt.created_by.first_name} ${apt.created_by.last_name}`;
+
+    return {
+      id: apt.id,
+      doctor_name: doctorName,
+      doctor_photo: doctorParticipant?.user?.picture,
+      specialty: 'Specialist',
+      date: apt.scheduled_at,
+      time: scheduledDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      type: apt.type === 'ONLINE' ? 'video' : 'in-person',
+      status: displayStatus,
+      originalAppointment: apt
+    };
+  }
+
+  filterAppointments(): void {
     this.filteredAppointments = this.appointments.filter(apt => apt.status === this.selectedSegment);
   }
 
-  handleRefresh(event: any) {
-    this.loadAppointments().then(() => {
-      event.target.complete();
+  handleRefresh(event: { target: { complete: () => void } }): void {
+    this.consultationService.getMyAppointments().subscribe({
+      next: (response) => {
+        this.appointments = response.results.map(apt => this.mapAppointment(apt));
+        this.filterAppointments();
+        event.target.complete();
+      },
+      error: () => {
+        event.target.complete();
+      }
     });
   }
 
@@ -194,7 +176,7 @@ export class AppointmentsPage implements OnInit {
     return type === 'video' ? 'videocam-outline' : 'location-outline';
   }
 
-  async rescheduleAppointment(appointment: Appointment) {
+  async rescheduleAppointment(appointment: DisplayAppointment): Promise<void> {
     const alert = await this.alertCtrl.create({
       header: 'Reschedule Appointment',
       message: 'Are you sure you want to reschedule this appointment?',
@@ -206,7 +188,7 @@ export class AppointmentsPage implements OnInit {
         {
           text: 'Reschedule',
           handler: () => {
-            this.navCtrl.navigateForward(`/book-appointment?doctorId=${appointment.id}&reschedule=true`);
+            this.navCtrl.navigateForward(`/book-appointment?appointmentId=${appointment.id}&reschedule=true`);
           }
         }
       ]
@@ -214,7 +196,7 @@ export class AppointmentsPage implements OnInit {
     await alert.present();
   }
 
-  async cancelAppointment(appointment: Appointment) {
+  async cancelAppointment(appointment: DisplayAppointment): Promise<void> {
     const alert = await this.alertCtrl.create({
       header: 'Cancel Appointment',
       message: 'Are you sure you want to cancel this appointment?',
@@ -225,18 +207,17 @@ export class AppointmentsPage implements OnInit {
         },
         {
           text: 'Yes, Cancel',
-          handler: async () => {
-            try {
-              await this.apiService.patch(`/appointments/${appointment.id}/`, { status: 'cancelled' }).toPromise();
-              appointment.status = 'cancelled';
-              this.filterAppointments();
-              this.showToast('Appointment cancelled successfully');
-            } catch (error) {
-              // Mock success for now
-              appointment.status = 'cancelled';
-              this.filterAppointments();
-              this.showToast('Appointment cancelled successfully');
-            }
+          handler: () => {
+            this.consultationService.cancelAppointment(appointment.id).subscribe({
+              next: () => {
+                appointment.status = 'cancelled';
+                this.filterAppointments();
+                this.showToast('Appointment cancelled successfully');
+              },
+              error: () => {
+                this.showToast('Failed to cancel appointment', 'danger');
+              }
+            });
           }
         }
       ]
@@ -244,20 +225,24 @@ export class AppointmentsPage implements OnInit {
     await alert.present();
   }
 
-  joinVideoCall(appointment: Appointment) {
-    this.showToast('Joining video call...');
+  joinVideoCall(appointment: DisplayAppointment): void {
+    const consultationId = appointment.originalAppointment.consultation || appointment.id;
+    this.navCtrl.navigateForward(`/consultation/${consultationId}/video`);
   }
 
-  viewDetails(appointment: Appointment) {
-    // Navigate to appointment details
-    this.showToast('Appointment details coming soon');
+  viewDetails(appointment: DisplayAppointment): void {
+    if (appointment.originalAppointment.consultation) {
+      this.navCtrl.navigateForward(`/consultation/${appointment.originalAppointment.consultation}`);
+    } else {
+      this.showToast('Appointment details coming soon');
+    }
   }
 
-  rateAppointment(appointment: Appointment) {
+  rateAppointment(appointment: DisplayAppointment): void {
     this.showToast('Rate & review coming soon');
   }
 
-  bookNewAppointment() {
+  bookNewAppointment(): void {
     this.navCtrl.navigateForward('/doctors');
   }
 
@@ -277,11 +262,11 @@ export class AppointmentsPage implements OnInit {
     return today.toDateString() === aptDate.toDateString();
   }
 
-  async showToast(message: string) {
+  async showToast(message: string, color: string = 'primary'): Promise<void> {
     const toast = await this.toastCtrl.create({
       message,
       duration: 2000,
-      color: 'primary'
+      color
     });
     toast.present();
   }

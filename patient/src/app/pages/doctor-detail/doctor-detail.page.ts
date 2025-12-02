@@ -22,15 +22,14 @@ import {
   IonList,
   IonItem,
   IonChip,
-  IonGrid,
-  IonRow,
-  IonCol,
   IonSpinner,
   NavController,
   ToastController
 } from '@ionic/angular/standalone';
-import { ApiService } from '../../core/services/api.service';
+import { DoctorService } from '../../core/services/doctor.service';
+import { SpecialityService } from '../../core/services/speciality.service';
 import { Doctor } from '../../core/models/doctor.model';
+import { TimeSlot } from '../../core/models/booking.model';
 
 interface Review {
   id: number;
@@ -74,128 +73,142 @@ export class DoctorDetailPage implements OnInit {
   doctor: Doctor | null = null;
   selectedSegment = 'about';
   isLoading = true;
+  isLoadingSlots = false;
+  availableSlots: { date: Date; day: string; dateStr: string; month: string; slots: string[]; isToday: boolean }[] = [];
   reviews: Review[] = [];
-  availableSlots: any[] = [];
 
-  weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  timeSlots = [
-    '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM',
-    '11:00 AM', '11:30 AM', '02:00 PM', '02:30 PM',
-    '03:00 PM', '03:30 PM', '04:00 PM', '04:30 PM'
-  ];
+  weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   constructor(
     private route: ActivatedRoute,
     private navCtrl: NavController,
-    private apiService: ApiService,
+    private doctorService: DoctorService,
+    private specialityService: SpecialityService,
     private toastCtrl: ToastController
   ) {}
 
   ngOnInit() {
     const doctorId = this.route.snapshot.paramMap.get('id');
     if (doctorId) {
-      this.loadDoctorDetails(doctorId);
+      this.loadDoctorDetails(parseInt(doctorId));
     }
   }
 
-  async loadDoctorDetails(doctorId: string) {
-    try {
-      this.isLoading = true;
-      const doctor = await this.apiService.get<Doctor>(`/practitioners/${doctorId}/`).toPromise();
-      if (doctor) {
+  loadDoctorDetails(doctorId: number): void {
+    this.isLoading = true;
+    this.doctorService.getDoctorById(doctorId).subscribe({
+      next: (doctor) => {
         this.doctor = doctor;
+        this.isLoading = false;
+        this.loadAvailableSlots();
+      },
+      error: () => {
+        this.isLoading = false;
+        this.showToast('Failed to load doctor details');
       }
-    } catch (error) {
-      console.error('Error loading doctor details:', error);
-      this.loadMockData(doctorId);
-    } finally {
-      this.isLoading = false;
+    });
+  }
+
+  loadAvailableSlots(): void {
+    if (!this.doctor?.specialities?.length) {
+      this.generateDefaultSlots();
+      return;
     }
-  }
 
-  loadMockData(doctorId: string) {
-    this.doctor = {
-      id: parseInt(doctorId),
-      first_name: 'John',
-      last_name: 'Smith',
-      email: 'john.smith@clinic.com',
-      specialities: [{ id: 2, name: 'Cardiology', description: 'Heart Specialist' }],
-      languages: [
-        { id: 1, name: 'English', code: 'en' },
-        { id: 2, name: 'Spanish', code: 'es' }
-      ],
-      is_online: true,
-      rating: 4.8,
-      reviews_count: 127,
-      experience_years: 15,
-      consultation_fee: 150,
-      about: 'Dr. John Smith is a board-certified cardiologist with over 15 years of experience in treating cardiovascular diseases. He specializes in preventive cardiology, heart failure management, and interventional procedures.',
-      education: [
-        'MD - Harvard Medical School (2005)',
-        'Residency - Johns Hopkins Hospital (2008)',
-        'Fellowship - Mayo Clinic (2010)'
-      ]
-    };
+    const specialityId = this.doctor.specialities[0].id;
+    this.isLoadingSlots = true;
 
-    this.reviews = [
-      {
-        id: 1,
-        patient_name: 'Sarah M.',
-        rating: 5,
-        comment: 'Excellent doctor! Very thorough and caring. Took time to explain everything.',
-        date: '2 days ago'
+    this.specialityService.getReasonsBySpeciality(specialityId).subscribe({
+      next: (reasons) => {
+        if (reasons.length > 0) {
+          this.doctorService.getAvailableSlots(reasons[0].id).subscribe({
+            next: (slots) => {
+              this.processTimeSlots(slots);
+              this.isLoadingSlots = false;
+            },
+            error: () => {
+              this.generateDefaultSlots();
+              this.isLoadingSlots = false;
+            }
+          });
+        } else {
+          this.generateDefaultSlots();
+          this.isLoadingSlots = false;
+        }
       },
-      {
-        id: 2,
-        patient_name: 'Robert L.',
-        rating: 4,
-        comment: 'Professional and knowledgeable. The wait time was a bit long though.',
-        date: '1 week ago'
-      },
-      {
-        id: 3,
-        patient_name: 'Emily K.',
-        rating: 5,
-        comment: 'Best cardiologist I have ever visited. Highly recommend!',
-        date: '2 weeks ago'
+      error: () => {
+        this.generateDefaultSlots();
+        this.isLoadingSlots = false;
       }
-    ];
-
-    this.generateAvailableSlots();
+    });
   }
 
-  generateAvailableSlots() {
+  private processTimeSlots(slots: TimeSlot[]): void {
+    const slotsByDate: Map<string, string[]> = new Map();
+
+    slots.forEach(slot => {
+      const dateKey = slot.date;
+      if (!slotsByDate.has(dateKey)) {
+        slotsByDate.set(dateKey, []);
+      }
+      if (slot.is_available) {
+        slotsByDate.get(dateKey)?.push(slot.start_time);
+      }
+    });
+
+    this.availableSlots = [];
+    const today = new Date();
+
+    slotsByDate.forEach((times, dateStr) => {
+      const date = new Date(dateStr);
+      this.availableSlots.push({
+        date,
+        day: this.weekDays[date.getDay()],
+        dateStr: date.getDate().toString(),
+        month: date.toLocaleDateString('en', { month: 'short' }),
+        slots: times,
+        isToday: date.toDateString() === today.toDateString()
+      });
+    });
+
+    this.availableSlots.sort((a, b) => a.date.getTime() - b.date.getTime());
+  }
+
+  private generateDefaultSlots(): void {
     const today = new Date();
     this.availableSlots = [];
+    const defaultTimes = [
+      '09:00', '09:30', '10:00', '10:30',
+      '11:00', '11:30', '14:00', '14:30',
+      '15:00', '15:30', '16:00', '16:30'
+    ];
 
     for (let i = 0; i < 7; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
 
-      const daySlots = {
-        date: date,
+      this.availableSlots.push({
+        date,
         day: this.weekDays[date.getDay()],
         dateStr: date.getDate().toString(),
         month: date.toLocaleDateString('en', { month: 'short' }),
-        slots: i === 0 ? this.timeSlots.slice(4) : this.timeSlots,
+        slots: i === 0 ? defaultTimes.slice(4) : defaultTimes,
         isToday: i === 0
-      };
-
-      this.availableSlots.push(daySlots);
+      });
     }
   }
 
-  segmentChanged(event: any) {
+  segmentChanged(event: CustomEvent): void {
     this.selectedSegment = event.detail.value;
   }
 
-  bookAppointment() {
+  bookAppointment(): void {
     if (this.doctor) {
       this.navCtrl.navigateForward(`/book-appointment?doctorId=${this.doctor.id}`);
     }
   }
 
-  async messageDoctor() {
+  async messageDoctor(): Promise<void> {
     const toast = await this.toastCtrl.create({
       message: 'Messaging feature coming soon',
       duration: 2000,
@@ -206,5 +219,22 @@ export class DoctorDetailPage implements OnInit {
 
   getRatingStars(rating: number): number[] {
     return Array(5).fill(0).map((_, i) => i < Math.floor(rating) ? 1 : 0);
+  }
+
+  formatTime(time: string): string {
+    const [hours, minutes] = time.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${minutes} ${ampm}`;
+  }
+
+  async showToast(message: string): Promise<void> {
+    const toast = await this.toastCtrl.create({
+      message,
+      duration: 2000,
+      color: 'danger'
+    });
+    toast.present();
   }
 }
