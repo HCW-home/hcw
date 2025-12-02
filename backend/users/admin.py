@@ -71,7 +71,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
 
     fieldsets = BaseUserAdmin.fieldsets + (
         ('Additional Info', {
-            'fields': ('location', 'app_preferences', 'timezone', 'preferred_language', 'languages', 'specialities', 'main_organisation', 'organisations', 'picture', 'accepted_term', 'mobile_phone_number')
+            'fields': ('location', 'app_preferences', 'mobile_phone_number', 'communication_method', 'timezone', 'preferred_language', 'languages', 'specialities', 'main_organisation', 'organisations', 'picture', 'accepted_term',)
         }),
         ('Authentication', {
             'fields': ('appointment_auth_token', 'is_appointment_auth_token_used', 'verification_code')

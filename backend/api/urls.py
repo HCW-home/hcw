@@ -11,7 +11,4 @@ urlpatterns = [
          SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('auth/', include('dj_rest_auth.urls')),
     path('auth/token/', views.AnonymousTokenAuthView.as_view(), name='anonymous_token_auth'),
-    
-    # router.register(r'tokens/favourites', views.SuperView,
-    #                 basename='token_favourites')
 ]
