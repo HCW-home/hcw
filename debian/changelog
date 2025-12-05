@@ -1,4 +1,4 @@
-hcw (0.9.15) bookworm; urgency=medium
+hcw (0.9.16) bookworm; urgency=medium
 
   [ Olivier Bitsch ]
   * Add new job title field
@@ -14,7 +14,7 @@ hcw (0.9.15) bookworm; urgency=medium
   * add i18n (en/fr), update patient dependencies
   * add video consultation screen
 
- -- Olivier Bitsch <olivier.b@iabsis.com>  Fri, 05 Dec 2025 10:42:42 +0100
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Fri, 05 Dec 2025 10:42:52 +0100
 
 hcw (0.9.13) bookworm; urgency=medium
 
