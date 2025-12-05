@@ -85,6 +85,8 @@ Jinja2==3.1.6
 jsonschema==4.25.1
 jsonschema-specifications==2025.9.1
 kombu==5.5.4
+livekit-api==1.0.7
+livekit-protocol==1.1.0
 MarkupSafe==3.0.2
 msgpack==1.1.1
 multidict==6.6.4
@@ -125,6 +127,7 @@ swapper==1.4.0
 tablib==3.8.0
 Twisted==25.5.0
 txaio==25.6.1
+types-protobuf==6.32.1.20251105
 typing_extensions==4.15.0
 tzdata==2025.2
 ua-parser==1.0.1
