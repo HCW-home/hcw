@@ -13,6 +13,7 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { RoutePaths } from '../../constants/routes';
 import { IUser } from '../../../modules/user/models/user';
 import { Subscription } from 'rxjs';
+import { UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -22,33 +23,44 @@ import { Subscription } from 'rxjs';
 })
 export class Sidebar implements OnInit, OnDestroy {
   public router = inject(Router);
+  private userService = inject(UserService);
 
   menuItems = MenuItems;
   currentUserSubscription!: Subscription;
-  currentUser!: IUser;
+  currentUser: IUser | null = null;
   isCollapsed = false;
   @Output() collapsedChange = new EventEmitter<boolean>();
 
-  ngOnInit() {
+  ngOnInit(): void {
     const savedState = localStorage.getItem('sidebar-collapsed');
     if (savedState !== null) {
       this.isCollapsed = JSON.parse(savedState);
       this.collapsedChange.emit(this.isCollapsed);
     }
+
+    this.currentUserSubscription = this.userService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+    });
   }
 
-  toggleSidebar() {
+  toggleSidebar(): void {
     this.isCollapsed = !this.isCollapsed;
     localStorage.setItem('sidebar-collapsed', JSON.stringify(this.isCollapsed));
     this.collapsedChange.emit(this.isCollapsed);
   }
 
-  onLogOut() {
+  onLogOut(): void {
     localStorage.clear();
     this.router.navigate([`${RoutePaths.AUTH}`]);
   }
 
-  ngOnDestroy() {
+  getUserDisplayName(): string {
+    if (!this.currentUser) return '';
+    const fullName = `${this.currentUser.first_name} ${this.currentUser.last_name}`.trim();
+    return fullName || this.currentUser.email;
+  }
+
+  ngOnDestroy(): void {
     this.currentUserSubscription?.unsubscribe();
   }
 

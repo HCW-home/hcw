@@ -5,21 +5,21 @@ export const MenuItems: Sidebar[] = [
   {
     name: 'Dashboard',
     path: `/${RoutePaths.DASHBOARD}`,
-    icon: 'users.svg',
+    icon: 'dashboard.svg',
   },
   {
     name: 'Consultations',
     path: `/${RoutePaths.CONSULTATIONS}`,
-    icon: 'geo-alt-fill.svg',
+    icon: 'video.svg',
   },
   {
     name: 'Test',
     path: `/${RoutePaths.TEST}`,
-    icon: 'report.svg',
+    icon: 'camera.svg',
   },
   {
     name: 'Availability',
     path: `/${RoutePaths.AVAILABILITY}`,
-    icon: 'report.svg',
+    icon: 'calendar.svg',
   },
 ]

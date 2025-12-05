@@ -185,13 +185,10 @@
               </div>
             </div>
           } @else {
-            <div class="video-call-active">
-              <app-video-call
-                [consultationId]="consultationId"
-                [displayName]="displayName"
-                (callEnded)="onCallEnded()">
-              </app-video-call>
-            </div>
+            <app-video-consultation
+              [consultationId]="consultationId"
+              (leave)="onCallEnded()">
+            </app-video-consultation>
           }
         </div>
       }

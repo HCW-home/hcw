@@ -7,7 +7,7 @@
     <button class="toggle-btn" (click)="toggleSidebar()">
       <app-svg
         [src]="isCollapsed ? 'svg/chevron-right.svg' : 'svg/chevron-left.svg'"
-        [svgStyle]="{'width.px': 20, 'height.px': 20, 'fill': 'var(--Bluish-Gray-06)'}">
+        [svgStyle]="{'width.px': 20, 'height.px': 20, 'color': 'var(--Bluish-Gray-06)'}">
       </app-svg>
     </button>
   </div>
@@ -26,7 +26,7 @@
             [svgStyle]="{
               'width.px': 24,
               'height.px': 24,
-              'fill': router.isActive('/' + RoutePaths.USER + menuItem.path, {
+              'color': router.isActive('/' + RoutePaths.USER + menuItem.path, {
                 paths: 'exact',
                 matrixParams: 'ignored',
                 queryParams: 'ignored',
@@ -50,17 +50,17 @@
 
   <div class="sidebar-footer">
     <div class="user-section">
-      @if (!isCollapsed) {
+      @if (!isCollapsed && currentUser) {
         <div class="user-info">
           <app-typography
             [variant]="TypographyTypeEnum['body-bold']"
             color="var(--Bluish-Gray-08)">
-            Dr. Smith
+            {{ getUserDisplayName() }}
           </app-typography>
           <app-typography
-            [variant]="TypographyTypeEnum['body-regular']"
+            [variant]="TypographyTypeEnum['body-s-regular']"
             color="var(--Bluish-Gray-06)">
-            Practitioner
+            {{ currentUser.email }}
           </app-typography>
         </div>
       }

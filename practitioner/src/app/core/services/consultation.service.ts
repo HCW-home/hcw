@@ -357,4 +357,14 @@ export class ConsultationService {
   deleteBookingSlot(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/user/bookingslots/${id}/`);
   }
+
+  getLivekitToken(consultationId: number): Observable<{
+    url: string;
+    room: string;
+    token: string;
+  }> {
+    return this.http.get<{ url: string; room: string; token: string }>(
+      `${this.apiUrl}/consultations/${consultationId}/livekit_token/`
+    );
+  }
 }

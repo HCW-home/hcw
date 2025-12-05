@@ -12,7 +12,6 @@ import { Subject, takeUntil } from 'rxjs';
 import { ConsultationService } from '../../../../core/services/consultation.service';
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { ConsultationWebSocketService } from '../../../../core/services/consultation-websocket.service';
-import { WebRTCService } from '../../../../core/services/webrtc.service';
 import {
   Consultation,
   Appointment,
@@ -27,7 +26,7 @@ import { BackButton } from '../../../../shared/components/back-button/back-butto
 import { Badge } from '../../../../shared/components/badge/badge';
 import { Loader } from '../../../../shared/components/loader/loader';
 import { MessageList, Message } from '../../../../shared/components/message-list/message-list';
-import { VideoCall } from '../../../../shared/components/video-call/video-call';
+import { VideoConsultationComponent } from '../video-consultation/video-consultation';
 
 import { Typography } from '../../../../shared/ui-components/typography/typography';
 import { Button } from '../../../../shared/ui-components/button/button';
@@ -56,7 +55,7 @@ import { BadgeTypeEnum } from '../../../../shared/constants/badge';
     Select,
     Button,
     Loader,
-    VideoCall,
+    VideoConsultationComponent,
     BackButton,
     Typography,
     MessageList,
@@ -103,7 +102,6 @@ export class ConsultationDetail implements OnInit, OnDestroy {
   private consultationService = inject(ConsultationService);
   private toasterService = inject(ToasterService);
   private wsService = inject(ConsultationWebSocketService);
-  private webrtcService = inject(WebRTCService);
 
   constructor() {
     this.appointmentForm = this.fb.group({
@@ -134,9 +132,6 @@ export class ConsultationDetail implements OnInit, OnDestroy {
     this.destroy$.next();
     this.destroy$.complete();
     this.wsService.disconnect();
-    if (this.inCall()) {
-      this.webrtcService.cleanup();
-    }
   }
 
   private connectWebSocket(): void {
@@ -419,8 +414,8 @@ export class ConsultationDetail implements OnInit, OnDestroy {
     return fullName || beneficiary.email || 'Unknown patient';
   }
 
-  async joinVideoCall(): Promise<void> {
-    this.toasterService.show('warning', 'Video call feature is not yet available');
+  joinVideoCall(): void {
+    this.inCall.set(true);
   }
 
   onCallEnded(): void {
