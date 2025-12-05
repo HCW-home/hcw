@@ -14,7 +14,7 @@ hcw (0.9.16) bookworm; urgency=medium
   * add i18n (en/fr), update patient dependencies
   * add video consultation screen
 
- -- Olivier Bitsch <olivier.b@iabsis.com>  Fri, 05 Dec 2025 10:42:52 +0100
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Fri, 05 Dec 2025 10:43:07 +0100
 
 hcw (0.9.13) bookworm; urgency=medium
 
