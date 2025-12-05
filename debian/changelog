@@ -1,3 +1,21 @@
+hcw (0.9.14) bookworm; urgency=medium
+
+  [ Olivier Bitsch ]
+  * Add new job title field
+  * New default template for populating database.
+  * Add new parameter for default model
+  * Draft livekit implementation
+  * Small cleanup
+
+  [ Gor Grigoryan ]
+  * implement ws connections, imporve add edit consultation and my consultations
+  * update ws connection
+  * Add core services, WebSocket integration, and video consultation to patient app
+  * add i18n (en/fr), update patient dependencies
+  * add video consultation screen
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Fri, 05 Dec 2025 10:31:33 +0100
+
 hcw (0.9.13) bookworm; urgency=medium
 
   * Add back Makefile for practionner interface
