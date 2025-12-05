@@ -1,4 +1,4 @@
-hcw (0.9.14) bookworm; urgency=medium
+hcw (0.9.15) bookworm; urgency=medium
 
   [ Olivier Bitsch ]
   * Add new job title field

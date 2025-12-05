@@ -3,5 +3,6 @@ flows:
 options:
  distrib: "debian"
  codename: "trixie"
+ disable_clean: "true"
 modes:
 - ON_VERSION
