@@ -1,4 +1,4 @@
-hcw (0.9.18) bookworm; urgency=medium
+hcw (0.9.19) bookworm; urgency=medium
 
   [ Olivier Bitsch ]
   * Add test rtc endpoint
