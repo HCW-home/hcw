@@ -21,6 +21,7 @@ urlpatterns = [
     path("api/user/notifications/", views.UserNotificationsView.as_view(), name="user_notifications"),
     path("api/user/appointments/", views.UserAppointmentsView.as_view(), name="user_appointments"),
     path("api/user/healthmetrics/", views.UserHealthMetricsView.as_view(), name="user_healthmetrics"),
+    path("api/user/testrtc/", views.TestRTCView.as_view(), name="user_testrtc"),
     path("api/messages/<int:message_id>/attachment/", views.MessageAttachmentView.as_view(), name="message_attachment"),
     path('api/user/', include(user_router.urls)),
 ]

@@ -28,6 +28,7 @@ from dj_rest_auth.registration.views import SocialLoginView
 from dj_rest_auth.registration.serializers import SocialLoginSerializer
 from allauth.socialaccount.providers.openid_connect.views import OpenIDConnectOAuth2Adapter
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from mediaserver.models import Server
 
 User = get_user_model()
 
@@ -653,12 +654,12 @@ class OpenIDView(SocialLoginView):
 class UserAppointmentViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = AppointmentDetailSerializer
-    
+
     def get_queryset(self):
         """Get appointments where the user is a participant."""
         return Appointment.objects.select_related(
             'consultation__created_by',
-            'consultation__owned_by', 
+            'consultation__owned_by',
             'consultation__beneficiary',
             'consultation__group',
             'created_by'
@@ -668,7 +669,7 @@ class UserAppointmentViewSet(viewsets.ReadOnlyModelViewSet):
         ).filter(
             participant__user=self.request.user
         ).distinct()
-    
+
     @extend_schema(
         request={
             'application/json': {
@@ -712,15 +713,15 @@ class UserAppointmentViewSet(viewsets.ReadOnlyModelViewSet):
     def presence(self, request, pk=None):
         """Update participant presence (is_confirmed field)."""
         is_present = request.data.get('is_present')
-        
+
         if is_present is None:
             return Response(
-                {"detail": "is_present parameter is required."}, 
+                {"detail": "is_present parameter is required."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         appointment = self.get_object()
-        
+
         try:
             participant = Participant.objects.get(
                 appointment=appointment,
@@ -728,14 +729,63 @@ class UserAppointmentViewSet(viewsets.ReadOnlyModelViewSet):
             )
             participant.is_confirmed = bool(is_present)
             participant.save()
-            
+
             return Response({
                 "detail": "Presence updated successfully.",
                 "is_confirmed": participant.is_confirmed
             })
-            
+
         except Participant.DoesNotExist:
             return Response(
-                {"detail": "You are not a participant in this appointment."}, 
+                {"detail": "You are not a participant in this appointment."},
                 status=status.HTTP_404_NOT_FOUND
+            )
+
+
+class TestRTCView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        responses={
+            200: {
+                'type': 'object',
+                'properties': {
+                    'url': {'type': 'string', 'description': 'Media server URL'},
+                    'token': {'type': 'string', 'description': 'JWT token for RTC connection'},
+                    'room': {'type': 'string', 'description': 'Test room name'}
+                },
+                'example': {
+                    "url": "wss://livekit.example.com",
+                    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                    "room": "usertest_123"
+                }
+            },
+            500: {
+                'type': 'object',
+                'properties': {
+                    'detail': {'type': 'string'}
+                },
+                'example': {"detail": "No media server available."}
+            }
+        },
+        description="Get RTC test connection information for the authenticated user. Returns server URL, JWT token, and room name for testing WebRTC connection."
+    )
+    def get(self, request):
+        """Get RTC test information for the authenticated user."""
+        try:
+            server = Server.get_server()
+            print(server.instance)
+            
+            test_info = server.instance.user_test_info(request.user)
+
+            return Response({
+                'url': server.url,
+                'token': test_info,
+                'room': f"usertest_{request.user.pk}"
+            })
+        except Exception as e:
+            return Response(
+                {"detail": "No media server available."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
