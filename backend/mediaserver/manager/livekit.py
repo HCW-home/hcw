@@ -77,11 +77,8 @@ class Main(BaseMediaserver):
                 api_secret=self.server.api_secret,
             )
             .with_grants(video_grants)
-            .with_identity(participant.pk)
+            .with_identity(str(participant.pk))
             .with_name(participant.name)
-            # .with_attributes(
-            #     {"color": color, "room_admin": "true" if is_admin_or_owner else "false"}
-            # )
             .to_jwt()
         )
 
@@ -105,11 +102,8 @@ class Main(BaseMediaserver):
                 api_secret=self.server.api_secret,
             )
             .with_grants(video_grants)
-            .with_identity(user.pk)
+            .with_identity(str(user.pk))
             .with_name(user.first_name)
-            # .with_attributes(
-            #     {"color": color, "room_admin": "true" if is_admin_or_owner else "false"}
-            # )
             .to_jwt()
         )
 
