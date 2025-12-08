@@ -1,3 +1,14 @@
+hcw (0.9.18) bookworm; urgency=medium
+
+  [ Olivier Bitsch ]
+  * Add test rtc endpoint
+  * Remove print
+
+  [ Gor Grigoryan ]
+  * Integrate LiveKit in test page
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Mon, 08 Dec 2025 14:54:25 +0100
+
 hcw (0.9.17) bookworm; urgency=medium
 
   * Fix missing livekit from reqs
