@@ -17,29 +17,61 @@
         gap: 4px;
       }
 
-      .status-indicator {
+      .status-indicators {
         display: flex;
         align-items: center;
-        gap: 8px;
-        padding: 8px 16px;
-        background: white;
-        border-radius: 20px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        gap: 16px;
+
+        .connection-status {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 16px;
+          background: white;
+          border-radius: 20px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+
+          .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+          }
+        }
+
+        .status-indicator {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 16px;
+          background: white;
+          border-radius: 20px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        }
       }
 
       @media (max-width: 768px) {
         flex-direction: column;
         gap: 16px;
         align-items: stretch;
+
+        .status-indicators {
+          flex-direction: column;
+          gap: 8px;
+        }
       }
     }
   }
 
   .test-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 24px;
     margin-bottom: 40px;
+    align-items: stretch;
+
+    @media (max-width: 1200px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
 
     @media (max-width: 768px) {
       grid-template-columns: 1fr;
@@ -53,6 +85,8 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
       border: 1px solid var(--Bluish-Gray-02);
       transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
 
       &:hover {
         transform: translateY(-2px);
@@ -86,6 +120,11 @@
 
           &.speaker {
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+          }
+
+          &.connection {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
             color: white;
           }
         }
@@ -122,6 +161,7 @@
 
       .test-content {
         margin-bottom: 24px;
+        flex: 1;
 
         .video-preview {
           position: relative;
@@ -141,6 +181,11 @@
             height: 100%;
             object-fit: cover;
             border-radius: 10px;
+            display: none;
+
+            &.visible {
+              display: block;
+            }
           }
 
           .video-placeholder {
@@ -219,16 +264,51 @@
             text-align: center;
           }
         }
+
+        .connection-test-area {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 32px;
+          background: var(--Bluish-Gray-01);
+          border-radius: 12px;
+
+          .connection-info {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+          }
+
+          .connecting-animation {
+            display: flex;
+            gap: 8px;
+
+            .dot {
+              width: 10px;
+              height: 10px;
+              background: var(--Primary-05);
+              border-radius: 50%;
+              animation: connecting-bounce 1.4s ease-in-out infinite;
+
+              &:nth-child(1) { animation-delay: 0s; }
+              &:nth-child(2) { animation-delay: 0.2s; }
+              &:nth-child(3) { animation-delay: 0.4s; }
+            }
+          }
+        }
       }
 
       .test-actions {
         display: flex;
         gap: 12px;
-        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        min-height: 44px;
 
         app-button {
-          flex: 1;
-          min-width: 120px;
+          width: 160px;
         }
       }
     }
@@ -266,6 +346,17 @@
   }
   50% {
     transform: scale(1.5);
+    opacity: 1;
+  }
+}
+
+@keyframes connecting-bounce {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
     opacity: 1;
   }
 }

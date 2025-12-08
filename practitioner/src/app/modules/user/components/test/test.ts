@@ -1,4 +1,5 @@
-import { Component, OnInit, OnDestroy, signal, ViewChild, ElementRef, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, ViewChild, ElementRef, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Page } from '../../../../core/components/page/page';
 import { Button } from '../../../../shared/ui-components/button/button';
 import { Typography } from '../../../../shared/ui-components/typography/typography';
@@ -9,6 +10,10 @@ import {
 } from '../../../../shared/constants/button';
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
 import { Router } from '@angular/router';
+import { LiveKitService, ConnectionStatus } from '../../../../core/services/livekit.service';
+import { UserService } from '../../../../core/services/user.service';
+import { ToasterService } from '../../../../core/services/toaster.service';
+import { LocalVideoTrack, LocalAudioTrack } from 'livekit-client';
 
 type TestStatus = 'idle' | 'testing' | 'working' | 'error' | 'playing';
 
@@ -23,17 +28,19 @@ export class Test implements OnInit, OnDestroy {
 
   breadcrumbs = [{ label: 'System Test' }];
 
+  connectionStatus = signal<ConnectionStatus>('disconnected');
   cameraStatus = signal<TestStatus>('idle');
   microphoneStatus = signal<TestStatus>('idle');
   speakerStatus = signal<TestStatus>('idle');
   systemStatus = signal<'checking' | 'ready' | 'partial' | 'error'>('checking');
 
-  private videoStream: MediaStream | null = null;
-  private audioStream: MediaStream | null = null;
+  private localVideoTrack: LocalVideoTrack | null = null;
+  private localAudioTrack: LocalAudioTrack | null = null;
   private audioContext: AudioContext | null = null;
   private analyserNode: AnalyserNode | null = null;
   private animationFrame: number | null = null;
   private testAudio: HTMLAudioElement | null = null;
+  private isConnecting = false;
 
   volumeBars = signal<number[]>(Array(20).fill(0));
   soundWaves = signal<number[]>(Array(5).fill(0));
@@ -43,13 +50,100 @@ export class Test implements OnInit, OnDestroy {
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
 
   private router = inject(Router);
+  private livekitService = inject(LiveKitService);
+  private userService = inject(UserService);
+  private toasterService = inject(ToasterService);
+  private destroyRef = inject(DestroyRef);
 
   ngOnInit() {
+    this.setupSubscriptions();
     this.updateSystemStatus();
   }
 
   ngOnDestroy() {
     this.cleanup();
+  }
+
+  private setupSubscriptions(): void {
+    this.livekitService.connectionStatus$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(status => {
+        this.connectionStatus.set(status);
+        this.updateSystemStatus();
+      });
+
+    this.livekitService.localVideoTrack$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(track => {
+        if (this.localVideoTrack && this.videoElement?.nativeElement) {
+          this.localVideoTrack.detach(this.videoElement.nativeElement);
+        }
+        this.localVideoTrack = track;
+        if (track) {
+          if (this.cameraStatus() === 'testing') {
+            this.cameraStatus.set('working');
+            this.updateSystemStatus();
+          }
+          setTimeout(() => this.attachLocalVideo(), 50);
+        }
+      });
+
+    this.livekitService.localAudioTrack$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(track => {
+        this.localAudioTrack = track;
+        if (track) {
+          this.setupAudioVisualization(track);
+          if (this.microphoneStatus() === 'testing') {
+            this.microphoneStatus.set('working');
+            this.updateSystemStatus();
+          }
+        } else {
+          this.stopAudioVisualization();
+        }
+      });
+
+    this.livekitService.error$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(error => {
+        this.toasterService.show('error', 'Error', error);
+      });
+  }
+
+  private async ensureConnected(): Promise<boolean> {
+    if (this.livekitService.isConnected()) {
+      return true;
+    }
+
+    if (this.isConnecting) {
+      return false;
+    }
+
+    this.isConnecting = true;
+
+    try {
+      const config = await this.userService.getTestRtcInfo()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .toPromise();
+
+      if (!config) {
+        throw new Error('Failed to get test connection info');
+      }
+
+      await this.livekitService.connect({
+        url: config.url,
+        token: config.token,
+        room: config.room,
+      });
+
+      return true;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to connect to server';
+      this.toasterService.show('error', 'Connection Error', message);
+      return false;
+    } finally {
+      this.isConnecting = false;
+    }
   }
 
   systemStatusText(): string {
@@ -71,8 +165,11 @@ export class Test implements OnInit, OnDestroy {
     const camera = this.cameraStatus();
     const mic = this.microphoneStatus();
     const speaker = this.speakerStatus();
+    const connection = this.connectionStatus();
 
-    if (camera === 'working' && mic === 'working' && speaker === 'working') {
+    if (connection === 'failed') {
+      this.systemStatus.set('error');
+    } else if (camera === 'working' && mic === 'working' && speaker === 'working') {
       this.systemStatus.set('ready');
     } else if (camera === 'error' && mic === 'error' && speaker === 'error') {
       this.systemStatus.set('error');
@@ -83,7 +180,6 @@ export class Test implements OnInit, OnDestroy {
     }
   }
 
-  // Camera Methods
   getCameraStatusText(): string {
     switch (this.cameraStatus()) {
       case 'idle':
@@ -100,6 +196,10 @@ export class Test implements OnInit, OnDestroy {
   }
 
   getCameraPlaceholderText(): string {
+    const connection = this.connectionStatus();
+    if (connection === 'connecting') {
+      return 'Connecting to server...';
+    }
     switch (this.cameraStatus()) {
       case 'idle':
         return 'Click "Test Camera" to begin';
@@ -116,63 +216,39 @@ export class Test implements OnInit, OnDestroy {
     this.cameraStatus.set('testing');
 
     try {
-      this.stopCamera();
+      const connected = await this.ensureConnected();
+      if (!connected) {
+        this.cameraStatus.set('error');
+        this.updateSystemStatus();
+        return;
+      }
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          width: { ideal: 640 },
-          height: { ideal: 480 },
-          facingMode: 'user'
-        }
-      });
-
-      this.videoStream = stream;
-
-      await new Promise<void>((resolve, reject) => {
-        const checkVideo = () => {
-          if (this.videoElement?.nativeElement) {
-            const video = this.videoElement.nativeElement;
-            video.srcObject = stream;
-
-            video.onloadedmetadata = () => {
-              video.play().then(() => {
-                this.cameraStatus.set('working');
-                this.updateSystemStatus();
-                resolve();
-              }).catch(reject);
-            };
-
-            video.onerror = reject;
-          } else {
-            setTimeout(checkVideo, 50);
-          }
-        };
-        checkVideo();
-      });
-
+      await this.livekitService.enableCamera(true);
     } catch (error) {
-      console.error('Camera test failed:', error);
+      const message = error instanceof Error ? error.message : 'Camera test failed';
+      this.toasterService.show('error', 'Camera Error', message);
       this.cameraStatus.set('error');
       this.updateSystemStatus();
-
-      // Clean up on error
-      if (this.videoStream) {
-        this.videoStream.getTracks().forEach(track => track.stop());
-        this.videoStream = null;
-      }
     }
   }
 
-  stopCamera() {
-    if (this.videoStream) {
-      this.videoStream.getTracks().forEach(track => track.stop());
-      this.videoStream = null;
-
-      if (this.videoElement?.nativeElement) {
-        this.videoElement.nativeElement.srcObject = null;
-      }
+  private attachLocalVideo(): void {
+    if (!this.videoElement?.nativeElement || !this.localVideoTrack) {
+      return;
     }
+    this.localVideoTrack.attach(this.videoElement.nativeElement);
+  }
 
+  async stopCamera() {
+    try {
+      if (this.localVideoTrack && this.videoElement?.nativeElement) {
+        this.localVideoTrack.detach(this.videoElement.nativeElement);
+      }
+      await this.livekitService.enableCamera(false);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to stop camera';
+      this.toasterService.show('error', 'Camera Error', message);
+    }
     this.cameraStatus.set('idle');
     this.updateSystemStatus();
   }
@@ -193,6 +269,10 @@ export class Test implements OnInit, OnDestroy {
   }
 
   getAudioLevelText(): string {
+    const connection = this.connectionStatus();
+    if (connection === 'connecting') {
+      return 'Connecting to server...';
+    }
     if (this.microphoneStatus() === 'working') {
       return 'Speak to see audio levels';
     } else if (this.microphoneStatus() === 'testing') {
@@ -207,64 +287,47 @@ export class Test implements OnInit, OnDestroy {
     this.microphoneStatus.set('testing');
 
     try {
-      this.stopMicrophone();
+      const connected = await this.ensureConnected();
+      if (!connected) {
+        this.microphoneStatus.set('error');
+        this.updateSystemStatus();
+        return;
+      }
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        }
-      });
-
-      this.audioStream = stream;
-      await this.setupAudioVisualization(stream);
-      this.microphoneStatus.set('working');
-      this.updateSystemStatus();
+      await this.livekitService.enableMicrophone(true);
     } catch (error) {
-      console.error('Microphone test failed:', error);
+      const message = error instanceof Error ? error.message : 'Microphone test failed';
+      this.toasterService.show('error', 'Microphone Error', message);
       this.microphoneStatus.set('error');
       this.updateSystemStatus();
-
-      if (this.audioStream) {
-        this.audioStream.getTracks().forEach(track => track.stop());
-        this.audioStream = null;
-      }
     }
   }
 
-  stopMicrophone() {
-    if (this.audioStream) {
-      this.audioStream.getTracks().forEach(track => track.stop());
-      this.audioStream = null;
+  async stopMicrophone() {
+    this.stopAudioVisualization();
+    try {
+      await this.livekitService.enableMicrophone(false);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to stop microphone';
+      this.toasterService.show('error', 'Microphone Error', message);
     }
-
-    if (this.audioContext) {
-      this.audioContext.close();
-      this.audioContext = null;
-    }
-
-    if (this.animationFrame) {
-      cancelAnimationFrame(this.animationFrame);
-      this.animationFrame = null;
-    }
-
-    this.volumeBars.set(Array(20).fill(0));
     this.microphoneStatus.set('idle');
     this.updateSystemStatus();
   }
 
-  private setupAudioVisualization(stream: MediaStream) {
+  private setupAudioVisualization(track: LocalAudioTrack) {
+    this.stopAudioVisualization();
     try {
+      const mediaStream = new MediaStream([track.mediaStreamTrack]);
       this.audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-      const source = this.audioContext.createMediaStreamSource(stream);
+      const source = this.audioContext.createMediaStreamSource(mediaStream);
       this.analyserNode = this.audioContext.createAnalyser();
       this.analyserNode.fftSize = 64;
       source.connect(this.analyserNode);
 
       this.visualizeAudio();
     } catch (error) {
-      console.error('Audio visualization setup failed:', error);
+      this.toasterService.show('error', 'Audio Error', 'Audio visualization setup failed');
     }
   }
 
@@ -291,7 +354,21 @@ export class Test implements OnInit, OnDestroy {
     analyze();
   }
 
-  // Speaker Methods
+  private stopAudioVisualization() {
+    if (this.audioContext) {
+      this.audioContext.close();
+      this.audioContext = null;
+      this.analyserNode = null;
+    }
+
+    if (this.animationFrame) {
+      cancelAnimationFrame(this.animationFrame);
+      this.animationFrame = null;
+    }
+
+    this.volumeBars.set(Array(20).fill(0));
+  }
+
   getSpeakerStatusText(): string {
     switch (this.speakerStatus()) {
       case 'idle':
@@ -321,27 +398,24 @@ export class Test implements OnInit, OnDestroy {
   testSpeakers() {
     this.speakerStatus.set('playing');
 
-    // Create a test tone
     try {
       this.testAudio = new Audio();
-      // Generate a simple test tone using data URL
       this.testAudio.src = this.generateTestTone();
       this.testAudio.play()
         .then(() => {
-          // Audio is playing
           setTimeout(() => {
             if (this.speakerStatus() === 'playing') {
               this.speakerStatus.set('idle');
             }
-          }, 3000); // 3 second test tone
+          }, 3000);
         })
-        .catch((error) => {
-          console.error('Speaker test failed:', error);
+        .catch(() => {
+          this.toasterService.show('error', 'Speaker Error', 'Failed to play test sound');
           this.speakerStatus.set('error');
           this.updateSystemStatus();
         });
     } catch (error) {
-      console.error('Speaker test setup failed:', error);
+      this.toasterService.show('error', 'Speaker Error', 'Speaker test setup failed');
       this.speakerStatus.set('error');
       this.updateSystemStatus();
     }
@@ -358,15 +432,13 @@ export class Test implements OnInit, OnDestroy {
   }
 
   private generateTestTone(): string {
-    // Generate a simple test tone at 440Hz (A4 note)
     const sampleRate = 44100;
-    const duration = 2; // 2 seconds
-    const frequency = 440; // A4
+    const duration = 2;
+    const frequency = 440;
     const samples = duration * sampleRate;
     const buffer = new ArrayBuffer(44 + samples * 2);
     const view = new DataView(buffer);
 
-    // WAV header
     const writeString = (offset: number, string: string) => {
       for (let i = 0; i < string.length; i++) {
         view.setUint8(offset + i, string.charCodeAt(i));
@@ -387,16 +459,46 @@ export class Test implements OnInit, OnDestroy {
     writeString(36, 'data');
     view.setUint32(40, samples * 2, true);
 
-    // Generate sine wave
     let offset = 44;
     for (let i = 0; i < samples; i++) {
-      const sample = Math.sin(2 * Math.PI * frequency * i / sampleRate) * 0.3; // 30% volume
+      const sample = Math.sin(2 * Math.PI * frequency * i / sampleRate) * 0.3;
       view.setInt16(offset, sample * 0x7FFF, true);
       offset += 2;
     }
 
     const blob = new Blob([buffer], { type: 'audio/wav' });
     return URL.createObjectURL(blob);
+  }
+
+  getConnectionStatusText(): string {
+    switch (this.connectionStatus()) {
+      case 'disconnected':
+        return 'Not connected';
+      case 'connecting':
+        return 'Connecting...';
+      case 'connected':
+        return 'Connected';
+      case 'reconnecting':
+        return 'Reconnecting...';
+      case 'failed':
+        return 'Connection failed';
+      default:
+        return 'Unknown';
+    }
+  }
+
+  getConnectionStatusColor(): string {
+    switch (this.connectionStatus()) {
+      case 'connected':
+        return 'var(--Success-05)';
+      case 'connecting':
+      case 'reconnecting':
+        return 'var(--Warning-05)';
+      case 'failed':
+        return 'var(--Error-05)';
+      default:
+        return 'var(--Bluish-Gray-06)';
+    }
   }
 
   allTestsCompleted(): boolean {
@@ -431,22 +533,23 @@ export class Test implements OnInit, OnDestroy {
     return 'var(--Warning-05)';
   }
 
-  testAllSystems() {
-    if (this.cameraStatus() === 'idle') {
-      this.testCamera();
+  async testAllSystems() {
+    const connected = await this.ensureConnected();
+    if (!connected) {
+      return;
     }
 
-    setTimeout(() => {
-      if (this.microphoneStatus() === 'idle') {
-        this.testMicrophone();
-      }
-    }, 1000);
+    if (this.cameraStatus() === 'idle') {
+      await this.testCamera();
+    }
 
-    setTimeout(() => {
-      if (this.speakerStatus() === 'idle') {
-        this.testSpeakers();
-      }
-    }, 2000);
+    if (this.microphoneStatus() === 'idle') {
+      await this.testMicrophone();
+    }
+
+    if (this.speakerStatus() === 'idle') {
+      this.testSpeakers();
+    }
   }
 
   startConsultations() {
@@ -455,14 +558,18 @@ export class Test implements OnInit, OnDestroy {
     }
   }
 
-
   private cleanup() {
-    this.stopCamera();
-    this.stopMicrophone();
+    if (this.localVideoTrack && this.videoElement?.nativeElement) {
+      this.localVideoTrack.detach(this.videoElement.nativeElement);
+    }
+
+    this.stopAudioVisualization();
 
     if (this.testAudio) {
       this.testAudio.pause();
       this.testAudio = null;
     }
+
+    this.livekitService.disconnect();
   }
 }
