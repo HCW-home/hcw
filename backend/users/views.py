@@ -775,7 +775,6 @@ class TestRTCView(APIView):
         """Get RTC test information for the authenticated user."""
         try:
             server = Server.get_server()
-            print(server.instance)
             
             test_info = server.instance.user_test_info(request.user)
 
