@@ -27,6 +27,7 @@ from .serializers import (
     RequestSerializer,
     BookingSlotSerializer
 )
+from mediaserver.models import Server
 
 User = get_user_model()
 
@@ -117,6 +118,59 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
         serializer = self.get_serializer(consultation)
         return Response(serializer.data)
     
+    @extend_schema(
+        responses={
+            200: {
+                'type': 'object',
+                'properties': {
+                    'url': {'type': 'string', 'description': 'Media server URL'},
+                    'token': {'type': 'string', 'description': 'JWT token for RTC connection'},
+                    'room': {'type': 'string', 'description': 'Test room name'}
+                },
+                'example': {
+                    "url": "wss://livekit.example.com",
+                    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                    "room": "usertest_123"
+                }
+            },
+            500: {
+                'type': 'object',
+                'properties': {
+                    'detail': {'type': 'string'}
+                },
+                'example': {"detail": "No media server available."}
+            }
+        },
+        description="Get RTC test connection information for the authenticated user. Returns server URL, JWT token, and room name for testing WebRTC connection."
+    )
+    @action(detail=True, methods=['get'])
+    def join(self, request, pk=None):
+        """Join consultation call"""
+        consultation = self.get_object()
+        if consultation.closed_at:
+            return Response(
+                {'error': 'Cannot join call in closed consultation'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            server = Server.get_server()
+
+            consultation_call_info = server.instance.consultation_user_info(
+                consultation, request.user)
+
+            return Response({
+                'url': server.url,
+                'token': consultation_call_info,
+                'room': f"consultation_{consultation.pk}"
+            })
+        except Exception as e:
+            return Response(
+                {"detail": "No media server available."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
     @extend_schema(
         request=AppointmentSerializer,
         responses={200: AppointmentSerializer(many=True), 201: AppointmentSerializer}
@@ -290,6 +344,57 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @extend_schema(
+        responses={
+            200: {
+                'type': 'object',
+                'properties': {
+                    'url': {'type': 'string', 'description': 'Media server URL'},
+                    'token': {'type': 'string', 'description': 'JWT token for RTC connection'},
+                    'room': {'type': 'string', 'description': 'Test room name'}
+                },
+                'example': {
+                    "url": "wss://livekit.example.com",
+                    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                    "room": "usertest_123"
+                }
+            },
+            500: {
+                'type': 'object',
+                'properties': {
+                    'detail': {'type': 'string'}
+                },
+                'example': {"detail": "No media server available."}
+            }
+        },
+        description="Get RTC test connection information for the authenticated user. Returns server URL, JWT token, and room name for testing WebRTC connection."
+    )
+    @action(detail=True, methods=['get'])
+    def join(self, request, pk=None):
+        """Join consultation call"""
+        appointment = self.get_object()
+        if appointment.consultation.closed_at:
+            return Response(
+                {'error': 'Cannot join call in closed consultation'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            server = Server.get_server()
+
+            consultation_call_info = server.instance.appointment_participant_info(
+                appointment, request.user)
+
+            return Response({
+                'url': server.url,
+                'token': consultation_call_info,
+                'room': f"appointment_{appointment.pk}"
+            })
+        except Exception as e:
+            return Response(
+                {"detail": "No media server available."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class ParticipantViewSet(viewsets.ModelViewSet):
     """

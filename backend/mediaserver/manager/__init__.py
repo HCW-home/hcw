@@ -3,7 +3,7 @@ from importlib import import_module
 from pkgutil import iter_modules
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple, Type
 
-from consultations.models import Consultation, Participant, User
+from consultations.models import Consultation, Appointment, User
 
 if TYPE_CHECKING:
     from ..models import Server
@@ -29,7 +29,7 @@ class BaseMediaserver(ABC):
         """
 
     @abstractmethod
-    def appointment_participant_info(self, participant: Participant):
+    def appointment_participant_info(self, appointment: Appointment, user: User):
         """
         Return room and token info for Participant
         """

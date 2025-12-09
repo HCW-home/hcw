@@ -58,8 +58,8 @@ class Main(BaseMediaserver):
                 )
             )
 
-    def appointment_participant_info(self, participant):
-        room_name = f"appointment_{participant.appointment.pk}"
+    def appointment_participant_info(self, appointment, user):
+        room_name = f"appointment_{appointment.pk}"
 
         video_grants = VideoGrants(
             room=room_name,
@@ -77,8 +77,8 @@ class Main(BaseMediaserver):
                 api_secret=self.server.api_secret,
             )
             .with_grants(video_grants)
-            .with_identity(str(participant.pk))
-            .with_name(participant.name)
+            .with_identity(str(user.pk))
+            .with_name(user.name)
             .to_jwt()
         )
 
