@@ -103,9 +103,30 @@ class Main(BaseMediaserver):
             )
             .with_grants(video_grants)
             .with_identity(str(user.pk))
-            .with_name(user.first_name)
+            .with_name(user.name)
             .to_jwt()
         )
 
     def consultation_user_info(self, consultation, user):
-        pass
+        room_name = f"consultation_{consultation.pk}"
+
+        video_grants = VideoGrants(
+            room=room_name,
+            room_join=True,
+            # room_admin=is_admin_or_owner,
+            # can_update_own_metadata=True,
+            can_publish=True,
+            # can_publish_sources=sources,
+            can_subscribe=True,
+        )
+
+        return (
+            AccessToken(
+                api_key=self.server.api_token,
+                api_secret=self.server.api_secret,
+            )
+            .with_grants(video_grants)
+            .with_identity(str(user.pk))
+            .with_name(user.name)
+            .to_jwt()
+        )

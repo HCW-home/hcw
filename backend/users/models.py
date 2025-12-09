@@ -112,6 +112,10 @@ class User(AbstractUser):
     is_appointment_auth_token_used = models.BooleanField(default=False, help_text="Whether the appointment auth token has been used before")
     verification_code = models.IntegerField(null=True, blank=True)
 
+    @property
+    def name(self) -> str:
+        return f"{self.first_name} {self.last_name}"
+
     def send_user_notification(self, title, message) -> FirebaseResponseDict:
         # Docs https://fcm-django.readthedocs.io/en/latest/
         """

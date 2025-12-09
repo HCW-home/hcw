@@ -180,7 +180,7 @@ class Participant(models.Model):
         """Get display name of the participant"""
         if self.user.temporary:
             return self.display_name or self.email or self.phone
-        return f"{self.user.firstname} {self.user.name}" or self.user.email
+        return self.user.name or self.user.email
 
     def clean(self):
         super().clean()
