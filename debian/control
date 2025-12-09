@@ -27,7 +27,14 @@ Package: hcw-practitioner
 Architecture: any
 Depends:
  ${shlibs:Depends},
- ${misc:Depends},
- python3
+ ${misc:Depends}
 Description: HCW@Home - Frontend dedicated to Practitioner with Angular
+ <Insert long description, indented with spaces.>
+
+Package: hcw-patient
+Architecture: any
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends}
+Description: HCW@Home - Frontend dedicated to Patient with Angular/Ionic
  <Insert long description, indented with spaces.>
