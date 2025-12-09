@@ -80,6 +80,7 @@ export class ConsultationDetail implements OnInit, OnDestroy {
   isWebSocketConnected = signal(false);
 
   inCall = signal(false);
+  activeAppointmentId = signal<number | null>(null);
   displayName = '';
 
   appointmentForm: FormGroup;
@@ -414,12 +415,14 @@ export class ConsultationDetail implements OnInit, OnDestroy {
     return fullName || beneficiary.email || 'Unknown patient';
   }
 
-  joinVideoCall(): void {
+  joinVideoCall(appointmentId?: number): void {
+    this.activeAppointmentId.set(appointmentId || null);
     this.inCall.set(true);
   }
 
   onCallEnded(): void {
     this.inCall.set(false);
+    this.activeAppointmentId.set(null);
   }
 
   protected readonly ButtonTypeEnum = ButtonTypeEnum;

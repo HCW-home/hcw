@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import {
@@ -13,17 +13,12 @@ import {
   AlertController,
   ToastController
 } from '@ionic/angular/standalone';
-import { Subscription, interval } from 'rxjs';
+import { Subject, interval, Subscription } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { LocalVideoTrack } from 'livekit-client';
 
-type CallState = 'connecting' | 'connected' | 'reconnecting' | 'ended' | 'failed';
-
-interface CallParticipant {
-  id: number;
-  name: string;
-  avatar?: string;
-  isMuted: boolean;
-  isVideoOff: boolean;
-}
+import { LiveKitService, ParticipantInfo, ConnectionStatus } from '../../core/services/livekit.service';
+import { ConsultationService } from '../../core/services/consultation.service';
 
 @Component({
   selector: 'app-video-consultation',
@@ -43,86 +38,261 @@ interface CallParticipant {
 })
 export class VideoConsultationPage implements OnInit, OnDestroy {
   @ViewChild('localVideo') localVideoRef!: ElementRef<HTMLVideoElement>;
-  @ViewChild('remoteVideo') remoteVideoRef!: ElementRef<HTMLVideoElement>;
+  @ViewChild('participantsContainer') participantsContainerRef!: ElementRef<HTMLDivElement>;
 
-  consultationId: string | null = null;
-  callState: CallState = 'connecting';
-  callDuration = 0;
-  formattedDuration = '00:00';
+  appointmentId: number | null = null;
+  consultationId: number | null = null;
 
-  isAudioMuted = false;
-  isVideoOff = false;
+  connectionStatus: ConnectionStatus = 'disconnected';
+  participants: Map<string, ParticipantInfo> = new Map();
+  localVideoTrack: LocalVideoTrack | null = null;
+
+  isCameraEnabled = false;
+  isMicrophoneEnabled = false;
+  isScreenShareEnabled = false;
   isSpeakerOn = true;
-  isScreenSharing = false;
   showControls = true;
 
-  localStream: MediaStream | null = null;
-  remoteParticipant: CallParticipant = {
-    id: 0,
-    name: 'Dr. Smith',
-    isMuted: false,
-    isVideoOff: false
-  };
+  callDuration = 0;
+  formattedDuration = '00:00';
+  isLoading = false;
+  errorMessage = '';
 
-  private subscriptions: Subscription[] = [];
+  private destroy$ = new Subject<void>();
   private durationTimer: Subscription | null = null;
   private controlsTimer: ReturnType<typeof setTimeout> | null = null;
+  private videoElements = new Map<string, HTMLVideoElement>();
+  private audioElements = new Map<string, HTMLAudioElement>();
 
   constructor(
     private route: ActivatedRoute,
     public navCtrl: NavController,
     private alertCtrl: AlertController,
-    private toastCtrl: ToastController
+    private toastCtrl: ToastController,
+    private livekitService: LiveKitService,
+    private consultationService: ConsultationService,
+    private cdr: ChangeDetectorRef
   ) {}
 
-  ngOnInit() {
-    this.consultationId = this.route.snapshot.paramMap.get('id');
-    this.initializeCall();
-  }
+  ngOnInit(): void {
+    const idParam = this.route.snapshot.paramMap.get('id');
+    const type = this.route.snapshot.queryParamMap.get('type');
 
-  ngOnDestroy() {
-    this.cleanup();
-    this.subscriptions.forEach(sub => sub.unsubscribe());
-  }
-
-  async initializeCall(): Promise<void> {
-    try {
-      await this.requestMediaPermissions();
-      this.simulateConnection();
-    } catch (error) {
-      this.callState = 'failed';
-      this.showToast('Failed to access camera/microphone');
+    if (idParam) {
+      const id = parseInt(idParam, 10);
+      if (type === 'consultation') {
+        this.consultationId = id;
+      } else {
+        this.appointmentId = id;
+      }
     }
+
+    this.setupSubscriptions();
+    this.joinRoom();
   }
 
-  private async requestMediaPermissions(): Promise<void> {
-    try {
-      this.localStream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+    this.livekitService.disconnect();
+    this.cleanupMediaElements();
+    this.stopDurationTimer();
+  }
+
+  private setupSubscriptions(): void {
+    this.livekitService.connectionStatus$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(status => {
+        this.connectionStatus = status;
+        if (status === 'connected' && !this.durationTimer) {
+          this.startDurationTimer();
+        }
+        this.cdr.markForCheck();
       });
 
-      if (this.localVideoRef?.nativeElement) {
-        this.localVideoRef.nativeElement.srcObject = this.localStream;
+    this.livekitService.localVideoTrack$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(track => {
+        this.localVideoTrack = track;
+        this.attachLocalVideo();
+        this.cdr.markForCheck();
+      });
+
+    this.livekitService.participants$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(participants => {
+        this.participants = participants;
+        this.attachRemoteMedia();
+        this.cdr.markForCheck();
+      });
+
+    this.livekitService.isCameraEnabled$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(enabled => {
+        this.isCameraEnabled = enabled;
+        this.cdr.markForCheck();
+      });
+
+    this.livekitService.isMicrophoneEnabled$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(enabled => {
+        this.isMicrophoneEnabled = enabled;
+        this.cdr.markForCheck();
+      });
+
+    this.livekitService.isScreenShareEnabled$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(enabled => {
+        this.isScreenShareEnabled = enabled;
+        this.cdr.markForCheck();
+      });
+
+    this.livekitService.error$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(error => {
+        this.errorMessage = error;
+        this.showToast(error);
+        this.cdr.markForCheck();
+      });
+  }
+
+  async joinRoom(): Promise<void> {
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.cdr.markForCheck();
+
+    try {
+      let config: { url: string; token: string; room: string } | undefined;
+
+      if (this.appointmentId) {
+        config = await this.consultationService
+          .joinAppointment(this.appointmentId)
+          .toPromise();
+      } else if (this.consultationId) {
+        config = await this.consultationService
+          .joinConsultation(this.consultationId)
+          .toPromise();
+      } else {
+        throw new Error('Either consultationId or appointmentId is required');
       }
+
+      if (!config) {
+        throw new Error('Failed to get LiveKit configuration');
+      }
+
+      await this.livekitService.connect(config);
+      await this.livekitService.enableCamera(true);
+      await this.livekitService.enableMicrophone(true);
+      this.showToast('Connected to consultation');
     } catch (error) {
-      throw error;
+      this.errorMessage = error instanceof Error ? error.message : 'Failed to join video call';
+      this.showToast(this.errorMessage);
+    } finally {
+      this.isLoading = false;
+      this.cdr.markForCheck();
     }
   }
 
-  private simulateConnection(): void {
-    setTimeout(() => {
-      this.callState = 'connected';
-      this.startDurationTimer();
-      this.showToast('Connected to consultation');
-    }, 2000);
+  private attachLocalVideo(): void {
+    if (!this.localVideoRef?.nativeElement || !this.localVideoTrack) return;
+    this.localVideoTrack.attach(this.localVideoRef.nativeElement);
+  }
+
+  private attachRemoteMedia(): void {
+    if (!this.participantsContainerRef?.nativeElement) return;
+
+    const currentParticipantIds = new Set(this.participants.keys());
+    const existingElementIds = new Set(this.videoElements.keys());
+
+    for (const id of existingElementIds) {
+      if (!currentParticipantIds.has(id)) {
+        this.removeParticipantElements(id);
+      }
+    }
+
+    for (const [identity, participant] of this.participants) {
+      this.attachParticipantMedia(identity, participant);
+    }
+  }
+
+  private attachParticipantMedia(identity: string, participant: ParticipantInfo): void {
+    if (participant.videoTrack) {
+      let videoEl = this.videoElements.get(identity);
+      if (!videoEl) {
+        videoEl = document.createElement('video');
+        videoEl.autoplay = true;
+        videoEl.playsInline = true;
+        videoEl.className = 'participant-video';
+        videoEl.id = `video-${identity}`;
+        this.videoElements.set(identity, videoEl);
+
+        if (this.participantsContainerRef?.nativeElement) {
+          this.participantsContainerRef.nativeElement.appendChild(videoEl);
+        }
+      }
+
+      if (participant.videoTrack.attachedElements.indexOf(videoEl) === -1) {
+        participant.videoTrack.attach(videoEl);
+      }
+    }
+
+    if (participant.audioTrack) {
+      let audioEl = this.audioElements.get(identity);
+      if (!audioEl) {
+        audioEl = document.createElement('audio');
+        audioEl.autoplay = true;
+        audioEl.id = `audio-${identity}`;
+        this.audioElements.set(identity, audioEl);
+        document.body.appendChild(audioEl);
+      }
+
+      audioEl.muted = !this.isSpeakerOn;
+
+      if (participant.audioTrack.attachedElements.indexOf(audioEl) === -1) {
+        participant.audioTrack.attach(audioEl);
+      }
+    }
+  }
+
+  private removeParticipantElements(identity: string): void {
+    const videoEl = this.videoElements.get(identity);
+    if (videoEl) {
+      videoEl.srcObject = null;
+      videoEl.remove();
+      this.videoElements.delete(identity);
+    }
+
+    const audioEl = this.audioElements.get(identity);
+    if (audioEl) {
+      audioEl.srcObject = null;
+      audioEl.remove();
+      this.audioElements.delete(identity);
+    }
+  }
+
+  private cleanupMediaElements(): void {
+    for (const [identity] of this.videoElements) {
+      this.removeParticipantElements(identity);
+    }
+    this.videoElements.clear();
+    this.audioElements.clear();
   }
 
   private startDurationTimer(): void {
-    this.durationTimer = interval(1000).subscribe(() => {
-      this.callDuration++;
-      this.formattedDuration = this.formatDuration(this.callDuration);
-    });
+    this.durationTimer = interval(1000)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.callDuration++;
+        this.formattedDuration = this.formatDuration(this.callDuration);
+        this.cdr.markForCheck();
+      });
+  }
+
+  private stopDurationTimer(): void {
+    if (this.durationTimer) {
+      this.durationTimer.unsubscribe();
+      this.durationTimer = null;
+    }
   }
 
   private formatDuration(seconds: number): string {
@@ -136,64 +306,39 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }
 
-  toggleAudio(): void {
-    this.isAudioMuted = !this.isAudioMuted;
-    if (this.localStream) {
-      this.localStream.getAudioTracks().forEach(track => {
-        track.enabled = !this.isAudioMuted;
-      });
+  async toggleCamera(): Promise<void> {
+    try {
+      await this.livekitService.toggleCamera();
+    } catch (error) {
+      this.showToast('Failed to toggle camera');
     }
   }
 
-  toggleVideo(): void {
-    this.isVideoOff = !this.isVideoOff;
-    if (this.localStream) {
-      this.localStream.getVideoTracks().forEach(track => {
-        track.enabled = !this.isVideoOff;
-      });
+  async toggleMicrophone(): Promise<void> {
+    try {
+      await this.livekitService.toggleMicrophone();
+    } catch (error) {
+      this.showToast('Failed to toggle microphone');
     }
   }
 
   toggleSpeaker(): void {
     this.isSpeakerOn = !this.isSpeakerOn;
-    if (this.remoteVideoRef?.nativeElement) {
-      this.remoteVideoRef.nativeElement.muted = !this.isSpeakerOn;
+    for (const audioEl of this.audioElements.values()) {
+      audioEl.muted = !this.isSpeakerOn;
+    }
+  }
+
+  async toggleScreenShare(): Promise<void> {
+    try {
+      await this.livekitService.toggleScreenShare();
+    } catch (error) {
+      this.showToast('Failed to toggle screen share');
     }
   }
 
   switchCamera(): void {
     this.showToast('Switching camera...');
-  }
-
-  async toggleScreenShare(): Promise<void> {
-    if (this.isScreenSharing) {
-      this.stopScreenShare();
-    } else {
-      await this.startScreenShare();
-    }
-  }
-
-  private async startScreenShare(): Promise<void> {
-    try {
-      const screenStream = await navigator.mediaDevices.getDisplayMedia({
-        video: true
-      });
-
-      this.isScreenSharing = true;
-
-      screenStream.getVideoTracks()[0].onended = () => {
-        this.stopScreenShare();
-      };
-
-      this.showToast('Screen sharing started');
-    } catch (error) {
-      this.showToast('Failed to start screen sharing');
-    }
-  }
-
-  private stopScreenShare(): void {
-    this.isScreenSharing = false;
-    this.showToast('Screen sharing stopped');
   }
 
   async endCall(): Promise<void> {
@@ -218,30 +363,13 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     await alert.present();
   }
 
-  private performEndCall(): void {
-    this.callState = 'ended';
-    this.cleanup();
+  private async performEndCall(): Promise<void> {
+    await this.livekitService.disconnect();
+    this.stopDurationTimer();
 
     setTimeout(() => {
       this.navCtrl.navigateBack('/tabs/appointments');
     }, 1500);
-  }
-
-  private cleanup(): void {
-    if (this.durationTimer) {
-      this.durationTimer.unsubscribe();
-      this.durationTimer = null;
-    }
-
-    if (this.controlsTimer) {
-      clearTimeout(this.controlsTimer);
-      this.controlsTimer = null;
-    }
-
-    if (this.localStream) {
-      this.localStream.getTracks().forEach(track => track.stop());
-      this.localStream = null;
-    }
   }
 
   onVideoAreaTap(): void {
@@ -254,6 +382,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     if (this.showControls) {
       this.controlsTimer = setTimeout(() => {
         this.showControls = false;
+        this.cdr.markForCheck();
       }, 5000);
     }
   }
@@ -272,12 +401,25 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
   }
 
   getCallStateMessage(): string {
-    switch (this.callState) {
+    switch (this.connectionStatus) {
       case 'connecting': return 'Connecting to consultation...';
       case 'reconnecting': return 'Reconnecting...';
-      case 'ended': return 'Consultation ended';
+      case 'disconnected': return 'Disconnected';
       case 'failed': return 'Connection failed';
       default: return '';
     }
+  }
+
+  getParticipantsArray(): ParticipantInfo[] {
+    return Array.from(this.participants.values());
+  }
+
+  getRemoteParticipant(): ParticipantInfo | null {
+    const participantsArray = this.getParticipantsArray();
+    return participantsArray.length > 0 ? participantsArray[0] : null;
+  }
+
+  getParticipantVideoElement(identity: string): HTMLVideoElement | undefined {
+    return this.videoElements.get(identity);
   }
 }

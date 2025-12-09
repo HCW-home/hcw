@@ -67,6 +67,64 @@
     padding: 16px;
     min-height: calc(100vh - 300px);
 
+    .beneficiary-card {
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+      .helper-text {
+        display: block;
+        font-size: 12px;
+        margin-top: 12px;
+        padding-left: 4px;
+      }
+    }
+
+    .schedule-toggle-card {
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+      ion-item {
+        --padding-start: 0;
+        --inner-padding-end: 0;
+
+        h2 {
+          font-size: 16px;
+          font-weight: 600;
+          color: var(--app-text-primary);
+          margin: 0 0 4px 0;
+        }
+
+        p {
+          font-size: 13px;
+          color: var(--app-text-secondary);
+          margin: 0;
+        }
+      }
+    }
+
+    .no-schedule-card {
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+      ion-card-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 32px;
+        gap: 12px;
+
+        ion-icon {
+          font-size: 48px;
+        }
+
+        ion-text {
+          font-size: 14px;
+          line-height: 1.5;
+        }
+      }
+    }
+
     .appointment-types {
       display: flex;
       flex-direction: column;

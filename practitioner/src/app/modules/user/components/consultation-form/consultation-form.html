@@ -65,13 +65,11 @@
                 </div>
 
                 <div class="form-field">
-                  <app-input
-                    label="Beneficiary ID (Optional)"
-                    type="number"
-                    placeholder="Enter patient ID"
-                    formControlName="beneficiary_id"
-                    leftIcon="user">
-                  </app-input>
+                  <app-user-search-select
+                    label="Beneficiary (Optional)"
+                    placeholder="Search by name or email..."
+                    formControlName="beneficiary_id">
+                  </app-user-search-select>
                 </div>
               </div>
             </div>

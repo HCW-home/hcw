@@ -21,6 +21,7 @@ import {
   IonChip,
   IonProgressBar,
   IonAvatar,
+  IonToggle,
   NavController,
   LoadingController,
   ToastController,
@@ -28,10 +29,12 @@ import {
 } from '@ionic/angular/standalone';
 import { DoctorService } from '../../core/services/doctor.service';
 import { SpecialityService } from '../../core/services/speciality.service';
-import { ConsultationService } from '../../core/services/consultation.service';
+import { ConsultationService, ConsultationRequestData } from '../../core/services/consultation.service';
 import { Doctor } from '../../core/models/doctor.model';
 import { Reason } from '../../core/models/consultation.model';
+import { User } from '../../core/models/user.model';
 import { TimeSlot } from '../../core/models/booking.model';
+import { UserSearchSelectComponent } from '../../shared/components/user-search-select/user-search-select.component';
 
 interface AppointmentSlot {
   time: string;
@@ -64,7 +67,9 @@ interface AppointmentSlot {
     IonTextarea,
     IonChip,
     IonProgressBar,
-    IonAvatar
+    IonAvatar,
+    IonToggle,
+    UserSearchSelectComponent
   ]
 })
 export class BookAppointmentPage implements OnInit {
@@ -76,6 +81,9 @@ export class BookAppointmentPage implements OnInit {
   selectedReason: Reason | null = null;
   isLoadingDoctor = false;
   isLoadingSlots = false;
+
+  selectedBeneficiary: User | null = null;
+  scheduleAppointment = false;
 
   appointmentData = {
     doctorId: null as number | null,
@@ -224,15 +232,29 @@ export class BookAppointmentPage implements OnInit {
     return `${displayHour}:${minutes || '00'} ${ampm}`;
   }
 
+  onBeneficiarySelected(user: User | null): void {
+    this.selectedBeneficiary = user;
+  }
+
+  onScheduleToggleChange(event: CustomEvent): void {
+    this.scheduleAppointment = event.detail.checked;
+    if (!this.scheduleAppointment) {
+      this.appointmentData.date = '';
+      this.appointmentData.time = '';
+      this.selectedDate = '';
+      this.availableSlots.forEach(s => s.selected = false);
+    }
+  }
+
   nextStep(): void {
     if (this.validateCurrentStep()) {
       if (this.currentStep < this.totalSteps) {
         this.currentStep++;
-        if (this.currentStep === 2 && this.availableSlots.length === 0) {
+        if (this.currentStep === 2 && this.scheduleAppointment && this.availableSlots.length === 0) {
           this.loadAvailableSlots();
         }
       } else {
-        this.submitAppointment();
+        this.submitConsultationRequest();
       }
     }
   }
@@ -247,13 +269,13 @@ export class BookAppointmentPage implements OnInit {
     switch (this.currentStep) {
       case 1:
         if (!this.appointmentData.appointmentType) {
-          this.showToast('Please select appointment type');
+          this.showToast('Please select consultation type');
           return false;
         }
         return true;
       case 2:
-        if (!this.appointmentData.date || !this.appointmentData.time) {
-          this.showToast('Please select date and time');
+        if (this.scheduleAppointment && (!this.appointmentData.date || !this.appointmentData.time)) {
+          this.showToast('Please select date and time or disable scheduling');
           return false;
         }
         return true;
@@ -301,44 +323,64 @@ export class BookAppointmentPage implements OnInit {
     this.loadAvailableSlots();
   }
 
-  async submitAppointment(): Promise<void> {
+  async submitConsultationRequest(): Promise<void> {
+    // if (!this.selectedReason) {
+    //   this.showToast('Please select a reason for consultation');
+    //   return;
+    // }
+
     const loading = await this.loadingCtrl.create({
-      message: 'Booking appointment...'
+      message: 'Creating consultation request...'
     });
     await loading.present();
 
-    const scheduledDate = new Date(this.appointmentData.date);
-    const timeParts = this.appointmentData.time.match(/(\d+):(\d+)\s*(AM|PM)/i);
-    if (timeParts) {
-      let hours = parseInt(timeParts[1]);
-      const minutes = parseInt(timeParts[2]);
-      const ampm = timeParts[3].toUpperCase();
-      if (ampm === 'PM' && hours !== 12) hours += 12;
-      if (ampm === 'AM' && hours === 12) hours = 0;
-      scheduledDate.setHours(hours, minutes, 0, 0);
-    }
-
-    const appointmentRequest = {
-      type: this.appointmentData.appointmentType === 'video' ? 'ONLINE' as const : 'IN_PERSON' as const,
-      scheduled_at: scheduledDate.toISOString()
+    const requestData: ConsultationRequestData = {
+      reason_id: 1, // todo change
+      type: this.appointmentData.appointmentType === 'video' ? 'ONLINE' : 'IN_PERSON',
+      comment: `${this.selectedSymptoms.join(', ')}. ${this.appointmentData.reason}`.trim()
     };
 
-    this.consultationService.createAppointment(appointmentRequest).subscribe({
+    if (this.selectedBeneficiary) {
+      requestData.beneficiary_id = this.selectedBeneficiary.id;
+    }
+
+    if (this.selectedDoctor) {
+      requestData.expected_with_id = this.selectedDoctor.id;
+    }
+
+    if (this.scheduleAppointment && this.appointmentData.date && this.appointmentData.time) {
+      const scheduledDate = new Date(this.appointmentData.date);
+      const timeParts = this.appointmentData.time.match(/(\d+):(\d+)\s*(AM|PM)/i);
+      if (timeParts) {
+        let hours = parseInt(timeParts[1]);
+        const minutes = parseInt(timeParts[2]);
+        const ampm = timeParts[3].toUpperCase();
+        if (ampm === 'PM' && hours !== 12) hours += 12;
+        if (ampm === 'AM' && hours === 12) hours = 0;
+        scheduledDate.setHours(hours, minutes, 0, 0);
+      }
+      requestData.expected_at = scheduledDate.toISOString();
+    }
+
+    this.consultationService.createConsultationRequest(requestData).subscribe({
       next: () => {
         loading.dismiss();
         this.showSuccessAlert();
       },
-      error: () => {
+      error: (error) => {
         loading.dismiss();
-        this.showToast('Failed to book appointment. Please try again.');
+        const message = error.error?.detail || 'Failed to create consultation request. Please try again.';
+        this.showToast(message);
       }
     });
   }
 
   async showSuccessAlert(): Promise<void> {
     const alert = await this.alertCtrl.create({
-      header: 'Appointment Booked!',
-      message: 'Your appointment has been successfully booked. You will receive a confirmation shortly.',
+      header: 'Request Submitted!',
+      message: this.scheduleAppointment
+        ? 'Your consultation request has been submitted with your preferred appointment time.'
+        : 'Your consultation request has been submitted. You will be contacted to schedule an appointment.',
       buttons: [
         {
           text: 'View Appointments',
@@ -367,8 +409,8 @@ export class BookAppointmentPage implements OnInit {
 
   getStepTitle(): string {
     switch (this.currentStep) {
-      case 1: return 'Select Appointment Type';
-      case 2: return 'Choose Date & Time';
+      case 1: return 'Select Consultation Type';
+      case 2: return 'Schedule Appointment (Optional)';
       case 3: return 'Describe Your Symptoms';
       case 4: return 'Review & Confirm';
       default: return '';
@@ -379,5 +421,11 @@ export class BookAppointmentPage implements OnInit {
     if (!dateString) return '';
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  }
+
+  getBeneficiaryDisplayName(): string {
+    if (!this.selectedBeneficiary) return 'Myself';
+    const name = `${this.selectedBeneficiary.first_name || ''} ${this.selectedBeneficiary.last_name || ''}`.trim();
+    return name || this.selectedBeneficiary.email || 'Selected User';
   }
 }

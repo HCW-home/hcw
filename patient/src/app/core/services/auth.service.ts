@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, from, switchMap, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { User, LoginRequest, LoginResponse, RegisterRequest, MagicLinkRequest, MagicLinkVerify } from '../models/user.model';
 import { StorageService } from './storage.service';
@@ -33,7 +33,7 @@ export class AuthService {
   login(credentials: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.apiUrl}/auth/login/`, credentials)
       .pipe(
-        tap(async (response) => {
+        switchMap(async (response) => {
           if (response.access) {
             await this.storage.set('access_token', response.access);
             await this.storage.set('refresh_token', response.refresh);
@@ -42,6 +42,7 @@ export class AuthService {
               this.currentUserSubject.next(response.user);
             }
           }
+          return response;
         })
       );
   }
@@ -57,7 +58,7 @@ export class AuthService {
   verifyMagicLink(data: MagicLinkVerify): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.apiUrl}/auth/magic-link/verify/`, data)
       .pipe(
-        tap(async (response) => {
+        switchMap(async (response) => {
           if (response.access) {
             await this.storage.set('access_token', response.access);
             await this.storage.set('refresh_token', response.refresh);
@@ -66,6 +67,7 @@ export class AuthService {
               this.currentUserSubject.next(response.user);
             }
           }
+          return response;
         })
       );
   }

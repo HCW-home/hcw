@@ -37,7 +37,7 @@ export class UserService {
     if (page) params['page'] = page;
     if (pageSize) params['page_size'] = pageSize;
 
-    return this.http.get<PaginatedResponse<IUser>>(`${this.apiUrl}/user/`, {params});
+    return this.http.get<PaginatedResponse<IUser>>(`${this.apiUrl}/users/`, {params});
   }
 
   getLanguages(): Observable<ILanguage[]> {

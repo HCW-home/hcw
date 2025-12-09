@@ -1,59 +1,63 @@
 <ion-content class="video-consultation-content" [scrollY]="false" (click)="onVideoAreaTap()">
   <div class="video-container">
-    <div class="remote-video-wrapper">
-      @if (callState === 'connected' && !remoteParticipant.isVideoOff) {
-        <video #remoteVideo autoplay playsinline class="remote-video"></video>
+    <div class="remote-video-wrapper" #participantsContainer>
+      @if (connectionStatus === 'connected' && getParticipantsArray().length > 0) {
+        @for (participant of getParticipantsArray(); track participant.identity) {
+          @if (!participant.isCameraEnabled) {
+            <div class="video-placeholder">
+              <ion-avatar class="participant-avatar">
+                <div class="avatar-initials">{{ participant.name.charAt(0) }}</div>
+              </ion-avatar>
+              <ion-text class="participant-name">{{ participant.name }}</ion-text>
+            </div>
+          }
+          @if (participant.isMicrophoneEnabled === false) {
+            <div class="mute-indicator remote">
+              <ion-icon name="mic-off"></ion-icon>
+            </div>
+          }
+        }
       } @else {
         <div class="video-placeholder">
           <ion-avatar class="participant-avatar">
-            @if (remoteParticipant.avatar) {
-              <img [src]="remoteParticipant.avatar" alt="Participant">
-            } @else {
-              <div class="avatar-initials">{{ remoteParticipant.name.charAt(0) }}</div>
-            }
+            <div class="avatar-initials">?</div>
           </ion-avatar>
-          <ion-text class="participant-name">{{ remoteParticipant.name }}</ion-text>
-          @if (callState !== 'connected') {
+          <ion-text class="participant-name">Waiting for practitioner...</ion-text>
+          @if (connectionStatus !== 'connected') {
             <ion-text class="status-message" color="light">{{ getCallStateMessage() }}</ion-text>
-            @if (callState === 'connecting' || callState === 'reconnecting') {
+            @if (connectionStatus === 'connecting' || connectionStatus === 'reconnecting' || isLoading) {
               <ion-spinner name="crescent" color="light"></ion-spinner>
             }
           }
         </div>
       }
-
-      @if (remoteParticipant.isMuted && callState === 'connected') {
-        <div class="mute-indicator remote">
-          <ion-icon name="mic-off"></ion-icon>
-        </div>
-      }
     </div>
 
-    <div class="local-video-wrapper" [class.video-off]="isVideoOff">
-      @if (!isVideoOff) {
+    <div class="local-video-wrapper" [class.video-off]="!isCameraEnabled">
+      @if (isCameraEnabled) {
         <video #localVideo autoplay playsinline muted class="local-video"></video>
       } @else {
         <div class="local-video-placeholder">
           <ion-icon name="videocam-off"></ion-icon>
         </div>
       }
-      @if (isAudioMuted) {
+      @if (!isMicrophoneEnabled) {
         <div class="mute-indicator local">
           <ion-icon name="mic-off"></ion-icon>
         </div>
       }
     </div>
 
-    @if (showControls || callState !== 'connected') {
-      <div class="top-bar" @if (callState === 'connected') { [@fadeInOut] }>
+    @if (showControls || connectionStatus !== 'connected') {
+      <div class="top-bar">
         <div class="call-info">
-          @if (callState === 'connected') {
+          @if (connectionStatus === 'connected') {
             <ion-chip color="success" class="duration-chip">
               <ion-icon name="ellipse" class="recording-dot"></ion-icon>
               <ion-text>{{ formattedDuration }}</ion-text>
             </ion-chip>
           }
-          @if (isScreenSharing) {
+          @if (isScreenShareEnabled) {
             <ion-chip color="warning">
               <ion-icon name="desktop-outline"></ion-icon>
               <ion-text>Sharing</ion-text>
@@ -67,20 +71,20 @@
         </div>
       </div>
 
-      <div class="controls-bar" @if (callState === 'connected') { [@fadeInOut] }>
+      <div class="controls-bar">
         <div class="controls-wrapper">
           <ion-button
-            [color]="isAudioMuted ? 'danger' : 'light'"
+            [color]="!isMicrophoneEnabled ? 'danger' : 'light'"
             class="control-button"
-            (click)="toggleAudio(); $event.stopPropagation()">
-            <ion-icon [name]="isAudioMuted ? 'mic-off' : 'mic'" slot="icon-only"></ion-icon>
+            (click)="toggleMicrophone(); $event.stopPropagation()">
+            <ion-icon [name]="!isMicrophoneEnabled ? 'mic-off' : 'mic'" slot="icon-only"></ion-icon>
           </ion-button>
 
           <ion-button
-            [color]="isVideoOff ? 'danger' : 'light'"
+            [color]="!isCameraEnabled ? 'danger' : 'light'"
             class="control-button"
-            (click)="toggleVideo(); $event.stopPropagation()">
-            <ion-icon [name]="isVideoOff ? 'videocam-off' : 'videocam'" slot="icon-only"></ion-icon>
+            (click)="toggleCamera(); $event.stopPropagation()">
+            <ion-icon [name]="!isCameraEnabled ? 'videocam-off' : 'videocam'" slot="icon-only"></ion-icon>
           </ion-button>
 
           <ion-button
@@ -98,7 +102,7 @@
           </ion-button>
 
           <ion-button
-            [color]="isScreenSharing ? 'primary' : 'light'"
+            [color]="isScreenShareEnabled ? 'primary' : 'light'"
             class="control-button"
             (click)="toggleScreenShare(); $event.stopPropagation()">
             <ion-icon name="desktop-outline" slot="icon-only"></ion-icon>
@@ -118,7 +122,7 @@
       </div>
     }
 
-    @if (callState === 'ended') {
+    @if (connectionStatus === 'disconnected' && !isLoading && callDuration > 0) {
       <div class="call-ended-overlay">
         <ion-icon name="checkmark-circle" color="success"></ion-icon>
         <ion-text>Consultation Ended</ion-text>
@@ -126,11 +130,14 @@
       </div>
     }
 
-    @if (callState === 'failed') {
+    @if (connectionStatus === 'failed') {
       <div class="call-failed-overlay">
         <ion-icon name="alert-circle" color="danger"></ion-icon>
         <ion-text>Connection Failed</ion-text>
-        <ion-button fill="outline" color="light" (click)="initializeCall()">
+        @if (errorMessage) {
+          <ion-text color="medium" class="error-message">{{ errorMessage }}</ion-text>
+        }
+        <ion-button fill="outline" color="light" (click)="joinRoom()">
           Try Again
         </ion-button>
         <ion-button fill="clear" color="light" (click)="navCtrl.back()">

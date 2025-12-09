@@ -367,4 +367,24 @@ export class ConsultationService {
       `${this.apiUrl}/consultations/${consultationId}/livekit_token/`
     );
   }
+
+  joinConsultation(consultationId: number): Observable<{
+    url: string;
+    token: string;
+    room: string;
+  }> {
+    return this.http.get<{ url: string; token: string; room: string }>(
+      `${this.apiUrl}/consultations/${consultationId}/join/`
+    );
+  }
+
+  joinAppointment(appointmentId: number): Observable<{
+    url: string;
+    token: string;
+    room: string;
+  }> {
+    return this.http.get<{ url: string; token: string; room: string }>(
+      `${this.apiUrl}/appointments/${appointmentId}/join/`
+    );
+  }
 }

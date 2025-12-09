@@ -10,16 +10,16 @@
 
     <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="login-form">
       <ion-item lines="full" class="input-item">
-        <ion-icon name="person-outline" slot="start"></ion-icon>
+        <ion-icon name="mail-outline" slot="start"></ion-icon>
         <ion-input
           type="email"
-          placeholder="Email or Username"
-          formControlName="username">
+          placeholder="Email"
+          formControlName="email">
         </ion-input>
       </ion-item>
-      @if (loginForm.get('username')?.invalid && loginForm.get('username')?.touched) {
+      @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
         <ion-text color="danger" class="error-message">
-          <ion-label class="error-text">Email or username is required</ion-label>
+          <ion-label class="error-text">Valid email is required</ion-label>
         </ion-text>
       }
 

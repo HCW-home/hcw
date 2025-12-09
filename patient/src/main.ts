@@ -2,8 +2,9 @@ import { bootstrapApplication } from '@angular/platform-browser';
 import { RouteReuseStrategy, provideRouter, withPreloading, PreloadAllModules, withComponentInputBinding } from '@angular/router';
 import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalone';
 import { register } from 'swiper/element/bundle';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { importProvidersFrom } from '@angular/core';
+import { AuthInterceptor } from './app/core/interceptors/auth.interceptor';
 import { IonicStorageModule } from '@ionic/storage-angular';
 import { addIcons } from 'ionicons';
 import {
@@ -53,7 +54,9 @@ import {
   settingsOutline, peopleOutline, bodyOutline, heartOutline, pulseOutline, fitnessOutline, locationOutline,
   videocamOutline, cardOutline, closeCircle, addCircleOutline, refresh, cameraOutline, logOutOutline, helpCircleOutline,
   callOutline, barbellOutline, resizeOutline, waterOutline, moonOutline, bulbOutline, chatbubblesOutline, flaskOutline,
-  pricetagOutline, trash, shareOutline, arrowUp, downloadOutline, cloudUploadOutline, schoolOutline, briefcaseOutline
+  pricetagOutline, trash, shareOutline, arrowUp, downloadOutline, cloudUploadOutline, schoolOutline, briefcaseOutline,
+  mic, micOff, videocam, videocamOff, call, volumeHigh, volumeMute, desktopOutline,
+  cameraReverseOutline, ellipse, alertCircle
 } from 'ionicons/icons';
 
 import { routes } from './app/app.routes';
@@ -136,6 +139,17 @@ addIcons({
   'cloud-upload-outline': cloudUploadOutline,
   'school-outline': schoolOutline,
   'briefcase-outline': briefcaseOutline,
+  'mic': mic,
+  'mic-off': micOff,
+  'videocam': videocam,
+  'videocam-off': videocamOff,
+  'call': call,
+  'volume-high': volumeHigh,
+  'volume-mute': volumeMute,
+  'desktop-outline': desktopOutline,
+  'camera-reverse-outline': cameraReverseOutline,
+  'ellipse': ellipse,
+  'alert-circle': alertCircle,
 });
 
 bootstrapApplication(AppComponent, {
@@ -147,6 +161,7 @@ bootstrapApplication(AppComponent, {
       withComponentInputBinding()
     ),
     provideHttpClient(withInterceptorsFromDi()),
+    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
     importProvidersFrom(IonicStorageModule.forRoot())
   ]
 }).catch(err => console.log(err));

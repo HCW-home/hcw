@@ -41,7 +41,7 @@
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         border: 1px solid var(--Bluish-Gray-02);
         margin-bottom: 24px;
-        overflow: hidden;
+        overflow: visible;
 
         .card-header {
           display: flex;
@@ -289,6 +289,14 @@
 }
 
 .form-card:hover {
-  transform: translateY(-2px);
+  //transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.form-card .card-content {
+  overflow: visible;
+}
+
+.form-card:has(app-user-search-select) {
+  overflow: visible;
 }

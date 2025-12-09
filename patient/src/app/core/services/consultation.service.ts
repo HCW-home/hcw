@@ -30,10 +30,10 @@ export interface CreateAppointmentRequest {
 }
 
 export interface ConsultationRequestData {
-  beneficiary?: number;
-  expected_with?: number;
+  beneficiary_id?: number;
+  expected_with_id?: number;
   expected_at?: string;
-  reason: number;
+  reason_id: number | undefined;
   type: 'ONLINE' | 'IN_PERSON';
   comment?: string;
 }
@@ -107,5 +107,25 @@ export class ConsultationService {
 
   reopenConsultation(id: number): Observable<Consultation> {
     return this.api.post<Consultation>(`/consultations/${id}/reopen/`, {});
+  }
+
+  joinConsultation(consultationId: number): Observable<{
+    url: string;
+    token: string;
+    room: string;
+  }> {
+    return this.api.get<{ url: string; token: string; room: string }>(
+      `/consultations/${consultationId}/join/`
+    );
+  }
+
+  joinAppointment(appointmentId: number): Observable<{
+    url: string;
+    token: string;
+    room: string;
+  }> {
+    return this.api.get<{ url: string; token: string; room: string }>(
+      `/appointments/${appointmentId}/join/`
+    );
   }
 }

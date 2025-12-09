@@ -1,0 +1,213 @@
+:host {
+  width: 100%;
+  display: block;
+  font-family: "Source Sans Pro", sans-serif;
+}
+
+.user-search-select {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  .label {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 20px;
+    letter-spacing: 0.32px;
+    color: var(--Bluish-Gray-10);
+  }
+
+  .search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    .search-icon {
+      position: absolute;
+      left: 16px;
+      display: flex;
+      align-items: center;
+      color: var(--Bluish-Gray-06);
+      pointer-events: none;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 12px 16px 12px 44px;
+      font-size: 16px;
+      font-family: inherit;
+      border: 2px solid var(--Bluish-Gray-03);
+      border-radius: 4px;
+      outline: none;
+      background: var(--White-and-Black-01);
+      color: var(--Bluish-Gray-10);
+      transition: border-color 0.2s;
+
+      &::placeholder {
+        color: var(--Bluish-Gray-06);
+      }
+
+      &:focus {
+        border-color: var(--Blue-03);
+      }
+    }
+  }
+
+  .selected-user {
+    .user-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: var(--White-and-Black-01);
+      border: 2px solid var(--Blue-03);
+      border-radius: 4px;
+
+      .avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--Primary-05);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .avatar-initials {
+          color: white;
+          font-size: 12px;
+          font-weight: 600;
+        }
+      }
+
+      .user-name {
+        font-size: 16px;
+        font-weight: 400;
+        color: var(--Bluish-Gray-10);
+      }
+
+      .clear-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        padding: 0;
+        margin-left: 8px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--Bluish-Gray-06);
+        border-radius: 50%;
+        transition: color 0.2s;
+
+        &:hover {
+          color: var(--Bluish-Gray-09);
+        }
+      }
+    }
+  }
+
+  .search-container {
+    position: relative;
+
+    .dropdown-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 9999;
+    }
+
+    .users-dropdown {
+      position: absolute;
+      top: calc(100% + 2px);
+      left: 0;
+      right: 0;
+      max-height: 200px;
+      overflow-y: auto;
+      background: var(--White-and-Black-01);
+      border: 2px solid var(--Bluish-Gray-02);
+      box-shadow: 0px 2px 20px 0 rgba(43, 43, 43, 0.10);
+      z-index: 10000;
+      padding: 4px;
+
+      &::-webkit-scrollbar {
+        width: 5px;
+        height: 5px;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        border-radius: 16px;
+        background-color: var(--Bluish-Gray-06);
+      }
+
+      &::-webkit-scrollbar-track {
+        border-radius: 16px;
+        background-color: var(--Bluish-Gray-04);
+      }
+
+      .loading-container,
+      .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 24px 16px;
+        gap: 8px;
+      }
+
+      .users-list {
+        .user-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 8px;
+          cursor: pointer;
+          border-radius: 4px;
+          transition: background-color 0.2s;
+
+          &:hover {
+            background: var(--Bluish-Gray-02);
+          }
+
+          .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--Primary-05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+
+            .avatar-initials {
+              color: white;
+              font-size: 12px;
+              font-weight: 600;
+            }
+          }
+
+          .user-info {
+            flex: 1;
+            min-width: 0;
+
+            app-typography {
+              display: block;
+
+              &:first-child {
+                margin-bottom: 2px;
+              }
+            }
+          }
+        }
+
+        .loading-more {
+          display: flex;
+          justify-content: center;
+          padding: 12px;
+        }
+      }
+    }
+  }
+}

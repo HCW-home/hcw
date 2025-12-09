@@ -186,7 +186,8 @@
             </div>
           } @else {
             <app-video-consultation
-              [consultationId]="consultationId"
+              [consultationId]="activeAppointmentId() ? undefined : consultationId"
+              [appointmentId]="activeAppointmentId() ?? undefined"
               (leave)="onCallEnded()">
             </app-video-consultation>
           }
@@ -288,8 +289,18 @@
                       </div>
 
                       <div class="appointment-actions">
+                        @if (appointment.status === AppointmentStatus.SCHEDULED && appointment.type === 'Online') {
+                          <app-button
+                            text="Join"
+                            leftIcon="video"
+                            [size]="ButtonSizeEnum.small"
+                            [style]="ButtonStyleEnum.primary"
+                            (buttonClick)="joinVideoCall(appointment.id)">
+                          </app-button>
+                        }
+
                         <app-button
-                          text="Manage Participants"
+                          text="Participants"
                           leftIcon="users"
                           [size]="ButtonSizeEnum.small"
                           [style]="ButtonStyleEnum.text"

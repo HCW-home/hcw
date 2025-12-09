@@ -30,6 +30,7 @@ import {
 
 import { Page } from '../../../../core/components/page/page';
 import { Loader } from '../../../../shared/components/loader/loader';
+import { UserSearchSelect } from '../../../../shared/components/user-search-select/user-search-select';
 
 import { Typography } from '../../../../shared/ui-components/typography/typography';
 import { Button } from '../../../../shared/ui-components/button/button';
@@ -56,6 +57,7 @@ import { RoutePaths } from '../../../../core/constants/routes';
     ReactiveFormsModule,
     Page,
     Loader,
+    UserSearchSelect,
     Typography,
     Button,
     InputComponent,
@@ -511,13 +513,14 @@ export class ConsultationForm implements OnInit, OnDestroy {
 
   createConsultation(): void {
     const formValue = this.consultationForm.value;
+    const beneficiaryId = typeof formValue.beneficiary_id === 'number'
+      ? formValue.beneficiary_id
+      : (formValue.beneficiary_id ? parseInt(formValue.beneficiary_id) : undefined);
     const consultationData: CreateConsultationRequest = {
       title: formValue.title,
       description: formValue.description || undefined,
-      group_id: parseInt(formValue.group_id),
-      beneficiary_id: formValue.beneficiary_id
-        ? parseInt(formValue.beneficiary_id)
-        : undefined,
+      group_id: formValue.group_id ? parseInt(formValue.group_id) : undefined,
+      beneficiary_id: beneficiaryId,
     };
 
     this.consultationService

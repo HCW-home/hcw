@@ -3,7 +3,7 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/tabs/home"></ion-back-button>
     </ion-buttons>
-    <ion-title>Book Appointment</ion-title>
+    <ion-title>Request Consultation</ion-title>
   </ion-toolbar>
   <ion-toolbar>
     <ion-progress-bar [value]="getProgressPercentage() / 100" color="primary"></ion-progress-bar>
@@ -40,6 +40,22 @@
   <div class="step-content">
     @switch (currentStep) {
       @case (1) {
+        <ion-card class="beneficiary-card">
+          <ion-card-content>
+            <app-user-search-select
+              label="Who is this consultation for?"
+              placeholder="Search for a family member..."
+              [selectedUser]="selectedBeneficiary"
+              (userSelected)="onBeneficiarySelected($event)">
+            </app-user-search-select>
+            @if (!selectedBeneficiary) {
+              <ion-text class="helper-text" color="medium">
+                Leave empty if the consultation is for yourself
+              </ion-text>
+            }
+          </ion-card-content>
+        </ion-card>
+
         <div class="appointment-types">
           @for (type of appointmentTypes; track type.value) {
             <ion-card
@@ -60,36 +76,63 @@
       }
 
       @case (2) {
-        <ion-card class="date-time-card">
+        <ion-card class="schedule-toggle-card">
           <ion-card-content>
-            <ion-text class="section-label">Select Date</ion-text>
-            <ion-datetime
-              presentation="date"
-              [min]="minDate"
-              [max]="maxDate"
-              [(ngModel)]="selectedDate"
-              (ionChange)="onDateChange($event)"
-              class="custom-datetime">
-            </ion-datetime>
+            <ion-item lines="none">
+              <ion-label>
+                <h2>Schedule a specific time?</h2>
+                <p>You can request a specific appointment time or let us contact you to schedule</p>
+              </ion-label>
+              <ion-toggle
+                slot="end"
+                [checked]="scheduleAppointment"
+                (ionChange)="onScheduleToggleChange($event)">
+              </ion-toggle>
+            </ion-item>
           </ion-card-content>
         </ion-card>
 
-        @if (selectedDate) {
-          <ion-card class="time-slots-card">
+        @if (scheduleAppointment) {
+          <ion-card class="date-time-card">
             <ion-card-content>
-              <ion-text class="section-label">Available Time Slots</ion-text>
-              <div class="time-slots-grid">
-                @for (slot of availableSlots; track slot.time) {
-                  <div
-                    class="time-slot"
-                    [class.available]="slot.available"
-                    [class.selected]="slot.selected"
-                    [class.unavailable]="!slot.available"
-                    (click)="selectTimeSlot(slot)">
-                    <ion-text>{{ slot.time }}</ion-text>
-                  </div>
-                }
-              </div>
+              <ion-text class="section-label">Select Date</ion-text>
+              <ion-datetime
+                presentation="date"
+                [min]="minDate"
+                [max]="maxDate"
+                [(ngModel)]="selectedDate"
+                (ionChange)="onDateChange($event)"
+                class="custom-datetime">
+              </ion-datetime>
+            </ion-card-content>
+          </ion-card>
+
+          @if (selectedDate) {
+            <ion-card class="time-slots-card">
+              <ion-card-content>
+                <ion-text class="section-label">Available Time Slots</ion-text>
+                <div class="time-slots-grid">
+                  @for (slot of availableSlots; track slot.time) {
+                    <div
+                      class="time-slot"
+                      [class.available]="slot.available"
+                      [class.selected]="slot.selected"
+                      [class.unavailable]="!slot.available"
+                      (click)="selectTimeSlot(slot)">
+                      <ion-text>{{ slot.time }}</ion-text>
+                    </div>
+                  }
+                </div>
+              </ion-card-content>
+            </ion-card>
+          }
+        } @else {
+          <ion-card class="no-schedule-card">
+            <ion-card-content>
+              <ion-icon name="calendar-outline" color="medium"></ion-icon>
+              <ion-text color="medium">
+                We will contact you to schedule an appointment after reviewing your request.
+              </ion-text>
             </ion-card-content>
           </ion-card>
         }
@@ -140,11 +183,19 @@
       @case (4) {
         <ion-card class="review-card">
           <ion-card-content>
-            <ion-text class="review-title">Appointment Summary</ion-text>
+            <ion-text class="review-title">Consultation Request Summary</ion-text>
+
+            <ion-item lines="none">
+              <ion-icon name="person-outline" slot="start" color="primary"></ion-icon>
+              <ion-label>
+                <ion-text class="review-label">Beneficiary</ion-text>
+                <ion-text class="review-value">{{ getBeneficiaryDisplayName() }}</ion-text>
+              </ion-label>
+            </ion-item>
 
             @if (selectedDoctor) {
               <ion-item lines="none">
-                <ion-icon name="person-outline" slot="start" color="primary"></ion-icon>
+                <ion-icon name="medkit-outline" slot="start" color="primary"></ion-icon>
                 <ion-label>
                   <ion-text class="review-label">Doctor</ion-text>
                   <ion-text class="review-value">Dr. {{ selectedDoctor.first_name }} {{ selectedDoctor.last_name }}</ion-text>
@@ -152,21 +203,31 @@
               </ion-item>
             }
 
-            <ion-item lines="none">
-              <ion-icon name="calendar-outline" slot="start" color="primary"></ion-icon>
-              <ion-label>
-                <ion-text class="review-label">Date</ion-text>
-                <ion-text class="review-value">{{ formatDate(appointmentData.date) }}</ion-text>
-              </ion-label>
-            </ion-item>
+            @if (scheduleAppointment && appointmentData.date) {
+              <ion-item lines="none">
+                <ion-icon name="calendar-outline" slot="start" color="primary"></ion-icon>
+                <ion-label>
+                  <ion-text class="review-label">Preferred Date</ion-text>
+                  <ion-text class="review-value">{{ formatDate(appointmentData.date) }}</ion-text>
+                </ion-label>
+              </ion-item>
 
-            <ion-item lines="none">
-              <ion-icon name="time-outline" slot="start" color="primary"></ion-icon>
-              <ion-label>
-                <ion-text class="review-label">Time</ion-text>
-                <ion-text class="review-value">{{ appointmentData.time }}</ion-text>
-              </ion-label>
-            </ion-item>
+              <ion-item lines="none">
+                <ion-icon name="time-outline" slot="start" color="primary"></ion-icon>
+                <ion-label>
+                  <ion-text class="review-label">Preferred Time</ion-text>
+                  <ion-text class="review-value">{{ appointmentData.time }}</ion-text>
+                </ion-label>
+              </ion-item>
+            } @else {
+              <ion-item lines="none">
+                <ion-icon name="calendar-outline" slot="start" color="medium"></ion-icon>
+                <ion-label>
+                  <ion-text class="review-label">Appointment</ion-text>
+                  <ion-text class="review-value" color="medium">To be scheduled</ion-text>
+                </ion-label>
+              </ion-item>
+            }
 
             <ion-item lines="none">
               <ion-icon name="videocam-outline" slot="start" color="primary"></ion-icon>
@@ -219,7 +280,7 @@
       </ion-button>
     }
     <ion-button expand="block" (click)="nextStep()">
-      {{ currentStep === totalSteps ? 'Confirm Booking' : 'Continue' }}
+      {{ currentStep === totalSteps ? 'Submit Request' : 'Continue' }}
       @if (currentStep < totalSteps) {
         <ion-icon name="chevron-forward-outline" slot="end"></ion-icon>
       }

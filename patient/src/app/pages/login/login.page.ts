@@ -44,8 +44,8 @@ export class LoginPage {
     private toastCtrl: ToastController
   ) {
     this.loginForm = this.fb.group({
-      username: ['', [Validators.required]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
+      email: ['patient@gmail.com', [Validators.required, Validators.email]],
+      password: ['5r@@WC6vkz3BNzY', [Validators.required, Validators.minLength(6)]]
     });
   }
 

@@ -128,15 +128,15 @@ export class AppointmentsPage implements OnInit {
       displayStatus = 'upcoming';
     }
 
-    const doctorParticipant = apt.participants?.find(p => p.user && p.user.id !== apt.created_by.id);
-    const doctorName = doctorParticipant?.user
-      ? `Dr. ${doctorParticipant.user.first_name} ${doctorParticipant.user.last_name}`
-      : `Dr. ${apt.created_by.first_name} ${apt.created_by.last_name}`;
+    const firstParticipant = apt.participants?.[0];
+    const doctorName = firstParticipant?.user
+      ? `Dr. ${firstParticipant.user.first_name} ${firstParticipant.user.last_name}`
+      : 'Doctor';
 
     return {
       id: apt.id,
       doctor_name: doctorName,
-      doctor_photo: doctorParticipant?.user?.picture,
+      doctor_photo: firstParticipant?.user?.picture,
       specialty: 'Specialist',
       date: apt.scheduled_at,
       time: scheduledDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -226,8 +226,7 @@ export class AppointmentsPage implements OnInit {
   }
 
   joinVideoCall(appointment: DisplayAppointment): void {
-    const consultationId = appointment.originalAppointment.consultation || appointment.id;
-    this.navCtrl.navigateForward(`/consultation/${consultationId}/video`);
+    this.navCtrl.navigateForward(`/consultation/${appointment.id}/video?type=appointment`);
   }
 
   viewDetails(appointment: DisplayAppointment): void {
