@@ -317,7 +317,7 @@ ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.redis.RedisCache" if not DEBUG else 'django.core.cache.backends.dummy.DummyCache',
+        "BACKEND": "django.core.cache.backends.redis.RedisCache" if not DEBUG else 'django.core.cache.backends.locmem.LocMemCache',
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}",
     }
 }

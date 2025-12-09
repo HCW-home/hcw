@@ -1,5 +1,6 @@
 from importlib import import_module
 from typing import Union
+import logging
 
 from django.core.cache import cache
 from django.db import models
@@ -8,6 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from . import manager
 from .manager import BaseMediaserver
 
+logger = logging.getLogger(__name__)
 
 # Create your models here.
 class Server(models.Model):
@@ -34,17 +36,24 @@ class Server(models.Model):
         return self.module.Main(self)
 
     @classmethod
-    def get_server(cls):
+    def get_server(cls) -> 'Server':
         """Get server with round robin"""
 
         current_index = cache.get("round_robin_index", 0)
-        objet = cls.objects.all()[current_index]
 
-        total = cls.objects.filter(is_active=True).count()
-        next_index = (current_index + 1) % total
-        cache.set("round_robin_index", next_index)
+        active_servers = cls.objects.filter(is_active=True)
+        active_server_count = active_servers.count()
 
-        return objet
+        for i in range(active_server_count):
+            try:
+                next_index = (1 + i + current_index) % active_server_count
+                obj = active_servers[next_index]
+                obj.instance.test_connection()
+                cache.set("round_robin_index", next_index)
+                return obj
+            except:
+                logger.warning(f"The server is not reachable or has wrong credential: {obj}")
+                continue
 
 
 class Turn(models.Model):
