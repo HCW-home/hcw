@@ -4,11 +4,11 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models import Q
-from rest_framework.permissions import IsAuthenticated, DjangoModelPermissions
+from rest_framework.permissions import IsAuthenticated
 from core.mixins import CreatedByMixin
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes, OpenApiExample
-from .permissions import ConsultationAssigneePermission
+from .permissions import ConsultationAssigneePermission, DjangoModelPermissionsWithView
 from .models import Consultation, Queue, Appointment, Participant, Message, AppointmentStatus, Request, RequestStatus, Reason, BookingSlot
 from .filters import ConsultationFilter
 from .paginations import ConsultationPagination
@@ -31,19 +31,7 @@ from mediaserver.models import Server
 
 User = get_user_model()
 
-class DjangoModelPermissionsWithView(DjangoModelPermissions):
-    """
-    Custom permission class that includes view permissions.
-    """
-    perms_map = {
-        'GET': ['%(app_label)s.view_%(model_name)s'],
-        'OPTIONS': [],
-        'HEAD': [],
-        'POST': ['%(app_label)s.add_%(model_name)s'],
-        'PUT': ['%(app_label)s.change_%(model_name)s'],
-        'PATCH': ['%(app_label)s.change_%(model_name)s'],
-        'DELETE': ['%(app_label)s.delete_%(model_name)s'],
-    }
+
 
 @dataclass
 class Slot:
