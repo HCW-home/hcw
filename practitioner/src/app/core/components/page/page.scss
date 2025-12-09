@@ -4,15 +4,17 @@
   padding: 20px;
   flex-direction: column;
   align-items: stretch;
+  height: 100%;
 }
 
 .app-page-inner {
   gap: 32px;
   width: 100%;
-  flex: 1 1 auto;
+  flex: 1;
   display: flex;
   padding: 16px;
   border-radius: 8px;
   flex-direction: column;
   background: var(--White-and-Black-01);
+  overflow: auto;
 }
