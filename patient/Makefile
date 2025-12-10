@@ -12,7 +12,7 @@ www: node_modules
 node_modules:
 	npm i
 
-install: dist/patient/browser
+install: www
 	mkdir -p $(DESTDIR)$(STATIC)/$(PROJECT)/$(COMPONENT)/
 	cp -r www/* $(DESTDIR)$(STATIC)/$(PROJECT)/$(COMPONENT)/
 

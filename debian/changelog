@@ -1,3 +1,20 @@
+hcw (0.9.20) bookworm; urgency=medium
+
+  [ Gor Grigoryan ]
+  * improve icons
+  * use join video, improve video consultation overview
+  * remove practitioner_old project
+  * improve consultation form, add confirmation component
+
+  [ Olivier Bitsch ]
+  * Test if server is reachable
+  * Return consultation_user_info
+  * Return room for consultation and for appointment
+  * Just small restructure
+  * CI for patient also
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Wed, 10 Dec 2025 11:49:42 +0100
+
 hcw (0.9.19) bookworm; urgency=medium
 
   [ Olivier Bitsch ]

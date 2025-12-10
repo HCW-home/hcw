@@ -24,7 +24,7 @@ class ParticipantSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'is_invited', 'is_confirmed', 'email', 'phone', 'display_name', 'feedback_rate', 'feedback_message']
 
 class AppointmentSerializer(serializers.ModelSerializer):
-    created_by = serializers.HiddenField(
+    created_by = ConsultationUserSerializer(
         default=serializers.CurrentUserDefault())
     consultation = serializers.PrimaryKeyRelatedField(read_only=True)
     participants = ParticipantSerializer(source='participant_set', many=True, read_only=True)
@@ -36,7 +36,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'status']
 
 class ConsultationMessageSerializer(serializers.ModelSerializer):
-    created_by = serializers.HiddenField(
+    created_by = ConsultationUserSerializer(
         default=serializers.CurrentUserDefault())
     # consultation = serializers.PrimaryKeyRelatedField(read_only=True)
     attachment = serializers.SerializerMethodField()
