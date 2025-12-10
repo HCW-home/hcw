@@ -1,6 +1,6 @@
 .consultations-container {
   padding: 32px;
-  background: var(--Background-01);
+  background: var(--slate-50);
   min-height: calc(100vh - 200px);
 
   .consultations-header {
@@ -40,9 +40,9 @@
     }
 
     .consultation-card {
-      background: white;
+      background: var(--White);
       border-radius: 16px;
-      border: 1px solid var(--Bluish-Gray-02);
+      border: 1px solid var(--slate-200);
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
       overflow: hidden;
       transition: all 0.3s ease;
@@ -61,8 +61,8 @@
         justify-content: space-between;
         align-items: flex-start;
         padding: 20px 24px;
-        border-bottom: 1px solid var(--Bluish-Gray-02);
-        background: var(--Bluish-Gray-01);
+        border-bottom: 1px solid var(--slate-200);
+        background: var(--slate-50);
 
         .header-left {
           display: flex;
@@ -106,7 +106,7 @@
         .description {
           margin-bottom: 20px;
           padding-bottom: 20px;
-          border-bottom: 1px solid var(--Bluish-Gray-02);
+          border-bottom: 1px solid var(--slate-200);
 
           app-typography {
             display: -webkit-box;
@@ -170,9 +170,9 @@
       padding: 64px 32px;
       grid-column: 1 / -1;
       gap: 16px;
-      background: white;
+      background: var(--White);
       border-radius: 12px;
-      border: 2px dashed var(--Bluish-Gray-03);
+      border: 2px dashed var(--slate-300);
     }
 
     .loading-state {
@@ -184,9 +184,9 @@
       padding: 64px 32px;
       grid-column: 1 / -1;
       gap: 24px;
-      background: white;
+      background: var(--White);
       border-radius: 12px;
-      border: 1px solid var(--Bluish-Gray-03);
+      border: 1px solid var(--slate-200);
     }
 
     .error-state {
@@ -198,15 +198,14 @@
       padding: 64px 32px;
       grid-column: 1 / -1;
       gap: 16px;
-      background: white;
+      background: var(--White);
       border-radius: 12px;
-      border: 1px solid var(--Error-05);
-      background-color: var(--Error-01, #fef2f2);
+      border: 1px solid var(--rose-500);
+      background-color: var(--rose-50);
     }
   }
 }
 
-// Responsive adjustments
 @media (max-width: 1200px) {
   .consultations-container {
     padding: 24px;

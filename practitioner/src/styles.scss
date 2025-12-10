@@ -17,7 +17,7 @@ input[type=number] {
 
 input:disabled {
   opacity: 0.6;
-  background: var(--Gray-04);
+  background: var(--slate-200);
 }
 
 .text-link {
@@ -31,6 +31,6 @@ input:disabled {
     text-decoration-thickness: auto;
     text-decoration-line: underline;
     text-underline-position: from-font;
-    text-decoration-color: var(--Blue-04);
+    text-decoration-color: var(--primary-500);
   }
 }

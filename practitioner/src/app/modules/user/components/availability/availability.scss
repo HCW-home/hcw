@@ -38,14 +38,14 @@
       }
 
       .schedule-card {
-        background: var(--White-and-Black-01);
-        border: 1px solid var(--Bluish-Gray-03);
+        background: var(--White);
+        border: 1px solid var(--slate-200);
         border-radius: 12px;
         padding: 24px;
         transition: all 0.2s ease;
 
         &:hover {
-          border-color: var(--Bluish-Gray-04);
+          border-color: var(--slate-300);
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         }
 
@@ -55,10 +55,10 @@
           gap: 12px;
           margin-bottom: 20px;
           padding-bottom: 16px;
-          border-bottom: 1px solid var(--Bluish-Gray-02);
+          border-bottom: 1px solid var(--slate-200);
 
           app-svg {
-            color: var(--Primary-05);
+            color: var(--primary-600);
           }
         }
 
@@ -120,14 +120,14 @@
       }
 
       .slot-card {
-        background: var(--White-and-Black-01);
-        border: 1px solid var(--Bluish-Gray-03);
+        background: var(--White);
+        border: 1px solid var(--slate-200);
         border-radius: 12px;
         padding: 20px;
         transition: all 0.2s ease;
 
         &:hover {
-          border-color: var(--Primary-04);
+          border-color: var(--primary-500);
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
 
@@ -158,8 +158,8 @@
               margin-top: 8px;
 
               .day-tag {
-                background: var(--Primary-01);
-                color: var(--Primary-06);
+                background: var(--primary-100);
+                color: var(--primary-700);
                 padding: 4px 8px;
                 border-radius: 6px;
                 font-size: 12px;
@@ -167,7 +167,7 @@
               }
 
               .no-days {
-                color: var(--Bluish-Gray-06);
+                color: var(--slate-400);
                 font-style: italic;
                 font-size: 12px;
               }
@@ -179,11 +179,11 @@
             align-items: center;
             gap: 6px;
             padding: 8px 12px;
-            background: var(--Warning-01);
+            background: var(--amber-100);
             border-radius: 6px;
 
             app-svg {
-              color: var(--Warning-05);
+              color: var(--amber-600);
             }
           }
         }
@@ -206,7 +206,6 @@
 }
 
 
-// Responsive Design
 @media (max-width: 768px) {
   .availability-container {
     padding: 16px;

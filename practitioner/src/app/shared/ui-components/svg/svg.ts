@@ -152,6 +152,9 @@ const ICON_MAP: Record<string, string> = {
   'send': 'heroPaperAirplane',
   'send.svg': 'heroPaperAirplane',
   'svg/send.svg': 'heroPaperAirplane',
+  'logo-icon': 'heroHeart',
+  'logo-icon.svg': 'heroHeart',
+  'svg/logo-icon.svg': 'heroHeart',
 };
 
 @Component({

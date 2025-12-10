@@ -37,14 +37,14 @@
           @if (isLoading() && users().length === 0) {
             <div class="loading-container">
               <app-loader></app-loader>
-              <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--Bluish-Gray-07)">
+              <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
                 Searching users...
               </app-typography>
             </div>
           } @else if (users().length === 0) {
             <div class="empty-state">
-              <app-svg src="user" [svgStyle]="{'width.px': 32, 'height.px': 32, 'color': 'var(--Bluish-Gray-07)'}"></app-svg>
-              <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--Bluish-Gray-07)">
+              <app-svg src="user" [svgStyle]="{'width.px': 32, 'height.px': 32, 'color': 'var(--slate-500)'}"></app-svg>
+              <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
                 @if (searchQuery()) {
                   No users found for "{{ searchQuery() }}"
                 } @else {
@@ -63,7 +63,7 @@
                     <app-typography [variant]="TypographyTypeEnum['body-s-medium']">
                       {{ getUserDisplayName(user) }}
                     </app-typography>
-                    <app-typography [variant]="TypographyTypeEnum['body-xs-regular']" color="var(--Bluish-Gray-07)">
+                    <app-typography [variant]="TypographyTypeEnum['body-xs-regular']" color="var(--slate-500)">
                       {{ user.email }}
                     </app-typography>
                   </div>

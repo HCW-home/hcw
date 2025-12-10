@@ -2,13 +2,13 @@
   <div class="confirmation-backdrop" (click)="onBackdropClick($event)">
     <div class="confirmation-modal">
       <div class="confirmation-header">
-        <app-svg src="alert-circle" [svgStyle]="{'width.px': 24, 'height.px': 24, 'color': 'var(--Warning-05)'}"></app-svg>
+        <app-svg src="alert-circle" [svgStyle]="{'width.px': 24, 'height.px': 24, 'color': 'var(--amber-500)'}"></app-svg>
         <app-typography [variant]="TypographyTypeEnum['h5-semibold']">
           {{ title }}
         </app-typography>
       </div>
       <div class="confirmation-body">
-        <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-07)">
+        <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
           {{ message }}
         </app-typography>
       </div>

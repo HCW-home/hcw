@@ -9,11 +9,11 @@
           {{ consultation().patient_name }}
         </app-typography>
         @if (consultation().patient_age) {
-          <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--Bluish-Gray-07)">
+          <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
             Age {{ consultation().patient_age }}
           </app-typography>
         } @else {
-          <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--Bluish-Gray-07)">
+          <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
             {{ consultation().patient_email || 'No contact info' }}
           </app-typography>
         }
@@ -53,7 +53,7 @@
 
     @if (type() === 'active' && consultation().symptoms && consultation().symptoms!.length > 0) {
       <div class="symptoms">
-        <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--Bluish-Gray-07)">
+        <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--slate-500)">
           Symptoms:
         </app-typography>
         <div class="symptoms-tags">
@@ -66,7 +66,7 @@
 
     @if (type() === 'past' && consultation().notes) {
       <div class="consultation-notes">
-        <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--Bluish-Gray-07)">
+        <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--slate-500)">
           Notes:
         </app-typography>
         <app-typography [variant]="TypographyTypeEnum['body-s-regular']">
@@ -77,8 +77,8 @@
 
     @if (type() === 'past' && consultation().follow_up_required) {
       <div class="follow-up-indicator">
-        <app-svg src="alert-circle" [svgStyle]="{'width.px': 16, 'height.px': 16, 'fill': 'var(--Warning-05)'}"></app-svg>
-        <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--Warning-05)">
+        <app-svg src="alert-circle" [svgStyle]="{'width.px': 16, 'height.px': 16, 'fill': 'var(--amber-500)'}"></app-svg>
+        <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--amber-600)">
           Follow-up required
         </app-typography>
       </div>

@@ -26,7 +26,7 @@
   overflow: auto;
   border-radius: 8px;
   position: relative;
-  background: var(--White-and-Black-01);
+  background: var(--White);
 
   .overlay-content-header {
     top: 0;
@@ -35,7 +35,7 @@
     align-self: stretch;
     align-items: center;
     justify-content: space-between;
-    background: var(--White-and-Black-01);
+    background: var(--White);
   }
 }
 

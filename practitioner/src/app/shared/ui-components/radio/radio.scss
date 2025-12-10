@@ -15,8 +15,8 @@
     line-height: 20px;
     font-style: normal;
     letter-spacing: 0.32px;
-    color: var(--Bluish-Gray-10);
-    font-family: "Source Sans Pro", sans-serif;
+    color: var(--slate-800);
+    font-family: "Plus Jakarta Sans", "Source Sans Pro", sans-serif;
   }
 
   .switch-radio-container {
@@ -46,8 +46,8 @@
       cursor: pointer;
       align-items: center;
       align-self: stretch;
-      border-radius: 5px;
-      border: 2px solid var(--Bluish-Gray-04);
+      border-radius: 12px;
+      border: 2px solid var(--slate-200);
 
 
       input {
@@ -77,12 +77,12 @@
       }
 
       &.checked {
-        border: 2px solid var(--Blue-04);
-        background: var(--Blue-01);
+        border: 2px solid var(--primary-400);
+        background: var(--primary-50);
 
 
         .radio-visualization {
-          border-color: var(--Blue-04);
+          border-color: var(--primary-500);
 
           .radio-visualization__inner {
             transform: scale(1);

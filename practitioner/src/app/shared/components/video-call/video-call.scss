@@ -2,7 +2,7 @@
   position: relative;
   width: 100%;
   height: 100%;
-  background: var(--Gray-90);
+  background: var(--slate-900);
   border-radius: 12px;
   overflow: hidden;
   display: flex;
@@ -14,7 +14,7 @@
   top: 0;
   left: 0;
   right: 0;
-  background: var(--Error-05);
+  background: var(--rose-600);
   color: var(--White);
   padding: 12px;
   text-align: center;
@@ -33,7 +33,7 @@
 .local-video-wrapper,
 .remote-video-wrapper {
   position: relative;
-  background: var(--Gray-80);
+  background: var(--slate-800);
   border-radius: 8px;
   overflow: hidden;
   aspect-ratio: 16 / 9;
@@ -73,7 +73,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--Gray-70);
+  background: var(--slate-700);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -82,7 +82,7 @@
 .disabled-icon {
   width: 64px;
   height: 64px;
-  color: var(--Gray-40);
+  color: var(--slate-400);
 }
 
 .waiting-wrapper {
@@ -95,18 +95,18 @@
 
 .waiting-content {
   text-align: center;
-  color: var(--Gray-40);
+  color: var(--slate-400);
 }
 
 .waiting-icon {
   width: 80px;
   height: 80px;
   margin-bottom: 16px;
-  color: var(--Gray-40);
+  color: var(--slate-400);
 }
 
 .waiting-text {
-  color: var(--Gray-40);
+  color: var(--slate-400);
   margin-top: 8px;
 }
 
@@ -114,8 +114,8 @@
   display: flex;
   gap: 12px;
   padding: 16px;
-  background: var(--Gray-10);
-  border-top: 1px solid var(--Gray-20);
+  background: var(--slate-100);
+  border-top: 1px solid var(--slate-200);
   justify-content: center;
   align-items: center;
 }
@@ -133,11 +133,11 @@
 }
 
 .end-call {
-  background: var(--Error-05);
+  background: var(--rose-600);
   color: var(--White);
 
   &:hover {
-    background: var(--Error-04);
+    background: var(--rose-500);
   }
 }
 
@@ -162,8 +162,8 @@
 .spinner {
   width: 48px;
   height: 48px;
-  border: 4px solid var(--Gray-40);
-  border-top-color: var(--Primary-04);
+  border: 4px solid var(--slate-400);
+  border-top-color: var(--primary-500);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 16px;

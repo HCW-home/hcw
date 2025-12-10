@@ -490,14 +490,14 @@ export class Test implements OnInit, OnDestroy {
   getConnectionStatusColor(): string {
     switch (this.connectionStatus()) {
       case 'connected':
-        return 'var(--Success-05)';
+        return 'var(--emerald-500)';
       case 'connecting':
       case 'reconnecting':
-        return 'var(--Warning-05)';
+        return 'var(--amber-500)';
       case 'failed':
-        return 'var(--Error-05)';
+        return 'var(--rose-500)';
       default:
-        return 'var(--Bluish-Gray-06)';
+        return 'var(--slate-400)';
     }
   }
 
@@ -520,17 +520,17 @@ export class Test implements OnInit, OnDestroy {
 
   getOverallStatusColor(): string {
     if (this.allTestsCompleted()) {
-      return 'var(--Success-05)';
+      return 'var(--emerald-500)';
     }
 
     const working = [this.cameraStatus(), this.microphoneStatus(), this.speakerStatus()]
       .filter(status => status === 'working').length;
 
     if (working === 0) {
-      return 'var(--Error-05)';
+      return 'var(--rose-500)';
     }
 
-    return 'var(--Warning-05)';
+    return 'var(--amber-500)';
   }
 
   async testAllSystems() {

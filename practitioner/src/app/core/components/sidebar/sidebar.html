@@ -1,13 +1,25 @@
 <div class="sidebar" [class.collapsed]="isCollapsed">
   <div class="sidebar-header">
-    <app-svg
-      [src]="isCollapsed ? 'svg/logo.svg' : 'svg/logo.svg'"
-      [svgStyle]="{'width.px': isCollapsed ? 40 : 160, 'height.px': isCollapsed ? 40 : 60, 'transition': 'all 0.3s ease'}">
-    </app-svg>
+    <div class="logo-section">
+      <app-svg
+        src="svg/logo.svg"
+        [svgStyle]="{'width.px': isCollapsed ? 40 : 44, 'height.px': isCollapsed ? 40 : 44}">
+      </app-svg>
+      @if (!isCollapsed) {
+        <div class="logo-text">
+          <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
+            HCW
+          </app-typography>
+          <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--slate-500)">
+            Practitioner
+          </app-typography>
+        </div>
+      }
+    </div>
     <button class="toggle-btn" (click)="toggleSidebar()">
       <app-svg
         [src]="isCollapsed ? 'svg/chevron-right.svg' : 'svg/chevron-left.svg'"
-        [svgStyle]="{'width.px': 20, 'height.px': 20, 'color': 'var(--Bluish-Gray-06)'}">
+        [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--slate-400)'}">
       </app-svg>
     </button>
   </div>
@@ -32,8 +44,8 @@
                 queryParams: 'ignored',
                 fragment: 'ignored',
               })
-                ? 'var(--Primary-04)'
-                : 'var(--Bluish-Gray-06)'
+                ? 'var(--primary-500)'
+                : 'var(--slate-400)'
             }">
           </app-svg>
           @if (!isCollapsed) {
@@ -54,12 +66,12 @@
         <div class="user-info">
           <app-typography
             [variant]="TypographyTypeEnum['body-bold']"
-            color="var(--Bluish-Gray-08)">
+            color="var(--slate-700)">
             {{ getUserDisplayName() }}
           </app-typography>
           <app-typography
             [variant]="TypographyTypeEnum['body-s-regular']"
-            color="var(--Bluish-Gray-06)">
+            color="var(--slate-400)">
             {{ currentUser.email }}
           </app-typography>
         </div>

@@ -6,12 +6,12 @@
         [ngClass]="{ 'active': last }">
         @if (!last && crumb.url) {
           <app-typography [routerLink]="crumb.url" [variant]="TypographyTypeEnum['body-medium']"
-                          color="var(--Bluish-Gray-06)" class="pointer">{{ crumb.label }}
+                          color="var(--slate-400)" class="pointer">{{ crumb.label }}
           </app-typography>
         }
         @if (last) {
           <app-typography [variant]="TypographyTypeEnum['body-medium']"
-                          color="var(--Bluish-Gray-09)">{{ crumb.label }}
+                          color="var(--slate-800)">{{ crumb.label }}
           </app-typography>
         }
       </li>

@@ -39,7 +39,7 @@
 }
 
 .profile-info-card {
-  border: 1px solid var(--Bluish-Gray-02);
+  border: 1px solid var(--slate-200);
   border-radius: 12px;
   padding: 24px;
   display: flex;
@@ -52,7 +52,7 @@
   align-items: center;
   gap: 16px;
   padding-bottom: 16px;
-  border-bottom: 1px solid var(--Bluish-Gray-02);
+  border-bottom: 1px solid var(--slate-200);
 
   .user-avatar {
     width: 64px;
@@ -61,8 +61,8 @@
     border-radius: 50%;
     align-items: center;
     justify-content: center;
-    color: var(--Bluish-Gray-06);
-    background: var(--Bluish-Gray-01);
+    color: var(--slate-400);
+    background: var(--slate-50);
   }
 
   .user-basic-info {
@@ -113,7 +113,7 @@
     padding: 16px 0;
 
     &:not(:last-child) {
-      border-bottom: 1px solid var(--Bluish-Gray-02);
+      border-bottom: 1px solid var(--slate-200);
     }
   }
 

@@ -6,7 +6,7 @@
           <app-typography [variant]="TypographyTypeEnum['h2-semibold']">
             Availability Management
           </app-typography>
-          <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-07)">
+          <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
             Manage your weekly schedule and consultation time slots
           </app-typography>
         </div>
@@ -23,7 +23,7 @@
       @if (isLoading()) {
         <div class="loading-state">
           <app-loader></app-loader>
-          <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-07)">
+          <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
             Loading availability...
           </app-typography>
         </div>
@@ -161,7 +161,7 @@
         @if (activeTab() === 'slots') {
           <div class="slots-tab">
             <div class="slots-header">
-              <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--Bluish-Gray-07)">
+              <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--slate-500)">
                 Manage your individual time slots for different schedules
               </app-typography>
               <app-button
@@ -181,7 +181,7 @@
                       <app-typography [variant]="TypographyTypeEnum['body-l-semibold']">
                         {{ getSlotTimeRange(slot) }}
                       </app-typography>
-                      <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--Bluish-Gray-06)">
+                      <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-400)">
                         Break: {{ getBreakTimeRange(slot) }}
                       </app-typography>
                     </div>
@@ -205,7 +205,7 @@
 
                   <div class="slot-content">
                     <div class="slot-days">
-                      <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
+                      <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--slate-500)">
                         Active Days:
                       </app-typography>
                       <div class="days-list">
@@ -220,7 +220,7 @@
                     @if (slot.valid_until) {
                       <div class="slot-validity">
                         <app-svg src="calendar" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
-                        <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--Warning-05)">
+                        <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--amber-500)">
                           Valid until: {{ slot.valid_until }}
                         </app-typography>
                       </div>
@@ -230,10 +230,10 @@
               } @empty {
                 <div class="empty-state">
                   <app-svg src="calendar" [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
-                  <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--Bluish-Gray-06)">
+                  <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--slate-400)">
                     No time slots configured
                   </app-typography>
-                  <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-07)">
+                  <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
                     Create your first time slot to manage your availability
                   </app-typography>
                   <app-button

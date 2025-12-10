@@ -6,7 +6,7 @@
           <app-typography [variant]="TypographyTypeEnum['h1-semibold']">
             System Test
           </app-typography>
-          <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-07)">
+          <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
             Test your audio and video equipment before starting consultations
           </app-typography>
         </div>
@@ -30,7 +30,7 @@
               <div class="placeholder-icon">
                 <app-svg src="svg/eye-crossed.svg" [svgStyle]="{'width.px': 64, 'height.px': 64, 'opacity': 0.4}"></app-svg>
               </div>
-              <app-typography [variant]="TypographyTypeEnum['body-l-regular']" color="var(--Bluish-Gray-05)">
+              <app-typography [variant]="TypographyTypeEnum['body-l-regular']" color="var(--slate-400)">
                 {{getCameraPlaceholderText()}}
               </app-typography>
             </div>
@@ -52,7 +52,7 @@
             </div>
             <div class="test-item-info">
               <app-typography [variant]="TypographyTypeEnum['body-medium']">Camera</app-typography>
-              <app-typography [variant]="TypographyTypeEnum['body-s-regular']" [color]="cameraStatus() === 'working' ? 'var(--Success-05)' : cameraStatus() === 'error' ? 'var(--Error-05)' : 'var(--Bluish-Gray-06)'">
+              <app-typography [variant]="TypographyTypeEnum['body-s-regular']" [color]="cameraStatus() === 'working' ? 'var(--emerald-500)' : cameraStatus() === 'error' ? 'var(--rose-500)' : 'var(--slate-400)'">
                 {{getCameraStatusText()}}
               </app-typography>
             </div>
@@ -84,7 +84,7 @@
             </div>
             <div class="test-item-info">
               <app-typography [variant]="TypographyTypeEnum['body-medium']">Microphone</app-typography>
-              <app-typography [variant]="TypographyTypeEnum['body-s-regular']" [color]="microphoneStatus() === 'working' ? 'var(--Success-05)' : microphoneStatus() === 'error' ? 'var(--Error-05)' : 'var(--Bluish-Gray-06)'">
+              <app-typography [variant]="TypographyTypeEnum['body-s-regular']" [color]="microphoneStatus() === 'working' ? 'var(--emerald-500)' : microphoneStatus() === 'error' ? 'var(--rose-500)' : 'var(--slate-400)'">
                 {{getMicrophoneStatusText()}}
               </app-typography>
             </div>
@@ -116,7 +116,7 @@
             </div>
             <div class="test-item-info">
               <app-typography [variant]="TypographyTypeEnum['body-medium']">Speakers</app-typography>
-              <app-typography [variant]="TypographyTypeEnum['body-s-regular']" [color]="speakerStatus() === 'working' ? 'var(--Success-05)' : speakerStatus() === 'error' ? 'var(--Error-05)' : 'var(--Bluish-Gray-06)'">
+              <app-typography [variant]="TypographyTypeEnum['body-s-regular']" [color]="speakerStatus() === 'working' ? 'var(--emerald-500)' : speakerStatus() === 'error' ? 'var(--rose-500)' : 'var(--slate-400)'">
                 {{getSpeakerStatusText()}}
               </app-typography>
             </div>

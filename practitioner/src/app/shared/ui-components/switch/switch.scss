@@ -6,8 +6,8 @@
   margin-bottom: 8px;
   font-style: normal;
   letter-spacing: 0.32px;
-  color: var(--Bluish-Gray-10);
-  font-family: "Source Sans Pro", sans-serif;
+  color: var(--slate-800);
+  font-family: "Plus Jakarta Sans", "Source Sans Pro", sans-serif;
 }
 
 .switch-container {
@@ -28,7 +28,7 @@
     display: inline-block;
     vertical-align: text-bottom;
     transition: all 0.3s linear;
-    background-color: var(--Bluish-Gray-05);
+    background-color: var(--slate-300);
 
     &::before {
       left: 0;
@@ -38,7 +38,7 @@
       position: absolute;
       border-radius: 10px;
       transition: all 0.25s linear;
-      background-color: var(--Bluish-Gray-05);
+      background-color: var(--slate-300);
       transform: translate3d(2px, 2px, 0) scale3d(1, 1, 1);
     }
 
@@ -51,7 +51,7 @@
       border-radius: 10px;
       transition: all 0.2s ease-in-out;
       transform: translate3d(2px, 2px, 0);
-      background-color: var(--White-and-Black-01);
+      background-color: var(--White);
     }
   }
 
@@ -70,7 +70,7 @@
 
   &.checked {
     i {
-      background-color: var(--Blue-04);
+      background-color: var(--primary-500);
 
       &::after {
         transform: translate3d(12px, 2px, 0);

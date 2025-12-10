@@ -6,7 +6,7 @@
           <app-typography [variant]="TypographyTypeEnum['h2-semibold']">
             {{ pageTitle() }}
           </app-typography>
-          <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-07)">
+          <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
             {{ pageDescription() }}
           </app-typography>
         </div>
@@ -174,7 +174,7 @@
 
                         @if (getParticipantsFormArray(i).length === 0) {
                           <div class="empty-participants">
-                            <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--Bluish-Gray-07)">
+                            <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
                               No participants added yet.
                             </app-typography>
                           </div>
@@ -246,7 +246,7 @@
                 }
               } @else {
                 <div class="empty-appointments">
-                  <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-07)">
+                  <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
                     No appointments configured. Add your first appointment to get started.
                   </app-typography>
                 </div>
@@ -257,8 +257,8 @@
           <div class="form-actions">
             @if (mode === 'edit' && isAutoSaving()) {
               <div class="auto-save-indicator">
-                <app-svg src="check" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--Success-05)'}"></app-svg>
-                <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Success-05)">
+                <app-svg src="check" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--emerald-500)'}"></app-svg>
+                <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--emerald-500)">
                   Saving changes...
                 </app-typography>
               </div>
@@ -266,8 +266,8 @@
 
             @if (mode === 'edit' && lastSaved() && !isAutoSaving()) {
               <div class="auto-save-indicator">
-                <app-svg src="check" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--Success-05)'}"></app-svg>
-                <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--Bluish-Gray-07)">
+                <app-svg src="check" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--emerald-500)'}"></app-svg>
+                <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--slate-500)">
                   All changes saved
                 </app-typography>
               </div>

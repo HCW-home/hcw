@@ -3,55 +3,55 @@
   display: flex;
   padding: 6px 8px;
   width: fit-content;
-  border-radius: 4px;
+  border-radius: 8px;
   align-items: center;
   justify-content: center;
 
   &.green {
-    background: var(--Green-01);
+    background: var(--emerald-100);
 
     .badge-text {
-      color: var(--Green-04);
+      color: var(--emerald-600);
     }
   }
 
   &.blue {
-    background: var(--Primary-01);
+    background: var(--primary-100);
 
     .badge-text {
-      color: var(--Blue-04);
+      color: var(--primary-700);
     }
   }
 
   &.red {
-    background: var(--Red-01);
+    background: var(--rose-100);
 
     .badge-text {
-      color: var(--Red-04);
+      color: var(--rose-600);
     }
   }
 
   &.orange {
-    background: var(--Orange-01);
+    background: var(--amber-100);
 
     .badge-text {
-      color: var(--Orange-04);
+      color: var(--amber-700);
     }
   }
 
   &.purple {
-    background: var(--Purple-01);
+    background: var(--purple-100);
 
     .badge-text {
-      color: var(--Purple-03);
+      color: var(--purple-700);
     }
   }
 
   &.gray {
-    background: var(--Bluish-Gray-02);
+    background: var(--slate-100);
 
     .badge-text {
-      color: var(--Bluish-Gray-10);
+      color: var(--slate-700);
     }
   }
 
@@ -61,6 +61,6 @@
     font-weight: 400;
     line-height: 16px;
     letter-spacing: 0.32px;
-    font-family: 'Source Sans Pro', sans-serif;
+    font-family: "Plus Jakarta Sans", "Source Sans Pro", sans-serif;
   }
 }

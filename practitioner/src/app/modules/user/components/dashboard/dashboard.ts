@@ -72,22 +72,22 @@ export class Dashboard implements OnInit {
         title: 'Total Consultations',
         value: s.totalConsultations,
         icon: 'report',
-        color: 'var(--Primary-05)',
-        bgColor: 'var(--Primary-01)'
+        color: 'var(--primary-600)',
+        bgColor: 'var(--primary-100)'
       },
       {
         title: 'Active',
         value: s.activeConsultations,
         icon: 'activity-history',
-        color: 'var(--Success-05)',
-        bgColor: 'var(--Success-01)'
+        color: 'var(--emerald-500)',
+        bgColor: 'var(--emerald-100)'
       },
       {
         title: 'Closed',
         value: s.closedConsultations,
         icon: 'check',
-        color: 'var(--Bluish-Gray-06)',
-        bgColor: 'var(--Bluish-Gray-02)'
+        color: 'var(--slate-400)',
+        bgColor: 'var(--slate-100)'
       }
     ];
   }

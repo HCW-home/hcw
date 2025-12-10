@@ -2,15 +2,15 @@
   top: 0;
   left: 0;
   bottom: 0;
-  width: 260px;
+  width: 288px;
   height: 100vh;
   display: flex;
   position: fixed;
   overflow: hidden;
   z-index: 1000;
   flex-direction: column;
-  background: var(--White-and-Black-01);
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+  background: linear-gradient(180deg, var(--White) 0%, var(--slate-50) 100%);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.06);
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   &.collapsed {
@@ -51,32 +51,55 @@
 
   .sidebar-header {
     display: flex;
-    padding: 20px 24px;
+    padding: 24px;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 1px solid var(--Bluish-Gray-02);
+    border-bottom: 1px solid var(--slate-200);
     position: relative;
     min-height: 80px;
+
+    .logo-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      app-svg {
+        flex-shrink: 0;
+      }
+
+      .logo-text {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+
+        app-typography {
+          display: block;
+          line-height: 1.2;
+        }
+      }
+    }
 
     .toggle-btn {
       position: absolute;
       right: -12px;
       top: 50%;
       transform: translateY(-50%);
-      width: 30px;
-      height: 30px;
+      width: 24px;
+      height: 24px;
       border-radius: 50%;
-      background: var(--White-and-Black-01);
-      border: 1px solid var(--Bluish-Gray-03);
+      background: var(--White);
+      border: 1px solid var(--slate-200);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: all 0.2s ease;
       z-index: 10;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 
       &:hover {
-        background: var(--Bluish-Gray-01);
+        background: var(--slate-50);
+        border-color: var(--primary-300);
       }
 
       &:active {
@@ -103,18 +126,19 @@
     }
 
     &::-webkit-scrollbar-thumb {
-      background: var(--Bluish-Gray-03);
+      background: var(--slate-300);
       border-radius: 4px;
     }
 
     .menu-item {
       display: flex;
       padding: 12px 16px;
-      border-radius: 8px;
+      border-radius: 12px;
       text-decoration: none;
       transition: all 0.2s ease;
       position: relative;
       overflow: hidden;
+      border: 2px solid transparent;
 
       .menu-item-content {
         display: flex;
@@ -132,38 +156,38 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        color: var(--Bluish-Gray-07);
+        color: var(--slate-600);
         transition: color 0.2s ease;
       }
 
       &:hover:not(.active) {
-        background: var(--Bluish-Gray-01);
+        background: var(--slate-100);
+        transform: scale(1.02);
 
         .menu-icon {
           transform: translateX(2px);
         }
 
         .menu-label {
-          color: var(--Bluish-Gray-08);
+          color: var(--slate-800);
         }
 
         ::ng-deep svg {
-          fill: var(--Bluish-Gray-08) !important;
+          fill: var(--slate-700) !important;
         }
       }
 
       &.active {
-        background: linear-gradient(90deg, var(--Primary-01) 0%, transparent 100%);
-        border-left: 3px solid var(--Primary-04);
-        padding-left: 13px;
+        background: var(--primary-100);
+        border-color: var(--primary-300);
 
         .menu-label {
-          color: var(--Primary-04);
+          color: var(--primary-800);
           font-weight: 600;
         }
 
         ::ng-deep svg {
-          fill: var(--Primary-04) !important;
+          fill: var(--primary-600) !important;
         }
       }
     }
@@ -171,16 +195,17 @@
 
   .sidebar-footer {
     padding: 20px;
-    border-top: 1px solid var(--Bluish-Gray-02);
-    background: var(--Bluish-Gray-01);
+    border-top: 1px solid var(--slate-200);
+    background: var(--slate-50);
 
     .user-section {
       margin-bottom: 12px;
 
       .user-info {
         padding: 12px;
-        background: var(--White-and-Black-01);
-        border-radius: 8px;
+        background: var(--White);
+        border-radius: 12px;
+        border: 1px solid var(--slate-200);
 
         app-typography {
           display: block;
@@ -198,18 +223,18 @@
       ::ng-deep .button {
         width: 100%;
         justify-content: flex-start;
-        border-radius: 8px;
+        border-radius: 12px;
         transition: all 0.2s ease;
 
         &:hover {
-          background: var(--Red-01);
+          background: var(--rose-50);
 
           svg {
-            fill: var(--Red-04) !important;
+            fill: var(--rose-500) !important;
           }
 
           .body-regular {
-            color: var(--Red-04);
+            color: var(--rose-600);
           }
         }
       }

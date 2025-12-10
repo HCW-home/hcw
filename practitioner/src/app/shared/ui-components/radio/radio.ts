@@ -68,9 +68,9 @@ export class Radio implements ControlValueAccessor {
 
   getLabelColor(id: string | number) {
     if (this.value === id) {
-      return 'var(--Bluish-Gray-10)';
+      return 'var(--slate-800)';
     } else {
-      return 'var(--Bluish-Gray-07)';
+      return 'var(--slate-500)';
     }
   }
 

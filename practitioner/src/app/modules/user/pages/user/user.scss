@@ -5,17 +5,17 @@
 
   .user-main {
     flex-grow: 1;
-    margin-left: 260px;
-    width: calc(100vw - 260px);
+    margin-left: 288px;
+    width: calc(100vw - 288px);
     display: flex;
     flex-direction: column;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(135deg, var(--slate-100) 0%, var(--primary-50) 50%, var(--slate-100) 100%);
 
     .user-content {
       flex-grow: 1;
       overflow-y: auto;
       padding: 0;
-      background: var(--Bluish-Gray-01);
     }
   }
 
@@ -35,4 +35,3 @@
     }
   }
 }
-

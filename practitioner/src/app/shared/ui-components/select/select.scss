@@ -3,7 +3,7 @@
   user-select: none;
   position: relative;
   display: inline-block;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: "Plus Jakarta Sans", "Source Sans Pro", sans-serif;
 }
 
 .native-select {
@@ -29,8 +29,8 @@
   line-height: 20px;
   font-style: normal;
   letter-spacing: 0.32px;
-  color: var(--Bluish-Gray-10);
-  font-family: "Source Sans Pro", sans-serif;
+  color: var(--slate-800);
+  font-family: "Plus Jakarta Sans", "Source Sans Pro", sans-serif;
 }
 
 .select-container {
@@ -42,24 +42,24 @@
   min-width: 160px;
   align-items: center;
   position: relative;
-  border-radius: 4px;
-  background: var(--White-and-Black-01);
-  border: 2px solid var(--Bluish-Gray-03);
+  border-radius: 12px;
+  background: var(--White);
+  border: 2px solid var(--slate-200);
 
 
   &.has-value {
-    border: 2px solid var(--Blue-03);
+    border: 2px solid var(--primary-400);
   }
 
   &.invalid {
-    color: var(--Red-04);
-    border: 2px solid var(--Red-04);
+    color: var(--rose-500);
+    border: 2px solid var(--rose-500);
   }
 
   &.disabled {
     opacity: 0.6;
     cursor: not-allowed;
-    background: var(--Gray-04);
+    background: var(--slate-200);
   }
 
   .select-arrow {
@@ -85,7 +85,7 @@
       font: inherit;
       min-width: 80px;
       background: transparent;
-      color: var(--Bluish-Gray-10);
+      color: var(--slate-800);
     }
   }
 
@@ -98,11 +98,11 @@
     .tag {
       display: inline-flex;
       align-items: center;
-      background: var(--Bluish-Gray-02);
+      background: var(--slate-100);
       padding: 2px 6px;
       border-radius: 12px;
       font-size: 13px;
-      color: var(--Bluish-Gray-10);
+      color: var(--slate-800);
 
       button {
         background: none;
@@ -110,10 +110,10 @@
         margin-left: 4px;
         cursor: pointer;
         font-size: 12px;
-        color: var(--Bluish-Gray-06);
+        color: var(--slate-400);
 
         &:hover {
-          color: var(--Bluish-Gray-09);
+          color: var(--slate-700);
         }
       }
     }
@@ -130,9 +130,10 @@
     overflow-y: auto;
     max-height: 200px;
     position: absolute;
-    background: var(--White-and-Black-01);
-    border: 2px solid var(--Bluish-Gray-02);
+    background: var(--White);
+    border: 2px solid var(--slate-100);
     border-top: none;
+    border-radius: 0 0 12px 12px;
     box-shadow: 0px 2px 20px 0 rgba(43, 43, 43, 0.10);
 
 
@@ -143,38 +144,38 @@
 
     &::-webkit-scrollbar-thumb {
       border-radius: 16px;
-      background-color: var(--Bluish-Gray-06);
+      background-color: var(--slate-400);
     }
 
     &::-webkit-scrollbar-track {
       border-radius: 16px;
-      background-color: var(--Bluish-Gray-04);
+      background-color: var(--slate-200);
     }
 
     .option {
       padding: 8px;
-      border-radius: 4px;
+      border-radius: 8px;
       transition: background 0.2s;
 
       .select-value {
-        color: var(--Bluish-Gray-07);
+        color: var(--slate-600);
       }
 
       &.hover:not(.disabled) {
-        color: var(--Bluish-Gray-10);
-        background: var(--Bluish-Gray-02);
+        color: var(--slate-800);
+        background: var(--slate-100);
 
         .select-value {
-          color: var(--Bluish-Gray-10);
+          color: var(--slate-800);
         }
       }
 
       &.selected:not(.disabled) {
-        background: var(--Bluish-Gray-02);
+        background: var(--primary-50);
         font-weight: bold;
 
         .select-value {
-          color: var(--Bluish-Gray-10);
+          color: var(--primary-700);
         }
       }
 
@@ -183,23 +184,17 @@
 
         .select-value {
 
-        color: var(--Primary-04);
+        color: var(--primary-500);
         }
       }
 
       &.disabled {
         opacity: 0.6;
         cursor: not-allowed;
-        background: var(--Gray-04);
+        background: var(--slate-200);
       }
     }
   }
 
 
 }
-
-
-
-
-
-

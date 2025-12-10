@@ -6,7 +6,7 @@
           <app-typography [variant]="TypographyTypeEnum['h2-semibold']">
             My Consultations
           </app-typography>
-          <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-07)">
+          <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
             Manage and track your patient consultations
           </app-typography>
         </div>
@@ -30,15 +30,15 @@
       @if (loading()) {
         <div class="loading-state">
           <app-loader></app-loader>
-          <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-07)">
+          <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
             Loading consultations...
           </app-typography>
         </div>
       } @else if (error()) {
         <div class="error-state">
           <app-svg src="alert-circle"
-                   [svgStyle]="{'width.px': 48, 'height.px': 48, 'color': 'var(--Error-05)'}"></app-svg>
-          <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--Error-05)">
+                   [svgStyle]="{'width.px': 48, 'height.px': 48, 'color': 'var(--rose-500)'}"></app-svg>
+          <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--rose-500)">
             {{ error() }}
           </app-typography>
           <app-button
@@ -82,7 +82,7 @@
               <div class="card-body">
                 @if (consultation.description) {
                   <div class="description">
-                    <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--Bluish-Gray-07)">
+                    <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
                       {{ consultation.description }}
                     </app-typography>
                   </div>
@@ -91,9 +91,9 @@
                 <div class="consultation-info">
                   <div class="info-row">
                     <div class="info-item">
-                      <app-svg src="user" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--Bluish-Gray-06)'}"></app-svg>
+                      <app-svg src="user" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--slate-400)'}"></app-svg>
                       <div class="info-content">
-                        <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--Bluish-Gray-07)">
+                        <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--slate-500)">
                           Patient
                         </app-typography>
                         <app-typography [variant]="TypographyTypeEnum['body-s-medium']">
@@ -104,9 +104,9 @@
 
                     @if (consultation.group) {
                       <div class="info-item">
-                        <app-svg src="users" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--Bluish-Gray-06)'}"></app-svg>
+                        <app-svg src="users" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--slate-400)'}"></app-svg>
                         <div class="info-content">
-                          <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--Bluish-Gray-07)">
+                          <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--slate-500)">
                             Team
                           </app-typography>
                           <app-typography [variant]="TypographyTypeEnum['body-s-medium']">
@@ -119,9 +119,9 @@
 
                   <div class="info-row">
                     <div class="info-item">
-                      <app-svg src="user-check" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--Bluish-Gray-06)'}"></app-svg>
+                      <app-svg src="user-check" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--slate-400)'}"></app-svg>
                       <div class="info-content">
-                        <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--Bluish-Gray-07)">
+                        <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--slate-500)">
                           Assigned To
                         </app-typography>
                         <app-typography [variant]="TypographyTypeEnum['body-s-medium']">
@@ -131,9 +131,9 @@
                     </div>
 
                     <div class="info-item">
-                      <app-svg src="calendar" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--Bluish-Gray-06)'}"></app-svg>
+                      <app-svg src="calendar" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--slate-400)'}"></app-svg>
                       <div class="info-content">
-                        <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--Bluish-Gray-07)">
+                        <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--slate-500)">
                           Created
                         </app-typography>
                         <app-typography [variant]="TypographyTypeEnum['body-s-medium']">
@@ -148,10 +148,10 @@
           } @empty {
             <div class="empty-state">
               <app-svg src="calendar" [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
-              <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--Bluish-Gray-06)">
+              <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--slate-400)">
                 No active consultations
               </app-typography>
-              <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-07)">
+              <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
                 Your active consultations will appear here
               </app-typography>
             </div>
@@ -184,7 +184,7 @@
               <div class="card-body">
                 @if (consultation.description) {
                   <div class="description">
-                    <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--Bluish-Gray-07)">
+                    <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
                       {{ consultation.description }}
                     </app-typography>
                   </div>
@@ -193,9 +193,9 @@
                 <div class="consultation-info">
                   <div class="info-row">
                     <div class="info-item">
-                      <app-svg src="user" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--Bluish-Gray-06)'}"></app-svg>
+                      <app-svg src="user" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--slate-400)'}"></app-svg>
                       <div class="info-content">
-                        <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--Bluish-Gray-07)">
+                        <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--slate-500)">
                           Patient
                         </app-typography>
                         <app-typography [variant]="TypographyTypeEnum['body-s-medium']">
@@ -206,9 +206,9 @@
 
                     @if (consultation.group) {
                       <div class="info-item">
-                        <app-svg src="users" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--Bluish-Gray-06)'}"></app-svg>
+                        <app-svg src="users" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--slate-400)'}"></app-svg>
                         <div class="info-content">
-                          <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--Bluish-Gray-07)">
+                          <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--slate-500)">
                             Team
                           </app-typography>
                           <app-typography [variant]="TypographyTypeEnum['body-s-medium']">
@@ -221,9 +221,9 @@
 
                   <div class="info-row">
                     <div class="info-item">
-                      <app-svg src="user-check" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--Bluish-Gray-06)'}"></app-svg>
+                      <app-svg src="user-check" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--slate-400)'}"></app-svg>
                       <div class="info-content">
-                        <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--Bluish-Gray-07)">
+                        <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--slate-500)">
                           Assigned To
                         </app-typography>
                         <app-typography [variant]="TypographyTypeEnum['body-s-medium']">
@@ -234,9 +234,9 @@
 
                     @if (consultation.closed_at) {
                       <div class="info-item">
-                        <app-svg src="calendar" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--Bluish-Gray-06)'}"></app-svg>
+                        <app-svg src="calendar" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--slate-400)'}"></app-svg>
                         <div class="info-content">
-                          <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--Bluish-Gray-07)">
+                          <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--slate-500)">
                             Closed
                           </app-typography>
                           <app-typography [variant]="TypographyTypeEnum['body-s-medium']">
@@ -252,10 +252,10 @@
           } @empty {
             <div class="empty-state">
               <app-svg src="history" [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
-              <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--Bluish-Gray-06)">
+              <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--slate-400)">
                 No past consultations
               </app-typography>
-              <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-07)">
+              <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
                 Your completed consultations will appear here
               </app-typography>
             </div>

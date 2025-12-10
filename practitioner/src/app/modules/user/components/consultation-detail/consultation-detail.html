@@ -45,7 +45,7 @@
         <app-loader></app-loader>
         <app-typography
           [variant]="TypographyTypeEnum['body-regular']"
-          color="var(--Bluish-Gray-07)">
+          color="var(--slate-500)">
           Loading consultation...
         </app-typography>
       </div>
@@ -71,7 +71,7 @@
 
           <app-typography
             [variant]="TypographyTypeEnum['body-regular']"
-            color="var(--Bluish-Gray-07)">
+            color="var(--slate-500)">
             Created on {{ formatDateTime(consultation()!.created_at) }}
           </app-typography>
         </div>
@@ -89,7 +89,7 @@
             <div class="info-item">
               <app-typography
                 [variant]="TypographyTypeEnum['body-s-medium']"
-                color="var(--Bluish-Gray-07)">
+                color="var(--slate-500)">
                 Created by
               </app-typography>
               <app-typography [variant]="TypographyTypeEnum['body-regular']">
@@ -98,7 +98,7 @@
               </app-typography>
               <app-typography
                 [variant]="TypographyTypeEnum['body-s-regular']"
-                color="var(--Bluish-Gray-07)">
+                color="var(--slate-500)">
                 {{ consultation()!.created_by.email }}
               </app-typography>
             </div>
@@ -108,7 +108,7 @@
             <div class="info-item">
               <app-typography
                 [variant]="TypographyTypeEnum['body-s-medium']"
-                color="var(--Bluish-Gray-07)">
+                color="var(--slate-500)">
                 Owned by
               </app-typography>
               <app-typography [variant]="TypographyTypeEnum['body-regular']">
@@ -117,7 +117,7 @@
               </app-typography>
               <app-typography
                 [variant]="TypographyTypeEnum['body-s-regular']"
-                color="var(--Bluish-Gray-07)">
+                color="var(--slate-500)">
                 {{ consultation()!.owned_by.email }}
               </app-typography>
             </div>
@@ -126,7 +126,7 @@
           <div class="info-item">
             <app-typography
               [variant]="TypographyTypeEnum['body-s-medium']"
-              color="var(--Bluish-Gray-07)">
+              color="var(--slate-500)">
               Patient
             </app-typography>
             <app-typography [variant]="TypographyTypeEnum['body-regular']">
@@ -135,7 +135,7 @@
             @if (consultation()?.beneficiary?.email) {
               <app-typography
                 [variant]="TypographyTypeEnum['body-s-regular']"
-                color="var(--Bluish-Gray-07)">
+                color="var(--slate-500)">
                 {{ consultation()!.beneficiary!.email }}
               </app-typography>
             }
@@ -145,7 +145,7 @@
             <div class="info-item">
               <app-typography
                 [variant]="TypographyTypeEnum['body-s-medium']"
-                color="var(--Bluish-Gray-07)">
+                color="var(--slate-500)">
                 Queue
               </app-typography>
               <app-typography [variant]="TypographyTypeEnum['body-regular']">
@@ -172,7 +172,7 @@
                 </app-typography>
                 <app-typography
                   [variant]="TypographyTypeEnum['body-regular']"
-                  color="var(--Bluish-Gray-07)">
+                  color="var(--slate-500)">
                   Start a video call to consult with participants in real-time
                 </app-typography>
                 <app-button
@@ -201,7 +201,7 @@
               <app-loader></app-loader>
               <app-typography
                 [variant]="TypographyTypeEnum['body-regular']"
-                color="var(--Bluish-Gray-07)">
+                color="var(--slate-500)">
                 Loading appointments...
               </app-typography>
             </div>
@@ -224,12 +224,12 @@
                     }"></app-svg>
                   <app-typography
                     [variant]="TypographyTypeEnum['body-l-medium']"
-                    color="var(--Bluish-Gray-06)">
+                    color="var(--slate-400)">
                     No appointments found
                   </app-typography>
                   <app-typography
                     [variant]="TypographyTypeEnum['body-regular']"
-                    color="var(--Bluish-Gray-07)">
+                    color="var(--slate-500)">
                     Create an appointment above to get started
                   </app-typography>
                 </div>
@@ -273,7 +273,7 @@
                             }"></app-svg>
                           <app-typography
                             [variant]="TypographyTypeEnum['body-s-regular']"
-                            color="var(--Bluish-Gray-07)">
+                            color="var(--slate-500)">
                             Expected end:
                             {{ formatDateTime(appointment.end_expected_at) }}
                           </app-typography>
@@ -283,7 +283,7 @@
                       <div class="participants-preview">
                         <app-typography
                           [variant]="TypographyTypeEnum['body-s-medium']"
-                          color="var(--Bluish-Gray-07)">
+                          color="var(--slate-500)">
                           Participants: {{ appointment.participants.length }}
                         </app-typography>
                       </div>

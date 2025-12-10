@@ -1,5 +1,5 @@
 .tabs-container {
-  border-bottom: 1px solid var(--Bluish-Gray-02);
+  border-bottom: 1px solid var(--slate-200);
 
   .tabs {
     display: flex;
@@ -15,19 +15,19 @@
       position: relative;
 
       &:hover {
-        background: var(--Bluish-Gray-01);
+        background: var(--slate-50);
       }
 
       &.active {
-        border-bottom-color: var(--Primary-05);
+        border-bottom-color: var(--primary-500);
 
         app-typography {
-          color: var(--Primary-05);
+          color: var(--primary-600);
         }
       }
 
       app-typography {
-        color: var(--Bluish-Gray-07);
+        color: var(--slate-500);
         transition: color 0.2s ease;
       }
     }

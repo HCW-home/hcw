@@ -11,7 +11,7 @@
   <div class="overlay-content">
     @if (title()) {
       <div class="overlay-content-header">
-        <app-typography color="var(--Bluish-Gray-09)" [variant]="TypographyTypeEnum['h6-medium']">{{title()}}</app-typography>
+        <app-typography color="var(--slate-800)" [variant]="TypographyTypeEnum['h6-medium']">{{title()}}</app-typography>
         <app-button (buttonClick)="onClose($event)" leftIcon="close"  [size]="ButtonSizeEnum.small" [state]="ButtonStateEnum.secondary"></app-button>
       </div>
     }

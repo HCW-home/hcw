@@ -55,7 +55,7 @@
   .messages-sidebar {
     position: sticky;
     top: 24px;
-    background: white;
+    background: var(--White);
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     overflow: hidden;
@@ -73,8 +73,8 @@
       align-items: center;
       justify-content: space-between;
       padding: 20px 24px;
-      border-bottom: 1px solid var(--Bluish-Gray-02);
-      background: var(--Bluish-Gray-01);
+      border-bottom: 1px solid var(--slate-200);
+      background: var(--slate-50);
     }
 
     app-message-list {
@@ -86,7 +86,7 @@
   }
 
   .consultation-info-card {
-    background: white;
+    background: var(--White);
     border-radius: 12px;
     padding: 24px;
     margin-bottom: 24px;
@@ -128,7 +128,7 @@
   }
 
   .create-form-card {
-    background: white;
+    background: var(--White);
     border-radius: 12px;
     padding: 24px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -189,7 +189,7 @@
   }
 
   .appointment-card {
-    background: white;
+    background: var(--White);
     border-radius: 12px;
     padding: 20px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -201,8 +201,8 @@
     }
 
     &.selected {
-      border-color: var(--Primary-04);
-      background: var(--Primary-01);
+      border-color: var(--primary-500);
+      background: var(--primary-50);
     }
 
     .appointment-header {
@@ -237,11 +237,11 @@
   }
 
   .selected-appointment-info {
-    background: var(--Primary-01);
+    background: var(--primary-50);
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 24px;
-    border-left: 4px solid var(--Primary-04);
+    border-left: 4px solid var(--primary-500);
 
     .appointment-summary {
       display: flex;
@@ -263,7 +263,7 @@
   }
 
   .participant-card {
-    background: white;
+    background: var(--White);
     border-radius: 12px;
     padding: 20px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -301,7 +301,7 @@
   }
 
   .consultation-messages-section {
-    background: white;
+    background: var(--White);
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     margin-top: 24px;
@@ -310,7 +310,7 @@
   }
 
   .video-call-section {
-    background: white;
+    background: var(--White);
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     margin-bottom: 24px;
@@ -340,7 +340,6 @@
   }
 }
 
-// Responsive design
 @media (max-width: 768px) {
   .consultation-detail {
     padding: 16px;

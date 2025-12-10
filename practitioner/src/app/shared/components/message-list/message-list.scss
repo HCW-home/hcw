@@ -2,8 +2,8 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  border: 1px solid var(--Gray-20);
-  border-radius: 8px;
+  border: 1px solid var(--slate-200);
+  border-radius: 12px;
   background: var(--White);
 }
 
@@ -12,7 +12,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  border-bottom: 1px solid var(--Gray-20);
+  border-bottom: 1px solid var(--slate-200);
 }
 
 .connection-status {
@@ -22,13 +22,13 @@
   font-weight: 500;
 
   &.connected {
-    background: var(--Success-10);
-    color: var(--Success-05);
+    background: var(--emerald-100);
+    color: var(--emerald-600);
   }
 
   &.disconnected {
-    background: var(--Error-10);
-    color: var(--Error-05);
+    background: var(--rose-100);
+    color: var(--rose-600);
   }
 }
 
@@ -46,7 +46,7 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: var(--Gray-40);
+  color: var(--slate-400);
 }
 
 .message-item {
@@ -55,11 +55,11 @@
   gap: 4px;
   max-width: 70%;
   padding: 12px;
-  border-radius: 8px;
+  border-radius: 12px;
 
   &.current-user {
     align-self: flex-end;
-    background: var(--Primary-10);
+    background: var(--primary-100);
 
     .message-header {
       justify-content: flex-end;
@@ -68,7 +68,7 @@
 
   &.other-user {
     align-self: flex-start;
-    background: var(--Gray-10);
+    background: var(--slate-100);
   }
 }
 
@@ -79,7 +79,7 @@
 }
 
 .message-time {
-  color: var(--Gray-40);
+  color: var(--slate-400);
 }
 
 .message-content {
@@ -90,7 +90,7 @@
   display: flex;
   gap: 8px;
   padding: 16px;
-  border-top: 1px solid var(--Gray-20);
+  border-top: 1px solid var(--slate-200);
 
   app-input {
     flex: 1;

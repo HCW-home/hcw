@@ -2,7 +2,7 @@
   @if (totalPages()) {
     <div class="item-per-page">
       <app-typography
-        color="var(--Bluish-Gray-07)"
+        color="var(--slate-500)"
         [variant]="TypographyTypeEnum['body-s-medium']"
         >Rows per page</app-typography
       >
@@ -52,13 +52,13 @@
     }
     <div class="showing">
       <app-typography
-        color="var(--Bluish-Gray-07)"
+        color="var(--slate-500)"
         [variant]="TypographyTypeEnum['body-s-medium']"
         >Showing</app-typography
       >
       <app-typography
         [variant]="TypographyTypeEnum['body-medium']"
-        color="var(--Bluish-Gray-09)">
+        color="var(--slate-800)">
         {{ currentItemsLength() }}/{{ totalCount() }}</app-typography
       >
     </div>

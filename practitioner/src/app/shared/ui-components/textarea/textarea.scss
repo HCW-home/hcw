@@ -14,8 +14,8 @@
       line-height: 20px;
       font-style: normal;
       letter-spacing: 0.32px;
-      color: var(--Bluish-Gray-10);
-      font-family: "Source Sans Pro", sans-serif;
+      color: var(--slate-800);
+      font-family: "Plus Jakarta Sans", "Source Sans Pro", sans-serif;
     }
 
     .input-container {
@@ -24,7 +24,7 @@
       position: relative;
       align-items: center;
       box-sizing: border-box;
-      background: var(--White-and-Black-01);
+      background: var(--White);
 
       &.small {
         height: 36px;
@@ -34,7 +34,7 @@
 
       &.disabled {
         opacity: 0.6;
-        background: var(--Gray-04);
+        background: var(--slate-200);
       }
 
     }
@@ -46,7 +46,7 @@
       svg {
         width: 16px;
         height: 16px;
-        fill: var(--Bluish-Gray-07);
+        fill: var(--slate-500);
       }
 
     }
@@ -69,14 +69,14 @@
       font-weight: 400;
       line-height: 16px;
       font-style: normal;
-      border-radius: 4px;
+      border-radius: 12px;
       align-items: center;
       letter-spacing: 0.32px;
       width: calc(100% - 5px);
-      color: var(--Bluish-Gray-10);
-      border: 2px solid var(--Bluish-Gray-03);
-      background: var(--White-and-Black-01);
-      font-family: "Source Sans Pro", sans-serif;
+      color: var(--slate-800);
+      border: 2px solid var(--slate-200);
+      background: var(--White);
+      font-family: "Plus Jakarta Sans", "Source Sans Pro", sans-serif;
 
 
       &:-webkit-autofill,
@@ -87,11 +87,11 @@
       }
 
       &::placeholder {
-        color: var(--Bluish-Gray-07);
+        color: var(--slate-400);
       }
 
       &:focus {
-        border: 2px solid var(--Blue-03);
+        border: 2px solid var(--primary-400);
       }
 
       :disabled {
@@ -107,7 +107,7 @@
       }
 
       &.has-value {
-        border: 2px solid var(--Blue-03);
+        border: 2px solid var(--primary-400);
       }
 
       &.small {
@@ -116,12 +116,11 @@
       }
 
       &.invalid {
-        color: var(--Red-04);
-        border: 2px solid var(--Red-04);
+        color: var(--rose-500);
+        border: 2px solid var(--rose-500);
       }
     }
 
   }
 
 }
-

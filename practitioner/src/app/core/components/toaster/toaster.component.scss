@@ -6,29 +6,29 @@
   max-width: 300px;
   margin-top: 1rem;
   height: fit-content;
-  border-radius: .25rem;
+  border-radius: 12px;
   padding: .75rem 1.25rem;
   animation: move 1s both;
   border: 1px solid transparent;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: "Plus Jakarta Sans", "Source Sans Pro", sans-serif;
 }
 
 .toast-success {
-  color: var(--White-and-Black-01);
-  background-color: var(--Primary-04);
-  border-color: var(--Primary-05);
+  color: var(--White);
+  background-color: var(--emerald-500);
+  border-color: var(--emerald-600);
 }
 
 .toast-error {
-  color: var(--White-and-Black-01);
-  background: var(--Red-05);
-  border-color: var(--Red-05);
+  color: var(--White);
+  background: var(--rose-500);
+  border-color: var(--rose-600);
 }
 
 .toast-warning {
-  color: var(--White-and-Black-02);
-  background-color: var(--Yellow-05);
-  border-color: var(--Yellow-05);
+  color: var(--slate-800);
+  background-color: var(--amber-400);
+  border-color: var(--amber-500);
 }
 
 .close {

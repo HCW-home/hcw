@@ -1,5 +1,5 @@
 .slot-modal-content {
-  background: var(--White-and-Black-01);
+  background: var(--White);
   max-width: 600px;
   min-width: 460px;
   width: 100%;
@@ -10,7 +10,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid var(--Bluish-Gray-02);
+    border-bottom: 1px solid var(--slate-200);
   }
 
   .modal-form {
