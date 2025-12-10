@@ -26,6 +26,7 @@
           class="search-input"
           [placeholder]="placeholder()"
           [value]="searchQuery()"
+          autocomplete="off"
           (input)="onSearchInput($event)"
           (focus)="onSearchFocus()">
       </div>

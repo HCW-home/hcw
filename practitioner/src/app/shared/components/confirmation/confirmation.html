@@ -1,0 +1,32 @@
+@if (isOpen) {
+  <div class="confirmation-backdrop" (click)="onBackdropClick($event)">
+    <div class="confirmation-modal">
+      <div class="confirmation-header">
+        <app-svg src="alert-circle" [svgStyle]="{'width.px': 24, 'height.px': 24, 'color': 'var(--Warning-05)'}"></app-svg>
+        <app-typography [variant]="TypographyTypeEnum['h5-semibold']">
+          {{ title }}
+        </app-typography>
+      </div>
+      <div class="confirmation-body">
+        <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--Bluish-Gray-07)">
+          {{ message }}
+        </app-typography>
+      </div>
+      <div class="confirmation-actions">
+        <app-button
+          [text]="cancelText"
+          [size]="ButtonSizeEnum.medium"
+          [style]="ButtonStyleEnum.stroke"
+          (buttonClick)="onCancel()">
+        </app-button>
+        <app-button
+          [text]="confirmText"
+          [size]="ButtonSizeEnum.medium"
+          [style]="ButtonStyleEnum.primary"
+          [state]="isDanger ? ButtonStateEnum.error : ButtonStateEnum.default"
+          (buttonClick)="onConfirm()">
+        </app-button>
+      </div>
+    </div>
+  </div>
+}

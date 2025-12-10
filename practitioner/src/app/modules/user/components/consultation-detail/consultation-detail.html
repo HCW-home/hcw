@@ -399,15 +399,10 @@
           <app-typography [variant]="TypographyTypeEnum['h3-semibold']">
             Messages
           </app-typography>
-          @if (isWebSocketConnected()) {
-            <app-badge [type]="BadgeTypeEnum.green">Connected</app-badge>
-          } @else {
-            <app-badge [type]="BadgeTypeEnum.red">Disconnected</app-badge>
-          }
         </div>
         <app-message-list
           [messages]="messages()"
-          [isConnected]="isWebSocketConnected()"
+          [isConnected]="true"
           (sendMessage)="onSendMessage($event)">
         </app-message-list>
       </div>

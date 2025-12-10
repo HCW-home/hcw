@@ -47,6 +47,7 @@ import {
   heroCalendarDays,
   heroInformationCircle,
   heroBars3,
+  heroPaperAirplane,
 } from '@ng-icons/heroicons/outline';
 import {
   lucideVideoOff,
@@ -101,6 +102,7 @@ export const appConfig: ApplicationConfig = {
       heroCalendarDays,
       heroInformationCircle,
       heroBars3,
+      heroPaperAirplane,
       lucideVideoOff,
       lucideMicOff,
       lucidePhoneOff,

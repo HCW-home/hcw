@@ -149,6 +149,9 @@ const ICON_MAP: Record<string, string> = {
   'video-off': 'lucideVideoOff',
   'video-off.svg': 'lucideVideoOff',
   'svg/video-off.svg': 'lucideVideoOff',
+  'send': 'heroPaperAirplane',
+  'send.svg': 'heroPaperAirplane',
+  'svg/send.svg': 'heroPaperAirplane',
 };
 
 @Component({

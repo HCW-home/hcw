@@ -99,14 +99,30 @@
                     <div class="appointment-header">
                       <app-typography [variant]="TypographyTypeEnum['body-l-semibold']">
                         Appointment {{ i + 1 }}
+                        @if (hasAppointmentId(i)) {
+                          <span class="saved-badge">(Saved)</span>
+                        }
                       </app-typography>
-                      <app-button
-                        text="Remove"
-                        leftIcon="delete"
-                        [size]="ButtonSizeEnum.small"
-                        [style]="ButtonStyleEnum.text"
-                        (buttonClick)="removeAppointment(i)">
-                      </app-button>
+                      <div class="appointment-header-actions">
+                        @if (mode === 'edit') {
+                          <app-button
+                            [text]="hasAppointmentId(i) ? 'Update' : 'Save'"
+                            leftIcon="check"
+                            [size]="ButtonSizeEnum.small"
+                            [style]="ButtonStyleEnum.stroke"
+                            [disabled]="isAppointmentSaving(i)"
+                            [loading]="isAppointmentSaving(i)"
+                            (buttonClick)="saveAppointment(i)">
+                          </app-button>
+                        }
+                        <app-button
+                          text="Remove"
+                          leftIcon="delete"
+                          [size]="ButtonSizeEnum.small"
+                          [style]="ButtonStyleEnum.text"
+                          (buttonClick)="removeAppointment(i)">
+                        </app-button>
+                      </div>
                     </div>
 
                     <div class="appointment-form">
@@ -156,6 +172,14 @@
                           </app-button>
                         </div>
 
+                        @if (getParticipantsFormArray(i).length === 0) {
+                          <div class="empty-participants">
+                            <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--Bluish-Gray-07)">
+                              No participants added yet.
+                            </app-typography>
+                          </div>
+                        }
+
                         @for (participant of getParticipantsFormArray(i).controls; track $index; let j = $index) {
                           <div class="participant-form" [formGroupName]="j">
                             <div class="participant-fields">
@@ -191,6 +215,17 @@
                             </div>
 
                             <div class="participant-actions">
+                              @if (mode === 'edit' && hasAppointmentId(i)) {
+                                <app-button
+                                  [text]="hasParticipantId(i, j) ? 'Update' : 'Save'"
+                                  leftIcon="check"
+                                  [size]="ButtonSizeEnum.small"
+                                  [style]="ButtonStyleEnum.stroke"
+                                  [disabled]="isParticipantSaving(i, j)"
+                                  [loading]="isParticipantSaving(i, j)"
+                                  (buttonClick)="saveParticipant(i, j)">
+                                </app-button>
+                              }
                               <app-button
                                 text="Remove"
                                 leftIcon="delete"

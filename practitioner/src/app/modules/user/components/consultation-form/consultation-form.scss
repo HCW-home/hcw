@@ -102,6 +102,19 @@
           margin-bottom: 20px;
           padding-bottom: 12px;
           border-bottom: 1px solid var(--Bluish-Gray-02);
+
+          .saved-badge {
+            font-size: 12px;
+            font-weight: 400;
+            color: var(--Success-05);
+            margin-left: 8px;
+          }
+
+          .appointment-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          }
         }
 
         .appointment-form {
@@ -141,6 +154,11 @@
               margin-bottom: 16px;
             }
 
+            .empty-participants {
+              padding: 12px;
+              text-align: center;
+            }
+
             .participant-form {
               display: flex;
               align-items: flex-end;
@@ -170,6 +188,7 @@
               .participant-actions {
                 display: flex;
                 align-items: center;
+                gap: 8px;
                 margin-left: 12px;
               }
             }

@@ -10,8 +10,10 @@ import { CommonModule } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
 
 import { ConsultationService } from '../../../../core/services/consultation.service';
+import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { ConsultationWebSocketService } from '../../../../core/services/consultation-websocket.service';
+import { UserService } from '../../../../core/services/user.service';
 import {
   Consultation,
   Appointment,
@@ -20,6 +22,7 @@ import {
   AppointmentType,
   CreateAppointmentRequest,
 } from '../../../../core/models/consultation';
+import { IUser } from '../../models/user';
 
 import { Page } from '../../../../core/components/page/page';
 import { BackButton } from '../../../../shared/components/back-button/back-button';
@@ -78,6 +81,7 @@ export class ConsultationDetail implements OnInit, OnDestroy {
 
   messages = signal<Message[]>([]);
   isWebSocketConnected = signal(false);
+  currentUser = signal<IUser | null>(null);
 
   inCall = signal(false);
   activeAppointmentId = signal<number | null>(null);
@@ -101,8 +105,10 @@ export class ConsultationDetail implements OnInit, OnDestroy {
   private router = inject(Router);
   private fb = inject(FormBuilder);
   private consultationService = inject(ConsultationService);
+  private confirmationService = inject(ConfirmationService);
   private toasterService = inject(ToasterService);
   private wsService = inject(ConsultationWebSocketService);
+  private userService = inject(UserService);
 
   constructor() {
     this.appointmentForm = this.fb.group({
@@ -119,10 +125,15 @@ export class ConsultationDetail implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.userService.currentUser$.pipe(takeUntil(this.destroy$)).subscribe(user => {
+      this.currentUser.set(user);
+    });
+
     this.route.params.pipe(takeUntil(this.destroy$)).subscribe(params => {
       this.consultationId = +params['id'];
       this.loadConsultation();
       this.loadAppointments();
+      this.loadMessages();
       this.connectWebSocket();
     });
 
@@ -172,7 +183,53 @@ export class ConsultationDetail implements OnInit, OnDestroy {
   }
 
   onSendMessage(message: string): void {
-    this.wsService.sendMessage(message);
+    const user = this.currentUser();
+    const tempId = Date.now();
+    const newMessage: Message = {
+      id: tempId,
+      username: user?.first_name || user?.email || 'You',
+      message: message,
+      timestamp: new Date().toISOString(),
+      isCurrentUser: true,
+    };
+    this.messages.update(msgs => [...msgs, newMessage]);
+
+    this.consultationService
+      .sendConsultationMessage(this.consultationId, { content: message })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (savedMessage) => {
+          this.messages.update(msgs =>
+            msgs.map(m => m.id === tempId ? { ...m, id: savedMessage.id } : m)
+          );
+        },
+        error: () => {
+          this.toasterService.show('error', 'Error sending message');
+          this.messages.update(msgs => msgs.filter(m => m.id !== tempId));
+        },
+      });
+  }
+
+  loadMessages(): void {
+    this.consultationService
+      .getConsultationMessages(this.consultationId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: response => {
+          const currentUserId = this.currentUser()?.pk;
+          const loadedMessages: Message[] = response.results.map(msg => ({
+            id: msg.id,
+            username: msg.created_by === currentUserId ? 'You' : `User ${msg.created_by}`,
+            message: msg.content || '',
+            timestamp: msg.created_at,
+            isCurrentUser: msg.created_by === currentUserId,
+          }));
+          this.messages.set(loadedMessages);
+        },
+        error: () => {
+          this.toasterService.show('error', 'Error loading messages');
+        },
+      });
   }
 
   loadConsultation(): void {
@@ -268,8 +325,16 @@ export class ConsultationDetail implements OnInit, OnDestroy {
     }
   }
 
-  cancelAppointment(appointment: Appointment): void {
-    if (confirm('Are you sure you want to cancel this appointment?')) {
+  async cancelAppointment(appointment: Appointment): Promise<void> {
+    const confirmed = await this.confirmationService.confirm({
+      title: 'Cancel Appointment',
+      message: 'Are you sure you want to cancel this appointment?',
+      confirmText: 'Cancel Appointment',
+      cancelText: 'Keep',
+      confirmStyle: 'danger',
+    });
+
+    if (confirmed) {
       this.consultationService
         .cancelAppointment(appointment.id)
         .pipe(takeUntil(this.destroy$))
@@ -285,19 +350,25 @@ export class ConsultationDetail implements OnInit, OnDestroy {
               'Appointment cancelled successfully'
             );
           },
-          error: error => {
-            console.error('Error cancelling appointment:', error);
+          error: () => {
             this.toasterService.show('error', 'Error cancelling appointment');
           },
         });
     }
   }
 
-  removeParticipant(participant: Participant): void {
-    if (
-      this.selectedAppointment() &&
-      confirm('Are you sure you want to remove this participant?')
-    ) {
+  async removeParticipant(participant: Participant): Promise<void> {
+    if (!this.selectedAppointment()) return;
+
+    const confirmed = await this.confirmationService.confirm({
+      title: 'Remove Participant',
+      message: 'Are you sure you want to remove this participant?',
+      confirmText: 'Remove',
+      cancelText: 'Cancel',
+      confirmStyle: 'danger',
+    });
+
+    if (confirmed) {
       this.consultationService
         .removeAppointmentParticipant(
           this.selectedAppointment()!.id,
@@ -315,19 +386,25 @@ export class ConsultationDetail implements OnInit, OnDestroy {
               'Participant removed successfully'
             );
           },
-          error: error => {
-            console.error('Error removing participant:', error);
+          error: () => {
             this.toasterService.show('error', 'Error removing participant');
           },
         });
     }
   }
 
-  closeConsultation(): void {
-    if (
-      this.consultation() &&
-      confirm('Are you sure you want to close this consultation?')
-    ) {
+  async closeConsultation(): Promise<void> {
+    if (!this.consultation()) return;
+
+    const confirmed = await this.confirmationService.confirm({
+      title: 'Close Consultation',
+      message: 'Are you sure you want to close this consultation?',
+      confirmText: 'Close',
+      cancelText: 'Cancel',
+      confirmStyle: 'danger',
+    });
+
+    if (confirmed) {
       this.consultationService
         .closeConsultation(this.consultationId)
         .pipe(takeUntil(this.destroy$))
@@ -339,19 +416,25 @@ export class ConsultationDetail implements OnInit, OnDestroy {
               'Consultation closed successfully'
             );
           },
-          error: error => {
-            console.error('Error closing consultation:', error);
+          error: () => {
             this.toasterService.show('error', 'Error closing consultation');
           },
         });
     }
   }
 
-  reopenConsultation(): void {
-    if (
-      this.consultation() &&
-      confirm('Are you sure you want to reopen this consultation?')
-    ) {
+  async reopenConsultation(): Promise<void> {
+    if (!this.consultation()) return;
+
+    const confirmed = await this.confirmationService.confirm({
+      title: 'Reopen Consultation',
+      message: 'Are you sure you want to reopen this consultation?',
+      confirmText: 'Reopen',
+      cancelText: 'Cancel',
+      confirmStyle: 'primary',
+    });
+
+    if (confirmed) {
       this.consultationService
         .reopenConsultation(this.consultationId)
         .pipe(takeUntil(this.destroy$))
@@ -363,8 +446,7 @@ export class ConsultationDetail implements OnInit, OnDestroy {
               'Consultation reopened successfully'
             );
           },
-          error: error => {
-            console.error('Error reopening consultation:', error);
+          error: () => {
             this.toasterService.show('error', 'Error reopening consultation');
           },
         });

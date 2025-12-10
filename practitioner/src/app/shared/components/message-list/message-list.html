@@ -36,12 +36,12 @@
       (keyup.enter)="onSendMessage()"
     ></app-input>
     <app-button
+      text="Send"
+      leftIcon="send"
       [size]="ButtonSizeEnum.medium"
       [style]="ButtonStyleEnum.primary"
       [disabled]="!newMessage.trim() || !isConnected"
-      (click)="onSendMessage()"
-    >
-      Send
+      (buttonClick)="onSendMessage()">
     </app-button>
   </div>
 </div>
