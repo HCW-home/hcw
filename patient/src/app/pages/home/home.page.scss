@@ -105,6 +105,48 @@ ion-header {
     }
   }
 
+  .new-request-card {
+    margin: 0;
+    cursor: pointer;
+    transition: transform 0.2s;
+
+    &:active {
+      transform: scale(0.98);
+    }
+
+    ion-card-content {
+      padding: var(--app-spacing-lg);
+    }
+
+    .new-request-content {
+      display: flex;
+      align-items: center;
+      gap: var(--app-spacing-md);
+    }
+
+    .new-request-icon {
+      font-size: 40px;
+      flex-shrink: 0;
+    }
+
+    .new-request-text {
+      flex: 1;
+
+      .new-request-title {
+        display: block;
+        font-size: var(--app-font-size-base);
+        font-weight: var(--app-font-weight-semibold);
+        color: var(--app-text-primary);
+        margin-bottom: var(--app-spacing-xs);
+      }
+
+      .new-request-description {
+        display: block;
+        font-size: var(--app-font-size-sm);
+      }
+    }
+  }
+
   .appointment-card {
     margin: 0;
 

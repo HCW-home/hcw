@@ -56,7 +56,7 @@ import {
   callOutline, barbellOutline, resizeOutline, waterOutline, moonOutline, bulbOutline, chatbubblesOutline, flaskOutline,
   pricetagOutline, trash, shareOutline, arrowUp, downloadOutline, cloudUploadOutline, schoolOutline, briefcaseOutline,
   mic, micOff, videocam, videocamOff, call, volumeHigh, volumeMute, desktopOutline,
-  cameraReverseOutline, ellipse, alertCircle
+  cameraReverseOutline, ellipse, alertCircle, arrowBackOutline, clipboardOutline
 } from 'ionicons/icons';
 
 import { routes } from './app/app.routes';
@@ -150,6 +150,8 @@ addIcons({
   'camera-reverse-outline': cameraReverseOutline,
   'ellipse': ellipse,
   'alert-circle': alertCircle,
+  'arrow-back-outline': arrowBackOutline,
+  'clipboard-outline': clipboardOutline,
 });
 
 bootstrapApplication(AppComponent, {

@@ -3,6 +3,7 @@ import { Observable } from 'rxjs';
 import { ApiService, PaginatedResponse } from './api.service';
 import { Doctor, Speciality } from '../models/doctor.model';
 import { BookingSlot, TimeSlot } from '../models/booking.model';
+import { Slot } from '../models/consultation.model';
 
 export interface DoctorFilters {
   page?: number;
@@ -31,8 +32,8 @@ export class DoctorService {
     return this.api.get<Doctor[]>(`/specialities/${specialityId}/doctors/`);
   }
 
-  getAvailableSlots(reasonId: number): Observable<TimeSlot[]> {
-    return this.api.get<TimeSlot[]>(`/reasons/${reasonId}/slots/`);
+  getAvailableSlots(reasonId: number, params?: { from_date?: string; user_id?: number; organisation_id?: number }): Observable<Slot[]> {
+    return this.api.get<Slot[]>(`/reasons/${reasonId}/slots/`, params);
   }
 
   getDoctorBookingSlots(doctorId: number): Observable<BookingSlot[]> {

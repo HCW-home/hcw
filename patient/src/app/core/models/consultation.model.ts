@@ -109,3 +109,21 @@ export interface User {
   last_name: string;
   picture?: string;
 }
+
+export interface Slot {
+  date: string;
+  start_time: string;
+  end_time: string;
+  duration: number;
+  user_id: number;
+  user_email: string;
+  user_first_name: string;
+  user_last_name: string;
+}
+
+export interface CreateRequestPayload {
+  reason_id: number;
+  expected_at: string;
+  expected_with_id?: number;
+  comment?: string;
+}

@@ -241,8 +241,8 @@ export class AppointmentsPage implements OnInit {
     this.showToast('Rate & review coming soon');
   }
 
-  bookNewAppointment(): void {
-    this.navCtrl.navigateForward('/doctors');
+  goToNewRequest(): void {
+    this.navCtrl.navigateForward('/new-request');
   }
 
   formatDate(dateString: string): string {

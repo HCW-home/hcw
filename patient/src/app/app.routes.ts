@@ -31,8 +31,8 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/doctor-detail/doctor-detail.page').then(m => m.DoctorDetailPage)
   },
   {
-    path: 'book-appointment',
-    loadComponent: () => import('./pages/book-appointment/book-appointment.page').then(m => m.BookAppointmentPage)
+    path: 'new-request',
+    loadComponent: () => import('./pages/new-request/new-request.page').then(m => m.NewRequestPage)
   },
   {
     path: 'health-records',

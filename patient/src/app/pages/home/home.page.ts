@@ -19,18 +19,14 @@ import {
   IonCard,
   IonCardContent,
   IonText,
-  IonSpinner,
   NavController
 } from '@ionic/angular/standalone';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
-import { DoctorService } from '../../core/services/doctor.service';
 import { ConsultationService } from '../../core/services/consultation.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { User } from '../../core/models/user.model';
-import { Doctor } from '../../core/models/doctor.model';
 import { Appointment } from '../../core/models/consultation.model';
-import { DoctorCardComponent } from '../../shared/components/doctor-card/doctor-card.component';
 
 @Component({
   selector: 'app-home',
@@ -56,15 +52,11 @@ import { DoctorCardComponent } from '../../shared/components/doctor-card/doctor-
     IonCol,
     IonCard,
     IonCardContent,
-    IonText,
-    IonSpinner,
-    DoctorCardComponent
+    IonText
   ]
 })
 export class HomePage implements OnInit, OnDestroy {
   currentUser: User | null = null;
-  nearbyDoctors: Doctor[] = [];
-  isLoadingDoctors = false;
   unreadNotifications = 0;
 
   quickActions = [
@@ -75,10 +67,10 @@ export class HomePage implements OnInit, OnDestroy {
       route: '/doctors'
     },
     {
-      icon: 'calendar-outline',
-      title: 'Book Appointment',
+      icon: 'add-circle-outline',
+      title: 'New Request',
       color: 'secondary',
-      route: '/doctors'
+      route: '/new-request'
     },
     {
       icon: 'document-text-outline',
@@ -95,14 +87,12 @@ export class HomePage implements OnInit, OnDestroy {
   constructor(
     private navCtrl: NavController,
     private authService: AuthService,
-    private doctorService: DoctorService,
     private consultationService: ConsultationService,
     private notificationService: NotificationService,
   ) {}
 
   ngOnInit() {
     this.loadUserData();
-    this.loadNearbyDoctors();
     this.loadUpcomingAppointment();
     this.loadUnreadCount();
   }
@@ -120,20 +110,6 @@ export class HomePage implements OnInit, OnDestroy {
       this.currentUser = user;
     });
     this.subscriptions.push(sub);
-  }
-
-  loadNearbyDoctors(): void {
-    this.isLoadingDoctors = true;
-    this.doctorService.getDoctors({ limit: 4, is_online: true }).subscribe({
-      next: (response) => {
-        this.nearbyDoctors = response.results.slice(0, 4);
-        this.isLoadingDoctors = false;
-      },
-      error: () => {
-        this.nearbyDoctors = [];
-        this.isLoadingDoctors = false;
-      }
-    });
   }
 
   loadUpcomingAppointment(): void {
@@ -163,7 +139,6 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   refreshData(event?: { target: { complete: () => void } }): void {
-    this.loadNearbyDoctors();
     this.loadUpcomingAppointment();
     this.notificationService.getNotifications({ limit: 10 }).subscribe({
       complete: () => {
@@ -176,16 +151,8 @@ export class HomePage implements OnInit, OnDestroy {
     this.navCtrl.navigateForward(route);
   }
 
-  viewAllDoctors(): void {
-    this.navCtrl.navigateForward('/doctors');
-  }
-
-  viewDoctorDetails(doctor: Doctor): void {
-    this.navCtrl.navigateForward(`/doctor/${doctor.id}`);
-  }
-
-  bookAppointment(doctor: Doctor): void {
-    this.navCtrl.navigateForward(`/book-appointment?doctorId=${doctor.id}`);
+  goToNewRequest(): void {
+    this.navCtrl.navigateForward('/new-request');
   }
 
   searchDoctors(event: CustomEvent): void {

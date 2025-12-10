@@ -1,0 +1,401 @@
+import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import {
+  IonContent,
+  IonHeader,
+  IonTitle,
+  IonToolbar,
+  IonButtons,
+  IonButton,
+  IonIcon,
+  IonCard,
+  IonCardContent,
+  IonCardHeader,
+  IonCardTitle,
+  IonText,
+  IonList,
+  IonItem,
+  IonLabel,
+  IonSpinner,
+  IonTextarea,
+  IonProgressBar,
+  IonAvatar,
+  NavController,
+  ToastController
+} from '@ionic/angular/standalone';
+import { Subject, takeUntil } from 'rxjs';
+import { SpecialityService } from '../../core/services/speciality.service';
+import { DoctorService } from '../../core/services/doctor.service';
+import { ConsultationService, ConsultationRequestData } from '../../core/services/consultation.service';
+import { Speciality, Doctor } from '../../core/models/doctor.model';
+import { Reason, Slot } from '../../core/models/consultation.model';
+
+@Component({
+  selector: 'app-new-request',
+  templateUrl: './new-request.page.html',
+  styleUrls: ['./new-request.page.scss'],
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    IonContent,
+    IonHeader,
+    IonTitle,
+    IonToolbar,
+    IonButtons,
+    IonButton,
+    IonIcon,
+    IonCard,
+    IonCardContent,
+    IonCardHeader,
+    IonCardTitle,
+    IonText,
+    IonList,
+    IonItem,
+    IonLabel,
+    IonSpinner,
+    IonTextarea,
+    IonProgressBar,
+    IonAvatar
+  ]
+})
+export class NewRequestPage implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+
+  currentStep = signal(1);
+  totalSteps = 5;
+  isLoading = signal(false);
+  isSubmitting = signal(false);
+
+  specialities = signal<Speciality[]>([]);
+  selectedSpeciality = signal<Speciality | null>(null);
+
+  reasons = signal<Reason[]>([]);
+  selectedReason = signal<Reason | null>(null);
+
+  availableSlots = signal<Slot[]>([]);
+  selectedSlot = signal<Slot | null>(null);
+  currentWeekStart = signal<Date>(this.getStartOfWeek(new Date()));
+
+  doctors = signal<Doctor[]>([]);
+  selectedDoctor = signal<Doctor | null>(null);
+
+  comment = '';
+
+  stepTitle = computed(() => {
+    switch (this.currentStep()) {
+      case 1: return 'Select Specialty';
+      case 2: return 'Select Reason';
+      case 3: return 'Choose Time Slot';
+      case 4: return 'Select Doctor';
+      case 5: return 'Review & Submit';
+      default: return 'New Request';
+    }
+  });
+
+  progress = computed(() => this.currentStep() / this.totalSteps);
+
+  groupedSlots = computed(() => {
+    const slots = this.availableSlots();
+    const grouped: { [date: string]: Slot[] } = {};
+    slots.forEach(slot => {
+      if (!grouped[slot.date]) {
+        grouped[slot.date] = [];
+      }
+      grouped[slot.date].push(slot);
+    });
+    return grouped;
+  });
+
+  weekDates = computed(() => {
+    const start = this.currentWeekStart();
+    const dates: Date[] = [];
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(start);
+      date.setDate(start.getDate() + i);
+      dates.push(date);
+    }
+    return dates;
+  });
+
+  constructor(
+    private navCtrl: NavController,
+    private toastCtrl: ToastController,
+    private specialityService: SpecialityService,
+    private doctorService: DoctorService,
+    private consultationService: ConsultationService
+  ) {}
+
+  ngOnInit() {
+    this.loadSpecialities();
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  loadSpecialities(): void {
+    this.isLoading.set(true);
+    this.specialityService.getSpecialities()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (specialities) => {
+          this.specialities.set(specialities);
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.showToast('Failed to load specialties', 'danger');
+          this.isLoading.set(false);
+        }
+      });
+  }
+
+  selectSpeciality(speciality: Speciality): void {
+    this.selectedSpeciality.set(speciality);
+    this.loadReasons(speciality.id);
+    this.currentStep.set(2);
+  }
+
+  loadReasons(specialityId: number): void {
+    this.isLoading.set(true);
+    this.specialityService.getReasonsBySpeciality(specialityId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (reasons) => {
+          this.reasons.set(reasons);
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.showToast('Failed to load reasons', 'danger');
+          this.isLoading.set(false);
+        }
+      });
+  }
+
+  selectReason(reason: Reason): void {
+    this.selectedReason.set(reason);
+    this.loadAvailableSlots(reason.id);
+    this.currentStep.set(3);
+  }
+
+  loadAvailableSlots(reasonId: number): void {
+    this.isLoading.set(true);
+    const fromDate = this.formatDate(this.currentWeekStart());
+    this.doctorService.getAvailableSlots(reasonId, { from_date: fromDate })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (slots) => {
+          this.availableSlots.set(slots);
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.showToast('Failed to load available slots', 'danger');
+          this.isLoading.set(false);
+        }
+      });
+  }
+
+  selectSlot(slot: Slot): void {
+    this.selectedSlot.set(slot);
+  }
+
+  nextWeek(): void {
+    const current = this.currentWeekStart();
+    const next = new Date(current);
+    next.setDate(current.getDate() + 7);
+    this.currentWeekStart.set(next);
+    const reason = this.selectedReason();
+    if (reason) {
+      this.loadAvailableSlots(reason.id);
+    }
+  }
+
+  previousWeek(): void {
+    const current = this.currentWeekStart();
+    const prev = new Date(current);
+    prev.setDate(current.getDate() - 7);
+    const today = this.getStartOfWeek(new Date());
+    if (prev >= today) {
+      this.currentWeekStart.set(prev);
+      const reason = this.selectedReason();
+      if (reason) {
+        this.loadAvailableSlots(reason.id);
+      }
+    }
+  }
+
+  proceedToDoctor(): void {
+    const speciality = this.selectedSpeciality();
+    if (speciality) {
+      this.loadDoctors(speciality.id);
+      this.currentStep.set(4);
+    }
+  }
+
+  skipSlotSelection(): void {
+    this.selectedSlot.set(null);
+    const speciality = this.selectedSpeciality();
+    if (speciality) {
+      this.loadDoctors(speciality.id);
+      this.currentStep.set(4);
+    }
+  }
+
+  loadDoctors(specialityId: number): void {
+    this.isLoading.set(true);
+    this.doctorService.getDoctorsBySpeciality(specialityId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (doctors) => {
+          this.doctors.set(doctors);
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.showToast('Failed to load doctors', 'danger');
+          this.isLoading.set(false);
+        }
+      });
+  }
+
+  selectDoctor(doctor: Doctor): void {
+    this.selectedDoctor.set(doctor);
+  }
+
+  proceedToReview(): void {
+    this.currentStep.set(5);
+  }
+
+  skipDoctorSelection(): void {
+    this.selectedDoctor.set(null);
+    this.currentStep.set(5);
+  }
+
+  goBack(): void {
+    const step = this.currentStep();
+    if (step > 1) {
+      this.currentStep.set(step - 1);
+    } else {
+      this.navCtrl.back();
+    }
+  }
+
+  async submitRequest(): Promise<void> {
+    const reason = this.selectedReason();
+    const slot = this.selectedSlot();
+    const doctor = this.selectedDoctor();
+
+    if (!reason) {
+      this.showToast('Please select a reason', 'warning');
+      return;
+    }
+
+    if (!this.comment.trim()) {
+      this.showToast('Please describe your symptoms or concerns', 'warning');
+      return;
+    }
+
+    let expectedAt: string;
+    if (slot) {
+      expectedAt = `${slot.date}T${slot.start_time}`;
+    } else {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(9, 0, 0, 0);
+      expectedAt = tomorrow.toISOString();
+    }
+
+    const requestData: ConsultationRequestData = {
+      reason_id: reason.id,
+      expected_at: expectedAt,
+      type: 'ONLINE',
+      comment: this.comment.trim()
+    };
+
+    if (doctor) {
+      requestData.expected_with_id = doctor.id;
+    }
+
+    this.isSubmitting.set(true);
+    this.consultationService.createConsultationRequest(requestData)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.showToast('Request submitted successfully', 'success');
+          this.navCtrl.navigateBack('/tabs/appointments');
+        },
+        error: () => {
+          this.showToast('Failed to submit request', 'danger');
+          this.isSubmitting.set(false);
+        }
+      });
+  }
+
+  private getStartOfWeek(date: Date): Date {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    d.setDate(diff);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  private formatDate(date: Date): string {
+    return date.toISOString().split('T')[0];
+  }
+
+  formatDisplayDate(date: Date): string {
+    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+
+  formatSlotTime(slot: Slot): string {
+    return `${slot.start_time.substring(0, 5)} - ${slot.end_time.substring(0, 5)}`;
+  }
+
+  getSlotsForDate(date: Date): Slot[] {
+    const dateStr = this.formatDate(date);
+    return this.groupedSlots()[dateStr] || [];
+  }
+
+  isSlotSelected(slot: Slot): boolean {
+    const selected = this.selectedSlot();
+    return selected !== null &&
+      selected.date === slot.date &&
+      selected.start_time === slot.start_time &&
+      selected.user_id === slot.user_id;
+  }
+
+  isDoctorSelected(doctor: Doctor): boolean {
+    const selected = this.selectedDoctor();
+    return selected !== null && selected.id === doctor.id;
+  }
+
+  getDoctorFullName(doctor: Doctor): string {
+    return `Dr. ${doctor.first_name} ${doctor.last_name}`;
+  }
+
+  getExpectedDateTime(): string {
+    const slot = this.selectedSlot();
+    if (slot) {
+      const date = new Date(`${slot.date}T${slot.start_time}`);
+      return date.toLocaleString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+    return 'Not selected (system will assign)';
+  }
+
+  private async showToast(message: string, color: string = 'primary'): Promise<void> {
+    const toast = await this.toastCtrl.create({
+      message,
+      duration: 2000,
+      color
+    });
+    toast.present();
+  }
+}

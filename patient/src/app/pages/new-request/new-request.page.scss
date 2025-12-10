@@ -1,0 +1,280 @@
+.step-indicator {
+  font-size: 14px;
+  font-weight: 500;
+  padding-right: 16px;
+}
+
+.new-request-content {
+  --background: var(--ion-color-light);
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 16px;
+}
+
+.step-content {
+  padding: 16px;
+}
+
+.step-description {
+  display: block;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.speciality-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.speciality-card {
+  margin: 0;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  ion-card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 12px;
+    text-align: center;
+  }
+
+  .speciality-icon {
+    font-size: 36px;
+    margin-bottom: 8px;
+  }
+
+  .speciality-name {
+    font-size: 14px;
+    font-weight: 500;
+  }
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  gap: 12px;
+
+  ion-icon {
+    font-size: 48px;
+  }
+}
+
+ion-list {
+  background: transparent;
+
+  ion-item {
+    --background: var(--ion-color-light-tint);
+    margin-bottom: 8px;
+    border-radius: 8px;
+    --border-radius: 8px;
+  }
+}
+
+.week-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding: 0 8px;
+
+  .week-label {
+    font-size: 14px;
+    font-weight: 500;
+  }
+}
+
+.slots-container {
+  display: flex;
+  overflow-x: auto;
+  gap: 8px;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--ion-color-medium);
+    border-radius: 2px;
+  }
+}
+
+.day-column {
+  min-width: 120px;
+  flex-shrink: 0;
+  background: var(--ion-color-light-tint);
+  border-radius: 8px;
+  padding: 12px 8px;
+
+  .day-header {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 12px;
+    color: var(--ion-color-dark);
+  }
+
+  .day-slots {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 100px;
+    align-items: center;
+  }
+
+  .slot-button {
+    width: 100%;
+    font-size: 11px;
+    --padding-start: 6px;
+    --padding-end: 6px;
+  }
+
+  .no-slots {
+    font-size: 12px;
+    text-align: center;
+    padding: 20px 0;
+  }
+}
+
+.doctors-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.doctor-card {
+  margin: 0;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  border: 2px solid transparent;
+
+  &.selected {
+    border-color: var(--ion-color-primary);
+  }
+
+  ion-card-content {
+    padding: 12px;
+  }
+
+  .doctor-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  ion-avatar {
+    width: 50px;
+    height: 50px;
+    flex-shrink: 0;
+  }
+
+  .doctor-details {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .doctor-name {
+    display: block;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .doctor-specialty {
+    display: block;
+    font-size: 13px;
+  }
+
+  .selected-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+}
+
+.step-actions {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.review-step {
+  .review-card {
+    margin: 0 0 20px 0;
+
+    ion-card-header {
+      padding-bottom: 0;
+    }
+
+    ion-card-title {
+      font-size: 18px;
+    }
+
+    ion-item {
+      --background: transparent;
+      margin-bottom: 0;
+
+      ion-label {
+        p {
+          font-size: 12px;
+          color: var(--ion-color-medium);
+          margin-bottom: 4px;
+        }
+
+        h3 {
+          font-size: 15px;
+          font-weight: 500;
+          margin: 0;
+        }
+      }
+    }
+  }
+}
+
+.comment-section {
+  margin-bottom: 20px;
+
+  .comment-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 8px;
+
+    ion-icon {
+      font-size: 18px;
+    }
+
+    .required {
+      color: var(--ion-color-danger);
+    }
+  }
+
+  .comment-input {
+    --background: var(--ion-color-light-tint);
+    --padding-start: 12px;
+    --padding-end: 12px;
+    --padding-top: 12px;
+    --padding-bottom: 12px;
+    border-radius: 8px;
+  }
+}

@@ -43,6 +43,21 @@
     </ion-grid>
   </div>
 
+  <div class="section">
+    <ion-card class="new-request-card" (click)="goToNewRequest()">
+      <ion-card-content>
+        <div class="new-request-content">
+          <ion-icon name="add-circle-outline" color="primary" class="new-request-icon"></ion-icon>
+          <div class="new-request-text">
+            <ion-text class="new-request-title">New Consultation Request</ion-text>
+            <ion-text class="new-request-description" color="medium">Request an appointment with a specialist</ion-text>
+          </div>
+          <ion-icon name="chevron-forward-outline" color="medium"></ion-icon>
+        </div>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
   @if (upcomingAppointment) {
     <div class="section">
       <ion-text class="section-title">Upcoming Appointment</ion-text>
@@ -63,31 +78,4 @@
       </ion-card>
     </div>
   }
-
-  <div class="section">
-    <div class="section-header">
-      <ion-text class="section-title">Available Doctors</ion-text>
-      <ion-text class="see-all" color="primary" (click)="viewAllDoctors()">See All</ion-text>
-    </div>
-
-    @if (isLoadingDoctors) {
-      <div class="loading-doctors">
-        <ion-spinner name="crescent" color="primary"></ion-spinner>
-      </div>
-    } @else if (nearbyDoctors.length === 0) {
-      <div class="empty-doctors">
-        <ion-text color="medium">No doctors available at the moment</ion-text>
-      </div>
-    } @else {
-      <div class="doctors-list">
-        @for (doctor of nearbyDoctors; track doctor.id) {
-          <app-doctor-card
-            [doctor]="doctor"
-            (doctorClick)="viewDoctorDetails($event)"
-            (bookClick)="bookAppointment($event)">
-          </app-doctor-card>
-        }
-      </div>
-    }
-  </div>
 </ion-content>

@@ -29,7 +29,7 @@ import {
 import { DoctorService } from '../../core/services/doctor.service';
 import { SpecialityService } from '../../core/services/speciality.service';
 import { Doctor } from '../../core/models/doctor.model';
-import { TimeSlot } from '../../core/models/booking.model';
+import { Slot } from '../../core/models/consultation.model';
 
 interface Review {
   id: number;
@@ -143,7 +143,7 @@ export class DoctorDetailPage implements OnInit {
     });
   }
 
-  private processTimeSlots(slots: TimeSlot[]): void {
+  private processTimeSlots(slots: Slot[]): void {
     const slotsByDate: Map<string, string[]> = new Map();
 
     slots.forEach(slot => {
@@ -151,9 +151,7 @@ export class DoctorDetailPage implements OnInit {
       if (!slotsByDate.has(dateKey)) {
         slotsByDate.set(dateKey, []);
       }
-      if (slot.is_available) {
-        slotsByDate.get(dateKey)?.push(slot.start_time);
-      }
+      slotsByDate.get(dateKey)?.push(slot.start_time);
     });
 
     this.availableSlots = [];

@@ -1,7 +1,7 @@
 <ion-header>
   <ion-toolbar>
     <ion-title>My Appointments</ion-title>
-    <ion-button slot="end" fill="clear" (click)="bookNewAppointment()">
+    <ion-button slot="end" fill="clear" (click)="goToNewRequest()">
       <ion-icon name="add-circle-outline" slot="icon-only"></ion-icon>
     </ion-button>
   </ion-toolbar>
@@ -47,8 +47,8 @@
           }
         </ion-text>
         @if (selectedSegment === 'upcoming') {
-          <ion-button (click)="bookNewAppointment()" class="book-button">
-            Find a Doctor
+          <ion-button (click)="goToNewRequest()" class="book-button">
+            New Request
           </ion-button>
         }
       </div>
@@ -134,9 +134,9 @@
                     View Details
                   </ion-button>
                 } @else {
-                  <ion-button size="small" fill="outline" (click)="bookNewAppointment()">
+                  <ion-button size="small" fill="outline" (click)="goToNewRequest()">
                     <ion-icon name="refresh" slot="start"></ion-icon>
-                    Book Again
+                    New Request
                   </ion-button>
                 }
               </div>

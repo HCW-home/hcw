@@ -20,15 +20,12 @@ import {
   IonIcon,
   IonText,
   IonButton,
-  IonFab,
-  IonFabButton,
   IonSpinner,
   IonBadge,
   IonRefresher,
   IonRefresherContent,
   NavController,
-  ToastController,
-  AlertController
+  ToastController
 } from '@ionic/angular/standalone';
 import { HealthService, HealthMetric } from '../../core/services/health.service';
 import { ConsultationService } from '../../core/services/consultation.service';
@@ -71,8 +68,6 @@ interface GroupedMetrics {
     IonIcon,
     IonText,
     IonButton,
-    IonFab,
-    IonFabButton,
     IonSpinner,
     IonBadge,
     IonRefresher,
@@ -91,7 +86,6 @@ export class HealthRecordsPage implements OnInit {
   constructor(
     private navCtrl: NavController,
     private toastCtrl: ToastController,
-    private alertCtrl: AlertController,
     private healthService: HealthService,
     private consultationService: ConsultationService
   ) {}
@@ -192,90 +186,6 @@ export class HealthRecordsPage implements OnInit {
         this.isLoadingPrescriptions = false;
       }
     });
-  }
-
-  async addHealthMetric(): Promise<void> {
-    const alert = await this.alertCtrl.create({
-      header: 'Add Health Metric',
-      inputs: [
-        {
-          name: 'metric_type',
-          type: 'text',
-          placeholder: 'Metric Type (e.g., Blood Pressure)'
-        },
-        {
-          name: 'value',
-          type: 'text',
-          placeholder: 'Value (e.g., 120/80)'
-        },
-        {
-          name: 'unit',
-          type: 'text',
-          placeholder: 'Unit (e.g., mmHg)'
-        }
-      ],
-      buttons: [
-        {
-          text: 'Cancel',
-          role: 'cancel'
-        },
-        {
-          text: 'Save',
-          handler: (data) => {
-            if (data.metric_type && data.value) {
-              this.saveHealthMetric(data);
-            }
-          }
-        }
-      ]
-    });
-
-    await alert.present();
-  }
-
-  private saveHealthMetric(data: { metric_type: string; value: string; unit?: string }): void {
-    this.healthService.createHealthMetric({
-      metric_type: data.metric_type,
-      value: data.value,
-      unit: data.unit
-    }).subscribe({
-      next: () => {
-        this.showToast('Health metric saved successfully');
-        this.loadHealthMetrics();
-      },
-      error: () => {
-        this.showToast('Failed to save health metric');
-      }
-    });
-  }
-
-  async deleteMetric(metric: HealthMetric): Promise<void> {
-    const alert = await this.alertCtrl.create({
-      header: 'Delete Metric',
-      message: 'Are you sure you want to delete this metric?',
-      buttons: [
-        {
-          text: 'Cancel',
-          role: 'cancel'
-        },
-        {
-          text: 'Delete',
-          handler: () => {
-            this.healthService.deleteHealthMetric(metric.id).subscribe({
-              next: () => {
-                this.showToast('Metric deleted');
-                this.loadHealthMetrics();
-              },
-              error: () => {
-                this.showToast('Failed to delete metric');
-              }
-            });
-          }
-        }
-      ]
-    });
-
-    await alert.present();
   }
 
   refillPrescription(prescription: Prescription): void {
