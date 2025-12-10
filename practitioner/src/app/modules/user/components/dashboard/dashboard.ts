@@ -6,11 +6,9 @@ import { Page } from '../../../../core/components/page/page';
 import { Typography } from '../../../../shared/ui-components/typography/typography';
 import { Button } from '../../../../shared/ui-components/button/button';
 import { Svg } from '../../../../shared/ui-components/svg/svg';
-import { Badge } from '../../../../shared/components/badge/badge';
 import { Loader } from '../../../../shared/components/loader/loader';
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
 import { ButtonSizeEnum, ButtonStyleEnum } from '../../../../shared/constants/button';
-import { BadgeTypeEnum } from '../../../../shared/constants/badge';
 import { ConsultationService } from '../../../../core/services/consultation.service';
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { Consultation, Appointment, AppointmentStatus } from '../../../../core/models/consultation';
@@ -37,7 +35,6 @@ interface StatCard {
     Typography,
     Button,
     Svg,
-    Badge,
     Loader
   ],
   templateUrl: './dashboard.html',
@@ -63,7 +60,6 @@ export class Dashboard implements OnInit {
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
-  protected readonly BadgeTypeEnum = BadgeTypeEnum;
 
   get statCards(): StatCard[] {
     const s = this.stats();

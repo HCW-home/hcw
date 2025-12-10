@@ -1,267 +1,152 @@
 <app-page>
   <div class="consultations-container">
-    <div class="consultations-header">
-      <div class="header-content">
-        <div class="title-section">
-          <app-typography [variant]="TypographyTypeEnum['h2-semibold']">
-            My Consultations
-          </app-typography>
-          <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
-            Manage and track your patient consultations
-          </app-typography>
-        </div>
-        <app-button
-          text="New Consultation"
-          leftIcon="plus"
-          [size]="ButtonSizeEnum.medium"
-          [style]="ButtonStyleEnum.primary"
-          (buttonClick)="createConsultation()">
-        </app-button>
-      </div>
-
+    <div class="consultations-card">
       <app-tabs
         [tabs]="tabItems"
         [activeTab]="activeTab()"
         (tabChange)="setActiveTab($event)">
       </app-tabs>
-    </div>
 
-    <div class="consultations-content">
-      @if (loading()) {
-        <div class="loading-state">
-          <app-loader></app-loader>
-          <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
-            Loading consultations...
-          </app-typography>
+      <div class="search-section">
+        <div class="search-input-wrapper">
+          <app-svg src="search" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--slate-400)'}"></app-svg>
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Search consultations..."
+            [(ngModel)]="searchQuery"
+            (input)="onSearchChange()">
         </div>
-      } @else if (error()) {
-        <div class="error-state">
-          <app-svg src="alert-circle"
-                   [svgStyle]="{'width.px': 48, 'height.px': 48, 'color': 'var(--rose-500)'}"></app-svg>
-          <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--rose-500)">
-            {{ error() }}
-          </app-typography>
-          <app-button
-            text="Retry"
-            [size]="ButtonSizeEnum.medium"
-            [style]="ButtonStyleEnum.stroke"
-            (click)="retryLoadConsultations()">
-          </app-button>
-        </div>
-      } @else if (activeTab() === 'active') {
-        <div class="consultations-grid">
-          @for (consultation of activeConsultations; track consultation.id) {
-            <div class="consultation-card">
-              <div class="card-header">
-                <div class="header-left">
-                  <app-typography [variant]="TypographyTypeEnum['body-l-semibold']">
-                    {{ consultation.title || 'Untitled Consultation' }}
-                  </app-typography>
-                  <app-badge [type]="BadgeTypeEnum.green">
-                    Active
-                  </app-badge>
-                </div>
-                <div class="card-actions">
-                  <app-button
-                    text="Edit"
-                    leftIcon="edit"
-                    [size]="ButtonSizeEnum.small"
-                    [style]="ButtonStyleEnum.text"
-                    (buttonClick)="editConsultation(consultation)">
-                  </app-button>
-                  <app-button
-                    text="View Details"
-                    leftIcon="arrow-right"
-                    [size]="ButtonSizeEnum.small"
-                    [style]="ButtonStyleEnum.primary"
-                    (buttonClick)="viewConsultationDetails(consultation)">
-                  </app-button>
-                </div>
-              </div>
+      </div>
 
-              <div class="card-body">
-                @if (consultation.description) {
-                  <div class="description">
-                    <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
-                      {{ consultation.description }}
-                    </app-typography>
-                  </div>
-                }
-
-                <div class="consultation-info">
-                  <div class="info-row">
-                    <div class="info-item">
-                      <app-svg src="user" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--slate-400)'}"></app-svg>
-                      <div class="info-content">
-                        <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--slate-500)">
-                          Patient
-                        </app-typography>
-                        <app-typography [variant]="TypographyTypeEnum['body-s-medium']">
-                          {{ getBeneficiaryName(consultation) }}
-                        </app-typography>
-                      </div>
-                    </div>
-
-                    @if (consultation.group) {
-                      <div class="info-item">
-                        <app-svg src="users" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--slate-400)'}"></app-svg>
-                        <div class="info-content">
-                          <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--slate-500)">
-                            Team
-                          </app-typography>
-                          <app-typography [variant]="TypographyTypeEnum['body-s-medium']">
-                            {{ consultation.group.name }}
-                          </app-typography>
-                        </div>
-                      </div>
-                    }
-                  </div>
-
-                  <div class="info-row">
-                    <div class="info-item">
-                      <app-svg src="user-check" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--slate-400)'}"></app-svg>
-                      <div class="info-content">
-                        <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--slate-500)">
-                          Assigned To
-                        </app-typography>
-                        <app-typography [variant]="TypographyTypeEnum['body-s-medium']">
-                          {{ getOwnerName(consultation) }}
-                        </app-typography>
-                      </div>
-                    </div>
-
-                    <div class="info-item">
-                      <app-svg src="calendar" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--slate-400)'}"></app-svg>
-                      <div class="info-content">
-                        <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--slate-500)">
-                          Created
-                        </app-typography>
-                        <app-typography [variant]="TypographyTypeEnum['body-s-medium']">
-                          {{ formatDate(consultation.created_at) }}
-                        </app-typography>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          } @empty {
+      <div class="consultations-list">
+        @if (loading()) {
+          <div class="loading-state">
+            <app-loader></app-loader>
+            <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
+              Loading consultations...
+            </app-typography>
+          </div>
+        } @else if (error()) {
+          <div class="error-state">
+            <app-svg src="alert-circle" [svgStyle]="{'width.px': 48, 'height.px': 48, 'color': 'var(--rose-500)'}"></app-svg>
+            <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--rose-500)">
+              {{ error() }}
+            </app-typography>
+            <app-button
+              text="Retry"
+              [size]="ButtonSizeEnum.medium"
+              [style]="ButtonStyleEnum.stroke"
+              (buttonClick)="retryLoadConsultations()">
+            </app-button>
+          </div>
+        } @else if (activeTab() === 'overdue') {
+          @if (filteredOverdueConsultations.length === 0) {
             <div class="empty-state">
-              <app-svg src="calendar" [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
+              <app-svg src="alert-circle" [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
               <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--slate-400)">
-                No active consultations
+                No overdue consultations
               </app-typography>
               <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
-                Your active consultations will appear here
+                Consultations requiring attention will appear here
               </app-typography>
             </div>
-          }
-        </div>
-      } @else {
-        <div class="consultations-grid">
-          @for (consultation of pastConsultations; track consultation.id) {
-            <div class="consultation-card past-card">
-              <div class="card-header">
-                <div class="header-left">
-                  <app-typography [variant]="TypographyTypeEnum['body-l-semibold']">
-                    {{ consultation.title || 'Untitled Consultation' }}
-                  </app-typography>
-                  <app-badge [type]="BadgeTypeEnum.gray">
-                    Closed
-                  </app-badge>
+          } @else {
+            @for (consultation of filteredOverdueConsultations; track consultation.id) {
+              <div class="consultation-item">
+                <div class="patient-avatar overdue">
+                  <span>{{ consultation.avatar }}</span>
                 </div>
-                <div class="card-actions">
-                  <app-button
-                    text="View Details"
-                    leftIcon="report"
-                    [size]="ButtonSizeEnum.small"
-                    [style]="ButtonStyleEnum.stroke"
-                    (buttonClick)="viewConsultationDetails(consultation)">
-                  </app-button>
-                </div>
-              </div>
-
-              <div class="card-body">
-                @if (consultation.description) {
-                  <div class="description">
-                    <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
-                      {{ consultation.description }}
-                    </app-typography>
-                  </div>
-                }
 
                 <div class="consultation-info">
-                  <div class="info-row">
-                    <div class="info-item">
-                      <app-svg src="user" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--slate-400)'}"></app-svg>
-                      <div class="info-content">
-                        <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--slate-500)">
-                          Patient
-                        </app-typography>
-                        <app-typography [variant]="TypographyTypeEnum['body-s-medium']">
-                          {{ getBeneficiaryName(consultation) }}
-                        </app-typography>
-                      </div>
-                    </div>
+                  <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-800)">
+                    {{ consultation.patient }}
+                  </app-typography>
+                  <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
+                    {{ consultation.reason }}
+                  </app-typography>
+                </div>
 
-                    @if (consultation.group) {
-                      <div class="info-item">
-                        <app-svg src="users" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--slate-400)'}"></app-svg>
-                        <div class="info-content">
-                          <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--slate-500)">
-                            Team
-                          </app-typography>
-                          <app-typography [variant]="TypographyTypeEnum['body-s-medium']">
-                            {{ consultation.group.name }}
-                          </app-typography>
-                        </div>
-                      </div>
-                    }
-                  </div>
-
-                  <div class="info-row">
-                    <div class="info-item">
-                      <app-svg src="user-check" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--slate-400)'}"></app-svg>
-                      <div class="info-content">
-                        <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--slate-500)">
-                          Assigned To
-                        </app-typography>
-                        <app-typography [variant]="TypographyTypeEnum['body-s-medium']">
-                          {{ getOwnerName(consultation) }}
-                        </app-typography>
-                      </div>
-                    </div>
-
-                    @if (consultation.closed_at) {
-                      <div class="info-item">
-                        <app-svg src="calendar" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--slate-400)'}"></app-svg>
-                        <div class="info-content">
-                          <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--slate-500)">
-                            Closed
-                          </app-typography>
-                          <app-typography [variant]="TypographyTypeEnum['body-s-medium']">
-                            {{ formatDate(consultation.closed_at) }}
-                          </app-typography>
-                        </div>
-                      </div>
-                    }
+                <div class="consultation-status">
+                  <div class="status-overdue">
+                    <app-svg src="alert-circle" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--amber-600)'}"></app-svg>
+                    <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--amber-600)">
+                      Waiting {{ consultation.waitingSince }}
+                    </app-typography>
                   </div>
                 </div>
+
+                <button class="action-btn overdue">
+                  <span>Review</span>
+                </button>
               </div>
-            </div>
-          } @empty {
-            <div class="empty-state">
-              <app-svg src="history" [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
-              <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--slate-400)">
-                No past consultations
-              </app-typography>
-              <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
-                Your completed consultations will appear here
-              </app-typography>
+            }
+          }
+        } @else if (filteredConsultations.length === 0) {
+          <div class="empty-state">
+            <app-svg src="calendar" [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
+            <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--slate-400)">
+              No consultations found
+            </app-typography>
+            <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
+              {{ activeTab() === 'active' ? 'Your active consultations will appear here' : 'Your completed consultations will appear here' }}
+            </app-typography>
+          </div>
+        } @else {
+          @for (consultation of filteredConsultations; track consultation.id) {
+            <div class="consultation-item" (click)="viewConsultationDetails(consultation)">
+              <div class="patient-avatar" [ngClass]="{'active': activeTab() === 'active', 'past': activeTab() === 'past'}">
+                <span>{{ getPatientInitials(consultation) }}</span>
+                @if (activeTab() === 'active') {
+                  <span class="online-indicator"></span>
+                }
+              </div>
+
+              <div class="consultation-info">
+                <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-800)">
+                  {{ getBeneficiaryName(consultation) }}
+                </app-typography>
+                <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
+                  {{ consultation.title || 'Consultation' }} - {{ getConsultationSubtitle(consultation) }}
+                </app-typography>
+              </div>
+
+              <div class="consultation-status">
+                @if (activeTab() === 'active') {
+                  <div class="status-active">
+                    <span class="status-dot"></span>
+                    <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--primary-600)">
+                      Active
+                    </app-typography>
+                  </div>
+                  <app-typography [variant]="TypographyTypeEnum['body-xs-regular']" color="var(--slate-400)">
+                    {{ formatDate(consultation.created_at) }}
+                  </app-typography>
+                } @else {
+                  <div class="status-completed">
+                    <app-svg src="check" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--emerald-600)'}"></app-svg>
+                    <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--emerald-600)">
+                      Completed
+                    </app-typography>
+                  </div>
+                  <app-typography [variant]="TypographyTypeEnum['body-xs-regular']" color="var(--slate-400)">
+                    {{ formatDate(consultation.closed_at || consultation.created_at) }}
+                  </app-typography>
+                }
+              </div>
+
+              <button class="action-btn" [ngClass]="{'active': activeTab() === 'active', 'past': activeTab() === 'past'}">
+                @if (activeTab() === 'active') {
+                  <app-svg src="video" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--White)'}"></app-svg>
+                  <span>Resume</span>
+                } @else {
+                  <span>View Details</span>
+                }
+              </button>
             </div>
           }
-        </div>
-      }
+        }
+      </div>
     </div>
   </div>
 </app-page>

@@ -2,17 +2,16 @@ import { Component, OnInit, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Page } from '../../../../core/components/page/page';
 import { Button } from '../../../../shared/ui-components/button/button';
 import { Typography } from '../../../../shared/ui-components/typography/typography';
 import { Tabs, TabItem } from '../../../../shared/components/tabs/tabs';
-import { Badge } from '../../../../shared/components/badge/badge';
 import {
   ButtonSizeEnum,
   ButtonStyleEnum,
 } from '../../../../shared/constants/button';
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
-import { BadgeTypeEnum } from '../../../../shared/constants/badge';
 import { Svg } from '../../../../shared/ui-components/svg/svg';
 import { ConsultationService } from '../../../../core/services/consultation.service';
 import { Consultation } from '../../../../core/models/consultation';
@@ -21,23 +20,28 @@ import { RoutePaths } from '../../../../core/constants/routes';
 
 @Component({
   selector: 'app-consultations',
-  imports: [CommonModule, Page, Button, Typography, Tabs, Badge, Svg, Loader],
+  imports: [CommonModule, FormsModule, Page, Button, Typography, Tabs, Svg, Loader],
   templateUrl: './consultations.html',
   styleUrl: './consultations.scss',
 })
 export class Consultations implements OnInit {
   breadcrumbs = [{ label: 'Consultations' }];
 
-  activeTab = signal<'active' | 'past'>('active');
+  activeTab = signal<'active' | 'past' | 'overdue'>('active');
   activeConsultationsData = signal<Consultation[]>([]);
   pastConsultationsData = signal<Consultation[]>([]);
   loading = signal<boolean>(false);
   error = signal<string | null>(null);
+  searchQuery = '';
+
+  overdueConsultations: { id: number; patient: string; waitingSince: string; reason: string; avatar: string }[] = [
+    { id: 1, patient: 'Michel Fournier', waitingSince: '3 days', reason: 'Lab results pending', avatar: 'MF' },
+    { id: 2, patient: 'Claire Rousseau', waitingSince: '5 days', reason: 'Prescription renewal', avatar: 'CR' },
+  ];
 
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
-  protected readonly BadgeTypeEnum = BadgeTypeEnum;
 
   constructor(
     private router: Router,
@@ -60,19 +64,50 @@ export class Consultations implements OnInit {
     return [
       {
         id: 'active',
-        label: 'Active Consultations',
+        label: 'Active',
         count: this.activeConsultations.length,
       },
       {
         id: 'past',
-        label: 'Past Consultations',
+        label: 'Closed',
         count: this.pastConsultations.length,
+      },
+      {
+        id: 'overdue',
+        label: 'Overdue',
+        count: this.overdueConsultations.length,
       },
     ];
   }
 
+  get filteredConsultations(): Consultation[] {
+    const consultations = this.activeTab() === 'active' ? this.activeConsultations : this.pastConsultations;
+    if (!this.searchQuery.trim()) {
+      return consultations;
+    }
+    const query = this.searchQuery.toLowerCase();
+    return consultations.filter(c =>
+      this.getBeneficiaryName(c).toLowerCase().includes(query) ||
+      (c.title && c.title.toLowerCase().includes(query))
+    );
+  }
+
   setActiveTab(tab: string) {
-    this.activeTab.set(tab as 'active' | 'past');
+    this.activeTab.set(tab as 'active' | 'past' | 'overdue');
+  }
+
+  get filteredOverdueConsultations() {
+    if (!this.searchQuery.trim()) {
+      return this.overdueConsultations;
+    }
+    const query = this.searchQuery.toLowerCase();
+    return this.overdueConsultations.filter(c =>
+      c.patient.toLowerCase().includes(query) ||
+      c.reason.toLowerCase().includes(query)
+    );
+  }
+
+  onSearchChange() {
   }
 
   viewConsultationDetails(consultation: Consultation) {
@@ -112,13 +147,35 @@ export class Consultations implements OnInit {
   }
 
   formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+      return 'Today, ' + date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    } else if (diffDays === 1) {
+      return 'Yesterday, ' + date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    } else if (diffDays < 7) {
+      return `${diffDays} days ago`;
+    }
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  getPatientInitials(consultation: Consultation): string {
+    if (!consultation.beneficiary) return '?';
+    const firstName = consultation.beneficiary.first_name?.trim() || '';
+    const lastName = consultation.beneficiary.last_name?.trim() || '';
+    const firstInitial = firstName.charAt(0).toUpperCase();
+    const lastInitial = lastName.charAt(0).toUpperCase();
+    return (firstInitial + lastInitial) || '?';
+  }
+
+  getConsultationSubtitle(consultation: Consultation): string {
+    if (this.activeTab() === 'active') {
+      return 'Created ' + this.formatDate(consultation.created_at);
+    }
+    return consultation.group?.name || 'Completed';
   }
 
   private loadConsultations() {

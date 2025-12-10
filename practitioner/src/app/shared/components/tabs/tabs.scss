@@ -1,34 +1,68 @@
 .tabs-container {
-  border-bottom: 1px solid var(--slate-200);
-
   .tabs {
     display: flex;
-    gap: 0;
+    border-bottom: 1px solid var(--slate-100);
 
     .tab {
-      padding: 12px 24px 16px;
+      flex: 1;
+      padding: 16px 24px;
       background: none;
       border: none;
-      border-bottom: 2px solid transparent;
       cursor: pointer;
       transition: all 0.2s ease;
       position: relative;
 
-      &:hover {
+      &:hover:not(.active) {
         background: var(--slate-50);
       }
 
-      &.active {
-        border-bottom-color: var(--primary-500);
+      .tab-content {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
 
-        app-typography {
-          color: var(--primary-600);
+      .tab-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--slate-500);
+        transition: color 0.2s ease;
+      }
+
+      .tab-count {
+        padding: 2px 8px;
+        border-radius: 9999px;
+        font-size: 12px;
+        font-weight: 700;
+        background: var(--slate-100);
+        color: var(--slate-600);
+        transition: all 0.2s ease;
+
+        &.active {
+          background: var(--primary-100);
+          color: var(--primary-700);
+        }
+
+        &.overdue {
+          background: var(--amber-100);
+          color: var(--amber-700);
         }
       }
 
-      app-typography {
-        color: var(--slate-500);
-        transition: color 0.2s ease;
+      .tab-indicator {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--primary-500);
+      }
+
+      &.active {
+        .tab-label {
+          color: var(--primary-600);
+        }
       }
     }
   }
