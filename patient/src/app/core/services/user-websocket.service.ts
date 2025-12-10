@@ -1,123 +1,107 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
-import { filter, map } from 'rxjs/operators';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { WebSocketService } from './websocket.service';
 import { AuthService } from './auth.service';
+import { environment } from '../../../environments/environment';
 import {
   WebSocketState,
   UserMessageEvent,
   NotificationEvent,
-  StatusResponseEvent,
+  StatusChangedEvent,
 } from '../models/websocket.model';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class UserWebSocketService implements OnDestroy {
-  private subscriptions: Subscription[] = [];
-  private joinedGroups: Set<string> = new Set();
-
   private isOnlineSubject = new BehaviorSubject<boolean>(false);
-  public isOnline$ = this.isOnlineSubject.asObservable();
-
   private connectionCountSubject = new BehaviorSubject<number>(0);
-  public connectionCount$ = this.connectionCountSubject.asObservable();
+  private messagesSubject = new Subject<UserMessageEvent>();
+  private notificationsSubject = new Subject<NotificationEvent>();
 
-  private userMessagesSubject = new Subject<UserMessageEvent['data']>();
-  public userMessages$ = this.userMessagesSubject.asObservable();
-
-  private notificationsSubject = new Subject<NotificationEvent['data']>();
-  public notifications$ = this.notificationsSubject.asObservable();
+  public isOnline$: Observable<boolean> = this.isOnlineSubject.asObservable();
+  public connectionCount$: Observable<number> = this.connectionCountSubject.asObservable();
+  public messages$: Observable<UserMessageEvent> = this.messagesSubject.asObservable();
+  public notifications$: Observable<NotificationEvent> = this.notificationsSubject.asObservable();
 
   constructor(
     private wsService: WebSocketService,
     private authService: AuthService
   ) {
-    this.setupAuthListener();
-  }
-
-  private setupAuthListener(): void {
-    const authSub = this.authService.isAuthenticated$.subscribe(isAuth => {
-      if (isAuth) {
-        this.connect();
-      } else {
-        this.disconnect();
-      }
-    });
-    this.subscriptions.push(authSub);
+    this.setupEventListeners();
   }
 
   async connect(): Promise<void> {
-    await this.wsService.connect('/ws/user/');
-    this.setupMessageHandlers();
-  }
+    const token = await this.authService.getToken();
+    console.log('UserWebSocketService.connect() - token:', token ? 'exists' : 'missing');
+    if (!token) {
+      return;
+    }
 
-  private setupMessageHandlers(): void {
-    const statusSub = this.wsService.on<StatusResponseEvent>('status_response')
-      .subscribe(event => {
-        this.isOnlineSubject.next(event.data.is_online);
-        this.connectionCountSubject.next(event.data.connection_count);
-      });
-
-    const messageSub = this.wsService.on<UserMessageEvent>('user_message')
-      .subscribe(event => {
-        this.userMessagesSubject.next(event.data);
-      });
-
-    const notifSub = this.wsService.on<NotificationEvent>('notification')
-      .subscribe(event => {
-        this.notificationsSubject.next(event.data);
-      });
-
-    const connectedSub = this.wsService.state$
-      .pipe(filter(state => state === WebSocketState.CONNECTED))
-      .subscribe(() => {
-        this.wsService.getStatus();
-        this.rejoinGroups();
-      });
-
-    this.subscriptions.push(statusSub, messageSub, notifSub, connectedSub);
-  }
-
-  joinConsultationGroup(consultationId: number): void {
-    const groupName = `consultation_${consultationId}`;
-    this.wsService.joinGroup(groupName);
-    this.joinedGroups.add(groupName);
-  }
-
-  leaveConsultationGroup(consultationId: number): void {
-    const groupName = `consultation_${consultationId}`;
-    this.wsService.leaveGroup(groupName);
-    this.joinedGroups.delete(groupName);
-  }
-
-  sendMessage(targetUserId: number, message: string): void {
-    this.wsService.sendMessage(targetUserId, message);
-  }
-
-  private rejoinGroups(): void {
-    this.joinedGroups.forEach(group => {
-      this.wsService.joinGroup(group);
+    const wsUrl = `${environment.wsUrl}/user/?token=${token}`;
+    console.log('Connecting to WebSocket:', wsUrl);
+    this.wsService.connect({
+      url: wsUrl,
+      reconnect: true,
+      reconnectAttempts: 10,
+      reconnectInterval: 3000,
+      pingInterval: 30000,
     });
   }
 
   disconnect(): void {
-    this.joinedGroups.clear();
     this.wsService.disconnect();
     this.isOnlineSubject.next(false);
     this.connectionCountSubject.next(0);
   }
 
-  get state$(): Observable<WebSocketState> {
+  getConnectionState(): Observable<WebSocketState> {
     return this.wsService.state$;
   }
 
-  get isConnected(): boolean {
+  isConnected(): boolean {
     return this.wsService.isConnected;
   }
 
+  joinConsultationGroup(consultationId: number): void {
+    this.wsService.joinGroup(`consultation_${consultationId}`);
+  }
+
+  leaveConsultationGroup(consultationId: number): void {
+    this.wsService.leaveGroup(`consultation_${consultationId}`);
+  }
+
+  sendMessage(targetUserId: number, message: string): void {
+    this.wsService.send({
+      type: 'send_message',
+      data: {
+        target_user_id: targetUserId,
+        message,
+      },
+      timestamp: Date.now(),
+    });
+  }
+
+  private setupEventListeners(): void {
+    this.wsService.on('status_changed').subscribe((event: StatusChangedEvent) => {
+      this.isOnlineSubject.next(event.data.is_online);
+      this.connectionCountSubject.next(event.data.connection_count);
+    });
+
+    this.wsService.on('user_message').subscribe((event: UserMessageEvent) => {
+      this.messagesSubject.next(event);
+    });
+
+    this.wsService.on('notification').subscribe((event: NotificationEvent) => {
+      this.notificationsSubject.next(event);
+    });
+
+    this.wsService.on('error').subscribe((event) => {
+      console.error('WebSocket error:', (event as { message: string }).message);
+    });
+  }
+
   ngOnDestroy(): void {
-    this.subscriptions.forEach(sub => sub.unsubscribe());
     this.disconnect();
   }
 }

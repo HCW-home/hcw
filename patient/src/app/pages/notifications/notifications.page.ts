@@ -97,7 +97,8 @@ export class NotificationsPage implements OnInit, OnDestroy {
   }
 
   private setupRealtimeNotifications(): void {
-    const sub = this.userWs.notifications$.subscribe(data => {
+    const sub = this.userWs.notifications$.subscribe(event => {
+      const data = event.data;
       const notification: AppNotification = {
         id: Date.now(),
         title: (data['title'] as string) || 'New Notification',

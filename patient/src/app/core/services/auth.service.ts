@@ -24,6 +24,7 @@ export class AuthService {
 
   async checkAuthStatus() {
     const token = await this.storage.get('access_token');
+    console.log('checkAuthStatus - token:', token ? 'exists' : 'missing');
     if (token) {
       this.isAuthenticatedSubject.next(true);
       this.getCurrentUser().subscribe();
@@ -88,6 +89,10 @@ export class AuthService {
 
   async getToken(): Promise<string | null> {
     return await this.storage.get('access_token');
+  }
+
+  isLoggedIn(): boolean {
+    return this.isAuthenticatedSubject.value;
   }
 
   async refreshToken(): Promise<Observable<any>> {

@@ -139,7 +139,8 @@ export class MessagesPage implements OnInit, OnDestroy {
       this.connectionState = state;
     });
 
-    const msgSub = this.consultationWs.messages$.subscribe(message => {
+    const msgSub = this.consultationWs.messages$.subscribe(event => {
+      const message = event.data;
       if (this.selectedConsultation && message.consultation_id === this.selectedConsultation.id) {
         this.messages.push({
           id: message.id,

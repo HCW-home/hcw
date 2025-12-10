@@ -1,10 +1,7 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { BehaviorSubject, Observable, Subject, filter, map } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { StorageService } from './storage.service';
+import { BehaviorSubject, Observable, Subject, filter } from 'rxjs';
 import {
   WebSocketState,
-  WebSocketMessage,
   UserOutgoingMessage,
   UserIncomingEvent,
   WebSocketConfig,
@@ -14,197 +11,192 @@ import {
   providedIn: 'root'
 })
 export class WebSocketService implements OnDestroy {
-  private socket: WebSocket | null = null;
+  private ws: WebSocket | null = null;
+  private config: WebSocketConfig | null = null;
+
+  private stateSubject = new BehaviorSubject<WebSocketState>(WebSocketState.DISCONNECTED);
+  private messageSubject = new Subject<UserIncomingEvent>();
+
   private reconnectAttempts = 0;
+  private maxReconnectAttempts = 10;
+  private reconnectInterval = 3000;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private pingTimer: ReturnType<typeof setInterval> | null = null;
   private messageQueue: UserOutgoingMessage[] = [];
 
-  private stateSubject = new BehaviorSubject<WebSocketState>(WebSocketState.DISCONNECTED);
-  public state$ = this.stateSubject.asObservable();
+  public state$: Observable<WebSocketState> = this.stateSubject.asObservable();
+  public messages$: Observable<UserIncomingEvent> = this.messageSubject.asObservable();
 
-  private messageSubject = new Subject<UserIncomingEvent>();
-  public messages$ = this.messageSubject.asObservable();
-
-  private config: WebSocketConfig = {
-    url: '',
-    reconnect: true,
-    reconnectInterval: 3000,
-    reconnectAttempts: 5,
-    pingInterval: 30000,
-  };
-
-  constructor(private storage: StorageService) {}
-
-  async connect(endpoint: string = '/ws/user/'): Promise<void> {
-    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+  connect(config: WebSocketConfig): void {
+    console.log('WebSocketService.connect() called with URL:', config.url);
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      console.log('WebSocket already open, skipping');
       return;
     }
 
-    const token = await this.storage.get('access_token');
-    if (!token) {
-      this.stateSubject.next(WebSocketState.FAILED);
-      return;
-    }
-
-    const wsBase = environment.apiUrl.replace(/^http/, 'ws').replace('/api', '');
-    this.config.url = `${wsBase}${endpoint}?token=${token}`;
-
+    this.config = config;
     this.stateSubject.next(WebSocketState.CONNECTING);
-    this.createConnection();
-  }
 
-  private createConnection(): void {
     try {
-      this.socket = new WebSocket(this.config.url);
+      console.log('Creating new WebSocket connection...');
+      this.ws = new WebSocket(config.url);
       this.setupEventHandlers();
     } catch (error) {
-      this.handleConnectionError();
-    }
-  }
-
-  private setupEventHandlers(): void {
-    if (!this.socket) return;
-
-    this.socket.onopen = () => {
-      this.stateSubject.next(WebSocketState.CONNECTED);
-      this.reconnectAttempts = 0;
-      this.flushMessageQueue();
-      this.startPingInterval();
-    };
-
-    this.socket.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data) as UserIncomingEvent;
-        this.messageSubject.next(message);
-      } catch (error) {
-        // Silent fail for invalid JSON
-      }
-    };
-
-    this.socket.onclose = () => {
-      this.cleanup();
-      this.stateSubject.next(WebSocketState.DISCONNECTED);
-      this.attemptReconnect();
-    };
-
-    this.socket.onerror = () => {
-      this.handleConnectionError();
-    };
-  }
-
-  private handleConnectionError(): void {
-    this.cleanup();
-    this.stateSubject.next(WebSocketState.FAILED);
-    this.attemptReconnect();
-  }
-
-  private attemptReconnect(): void {
-    if (!this.config.reconnect) return;
-    if (this.reconnectAttempts >= (this.config.reconnectAttempts || 5)) {
+      console.error('WebSocket connection error:', error);
       this.stateSubject.next(WebSocketState.FAILED);
-      return;
-    }
-
-    this.stateSubject.next(WebSocketState.RECONNECTING);
-    this.reconnectAttempts++;
-
-    this.reconnectTimer = setTimeout(() => {
-      this.createConnection();
-    }, this.config.reconnectInterval);
-  }
-
-  private startPingInterval(): void {
-    this.stopPingInterval();
-    this.pingTimer = setInterval(() => {
-      this.send({ type: 'ping', timestamp: Date.now() });
-    }, this.config.pingInterval);
-  }
-
-  private stopPingInterval(): void {
-    if (this.pingTimer) {
-      clearInterval(this.pingTimer);
-      this.pingTimer = null;
+      this.attemptReconnect();
     }
   }
 
-  send(message: UserOutgoingMessage): void {
-    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-      this.socket.send(JSON.stringify(message));
+  disconnect(): void {
+    this.clearTimers();
+    this.reconnectAttempts = 0;
+
+    if (this.ws) {
+      this.ws.close(1000, 'Client disconnect');
+      this.ws = null;
+    }
+
+    this.stateSubject.next(WebSocketState.DISCONNECTED);
+    this.messageQueue = [];
+  }
+
+  send<T extends UserOutgoingMessage>(message: T): void {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      try {
+        this.ws.send(JSON.stringify(message));
+      } catch (error) {
+        this.messageQueue.push(message);
+      }
     } else {
       this.messageQueue.push(message);
     }
   }
 
-  private flushMessageQueue(): void {
-    while (this.messageQueue.length > 0) {
-      const message = this.messageQueue.shift();
-      if (message) {
-        this.send(message);
-      }
-    }
+  on<T extends UserIncomingEvent['type']>(
+    type: T
+  ): Observable<Extract<UserIncomingEvent, { type: T }>> {
+    return this.messages$.pipe(
+      filter((msg): msg is Extract<UserIncomingEvent, { type: T }> => msg.type === type)
+    );
   }
 
-  on<T extends UserIncomingEvent>(eventType: T['type']): Observable<T> {
-    return this.messages$.pipe(
-      filter((msg): msg is T => msg.type === eventType)
-    );
+  ping(): void {
+    this.send({
+      type: 'ping',
+      timestamp: Date.now(),
+    });
   }
 
   joinGroup(groupName: string): void {
     this.send({
       type: 'join_group',
-      data: { group_name: groupName }
+      data: { group_name: groupName },
     });
   }
 
   leaveGroup(groupName: string): void {
     this.send({
       type: 'leave_group',
-      data: { group_name: groupName }
+      data: { group_name: groupName },
     });
   }
 
-  sendMessage(targetUserId: number, message: string, messageType?: string): void {
-    this.send({
-      type: 'send_message',
-      data: {
-        target_user_id: targetUserId,
-        message,
-        message_type: messageType
-      },
-      timestamp: Date.now()
-    });
-  }
-
-  getStatus(): void {
-    this.send({ type: 'get_status' });
-  }
-
-  disconnect(): void {
-    this.config.reconnect = false;
-    this.cleanup();
-    if (this.socket) {
-      this.socket.close();
-      this.socket = null;
-    }
-    this.stateSubject.next(WebSocketState.DISCONNECTED);
-  }
-
-  private cleanup(): void {
-    this.stopPingInterval();
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = null;
-    }
+  getState(): WebSocketState {
+    return this.stateSubject.value;
   }
 
   get isConnected(): boolean {
     return this.stateSubject.value === WebSocketState.CONNECTED;
   }
 
-  get currentState(): WebSocketState {
-    return this.stateSubject.value;
+  private setupEventHandlers(): void {
+    if (!this.ws) return;
+
+    this.ws.onopen = () => {
+      this.stateSubject.next(WebSocketState.CONNECTED);
+      this.reconnectAttempts = 0;
+      this.flushMessageQueue();
+
+      if (this.config?.pingInterval) {
+        this.startPingInterval(this.config.pingInterval);
+      }
+    };
+
+    this.ws.onmessage = (event: MessageEvent) => {
+      try {
+        const message: UserIncomingEvent = JSON.parse(event.data) as UserIncomingEvent;
+        this.messageSubject.next(message);
+      } catch (error) {
+        // Silent fail
+      }
+    };
+
+    this.ws.onerror = () => {
+      this.stateSubject.next(WebSocketState.FAILED);
+    };
+
+    this.ws.onclose = (event: CloseEvent) => {
+      this.clearTimers();
+
+      if (event.code !== 1000 && this.config?.reconnect !== false) {
+        this.stateSubject.next(WebSocketState.RECONNECTING);
+        this.attemptReconnect();
+      } else {
+        this.stateSubject.next(WebSocketState.DISCONNECTED);
+      }
+    };
+  }
+
+  private attemptReconnect(): void {
+    if (!this.config) return;
+
+    const maxAttempts = this.config.reconnectAttempts ?? this.maxReconnectAttempts;
+
+    if (this.reconnectAttempts >= maxAttempts) {
+      this.stateSubject.next(WebSocketState.FAILED);
+      return;
+    }
+
+    this.reconnectAttempts++;
+    const interval = this.config.reconnectInterval ?? this.reconnectInterval;
+
+    this.reconnectTimer = setTimeout(() => {
+      if (this.config) {
+        this.connect(this.config);
+      }
+    }, interval);
+  }
+
+  private flushMessageQueue(): void {
+    if (this.messageQueue.length === 0) return;
+
+    const queue = [...this.messageQueue];
+    this.messageQueue = [];
+
+    queue.forEach(message => {
+      this.send(message);
+    });
+  }
+
+  private startPingInterval(interval: number): void {
+    this.pingTimer = setInterval(() => {
+      if (this.isConnected) {
+        this.ping();
+      }
+    }, interval);
+  }
+
+  private clearTimers(): void {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+
+    if (this.pingTimer) {
+      clearInterval(this.pingTimer);
+      this.pingTimer = null;
+    }
   }
 
   ngOnDestroy(): void {
