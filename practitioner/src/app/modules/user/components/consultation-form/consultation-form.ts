@@ -410,7 +410,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
       title: formValue.title,
       description: formValue.description || undefined,
       group_id: formValue.group_id ? parseInt(formValue.group_id) : undefined,
-      beneficiary_id: formValue.beneficiary_id ? parseInt(formValue.beneficiary_id) : undefined,
+      beneficiary: formValue.beneficiary_id ? parseInt(formValue.beneficiary_id) : undefined,
     };
 
     this.isAutoSaving.set(true);
@@ -513,7 +513,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
       title: formValue.title,
       description: formValue.description || undefined,
       group_id: formValue.group_id ? parseInt(formValue.group_id) : undefined,
-      beneficiary_id: beneficiaryId,
+      beneficiary: beneficiaryId,
     };
 
     this.consultationService
@@ -551,7 +551,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
       title: formValue.title,
       description: formValue.description || undefined,
       group_id: parseInt(formValue.group_id),
-      beneficiary_id: formValue.beneficiary_id
+      beneficiary: formValue.beneficiary_id
         ? parseInt(formValue.beneficiary_id)
         : undefined,
     };

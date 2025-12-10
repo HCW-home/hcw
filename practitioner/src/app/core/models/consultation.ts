@@ -75,7 +75,7 @@ export interface CreateConsultationRequest {
   title?: string;
   description?: string;
   group_id?: number;
-  beneficiary_id?: number;
+  beneficiary?: number;
 }
 
 export interface Reason {
