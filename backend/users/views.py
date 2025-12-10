@@ -741,6 +741,58 @@ class UserAppointmentViewSet(viewsets.ReadOnlyModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
+    @extend_schema(
+        responses={
+            200: {
+                'type': 'object',
+                'properties': {
+                    'url': {'type': 'string', 'description': 'Media server URL'},
+                    'token': {'type': 'string', 'description': 'JWT token for RTC connection'},
+                    'room': {'type': 'string', 'description': 'Test room name'}
+                },
+                'example': {
+                    "url": "wss://livekit.example.com",
+                    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                    "room": "usertest_123"
+                }
+            },
+            500: {
+                'type': 'object',
+                'properties': {
+                    'detail': {'type': 'string'}
+                },
+                'example': {"detail": "No media server available."}
+            }
+        },
+        description="Get RTC test connection information for the authenticated user. Returns server URL, JWT token, and room name for testing WebRTC connection."
+    )
+    @action(detail=True, methods=['get'])
+    def join(self, request, pk=None):
+        """Join consultation call"""
+        appointment = self.get_object()
+        if appointment.consultation.closed_at:
+            return Response(
+                {'error': 'Cannot join call in closed consultation'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            server = Server.get_server()
+
+            consultation_call_info = server.instance.appointment_participant_info(
+                appointment, request.user)
+
+            return Response({
+                'url': server.url,
+                'token': consultation_call_info,
+                'room': f"appointment_{appointment.pk}"
+            })
+        except Exception as e:
+            return Response(
+                {"detail": "No media server available."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 
 class TestRTCView(APIView):
     authentication_classes = [JWTAuthentication]
