@@ -1,412 +1,436 @@
 <app-page>
   <div class="consultation-detail">
-    <div class="consultation-header">
-      <app-back-button></app-back-button>
+    <button class="back-button" (click)="goBack()">
+      <app-svg src="svg/arrow-left.svg" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
+      <span>Back</span>
+    </button>
 
-      <div class="header-content">
-        <app-typography [variant]="TypographyTypeEnum['h1-bold']">
-          Consultation Details
-        </app-typography>
+    <div class="page-header">
+      <h1 class="page-title">Consultation Details</h1>
+      @if (consultation()) {
+        <div class="header-actions">
+          <app-button
+            text="Edit"
+            leftIcon="edit"
+            [style]="ButtonStyleEnum.stroke"
+            [size]="ButtonSizeEnum.medium"
+            (buttonClick)="editConsultation()">
+          </app-button>
 
-        @if (consultation()) {
-          <div class="header-actions">
+          @if (!consultation()?.closed_at) {
             <app-button
-              text="Edit"
-              leftIcon="edit"
-              [size]="ButtonSizeEnum.medium"
+              text="Close Consultation"
+              leftIcon="close"
               [style]="ButtonStyleEnum.stroke"
-              (buttonClick)="editConsultation()">
+              [state]="ButtonStateEnum.error"
+              [size]="ButtonSizeEnum.medium"
+              (buttonClick)="closeConsultation()">
             </app-button>
-
-            @if (!consultation()?.closed_at) {
-              <app-button
-                text="Close Consultation"
-                leftIcon="close"
-                [size]="ButtonSizeEnum.medium"
-                [style]="ButtonStyleEnum.stroke"
-                (buttonClick)="closeConsultation()">
-              </app-button>
-            } @else {
-              <app-button
-                text="Reopen Consultation"
-                leftIcon="refresh"
-                [size]="ButtonSizeEnum.medium"
-                [style]="ButtonStyleEnum.primary"
-                (buttonClick)="reopenConsultation()">
-              </app-button>
-            }
-          </div>
-        }
-      </div>
+          } @else {
+            <app-button
+              text="Reopen Consultation"
+              leftIcon="check"
+              [style]="ButtonStyleEnum.primary"
+              [size]="ButtonSizeEnum.medium"
+              (buttonClick)="reopenConsultation()">
+            </app-button>
+          }
+        </div>
+      }
     </div>
 
     @if (isLoadingConsultation()) {
       <div class="loading-container">
         <app-loader></app-loader>
-        <app-typography
-          [variant]="TypographyTypeEnum['body-regular']"
-          color="var(--slate-500)">
-          Loading consultation...
-        </app-typography>
+        <span class="loading-text">Loading consultation...</span>
       </div>
     } @else if (consultation()) {
       <div class="consultation-content-wrapper">
         <div class="main-content">
           <div class="consultation-info-card">
             <div class="info-header">
-          <div class="title-section">
-            <app-typography [variant]="TypographyTypeEnum['h2-semibold']">
-              {{
-                consultation()?.title || 'Consultation #' + consultation()?.id
-              }}
-            </app-typography>
-            <div class="consultation-status">
-              @if (consultation()?.closed_at) {
-                <app-badge [type]="BadgeTypeEnum.red"> Closed </app-badge>
-              } @else {
-                <app-badge [type]="BadgeTypeEnum.green"> Active </app-badge>
+              <div class="title-row">
+                <h2 class="consultation-title">{{ consultation()?.title || 'Consultation #' + consultation()?.id }}</h2>
+                <span class="status-badge" [class.active]="!consultation()?.closed_at" [class.closed]="consultation()?.closed_at">
+                  {{ consultation()?.closed_at ? 'Closed' : 'Active' }}
+                </span>
+              </div>
+              <span class="created-date">Created on {{ formatDateTime(consultation()!.created_at) }}</span>
+            </div>
+
+            @if (consultation()?.description) {
+              <p class="description">{{ consultation()?.description }}</p>
+            }
+
+            <div class="info-grid">
+              @if (consultation()?.created_by) {
+                <div class="info-item">
+                  <span class="info-label">Created by</span>
+                  <span class="info-value">{{ consultation()!.created_by.first_name }} {{ consultation()!.created_by.last_name }}</span>
+                  <span class="info-sub">{{ consultation()!.created_by.email }}</span>
+                </div>
+              }
+
+              @if (consultation()?.owned_by) {
+                <div class="info-item">
+                  <span class="info-label">Owned by</span>
+                  <span class="info-value">{{ consultation()!.owned_by.first_name }} {{ consultation()!.owned_by.last_name }}</span>
+                  <span class="info-sub">{{ consultation()!.owned_by.email }}</span>
+                </div>
+              }
+
+              <div class="info-item">
+                <span class="info-label">Patient</span>
+                <span class="info-value">{{ getBeneficiaryDisplayName() }}</span>
+                @if (consultation()?.beneficiary?.email) {
+                  <span class="info-sub">{{ consultation()!.beneficiary!.email }}</span>
+                }
+              </div>
+
+              @if (consultation()?.group) {
+                <div class="info-item">
+                  <span class="info-label">Queue</span>
+                  <span class="info-value">{{ consultation()!.group!.name }}</span>
+                </div>
               }
             </div>
           </div>
 
-          <app-typography
-            [variant]="TypographyTypeEnum['body-regular']"
-            color="var(--slate-500)">
-            Created on {{ formatDateTime(consultation()!.created_at) }}
-          </app-typography>
+<!--          @if (!consultation()?.closed_at) {-->
+<!--            <div class="video-call-section">-->
+<!--              @if (!inCall()) {-->
+<!--                <div class="video-call-invite">-->
+<!--                  <div class="invite-content">-->
+<!--                    <div class="video-icon">-->
+<!--                      <app-svg src="video" [svgStyle]="{'width.px': 32, 'height.px': 32}"></app-svg>-->
+<!--                    </div>-->
+<!--                    <h3>Video Consultation</h3>-->
+<!--                    <p>Start a video call to consult with participants in real-time</p>-->
+<!--                    <button class="btn-primary large" (click)="joinVideoCall()">-->
+<!--                      <app-svg src="video" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>-->
+<!--                      Join Video Call-->
+<!--                    </button>-->
+<!--                  </div>-->
+<!--                </div>-->
+<!--              } @else {-->
+<!--                <app-video-consultation-->
+<!--                  [consultationId]="activeAppointmentId() ? undefined : consultationId"-->
+<!--                  [appointmentId]="activeAppointmentId() ?? undefined"-->
+<!--                  (leave)="onCallEnded()">-->
+<!--                </app-video-consultation>-->
+<!--              }-->
+<!--            </div>-->
+<!--          }-->
+
+          <div class="appointments-section">
+            <div class="section-header">
+              <h3 class="section-title">Appointments ({{ appointments().length }})</h3>
+              @if (!consultation()?.closed_at) {
+                <button class="btn-primary" (click)="openCreateAppointmentModal()">
+                  <app-svg src="plus" [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
+                  New Appointment
+                </button>
+              }
+            </div>
+
+            @if (isLoadingAppointments()) {
+              <div class="loading-container small">
+                <app-loader></app-loader>
+                <span class="loading-text">Loading appointments...</span>
+              </div>
+            } @else if (appointments().length === 0) {
+              <div class="empty-state">
+                <app-svg src="calendar" [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
+                <span class="empty-title">No appointments found</span>
+                <span class="empty-text">Create an appointment to get started</span>
+              </div>
+            } @else {
+              <div class="appointments-list">
+                @for (appointment of appointments(); track appointment.id) {
+                  <div class="appointment-card">
+                    <div class="appointment-header">
+                      <div class="appointment-info">
+                        <div class="date-time">
+                          <app-svg src="calendar" [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
+                          <span>{{ formatDateTime(appointment.scheduled_at) }}</span>
+                        </div>
+                        <span class="appointment-type" [class.online]="appointment.type === 'Online'">
+                          {{ appointment.type }}
+                        </span>
+                      </div>
+                      <span class="status-badge" [class]="appointment.status.toLowerCase()">
+                        {{ appointment.status }}
+                      </span>
+                    </div>
+
+                    @if (appointment.end_expected_at) {
+                      <div class="expected-end">
+                        <app-svg src="schedule" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
+                        <span>Expected end: {{ formatDateTime(appointment.end_expected_at) }}</span>
+                      </div>
+                    }
+
+                    <div class="participants-section">
+                      <span class="participants-label">Participants ({{ appointment.participants.length }})</span>
+                      @if (appointment.participants.length) {
+                        <div class="participants-list">
+                          @for (participant of appointment.participants; track participant.id) {
+                            <div class="participant-item">
+                              <div class="participant-avatar">
+                                {{ getParticipantInitials(participant) }}
+                              </div>
+                              <div class="participant-details">
+                                <span class="participant-name">{{ getUserDisplayName(participant) }}</span>
+                                <span class="participant-contact">{{ participant.email || participant.phone || '' }}</span>
+                              </div>
+                              <span class="participant-status" [class.confirmed]="participant.is_confirmed">
+                                {{ participant.is_confirmed ? 'Confirmed' : 'Pending' }}
+                              </span>
+                            </div>
+                          }
+                        </div>
+                      } @else {
+                        <span class="no-participants">No participants added</span>
+                      }
+                    </div>
+
+                    <div class="appointment-actions">
+                      @if (appointment.status === AppointmentStatus.SCHEDULED && appointment.type === 'Online') {
+                        <button class="btn-primary small" (click)="joinVideoCall(appointment.id)">
+                          <app-svg src="video" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                          Join
+                        </button>
+                      }
+                      @if (appointment.status === AppointmentStatus.SCHEDULED && !consultation()?.closed_at) {
+                        <button class="btn-secondary small" (click)="openManageParticipantsModal(appointment)">
+                          <app-svg src="users" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                          Manage Participants
+                        </button>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
         </div>
 
-        @if (consultation()?.description) {
-          <div class="description">
-            <app-typography [variant]="TypographyTypeEnum['body-regular']">
-              {{ consultation()?.description }}
-            </app-typography>
+        <div class="messages-sidebar">
+          <app-message-list
+            [messages]="messages()"
+            [isConnected]="true"
+            (sendMessage)="onSendMessage($event)">
+          </app-message-list>
+        </div>
+      </div>
+    }
+  </div>
+
+  @if (showCreateAppointmentModal()) {
+    <div class="modal-backdrop" (click)="closeCreateAppointmentModal()"></div>
+    <div class="modal-container">
+      <div class="modal-header">
+        <h2>Create New Appointment</h2>
+        <button class="modal-close" (click)="closeCreateAppointmentModal()">
+          <app-svg src="close" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
+        </button>
+      </div>
+      <form [formGroup]="appointmentForm" (ngSubmit)="createAppointment()" class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Appointment Type <span class="required">*</span></label>
+          <div class="type-toggle">
+            <button type="button" class="type-btn" [class.active]="appointmentForm.get('type')?.value === 'Online'" (click)="setAppointmentType('Online')">
+              <app-svg src="video" [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
+              Online
+            </button>
+            <button type="button" class="type-btn" [class.active]="appointmentForm.get('type')?.value === 'InPerson'" (click)="setAppointmentType('InPerson')">
+              <app-svg src="users" [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
+              In Person
+            </button>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Date <span class="required">*</span></label>
+            <input type="date" class="form-input" formControlName="date">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Time <span class="required">*</span></label>
+            <input type="time" class="form-input" formControlName="time">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Expected End Time (Optional)</label>
+          <input type="datetime-local" class="form-input" formControlName="end_expected_at">
+        </div>
+
+        <div class="participants-form-section">
+          <div class="section-header">
+            <label class="form-label">Guests</label>
+            <button type="button" class="btn-text" (click)="addModalParticipant()">
+              <app-svg src="plus" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+              Add Guest
+            </button>
+          </div>
+
+          @for (participant of modalParticipants(); track $index; let i = $index) {
+            <div class="guest-card">
+              <div class="form-group">
+                <label class="form-label">Name</label>
+                <input type="text" class="form-input" [value]="participant.name" (input)="updateModalParticipant(i, 'name', $event)">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Contact Method</label>
+                <div class="contact-toggle">
+                  <button type="button" class="contact-btn" [class.active]="participant.contactType === 'email'" (click)="updateModalParticipant(i, 'contactType', 'email')">
+                    <app-svg src="mail" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                    Email
+                  </button>
+                  <button type="button" class="contact-btn" [class.active]="participant.contactType === 'phone'" (click)="updateModalParticipant(i, 'contactType', 'phone')">
+                    <app-svg src="phone" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                    Phone
+                  </button>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">
+                  @if (participant.contactType === 'email') {
+                    Email Address
+                  } @else {
+                    Phone Number
+                  }
+                </label>
+                <input
+                  [type]="participant.contactType === 'email' ? 'email' : 'tel'"
+                  class="form-input"
+                  [value]="participant.email"
+                  [placeholder]="participant.contactType === 'email' ? 'guest@email.com' : '+33 6 12 34 56 78'"
+                  (input)="updateModalParticipant(i, 'email', $event)">
+              </div>
+              @if (modalParticipants().length > 1) {
+                <button type="button" class="remove-guest-btn" (click)="removeModalParticipant(i)">
+                  <app-svg src="close" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                </button>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" (click)="closeCreateAppointmentModal()">Cancel</button>
+          <button type="submit" class="btn-primary" [disabled]="appointmentForm.invalid || isCreatingAppointment()">
+            @if (isCreatingAppointment()) {
+              <span class="btn-loader"></span>
+            }
+            Create Appointment
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+
+  @if (showManageParticipantsModal()) {
+    <div class="modal-backdrop" (click)="closeManageParticipantsModal()"></div>
+    <div class="modal-container">
+      <div class="modal-header">
+        <h2>Manage Participants</h2>
+        <button class="modal-close" (click)="closeManageParticipantsModal()">
+          <app-svg src="close" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        @if (selectedAppointment()) {
+          <div class="appointment-info-summary">
+            <app-svg src="calendar" [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
+            <span>{{ formatDateTime(selectedAppointment()!.scheduled_at) }}</span>
+            <span class="appointment-type" [class.online]="selectedAppointment()!.type === 'Online'">
+              {{ selectedAppointment()!.type }}
+            </span>
           </div>
         }
 
-        <div class="info-grid">
-          @if (consultation()?.created_by) {
-            <div class="info-item">
-              <app-typography
-                [variant]="TypographyTypeEnum['body-s-medium']"
-                color="var(--slate-500)">
-                Created by
-              </app-typography>
-              <app-typography [variant]="TypographyTypeEnum['body-regular']">
-                {{ consultation()!.created_by.first_name }}
-                {{ consultation()!.created_by.last_name }}
-              </app-typography>
-              <app-typography
-                [variant]="TypographyTypeEnum['body-s-regular']"
-                color="var(--slate-500)">
-                {{ consultation()!.created_by.email }}
-              </app-typography>
-            </div>
-          }
-
-          @if (consultation()?.owned_by) {
-            <div class="info-item">
-              <app-typography
-                [variant]="TypographyTypeEnum['body-s-medium']"
-                color="var(--slate-500)">
-                Owned by
-              </app-typography>
-              <app-typography [variant]="TypographyTypeEnum['body-regular']">
-                {{ consultation()!.owned_by.first_name }}
-                {{ consultation()!.owned_by.last_name }}
-              </app-typography>
-              <app-typography
-                [variant]="TypographyTypeEnum['body-s-regular']"
-                color="var(--slate-500)">
-                {{ consultation()!.owned_by.email }}
-              </app-typography>
-            </div>
-          }
-
-          <div class="info-item">
-            <app-typography
-              [variant]="TypographyTypeEnum['body-s-medium']"
-              color="var(--slate-500)">
-              Patient
-            </app-typography>
-            <app-typography [variant]="TypographyTypeEnum['body-regular']">
-              {{ getBeneficiaryDisplayName() }}
-            </app-typography>
-            @if (consultation()?.beneficiary?.email) {
-              <app-typography
-                [variant]="TypographyTypeEnum['body-s-regular']"
-                color="var(--slate-500)">
-                {{ consultation()!.beneficiary!.email }}
-              </app-typography>
-            }
+        <div class="participants-manage-section">
+          <div class="section-header">
+            <span class="label">Current Participants ({{ participants().length }})</span>
           </div>
 
-          @if (consultation()?.group) {
-            <div class="info-item">
-              <app-typography
-                [variant]="TypographyTypeEnum['body-s-medium']"
-                color="var(--slate-500)">
-                Queue
-              </app-typography>
-              <app-typography [variant]="TypographyTypeEnum['body-regular']">
-                {{ consultation()!.group!.name }}
-              </app-typography>
-            </div>
-          }
-        </div>
-      </div>
-
-      @if (!consultation()?.closed_at) {
-        <div class="video-call-section">
-          @if (!inCall()) {
-            <div class="video-call-invite">
-              <div class="invite-content">
-                <app-svg
-                  src="video"
-                  [svgStyle]="{
-                    'width.px': 48,
-                    'height.px': 48,
-                  }"></app-svg>
-                <app-typography [variant]="TypographyTypeEnum['h3-semibold']">
-                  Video Consultation
-                </app-typography>
-                <app-typography
-                  [variant]="TypographyTypeEnum['body-regular']"
-                  color="var(--slate-500)">
-                  Start a video call to consult with participants in real-time
-                </app-typography>
-                <app-button
-                  text="Join Video Call"
-                  leftIcon="video"
-                  [size]="ButtonSizeEnum.large"
-                  [style]="ButtonStyleEnum.primary"
-                  (buttonClick)="joinVideoCall()">
-                </app-button>
-              </div>
-            </div>
-          } @else {
-            <app-video-consultation
-              [consultationId]="activeAppointmentId() ? undefined : consultationId"
-              [appointmentId]="activeAppointmentId() ?? undefined"
-              (leave)="onCallEnded()">
-            </app-video-consultation>
-          }
-        </div>
-      }
-
-      <div class="tab-content">
-        <div class="appointments-section">
-          @if (isLoadingAppointments()) {
-            <div class="loading-container">
+          @if (isLoadingParticipants()) {
+            <div class="loading-container small">
               <app-loader></app-loader>
-              <app-typography
-                [variant]="TypographyTypeEnum['body-regular']"
-                color="var(--slate-500)">
-                Loading appointments...
-              </app-typography>
+            </div>
+          } @else if (participants().length === 0) {
+            <div class="empty-participants">
+              <span>No participants yet</span>
             </div>
           } @else {
-            <div class="appointments-list">
-              <div class="list-header">
-                <app-typography [variant]="TypographyTypeEnum['h3-semibold']">
-                  Appointments ({{ appointments().length }})
-                </app-typography>
-              </div>
-
-              @if (appointments().length === 0) {
-                <div class="empty-state">
-                  <app-svg
-                    src="calendar"
-                    [svgStyle]="{
-                      'width.px': 48,
-                      'height.px': 48,
-                      opacity: 0.3,
-                    }"></app-svg>
-                  <app-typography
-                    [variant]="TypographyTypeEnum['body-l-medium']"
-                    color="var(--slate-400)">
-                    No appointments found
-                  </app-typography>
-                  <app-typography
-                    [variant]="TypographyTypeEnum['body-regular']"
-                    color="var(--slate-500)">
-                    Create an appointment above to get started
-                  </app-typography>
-                </div>
-              } @else {
-                <div class="appointments-grid">
-                  @for (appointment of appointments(); track appointment.id) {
-                    <div
-                      class="appointment-card"
-                      [class.selected]="
-                        selectedAppointment()?.id === appointment.id
-                      ">
-                      <div class="appointment-header">
-                        <div class="appointment-date">
-                          <app-svg
-                            src="calendar"
-                            [svgStyle]="{
-                              'width.px': 20,
-                              'height.px': 20,
-                            }"></app-svg>
-                          <app-typography
-                            [variant]="TypographyTypeEnum['body-medium']">
-                            {{ formatDateTime(appointment.scheduled_at) }}
-                          </app-typography>
-                        </div>
-
-                        <app-badge
-                          [type]="
-                            getAppointmentStatusBadgeType(appointment.status)
-                          ">
-                          {{ appointment.status }}
-                        </app-badge>
-                      </div>
-
-                      @if (appointment.end_expected_at) {
-                        <div class="appointment-end">
-                          <app-svg
-                            src="schedule"
-                            [svgStyle]="{
-                              'width.px': 16,
-                              'height.px': 16,
-                            }"></app-svg>
-                          <app-typography
-                            [variant]="TypographyTypeEnum['body-s-regular']"
-                            color="var(--slate-500)">
-                            Expected end:
-                            {{ formatDateTime(appointment.end_expected_at) }}
-                          </app-typography>
-                        </div>
-                      }
-
-                      <div class="participants-preview">
-                        <app-typography
-                          [variant]="TypographyTypeEnum['body-s-medium']"
-                          color="var(--slate-500)">
-                          Participants: {{ appointment.participants.length }}
-                        </app-typography>
-                      </div>
-
-                      <div class="appointment-actions">
-                        @if (appointment.status === AppointmentStatus.SCHEDULED && appointment.type === 'Online') {
-                          <app-button
-                            text="Join"
-                            leftIcon="video"
-                            [size]="ButtonSizeEnum.small"
-                            [style]="ButtonStyleEnum.primary"
-                            (buttonClick)="joinVideoCall(appointment.id)">
-                          </app-button>
-                        }
-
-                        <app-button
-                          text="Participants"
-                          leftIcon="users"
-                          [size]="ButtonSizeEnum.small"
-                          [style]="ButtonStyleEnum.text"
-                          (buttonClick)="selectAppointment(appointment)">
-                        </app-button>
-
-                        @if (
-                          appointment.status === AppointmentStatus.SCHEDULED
-                        ) {
-                          <app-button
-                            text="Cancel"
-                            leftIcon="close"
-                            [size]="ButtonSizeEnum.small"
-                            [style]="ButtonStyleEnum.stroke"
-                            (buttonClick)="cancelAppointment(appointment)">
-                          </app-button>
-                        }
-                      </div>
-                    </div>
-                  }
+            <div class="participants-manage-list">
+              @for (participant of participants(); track participant.id) {
+                <div class="participant-manage-item">
+                  <div class="participant-avatar">
+                    {{ getParticipantInitials(participant) }}
+                  </div>
+                  <div class="participant-details">
+                    <span class="participant-name">{{ getUserDisplayName(participant) }}</span>
+                    <span class="participant-contact">{{ participant.email || participant.phone || '' }}</span>
+                  </div>
+                  <span class="participant-status" [class.confirmed]="participant.is_confirmed">
+                    {{ participant.is_confirmed ? 'Confirmed' : 'Pending' }}
+                  </span>
+                  <button type="button" class="btn-remove" (click)="removeParticipant(participant)">
+                    <app-svg src="close" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                  </button>
                 </div>
               }
             </div>
           }
+        </div>
 
-          <div class="create-form-card">
-            <div class="form-header">
-              <app-typography [variant]="TypographyTypeEnum['h3-semibold']">
-                Create New Appointment
-              </app-typography>
+        <div class="add-participant-section">
+          <div class="section-header">
+            <span class="label">Add New Participant</span>
+          </div>
+          <form [formGroup]="participantForm" (ngSubmit)="addParticipantToAppointment()" class="add-participant-form">
+            <div class="form-group">
+              <label class="form-label">Contact Method</label>
+              <div class="contact-toggle">
+                <button type="button" class="contact-btn" [class.active]="participantForm.get('message_type')?.value === 'email'" (click)="setParticipantMessageType('email')">
+                  <app-svg src="mail" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                  Email
+                </button>
+                <button type="button" class="contact-btn" [class.active]="participantForm.get('message_type')?.value === 'sms'" (click)="setParticipantMessageType('sms')">
+                  <app-svg src="phone" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                  Phone
+                </button>
+              </div>
             </div>
 
-            <form
-              [formGroup]="appointmentForm"
-              (ngSubmit)="createAppointment()"
-              class="appointment-form">
-              <div class="form-row">
-                <app-select
-                  label="Appointment Type"
-                  formControlName="type"
-                  [options]="appointmentTypeOptions"
-                  [invalid]="
-                    (appointmentForm.get('type')?.invalid &&
-                      appointmentForm.get('type')?.touched) ||
-                    false
-                  "
-                  invalidMessage="Appointment type is required"
-                  class="full-width">
-                </app-select>
+            @if (participantForm.get('message_type')?.value === 'email') {
+              <div class="form-group">
+                <label class="form-label">Email Address</label>
+                <input type="email" class="form-input" formControlName="email" placeholder="participant@email.com">
               </div>
+            } @else {
+              <div class="form-group">
+                <label class="form-label">Phone Number</label>
+                <input type="tel" class="form-input" formControlName="phone" placeholder="+33 6 12 34 56 78">
+              </div>
+            }
 
-              <div class="form-row">
-                <app-input
-                  label="Scheduled Date & Time"
-                  type="datetime-local"
-                  formControlName="scheduled_at"
-                  [invalid]="
-                    (appointmentForm.get('scheduled_at')?.invalid &&
-                      appointmentForm.get('scheduled_at')?.touched) ||
-                    false
-                  "
-                  invalidMessage="Scheduled date and time is required"
-                  placeholder="Select date and time"
-                  class="full-width">
-                </app-input>
-              </div>
+            <button type="submit" class="btn-primary" [disabled]="isAddingParticipant()">
+              @if (isAddingParticipant()) {
+                <span class="btn-loader"></span>
+              }
+              Add Participant
+            </button>
+          </form>
+        </div>
 
-              <div class="form-row">
-                <app-input
-                  label="Expected End Time (Optional)"
-                  type="datetime-local"
-                  formControlName="end_expected_at"
-                  placeholder="Select end time"
-                  class="full-width">
-                </app-input>
-              </div>
-
-              <div class="form-actions">
-                <app-button
-                  text="Create Appointment"
-                  leftIcon="plus"
-                  [size]="ButtonSizeEnum.medium"
-                  [style]="ButtonStyleEnum.primary"
-                  [disabled]="appointmentForm.invalid"
-                  [type]="ButtonTypeEnum.submit">
-                </app-button>
-              </div>
-            </form>
-          </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-primary" (click)="closeManageParticipantsModal()">Done</button>
         </div>
       </div>
     </div>
-
-    <div class="messages-sidebar">
-        <div class="messages-header">
-          <app-typography [variant]="TypographyTypeEnum['h3-semibold']">
-            Messages
-          </app-typography>
-        </div>
-        <app-message-list
-          [messages]="messages()"
-          [isConnected]="true"
-          (sendMessage)="onSendMessage($event)">
-        </app-message-list>
-      </div>
-    </div>
-    }
-  </div>
+  }
 </app-page>

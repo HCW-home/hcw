@@ -56,6 +56,7 @@ export class Dashboard implements OnInit {
 
   recentConsultations = signal<Consultation[]>([]);
   upcomingAppointments = signal<{ appointment: Appointment; consultation: Consultation }[]>([]);
+  overdueConsultations = signal<Consultation[]>([]);
 
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
@@ -110,8 +111,23 @@ export class Dashboard implements OnInit {
           closedConsultations: closedCount
         });
 
-        this.recentConsultations.set(data.activeConsultations.results.slice(0, 5));
-        this.loadUpcomingAppointments(data.activeConsultations.results);
+        const allActive = data.activeConsultations.results;
+        const now = new Date();
+        const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+
+        const overdue = allActive.filter(c => {
+          const updatedAt = new Date(c.updated_at);
+          return updatedAt < threeDaysAgo;
+        });
+
+        const recent = allActive.filter(c => {
+          const updatedAt = new Date(c.updated_at);
+          return updatedAt >= threeDaysAgo;
+        });
+
+        this.overdueConsultations.set(overdue.slice(0, 5));
+        this.recentConsultations.set(recent.slice(0, 4));
+        this.loadUpcomingAppointments(allActive);
         this.loading.set(false);
       },
       error: () => {
@@ -196,6 +212,22 @@ export class Dashboard implements OnInit {
       return `In ${diffHours} hours`;
     } else {
       return 'Soon';
+    }
+  }
+
+  getWaitingTime(consultation: Consultation): string {
+    const updatedAt = new Date(consultation.updated_at);
+    const now = new Date();
+    const diffMs = now.getTime() - updatedAt.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 1) {
+      return '1 day';
+    } else if (diffDays > 1) {
+      return `${diffDays} days`;
+    } else {
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      return diffHours === 1 ? '1 hour' : `${diffHours} hours`;
     }
   }
 

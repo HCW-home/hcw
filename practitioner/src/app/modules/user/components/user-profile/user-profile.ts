@@ -1,6 +1,6 @@
 import {Component, OnInit, OnDestroy, signal, inject} from '@angular/core';
 import {FormBuilder, FormGroup, Validators, ReactiveFormsModule} from '@angular/forms';
-import {CommonModule} from '@angular/common';
+import {CommonModule, Location} from '@angular/common';
 import {Subject, takeUntil} from 'rxjs';
 
 import {UserService} from '../../../../core/services/user.service';
@@ -9,19 +9,10 @@ import {IUser, IUserUpdateRequest, ILanguage} from '../../models/user';
 import {CommunicationMethodOptions, TimezoneOptions} from '../../constants/user';
 
 import {Page} from '../../../../core/components/page/page';
-import {BackButton} from '../../../../shared/components/back-button/back-button';
-import {Badge} from '../../../../shared/components/badge/badge';
 import {Loader} from '../../../../shared/components/loader/loader';
-
-import {Typography} from '../../../../shared/ui-components/typography/typography';
-import {Button} from '../../../../shared/ui-components/button/button';
-import {Input} from '../../../../shared/ui-components/input/input';
 import {Select} from '../../../../shared/ui-components/select/select';
 import {Svg} from '../../../../shared/ui-components/svg/svg';
 
-import {TypographyTypeEnum} from '../../../../shared/constants/typography';
-import {ButtonSizeEnum, ButtonStyleEnum} from '../../../../shared/constants/button';
-import {BadgeTypeEnum} from '../../../../shared/constants/badge';
 import {SelectOption} from '../../../../shared/models/select';
 import {ValidationService} from '../../../../core/services/validation.service';
 
@@ -32,19 +23,15 @@ import {ValidationService} from '../../../../core/services/validation.service';
   imports: [
     Svg,
     Page,
-    Input,
-    Badge,
     Loader,
-    Button,
     Select,
-    Typography,
-    BackButton,
     CommonModule,
     ReactiveFormsModule,
   ]
 })
 export class UserProfile implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  private location = inject(Location);
   public validationService = inject(ValidationService);
 
   user = signal<IUser | null>(null);
@@ -54,11 +41,6 @@ export class UserProfile implements OnInit, OnDestroy {
   isSaving = signal(false);
 
   profileForm: FormGroup;
-
-  protected readonly TypographyTypeEnum = TypographyTypeEnum;
-  protected readonly ButtonSizeEnum = ButtonSizeEnum;
-  protected readonly ButtonStyleEnum = ButtonStyleEnum;
-  protected readonly BadgeTypeEnum = BadgeTypeEnum;
 
   communicationMethods: SelectOption[] = CommunicationMethodOptions;
   timezoneOptions: SelectOption[] = TimezoneOptions;
@@ -198,5 +180,15 @@ export class UserProfile implements OnInit, OnDestroy {
       .map(lang => languages.indexOf(lang!) + 1);
   }
 
+  goBack(): void {
+    this.location.back();
+  }
 
+  getInitials(): string {
+    const user = this.user();
+    if (!user) return '';
+    const first = user.first_name?.charAt(0) || '';
+    const last = user.last_name?.charAt(0) || '';
+    return (first + last).toUpperCase();
+  }
 }

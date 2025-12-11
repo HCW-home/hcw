@@ -1,295 +1,203 @@
 <app-page>
   <div class="user-profile">
-    <div class="profile-header">
-      <app-back-button></app-back-button>
+    <button class="back-button" (click)="goBack()">
+      <app-svg src="svg/arrow-left.svg" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
+      <span>Back</span>
+    </button>
 
-      <div class="header-content">
-        <app-typography [variant]="TypographyTypeEnum['h1-bold']">
-          User Profile
-        </app-typography>
-
-        @if (user()) {
-          <div class="header-actions">
-            @if (!isEditing()) {
-              <app-button
-                text="Edit Profile"
-                leftIcon="edit"
-                [size]="ButtonSizeEnum.medium"
-                [style]="ButtonStyleEnum.primary"
-                (buttonClick)="toggleEdit()">
-              </app-button>
-            } @else {
-              <div class="edit-actions">
-                <app-button
-                  text="Cancel"
-                  [size]="ButtonSizeEnum.medium"
-                  [style]="ButtonStyleEnum.text"
-                  (buttonClick)="toggleEdit()">
-                </app-button>
-                <app-button
-                  text="Save Changes"
-                  leftIcon="save"
-                  [size]="ButtonSizeEnum.medium"
-                  [style]="ButtonStyleEnum.primary"
-                  [disabled]="isSaving()"
-                  (buttonClick)="saveProfile()">
-                </app-button>
-              </div>
-            }
-          </div>
-        }
-      </div>
+    <div class="page-header">
+      <h1 class="page-title">User Profile</h1>
+      @if (user()) {
+        <div class="header-actions">
+          @if (!isEditing()) {
+            <button class="btn-edit" (click)="toggleEdit()">
+              <app-svg src="svg/edit.svg" [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
+              Edit Profile
+            </button>
+          } @else {
+            <button class="btn-cancel" (click)="toggleEdit()">Cancel</button>
+            <button class="btn-save" [disabled]="isSaving()" (click)="saveProfile()">
+              @if (isSaving()) {
+                <span class="btn-loader"></span>
+              }
+              Save Changes
+            </button>
+          }
+        </div>
+      }
     </div>
 
     @if (isLoadingUser()) {
       <div class="loading-container">
         <app-loader></app-loader>
-        <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
-          Loading profile...
-        </app-typography>
+        <span class="loading-text">Loading profile...</span>
       </div>
     } @else if (user()) {
-      <div class="profile-info-card">
-        <div class="info-header">
-          <div class="user-avatar">
-            <app-svg src="svg/user.svg" [svgStyle]="{'width.px': 39, 'height.px': 39}"></app-svg>
-          </div>
-          <div class="user-basic-info">
-            <app-typography [variant]="TypographyTypeEnum['h2-semibold']">
-              {{ user()!.first_name }} {{ user()!.last_name }}
-            </app-typography>
-            <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
-              {{ user()!.email }}
-            </app-typography>
-          </div>
-        </div>
-
-        @if (!isEditing()) {
-          <div class="profile-details">
-            <div class="info-section">
-              <app-typography [variant]="TypographyTypeEnum['h6-regular']">
-                Personal Information
-              </app-typography>
-              <div class="info-grid">
-                <div class="info-item">
-                  <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--slate-500)">
-                    First Name
-                  </app-typography>
-                  <app-typography [variant]="TypographyTypeEnum['body-regular']">
-                    {{ user()!.first_name }}
-                  </app-typography>
-                </div>
-                <div class="info-item">
-                  <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--slate-500)">
-                    Last Name
-                  </app-typography>
-                  <app-typography [variant]="TypographyTypeEnum['body-regular']">
-                    {{ user()!.last_name }}
-                  </app-typography>
-                </div>
-                <div class="info-item">
-                  <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--slate-500)">
-                    Email Address
-                  </app-typography>
-                  <app-typography [variant]="TypographyTypeEnum['body-regular']">
-                    {{ user()!.email }}
-                  </app-typography>
-                </div>
-              </div>
+      <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
+        <div class="profile-card">
+          <div class="profile-header-section">
+            <div class="user-avatar">
+              <span class="avatar-initials">{{ getInitials() }}</span>
             </div>
-
-            <div class="info-section">
-              <app-typography [variant]="TypographyTypeEnum['h6-regular']">
-                Contact Information
-              </app-typography>
-              <div class="info-grid">
-                <div class="info-item">
-                  <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--slate-500)">
-                    Email Address
-                  </app-typography>
-                  <app-typography [variant]="TypographyTypeEnum['body-regular']">
-                    {{ user()!.email }}
-                  </app-typography>
-                </div>
-                <div class="info-item">
-                  <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--slate-500)">
-                    Mobile Phone
-                  </app-typography>
-                  <app-typography [variant]="TypographyTypeEnum['body-regular']">
-                    {{ user()!.mobile_phone_number || 'Not provided' }}
-                  </app-typography>
-                </div>
-                <div class="info-item">
-                  <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--slate-500)">
-                    Preferred Communication
-                  </app-typography>
-                  <div class="communication-method">
-                    <app-badge [type]="BadgeTypeEnum.blue">
-                      {{ getCommunicationMethodLabel(user()!.communication_method) }}
-                    </app-badge>
-                  </div>
-                </div>
-              </div>
+            <div class="user-info">
+              <h2 class="user-name">{{ user()!.first_name }} {{ user()!.last_name }}</h2>
+              <span class="user-email">{{ user()!.email }}</span>
             </div>
+          </div>
 
-            <div class="info-section">
-              <app-typography [variant]="TypographyTypeEnum['h6-regular']">
-                Preferences
-              </app-typography>
-              <div class="info-grid">
-                <div class="info-item">
-                  <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--slate-500)">
-                    Timezone
-                  </app-typography>
-                  <app-typography [variant]="TypographyTypeEnum['body-regular']">
-                    {{ user()!.timezone || 'UTC' }}
-                  </app-typography>
-                </div>
-                <div class="info-item">
-                  <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--slate-500)">
-                    Preferred Language
-                  </app-typography>
-                  <app-typography [variant]="TypographyTypeEnum['body-regular']">
-                    {{ user()!.preferred_language || 'Not set' }}
-                  </app-typography>
-                </div>
-                @if (user()!.languages?.length) {
-                  <div class="info-item full-width">
-                    <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--slate-500)">
-                      Available Languages
-                    </app-typography>
-                    <div class="specialities-list">
-                      @for (language of user()!.languages; track language.code) {
-                        <app-badge [type]="BadgeTypeEnum.blue">
-                          {{ language.name }}
-                        </app-badge>
-                      }
-                    </div>
-                  </div>
+          <div class="profile-section">
+            <h3 class="section-title">Personal Information</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">First Name @if (isEditing()) {<span class="required">*</span>}</label>
+                @if (isEditing()) {
+                  <input
+                    type="text"
+                    class="form-input"
+                    formControlName="first_name"
+                    placeholder="Enter first name"
+                    [class.invalid]="profileForm.get('first_name')?.invalid && profileForm.get('first_name')?.touched">
+                  @if (profileForm.get('first_name')?.invalid && profileForm.get('first_name')?.touched) {
+                    <span class="error-message">First name is required</span>
+                  }
+                } @else {
+                  <span class="info-value">{{ user()!.first_name }}</span>
+                }
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Last Name @if (isEditing()) {<span class="required">*</span>}</label>
+                @if (isEditing()) {
+                  <input
+                    type="text"
+                    class="form-input"
+                    formControlName="last_name"
+                    placeholder="Enter last name"
+                    [class.invalid]="profileForm.get('last_name')?.invalid && profileForm.get('last_name')?.touched">
+                  @if (profileForm.get('last_name')?.invalid && profileForm.get('last_name')?.touched) {
+                    <span class="error-message">Last name is required</span>
+                  }
+                } @else {
+                  <span class="info-value">{{ user()!.last_name }}</span>
+                }
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Email Address</label>
+                @if (isEditing()) {
+                  <input
+                    type="email"
+                    class="form-input readonly"
+                    formControlName="email"
+                    placeholder="Email cannot be changed">
+                } @else {
+                  <span class="info-value">{{ user()!.email }}</span>
                 }
               </div>
             </div>
+          </div>
 
-            @if (user()!.specialities?.length) {
-              <div class="info-section">
-                <app-typography [variant]="TypographyTypeEnum['h6-regular']">
-                  Professional Information
-                </app-typography>
-                <div class="info-grid">
-                  <div class="info-item full-width">
-                    <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--slate-500)">
-                      Specialities
-                    </app-typography>
-                    <div class="specialities-list">
-                      @for (speciality of user()!.specialities; track speciality.id) {
-                        <app-badge [type]="BadgeTypeEnum.green">
-                          {{ speciality.name }}
-                        </app-badge>
-                      }
-                    </div>
+          <div class="profile-section">
+            <h3 class="section-title">Contact Information</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Mobile Phone</label>
+                @if (isEditing()) {
+                  <input
+                    type="tel"
+                    class="form-input"
+                    formControlName="mobile_phone_number"
+                    placeholder="+1 234 567 8900">
+                } @else {
+                  <span class="info-value">{{ user()!.mobile_phone_number || 'Not provided' }}</span>
+                }
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Preferred Communication @if (isEditing()) {<span class="required">*</span>}</label>
+                @if (isEditing()) {
+                  <app-select
+                    formControlName="communication_method"
+                    [options]="communicationMethods"
+                    [invalid]="(profileForm.get('communication_method')?.invalid && profileForm.get('communication_method')?.touched) || false"
+                    invalidMessage="Communication method is required">
+                  </app-select>
+                } @else {
+                  <span class="info-badge">{{ getCommunicationMethodLabel(user()!.communication_method) }}</span>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="profile-section">
+            <h3 class="section-title">Preferences</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Timezone @if (isEditing()) {<span class="required">*</span>}</label>
+                @if (isEditing()) {
+                  <app-select
+                    formControlName="timezone"
+                    [options]="timezoneOptions"
+                    [invalid]="(profileForm.get('timezone')?.invalid && profileForm.get('timezone')?.touched) || false"
+                    invalidMessage="Timezone is required">
+                  </app-select>
+                } @else {
+                  <span class="info-value">{{ user()!.timezone || 'UTC' }}</span>
+                }
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Preferred Language</label>
+                @if (isEditing()) {
+                  <app-select
+                    formControlName="preferred_language"
+                    [options]="languageOptions()"
+                    placeholder="Select your preferred language">
+                  </app-select>
+                } @else {
+                  <span class="info-value">{{ user()!.preferred_language || 'Not set' }}</span>
+                }
+              </div>
+
+              <div class="form-group full-width">
+                <label class="form-label">Available Languages</label>
+                @if (isEditing()) {
+                  <app-select
+                    formControlName="language_ids"
+                    [options]="languageOptions()"
+                    placeholder="Select languages you can communicate in"
+                    [multiSelect]="true">
+                  </app-select>
+                } @else if (user()!.languages?.length) {
+                  <div class="badges-list">
+                    @for (language of user()!.languages; track language.code) {
+                      <span class="info-badge blue">{{ language.name }}</span>
+                    }
+                  </div>
+                } @else {
+                  <span class="info-value">Not set</span>
+                }
+              </div>
+            </div>
+          </div>
+
+          @if (user()!.specialities?.length && !isEditing()) {
+            <div class="profile-section">
+              <h3 class="section-title">Professional Information</h3>
+              <div class="form-grid">
+                <div class="form-group full-width">
+                  <label class="form-label">Specialities</label>
+                  <div class="badges-list">
+                    @for (speciality of user()!.specialities; track speciality.id) {
+                      <span class="info-badge green">{{ speciality.name }}</span>
+                    }
                   </div>
                 </div>
               </div>
-            }
-          </div>
-        } @else {
-          <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="profile-form">
-            <div class="form-section">
-              <app-typography [variant]="TypographyTypeEnum['h6-regular']">
-                Personal Information
-              </app-typography>
-
-              <div class="form-row two-columns">
-                <app-input
-                  label="First Name"
-                  formControlName="first_name"
-                  [invalid]="(profileForm.get('first_name')?.invalid && profileForm.get('first_name')?.touched) || false"
-                  invalidMessage="First name is required"
-                  placeholder="Enter first name">
-                </app-input>
-
-                <app-input
-                  label="Last Name"
-                  formControlName="last_name"
-                  [invalid]="(profileForm.get('last_name')?.invalid && profileForm.get('last_name')?.touched) || false"
-                  invalidMessage="Last name is required"
-                  placeholder="Enter last name">
-                </app-input>
-              </div>
-
-              <div class="form-row">
-                <app-input
-                  label="Email Address"
-                  type="email"
-                  formControlName="email"
-                  placeholder="Email cannot be changed"
-                  leftIcon="email"
-                  class="readonly-field">
-                </app-input>
-              </div>
             </div>
-
-            <div class="form-section">
-              <app-typography [variant]="TypographyTypeEnum['h6-regular']">
-                Contact Information
-              </app-typography>
-
-              <div class="form-row">
-                <app-input
-                  label="Mobile Phone"
-                  type="tel"
-                  formControlName="mobile_phone_number"
-                  placeholder="+1 234 567 8900"
-                  leftIcon="phone">
-                </app-input>
-              </div>
-
-              <div class="form-row">
-                <app-select
-                  label="Preferred Communication Method"
-                  formControlName="communication_method"
-                  [options]="communicationMethods"
-                  [invalid]="(profileForm.get('communication_method')?.invalid && profileForm.get('communication_method')?.touched) || false"
-                  invalidMessage="Communication method is required">
-                </app-select>
-              </div>
-            </div>
-
-            <div class="form-section">
-              <app-typography [variant]="TypographyTypeEnum['h6-regular']">
-                System Preferences
-              </app-typography>
-
-              <div class="form-row two-columns">
-                <app-select
-                  label="Timezone"
-                  formControlName="timezone"
-                  [options]="timezoneOptions"
-                  [invalid]="(profileForm.get('timezone')?.invalid && profileForm.get('timezone')?.touched) || false"
-                  invalidMessage="Timezone is required">
-                </app-select>
-
-                <app-select
-                  label="Preferred Interface Language"
-                  formControlName="preferred_language"
-                  [options]="languageOptions()"
-                  placeholder="Select your preferred language">
-                </app-select>
-              </div>
-
-              <div class="form-row">
-                <app-select
-                  label="Available Languages"
-                  formControlName="language_ids"
-                  [options]="languageOptions()"
-                  placeholder="Select languages you can communicate in"
-                  [multiSelect]="true">
-                </app-select>
-              </div>
-            </div>
-          </form>
-        }
-      </div>
+          }
+        </div>
+      </form>
     }
   </div>
 </app-page>

@@ -57,6 +57,164 @@
       }
     }
 
+    .notification-section {
+      position: relative;
+
+      .notification-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        border: none;
+        border-radius: 12px;
+        background: transparent;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+
+        &:hover {
+          background: var(--slate-100);
+        }
+
+        .notification-badge {
+          position: absolute;
+          top: 6px;
+          right: 6px;
+          min-width: 18px;
+          height: 18px;
+          padding: 0 5px;
+          border-radius: 9px;
+          background: var(--rose-500);
+          color: var(--White);
+          font-size: 11px;
+          font-weight: 700;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 2px 6px rgba(244, 63, 94, 0.4);
+        }
+      }
+
+      .notification-dropdown {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        width: 360px;
+        max-height: 480px;
+        background: var(--White);
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        border: 1px solid var(--slate-100);
+        overflow: hidden;
+        z-index: 1000;
+        animation: fadeIn 0.2s ease-out;
+
+        .dropdown-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 16px 20px;
+          border-bottom: 1px solid var(--slate-100);
+          background: linear-gradient(to right, var(--primary-50), var(--White));
+
+          .mark-all-read {
+            border: none;
+            background: none;
+            color: var(--primary-600);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+
+            &:hover {
+              background: var(--primary-100);
+            }
+          }
+        }
+
+        .notification-list {
+          max-height: 400px;
+          overflow-y: auto;
+
+          .notification-loading,
+          .notification-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 48px 24px;
+          }
+
+          .notification-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid var(--slate-50);
+
+            &:hover {
+              background: var(--slate-50);
+            }
+
+            &.unread {
+              background: var(--primary-50);
+
+              &:hover {
+                background: var(--primary-100);
+              }
+            }
+
+            &:last-child {
+              border-bottom: none;
+            }
+
+            .notification-indicator {
+              width: 8px;
+              height: 8px;
+              border-radius: 50%;
+              background: var(--primary-500);
+              margin-top: 6px;
+              flex-shrink: 0;
+              opacity: 0;
+              transition: opacity 0.2s ease;
+
+              &.visible {
+                opacity: 1;
+              }
+            }
+
+            .notification-content {
+              flex: 1;
+              min-width: 0;
+
+              app-typography {
+                display: block;
+
+                &:nth-child(2) {
+                  margin-top: 4px;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                  display: -webkit-box;
+                  -webkit-line-clamp: 2;
+                  -webkit-box-orient: vertical;
+                }
+
+                &:nth-child(3) {
+                  margin-top: 8px;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
     .profile-section {
       display: flex;
       align-items: center;

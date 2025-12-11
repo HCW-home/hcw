@@ -1,8 +1,7 @@
-import { Component, OnInit, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
-import { Router } from '@angular/router';
+import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
+import { firstValueFrom, Subject, takeUntil } from 'rxjs';
+import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { Page } from '../../../../core/components/page/page';
 import { Button } from '../../../../shared/ui-components/button/button';
 import { Typography } from '../../../../shared/ui-components/typography/typography';
@@ -20,11 +19,14 @@ import { RoutePaths } from '../../../../core/constants/routes';
 
 @Component({
   selector: 'app-consultations',
-  imports: [CommonModule, FormsModule, Page, Button, Typography, Tabs, Svg, Loader],
+  imports: [CommonModule, Page, Button, Typography, Tabs, Svg, Loader],
   templateUrl: './consultations.html',
   styleUrl: './consultations.scss',
 })
-export class Consultations implements OnInit {
+export class Consultations implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+  private route = inject(ActivatedRoute);
+
   breadcrumbs = [{ label: 'Consultations' }];
 
   activeTab = signal<'active' | 'past' | 'overdue'>('active');
@@ -32,7 +34,6 @@ export class Consultations implements OnInit {
   pastConsultationsData = signal<Consultation[]>([]);
   loading = signal<boolean>(false);
   error = signal<string | null>(null);
-  searchQuery = '';
 
   overdueConsultations: { id: number; patient: string; waitingSince: string; reason: string; avatar: string }[] = [
     { id: 1, patient: 'Michel Fournier', waitingSince: '3 days', reason: 'Lab results pending', avatar: 'MF' },
@@ -49,7 +50,18 @@ export class Consultations implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.route.fragment.pipe(takeUntil(this.destroy$)).subscribe(fragment => {
+      if (fragment === 'active' || fragment === 'past' || fragment === 'overdue') {
+        this.activeTab.set(fragment);
+      }
+    });
+
     this.loadConsultations();
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   get activeConsultations(): Consultation[] {
@@ -80,34 +92,13 @@ export class Consultations implements OnInit {
     ];
   }
 
-  get filteredConsultations(): Consultation[] {
-    const consultations = this.activeTab() === 'active' ? this.activeConsultations : this.pastConsultations;
-    if (!this.searchQuery.trim()) {
-      return consultations;
-    }
-    const query = this.searchQuery.toLowerCase();
-    return consultations.filter(c =>
-      this.getBeneficiaryName(c).toLowerCase().includes(query) ||
-      (c.title && c.title.toLowerCase().includes(query))
-    );
+  get currentConsultations(): Consultation[] {
+    return this.activeTab() === 'active' ? this.activeConsultations : this.pastConsultations;
   }
 
   setActiveTab(tab: string) {
     this.activeTab.set(tab as 'active' | 'past' | 'overdue');
-  }
-
-  get filteredOverdueConsultations() {
-    if (!this.searchQuery.trim()) {
-      return this.overdueConsultations;
-    }
-    const query = this.searchQuery.toLowerCase();
-    return this.overdueConsultations.filter(c =>
-      c.patient.toLowerCase().includes(query) ||
-      c.reason.toLowerCase().includes(query)
-    );
-  }
-
-  onSearchChange() {
+    this.router.navigate([], { fragment: tab, replaceUrl: true });
   }
 
   viewConsultationDetails(consultation: Consultation) {

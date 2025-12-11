@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  border: 1px solid var(--slate-200);
+  min-height: 0;
   border-radius: 12px;
   background: var(--White);
 }
@@ -34,6 +34,7 @@
 
 .message-list-body {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 16px;
   display: flex;
@@ -91,6 +92,8 @@
   gap: 8px;
   padding: 16px;
   border-top: 1px solid var(--slate-200);
+  flex-shrink: 0;
+  background: var(--White);
 
   app-input {
     flex: 1;

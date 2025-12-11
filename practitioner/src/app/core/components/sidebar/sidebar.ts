@@ -3,12 +3,6 @@ import { Svg } from '../../../shared/ui-components/svg/svg';
 import { MenuItems } from '../../constants/sidebar';
 import { Typography } from '../../../shared/ui-components/typography/typography';
 import { TypographyTypeEnum } from '../../../shared/constants/typography';
-import { Button } from '../../../shared/ui-components/button/button';
-import {
-  ButtonSizeEnum,
-  ButtonStateEnum,
-  ButtonStyleEnum,
-} from '../../../shared/constants/button';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { RoutePaths } from '../../constants/routes';
 import { IUser } from '../../../modules/user/models/user';
@@ -17,7 +11,7 @@ import { UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [Svg, Typography, Button, RouterLink, RouterLinkActive],
+  imports: [Svg, Typography, RouterLink, RouterLinkActive],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.scss',
 })
@@ -65,8 +59,5 @@ export class Sidebar implements OnInit, OnDestroy {
   }
 
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
-  protected readonly ButtonSizeEnum = ButtonSizeEnum;
-  protected readonly ButtonStyleEnum = ButtonStyleEnum;
-  protected readonly ButtonStateEnum = ButtonStateEnum;
   protected readonly RoutePaths = RoutePaths;
 }

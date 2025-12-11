@@ -123,8 +123,8 @@ export interface BookingSlot {
   user: User;
   start_time: string;
   end_time: string;
-  start_break: string;
-  end_break: string;
+  start_break: string | null;
+  end_break: string | null;
   monday: boolean;
   tuesday: boolean;
   wednesday: boolean;
@@ -138,8 +138,8 @@ export interface BookingSlot {
 export interface CreateBookingSlot {
   start_time: string;
   end_time: string;
-  start_break: string;
-  end_break: string;
+  start_break?: string | null;
+  end_break?: string | null;
   monday: boolean;
   tuesday: boolean;
   wednesday: boolean;
@@ -147,7 +147,7 @@ export interface CreateBookingSlot {
   friday: boolean;
   saturday: boolean;
   sunday: boolean;
-  valid_until?: string;
+  valid_until?: string | null;
 }
 
 export interface AvailableSlot {

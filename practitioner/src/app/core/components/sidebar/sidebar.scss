@@ -172,9 +172,6 @@
           color: var(--slate-800);
         }
 
-        ::ng-deep svg {
-          fill: var(--slate-700) !important;
-        }
       }
 
       &.active {
@@ -184,10 +181,6 @@
         .menu-label {
           color: var(--primary-800);
           font-weight: 600;
-        }
-
-        ::ng-deep svg {
-          fill: var(--primary-600) !important;
         }
       }
     }

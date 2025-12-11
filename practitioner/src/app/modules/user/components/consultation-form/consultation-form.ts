@@ -33,15 +33,18 @@ import {
 import { Page } from '../../../../core/components/page/page';
 import { Loader } from '../../../../shared/components/loader/loader';
 import { UserSearchSelect } from '../../../../shared/components/user-search-select/user-search-select';
+import { Stepper } from '../../../../shared/components/stepper/stepper';
+import { IStep } from '../../../../shared/components/stepper/stepper-models';
 
 import { Typography } from '../../../../shared/ui-components/typography/typography';
-import { Button } from '../../../../shared/ui-components/button/button';
-import { Input as InputComponent } from '../../../../shared/ui-components/input/input';
-import { Textarea } from '../../../../shared/ui-components/textarea/textarea';
 import { Select } from '../../../../shared/ui-components/select/select';
 import { Svg } from '../../../../shared/ui-components/svg/svg';
+import { Input } from '../../../../shared/ui-components/input/input';
+import { Textarea } from '../../../../shared/ui-components/textarea/textarea';
+import { Button } from '../../../../shared/ui-components/button/button';
 
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
+import { ButtonStateEnum } from '../../../../shared/constants/button';
 import {
   ButtonSizeEnum,
   ButtonStyleEnum,
@@ -60,12 +63,13 @@ import { RoutePaths } from '../../../../core/constants/routes';
     Page,
     Loader,
     UserSearchSelect,
+    Stepper,
     Typography,
-    Button,
-    InputComponent,
-    Textarea,
     Select,
     Svg,
+    Input,
+    Textarea,
+    Button,
   ],
 })
 export class ConsultationForm implements OnInit, OnDestroy {
@@ -83,12 +87,21 @@ export class ConsultationForm implements OnInit, OnDestroy {
   lastSaved = signal<Date | null>(null);
   savingAppointments = signal<Set<number>>(new Set());
   savingParticipants = signal<Set<string>>(new Set());
+  participantContactTypes: Map<string, 'email' | 'phone'> = new Map();
+  currentStep = signal(0);
+
+  stepItems: IStep[] = [
+    { id: 'details', title: 'Details' },
+    { id: 'beneficiary', title: 'Beneficiary' },
+    { id: 'schedule', title: 'Schedule', isOptional: true },
+  ];
 
   consultationForm: FormGroup;
 
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
+  protected readonly ButtonStateEnum = ButtonStateEnum;
 
   breadcrumbs = computed<IBreadcrumb[]>(() => [
     { label: 'Consultations', link: '/user/consultations' },
@@ -162,6 +175,16 @@ export class ConsultationForm implements OnInit, OnDestroy {
         this.loadConsultation();
       } else {
         this.mode = 'create';
+      }
+    });
+
+    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(queryParams => {
+      const step = queryParams['step'];
+      if (step !== undefined) {
+        const stepNum = parseInt(step, 10);
+        if (!isNaN(stepNum) && stepNum >= 0 && stepNum <= 2) {
+          this.currentStep.set(stepNum);
+        }
       }
     });
 
@@ -249,9 +272,15 @@ export class ConsultationForm implements OnInit, OnDestroy {
 
           response.results.forEach(appointment => {
             const appointmentGroup = this.createAppointmentFormGroup();
+            const scheduledDate = new Date(appointment.scheduled_at);
+            const dateStr = scheduledDate.toISOString().split('T')[0];
+            const timeStr = scheduledDate.toTimeString().slice(0, 5);
+
             appointmentGroup.patchValue({
               id: appointment.id,
               type: appointment.type || AppointmentType.ONLINE,
+              date: dateStr,
+              time: timeStr,
               scheduled_at: this.formatDateTimeForInput(
                 appointment.scheduled_at
               ),
@@ -265,6 +294,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
               appointment.participants.forEach(participant => {
                 const participantGroup = this.fb.group({
                   id: [participant.id],
+                  name: [''],
                   email: [participant.email || '', [Validators.email]],
                   phone: [participant.phone || ''],
                   message_type: [participant.message_type || 'email', [Validators.required]],
@@ -286,6 +316,8 @@ export class ConsultationForm implements OnInit, OnDestroy {
     return this.fb.group({
       id: [''],
       type: ['Online', [Validators.required]],
+      date: [''],
+      time: [''],
       scheduled_at: [''],
       end_expected_at: [''],
       participants: this.fb.array([]),
@@ -343,6 +375,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
   private addParticipantToFormArray(participantsArray: FormArray): void {
     const participantGroup = this.fb.group({
       id: [''],
+      name: [''],
       email: ['', [Validators.email]],
       phone: [''],
       message_type: ['email', [Validators.required]],
@@ -460,7 +493,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
     this.isSaving.set(true);
 
     const formValue = this.consultationForm.value;
-    const newAppointments = formValue.appointments?.filter((apt: { id?: string; scheduled_at?: string }) => !apt.id && apt.scheduled_at) || [];
+    const newAppointments = formValue.appointments?.filter((apt: { id?: string; date?: string; scheduled_at?: string }) => !apt.id && (apt.date || apt.scheduled_at)) || [];
 
     if (newAppointments.length > 0) {
       this.createAppointmentsInEditMode(this.consultationId, newAppointments);
@@ -470,11 +503,20 @@ export class ConsultationForm implements OnInit, OnDestroy {
     }
   }
 
-  private createAppointmentsInEditMode(consultationId: number, appointments: { type?: string; scheduled_at: string; end_expected_at?: string }[]): void {
+  private createAppointmentsInEditMode(consultationId: number, appointments: { type?: string; date?: string; time?: string; scheduled_at?: string; end_expected_at?: string }[]): void {
     const appointmentRequests = appointments.map(apt => {
+      let scheduledAt: string;
+      if (apt.date && apt.time) {
+        scheduledAt = new Date(`${apt.date}T${apt.time}`).toISOString();
+      } else if (apt.date) {
+        scheduledAt = new Date(`${apt.date}T09:00`).toISOString();
+      } else {
+        scheduledAt = new Date(apt.scheduled_at!).toISOString();
+      }
+
       const appointmentData: CreateAppointmentRequest = {
         type: (apt.type as AppointmentType) || AppointmentType.ONLINE,
-        scheduled_at: new Date(apt.scheduled_at).toISOString(),
+        scheduled_at: scheduledAt,
         end_expected_at: apt.end_expected_at
           ? new Date(apt.end_expected_at).toISOString()
           : undefined,
@@ -579,13 +621,22 @@ export class ConsultationForm implements OnInit, OnDestroy {
       });
   }
 
-  createAppointments(consultationId: number, appointments: { type?: string; scheduled_at: string; end_expected_at?: string }[]): void {
+  createAppointments(consultationId: number, appointments: { type?: string; date?: string; time?: string; scheduled_at?: string; end_expected_at?: string }[]): void {
     const appointmentRequests = appointments
-      .filter(apt => apt.scheduled_at)
+      .filter(apt => apt.date || apt.scheduled_at)
       .map(apt => {
+        let scheduledAt: string;
+        if (apt.date && apt.time) {
+          scheduledAt = new Date(`${apt.date}T${apt.time}`).toISOString();
+        } else if (apt.date) {
+          scheduledAt = new Date(`${apt.date}T09:00`).toISOString();
+        } else {
+          scheduledAt = new Date(apt.scheduled_at!).toISOString();
+        }
+
         const appointmentData: CreateAppointmentRequest = {
           type: (apt.type as AppointmentType) || AppointmentType.ONLINE,
-          scheduled_at: new Date(apt.scheduled_at).toISOString(),
+          scheduled_at: scheduledAt,
           end_expected_at: apt.end_expected_at
             ? new Date(apt.end_expected_at).toISOString()
             : undefined,
@@ -691,10 +742,12 @@ export class ConsultationForm implements OnInit, OnDestroy {
 
     const appointmentGroup = this.appointmentsFormArray.at(appointmentIndex) as FormGroup;
     const appointmentId = appointmentGroup.get('id')?.value;
+    const date = appointmentGroup.get('date')?.value;
+    const time = appointmentGroup.get('time')?.value;
     const scheduledAt = appointmentGroup.get('scheduled_at')?.value;
 
-    if (!scheduledAt) {
-      this.toasterService.show('error', 'Scheduled date is required');
+    if (!date && !scheduledAt) {
+      this.toasterService.show('error', 'Date is required');
       return;
     }
 
@@ -702,9 +755,18 @@ export class ConsultationForm implements OnInit, OnDestroy {
     saving.add(appointmentIndex);
     this.savingAppointments.set(saving);
 
+    let scheduledDateTime: string;
+    if (date && time) {
+      scheduledDateTime = new Date(`${date}T${time}`).toISOString();
+    } else if (date) {
+      scheduledDateTime = new Date(`${date}T09:00`).toISOString();
+    } else {
+      scheduledDateTime = new Date(scheduledAt).toISOString();
+    }
+
     const appointmentData: CreateAppointmentRequest = {
       type: (appointmentGroup.get('type')?.value as AppointmentType) || AppointmentType.ONLINE,
-      scheduled_at: new Date(scheduledAt).toISOString(),
+      scheduled_at: scheduledDateTime,
       end_expected_at: appointmentGroup.get('end_expected_at')?.value
         ? new Date(appointmentGroup.get('end_expected_at')?.value).toISOString()
         : undefined,
@@ -838,5 +900,75 @@ export class ConsultationForm implements OnInit, OnDestroy {
     const participantsArray = this.getParticipantsFormArray(appointmentIndex);
     const participantGroup = participantsArray.at(participantIndex) as FormGroup;
     return !!participantGroup?.get('id')?.value;
+  }
+
+  toggleParticipantsSection(appointmentIndex: number): void {
+    const participantsArray = this.getParticipantsFormArray(appointmentIndex);
+    if (participantsArray.length === 0) {
+      this.addParticipantToAppointment(appointmentIndex);
+    } else {
+      while (participantsArray.length > 0) {
+        participantsArray.removeAt(0);
+      }
+    }
+  }
+
+  getParticipantContactType(appointmentIndex: number, participantIndex: number): 'email' | 'phone' {
+    const key = `${appointmentIndex}-${participantIndex}`;
+    return this.participantContactTypes.get(key) || 'email';
+  }
+
+  setParticipantContactType(appointmentIndex: number, participantIndex: number, type: 'email' | 'phone'): void {
+    const key = `${appointmentIndex}-${participantIndex}`;
+    this.participantContactTypes.set(key, type);
+  }
+
+  nextStep(): void {
+    if (this.canProceedToNextStep() && this.currentStep() < 2) {
+      const newStep = this.currentStep() + 1;
+      this.currentStep.set(newStep);
+      this.updateStepInUrl(newStep);
+    }
+  }
+
+  previousStep(): void {
+    if (this.currentStep() > 0) {
+      const newStep = this.currentStep() - 1;
+      this.currentStep.set(newStep);
+      this.updateStepInUrl(newStep);
+    }
+  }
+
+  goToStep(step: number): void {
+    if (step >= 0 && step <= 2) {
+      this.currentStep.set(step);
+      this.updateStepInUrl(step);
+    }
+  }
+
+  private updateStepInUrl(step: number): void {
+    this.router.navigate([], {
+      queryParams: { step },
+      queryParamsHandling: 'merge',
+      replaceUrl: true
+    });
+  }
+
+  canProceedToNextStep(): boolean {
+    return this.isStepValid(this.currentStep());
+  }
+
+  isStepValid(step: number): boolean {
+    switch (step) {
+      case 0:
+        const titleControl = this.consultationForm.get('title');
+        return titleControl ? titleControl.valid : false;
+      case 1:
+        return true;
+      case 2:
+        return true;
+      default:
+        return true;
+    }
   }
 }

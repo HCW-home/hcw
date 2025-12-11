@@ -1,0 +1,36 @@
+.placeholder-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  padding: 40px;
+}
+
+.placeholder-content {
+  text-align: center;
+
+  .placeholder-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 20px;
+    background: var(--slate-100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    color: var(--slate-400);
+  }
+
+  h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--slate-800);
+    margin: 0 0 8px;
+  }
+
+  p {
+    font-size: 15px;
+    color: var(--slate-500);
+    margin: 0;
+  }
+}

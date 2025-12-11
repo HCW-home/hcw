@@ -13,13 +13,18 @@ export const MenuItems: Sidebar[] = [
     icon: 'video.svg',
   },
   {
-    name: 'Test',
-    path: `/${RoutePaths.TEST}`,
-    icon: 'camera.svg',
+    name: 'Patients',
+    path: `/${RoutePaths.PATIENTS}`,
+    icon: 'user.svg',
   },
   {
-    name: 'Availability',
-    path: `/${RoutePaths.AVAILABILITY}`,
-    icon: 'calendar.svg',
+    name: 'Appointments',
+    path: `/${RoutePaths.APPOINTMENTS}`,
+    icon: 'clock.svg',
+  },
+  {
+    name: 'Configuration',
+    path: `/${RoutePaths.CONFIGURATION}`,
+    icon: 'settings.svg',
   },
 ]

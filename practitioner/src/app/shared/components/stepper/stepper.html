@@ -1,0 +1,25 @@
+<div class="stepper-header">
+  @for (step of steps(); track step.id; let i = $index; let last = $last) {
+    <div
+      class="step-item"
+      [class.clickable]="isStepClickable(i)"
+      (click)="onStepClick(i)">
+      <div class="step-circle" [ngClass]="getStepState(i)">
+        @if (getStepState(i) === 'completed') {
+          <app-svg src="check" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
+        } @else {
+          {{ i + 1 }}
+        }
+      </div>
+      <span class="step-title" [ngClass]="getStepState(i)">
+        {{ step.title }}
+        @if (step.isOptional) {
+          <span class="optional-label">(Optional)</span>
+        }
+      </span>
+    </div>
+    @if (!last) {
+      <div class="step-connector" [ngClass]="{'completed': i < currentStep()}"></div>
+    }
+  }
+</div>

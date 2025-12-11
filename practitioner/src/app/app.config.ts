@@ -48,12 +48,15 @@ import {
   heroInformationCircle,
   heroBars3,
   heroPaperAirplane,
+  heroBell,
 } from '@ng-icons/heroicons/outline';
 import {
   lucideVideoOff,
   lucideMicOff,
   lucidePhoneOff,
   lucideCameraOff,
+  lucideLayoutDashboard,
+  lucideSettings,
 } from '@ng-icons/lucide';
 import {authInterceptor} from './core/interceptors/auth.interceptor';
 
@@ -103,10 +106,13 @@ export const appConfig: ApplicationConfig = {
       heroInformationCircle,
       heroBars3,
       heroPaperAirplane,
+      heroBell,
       lucideVideoOff,
       lucideMicOff,
       lucidePhoneOff,
       lucideCameraOff,
+      lucideLayoutDashboard,
+      lucideSettings,
     }),
     provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
     provideTranslateHttpLoader({

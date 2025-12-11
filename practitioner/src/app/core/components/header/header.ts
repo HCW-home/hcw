@@ -8,7 +8,9 @@ import {Svg} from '../../../shared/ui-components/svg/svg';
 import {filter, Subscription} from 'rxjs';
 import {NgClass} from '@angular/common';
 import {UserService} from '../../services/user.service';
+import {NotificationService} from '../../services/notification.service';
 import {IUser} from '../../../modules/user/models/user';
+import {INotification, NotificationStatus} from '../../models/notification';
 
 @Component({
   selector: 'app-header',
@@ -19,13 +21,17 @@ import {IUser} from '../../../modules/user/models/user';
 export class Header implements OnInit, OnDestroy {
   private router = inject(Router);
   private userService = inject(UserService);
+  protected notificationService = inject(NotificationService);
   private userSubscription!: Subscription;
 
   showProfileMenu = signal(false);
+  showNotifications = signal(false);
   showNewConsultationButton = signal(false);
   pageTitle = signal('Dashboard');
   pageSubtitle = signal('Welcome back');
   currentUser: IUser | null = null;
+
+  protected readonly NotificationStatus = NotificationStatus;
 
   ngOnInit() {
     this.userSubscription = this.userService.currentUser$.subscribe(user => {
@@ -38,6 +44,7 @@ export class Header implements OnInit, OnDestroy {
       this.updatePageInfo();
     });
     this.updatePageInfo();
+    this.notificationService.loadNotifications();
   }
 
   ngOnDestroy() {
@@ -50,18 +57,27 @@ export class Header implements OnInit, OnDestroy {
 
     if (url.includes('/dashboard')) {
       this.pageTitle.set('Dashboard');
-      this.pageSubtitle.set('Welcome back! Here\'s an overview of your consultations.');
+      this.pageSubtitle.set(`Welcome back, ${this.getUserDisplayName() || 'Doctor'}`);
       this.showNewConsultationButton.set(true);
     } else if (url.includes('/consultations/new')) {
       this.pageTitle.set('New Consultation');
-      this.pageSubtitle.set('Create a new consultation');
+      this.pageSubtitle.set('Create a new consultation with a patient');
     } else if (url.includes('/consultations/')) {
       this.pageTitle.set('Consultation Details');
       this.pageSubtitle.set('View and manage consultation');
     } else if (url.includes('/consultations')) {
       this.pageTitle.set('Consultations');
-      this.pageSubtitle.set('Manage all your consultations');
+      this.pageSubtitle.set('Manage and review all your consultations');
       this.showNewConsultationButton.set(true);
+    } else if (url.includes('/patients')) {
+      this.pageTitle.set('Patients');
+      this.pageSubtitle.set('View and manage your patients');
+    } else if (url.includes('/appointments')) {
+      this.pageTitle.set('Appointments');
+      this.pageSubtitle.set('Schedule and manage appointments');
+    } else if (url.includes('/configuration')) {
+      this.pageTitle.set('Configuration');
+      this.pageSubtitle.set('Manage your system settings and availability');
     } else if (url.includes('/availability')) {
       this.pageTitle.set('Availability');
       this.pageSubtitle.set('Manage your schedule and booking slots');
@@ -111,6 +127,32 @@ export class Header implements OnInit, OnDestroy {
     this.closeProfileMenu();
     localStorage.clear();
     this.router.navigate([RoutePaths.AUTH]);
+  }
+
+  toggleNotifications() {
+    this.showNotifications.update(v => !v);
+    if (this.showNotifications()) {
+      this.showProfileMenu.set(false);
+    }
+  }
+
+  closeNotifications() {
+    this.showNotifications.set(false);
+  }
+
+  markAllNotificationsRead() {
+    this.notificationService.markAllAsRead();
+  }
+
+  onNotificationClick(notification: INotification) {
+    if (notification.status !== NotificationStatus.READ) {
+      this.notificationService.markAsRead(notification.id).subscribe();
+    }
+    this.closeNotifications();
+  }
+
+  isNotificationUnread(notification: INotification): boolean {
+    return notification.status !== NotificationStatus.READ && notification.read_at === null;
   }
 
   protected readonly TypographyTypeEnum = TypographyTypeEnum;

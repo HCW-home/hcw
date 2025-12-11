@@ -199,8 +199,8 @@ export class Availability implements OnInit, OnDestroy {
       const slotData: CreateBookingSlot = {
         start_time: formValue.start_time,
         end_time: formValue.end_time,
-        start_break: formValue.start_break || '',
-        end_break: formValue.end_break || '',
+        start_break: formValue.start_break || null,
+        end_break: formValue.end_break || null,
         monday: formValue.monday,
         tuesday: formValue.tuesday,
         wednesday: formValue.wednesday,
@@ -208,7 +208,7 @@ export class Availability implements OnInit, OnDestroy {
         friday: formValue.friday,
         saturday: formValue.saturday,
         sunday: formValue.sunday,
-        valid_until: formValue.valid_until || undefined
+        valid_until: formValue.valid_until || null
       };
 
       const operation = this.selectedSlot()
@@ -284,8 +284,8 @@ export class Availability implements OnInit, OnDestroy {
       const slotData: CreateBookingSlot = {
         start_time: formValue.start_time,
         end_time: formValue.end_time,
-        start_break: formValue.start_break || '',
-        end_break: formValue.end_break || '',
+        start_break: formValue.start_break || null,
+        end_break: formValue.end_break || null,
         monday: formValue.monday,
         tuesday: formValue.tuesday,
         wednesday: formValue.wednesday,
@@ -293,7 +293,7 @@ export class Availability implements OnInit, OnDestroy {
         friday: formValue.friday,
         saturday: formValue.saturday,
         sunday: formValue.sunday,
-        valid_until: formValue.valid_until || undefined
+        valid_until: formValue.valid_until || null
       };
 
       const operation = this.modalMode() === 'edit' && this.selectedSlot()

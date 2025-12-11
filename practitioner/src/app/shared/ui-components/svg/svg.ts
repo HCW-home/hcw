@@ -83,9 +83,12 @@ const ICON_MAP: Record<string, string> = {
   'log-out': 'heroArrowRightOnRectangle',
   'log-out.svg': 'heroArrowRightOnRectangle',
   'svg/log-out.svg': 'heroArrowRightOnRectangle',
-  'dashboard': 'heroSquares2x2',
-  'dashboard.svg': 'heroSquares2x2',
-  'svg/dashboard.svg': 'heroSquares2x2',
+  'dashboard': 'lucideLayoutDashboard',
+  'dashboard.svg': 'lucideLayoutDashboard',
+  'svg/dashboard.svg': 'lucideLayoutDashboard',
+  'settings': 'lucideSettings',
+  'settings.svg': 'lucideSettings',
+  'svg/settings.svg': 'lucideSettings',
   'report': 'heroDocumentText',
   'report.svg': 'heroDocumentText',
   'svg/report.svg': 'heroDocumentText',
@@ -155,6 +158,12 @@ const ICON_MAP: Record<string, string> = {
   'logo-icon': 'heroHeart',
   'logo-icon.svg': 'heroHeart',
   'svg/logo-icon.svg': 'heroHeart',
+  'bell': 'heroBell',
+  'bell.svg': 'heroBell',
+  'svg/bell.svg': 'heroBell',
+  'notification': 'heroBell',
+  'notification.svg': 'heroBell',
+  'svg/notification.svg': 'heroBell',
 };
 
 @Component({

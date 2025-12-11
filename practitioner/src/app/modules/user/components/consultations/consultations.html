@@ -7,18 +7,6 @@
         (tabChange)="setActiveTab($event)">
       </app-tabs>
 
-      <div class="search-section">
-        <div class="search-input-wrapper">
-          <app-svg src="search" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--slate-400)'}"></app-svg>
-          <input
-            type="text"
-            class="search-input"
-            placeholder="Search consultations..."
-            [(ngModel)]="searchQuery"
-            (input)="onSearchChange()">
-        </div>
-      </div>
-
       <div class="consultations-list">
         @if (loading()) {
           <div class="loading-state">
@@ -41,7 +29,7 @@
             </app-button>
           </div>
         } @else if (activeTab() === 'overdue') {
-          @if (filteredOverdueConsultations.length === 0) {
+          @if (overdueConsultations.length === 0) {
             <div class="empty-state">
               <app-svg src="alert-circle" [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
               <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--slate-400)">
@@ -52,7 +40,7 @@
               </app-typography>
             </div>
           } @else {
-            @for (consultation of filteredOverdueConsultations; track consultation.id) {
+            @for (consultation of overdueConsultations; track consultation.id) {
               <div class="consultation-item">
                 <div class="patient-avatar overdue">
                   <span>{{ consultation.avatar }}</span>
@@ -82,7 +70,7 @@
               </div>
             }
           }
-        } @else if (filteredConsultations.length === 0) {
+        } @else if (currentConsultations.length === 0) {
           <div class="empty-state">
             <app-svg src="calendar" [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
             <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--slate-400)">
@@ -93,7 +81,7 @@
             </app-typography>
           </div>
         } @else {
-          @for (consultation of filteredConsultations; track consultation.id) {
+          @for (consultation of currentConsultations; track consultation.id) {
             <div class="consultation-item" (click)="viewConsultationDetails(consultation)">
               <div class="patient-avatar" [ngClass]="{'active': activeTab() === 'active', 'past': activeTab() === 'past'}">
                 <span>{{ getPatientInitials(consultation) }}</span>

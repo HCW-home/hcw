@@ -7,4 +7,7 @@ export enum RoutePaths {
   TEST = 'test',
   AVAILABILITY = 'availability',
   PROFILE = 'profile',
+  PATIENTS = 'patients',
+  APPOINTMENTS = 'appointments',
+  CONFIGURATION = 'configuration',
 }

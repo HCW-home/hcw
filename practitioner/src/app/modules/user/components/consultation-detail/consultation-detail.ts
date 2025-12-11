@@ -6,7 +6,7 @@ import {
   Validators,
   ReactiveFormsModule,
 } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
 
 import { ConsultationService } from '../../../../core/services/consultation.service';
@@ -25,26 +25,19 @@ import {
 import { IUser } from '../../models/user';
 
 import { Page } from '../../../../core/components/page/page';
-import { BackButton } from '../../../../shared/components/back-button/back-button';
-import { Badge } from '../../../../shared/components/badge/badge';
 import { Loader } from '../../../../shared/components/loader/loader';
 import { MessageList, Message } from '../../../../shared/components/message-list/message-list';
 import { VideoConsultationComponent } from '../video-consultation/video-consultation';
 
-import { Typography } from '../../../../shared/ui-components/typography/typography';
-import { Button } from '../../../../shared/ui-components/button/button';
-import { Input } from '../../../../shared/ui-components/input/input';
-import { Select } from '../../../../shared/ui-components/select/select';
 import { Svg } from '../../../../shared/ui-components/svg/svg';
-import { SelectOption } from '../../../../shared/models/select';
+import { Button } from '../../../../shared/ui-components/button/button';
+import { ButtonStyleEnum, ButtonSizeEnum, ButtonStateEnum } from '../../../../shared/constants/button';
 
-import { TypographyTypeEnum } from '../../../../shared/constants/typography';
-import {
-  ButtonSizeEnum,
-  ButtonStyleEnum,
-  ButtonTypeEnum,
-} from '../../../../shared/constants/button';
-import { BadgeTypeEnum } from '../../../../shared/constants/badge';
+interface ModalParticipant {
+  name: string;
+  email: string;
+  contactType: 'email' | 'phone';
+}
 
 @Component({
   selector: 'app-consultation-detail',
@@ -53,21 +46,17 @@ import { BadgeTypeEnum } from '../../../../shared/constants/badge';
   imports: [
     Svg,
     Page,
-    Badge,
-    Input,
-    Select,
-    Button,
     Loader,
     VideoConsultationComponent,
-    BackButton,
-    Typography,
     MessageList,
     CommonModule,
     ReactiveFormsModule,
+    Button,
   ],
 })
 export class ConsultationDetail implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  private location = inject(Location);
 
   consultationId!: number;
   consultation = signal<Consultation | null>(null);
@@ -78,6 +67,8 @@ export class ConsultationDetail implements OnInit, OnDestroy {
   isLoadingConsultation = signal(false);
   isLoadingAppointments = signal(false);
   isLoadingParticipants = signal(false);
+  isCreatingAppointment = signal(false);
+  isAddingParticipant = signal(false);
 
   messages = signal<Message[]>([]);
   isWebSocketConnected = signal(false);
@@ -85,21 +76,18 @@ export class ConsultationDetail implements OnInit, OnDestroy {
 
   inCall = signal(false);
   activeAppointmentId = signal<number | null>(null);
-  displayName = '';
+
+  showCreateAppointmentModal = signal(false);
+  showManageParticipantsModal = signal(false);
+  modalParticipants = signal<ModalParticipant[]>([{ name: '', email: '', contactType: 'email' }]);
 
   appointmentForm: FormGroup;
   participantForm: FormGroup;
 
-  protected readonly TypographyTypeEnum = TypographyTypeEnum;
-  protected readonly ButtonSizeEnum = ButtonSizeEnum;
-  protected readonly ButtonStyleEnum = ButtonStyleEnum;
-  protected readonly BadgeTypeEnum = BadgeTypeEnum;
   protected readonly AppointmentStatus = AppointmentStatus;
-
-  appointmentTypeOptions: SelectOption[] = [
-    { value: AppointmentType.ONLINE, label: 'Online' },
-    { value: AppointmentType.INPERSON, label: 'In Person' },
-  ];
+  protected readonly ButtonStyleEnum = ButtonStyleEnum;
+  protected readonly ButtonSizeEnum = ButtonSizeEnum;
+  protected readonly ButtonStateEnum = ButtonStateEnum;
 
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -113,7 +101,8 @@ export class ConsultationDetail implements OnInit, OnDestroy {
   constructor() {
     this.appointmentForm = this.fb.group({
       type: ['Online', [Validators.required]],
-      scheduled_at: ['', [Validators.required]],
+      date: ['', [Validators.required]],
+      time: ['', [Validators.required]],
       end_expected_at: [''],
     });
 
@@ -295,10 +284,14 @@ export class ConsultationDetail implements OnInit, OnDestroy {
 
   createAppointment(): void {
     if (this.appointmentForm.valid) {
+      this.isCreatingAppointment.set(true);
       const formValue = this.appointmentForm.value;
+
+      const scheduledAt = new Date(`${formValue.date}T${formValue.time}`).toISOString();
+
       const appointmentData: CreateAppointmentRequest = {
         type: formValue.type,
-        scheduled_at: new Date(formValue.scheduled_at).toISOString(),
+        scheduled_at: scheduledAt,
         end_expected_at: formValue.end_expected_at
           ? new Date(formValue.end_expected_at).toISOString()
           : undefined,
@@ -309,20 +302,54 @@ export class ConsultationDetail implements OnInit, OnDestroy {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: appointment => {
-            const currentAppointments = this.appointments();
-            this.appointments.set([...currentAppointments, appointment]);
-            this.appointmentForm.reset({ type: 'Online' });
-            this.toasterService.show(
-              'success',
-              'Appointment created successfully'
-            );
+            const participants = this.modalParticipants().filter(p => p.email);
+            if (participants.length > 0) {
+              this.createParticipantsForAppointment(appointment.id, participants, appointment);
+            } else {
+              this.finalizeAppointmentCreation(appointment);
+            }
           },
           error: error => {
             console.error('Error creating appointment:', error);
+            this.isCreatingAppointment.set(false);
             this.toasterService.show('error', 'Error creating appointment');
           },
         });
     }
+  }
+
+  private createParticipantsForAppointment(appointmentId: number, participants: ModalParticipant[], appointment: Appointment): void {
+    const requests = participants.map(p => {
+      const data: any = {
+        message_type: p.contactType === 'email' ? 'email' : 'sms',
+      };
+      if (p.contactType === 'email') {
+        data.email = p.email;
+      } else {
+        data.phone = p.email;
+      }
+      return this.consultationService.addAppointmentParticipant(appointmentId, data).toPromise();
+    });
+
+    Promise.all(requests)
+      .then(() => {
+        this.loadAppointments();
+        this.finalizeAppointmentCreation(appointment);
+      })
+      .catch(() => {
+        this.finalizeAppointmentCreation(appointment);
+        this.toasterService.show('warning', 'Appointment created but some participants could not be added');
+      });
+  }
+
+  private finalizeAppointmentCreation(appointment: Appointment): void {
+    const currentAppointments = this.appointments();
+    this.appointments.set([...currentAppointments, appointment]);
+    this.appointmentForm.reset({ type: 'Online' });
+    this.modalParticipants.set([{ name: '', email: '', contactType: 'email' }]);
+    this.isCreatingAppointment.set(false);
+    this.showCreateAppointmentModal.set(false);
+    this.toasterService.show('success', 'Appointment created successfully');
   }
 
   async cancelAppointment(appointment: Appointment): Promise<void> {
@@ -471,21 +498,6 @@ export class ConsultationDetail implements OnInit, OnDestroy {
     return participant.email || 'Unknown';
   }
 
-  getAppointmentStatusBadgeType(status: AppointmentStatus): BadgeTypeEnum {
-    switch (status) {
-      case AppointmentStatus.SCHEDULED:
-        return BadgeTypeEnum.green;
-      case AppointmentStatus.CANCELLED:
-        return BadgeTypeEnum.red;
-      default:
-        return BadgeTypeEnum.blue;
-    }
-  }
-
-  getParticipantStatusBadgeType(isConfirmed: boolean): BadgeTypeEnum {
-    return isConfirmed ? BadgeTypeEnum.green : BadgeTypeEnum.orange;
-  }
-
   getBeneficiaryDisplayName(): string {
     const beneficiary = this.consultation()?.beneficiary;
     if (!beneficiary) return 'No beneficiary assigned';
@@ -507,5 +519,102 @@ export class ConsultationDetail implements OnInit, OnDestroy {
     this.activeAppointmentId.set(null);
   }
 
-  protected readonly ButtonTypeEnum = ButtonTypeEnum;
+  goBack(): void {
+    this.location.back();
+  }
+
+  openCreateAppointmentModal(): void {
+    this.appointmentForm.reset({ type: 'Online' });
+    this.modalParticipants.set([{ name: '', email: '', contactType: 'email' }]);
+    this.showCreateAppointmentModal.set(true);
+  }
+
+  closeCreateAppointmentModal(): void {
+    this.showCreateAppointmentModal.set(false);
+  }
+
+  openManageParticipantsModal(appointment: Appointment): void {
+    this.selectedAppointment.set(appointment);
+    this.loadParticipants(appointment);
+    this.participantForm.reset({ message_type: 'email' });
+    this.showManageParticipantsModal.set(true);
+  }
+
+  closeManageParticipantsModal(): void {
+    this.showManageParticipantsModal.set(false);
+    this.loadAppointments();
+  }
+
+  setAppointmentType(type: string): void {
+    this.appointmentForm.patchValue({ type });
+  }
+
+  setParticipantMessageType(type: string): void {
+    this.participantForm.patchValue({ message_type: type });
+  }
+
+  addModalParticipant(): void {
+    this.modalParticipants.update(list => [...list, { name: '', email: '', contactType: 'email' }]);
+  }
+
+  removeModalParticipant(index: number): void {
+    this.modalParticipants.update(list => list.filter((_, i) => i !== index));
+  }
+
+  updateModalParticipant(index: number, field: string, event: any): void {
+    const value = typeof event === 'string' ? event : event.target.value;
+    this.modalParticipants.update(list => {
+      const updated = [...list];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+  }
+
+  getParticipantInitials(participant: Participant): string {
+    if (participant.user) {
+      const first = participant.user.first_name?.charAt(0) || '';
+      const last = participant.user.last_name?.charAt(0) || '';
+      return (first + last).toUpperCase() || '?';
+    }
+    if (participant.email) {
+      return participant.email.charAt(0).toUpperCase();
+    }
+    return '?';
+  }
+
+  addParticipantToAppointment(): void {
+    const appointment = this.selectedAppointment();
+    if (!appointment) return;
+
+    const formValue = this.participantForm.value;
+    const data: any = {
+      message_type: formValue.message_type,
+    };
+
+    if (formValue.message_type === 'email' && formValue.email) {
+      data.email = formValue.email;
+    } else if (formValue.message_type === 'sms' && formValue.phone) {
+      data.phone = formValue.phone;
+    } else {
+      this.toasterService.show('error', 'Please provide contact information');
+      return;
+    }
+
+    this.isAddingParticipant.set(true);
+    this.consultationService
+      .addAppointmentParticipant(appointment.id, data)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.loadParticipants(appointment);
+          this.participantForm.reset({ message_type: 'email' });
+          this.isAddingParticipant.set(false);
+          this.toasterService.show('success', 'Participant added successfully');
+        },
+        error: () => {
+          this.isAddingParticipant.set(false);
+          this.toasterService.show('error', 'Error adding participant');
+        },
+      });
+  }
 }

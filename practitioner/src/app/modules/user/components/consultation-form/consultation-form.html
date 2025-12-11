@@ -1,311 +1,278 @@
 <app-page>
   <div class="consultation-form-container">
-    <div class="consultation-form-header">
-      <div class="header-content">
-        <div class="title-section">
-          <app-typography [variant]="TypographyTypeEnum['h2-semibold']">
-            {{ pageTitle() }}
-          </app-typography>
-          <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
-            {{ pageDescription() }}
-          </app-typography>
-        </div>
-      </div>
-    </div>
+    <button class="back-button" (click)="cancel()">
+      <app-svg src="arrow-left" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+      <span>Back to consultations</span>
+    </button>
 
     @if (isLoading()) {
       <div class="loading-container">
         <app-loader></app-loader>
       </div>
     } @else {
-      <div class="consultation-form-content">
-        <form [formGroup]="consultationForm" (ngSubmit)="onSubmit()" class="consultation-form">
+      <app-stepper
+        [steps]="stepItems"
+        [currentStep]="currentStep()"
+        [allowStepClick]="mode === 'edit'"
+        (stepChange)="goToStep($event)">
+      </app-stepper>
 
-          <div class="form-card">
-            <div class="card-header">
-              <app-svg src="user" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
-              <app-typography [variant]="TypographyTypeEnum['body-l-semibold']">
-                Basic Information
-              </app-typography>
-            </div>
+      <form [formGroup]="consultationForm" (ngSubmit)="onSubmit()" class="consultation-form">
+        @if (currentStep() === 0) {
+          <div class="step-content">
+            <div class="form-card">
+              <h3 class="card-title">Consultation Details</h3>
 
-            <div class="card-content">
-              <div class="form-grid">
-                <div class="form-field full-width">
-                  <app-input
-                    label="Consultation Title"
-                    type="text"
-                    placeholder="Enter consultation title"
-                    formControlName="title"
-                    [invalid]="isFieldInvalid('title')"
-                    [invalidMessage]="getFieldError('title')"
-                    leftIcon="edit">
-                  </app-input>
-                </div>
+              <div class="form-group">
+                <app-input
+                  label="Title"
+                  [required]="true"
+                  placeholder="e.g., Follow-up consultation, Initial assessment..."
+                  formControlName="title"
+                  [invalid]="isFieldInvalid('title')"
+                  [invalidMessage]="getFieldError('title')">
+                </app-input>
+              </div>
 
-                <div class="form-field full-width">
-                  <app-textarea
-                    label="Description (Optional)"
-                    placeholder="Enter consultation description or notes"
-                    formControlName="description"
-                    [invalid]="isFieldInvalid('description')"
-                    [invalidMessage]="getFieldError('description')">
-                  </app-textarea>
-                </div>
-
-                <div class="form-field">
-                  <app-select
-                    label="Assigned Team"
-                    [options]="queueOptions()"
-                    placeholder="Select team"
-                    formControlName="group_id"
-                    [invalid]="isFieldInvalid('group_id')"
-                    [invalidMessage]="getFieldError('group_id')">
-                  </app-select>
-                </div>
-
-                <div class="form-field">
-                  <app-user-search-select
-                    label="Beneficiary (Optional)"
-                    placeholder="Search by name or email..."
-                    formControlName="beneficiary_id">
-                  </app-user-search-select>
-                </div>
+              <div class="form-group">
+                <app-textarea
+                  label="Description"
+                  placeholder="Add any relevant notes or context for this consultation..."
+                  [rows]="4"
+                  formControlName="description">
+                </app-textarea>
               </div>
             </div>
           </div>
+        }
 
-          <div class="form-card">
-            <div class="card-header">
-              <app-svg src="calendar" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
-              <app-typography [variant]="TypographyTypeEnum['body-l-semibold']">
-                Appointments
-              </app-typography>
-              <div class="header-actions">
-                <app-button
-                  text="Add Appointment"
-                  leftIcon="plus"
-                  [size]="ButtonSizeEnum.small"
-                  [style]="ButtonStyleEnum.stroke"
-                  (buttonClick)="addAppointment()">
-                </app-button>
+        @if (currentStep() === 1) {
+          <div class="step-content">
+            <div class="form-card">
+              <h3 class="card-title">Beneficiary</h3>
+
+              <div class="form-group">
+                <label class="form-label">
+                  Select Team
+                </label>
+                <app-select
+                  [options]="queueOptions()"
+                  placeholder="Select team"
+                  formControlName="group_id"
+                  [invalid]="isFieldInvalid('group_id')"
+                  [invalidMessage]="getFieldError('group_id')">
+                </app-select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Select existing Patient</label>
+                <app-user-search-select
+                  placeholder="Search by name or email..."
+                  formControlName="beneficiary_id">
+                </app-user-search-select>
               </div>
             </div>
+          </div>
+        }
 
-            <div class="card-content" formArrayName="appointments">
-              @if (formReady() && appointmentsFormArray && appointmentsFormArray.length > 0) {
-                @for (appointment of appointmentsFormArray.controls; track $index; let i = $index) {
-                  <div class="appointment-section" [formGroupName]="i">
-                    <div class="appointment-header">
-                      <app-typography [variant]="TypographyTypeEnum['body-l-semibold']">
-                        Appointment {{ i + 1 }}
-                        @if (hasAppointmentId(i)) {
-                          <span class="saved-badge">(Saved)</span>
-                        }
-                      </app-typography>
-                      <div class="appointment-header-actions">
-                        @if (mode === 'edit') {
-                          <app-button
-                            [text]="hasAppointmentId(i) ? 'Update' : 'Save'"
-                            leftIcon="check"
-                            [size]="ButtonSizeEnum.small"
-                            [style]="ButtonStyleEnum.stroke"
-                            [disabled]="isAppointmentSaving(i)"
-                            [loading]="isAppointmentSaving(i)"
-                            (buttonClick)="saveAppointment(i)">
-                          </app-button>
-                        }
-                        <app-button
-                          text="Remove"
-                          leftIcon="delete"
-                          [size]="ButtonSizeEnum.small"
-                          [style]="ButtonStyleEnum.text"
-                          (buttonClick)="removeAppointment(i)">
-                        </app-button>
+        @if (currentStep() === 2) {
+          <div class="step-content">
+            <div class="form-card">
+              <h3 class="card-title">Schedule First Appointment</h3>
+              <p class="step-hint">Optional - You can schedule appointments later from the consultation page</p>
+
+              <div class="appointment-content" formArrayName="appointments">
+                @if (formReady() && appointmentsFormArray && appointmentsFormArray.length > 0) {
+                  @for (appointment of appointmentsFormArray.controls; track $index; let i = $index) {
+                    <div class="appointment-section" [formGroupName]="i">
+                      @if (appointmentsFormArray.length > 1) {
+                        <div class="appointment-header">
+                          <app-typography [variant]="TypographyTypeEnum['body-semibold']">
+                            Appointment {{ i + 1 }}
+                            @if (hasAppointmentId(i)) {
+                              <span class="saved-badge">(Saved)</span>
+                            }
+                          </app-typography>
+                          <div class="appointment-actions">
+                            @if (mode === 'edit') {
+                              <button type="button" class="btn-text primary" [disabled]="isAppointmentSaving(i)" (click)="saveAppointment(i)">
+                                {{ hasAppointmentId(i) ? 'Update' : 'Save' }}
+                              </button>
+                            }
+                            <button type="button" class="btn-text danger" (click)="removeAppointment(i)">
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      }
+
+                      <div class="appointment-grid">
+                        <div class="form-group">
+                          <app-input
+                            label="Date"
+                            type="date"
+                            leftIcon="calendar"
+                            formControlName="date">
+                          </app-input>
+                        </div>
+                        <div class="form-group">
+                          <app-input
+                            label="Time"
+                            type="time"
+                            leftIcon="clock"
+                            formControlName="time">
+                          </app-input>
+                        </div>
                       </div>
-                    </div>
 
-                    <div class="appointment-form">
-                      <div class="appointment-fields">
-                        <div class="form-field">
-                          <app-select
-                            label="Appointment Type"
-                            formControlName="type"
-                            [options]="appointmentTypeOptions"
-                            [invalid]="isAppointmentFieldInvalid(i, 'type')"
-                            invalidMessage="Appointment type is required">
-                          </app-select>
-                        </div>
-
-                        <div class="form-field">
-                          <app-input
-                            label="Scheduled Date & Time"
-                            type="datetime-local"
-                            formControlName="scheduled_at"
-                            [invalid]="isAppointmentFieldInvalid(i, 'scheduled_at')"
-                            invalidMessage="Scheduled time is required"
-                            leftIcon="calendar">
-                          </app-input>
-                        </div>
-
-                        <div class="form-field">
-                          <app-input
-                            label="Expected End Time (Optional)"
-                            type="datetime-local"
-                            formControlName="end_expected_at"
-                            leftIcon="calendar">
-                          </app-input>
-                        </div>
+                      <div class="form-group">
+                        <app-select
+                          label="Appointment Type"
+                          formControlName="type"
+                          [options]="appointmentTypeOptions"
+                          [invalid]="isAppointmentFieldInvalid(i, 'type')"
+                          invalidMessage="Appointment type is required">
+                        </app-select>
                       </div>
 
                       <div class="participants-section" formArrayName="participants">
-                        <div class="participants-header">
-                          <app-typography [variant]="TypographyTypeEnum['body-s-semibold']">
-                            Participants
-                          </app-typography>
-                          <app-button
-                            text="Add Participant"
-                            leftIcon="user"
-                            [size]="ButtonSizeEnum.small"
-                            [style]="ButtonStyleEnum.text"
-                            (buttonClick)="addParticipantToAppointment(i)">
-                          </app-button>
-                        </div>
+                        <button type="button" class="add-guest-btn" (click)="toggleParticipantsSection(i)">
+                          @if (getParticipantsFormArray(i).length === 0) {
+                            <app-svg src="user" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                            <span>Add a guest</span>
+                          } @else {
+                            <app-svg src="close" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                            <span>Remove guests</span>
+                          }
+                        </button>
 
-                        @if (getParticipantsFormArray(i).length === 0) {
-                          <div class="empty-participants">
-                            <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
-                              No participants added yet.
-                            </app-typography>
-                          </div>
-                        }
+                        @if (getParticipantsFormArray(i).length > 0) {
+                          <div class="guest-form">
+                            @for (participant of getParticipantsFormArray(i).controls; track $index; let j = $index) {
+                              <div class="guest-item" [formGroupName]="j">
+                                <div class="form-group">
+                                  <app-input
+                                    label="Guest Name"
+                                    leftIcon="user"
+                                    placeholder="Enter guest name..."
+                                    formControlName="name">
+                                  </app-input>
+                                </div>
 
-                        @for (participant of getParticipantsFormArray(i).controls; track $index; let j = $index) {
-                          <div class="participant-form" [formGroupName]="j">
-                            <div class="participant-fields">
-                              <div class="form-field">
-                                <app-input
-                                  label="Email"
-                                  type="email"
-                                  placeholder="participant@email.com"
-                                  formControlName="email"
-                                  [invalid]="isParticipantFieldInvalid(i, j, 'email')"
-                                  invalidMessage="Please enter a valid email"
-                                  leftIcon="user">
-                                </app-input>
+                                <div class="form-group">
+                                  <label class="form-label">Contact Method</label>
+                                  <div class="contact-toggle">
+                                    <button type="button" class="contact-btn" [class.active]="getParticipantContactType(i, j) === 'email'" (click)="setParticipantContactType(i, j, 'email')">
+                                      <app-svg src="email" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                                      Email
+                                    </button>
+                                    <button type="button" class="contact-btn" [class.active]="getParticipantContactType(i, j) === 'phone'" (click)="setParticipantContactType(i, j, 'phone')">
+                                      <app-svg src="phone" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                                      Phone
+                                    </button>
+                                  </div>
+                                </div>
+
+                                <div class="form-group">
+                                  <app-input
+                                    [label]="getParticipantContactType(i, j) === 'email' ? 'Email Address' : 'Phone Number'"
+                                    [type]="getParticipantContactType(i, j) === 'email' ? 'email' : 'tel'"
+                                    [leftIcon]="getParticipantContactType(i, j) === 'email' ? 'email' : 'phone'"
+                                    [placeholder]="getParticipantContactType(i, j) === 'email' ? 'guest@email.com' : '+33 6 12 34 56 78'"
+                                    formControlName="email">
+                                  </app-input>
+                                </div>
+
+                                @if (j > 0) {
+                                  <button type="button" class="remove-guest-btn" (click)="removeParticipantFromAppointment(i, j)">
+                                    <app-svg src="close" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                                  </button>
+                                }
                               </div>
-
-                              <div class="form-field">
-                                <app-input
-                                  label="Phone (Optional)"
-                                  type="tel"
-                                  placeholder="+1234567890"
-                                  formControlName="phone"
-                                  leftIcon="phone">
-                                </app-input>
-                              </div>
-
-                              <div class="form-field">
-                                <app-select
-                                  label="Notification Method"
-                                  [options]="communicationMethods"
-                                  formControlName="message_type">
-                                </app-select>
-                              </div>
-                            </div>
-
-                            <div class="participant-actions">
-                              @if (mode === 'edit' && hasAppointmentId(i)) {
-                                <app-button
-                                  [text]="hasParticipantId(i, j) ? 'Update' : 'Save'"
-                                  leftIcon="check"
-                                  [size]="ButtonSizeEnum.small"
-                                  [style]="ButtonStyleEnum.stroke"
-                                  [disabled]="isParticipantSaving(i, j)"
-                                  [loading]="isParticipantSaving(i, j)"
-                                  (buttonClick)="saveParticipant(i, j)">
-                                </app-button>
-                              }
-                              <app-button
-                                text="Remove"
-                                leftIcon="delete"
-                                [size]="ButtonSizeEnum.small"
-                                [style]="ButtonStyleEnum.text"
-                                (buttonClick)="removeParticipantFromAppointment(i, j)">
-                              </app-button>
-                            </div>
+                            }
+                            <button type="button" class="btn-text primary" (click)="addParticipantToAppointment(i)">
+                              <app-svg src="plus" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                              Add another guest
+                            </button>
                           </div>
                         }
                       </div>
                     </div>
-                  </div>
 
-                  @if (i < appointmentsFormArray.length - 1) {
-                    <div class="appointment-divider"></div>
+                    @if (i < appointmentsFormArray.length - 1) {
+                      <div class="appointment-divider"></div>
+                    }
                   }
+
+                  <button type="button" class="btn-text primary add-appointment-btn" (click)="addAppointment()">
+                    <app-svg src="plus" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                    Add another appointment
+                  </button>
+                } @else {
+                  <div class="empty-appointments">
+                    <button type="button" class="btn-add-appointment" (click)="addAppointment()">
+                      <app-svg src="plus" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
+                      <span>Add Appointment</span>
+                    </button>
+                    <p class="empty-text">Click to schedule your first appointment</p>
+                  </div>
                 }
-              } @else {
-                <div class="empty-appointments">
-                  <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
-                    No appointments configured. Add your first appointment to get started.
-                  </app-typography>
-                </div>
-              }
+              </div>
             </div>
           </div>
+        }
 
-          <div class="form-actions">
+        <div class="stepper-actions">
+          <app-button
+            text="Back"
+            leftIcon="arrow-left"
+            [style]="ButtonStyleEnum.stroke"
+            [size]="ButtonSizeEnum.medium"
+            [disabled]="currentStep() === 0"
+            (buttonClick)="previousStep()">
+          </app-button>
+
+          <div class="action-right">
             @if (mode === 'edit' && isAutoSaving()) {
               <div class="auto-save-indicator">
                 <app-svg src="check" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--emerald-500)'}"></app-svg>
-                <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--emerald-500)">
-                  Saving changes...
-                </app-typography>
+                <span>Saving...</span>
               </div>
             }
 
-            @if (mode === 'edit' && lastSaved() && !isAutoSaving()) {
-              <div class="auto-save-indicator">
-                <app-svg src="check" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--emerald-500)'}"></app-svg>
-                <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--slate-500)">
-                  All changes saved
-                </app-typography>
-              </div>
-            }
-
-            <app-button
-              text="Cancel"
-              [size]="ButtonSizeEnum.large"
-              [style]="ButtonStyleEnum.stroke"
-              (buttonClick)="cancel()">
-            </app-button>
-
-            @if (mode === 'create') {
+            @if (currentStep() < 2) {
               <app-button
-                text="Create Consultation"
-                leftIcon="plus"
-                [size]="ButtonSizeEnum.large"
+                text="Next"
+                rightIcon="arrow-right"
                 [style]="ButtonStyleEnum.primary"
-                [disabled]="isSaving()"
-                [loading]="isSaving()"
-                (buttonClick)="onSubmit()">
+                [size]="ButtonSizeEnum.medium"
+                [disabled]="!canProceedToNextStep()"
+                (buttonClick)="nextStep()">
               </app-button>
-            }
-
-            @if (mode === 'edit') {
-              <app-button
-                text="Save Changes"
-                leftIcon="check"
-                [size]="ButtonSizeEnum.large"
-                [style]="ButtonStyleEnum.primary"
-                [disabled]="isSaving()"
-                [loading]="isSaving()"
-                (buttonClick)="saveEditChanges()">
-              </app-button>
+            } @else {
+              @if (mode === 'create') {
+                <app-button
+                  text="Create Consultation"
+                  [style]="ButtonStyleEnum.primary"
+                  [size]="ButtonSizeEnum.medium"
+                  [disabled]="isSaving()"
+                  [loading]="isSaving()"
+                  (buttonClick)="onSubmit()">
+                </app-button>
+              } @else {
+                <app-button
+                  text="Save Changes"
+                  [style]="ButtonStyleEnum.primary"
+                  [size]="ButtonSizeEnum.medium"
+                  [disabled]="isSaving()"
+                  [loading]="isSaving()"
+                  (buttonClick)="saveEditChanges()">
+                </app-button>
+              }
             }
           </div>
-        </form>
-      </div>
+        </div>
+      </form>
     }
   </div>
 </app-page>

@@ -51,7 +51,7 @@
           @if (!isCollapsed) {
             <app-typography
               class="menu-label"
-              [variant]="TypographyTypeEnum['body-medium']">
+              [variant]="TypographyTypeEnum['body-semibold']">
               {{ menuItem.name }}
             </app-typography>
           }
@@ -60,31 +60,4 @@
     }
   </div>
 
-  <div class="sidebar-footer">
-    <div class="user-section">
-      @if (!isCollapsed && currentUser) {
-        <div class="user-info">
-          <app-typography
-            [variant]="TypographyTypeEnum['body-bold']"
-            color="var(--slate-700)">
-            {{ getUserDisplayName() }}
-          </app-typography>
-          <app-typography
-            [variant]="TypographyTypeEnum['body-s-regular']"
-            color="var(--slate-400)">
-            {{ currentUser.email }}
-          </app-typography>
-        </div>
-      }
-    </div>
-    <app-button
-      [leftIcon]="isCollapsed ? 'log-out' : 'log-out'"
-      (buttonClick)="onLogOut()"
-      [size]="ButtonSizeEnum.small"
-      [style]="ButtonStyleEnum.text"
-      [state]="ButtonStateEnum.secondary"
-      [text]="isCollapsed ? '' : 'Logout'"
-      [title]="isCollapsed ? 'Logout' : ''">
-    </app-button>
-  </div>
 </div>

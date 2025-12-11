@@ -20,6 +20,66 @@
 
     <app-language-selector></app-language-selector>
 
+    <div class="notification-section">
+      <button class="notification-btn" (click)="toggleNotifications()">
+        <app-svg src="bell" [svgStyle]="{'width.px': 22, 'height.px': 22, 'color': 'var(--slate-600)'}"></app-svg>
+        @if (notificationService.unreadCount() > 0) {
+          <span class="notification-badge">{{ notificationService.unreadCount() > 9 ? '9+' : notificationService.unreadCount() }}</span>
+        }
+      </button>
+
+      @if (showNotifications()) {
+        <div class="notification-dropdown">
+          <div class="dropdown-header">
+            <app-typography [variant]="TypographyTypeEnum['body-bold']" color="var(--slate-800)">
+              Notifications
+            </app-typography>
+            @if (notificationService.unreadCount() > 0) {
+              <button class="mark-all-read" (click)="markAllNotificationsRead()">
+                Mark all read
+              </button>
+            }
+          </div>
+          <div class="notification-list">
+            @if (notificationService.isLoading()) {
+              <div class="notification-loading">
+                <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
+                  Loading...
+                </app-typography>
+              </div>
+            } @else if (notificationService.notifications().length === 0) {
+              <div class="notification-empty">
+                <app-svg src="bell" [svgStyle]="{'width.px': 32, 'height.px': 32, 'color': 'var(--slate-300)'}"></app-svg>
+                <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-400)">
+                  No notifications
+                </app-typography>
+              </div>
+            } @else {
+              @for (notification of notificationService.notifications(); track notification.id) {
+                <div
+                  class="notification-item"
+                  [ngClass]="{'unread': isNotificationUnread(notification)}"
+                  (click)="onNotificationClick(notification)">
+                  <div class="notification-indicator" [ngClass]="{'visible': isNotificationUnread(notification)}"></div>
+                  <div class="notification-content">
+                    <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-800)">
+                      {{ notification.subject }}
+                    </app-typography>
+                    <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
+                      {{ notification.content }}
+                    </app-typography>
+                    <app-typography [variant]="TypographyTypeEnum['body-xs-regular']" color="var(--slate-400)">
+                      {{ notificationService.getRelativeTime(notification.created_at) }}
+                    </app-typography>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        </div>
+      }
+    </div>
+
     <div class="profile-section" (click)="toggleProfileMenu()">
       <div class="profile-info">
         <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-800)">

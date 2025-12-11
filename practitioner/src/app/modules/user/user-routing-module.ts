@@ -9,6 +9,9 @@ import { ConsultationForm } from './components/consultation-form/consultation-fo
 import { UserProfile } from './components/user-profile/user-profile';
 import { Test } from './components/test/test';
 import { Availability } from './components/availability/availability';
+import { Patients } from './components/patients/patients';
+import { Appointments } from './components/appointments/appointments';
+import { Configuration } from './components/configuration/configuration';
 
 const routes: Routes = [
   {
@@ -57,6 +60,21 @@ const routes: Routes = [
         path: RoutePaths.PROFILE,
         pathMatch: 'full',
         component: UserProfile,
+      },
+      {
+        path: RoutePaths.PATIENTS,
+        pathMatch: 'full',
+        component: Patients,
+      },
+      {
+        path: RoutePaths.APPOINTMENTS,
+        pathMatch: 'full',
+        component: Appointments,
+      },
+      {
+        path: RoutePaths.CONFIGURATION,
+        pathMatch: 'full',
+        component: Configuration,
       },
     ],
   },
