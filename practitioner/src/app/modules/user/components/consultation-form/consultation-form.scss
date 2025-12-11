@@ -389,10 +389,11 @@
     }
 
     .empty-appointments {
+      gap: 16px;
+      padding: 40px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 40px;
       text-align: center;
 
       .btn-add-appointment {

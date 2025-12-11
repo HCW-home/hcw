@@ -202,7 +202,7 @@
 
                               @if (j > 0) {
                                 <app-button
-                                  leftIcon="close"
+                                  text="Remove"
                                   [style]="ButtonStyleEnum.text"
                                   [state]="ButtonStateEnum.error"
                                   [size]="ButtonSizeEnum.small"
@@ -238,7 +238,6 @@
                     text="Add Appointment"
                     leftIcon="plus"
                     [style]="ButtonStyleEnum.stroke"
-                    [size]="ButtonSizeEnum.large"
                     (buttonClick)="addAppointment()">
                   </app-button>
                   <p class="empty-text">Click to schedule your first appointment</p>
