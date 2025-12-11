@@ -1,4 +1,26 @@
-<div class="modal-backdrop" animate.enter="fade-in" animate.leave="fade-out"></div>
-<div class="modal" animate.enter="modal-enter" animate.leave="modal-leave">
-  <ng-content></ng-content>
-</div>
+@if (isOpen()) {
+  <div class="modal-backdrop" (click)="onBackdropClick($event)">
+    <div class="modal" [class]="'modal-' + size()">
+      @if (title() || showCloseButton()) {
+        <div class="modal-header">
+          @if (title()) {
+            <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
+              {{ title() }}
+            </app-typography>
+          }
+          @if (showCloseButton()) {
+            <button class="close-button" (click)="close()">
+              <app-svg src="close" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
+            </button>
+          }
+        </div>
+      }
+      <div class="modal-body" [class.no-header]="!title() && !showCloseButton()">
+        <ng-content></ng-content>
+      </div>
+      <div class="modal-footer">
+        <ng-content select="[modal-footer]"></ng-content>
+      </div>
+    </div>
+  </div>
+}

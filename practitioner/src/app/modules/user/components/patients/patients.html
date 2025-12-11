@@ -1,11 +1,110 @@
 <app-page>
-  <div class="placeholder-page">
-    <div class="placeholder-content">
-      <div class="placeholder-icon">
-        <app-svg src="user" [svgStyle]="{'width.px': 48, 'height.px': 48}"></app-svg>
+  <div class="patients-container">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
+          Total Patients
+        </app-typography>
+        <app-typography [variant]="TypographyTypeEnum['h5-bold']" color="var(--slate-800)">
+          {{ totalPatients }}
+        </app-typography>
       </div>
-      <h2>Patients</h2>
-      <p>This page is under construction</p>
+      <div class="stat-card">
+        <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
+          Active Patients
+        </app-typography>
+        <app-typography [variant]="TypographyTypeEnum['h5-bold']" color="var(--primary-600)">
+          {{ activePatients }}
+        </app-typography>
+      </div>
+      <div class="stat-card">
+        <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
+          This Month
+        </app-typography>
+        <app-typography [variant]="TypographyTypeEnum['h5-bold']" color="var(--emerald-600)">
+          +3
+        </app-typography>
+      </div>
+    </div>
+
+    <div class="patients-card">
+      <div class="table-header">
+        <div class="header-cell patient-col">Patient</div>
+        <div class="header-cell contact-col">Contact</div>
+        <div class="header-cell age-col">Age</div>
+        <div class="header-cell visit-col">Last Visit</div>
+        <div class="header-cell action-col"></div>
+      </div>
+
+      <div class="table-body">
+        @if (loading()) {
+          <div class="loading-state">
+            <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
+              Loading patients...
+            </app-typography>
+          </div>
+        } @else if (patients.length === 0) {
+          <div class="empty-state">
+            <app-svg src="user" [svgStyle]="{'width.px': 48, 'height.px': 48, 'color': 'var(--slate-300)'}"></app-svg>
+            <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--slate-600)">
+              No patients found
+            </app-typography>
+            <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-400)">
+              Add your first patient to get started
+            </app-typography>
+          </div>
+        } @else {
+          @for (patient of patients; track patient.id) {
+            <div class="table-row" (click)="viewPatient(patient)">
+              <div class="row-cell patient-col">
+                <div class="patient-avatar" [class.inactive]="patient.status === 'inactive'">
+                  {{ patient.avatar }}
+                </div>
+                <div class="patient-info">
+                  <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-800)">
+                    {{ patient.name }}
+                  </app-typography>
+                  <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
+                    {{ patient.totalConsultations }} consultations
+                  </app-typography>
+                </div>
+              </div>
+
+              <div class="row-cell contact-col">
+                <div class="contact-item">
+                  <app-svg src="email" [svgStyle]="{'width.px': 14, 'height.px': 14, 'color': 'var(--slate-400)'}"></app-svg>
+                  <span class="contact-text">{{ patient.email }}</span>
+                </div>
+                <div class="contact-item">
+                  <app-svg src="phone" [svgStyle]="{'width.px': 14, 'height.px': 14, 'color': 'var(--slate-400)'}"></app-svg>
+                  <span class="contact-text">{{ patient.phone }}</span>
+                </div>
+              </div>
+
+              <div class="row-cell age-col">
+                <app-typography [variant]="TypographyTypeEnum['body-medium']" color="var(--slate-800)">
+                  {{ calculateAge(patient.dateOfBirth) }} years
+                </app-typography>
+                <app-typography [variant]="TypographyTypeEnum['body-xs-regular']" color="var(--slate-500)">
+                  {{ formatDate(patient.dateOfBirth) }}
+                </app-typography>
+              </div>
+
+              <div class="row-cell visit-col">
+                <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-800)">
+                  {{ formatDate(patient.lastVisit) }}
+                </app-typography>
+              </div>
+
+              <div class="row-cell action-col">
+                <div class="row-action">
+                  <app-svg src="arrow-right" [svgStyle]="{'width.px': 20, 'height.px': 20, 'color': 'var(--slate-400)'}"></app-svg>
+                </div>
+              </div>
+            </div>
+          }
+        }
+      </div>
     </div>
   </div>
 </app-page>

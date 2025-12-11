@@ -150,9 +150,13 @@
                           <span class="no-days">No active days</span>
                         }
                       </div>
-                      @if (slot.valid_until) {
-                        <div class="slot-validity">Valid until: {{ slot.valid_until }}</div>
-                      }
+                      <div class="slot-validity" [class.infinite]="!slot.valid_until">
+                        @if (slot.valid_until) {
+                          Valid until: {{ slot.valid_until }}
+                        } @else {
+                          No expiration
+                        }
+                      </div>
                     </div>
                     <div class="slot-actions">
                       <app-button

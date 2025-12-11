@@ -46,9 +46,9 @@
       background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
       box-shadow: 0 4px 14px rgba(6, 182, 212, 0.3);
 
-      ::ng-deep svg {
-        fill: var(--White) !important;
-      }
+      //::ng-deep svg {
+      //  fill: var(--White) !important;
+      //}
 
       &:hover {
         background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
@@ -72,9 +72,9 @@
         background: var(--slate-100);
         box-shadow: none;
 
-        ::ng-deep svg {
-          fill: var(--slate-600) !important;
-        }
+        //::ng-deep svg {
+        //  fill: var(--slate-600) !important;
+        //}
 
         &:hover {
           background: var(--slate-200);
@@ -110,18 +110,18 @@
       border: 2px solid var(--primary-500);
       color: var(--primary-600);
 
-      ::ng-deep svg {
-        fill: var(--primary-500);
-      }
+      //::ng-deep svg {
+      //  fill: var(--primary-500);
+      //}
 
       &:hover {
         background: var(--primary-500);
         color: var(--White);
         transform: translateY(-1px);
 
-        ::ng-deep svg {
-          fill: var(--White);
-        }
+        //::ng-deep svg {
+        //  fill: var(--White);
+        //}
       }
 
       &:disabled {
@@ -133,18 +133,18 @@
         color: var(--slate-600);
         border-color: var(--slate-300);
 
-        ::ng-deep svg {
-          fill: var(--slate-500);
-        }
+        //::ng-deep svg {
+        //  fill: var(--slate-500);
+        //}
 
         &:hover {
           background: var(--slate-100);
           border-color: var(--slate-400);
           color: var(--slate-700);
 
-          ::ng-deep svg {
-            fill: var(--slate-600);
-          }
+          //::ng-deep svg {
+          //  fill: var(--slate-600);
+          //}
         }
 
         &:disabled {
@@ -158,17 +158,17 @@
         color: var(--rose-500);
         border-color: var(--rose-500);
 
-        ::ng-deep svg {
-          fill: var(--rose-500);
-        }
+        //::ng-deep svg {
+        //  fill: var(--rose-500);
+        //}
 
         &:hover {
           background: var(--rose-500);
           color: var(--White);
 
-          ::ng-deep svg {
-            fill: var(--White);
-          }
+          //::ng-deep svg {
+          //  fill: var(--White);
+          //}
         }
 
         &:disabled {
@@ -184,9 +184,9 @@
       background: transparent;
       color: var(--primary-600);
 
-      ::ng-deep svg {
-        fill: var(--primary-500);
-      }
+      //::ng-deep svg {
+      //  fill: var(--primary-500);
+      //}
 
       &:hover {
         color: var(--primary-700);
@@ -201,9 +201,9 @@
       &.secondary {
         color: var(--slate-600);
 
-        ::ng-deep svg {
-          fill: var(--slate-500);
-        }
+        //::ng-deep svg {
+        //  fill: var(--slate-500);
+        //}
 
         &:hover {
           color: var(--slate-800);
@@ -219,9 +219,9 @@
       &.error {
         color: var(--rose-500);
 
-        ::ng-deep svg {
-          fill: var(--rose-500);
-        }
+        //::ng-deep svg {
+        //  fill: var(--rose-500);
+        //}
 
         &:hover {
           color: var(--rose-600);
@@ -247,9 +247,9 @@
         border-color: var(--primary-500);
         box-shadow: none;
 
-        ::ng-deep svg {
-          fill: var(--primary-500);
-        }
+        //::ng-deep svg {
+        //  fill: var(--primary-500);
+        //}
       }
 
       &:disabled {

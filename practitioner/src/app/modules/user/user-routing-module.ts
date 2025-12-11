@@ -10,6 +10,7 @@ import { UserProfile } from './components/user-profile/user-profile';
 import { Test } from './components/test/test';
 import { Availability } from './components/availability/availability';
 import { Patients } from './components/patients/patients';
+import { PatientDetail } from './components/patient-detail/patient-detail';
 import { Appointments } from './components/appointments/appointments';
 import { Configuration } from './components/configuration/configuration';
 
@@ -65,6 +66,10 @@ const routes: Routes = [
         path: RoutePaths.PATIENTS,
         pathMatch: 'full',
         component: Patients,
+      },
+      {
+        path: RoutePaths.PATIENT_DETAIL,
+        component: PatientDetail,
       },
       {
         path: RoutePaths.APPOINTMENTS,

@@ -27,7 +27,6 @@ import { IUser } from '../../models/user';
 import { Page } from '../../../../core/components/page/page';
 import { Loader } from '../../../../shared/components/loader/loader';
 import { MessageList, Message } from '../../../../shared/components/message-list/message-list';
-import { VideoConsultationComponent } from '../video-consultation/video-consultation';
 
 import { Svg } from '../../../../shared/ui-components/svg/svg';
 import { Button } from '../../../../shared/ui-components/button/button';
@@ -47,7 +46,6 @@ interface ModalParticipant {
     Svg,
     Page,
     Loader,
-    VideoConsultationComponent,
     MessageList,
     CommonModule,
     ReactiveFormsModule,

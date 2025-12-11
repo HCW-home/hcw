@@ -1,9 +1,13 @@
 <app-page>
   <div class="consultation-form-container">
-    <button class="back-button" (click)="cancel()">
-      <app-svg src="arrow-left" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
-      <span>Back to consultations</span>
-    </button>
+    <app-button
+      text="Back to consultations"
+      leftIcon="arrow-left"
+      [style]="ButtonStyleEnum.text"
+      [size]="ButtonSizeEnum.small"
+      buttonClass="back-button"
+      (buttonClick)="cancel()">
+    </app-button>
 
     @if (isLoading()) {
       <div class="loading-container">
@@ -77,147 +81,169 @@
 
         @if (currentStep() === 2) {
           <div class="step-content">
-            <div class="form-card">
-              <h3 class="card-title">Schedule First Appointment</h3>
+            <div class="step-header">
+              <h3 class="card-title">Schedule Appointments</h3>
               <p class="step-hint">Optional - You can schedule appointments later from the consultation page</p>
+            </div>
 
-              <div class="appointment-content" formArrayName="appointments">
-                @if (formReady() && appointmentsFormArray && appointmentsFormArray.length > 0) {
-                  @for (appointment of appointmentsFormArray.controls; track $index; let i = $index) {
-                    <div class="appointment-section" [formGroupName]="i">
-                      @if (appointmentsFormArray.length > 1) {
-                        <div class="appointment-header">
-                          <app-typography [variant]="TypographyTypeEnum['body-semibold']">
-                            Appointment {{ i + 1 }}
-                            @if (hasAppointmentId(i)) {
-                              <span class="saved-badge">(Saved)</span>
-                            }
-                          </app-typography>
-                          <div class="appointment-actions">
-                            @if (mode === 'edit') {
-                              <button type="button" class="btn-text primary" [disabled]="isAppointmentSaving(i)" (click)="saveAppointment(i)">
-                                {{ hasAppointmentId(i) ? 'Update' : 'Save' }}
-                              </button>
-                            }
-                            <button type="button" class="btn-text danger" (click)="removeAppointment(i)">
-                              Remove
-                            </button>
-                          </div>
-                        </div>
-                      }
-
-                      <div class="appointment-grid">
-                        <div class="form-group">
-                          <app-input
-                            label="Date"
-                            type="date"
-                            leftIcon="calendar"
-                            formControlName="date">
-                          </app-input>
-                        </div>
-                        <div class="form-group">
-                          <app-input
-                            label="Time"
-                            type="time"
-                            leftIcon="clock"
-                            formControlName="time">
-                          </app-input>
-                        </div>
-                      </div>
-
-                      <div class="form-group">
-                        <app-select
-                          label="Appointment Type"
-                          formControlName="type"
-                          [options]="appointmentTypeOptions"
-                          [invalid]="isAppointmentFieldInvalid(i, 'type')"
-                          invalidMessage="Appointment type is required">
-                        </app-select>
-                      </div>
-
-                      <div class="participants-section" formArrayName="participants">
-                        <button type="button" class="add-guest-btn" (click)="toggleParticipantsSection(i)">
-                          @if (getParticipantsFormArray(i).length === 0) {
-                            <app-svg src="user" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
-                            <span>Add a guest</span>
-                          } @else {
-                            <app-svg src="close" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
-                            <span>Remove guests</span>
-                          }
-                        </button>
-
-                        @if (getParticipantsFormArray(i).length > 0) {
-                          <div class="guest-form">
-                            @for (participant of getParticipantsFormArray(i).controls; track $index; let j = $index) {
-                              <div class="guest-item" [formGroupName]="j">
-                                <div class="form-group">
-                                  <app-input
-                                    label="Guest Name"
-                                    leftIcon="user"
-                                    placeholder="Enter guest name..."
-                                    formControlName="name">
-                                  </app-input>
-                                </div>
-
-                                <div class="form-group">
-                                  <label class="form-label">Contact Method</label>
-                                  <div class="contact-toggle">
-                                    <button type="button" class="contact-btn" [class.active]="getParticipantContactType(i, j) === 'email'" (click)="setParticipantContactType(i, j, 'email')">
-                                      <app-svg src="email" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
-                                      Email
-                                    </button>
-                                    <button type="button" class="contact-btn" [class.active]="getParticipantContactType(i, j) === 'phone'" (click)="setParticipantContactType(i, j, 'phone')">
-                                      <app-svg src="phone" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
-                                      Phone
-                                    </button>
-                                  </div>
-                                </div>
-
-                                <div class="form-group">
-                                  <app-input
-                                    [label]="getParticipantContactType(i, j) === 'email' ? 'Email Address' : 'Phone Number'"
-                                    [type]="getParticipantContactType(i, j) === 'email' ? 'email' : 'tel'"
-                                    [leftIcon]="getParticipantContactType(i, j) === 'email' ? 'email' : 'phone'"
-                                    [placeholder]="getParticipantContactType(i, j) === 'email' ? 'guest@email.com' : '+33 6 12 34 56 78'"
-                                    formControlName="email">
-                                  </app-input>
-                                </div>
-
-                                @if (j > 0) {
-                                  <button type="button" class="remove-guest-btn" (click)="removeParticipantFromAppointment(i, j)">
-                                    <app-svg src="close" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
-                                  </button>
-                                }
-                              </div>
-                            }
-                            <button type="button" class="btn-text primary" (click)="addParticipantToAppointment(i)">
-                              <app-svg src="plus" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
-                              Add another guest
-                            </button>
-                          </div>
+            <div class="appointments-container" formArrayName="appointments">
+              @if (formReady() && appointmentsFormArray && appointmentsFormArray.length > 0) {
+                @for (appointment of appointmentsFormArray.controls; track $index; let i = $index) {
+                  <div class="form-card appointment-card" [formGroupName]="i">
+                    <div class="appointment-header">
+                      <app-typography [variant]="TypographyTypeEnum['body-semibold']">
+                        Appointment {{ i + 1 }}
+                        @if (hasAppointmentId(i)) {
+                          <span class="saved-badge">(Saved)</span>
                         }
+                      </app-typography>
+                      <div class="appointment-actions">
+                        @if (mode === 'edit') {
+                          <app-button
+                            [text]="hasAppointmentId(i) ? 'Update' : 'Save'"
+                            [style]="ButtonStyleEnum.text"
+                            [size]="ButtonSizeEnum.small"
+                            [disabled]="isAppointmentSaving(i)"
+                            (buttonClick)="saveAppointment(i)">
+                          </app-button>
+                        }
+                        <app-button
+                          text="Remove"
+                          [style]="ButtonStyleEnum.text"
+                          [state]="ButtonStateEnum.error"
+                          [size]="ButtonSizeEnum.small"
+                          (buttonClick)="removeAppointment(i)">
+                        </app-button>
                       </div>
                     </div>
 
-                    @if (i < appointmentsFormArray.length - 1) {
-                      <div class="appointment-divider"></div>
-                    }
-                  }
+                    <div class="appointment-grid">
+                      <div class="form-group">
+                        <app-input
+                          label="Date"
+                          type="date"
+                          leftIcon="calendar"
+                          formControlName="date">
+                        </app-input>
+                      </div>
+                      <div class="form-group">
+                        <app-input
+                          label="Time"
+                          type="time"
+                          leftIcon="clock"
+                          formControlName="time">
+                        </app-input>
+                      </div>
+                    </div>
 
-                  <button type="button" class="btn-text primary add-appointment-btn" (click)="addAppointment()">
-                    <app-svg src="plus" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
-                    Add another appointment
-                  </button>
-                } @else {
-                  <div class="empty-appointments">
-                    <button type="button" class="btn-add-appointment" (click)="addAppointment()">
-                      <app-svg src="plus" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
-                      <span>Add Appointment</span>
-                    </button>
-                    <p class="empty-text">Click to schedule your first appointment</p>
+                    <div class="form-group">
+                      <app-select
+                        label="Appointment Type"
+                        formControlName="type"
+                        [options]="appointmentTypeOptions"
+                        [invalid]="isAppointmentFieldInvalid(i, 'type')"
+                        invalidMessage="Appointment type is required">
+                      </app-select>
+                    </div>
+
+                    <div class="participants-section" formArrayName="participants">
+                      <app-button
+                        [text]="getParticipantsFormArray(i).length === 0 ? 'Add a guest' : 'Remove guests'"
+                        [leftIcon]="getParticipantsFormArray(i).length === 0 ? 'user' : 'close'"
+                        [style]="ButtonStyleEnum.stroke"
+                        [size]="ButtonSizeEnum.small"
+                        (buttonClick)="toggleParticipantsSection(i)">
+                      </app-button>
+
+                      @if (getParticipantsFormArray(i).length > 0) {
+                        <div class="guest-form">
+                          @for (participant of getParticipantsFormArray(i).controls; track $index; let j = $index) {
+                            <div class="guest-item" [formGroupName]="j">
+                              <div class="form-group">
+                                <app-input
+                                  label="Guest Name"
+                                  leftIcon="user"
+                                  placeholder="Enter guest name..."
+                                  formControlName="name">
+                                </app-input>
+                              </div>
+
+                              <div class="form-group">
+                                <label class="form-label">Contact Method</label>
+                                <div class="contact-toggle">
+                                  <app-button
+                                    text="Email"
+                                    leftIcon="email"
+                                    [block]="true"
+                                    [style]="getParticipantContactType(i, j) === 'email' ? ButtonStyleEnum.primary : ButtonStyleEnum.stroke"
+                                    [size]="ButtonSizeEnum.small"
+                                    (buttonClick)="setParticipantContactType(i, j, 'email')">
+                                  </app-button>
+                                  <app-button
+                                    text="Phone"
+                                    leftIcon="phone"
+                                    [block]="true"
+                                    [style]="getParticipantContactType(i, j) === 'phone' ? ButtonStyleEnum.primary : ButtonStyleEnum.stroke"
+                                    [size]="ButtonSizeEnum.small"
+                                    (buttonClick)="setParticipantContactType(i, j, 'phone')">
+                                  </app-button>
+                                </div>
+                              </div>
+
+                              <div class="form-group">
+                                <app-input
+                                  [label]="getParticipantContactType(i, j) === 'email' ? 'Email Address' : 'Phone Number'"
+                                  [type]="getParticipantContactType(i, j) === 'email' ? 'email' : 'tel'"
+                                  [leftIcon]="getParticipantContactType(i, j) === 'email' ? 'email' : 'phone'"
+                                  [placeholder]="getParticipantContactType(i, j) === 'email' ? 'guest@email.com' : '+33 6 12 34 56 78'"
+                                  formControlName="email">
+                                </app-input>
+                              </div>
+
+                              @if (j > 0) {
+                                <app-button
+                                  leftIcon="close"
+                                  [style]="ButtonStyleEnum.text"
+                                  [state]="ButtonStateEnum.error"
+                                  [size]="ButtonSizeEnum.small"
+                                  buttonClass="remove-guest-btn"
+                                  (buttonClick)="removeParticipantFromAppointment(i, j)">
+                                </app-button>
+                              }
+                            </div>
+                          }
+                          <app-button
+                            text="Add another guest"
+                            leftIcon="plus"
+                            [style]="ButtonStyleEnum.text"
+                            [size]="ButtonSizeEnum.small"
+                            (buttonClick)="addParticipantToAppointment(i)">
+                          </app-button>
+                        </div>
+                      }
+                    </div>
                   </div>
                 }
-              </div>
+
+                <app-button
+                  text="Add another appointment"
+                  leftIcon="plus"
+                  [style]="ButtonStyleEnum.text"
+                  [size]="ButtonSizeEnum.medium"
+                  (buttonClick)="addAppointment()">
+                </app-button>
+              } @else {
+                <div class="form-card empty-appointments">
+                  <app-button
+                    text="Add Appointment"
+                    leftIcon="plus"
+                    [style]="ButtonStyleEnum.stroke"
+                    [size]="ButtonSizeEnum.large"
+                    (buttonClick)="addAppointment()">
+                  </app-button>
+                  <p class="empty-text">Click to schedule your first appointment</p>
+                </div>
+              }
             </div>
           </div>
         }

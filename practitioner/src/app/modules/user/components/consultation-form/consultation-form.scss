@@ -6,23 +6,8 @@
   margin: 0 auto;
   animation: fadeIn 0.3s ease-out;
 
-  .back-button {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: none;
-    border: none;
-    color: var(--slate-600);
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    padding: 0;
+  > app-button:first-child {
     margin-bottom: 24px;
-    transition: color 0.2s ease;
-
-    &:hover {
-      color: var(--slate-800);
-    }
   }
 
   .loading-container {
@@ -180,7 +165,7 @@
       }
     }
 
-    .appointment-section {
+    .appointment-card {
       .appointment-header {
         display: flex;
         justify-content: space-between;
@@ -253,20 +238,10 @@
             margin-bottom: 12px;
           }
 
-          .remove-guest-btn {
+          > app-button:last-child {
             position: absolute;
             top: 0;
             right: 0;
-            background: none;
-            border: none;
-            color: var(--slate-400);
-            cursor: pointer;
-            padding: 4px;
-            transition: color 0.2s ease;
-
-            &:hover {
-              color: var(--rose-500);
-            }
           }
         }
 
@@ -274,31 +249,8 @@
           display: flex;
           gap: 8px;
 
-          .contact-btn {
+          app-button {
             flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 8px 16px;
-            background: var(--White);
-            border: 1px solid var(--slate-200);
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--slate-600);
-            cursor: pointer;
-            transition: all 0.2s ease;
-
-            &:hover {
-              border-color: var(--slate-300);
-            }
-
-            &.active {
-              background: var(--primary-500);
-              border-color: var(--primary-500);
-              color: var(--White);
-            }
           }
         }
       }

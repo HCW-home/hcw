@@ -343,6 +343,11 @@
           padding: 6px 10px;
           border-radius: 6px;
           display: inline-block;
+
+          &.infinite {
+            color: var(--emerald-600);
+            background: var(--emerald-50);
+          }
         }
       }
 
@@ -357,9 +362,11 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
       gap: 16px;
       padding: 80px 24px;
       text-align: center;
+      grid-column: 1 / -1;
 
       .empty-title {
         font-size: 16px;

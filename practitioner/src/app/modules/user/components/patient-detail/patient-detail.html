@@ -1,0 +1,356 @@
+<app-page>
+  <div class="patient-detail-container">
+    @if (patient) {
+      <div class="back-link" (click)="goBack()">
+        <app-svg src="arrow-left" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+        <span>Back to patients</span>
+      </div>
+
+      <div class="patient-header">
+        <div class="header-left">
+          <div class="patient-avatar-large">
+            {{ patient.avatar }}
+          </div>
+          <div class="patient-info">
+            <div class="name-row">
+              <app-typography [variant]="TypographyTypeEnum['h5-bold']" color="var(--slate-800)">
+                {{ patient.name }}
+              </app-typography>
+              <app-button
+                leftIcon="edit"
+                [style]="ButtonStyleEnum.text"
+                [size]="ButtonSizeEnum.small"
+                buttonClass="edit-icon-btn"
+                (buttonClick)="openEditModal()">
+              </app-button>
+            </div>
+            <div class="patient-meta">
+              <span>{{ calculateAge(patient.dateOfBirth) }} years old</span>
+              <span class="separator"></span>
+              <span>{{ formatDate(patient.dateOfBirth) }}</span>
+            </div>
+            <div class="patient-contact">
+              <div class="contact-item">
+                <app-svg src="email" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                <span>{{ patient.email }}</span>
+              </div>
+              <div class="contact-item">
+                <app-svg src="phone" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                <span>{{ patient.phone }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="header-actions">
+          <app-button
+            text="Message"
+            leftIcon="email"
+            [style]="ButtonStyleEnum.stroke"
+            [size]="ButtonSizeEnum.medium">
+          </app-button>
+          <app-button
+            text="Start Consultation"
+            leftIcon="video"
+            [style]="ButtonStyleEnum.primary"
+            [size]="ButtonSizeEnum.medium"
+            (buttonClick)="startConsultation()">
+          </app-button>
+        </div>
+      </div>
+
+      <app-tabs
+        [tabs]="tabItems"
+        [activeTab]="activeTab()"
+        (tabChange)="setActiveTab($event)">
+      </app-tabs>
+
+      <div class="tab-content">
+        @if (activeTab() === 'overview') {
+          <div class="overview-section">
+            <div class="section-header">
+              <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
+                Health Metrics
+              </app-typography>
+            </div>
+            <div class="metrics-grid">
+              @for (metric of healthMetrics; track metric.id) {
+                <div class="metric-card" [ngClass]="getMetricColorClass(metric.color)">
+                  <div class="metric-header">
+                    <div class="metric-icon">
+                      <app-svg [src]="metric.icon" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
+                    </div>
+                    <div class="metric-trend" [ngClass]="getTrendClass(metric.trend)">
+                      @if (metric.trend === 'up') {
+                        <app-svg src="arrow-up" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                      } @else if (metric.trend === 'down') {
+                        <app-svg src="arrow-down" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                      } @else {
+                        <app-svg src="minus" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                      }
+                    </div>
+                  </div>
+                  <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--slate-600)">
+                    {{ metric.name }}
+                  </app-typography>
+                  <div class="metric-value">
+                    <span class="value">{{ metric.value }}</span>
+                    <span class="unit">{{ metric.unit }}</span>
+                  </div>
+                  <app-typography [variant]="TypographyTypeEnum['body-xs-regular']" color="var(--slate-400)">
+                    Updated {{ formatDate(metric.lastUpdated) }}
+                  </app-typography>
+                </div>
+              }
+            </div>
+
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-icon primary">
+                  <app-svg src="video" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
+                </div>
+                <div class="stat-content">
+                  <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-700)">
+                    Total Consultations
+                  </app-typography>
+                  <app-typography [variant]="TypographyTypeEnum['h2-bold']" color="var(--slate-800)">
+                    {{ patient.totalConsultations }}
+                  </app-typography>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon emerald">
+                  <app-svg src="calendar" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
+                </div>
+                <div class="stat-content">
+                  <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-700)">
+                    Next Appointment
+                  </app-typography>
+                  <app-typography [variant]="TypographyTypeEnum['h3-bold']" color="var(--slate-800)">
+                    {{ upcomingAppointments[0] ? upcomingAppointments[0].time : 'N/A' }}
+                  </app-typography>
+                  <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
+                    {{ upcomingAppointments[0] ? formatDate(upcomingAppointments[0].date) : '' }}
+                  </app-typography>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon amber">
+                  <app-svg src="clock" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
+                </div>
+                <div class="stat-content">
+                  <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-700)">
+                    Last Visit
+                  </app-typography>
+                  <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
+                    {{ formatDate(patient.lastVisit) }}
+                  </app-typography>
+                </div>
+              </div>
+            </div>
+
+            <div class="section-header">
+              <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
+                Recent Consultations
+              </app-typography>
+              <app-button
+                text="View all"
+                [style]="ButtonStyleEnum.text"
+                [size]="ButtonSizeEnum.small"
+                (buttonClick)="setActiveTab('consultations')">
+              </app-button>
+            </div>
+            <div class="consultations-preview">
+              @for (consultation of consultationHistory.slice(0, 3); track consultation.id) {
+                <div class="consultation-item">
+                  <div class="consultation-main">
+                    <div class="consultation-header">
+                      <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-800)">
+                        {{ consultation.type }}
+                      </app-typography>
+                      <span class="status-badge completed">{{ consultation.status }}</span>
+                    </div>
+                    <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-600)">
+                      {{ consultation.diagnosis }}
+                    </app-typography>
+                    <div class="consultation-meta">
+                      <span>
+                        <app-svg src="calendar" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
+                        {{ formatDate(consultation.date) }} at {{ consultation.time }}
+                      </span>
+                      <span>
+                        <app-svg src="clock" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
+                        {{ consultation.duration }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        @if (activeTab() === 'consultations') {
+          <div class="consultations-section">
+            <div class="section-card">
+              <div class="card-header">
+                <div>
+                  <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
+                    Consultation History
+                  </app-typography>
+                  <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
+                    {{ consultationHistory.length }} total consultations
+                  </app-typography>
+                </div>
+              </div>
+              <div class="consultations-list">
+                @for (consultation of consultationHistory; track consultation.id) {
+                  <div class="consultation-detail-item">
+                    <div class="consultation-detail-header">
+                      <div>
+                        <div class="title-row">
+                          <app-typography [variant]="TypographyTypeEnum['body-l-semibold']" color="var(--slate-800)">
+                            {{ consultation.type }}
+                          </app-typography>
+                          <span class="status-badge completed">{{ consultation.status }}</span>
+                        </div>
+                        <div class="meta-row">
+                          <span>
+                            <app-svg src="calendar" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                            {{ formatDate(consultation.date) }} at {{ consultation.time }}
+                          </span>
+                          <span>
+                            <app-svg src="clock" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                            {{ consultation.duration }}
+                          </span>
+                          <span>with {{ consultation.doctor }}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="consultation-details">
+                      <div class="detail-box">
+                        <app-typography [variant]="TypographyTypeEnum['body-s-semibold']" color="var(--slate-700)">
+                          Diagnosis
+                        </app-typography>
+                        <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-600)">
+                          {{ consultation.diagnosis }}
+                        </app-typography>
+                      </div>
+                      <div class="detail-box">
+                        <app-typography [variant]="TypographyTypeEnum['body-s-semibold']" color="var(--slate-700)">
+                          Prescription
+                        </app-typography>
+                        <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-600)">
+                          {{ consultation.prescription }}
+                        </app-typography>
+                      </div>
+                    </div>
+                    <div class="notes-box">
+                      <app-typography [variant]="TypographyTypeEnum['body-s-semibold']" color="var(--slate-700)">
+                        Notes
+                      </app-typography>
+                      <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-600)">
+                        {{ consultation.notes }}
+                      </app-typography>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        }
+
+        @if (activeTab() === 'appointments') {
+          <div class="appointments-section">
+            <div class="section-card">
+              <div class="card-header">
+                <div>
+                  <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
+                    Upcoming Appointments
+                  </app-typography>
+                  <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
+                    {{ upcomingAppointments.length }} scheduled
+                  </app-typography>
+                </div>
+                <app-button
+                  text="Schedule New"
+                  leftIcon="plus"
+                  [style]="ButtonStyleEnum.primary"
+                  [size]="ButtonSizeEnum.small">
+                </app-button>
+              </div>
+              <div class="appointments-list">
+                @for (appointment of upcomingAppointments; track appointment.id) {
+                  <div class="appointment-item">
+                    <div class="appointment-main">
+                      <div class="appointment-header">
+                        <app-typography [variant]="TypographyTypeEnum['body-l-semibold']" color="var(--slate-800)">
+                          {{ appointment.type }}
+                        </app-typography>
+                        <span class="status-badge" [ngClass]="appointment.status">
+                          {{ appointment.status }}
+                        </span>
+                      </div>
+                      <div class="appointment-meta">
+                        <span>
+                          <app-svg src="calendar" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                          {{ formatDate(appointment.date) }}
+                        </span>
+                        <span>
+                          <app-svg src="clock" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                          {{ appointment.time }}
+                        </span>
+                        <span>with {{ appointment.doctor }}</span>
+                      </div>
+                      <div class="appointment-notes">
+                        <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-600)">
+                          {{ appointment.notes }}
+                        </app-typography>
+                      </div>
+                    </div>
+                    <div class="appointment-actions">
+                      <app-button
+                        text="Reschedule"
+                        [style]="ButtonStyleEnum.stroke"
+                        [size]="ButtonSizeEnum.small">
+                      </app-button>
+                      <app-button
+                        text="Start Now"
+                        [style]="ButtonStyleEnum.primary"
+                        [size]="ButtonSizeEnum.small">
+                      </app-button>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="not-found">
+        <app-svg src="user" [svgStyle]="{'width.px': 48, 'height.px': 48, 'color': 'var(--slate-300)'}"></app-svg>
+        <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--slate-600)">
+          Patient not found
+        </app-typography>
+        <app-button
+          text="Back to Patients"
+          [style]="ButtonStyleEnum.primary"
+          [size]="ButtonSizeEnum.medium"
+          (buttonClick)="goBack()">
+        </app-button>
+      </div>
+    }
+  </div>
+
+  <app-modal
+    [isOpen]="showEditModal()"
+    size="large"
+    [showCloseButton]="false"
+    (closed)="closeEditModal()">
+    <app-add-edit-patient
+      [patient]="patient"
+      (saved)="onPatientSaved($event)"
+      (cancelled)="closeEditModal()">
+    </app-add-edit-patient>
+  </app-modal>
+</app-page>

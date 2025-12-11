@@ -1,0 +1,91 @@
+<div class="patient-form">
+  <div class="form-header">
+    <div class="header-avatar">
+      {{ patient()?.avatar || 'N' }}
+    </div>
+    <div class="header-info">
+      <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
+        {{ patient() ? 'Edit Patient Information' : 'Add New Patient' }}
+      </app-typography>
+      @if (patient()) {
+        <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
+          {{ patient()?.name }}
+        </app-typography>
+      }
+    </div>
+  </div>
+
+  <div class="form-body">
+    <div class="form-group">
+      <app-input
+        label="Full Name"
+        leftIcon="user"
+        placeholder="Enter patient name"
+        [(ngModel)]="formData.name">
+      </app-input>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <app-input
+          label="Email"
+          type="email"
+          leftIcon="email"
+          placeholder="Enter email address"
+          [(ngModel)]="formData.email">
+        </app-input>
+      </div>
+      <div class="form-group">
+        <app-input
+          label="Phone"
+          leftIcon="phone"
+          placeholder="Enter phone number"
+          [(ngModel)]="formData.phone">
+        </app-input>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <app-input
+        label="Date of Birth"
+        type="date"
+        leftIcon="calendar"
+        [(ngModel)]="formData.dateOfBirth">
+      </app-input>
+    </div>
+
+    @if (patient()) {
+      <div class="info-section">
+        <div class="info-row">
+          <span class="info-label">Total Consultations</span>
+          <span class="info-value">{{ patient()?.totalConsultations }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Last Visit</span>
+          <span class="info-value">{{ patient() ? formatDate(patient()!.lastVisit) : '' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Age</span>
+          <span class="info-value">{{ calculateAge(formData.dateOfBirth) }} years</span>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="form-footer">
+    <app-button
+      text="Cancel"
+      [block]="true"
+      [style]="ButtonStyleEnum.stroke"
+      [size]="ButtonSizeEnum.medium"
+      (buttonClick)="onCancel()">
+    </app-button>
+    <app-button
+      text="Save Changes"
+      [block]="true"
+      [style]="ButtonStyleEnum.primary"
+      [size]="ButtonSizeEnum.medium"
+      (buttonClick)="onSave()">
+    </app-button>
+  </div>
+</div>
