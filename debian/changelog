@@ -1,3 +1,10 @@
+hcw (0.9.22) bookworm; urgency=medium
+
+  [ Gor Grigoryan ]
+  * ui improvements
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Tue, 16 Dec 2025 13:42:38 +0100
+
 hcw (0.9.21) bookworm; urgency=medium
 
   [ Gor Grigoryan ]
