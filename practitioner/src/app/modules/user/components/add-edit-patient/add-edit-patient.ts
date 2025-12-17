@@ -1,81 +1,174 @@
-import { Component, input, output } from '@angular/core';
+import { Component, input, output, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Subject, takeUntil } from 'rxjs';
 import { Typography } from '../../../../shared/ui-components/typography/typography';
 import { Button } from '../../../../shared/ui-components/button/button';
 import { Input } from '../../../../shared/ui-components/input/input';
+import { Select } from '../../../../shared/ui-components/select/select';
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
 import { ButtonSizeEnum, ButtonStyleEnum } from '../../../../shared/constants/button';
-import { IPatient } from '../../models/patient';
-
-export interface IPatientFormData {
-  name: string;
-  email: string;
-  phone: string;
-  dateOfBirth: string;
-}
+import { PatientService, IPatientCreateRequest, IPatientUpdateRequest } from '../../../../core/services/patient.service';
+import { UserService } from '../../../../core/services/user.service';
+import { ToasterService } from '../../../../core/services/toaster.service';
+import { IUser, ILanguage } from '../../models/user';
+import { SelectOption } from '../../../../shared/models/select';
 
 @Component({
   selector: 'app-add-edit-patient',
-  imports: [CommonModule, FormsModule, Typography, Button, Input],
+  imports: [CommonModule, ReactiveFormsModule, Typography, Button, Input, Select],
   templateUrl: './add-edit-patient.html',
   styleUrl: './add-edit-patient.scss',
 })
-export class AddEditPatient {
-  patient = input<IPatient | null>(null);
+export class AddEditPatient implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+  private fb = inject(FormBuilder);
+  private patientService = inject(PatientService);
+  private userService = inject(UserService);
+  private toasterService = inject(ToasterService);
 
-  saved = output<IPatientFormData>();
+  patient = input<IUser | null>(null);
+
+  saved = output<void>();
   cancelled = output<void>();
 
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
 
-  formData: IPatientFormData = {
-    name: '',
-    email: '',
-    phone: '',
-    dateOfBirth: ''
-  };
+  form!: FormGroup;
+  loading = false;
+  languageOptions: SelectOption[] = [];
+
+  get isEditMode(): boolean {
+    return !!this.patient();
+  }
 
   ngOnInit(): void {
+    this.initForm();
+    this.loadLanguages();
+  }
+
+  private loadLanguages(): void {
+    this.userService.getLanguages().pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (languages) => {
+        this.languageOptions = languages.map(lang => ({
+          value: lang.code,
+          label: lang.name
+        }));
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private initForm(): void {
     const p = this.patient();
-    if (p) {
-      this.formData = {
-        name: p.name,
-        email: p.email,
-        phone: p.phone,
-        dateOfBirth: p.dateOfBirth
-      };
+    this.form = this.fb.group({
+      first_name: [p?.first_name || '', Validators.required],
+      last_name: [p?.last_name || '', Validators.required],
+      email: [p?.email || '', [Validators.required, Validators.email]],
+      mobile_phone_number: [p?.mobile_phone_number || ''],
+      timezone: [p?.timezone || 'UTC'],
+      preferred_language: [p?.preferred_language || 'en', Validators.required]
+    });
+
+    if (this.isEditMode) {
+      this.form.get('email')?.disable();
     }
   }
 
+  getInitials(): string {
+    const firstName = this.form.get('first_name')?.value || '';
+    const lastName = this.form.get('last_name')?.value || '';
+    const first = firstName.charAt(0) || '';
+    const last = lastName.charAt(0) || '';
+    return (first + last).toUpperCase() || 'N';
+  }
+
   onSave(): void {
-    this.saved.emit(this.formData);
+    if (this.form.invalid) {
+      Object.keys(this.form.controls).forEach(key => {
+        this.form.get(key)?.markAsTouched();
+      });
+      return;
+    }
+
+    this.loading = true;
+    const formValue = this.form.getRawValue();
+
+    if (this.isEditMode) {
+      const updateData: IPatientUpdateRequest = {
+        first_name: formValue.first_name,
+        last_name: formValue.last_name,
+        mobile_phone_number: formValue.mobile_phone_number,
+        timezone: formValue.timezone
+      };
+
+      this.patientService.updatePatient(this.patient()!.pk, updateData).pipe(
+        takeUntil(this.destroy$)
+      ).subscribe({
+        next: () => {
+          this.toasterService.show('success', 'Success', 'Patient updated successfully');
+          this.loading = false;
+          this.saved.emit();
+        },
+        error: (err) => {
+          const message = err.error?.detail || 'Failed to update patient';
+          this.toasterService.show('error', 'Error', message);
+          this.loading = false;
+        }
+      });
+    } else {
+      const createData: IPatientCreateRequest = {
+        first_name: formValue.first_name,
+        last_name: formValue.last_name,
+        email: formValue.email,
+        mobile_phone_number: formValue.mobile_phone_number,
+        timezone: formValue.timezone,
+        preferred_language: formValue.preferred_language,
+        language_ids: []
+      };
+
+      this.patientService.createPatient(createData).pipe(
+        takeUntil(this.destroy$)
+      ).subscribe({
+        next: () => {
+          this.toasterService.show('success', 'Success', 'Patient created successfully');
+          this.loading = false;
+          this.saved.emit();
+        },
+        error: (err) => {
+          const message = err.error?.detail || err.error?.email?.[0] || 'Failed to create patient';
+          this.toasterService.show('error', 'Error', message);
+          this.loading = false;
+        }
+      });
+    }
   }
 
   onCancel(): void {
     this.cancelled.emit();
   }
 
-  calculateAge(dateOfBirth: string): number {
-    if (!dateOfBirth) return 0;
-    const today = new Date();
-    const birthDate = new Date(dateOfBirth);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
+  isFieldInvalid(fieldName: string): boolean {
+    const field = this.form.get(fieldName);
+    return !!(field && field.invalid && field.touched);
   }
 
-  formatDate(dateString: string): string {
-    if (!dateString) return '';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
-    });
+  getFieldError(fieldName: string): string {
+    const field = this.form.get(fieldName);
+    if (field?.errors?.['required']) {
+      return 'This field is required';
+    }
+    if (field?.errors?.['email']) {
+      return 'Please enter a valid email address';
+    }
+    return '';
   }
 }

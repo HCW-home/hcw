@@ -58,6 +58,7 @@ export interface IUser {
   organisations?: IOrganisation[];
   specialities?: ISpeciality[];
   accepted_term?: ITerm;
+  is_online?: boolean;
 }
 
 export interface IUserUpdateRequest {

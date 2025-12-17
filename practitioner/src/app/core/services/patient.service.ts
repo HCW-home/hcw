@@ -1,0 +1,88 @@
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { PaginatedResponse } from '../models/global';
+import { IUser, ISpeciality } from '../../modules/user/models/user';
+import { IHealthMetricResponse } from '../../modules/user/models/patient';
+
+export interface IPatientCreateRequest {
+  email: string;
+  first_name: string;
+  last_name: string;
+  mobile_phone_number?: string;
+  timezone?: string;
+  communication_method?: string;
+  preferred_language?: string;
+  language_ids?: number[];
+}
+
+export interface IPatientUpdateRequest {
+  first_name?: string;
+  last_name?: string;
+  mobile_phone_number?: string;
+  timezone?: string;
+  communication_method?: string;
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class PatientService {
+  private apiUrl = environment.apiUrl;
+  private http = inject(HttpClient);
+
+  getPatients(params?: {
+    search?: string;
+    page?: number;
+    page_size?: number;
+  }): Observable<PaginatedResponse<IUser>> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          httpParams = httpParams.set(key, value.toString());
+        }
+      });
+    }
+    return this.http.get<PaginatedResponse<IUser>>(`${this.apiUrl}/users/`, { params: httpParams });
+  }
+
+  getPatient(id: number): Observable<IUser> {
+    return this.http.get<IUser>(`${this.apiUrl}/users/${id}/`);
+  }
+
+  createPatient(data: IPatientCreateRequest): Observable<IUser> {
+    return this.http.post<IUser>(`${this.apiUrl}/users/`, data);
+  }
+
+  updatePatient(id: number, data: IPatientUpdateRequest): Observable<IUser> {
+    return this.http.patch<IUser>(`${this.apiUrl}/users/${id}/`, data);
+  }
+
+  deletePatient(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/users/${id}/`);
+  }
+
+  getPatientHealthMetrics(id: number, params?: {
+    page?: number;
+    page_size?: number;
+  }): Observable<PaginatedResponse<IHealthMetricResponse>> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          httpParams = httpParams.set(key, value.toString());
+        }
+      });
+    }
+    return this.http.get<PaginatedResponse<IHealthMetricResponse>>(
+      `${this.apiUrl}/users/${id}/healthmetric/`,
+      { params: httpParams }
+    );
+  }
+
+  getPatientSpecialities(id: number): Observable<ISpeciality[]> {
+    return this.http.get<ISpeciality[]>(`${this.apiUrl}/users/${id}/specialities/`);
+  }
+}

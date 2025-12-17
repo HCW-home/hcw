@@ -1,22 +1,26 @@
 import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, forkJoin } from 'rxjs';
 import { Page } from '../../../../core/components/page/page';
 import { Svg } from '../../../../shared/ui-components/svg/svg';
 import { Typography } from '../../../../shared/ui-components/typography/typography';
 import { Button } from '../../../../shared/ui-components/button/button';
+import { Loader } from '../../../../shared/components/loader/loader';
 import { Tabs, TabItem } from '../../../../shared/components/tabs/tabs';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
-import { AddEditPatient, IPatientFormData } from '../add-edit-patient/add-edit-patient';
+import { AddEditPatient } from '../add-edit-patient/add-edit-patient';
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
 import { ButtonSizeEnum, ButtonStyleEnum } from '../../../../shared/constants/button';
-import { IPatient, IHealthMetric, IPatientAppointment, IPatientConsultation } from '../../models/patient';
+import { IHealthMetric, IHealthMetricResponse, IPatientAppointment, IPatientConsultation } from '../../models/patient';
+import { IUser } from '../../models/user';
 import { RoutePaths } from '../../../../core/constants/routes';
+import { PatientService } from '../../../../core/services/patient.service';
+import { ToasterService } from '../../../../core/services/toaster.service';
 
 @Component({
   selector: 'app-patient-detail',
-  imports: [CommonModule, Page, Svg, Typography, Button, Tabs, ModalComponent, AddEditPatient],
+  imports: [CommonModule, Page, Svg, Typography, Button, Loader, Tabs, ModalComponent, AddEditPatient],
   templateUrl: './patient-detail.html',
   styleUrl: './patient-detail.scss',
 })
@@ -24,6 +28,8 @@ export class PatientDetail implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private patientService = inject(PatientService);
+  private toasterService = inject(ToasterService);
 
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
@@ -32,51 +38,10 @@ export class PatientDetail implements OnInit, OnDestroy {
   patientId: number | null = null;
   activeTab = signal<'overview' | 'consultations' | 'appointments'>('overview');
   showEditModal = signal(false);
+  loading = signal(true);
 
-  patient: IPatient | null = null;
-
-  healthMetrics: IHealthMetric[] = [
-    {
-      id: 1,
-      name: 'Heart Rate',
-      value: '72',
-      unit: 'bpm',
-      icon: 'heart',
-      color: 'rose',
-      trend: 'stable',
-      lastUpdated: '2024-01-12',
-    },
-    {
-      id: 2,
-      name: 'Blood Pressure',
-      value: '120/80',
-      unit: 'mmHg',
-      icon: 'activity',
-      color: 'purple',
-      trend: 'down',
-      lastUpdated: '2024-01-12',
-    },
-    {
-      id: 3,
-      name: 'Temperature',
-      value: '36.8',
-      unit: 'C',
-      icon: 'thermometer',
-      color: 'amber',
-      trend: 'stable',
-      lastUpdated: '2024-01-10',
-    },
-    {
-      id: 4,
-      name: 'Weight',
-      value: '72.5',
-      unit: 'kg',
-      icon: 'weight',
-      color: 'blue',
-      trend: 'up',
-      lastUpdated: '2024-01-08',
-    }
-  ];
+  patient = signal<IUser | null>(null);
+  healthMetrics = signal<IHealthMetric[]>([]);
 
   upcomingAppointments: IPatientAppointment[] = [
     {
@@ -147,75 +112,6 @@ export class PatientDetail implements OnInit, OnDestroy {
     }
   ];
 
-  patients: IPatient[] = [
-    {
-      id: 1,
-      name: 'Marie Dupont',
-      avatar: 'MD',
-      email: 'marie.dupont@email.com',
-      phone: '+33 6 12 34 56 78',
-      dateOfBirth: '1985-03-15',
-      lastVisit: '2024-01-10',
-      totalConsultations: 12,
-      status: 'active'
-    },
-    {
-      id: 2,
-      name: 'Jean Martin',
-      avatar: 'JM',
-      email: 'jean.martin@email.com',
-      phone: '+33 6 98 76 54 32',
-      dateOfBirth: '1978-07-22',
-      lastVisit: '2024-01-08',
-      totalConsultations: 8,
-      status: 'active'
-    },
-    {
-      id: 3,
-      name: 'Sophie Bernard',
-      avatar: 'SB',
-      email: 'sophie.b@email.com',
-      phone: '+33 6 55 44 33 22',
-      dateOfBirth: '1992-11-30',
-      lastVisit: '2023-12-20',
-      totalConsultations: 5,
-      status: 'inactive'
-    },
-    {
-      id: 4,
-      name: 'Pierre Durand',
-      avatar: 'PD',
-      email: 'p.durand@email.com',
-      phone: '+33 6 11 22 33 44',
-      dateOfBirth: '1965-05-08',
-      lastVisit: '2024-01-12',
-      totalConsultations: 24,
-      status: 'active'
-    },
-    {
-      id: 5,
-      name: 'Claire Moreau',
-      avatar: 'CM',
-      email: 'c.moreau@email.com',
-      phone: '+33 6 77 88 99 00',
-      dateOfBirth: '1988-09-25',
-      lastVisit: '2024-01-05',
-      totalConsultations: 15,
-      status: 'active'
-    },
-    {
-      id: 6,
-      name: 'Lucas Petit',
-      avatar: 'LP',
-      email: 'lucas.petit@email.com',
-      phone: '+33 6 44 55 66 77',
-      dateOfBirth: '1995-02-14',
-      lastVisit: '2023-11-15',
-      totalConsultations: 3,
-      status: 'inactive'
-    },
-  ];
-
   tabItems: TabItem[] = [
     { id: 'overview', label: 'Overview' },
     { id: 'consultations', label: 'Consultations' },
@@ -243,7 +139,122 @@ export class PatientDetail implements OnInit, OnDestroy {
   }
 
   loadPatient(): void {
-    this.patient = this.patients.find(p => p.id === this.patientId) || null;
+    if (!this.patientId) return;
+
+    this.loading.set(true);
+    forkJoin({
+      patient: this.patientService.getPatient(this.patientId),
+      healthMetrics: this.patientService.getPatientHealthMetrics(this.patientId, { page_size: 10 })
+    }).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: ({ patient, healthMetrics }) => {
+        this.patient.set(patient);
+        this.healthMetrics.set(this.transformHealthMetrics(healthMetrics.results));
+        this.loading.set(false);
+      },
+      error: () => {
+        this.toasterService.show('error', 'Error', 'Failed to load patient');
+        this.loading.set(false);
+      }
+    });
+  }
+
+  private transformHealthMetrics(metrics: IHealthMetricResponse[]): IHealthMetric[] {
+    if (!metrics.length) return [];
+
+    const latestMetric = metrics[0];
+    const displayMetrics: IHealthMetric[] = [];
+
+    if (latestMetric.heart_rate_bpm !== null) {
+      displayMetrics.push({
+        id: 1,
+        name: 'Heart Rate',
+        value: latestMetric.heart_rate_bpm.toString(),
+        unit: 'bpm',
+        icon: 'heart',
+        color: 'rose',
+        trend: 'stable',
+        lastUpdated: latestMetric.measured_at
+      });
+    }
+
+    if (latestMetric.systolic_bp !== null && latestMetric.diastolic_bp !== null) {
+      displayMetrics.push({
+        id: 2,
+        name: 'Blood Pressure',
+        value: `${latestMetric.systolic_bp}/${latestMetric.diastolic_bp}`,
+        unit: 'mmHg',
+        icon: 'activity',
+        color: 'purple',
+        trend: 'stable',
+        lastUpdated: latestMetric.measured_at
+      });
+    }
+
+    if (latestMetric.temperature_c !== null) {
+      displayMetrics.push({
+        id: 3,
+        name: 'Temperature',
+        value: latestMetric.temperature_c.toString(),
+        unit: 'C',
+        icon: 'thermometer',
+        color: 'amber',
+        trend: 'stable',
+        lastUpdated: latestMetric.measured_at
+      });
+    }
+
+    if (latestMetric.weight_kg !== null) {
+      displayMetrics.push({
+        id: 4,
+        name: 'Weight',
+        value: latestMetric.weight_kg.toString(),
+        unit: 'kg',
+        icon: 'weight',
+        color: 'blue',
+        trend: 'stable',
+        lastUpdated: latestMetric.measured_at
+      });
+    }
+
+    if (latestMetric.spo2_pct !== null) {
+      displayMetrics.push({
+        id: 5,
+        name: 'SpO2',
+        value: latestMetric.spo2_pct.toString(),
+        unit: '%',
+        icon: 'activity',
+        color: 'emerald',
+        trend: 'stable',
+        lastUpdated: latestMetric.measured_at
+      });
+    }
+
+    if (latestMetric.glucose_fasting_mgdl !== null) {
+      displayMetrics.push({
+        id: 6,
+        name: 'Glucose',
+        value: latestMetric.glucose_fasting_mgdl.toString(),
+        unit: 'mg/dL',
+        icon: 'activity',
+        color: 'cyan',
+        trend: 'stable',
+        lastUpdated: latestMetric.measured_at
+      });
+    }
+
+    return displayMetrics;
+  }
+
+  getInitials(patient: IUser): string {
+    const first = patient.first_name?.charAt(0) || '';
+    const last = patient.last_name?.charAt(0) || '';
+    return (first + last).toUpperCase() || 'U';
+  }
+
+  getFullName(patient: IUser): string {
+    return `${patient.first_name || ''} ${patient.last_name || ''}`.trim() || patient.email;
   }
 
   setActiveTab(tab: string): void {
@@ -267,38 +278,9 @@ export class PatientDetail implements OnInit, OnDestroy {
     this.showEditModal.set(false);
   }
 
-  onPatientSaved(formData: IPatientFormData): void {
-    if (this.patient) {
-      this.patient = {
-        ...this.patient,
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        dateOfBirth: formData.dateOfBirth,
-        avatar: this.getInitials(formData.name)
-      };
-      this.closeEditModal();
-    }
-  }
-
-  private getInitials(name: string): string {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  }
-
-  calculateAge(dateOfBirth: string): number {
-    const today = new Date();
-    const birthDate = new Date(dateOfBirth);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
+  onPatientSaved(): void {
+    this.closeEditModal();
+    this.loadPatient();
   }
 
   formatDate(dateString: string): string {

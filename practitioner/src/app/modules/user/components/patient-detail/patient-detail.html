@@ -1,6 +1,10 @@
 <app-page>
   <div class="patient-detail-container">
-    @if (patient) {
+    @if (loading()) {
+      <div class="loading-state">
+        <app-loader></app-loader>
+      </div>
+    } @else if (patient()) {
       <div class="back-link" (click)="goBack()">
         <app-svg src="arrow-left" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
         <span>Back to patients</span>
@@ -9,12 +13,12 @@
       <div class="patient-header">
         <div class="header-left">
           <div class="patient-avatar-large">
-            {{ patient.avatar }}
+            {{ getInitials(patient()!) }}
           </div>
           <div class="patient-info">
             <div class="name-row">
               <app-typography [variant]="TypographyTypeEnum['h5-bold']" color="var(--slate-800)">
-                {{ patient.name }}
+                {{ getFullName(patient()!) }}
               </app-typography>
               <app-button
                 leftIcon="edit"
@@ -24,20 +28,17 @@
                 (buttonClick)="openEditModal()">
               </app-button>
             </div>
-            <div class="patient-meta">
-              <span>{{ calculateAge(patient.dateOfBirth) }} years old</span>
-              <span class="separator"></span>
-              <span>{{ formatDate(patient.dateOfBirth) }}</span>
-            </div>
             <div class="patient-contact">
               <div class="contact-item">
                 <app-svg src="email" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
-                <span>{{ patient.email }}</span>
+                <span>{{ patient()!.email }}</span>
               </div>
-              <div class="contact-item">
-                <app-svg src="phone" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
-                <span>{{ patient.phone }}</span>
-              </div>
+              @if (patient()!.mobile_phone_number) {
+                <div class="contact-item">
+                  <app-svg src="phone" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                  <span>{{ patient()!.mobile_phone_number }}</span>
+                </div>
+              }
             </div>
           </div>
         </div>
@@ -73,7 +74,14 @@
               </app-typography>
             </div>
             <div class="metrics-grid">
-              @for (metric of healthMetrics; track metric.id) {
+              @if (healthMetrics().length === 0) {
+                <div class="no-metrics">
+                  <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
+                    No health metrics recorded
+                  </app-typography>
+                </div>
+              }
+              @for (metric of healthMetrics(); track metric.id) {
                 <div class="metric-card" [ngClass]="getMetricColorClass(metric.color)">
                   <div class="metric-header">
                     <div class="metric-icon">
@@ -113,7 +121,7 @@
                     Total Consultations
                   </app-typography>
                   <app-typography [variant]="TypographyTypeEnum['h2-bold']" color="var(--slate-800)">
-                    {{ patient.totalConsultations }}
+                    {{ consultationHistory.length }}
                   </app-typography>
                 </div>
               </div>
@@ -139,10 +147,10 @@
                 </div>
                 <div class="stat-content">
                   <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-700)">
-                    Last Visit
+                    Last Login
                   </app-typography>
                   <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
-                    {{ formatDate(patient.lastVisit) }}
+                    {{ patient()!.last_login ? formatDate(patient()!.last_login!) : 'Never' }}
                   </app-typography>
                 </div>
               </div>
@@ -348,8 +356,8 @@
     [showCloseButton]="false"
     (closed)="closeEditModal()">
     <app-add-edit-patient
-      [patient]="patient"
-      (saved)="onPatientSaved($event)"
+      [patient]="patient()"
+      (saved)="onPatientSaved()"
       (cancelled)="closeEditModal()">
     </app-add-edit-patient>
   </app-modal>

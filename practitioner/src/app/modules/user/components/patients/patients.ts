@@ -1,127 +1,114 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, inject, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { Page } from '../../../../core/components/page/page';
 import { Svg } from '../../../../shared/ui-components/svg/svg';
 import { Typography } from '../../../../shared/ui-components/typography/typography';
+import { Button } from '../../../../shared/ui-components/button/button';
+import { Input } from '../../../../shared/ui-components/input/input';
+import { Loader } from '../../../../shared/components/loader/loader';
+import { ModalComponent } from '../../../../shared/components/modal/modal.component';
+import { AddEditPatient } from '../add-edit-patient/add-edit-patient';
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
-import { IPatient } from '../../models/patient';
+import { ButtonSizeEnum, ButtonStyleEnum } from '../../../../shared/constants/button';
 import { RoutePaths } from '../../../../core/constants/routes';
+import { PatientService } from '../../../../core/services/patient.service';
+import { ToasterService } from '../../../../core/services/toaster.service';
+import { IUser } from '../../models/user';
 
 @Component({
   selector: 'app-patients',
-  imports: [CommonModule, Page, Svg, Typography],
+  imports: [CommonModule, FormsModule, Page, Svg, Typography, Button, Input, Loader, ModalComponent, AddEditPatient],
   templateUrl: './patients.html',
   styleUrl: './patients.scss',
 })
-export class Patients {
+export class Patients implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+  private searchSubject$ = new Subject<string>();
+  private patientService = inject(PatientService);
+  private toasterService = inject(ToasterService);
+  private router = inject(Router);
+
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
+  protected readonly ButtonSizeEnum = ButtonSizeEnum;
+  protected readonly ButtonStyleEnum = ButtonStyleEnum;
 
   loading = signal(false);
+  patients = signal<IUser[]>([]);
+  totalCount = signal(0);
+  searchQuery = '';
+  showAddModal = signal(false);
 
-  patients: IPatient[] = [
-    {
-      id: 1,
-      name: 'Marie Dupont',
-      avatar: 'MD',
-      email: 'marie.dupont@email.com',
-      phone: '+33 6 12 34 56 78',
-      dateOfBirth: '1985-03-15',
-      lastVisit: '2024-01-10',
-      totalConsultations: 12,
-      status: 'active'
-    },
-    {
-      id: 2,
-      name: 'Jean Martin',
-      avatar: 'JM',
-      email: 'jean.martin@email.com',
-      phone: '+33 6 98 76 54 32',
-      dateOfBirth: '1978-07-22',
-      lastVisit: '2024-01-08',
-      totalConsultations: 8,
-      status: 'active'
-    },
-    {
-      id: 3,
-      name: 'Sophie Bernard',
-      avatar: 'SB',
-      email: 'sophie.b@email.com',
-      phone: '+33 6 55 44 33 22',
-      dateOfBirth: '1992-11-30',
-      lastVisit: '2023-12-20',
-      totalConsultations: 5,
-      status: 'inactive'
-    },
-    {
-      id: 4,
-      name: 'Pierre Durand',
-      avatar: 'PD',
-      email: 'p.durand@email.com',
-      phone: '+33 6 11 22 33 44',
-      dateOfBirth: '1965-05-08',
-      lastVisit: '2024-01-12',
-      totalConsultations: 24,
-      status: 'active'
-    },
-    {
-      id: 5,
-      name: 'Claire Moreau',
-      avatar: 'CM',
-      email: 'c.moreau@email.com',
-      phone: '+33 6 77 88 99 00',
-      dateOfBirth: '1988-09-25',
-      lastVisit: '2024-01-05',
-      totalConsultations: 15,
-      status: 'active'
-    },
-    {
-      id: 6,
-      name: 'Lucas Petit',
-      avatar: 'LP',
-      email: 'lucas.petit@email.com',
-      phone: '+33 6 44 55 66 77',
-      dateOfBirth: '1995-02-14',
-      lastVisit: '2023-11-15',
-      totalConsultations: 3,
-      status: 'inactive'
-    },
-  ];
+  ngOnInit(): void {
+    this.loadPatients();
 
-  constructor(private router: Router) {}
-
-  get totalPatients(): number {
-    return this.patients.length;
-  }
-
-  get activePatients(): number {
-    return this.patients.filter(p => p.status === 'active').length;
-  }
-
-  calculateAge(dateOfBirth: string): number {
-    const today = new Date();
-    const birthDate = new Date(dateOfBirth);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
-  }
-
-  formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
+    this.searchSubject$.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      takeUntil(this.destroy$)
+    ).subscribe(query => {
+      this.searchQuery = query;
+      this.loadPatients();
     });
   }
 
-  viewPatient(patient: IPatient): void {
-    this.router.navigate([RoutePaths.USER, 'patients', patient.id]);
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
-  addPatient(): void {
-    this.router.navigate([RoutePaths.USER, 'patients', 'new']);
+  loadPatients(): void {
+    this.loading.set(true);
+    const params: { search?: string; page_size?: number } = { page_size: 50 };
+    if (this.searchQuery) {
+      params.search = this.searchQuery;
+    }
+
+    this.patientService.getPatients(params).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (response) => {
+        this.patients.set(response.results);
+        this.totalCount.set(response.count);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.toasterService.show('error', 'Error', 'Failed to load patients');
+        this.loading.set(false);
+      }
+    });
+  }
+
+  onSearchChange(query: string): void {
+    this.searchSubject$.next(query);
+  }
+
+  getInitials(patient: IUser): string {
+    const first = patient.first_name?.charAt(0) || '';
+    const last = patient.last_name?.charAt(0) || '';
+    return (first + last).toUpperCase() || 'U';
+  }
+
+  getFullName(patient: IUser): string {
+    return `${patient.first_name || ''} ${patient.last_name || ''}`.trim() || patient.email;
+  }
+
+  viewPatient(patient: IUser): void {
+    this.router.navigate([RoutePaths.USER, 'patients', patient.pk]);
+  }
+
+  openAddModal(): void {
+    this.showAddModal.set(true);
+  }
+
+  closeAddModal(): void {
+    this.showAddModal.set(false);
+  }
+
+  onPatientCreated(): void {
+    this.closeAddModal();
+    this.loadPatients();
   }
 }

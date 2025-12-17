@@ -3,6 +3,13 @@
   width: 100%;
 }
 
+.loading-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
 .back-link {
   display: inline-flex;
   align-items: center;
@@ -202,6 +209,24 @@
     background: var(--blue-100);
     color: var(--blue-600);
   }
+
+  &.metric-emerald .metric-icon {
+    background: var(--emerald-100);
+    color: var(--emerald-600);
+  }
+
+  &.metric-cyan .metric-icon {
+    background: var(--cyan-100);
+    color: var(--cyan-600);
+  }
+}
+
+.no-metrics {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px 20px;
+  background: var(--slate-50);
+  border-radius: 16px;
 }
 
 .stats-grid {
