@@ -609,7 +609,7 @@ class UserHealthMetricsView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
-class UserViewSet(viewsets.ReadOnlyModelViewSet):
+class UserViewSet(viewsets.ModelViewSet):
     """
     ViewSet for users - read only with GET endpoint
     Supports search by first name, last name, and email
@@ -620,6 +620,32 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = UniversalPagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['first_name', 'last_name', 'email']
+
+    def update(self, request, *args, **kwargs):
+        """Prevent updating users with superuser or staff access."""
+        user = self.get_object()
+
+        # Prevent updating superusers and staff users
+        if user.is_superuser or user.is_staff:
+            return Response(
+                {"detail": "Cannot update users with portal or super admin access."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        """Prevent partially updating users with superuser or staff access."""
+        user = self.get_object()
+
+        # Prevent updating superusers and staff users
+        if user.is_superuser or user.is_staff:
+            return Response(
+                {"detail": "Cannot update users with portal or super admin access."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        return super().partial_update(request, *args, **kwargs)
     
     @extend_schema(responses=HealthMetricSerializer(many=True))
     @action(detail=True, methods=['get'])
