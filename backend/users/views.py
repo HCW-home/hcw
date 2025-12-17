@@ -622,7 +622,7 @@ class UserViewSet(viewsets.ModelViewSet):
     search_fields = ['first_name', 'last_name', 'email']
 
     def update(self, request, *args, **kwargs):
-        """Prevent updating users with superuser or staff access."""
+        """Prevent updating users with superuser, staff access, or users in groups."""
         user = self.get_object()
 
         # Prevent updating superusers and staff users
@@ -632,16 +632,30 @@ class UserViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN
             )
 
+        # Prevent updating users who belong to any group
+        if user.groups.exists():
+            return Response(
+                {"detail": "Cannot update users who belong to a group."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         return super().update(request, *args, **kwargs)
 
     def partial_update(self, request, *args, **kwargs):
-        """Prevent partially updating users with superuser or staff access."""
+        """Prevent partially updating users with superuser, staff access, or users in groups."""
         user = self.get_object()
 
         # Prevent updating superusers and staff users
         if user.is_superuser or user.is_staff:
             return Response(
                 {"detail": "Cannot update users with portal or super admin access."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Prevent updating users who belong to any group
+        if user.groups.exists():
+            return Response(
+                {"detail": "Cannot update users who belong to a group."},
                 status=status.HTTP_403_FORBIDDEN
             )
 
