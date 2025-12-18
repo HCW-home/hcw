@@ -17,6 +17,12 @@
         <div class="view-toggle">
           <button
             class="view-btn"
+            [class.active]="isActiveView('list')"
+            (click)="setView('list')">
+            List
+          </button>
+          <button
+            class="view-btn"
             [class.active]="isActiveView('timeGridDay')"
             (click)="setView('timeGridDay')">
             Day
@@ -40,6 +46,47 @@
     @if (loading()) {
       <div class="loading-state">
         <app-loader></app-loader>
+      </div>
+    } @else if (currentView() === 'list') {
+      <div class="list-view">
+        @if (appointments().length === 0) {
+          <div class="empty-state">
+            <app-svg src="calendar" [svgStyle]="{'width.px': 48, 'height.px': 48}"></app-svg>
+            <span>No appointments found</span>
+          </div>
+        } @else {
+          @for (appointment of appointments(); track appointment.id) {
+            <div class="appointment-item" (click)="viewAppointment(appointment)">
+              <div class="appointment-date">
+                <span class="day">{{ appointment.scheduled_at | date:'dd' }}</span>
+                <span class="month">{{ appointment.scheduled_at | date:'MMM' }}</span>
+              </div>
+              <div class="appointment-info">
+                <div class="appointment-title">{{ getAppointmentTypeLabel(appointment.type) }}</div>
+                <div class="appointment-meta">
+                  <span>
+                    <app-svg src="clock" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
+                    {{ appointment.scheduled_at | date:'HH:mm' }}
+                    @if (appointment.end_expected_at) {
+                      - {{ appointment.end_expected_at | date:'HH:mm' }}
+                    }
+                  </span>
+                  @if (appointment.created_by) {
+                    <span>
+                      <app-svg src="user" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
+                      {{ appointment.created_by.first_name }} {{ appointment.created_by.last_name }}
+                    </span>
+                  }
+                </div>
+              </div>
+              <div class="appointment-status">
+                <span class="status-badge" [ngClass]="getStatusClass(appointment.status)">
+                  {{ appointment.status }}
+                </span>
+              </div>
+            </div>
+          }
+        }
       </div>
     } @else {
       <div class="calendar-wrapper">

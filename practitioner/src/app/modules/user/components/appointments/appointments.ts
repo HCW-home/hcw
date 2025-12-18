@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, signal, inject, viewChild, HostListener } from '@angular/core';
 import { Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
 import { FullCalendarModule, FullCalendarComponent } from '@fullcalendar/angular';
 import { CalendarOptions, EventInput, EventClickArg } from '@fullcalendar/core';
@@ -9,16 +9,17 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { Page } from '../../../../core/components/page/page';
 import { Loader } from '../../../../shared/components/loader/loader';
+import { Svg } from '../../../../shared/ui-components/svg/svg';
 import { ConsultationService } from '../../../../core/services/consultation.service';
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { Appointment, AppointmentStatus, AppointmentType } from '../../../../core/models/consultation';
 import { RoutePaths } from '../../../../core/constants/routes';
 
-type CalendarView = 'dayGridMonth' | 'timeGridWeek' | 'timeGridDay';
+type CalendarView = 'dayGridMonth' | 'timeGridWeek' | 'timeGridDay' | 'list';
 
 @Component({
   selector: 'app-appointments',
-  imports: [CommonModule, Page, Loader, FullCalendarModule],
+  imports: [CommonModule, DatePipe, Page, Loader, Svg, FullCalendarModule],
   templateUrl: './appointments.html',
   styleUrl: './appointments.scss',
 })
@@ -116,7 +117,7 @@ export class Appointments implements OnInit, OnDestroy {
     return this.getAppointmentTypeLabel(appointment.type);
   }
 
-  private getAppointmentTypeLabel(type: AppointmentType | string): string {
+  getAppointmentTypeLabel(type: AppointmentType | string): string {
     const t = typeof type === 'string' ? type.toLowerCase() : type;
     switch (t) {
       case 'online':
@@ -169,9 +170,11 @@ export class Appointments implements OnInit, OnDestroy {
 
   setView(view: CalendarView): void {
     this.currentView.set(view);
-    const calendarApi = this.calendarComponent()?.getApi();
-    if (calendarApi) {
-      calendarApi.changeView(view);
+    if (view !== 'list') {
+      const calendarApi = this.calendarComponent()?.getApi();
+      if (calendarApi) {
+        calendarApi.changeView(view);
+      }
     }
   }
 
@@ -199,4 +202,27 @@ export class Appointments implements OnInit, OnDestroy {
       calendarApi.next();
     }
   }
+
+  viewAppointment(appointment: Appointment): void {
+    if (appointment.consultation) {
+      this.router.navigate([RoutePaths.USER, 'consultations', appointment.consultation]);
+    }
+  }
+
+  getStatusClass(status: AppointmentStatus | string): string {
+    const s = typeof status === 'string' ? status.toLowerCase() : status;
+    switch (s) {
+      case 'scheduled':
+        return 'scheduled';
+      case 'cancelled':
+        return 'cancelled';
+      case 'completed':
+        return 'completed';
+      case 'in_progress':
+        return 'in-progress';
+      default:
+        return 'scheduled';
+    }
+  }
+
 }
