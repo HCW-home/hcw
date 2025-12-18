@@ -96,31 +96,15 @@
             </div>
           </div>
 
-<!--          @if (!consultation()?.closed_at) {-->
-<!--            <div class="video-call-section">-->
-<!--              @if (!inCall()) {-->
-<!--                <div class="video-call-invite">-->
-<!--                  <div class="invite-content">-->
-<!--                    <div class="video-icon">-->
-<!--                      <app-svg src="video" [svgStyle]="{'width.px': 32, 'height.px': 32}"></app-svg>-->
-<!--                    </div>-->
-<!--                    <h3>Video Consultation</h3>-->
-<!--                    <p>Start a video call to consult with participants in real-time</p>-->
-<!--                    <button class="btn-primary large" (click)="joinVideoCall()">-->
-<!--                      <app-svg src="video" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>-->
-<!--                      Join Video Call-->
-<!--                    </button>-->
-<!--                  </div>-->
-<!--                </div>-->
-<!--              } @else {-->
-<!--                <app-video-consultation-->
-<!--                  [consultationId]="activeAppointmentId() ? undefined : consultationId"-->
-<!--                  [appointmentId]="activeAppointmentId() ?? undefined"-->
-<!--                  (leave)="onCallEnded()">-->
-<!--                </app-video-consultation>-->
-<!--              }-->
-<!--            </div>-->
-<!--          }-->
+          @if (inCall()) {
+            <div class="video-call-section">
+              <app-video-consultation
+                [consultationId]="activeAppointmentId() ? undefined : consultationId"
+                [appointmentId]="activeAppointmentId() ?? undefined"
+                (leave)="onCallEnded()">
+              </app-video-consultation>
+            </div>
+          }
 
           <div class="appointments-section">
             <div class="section-header">
