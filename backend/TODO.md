@@ -15,8 +15,5 @@ update patient user information
 
 
 * add beneficiary filter on appointment
-* preferred_language is not working for post, also languages and language_ids
-* overdue status consultation
-* duplicate participant email error
 * auth password reset error
 
