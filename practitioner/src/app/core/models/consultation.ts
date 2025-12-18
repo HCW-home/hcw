@@ -3,6 +3,7 @@ export interface User {
   email: string;
   first_name: string;
   last_name: string;
+  is_online?: boolean;
 }
 
 export interface Queue {
@@ -52,8 +53,7 @@ export interface ConsultationMessage {
   content: string | null;
   attachment: string | null;
   created_at: string;
-  created_by: number;
-  consultation: number;
+  created_by: User;
 }
 
 export interface Consultation {

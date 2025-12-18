@@ -206,13 +206,19 @@ export class ConsultationDetail implements OnInit, OnDestroy {
       .subscribe({
         next: response => {
           const currentUserId = this.currentUser()?.pk;
-          const loadedMessages: Message[] = response.results.map(msg => ({
-            id: msg.id,
-            username: msg.created_by === currentUserId ? 'You' : `User ${msg.created_by}`,
-            message: msg.content || '',
-            timestamp: msg.created_at,
-            isCurrentUser: msg.created_by === currentUserId,
-          }));
+          const loadedMessages: Message[] = response.results.map(msg => {
+            const isCurrentUser = msg.created_by.id === currentUserId;
+            const username = isCurrentUser
+              ? 'You'
+              : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim() || msg.created_by.email;
+            return {
+              id: msg.id,
+              username,
+              message: msg.content || '',
+              timestamp: msg.created_at,
+              isCurrentUser,
+            };
+          });
           this.messages.set(loadedMessages);
         },
         error: () => {
