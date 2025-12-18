@@ -32,24 +32,6 @@ class UserDetailsSerializer(serializers.ModelSerializer):
 
     main_organisation = OrganisationSerializer(read_only=True)
     organisations = OrganisationSerializer(many=True, read_only=True)
-    preferred_language = LanguageSerializer(read_only=True, required=False, allow_null=True)
-    languages = LanguageSerializer(many=True, read_only=True, required=False)
-
-    # Write-only fields for accepting IDs on create/update
-    preferred_language_id = serializers.PrimaryKeyRelatedField(
-        queryset=Language.objects.all(),
-        write_only=True,
-        source='preferred_language',
-        required=False,
-        allow_null=True
-    )
-    language_ids = serializers.PrimaryKeyRelatedField(
-        many=True,
-        queryset=Language.objects.all(),
-        write_only=True,
-        source='languages',
-        required=False
-    )
 
     @staticmethod
     def validate_username(username):
@@ -65,7 +47,7 @@ class UserDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserModel
         fields = ['pk', UserModel.EMAIL_FIELD, 'picture',
-                  'first_name', 'last_name', 'app_preferences', 'last_login', 'communication_method', 'mobile_phone_number', 'timezone', 'location', 'main_organisation', 'organisations', 'preferred_language', 'preferred_language_id', 'languages', 'language_ids', 'is_online']
+                  'first_name', 'last_name', 'app_preferences', 'last_login', 'communication_method', 'mobile_phone_number', 'timezone', 'location', 'main_organisation', 'organisations', 'preferred_language', 'languages', 'is_online']
         read_only_fields = ['email', 'is_online']
 
 class RegisterSerializer(serializers.Serializer):
