@@ -267,6 +267,58 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
 
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @extend_schema(
+        responses={200: ConsultationSerializer(many=True)},
+        description="Get overdue consultations where either:\n"
+                    "1. All appointments are more than 1 hour in the past, OR\n"
+                    "2. The last message was sent by the beneficiary"
+    )
+    @action(detail=False, methods=['get'], url_path='overdue')
+    def overdue(self, request):
+        """Get consultations that need attention (overdue)"""
+        one_hour_ago = timezone.now() - timedelta(hours=1)
+
+        # Get consultations the user has access to
+        consultations_qs = self.get_queryset()
+
+        # Filter only open consultations
+        consultations_qs = consultations_qs.filter(closed_at__isnull=True)
+
+        overdue_consultation_ids = []
+
+        for consultation in consultations_qs:
+            # Condition 1: All appointments are more than 1 hour in the past
+            appointments = consultation.appointments.filter(status=AppointmentStatus.SCHEDULED)
+
+            if appointments.exists():
+                # Check if ALL appointments are more than 1 hour in the past
+                all_appointments_overdue = all(
+                    apt.scheduled_at < one_hour_ago
+                    for apt in appointments
+                )
+
+                if all_appointments_overdue:
+                    overdue_consultation_ids.append(consultation.id)
+                    continue
+
+            # Condition 2: Last message was sent by the beneficiary
+            last_message = consultation.messages.order_by('-created_at').first()
+
+            if last_message and last_message.created_by == consultation.beneficiary:
+                overdue_consultation_ids.append(consultation.id)
+
+        # Get the overdue consultations
+        overdue_consultations = consultations_qs.filter(id__in=overdue_consultation_ids)
+
+        # Apply pagination
+        page = self.paginate_queryset(overdue_consultations)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(overdue_consultations, many=True)
+        return Response(serializer.data)
+
 
 
 class AppointmentViewSet(viewsets.ModelViewSet):

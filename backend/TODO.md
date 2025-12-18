@@ -12,3 +12,11 @@ update patient user information
 * Add location field
 * Add terms models
 * Add terms for Users
+
+
+* add beneficiary filter on appointment
+* preferred_language is not working for post, also languages and language_ids
+* overdue status consultation
+* duplicate participant email error
+* auth password reset error
+
