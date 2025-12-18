@@ -1,11 +1,73 @@
 <app-page>
-  <div class="placeholder-page">
-    <div class="placeholder-content">
-      <div class="placeholder-icon">
-        <app-svg src="clock" [svgStyle]="{'width.px': 48, 'height.px': 48}"></app-svg>
+  <div class="appointments-container">
+    <div class="calendar-header">
+      <span class="total-count">{{ appointments().length }} appointments</span>
+      <div class="header-controls">
+        <div class="nav-controls">
+          <button class="nav-btn" (click)="navigatePrev()">
+            <span class="nav-icon">&lt;</span>
+          </button>
+          <button class="today-btn" (click)="goToToday()">Today</button>
+          <button class="nav-btn" (click)="navigateNext()">
+            <span class="nav-icon">&gt;</span>
+          </button>
+          <span class="current-date">{{ currentTitle() }}</span>
+        </div>
+
+        <div class="view-toggle">
+          <button
+            class="view-btn"
+            [class.active]="isActiveView('timeGridDay')"
+            (click)="setView('timeGridDay')">
+            Day
+          </button>
+          <button
+            class="view-btn"
+            [class.active]="isActiveView('timeGridWeek')"
+            (click)="setView('timeGridWeek')">
+            Week
+          </button>
+          <button
+            class="view-btn"
+            [class.active]="isActiveView('dayGridMonth')"
+            (click)="setView('dayGridMonth')">
+            Month
+          </button>
+        </div>
       </div>
-      <h2>Appointments</h2>
-      <p>This page is under construction</p>
+    </div>
+
+    @if (loading()) {
+      <div class="loading-state">
+        <app-loader></app-loader>
+      </div>
+    } @else {
+      <div class="calendar-wrapper">
+        <full-calendar
+          #calendar
+          [options]="calendarOptions"
+          [events]="calendarEvents()">
+        </full-calendar>
+      </div>
+    }
+
+    <div class="legend">
+      <div class="legend-item">
+        <span class="legend-color scheduled"></span>
+        <span class="legend-label">Scheduled</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-color in-progress"></span>
+        <span class="legend-label">In Progress</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-color completed"></span>
+        <span class="legend-label">Completed</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-color cancelled"></span>
+        <span class="legend-label">Cancelled</span>
+      </div>
     </div>
   </div>
 </app-page>

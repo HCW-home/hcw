@@ -1,14 +1,9 @@
 <app-page>
   <div class="patients-container">
     <div class="page-header">
-      <div class="header-left">
-        <app-typography [variant]="TypographyTypeEnum['h5-bold']" color="var(--slate-800)">
-          Patients
-        </app-typography>
-        <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
-          {{ totalCount() }} total patients
-        </app-typography>
-      </div>
+      <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
+        {{ totalCount() }} total patients
+      </app-typography>
       <div class="header-actions">
         <div class="search-wrapper">
           <app-input
