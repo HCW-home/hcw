@@ -13,7 +13,7 @@ export interface IPatientCreateRequest {
   mobile_phone_number?: string;
   timezone?: string;
   communication_method?: string;
-  preferred_language?: string;
+  preferred_language?: number | null;
   language_ids?: number[];
 }
 

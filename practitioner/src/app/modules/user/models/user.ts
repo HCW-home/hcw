@@ -23,6 +23,7 @@ export interface IOrganisation {
 }
 
 export interface ILanguage {
+  id: number;
   name: string;
   code: string;
 }
@@ -47,7 +48,7 @@ export interface IUser {
 
   communication_method: CommunicationMethodType;
   mobile_phone_number?: string;
-  preferred_language?: string;
+  preferred_language?: number | null;
   timezone: string;
   languages?: ILanguage[];
   language_ids?: number[];
@@ -66,7 +67,7 @@ export interface IUserUpdateRequest {
   last_name?: string;
   mobile_phone_number?: string;
   communication_method?: CommunicationMethodType;
-  preferred_language?: string;
+  preferred_language?: number | null;
   timezone?: string;
   language_ids?: number[];
 }

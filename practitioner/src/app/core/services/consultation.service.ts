@@ -119,6 +119,28 @@ export class ConsultationService {
     );
   }
 
+  getAppointments(params?: {
+    page?: number;
+    page_size?: number;
+    consultation__beneficiary?: number;
+    consultation__created_by?: number;
+    consultation__owned_by?: number;
+    status?: string;
+  }): Observable<PaginatedResponse<Appointment>> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          httpParams = httpParams.set(key, value.toString());
+        }
+      });
+    }
+    return this.http.get<PaginatedResponse<Appointment>>(
+      `${this.apiUrl}/appointments/`,
+      { params: httpParams }
+    );
+  }
+
   getAppointment(appointmentId: number): Observable<Appointment> {
     return this.http.get<Appointment>(
       `${this.apiUrl}/appointments/${appointmentId}/`

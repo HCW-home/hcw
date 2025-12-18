@@ -57,7 +57,7 @@ export class UserProfile implements OnInit, OnDestroy {
       email: [{value: '', disabled: true}],
       mobile_phone_number: [''],
       communication_method: ['email', [Validators.required]],
-      preferred_language: [''],
+      preferred_language: [null],
       timezone: ['UTC', Validators.required],
       language_ids: [[]]
     });
@@ -92,7 +92,7 @@ export class UserProfile implements OnInit, OnDestroy {
   }
 
   private populateForm(user: IUser): void {
-    const languageCodes = user.languages?.map(lang => lang.code) || [];
+    const languageIds = user.languages?.map(lang => lang.id) || [];
 
     this.profileForm.patchValue({
       first_name: user.first_name || '',
@@ -100,9 +100,9 @@ export class UserProfile implements OnInit, OnDestroy {
       email: user.email,
       mobile_phone_number: user.mobile_phone_number || '',
       communication_method: user.communication_method || 'email',
-      preferred_language: user.preferred_language || '',
+      preferred_language: user.preferred_language || null,
       timezone: user.timezone || 'UTC',
-      language_ids: languageCodes
+      language_ids: languageIds
     });
   }
 
@@ -156,28 +156,34 @@ export class UserProfile implements OnInit, OnDestroy {
     return option?.label || method;
   }
 
-  loadDropdownData(): void {
-    this.userService.getLanguages().toPromise().then(languages => {
-      if (languages) {
-        this.languages.set(languages);
-        this.languageOptions.set(
-          languages.map(lang => ({
-            label: lang.name,
-            value: lang.code
-          }))
-        );
-      }
-    }).catch(error => {
-      console.error('Error loading languages:', error);
-    });
+  getPreferredLanguageName(): string {
+    const user = this.user();
+    if (!user?.preferred_language) return 'Not set';
+    const language = this.languages().find(lang => lang.id === user.preferred_language);
+    return language?.name || 'Not set';
   }
 
-  private getLanguageIds(languageCodes: string[]): number[] {
-    const languages = this.languages();
-    return languageCodes
-      .map(code => languages.find(lang => lang.code === code))
-      .filter(lang => lang !== undefined)
-      .map(lang => languages.indexOf(lang!) + 1);
+  loadDropdownData(): void {
+    this.userService.getLanguages()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: languages => {
+          this.languages.set(languages);
+          this.languageOptions.set(
+            languages.map(lang => ({
+              label: lang.name,
+              value: lang.code
+            }))
+          );
+        },
+        error: () => {
+          this.toasterService.show('error', 'Error loading languages');
+        }
+      });
+  }
+
+  private getLanguageIds(languageIds: number[]): number[] {
+    return languageIds || [];
   }
 
   goBack(): void {

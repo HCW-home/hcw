@@ -21,6 +21,7 @@ export interface Participant {
   is_confirmed: boolean;
   email: string | null;
   phone: string | null;
+  display_name: string | null;
   message_type?: string;
   feedback_rate: number | null;
   feedback_message: string | null;
@@ -42,7 +43,7 @@ export interface Appointment {
   scheduled_at: string;
   end_expected_at: string | null;
   consultation: number;
-  created_by: number;
+  created_by: User;
   status: AppointmentStatus;
   created_at: string;
   participants: Participant[];

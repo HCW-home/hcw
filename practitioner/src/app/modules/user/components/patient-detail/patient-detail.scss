@@ -8,6 +8,10 @@
   justify-content: center;
   align-items: center;
   min-height: 400px;
+
+  &.small {
+    min-height: 120px;
+  }
 }
 
 .back-link {
@@ -221,17 +225,22 @@
   }
 }
 
-.no-metrics {
+.no-metrics,
+.no-consultations {
   grid-column: 1 / -1;
   text-align: center;
   padding: 40px 20px;
   background: var(--slate-50);
   border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
 }
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 16px;
   margin-top: 24px;
 }
@@ -327,14 +336,20 @@
   font-size: 12px;
   font-weight: 500;
 
-  &.completed {
+  &.completed,
+  &.confirmed {
     background: var(--emerald-100);
     color: var(--emerald-700);
   }
 
-  &.confirmed {
-    background: var(--emerald-100);
-    color: var(--emerald-700);
+  &.active {
+    background: var(--primary-100);
+    color: var(--primary-700);
+  }
+
+  &.closed {
+    background: var(--slate-100);
+    color: var(--slate-600);
   }
 
   &.pending {
@@ -345,6 +360,16 @@
   &.cancelled {
     background: var(--rose-100);
     color: var(--rose-700);
+  }
+
+  &.scheduled {
+    background: var(--blue-100);
+    color: var(--blue-700);
+  }
+
+  &.in-progress {
+    background: var(--amber-100);
+    color: var(--amber-700);
   }
 }
 
@@ -374,6 +399,8 @@
   .appointment-item {
     padding: 24px;
     border-bottom: 1px solid var(--slate-100);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
 
     &:last-child {
       border-bottom: none;
@@ -382,6 +409,17 @@
     &:hover {
       background: var(--slate-50);
     }
+  }
+
+  .loading-state {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+  }
+
+  .no-consultations {
+    margin: 24px;
   }
 }
 
@@ -466,6 +504,33 @@
       background: var(--slate-50);
       border-radius: 12px;
       padding: 12px 16px;
+    }
+
+    .participants-info {
+      background: var(--slate-50);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-top: 12px;
+
+      app-typography {
+        display: block;
+        margin-bottom: 8px;
+      }
+
+      .participants-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+
+        .participant-badge {
+          padding: 4px 10px;
+          background: var(--White);
+          border: 1px solid var(--slate-200);
+          border-radius: 16px;
+          font-size: 12px;
+          color: var(--slate-700);
+        }
+      }
     }
   }
 

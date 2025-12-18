@@ -12,10 +12,12 @@ import { ModalComponent } from '../../../../shared/components/modal/modal.compon
 import { AddEditPatient } from '../add-edit-patient/add-edit-patient';
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
 import { ButtonSizeEnum, ButtonStyleEnum } from '../../../../shared/constants/button';
-import { IHealthMetric, IHealthMetricResponse, IPatientAppointment, IPatientConsultation } from '../../models/patient';
+import { IHealthMetric, IHealthMetricResponse } from '../../models/patient';
 import { IUser } from '../../models/user';
 import { RoutePaths } from '../../../../core/constants/routes';
 import { PatientService } from '../../../../core/services/patient.service';
+import { ConsultationService } from '../../../../core/services/consultation.service';
+import { Consultation, Appointment } from '../../../../core/models/consultation';
 import { ToasterService } from '../../../../core/services/toaster.service';
 
 @Component({
@@ -29,6 +31,7 @@ export class PatientDetail implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private patientService = inject(PatientService);
+  private consultationService = inject(ConsultationService);
   private toasterService = inject(ToasterService);
 
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
@@ -39,78 +42,13 @@ export class PatientDetail implements OnInit, OnDestroy {
   activeTab = signal<'overview' | 'consultations' | 'appointments'>('overview');
   showEditModal = signal(false);
   loading = signal(true);
+  loadingConsultations = signal(false);
+  loadingAppointments = signal(false);
 
   patient = signal<IUser | null>(null);
   healthMetrics = signal<IHealthMetric[]>([]);
-
-  upcomingAppointments: IPatientAppointment[] = [
-    {
-      id: 1,
-      date: '2024-01-15',
-      time: '10:30',
-      type: 'Follow-up Consultation',
-      doctor: 'Dr. Laurent',
-      status: 'confirmed',
-      notes: 'Review blood test results'
-    },
-    {
-      id: 2,
-      date: '2024-01-22',
-      time: '14:00',
-      type: 'Routine Check-up',
-      doctor: 'Dr. Laurent',
-      status: 'confirmed',
-      notes: 'Annual physical examination'
-    },
-    {
-      id: 3,
-      date: '2024-02-05',
-      time: '11:00',
-      type: 'Specialist Referral',
-      doctor: 'Dr. Moreau',
-      status: 'pending',
-      notes: 'Cardiology consultation'
-    }
-  ];
-
-  consultationHistory: IPatientConsultation[] = [
-    {
-      id: 1,
-      date: '2024-01-10',
-      time: '10:30',
-      type: 'Follow-up',
-      doctor: 'Dr. Laurent',
-      duration: '25 min',
-      diagnosis: 'Blood pressure monitoring',
-      prescription: 'Continue current medication',
-      notes: 'Patient doing well, BP stable. Schedule follow-up in 2 weeks.',
-      status: 'completed'
-    },
-    {
-      id: 2,
-      date: '2024-01-03',
-      time: '14:15',
-      type: 'Initial Consultation',
-      doctor: 'Dr. Laurent',
-      duration: '45 min',
-      diagnosis: 'Hypertension - Stage 1',
-      prescription: 'Lisinopril 10mg once daily',
-      notes: 'Started on medication. Advised lifestyle modifications including diet and exercise.',
-      status: 'completed'
-    },
-    {
-      id: 3,
-      date: '2023-12-20',
-      time: '09:00',
-      type: 'Annual Check-up',
-      doctor: 'Dr. Laurent',
-      duration: '30 min',
-      diagnosis: 'Elevated blood pressure',
-      prescription: 'Blood work ordered',
-      notes: 'Blood pressure elevated. Ordered comprehensive metabolic panel and lipid panel.',
-      status: 'completed'
-    }
-  ];
+  consultations = signal<Consultation[]>([]);
+  appointments = signal<Appointment[]>([]);
 
   tabItems: TabItem[] = [
     { id: 'overview', label: 'Overview' },
@@ -129,6 +67,8 @@ export class PatientDetail implements OnInit, OnDestroy {
       if (params['id']) {
         this.patientId = +params['id'];
         this.loadPatient();
+        this.loadConsultations();
+        this.loadAppointments();
       }
     });
   }
@@ -158,6 +98,44 @@ export class PatientDetail implements OnInit, OnDestroy {
         this.loading.set(false);
       }
     });
+  }
+
+  loadConsultations(): void {
+    if (!this.patientId) return;
+
+    this.loadingConsultations.set(true);
+    this.consultationService
+      .getConsultations({ beneficiary: this.patientId })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: response => {
+          this.consultations.set(response.results);
+          this.loadingConsultations.set(false);
+        },
+        error: () => {
+          this.toasterService.show('error', 'Error', 'Failed to load consultations');
+          this.loadingConsultations.set(false);
+        }
+      });
+  }
+
+  loadAppointments(): void {
+    if (!this.patientId) return;
+
+    this.loadingAppointments.set(true);
+    this.consultationService
+      .getAppointments({ consultation__beneficiary: this.patientId })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: response => {
+          this.appointments.set(response.results);
+          this.loadingAppointments.set(false);
+        },
+        error: () => {
+          this.toasterService.show('error', 'Error', 'Failed to load appointments');
+          this.loadingAppointments.set(false);
+        }
+      });
   }
 
   private transformHealthMetrics(metrics: IHealthMetricResponse[]): IHealthMetric[] {
@@ -268,6 +246,62 @@ export class PatientDetail implements OnInit, OnDestroy {
 
   startConsultation(): void {
     this.router.navigate([RoutePaths.USER, 'consultations', 'new']);
+  }
+
+  viewConsultation(consultation: Consultation): void {
+    this.router.navigate([RoutePaths.USER, 'consultations', consultation.id]);
+  }
+
+  getConsultationTitle(consultation: Consultation): string {
+    return consultation.title || `Consultation #${consultation.id}`;
+  }
+
+  getOwnerName(consultation: Consultation): string {
+    if (!consultation.owned_by) return 'Unassigned';
+    const first = consultation.owned_by.first_name || '';
+    const last = consultation.owned_by.last_name || '';
+    return `${first} ${last}`.trim() || consultation.owned_by.email;
+  }
+
+  getAppointmentStatusClass(status: string): string {
+    const s = status?.toLowerCase();
+    switch (s) {
+      case 'scheduled': return 'scheduled';
+      case 'completed': return 'completed';
+      case 'cancelled': return 'cancelled';
+      case 'in_progress': return 'in-progress';
+      default: return 'scheduled';
+    }
+  }
+
+  formatDateTime(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  formatTime(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  getAppointmentType(type: string): string {
+    const t = type?.toLowerCase();
+    switch (t) {
+      case 'online': return 'Video Call';
+      case 'inperson': return 'In Person';
+      case 'in_person': return 'In Person';
+      case 'phone': return 'Phone Call';
+      default: return type;
+    }
   }
 
   openEditModal(): void {

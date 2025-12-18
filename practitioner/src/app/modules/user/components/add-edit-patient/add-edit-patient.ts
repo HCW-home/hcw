@@ -75,7 +75,7 @@ export class AddEditPatient implements OnInit, OnDestroy {
       email: [p?.email || '', [Validators.required, Validators.email]],
       mobile_phone_number: [p?.mobile_phone_number || ''],
       timezone: [p?.timezone || 'UTC'],
-      preferred_language: [p?.preferred_language || 'en', Validators.required]
+      preferred_language: [p?.preferred_language || null, Validators.required]
     });
 
     if (this.isEditMode) {

@@ -155,7 +155,7 @@
                     placeholder="Select your preferred language">
                   </app-select>
                 } @else {
-                  <span class="info-value">{{ user()!.preferred_language || 'Not set' }}</span>
+                  <span class="info-value">{{ getPreferredLanguageName() }}</span>
                 }
               </div>
 
