@@ -16,7 +16,7 @@ UserModel = get_user_model()
 class LanguageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Language
-        fields = ['name', 'code']
+        fields = ['id', 'name', 'code']
 
 class OrganisationSerializer(serializers.ModelSerializer):
     class Meta:
