@@ -372,7 +372,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         elif request.method == 'POST':
             serializer = ParticipantSerializer(
                 data=request.data,
-                context={'request': request}
+                context={'request': request, 'appointment': appointment}
             )
 
             if serializer.is_valid():

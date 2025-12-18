@@ -18,10 +18,42 @@ class QueueSerializer(serializers.ModelSerializer):
 
 class ParticipantSerializer(serializers.ModelSerializer):
     user = ConsultationUserSerializer(read_only=True)
-    
+
     class Meta:
         model = Participant
         fields = ['id', 'user', 'is_invited', 'is_confirmed', 'email', 'phone', 'display_name', 'feedback_rate', 'feedback_message']
+
+    def validate(self, attrs):
+        """Validate that the participant doesn't already exist for this appointment."""
+        # Get appointment from context (set when creating participant)
+        appointment = self.context.get('appointment') or attrs.get('appointment')
+
+        if appointment:
+            # Check if email is provided
+            email = attrs.get('email')
+            phone = attrs.get('phone')
+
+            if email:
+                # Check if a participant with this email already exists for this appointment
+                # The email will be used to create/get a user in the model's save method
+                existing_user = User.objects.filter(email=email).first()
+                if existing_user:
+                    # Check if this user is already a participant in this appointment
+                    if Participant.objects.filter(appointment=appointment, user=existing_user).exists():
+                        raise serializers.ValidationError({
+                            'email': 'A participant with this email already exists for this appointment.'
+                        })
+
+            elif phone and not email:
+                # Check if a participant with this phone already exists
+                existing_user = User.objects.filter(mobile_phone_number=phone).first()
+                if existing_user:
+                    if Participant.objects.filter(appointment=appointment, user=existing_user).exists():
+                        raise serializers.ValidationError({
+                            'phone': 'A participant with this phone number already exists for this appointment.'
+                        })
+
+        return attrs
 
 class AppointmentSerializer(serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(
