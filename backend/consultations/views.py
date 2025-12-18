@@ -10,7 +10,7 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes, OpenApiExample
 from .permissions import ConsultationAssigneePermission, DjangoModelPermissionsWithView
 from .models import Consultation, Queue, Appointment, Participant, Message, AppointmentStatus, Request, RequestStatus, Reason, BookingSlot
-from .filters import ConsultationFilter
+from .filters import ConsultationFilter, AppointmentFilter
 from .paginations import ConsultationPagination
 from django.utils import timezone
 from django.contrib.auth import get_user_model
@@ -330,6 +330,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     pagination_class = ConsultationPagination
     ordering = ['-created_at']
     ordering_fields = ['created_at', 'updated_at', 'scheduled_at']
+    filterset_class = AppointmentFilter
 
     def get_queryset(self):
         user = self.request.user

@@ -1,5 +1,5 @@
 import django_filters
-from .models import Consultation
+from .models import Consultation, Appointment
 
 class ConsultationFilter(django_filters.FilterSet):
     # Custom boolean filter to check if closed_at is set
@@ -17,4 +17,18 @@ class ConsultationFilter(django_filters.FilterSet):
             "created_by",
             "owned_by",
             "closed_at",
+        ]
+
+
+class AppointmentFilter(django_filters.FilterSet):
+
+    class Meta:
+        model = Appointment
+        fields = [
+            "consultation__beneficiary",
+            "consultation__beneficiary",
+            "consultation__created_by",
+            "consultation__owned_by",
+            "consultation__closed_at",
+            "status"
         ]
