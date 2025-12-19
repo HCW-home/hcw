@@ -21,7 +21,7 @@ class ParticipantSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Participant
-        fields = ['id', 'user', 'is_invited', 'is_confirmed', 'email', 'phone', 'display_name', 'feedback_rate', 'feedback_message']
+        fields = ['id', 'user', 'is_invited', 'is_confirmed', 'email', 'phone', 'timezone', 'display_name', 'feedback_rate', 'feedback_message']
 
     def validate(self, attrs):
         """Validate that the participant doesn't already exist for this appointment."""

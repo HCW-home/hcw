@@ -614,7 +614,7 @@ class UserViewSet(viewsets.ModelViewSet):
     ViewSet for users - read only with GET endpoint
     Supports search by first name, last name, and email
     """
-    queryset = User.objects.all()
+    queryset = User.objects.filter(temporary=False)
     serializer_class = UserDetailsSerializer
     permission_classes = [IsAuthenticated, DjangoModelPermissionsWithView]
     pagination_class = UniversalPagination

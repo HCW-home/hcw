@@ -8,6 +8,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from messaging.models import CommunicationMethod
 from users.models import User
+from zoneinfo import available_timezones
 
 # Create your models here.
 
@@ -133,6 +134,13 @@ class Participant(models.Model):
         blank=True,
     )
 
+    timezone = models.CharField(
+        max_length=63,
+        choices=[(tz, tz) for tz in sorted(available_timezones())],
+        default='UTC',
+        help_text='User timezone for displaying dates and times'
+    )
+
     is_invited = models.BooleanField(default=True)
     is_confirmed = models.BooleanField(default=False)
 
@@ -155,6 +163,7 @@ class Participant(models.Model):
             self.user, _ = User.objects.update_or_create(
                 email=self.email,
                 mobile_phone_number=self.phone,
+                timezone=self.timezone,
                 defaults={
                     "username": self.email
                     if self.email
