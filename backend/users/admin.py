@@ -51,6 +51,8 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
     import_form_class = ImportForm
     export_form_class = ExportForm
     list_editable = ['is_active']
+    ordering = ['email']
+    readonly_fields = ('last_login', 'date_joined')
     # export_form_class = SelectableFieldsExportForm
 
     list_display = [
@@ -69,13 +71,38 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
         ('languages', 'specialities', "is_online")
     filter_horizontal = BaseUserAdmin.filter_horizontal + ('languages', 'specialities')
 
-    fieldsets = BaseUserAdmin.fieldsets + (
+    fieldsets = (
+        (_("Personal info"), {
+         "fields": ("email", "first_name", "last_name", "password")}),
+        (
+            _("Permissions"),
+            {
+                "fields": (
+                    "is_active",
+                    "is_staff",
+                    "is_superuser",
+                    "groups",
+                    "user_permissions",
+                ),
+            },
+        ),
         ('Additional Info', {
             'fields': ('location', 'app_preferences', 'mobile_phone_number', 'communication_method', 'timezone', 'preferred_language', 'languages', 'specialities', 'main_organisation', 'organisations', 'picture', 'accepted_term',)
         }),
         ('Authentication', {
             'fields': ('appointment_auth_token', 'is_appointment_auth_token_used', 'verification_code')
         }),
+        (_("Important dates"), {"fields": ("last_login", "date_joined")}),
+    )
+
+    add_fieldsets = (
+        (
+            None,
+            {
+                "classes": ("wide",),
+                "fields": ("email", "usable_password", "password1", "password2"),
+            },
+        ),
     )
 
     def languages_display(self, obj):

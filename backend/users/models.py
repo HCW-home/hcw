@@ -16,6 +16,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from location_field.models.plain import PlainLocationField
 from zoneinfo import available_timezones
 from django.db import models
+from .managers import UserManager
 import uuid
 
 # Create your models here.
@@ -68,6 +69,16 @@ class FCMDeviceOverride(AbstractFCMDevice):
     updated_at = models.DateTimeField(auto_now=True)
 
 class User(AbstractUser):
+
+    objects = UserManager()
+
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = []
+
+    username = None
+
+    email = models.EmailField(_("email address"), blank=True, null=True, unique=True)
+
     app_preferences = models.JSONField(null=True, blank=True)
     encrypted = models.BooleanField(default=False)
 

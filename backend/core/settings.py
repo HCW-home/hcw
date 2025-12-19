@@ -660,3 +660,6 @@ PATIENT_URL = os.getenv('PATIENT_URL', 'http://localhost:4201')
 # MFA_ADAPTER_CLASS = "dj_rest_auth_mfa.adapters.DjangoMFA2Adapter"
 # MFA_GRACE_WINDOW_DAYS = 7
 
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
