@@ -1,3 +1,27 @@
+hcw (0.9.23) bookworm; urgency=medium
+
+  [ Olivier Bitsch ]
+  * Have ability to create user ('patient'), but not able to update non patient user
+  * Restrict if user has group (meaning role in app)
+  * Fix preferred_language
+  * Overdue consultation
+  * Fix duplicate participant email error and add overdue
+  * Adding ID language
+  * Simplify language logic
+  * Fix serualizer for language
+  * Adding filter on Appointment
+
+  [ Gor Grigoryan ]
+  * add patieint list, detail and add/edit modal for patient info
+  * remove package-lock
+  * add appointment join
+  * add messages direction
+  * add patient appointments
+  * add appointments page using fullcalendar
+  * add list view of appointments
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Fri, 19 Dec 2025 14:49:15 +0100
+
 hcw (0.9.22) bookworm; urgency=medium
 
   [ Gor Grigoryan ]
