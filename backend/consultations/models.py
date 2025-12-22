@@ -9,6 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from messaging.models import CommunicationMethod
 from users.models import User
 from zoneinfo import available_timezones
+from django_clamd.validators import validate_file_infection
 
 # Create your models here.
 
@@ -221,7 +222,7 @@ class Message(models.Model):
     event = models.TextField(_("event"), null=True, blank=True)
     content = models.TextField(_("content"), null=True, blank=True)
     attachment = models.FileField(
-        _("attachment"), upload_to="messages_attachment", null=True, blank=True
+        _("attachment"), upload_to="messages_attachment", null=True, blank=True, validators=[validate_file_infection]
     )
 
     class Meta:

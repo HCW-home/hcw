@@ -30,3 +30,4 @@ itsdangerous
 Pillow
 factory-boy
 livekit-api
+django-clamd

@@ -51,6 +51,18 @@ EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', False)
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 
+# Clamav Antivirus
+if os.getenv('CLAMD_SOCKET'):
+    CLAMD_USE_TCP = False
+    CLAMD_SOCKET = os.getenv('CLAMD_SOCKET', '/var/run/clamav/clamd.ctl')
+
+elif os.getenv('CLAMD_TCP_ADDR'):
+    CLAMD_USE_TCP = True
+    CLAMD_TCP_SOCKET = int(os.getenv('CLAMD_TCP_SOCKET', 3310))
+    CLAMD_TCP_ADDR = os.getenv('CLAMD_TCP_ADDR', '127.0.0.1')
+else:
+    CLAMD_ENABLED = False
+
 ACCOUNT_MAX_EMAIL_ADDRESSES = 1
 
 # Application definition
