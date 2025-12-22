@@ -5,6 +5,7 @@ import {
   FormGroup,
   Validators,
   ReactiveFormsModule,
+  FormsModule,
 } from '@angular/forms';
 import { CommonModule, Location } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
@@ -31,7 +32,11 @@ import { VideoConsultationComponent } from '../video-consultation/video-consulta
 
 import { Svg } from '../../../../shared/ui-components/svg/svg';
 import { Button } from '../../../../shared/ui-components/button/button';
+import { Input } from '../../../../shared/ui-components/input/input';
+import { Badge } from '../../../../shared/components/badge/badge';
 import { ButtonStyleEnum, ButtonSizeEnum, ButtonStateEnum } from '../../../../shared/constants/button';
+import { BadgeTypeEnum } from '../../../../shared/constants/badge';
+import { getParticipantBadgeType, getAppointmentBadgeType } from '../../../../shared/tools/helper';
 
 interface ModalParticipant {
   name: string;
@@ -51,7 +56,10 @@ interface ModalParticipant {
     VideoConsultationComponent,
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     Button,
+    Badge,
+    Input,
   ],
 })
 export class ConsultationDetail implements OnInit, OnDestroy {
@@ -88,6 +96,9 @@ export class ConsultationDetail implements OnInit, OnDestroy {
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
   protected readonly ButtonStateEnum = ButtonStateEnum;
+  protected readonly BadgeTypeEnum = BadgeTypeEnum;
+  protected readonly getParticipantBadgeType = getParticipantBadgeType;
+  protected readonly getAppointmentBadgeType = getAppointmentBadgeType;
 
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -308,12 +319,18 @@ export class ConsultationDetail implements OnInit, OnDestroy {
 
       const scheduledAt = new Date(`${formValue.date}T${formValue.time}`).toISOString();
 
+      let endExpectedAt: string | undefined;
+      if (formValue.end_expected_at && formValue.end_expected_at.trim() !== '') {
+        const endDate = new Date(formValue.end_expected_at);
+        if (!isNaN(endDate.getTime())) {
+          endExpectedAt = endDate.toISOString();
+        }
+      }
+
       const appointmentData: CreateAppointmentRequest = {
         type: formValue.type,
         scheduled_at: scheduledAt,
-        end_expected_at: formValue.end_expected_at
-          ? new Date(formValue.end_expected_at).toISOString()
-          : undefined,
+        end_expected_at: endExpectedAt,
       };
 
       this.consultationService
@@ -398,6 +415,51 @@ export class ConsultationDetail implements OnInit, OnDestroy {
           },
           error: () => {
             this.toasterService.show('error', 'Error cancelling appointment');
+          },
+        });
+    }
+  }
+
+  sendAppointment(appointment: Appointment): void {
+    this.consultationService
+      .sendAppointment(appointment.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: updatedAppointment => {
+          const currentAppointments = this.appointments();
+          const updatedAppointments = currentAppointments.map(a =>
+            a.id === appointment.id ? updatedAppointment : a
+          );
+          this.appointments.set(updatedAppointments);
+          this.toasterService.show('success', 'Appointment sent successfully');
+        },
+        error: () => {
+          this.toasterService.show('error', 'Error sending appointment');
+        },
+      });
+  }
+
+  async deleteAppointment(appointment: Appointment): Promise<void> {
+    const confirmed = await this.confirmationService.confirm({
+      title: 'Delete Appointment',
+      message: 'Are you sure you want to delete this appointment? This action cannot be undone.',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      confirmStyle: 'danger',
+    });
+
+    if (confirmed) {
+      this.consultationService
+        .deleteAppointment(appointment.id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            const currentAppointments = this.appointments();
+            this.appointments.set(currentAppointments.filter(a => a.id !== appointment.id));
+            this.toasterService.show('success', 'Appointment deleted successfully');
+          },
+          error: () => {
+            this.toasterService.show('error', 'Error deleting appointment');
           },
         });
     }

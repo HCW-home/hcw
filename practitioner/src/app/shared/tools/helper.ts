@@ -1,4 +1,31 @@
 import { HttpParams } from '@angular/common/http';
+import { BadgeTypeEnum } from '../constants/badge';
+import { AppointmentStatus } from '../../core/models/consultation';
+
+export function getParticipantBadgeType(isConfirmed: boolean): BadgeTypeEnum {
+  return isConfirmed ? BadgeTypeEnum.green : BadgeTypeEnum.orange;
+}
+
+export function getAppointmentBadgeType(status: AppointmentStatus): BadgeTypeEnum {
+  switch (status) {
+    case AppointmentStatus.DRAFT:
+      return BadgeTypeEnum.orange;
+    case AppointmentStatus.SCHEDULED:
+      return BadgeTypeEnum.green;
+    case AppointmentStatus.CANCELLED:
+      return BadgeTypeEnum.red;
+    default:
+      return BadgeTypeEnum.gray;
+  }
+}
+
+export function getConsultationBadgeType(isClosed: boolean): BadgeTypeEnum {
+  return isClosed ? BadgeTypeEnum.gray : BadgeTypeEnum.green;
+}
+
+export function getOnlineStatusBadgeType(isOnline: boolean): BadgeTypeEnum {
+  return isOnline ? BadgeTypeEnum.green : BadgeTypeEnum.gray;
+}
 
 export function toHttpParams(obj: Record<string, unknown>): HttpParams {
   let params = new HttpParams();

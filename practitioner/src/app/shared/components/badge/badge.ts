@@ -1,7 +1,9 @@
 import { Component, input } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { BadgeType } from '../../models/badge';
-import { BadgeTypeEnum } from '../../constants/badge';
+import { BadgeTypeEnum, BadgeSizeEnum } from '../../constants/badge';
+
+export type BadgeSize = `${BadgeSizeEnum}`;
 
 @Component({
   selector: 'app-badge',
@@ -11,4 +13,5 @@ import { BadgeTypeEnum } from '../../constants/badge';
 })
 export class Badge {
   type = input<BadgeType>(BadgeTypeEnum.gray);
+  size = input<BadgeSize>(BadgeSizeEnum.small);
 }

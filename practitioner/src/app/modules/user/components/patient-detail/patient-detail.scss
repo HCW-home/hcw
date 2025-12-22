@@ -330,48 +330,6 @@
   }
 }
 
-.status-badge {
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-
-  &.completed,
-  &.confirmed {
-    background: var(--emerald-100);
-    color: var(--emerald-700);
-  }
-
-  &.active {
-    background: var(--primary-100);
-    color: var(--primary-700);
-  }
-
-  &.closed {
-    background: var(--slate-100);
-    color: var(--slate-600);
-  }
-
-  &.pending {
-    background: var(--amber-100);
-    color: var(--amber-700);
-  }
-
-  &.cancelled {
-    background: var(--rose-100);
-    color: var(--rose-700);
-  }
-
-  &.scheduled {
-    background: var(--blue-100);
-    color: var(--blue-700);
-  }
-
-  &.in-progress {
-    background: var(--amber-100);
-    color: var(--amber-700);
-  }
-}
 
 .section-card {
   background: var(--White);

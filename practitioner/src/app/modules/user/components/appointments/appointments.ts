@@ -9,17 +9,19 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { Page } from '../../../../core/components/page/page';
 import { Loader } from '../../../../shared/components/loader/loader';
+import { Badge } from '../../../../shared/components/badge/badge';
 import { Svg } from '../../../../shared/ui-components/svg/svg';
 import { ConsultationService } from '../../../../core/services/consultation.service';
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { Appointment, AppointmentStatus, AppointmentType } from '../../../../core/models/consultation';
 import { RoutePaths } from '../../../../core/constants/routes';
+import { getAppointmentBadgeType } from '../../../../shared/tools/helper';
 
 type CalendarView = 'dayGridMonth' | 'timeGridWeek' | 'timeGridDay' | 'list';
 
 @Component({
   selector: 'app-appointments',
-  imports: [CommonModule, DatePipe, Page, Loader, Svg, FullCalendarModule],
+  imports: [CommonModule, DatePipe, Page, Loader, Svg, Badge, FullCalendarModule],
   templateUrl: './appointments.html',
   styleUrl: './appointments.scss',
 })
@@ -28,6 +30,8 @@ export class Appointments implements OnInit, OnDestroy {
   private router = inject(Router);
   private consultationService = inject(ConsultationService);
   private toasterService = inject(ToasterService);
+
+  protected readonly getAppointmentBadgeType = getAppointmentBadgeType;
 
   calendarComponent = viewChild<FullCalendarComponent>('calendar');
 

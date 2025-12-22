@@ -6,3 +6,8 @@ export enum BadgeTypeEnum {
   'orange' = 'orange',
   'purple' = 'purple',
 }
+
+export enum BadgeSizeEnum {
+  'small' = 'small',
+  'medium' = 'medium',
+}

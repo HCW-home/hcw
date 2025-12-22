@@ -188,6 +188,13 @@ export class ConsultationService {
     );
   }
 
+  sendAppointment(appointmentId: number): Observable<Appointment> {
+    return this.http.post<Appointment>(
+      `${this.apiUrl}/appointments/${appointmentId}/send/`,
+      {}
+    );
+  }
+
   getAppointmentParticipants(
     appointmentId: number,
     params?: { page?: number; page_size?: number }
@@ -426,5 +433,11 @@ export class ConsultationService {
     return this.http.get<{ url: string; token: string; room: string }>(
       `${this.apiUrl}/appointments/${appointmentId}/join/`
     );
+  }
+
+  getMessageAttachment(messageId: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/messages/${messageId}/attachment/`, {
+      responseType: 'blob'
+    });
   }
 }

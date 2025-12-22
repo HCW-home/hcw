@@ -157,22 +157,6 @@
   font-style: italic;
 }
 
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-  background: var(--slate-100);
-  color: var(--slate-600);
-
-  &.online {
-    background: var(--emerald-100);
-    color: var(--emerald-700);
-  }
-}
-
 .row-action {
   width: 36px;
   height: 36px;

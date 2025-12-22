@@ -172,9 +172,9 @@
                         <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-800)">
                           {{ getConsultationTitle(consultation) }}
                         </app-typography>
-                        <span class="status-badge" [ngClass]="consultation.closed_at ? 'closed' : 'active'">
+                        <app-badge [type]="getConsultationBadgeType(!!consultation.closed_at)">
                           {{ consultation.closed_at ? 'Closed' : 'Active' }}
-                        </span>
+                        </app-badge>
                       </div>
                       @if (consultation.description) {
                         <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-600)">
@@ -306,9 +306,9 @@
                           <app-typography [variant]="TypographyTypeEnum['body-l-semibold']" color="var(--slate-800)">
                             {{ getAppointmentType(appointment.type) }}
                           </app-typography>
-                          <span class="status-badge" [ngClass]="getAppointmentStatusClass(appointment.status)">
+                          <app-badge [type]="getAppointmentBadgeType(appointment.status)">
                             {{ appointment.status }}
-                          </span>
+                          </app-badge>
                         </div>
                         <div class="appointment-meta">
                           <span>

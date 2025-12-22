@@ -9,7 +9,7 @@ import { INotification, INotificationResponse, NotificationStatus } from '../mod
 })
 export class NotificationService {
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrl}/api/user/notifications/`;
+  private apiUrl = `${environment.apiUrl}/user/notifications/`;
 
   notifications = signal<INotification[]>([]);
   unreadCount = signal<number>(0);

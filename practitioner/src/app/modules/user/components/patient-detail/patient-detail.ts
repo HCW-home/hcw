@@ -19,10 +19,12 @@ import { PatientService } from '../../../../core/services/patient.service';
 import { ConsultationService } from '../../../../core/services/consultation.service';
 import { Consultation, Appointment } from '../../../../core/models/consultation';
 import { ToasterService } from '../../../../core/services/toaster.service';
+import { Badge } from '../../../../shared/components/badge/badge';
+import { getConsultationBadgeType, getAppointmentBadgeType } from '../../../../shared/tools/helper';
 
 @Component({
   selector: 'app-patient-detail',
-  imports: [CommonModule, Page, Svg, Typography, Button, Loader, Tabs, ModalComponent, AddEditPatient],
+  imports: [CommonModule, Page, Svg, Typography, Button, Loader, Tabs, ModalComponent, AddEditPatient, Badge],
   templateUrl: './patient-detail.html',
   styleUrl: './patient-detail.scss',
 })
@@ -37,6 +39,8 @@ export class PatientDetail implements OnInit, OnDestroy {
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
+  protected readonly getConsultationBadgeType = getConsultationBadgeType;
+  protected readonly getAppointmentBadgeType = getAppointmentBadgeType;
 
   patientId: number | null = null;
   activeTab = signal<'overview' | 'consultations' | 'appointments'>('overview');
@@ -261,17 +265,6 @@ export class PatientDetail implements OnInit, OnDestroy {
     const first = consultation.owned_by.first_name || '';
     const last = consultation.owned_by.last_name || '';
     return `${first} ${last}`.trim() || consultation.owned_by.email;
-  }
-
-  getAppointmentStatusClass(status: string): string {
-    const s = status?.toLowerCase();
-    switch (s) {
-      case 'scheduled': return 'scheduled';
-      case 'completed': return 'completed';
-      case 'cancelled': return 'cancelled';
-      case 'in_progress': return 'in-progress';
-      default: return 'scheduled';
-    }
   }
 
   formatDateTime(dateString: string): string {

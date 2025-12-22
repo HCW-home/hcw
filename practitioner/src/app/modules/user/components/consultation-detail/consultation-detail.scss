@@ -26,7 +26,7 @@
 .page-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 16px;
   margin-bottom: 24px;
   flex-wrap: wrap;
@@ -226,30 +226,6 @@
   .info-sub {
     font-size: 13px;
     color: var(--slate-500);
-  }
-}
-
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-
-  &.active, &.scheduled {
-    background: var(--emerald-100);
-    color: var(--emerald-700);
-  }
-
-  &.closed, &.cancelled {
-    background: var(--rose-100);
-    color: var(--rose-700);
-  }
-
-  &.completed {
-    background: var(--slate-100);
-    color: var(--slate-600);
   }
 }
 
@@ -467,20 +443,6 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-      }
-    }
-
-    .participant-status {
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 11px;
-      font-weight: 600;
-      background: var(--amber-100);
-      color: var(--amber-700);
-
-      &.confirmed {
-        background: var(--emerald-100);
-        color: var(--emerald-700);
       }
     }
   }
@@ -730,6 +692,7 @@
   background: var(--slate-50);
   border-radius: 16px;
   padding: 20px;
+  padding-right: 56px;
   margin-bottom: 16px;
   border: 1px solid var(--slate-100);
 
@@ -741,25 +704,10 @@
     }
   }
 
-  .remove-guest-btn {
+  > app-button {
     position: absolute;
     top: 16px;
     right: 16px;
-    width: 32px;
-    height: 32px;
-    border-radius: 10px;
-    border: none;
-    background: var(--rose-100);
-    color: var(--rose-600);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-
-    &:hover {
-      background: var(--rose-200);
-    }
   }
 }
 
@@ -858,20 +806,6 @@
       display: block;
       font-size: 13px;
       color: var(--slate-500);
-    }
-  }
-
-  .participant-status {
-    padding: 6px 12px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 600;
-    background: var(--amber-100);
-    color: var(--amber-700);
-
-    &.confirmed {
-      background: var(--emerald-100);
-      color: var(--emerald-700);
     }
   }
 

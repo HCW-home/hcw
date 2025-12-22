@@ -16,7 +16,7 @@
         <app-button
           text="Add Patient"
           leftIcon="plus"
-          [style]="ButtonStyleEnum.primary"
+          [style]="ButtonStyleEnum.stroke"
           [size]="ButtonSizeEnum.medium"
           (buttonClick)="openAddModal()">
         </app-button>
@@ -83,9 +83,9 @@
               </div>
 
               <div class="row-cell status-col">
-                <span class="status-badge" [class.online]="patient.is_online">
+                <app-badge [type]="getOnlineStatusBadgeType(patient.is_online ?? false)">
                   {{ patient.is_online ? 'Online' : 'Offline' }}
-                </span>
+                </app-badge>
               </div>
 
               <div class="row-cell action-col">

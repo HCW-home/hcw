@@ -12,10 +12,10 @@
 
   <div class="header-actions">
     @if (showNewConsultationButton()) {
-      <button class="new-consultation-btn" (click)="navigateToNewConsultation()">
-        <app-svg src="plus" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--White)'}"></app-svg>
-        <span>New Consultation</span>
-      </button>
+      <app-button text="New Consultation" leftIcon="plus" [size]="ButtonSizeEnum.medium"
+                  [style]="ButtonStyleEnum.stroke"
+                  (click)="navigateToNewConsultation()">
+      </app-button>
     }
 
     <app-language-selector></app-language-selector>
@@ -24,7 +24,8 @@
       <button class="notification-btn" (click)="toggleNotifications()">
         <app-svg src="bell" [svgStyle]="{'width.px': 22, 'height.px': 22, 'color': 'var(--slate-600)'}"></app-svg>
         @if (notificationService.unreadCount() > 0) {
-          <span class="notification-badge">{{ notificationService.unreadCount() > 9 ? '9+' : notificationService.unreadCount() }}</span>
+          <span
+            class="notification-badge">{{ notificationService.unreadCount() > 9 ? '9+' : notificationService.unreadCount() }}</span>
         }
       </button>
 
@@ -49,7 +50,8 @@
               </div>
             } @else if (notificationService.notifications().length === 0) {
               <div class="notification-empty">
-                <app-svg src="bell" [svgStyle]="{'width.px': 32, 'height.px': 32, 'color': 'var(--slate-300)'}"></app-svg>
+                <app-svg src="bell"
+                         [svgStyle]="{'width.px': 32, 'height.px': 32, 'color': 'var(--slate-300)'}"></app-svg>
                 <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-400)">
                   No notifications
                 </app-typography>
@@ -108,13 +110,15 @@
         </div>
         <div class="dropdown-items">
           <button class="dropdown-item" (click)="openProfile()">
-            <app-svg src="svg/profile.svg" [svgStyle]="{'width.px': 18, 'height.px': 18, 'color': 'var(--slate-500)'}"></app-svg>
+            <app-svg src="svg/profile.svg"
+                     [svgStyle]="{'width.px': 18, 'height.px': 18, 'color': 'var(--slate-500)'}"></app-svg>
             <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-700)">
               My Profile
             </app-typography>
           </button>
           <button class="dropdown-item logout" (click)="onLogout()">
-            <app-svg src="svg/log-out.svg" [svgStyle]="{'width.px': 18, 'height.px': 18, 'color': 'var(--rose-500)'}"></app-svg>
+            <app-svg src="svg/log-out.svg"
+                     [svgStyle]="{'width.px': 18, 'height.px': 18, 'color': 'var(--rose-500)'}"></app-svg>
             <app-typography [variant]="TypographyTypeEnum['body-medium']" color="var(--rose-500)">
               Sign out
             </app-typography>

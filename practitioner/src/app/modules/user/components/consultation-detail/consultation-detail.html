@@ -6,7 +6,6 @@
     </button>
 
     <div class="page-header">
-      <h1 class="page-title">Consultation Details</h1>
       @if (consultation()) {
         <div class="header-actions">
           <app-button
@@ -51,9 +50,9 @@
             <div class="info-header">
               <div class="title-row">
                 <h2 class="consultation-title">{{ consultation()?.title || 'Consultation #' + consultation()?.id }}</h2>
-                <span class="status-badge" [class.active]="!consultation()?.closed_at" [class.closed]="consultation()?.closed_at">
+                <app-badge [type]="consultation()?.closed_at ? BadgeTypeEnum.gray : BadgeTypeEnum.green">
                   {{ consultation()?.closed_at ? 'Closed' : 'Active' }}
-                </span>
+                </app-badge>
               </div>
               <span class="created-date">Created on {{ formatDateTime(consultation()!.created_at) }}</span>
             </div>
@@ -110,10 +109,13 @@
             <div class="section-header">
               <h3 class="section-title">Appointments ({{ appointments().length }})</h3>
               @if (!consultation()?.closed_at) {
-                <button class="btn-primary" (click)="openCreateAppointmentModal()">
-                  <app-svg src="plus" [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
-                  New Appointment
-                </button>
+                <app-button
+                  text="New Appointment"
+                  leftIcon="plus"
+                  [size]="ButtonSizeEnum.medium"
+                  [style]="ButtonStyleEnum.primary"
+                  (buttonClick)="openCreateAppointmentModal()">
+                </app-button>
               }
             </div>
 
@@ -142,9 +144,9 @@
                           {{ appointment.type }}
                         </span>
                       </div>
-                      <span class="status-badge" [class]="appointment.status.toLowerCase()">
+                      <app-badge [type]="getAppointmentBadgeType(appointment.status)">
                         {{ appointment.status }}
-                      </span>
+                      </app-badge>
                     </div>
 
                     @if (appointment.end_expected_at) {
@@ -167,9 +169,9 @@
                                 <span class="participant-name">{{ getUserDisplayName(participant) }}</span>
                                 <span class="participant-contact">{{ participant.email || participant.phone || '' }}</span>
                               </div>
-                              <span class="participant-status" [class.confirmed]="participant.is_confirmed">
+                              <app-badge [type]="getParticipantBadgeType(participant.is_confirmed)">
                                 {{ participant.is_confirmed ? 'Confirmed' : 'Pending' }}
-                              </span>
+                              </app-badge>
                             </div>
                           }
                         </div>
@@ -179,17 +181,48 @@
                     </div>
 
                     <div class="appointment-actions">
+                      @if (appointment.status === AppointmentStatus.DRAFT && !consultation()?.closed_at) {
+                        <app-button
+                          text="Send"
+                          leftIcon="send"
+                          [size]="ButtonSizeEnum.small"
+                          [style]="ButtonStyleEnum.primary"
+                          (buttonClick)="sendAppointment(appointment)">
+                        </app-button>
+                        <app-button
+                          text="Delete"
+                          leftIcon="trash"
+                          [size]="ButtonSizeEnum.small"
+                          [style]="ButtonStyleEnum.stroke"
+                          [state]="ButtonStateEnum.error"
+                          (buttonClick)="deleteAppointment(appointment)">
+                        </app-button>
+                      }
                       @if (appointment.status === AppointmentStatus.SCHEDULED && appointment.type === 'Online') {
-                        <button class="btn-primary small" (click)="joinVideoCall(appointment.id)">
-                          <app-svg src="video" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
-                          Join
-                        </button>
+                        <app-button
+                          text="Join"
+                          leftIcon="video"
+                          [size]="ButtonSizeEnum.small"
+                          [style]="ButtonStyleEnum.primary"
+                          (buttonClick)="joinVideoCall(appointment.id)">
+                        </app-button>
                       }
                       @if (appointment.status === AppointmentStatus.SCHEDULED && !consultation()?.closed_at) {
-                        <button class="btn-secondary small" (click)="openManageParticipantsModal(appointment)">
-                          <app-svg src="users" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
-                          Manage Participants
-                        </button>
+                        <app-button
+                          text="Manage Participants"
+                          leftIcon="users"
+                          [size]="ButtonSizeEnum.small"
+                          [style]="ButtonStyleEnum.stroke"
+                          (buttonClick)="openManageParticipantsModal(appointment)">
+                        </app-button>
+                        <app-button
+                          text="Delete"
+                          leftIcon="trash"
+                          [size]="ButtonSizeEnum.small"
+                          [style]="ButtonStyleEnum.stroke"
+                          [state]="ButtonStateEnum.error"
+                          (buttonClick)="deleteAppointment(appointment)">
+                        </app-button>
                       }
                     </div>
                   </div>
@@ -235,20 +268,23 @@
         </div>
 
         <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Date <span class="required">*</span></label>
-            <input type="date" class="form-input" formControlName="date">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Time <span class="required">*</span></label>
-            <input type="time" class="form-input" formControlName="time">
-          </div>
+          <app-input
+            type="date"
+            label="Date *"
+            formControlName="date">
+          </app-input>
+          <app-input
+            type="time"
+            label="Time *"
+            formControlName="time">
+          </app-input>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Expected End Time (Optional)</label>
-          <input type="datetime-local" class="form-input" formControlName="end_expected_at">
-        </div>
+        <app-input
+          type="datetime-local"
+          label="Expected End Time (Optional)"
+          formControlName="end_expected_at">
+        </app-input>
 
         <div class="participants-form-section">
           <div class="section-header">
@@ -261,10 +297,12 @@
 
           @for (participant of modalParticipants(); track $index; let i = $index) {
             <div class="guest-card">
-              <div class="form-group">
-                <label class="form-label">Name</label>
-                <input type="text" class="form-input" [value]="participant.name" (input)="updateModalParticipant(i, 'name', $event)">
-              </div>
+              <app-input
+                type="text"
+                label="Name"
+                [ngModel]="participant.name"
+                (ngModelChange)="updateModalParticipant(i, 'name', $event)">
+              </app-input>
               <div class="form-group">
                 <label class="form-label">Contact Method</label>
                 <div class="contact-toggle">
@@ -278,38 +316,43 @@
                   </button>
                 </div>
               </div>
-              <div class="form-group">
-                <label class="form-label">
-                  @if (participant.contactType === 'email') {
-                    Email Address
-                  } @else {
-                    Phone Number
-                  }
-                </label>
-                <input
-                  [type]="participant.contactType === 'email' ? 'email' : 'tel'"
-                  class="form-input"
-                  [value]="participant.email"
-                  [placeholder]="participant.contactType === 'email' ? 'guest@email.com' : '+33 6 12 34 56 78'"
-                  (input)="updateModalParticipant(i, 'email', $event)">
-              </div>
+              <app-input
+                [type]="participant.contactType === 'email' ? 'email' : 'tel'"
+                [label]="participant.contactType === 'email' ? 'Email Address' : 'Phone Number'"
+                [placeholder]="participant.contactType === 'email' ? 'guest@email.com' : '+33 6 12 34 56 78'"
+                [ngModel]="participant.email"
+                (ngModelChange)="updateModalParticipant(i, 'email', $event)">
+              </app-input>
               @if (modalParticipants().length > 1) {
-                <button type="button" class="remove-guest-btn" (click)="removeModalParticipant(i)">
-                  <app-svg src="close" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
-                </button>
+                <app-button
+                  leftIcon="close"
+                  [size]="ButtonSizeEnum.small"
+                  [style]="ButtonStyleEnum.text"
+                  [state]="ButtonStateEnum.error"
+                  (buttonClick)="removeModalParticipant(i)">
+                </app-button>
               }
             </div>
           }
         </div>
 
         <div class="modal-actions">
-          <button type="button" class="btn-cancel" (click)="closeCreateAppointmentModal()">Cancel</button>
-          <button type="submit" class="btn-primary" [disabled]="appointmentForm.invalid || isCreatingAppointment()">
-            @if (isCreatingAppointment()) {
-              <span class="btn-loader"></span>
-            }
-            Create Appointment
-          </button>
+          <app-button
+            text="Cancel"
+            [block]="true"
+            [size]="ButtonSizeEnum.medium"
+            [style]="ButtonStyleEnum.stroke"
+            (buttonClick)="closeCreateAppointmentModal()">
+          </app-button>
+          <app-button
+            text="Create Appointment"
+            [block]="true"
+            [size]="ButtonSizeEnum.medium"
+            [style]="ButtonStyleEnum.primary"
+            [disabled]="appointmentForm.invalid || isCreatingAppointment()"
+            [loading]="isCreatingAppointment()"
+            (buttonClick)="createAppointment()">
+          </app-button>
         </div>
       </form>
     </div>
@@ -359,12 +402,16 @@
                     <span class="participant-name">{{ getUserDisplayName(participant) }}</span>
                     <span class="participant-contact">{{ participant.email || participant.phone || '' }}</span>
                   </div>
-                  <span class="participant-status" [class.confirmed]="participant.is_confirmed">
+                  <app-badge [type]="getParticipantBadgeType(participant.is_confirmed)">
                     {{ participant.is_confirmed ? 'Confirmed' : 'Pending' }}
-                  </span>
-                  <button type="button" class="btn-remove" (click)="removeParticipant(participant)">
-                    <app-svg src="close" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
-                  </button>
+                  </app-badge>
+                  <app-button
+                    leftIcon="close"
+                    [size]="ButtonSizeEnum.small"
+                    [style]="ButtonStyleEnum.text"
+                    [state]="ButtonStateEnum.error"
+                    (buttonClick)="removeParticipant(participant)">
+                  </app-button>
                 </div>
               }
             </div>
@@ -376,10 +423,12 @@
             <span class="label">Add New Participant</span>
           </div>
           <form [formGroup]="participantForm" (ngSubmit)="addParticipantToAppointment()" class="add-participant-form">
-            <div class="form-group">
-              <label class="form-label">Name (Optional)</label>
-              <input type="text" class="form-input" formControlName="display_name" placeholder="Participant name">
-            </div>
+            <app-input
+              type="text"
+              label="Name (Optional)"
+              placeholder="Participant name"
+              formControlName="display_name">
+            </app-input>
 
             <div class="form-group">
               <label class="form-label">Contact Method</label>
@@ -396,28 +445,40 @@
             </div>
 
             @if (participantForm.get('message_type')?.value === 'email') {
-              <div class="form-group">
-                <label class="form-label">Email Address</label>
-                <input type="email" class="form-input" formControlName="email" placeholder="participant@email.com">
-              </div>
+              <app-input
+                type="email"
+                label="Email Address"
+                placeholder="participant@email.com"
+                formControlName="email">
+              </app-input>
             } @else {
-              <div class="form-group">
-                <label class="form-label">Phone Number</label>
-                <input type="tel" class="form-input" formControlName="phone" placeholder="+33 6 12 34 56 78">
-              </div>
+              <app-input
+                type="tel"
+                label="Phone Number"
+                placeholder="+33 6 12 34 56 78"
+                formControlName="phone">
+              </app-input>
             }
 
-            <button type="submit" class="btn-primary" [disabled]="isAddingParticipant()">
-              @if (isAddingParticipant()) {
-                <span class="btn-loader"></span>
-              }
-              Add Participant
-            </button>
+            <app-button
+              text="Add Participant"
+              [size]="ButtonSizeEnum.medium"
+              [style]="ButtonStyleEnum.primary"
+              [disabled]="isAddingParticipant()"
+              [loading]="isAddingParticipant()"
+              (buttonClick)="addParticipantToAppointment()">
+            </app-button>
           </form>
         </div>
 
         <div class="modal-actions">
-          <button type="button" class="btn-primary" (click)="closeManageParticipantsModal()">Done</button>
+          <app-button
+            text="Done"
+            [block]="true"
+            [size]="ButtonSizeEnum.medium"
+            [style]="ButtonStyleEnum.primary"
+            (buttonClick)="closeManageParticipantsModal()">
+          </app-button>
         </div>
       </div>
     </div>

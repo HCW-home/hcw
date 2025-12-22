@@ -80,9 +80,9 @@
                 </div>
               </div>
               <div class="appointment-status">
-                <span class="status-badge" [ngClass]="getStatusClass(appointment.status)">
+                <app-badge [type]="getAppointmentBadgeType(appointment.status)">
                   {{ appointment.status }}
-                </span>
+                </app-badge>
               </div>
             </div>
           }

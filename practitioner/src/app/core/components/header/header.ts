@@ -11,10 +11,15 @@ import {UserService} from '../../services/user.service';
 import {NotificationService} from '../../services/notification.service';
 import {IUser} from '../../../modules/user/models/user';
 import {INotification, NotificationStatus} from '../../models/notification';
+import { Button } from '../../../shared/ui-components/button/button';
+import {
+  ButtonSizeEnum,
+  ButtonStyleEnum,
+} from '../../../shared/constants/button';
 
 @Component({
   selector: 'app-header',
-  imports: [LanguageSelector, Typography, Svg, NgClass],
+  imports: [LanguageSelector, Typography, Svg, NgClass, Button],
   templateUrl: './header.html',
   styleUrl: './header.scss',
 })
@@ -38,11 +43,11 @@ export class Header implements OnInit, OnDestroy {
       this.currentUser = user;
     });
 
-    this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
-    ).subscribe(() => {
-      this.updatePageInfo();
-    });
+    this.router.events
+      .pipe(filter(event => event instanceof NavigationEnd))
+      .subscribe(() => {
+        this.updatePageInfo();
+      });
     this.updatePageInfo();
     this.notificationService.loadNotifications();
   }
@@ -57,7 +62,9 @@ export class Header implements OnInit, OnDestroy {
 
     if (url.includes('/dashboard')) {
       this.pageTitle.set('Dashboard');
-      this.pageSubtitle.set(`Welcome back, ${this.getUserDisplayName() || 'Doctor'}`);
+      this.pageSubtitle.set(
+        `Welcome back, ${this.getUserDisplayName() || 'Doctor'}`
+      );
       this.showNewConsultationButton.set(true);
     } else if (url.includes('/consultations/new')) {
       this.pageTitle.set('New Consultation');
@@ -152,8 +159,13 @@ export class Header implements OnInit, OnDestroy {
   }
 
   isNotificationUnread(notification: INotification): boolean {
-    return notification.status !== NotificationStatus.READ && notification.read_at === null;
+    return (
+      notification.status !== NotificationStatus.READ &&
+      notification.read_at === null
+    );
   }
 
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
+  protected readonly ButtonSizeEnum = ButtonSizeEnum;
+  protected readonly ButtonStyleEnum = ButtonStyleEnum;
 }

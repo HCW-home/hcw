@@ -213,33 +213,6 @@
 
 .appointment-status {
   flex-shrink: 0;
-
-  .status-badge {
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 500;
-
-    &.scheduled {
-      background: #dbeafe;
-      color: #1d4ed8;
-    }
-
-    &.in-progress {
-      background: #fef3c7;
-      color: #b45309;
-    }
-
-    &.completed {
-      background: #d1fae5;
-      color: #047857;
-    }
-
-    &.cancelled {
-      background: #fee2e2;
-      color: #b91c1c;
-    }
-  }
 }
 
 .legend {

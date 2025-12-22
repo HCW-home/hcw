@@ -9,6 +9,7 @@ import { Typography } from '../../../../shared/ui-components/typography/typograp
 import { Button } from '../../../../shared/ui-components/button/button';
 import { Input } from '../../../../shared/ui-components/input/input';
 import { Loader } from '../../../../shared/components/loader/loader';
+import { Badge } from '../../../../shared/components/badge/badge';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { AddEditPatient } from '../add-edit-patient/add-edit-patient';
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
@@ -17,10 +18,11 @@ import { RoutePaths } from '../../../../core/constants/routes';
 import { PatientService } from '../../../../core/services/patient.service';
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { IUser } from '../../models/user';
+import { getOnlineStatusBadgeType } from '../../../../shared/tools/helper';
 
 @Component({
   selector: 'app-patients',
-  imports: [CommonModule, FormsModule, Page, Svg, Typography, Button, Input, Loader, ModalComponent, AddEditPatient],
+  imports: [CommonModule, FormsModule, Page, Svg, Typography, Button, Input, Loader, Badge, ModalComponent, AddEditPatient],
   templateUrl: './patients.html',
   styleUrl: './patients.scss',
 })
@@ -34,6 +36,7 @@ export class Patients implements OnInit, OnDestroy {
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
+  protected readonly getOnlineStatusBadgeType = getOnlineStatusBadgeType;
 
   loading = signal(false);
   patients = signal<IUser[]>([]);

@@ -28,6 +28,7 @@ export interface Participant {
 }
 
 export enum AppointmentStatus {
+  DRAFT = 'Draft',
   SCHEDULED = 'Scheduled',
   CANCELLED = 'Cancelled'
 }
