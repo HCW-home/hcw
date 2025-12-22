@@ -324,17 +324,20 @@ class MessageAttachmentView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Check Django model permission
         user = request.user
 
         # Check if user has permission to access this consultation
+        # Same logic as Consultation queryset: created_by, owned_by, or group member
         consultation = message.consultation
 
-        # Check if user is related to the consultation (same logic as UserConsultationsViewSet)
+        has_access = (
+            consultation.created_by == user or
+            consultation.owned_by == user or
+            consultation.group and consultation.group.users.filter(id=user.id).exists() or
+            consultation.beneficiary == user
+        )
 
-        print(consultation.beneficiary != user)
-
-        if consultation.beneficiary != user and not user.has_perm('consultations.view_message'):
+        if not has_access:
             return Response(
                 {"detail": "You don't have permission to access this message."},
                 status=status.HTTP_403_FORBIDDEN
