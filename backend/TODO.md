@@ -16,3 +16,5 @@ update patient user information
 
 * do virus scan on attachment saving
 * have draft status of appointment
+* Add dashboard endpoint
+* add user id field in participant adding and username is requested and broken
