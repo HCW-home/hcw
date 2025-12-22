@@ -76,7 +76,8 @@
                       <app-button
                         [text]="consultation.closed_at ? 'View' : 'Join'"
                         [size]="ButtonSizeEnum.small"
-                        [style]="ButtonStyleEnum.primary">
+                        [style]="ButtonStyleEnum.primary"
+                        (buttonClick)="consultation.closed_at ? viewConsultation(consultation) : joinConsultation(consultation, $event)">
                       </app-button>
                     </div>
                   </div>
@@ -147,7 +148,8 @@
                         leftIcon="video"
                         [size]="ButtonSizeEnum.small"
                         [style]="ButtonStyleEnum.primary"
-                        buttonClass="video-btn">
+                        buttonClass="video-btn"
+                        (buttonClick)="joinAppointment(item, $event)">
                       </app-button>
                     </div>
                   }

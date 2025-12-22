@@ -377,6 +377,11 @@
           </div>
           <form [formGroup]="participantForm" (ngSubmit)="addParticipantToAppointment()" class="add-participant-form">
             <div class="form-group">
+              <label class="form-label">Name (Optional)</label>
+              <input type="text" class="form-input" formControlName="display_name" placeholder="Participant name">
+            </div>
+
+            <div class="form-group">
               <label class="form-label">Contact Method</label>
               <div class="contact-toggle">
                 <button type="button" class="contact-btn" [class.active]="participantForm.get('message_type')?.value === 'email'" (click)="setParticipantMessageType('email')">

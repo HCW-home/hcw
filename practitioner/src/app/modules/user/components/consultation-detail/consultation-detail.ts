@@ -107,6 +107,7 @@ export class ConsultationDetail implements OnInit, OnDestroy {
     });
 
     this.participantForm = this.fb.group({
+      display_name: [''],
       email: ['', [Validators.email]],
       phone: [''],
       message_type: ['email', [Validators.required]],
@@ -124,9 +125,19 @@ export class ConsultationDetail implements OnInit, OnDestroy {
       this.loadAppointments();
       this.loadMessages();
       this.connectWebSocket();
+      this.checkJoinQueryParam();
     });
 
     this.setupWebSocketListeners();
+  }
+
+  private checkJoinQueryParam(): void {
+    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(queryParams => {
+      if (queryParams['join'] === 'true') {
+        const appointmentId = queryParams['appointmentId'] ? +queryParams['appointmentId'] : null;
+        this.joinVideoCall(appointmentId ?? undefined);
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -544,7 +555,7 @@ export class ConsultationDetail implements OnInit, OnDestroy {
   openManageParticipantsModal(appointment: Appointment): void {
     this.selectedAppointment.set(appointment);
     this.loadParticipants(appointment);
-    this.participantForm.reset({ message_type: 'email' });
+    this.participantForm.reset({ message_type: 'email', display_name: '' });
     this.showManageParticipantsModal.set(true);
   }
 
@@ -599,6 +610,10 @@ export class ConsultationDetail implements OnInit, OnDestroy {
       message_type: formValue.message_type,
     };
 
+    if (formValue.display_name) {
+      data.display_name = formValue.display_name;
+    }
+
     if (formValue.message_type === 'email' && formValue.email) {
       data.email = formValue.email;
     } else if (formValue.message_type === 'sms' && formValue.phone) {
@@ -615,7 +630,7 @@ export class ConsultationDetail implements OnInit, OnDestroy {
       .subscribe({
         next: () => {
           this.loadParticipants(appointment);
-          this.participantForm.reset({ message_type: 'email' });
+          this.participantForm.reset({ message_type: 'email', display_name: '' });
           this.isAddingParticipant.set(false);
           this.toasterService.show('success', 'Participant added successfully');
         },
