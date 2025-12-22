@@ -14,6 +14,5 @@ update patient user information
 * Add terms for Users
 
 
-* add beneficiary filter on appointment
-* auth password reset error
-
+* do virus scan on attachment saving
+* have draft status of appointment
