@@ -122,7 +122,7 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
                     "room": "usertest_123"
                 }
             },
-            500: {
+            400: {
                 'type': 'object',
                 'properties': {
                     'detail': {'type': 'string'}
