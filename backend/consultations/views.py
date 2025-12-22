@@ -20,7 +20,7 @@ from typing import List
 from .serializers import (
     ConsultationSerializer,
     ConsultationCreateSerializer,
-    QueueSerializer, 
+    QueueSerializer,
     AppointmentSerializer,
     ParticipantSerializer,
     ConsultationMessageSerializer,
@@ -232,45 +232,6 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
             if serializer.is_valid():
                 message = serializer.save(consultation=consultation)
                 return Response(ConsultationMessageSerializer(message).data, status=status.HTTP_201_CREATED)
-
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    @extend_schema(
-        request=ParticipantSerializer,
-        responses={200: ParticipantSerializer(many=True), 201: ParticipantSerializer}
-    )
-    @action(detail=True, methods=['get', 'post'])
-    def participants(self, request, pk=None):
-        """Get all participants for all appointments in this consultation or create a new participant"""
-        consultation = self.get_object()
-
-        if request.method == 'GET':
-            # Get all participants from all appointments in this consultation
-            participants = Participant.objects.filter(
-                appointment__consultation=consultation
-            )
-
-            page = self.paginate_queryset(participants)
-            if page is not None:
-                serializer = ParticipantSerializer(page, many=True)
-                return self.get_paginated_response(serializer.data)
-
-            serializer = ParticipantSerializer(participants, many=True)
-            return Response(serializer.data)
-
-        elif request.method == 'POST':
-            serializer = ParticipantSerializer(
-                data=request.data,
-                context={'request': request}
-            )
-
-            if serializer.is_valid():
-                # When creating via consultation endpoint, appointment must be provided in request data
-                participant = serializer.save()
-                return Response(
-                    ParticipantSerializer(participant).data,
-                    status=status.HTTP_201_CREATED
-                )
 
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

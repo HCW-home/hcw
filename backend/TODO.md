@@ -18,3 +18,4 @@ update patient user information
 * have draft status of appointment
 * Add dashboard endpoint
 * add user id field in participant adding and username is requested and broken
+* Error 400 instead of 500 on errors
