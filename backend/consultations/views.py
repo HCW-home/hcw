@@ -24,6 +24,7 @@ from .serializers import (
     AppointmentSerializer,
     ParticipantSerializer,
     ConsultationMessageSerializer,
+    ConsultationMessageCreateSerializer,
     RequestSerializer,
     BookingSlotSerializer
 )
@@ -196,9 +197,15 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
 
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
     @extend_schema(
-        request=ConsultationMessageSerializer, 
-        responses={200: ConsultationMessageSerializer(many=True), 201: ConsultationMessageSerializer}
+        methods=['GET'],
+        responses=ConsultationMessageSerializer(many=True)
+    )
+    @extend_schema(
+        methods=['POST'],
+        request=ConsultationMessageCreateSerializer,
+        responses={201: ConsultationMessageSerializer}
     )
     @action(detail=True, methods=['get', 'post'])
     def messages(self, request, pk=None):
@@ -217,7 +224,7 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
             return Response(serializer.data)
         
         elif request.method == 'POST':
-            serializer = ConsultationMessageSerializer(
+            serializer = ConsultationMessageCreateSerializer(
                 data=request.data,
                 context={'request': request}
             )

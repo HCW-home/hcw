@@ -70,6 +70,9 @@ class FCMDeviceOverride(AbstractFCMDevice):
 
 class User(AbstractUser):
 
+    def __str__(self):
+        return self.name
+
     objects = UserManager()
 
     USERNAME_FIELD = "email"

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import Consultation, Queue, Appointment, Participant, Message, Reason, Request, BookingSlot
+from drf_spectacular.utils import extend_schema_field
 
 User = get_user_model()
 
@@ -67,6 +68,11 @@ class AppointmentSerializer(serializers.ModelSerializer):
                   'consultation', 'created_by', 'status', 'created_at', 'participants']
         read_only_fields = ['id', 'status']
 
+
+class AttachmentMetadataSerializer(serializers.Serializer):
+    file_name = serializers.CharField()
+    mime_type = serializers.CharField()
+
 class ConsultationMessageSerializer(serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(
         default=serializers.CurrentUserDefault())
@@ -77,6 +83,7 @@ class ConsultationMessageSerializer(serializers.ModelSerializer):
         model = Message
         fields = ['id', 'content', 'attachment', 'created_at', 'created_by']
 
+    @extend_schema_field(AttachmentMetadataSerializer(allow_null=True))
     def get_attachment(self, obj):
         """Return attachment metadata if attachment exists."""
         if obj.attachment:
@@ -91,6 +98,15 @@ class ConsultationMessageSerializer(serializers.ModelSerializer):
                 'mime_type': mime_type
             }
         return None
+
+
+class ConsultationMessageCreateSerializer(ConsultationMessageSerializer):
+    attachment = serializers.FileField(required=False, allow_null=True)
+
+    class Meta:
+        model = Message
+        fields = ['id', 'content', 'attachment', 'created_at', 'created_by']
+
 
 class ConsultationSerializer(serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(read_only=True)
