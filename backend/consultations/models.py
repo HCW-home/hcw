@@ -93,6 +93,7 @@ class Consultation(models.Model):
 
 
 class AppointmentStatus(models.TextChoices):
+    DRAFT = "Draft", _("Draft")
     SCHEDULED = "Scheduled", _("Scheduled")
     CANCELLED = "Cancelled", _("Cancelled")
 
@@ -102,7 +103,7 @@ class Appointment(models.Model):
     status = models.CharField(
         _("status"),
         choices=AppointmentStatus.choices,
-        default=AppointmentStatus.SCHEDULED,
+        default=AppointmentStatus.DRAFT,
     )
     consultation = models.ForeignKey(
         Consultation,

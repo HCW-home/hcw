@@ -444,6 +444,23 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+    @extend_schema(responses=AppointmentSerializer)
+    @action(detail=True, methods=['post'])
+    def send(self, request, pk=None):
+        """Send an appointment (change status to SCHEDULED)"""
+        appointment = self.get_object()
+        if appointment.status == AppointmentStatus.SCHEDULED:
+            return Response(
+                {'error': 'This appointment is already scheduled'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        appointment.status = AppointmentStatus.SCHEDULED
+        appointment.save()
+
+        serializer = self.get_serializer(appointment)
+        return Response(serializer.data)
+
 class ParticipantViewSet(viewsets.ModelViewSet):
     """
     ViewSet for participants - provides CRUD operations
