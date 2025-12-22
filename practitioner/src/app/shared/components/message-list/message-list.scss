@@ -87,8 +87,48 @@
   word-wrap: break-word;
 }
 
+.message-attachment {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: var(--White);
+  border-radius: 8px;
+  border: 1px solid var(--slate-200);
+
+  .attachment-name {
+    font-size: 13px;
+    color: var(--primary-600);
+    word-break: break-all;
+  }
+}
+
+.selected-file-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--slate-50);
+  border-top: 1px solid var(--slate-200);
+
+  .file-name {
+    flex: 1;
+    font-size: 13px;
+    color: var(--slate-600);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.file-input-hidden {
+  display: none;
+}
+
 .message-list-footer {
   display: flex;
+  align-items: center;
   gap: 8px;
   padding: 16px;
   border-top: 1px solid var(--slate-200);
@@ -97,5 +137,9 @@
 
   app-input {
     flex: 1;
+  }
+
+  app-button {
+    flex-shrink: 0;
   }
 }

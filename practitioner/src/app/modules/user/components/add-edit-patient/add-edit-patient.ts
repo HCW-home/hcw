@@ -72,7 +72,7 @@ export class AddEditPatient implements OnInit, OnDestroy {
     this.form = this.fb.group({
       first_name: [p?.first_name || '', Validators.required],
       last_name: [p?.last_name || '', Validators.required],
-      email: [p?.email || '', [Validators.required, Validators.email]],
+      email: [p?.email || '', [Validators.email]],
       mobile_phone_number: [p?.mobile_phone_number || ''],
       timezone: [p?.timezone || 'UTC'],
       preferred_language: [p?.preferred_language || null, Validators.required]

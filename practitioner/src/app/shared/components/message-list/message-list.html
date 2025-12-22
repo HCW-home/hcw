@@ -21,14 +21,48 @@
             </app-typography>
           </div>
           <div class="message-content">
-            <app-typography [variant]="TypographyTypeEnum['body-s-regular']">{{ message.message }}</app-typography>
+            @if (message.message) {
+              <app-typography [variant]="TypographyTypeEnum['body-s-regular']">{{ message.message }}</app-typography>
+            }
+            @if (message.attachment) {
+              <div class="message-attachment">
+                <app-svg [src]="getAttachmentIcon(message.attachment)" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                <span class="attachment-name">{{ message.attachment.file_name }}</span>
+              </div>
+            }
           </div>
         </div>
       }
     }
   </div>
 
+  @if (selectedFile) {
+    <div class="selected-file-preview">
+      <app-svg src="paperclip" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+      <span class="file-name">{{ selectedFile.name }}</span>
+      <app-button
+        leftIcon="x"
+        [size]="ButtonSizeEnum.small"
+        [style]="ButtonStyleEnum.stroke"
+        (buttonClick)="removeSelectedFile()">
+      </app-button>
+    </div>
+  }
+
   <div class="message-list-footer">
+    <input
+      #fileInput
+      type="file"
+      class="file-input-hidden"
+      (change)="onFileSelected($event)"
+    />
+    <app-button
+      leftIcon="paperclip"
+      [size]="ButtonSizeEnum.medium"
+      [style]="ButtonStyleEnum.stroke"
+      [disabled]="!isConnected"
+      (buttonClick)="openFilePicker()">
+    </app-button>
     <app-input
       [(ngModel)]="newMessage"
       [placeholder]="'Type a message...'"
@@ -40,7 +74,7 @@
       leftIcon="send"
       [size]="ButtonSizeEnum.medium"
       [style]="ButtonStyleEnum.primary"
-      [disabled]="!newMessage.trim() || !isConnected"
+      [disabled]="(!newMessage.trim() && !selectedFile) || !isConnected"
       (buttonClick)="onSendMessage()">
     </app-button>
   </div>

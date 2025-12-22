@@ -26,7 +26,7 @@ import { IUser } from '../../models/user';
 
 import { Page } from '../../../../core/components/page/page';
 import { Loader } from '../../../../shared/components/loader/loader';
-import { MessageList, Message } from '../../../../shared/components/message-list/message-list';
+import { MessageList, Message, SendMessageData } from '../../../../shared/components/message-list/message-list';
 import { VideoConsultationComponent } from '../video-consultation/video-consultation';
 
 import { Svg } from '../../../../shared/ui-components/svg/svg';
@@ -171,25 +171,26 @@ export class ConsultationDetail implements OnInit, OnDestroy {
     });
   }
 
-  onSendMessage(message: string): void {
+  onSendMessage(data: SendMessageData): void {
     const user = this.currentUser();
     const tempId = Date.now();
     const newMessage: Message = {
       id: tempId,
       username: user?.first_name || user?.email || 'You',
-      message: message,
+      message: data.content || '',
       timestamp: new Date().toISOString(),
       isCurrentUser: true,
+      attachment: data.attachment ? { file_name: data.attachment.name, mime_type: data.attachment.type } : null,
     };
     this.messages.update(msgs => [...msgs, newMessage]);
 
     this.consultationService
-      .sendConsultationMessage(this.consultationId, { content: message })
+      .sendConsultationMessage(this.consultationId, { content: data.content, attachment: data.attachment })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (savedMessage) => {
           this.messages.update(msgs =>
-            msgs.map(m => m.id === tempId ? { ...m, id: savedMessage.id } : m)
+            msgs.map(m => m.id === tempId ? { ...m, id: savedMessage.id, attachment: savedMessage.attachment } : m)
           );
         },
         error: () => {
@@ -217,6 +218,7 @@ export class ConsultationDetail implements OnInit, OnDestroy {
               message: msg.content || '',
               timestamp: msg.created_at,
               isCurrentUser,
+              attachment: msg.attachment,
             };
           });
           this.messages.set(loadedMessages);

@@ -54,6 +54,8 @@ import {
   heroHeart,
   heroChartBar,
   heroScale,
+  heroPaperClip,
+  heroPhoto,
 } from '@ng-icons/heroicons/outline';
 import {
   lucideVideoOff,
@@ -117,6 +119,8 @@ export const appConfig: ApplicationConfig = {
       heroHeart,
       heroChartBar,
       heroScale,
+      heroPaperClip,
+      heroPhoto,
       lucideVideoOff,
       lucideMicOff,
       lucidePhoneOff,

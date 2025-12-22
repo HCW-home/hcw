@@ -41,17 +41,17 @@
             </div>
           } @else {
             @for (consultation of overdueConsultations; track consultation.id) {
-              <div class="consultation-item">
+              <div class="consultation-item" (click)="viewConsultationDetails(consultation)">
                 <div class="patient-avatar overdue">
-                  <span>{{ consultation.avatar }}</span>
+                  <span>{{ getPatientInitials(consultation) }}</span>
                 </div>
 
                 <div class="consultation-info">
                   <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-800)">
-                    {{ consultation.patient }}
+                    {{ getBeneficiaryName(consultation) }}
                   </app-typography>
                   <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
-                    {{ consultation.reason }}
+                    {{ consultation.title || 'Consultation' }}
                   </app-typography>
                 </div>
 
@@ -59,7 +59,7 @@
                   <div class="status-overdue">
                     <app-svg src="alert-circle" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--amber-600)'}"></app-svg>
                     <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--amber-600)">
-                      Waiting {{ consultation.waitingSince }}
+                      {{ formatDate(consultation.created_at) }}
                     </app-typography>
                   </div>
                 </div>

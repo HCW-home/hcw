@@ -7,7 +7,7 @@ import { IUser, ISpeciality } from '../../modules/user/models/user';
 import { IHealthMetricResponse } from '../../modules/user/models/patient';
 
 export interface IPatientCreateRequest {
-  email: string;
+  email?: string;
   first_name: string;
   last_name: string;
   mobile_phone_number?: string;

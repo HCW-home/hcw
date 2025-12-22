@@ -49,10 +49,15 @@ export interface Appointment {
   participants: Participant[];
 }
 
+export interface MessageAttachment {
+  file_name: string;
+  mime_type: string;
+}
+
 export interface ConsultationMessage {
   id: number;
   content: string | null;
-  attachment: string | null;
+  attachment: MessageAttachment | null;
   created_at: string;
   created_by: User;
 }

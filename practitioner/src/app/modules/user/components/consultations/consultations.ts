@@ -32,13 +32,9 @@ export class Consultations implements OnInit, OnDestroy {
   activeTab = signal<'active' | 'past' | 'overdue'>('active');
   activeConsultationsData = signal<Consultation[]>([]);
   pastConsultationsData = signal<Consultation[]>([]);
+  overdueConsultationsData = signal<Consultation[]>([]);
   loading = signal<boolean>(false);
   error = signal<string | null>(null);
-
-  overdueConsultations: { id: number; patient: string; waitingSince: string; reason: string; avatar: string }[] = [
-    { id: 1, patient: 'Michel Fournier', waitingSince: '3 days', reason: 'Lab results pending', avatar: 'MF' },
-    { id: 2, patient: 'Claire Rousseau', waitingSince: '5 days', reason: 'Prescription renewal', avatar: 'CR' },
-  ];
 
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
@@ -72,6 +68,10 @@ export class Consultations implements OnInit, OnDestroy {
     return this.pastConsultationsData();
   }
 
+  get overdueConsultations(): Consultation[] {
+    return this.overdueConsultationsData();
+  }
+
   get tabItems(): TabItem[] {
     return [
       {
@@ -99,6 +99,9 @@ export class Consultations implements OnInit, OnDestroy {
   setActiveTab(tab: string) {
     this.activeTab.set(tab as 'active' | 'past' | 'overdue');
     this.router.navigate([], { fragment: tab, replaceUrl: true });
+    if (tab === 'overdue') {
+      this.loadOverdueConsultations();
+    }
   }
 
   viewConsultationDetails(consultation: Consultation) {
@@ -175,20 +178,42 @@ export class Consultations implements OnInit, OnDestroy {
 
     const activeConsultations$ = this.consultationService.getConsultations({ is_closed: false });
     const pastConsultations$ = this.consultationService.getConsultations({ is_closed: true });
+    const overdueConsultations$ = this.consultationService.getOverdueConsultations();
 
     Promise.all([
       firstValueFrom(activeConsultations$),
-      firstValueFrom(pastConsultations$)
-    ]).then(([activeResponse, pastResponse]) => {
+      firstValueFrom(pastConsultations$),
+      firstValueFrom(overdueConsultations$)
+    ]).then(([activeResponse, pastResponse, overdueResponse]) => {
       this.activeConsultationsData.set(activeResponse.results);
       this.pastConsultationsData.set(pastResponse.results);
+      this.overdueConsultationsData.set(overdueResponse.results);
       this.loading.set(false);
     }).catch((error) => {
-      console.error('Error loading consultations:', error);
       this.error.set('Failed to load consultations. Please try again.');
       this.activeConsultationsData.set([]);
       this.pastConsultationsData.set([]);
+      this.overdueConsultationsData.set([]);
       this.loading.set(false);
+    });
+  }
+
+  private loadOverdueConsultations() {
+    this.loading.set(true);
+    this.error.set(null);
+
+    this.consultationService.getOverdueConsultations().pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (response) => {
+        this.overdueConsultationsData.set(response.results);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.error.set('Failed to load overdue consultations. Please try again.');
+        this.overdueConsultationsData.set([]);
+        this.loading.set(false);
+      }
     });
   }
 }

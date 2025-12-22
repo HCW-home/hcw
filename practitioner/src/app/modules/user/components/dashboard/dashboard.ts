@@ -99,7 +99,8 @@ export class Dashboard implements OnInit {
 
     forkJoin({
       activeConsultations: this.consultationService.getConsultations({ is_closed: false, page_size: 100 }),
-      closedConsultations: this.consultationService.getConsultations({ is_closed: true, page_size: 100 })
+      closedConsultations: this.consultationService.getConsultations({ is_closed: true, page_size: 100 }),
+      overdueConsultations: this.consultationService.getOverdueConsultations({ page_size: 5 })
     }).subscribe({
       next: (data) => {
         const activeCount = data.activeConsultations.count;
@@ -112,21 +113,9 @@ export class Dashboard implements OnInit {
         });
 
         const allActive = data.activeConsultations.results;
-        const now = new Date();
-        const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
 
-        const overdue = allActive.filter(c => {
-          const updatedAt = new Date(c.updated_at);
-          return updatedAt < threeDaysAgo;
-        });
-
-        const recent = allActive.filter(c => {
-          const updatedAt = new Date(c.updated_at);
-          return updatedAt >= threeDaysAgo;
-        });
-
-        this.overdueConsultations.set(overdue.slice(0, 5));
-        this.recentConsultations.set(recent.slice(0, 4));
+        this.overdueConsultations.set(data.overdueConsultations.results);
+        this.recentConsultations.set(allActive.slice(0, 4));
         this.loadUpcomingAppointments(allActive);
         this.loading.set(false);
       },

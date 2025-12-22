@@ -182,6 +182,18 @@ const ICON_MAP: Record<string, string> = {
   'weight': 'heroScale',
   'weight.svg': 'heroScale',
   'svg/weight.svg': 'heroScale',
+  'paperclip': 'heroPaperClip',
+  'paperclip.svg': 'heroPaperClip',
+  'svg/paperclip.svg': 'heroPaperClip',
+  'x': 'heroXMark',
+  'x.svg': 'heroXMark',
+  'svg/x.svg': 'heroXMark',
+  'image': 'heroPhoto',
+  'image.svg': 'heroPhoto',
+  'svg/image.svg': 'heroPhoto',
+  'file-text': 'heroDocumentText',
+  'file-text.svg': 'heroDocumentText',
+  'svg/file-text.svg': 'heroDocumentText',
 };
 
 @Component({

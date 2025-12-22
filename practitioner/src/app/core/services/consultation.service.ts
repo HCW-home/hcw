@@ -88,6 +88,24 @@ export class ConsultationService {
     );
   }
 
+  getOverdueConsultations(params?: {
+    page?: number;
+    page_size?: number;
+  }): Observable<PaginatedResponse<Consultation>> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          httpParams = httpParams.set(key, value.toString());
+        }
+      });
+    }
+    return this.http.get<PaginatedResponse<Consultation>>(
+      `${this.apiUrl}/consultations/overdue/`,
+      { params: httpParams }
+    );
+  }
+
   getConsultationAppointments(
     consultationId: number,
     params?: {
