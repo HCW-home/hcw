@@ -296,7 +296,6 @@ class UserMessagingService:
                 'data': {
                     'message_type': message_type,
                     'from_user_id': from_user_id,
-                    'from_username': from_user.username,
                     'message': message,
                     'timestamp': str(datetime.now().isoformat())
                 }

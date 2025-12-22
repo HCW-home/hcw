@@ -248,6 +248,7 @@ REST_AUTH = {
     'JWT_AUTH_HTTPONLY': False,
     'USER_DETAILS_SERIALIZER': 'users.serializers.UserDetailsSerializer',
     'REGISTER_SERIALIZER': 'users.serializers.RegisterSerializer',
+    'LOGIN_SERIALIZER': 'users.serializers.LoginSerializer',
 }
 
 LOGIN_REDIRECT_URL = '/home/'
