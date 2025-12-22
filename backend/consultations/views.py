@@ -156,7 +156,7 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
         except Exception as e:
             return Response(
                 {"detail": "No media server available."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status=status.HTTP_404_NOT_FOUND
             )
 
 
