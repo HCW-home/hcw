@@ -166,9 +166,6 @@ class Participant(models.Model):
                 mobile_phone_number=self.phone,
                 timezone=self.timezone,
                 defaults={
-                    "username": self.email
-                    if self.email
-                    else f"temp_user_{str(uuid.uuid4())[:8]}",
                     "temporary": True,
                 },
             )
