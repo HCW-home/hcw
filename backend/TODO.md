@@ -16,4 +16,3 @@ update patient user information
 
 * do virus scan on attachment saving
 * Add dashboard endpoint
-* Error 400 instead of 500 on errors
