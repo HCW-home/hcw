@@ -3,9 +3,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import {
   FormBuilder,
   FormGroup,
+  FormArray,
   Validators,
   ReactiveFormsModule,
-  FormsModule,
 } from '@angular/forms';
 import { CommonModule, Location } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
@@ -34,15 +34,10 @@ import { Svg } from '../../../../shared/ui-components/svg/svg';
 import { Button } from '../../../../shared/ui-components/button/button';
 import { Input } from '../../../../shared/ui-components/input/input';
 import { Badge } from '../../../../shared/components/badge/badge';
+import { UserSearchSelect } from '../../../../shared/components/user-search-select/user-search-select';
 import { ButtonStyleEnum, ButtonSizeEnum, ButtonStateEnum } from '../../../../shared/constants/button';
 import { BadgeTypeEnum } from '../../../../shared/constants/badge';
 import { getParticipantBadgeType, getAppointmentBadgeType } from '../../../../shared/tools/helper';
-
-interface ModalParticipant {
-  name: string;
-  email: string;
-  contactType: 'email' | 'phone';
-}
 
 @Component({
   selector: 'app-consultation-detail',
@@ -56,10 +51,10 @@ interface ModalParticipant {
     VideoConsultationComponent,
     CommonModule,
     ReactiveFormsModule,
-    FormsModule,
     Button,
     Badge,
     Input,
+    UserSearchSelect,
   ],
 })
 export class ConsultationDetail implements OnInit, OnDestroy {
@@ -87,7 +82,9 @@ export class ConsultationDetail implements OnInit, OnDestroy {
 
   showCreateAppointmentModal = signal(false);
   showManageParticipantsModal = signal(false);
-  modalParticipants = signal<ModalParticipant[]>([{ name: '', email: '', contactType: 'email' }]);
+
+  isExistingUser = signal(false);
+  selectedParticipantUser = signal<IUser | null>(null);
 
   appointmentForm: FormGroup;
   participantForm: FormGroup;
@@ -115,13 +112,30 @@ export class ConsultationDetail implements OnInit, OnDestroy {
       date: ['', [Validators.required]],
       time: ['', [Validators.required]],
       end_expected_at: [''],
+      participants: this.fb.array([]),
     });
 
     this.participantForm = this.fb.group({
+      user_id: [null],
       display_name: [''],
       email: ['', [Validators.email]],
       phone: [''],
       message_type: ['email', [Validators.required]],
+    });
+  }
+
+  get participantsFormArray(): FormArray {
+    return this.appointmentForm.get('participants') as FormArray;
+  }
+
+  createParticipantFormGroup(): FormGroup {
+    return this.fb.group({
+      isExistingUser: [false],
+      user_id: [null],
+      selectedUser: [null],
+      name: [''],
+      email: [''],
+      contactType: ['email'],
     });
   }
 
@@ -338,7 +352,9 @@ export class ConsultationDetail implements OnInit, OnDestroy {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: appointment => {
-            const participants = this.modalParticipants().filter(p => p.email);
+            const participants = this.participantsFormArray.value.filter((p: { isExistingUser: boolean; user_id: number | null; email: string }) =>
+              (p.isExistingUser && p.user_id) || (!p.isExistingUser && p.email)
+            );
             if (participants.length > 0) {
               this.createParticipantsForAppointment(appointment.id, participants, appointment);
             } else {
@@ -354,12 +370,14 @@ export class ConsultationDetail implements OnInit, OnDestroy {
     }
   }
 
-  private createParticipantsForAppointment(appointmentId: number, participants: ModalParticipant[], appointment: Appointment): void {
+  private createParticipantsForAppointment(appointmentId: number, participants: { isExistingUser: boolean; user_id: number | null; name: string; email: string; contactType: string }[], appointment: Appointment): void {
     const requests = participants.map(p => {
       const data: any = {
         message_type: p.contactType === 'email' ? 'email' : 'sms',
       };
-      if (p.contactType === 'email') {
+      if (p.isExistingUser && p.user_id) {
+        data.user_id = p.user_id;
+      } else if (p.contactType === 'email') {
         data.email = p.email;
       } else {
         data.phone = p.email;
@@ -382,7 +400,7 @@ export class ConsultationDetail implements OnInit, OnDestroy {
     const currentAppointments = this.appointments();
     this.appointments.set([...currentAppointments, appointment]);
     this.appointmentForm.reset({ type: 'Online' });
-    this.modalParticipants.set([{ name: '', email: '', contactType: 'email' }]);
+    this.participantsFormArray.clear();
     this.isCreatingAppointment.set(false);
     this.showCreateAppointmentModal.set(false);
     this.toasterService.show('success', 'Appointment created successfully');
@@ -606,7 +624,7 @@ export class ConsultationDetail implements OnInit, OnDestroy {
 
   openCreateAppointmentModal(): void {
     this.appointmentForm.reset({ type: 'Online' });
-    this.modalParticipants.set([{ name: '', email: '', contactType: 'email' }]);
+    this.participantsFormArray.clear();
     this.showCreateAppointmentModal.set(true);
   }
 
@@ -617,7 +635,9 @@ export class ConsultationDetail implements OnInit, OnDestroy {
   openManageParticipantsModal(appointment: Appointment): void {
     this.selectedAppointment.set(appointment);
     this.loadParticipants(appointment);
-    this.participantForm.reset({ message_type: 'email', display_name: '' });
+    this.isExistingUser.set(false);
+    this.selectedParticipantUser.set(null);
+    this.participantForm.reset({ message_type: 'email', display_name: '', user_id: null });
     this.showManageParticipantsModal.set(true);
   }
 
@@ -634,21 +654,73 @@ export class ConsultationDetail implements OnInit, OnDestroy {
     this.participantForm.patchValue({ message_type: type });
   }
 
+  setParticipantType(isExisting: boolean): void {
+    this.isExistingUser.set(isExisting);
+    this.selectedParticipantUser.set(null);
+    this.participantForm.reset({ message_type: 'email', display_name: '', user_id: null });
+  }
+
+  onParticipantUserSelected(user: IUser | null): void {
+    this.selectedParticipantUser.set(user);
+    if (user) {
+      this.participantForm.patchValue({ user_id: user.pk });
+    } else {
+      this.participantForm.patchValue({ user_id: null });
+    }
+  }
+
   addModalParticipant(): void {
-    this.modalParticipants.update(list => [...list, { name: '', email: '', contactType: 'email' }]);
+    this.participantsFormArray.push(this.createParticipantFormGroup());
   }
 
   removeModalParticipant(index: number): void {
-    this.modalParticipants.update(list => list.filter((_, i) => i !== index));
+    this.participantsFormArray.removeAt(index);
   }
 
-  updateModalParticipant(index: number, field: string, event: any): void {
-    const value = typeof event === 'string' ? event : event.target.value;
-    this.modalParticipants.update(list => {
-      const updated = [...list];
-      updated[index] = { ...updated[index], [field]: value };
-      return updated;
+  setModalParticipantContactType(index: number, type: string): void {
+    const participant = this.participantsFormArray.at(index);
+    participant.patchValue({ contactType: type });
+  }
+
+  getModalParticipantContactType(index: number): string {
+    const participant = this.participantsFormArray.at(index);
+    return participant.get('contactType')?.value || 'email';
+  }
+
+  isModalParticipantExistingUser(index: number): boolean {
+    const participant = this.participantsFormArray.at(index);
+    return participant.get('isExistingUser')?.value || false;
+  }
+
+  setModalParticipantType(index: number, isExisting: boolean): void {
+    const participant = this.participantsFormArray.at(index);
+    participant.patchValue({
+      isExistingUser: isExisting,
+      user_id: null,
+      selectedUser: null,
+      name: '',
+      email: '',
     });
+  }
+
+  onModalParticipantUserSelected(index: number, user: IUser | null): void {
+    const participant = this.participantsFormArray.at(index);
+    if (user) {
+      participant.patchValue({
+        user_id: user.pk,
+        selectedUser: user,
+      });
+    } else {
+      participant.patchValue({
+        user_id: null,
+        selectedUser: null,
+      });
+    }
+  }
+
+  getModalParticipantSelectedUser(index: number): IUser | null {
+    const participant = this.participantsFormArray.at(index);
+    return participant.get('selectedUser')?.value || null;
   }
 
   getParticipantInitials(participant: Participant): string {
@@ -668,21 +740,30 @@ export class ConsultationDetail implements OnInit, OnDestroy {
     if (!appointment) return;
 
     const formValue = this.participantForm.value;
-    const data: any = {
-      message_type: formValue.message_type,
-    };
+    let data: any;
 
-    if (formValue.display_name) {
-      data.display_name = formValue.display_name;
-    }
-
-    if (formValue.message_type === 'email' && formValue.email) {
-      data.email = formValue.email;
-    } else if (formValue.message_type === 'sms' && formValue.phone) {
-      data.phone = formValue.phone;
+    if (this.isExistingUser() && formValue.user_id) {
+      data = {
+        user_id: formValue.user_id,
+        message_type: formValue.message_type,
+      };
     } else {
-      this.toasterService.show('error', 'Please provide contact information');
-      return;
+      data = {
+        message_type: formValue.message_type,
+      };
+
+      if (formValue.display_name) {
+        data.display_name = formValue.display_name;
+      }
+
+      if (formValue.message_type === 'email' && formValue.email) {
+        data.email = formValue.email;
+      } else if (formValue.message_type === 'sms' && formValue.phone) {
+        data.phone = formValue.phone;
+      } else {
+        this.toasterService.show('error', 'Please provide contact information');
+        return;
+      }
     }
 
     this.isAddingParticipant.set(true);
@@ -692,7 +773,9 @@ export class ConsultationDetail implements OnInit, OnDestroy {
       .subscribe({
         next: () => {
           this.loadParticipants(appointment);
-          this.participantForm.reset({ message_type: 'email', display_name: '' });
+          this.isExistingUser.set(false);
+          this.selectedParticipantUser.set(null);
+          this.participantForm.reset({ message_type: 'email', display_name: '', user_id: null });
           this.isAddingParticipant.set(false);
           this.toasterService.show('success', 'Participant added successfully');
         },

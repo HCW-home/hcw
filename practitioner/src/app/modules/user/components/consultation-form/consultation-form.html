@@ -159,56 +159,81 @@
                         <div class="guest-form">
                           @for (participant of getParticipantsFormArray(i).controls; track $index; let j = $index) {
                             <div class="guest-item" [formGroupName]="j">
-                              <div class="form-group">
-                                <app-input
-                                  label="Guest Name"
-                                  leftIcon="user"
-                                  placeholder="Enter guest name..."
-                                  formControlName="name">
-                                </app-input>
+                              <div class="guest-item-header">
+                                <span class="guest-number">Guest {{ j + 1 }}</span>
+                                @if (j > 0) {
+                                  <app-button
+                                    text="Remove"
+                                    [style]="ButtonStyleEnum.text"
+                                    [state]="ButtonStateEnum.error"
+                                    [size]="ButtonSizeEnum.small"
+                                    (buttonClick)="removeParticipantFromAppointment(i, j)">
+                                  </app-button>
+                                }
                               </div>
 
                               <div class="form-group">
-                                <label class="form-label">Contact Method</label>
-                                <div class="contact-toggle">
-                                  <app-button
-                                    text="Email"
-                                    leftIcon="email"
-                                    [block]="true"
-                                    [style]="getParticipantContactType(i, j) === 'email' ? ButtonStyleEnum.primary : ButtonStyleEnum.stroke"
-                                    [size]="ButtonSizeEnum.small"
-                                    (buttonClick)="setParticipantContactType(i, j, 'email')">
-                                  </app-button>
-                                  <app-button
-                                    text="Phone"
-                                    leftIcon="phone"
-                                    [block]="true"
-                                    [style]="getParticipantContactType(i, j) === 'phone' ? ButtonStyleEnum.primary : ButtonStyleEnum.stroke"
-                                    [size]="ButtonSizeEnum.small"
-                                    (buttonClick)="setParticipantContactType(i, j, 'phone')">
-                                  </app-button>
+                                <label class="form-label">Participant Type</label>
+                                <div class="type-toggle">
+                                  <button type="button" class="type-btn"
+                                    [class.active]="!isParticipantExistingUser(i, j)"
+                                    (click)="setParticipantType(i, j, false)">
+                                    External Guest
+                                  </button>
+                                  <button type="button" class="type-btn"
+                                    [class.active]="isParticipantExistingUser(i, j)"
+                                    (click)="setParticipantType(i, j, true)">
+                                    Existing User
+                                  </button>
                                 </div>
                               </div>
 
-                              <div class="form-group">
-                                <app-input
-                                  [label]="getParticipantContactType(i, j) === 'email' ? 'Email Address' : 'Phone Number'"
-                                  [type]="getParticipantContactType(i, j) === 'email' ? 'email' : 'tel'"
-                                  [leftIcon]="getParticipantContactType(i, j) === 'email' ? 'email' : 'phone'"
-                                  [placeholder]="getParticipantContactType(i, j) === 'email' ? 'guest@email.com' : '+33 6 12 34 56 78'"
-                                  formControlName="email">
-                                </app-input>
-                              </div>
+                              @if (isParticipantExistingUser(i, j)) {
+                                <app-user-search-select
+                                  placeholder="Search by name or email..."
+                                  (userSelected)="onParticipantUserSelected(i, j, $event)">
+                                </app-user-search-select>
+                              } @else {
+                                <div class="form-group">
+                                  <app-input
+                                    label="Guest Name (Optional)"
+                                    leftIcon="user"
+                                    placeholder="Enter guest name..."
+                                    formControlName="name">
+                                  </app-input>
+                                </div>
 
-                              @if (j > 0) {
-                                <app-button
-                                  text="Remove"
-                                  [style]="ButtonStyleEnum.text"
-                                  [state]="ButtonStateEnum.error"
-                                  [size]="ButtonSizeEnum.small"
-                                  buttonClass="remove-guest-btn"
-                                  (buttonClick)="removeParticipantFromAppointment(i, j)">
-                                </app-button>
+                                <div class="form-group">
+                                  <label class="form-label">Contact Method</label>
+                                  <div class="contact-toggle">
+                                    <app-button
+                                      text="Email"
+                                      leftIcon="email"
+                                      [block]="true"
+                                      [style]="getParticipantContactType(i, j) === 'email' ? ButtonStyleEnum.primary : ButtonStyleEnum.stroke"
+                                      [size]="ButtonSizeEnum.small"
+                                      (buttonClick)="setParticipantContactType(i, j, 'email')">
+                                    </app-button>
+                                    <app-button
+                                      text="Phone"
+                                      leftIcon="phone"
+                                      [block]="true"
+                                      [style]="getParticipantContactType(i, j) === 'phone' ? ButtonStyleEnum.primary : ButtonStyleEnum.stroke"
+                                      [size]="ButtonSizeEnum.small"
+                                      (buttonClick)="setParticipantContactType(i, j, 'phone')">
+                                    </app-button>
+                                  </div>
+                                </div>
+
+                                <div class="form-group">
+                                  <app-input
+                                    [label]="getParticipantContactType(i, j) === 'email' ? 'Email Address' : 'Phone Number'"
+                                    [type]="getParticipantContactType(i, j) === 'email' ? 'email' : 'tel'"
+                                    [leftIcon]="getParticipantContactType(i, j) === 'email' ? 'email' : 'phone'"
+                                    [placeholder]="getParticipantContactType(i, j) === 'email' ? 'guest@email.com' : '+33 6 12 34 56 78'"
+                                    formControlName="email">
+                                  </app-input>
+                                </div>
                               }
                             </div>
                           }

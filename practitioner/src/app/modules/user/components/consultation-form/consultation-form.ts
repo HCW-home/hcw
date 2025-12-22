@@ -33,6 +33,7 @@ import {
 import { Page } from '../../../../core/components/page/page';
 import { Loader } from '../../../../shared/components/loader/loader';
 import { UserSearchSelect } from '../../../../shared/components/user-search-select/user-search-select';
+import { IUser } from '../../models/user';
 import { Stepper } from '../../../../shared/components/stepper/stepper';
 import { IStep } from '../../../../shared/components/stepper/stepper-models';
 
@@ -375,6 +376,9 @@ export class ConsultationForm implements OnInit, OnDestroy {
   private addParticipantToFormArray(participantsArray: FormArray): void {
     const participantGroup = this.fb.group({
       id: [''],
+      isExistingUser: [false],
+      user_id: [null],
+      selectedUser: [null],
       name: [''],
       email: ['', [Validators.email]],
       phone: [''],
@@ -921,6 +925,46 @@ export class ConsultationForm implements OnInit, OnDestroy {
   setParticipantContactType(appointmentIndex: number, participantIndex: number, type: 'email' | 'phone'): void {
     const key = `${appointmentIndex}-${participantIndex}`;
     this.participantContactTypes.set(key, type);
+  }
+
+  isParticipantExistingUser(appointmentIndex: number, participantIndex: number): boolean {
+    const participantsArray = this.getParticipantsFormArray(appointmentIndex);
+    const participantGroup = participantsArray.at(participantIndex) as FormGroup;
+    return participantGroup.get('isExistingUser')?.value || false;
+  }
+
+  setParticipantType(appointmentIndex: number, participantIndex: number, isExisting: boolean): void {
+    const participantsArray = this.getParticipantsFormArray(appointmentIndex);
+    const participantGroup = participantsArray.at(participantIndex) as FormGroup;
+    participantGroup.patchValue({
+      isExistingUser: isExisting,
+      user_id: null,
+      selectedUser: null,
+      name: '',
+      email: '',
+    });
+  }
+
+  onParticipantUserSelected(appointmentIndex: number, participantIndex: number, user: IUser | null): void {
+    const participantsArray = this.getParticipantsFormArray(appointmentIndex);
+    const participantGroup = participantsArray.at(participantIndex) as FormGroup;
+    if (user) {
+      participantGroup.patchValue({
+        user_id: user.pk,
+        selectedUser: user,
+      });
+    } else {
+      participantGroup.patchValue({
+        user_id: null,
+        selectedUser: null,
+      });
+    }
+  }
+
+  getParticipantSelectedUser(appointmentIndex: number, participantIndex: number): IUser | null {
+    const participantsArray = this.getParticipantsFormArray(appointmentIndex);
+    const participantGroup = participantsArray.at(participantIndex) as FormGroup;
+    return participantGroup.get('selectedUser')?.value || null;
   }
 
   nextStep(): void {

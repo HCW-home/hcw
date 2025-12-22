@@ -233,15 +233,58 @@
         .guest-item {
           position: relative;
           margin-bottom: 16px;
+          padding: 16px;
+          background: white;
+          border-radius: 12px;
+          border: 1px solid var(--slate-200);
 
           &:last-of-type {
             margin-bottom: 12px;
           }
 
-          > app-button:last-child {
-            position: absolute;
-            top: 0;
-            right: 0;
+          .guest-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+
+            .guest-number {
+              font-weight: 600;
+              font-size: 14px;
+              color: var(--slate-700);
+            }
+          }
+
+          .type-toggle {
+            display: flex;
+            gap: 8px;
+
+            .type-btn {
+              flex: 1;
+              padding: 10px 16px;
+              background: white;
+              border: 2px solid var(--slate-200);
+              border-radius: 8px;
+              font-size: 14px;
+              font-weight: 500;
+              color: var(--slate-600);
+              cursor: pointer;
+              transition: all 0.2s;
+
+              &:hover {
+                border-color: var(--primary-300);
+              }
+
+              &.active {
+                background: var(--primary-50);
+                border-color: var(--primary-500);
+                color: var(--primary-700);
+              }
+            }
+          }
+
+          app-user-search-select {
+            display: block;
           }
         }
 

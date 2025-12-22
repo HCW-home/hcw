@@ -692,9 +692,21 @@
   background: var(--slate-50);
   border-radius: 16px;
   padding: 20px;
-  padding-right: 56px;
   margin-bottom: 16px;
   border: 1px solid var(--slate-100);
+
+  .guest-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+
+    .guest-number {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--slate-700);
+    }
+  }
 
   .form-group {
     margin-bottom: 16px;
@@ -704,10 +716,8 @@
     }
   }
 
-  > app-button {
-    position: absolute;
-    top: 16px;
-    right: 16px;
+  app-user-search-select {
+    display: block;
   }
 }
 
