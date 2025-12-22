@@ -6,6 +6,7 @@ import { Typography } from '../../ui-components/typography/typography';
 import { Button } from '../../ui-components/button/button';
 import { Input as InputComponent } from '../../ui-components/input/input';
 import { Svg } from '../../ui-components/svg/svg';
+import { ModalComponent } from '../modal/modal.component';
 import { TypographyTypeEnum } from '../../constants/typography';
 import { ButtonSizeEnum, ButtonStyleEnum } from '../../constants/button';
 import { ConsultationService } from '../../../core/services/consultation.service';
@@ -31,7 +32,7 @@ export interface SendMessageData {
 
 @Component({
   selector: 'app-message-list',
-  imports: [CommonModule, FormsModule, Typography, Button, InputComponent, Svg],
+  imports: [CommonModule, FormsModule, Typography, Button, InputComponent, Svg, ModalComponent],
   templateUrl: './message-list.html',
   styleUrl: './message-list.scss',
 })

@@ -93,18 +93,10 @@
   </div>
 </div>
 
-@if (viewingImage()) {
-  <div class="image-viewer-overlay" (click)="closeImageViewer()">
-    <div class="image-viewer-container" (click)="$event.stopPropagation()">
-      <div class="image-viewer-header">
-        <span class="image-viewer-title">{{ viewingImage()?.fileName }}</span>
-        <button class="image-viewer-close" (click)="closeImageViewer()">
-          <app-svg src="close" [svgStyle]="{'width.px': 24, 'height.px': 24}"></app-svg>
-        </button>
-      </div>
-      <div class="image-viewer-body">
-        <img [src]="viewingImage()?.url" [alt]="viewingImage()?.fileName" class="image-viewer-image">
-      </div>
-    </div>
-  </div>
-}
+<app-modal
+  [isOpen]="!!viewingImage()"
+  [title]="viewingImage()?.fileName || ''"
+  size="large"
+  (closed)="closeImageViewer()">
+  <img [src]="viewingImage()?.url" [alt]="viewingImage()?.fileName" style="max-width: 100%; max-height: 70vh; display: block; margin: 0 auto;">
+</app-modal>
