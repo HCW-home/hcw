@@ -29,6 +29,9 @@ from dj_rest_auth.registration.serializers import SocialLoginSerializer
 from allauth.socialaccount.providers.openid_connect.views import OpenIDConnectOAuth2Adapter
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from mediaserver.models import Server
+from django.http import FileResponse
+import mimetypes
+import os
 
 User = get_user_model()
 
@@ -290,11 +293,9 @@ class MessageAttachmentView(APIView):
     @extend_schema(
         responses={
             200: {
-                'type': 'object',
-                'properties': {
-                    'attachment': {'type': 'string', 'format': 'uri'}
-                },
-                'example': {"attachment": "/media/messages_attachment/file.pdf"}
+                'type': 'string',
+                'format': 'binary',
+                'description': 'Binary file content with appropriate Content-Type and Content-Disposition headers'
             },
             404: {
                 'type': 'object',
@@ -311,7 +312,7 @@ class MessageAttachmentView(APIView):
                 'example': {"detail": "You don't have permission to access this message."}
             }
         },
-        description="Get attachment for a specific message. User must have access to the consultation containing the message."
+        description="Download attachment for a specific message. Returns the file as binary content with appropriate Content-Type header. User must have access to the consultation containing the message."
     )
     def get(self, request, message_id):
         """Get attachment for a specific message if user has permission."""
@@ -323,12 +324,17 @@ class MessageAttachmentView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Check if user has permission to access this consultation
-        consultation = message.consultation
+        # Check Django model permission
         user = request.user
 
+        # Check if user has permission to access this consultation
+        consultation = message.consultation
+
         # Check if user is related to the consultation (same logic as UserConsultationsViewSet)
-        if consultation.beneficiary != user:
+
+        print(consultation.beneficiary != user)
+
+        if consultation.beneficiary != user and not user.has_perm('consultations.view_message'):
             return Response(
                 {"detail": "You don't have permission to access this message."},
                 status=status.HTTP_403_FORBIDDEN
@@ -341,10 +347,24 @@ class MessageAttachmentView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Return the attachment URL
-        return Response({
-            'attachment': message.attachment.url if message.attachment else None
-        })
+        file_path = message.attachment.path
+        file_name = os.path.basename(file_path)
+
+        # Guess the content type
+        content_type, _ = mimetypes.guess_type(file_path)
+        if content_type is None:
+            content_type = 'application/octet-stream'
+
+        # Open and return the file
+        try:
+            response = FileResponse(open(file_path, 'rb'), content_type=content_type)
+            response['Content-Disposition'] = f'inline; filename="{file_name}"'
+            return response
+        except FileNotFoundError:
+            return Response(
+                {"detail": "Attachment file not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
 
 class UserNotificationsView(APIView):

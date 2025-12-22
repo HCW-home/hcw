@@ -144,7 +144,6 @@ class WebsocketConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
                 'data': {
                     'message_type': data.get('message_type', 'user_message'),
                     'from_user_id': self.user_id,
-                    'from_username': sender.username,
                     'message': message,
                     'timestamp': content.get('timestamp')
                 }

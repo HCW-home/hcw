@@ -1,7 +1,6 @@
 from django.conf import settings
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, authenticate
 from rest_framework import serializers
-from allauth.utils import get_username_max_length
 from allauth.account import app_settings
 from allauth.account.adapter import get_adapter
 from allauth.socialaccount.models import  EmailAddress
@@ -42,17 +41,6 @@ class UserDetailsSerializer(serializers.ModelSerializer):
         required=False
     )
 
-    @staticmethod
-    def validate_username(username):
-        if 'allauth.account' not in settings.INSTALLED_APPS:
-            # We don't need to call the all-auth
-            # username validator unless its installed
-            return username
-
-        from allauth.account.adapter import get_adapter
-        username = get_adapter().clean_username(username)
-        return username
-
     class Meta:
         model = UserModel
         fields = ['pk', UserModel.EMAIL_FIELD, 'picture',
@@ -92,6 +80,31 @@ class RegisterSerializer(serializers.Serializer):
         user.save()
         setup_user_email(request, user, [])
         return user
+
+class LoginSerializer(serializers.Serializer):
+    """
+    Custom login serializer that uses email instead of username
+    """
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(style={'input_type': 'password'}, write_only=True)
+
+    def validate(self, attrs):
+        email = attrs.get('email')
+        password = attrs.get('password')
+
+        if email and password:
+            user = authenticate(request=self.context.get('request'),
+                              username=email, password=password)
+
+            if not user:
+                msg = 'Unable to log in with provided credentials.'
+                raise serializers.ValidationError(msg, code='authorization')
+        else:
+            msg = 'Must include "email" and "password".'
+            raise serializers.ValidationError(msg, code='authorization')
+
+        attrs['user'] = user
+        return attrs
 
 class SpecialitySerializer(serializers.ModelSerializer):
     class Meta:
