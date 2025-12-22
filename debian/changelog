@@ -1,3 +1,21 @@
+hcw (0.9.24) bookworm; urgency=medium
+
+  [ Olivier Bitsch ]
+  * Don't list temporary user + timezone
+  * Remove username and login is done on email
+  * Fix user label when no email
+  * Fix reuse name for __str__
+  * Fix attachment
+  * Change appointment logic
+  * Update TODO
+
+  [ Gor Grigoryan ]
+  * add overdue consultation, attachments to messages
+  * add dashboard quick actions
+  * add display name in manage particiapnt
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Mon, 22 Dec 2025 13:04:50 +0100
+
 hcw (0.9.23) bookworm; urgency=medium
 
   [ Olivier Bitsch ]
