@@ -191,17 +191,18 @@
     </div>
   </div>
 
-  @if (showSlotModal()) {
-    <app-modal>
-      <app-slot-modal
-        [modalTitle]="modalTitle()"
-        [modalMode]="modalMode()"
-        [slotForm]="slotForm"
-        [weekDays]="weekDays"
-        [isSaving]="isSaving()"
-        (closeModal)="closeSlotModal()"
-        (save)="saveSlot()">
-      </app-slot-modal>
-    </app-modal>
-  }
+  <app-modal
+    [isOpen]="showSlotModal()"
+    [showCloseButton]="false"
+    (closed)="closeSlotModal()">
+    <app-slot-modal
+      [modalTitle]="modalTitle()"
+      [modalMode]="modalMode()"
+      [slotForm]="slotForm"
+      [weekDays]="weekDays"
+      [isSaving]="isSaving()"
+      (closeModal)="closeSlotModal()"
+      (save)="saveSlot()">
+    </app-slot-modal>
+  </app-modal>
 </app-page>

@@ -228,27 +228,27 @@ export class Dashboard implements OnInit {
   }
 
   navigateToConsultations(): void {
-    this.router.navigate(['/consultations']);
+    this.router.navigate(['/app/consultations']);
   }
 
   navigateToNewConsultation(): void {
-    this.router.navigate(['/consultations/new']);
+    this.router.navigate(['/app/consultations/new']);
   }
 
   navigateToAvailability(): void {
-    this.router.navigate(['/availability']);
+    this.router.navigate(['/app/configuration'], { fragment: 'availability' });
   }
 
   navigateToSystemTest(): void {
-    this.router.navigate(['/system-test']);
+    this.router.navigate(['/app/configuration'], { fragment: 'system-test' });
   }
 
   viewConsultation(consultation: Consultation): void {
-    this.router.navigate(['/consultations', consultation.id]);
+    this.router.navigate(['/app/consultations', consultation.id]);
   }
 
   viewAppointment(item: { appointment: Appointment; consultation: Consultation }): void {
-    this.router.navigate(['/consultations', item.consultation.id]);
+    this.router.navigate(['/app/consultations', item.consultation.id]);
   }
 
   retry(): void {

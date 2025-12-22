@@ -151,6 +151,12 @@
   }
 }
 
+.contact-text.no-contact {
+  font-size: 13px;
+  color: var(--slate-400);
+  font-style: italic;
+}
+
 .status-badge {
   display: inline-flex;
   align-items: center;

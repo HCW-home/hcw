@@ -98,6 +98,7 @@
     <div class="modal-actions">
       <app-button
         text="Cancel"
+        [block]="true"
         [size]="ButtonSizeEnum.medium"
         [style]="ButtonStyleEnum.stroke"
         (buttonClick)="onCloseModal()">
@@ -107,6 +108,7 @@
         [text]="modalMode === 'create' ? 'Create Slot' : 'Update Slot'"
         [leftIcon]="modalMode === 'create' ? 'plus' : 'check'"
         [size]="ButtonSizeEnum.medium"
+        [block]="true"
         [style]="ButtonStyleEnum.primary"
         [disabled]="isSaving"
         [loading]="isSaving"

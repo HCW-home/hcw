@@ -65,15 +65,20 @@
               </div>
 
               <div class="row-cell contact-col">
-                <div class="contact-item">
-                  <app-svg src="email" [svgStyle]="{'width.px': 14, 'height.px': 14, 'color': 'var(--slate-400)'}"></app-svg>
-                  <span class="contact-text">{{ patient.email }}</span>
-                </div>
+                @if (patient.email) {
+                  <div class="contact-item">
+                    <app-svg src="email" [svgStyle]="{'width.px': 14, 'height.px': 14, 'color': 'var(--slate-400)'}"></app-svg>
+                    <span class="contact-text">{{ patient.email }}</span>
+                  </div>
+                }
                 @if (patient.mobile_phone_number) {
                   <div class="contact-item">
                     <app-svg src="phone" [svgStyle]="{'width.px': 14, 'height.px': 14, 'color': 'var(--slate-400)'}"></app-svg>
                     <span class="contact-text">{{ patient.mobile_phone_number }}</span>
                   </div>
+                }
+                @if (!patient.email && !patient.mobile_phone_number) {
+                  <span class="contact-text no-contact">No contact info</span>
                 }
               </div>
 

@@ -214,26 +214,35 @@
         </div>
       </div>
 
-      @if (overdueConsultations().length > 0) {
-        <div class="overdue-section">
-          <div class="section-card overdue">
-            <div class="section-header">
-              <div class="header-left">
-                <div class="section-icon amber">
-                  <app-svg src="clock" [svgStyle]="{'width.px': 20, 'height.px': 20, 'color': 'var(--amber-600)'}"></app-svg>
-                </div>
-                <div class="section-title">
-                  <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
-                    Overdue Consultations
-                  </app-typography>
-                  <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
-                    Patients awaiting your response
-                  </app-typography>
-                </div>
+      <div class="overdue-section">
+        <div class="section-card overdue">
+          <div class="section-header">
+            <div class="header-left">
+              <div class="section-icon amber">
+                <app-svg src="clock" [svgStyle]="{'width.px': 20, 'height.px': 20, 'color': 'var(--amber-600)'}"></app-svg>
               </div>
-              <span class="overdue-badge">{{ overdueConsultations().length }} pending</span>
+              <div class="section-title">
+                <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
+                  Overdue Consultations
+                </app-typography>
+                <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
+                  Patients awaiting your response
+                </app-typography>
+              </div>
             </div>
-            <div class="section-content">
+            @if (overdueConsultations().length > 0) {
+              <span class="overdue-badge">{{ overdueConsultations().length }} pending</span>
+            }
+          </div>
+          <div class="section-content">
+            @if (overdueConsultations().length === 0) {
+              <div class="empty-state-small">
+                <app-svg src="check" [svgStyle]="{'width.px': 32, 'height.px': 32, 'opacity': 0.3}"></app-svg>
+                <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--slate-400)">
+                  No overdue consultations
+                </app-typography>
+              </div>
+            } @else {
               <div class="overdue-list">
                 @for (consultation of overdueConsultations(); track consultation.id) {
                   <div class="overdue-item" (click)="viewConsultation(consultation)">
@@ -262,10 +271,10 @@
                   </div>
                 }
               </div>
-            </div>
+            }
           </div>
         </div>
-      }
+      </div>
     }
   </div>
 </app-page>
