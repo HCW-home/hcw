@@ -97,8 +97,12 @@ export class ConsultationService {
     return this.api.post<void>(`/requests/${id}/cancel/`, {});
   }
 
-  getMyRequests(): Observable<PaginatedResponse<ConsultationRequest>> {
-    return this.api.get<PaginatedResponse<ConsultationRequest>>('/requests/');
+  getMyRequests(): Observable<ConsultationRequest[]> {
+    return this.api.get<ConsultationRequest[]>('/requests/');
+  }
+
+  getRequestById(id: number): Observable<ConsultationRequest> {
+    return this.api.get<ConsultationRequest>(`/requests/${id}/`);
   }
 
   closeConsultation(id: number): Observable<Consultation> {

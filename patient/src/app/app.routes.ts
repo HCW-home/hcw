@@ -3,7 +3,7 @@ import { Routes } from '@angular/router';
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: 'tabs',
+    redirectTo: 'home',
     pathMatch: 'full'
   },
   {
@@ -19,8 +19,24 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/register/register.page').then(m => m.RegisterPage)
   },
   {
-    path: 'tabs',
-    loadChildren: () => import('./pages/tabs/tabs.routes').then(m => m.routes)
+    path: 'home',
+    loadComponent: () => import('./pages/home/home.page').then(m => m.HomePage)
+  },
+  {
+    path: 'appointments',
+    loadComponent: () => import('./pages/appointments/appointments.page').then(m => m.AppointmentsPage)
+  },
+  {
+    path: 'notifications',
+    loadComponent: () => import('./pages/notifications/notifications.page').then(m => m.NotificationsPage)
+  },
+  {
+    path: 'profile',
+    loadComponent: () => import('./pages/profile/profile.page').then(m => m.ProfilePage)
+  },
+  {
+    path: 'request-detail/:id',
+    loadComponent: () => import('./pages/request-detail/request-detail.page').then(m => m.RequestDetailPage)
   },
   {
     path: 'doctors',
@@ -45,5 +61,9 @@ export const routes: Routes = [
   {
     path: 'consultation/:id/video',
     loadComponent: () => import('./pages/video-consultation/video-consultation.page').then(m => m.VideoConsultationPage)
+  },
+  {
+    path: 'tabs',
+    loadChildren: () => import('./pages/tabs/tabs.routes').then(m => m.routes)
   }
 ];

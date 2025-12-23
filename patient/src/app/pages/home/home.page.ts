@@ -1,32 +1,28 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
+import { CommonModule, DatePipe } from '@angular/common';
 import {
   IonHeader,
   IonToolbar,
-  IonTitle,
   IonButtons,
   IonButton,
   IonIcon,
-  IonBadge,
   IonContent,
   IonRefresher,
   IonRefresherContent,
-  IonSearchbar,
-  IonGrid,
-  IonRow,
-  IonCol,
-  IonCard,
-  IonCardContent,
-  IonText,
-  NavController
+  IonSpinner,
+  NavController,
+  ToastController
 } from '@ionic/angular/standalone';
-import { Subscription } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { ConsultationService } from '../../core/services/consultation.service';
-import { NotificationService } from '../../core/services/notification.service';
 import { User } from '../../core/models/user.model';
-import { Appointment } from '../../core/models/consultation.model';
+import { ConsultationRequest, Speciality } from '../../core/models/consultation.model';
+
+interface RequestStatus {
+  label: string;
+  color: 'warning' | 'info' | 'primary' | 'success' | 'muted';
+}
 
 @Component({
   selector: 'app-home',
@@ -35,162 +31,183 @@ import { Appointment } from '../../core/models/consultation.model';
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
+    DatePipe,
     IonHeader,
     IonToolbar,
-    IonTitle,
     IonButtons,
     IonButton,
     IonIcon,
-    IonBadge,
     IonContent,
     IonRefresher,
     IonRefresherContent,
-    IonSearchbar,
-    IonGrid,
-    IonRow,
-    IonCol,
-    IonCard,
-    IonCardContent,
-    IonText
+    IonSpinner
   ]
 })
 export class HomePage implements OnInit, OnDestroy {
-  currentUser: User | null = null;
-  unreadNotifications = 0;
+  private destroy$ = new Subject<void>();
 
-  quickActions = [
-    {
-      icon: 'medical-outline',
-      title: 'Find Doctor',
-      color: 'primary',
-      route: '/doctors'
-    },
-    {
-      icon: 'add-circle-outline',
-      title: 'New Request',
-      color: 'secondary',
-      route: '/new-request'
-    },
-    {
-      icon: 'document-text-outline',
-      title: 'Health Records',
-      color: 'tertiary',
-      route: '/health-records'
-    }
-  ];
+  currentUser = signal<User | null>(null);
+  requests = signal<ConsultationRequest[]>([]);
+  isLoading = signal(false);
 
-  upcomingAppointment: Appointment | null = null;
-
-  private subscriptions: Subscription[] = [];
+  totalRequests = computed(() => this.requests().length);
 
   constructor(
     private navCtrl: NavController,
     private authService: AuthService,
     private consultationService: ConsultationService,
-    private notificationService: NotificationService,
+    private toastController: ToastController
   ) {}
 
-  ngOnInit() {
+  private async showError(message: string): Promise<void> {
+    const toast = await this.toastController.create({
+      message,
+      duration: 3000,
+      position: 'bottom',
+      color: 'danger'
+    });
+    await toast.present();
+  }
+
+  ngOnInit(): void {
     this.loadUserData();
-    this.loadUpcomingAppointment();
-    this.loadUnreadCount();
+    this.loadRequests();
   }
 
-  ngOnDestroy() {
-    this.subscriptions.forEach(sub => sub.unsubscribe());
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
-  ionViewWillEnter() {
-    this.refreshData();
+  ionViewWillEnter(): void {
+    this.loadRequests();
   }
 
   loadUserData(): void {
-    const sub = this.authService.currentUser$.subscribe(user => {
-      this.currentUser = user;
-    });
-    this.subscriptions.push(sub);
+    this.authService.currentUser$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(user => {
+        this.currentUser.set(user);
+      });
   }
 
-  loadUpcomingAppointment(): void {
-    this.consultationService.getMyAppointments({ status: 'SCHEDULED', limit: 1 }).subscribe({
-      next: (response) => {
-        if (response.results.length > 0) {
-          const upcoming = response.results.find(apt => {
-            const aptDate = new Date(apt.scheduled_at);
-            return aptDate > new Date() && apt.status === 'SCHEDULED';
-          });
-          this.upcomingAppointment = upcoming || null;
+  loadRequests(): void {
+    this.isLoading.set(true);
+    this.consultationService.getMyRequests()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (requests) => {
+          this.requests.set(requests);
+          this.isLoading.set(false);
+        },
+        error: (error) => {
+          this.showError(error?.error?.detail || 'Failed to load requests');
+          this.isLoading.set(false);
         }
-      },
-      error: () => {
-        this.upcomingAppointment = null;
-      }
-    });
+      });
   }
 
-  loadUnreadCount(): void {
-    const sub = this.notificationService.unreadCount$.subscribe(count => {
-      this.unreadNotifications = count;
-    });
-    this.subscriptions.push(sub);
-
-    this.notificationService.getNotifications({ limit: 10 }).subscribe();
-  }
-
-  refreshData(event?: { target: { complete: () => void } }): void {
-    this.loadUpcomingAppointment();
-    this.notificationService.getNotifications({ limit: 10 }).subscribe({
-      complete: () => {
-        event?.target.complete();
-      }
-    });
-  }
-
-  navigateToAction(route: string): void {
-    this.navCtrl.navigateForward(route);
+  refreshData(event: { target: { complete: () => void } }): void {
+    this.consultationService.getMyRequests()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (requests) => {
+          this.requests.set(requests);
+          event.target.complete();
+        },
+        error: (error) => {
+          this.showError(error?.error?.detail || 'Failed to load requests');
+          event.target.complete();
+        }
+      });
   }
 
   goToNewRequest(): void {
     this.navCtrl.navigateForward('/new-request');
   }
 
-  searchDoctors(event: CustomEvent): void {
-    const searchTerm = event.detail?.value;
-    if (searchTerm && searchTerm.trim() !== '') {
-      this.navCtrl.navigateForward(`/doctors?search=${encodeURIComponent(searchTerm)}`);
+  viewRequestDetails(request: ConsultationRequest): void {
+    this.navCtrl.navigateForward(`/request-detail/${request.id}`);
+  }
+
+  goToProfile(): void {
+    this.navCtrl.navigateForward('/profile');
+  }
+
+  getStatusConfig(status: string | undefined): RequestStatus {
+    const normalizedStatus = (status || 'Requested').toLowerCase();
+    const statusMap: Record<string, RequestStatus> = {
+      'requested': { label: 'Pending', color: 'warning' },
+      'accepted': { label: 'Accepted', color: 'info' },
+      'scheduled': { label: 'Scheduled', color: 'primary' },
+      'cancelled': { label: 'Cancelled', color: 'muted' },
+      'refused': { label: 'Refused', color: 'muted' }
+    };
+    return statusMap[normalizedStatus] || statusMap['requested'];
+  }
+
+  hasAppointment(request: ConsultationRequest): boolean {
+    return !!request.appointment;
+  }
+
+  hasConsultation(request: ConsultationRequest): boolean {
+    return !!request.consultation;
+  }
+
+  getReasonName(request: ConsultationRequest): string {
+    if (typeof request.reason === 'object' && request.reason) {
+      return request.reason.name;
     }
+    return 'Consultation';
   }
 
-  goToNotifications(): void {
-    this.navCtrl.navigateForward('/tabs/notifications');
-  }
-
-  viewAppointment(): void {
-    this.navCtrl.navigateForward('/tabs/appointments');
-  }
-
-  formatAppointmentDate(dateString: string): string {
-    const date = new Date(dateString);
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    if (date.toDateString() === today.toDateString()) {
-      return 'Today at ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } else if (date.toDateString() === tomorrow.toDateString()) {
-      return 'Tomorrow at ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } else {
-      return date.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }) +
-        ' at ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  getSpecialityName(request: ConsultationRequest): string {
+    if (typeof request.reason === 'object' && request.reason) {
+      const speciality = request.reason.speciality;
+      if (typeof speciality === 'object' && speciality) {
+        return (speciality as Speciality).name;
+      }
     }
+    return '';
   }
 
-  getAppointmentDoctor(appointment: Appointment): string {
-    const participant = appointment.participants?.find(p => p.user && p.user.id !== appointment.created_by.id);
-    if (participant?.user) {
-      return `Dr. ${participant.user.first_name} ${participant.user.last_name}`;
+  getDoctorName(request: ConsultationRequest): string {
+    if (request.appointment?.participants) {
+      const doctor = request.appointment.participants.find(p => p.user && p.user.id !== request.created_by?.id);
+      if (doctor?.user) {
+        return `Dr. ${doctor.user.first_name} ${doctor.user.last_name}`;
+      }
     }
-    return `Dr. ${appointment.created_by.first_name} ${appointment.created_by.last_name}`;
+    if (typeof request.expected_with === 'object' && request.expected_with) {
+      const user = request.expected_with as { first_name?: string; last_name?: string };
+      return `Dr. ${user.first_name || ''} ${user.last_name || ''}`.trim();
+    }
+    return '';
+  }
+
+  getAppointmentTypeIcon(request: ConsultationRequest): string {
+    return request.appointment?.type === 'ONLINE' ? 'videocam-outline' : 'location-outline';
+  }
+
+  getAppointmentTypeLabel(request: ConsultationRequest): string {
+    return request.appointment?.type === 'ONLINE' ? 'Video' : 'In-person';
+  }
+
+  isStatusRequested(request: ConsultationRequest): boolean {
+    return request.status?.toLowerCase() === 'requested';
+  }
+
+  isStatusAccepted(request: ConsultationRequest): boolean {
+    return request.status?.toLowerCase() === 'accepted';
+  }
+
+  getUserInitials(): string {
+    const user = this.currentUser();
+    if (user) {
+      const first = user.first_name?.charAt(0) || '';
+      const last = user.last_name?.charAt(0) || '';
+      return (first + last).toUpperCase() || 'U';
+    }
+    return 'U';
   }
 }

@@ -1,4 +1,4 @@
-<ion-header>
+<ion-header class="ion-no-border">
   <ion-toolbar>
     <ion-buttons slot="start">
       <ion-button (click)="goBack()">
@@ -7,7 +7,7 @@
     </ion-buttons>
     <ion-title>{{ stepTitle() }}</ion-title>
     <ion-buttons slot="end">
-      <ion-text class="step-indicator">{{ currentStep() }}/{{ totalSteps }}</ion-text>
+      <span class="step-indicator">{{ currentStep() }}/{{ totalSteps }}</span>
     </ion-buttons>
   </ion-toolbar>
   <ion-progress-bar [value]="progress()"></ion-progress-bar>
@@ -17,27 +17,30 @@
   @if (isLoading()) {
     <div class="loading-container">
       <ion-spinner name="crescent" color="primary"></ion-spinner>
-      <ion-text color="medium">Loading...</ion-text>
+      <span>Loading...</span>
     </div>
   } @else {
     @switch (currentStep()) {
       @case (1) {
         <div class="step-content">
-          <ion-text class="step-description" color="medium">Choose a medical specialty for your consultation</ion-text>
+          <h2 class="step-title">Choose Specialty</h2>
+          <p class="step-description">Choose a medical specialty for your consultation</p>
           <div class="speciality-grid">
             @for (speciality of specialities(); track speciality.id) {
-              <ion-card class="speciality-card" (click)="selectSpeciality(speciality)">
+              <div class="speciality-card" (click)="selectSpeciality(speciality)">
                 <ion-card-content>
-                  <ion-icon name="medical-outline" color="primary" class="speciality-icon"></ion-icon>
-                  <ion-text class="speciality-name">{{ speciality.name }}</ion-text>
+                  <div class="speciality-icon-wrapper">
+                    <ion-icon name="medical-outline" class="speciality-icon"></ion-icon>
+                  </div>
+                  <span class="speciality-name">{{ speciality.name }}</span>
                 </ion-card-content>
-              </ion-card>
+              </div>
             }
           </div>
           @if (specialities().length === 0) {
             <div class="empty-state">
-              <ion-icon name="information-circle-outline" color="medium"></ion-icon>
-              <ion-text color="medium">No specialties available</ion-text>
+              <ion-icon name="information-circle-outline"></ion-icon>
+              <span>No specialties available</span>
             </div>
           }
         </div>
@@ -45,25 +48,28 @@
 
       @case (2) {
         <div class="step-content">
-          <ion-text class="step-description" color="medium">Select the reason for your consultation</ion-text>
-          <ion-list>
+          <h2 class="step-title">Reason for Visit</h2>
+          <p class="step-description">Select the reason for your consultation</p>
+          <div class="reason-list">
             @for (reason of reasons(); track reason.id) {
-              <ion-item button (click)="selectReason(reason)">
-                <ion-icon name="clipboard-outline" slot="start" color="primary"></ion-icon>
-                <ion-label>
-                  <h3>{{ reason.name }}</h3>
+              <div class="reason-item" (click)="selectReason(reason)">
+                <div class="reason-icon">
+                  <ion-icon name="clipboard-outline"></ion-icon>
+                </div>
+                <div class="reason-details">
+                  <p class="reason-name">{{ reason.name }}</p>
                   @if (reason.duration) {
-                    <p>Duration: {{ reason.duration }} minutes</p>
+                    <p class="reason-duration">Duration: {{ reason.duration }} minutes</p>
                   }
-                </ion-label>
-                <ion-icon name="chevron-forward-outline" slot="end" color="medium"></ion-icon>
-              </ion-item>
+                </div>
+                <ion-icon name="chevron-forward-outline" class="reason-arrow"></ion-icon>
+              </div>
             }
-          </ion-list>
+          </div>
           @if (reasons().length === 0) {
             <div class="empty-state">
-              <ion-icon name="information-circle-outline" color="medium"></ion-icon>
-              <ion-text color="medium">No reasons available for this specialty</ion-text>
+              <ion-icon name="information-circle-outline"></ion-icon>
+              <span>No reasons available for this specialty</span>
             </div>
           }
         </div>
@@ -71,13 +77,14 @@
 
       @case (3) {
         <div class="step-content">
-          <ion-text class="step-description" color="medium">Select a preferred time slot (optional)</ion-text>
+          <h2 class="step-title">Choose Time Slot</h2>
+          <p class="step-description">Select a preferred time slot (optional)</p>
 
           <div class="week-navigation">
             <ion-button fill="clear" (click)="previousWeek()">
               <ion-icon name="chevron-back-outline" slot="icon-only"></ion-icon>
             </ion-button>
-            <ion-text class="week-label">{{ formatDisplayDate(weekDates()[0]) }} - {{ formatDisplayDate(weekDates()[6]) }}</ion-text>
+            <span class="week-label">{{ formatDisplayDate(weekDates()[0]) }} - {{ formatDisplayDate(weekDates()[6]) }}</span>
             <ion-button fill="clear" (click)="nextWeek()">
               <ion-icon name="chevron-forward-outline" slot="icon-only"></ion-icon>
             </ion-button>
@@ -86,7 +93,7 @@
           <div class="slots-container">
             @for (date of weekDates(); track date.getTime()) {
               <div class="day-column">
-                <ion-text class="day-header">{{ formatDisplayDate(date) }}</ion-text>
+                <span class="day-header">{{ formatDisplayDate(date) }}</span>
                 <div class="day-slots">
                   @for (slot of getSlotsForDate(date); track slot.start_time + slot.user_id) {
                     <ion-button
@@ -94,12 +101,14 @@
                       [fill]="isSlotSelected(slot) ? 'solid' : 'outline'"
                       [color]="isSlotSelected(slot) ? 'primary' : 'medium'"
                       class="slot-button"
+                      [class.slot-selected]="isSlotSelected(slot)"
+                      [class.slot-default]="!isSlotSelected(slot)"
                       (click)="selectSlot(slot)">
                       {{ formatSlotTime(slot) }}
                     </ion-button>
                   }
                   @if (getSlotsForDate(date).length === 0) {
-                    <ion-text class="no-slots" color="medium">No slots</ion-text>
+                    <span class="no-slots">No slots</span>
                   }
                 </div>
               </div>
@@ -108,119 +117,122 @@
 
           <div class="step-actions">
             @if (selectedSlot()) {
-              <ion-button expand="block" (click)="proceedToDoctor()">
+              <button class="primary-action" (click)="proceedToDoctor()">
                 Continue with selected slot
-              </ion-button>
+              </button>
             }
-            <ion-button expand="block" fill="outline" (click)="skipSlotSelection()">
+            <button class="secondary-action" (click)="skipSlotSelection()">
               Skip - Let system assign time
-            </ion-button>
+            </button>
           </div>
         </div>
       }
 
       @case (4) {
         <div class="step-content">
-          <ion-text class="step-description" color="medium">Select a preferred doctor (optional)</ion-text>
+          <h2 class="step-title">Select Doctor</h2>
+          <p class="step-description">Select a preferred doctor (optional)</p>
           <div class="doctors-list">
             @for (doctor of doctors(); track doctor.id) {
-              <ion-card
+              <div
                 class="doctor-card"
                 [class.selected]="isDoctorSelected(doctor)"
                 (click)="selectDoctor(doctor)">
                 <ion-card-content>
                   <div class="doctor-info">
-                    <ion-avatar>
+                    <div class="doctor-avatar">
                       @if (doctor.picture) {
                         <img [src]="doctor.picture" [alt]="getDoctorFullName(doctor)">
                       } @else {
-                        <img src="assets/images/default-doctor.svg" [alt]="getDoctorFullName(doctor)">
+                        {{ getDoctorFullName(doctor).charAt(0) }}
                       }
-                    </ion-avatar>
+                    </div>
                     <div class="doctor-details">
-                      <ion-text class="doctor-name">{{ getDoctorFullName(doctor) }}</ion-text>
+                      <span class="doctor-name">{{ getDoctorFullName(doctor) }}</span>
                       @if (doctor.specialities && doctor.specialities.length > 0) {
-                        <ion-text class="doctor-specialty" color="medium">
-                          {{ doctor.specialities[0].name }}
-                        </ion-text>
+                        <span class="doctor-specialty">{{ doctor.specialities[0].name }}</span>
                       }
                     </div>
                     @if (isDoctorSelected(doctor)) {
-                      <ion-icon name="checkmark-circle" color="primary" class="selected-icon"></ion-icon>
+                      <ion-icon name="checkmark-circle" class="selected-icon"></ion-icon>
                     }
                   </div>
                 </ion-card-content>
-              </ion-card>
+              </div>
             }
           </div>
           @if (doctors().length === 0) {
             <div class="empty-state">
-              <ion-icon name="information-circle-outline" color="medium"></ion-icon>
-              <ion-text color="medium">No doctors available for this specialty</ion-text>
+              <ion-icon name="information-circle-outline"></ion-icon>
+              <span>No doctors available for this specialty</span>
             </div>
           }
           <div class="step-actions">
             @if (selectedDoctor()) {
-              <ion-button expand="block" (click)="proceedToReview()">
+              <button class="primary-action" (click)="proceedToReview()">
                 Continue with selected doctor
-              </ion-button>
+              </button>
             }
-            <ion-button expand="block" fill="outline" (click)="skipDoctorSelection()">
+            <button class="secondary-action" (click)="skipDoctorSelection()">
               Skip - Any available doctor
-            </ion-button>
+            </button>
           </div>
         </div>
       }
 
       @case (5) {
         <div class="step-content review-step">
-          <ion-text class="step-description" color="medium">Review your request before submitting</ion-text>
+          <h2 class="step-title">Review & Submit</h2>
+          <p class="step-description">Review your request before submitting</p>
 
-          <ion-card class="review-card">
-            <ion-card-header>
-              <ion-card-title>Request Summary</ion-card-title>
-            </ion-card-header>
-            <ion-card-content>
-              <ion-list lines="none">
-                <ion-item>
-                  <ion-icon name="medical-outline" slot="start" color="primary"></ion-icon>
-                  <ion-label>
-                    <p>Specialty</p>
-                    <h3>{{ selectedSpeciality()?.name || 'Not selected' }}</h3>
-                  </ion-label>
-                </ion-item>
+          <div class="review-card">
+            <h3 class="review-title">Request Summary</h3>
 
-                <ion-item>
-                  <ion-icon name="clipboard-outline" slot="start" color="primary"></ion-icon>
-                  <ion-label>
-                    <p>Reason</p>
-                    <h3>{{ selectedReason()?.name || 'Not selected' }}</h3>
-                  </ion-label>
-                </ion-item>
+            <div class="review-item">
+              <div class="review-icon">
+                <ion-icon name="medical-outline"></ion-icon>
+              </div>
+              <div class="review-details">
+                <p class="review-label">Specialty</p>
+                <p class="review-value">{{ selectedSpeciality()?.name || 'Not selected' }}</p>
+              </div>
+            </div>
 
-                <ion-item>
-                  <ion-icon name="time-outline" slot="start" color="primary"></ion-icon>
-                  <ion-label>
-                    <p>Preferred Time</p>
-                    <h3>{{ getExpectedDateTime() }}</h3>
-                  </ion-label>
-                </ion-item>
+            <div class="review-item">
+              <div class="review-icon">
+                <ion-icon name="clipboard-outline"></ion-icon>
+              </div>
+              <div class="review-details">
+                <p class="review-label">Reason</p>
+                <p class="review-value">{{ selectedReason()?.name || 'Not selected' }}</p>
+              </div>
+            </div>
 
-                <ion-item>
-                  <ion-icon name="person-outline" slot="start" color="primary"></ion-icon>
-                  <ion-label>
-                    <p>Preferred Doctor</p>
-                    <h3>{{ selectedDoctor() ? getDoctorFullName(selectedDoctor()!) : 'Any available' }}</h3>
-                  </ion-label>
-                </ion-item>
-              </ion-list>
-            </ion-card-content>
-          </ion-card>
+            <div class="review-item">
+              <div class="review-icon">
+                <ion-icon name="time-outline"></ion-icon>
+              </div>
+              <div class="review-details">
+                <p class="review-label">Preferred Time</p>
+                <p class="review-value">{{ getExpectedDateTime() }}</p>
+              </div>
+            </div>
+
+            <div class="review-item">
+              <div class="review-icon">
+                <ion-icon name="person-outline"></ion-icon>
+              </div>
+              <div class="review-details">
+                <p class="review-label">Preferred Doctor</p>
+                <p class="review-value">{{ selectedDoctor() ? getDoctorFullName(selectedDoctor()!) : 'Any available' }}</p>
+              </div>
+            </div>
+          </div>
 
           <div class="comment-section">
             <div class="comment-label">
-              <ion-icon name="clipboard-outline" color="primary"></ion-icon>
-              <ion-text>Describe your symptoms or concerns <span class="required">*</span></ion-text>
+              <ion-icon name="chatbubble-outline"></ion-icon>
+              <span>Describe your symptoms or concerns <span class="required">*</span></span>
             </div>
             <ion-textarea
               [(ngModel)]="comment"
@@ -231,17 +243,17 @@
           </div>
 
           <div class="step-actions">
-            <ion-button
-              expand="block"
+            <button
+              class="primary-action"
               [disabled]="isSubmitting() || !comment.trim()"
               (click)="submitRequest()">
               @if (isSubmitting()) {
-                <ion-spinner name="crescent" slot="start"></ion-spinner>
+                <ion-spinner name="crescent"></ion-spinner>
                 Submitting...
               } @else {
                 Submit Request
               }
-            </ion-button>
+            </button>
           </div>
         </div>
       }

@@ -24,11 +24,16 @@ export interface Queue {
   name: string;
 }
 
+export interface Speciality {
+  id: number;
+  name: string;
+}
+
 export interface Reason {
   id: number;
   name: string;
   description?: string;
-  speciality?: number;
+  speciality?: Speciality | number;
   duration?: number;
   is_active?: boolean;
 }

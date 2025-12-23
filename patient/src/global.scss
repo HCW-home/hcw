@@ -51,6 +51,40 @@ body {
   color: var(--app-text-primary);
 }
 
+/* Desktop/Tablet container - constrain app to mobile-like width */
+@media (min-width: 768px) {
+  body {
+    background-color: #e2e8f0;
+  }
+
+  ion-app {
+    max-width: 680px;
+    margin: 0 auto;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.15);
+    position: relative;
+    background-color: var(--app-background);
+  }
+
+  ion-header ion-toolbar {
+    max-width: 680px;
+  }
+
+  ion-footer {
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  ion-modal {
+    --max-width: 680px;
+  }
+
+  ion-action-sheet,
+  ion-alert,
+  ion-toast {
+    --max-width: 680px;
+  }
+}
+
 ion-content {
   --background: var(--app-background);
 }

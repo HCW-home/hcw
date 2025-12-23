@@ -1,81 +1,148 @@
 <ion-header class="ion-no-border">
   <ion-toolbar>
-    <ion-title class="custom-title">
-      <ion-text class="greeting-text">Hello, {{ currentUser?.first_name || 'User' }}</ion-text>
-    </ion-title>
-    <ion-buttons slot="end">
-      <ion-button class="notification-button" (click)="goToNotifications()">
-        <ion-icon slot="icon-only" name="notifications-outline"></ion-icon>
-        @if (unreadNotifications > 0) {
-          <ion-badge color="danger" class="header-badge">{{ unreadNotifications }}</ion-badge>
-        }
-      </ion-button>
-    </ion-buttons>
+    <div class="header-content">
+      <div class="logo">
+        <img src="assets/images/logo.svg" alt="HCW Logo" class="logo-img">
+        <div class="logo-text-group">
+          <span class="logo-text">HCW</span>
+          <span class="logo-subtitle">Patient</span>
+        </div>
+      </div>
+      <ion-buttons slot="end">
+        <ion-button class="user-avatar-btn" (click)="goToProfile()">
+          <div class="user-avatar">{{ getUserInitials() }}</div>
+        </ion-button>
+      </ion-buttons>
+    </div>
   </ion-toolbar>
 </ion-header>
 
 <ion-content class="home-content">
-  <ion-refresher slot="fixed" (ionRefresh)="refreshData($event)">
+  <ion-refresher slot="fixed" (ionRefresh)="refreshData($any($event))">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
-  <div class="search-container">
-    <ion-searchbar
-      placeholder="Search doctors, specialties..."
-      (ionInput)="searchDoctors($event)"
-      class="custom-searchbar">
-    </ion-searchbar>
-  </div>
-
-  <div class="section quick-actions-section">
-    <ion-text class="section-title">Quick Actions</ion-text>
-    <ion-grid>
-      <ion-row>
-        @for (action of quickActions; track action.title) {
-          <ion-col size="4">
-            <div class="action-card" (click)="navigateToAction(action.route)">
-              <ion-icon [name]="action.icon" [color]="action.color" class="action-icon"></ion-icon>
-              <ion-text class="action-title">{{ action.title }}</ion-text>
-            </div>
-          </ion-col>
-        }
-      </ion-row>
-    </ion-grid>
-  </div>
-
-  <div class="section">
-    <ion-card class="new-request-card" (click)="goToNewRequest()">
-      <ion-card-content>
-        <div class="new-request-content">
-          <ion-icon name="add-circle-outline" color="primary" class="new-request-icon"></ion-icon>
-          <div class="new-request-text">
-            <ion-text class="new-request-title">New Consultation Request</ion-text>
-            <ion-text class="new-request-description" color="medium">Request an appointment with a specialist</ion-text>
-          </div>
-          <ion-icon name="chevron-forward-outline" color="medium"></ion-icon>
-        </div>
-      </ion-card-content>
-    </ion-card>
-  </div>
-
-  @if (upcomingAppointment) {
-    <div class="section">
-      <ion-text class="section-title">Upcoming Appointment</ion-text>
-      <ion-card class="appointment-card" (click)="viewAppointment()">
-        <ion-card-content>
-          <div class="appointment-info">
-            <ion-text class="appointment-doctor">{{ getAppointmentDoctor(upcomingAppointment) }}</ion-text>
-            <ion-text class="appointment-specialty" color="medium">{{ upcomingAppointment.type === 'ONLINE' ? 'Video Consultation' : 'In-Person Visit' }}</ion-text>
-            <div class="appointment-time">
-              <ion-icon name="time-outline" color="primary"></ion-icon>
-              <ion-text class="time-text">{{ formatAppointmentDate(upcomingAppointment.scheduled_at) }}</ion-text>
-            </div>
-          </div>
-          <ion-button size="small" fill="clear" class="view-button">
-            View Details
-          </ion-button>
-        </ion-card-content>
-      </ion-card>
+  <div class="main-content">
+    <div class="greeting">
+      <p class="greeting-text">Welcome back,</p>
+      <h1 class="greeting-name">{{ currentUser()?.first_name || 'User' }}</h1>
     </div>
-  }
+
+    <div class="cta-section">
+      <button class="cta-button" (click)="goToNewRequest()">
+        <span class="cta-icon">
+          <ion-icon name="add-outline"></ion-icon>
+        </span>
+        Request a Consultation
+      </button>
+    </div>
+
+    <section class="section requests-section">
+      <div class="section-header">
+        <div class="section-title-group">
+          <h2 class="section-title">My Requests</h2>
+          @if (totalRequests() > 0) {
+            <span class="section-badge">{{ totalRequests() }} total</span>
+          }
+        </div>
+      </div>
+
+      @if (isLoading()) {
+        <div class="loading-container">
+          <ion-spinner name="crescent"></ion-spinner>
+        </div>
+      } @else if (requests().length === 0) {
+        <div class="empty-state">
+          <ion-icon name="document-text-outline" class="empty-icon"></ion-icon>
+          <p class="empty-text">No requests yet</p>
+          <p class="empty-hint">Tap the button above to request a consultation</p>
+        </div>
+      } @else {
+        @for (request of requests(); track request.id) {
+          <div class="request-card" (click)="viewRequestDetails(request)">
+            <div class="request-header">
+              <div class="request-title-row">
+                <h3 class="request-reason">{{ getReasonName(request) }}</h3>
+                <span class="status-badge status-{{ getStatusConfig(request.status).color }}">
+                  {{ getStatusConfig(request.status).label }}
+                </span>
+              </div>
+              @if (getSpecialityName(request)) {
+                <span class="request-specialty">{{ getSpecialityName(request) }}</span>
+              }
+            </div>
+
+            @if (hasAppointment(request)) {
+              <div class="sub-section appointment-sub">
+                <div class="sub-section-header">
+                  <ion-icon name="calendar-outline"></ion-icon>
+                  <span>Upcoming appointment</span>
+                </div>
+                <div class="appointment-content">
+                  <div class="doctor-avatar">
+                    {{ getDoctorName(request) ? getDoctorName(request).charAt(0) : '?' }}
+                  </div>
+                  <div class="appointment-details">
+                    @if (getDoctorName(request)) {
+                      <p class="doctor-name">{{ getDoctorName(request) }}</p>
+                    }
+                    <div class="appointment-meta">
+                      <span class="meta-item">
+                        <ion-icon name="calendar-outline"></ion-icon>
+                        {{ request.appointment?.scheduled_at | date:'EEE, MMM d' }}
+                      </span>
+                      <span class="meta-item">
+                        <ion-icon name="time-outline"></ion-icon>
+                        {{ request.appointment?.scheduled_at | date:'HH:mm' }}
+                      </span>
+                      <span class="meta-item type-tag">
+                        <ion-icon [name]="getAppointmentTypeIcon(request)"></ion-icon>
+                        {{ getAppointmentTypeLabel(request) }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+
+            @if (hasConsultation(request)) {
+              <div class="sub-section consultation-sub">
+                <div class="sub-section-header">
+                  <ion-icon name="chatbubbles-outline"></ion-icon>
+                  <span>Active consultation</span>
+                </div>
+                <div class="consultation-content">
+                  <p class="consultation-hint">Tap to view messages</p>
+                </div>
+              </div>
+            }
+
+            @if (isStatusRequested(request)) {
+              <div class="sub-section pending-sub">
+                <div class="sub-section-header">
+                  <ion-icon name="hourglass-outline"></ion-icon>
+                  <span>Awaiting doctor assignment</span>
+                </div>
+              </div>
+            }
+
+            @if (isStatusAccepted(request) && !hasAppointment(request)) {
+              <div class="sub-section accepted-sub">
+                <div class="sub-section-header">
+                  <ion-icon name="checkmark-circle-outline"></ion-icon>
+                  <span>Request accepted</span>
+                </div>
+                <p class="sub-hint">Appointment will be scheduled soon</p>
+              </div>
+            }
+
+            <button class="card-action-btn">
+              <span>View details</span>
+              <ion-icon name="chevron-forward-outline"></ion-icon>
+            </button>
+          </div>
+        }
+      }
+    </section>
+  </div>
 </ion-content>

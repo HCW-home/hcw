@@ -11,21 +11,38 @@
     .login-header {
       text-align: center;
       margin-bottom: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
 
       .logo {
-        margin-bottom: var(--app-spacing-xl);
+        margin-bottom: var(--app-spacing-md);
 
-        ion-icon {
-          font-size: 64px;
+        .logo-img {
+          width: 64px;
+          height: 64px;
         }
       }
 
-      .title {
-        display: block;
-        font-size: var(--app-font-size-3xl);
-        font-weight: var(--app-font-weight-bold);
-        color: var(--app-text-primary);
-        margin-bottom: var(--app-spacing-sm);
+      .logo-text-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: var(--app-spacing-lg);
+
+        .title {
+          font-size: 2rem;
+          font-weight: 700;
+          color: var(--app-text-primary);
+          line-height: 1.2;
+        }
+
+        .title-subtitle {
+          font-size: 1rem;
+          font-weight: 500;
+          color: var(--app-text-secondary);
+          line-height: 1;
+        }
       }
 
       .subtitle {

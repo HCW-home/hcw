@@ -64,7 +64,7 @@ export class LoginPage {
       this.authService.login(this.loginForm.value).subscribe({
         next: async (response) => {
           await loading.dismiss();
-          this.navCtrl.navigateRoot('/tabs/home');
+          this.navCtrl.navigateRoot('/home');
         },
         error: async (error) => {
           await loading.dismiss();

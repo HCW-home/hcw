@@ -1,0 +1,147 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home" text="" icon="arrow-back-outline"></ion-back-button>
+    </ion-buttons>
+    <ion-buttons slot="end">
+      <ion-button>
+        <ion-icon slot="icon-only" name="ellipsis-vertical-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="request-detail-content">
+  @if (isLoading()) {
+    <div class="loading-container">
+      <ion-spinner name="crescent"></ion-spinner>
+    </div>
+  } @else if (request()) {
+    <div class="main-content">
+      <div class="request-header-section">
+        <span class="status-badge status-{{ getStatusConfig(request()?.status).color }}">
+          {{ getStatusConfig(request()?.status).label }}
+        </span>
+        <h1 class="request-title">{{ getReasonName() }}</h1>
+        @if (getSpecialityName()) {
+          <p class="request-specialty">{{ getSpecialityName() }}</p>
+        }
+        <p class="request-type">
+          <ion-icon [name]="request()?.type === 'ONLINE' ? 'videocam-outline' : 'location-outline'"></ion-icon>
+          {{ getTypeLabel() }}
+        </p>
+      </div>
+
+      <div class="info-card">
+        <h3 class="info-title">Request Details</h3>
+        <div class="info-row">
+          <span class="info-label">Created</span>
+          <span class="info-value">{{ request()?.created_at | date:'MMM d, yyyy - HH:mm' }}</span>
+        </div>
+        @if (request()?.expected_at) {
+          <div class="info-row">
+            <span class="info-label">Preferred Time</span>
+            <span class="info-value">{{ request()?.expected_at | date:'MMM d, yyyy - HH:mm' }}</span>
+          </div>
+        }
+        @if (request()?.comment) {
+          <div class="info-row comment-row">
+            <span class="info-label">Your Comment</span>
+            <span class="info-value comment">{{ request()?.comment }}</span>
+          </div>
+        }
+      </div>
+
+      @if (hasAppointment()) {
+        <div class="info-card appointment-card">
+          <div class="card-header">
+            <ion-icon name="calendar-outline" class="card-icon"></ion-icon>
+            <h3 class="info-title">Scheduled Appointment</h3>
+          </div>
+          <div class="appointment-details">
+            @if (getDoctorName()) {
+              <div class="doctor-row">
+                <div class="doctor-avatar">
+                  {{ getDoctorName().charAt(0) }}
+                </div>
+                <span class="doctor-name">{{ getDoctorName() }}</span>
+              </div>
+            }
+            <div class="appointment-meta">
+              <div class="meta-item">
+                <ion-icon name="calendar-outline"></ion-icon>
+                <span>{{ request()?.appointment?.scheduled_at | date:'EEEE, MMM d, yyyy' }}</span>
+              </div>
+              <div class="meta-item">
+                <ion-icon name="time-outline"></ion-icon>
+                <span>{{ request()?.appointment?.scheduled_at | date:'HH:mm' }}</span>
+              </div>
+              <div class="meta-item type-item">
+                <ion-icon [name]="getAppointmentTypeIcon()"></ion-icon>
+                <span>{{ getAppointmentTypeLabel() }}</span>
+              </div>
+            </div>
+          </div>
+          @if (request()?.appointment?.type === 'ONLINE') {
+            <button class="action-button primary-btn" (click)="joinAppointment()">
+              <ion-icon name="videocam-outline"></ion-icon>
+              Join Video Call
+            </button>
+          }
+        </div>
+      }
+
+      @if (hasConsultation()) {
+        <div class="info-card consultation-card">
+          <div class="card-header">
+            <ion-icon name="chatbubbles-outline" class="card-icon"></ion-icon>
+            <h3 class="info-title">Active Consultation</h3>
+          </div>
+          <p class="consultation-hint">You can view messages and communicate with your doctor.</p>
+          <button class="action-button primary-btn" (click)="viewConsultation()">
+            <ion-icon name="chatbubble-ellipses-outline"></ion-icon>
+            View Messages
+          </button>
+        </div>
+      }
+
+      @if (isStatusRequested()) {
+        <div class="info-card pending-card">
+          <div class="card-header">
+            <ion-icon name="hourglass-outline" class="card-icon"></ion-icon>
+            <h3 class="info-title">Awaiting Assignment</h3>
+          </div>
+          <p class="pending-text">Your request is being reviewed. A doctor will be assigned shortly.</p>
+          <button class="action-button danger-btn" (click)="cancelRequest()">
+            Cancel Request
+          </button>
+        </div>
+      }
+
+      @if (isStatusAccepted() && !hasAppointment()) {
+        <div class="info-card accepted-card">
+          <div class="card-header">
+            <ion-icon name="checkmark-circle-outline" class="card-icon"></ion-icon>
+            <h3 class="info-title">Request Accepted</h3>
+          </div>
+          <p class="accepted-text">Your request has been accepted. An appointment will be scheduled soon.</p>
+        </div>
+      }
+
+      @if (isStatusRefused() && request()?.refused_reason) {
+        <div class="info-card refused-card">
+          <div class="card-header">
+            <ion-icon name="close-circle-outline" class="card-icon"></ion-icon>
+            <h3 class="info-title">Request Refused</h3>
+          </div>
+          <p class="refused-reason">{{ request()?.refused_reason }}</p>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="empty-state">
+      <ion-icon name="document-text-outline" class="empty-icon"></ion-icon>
+      <p class="empty-text">Request not found</p>
+    </div>
+  }
+</ion-content>

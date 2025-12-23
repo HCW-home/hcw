@@ -9,18 +9,10 @@ import {
   IonButtons,
   IonButton,
   IonIcon,
-  IonCard,
   IonCardContent,
-  IonCardHeader,
-  IonCardTitle,
-  IonText,
-  IonList,
-  IonItem,
-  IonLabel,
   IonSpinner,
   IonTextarea,
   IonProgressBar,
-  IonAvatar,
   NavController,
   ToastController
 } from '@ionic/angular/standalone';
@@ -46,18 +38,10 @@ import { Reason, Slot } from '../../core/models/consultation.model';
     IonButtons,
     IonButton,
     IonIcon,
-    IonCard,
     IonCardContent,
-    IonCardHeader,
-    IonCardTitle,
-    IonText,
-    IonList,
-    IonItem,
-    IonLabel,
     IonSpinner,
     IonTextarea,
-    IonProgressBar,
-    IonAvatar
+    IonProgressBar
   ]
 })
 export class NewRequestPage implements OnInit, OnDestroy {
@@ -323,7 +307,7 @@ export class NewRequestPage implements OnInit, OnDestroy {
       .subscribe({
         next: () => {
           this.showToast('Request submitted successfully', 'success');
-          this.navCtrl.navigateBack('/tabs/appointments');
+          this.navCtrl.navigateBack('/home');
         },
         error: () => {
           this.showToast('Failed to submit request', 'danger');
