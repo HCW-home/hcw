@@ -38,6 +38,7 @@ import { UserSearchSelect } from '../../../../shared/components/user-search-sele
 import { ButtonStyleEnum, ButtonSizeEnum, ButtonStateEnum } from '../../../../shared/constants/button';
 import { BadgeTypeEnum } from '../../../../shared/constants/badge';
 import { getParticipantBadgeType, getAppointmentBadgeType } from '../../../../shared/tools/helper';
+import { getErrorMessage } from '../../../../core/utils/error-helper';
 
 @Component({
   selector: 'app-consultation-detail',
@@ -229,8 +230,8 @@ export class ConsultationDetail implements OnInit, OnDestroy {
             msgs.map(m => m.id === tempId ? { ...m, id: savedMessage.id, attachment: savedMessage.attachment } : m)
           );
         },
-        error: () => {
-          this.toasterService.show('error', 'Error sending message');
+        error: (error) => {
+          this.toasterService.show('error', getErrorMessage(error));
           this.messages.update(msgs => msgs.filter(m => m.id !== tempId));
         },
       });
@@ -259,8 +260,8 @@ export class ConsultationDetail implements OnInit, OnDestroy {
           });
           this.messages.set(loadedMessages);
         },
-        error: () => {
-          this.toasterService.show('error', 'Error loading messages');
+        error: (error) => {
+          this.toasterService.show('error', getErrorMessage(error));
         },
       });
   }
@@ -275,10 +276,9 @@ export class ConsultationDetail implements OnInit, OnDestroy {
           this.consultation.set(consultation);
           this.isLoadingConsultation.set(false);
         },
-        error: error => {
-          console.error('Error loading consultation:', error);
+        error: (error) => {
           this.isLoadingConsultation.set(false);
-          this.toasterService.show('error', 'Error loading consultation');
+          this.toasterService.show('error', getErrorMessage(error));
         },
       });
   }
@@ -293,10 +293,9 @@ export class ConsultationDetail implements OnInit, OnDestroy {
           this.appointments.set(response.results);
           this.isLoadingAppointments.set(false);
         },
-        error: error => {
-          console.error('Error loading appointments:', error);
+        error: (error) => {
           this.isLoadingAppointments.set(false);
-          this.toasterService.show('error', 'Error loading appointments');
+          this.toasterService.show('error', getErrorMessage(error));
         },
       });
   }
@@ -313,10 +312,9 @@ export class ConsultationDetail implements OnInit, OnDestroy {
           this.participants.set(response.results);
           this.isLoadingParticipants.set(false);
         },
-        error: error => {
-          console.error('Error loading participants:', error);
+        error: (error) => {
           this.isLoadingParticipants.set(false);
-          this.toasterService.show('error', 'Error loading participants');
+          this.toasterService.show('error', getErrorMessage(error));
         },
       });
   }
@@ -361,10 +359,9 @@ export class ConsultationDetail implements OnInit, OnDestroy {
               this.finalizeAppointmentCreation(appointment);
             }
           },
-          error: error => {
-            console.error('Error creating appointment:', error);
+          error: (error) => {
             this.isCreatingAppointment.set(false);
-            this.toasterService.show('error', 'Error creating appointment');
+            this.toasterService.show('error', getErrorMessage(error));
           },
         });
     }
@@ -431,8 +428,8 @@ export class ConsultationDetail implements OnInit, OnDestroy {
               'Appointment cancelled successfully'
             );
           },
-          error: () => {
-            this.toasterService.show('error', 'Error cancelling appointment');
+          error: (error) => {
+            this.toasterService.show('error', getErrorMessage(error));
           },
         });
     }
@@ -451,8 +448,8 @@ export class ConsultationDetail implements OnInit, OnDestroy {
           this.appointments.set(updatedAppointments);
           this.toasterService.show('success', 'Appointment sent successfully');
         },
-        error: () => {
-          this.toasterService.show('error', 'Error sending appointment');
+        error: (error) => {
+          this.toasterService.show('error', getErrorMessage(error));
         },
       });
   }
@@ -476,8 +473,8 @@ export class ConsultationDetail implements OnInit, OnDestroy {
             this.appointments.set(currentAppointments.filter(a => a.id !== appointment.id));
             this.toasterService.show('success', 'Appointment deleted successfully');
           },
-          error: () => {
-            this.toasterService.show('error', 'Error deleting appointment');
+          error: (error) => {
+            this.toasterService.show('error', getErrorMessage(error));
           },
         });
     }
@@ -512,8 +509,8 @@ export class ConsultationDetail implements OnInit, OnDestroy {
               'Participant removed successfully'
             );
           },
-          error: () => {
-            this.toasterService.show('error', 'Error removing participant');
+          error: (error) => {
+            this.toasterService.show('error', getErrorMessage(error));
           },
         });
     }
@@ -542,8 +539,8 @@ export class ConsultationDetail implements OnInit, OnDestroy {
               'Consultation closed successfully'
             );
           },
-          error: () => {
-            this.toasterService.show('error', 'Error closing consultation');
+          error: (error) => {
+            this.toasterService.show('error', getErrorMessage(error));
           },
         });
     }
@@ -572,8 +569,8 @@ export class ConsultationDetail implements OnInit, OnDestroy {
               'Consultation reopened successfully'
             );
           },
-          error: () => {
-            this.toasterService.show('error', 'Error reopening consultation');
+          error: (error) => {
+            this.toasterService.show('error', getErrorMessage(error));
           },
         });
     }
@@ -779,9 +776,9 @@ export class ConsultationDetail implements OnInit, OnDestroy {
           this.isAddingParticipant.set(false);
           this.toasterService.show('success', 'Participant added successfully');
         },
-        error: () => {
+        error: (error) => {
           this.isAddingParticipant.set(false);
-          this.toasterService.show('error', 'Error adding participant');
+          this.toasterService.show('error', getErrorMessage(error));
         },
       });
   }

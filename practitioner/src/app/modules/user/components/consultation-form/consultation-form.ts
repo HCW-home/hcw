@@ -53,6 +53,7 @@ import {
 import { SelectOption } from '../../../../shared/models/select';
 import { IBreadcrumb } from '../../../../shared/models/breadcrumb';
 import { RoutePaths } from '../../../../core/constants/routes';
+import { getErrorMessage } from '../../../../core/utils/error-helper';
 
 @Component({
   selector: 'app-consultation-form',
@@ -213,11 +214,8 @@ export class ConsultationForm implements OnInit, OnDestroy {
         next: queues => {
           this.queues.set(queues);
         },
-        error: () => {
-          this.toasterService.show(
-            'error',
-            'Error loading teams - please check your connection'
-          );
+        error: (error) => {
+          this.toasterService.show('error', getErrorMessage(error));
           this.queues.set([]);
         },
       });
@@ -236,9 +234,9 @@ export class ConsultationForm implements OnInit, OnDestroy {
           this.populateForm(consultation);
           this.isLoading.set(false);
         },
-        error: () => {
+        error: (error) => {
           this.isLoading.set(false);
-          this.toasterService.show('error', 'Error loading consultation');
+          this.toasterService.show('error', getErrorMessage(error));
           this.router.navigate([
             `/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`,
           ]);
@@ -307,8 +305,8 @@ export class ConsultationForm implements OnInit, OnDestroy {
             this.appointmentsFormArray.push(appointmentGroup);
           });
         },
-        error: () => {
-          this.toasterService.show('error', 'Error loading appointments');
+        error: (error) => {
+          this.toasterService.show('error', getErrorMessage(error));
         },
       });
   }
@@ -352,8 +350,8 @@ export class ConsultationForm implements OnInit, OnDestroy {
               this.appointmentsFormArray.removeAt(index);
               this.toasterService.show('success', 'Appointment deleted successfully');
             },
-            error: () => {
-              this.toasterService.show('error', 'Error deleting appointment');
+            error: (error) => {
+              this.toasterService.show('error', getErrorMessage(error));
             },
           });
       }
@@ -415,8 +413,8 @@ export class ConsultationForm implements OnInit, OnDestroy {
               participantsArray.removeAt(participantIndex);
               this.toasterService.show('success', 'Participant removed successfully');
             },
-            error: () => {
-              this.toasterService.show('error', 'Error removing participant');
+            error: (error) => {
+              this.toasterService.show('error', getErrorMessage(error));
             },
           });
       }
@@ -543,9 +541,9 @@ export class ConsultationForm implements OnInit, OnDestroy {
           this.isSaving.set(false);
           this.loadAppointments();
         },
-        error: () => {
+        error: (error) => {
           this.isSaving.set(false);
-          this.toasterService.show('error', 'Error creating some appointments');
+          this.toasterService.show('error', getErrorMessage(error));
         },
       });
   }
@@ -582,9 +580,9 @@ export class ConsultationForm implements OnInit, OnDestroy {
             ]);
           }
         },
-        error: () => {
+        error: (error) => {
           this.isSaving.set(false);
-          this.toasterService.show('error', 'Error creating consultation');
+          this.toasterService.show('error', getErrorMessage(error));
         },
       });
   }
@@ -618,9 +616,9 @@ export class ConsultationForm implements OnInit, OnDestroy {
             consultation.id,
           ]);
         },
-        error: () => {
+        error: (error) => {
           this.isSaving.set(false);
-          this.toasterService.show('error', 'Error updating consultation');
+          this.toasterService.show('error', getErrorMessage(error));
         },
       });
   }
@@ -675,12 +673,9 @@ export class ConsultationForm implements OnInit, OnDestroy {
             consultationId,
           ]);
         },
-        error: () => {
+        error: (error) => {
           this.isSaving.set(false);
-          this.toasterService.show(
-            'error',
-            'Consultation created but failed to create some appointments'
-          );
+          this.toasterService.show('error', getErrorMessage(error));
           this.router.navigate([
             `/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`,
             consultationId,
@@ -787,11 +782,11 @@ export class ConsultationForm implements OnInit, OnDestroy {
             this.savingAppointments.set(s);
             this.toasterService.show('success', 'Appointment updated successfully');
           },
-          error: () => {
+          error: (error) => {
             const s = new Set(this.savingAppointments());
             s.delete(appointmentIndex);
             this.savingAppointments.set(s);
-            this.toasterService.show('error', 'Error updating appointment');
+            this.toasterService.show('error', getErrorMessage(error));
           },
         });
     } else {
@@ -806,11 +801,11 @@ export class ConsultationForm implements OnInit, OnDestroy {
             this.savingAppointments.set(s);
             this.toasterService.show('success', 'Appointment created successfully');
           },
-          error: () => {
+          error: (error) => {
             const s = new Set(this.savingAppointments());
             s.delete(appointmentIndex);
             this.savingAppointments.set(s);
-            this.toasterService.show('error', 'Error creating appointment');
+            this.toasterService.show('error', getErrorMessage(error));
           },
         });
     }
@@ -862,11 +857,11 @@ export class ConsultationForm implements OnInit, OnDestroy {
             this.savingParticipants.set(s);
             this.toasterService.show('success', 'Participant updated successfully');
           },
-          error: () => {
+          error: (error) => {
             const s = new Set(this.savingParticipants());
             s.delete(key);
             this.savingParticipants.set(s);
-            this.toasterService.show('error', 'Error updating participant');
+            this.toasterService.show('error', getErrorMessage(error));
           },
         });
     } else {
@@ -881,11 +876,11 @@ export class ConsultationForm implements OnInit, OnDestroy {
             this.savingParticipants.set(s);
             this.toasterService.show('success', 'Participant added successfully');
           },
-          error: () => {
+          error: (error) => {
             const s = new Set(this.savingParticipants());
             s.delete(key);
             this.savingParticipants.set(s);
-            this.toasterService.show('error', 'Error adding participant');
+            this.toasterService.show('error', getErrorMessage(error));
           },
         });
     }

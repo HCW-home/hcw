@@ -15,6 +15,7 @@ import {Svg} from '../../../../shared/ui-components/svg/svg';
 
 import {SelectOption} from '../../../../shared/models/select';
 import {ValidationService} from '../../../../core/services/validation.service';
+import {getErrorMessage} from '../../../../core/utils/error-helper';
 
 @Component({
   selector: 'app-user-profile',
@@ -84,9 +85,8 @@ export class UserProfile implements OnInit, OnDestroy {
           this.isLoadingUser.set(false);
         },
         error: (error) => {
-          console.error('Error loading user profile:', error);
           this.isLoadingUser.set(false);
-          this.toasterService.show('error', 'Error loading user profile');
+          this.toasterService.show('error', getErrorMessage(error));
         }
       });
   }
@@ -141,9 +141,8 @@ export class UserProfile implements OnInit, OnDestroy {
             this.toasterService.show('success', 'Profile updated successfully');
           },
           error: (error) => {
-            console.error('Error updating profile:', error);
             this.isSaving.set(false);
-            this.toasterService.show('error', 'Error updating profile');
+            this.toasterService.show('error', getErrorMessage(error));
           }
         });
     } else {
@@ -176,8 +175,8 @@ export class UserProfile implements OnInit, OnDestroy {
             }))
           );
         },
-        error: () => {
-          this.toasterService.show('error', 'Error loading languages');
+        error: (error) => {
+          this.toasterService.show('error', getErrorMessage(error));
         }
       });
   }

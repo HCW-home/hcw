@@ -27,6 +27,7 @@ import { Svg } from '../../../../shared/ui-components/svg/svg';
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
 import { ButtonSizeEnum, ButtonStyleEnum } from '../../../../shared/constants/button';
 import { RoutePaths } from '../../../../core/constants/routes';
+import { getErrorMessage } from '../../../../core/utils/error-helper';
 
 interface WeekDay {
   key: keyof CreateBookingSlot;
@@ -166,9 +167,8 @@ export class Availability implements OnInit, OnDestroy {
           }
         },
         error: (error) => {
-          this.logger.error('Error loading booking slots:', error);
           this.isLoading.set(false);
-          this.toasterService.show('error', 'Error loading availability');
+          this.toasterService.show('error', getErrorMessage(error));
         }
       });
   }
@@ -225,9 +225,8 @@ export class Availability implements OnInit, OnDestroy {
             this.loadBookingSlots();
           },
           error: (error) => {
-            this.logger.error('Error saving schedule:', error);
             this.isSaving.set(false);
-            this.toasterService.show('error', 'Error saving schedule');
+            this.toasterService.show('error', getErrorMessage(error));
           }
         });
     } else {
@@ -311,9 +310,8 @@ export class Availability implements OnInit, OnDestroy {
             this.loadBookingSlots();
           },
           error: (error) => {
-            this.logger.error('Error saving time slot:', error);
             this.isSaving.set(false);
-            this.toasterService.show('error', 'Error saving time slot');
+            this.toasterService.show('error', getErrorMessage(error));
           }
         });
     } else {
@@ -332,8 +330,7 @@ export class Availability implements OnInit, OnDestroy {
             this.loadBookingSlots();
           },
           error: (error) => {
-            this.logger.error('Error deleting time slot:', error);
-            this.toasterService.show('error', 'Error deleting time slot');
+            this.toasterService.show('error', getErrorMessage(error));
           }
         });
     }

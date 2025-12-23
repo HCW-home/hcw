@@ -13,6 +13,7 @@ import { UserService } from '../../../../core/services/user.service';
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { IUser, ILanguage } from '../../models/user';
 import { SelectOption } from '../../../../shared/models/select';
+import { getErrorMessage } from '../../../../core/utils/error-helper';
 
 @Component({
   selector: 'app-add-edit-patient',
@@ -118,9 +119,8 @@ export class AddEditPatient implements OnInit, OnDestroy {
           this.loading = false;
           this.saved.emit();
         },
-        error: (err) => {
-          const message = err.error?.detail || 'Failed to update patient';
-          this.toasterService.show('error', 'Error', message);
+        error: (error) => {
+          this.toasterService.show('error', getErrorMessage(error));
           this.loading = false;
         }
       });
@@ -143,9 +143,8 @@ export class AddEditPatient implements OnInit, OnDestroy {
           this.loading = false;
           this.saved.emit();
         },
-        error: (err) => {
-          const message = err.error?.detail || err.error?.email?.[0] || 'Failed to create patient';
-          this.toasterService.show('error', 'Error', message);
+        error: (error) => {
+          this.toasterService.show('error', getErrorMessage(error));
           this.loading = false;
         }
       });

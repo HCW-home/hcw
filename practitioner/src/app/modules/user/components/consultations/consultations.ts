@@ -16,6 +16,7 @@ import { ConsultationService } from '../../../../core/services/consultation.serv
 import { Consultation } from '../../../../core/models/consultation';
 import { Loader } from '../../../../shared/components/loader/loader';
 import { RoutePaths } from '../../../../core/constants/routes';
+import { getErrorMessage } from '../../../../core/utils/error-helper';
 
 @Component({
   selector: 'app-consultations',
@@ -190,7 +191,7 @@ export class Consultations implements OnInit, OnDestroy {
       this.overdueConsultationsData.set(overdueResponse.results);
       this.loading.set(false);
     }).catch((error) => {
-      this.error.set('Failed to load consultations. Please try again.');
+      this.error.set(getErrorMessage(error));
       this.activeConsultationsData.set([]);
       this.pastConsultationsData.set([]);
       this.overdueConsultationsData.set([]);
@@ -209,8 +210,8 @@ export class Consultations implements OnInit, OnDestroy {
         this.overdueConsultationsData.set(response.results);
         this.loading.set(false);
       },
-      error: () => {
-        this.error.set('Failed to load overdue consultations. Please try again.');
+      error: (error) => {
+        this.error.set(getErrorMessage(error));
         this.overdueConsultationsData.set([]);
         this.loading.set(false);
       }
