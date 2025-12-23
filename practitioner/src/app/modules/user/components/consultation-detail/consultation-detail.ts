@@ -1,12 +1,5 @@
 import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import {
-  FormBuilder,
-  FormGroup,
-  FormArray,
-  Validators,
-  ReactiveFormsModule,
-} from '@angular/forms';
 import { CommonModule, Location } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
 
@@ -20,8 +13,6 @@ import {
   Appointment,
   Participant,
   AppointmentStatus,
-  AppointmentType,
-  CreateAppointmentRequest,
 } from '../../../../core/models/consultation';
 import { IUser } from '../../models/user';
 
@@ -32,13 +23,13 @@ import { VideoConsultationComponent } from '../video-consultation/video-consulta
 
 import { Svg } from '../../../../shared/ui-components/svg/svg';
 import { Button } from '../../../../shared/ui-components/button/button';
-import { Input } from '../../../../shared/ui-components/input/input';
 import { Badge } from '../../../../shared/components/badge/badge';
-import { UserSearchSelect } from '../../../../shared/components/user-search-select/user-search-select';
 import { ButtonStyleEnum, ButtonSizeEnum, ButtonStateEnum } from '../../../../shared/constants/button';
 import { BadgeTypeEnum } from '../../../../shared/constants/badge';
 import { getParticipantBadgeType, getAppointmentBadgeType } from '../../../../shared/tools/helper';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
+import { AppointmentFormModal } from './appointment-form-modal/appointment-form-modal';
+import { ManageParticipantsModal } from './manage-participants-modal/manage-participants-modal';
 
 @Component({
   selector: 'app-consultation-detail',
@@ -51,11 +42,10 @@ import { getErrorMessage } from '../../../../core/utils/error-helper';
     MessageList,
     VideoConsultationComponent,
     CommonModule,
-    ReactiveFormsModule,
     Button,
     Badge,
-    Input,
-    UserSearchSelect,
+    AppointmentFormModal,
+    ManageParticipantsModal,
   ],
 })
 export class ConsultationDetail implements OnInit, OnDestroy {
@@ -66,13 +56,9 @@ export class ConsultationDetail implements OnInit, OnDestroy {
   consultation = signal<Consultation | null>(null);
   appointments = signal<Appointment[]>([]);
   selectedAppointment = signal<Appointment | null>(null);
-  participants = signal<Participant[]>([]);
 
   isLoadingConsultation = signal(false);
   isLoadingAppointments = signal(false);
-  isLoadingParticipants = signal(false);
-  isCreatingAppointment = signal(false);
-  isAddingParticipant = signal(false);
 
   messages = signal<Message[]>([]);
   isWebSocketConnected = signal(false);
@@ -83,12 +69,7 @@ export class ConsultationDetail implements OnInit, OnDestroy {
 
   showCreateAppointmentModal = signal(false);
   showManageParticipantsModal = signal(false);
-
-  isExistingUser = signal(false);
-  selectedParticipantUser = signal<IUser | null>(null);
-
-  appointmentForm: FormGroup;
-  participantForm: FormGroup;
+  editingAppointment = signal<Appointment | null>(null);
 
   protected readonly AppointmentStatus = AppointmentStatus;
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
@@ -100,45 +81,11 @@ export class ConsultationDetail implements OnInit, OnDestroy {
 
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private fb = inject(FormBuilder);
   private consultationService = inject(ConsultationService);
   private confirmationService = inject(ConfirmationService);
   private toasterService = inject(ToasterService);
   private wsService = inject(ConsultationWebSocketService);
   private userService = inject(UserService);
-
-  constructor() {
-    this.appointmentForm = this.fb.group({
-      type: ['Online', [Validators.required]],
-      date: ['', [Validators.required]],
-      time: ['', [Validators.required]],
-      end_expected_at: [''],
-      participants: this.fb.array([]),
-    });
-
-    this.participantForm = this.fb.group({
-      user_id: [null],
-      display_name: [''],
-      email: ['', [Validators.email]],
-      phone: [''],
-      message_type: ['email', [Validators.required]],
-    });
-  }
-
-  get participantsFormArray(): FormArray {
-    return this.appointmentForm.get('participants') as FormArray;
-  }
-
-  createParticipantFormGroup(): FormGroup {
-    return this.fb.group({
-      isExistingUser: [false],
-      user_id: [null],
-      selectedUser: [null],
-      name: [''],
-      email: [''],
-      contactType: ['email'],
-    });
-  }
 
   ngOnInit(): void {
     this.userService.currentUser$.pipe(takeUntil(this.destroy$)).subscribe(user => {
@@ -194,12 +141,12 @@ export class ConsultationDetail implements OnInit, OnDestroy {
 
     this.wsService.participantJoined$.pipe(takeUntil(this.destroy$)).subscribe(event => {
       this.toasterService.show('success', 'Participant Joined', `${event.data.username} joined the consultation`);
-      this.loadParticipants(this.selectedAppointment()!);
+      this.loadAppointments();
     });
 
     this.wsService.participantLeft$.pipe(takeUntil(this.destroy$)).subscribe(event => {
       this.toasterService.show('warning', 'Participant Left', `${event.data.username} left the consultation`);
-      this.loadParticipants(this.selectedAppointment()!);
+      this.loadAppointments();
     });
 
     this.wsService.appointmentUpdated$.pipe(takeUntil(this.destroy$)).subscribe(() => {
@@ -300,141 +247,6 @@ export class ConsultationDetail implements OnInit, OnDestroy {
       });
   }
 
-  loadParticipants(appointment: Appointment): void {
-    if (!appointment) return;
-
-    this.isLoadingParticipants.set(true);
-    this.consultationService
-      .getAppointmentParticipants(appointment.id)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: response => {
-          this.participants.set(response.results);
-          this.isLoadingParticipants.set(false);
-        },
-        error: (error) => {
-          this.isLoadingParticipants.set(false);
-          this.toasterService.show('error', getErrorMessage(error));
-        },
-      });
-  }
-
-  selectAppointment(appointment: Appointment): void {
-    this.selectedAppointment.set(appointment);
-    this.loadParticipants(appointment);
-  }
-
-  createAppointment(): void {
-    if (this.appointmentForm.valid) {
-      this.isCreatingAppointment.set(true);
-      const formValue = this.appointmentForm.value;
-
-      const scheduledAt = new Date(`${formValue.date}T${formValue.time}`).toISOString();
-
-      let endExpectedAt: string | undefined;
-      if (formValue.end_expected_at && formValue.end_expected_at.trim() !== '') {
-        const endDate = new Date(formValue.end_expected_at);
-        if (!isNaN(endDate.getTime())) {
-          endExpectedAt = endDate.toISOString();
-        }
-      }
-
-      const appointmentData: CreateAppointmentRequest = {
-        type: formValue.type,
-        scheduled_at: scheduledAt,
-        end_expected_at: endExpectedAt,
-      };
-
-      this.consultationService
-        .createConsultationAppointment(this.consultationId, appointmentData)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: appointment => {
-            const participants = this.participantsFormArray.value.filter((p: { isExistingUser: boolean; user_id: number | null; email: string }) =>
-              (p.isExistingUser && p.user_id) || (!p.isExistingUser && p.email)
-            );
-            if (participants.length > 0) {
-              this.createParticipantsForAppointment(appointment.id, participants, appointment);
-            } else {
-              this.finalizeAppointmentCreation(appointment);
-            }
-          },
-          error: (error) => {
-            this.isCreatingAppointment.set(false);
-            this.toasterService.show('error', getErrorMessage(error));
-          },
-        });
-    }
-  }
-
-  private createParticipantsForAppointment(appointmentId: number, participants: { isExistingUser: boolean; user_id: number | null; name: string; email: string; contactType: string }[], appointment: Appointment): void {
-    const requests = participants.map(p => {
-      const data: any = {
-        message_type: p.contactType === 'email' ? 'email' : 'sms',
-      };
-      if (p.isExistingUser && p.user_id) {
-        data.user_id = p.user_id;
-      } else if (p.contactType === 'email') {
-        data.email = p.email;
-      } else {
-        data.phone = p.email;
-      }
-      return this.consultationService.addAppointmentParticipant(appointmentId, data).toPromise();
-    });
-
-    Promise.all(requests)
-      .then(() => {
-        this.loadAppointments();
-        this.finalizeAppointmentCreation(appointment);
-      })
-      .catch(() => {
-        this.finalizeAppointmentCreation(appointment);
-        this.toasterService.show('warning', 'Appointment created but some participants could not be added');
-      });
-  }
-
-  private finalizeAppointmentCreation(appointment: Appointment): void {
-    const currentAppointments = this.appointments();
-    this.appointments.set([...currentAppointments, appointment]);
-    this.appointmentForm.reset({ type: 'Online' });
-    this.participantsFormArray.clear();
-    this.isCreatingAppointment.set(false);
-    this.showCreateAppointmentModal.set(false);
-    this.toasterService.show('success', 'Appointment created successfully');
-  }
-
-  async cancelAppointment(appointment: Appointment): Promise<void> {
-    const confirmed = await this.confirmationService.confirm({
-      title: 'Cancel Appointment',
-      message: 'Are you sure you want to cancel this appointment?',
-      confirmText: 'Cancel Appointment',
-      cancelText: 'Keep',
-      confirmStyle: 'danger',
-    });
-
-    if (confirmed) {
-      this.consultationService
-        .cancelAppointment(appointment.id)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: updatedAppointment => {
-            const currentAppointments = this.appointments();
-            const updatedAppointments = currentAppointments.map(a =>
-              a.id === appointment.id ? updatedAppointment : a
-            );
-            this.appointments.set(updatedAppointments);
-            this.toasterService.show(
-              'success',
-              'Appointment cancelled successfully'
-            );
-          },
-          error: (error) => {
-            this.toasterService.show('error', getErrorMessage(error));
-          },
-        });
-    }
-  }
-
   sendAppointment(appointment: Appointment): void {
     this.consultationService
       .sendAppointment(appointment.id)
@@ -480,42 +292,6 @@ export class ConsultationDetail implements OnInit, OnDestroy {
     }
   }
 
-  async removeParticipant(participant: Participant): Promise<void> {
-    if (!this.selectedAppointment()) return;
-
-    const confirmed = await this.confirmationService.confirm({
-      title: 'Remove Participant',
-      message: 'Are you sure you want to remove this participant?',
-      confirmText: 'Remove',
-      cancelText: 'Cancel',
-      confirmStyle: 'danger',
-    });
-
-    if (confirmed) {
-      this.consultationService
-        .removeAppointmentParticipant(
-          this.selectedAppointment()!.id,
-          participant.id
-        )
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: () => {
-            const currentParticipants = this.participants();
-            this.participants.set(
-              currentParticipants.filter(p => p.id !== participant.id)
-            );
-            this.toasterService.show(
-              'success',
-              'Participant removed successfully'
-            );
-          },
-          error: (error) => {
-            this.toasterService.show('error', getErrorMessage(error));
-          },
-        });
-    }
-  }
-
   async closeConsultation(): Promise<void> {
     if (!this.consultation()) return;
 
@@ -534,10 +310,7 @@ export class ConsultationDetail implements OnInit, OnDestroy {
         .subscribe({
           next: updatedConsultation => {
             this.consultation.set(updatedConsultation);
-            this.toasterService.show(
-              'success',
-              'Consultation closed successfully'
-            );
+            this.toasterService.show('success', 'Consultation closed successfully');
           },
           error: (error) => {
             this.toasterService.show('error', getErrorMessage(error));
@@ -564,10 +337,7 @@ export class ConsultationDetail implements OnInit, OnDestroy {
         .subscribe({
           next: updatedConsultation => {
             this.consultation.set(updatedConsultation);
-            this.toasterService.show(
-              'success',
-              'Consultation reopened successfully'
-            );
+            this.toasterService.show('success', 'Consultation reopened successfully');
           },
           error: (error) => {
             this.toasterService.show('error', getErrorMessage(error));
@@ -620,104 +390,42 @@ export class ConsultationDetail implements OnInit, OnDestroy {
   }
 
   openCreateAppointmentModal(): void {
-    this.appointmentForm.reset({ type: 'Online' });
-    this.participantsFormArray.clear();
+    this.editingAppointment.set(null);
+    this.showCreateAppointmentModal.set(true);
+  }
+
+  openEditAppointmentModal(appointment: Appointment): void {
+    this.editingAppointment.set(appointment);
     this.showCreateAppointmentModal.set(true);
   }
 
   closeCreateAppointmentModal(): void {
     this.showCreateAppointmentModal.set(false);
+    this.editingAppointment.set(null);
+  }
+
+  onAppointmentCreated(appointment: Appointment): void {
+    const currentAppointments = this.appointments();
+    this.appointments.set([...currentAppointments, appointment]);
+    this.loadAppointments();
+  }
+
+  onAppointmentUpdated(updatedAppointment: Appointment): void {
+    const currentAppointments = this.appointments();
+    const updatedAppointments = currentAppointments.map(a =>
+      a.id === updatedAppointment.id ? updatedAppointment : a
+    );
+    this.appointments.set(updatedAppointments);
   }
 
   openManageParticipantsModal(appointment: Appointment): void {
     this.selectedAppointment.set(appointment);
-    this.loadParticipants(appointment);
-    this.isExistingUser.set(false);
-    this.selectedParticipantUser.set(null);
-    this.participantForm.reset({ message_type: 'email', display_name: '', user_id: null });
     this.showManageParticipantsModal.set(true);
   }
 
   closeManageParticipantsModal(): void {
     this.showManageParticipantsModal.set(false);
     this.loadAppointments();
-  }
-
-  setAppointmentType(type: string): void {
-    this.appointmentForm.patchValue({ type });
-  }
-
-  setParticipantMessageType(type: string): void {
-    this.participantForm.patchValue({ message_type: type });
-  }
-
-  setParticipantType(isExisting: boolean): void {
-    this.isExistingUser.set(isExisting);
-    this.selectedParticipantUser.set(null);
-    this.participantForm.reset({ message_type: 'email', display_name: '', user_id: null });
-  }
-
-  onParticipantUserSelected(user: IUser | null): void {
-    this.selectedParticipantUser.set(user);
-    if (user) {
-      this.participantForm.patchValue({ user_id: user.pk });
-    } else {
-      this.participantForm.patchValue({ user_id: null });
-    }
-  }
-
-  addModalParticipant(): void {
-    this.participantsFormArray.push(this.createParticipantFormGroup());
-  }
-
-  removeModalParticipant(index: number): void {
-    this.participantsFormArray.removeAt(index);
-  }
-
-  setModalParticipantContactType(index: number, type: string): void {
-    const participant = this.participantsFormArray.at(index);
-    participant.patchValue({ contactType: type });
-  }
-
-  getModalParticipantContactType(index: number): string {
-    const participant = this.participantsFormArray.at(index);
-    return participant.get('contactType')?.value || 'email';
-  }
-
-  isModalParticipantExistingUser(index: number): boolean {
-    const participant = this.participantsFormArray.at(index);
-    return participant.get('isExistingUser')?.value || false;
-  }
-
-  setModalParticipantType(index: number, isExisting: boolean): void {
-    const participant = this.participantsFormArray.at(index);
-    participant.patchValue({
-      isExistingUser: isExisting,
-      user_id: null,
-      selectedUser: null,
-      name: '',
-      email: '',
-    });
-  }
-
-  onModalParticipantUserSelected(index: number, user: IUser | null): void {
-    const participant = this.participantsFormArray.at(index);
-    if (user) {
-      participant.patchValue({
-        user_id: user.pk,
-        selectedUser: user,
-      });
-    } else {
-      participant.patchValue({
-        user_id: null,
-        selectedUser: null,
-      });
-    }
-  }
-
-  getModalParticipantSelectedUser(index: number): IUser | null {
-    const participant = this.participantsFormArray.at(index);
-    return participant.get('selectedUser')?.value || null;
   }
 
   getParticipantInitials(participant: Participant): string {
@@ -730,56 +438,5 @@ export class ConsultationDetail implements OnInit, OnDestroy {
       return participant.email.charAt(0).toUpperCase();
     }
     return '?';
-  }
-
-  addParticipantToAppointment(): void {
-    const appointment = this.selectedAppointment();
-    if (!appointment) return;
-
-    const formValue = this.participantForm.value;
-    let data: any;
-
-    if (this.isExistingUser() && formValue.user_id) {
-      data = {
-        user_id: formValue.user_id,
-        message_type: formValue.message_type,
-      };
-    } else {
-      data = {
-        message_type: formValue.message_type,
-      };
-
-      if (formValue.display_name) {
-        data.display_name = formValue.display_name;
-      }
-
-      if (formValue.message_type === 'email' && formValue.email) {
-        data.email = formValue.email;
-      } else if (formValue.message_type === 'sms' && formValue.phone) {
-        data.phone = formValue.phone;
-      } else {
-        this.toasterService.show('error', 'Please provide contact information');
-        return;
-      }
-    }
-
-    this.isAddingParticipant.set(true);
-    this.consultationService
-      .addAppointmentParticipant(appointment.id, data)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => {
-          this.loadParticipants(appointment);
-          this.isExistingUser.set(false);
-          this.selectedParticipantUser.set(null);
-          this.participantForm.reset({ message_type: 'email', display_name: '', user_id: null });
-          this.isAddingParticipant.set(false);
-          this.toasterService.show('success', 'Participant added successfully');
-        },
-        error: (error) => {
-          this.isAddingParticipant.set(false);
-          this.toasterService.show('error', getErrorMessage(error));
-        },
-      });
   }
 }

@@ -178,5 +178,6 @@ export interface CreateParticipantRequest {
   user_id?: number;
   email?: string;
   phone?: string;
+  display_name?: string;
   message_type: string;
 }
