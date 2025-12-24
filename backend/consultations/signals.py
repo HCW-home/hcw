@@ -1,9 +1,11 @@
-from django.db.models.signals import post_save, post_delete
-from django.dispatch import receiver
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
+from livekit.protocol.room import SendDataRequest
+
 from .consumers import get_consultation
-from .models import Consultation, Request, RequestStatus
+from .models import Appointment, AppointmentStatus, Consultation, Request, RequestStatus
 from .serializers import ConsultationSerializer
 
 
@@ -26,6 +28,7 @@ def get_users_to_notification_consultation(consultation: Consultation):
 
     return users_to_notify_pks
 
+
 @receiver(post_save, sender=Consultation)
 def consultation_saved(sender, instance: Consultation, created, **kwargs):
     """
@@ -40,9 +43,10 @@ def consultation_saved(sender, instance: Consultation, created, **kwargs):
             {
                 "type": "consultation",
                 "consultation_id": instance.pk,
-                "state": "created" if created else "updated"
-            }
+                "state": "created" if created else "updated",
+            },
         )
+
 
 @receiver(post_delete, sender=Consultation)
 def consultation_deleted(sender, instance, **kwargs):
@@ -54,8 +58,9 @@ def consultation_deleted(sender, instance, **kwargs):
                 "type": "consultation",
                 "consultation_id": instance.pk,
                 "state": "deleted",
-            }
+            },
         )
+
 
 @receiver(post_save, sender=Request)
 def request_saved(sender, instance, created, **kwargs):
@@ -67,12 +72,26 @@ def request_saved(sender, instance, created, **kwargs):
         try:
             # Import the task here to avoid circular imports
             from .tasks import handle_request
+
             # Trigger the celery task asynchronously
             handle_request.delay(instance.id)
         except Exception as e:
             # Log the error but don't block the request creation
             import logging
+
             logger = logging.getLogger(__name__)
-            logger.error(f"Failed to trigger celery task for request {instance.id}: {str(e)}")
+            logger.error(
+                f"Failed to trigger celery task for request {instance.id}: {str(e)}"
+            )
             # For debugging: temporarily disable to see if this is the cause
             pass
+
+
+# @receiver(post_save, sender=Appointment)
+# def send_appointment_invites(sender, instance, created, **kwargs):
+#     """
+#     Prepare invite sending over celery task.
+#     """
+
+#     if created and instance.status in [AppointmentStatus.SCHEDULED, AppointmentStatus.CANCELLED]:
+#         pass

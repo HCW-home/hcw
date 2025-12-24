@@ -1,4 +1,5 @@
 import asyncio
+from typing import Optional
 
 from livekit import api
 from livekit.api import (
@@ -19,7 +20,7 @@ class Main(BaseMediaserver):
 
     def __init__(self, server):
         super().__init__(server)
-        self._client = None
+        self._client: Optional[LiveKitAPI] = None
 
     @property
     def client(self):
@@ -83,7 +84,6 @@ class Main(BaseMediaserver):
         )
 
     def user_test_info(self, user):
-
         room_name = f"usertest_{user.pk}"
 
         video_grants = VideoGrants(

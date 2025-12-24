@@ -1,22 +1,23 @@
 # comments in English
-from channels.generic.websocket import AsyncJsonWebsocketConsumer
-from .serializers import ConsultationSerializer
-
-from mediaserver.manager.janus import Janus
-from mediaserver.models import Server, Turn
-from mediaserver.serializers import TurnIceServerSerializer
-
-from users.consumers import UserOnlineStatusMixin
+import asyncio
 
 from asgiref.sync import sync_to_async
+from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.conf import settings
-import asyncio
+
+# from mediaserver.manager.janus import Janus
+from mediaserver.models import Server, Turn
+from mediaserver.serializers import TurnIceServerSerializer
+from users.consumers import UserOnlineStatusMixin
+
+from .serializers import ConsultationSerializer
 
 # Module-level dictionaries to track active rooms and their sessions
 # This ensures rooms persist across connections but are properly managed
 _active_rooms = {}  # consultation_id -> room_id
 _room_locks = {}
 _active_sessions = {}  # consultation_id -> {'session': janus_instance, 'count': connection_count}
+
 
 class ConsultationConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
     def __init__(self, *args, **kwargs):
@@ -26,7 +27,7 @@ class ConsultationConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
         self.is_publisher = False
         self.publisher_id = None
         self.uses_shared_session = False
-        
+
     async def connect(self):
         consultation_id = self.scope["url_route"]["kwargs"]["consultation_pk"]
         self.consultation_id = consultation_id
@@ -35,7 +36,7 @@ class ConsultationConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
 
         # Call parent connect to handle user online status tracking
         await super().connect()
-        
+
         # Send comprehensive ICE server configuration to frontend
         # Based on Janus Gateway best practices for reliable connectivity
 
@@ -44,16 +45,15 @@ class ConsultationConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
             "iceCandidatePoolSize": 10,
             "bundlePolicy": "max-bundle",
             "rtcpMuxPolicy": "require",
-            "iceTransportPolicy": "all"  # Allow both UDP and TCP
+            "iceTransportPolicy": "all",  # Allow both UDP and TCP
         }
 
         await self.send_json({"type": "ice_config", "data": ice_servers})
-        
+
         await self._get_or_create_shared_session()
-        
+
         # Auto-create or join existing room for this consultation
         await self._ensure_room_exists()
-
 
     async def receive_json(self, content, **kwargs):
         t = content.get("type")
@@ -70,46 +70,58 @@ class ConsultationConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
 
         elif t == "join":
             display = data.get("display_name", "Guest")
-            
+
             # Check if already joined as publisher
             if self.is_publisher:
                 print(f"Already joined as publisher with ID: {self.publisher_id}")
                 # Send current participants list
                 try:
                     plist = await self.janus.list_participants()
-                    await self.send_json({"type": "joined", "publisher_id": self.publisher_id})
+                    await self.send_json(
+                        {"type": "joined", "publisher_id": self.publisher_id}
+                    )
                     await self.send_json({"type": "participants", "data": plist})
                 except Exception as e:
                     print(f"Error getting participants for already joined user: {e}")
                     await self.send_json({"type": "participants", "data": []})
                 return
-            
+
             # Ensure room exists before joining
             await self._ensure_room_exists()
-            
+
             try:
                 # First ensure room exists by listing participants (this will create it if needed)
                 try:
                     existing_participants = await self.janus.list_participants()
-                    print(f"Room {self.janus.room_id} exists with participants: {existing_participants}")
+                    print(
+                        f"Room {self.janus.room_id} exists with participants: {existing_participants}"
+                    )
                 except Exception as room_check_error:
-                    print(f"Room {self.janus.room_id} may not exist, trying to create: {room_check_error}")
+                    print(
+                        f"Room {self.janus.room_id} may not exist, trying to create: {room_check_error}"
+                    )
                     try:
                         await self.janus.create_room()
                         print(f"Successfully created room {self.janus.room_id}")
                     except Exception as create_error:
-                        print(f"Room creation failed but may already exist: {create_error}")
-                
+                        print(
+                            f"Room creation failed but may already exist: {create_error}"
+                        )
+
                 join_result = await self.janus.join(display)
                 print(f"Join result for {display}: {join_result}")
-                
+
                 # Check if join was successful - handle different response formats
                 if join_result and isinstance(join_result, dict):
                     if join_result.get("videoroom") == "joined":
                         self.is_publisher = True
                         self.publisher_id = join_result.get("id")
-                        print(f"Successfully joined as publisher with ID: {self.publisher_id}")
-                    elif join_result.get("error_code") == 425:  # Already in as publisher
+                        print(
+                            f"Successfully joined as publisher with ID: {self.publisher_id}"
+                        )
+                    elif (
+                        join_result.get("error_code") == 425
+                    ):  # Already in as publisher
                         print(f"Already in room as publisher, handling gracefully")
                         self.is_publisher = True
                         # Try to get our publisher ID from participants list
@@ -122,9 +134,11 @@ class ConsultationConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
                         except Exception as pe:
                             print(f"Error getting participants after join: {pe}")
                 elif join_result == False:
-                    print(f"Join returned False - likely room doesn't exist or other error")
+                    print(
+                        f"Join returned False - likely room doesn't exist or other error"
+                    )
                     raise Exception("Join failed - room may not exist")
-                
+
                 # Get participants to check current room state
                 try:
                     plist = await self.janus.list_participants()
@@ -133,10 +147,12 @@ class ConsultationConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
                 except Exception as pe:
                     print(f"Error getting participants after successful join: {pe}")
                     await self.send_json({"type": "participants", "data": []})
-                
+
             except Exception as e:
                 print(f"Error joining room: {e}")
-                await self.send_json({"type": "error", "message": f"Failed to join room: {str(e)}"})
+                await self.send_json(
+                    {"type": "error", "message": f"Failed to join room: {str(e)}"}
+                )
 
         elif t == "publish":
             # Client sends its local SDP offer to publish media
@@ -144,64 +160,72 @@ class ConsultationConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
                 # Send the publish request - our monkey-patch will intercept and forward the JSEP answer
                 result = await self.janus.publish(jsep_offer=data["jsep"])
                 print(f"Publish result: {result}")
-                
+
                 # The JSEP answer should have been intercepted and forwarded by our monkey-patch
-                
+
                 # After publishing, broadcast participant update to everyone
                 room_group_name = f"consultation_{self.consultation_id}"
-                await self.channel_layer.group_send(room_group_name, {
-                    "type": "trigger_participant_refresh"
-                })
+                await self.channel_layer.group_send(
+                    room_group_name, {"type": "trigger_participant_refresh"}
+                )
             except Exception as e:
                 print(f"Error during publish: {e}")
-                await self.send_json({"type": "error", "message": f"Failed to publish: {str(e)}"})
+                await self.send_json(
+                    {"type": "error", "message": f"Failed to publish: {str(e)}"}
+                )
 
         elif t == "subscribe":
             # Subscribe to a remote feed (publisher id) using separate subscriber handle
             try:
                 feed_id = int(data["feed_id"])
                 print(f"Creating subscriber handle for feed {feed_id}")
-                
+
                 # Create a separate subscriber handle for this feed
                 server = await self._get_server()
-                
+
                 async def subscriber_event_handler(evt: dict):
                     # Handle intercepted JSEP from subscriber
-                    if evt.get('intercepted'):
-                        if evt.get('jsep') and evt['jsep'].get('type') == 'answer':
-                            print(f"🎯 Intercepted subscriber JSEP answer for feed {feed_id}")
-                            await self.send_json({
-                                "type": "janus_event", 
-                                "payload": {
-                                    'janus': 'event',
-                                    'jsep': evt['jsep'],
-                                    'feed_id': feed_id
+                    if evt.get("intercepted"):
+                        if evt.get("jsep") and evt["jsep"].get("type") == "answer":
+                            print(
+                                f"🎯 Intercepted subscriber JSEP answer for feed {feed_id}"
+                            )
+                            await self.send_json(
+                                {
+                                    "type": "janus_event",
+                                    "payload": {
+                                        "janus": "event",
+                                        "jsep": evt["jsep"],
+                                        "feed_id": feed_id,
+                                    },
                                 }
-                            })
+                            )
                         return
                     # Mark events from this subscriber handle
-                    evt['feed_id'] = feed_id
+                    evt["feed_id"] = feed_id
                     await self.send_json({"type": "janus_event", "payload": evt})
-                
+
                 subscriber_janus = Janus(server, on_event=subscriber_event_handler)
                 await subscriber_janus.attach()
-                
+
                 # Use the same room as the publisher
                 subscriber_janus._room_id = self.janus.room_id
-                
+
                 # Subscribe to the specific feed
                 result = await subscriber_janus.subscribe(feed_id=feed_id)
                 print(f"Subscriber handle created for feed {feed_id}: {result}")
-                
+
                 # Store the subscriber handle
                 self.subscriber_handles[feed_id] = subscriber_janus
-                
+
             except Exception as e:
                 print(f"Error creating subscriber handle for feed {feed_id}: {e}")
-                await self.send_json({
-                    "type": "error", 
-                    "message": f"Failed to subscribe to feed {feed_id}: {str(e)}"
-                })
+                await self.send_json(
+                    {
+                        "type": "error",
+                        "message": f"Failed to subscribe to feed {feed_id}: {str(e)}",
+                    }
+                )
 
         elif t == "start":
             # Relay the client's SDP answer to Janus to start receiving
@@ -220,7 +244,9 @@ class ConsultationConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
             feed_id = data.get("feed_id")
             if feed_id and feed_id in self.subscriber_handles:
                 print(f"Trickling ICE for subscriber feed {feed_id}")
-                await self.subscriber_handles[feed_id].trickle(candidate=data.get("candidate"))
+                await self.subscriber_handles[feed_id].trickle(
+                    candidate=data.get("candidate")
+                )
             else:
                 print("Trickling ICE for publisher handle")
                 await self.janus.trickle(candidate=data.get("candidate"))
@@ -233,10 +259,10 @@ class ConsultationConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
                 # Also broadcast to all participants in the room
                 consultation_id = self.scope["url_route"]["kwargs"]["consultation_pk"]
                 room_group_name = f"consultation_{consultation_id}"
-                await self.channel_layer.group_send(room_group_name, {
-                    "type": "participants_update",
-                    "participants": plist
-                })
+                await self.channel_layer.group_send(
+                    room_group_name,
+                    {"type": "participants_update", "participants": plist},
+                )
             except Exception as e:
                 print(f"Error getting participants: {e}")
                 # Try to ensure room exists and retry
@@ -251,7 +277,6 @@ class ConsultationConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
         else:
             print(content)
 
-
     async def disconnect(self, code):
         if hasattr(self, "janus") and self.janus:
             try:
@@ -262,7 +287,7 @@ class ConsultationConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
                     self.publisher_id = None
             except Exception as e:
                 print(f"Error during disconnect: {e}")
-        
+
         # Clean up subscriber handles
         for feed_id, subscriber_handle in self.subscriber_handles.items():
             try:
@@ -271,99 +296,110 @@ class ConsultationConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
             except Exception as e:
                 print(f"Error closing subscriber handle for feed {feed_id}: {e}")
         self.subscriber_handles.clear()
-        
+
         # Handle shared session cleanup
         await self._cleanup_shared_session()
-        
+
         # Remove from channel group
         room_group_name = f"consultation_{self.consultation_id}"
         await self.channel_layer.group_discard(room_group_name, self.channel_name)
-        
+
         # Call parent disconnect to handle user online status tracking
         await super().disconnect(code)
 
     async def _get_server(self):
         # Fetch any configured Janus server entry
         return await Server.objects.afirst()
-    
+
     async def _get_or_create_shared_session(self):
         """Get or create a shared Janus session for this consultation"""
         global _active_sessions, _room_locks
-        
+
         # Create lock for this consultation if it doesn't exist
         if self.consultation_id not in _room_locks:
             _room_locks[self.consultation_id] = asyncio.Lock()
-        
+
         async with _room_locks[self.consultation_id]:
             if self.consultation_id not in _active_sessions:
                 # Create new shared session
                 server = await self._get_server()
-                
+
                 async def on_evt(evt: dict):
                     # Broadcast event to all participants in the consultation
                     print(f"📡 on_evt callback triggered with: {evt}")
-                    
+
                     # Handle intercepted JSEP answers from our monkey-patch
-                    if evt.get('intercepted'):
-                        if evt.get('jsep') and evt['jsep'].get('type') == 'answer':
+                    if evt.get("intercepted"):
+                        if evt.get("jsep") and evt["jsep"].get("type") == "answer":
                             print(f"🎯 Intercepted JSEP answer, forwarding to frontend")
                             # Send directly to all connections in the room
                             room_group_name = f"consultation_{self.consultation_id}"
-                            await self.channel_layer.group_send(room_group_name, {
-                                "type": "janus_event_broadcast", 
-                                "event": {
-                                    'janus': 'event',
-                                    'jsep': evt['jsep']
-                                }
-                            })
+                            await self.channel_layer.group_send(
+                                room_group_name,
+                                {
+                                    "type": "janus_event_broadcast",
+                                    "event": {"janus": "event", "jsep": evt["jsep"]},
+                                },
+                            )
                         return  # Don't broadcast intercepted events further
-                    
-                    if evt.get('jsep'):
-                        print(f"🔔 JSEP event detected in callback: {evt['jsep']['type']}")
-                    
+
+                    if evt.get("jsep"):
+                        print(
+                            f"🔔 JSEP event detected in callback: {evt['jsep']['type']}"
+                        )
+
                     room_group_name = f"consultation_{self.consultation_id}"
-                    await self.channel_layer.group_send(room_group_name, {
-                        "type": "janus_event_broadcast", 
-                        "event": evt
-                    })
-                
+                    await self.channel_layer.group_send(
+                        room_group_name, {"type": "janus_event_broadcast", "event": evt}
+                    )
+
                 janus_instance = Janus(server, on_event=on_evt)
                 await janus_instance.attach()
-                
+
                 _active_sessions[self.consultation_id] = {
-                    'session': janus_instance,
-                    'count': 0
+                    "session": janus_instance,
+                    "count": 0,
                 }
-                print(f"Created shared Janus session for consultation {self.consultation_id}")
-            
+                print(
+                    f"Created shared Janus session for consultation {self.consultation_id}"
+                )
+
             # Use the shared session
-            self.janus = _active_sessions[self.consultation_id]['session']
-            _active_sessions[self.consultation_id]['count'] += 1
+            self.janus = _active_sessions[self.consultation_id]["session"]
+            _active_sessions[self.consultation_id]["count"] += 1
             self.uses_shared_session = True
-            
-            print(f"Using shared session for consultation {self.consultation_id}, connection count: {_active_sessions[self.consultation_id]['count']}")
-    
+
+            print(
+                f"Using shared session for consultation {self.consultation_id}, connection count: {_active_sessions[self.consultation_id]['count']}"
+            )
+
     async def _cleanup_shared_session(self):
         """Clean up shared session when connection disconnects"""
         global _active_sessions, _room_locks
-        
+
         if not self.uses_shared_session or self.consultation_id not in _active_sessions:
             return
-        
+
         if self.consultation_id not in _room_locks:
             _room_locks[self.consultation_id] = asyncio.Lock()
-        
+
         async with _room_locks[self.consultation_id]:
             if self.consultation_id in _active_sessions:
-                _active_sessions[self.consultation_id]['count'] -= 1
-                print(f"Decremented connection count for consultation {self.consultation_id}: {_active_sessions[self.consultation_id]['count']}")
-                
+                _active_sessions[self.consultation_id]["count"] -= 1
+                print(
+                    f"Decremented connection count for consultation {self.consultation_id}: {_active_sessions[self.consultation_id]['count']}"
+                )
+
                 # If no more connections, close the session
-                if _active_sessions[self.consultation_id]['count'] <= 0:
+                if _active_sessions[self.consultation_id]["count"] <= 0:
                     try:
-                        session_instance = _active_sessions[self.consultation_id]['session']
+                        session_instance = _active_sessions[self.consultation_id][
+                            "session"
+                        ]
                         await session_instance.close()
-                        print(f"Closed shared Janus session for consultation {self.consultation_id}")
+                        print(
+                            f"Closed shared Janus session for consultation {self.consultation_id}"
+                        )
                     except Exception as e:
                         print(f"Error closing shared session: {e}")
                     finally:
@@ -374,23 +410,25 @@ class ConsultationConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
 
     async def _ensure_room_exists(self):
         global _active_rooms, _room_locks
-        
+
         # Create lock for this consultation if it doesn't exist
         if self.consultation_id not in _room_locks:
             _room_locks[self.consultation_id] = asyncio.Lock()
-        
+
         # Use lock to ensure only one client creates the room
         async with _room_locks[self.consultation_id]:
             # For testing, always use room 121554 to match the demo
             target_room_id = 121554
-            
+
             # Check if room already exists for this consultation
             if self.consultation_id not in _active_rooms:
                 # Set the room ID and store it
                 self.janus._room_id = target_room_id
                 _active_rooms[self.consultation_id] = target_room_id
-                print(f"Using Janus room {target_room_id} for consultation {self.consultation_id} (demo room)")
-                
+                print(
+                    f"Using Janus room {target_room_id} for consultation {self.consultation_id} (demo room)"
+                )
+
                 # Try to create the room (it might already exist from the demo)
                 try:
                     await self.janus.create_room()
@@ -402,8 +440,10 @@ class ConsultationConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
                 # Use existing room ID
                 existing_room_id = _active_rooms[self.consultation_id]
                 self.janus._room_id = existing_room_id
-                print(f"Using existing Janus room {existing_room_id} for consultation {self.consultation_id}")
-                
+                print(
+                    f"Using existing Janus room {existing_room_id} for consultation {self.consultation_id}"
+                )
+
                 # Test if room actually exists on Janus server
                 try:
                     await self.janus.list_participants()
@@ -413,29 +453,23 @@ class ConsultationConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
                     # Reset to target room
                     self.janus._room_id = target_room_id
                     _active_rooms[self.consultation_id] = target_room_id
-        
+
         # Send room created message to this client
         await self.send_json({"type": "room_created", "room_id": self.janus.room_id})
 
     async def participants_update(self, event):
         # Handler for participants_update group message
-        await self.send_json({
-            "type": "participants",
-            "data": event["participants"]
-        })
+        await self.send_json({"type": "participants", "data": event["participants"]})
 
     async def janus_event_broadcast(self, event):
         # Handler for broadcasting Janus events to all participants
         evt = event["event"]
         print(f"📤 Broadcasting Janus event to frontend: {evt}")
-        if evt.get('jsep'):
+        if evt.get("jsep"):
             print(f"🚀 Broadcasting JSEP event to frontend: {evt['jsep']['type']}")
-        
-        await self.send_json({
-            "type": "janus_event", 
-            "payload": evt
-        })
-        
+
+        await self.send_json({"type": "janus_event", "payload": evt})
+
         # Also check for specific videoroom events to trigger participant refresh
         evt = event["event"]
         if evt.get("plugindata", {}).get("data", {}).get("videoroom") == "event":
@@ -469,8 +503,10 @@ class ConsultationConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
 @sync_to_async
 def get_consultation(consultation_id):
     from .models import Consultation
+
     consultation = Consultation.objects.get(pk=consultation_id)
-    return ConsultationSerializer(consultation).data,
+    return (ConsultationSerializer(consultation).data,)
+
 
 @sync_to_async
 def get_turn():

@@ -1,15 +1,17 @@
 import re
 import uuid
 from datetime import time
+from zoneinfo import available_timezones
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django_clamd.validators import validate_file_infection
 from messaging.models import CommunicationMethod
 from users.models import User
-from zoneinfo import available_timezones
-from django_clamd.validators import validate_file_infection
+
+from . import assignments
 
 # Create your models here.
 
@@ -139,8 +141,8 @@ class Participant(models.Model):
     timezone = models.CharField(
         max_length=63,
         choices=[(tz, tz) for tz in sorted(available_timezones())],
-        default='UTC',
-        help_text='User timezone for displaying dates and times'
+        default="UTC",
+        help_text="User timezone for displaying dates and times",
     )
 
     is_invited = models.BooleanField(default=True)
@@ -222,19 +224,16 @@ class Message(models.Model):
     event = models.TextField(_("event"), null=True, blank=True)
     content = models.TextField(_("content"), null=True, blank=True)
     attachment = models.FileField(
-        _("attachment"), upload_to="messages_attachment", null=True, blank=True, validators=[validate_file_infection]
+        _("attachment"),
+        upload_to="messages_attachment",
+        null=True,
+        blank=True,
+        validators=[validate_file_infection],
     )
 
     class Meta:
         verbose_name = _("message")
         verbose_name_plural = _("messages")
-
-
-class ReasonAssignmentMethod(models.TextChoices):
-    USER = "User", _("User")
-    QUEUE = "Queue", _("Queue")
-    APPOINTMENT = "Appointment", _("Appointment")
-    MANUAL = "Manual", _("Manual")
 
 
 class Reason(models.Model):
@@ -265,10 +264,7 @@ class Reason(models.Model):
     )
     is_active = models.BooleanField(_("is active"), default=True)
 
-    assignment_method = models.CharField(
-        choices=ReasonAssignmentMethod.choices,
-        default=ReasonAssignmentMethod.APPOINTMENT,
-    )
+    assignment_method = models.CharField(choices=assignments.MAIN_DISPLAY_NAMES)
 
     class Meta:
         verbose_name = _("reason")
@@ -277,44 +273,44 @@ class Reason(models.Model):
     def __str__(self):
         return f"{self.name}"
 
-    def clean(self):
-        super().clean()
+    # def clean(self):
+    #     super().clean()
 
-        if self.assignment_method == ReasonAssignmentMethod.USER:
-            if self.queue_assignee:
-                raise ValidationError(
-                    _(
-                        f"Queue must not be defined if assignment method is {ReasonAssignmentMethod.USER}."
-                    )
-                )
-            if not self.user_assignee:
-                raise ValidationError(
-                    _(
-                        f"User must be defined if assignment method is {ReasonAssignmentMethod.USER}."
-                    )
-                )
+    #     if self.assignment_method == ReasonAssignmentMethod.USER:
+    #         if self.queue_assignee:
+    #             raise ValidationError(
+    #                 _(
+    #                     f"Queue must not be defined if assignment method is {ReasonAssignmentMethod.USER}."
+    #                 )
+    #             )
+    #         if not self.user_assignee:
+    #             raise ValidationError(
+    #                 _(
+    #                     f"User must be defined if assignment method is {ReasonAssignmentMethod.USER}."
+    #                 )
+    #             )
 
-        if self.assignment_method == ReasonAssignmentMethod.QUEUE:
-            if not self.queue_assignee:
-                raise ValidationError(
-                    _(
-                        f"Queue must be defined if assignment method is {ReasonAssignmentMethod.QUEUE}."
-                    )
-                )
-            if self.user_assignee:
-                raise ValidationError(
-                    _(
-                        f"User must not be defined if assignment method is {ReasonAssignmentMethod.QUEUE}."
-                    )
-                )
+    #     if self.assignment_method == ReasonAssignmentMethod.QUEUE:
+    #         if not self.queue_assignee:
+    #             raise ValidationError(
+    #                 _(
+    #                     f"Queue must be defined if assignment method is {ReasonAssignmentMethod.QUEUE}."
+    #                 )
+    #             )
+    #         if self.user_assignee:
+    #             raise ValidationError(
+    #                 _(
+    #                     f"User must not be defined if assignment method is {ReasonAssignmentMethod.QUEUE}."
+    #                 )
+    #             )
 
-        if self.assignment_method == ReasonAssignmentMethod.APPOINTMENT:
-            if self.user_assignee or self.queue_assignee:
-                raise ValidationError(
-                    _(
-                        f"User or Queue must not be defined if assignment method is {ReasonAssignmentMethod.APPOINTMENT}."
-                    )
-                )
+    #     if self.assignment_method == ReasonAssignmentMethod.APPOINTMENT:
+    #         if self.user_assignee or self.queue_assignee:
+    #             raise ValidationError(
+    #                 _(
+    #                     f"User or Queue must not be defined if assignment method is {ReasonAssignmentMethod.APPOINTMENT}."
+    #                 )
+    #             )
 
 
 class RequestStatus(models.TextChoices):

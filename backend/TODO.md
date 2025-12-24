@@ -13,6 +13,10 @@ update patient user information
 * Add terms models
 * Add terms for Users
 
-
-* do virus scan on attachment saving
 * Add dashboard endpoint
+
+* On sent action appointement, I would track partitipant
+* Add message logic and send link and datetime of appointment
+* Add calculated status field for participant (participant : sent, read, accepted)
+* Add validation on phone number
+* email is not considered on user (patient) adding

@@ -3,7 +3,7 @@ from importlib import import_module
 from pkgutil import iter_modules
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple, Type
 
-from consultations.models import Consultation, Appointment, User
+from consultations.models import Appointment, Consultation, User
 
 if TYPE_CHECKING:
     from ..models import Server
@@ -15,7 +15,7 @@ class BaseMediaserver(ABC):
     display_name: str = ""
 
     def __init__(self, server: "Server"):
-        self.server = server
+        self.server: "Server" = server
 
     @abstractmethod
     def test_connection(self) -> Tuple[bool, Any]:
@@ -29,23 +29,22 @@ class BaseMediaserver(ABC):
         """
 
     @abstractmethod
-    def appointment_participant_info(self, appointment: Appointment, user: User):
+    def appointment_participant_info(self, appointment: Appointment, user: User) -> str:
         """
-        Return room and token info for Participant
+        Return room and token info for Participant into JWT format
         """
 
     @abstractmethod
-    def consultation_user_info(self, consultation: Consultation, user: User):
+    def consultation_user_info(self, consultation: Consultation, user: User) -> str:
         """
-        Return room and token info for User for specific consultation
-        """
-        
-    @abstractmethod
-    def user_test_info(self, user: User):
-        """
-        Return room and token info for User self test
+        Return room and token info for User for specific consultation into JWT format
         """
 
+    @abstractmethod
+    def user_test_info(self, user: User) -> str:
+        """
+        Return room and token info for User self test into JWT format
+        """
 
 
 MAIN_CLASSES: Dict[str, Type[BaseMediaserver]] = {}
