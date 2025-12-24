@@ -587,6 +587,20 @@ class Message(ModelCeleryAbstract):
             f"Message to {self.recipient_phone or self.recipient_email} - {self.status}"
         )
 
+    @property
+    def phone_number(self):
+        if self.sent_to and self.sent_to.mobile_phone_number:
+            return self.sent_to.mobile_phone_number
+        if self.recipient_phone:
+            return self.recipient_phone
+
+    @property
+    def email(self):
+        if self.sent_to and self.sent_to.email:
+            return self.sent_to.email
+        if self.recipient_email:
+            return self.recipient_email
+
     def clean(self):
         """Validate prefix fields"""
         super().clean()
@@ -598,12 +612,14 @@ class Message(ModelCeleryAbstract):
                 )
             )
 
-        if self.communication_method in [
-            CommunicationMethod.SMS,
-            CommunicationMethod.WHATSAPP,
-        ] and (
-            not self.recipient_phone
-            or (self.sent_to and not self.sent_to.mobile_phone_number)
+        print(self.phone_number)
+        if (
+            self.communication_method
+            in [
+                CommunicationMethod.SMS,
+                CommunicationMethod.WHATSAPP,
+            ]
+            and not self.phone_number
         ):
             raise ValidationError(
                 {
@@ -613,9 +629,7 @@ class Message(ModelCeleryAbstract):
                 }
             )
 
-        if self.communication_method == CommunicationMethod.EMAIL and (
-            not self.recipient_email or (self.sent_to and not self.sent_to.email)
-        ):
+        if self.communication_method == CommunicationMethod.EMAIL and not self.email:
             raise ValidationError(
                 {
                     "recipient_email": _(
@@ -624,19 +638,11 @@ class Message(ModelCeleryAbstract):
                 }
             )
 
-
-@receiver(post_save, sender=Message)
-def queue_message_sending(sender, instance, created, **kwargs):
-    """
-    Automatically queue message for sending when a new message is created
-    """
-    if created and instance.status == MessageStatus.PENDING:
-        print(f"BIN {instance}")
-        # Import here to avoid circular imports
-        from .tasks import send_message_via_provider
-
-        # Queue the message for sending
-        task = send_message_via_provider.delay(instance.id)
-
-        # Update message with task ID (without triggering this signal again)
-        Message.objects.filter(id=instance.id).update(celery_task_id=task.id)
+        if not self.communication_method and not self.sent_to:
+            raise ValidationError(
+                {
+                    "communication_method": _(
+                        "Communication method is required if no sent to user"
+                    )
+                }
+            )
