@@ -92,16 +92,12 @@
       }
 
       @if (hasConsultation()) {
-        <div class="info-card consultation-card">
-          <div class="card-header">
-            <ion-icon name="chatbubbles-outline" class="card-icon"></ion-icon>
-            <h3 class="info-title">Active Consultation</h3>
-          </div>
-          <p class="consultation-hint">You can view messages and communicate with your doctor.</p>
-          <button class="action-button primary-btn" (click)="viewConsultation()">
-            <ion-icon name="chatbubble-ellipses-outline"></ion-icon>
-            View Messages
-          </button>
+        <div class="chat-section">
+          <app-message-list
+            [messages]="messages()"
+            [isConnected]="isConnected()"
+            (sendMessage)="onSendMessage($event)">
+          </app-message-list>
         </div>
       }
 

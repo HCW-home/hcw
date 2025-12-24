@@ -93,7 +93,10 @@
           <div class="slots-container">
             @for (date of weekDates(); track date.getTime()) {
               <div class="day-column">
-                <span class="day-header">{{ formatDisplayDate(date) }}</span>
+                <div class="day-header">
+                  <span class="day-name">{{ formatDayName(date) }}</span>
+                  <span class="day-date">{{ formatDayNumber(date) }}</span>
+                </div>
                 <div class="day-slots">
                   @for (slot of getSlotsForDate(date); track slot.start_time + slot.user_id) {
                     <ion-button

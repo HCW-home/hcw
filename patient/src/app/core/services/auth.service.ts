@@ -52,6 +52,10 @@ export class AuthService {
     return this.http.post(`${this.apiUrl}/auth/registration/`, data);
   }
 
+  forgotPassword(data: { email: string }): Observable<any> {
+    return this.http.post(`${this.apiUrl}/auth/password/reset/`, data);
+  }
+
   requestMagicLink(data: MagicLinkRequest): Observable<any> {
     return this.http.post(`${this.apiUrl}/auth/magic-link/request/`, data);
   }

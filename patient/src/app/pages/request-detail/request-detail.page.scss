@@ -300,6 +300,11 @@ ion-header {
     }
   }
 
+  .chat-section {
+    height: 400px;
+    margin-bottom: var(--app-spacing-md);
+  }
+
   .empty-state {
     display: flex;
     flex-direction: column;

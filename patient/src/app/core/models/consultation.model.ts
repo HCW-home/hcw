@@ -80,6 +80,11 @@ export interface Participant {
   feedback_message?: string;
 }
 
+export interface MessageAttachment {
+  file_name: string;
+  mime_type: string;
+}
+
 export interface ConsultationMessage {
   id: number;
   consultation: number;
@@ -87,7 +92,7 @@ export interface ConsultationMessage {
   created_at: string;
   event?: string;
   content: string;
-  attachment?: string;
+  attachment?: MessageAttachment | null;
 }
 
 export interface ConsultationRequest {

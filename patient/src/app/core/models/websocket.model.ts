@@ -174,11 +174,21 @@ export interface AppointmentUpdatedEvent {
   };
 }
 
+export interface ParticipantsEvent {
+  type: 'participants';
+  data: {
+    id: number;
+    username: string;
+    is_online: boolean;
+  }[];
+}
+
 export type ConsultationIncomingEvent =
   | ConsultationMessageEvent
   | ParticipantJoinedEvent
   | ParticipantLeftEvent
   | AppointmentUpdatedEvent
+  | ParticipantsEvent
   | GroupJoinedEvent
   | GroupLeftEvent
   | ErrorEvent;

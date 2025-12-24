@@ -132,4 +132,8 @@ export class ConsultationService {
       `/appointments/${appointmentId}/join/`
     );
   }
+
+  getMessageAttachment(messageId: number): Observable<Blob> {
+    return this.api.getBlob(`/messages/${messageId}/attachment/`);
+  }
 }

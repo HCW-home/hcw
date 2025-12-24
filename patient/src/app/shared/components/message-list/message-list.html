@@ -1,0 +1,102 @@
+<div class="message-list-container">
+  <div class="message-list-header">
+    <span class="header-title">Messages</span>
+    <span class="connection-status" [class.connected]="isConnected" [class.disconnected]="!isConnected">
+      <ion-icon [name]="isConnected ? 'wifi-outline' : 'cloud-offline-outline'"></ion-icon>
+      {{ isConnected ? 'Connected' : 'Disconnected' }}
+    </span>
+  </div>
+
+  <div class="message-list-body" #messagesContainer>
+    @if (messages.length === 0) {
+      <div class="no-messages">
+        <ion-icon name="chatbubbles-outline" class="empty-icon"></ion-icon>
+        <span>No messages yet</span>
+      </div>
+    } @else {
+      @for (message of messages; track message.id) {
+        <div class="message-item" [class.current-user]="message.isCurrentUser" [class.other-user]="!message.isCurrentUser">
+          <div class="message-header">
+            <span class="message-username">{{ message.username }}</span>
+            <span class="message-time">{{ formatTime(message.timestamp) }}</span>
+          </div>
+          <div class="message-content">
+            @if (message.message) {
+              <p class="message-text">{{ message.message }}</p>
+            }
+            @if (message.attachment) {
+              @if (isImageAttachment(message.attachment)) {
+                @if (getImageUrl(message.id)) {
+                  <div class="message-image-attachment" (click)="openImageViewer(message)">
+                    <img [src]="getImageUrl(message.id)" [alt]="message.attachment.file_name" class="attachment-image-preview">
+                  </div>
+                } @else {
+                  <div class="message-attachment loading">
+                    <ion-spinner name="crescent"></ion-spinner>
+                    <span class="attachment-name">Loading image...</span>
+                  </div>
+                }
+              } @else {
+                <div class="message-attachment">
+                  <ion-icon [name]="getAttachmentIcon(message.attachment)"></ion-icon>
+                  <span class="attachment-name">{{ message.attachment.file_name }}</span>
+                </div>
+              }
+            }
+          </div>
+        </div>
+      }
+    }
+  </div>
+
+  @if (selectedFile) {
+    <div class="selected-file-preview">
+      <ion-icon name="attach-outline"></ion-icon>
+      <span class="file-name">{{ selectedFile.name }}</span>
+      <ion-button fill="clear" size="small" (click)="removeSelectedFile()">
+        <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+      </ion-button>
+    </div>
+  }
+
+  <div class="message-list-footer">
+    <input
+      #fileInput
+      type="file"
+      class="file-input-hidden"
+      (change)="onFileSelected($event)"
+    />
+    <ion-button fill="clear" class="attach-btn" [disabled]="!isConnected" (click)="openFilePicker()">
+      <ion-icon slot="icon-only" name="attach-outline"></ion-icon>
+    </ion-button>
+    <input
+      type="text"
+      class="message-input"
+      [(ngModel)]="newMessage"
+      placeholder="Type a message..."
+      [disabled]="!isConnected"
+      (keyup.enter)="onSendMessage()"
+    />
+    <ion-button
+      fill="solid"
+      class="send-btn"
+      [disabled]="(!newMessage.trim() && !selectedFile) || !isConnected"
+      (click)="onSendMessage()">
+      <ion-icon slot="icon-only" name="send-outline"></ion-icon>
+    </ion-button>
+  </div>
+</div>
+
+@if (viewingImage()) {
+  <div class="image-viewer-overlay" (click)="closeImageViewer()">
+    <div class="image-viewer-content" (click)="$event.stopPropagation()">
+      <div class="image-viewer-header">
+        <span class="image-viewer-title">{{ viewingImage()?.fileName }}</span>
+        <ion-button fill="clear" (click)="closeImageViewer()">
+          <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+        </ion-button>
+      </div>
+      <img [src]="viewingImage()?.url" [alt]="viewingImage()?.fileName" class="full-image">
+    </div>
+  </div>
+}

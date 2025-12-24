@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import {
@@ -15,7 +15,11 @@ import {
 } from '@ionic/angular/standalone';
 import { Subject, takeUntil } from 'rxjs';
 import { ConsultationService } from '../../core/services/consultation.service';
-import { ConsultationRequest, Speciality } from '../../core/models/consultation.model';
+import { ConsultationWebSocketService } from '../../core/services/consultation-websocket.service';
+import { AuthService } from '../../core/services/auth.service';
+import { ConsultationRequest, Speciality, User } from '../../core/models/consultation.model';
+import { WebSocketState } from '../../core/models/websocket.model';
+import { MessageListComponent, Message, SendMessageData } from '../../shared/components/message-list/message-list';
 
 interface RequestStatus {
   label: string;
@@ -37,7 +41,8 @@ interface RequestStatus {
     IonIcon,
     IonBackButton,
     IonContent,
-    IonSpinner
+    IonSpinner,
+    MessageListComponent
   ]
 })
 export class RequestDetailPage implements OnInit, OnDestroy {
@@ -46,15 +51,31 @@ export class RequestDetailPage implements OnInit, OnDestroy {
 
   request = signal<ConsultationRequest | null>(null);
   isLoading = signal(true);
+  messages = signal<Message[]>([]);
+  isConnected = signal(false);
+  currentUser = signal<User | null>(null);
+
+  consultationId = computed(() => {
+    const req = this.request();
+    if (req?.consultation) {
+      return typeof req.consultation === 'object' ? req.consultation.id : req.consultation;
+    }
+    return null;
+  });
 
   constructor(
     private route: ActivatedRoute,
     private navCtrl: NavController,
     private consultationService: ConsultationService,
+    private wsService: ConsultationWebSocketService,
+    private authService: AuthService,
     private toastController: ToastController
   ) {}
 
   ngOnInit(): void {
+    this.loadCurrentUser();
+    this.setupWebSocketSubscriptions();
+
     this.route.params.pipe(takeUntil(this.destroy$)).subscribe(params => {
       this.requestId = +params['id'];
       this.loadRequest();
@@ -62,8 +83,40 @@ export class RequestDetailPage implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.wsService.disconnect();
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  private loadCurrentUser(): void {
+    this.authService.currentUser$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(user => {
+        if (user) {
+          this.currentUser.set(user as User);
+        }
+      });
+  }
+
+  private setupWebSocketSubscriptions(): void {
+    this.wsService.state$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(state => {
+        this.isConnected.set(state === WebSocketState.CONNECTED);
+      });
+
+    this.wsService.messages$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(event => {
+        const newMessage: Message = {
+          id: event.data.id,
+          username: event.data.username,
+          message: event.data.message,
+          timestamp: event.data.timestamp,
+          isCurrentUser: false,
+        };
+        this.messages.update(msgs => [...msgs, newMessage]);
+      });
   }
 
   private loadRequest(): void {
@@ -76,11 +129,91 @@ export class RequestDetailPage implements OnInit, OnDestroy {
         next: (request) => {
           this.request.set(request);
           this.isLoading.set(false);
+
+          if (request.consultation) {
+            const consultationId = typeof request.consultation === 'object'
+              ? request.consultation.id
+              : request.consultation;
+            this.loadMessages(consultationId);
+            this.wsService.connect(consultationId);
+          }
         },
         error: async (error) => {
           this.isLoading.set(false);
           const toast = await this.toastController.create({
             message: error?.error?.detail || 'Failed to load request details',
+            duration: 3000,
+            position: 'bottom',
+            color: 'danger'
+          });
+          await toast.present();
+        }
+      });
+  }
+
+  private loadMessages(consultationId: number): void {
+    this.consultationService.getConsultationMessages(consultationId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (messagesResponse) => {
+          const currentUserId = this.currentUser()?.id;
+          const loadedMessages: Message[] = messagesResponse.map(msg => {
+            const isCurrentUser = msg.created_by.id === currentUserId;
+            return {
+              id: msg.id,
+              username: isCurrentUser ? 'You' : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim(),
+              message: msg.content || '',
+              timestamp: msg.created_at,
+              isCurrentUser,
+              attachment: msg.attachment,
+            };
+          });
+          this.messages.set(loadedMessages);
+        },
+        error: async (error) => {
+          const toast = await this.toastController.create({
+            message: error?.error?.detail || 'Failed to load messages',
+            duration: 3000,
+            position: 'bottom',
+            color: 'danger'
+          });
+          await toast.present();
+        }
+      });
+  }
+
+  onSendMessage(data: SendMessageData): void {
+    const consultationId = this.consultationId();
+    if (!consultationId) return;
+
+    const user = this.currentUser();
+    const tempId = Date.now();
+    const newMessage: Message = {
+      id: tempId,
+      username: 'You',
+      message: data.content || '',
+      timestamp: new Date().toISOString(),
+      isCurrentUser: true,
+      attachment: data.attachment ? { file_name: data.attachment.name, mime_type: data.attachment.type } : null,
+    };
+    this.messages.update(msgs => [...msgs, newMessage]);
+
+    this.consultationService.sendConsultationMessage(consultationId, data.content || '', data.attachment)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (savedMessage) => {
+          this.messages.update(msgs =>
+            msgs.map(m => m.id === tempId ? {
+              ...m,
+              id: savedMessage.id,
+              attachment: savedMessage.attachment
+            } : m)
+          );
+        },
+        error: async (error) => {
+          this.messages.update(msgs => msgs.filter(m => m.id !== tempId));
+          const toast = await this.toastController.create({
+            message: error?.error?.detail || 'Failed to send message',
             duration: 3000,
             position: 'bottom',
             color: 'danger'

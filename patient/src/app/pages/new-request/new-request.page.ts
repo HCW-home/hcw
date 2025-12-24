@@ -333,6 +333,14 @@ export class NewRequestPage implements OnInit, OnDestroy {
     return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   }
 
+  formatDayName(date: Date): string {
+    return date.toLocaleDateString('en-US', { weekday: 'short' });
+  }
+
+  formatDayNumber(date: Date): string {
+    return date.getDate().toString();
+  }
+
   formatSlotTime(slot: Slot): string {
     return `${slot.start_time.substring(0, 5)} - ${slot.end_time.substring(0, 5)}`;
   }

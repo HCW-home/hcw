@@ -45,7 +45,7 @@ export class LoginPage {
   ) {
     this.loginForm = this.fb.group({
       email: ['patient@gmail.com', [Validators.required, Validators.email]],
-      password: ['5r@@WC6vkz3BNzY', [Validators.required, Validators.minLength(6)]]
+      password: ['nHVih82Umdv@Qtk', [Validators.required, Validators.minLength(6)]]
     });
   }
 
@@ -84,13 +84,8 @@ export class LoginPage {
     this.navCtrl.navigateForward('/register');
   }
 
-  async forgotPassword() {
-    const toast = await this.toastCtrl.create({
-      message: 'Password reset functionality coming soon!',
-      duration: 2000,
-      position: 'top'
-    });
-    await toast.present();
+  forgotPassword(): void {
+    this.navCtrl.navigateForward('/forgot-password');
   }
 
   async socialLogin(provider: string) {

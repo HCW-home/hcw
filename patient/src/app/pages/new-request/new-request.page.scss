@@ -204,92 +204,115 @@ ion-header {
   align-items: center;
   justify-content: space-between;
   margin-bottom: var(--app-spacing-lg);
-  background: var(--app-card-background);
+  background: var(--ion-color-primary-bg);
   border-radius: var(--app-card-radius);
-  padding: var(--app-spacing-sm) var(--app-spacing-md);
-  border: 1px solid var(--app-border-color);
+  padding: var(--app-spacing-md) var(--app-spacing-lg);
 
   ion-button {
     --color: var(--ion-color-primary);
+    --padding-start: 8px;
+    --padding-end: 8px;
+
+    ion-icon {
+      font-size: 20px;
+    }
   }
 
   .week-label {
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
     font-weight: 600;
-    color: var(--app-text-primary);
+    color: var(--ion-color-primary);
   }
 }
 
 .slots-container {
-  display: flex;
-  overflow-x: auto;
-  gap: var(--app-spacing-sm);
-  padding-bottom: var(--app-spacing-lg);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--app-spacing-md);
   margin-bottom: var(--app-spacing-lg);
-
-  &::-webkit-scrollbar {
-    height: 4px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--app-border-color);
-    border-radius: 2px;
-  }
 }
 
 .day-column {
-  min-width: 110px;
-  flex-shrink: 0;
   background: var(--app-card-background);
   border-radius: var(--app-card-radius);
-  padding: var(--app-spacing-md) var(--app-spacing-sm);
+  padding: var(--app-spacing-md);
   border: 1px solid var(--app-border-color);
+  min-height: 160px;
 
   .day-header {
-    display: block;
-    font-size: 0.75rem;
-    font-weight: 600;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
     text-align: center;
     margin-bottom: var(--app-spacing-md);
-    color: var(--app-text-primary);
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
+    padding-bottom: var(--app-spacing-sm);
+    border-bottom: 1px solid var(--app-border-color);
+
+    .day-name {
+      font-size: 0.6875rem;
+      font-weight: 500;
+      color: var(--app-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .day-date {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--app-text-primary);
+    }
   }
 
   .day-slots {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    min-height: 100px;
-    align-items: center;
+    gap: 8px;
+    align-items: stretch;
   }
 
   .slot-button {
     width: 100%;
-    font-size: 0.75rem;
-    font-weight: 500;
-    --padding-start: 6px;
-    --padding-end: 6px;
-    --border-radius: 0.5rem;
-    min-height: 32px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    --padding-start: 8px;
+    --padding-end: 8px;
+    --border-radius: 8px;
+    min-height: 36px;
+    margin: 0;
+    letter-spacing: 0.01em;
 
     &.slot-selected {
       --background: var(--ion-color-primary);
       --color: white;
+      --box-shadow: 0 2px 8px rgba(8, 145, 178, 0.35);
     }
 
     &.slot-default {
       --background: var(--app-background);
       --color: var(--app-text-primary);
       --border-color: var(--app-border-color);
+      --border-width: 1px;
+
+      &:hover {
+        --border-color: var(--ion-color-primary);
+      }
     }
   }
 
   .no-slots {
-    font-size: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    min-height: 80px;
+    font-size: 0.8125rem;
     text-align: center;
-    padding: var(--app-spacing-xl) 0;
     color: var(--app-text-muted);
+    background: var(--app-background);
+    border-radius: 8px;
+    padding: var(--app-spacing-md);
   }
 }
 
