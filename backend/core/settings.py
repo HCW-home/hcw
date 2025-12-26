@@ -383,7 +383,7 @@ UNFOLD = {
                     {
                         "title": _("Users"),
                         "icon": "people",
-                        "link": "/admin/users/user/",
+                        "link": reverse_lazy("admin:users_user_changelist"),
                         "permission": lambda request: request.user.has_perm(
                             "users.view_user"
                         ),
@@ -391,7 +391,7 @@ UNFOLD = {
                     {
                         "title": _("Health Metric"),
                         "icon": "people",
-                        "link": "/admin/users/healthmetric/",
+                        "link": reverse_lazy("admin:users_healthmetric_changelist"),
                         "permission": lambda request: request.user.has_perm(
                             "users.view_healthmetric"
                         ),
@@ -399,7 +399,7 @@ UNFOLD = {
                     {
                         "title": _("Groups"),
                         "icon": "group",
-                        "link": "/admin/auth/group/",
+                        "link": reverse_lazy("admin:auth_group_changelist"),
                         "permission": lambda request: request.user.has_perm(
                             "auth.view_group"
                         ),
@@ -407,7 +407,7 @@ UNFOLD = {
                     {
                         "title": _("Organizations"),
                         "icon": "business",
-                        "link": "/admin/users/organisation/",
+                        "link": reverse_lazy("admin:users_organisation_changelist"),
                         "permission": lambda request: request.user.has_perm(
                             "users.view_organisation"
                         ),
@@ -415,7 +415,7 @@ UNFOLD = {
                     {
                         "title": _("Terms"),
                         "icon": "contract",
-                        "link": "/admin/users/term/",
+                        "link": reverse_lazy("admin:users_term_changelist"),
                         "permission": lambda request: request.user.has_perm(
                             "users.view_term"
                         ),
@@ -423,7 +423,7 @@ UNFOLD = {
                     {
                         "title": _("Languages"),
                         "icon": "language",
-                        "link": "/admin/users/language/",
+                        "link": reverse_lazy("admin:users_language_changelist"),
                         "permission": lambda request: request.user.has_perm(
                             "users.view_language"
                         ),
@@ -431,7 +431,7 @@ UNFOLD = {
                     {
                         "title": _("Specialities"),
                         "icon": "medical_services",
-                        "link": "/admin/users/speciality/",
+                        "link": reverse_lazy("admin:users_speciality_changelist"),
                         "permission": lambda request: request.user.has_perm(
                             "users.view_speciality"
                         ),
@@ -439,7 +439,7 @@ UNFOLD = {
                     {
                         "title": _("Notifications"),
                         "icon": "notifications",
-                        "link": "/admin/users/notification/",
+                        "link": reverse_lazy("admin:users_notification_changelist"),
                         "permission": lambda request: request.user.has_perm(
                             "users.view_notification"
                         ),
@@ -447,7 +447,9 @@ UNFOLD = {
                     {
                         "title": _("FCM Devices"),
                         "icon": "phone_android",
-                        "link": "/admin/users/fcmdeviceoverride/",
+                        "link": reverse_lazy(
+                            "admin:users_fcmdeviceoverride_changelist"
+                        ),
                         "permission": lambda request: request.user.has_perm(
                             "users.view_fcmdeviceoverride"
                         ),
@@ -462,7 +464,9 @@ UNFOLD = {
                     {
                         "title": _("Consultations"),
                         "icon": "medical_services",
-                        "link": "/admin/consultations/consultation/",
+                        "link": reverse_lazy(
+                            "admin:consultations_consultation_changelist"
+                        ),
                         "permission": lambda request: request.user.has_perm(
                             "consultations.view_consultation"
                         ),
@@ -470,7 +474,7 @@ UNFOLD = {
                     {
                         "title": _("Queues"),
                         "icon": "group_work",
-                        "link": "/admin/consultations/queue/",
+                        "link": reverse_lazy("admin:consultations_queue_changelist"),
                         "permission": lambda request: request.user.has_perm(
                             "consultations.view_queue"
                         ),
@@ -478,7 +482,9 @@ UNFOLD = {
                     {
                         "title": _("Appointments"),
                         "icon": "schedule",
-                        "link": "/admin/consultations/appointment/",
+                        "link": reverse_lazy(
+                            "admin:consultations_appointment_changelist"
+                        ),
                         "permission": lambda request: request.user.has_perm(
                             "consultations.view_appointment"
                         ),
@@ -486,7 +492,7 @@ UNFOLD = {
                     {
                         "title": _("Messages"),
                         "icon": "message",
-                        "link": "/admin/consultations/message/",
+                        "link": reverse_lazy("admin:consultations_message_changelist"),
                         "permission": lambda request: request.user.has_perm(
                             "consultations.view_message"
                         ),
@@ -494,7 +500,7 @@ UNFOLD = {
                     {
                         "title": _("Reasons"),
                         "icon": "list",
-                        "link": "/admin/consultations/reason/",
+                        "link": reverse_lazy("admin:consultations_reason_changelist"),
                         "permission": lambda request: request.user.has_perm(
                             "consultations.view_reason"
                         ),
@@ -502,7 +508,7 @@ UNFOLD = {
                     {
                         "title": _("Requests"),
                         "icon": "inbox",
-                        "link": "/admin/consultations/request/",
+                        "link": reverse_lazy("admin:consultations_request_changelist"),
                         "permission": lambda request: request.user.has_perm(
                             "consultations.view_request"
                         ),
@@ -510,7 +516,9 @@ UNFOLD = {
                     {
                         "title": _("Booking slots"),
                         "icon": "event",
-                        "link": "/admin/consultations/bookingslot/",
+                        "link": reverse_lazy(
+                            "admin:consultations_bookingslot_changelist"
+                        ),
                         "permission": lambda request: request.user.has_perm(
                             "consultations.view_bookingslot"
                         ),
@@ -525,7 +533,9 @@ UNFOLD = {
                     {
                         "title": _("Messaging providers"),
                         "icon": "settings_applications",
-                        "link": "/admin/messaging/messagingprovider/",
+                        "link": reverse_lazy(
+                            "admin:messaging_messagingprovider_changelist"
+                        ),
                         "permission": lambda request: request.user.has_perm(
                             "messaging.view_messagingprovider"
                         ),
@@ -533,7 +543,7 @@ UNFOLD = {
                     {
                         "title": _("Messages"),
                         "icon": "message",
-                        "link": "/admin/messaging/message/",
+                        "link": reverse_lazy("admin:messaging_message_changelist"),
                         "permission": lambda request: request.user.has_perm(
                             "messaging.view_messagingprovider"
                         ),
@@ -541,7 +551,7 @@ UNFOLD = {
                     {
                         "title": _("Templates"),
                         "icon": "description",
-                        "link": "/admin/messaging/template/",
+                        "link": reverse_lazy("admin:messaging_template_changelist"),
                         "permission": lambda request: request.user.has_perm(
                             "messaging.view_template"
                         ),
@@ -549,7 +559,9 @@ UNFOLD = {
                     {
                         "title": _("Template Validations"),
                         "icon": "verified",
-                        "link": "/admin/messaging/templatevalidation/",
+                        "link": reverse_lazy(
+                            "admin:messaging_templatevalidation_changelist"
+                        ),
                         "permission": lambda request: request.user.has_perm(
                             "messaging.view_templatevalidation"
                         ),
@@ -564,7 +576,7 @@ UNFOLD = {
                     {
                         "title": _("Media Server"),
                         "icon": "videocam",
-                        "link": "/admin/mediaserver/server/",
+                        "link": reverse_lazy("admin:mediaserver_server_changelist"),
                         "permission": lambda request: request.user.has_perm(
                             "mediaserver.view_server"
                         ),
@@ -572,7 +584,7 @@ UNFOLD = {
                     {
                         "title": _("TURN Server"),
                         "icon": "router",
-                        "link": "/admin/mediaserver/turn/",
+                        "link": reverse_lazy("admin:mediaserver_turn_changelist"),
                         "permission": lambda request: request.user.has_perm(
                             "mediaserver.view_turn"
                         ),

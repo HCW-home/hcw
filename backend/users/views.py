@@ -1,87 +1,118 @@
-from rest_framework_simplejwt.tokens import RefreshToken
-from django.shortcuts import render
-from django.views.generic import View
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, DjangoModelPermissions, BasePermission
-from rest_framework.pagination import PageNumberPagination
-from rest_framework import filters
-from django.contrib.auth import get_user_model
-from drf_spectacular.utils import extend_schema
-from .models import Speciality, Language
-from .serializers import SpecialitySerializer, UserDetailsSerializer, LanguageSerializer, OrganisationSerializer
-from consultations.serializers import ReasonSerializer, AppointmentDetailSerializer
-from itsdangerous import URLSafeTimedSerializer
-from django.conf import settings
-from rest_framework.views import APIView
-from django.core.mail import send_mail
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes, OpenApiExample
-from consultations.models import Consultation, Appointment, Participant, Message as ConsultationMessage
-from consultations.serializers import ConsultationSerializer, AppointmentSerializer, ConsultationMessageSerializer
-from messaging.models import Message
-from messaging.serializers import MessageSerializer
-from .models import HealthMetric
-from .serializers import HealthMetricSerializer
-from allauth.socialaccount.providers.oauth2.client import OAuth2Client
-from dj_rest_auth.registration.views import SocialLoginView
-from dj_rest_auth.registration.serializers import SocialLoginSerializer
-from allauth.socialaccount.providers.openid_connect.views import OpenIDConnectOAuth2Adapter
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from mediaserver.models import Server
-from django.http import FileResponse
 import mimetypes
 import os
 
+from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+from allauth.socialaccount.providers.openid_connect.views import (
+    OpenIDConnectOAuth2Adapter,
+)
+from consultations.models import Appointment, Consultation, Participant
+from consultations.models import Message as ConsultationMessage
+from consultations.serializers import (
+    AppointmentDetailSerializer,
+    AppointmentSerializer,
+    ConsultationMessageSerializer,
+    ConsultationSerializer,
+    ReasonSerializer,
+)
+from dj_rest_auth.registration.serializers import SocialLoginSerializer
+from dj_rest_auth.registration.views import SocialLoginView
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.core.mail import send_mail
+from django.http import FileResponse
+from django.shortcuts import render
+from django.views.generic import View
+from drf_spectacular.utils import (
+    OpenApiExample,
+    OpenApiParameter,
+    OpenApiTypes,
+    extend_schema,
+)
+from itsdangerous import URLSafeTimedSerializer
+from mediaserver.models import Server
+from messaging.models import Message
+from messaging.serializers import MessageSerializer
+from rest_framework import filters, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import (
+    BasePermission,
+    DjangoModelPermissions,
+    IsAuthenticated,
+)
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from .models import HealthMetric, Language, Speciality
+from .serializers import (
+    HealthMetricSerializer,
+    LanguageSerializer,
+    OrganisationSerializer,
+    SpecialitySerializer,
+    UserDetailsSerializer,
+)
+
 User = get_user_model()
+
 
 class DjangoModelPermissionsWithView(DjangoModelPermissions):
     """
     Custom permission class that includes view permissions.
     """
+
     perms_map = {
-        'GET': ['%(app_label)s.view_%(model_name)s'],
-        'OPTIONS': [],
-        'HEAD': [],
-        'POST': ['%(app_label)s.add_%(model_name)s'],
-        'PUT': ['%(app_label)s.change_%(model_name)s'],
-        'PATCH': ['%(app_label)s.change_%(model_name)s'],
-        'DELETE': ['%(app_label)s.delete_%(model_name)s'],
+        "GET": ["%(app_label)s.view_%(model_name)s"],
+        "OPTIONS": [],
+        "HEAD": [],
+        "POST": ["%(app_label)s.add_%(model_name)s"],
+        "PUT": ["%(app_label)s.change_%(model_name)s"],
+        "PATCH": ["%(app_label)s.change_%(model_name)s"],
+        "DELETE": ["%(app_label)s.delete_%(model_name)s"],
     }
+
 
 # Create your views here.
 
+
 class UniversalPagination(PageNumberPagination):
     page_size = 20
-    page_size_query_param = 'page_size'
+    page_size_query_param = "page_size"
     max_page_size = 100
+
 
 User = get_user_model()
 
+
 class Home(View):
-    template_name = 'useapp.html'
-    
+    template_name = "useapp.html"
+
     def get(self, request, *args, **kwargs):
         return render(request, self.template_name)
+
 
 class LanguageViewSet(viewsets.ReadOnlyModelViewSet):
     """
     ViewSet for languages - read only
     """
+
     queryset = Language.objects.all()
     serializer_class = LanguageSerializer
     permission_classes = [IsAuthenticated]
+
 
 class SpecialityViewSet(viewsets.ReadOnlyModelViewSet):
     """
     ViewSet for specialities - read only
     """
+
     queryset = Speciality.objects.all()
     serializer_class = SpecialitySerializer
     permission_classes = [IsAuthenticated]
 
     @extend_schema(responses=ReasonSerializer(many=True))
-    @action(detail=True, methods=['get'])
+    @action(detail=True, methods=["get"])
     def reasons(self, request, pk=None):
         """Get active reasons for this specialty"""
         specialty = self.get_object()
@@ -90,7 +121,7 @@ class SpecialityViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(serializer.data)
 
     @extend_schema(responses=UserDetailsSerializer(many=True))
-    @action(detail=True, methods=['get'])
+    @action(detail=True, methods=["get"])
     def doctors(self, request, pk=None):
         """Get doctors for this specialty"""
         specialty = self.get_object()
@@ -99,16 +130,15 @@ class SpecialityViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(serializer.data)
 
     @extend_schema(responses=OrganisationSerializer(many=True))
-    @action(detail=True, methods=['get'])
+    @action(detail=True, methods=["get"])
     def organisations(self, request, pk=None):
         """Get organisations based on users with this specialty"""
         specialty = self.get_object()
         # Get users with this specialty who have a main_organisation
         users_with_specialty = User.objects.filter(
-            specialities=specialty,
-            main_organisation__isnull=False
-        ).select_related('main_organisation')
-        
+            specialities=specialty, main_organisation__isnull=False
+        ).select_related("main_organisation")
+
         # Extract unique organizations
         organisations = []
         seen_org_ids = set()
@@ -116,7 +146,7 @@ class SpecialityViewSet(viewsets.ReadOnlyModelViewSet):
             if user.main_organisation.id not in seen_org_ids:
                 organisations.append(user.main_organisation)
                 seen_org_ids.add(user.main_organisation.id)
-        
+
         serializer = OrganisationSerializer(organisations, many=True)
         return Response(serializer.data)
 
@@ -145,13 +175,13 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
         consultations = Consultation.objects.filter(beneficiary=user)
 
         # Filter by status if provided
-        status = self.request.query_params.get('status')
-        if status == 'open':
+        status = self.request.query_params.get("status")
+        if status == "open":
             consultations = consultations.filter(closed_at__isnull=True)
-        elif status == 'closed':
+        elif status == "closed":
             consultations = consultations.filter(closed_at__isnull=False)
 
-        return consultations.order_by('-created_at')
+        return consultations.order_by("-created_at")
 
     @extend_schema(
         parameters=[
@@ -161,13 +191,13 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
                 required=False,
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
-                enum=['open', 'closed']
+                enum=["open", "closed"],
             ),
         ],
         responses={
             200: ConsultationSerializer(many=True),
         },
-        description="Get paginated consultations where the authenticated user is the beneficiary or participant."
+        description="Get paginated consultations where the authenticated user is the beneficiary or participant.",
     )
     def list(self, request, *args, **kwargs):
         """List all consultations for the authenticated user."""
@@ -177,14 +207,12 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
         responses={
             200: ConsultationSerializer,
             404: {
-                'type': 'object',
-                'properties': {
-                    'detail': {'type': 'string'}
-                },
-                'example': {"detail": "Not found."}
-            }
+                "type": "object",
+                "properties": {"detail": {"type": "string"}},
+                "example": {"detail": "Not found."},
+            },
         },
-        description="Get a specific consultation by ID."
+        description="Get a specific consultation by ID.",
     )
     def retrieve(self, request, *args, **kwargs):
         """Get a specific consultation by ID."""
@@ -196,22 +224,20 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
             200: ConsultationMessageSerializer(many=True),
             201: ConsultationMessageSerializer,
             404: {
-                'type': 'object',
-                'properties': {
-                    'detail': {'type': 'string'}
-                },
-                'example': {"detail": "Consultation not found."}
-            }
+                "type": "object",
+                "properties": {"detail": {"type": "string"}},
+                "example": {"detail": "Consultation not found."},
+            },
         },
-        description="Get messages for this consultation (paginated) or create a new message."
+        description="Get messages for this consultation (paginated) or create a new message.",
     )
-    @action(detail=True, methods=['get', 'post'])
+    @action(detail=True, methods=["get", "post"])
     def messages(self, request, pk=None):
         """Get messages for this consultation or create a new message."""
         consultation = self.get_object()
 
-        if request.method == 'GET':
-            messages = consultation.messages.all().order_by('-created_at')
+        if request.method == "GET":
+            messages = consultation.messages.all().order_by("-created_at")
 
             # Apply pagination
             page = self.paginate_queryset(messages)
@@ -222,17 +248,16 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
             serializer = ConsultationMessageSerializer(messages, many=True)
             return Response(serializer.data)
 
-        elif request.method == 'POST':
+        elif request.method == "POST":
             serializer = ConsultationMessageSerializer(
-                data=request.data,
-                context={'request': request}
+                data=request.data, context={"request": request}
             )
 
             if serializer.is_valid():
                 message = serializer.save(consultation=consultation)
                 return Response(
                     ConsultationMessageSerializer(message).data,
-                    status=status.HTTP_201_CREATED
+                    status=status.HTTP_201_CREATED,
                 )
 
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -242,24 +267,22 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
         responses={
             200: ConsultationMessageSerializer,
             404: {
-                'type': 'object',
-                'properties': {
-                    'detail': {'type': 'string'}
-                },
-                'example': {"detail": "Message not found."}
-            }
+                "type": "object",
+                "properties": {"detail": {"type": "string"}},
+                "example": {"detail": "Message not found."},
+            },
         },
         parameters=[
             OpenApiParameter(
-                name='message_id',
+                name="message_id",
                 type=OpenApiTypes.INT,
                 location=OpenApiParameter.PATH,
-                description='ID of the message to update'
+                description="ID of the message to update",
             )
         ],
-        description="Update a specific message in this consultation."
+        description="Update a specific message in this consultation.",
     )
-    @action(detail=True, methods=['patch'], url_path='messages/(?P<message_id>[^/.]+)')
+    @action(detail=True, methods=["patch"], url_path="messages/(?P<message_id>[^/.]+)")
     def update_message(self, request, pk=None, message_id=None):
         """Update a specific message in this consultation."""
         consultation = self.get_object()
@@ -268,15 +291,14 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
             message = consultation.messages.get(id=message_id, created_by=request.user)
         except ConsultationMessage.DoesNotExist:
             return Response(
-                {"detail": "Message not found or you don't have permission to update it."},
-                status=status.HTTP_404_NOT_FOUND
+                {
+                    "detail": "Message not found or you don't have permission to update it."
+                },
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         serializer = ConsultationMessageSerializer(
-            message,
-            data=request.data,
-            partial=True,
-            context={'request': request}
+            message, data=request.data, partial=True, context={"request": request}
         )
 
         if serializer.is_valid():
@@ -293,35 +315,34 @@ class MessageAttachmentView(APIView):
     @extend_schema(
         responses={
             200: {
-                'type': 'string',
-                'format': 'binary',
-                'description': 'Binary file content with appropriate Content-Type and Content-Disposition headers'
+                "type": "string",
+                "format": "binary",
+                "description": "Binary file content with appropriate Content-Type and Content-Disposition headers",
             },
             404: {
-                'type': 'object',
-                'properties': {
-                    'detail': {'type': 'string'}
-                },
-                'example': {"detail": "Message not found or no attachment."}
+                "type": "object",
+                "properties": {"detail": {"type": "string"}},
+                "example": {"detail": "Message not found or no attachment."},
             },
             403: {
-                'type': 'object',
-                'properties': {
-                    'detail': {'type': 'string'}
+                "type": "object",
+                "properties": {"detail": {"type": "string"}},
+                "example": {
+                    "detail": "You don't have permission to access this message."
                 },
-                'example': {"detail": "You don't have permission to access this message."}
-            }
+            },
         },
-        description="Download attachment for a specific message. Returns the file as binary content with appropriate Content-Type header. User must have access to the consultation containing the message."
+        description="Download attachment for a specific message. Returns the file as binary content with appropriate Content-Type header. User must have access to the consultation containing the message.",
     )
     def get(self, request, message_id):
         """Get attachment for a specific message if user has permission."""
         try:
-            message = ConsultationMessage.objects.select_related('consultation').get(id=message_id)
+            message = ConsultationMessage.objects.select_related("consultation").get(
+                id=message_id
+            )
         except ConsultationMessage.DoesNotExist:
             return Response(
-                {"detail": "Message not found."},
-                status=status.HTTP_404_NOT_FOUND
+                {"detail": "Message not found."}, status=status.HTTP_404_NOT_FOUND
             )
 
         user = request.user
@@ -331,23 +352,24 @@ class MessageAttachmentView(APIView):
         consultation = message.consultation
 
         has_access = (
-            consultation.created_by == user or
-            consultation.owned_by == user or
-            consultation.group and consultation.group.users.filter(id=user.id).exists() or
-            consultation.beneficiary == user
+            consultation.created_by == user
+            or consultation.owned_by == user
+            or consultation.group
+            and consultation.group.users.filter(id=user.id).exists()
+            or consultation.beneficiary == user
         )
 
         if not has_access:
             return Response(
                 {"detail": "You don't have permission to access this message."},
-                status=status.HTTP_403_FORBIDDEN
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         # Check if message has an attachment
         if not message.attachment:
             return Response(
                 {"detail": "Message has no attachment."},
-                status=status.HTTP_404_NOT_FOUND
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         file_path = message.attachment.path
@@ -356,24 +378,24 @@ class MessageAttachmentView(APIView):
         # Guess the content type
         content_type, _ = mimetypes.guess_type(file_path)
         if content_type is None:
-            content_type = 'application/octet-stream'
+            content_type = "application/octet-stream"
 
         # Open and return the file
         try:
-            response = FileResponse(open(file_path, 'rb'), content_type=content_type)
-            response['Content-Disposition'] = f'inline; filename="{file_name}"'
+            response = FileResponse(open(file_path, "rb"), content_type=content_type)
+            response["Content-Disposition"] = f'inline; filename="{file_name}"'
             return response
         except FileNotFoundError:
             return Response(
                 {"detail": "Attachment file not found."},
-                status=status.HTTP_404_NOT_FOUND
+                status=status.HTTP_404_NOT_FOUND,
             )
 
 
 class UserNotificationsView(APIView):
     permission_classes = [IsAuthenticated]
     pagination_class = UniversalPagination
-    
+
     @extend_schema(
         parameters=[
             OpenApiParameter(
@@ -382,7 +404,7 @@ class UserNotificationsView(APIView):
                 required=False,
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
-                enum=['read', 'delivered', 'sent', 'pending', 'failed']
+                enum=["read", "delivered", "sent", "pending", "failed"],
             ),
             OpenApiParameter(
                 name="page",
@@ -404,8 +426,8 @@ class UserNotificationsView(APIView):
         },
         examples=[
             OpenApiExample(
-                'Get paginated notifications',
-                description='Returns paginated notifications for the user',
+                "Get paginated notifications",
+                description="Returns paginated notifications for the user",
                 value={
                     "count": 25,
                     "next": "http://localhost:8000/api/user/notifications/?page=2",
@@ -418,26 +440,26 @@ class UserNotificationsView(APIView):
                             "communication_method": "email",
                             "status": "delivered",
                             "sent_at": "2025-01-15T10:30:00Z",
-                            "created_at": "2025-01-15T10:29:00Z"
+                            "created_at": "2025-01-15T10:29:00Z",
                         }
-                    ]
+                    ],
                 },
-                response_only=True
+                response_only=True,
             ),
         ],
-        description="Get paginated notifications (messages) where the authenticated user is the recipient. Filter by message status. Default page size is 20, max 100."
+        description="Get paginated notifications (messages) where the authenticated user is the recipient. Filter by message status. Default page size is 20, max 100.",
     )
     def get(self, request):
         """Get all notifications for the authenticated user as recipient."""
         notifications = Message.objects.filter(sent_to=request.user)
-        
+
         # Filter by status if provided
-        status = request.query_params.get('status')
+        status = request.query_params.get("status")
         if status:
             notifications = notifications.filter(status=status)
-        
-        notifications = notifications.order_by('-created_at')
-        
+
+        notifications = notifications.order_by("-created_at")
+
         # Apply pagination
         paginator = self.pagination_class()
         paginated_notifications = paginator.paginate_queryset(notifications, request)
@@ -449,7 +471,7 @@ class UserAppointmentsView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     pagination_class = UniversalPagination
-    
+
     @extend_schema(
         parameters=[
             OpenApiParameter(
@@ -458,7 +480,7 @@ class UserAppointmentsView(APIView):
                 required=False,
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
-                enum=['Scheduled', 'Cancelled']
+                enum=["Scheduled", "Cancelled"],
             ),
             OpenApiParameter(
                 name="page",
@@ -480,8 +502,8 @@ class UserAppointmentsView(APIView):
         },
         examples=[
             OpenApiExample(
-                'Get paginated appointments',
-                description='Returns paginated appointments where user is a participant',
+                "Get paginated appointments",
+                description="Returns paginated appointments where user is a participant",
                 value={
                     "count": 15,
                     "next": "http://localhost:8000/api/user/appointments/?page=2",
@@ -492,30 +514,29 @@ class UserAppointmentsView(APIView):
                             "scheduled_at": "2025-01-16T10:00:00Z",
                             "end_expected_at": "2025-01-16T10:30:00Z",
                             "status": "Scheduled",
-                            "created_at": "2025-01-15T08:00:00Z"
+                            "created_at": "2025-01-15T08:00:00Z",
                         }
-                    ]
+                    ],
                 },
-                response_only=True
+                response_only=True,
             ),
         ],
-        description="Get paginated appointments where the authenticated user is a participant. Filter by appointment status. Default page size is 20, max 100."
+        description="Get paginated appointments where the authenticated user is a participant. Filter by appointment status. Default page size is 20, max 100.",
     )
     def get(self, request):
-
         """Get all appointments where the authenticated user is a participant."""
         # Get appointments where user is a participant
         appointments = Appointment.objects.filter(
             participant__user=request.user
         ).distinct()
-        
+
         # Filter by status if provided
-        status = request.query_params.get('status')
+        status = request.query_params.get("status")
         if status:
             appointments = appointments.filter(status=status)
-        
-        appointments = appointments.order_by('-scheduled_at')
-        
+
+        appointments = appointments.order_by("-scheduled_at")
+
         # Apply pagination
         paginator = self.pagination_class()
         paginated_appointments = paginator.paginate_queryset(appointments, request)
@@ -526,7 +547,7 @@ class UserAppointmentsView(APIView):
 class UserHealthMetricsView(APIView):
     permission_classes = [IsAuthenticated]
     pagination_class = UniversalPagination
-    
+
     @extend_schema(
         parameters=[
             OpenApiParameter(
@@ -537,7 +558,7 @@ class UserHealthMetricsView(APIView):
                 location=OpenApiParameter.QUERY,
             ),
             OpenApiParameter(
-                name="to_date", 
+                name="to_date",
                 description="Filter health metrics up to this date (format: YYYY-MM-DD)",
                 required=False,
                 type=OpenApiTypes.DATE,
@@ -570,8 +591,8 @@ class UserHealthMetricsView(APIView):
         },
         examples=[
             OpenApiExample(
-                'Get paginated health metrics',
-                description='Returns paginated health metrics for the authenticated user',
+                "Get paginated health metrics",
+                description="Returns paginated health metrics for the authenticated user",
                 value={
                     "count": 25,
                     "next": "http://localhost:8000/api/user/healthmetrics/?page=2",
@@ -586,45 +607,57 @@ class UserHealthMetricsView(APIView):
                             "temperature_c": "36.5",
                             "source": "manual",
                             "notes": "Regular checkup",
-                            "created_at": "2025-01-15T10:35:00Z"
+                            "created_at": "2025-01-15T10:35:00Z",
                         }
-                    ]
+                    ],
                 },
-                response_only=True
+                response_only=True,
             ),
         ],
-        description="Get paginated health metrics for the authenticated user. Filter by date range and source. All health metrics fields are included in the response. Default page size is 20, max 100."
+        description="Get paginated health metrics for the authenticated user. Filter by date range and source. All health metrics fields are included in the response. Default page size is 20, max 100.",
     )
     def get(self, request):
         """Get all health metrics for the authenticated user."""
         health_metrics = HealthMetric.objects.filter(user=request.user)
-        
+
         # Filter by date range
-        from_date = request.query_params.get('from_date')
+        from_date = request.query_params.get("from_date")
         if from_date:
             try:
                 from datetime import datetime
-                from_date_obj = datetime.strptime(from_date, '%Y-%m-%d').date()
-                health_metrics = health_metrics.filter(measured_at__date__gte=from_date_obj)
+
+                from_date_obj = datetime.strptime(from_date, "%Y-%m-%d").date()
+                health_metrics = health_metrics.filter(
+                    measured_at__date__gte=from_date_obj
+                )
             except ValueError:
-                return Response({"error": "Invalid from_date format. Use YYYY-MM-DD"}, status=status.HTTP_400_BAD_REQUEST)
-        
-        to_date = request.query_params.get('to_date')
+                return Response(
+                    {"error": "Invalid from_date format. Use YYYY-MM-DD"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        to_date = request.query_params.get("to_date")
         if to_date:
             try:
                 from datetime import datetime
-                to_date_obj = datetime.strptime(to_date, '%Y-%m-%d').date()
-                health_metrics = health_metrics.filter(measured_at__date__lte=to_date_obj)
+
+                to_date_obj = datetime.strptime(to_date, "%Y-%m-%d").date()
+                health_metrics = health_metrics.filter(
+                    measured_at__date__lte=to_date_obj
+                )
             except ValueError:
-                return Response({"error": "Invalid to_date format. Use YYYY-MM-DD"}, status=status.HTTP_400_BAD_REQUEST)
-        
+                return Response(
+                    {"error": "Invalid to_date format. Use YYYY-MM-DD"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
         # Filter by source
-        source = request.query_params.get('source')
+        source = request.query_params.get("source")
         if source:
             health_metrics = health_metrics.filter(source__icontains=source)
-        
-        health_metrics = health_metrics.order_by('-measured_at')
-        
+
+        health_metrics = health_metrics.order_by("-measured_at")
+
         # Apply pagination
         paginator = self.pagination_class()
         paginated_health_metrics = paginator.paginate_queryset(health_metrics, request)
@@ -637,12 +670,13 @@ class UserViewSet(viewsets.ModelViewSet):
     ViewSet for users - read only with GET endpoint
     Supports search by first name, last name, and email
     """
+
     queryset = User.objects.filter(temporary=False)
     serializer_class = UserDetailsSerializer
     permission_classes = [IsAuthenticated, DjangoModelPermissionsWithView]
     pagination_class = UniversalPagination
     filter_backends = [filters.SearchFilter]
-    search_fields = ['first_name', 'last_name', 'email']
+    search_fields = ["first_name", "last_name", "email"]
 
     def update(self, request, *args, **kwargs):
         """Prevent updating users with superuser, staff access, or users in groups."""
@@ -652,14 +686,14 @@ class UserViewSet(viewsets.ModelViewSet):
         if user.is_superuser or user.is_staff:
             return Response(
                 {"detail": "Cannot update users with portal or super admin access."},
-                status=status.HTTP_403_FORBIDDEN
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         # Prevent updating users who belong to any group
         if user.groups.exists():
             return Response(
                 {"detail": "Cannot update users who belong to a group."},
-                status=status.HTTP_403_FORBIDDEN
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         return super().update(request, *args, **kwargs)
@@ -672,24 +706,24 @@ class UserViewSet(viewsets.ModelViewSet):
         if user.is_superuser or user.is_staff:
             return Response(
                 {"detail": "Cannot update users with portal or super admin access."},
-                status=status.HTTP_403_FORBIDDEN
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         # Prevent updating users who belong to any group
         if user.groups.exists():
             return Response(
                 {"detail": "Cannot update users who belong to a group."},
-                status=status.HTTP_403_FORBIDDEN
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         return super().partial_update(request, *args, **kwargs)
-    
+
     @extend_schema(responses=HealthMetricSerializer(many=True))
-    @action(detail=True, methods=['get'])
+    @action(detail=True, methods=["get"])
     def healthmetric(self, request, pk=None):
         """Get health metrics for this user"""
         user = self.get_object()
-        health_metrics = HealthMetric.objects.filter(user=user).order_by('-measured_at')
+        health_metrics = HealthMetric.objects.filter(user=user).order_by("-measured_at")
 
         page = self.paginate_queryset(health_metrics)
         if page is not None:
@@ -700,13 +734,14 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @extend_schema(responses=SpecialitySerializer(many=True))
-    @action(detail=True, methods=['get'])
+    @action(detail=True, methods=["get"])
     def specialities(self, request, pk=None):
         """Get specialities for this user"""
         user = self.get_object()
         specialities = user.specialities.all()
         serializer = SpecialitySerializer(specialities, many=True)
         return Response(serializer.data)
+
 
 class OpenIDView(SocialLoginView):
     adapter_class = OpenIDConnectOAuth2Adapter
@@ -720,140 +755,141 @@ class UserAppointmentViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         """Get appointments where the user is a participant."""
-        return Appointment.objects.select_related(
-            'consultation__created_by',
-            'consultation__owned_by',
-            'consultation__beneficiary',
-            'consultation__group',
-            'created_by'
-        ).prefetch_related(
-            'participant_set__user',
-            'consultation__group__users'
-        ).filter(
-            participant__user=self.request.user
-        ).distinct()
+        return (
+            Appointment.objects.select_related(
+                "consultation__created_by",
+                "consultation__owned_by",
+                "consultation__beneficiary",
+                "consultation__group",
+                "created_by",
+            )
+            .prefetch_related("participants__user", "consultation__group__users")
+            .filter(participant__user=self.request.user)
+            .distinct()
+        )
 
     @extend_schema(
         request={
-            'application/json': {
-                'type': 'object',
-                'properties': {
-                    'is_present': {
-                        'type': 'boolean',
-                        'example': True
-                    }
-                },
-                'required': ['is_present']
+            "application/json": {
+                "type": "object",
+                "properties": {"is_present": {"type": "boolean", "example": True}},
+                "required": ["is_present"],
             }
         },
         responses={
             200: {
-                'type': 'object',
-                'properties': {
-                    'detail': {'type': 'string'},
-                    'is_confirmed': {'type': 'boolean'}
+                "type": "object",
+                "properties": {
+                    "detail": {"type": "string"},
+                    "is_confirmed": {"type": "boolean"},
                 },
-                'example': {"detail": "Presence updated successfully.", "is_confirmed": True}
+                "example": {
+                    "detail": "Presence updated successfully.",
+                    "is_confirmed": True,
+                },
             },
             400: {
-                'type': 'object',
-                'properties': {
-                    'detail': {'type': 'string'}
-                },
-                'example': {"detail": "is_present parameter is required."}
+                "type": "object",
+                "properties": {"detail": {"type": "string"}},
+                "example": {"detail": "is_present parameter is required."},
             },
             404: {
-                'type': 'object',
-                'properties': {
-                    'detail': {'type': 'string'}
+                "type": "object",
+                "properties": {"detail": {"type": "string"}},
+                "example": {
+                    "detail": "Appointment not found or you are not a participant."
                 },
-                'example': {"detail": "Appointment not found or you are not a participant."}
-            }
+            },
         },
-        description="Update the presence (is_confirmed) of the authenticated user in the appointment."
+        description="Update the presence (is_confirmed) of the authenticated user in the appointment.",
     )
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=["post"])
     def presence(self, request, pk=None):
         """Update participant presence (is_confirmed field)."""
-        is_present = request.data.get('is_present')
+        is_present = request.data.get("is_present")
 
         if is_present is None:
             return Response(
                 {"detail": "is_present parameter is required."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         appointment = self.get_object()
 
         try:
             participant = Participant.objects.get(
-                appointment=appointment,
-                user=request.user
+                appointment=appointment, user=request.user
             )
             participant.is_confirmed = bool(is_present)
             participant.save()
 
-            return Response({
-                "detail": "Presence updated successfully.",
-                "is_confirmed": participant.is_confirmed
-            })
+            return Response(
+                {
+                    "detail": "Presence updated successfully.",
+                    "is_confirmed": participant.is_confirmed,
+                }
+            )
 
         except Participant.DoesNotExist:
             return Response(
                 {"detail": "You are not a participant in this appointment."},
-                status=status.HTTP_404_NOT_FOUND
+                status=status.HTTP_404_NOT_FOUND,
             )
 
     @extend_schema(
         responses={
             200: {
-                'type': 'object',
-                'properties': {
-                    'url': {'type': 'string', 'description': 'Media server URL'},
-                    'token': {'type': 'string', 'description': 'JWT token for RTC connection'},
-                    'room': {'type': 'string', 'description': 'Test room name'}
+                "type": "object",
+                "properties": {
+                    "url": {"type": "string", "description": "Media server URL"},
+                    "token": {
+                        "type": "string",
+                        "description": "JWT token for RTC connection",
+                    },
+                    "room": {"type": "string", "description": "Test room name"},
                 },
-                'example': {
+                "example": {
                     "url": "wss://livekit.example.com",
                     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-                    "room": "usertest_123"
-                }
+                    "room": "usertest_123",
+                },
             },
             500: {
-                'type': 'object',
-                'properties': {
-                    'detail': {'type': 'string'}
-                },
-                'example': {"detail": "No media server available."}
-            }
+                "type": "object",
+                "properties": {"detail": {"type": "string"}},
+                "example": {"detail": "No media server available."},
+            },
         },
-        description="Get RTC test connection information for the authenticated user. Returns server URL, JWT token, and room name for testing WebRTC connection."
+        description="Get RTC test connection information for the authenticated user. Returns server URL, JWT token, and room name for testing WebRTC connection.",
     )
-    @action(detail=True, methods=['get'])
+    @action(detail=True, methods=["get"])
     def join(self, request, pk=None):
         """Join consultation call"""
         appointment = self.get_object()
         if appointment.consultation.closed_at:
             return Response(
-                {'error': 'Cannot join call in closed consultation'},
-                status=status.HTTP_400_BAD_REQUEST
+                {"error": "Cannot join call in closed consultation"},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         try:
             server = Server.get_server()
 
             consultation_call_info = server.instance.appointment_participant_info(
-                appointment, request.user)
+                appointment, request.user
+            )
 
-            return Response({
-                'url': server.url,
-                'token': consultation_call_info,
-                'room': f"appointment_{appointment.pk}"
-            })
+            return Response(
+                {
+                    "url": server.url,
+                    "token": consultation_call_info,
+                    "room": f"appointment_{appointment.pk}",
+                }
+            )
         except Exception as e:
             return Response(
                 {"detail": "No media server available."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
 
@@ -864,42 +900,45 @@ class TestRTCView(APIView):
     @extend_schema(
         responses={
             200: {
-                'type': 'object',
-                'properties': {
-                    'url': {'type': 'string', 'description': 'Media server URL'},
-                    'token': {'type': 'string', 'description': 'JWT token for RTC connection'},
-                    'room': {'type': 'string', 'description': 'Test room name'}
+                "type": "object",
+                "properties": {
+                    "url": {"type": "string", "description": "Media server URL"},
+                    "token": {
+                        "type": "string",
+                        "description": "JWT token for RTC connection",
+                    },
+                    "room": {"type": "string", "description": "Test room name"},
                 },
-                'example': {
+                "example": {
                     "url": "wss://livekit.example.com",
                     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-                    "room": "usertest_123"
-                }
+                    "room": "usertest_123",
+                },
             },
             500: {
-                'type': 'object',
-                'properties': {
-                    'detail': {'type': 'string'}
-                },
-                'example': {"detail": "No media server available."}
-            }
+                "type": "object",
+                "properties": {"detail": {"type": "string"}},
+                "example": {"detail": "No media server available."},
+            },
         },
-        description="Get RTC test connection information for the authenticated user. Returns server URL, JWT token, and room name for testing WebRTC connection."
+        description="Get RTC test connection information for the authenticated user. Returns server URL, JWT token, and room name for testing WebRTC connection.",
     )
     def get(self, request):
         """Get RTC test information for the authenticated user."""
         try:
             server = Server.get_server()
-            
+
             test_info = server.instance.user_test_info(request.user)
 
-            return Response({
-                'url': server.url,
-                'token': test_info,
-                'room': f"usertest_{request.user.pk}"
-            })
+            return Response(
+                {
+                    "url": server.url,
+                    "token": test_info,
+                    "room": f"usertest_{request.user.pk}",
+                }
+            )
         except Exception as e:
             return Response(
                 {"detail": "No media server available."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
