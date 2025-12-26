@@ -316,7 +316,6 @@ class RequestSerializer(serializers.ModelSerializer):
     expected_with_id = serializers.IntegerField(
         write_only=True, required=False, allow_null=True
     )
-    appointment = AppointmentDetailSerializer()
 
     class Meta:
         model = Request
