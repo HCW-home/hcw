@@ -30,14 +30,16 @@ def send_message(self, message_id):
     Args:
         message_id (int): The ID of the message to send
     """
-    # Get message and maps to celery task
+    # Get message and maps to celery task and reset any status
     message = Message.objects.get(id=message_id)
+    message.status = MessageStatus.SENDING
     message.celery_task_id = self.request.id
+    message.error_message = None
     message.save()
 
     # Get all active providers for this communication method, ordered by priority
     messaging_providers = MessagingProvider.objects.filter(
-        communication_method=message.communication_method, is_active=True
+        communication_method=message.validated_communication_method, is_active=True
     ).order_by("priority", "id")
 
     if not messaging_providers.exists():
@@ -47,7 +49,7 @@ def send_message(self, message_id):
         return
 
     logger.info(
-        f"Found {messaging_providers.count()} providers for {message.communication_method}"
+        f"Found {messaging_providers.count()} providers for {message.validated_communication_method}"
     )
 
     # Try each provider in order
@@ -64,9 +66,8 @@ def send_message(self, message_id):
             return
 
         except Exception as e:
-            message.task_logs += (
-                f"Exception with provider {messaging_provider.name}: {str(e)}"
-            )
+            error_msg = f"Exception with provider {messaging_provider.name}: {str(e)}"
+            message.task_logs += error_msg
             message.save()
             logger.error(error_msg)
             logger.error(traceback.format_exc())

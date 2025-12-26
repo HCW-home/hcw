@@ -267,9 +267,9 @@ class Template(models.Model):
             )
             content = getattr(template, f"template_{field}")
         except Template.DoesNotExist:
-            pass
+            content = None
 
-        return content or DEFAULT_NOTIFICATION_MESSAGES[event_type]["content"]
+        return content or DEFAULT_NOTIFICATION_MESSAGES[event_type][field]
 
     @property
     def factory_instance(self) -> Optional[DjangoModelFactory]:
@@ -535,6 +535,7 @@ class TemplateValidation(ModelCeleryAbstract):
 
 class MessageStatus(models.TextChoices):
     PENDING = "pending", "Pending"
+    SENDING = "sending", "Sending"
     SENT = "sent", "Sent"
     DELIVERED = "delivered", "Delivered"
     FAILED = "failed", "Failed"
@@ -577,7 +578,7 @@ class Message(ModelCeleryAbstract):
 
     # External provider info
     external_message_id = models.CharField(max_length=200, blank=True)
-    error_message = models.TextField(blank=True)
+    error_message = models.TextField(blank=True, null=True)
 
     # Sender
     sent_by = models.ForeignKey(
@@ -674,14 +675,12 @@ class Message(ModelCeleryAbstract):
             event_type=self.template_system_name,
             field=field,
         )
-        if not template_to_render:
-            return "Unable to render"
 
         env = jinja2.Environment()
 
         text_template = env.from_string(template_to_render)
         try:
-            return text_template.render(self.object_dict)
+            return text_template.render(self.object_dict or {})
         except Exception as e:
             raise Exception(f"Unable to render: {e}")
 

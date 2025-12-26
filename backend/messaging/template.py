@@ -26,9 +26,7 @@ DEFAULT_NOTIFICATION_MESSAGES = {
         "helper_text": "Message sent to user when a beneficiary sends a message",
     },
     "invitation_to_appointment": {
-        "subject": _(
-            "Message sent to user with invitation to join a consultation at a later time"
-        ),
+        "subject": _("Your appointment"),
         "content": _(
             "You receive this message because you have been invited to join a consultation at a later time. Please log in to the system to view the details and join the consultation when you are ready."
         ),

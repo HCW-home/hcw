@@ -152,13 +152,13 @@ class MessageAdmin(ModelAdmin):
 
     def display_render_content(self, instance):
         try:
-            instance.render_content
+            return instance.render_content
         except Exception as e:
             return f"Unable to render the message content: {e}"
 
     def display_render_subject(self, instance):
         try:
-            instance.render_subject
+            return instance.render_subject
         except Exception as e:
             return f"Unable to render the message content: {e}"
 
