@@ -39,14 +39,10 @@ class BaseMessagingProvider(ABC):
         """
 
     @abstractmethod
-    def test_connection(self) -> Tuple[bool, Any]:
+    def test_connection(self):
         """
         Test connection to the provider's API
         Default implementation just validates configuration
-
-        Returns:
-            - True, True if connection test passed
-            - error (str, optional): Error message if failed
         """
 
 

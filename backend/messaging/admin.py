@@ -11,7 +11,7 @@ from modeltranslation.admin import TabbedTranslationAdmin
 # Register your models here.
 from unfold.admin import ModelAdmin, TabularInline
 from unfold.contrib.import_export.forms import ExportForm, ImportForm
-from unfold.decorators import display
+from unfold.decorators import action, display
 
 from . import providers
 from .forms import TemplateForm
@@ -66,6 +66,19 @@ class MessagingProviderAdmin(ModelAdmin):
 
     # Use compressed_fields for conditional display
     compressed_fields = True
+
+    actions = ["test_provider"]
+
+    @action(
+        description=_("Test connection wiht selected providers"),
+    )
+    def test_provider(self, request, queryset):
+        for provider in queryset.all():
+            try:
+                provider.instance.test_connection()
+                messages.success(request, _(f"Test succesfull: {provider}"))
+            except Exception as e:
+                messages.error(request, _(f"Test unsuccesfull: {provider}, {e}"))
 
     @display(description="Send from")
     def get_from(self, obj):
@@ -183,43 +196,43 @@ class TemplateAdmin(ModelAdmin, TabbedTranslationAdmin, ImportExportModelAdmin):
     export_form_class = ExportForm
     list_editable = ["is_active"]
 
-    def changelist_view(self, request, extra_context=None):
-        # Check coverage of notification messages x communication methods
-        missing_combinations = []
-        notification_messages = [choice[0] for choice in NOTIFICATION_CHOICES]
-        communication_methods = [choice[0] for choice in CommunicationMethod.choices]
+    # def changelist_view(self, request, extra_context=None):
+    #     # Check coverage of notification messages x communication methods
+    #     missing_combinations = []
+    #     notification_messages = [choice[0] for choice in NOTIFICATION_CHOICES]
+    #     communication_methods = [choice[0] for choice in CommunicationMethod.choices]
 
-        for event_type in notification_messages:
-            for comm_method in communication_methods:
-                # Check if there's a template for this combination
-                template_exists = Template.objects.filter(
-                    event_type=event_type, communication_method__contains=[comm_method]
-                ).exists()
+    #     for event_type in notification_messages:
+    #         for comm_method in communication_methods:
+    #             # Check if there's a template for this combination
+    #             template_exists = Template.objects.filter(
+    #                 event_type=event_type, communication_method__contains=[comm_method]
+    #             ).exists()
 
-                if not template_exists:
-                    missing_combinations.append(f"{event_type} with {comm_method}")
+    #             if not template_exists:
+    #                 missing_combinations.append(f"{event_type} with {comm_method}")
 
-        if missing_combinations:
-            messages.warning(
-                request,
-                _(
-                    _(
-                        "Missing template combinations, some message will use native messages: {}"
-                    )
-                ).format(
-                    ", ".join(missing_combinations[:10])
-                    + (", ..." if len(missing_combinations) > 10 else "")
-                ),
-            )
-        else:
-            messages.success(
-                request,
-                _(
-                    "All notification message x communication method combinations are configured"
-                ),
-            )
+    #     if missing_combinations:
+    #         messages.warning(
+    #             request,
+    #             _(
+    #                 _(
+    #                     "Missing template combinations, some message will use native messages: {}"
+    #                 )
+    #             ).format(
+    #                 ", ".join(missing_combinations[:10])
+    #                 + (", ..." if len(missing_combinations) > 10 else "")
+    #             ),
+    #         )
+    #     else:
+    #         messages.success(
+    #             request,
+    #             _(
+    #                 "All notification message x communication method combinations are configured"
+    #             ),
+    #         )
 
-        return super().changelist_view(request, extra_context=extra_context)
+    #     return super().changelist_view(request, extra_context=extra_context)
 
     fieldsets = [
         (

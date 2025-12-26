@@ -97,7 +97,7 @@ class MessagingProvider(models.Model):
     )
 
     def __str__(self):
-        return f"{self.priority} - {self.name}"
+        return f"{self.name} priority:{self.priority}"
 
     def matches_phone_prefix(self, phone_number: str) -> bool:
         """
@@ -199,6 +199,12 @@ class MessagingProvider(models.Model):
             ]
 
         return super(MessagingProvider, self).save(*args, **kwargs)
+
+    def test(self):
+        try:
+            self.instance.test_connection()
+        except Exception as e:
+            return f"Test failed: {e}"
 
     class Meta:
         verbose_name = _("messaging provider")

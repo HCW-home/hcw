@@ -27,22 +27,16 @@ class Main(BaseMessagingProvider):
             fail_silently=False,
         )
 
-    def test_connection(self) -> Tuple[bool, Any]:
-        try:
-            if not hasattr(settings, "EMAIL_HOST") or not settings.EMAIL_HOST:
-                return (False, "EMAIL_HOST setting is required")
+    def test_connection(self):
+        if not hasattr(settings, "EMAIL_HOST") or not settings.EMAIL_HOST:
+            raise Exception("EMAIL_HOST setting is required")
 
-            from_email = self.messaging_provider.from_email or getattr(
-                settings, "DEFAULT_FROM_EMAIL", None
-            )
-            if not from_email:
-                return (False, "from_email is required")
+        from_email = self.messaging_provider.from_email or getattr(
+            settings, "DEFAULT_FROM_EMAIL", None
+        )
+        if not from_email:
+            raise Exception("from_email is required")
 
-            connection = get_connection()
-            connection.open()
-            connection.close()
-
-            return (True, True)
-
-        except Exception as e:
-            return (False, str(e))
+        connection = get_connection()
+        connection.open()
+        connection.close()
