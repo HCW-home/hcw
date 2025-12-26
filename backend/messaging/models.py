@@ -276,7 +276,7 @@ class Template(models.Model):
 
         # Validate template_text
         try:
-            for field_name in get_translation_fields("template_text"):
+            for field_name in get_translation_fields("template_content"):
                 env.parse(getattr(self, field_name))
         except jinja2.TemplateSyntaxError as e:
             raise ValidationError(
