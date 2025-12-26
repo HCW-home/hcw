@@ -12,6 +12,7 @@ from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 from factory.django import DjangoModelFactory
 from modeltranslation.utils import get_translation_fields
+from unfold.mixins.action_model_admin import Model
 
 # Create your models here.
 from . import providers
@@ -223,11 +224,18 @@ class Template(models.Model):
         help_text=_("Unique identifier for the template"),
     )
 
-    template_text = models.TextField(
+    template_content = models.TextField(
         _("template text"),
         help_text=_(
             "Jinja2 template for message content, use {{ obj }} to get object attributes"
         ),
+    )
+
+    template_subject = models.CharField(
+        _("template subject"),
+        max_length=500,
+        blank=True,
+        help_text=_("Jinja2 template for message subject"),
     )
 
     model = models.CharField(
@@ -238,12 +246,6 @@ class Template(models.Model):
         help_text="This model will be required to contruct message.",
     )
 
-    template_subject = models.CharField(
-        _("template subject"),
-        max_length=500,
-        blank=True,
-        help_text=_("Jinja2 template for message subject"),
-    )
     communication_method = ArrayField(
         base_field=models.CharField(max_length=10, choices=CommunicationMethod.choices),
         default=list,
@@ -329,7 +331,7 @@ class Template(models.Model):
         env = jinja2.Environment()
 
         # Render template text
-        text_template = env.from_string(self.template_text)
+        text_template = env.from_string(self.template_content)
         rendered_text = text_template.render(render_context)
 
         # Render template subject
@@ -429,8 +431,8 @@ class Template(models.Model):
             env = jinja2.Environment()
 
             # Extract variables from template_text
-            if self.template_text:
-                text_ast = env.parse(self.template_text)
+            if self.template_content:
+                text_ast = env.parse(self.template_content)
                 variables.update(self._extract_variable_paths(text_ast))
 
             # Extract variables from template_subject
@@ -525,8 +527,11 @@ class MessageStatus(models.TextChoices):
 
 class Message(ModelCeleryAbstract):
     # Message content
-    content = models.TextField(_("content"))
-    subject = models.CharField(_("subject"), max_length=200, blank=True)
+    content = models.TextField(_("content"), blank=True, null=True)
+    subject = models.CharField(_("subject"), max_length=200, blank=True, null=True)
+    template_system_name = models.CharField(
+        choices=settings.NOTIFICATION_MESSAGES, blank=True, null=True
+    )
 
     # Message type and provider
     communication_method = models.CharField(
@@ -579,6 +584,8 @@ class Message(ModelCeleryAbstract):
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    object_dict = models.JSONField(blank=True, null=True)
+
     class Meta:
         ordering = ["-created_at"]
 
@@ -600,6 +607,45 @@ class Message(ModelCeleryAbstract):
             return self.sent_to.email
         if self.recipient_email:
             return self.recipient_email
+
+    def send(self):
+        from .tasks import send_message
+
+        send_message.delay(self.pk)
+
+    @property
+    def recipient(self):
+        return self.email or self.phone_number
+
+    @property
+    def validated_communication_method(self):
+        if self.communication_method:
+            return self.communication_method
+        if self.sent_to and self.sent_to.communication_method:
+            return self.sent_to.communication_method
+
+    @property
+    def render_text(self):
+        return self.render("content")
+
+    @property
+    def render_subject(self):
+        return self.render("subject")
+
+    def render(self, field: str):
+        if not self.template_system_name:
+            return getattr(self, field)
+
+        template = Template.objects.get(
+            communication_method__contains=[self.validated_communication_method],
+            event_type=self.template_system_name,
+        )
+
+        env = jinja2.Environment()
+        text_to_render = getattr(template, f"template_{field}")
+        print(text_to_render)
+        text_template = env.from_string(text_to_render)
+        return text_template.render(object_dict)
 
     def clean(self):
         """Validate prefix fields"""
@@ -645,4 +691,14 @@ class Message(ModelCeleryAbstract):
                         "Communication method is required if no sent to user"
                     )
                 }
+            )
+
+        if not self.template_system_name or not self.content:
+            raise ValidationError(
+                {"content": _("Message content or template_system_name is required")}
+            )
+
+        if self.communication_method == CommunicationMethod.EMAIL and not self.subject:
+            raise ValidationError(
+                {"subject": _("Subject is required for sending email")}
             )

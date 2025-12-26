@@ -1,78 +1,123 @@
 import traceback
 from typing import DefaultDict
-from django.contrib import admin
-from .models import MessagingProvider, Message, MessageStatus, Template, TemplateValidation, TemplateValidationStatus
-from unfold.decorators import display
-from . import providers
+
+from django.conf import settings
+from django.contrib import admin, messages
 from django.utils.functional import cached_property
-# Register your models here.
-from unfold.admin import ModelAdmin, TabularInline
-from modeltranslation.admin import TabbedTranslationAdmin
 from django.utils.translation import gettext_lazy as _
 from import_export.admin import ImportExportModelAdmin
+from modeltranslation.admin import TabbedTranslationAdmin
+
+# Register your models here.
+from unfold.admin import ModelAdmin, TabularInline
 from unfold.contrib.import_export.forms import ExportForm, ImportForm
+from unfold.decorators import display
+
+from . import providers
 from .forms import TemplateForm
+from .models import (
+    CommunicationMethod,
+    Message,
+    MessageStatus,
+    MessagingProvider,
+    Template,
+    TemplateValidation,
+    TemplateValidationStatus,
+)
 from .tasks import template_messaging_provider_task
-from django.contrib import messages
-from django.conf import settings
-from .models import CommunicationMethod
+
 # admin.site.register(MessagingProvider, ModelAdmin)
 
 
 @admin.register(MessagingProvider)
 class MessagingProviderAdmin(ModelAdmin):
-    list_display = ['name', 'get_from', 'priority',
-                    'is_active', 'communication_method']
-    readonly_fields = ['communication_method']
-    
+    list_display = ["name", "get_from", "priority", "is_active", "communication_method"]
+    readonly_fields = ["communication_method"]
+
     fieldsets = [
-        ('Basic information', {
-            'fields': ['name', 'priority', 'is_active']
-        }),
-        ('Authentication and configuration', {
-            'fields': [
-                'api_key', 'auth_token', 'account_sid',
-                'client_id', 'client_secret',
-                'application_key', 'application_secret', 'consumer_key',
-                'service_name', 'from_phone', 'from_email', 'sender_id'
-            ]
-        }),
-        ('Phone prefex filtering', {
-            'fields': ['included_prefixes', 'excluded_prefixes'],
-            'description': 'Configure which phone prefixes this provider should handle. Separate multiple prefixes with commas (e.g. +33, +41, +1). Leave included_prefixes empty to allow all except excluded ones.'
-        }),
+        ("Basic information", {"fields": ["name", "priority", "is_active"]}),
+        (
+            "Authentication and configuration",
+            {
+                "fields": [
+                    "api_key",
+                    "auth_token",
+                    "account_sid",
+                    "client_id",
+                    "client_secret",
+                    "application_key",
+                    "application_secret",
+                    "consumer_key",
+                    "service_name",
+                    "from_phone",
+                    "from_email",
+                    "sender_id",
+                ]
+            },
+        ),
+        (
+            "Phone prefex filtering",
+            {
+                "fields": ["included_prefixes", "excluded_prefixes"],
+                "description": "Configure which phone prefixes this provider should handle. Separate multiple prefixes with commas (e.g. +33, +41, +1). Leave included_prefixes empty to allow all except excluded ones.",
+            },
+        ),
     ]
-    
+
     # Use compressed_fields for conditional display
     compressed_fields = True
-    
+
     @display(description="Send from")
     def get_from(self, obj):
         return obj.from_phone or obj.from_email or "-"
 
     @cached_property
     def conditional_fields(self):
-
         field_set = DefaultDict(list)
         for provider, class_provider in providers.MAIN_CLASSES.items():
             for field in class_provider.required_fields:
                 field_set[field].append(provider)
 
-        return {key: "name == '" + "' || name == '".join(values) + "'" for key, values in field_set.items()}
+        return {
+            key: "name == '" + "' || name == '".join(values) + "'"
+            for key, values in field_set.items()
+        }
 
 
 @admin.register(Message)
 class MessageAdmin(ModelAdmin):
-    list_display = ['communication_method', 'recipient_display',
-                    'display_status', 'sent_by', 'created_at']
-    list_filter = ['communication_method', 'status', 'created_at', 'provider_name']
-    search_fields = ['content', 'recipient_phone',
-                     'recipient_email', 'sent_by__email', 'celery_task_id']
-    readonly_fields = ['sent_at', 'delivered_at', 'read_at', 'failed_at', 'status',
-                        'error_message',
-                       'external_message_id', 'celery_task_id', 'created_at', 'updated_at', 'provider_name']
+    list_display = [
+        "recipient",
+        "display_status",
+        "sent_by",
+        "created_at",
+        "error_message",
+    ]
+    list_filter = ["communication_method", "status", "created_at", "provider_name"]
+    search_fields = [
+        "content",
+        "recipient_phone",
+        "recipient_email",
+        "sent_by__email",
+        "celery_task_id",
+    ]
+    readonly_fields = [
+        "sent_at",
+        "delivered_at",
+        "read_at",
+        "failed_at",
+        "status",
+        "error_message",
+        "external_message_id",
+        "celery_task_id",
+        "created_at",
+        "updated_at",
+        "provider_name",
+        "render_text",
+        "render_subject",
+    ]
 
-    actions = ['resend_failed_messages']
+    actions = ["send_message"]
 
     @display(
         description=_("Status"),
@@ -87,39 +132,34 @@ class MessageAdmin(ModelAdmin):
     def display_status(self, instance):
         return instance.status
 
-
-    @display(description="Fields")
-    def recipient_display(self, obj):
-        if obj.recipient_phone:
-            return obj.recipient_phone
-        elif obj.recipient_email:
-            return obj.recipient_email
-        return "No recipient"
-
-    def resend_failed_messages(self, request, queryset):
+    def send_message(self, request, queryset):
         """Resend failed messages via Celery"""
-        from .tasks import send_message_via_provider
 
-        for message in queryset.filter(status=MessageStatus.FAILED):
-            send_message_via_provider.delay(message.pk)
-    resend_failed_messages.short_description = "Resend failed messages"
+        for message in queryset.all():
+            message.send()
+
+    send_message.short_description = "Send or resend message"
 
 
 @admin.register(Template)
 class TemplateAdmin(ModelAdmin, TabbedTranslationAdmin, ImportExportModelAdmin):
-    list_display = ['event_type', 'communication_method',
-                    'is_active', 'created_at', 'variables', 'example']
-    list_filter = ['communication_method', 'is_active',
-                   'created_at']
-    search_fields = ['event_type']
-    readonly_fields = ['created_at', 'updated_at']
+    list_display = [
+        "event_type",
+        "communication_method",
+        "is_active",
+        "created_at",
+        "variables",
+        "example",
+    ]
+    list_filter = ["communication_method", "is_active", "created_at"]
+    search_fields = ["event_type"]
+    readonly_fields = ["created_at", "updated_at"]
     form = TemplateForm
     import_form_class = ImportForm
     export_form_class = ExportForm
-    list_editable = ['is_active']
+    list_editable = ["is_active"]
 
     def changelist_view(self, request, extra_context=None):
-
         # Check coverage of notification messages x communication methods
         missing_combinations = []
         notification_messages = [choice[0] for choice in settings.NOTIFICATION_MESSAGES]
@@ -129,8 +169,7 @@ class TemplateAdmin(ModelAdmin, TabbedTranslationAdmin, ImportExportModelAdmin):
             for comm_method in communication_methods:
                 # Check if there's a template for this combination
                 template_exists = Template.objects.filter(
-                    event_type=event_type,
-                    communication_method__contains=[comm_method]
+                    event_type=event_type, communication_method__contains=[comm_method]
                 ).exists()
 
                 if not template_exists:
@@ -139,92 +178,143 @@ class TemplateAdmin(ModelAdmin, TabbedTranslationAdmin, ImportExportModelAdmin):
         if missing_combinations:
             messages.error(
                 request,
-                _(_('Missing template combinations: {}')).format(', '.join(missing_combinations[:10]) +
-                  (', ...' if len(missing_combinations) > 10 else ''))
+                _(_("Missing template combinations: {}")).format(
+                    ", ".join(missing_combinations[:10])
+                    + (", ..." if len(missing_combinations) > 10 else "")
+                ),
             )
         else:
-            messages.success(request, _('All notification message x communication method combinations are configured'))
+            messages.success(
+                request,
+                _(
+                    "All notification message x communication method combinations are configured"
+                ),
+            )
 
         return super().changelist_view(request, extra_context=extra_context)
 
     fieldsets = [
-        ('Basic Information', {
-            'fields': ['event_type', 'communication_method', 'model', 'is_active']
-        }),
-        ('Template Content', {
-            'fields': ['template_subject', 'template_text'],
-            'description': 'Use Jinja2 template syntax. Example: Hello {{ user.name }}!'
-        }),
-        ('Timestamps', {
-            'fields': ['created_at', 'updated_at'],
-            'classes': ['collapse']
-        })
+        (
+            "Basic Information",
+            {"fields": ["event_type", "communication_method", "model", "is_active"]},
+        ),
+        (
+            "Template Content",
+            {
+                "fields": ["template_subject", "template_content"],
+                "description": "Use Jinja2 template syntax. Example: Hello {{ user.name }}!",
+            },
+        ),
+        (
+            "Timestamps",
+            {"fields": ["created_at", "updated_at"], "classes": ["collapse"]},
+        ),
     ]
 
     @display(description="Render example")
     def example(self, obj):
         try:
             rendered_subject, rendered_text = obj.render_from_template(
-                obj=obj.factory_instance.build())
+                obj=obj.factory_instance.build()
+            )
             if rendered_subject:
                 return rendered_subject, rendered_text
             return rendered_text
         except Exception:
             print(traceback.format_exc())
-            return '-'
+            return "-"
 
     @display(description="Recipient")
     def variables(self, obj):
         return obj.template_variables
-    
+
     def get_form(self, request, obj=None, **kwargs):
         """Customize form to show help text for Jinja2 templates"""
         form = super().get_form(request, obj, **kwargs)
         for field in form.base_fields.keys():
-            if field.startswith('template_text'):
-                form.base_fields[field].widget.attrs.update({
-                    'rows': 10,
-                    'placeholder': _('Hello {{ recipient.name }}!\n\nYour consultation is scheduled for {{ appointment.date }}.')
-                })
-        
-            if field.startswith('template_subject'):
-                form.base_fields[field].widget.attrs.update({
-                    'placeholder': 'Consultation with {{ practitioner.name }}'
-                })
+            if field.startswith("template_content"):
+                form.base_fields[field].widget.attrs.update(
+                    {
+                        "rows": 10,
+                        "placeholder": _(
+                            "Hello {{ recipient.name }}!\n\nYour consultation is scheduled for {{ appointment.date }}."
+                        ),
+                    }
+                )
+
+            if field.startswith("template_subject"):
+                form.base_fields[field].widget.attrs.update(
+                    {"placeholder": "Consultation with {{ practitioner.name }}"}
+                )
         return form
 
 
 @admin.register(TemplateValidation)
 class TemplateValidationAdmin(ModelAdmin):
-    list_display = ['template', 'language_code', 'messaging_provider', 'display_status', 'external_template_id', 'created_at', 'validated_at']
-    list_filter = ['status', 'language_code', 'messaging_provider', 'template__communication_method', 'created_at', 'validated_at']
-    search_fields = ['template__system_name', 'external_template_id', 'messaging_provider', 'language_code']
-    readonly_fields = ['created_at', 'updated_at', 'validated_at', 'task_logs', 'status',
-                       'validation_response', 'external_template_id']
-
-    fieldsets = [
-        ('Template Information', {
-            'fields': ['template', 'messaging_provider', 'language_code']
-        }),
-        ('Validation Details', {
-            'fields': ['external_template_id'],
-            'description': 'This field is automatically populated when the template is submitted for validation'
-        }),
-        ('Status', {
-            'fields': ['status', 'task_logs']
-        }),
-        ('Validation Response', {
-            'fields': ['validation_response'],
-            'classes': ['collapse'],
-            'description': 'Raw response data from the messaging provider'
-        }),
-        ('Timestamps', {
-            'fields': ['created_at', 'updated_at', 'validated_at'],
-            'classes': ['collapse']
-        })
+    list_display = [
+        "template",
+        "language_code",
+        "messaging_provider",
+        "display_status",
+        "external_template_id",
+        "created_at",
+        "validated_at",
+    ]
+    list_filter = [
+        "status",
+        "language_code",
+        "messaging_provider",
+        "template__communication_method",
+        "created_at",
+        "validated_at",
+    ]
+    search_fields = [
+        "template__system_name",
+        "external_template_id",
+        "messaging_provider",
+        "language_code",
+    ]
+    readonly_fields = [
+        "created_at",
+        "updated_at",
+        "validated_at",
+        "task_logs",
+        "status",
+        "validation_response",
+        "external_template_id",
     ]
 
-    actions = ['validate_templates', 'check_validation_status']
+    fieldsets = [
+        (
+            "Template Information",
+            {"fields": ["template", "messaging_provider", "language_code"]},
+        ),
+        (
+            "Validation Details",
+            {
+                "fields": ["external_template_id"],
+                "description": "This field is automatically populated when the template is submitted for validation",
+            },
+        ),
+        ("Status", {"fields": ["status", "task_logs"]}),
+        (
+            "Validation Response",
+            {
+                "fields": ["validation_response"],
+                "classes": ["collapse"],
+                "description": "Raw response data from the messaging provider",
+            },
+        ),
+        (
+            "Timestamps",
+            {
+                "fields": ["created_at", "updated_at", "validated_at"],
+                "classes": ["collapse"],
+            },
+        ),
+    ]
+
+    actions = ["validate_templates", "check_validation_status"]
 
     @display(
         description=_("Status"),
@@ -246,21 +336,24 @@ class TemplateValidationAdmin(ModelAdmin):
         provider_names = []
         for provider_name, provider_class in providers.MAIN_CLASSES.items():
             # Check if provider has validation methods
-            if (hasattr(provider_class, 'validate_template') and
-                hasattr(provider_class, 'check_template_validation')):
+            if hasattr(provider_class, "validate_template") and hasattr(
+                provider_class, "check_template_validation"
+            ):
                 provider_names.append(provider_name)
 
         if provider_names:
             qs = qs.filter(messaging_provider__name__in=provider_names)
 
-        return qs.select_related('template', 'messaging_provider')
+        return qs.select_related("template", "messaging_provider")
 
     def validate_templates(self, request, queryset):
         """Validate templates with their respective providers"""
 
         for template_validation in queryset:
             template_messaging_provider_task.delay(
-                template_validation.pk, 'validate_template')
+                template_validation.pk, "validate_template"
+            )
+
     validate_templates.short_description = "Validate selected templates"
 
     def check_validation_status(self, request, queryset):
@@ -268,6 +361,7 @@ class TemplateValidationAdmin(ModelAdmin):
 
         for template_validation in queryset:
             template_messaging_provider_task.delay(
-                template_validation.pk, 'check_template_validation')
+                template_validation.pk, "check_template_validation"
+            )
 
     check_validation_status.short_description = "Check validation status"

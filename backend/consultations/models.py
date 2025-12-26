@@ -130,7 +130,9 @@ class Appointment(models.Model):
 
 
 class Participant(models.Model):
-    appointment = models.ForeignKey(Appointment, on_delete=models.CASCADE)
+    appointment = models.ForeignKey(
+        Appointment, on_delete=models.CASCADE, related_name="participants"
+    )
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -147,6 +149,7 @@ class Participant(models.Model):
 
     is_invited = models.BooleanField(default=True)
     is_confirmed = models.BooleanField(default=False)
+    is_notified = models.BooleanField(default=False)
 
     display_name = models.CharField(null=True, blank=True)
     email = models.EmailField(null=True, blank=True)

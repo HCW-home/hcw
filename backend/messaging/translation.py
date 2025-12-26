@@ -1,8 +1,8 @@
-from modeltranslation.translator import register, TranslationOptions
+from modeltranslation.translator import TranslationOptions, register
 
 from .models import Template
 
 
 @register(Template)
 class TemplateTranslation(TranslationOptions):
-    fields = ['template_text', 'template_subject']
+    fields = ["template_content", "template_subject"]

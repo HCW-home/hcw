@@ -7,6 +7,7 @@ from livekit.protocol.room import SendDataRequest
 from .consumers import get_consultation
 from .models import Appointment, AppointmentStatus, Consultation, Request, RequestStatus
 from .serializers import ConsultationSerializer
+from .tasks import handle_invites
 
 
 def get_users_to_notification_consultation(consultation: Consultation):
@@ -87,11 +88,11 @@ def request_saved(sender, instance, created, **kwargs):
             pass
 
 
-# @receiver(post_save, sender=Appointment)
-# def send_appointment_invites(sender, instance, created, **kwargs):
-#     """
-#     Prepare invite sending over celery task.
-#     """
+@receiver(post_save, sender=Appointment)
+def send_appointment_invites(sender, instance, created, **kwargs):
+    """
+    Prepare invite sending over celery task.
+    """
 
-#     if created and instance.status in [AppointmentStatus.SCHEDULED, AppointmentStatus.CANCELLED]:
-#         pass
+    if instance.status == [AppointmentStatus.SCHEDULED, AppointmentStatus.CANCELLED]:
+        handle_invites.delay(instance.pk)
