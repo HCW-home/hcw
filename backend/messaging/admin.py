@@ -24,7 +24,7 @@ from .models import (
     TemplateValidation,
     TemplateValidationStatus,
 )
-from .tasks import template_messaging_provider_task
+from .template import NOTIFICATION_CHOICES
 
 # admin.site.register(MessagingProvider, ModelAdmin)
 
@@ -91,6 +91,7 @@ class MessageAdmin(ModelAdmin):
         "display_status",
         "sent_by",
         "created_at",
+        "display_template_is_valid",
         "error_message",
     ]
     list_filter = ["communication_method", "status", "created_at", "provider_name"]
@@ -113,8 +114,9 @@ class MessageAdmin(ModelAdmin):
         "created_at",
         "updated_at",
         "provider_name",
-        "render_text",
-        "render_subject",
+        "display_template_is_valid",
+        "display_render_content",
+        "display_render_subject",
     ]
 
     actions = ["send_message"]
@@ -132,11 +134,33 @@ class MessageAdmin(ModelAdmin):
     def display_status(self, instance):
         return instance.status
 
+    @display(
+        description=_("Rendering is valid"),
+        label={
+            "False": "danger",
+            "True": "success",
+        },
+    )
+    def display_template_is_valid(self, instance):
+        return str(instance.template_is_valid)
+
     def send_message(self, request, queryset):
         """Resend failed messages via Celery"""
 
         for message in queryset.all():
             message.send()
+
+    def display_render_content(self, instance):
+        try:
+            instance.render_content
+        except Exception as e:
+            return f"Unable to render the message content: {e}"
+
+    def display_render_subject(self, instance):
+        try:
+            instance.render_subject
+        except Exception as e:
+            return f"Unable to render the message content: {e}"
 
     send_message.short_description = "Send or resend message"
 
@@ -162,7 +186,7 @@ class TemplateAdmin(ModelAdmin, TabbedTranslationAdmin, ImportExportModelAdmin):
     def changelist_view(self, request, extra_context=None):
         # Check coverage of notification messages x communication methods
         missing_combinations = []
-        notification_messages = [choice[0] for choice in settings.NOTIFICATION_MESSAGES]
+        notification_messages = [choice[0] for choice in NOTIFICATION_CHOICES]
         communication_methods = [choice[0] for choice in CommunicationMethod.choices]
 
         for event_type in notification_messages:
@@ -176,9 +200,13 @@ class TemplateAdmin(ModelAdmin, TabbedTranslationAdmin, ImportExportModelAdmin):
                     missing_combinations.append(f"{event_type} with {comm_method}")
 
         if missing_combinations:
-            messages.error(
+            messages.warning(
                 request,
-                _(_("Missing template combinations: {}")).format(
+                _(
+                    _(
+                        "Missing template combinations, some message will use native messages: {}"
+                    )
+                ).format(
                     ", ".join(missing_combinations[:10])
                     + (", ..." if len(missing_combinations) > 10 else "")
                 ),
@@ -345,16 +373,6 @@ class TemplateValidationAdmin(ModelAdmin):
             qs = qs.filter(messaging_provider__name__in=provider_names)
 
         return qs.select_related("template", "messaging_provider")
-
-    def validate_templates(self, request, queryset):
-        """Validate templates with their respective providers"""
-
-        for template_validation in queryset:
-            template_messaging_provider_task.delay(
-                template_validation.pk, "validate_template"
-            )
-
-    validate_templates.short_description = "Validate selected templates"
 
     def check_validation_status(self, request, queryset):
         """Check validation status for pending templates"""

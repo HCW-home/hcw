@@ -10,21 +10,22 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
-from django.urls import reverse_lazy
-from pathlib import Path
 import os
 from datetime import timedelta
-from dotenv import load_dotenv
+from pathlib import Path
+
 from celery.schedules import crontab
-from firebase_admin import initialize_app
+from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
+from dotenv import load_dotenv
+from firebase_admin import initialize_app
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load .env file, or switch to system
 try:
-    dotenv_path = os.path.join(BASE_DIR, '.env')
+    dotenv_path = os.path.join(BASE_DIR, ".env")
     load_dotenv(dotenv_path)
 except Exception as e:
     print(f"Unable to load file: {dotenv_path}")
@@ -34,32 +35,34 @@ except Exception as e:
 
 # Discord
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
-DISCORD_CHANNEL_ID = int(os.getenv("DISCORD_CHANNEL_ID")) if os.getenv("DISCORD_CHANNEL_ID") else None
+DISCORD_CHANNEL_ID = (
+    int(os.getenv("DISCORD_CHANNEL_ID")) if os.getenv("DISCORD_CHANNEL_ID") else None
+)
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('DJANGOSECRET_KEY')
+SECRET_KEY = os.getenv("DJANGOSECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True if os.getenv('DEBUG') == 'True' else False
+DEBUG = True if os.getenv("DEBUG") == "True" else False
 
-ALLOWED_HOSTS = [os.getenv('ALLOWED_HOST')]
+ALLOWED_HOSTS = [os.getenv("ALLOWED_HOST")]
 
-EMAIL_HOST = os.getenv('EMAIL_HOST')
-EMAIL_PORT = os.getenv('EMAIL_PORT', 25)
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
-EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', False)
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+EMAIL_HOST = os.getenv("EMAIL_HOST")
+EMAIL_PORT = os.getenv("EMAIL_PORT", 25)
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
+EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", False)
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 
 # Clamav Antivirus
-if os.getenv('CLAMD_SOCKET'):
+if os.getenv("CLAMD_SOCKET"):
     CLAMD_USE_TCP = False
-    CLAMD_SOCKET = os.getenv('CLAMD_SOCKET', '/var/run/clamav/clamd.ctl')
+    CLAMD_SOCKET = os.getenv("CLAMD_SOCKET", "/var/run/clamav/clamd.ctl")
 
-elif os.getenv('CLAMD_TCP_ADDR'):
+elif os.getenv("CLAMD_TCP_ADDR"):
     CLAMD_USE_TCP = True
-    CLAMD_TCP_SOCKET = int(os.getenv('CLAMD_TCP_SOCKET', 3310))
-    CLAMD_TCP_ADDR = os.getenv('CLAMD_TCP_ADDR', '127.0.0.1')
+    CLAMD_TCP_SOCKET = int(os.getenv("CLAMD_TCP_SOCKET", 3310))
+    CLAMD_TCP_ADDR = os.getenv("CLAMD_TCP_ADDR", "127.0.0.1")
 else:
     CLAMD_ENABLED = False
 
@@ -68,103 +71,86 @@ ACCOUNT_MAX_EMAIL_ADDRESSES = 1
 # Application definition
 
 INSTALLED_APPS = [
-    'daphne',
-    'unfold',
-    'modeltranslation',
-    'unfold.contrib.filters',
-    'unfold.contrib.forms',
-    'unfold.contrib.inlines',
-    'unfold.contrib.import_export',
-    'unfold.contrib.guardian',
-    'unfold.contrib.simple_history',
-    'unfold.contrib.location_field',
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'import_export',
-    'django_celery_beat',
-    'corsheaders',
-    'mfa',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.openid_connect',
-    'django_filters',
-    'dj_rest_auth.registration',
-    'rest_framework',
-    'rest_framework.authtoken',
-    'dj_rest_auth',
+    "daphne",
+    "unfold",
+    "modeltranslation",
+    "unfold.contrib.filters",
+    "unfold.contrib.forms",
+    "unfold.contrib.inlines",
+    "unfold.contrib.import_export",
+    "unfold.contrib.guardian",
+    "unfold.contrib.simple_history",
+    "unfold.contrib.location_field",
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "import_export",
+    "django_celery_beat",
+    "corsheaders",
+    "mfa",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.openid_connect",
+    "django_filters",
+    "dj_rest_auth.registration",
+    "rest_framework",
+    "rest_framework.authtoken",
+    "dj_rest_auth",
     # 'dj_rest_auth_mfa',
-    'rest_framework_simplejwt',
-    'drf_spectacular',
-    'django_celery_results',
-    'fcm_django',
-    'location_field',
-    'consultations',
-    'users',
-    'messaging',
-    'mediaserver',
-    'api',
-]
-
-NOTIFICATION_MESSAGES = [
-    ('you_have_been_assigned_to_consultation', _(
-        'Message sent to user when assigned to a consultation')),
-    ('an_unprocessed_request_has_been_received', _(
-        'Message sent to user when a consultation request requires manual processing')),
-    ('a_message_has_been_sent_by_beneficiary', _(
-        'Message sent to user when a beneficiary sends a message')),
-    ('invitation_to_join_consultation_now', _(
-        'Message sent to user with invitation to join a consultation immediately')),
-    ('invitation_to_join_consultation_later', _(
-        'Message sent to user with invitation to join a consultation at a later time')),
-    ('your_appointment_is_in_24h', _(
-        'Message sent to user 24 hours before scheduled appointment')),
-    ('your_authentication_code_is_participant', _(
-        'Message sent to participant containing their authentication code')),
+    "rest_framework_simplejwt",
+    "drf_spectacular",
+    "django_celery_results",
+    "fcm_django",
+    "location_field",
+    "consultations",
+    "users",
+    "messaging",
+    "mediaserver",
+    "api",
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'core.middleware.TimezoneMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'allauth.account.middleware.AccountMiddleware'
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "core.middleware.TimezoneMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ASGI_APPLICATION = "core.asgi.application"
 
-ROOT_URLCONF = 'core.urls'
+ROOT_URLCONF = "core.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / "core/templates"],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-                'django.template.context_processors.request',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "core/templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+                "django.template.context_processors.request",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'core.wsgi.application'
-MEDIA_ROOT = os.getenv('MEDIA_ROOT', 'upload')
-MEDIA_URL = '/upload/'
+WSGI_APPLICATION = "core.wsgi.application"
+MEDIA_ROOT = os.getenv("MEDIA_ROOT", "upload")
+MEDIA_URL = "/upload/"
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
@@ -172,34 +158,31 @@ MEDIA_URL = '/upload/'
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        'NAME': os.getenv('DATABASE_NAME'),
-        'USER': os.getenv('DATABASE_USER'),
-        'PASSWORD': os.getenv('DATABASE_PASSWORD'),
-        'HOST': os.getenv('DATABASE_HOST'),
-        'PORT': os.getenv('DATABASE_PORT'),
+        "NAME": os.getenv("DATABASE_NAME"),
+        "USER": os.getenv("DATABASE_USER"),
+        "PASSWORD": os.getenv("DATABASE_PASSWORD"),
+        "HOST": os.getenv("DATABASE_HOST"),
+        "PORT": os.getenv("DATABASE_PORT"),
     }
 }
 
-SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
-    "ROTATE_REFRESH_TOKENS": True
-}
+SIMPLE_JWT = {"ACCESS_TOKEN_LIFETIME": timedelta(days=1), "ROTATE_REFRESH_TOKENS": True}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
@@ -207,13 +190,13 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
 LOCALE_PATHS = [
-    BASE_DIR / 'locale',
+    BASE_DIR / "locale",
 ]
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
@@ -221,64 +204,59 @@ USE_TZ = True
 
 gettext = lambda s: s
 LANGUAGES = (
-    ('en', gettext('English')),
-    ('de', gettext('German')),
-    ('fr', gettext('French')),
+    ("en", gettext("English")),
+    ("de", gettext("German")),
+    ("fr", gettext("French")),
 )
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = "static/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
 ]
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
-    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
-    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
 }
 
 SITE_ID = 1
 ACCOUNT_EMAIL_VERIFICATION = "optional"
-AUTH_USER_MODEL = 'users.User'
+AUTH_USER_MODEL = "users.User"
 
 REST_AUTH = {
-    'USE_JWT': True,
-    'JWT_AUTH_COOKIE': '_auth',
-    'JWT_AUTH_REFRESH_COOKIE': '_refresh',
-    'JWT_AUTH_HTTPONLY': False,
-    'USER_DETAILS_SERIALIZER': 'users.serializers.UserDetailsSerializer',
-    'REGISTER_SERIALIZER': 'users.serializers.RegisterSerializer',
-    'LOGIN_SERIALIZER': 'users.serializers.LoginSerializer',
+    "USE_JWT": True,
+    "JWT_AUTH_COOKIE": "_auth",
+    "JWT_AUTH_REFRESH_COOKIE": "_refresh",
+    "JWT_AUTH_HTTPONLY": False,
+    "USER_DETAILS_SERIALIZER": "users.serializers.UserDetailsSerializer",
+    "REGISTER_SERIALIZER": "users.serializers.RegisterSerializer",
+    "LOGIN_SERIALIZER": "users.serializers.LoginSerializer",
 }
 
-LOGIN_REDIRECT_URL = '/home/'
+LOGIN_REDIRECT_URL = "/home/"
 
 SWAGGER_SETTINGS = {
-    'SECURITY_DEFINITIONS': {
-        'basic': {
-            'type': 'oauth2'
-        }
-    },
-    'USE_SESSION_AUTH': False
-
+    "SECURITY_DEFINITIONS": {"basic": {"type": "oauth2"}},
+    "USE_SESSION_AUTH": False,
 }
 
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'HCW@Home API',
-    'VERSION': '1.0.0',
-    'SERVE_INCLUDE_SCHEMA': False,
+    "TITLE": "HCW@Home API",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENTS": {
         "securitySchemes": {
             "bearerAuth": {  # OpenAPI 3
@@ -299,12 +277,12 @@ SOCIALACCOUNT_PROVIDERS = {
     "openid_connect": {
         "APPS": [
             {
-                "provider_id": 'openid',
-                "name": os.getenv('OPENID_NAME'),
-                "client_id": os.getenv('OPENID_CLIENT_ID'),
-                "secret": os.getenv('OPENID_SECRET'),
+                "provider_id": "openid",
+                "name": os.getenv("OPENID_NAME"),
+                "client_id": os.getenv("OPENID_CLIENT_ID"),
+                "secret": os.getenv("OPENID_SECRET"),
                 "settings": {
-                    "server_url": os.getenv('OPENID_CONFIGURATION_URL'),
+                    "server_url": os.getenv("OPENID_CONFIGURATION_URL"),
                 },
             }
         ]
@@ -314,27 +292,29 @@ SOCIALACCOUNT_PROVIDERS = {
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
 
-REDIS_HOST = os.getenv('REDIS_HOST') or '127.0.0.1'
-REDIS_PORT = os.getenv('REDIS_PORT') or '6379'
+REDIS_HOST = os.getenv("REDIS_HOST") or "127.0.0.1"
+REDIS_PORT = os.getenv("REDIS_PORT") or "6379"
 
 CELERY_BROKER_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/0"
-CELERY_RESULT_BACKEND = 'django-db'
-CELERY_CACHE_BACKEND = 'django-cache'
+CELERY_RESULT_BACKEND = "django-db"
+CELERY_CACHE_BACKEND = "django-cache"
 
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_RESULT_EXTENDED = True
 CELERY_TASK_TRACK_STARTED = True
 
-ACCOUNT_LOGIN_METHODS = {'email'}
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
+ACCOUNT_LOGIN_METHODS = {"email"}
+ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.redis.RedisCache" if not DEBUG else 'django.core.cache.backends.locmem.LocMemCache',
+        "BACKEND": "django.core.cache.backends.redis.RedisCache"
+        if not DEBUG
+        else "django.core.cache.backends.locmem.LocMemCache",
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}",
     }
 }
-STATIC_ROOT = os.getenv('STATIC_ROOT', 'statics')
+STATIC_ROOT = os.getenv("STATIC_ROOT", "statics")
 
 CELERY_BEAT_SCHEDULE = {
     # 'run_all': {
@@ -351,12 +331,12 @@ FCM_DJANGO_SETTINGS = {
     "FCM_DEVICE_MODEL": "users.FCMDeviceOverride",
 }
 
-ENCRYPTION_KEY = os.getenv('ENCRYPTION_KEY')
+ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")
 
 # Janus Media Server Configuration
-JANUS_TURN_SERVER = os.getenv('JANUS_TURN_SERVER', 'turn:demo.hcw-at-home.com')
-JANUS_TURN_USERNAME = os.getenv('JANUS_TURN_USERNAME', 'iabsis')
-JANUS_TURN_PASSWORD = os.getenv('JANUS_TURN_PASSWORD', 'pfcqopfs')
+JANUS_TURN_SERVER = os.getenv("JANUS_TURN_SERVER", "turn:demo.hcw-at-home.com")
+JANUS_TURN_USERNAME = os.getenv("JANUS_TURN_USERNAME", "iabsis")
+JANUS_TURN_PASSWORD = os.getenv("JANUS_TURN_PASSWORD", "pfcqopfs")
 
 CHANNEL_LAYERS = {
     "default": {
@@ -367,7 +347,7 @@ CHANNEL_LAYERS = {
     },
 }
 
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Unfold Admin Configuration
 UNFOLD = {
@@ -391,7 +371,7 @@ UNFOLD = {
                     {
                         "title": _("Dashboard"),
                         "icon": "dashboard",
-                        "link": "/admin/",
+                        "link": reverse_lazy("admin:index"),
                     },
                 ],
             },
@@ -404,55 +384,73 @@ UNFOLD = {
                         "title": _("Users"),
                         "icon": "people",
                         "link": "/admin/users/user/",
-                        "permission": lambda request: request.user.has_perm("users.view_user"),
+                        "permission": lambda request: request.user.has_perm(
+                            "users.view_user"
+                        ),
                     },
                     {
                         "title": _("Health Metric"),
                         "icon": "people",
                         "link": "/admin/users/healthmetric/",
-                        "permission": lambda request: request.user.has_perm("users.view_healthmetric"),
+                        "permission": lambda request: request.user.has_perm(
+                            "users.view_healthmetric"
+                        ),
                     },
                     {
                         "title": _("Groups"),
                         "icon": "group",
                         "link": "/admin/auth/group/",
-                        "permission": lambda request: request.user.has_perm("auth.view_group"),
+                        "permission": lambda request: request.user.has_perm(
+                            "auth.view_group"
+                        ),
                     },
                     {
                         "title": _("Organizations"),
                         "icon": "business",
                         "link": "/admin/users/organisation/",
-                        "permission": lambda request: request.user.has_perm("users.view_organisation"),
+                        "permission": lambda request: request.user.has_perm(
+                            "users.view_organisation"
+                        ),
                     },
                     {
                         "title": _("Terms"),
                         "icon": "contract",
                         "link": "/admin/users/term/",
-                        "permission": lambda request: request.user.has_perm("users.view_term"),
+                        "permission": lambda request: request.user.has_perm(
+                            "users.view_term"
+                        ),
                     },
                     {
                         "title": _("Languages"),
                         "icon": "language",
                         "link": "/admin/users/language/",
-                        "permission": lambda request: request.user.has_perm("users.view_language"),
+                        "permission": lambda request: request.user.has_perm(
+                            "users.view_language"
+                        ),
                     },
                     {
                         "title": _("Specialities"),
                         "icon": "medical_services",
                         "link": "/admin/users/speciality/",
-                        "permission": lambda request: request.user.has_perm("users.view_speciality"),
+                        "permission": lambda request: request.user.has_perm(
+                            "users.view_speciality"
+                        ),
                     },
                     {
                         "title": _("Notifications"),
                         "icon": "notifications",
                         "link": "/admin/users/notification/",
-                        "permission": lambda request: request.user.has_perm("users.view_notification"),
+                        "permission": lambda request: request.user.has_perm(
+                            "users.view_notification"
+                        ),
                     },
                     {
                         "title": _("FCM Devices"),
                         "icon": "phone_android",
                         "link": "/admin/users/fcmdeviceoverride/",
-                        "permission": lambda request: request.user.has_perm("users.view_fcmdeviceoverride"),
+                        "permission": lambda request: request.user.has_perm(
+                            "users.view_fcmdeviceoverride"
+                        ),
                     },
                 ],
             },
@@ -465,43 +463,57 @@ UNFOLD = {
                         "title": _("Consultations"),
                         "icon": "medical_services",
                         "link": "/admin/consultations/consultation/",
-                        "permission": lambda request: request.user.has_perm("consultations.view_consultation"),
+                        "permission": lambda request: request.user.has_perm(
+                            "consultations.view_consultation"
+                        ),
                     },
                     {
                         "title": _("Queues"),
                         "icon": "group_work",
                         "link": "/admin/consultations/queue/",
-                        "permission": lambda request: request.user.has_perm("consultations.view_queue"),
+                        "permission": lambda request: request.user.has_perm(
+                            "consultations.view_queue"
+                        ),
                     },
                     {
                         "title": _("Appointments"),
                         "icon": "schedule",
                         "link": "/admin/consultations/appointment/",
-                        "permission": lambda request: request.user.has_perm("consultations.view_appointment"),
+                        "permission": lambda request: request.user.has_perm(
+                            "consultations.view_appointment"
+                        ),
                     },
                     {
                         "title": _("Messages"),
                         "icon": "message",
                         "link": "/admin/consultations/message/",
-                        "permission": lambda request: request.user.has_perm("consultations.view_message"),
+                        "permission": lambda request: request.user.has_perm(
+                            "consultations.view_message"
+                        ),
                     },
                     {
                         "title": _("Reasons"),
                         "icon": "list",
                         "link": "/admin/consultations/reason/",
-                        "permission": lambda request: request.user.has_perm("consultations.view_reason"),
+                        "permission": lambda request: request.user.has_perm(
+                            "consultations.view_reason"
+                        ),
                     },
                     {
                         "title": _("Requests"),
                         "icon": "inbox",
                         "link": "/admin/consultations/request/",
-                        "permission": lambda request: request.user.has_perm("consultations.view_request"),
+                        "permission": lambda request: request.user.has_perm(
+                            "consultations.view_request"
+                        ),
                     },
                     {
                         "title": _("Booking slots"),
                         "icon": "event",
                         "link": "/admin/consultations/bookingslot/",
-                        "permission": lambda request: request.user.has_perm("consultations.view_bookingslot"),
+                        "permission": lambda request: request.user.has_perm(
+                            "consultations.view_bookingslot"
+                        ),
                     },
                 ],
             },
@@ -514,25 +526,33 @@ UNFOLD = {
                         "title": _("Messaging providers"),
                         "icon": "settings_applications",
                         "link": "/admin/messaging/messagingprovider/",
-                        "permission": lambda request: request.user.has_perm("messaging.view_messagingprovider"),
+                        "permission": lambda request: request.user.has_perm(
+                            "messaging.view_messagingprovider"
+                        ),
                     },
                     {
                         "title": _("Messages"),
                         "icon": "message",
                         "link": "/admin/messaging/message/",
-                        "permission": lambda request: request.user.has_perm("messaging.view_messagingprovider"),
+                        "permission": lambda request: request.user.has_perm(
+                            "messaging.view_messagingprovider"
+                        ),
                     },
                     {
                         "title": _("Templates"),
                         "icon": "description",
                         "link": "/admin/messaging/template/",
-                        "permission": lambda request: request.user.has_perm("messaging.view_template"),
+                        "permission": lambda request: request.user.has_perm(
+                            "messaging.view_template"
+                        ),
                     },
                     {
                         "title": _("Template Validations"),
                         "icon": "verified",
                         "link": "/admin/messaging/templatevalidation/",
-                        "permission": lambda request: request.user.has_perm("messaging.view_templatevalidation"),
+                        "permission": lambda request: request.user.has_perm(
+                            "messaging.view_templatevalidation"
+                        ),
                     },
                 ],
             },
@@ -545,13 +565,17 @@ UNFOLD = {
                         "title": _("Media Server"),
                         "icon": "videocam",
                         "link": "/admin/mediaserver/server/",
-                        "permission": lambda request: request.user.has_perm("mediaserver.view_server"),
+                        "permission": lambda request: request.user.has_perm(
+                            "mediaserver.view_server"
+                        ),
                     },
                     {
                         "title": _("TURN Server"),
                         "icon": "router",
                         "link": "/admin/mediaserver/turn/",
-                        "permission": lambda request: request.user.has_perm("mediaserver.view_turn"),
+                        "permission": lambda request: request.user.has_perm(
+                            "mediaserver.view_turn"
+                        ),
                     },
                 ],
             },
@@ -616,33 +640,33 @@ UNFOLD = {
 
 # Default Configuration Values
 DEFAULT_CONFIGURATIONS = {
-    'site_name': {
-        'value': 'HCW@Home',
-        'description': 'The name of the application displayed to users',
+    "site_name": {
+        "value": "HCW@Home",
+        "description": "The name of the application displayed to users",
     },
-    'site_url': {
-        'value': 'https://localhost:8000',
-        'description': 'Base URL of the application',
+    "site_url": {
+        "value": "https://localhost:8000",
+        "description": "Base URL of the application",
     },
-    'max_upload_size': {
-        'value': '10485760',  # 10MB in bytes
-        'description': 'Maximum file upload size in bytes',
+    "max_upload_size": {
+        "value": "10485760",  # 10MB in bytes
+        "description": "Maximum file upload size in bytes",
     },
-    'maintenance_mode': {
-        'value': 'false',
-        'description': 'Enable/disable maintenance mode (true/false)',
+    "maintenance_mode": {
+        "value": "false",
+        "description": "Enable/disable maintenance mode (true/false)",
     },
-    'contact_email': {
-        'value': 'admin@example.com',
-        'description': 'Contact email for support inquiries',
+    "contact_email": {
+        "value": "admin@example.com",
+        "description": "Contact email for support inquiries",
     },
-    'session_timeout': {
-        'value': '3600',  # 1 hour in seconds
-        'description': 'Session timeout in seconds',
+    "session_timeout": {
+        "value": "3600",  # 1 hour in seconds
+        "description": "Session timeout in seconds",
     },
-    'enable_notifications': {
-        'value': 'true',
-        'description': 'Enable/disable push notifications (true/false)',
+    "enable_notifications": {
+        "value": "true",
+        "description": "Enable/disable push notifications (true/false)",
     },
 }
 
@@ -653,26 +677,26 @@ CORS_ALLOWED_ORIGINS = []
 # Add specific origins here for production when DEBUG=False
 # Example: 'https://yourdomain.com', 'https://www.yourdomain.com'
 CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
 ]
 
-PRACTITIONER_URL = os.getenv('PRACTITIONER_URL', 'http://localhost:4200')
-PATIENT_URL = os.getenv('PATIENT_URL', 'http://localhost:4201')
+PRACTITIONER_URL = os.getenv("PRACTITIONER_URL", "http://localhost:4200")
+PATIENT_URL = os.getenv("PATIENT_URL", "http://localhost:4201")
 
 
-# RECOVERY_ITERATION = 720000 
+# RECOVERY_ITERATION = 720000
 # MFA_MANDATORY = False
 # MFA_ADAPTER_CLASS = "dj_rest_auth_mfa.adapters.DjangoMFA2Adapter"
 # MFA_GRACE_WINDOW_DAYS = 7
 
-ACCOUNT_LOGIN_METHODS = {'email'}
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
+ACCOUNT_LOGIN_METHODS = {"email"}
+ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None

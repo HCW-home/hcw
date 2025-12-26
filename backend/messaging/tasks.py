@@ -38,7 +38,7 @@ def send_message(self, message_id):
     # Get all active providers for this communication method, ordered by priority
     messaging_providers = MessagingProvider.objects.filter(
         communication_method=message.communication_method, is_active=True
-    ).first("priority", "id")
+    ).order_by("priority", "id")
 
     if not messaging_providers.exists():
         message.status = MessageStatus.FAILED
@@ -124,74 +124,3 @@ def cleanup_old_message_logs(days=30):
 
     logger.info(f"Cleaned up logs from {updated_count} old messages")
     return {"cleaned_count": updated_count}
-
-
-@shared_task
-def create_template_validation(template_id, template_created):
-    """
-    Create template validations for all available languages and providers that support validation.
-
-    Args:
-        template_id (int): The ID of the template
-        created (bool): Whether the template was just created
-    """
-
-    try:
-        template = Template.objects.get(id=template_id)
-    except Template.DoesNotExist:
-        logger.error(f"Template with ID {template_id} not found")
-        return {"success": False, "error": f"Template with ID {template_id} not found"}
-
-    templates = []
-
-    for lang, _ in settings.LANGUAGES:
-        if hasattr(template, f"template_text_{lang}"):
-            for communication_method in template.communication_method:
-                for messaging_provider in MessagingProvider.objects.filter(
-                    communication_method=communication_method
-                ):
-                    provider_module = messaging_provider.module
-
-                    if hasattr(provider_module.Main, "validate_template") and callable(
-                        getattr(provider_module.Main, "validate_template", None)
-                    ):
-                        template, created = TemplateValidation.objects.update_or_create(
-                            template=template,
-                            messaging_provider=messaging_provider,
-                            language_code=lang,
-                        )
-
-                        if created:
-                            template.status = TemplateValidationStatus.PENDING
-                            template.save()
-
-                        templates.append(template)
-
-
-@shared_task(bind=True)
-def template_messaging_provider_task(self, template_validation_id, method):
-    try:
-        template_validation = TemplateValidation.objects.get(id=template_validation_id)
-        # Get the provider instance
-        provider_instance = template_validation.messaging_provider.instance
-
-        # Dynamically resolve the method name
-        func = getattr(provider_instance, method, None)
-        if not callable(func):
-            raise AttributeError(
-                f"Method '{method}' not found on {provider_instance.__class__.__name__}"
-            )
-
-        # Call the resolved method
-        func(template_validation)
-
-    except Exception as e:
-        template_validation.task_logs += (
-            f"Unable to run {method} on template {template_validation}: {str(e)}"
-        )
-        template_validation.status = TemplateValidationStatus.FAILED
-        template_validation.task_logs += traceback.format_exc()
-        template_validation.save()
-        return
-
-    template_validation.save()

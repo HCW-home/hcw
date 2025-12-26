@@ -18,6 +18,7 @@ from unfold.mixins.action_model_admin import Model
 from . import providers
 from .abstracts import ModelCeleryAbstract
 from .providers import BaseMessagingProvider
+from .template import DEFAULT_NOTIFICATION_MESSAGES, NOTIFICATION_CHOICES
 
 
 class CommunicationMethod(models.TextChoices):
@@ -89,7 +90,9 @@ class MessagingProvider(models.Model):
         default=list,
         verbose_name=_("included prefixes"),
         help_text=_(
-            "Phone prefixes that should use this provider. Separate multiple prefixes with commas (e.g. +33, +41). If empty, all prefixes except excluded ones are allowed"
+            """Phone prefixes that should use this provider. """
+            """Separate multiple prefixes with commas (e.g. +33, +41). """
+            """If empty, all prefixes except excluded ones are allowed"""
         ),
     )
 
@@ -220,7 +223,7 @@ class Template(models.Model):
         _("system name"),
         max_length=100,
         unique=True,
-        choices=settings.NOTIFICATION_MESSAGES,
+        choices=NOTIFICATION_CHOICES,
         help_text=_("Unique identifier for the template"),
     )
 
@@ -254,6 +257,19 @@ class Template(models.Model):
     is_active = models.BooleanField(_("is active"), default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    @staticmethod
+    def get_template(name: str, event_type: str, field: str) -> str:
+        try:
+            template = Template.objects.get(
+                communication_method__contains=[name],
+                event_type=event_type,
+            )
+            content = getattr(template, f"template_{field}")
+        except Template.DoesNotExist:
+            pass
+
+        return content or DEFAULT_NOTIFICATION_MESSAGES[event_type]["content"]
 
     @property
     def factory_instance(self) -> Optional[DjangoModelFactory]:
@@ -530,7 +546,7 @@ class Message(ModelCeleryAbstract):
     content = models.TextField(_("content"), blank=True, null=True)
     subject = models.CharField(_("subject"), max_length=200, blank=True, null=True)
     template_system_name = models.CharField(
-        choices=settings.NOTIFICATION_MESSAGES, blank=True, null=True
+        choices=NOTIFICATION_CHOICES, blank=True, null=True
     )
 
     # Message type and provider
@@ -602,6 +618,23 @@ class Message(ModelCeleryAbstract):
             return self.recipient_phone
 
     @property
+    def template_is_valid(self) -> bool:
+        try:
+            self.render_content
+            self.render_subject
+            return True
+        except:
+            return False
+
+    @property
+    def template_invalid_msg(self):
+        try:
+            self.render_content
+            self.render_subject
+        except Exception as e:
+            return e
+
+    @property
     def email(self):
         if self.sent_to and self.sent_to.email:
             return self.sent_to.email
@@ -625,7 +658,7 @@ class Message(ModelCeleryAbstract):
             return self.sent_to.communication_method
 
     @property
-    def render_text(self):
+    def render_content(self):
         return self.render("content")
 
     @property
@@ -636,16 +669,21 @@ class Message(ModelCeleryAbstract):
         if not self.template_system_name:
             return getattr(self, field)
 
-        template = Template.objects.get(
-            communication_method__contains=[self.validated_communication_method],
+        template_to_render = Template.get_template(
+            name=self.validated_communication_method,
             event_type=self.template_system_name,
+            field=field,
         )
+        if not template_to_render:
+            return "Unable to render"
 
         env = jinja2.Environment()
-        text_to_render = getattr(template, f"template_{field}")
-        print(text_to_render)
-        text_template = env.from_string(text_to_render)
-        return text_template.render(object_dict)
+
+        text_template = env.from_string(template_to_render)
+        try:
+            return text_template.render(self.object_dict)
+        except Exception as e:
+            raise Exception(f"Unable to render: {e}")
 
     def clean(self):
         """Validate prefix fields"""
@@ -693,10 +731,14 @@ class Message(ModelCeleryAbstract):
                 }
             )
 
-        if not self.template_system_name or not self.content:
-            raise ValidationError(
-                {"content": _("Message content or template_system_name is required")}
-            )
+        # if not self.template_system_name or not self.content:
+        #     raise ValidationError(
+        #         {
+        #             "template_system_name": _(
+        #                 "Message content or template_system_name is required"
+        #             )
+        #         }
+        #     )
 
         if self.communication_method == CommunicationMethod.EMAIL and not self.subject:
             raise ValidationError(
