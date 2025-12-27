@@ -442,14 +442,6 @@ UNFOLD = {
                         ),
                     },
                     {
-                        "title": _("Notifications"),
-                        "icon": "notifications",
-                        "link": reverse_lazy("admin:users_notification_changelist"),
-                        "permission": lambda request: request.user.has_perm(
-                            "users.view_notification"
-                        ),
-                    },
-                    {
                         "title": _("FCM Devices"),
                         "icon": "phone_android",
                         "link": reverse_lazy(
