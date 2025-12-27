@@ -35,8 +35,11 @@ def handle_invites(appointment_id):
 
     if appointment.status == AppointmentStatus.SCHEDULED:
         template_system_name = "invitation_to_appointment"
-    else:
+    elif appointment.status == AppointmentStatus.CANCELLED:
         template_system_name = "cancelling_appointment"
+    else:
+        "Do nothing"
+        return
 
     for participant in appointment.participants.filter(
         is_invited=True, is_notified=False
