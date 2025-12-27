@@ -21,6 +21,7 @@ from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.http import FileResponse
 from django.shortcuts import render
+from django.utils import timezone
 from django.views.generic import View
 from drf_spectacular.utils import (
     OpenApiExample,
@@ -465,6 +466,56 @@ class UserNotificationsView(APIView):
         paginated_notifications = paginator.paginate_queryset(notifications, request)
         serializer = MessageSerializer(paginated_notifications, many=True)
         return paginator.get_paginated_response(serializer.data)
+
+
+class UserNotificationReadView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        responses={
+            200: MessageSerializer,
+            404: {
+                "type": "object",
+                "properties": {"detail": {"type": "string"}},
+                "example": {"detail": "Notification not found."},
+            },
+            403: {
+                "type": "object",
+                "properties": {"detail": {"type": "string"}},
+                "example": {
+                    "detail": "You don't have permission to mark this notification as read."
+                },
+            },
+        },
+        description="Mark a notification as read by populating the read_at field with the current timestamp. Only the recipient can mark their notification as read.",
+    )
+    def post(self, request, notification_id):
+        """Mark a notification as read."""
+        try:
+            notification = Message.objects.get(id=notification_id)
+        except Message.DoesNotExist:
+            return Response(
+                {"detail": "Notification not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Check if the authenticated user is the recipient
+        if notification.sent_to != request.user:
+            return Response(
+                {
+                    "detail": "You don't have permission to mark this notification as read."
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # Mark as read by setting read_at to current time
+
+        notification.read_at = timezone.now()
+        notification.status = "read"
+        notification.save()
+
+        serializer = MessageSerializer(notification)
+        return Response(serializer.data)
 
 
 class UserAppointmentsView(APIView):
