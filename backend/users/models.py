@@ -616,10 +616,6 @@ class HealthMetric(models.Model):
     def __str__(self):
         return f"{self.user} @ {self.measured_at:%Y-%m-%d %H:%M}"
 
-
-class Notification(ModelOwnerAbstract):
-    title = models.CharField(max_length=200)
-    message = models.TextField()
     acknowledged_at = models.DateTimeField(blank=True, null=True)
 
     def save(self, *args, **kawrgs):

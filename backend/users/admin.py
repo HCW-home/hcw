@@ -39,7 +39,6 @@ from .models import (
     Term,
     User,
 )
-from .models import Notification as UserNotification
 
 admin.site.unregister(Group)
 
@@ -159,8 +158,6 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
 
 
 admin.site.register(User, UserAdmin)
-
-admin.site.register(UserNotification, ModelAdmin)
 
 
 class DeviceAdmin(ModelAdmin):
