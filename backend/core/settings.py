@@ -81,6 +81,7 @@ INSTALLED_APPS = [
     "unfold.contrib.guardian",
     "unfold.contrib.simple_history",
     "unfold.contrib.location_field",
+    "unfold.contrib.constance",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -111,6 +112,7 @@ INSTALLED_APPS = [
     "messaging",
     "mediaserver",
     "api",
+    "constance",
 ]
 
 MIDDLEWARE = [
@@ -167,6 +169,8 @@ DATABASES = {
 }
 
 SIMPLE_JWT = {"ACCESS_TOKEN_LIFETIME": timedelta(days=1), "ROTATE_REFRESH_TOKENS": True}
+
+CONSTANCE_BACKEND = "constance.backends.database.DatabaseBackend"
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -651,35 +655,19 @@ UNFOLD = {
 }
 
 # Default Configuration Values
-DEFAULT_CONFIGURATIONS = {
-    "site_name": {
-        "value": "HCW@Home",
-        "description": "The name of the application displayed to users",
-    },
-    "site_url": {
-        "value": "https://localhost:8000",
-        "description": "Base URL of the application",
-    },
-    "max_upload_size": {
-        "value": "10485760",  # 10MB in bytes
-        "description": "Maximum file upload size in bytes",
-    },
-    "maintenance_mode": {
-        "value": "false",
-        "description": "Enable/disable maintenance mode (true/false)",
-    },
-    "contact_email": {
-        "value": "admin@example.com",
-        "description": "Contact email for support inquiries",
-    },
-    "session_timeout": {
-        "value": "3600",  # 1 hour in seconds
-        "description": "Session timeout in seconds",
-    },
-    "enable_notifications": {
-        "value": "true",
-        "description": "Enable/disable push notifications (true/false)",
-    },
+CONSTANCE_CONFIG = {
+    "site_name": ("HCW@Home", "The name of the application displayed to users"),
+    "patient_base_url": ("https://localhost:8000", "Base URL of patient frontend"),
+    "practionner_base_url": (
+        "https://localhost:8000",
+        "Base URL of practionner frontend",
+    ),
+}
+
+
+CONSTANCE_CONFIG_FIELDSETS = {
+    "General Options": ("site_name",),
+    "URLs": ("patient_base_url", "practionner_base_url"),
 }
 
 # CORS Configuration

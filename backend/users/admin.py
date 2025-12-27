@@ -1,26 +1,16 @@
 from typing import List, Tuple, Union
-from django.db import models
-from django.contrib import admin
-from .models import User, FCMDeviceOverride, Language, Speciality, HealthMetric, Organisation, Term
-from .models import Notification as UserNotification
+
+from allauth.socialaccount.models import SocialApp
+from constance.admin import Config, ConstanceAdmin
+from django.contrib import admin, messages
 from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from fcm_django.models import FCMDevice
-from fcm_django.admin import DeviceAdmin
-from django.contrib import admin, messages
-from fcm_django.models import FirebaseResponseDict, fcm_error_list
+from django.contrib.auth.models import Group
+from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext_lazy
-from unfold.admin import ModelAdmin, TabularInline, StackedInline
-from django.contrib.auth.models import Group
-from modeltranslation.admin import TabbedTranslationAdmin
-from unfold.contrib.forms.widgets import WysiwygWidget
-from unfold.widgets import UnfoldAdminColorInputWidget
-from unfold.contrib.import_export.forms import ExportForm, ImportForm, SelectableFieldsExportForm
-from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
-from import_export.admin import ImportExportModelAdmin
-from allauth.socialaccount.models import SocialApp
-
+from fcm_django.admin import DeviceAdmin
+from fcm_django.models import FCMDevice, FirebaseResponseDict, fcm_error_list
 from firebase_admin.messaging import (
     ErrorInfo,
     Message,
@@ -28,12 +18,36 @@ from firebase_admin.messaging import (
     SendResponse,
     TopicManagementResponse,
 )
+from import_export.admin import ImportExportModelAdmin
+from modeltranslation.admin import TabbedTranslationAdmin
+from unfold.admin import ModelAdmin, StackedInline, TabularInline
+from unfold.contrib.forms.widgets import WysiwygWidget
+from unfold.contrib.import_export.forms import (
+    ExportForm,
+    ImportForm,
+    SelectableFieldsExportForm,
+)
+from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
+from unfold.widgets import UnfoldAdminColorInputWidget
+
+from .models import (
+    FCMDeviceOverride,
+    HealthMetric,
+    Language,
+    Organisation,
+    Speciality,
+    Term,
+    User,
+)
+from .models import Notification as UserNotification
 
 admin.site.unregister(Group)
+
 
 @admin.register(Group)
 class GroupAdmin(BaseGroupAdmin, ModelAdmin):
     pass
+
 
 @admin.register(Term)
 class TermAdmin(ModelAdmin, TabbedTranslationAdmin):
@@ -43,16 +57,16 @@ class TermAdmin(ModelAdmin, TabbedTranslationAdmin):
         }
     }
 
-class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
 
+class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
     form = UserChangeForm
     add_form = UserCreationForm
     change_password_form = AdminPasswordChangeForm
     import_form_class = ImportForm
     export_form_class = ExportForm
-    list_editable = ['is_active']
-    ordering = ['email']
-    readonly_fields = ('last_login', 'date_joined')
+    list_editable = ["is_active"]
+    ordering = ["email"]
+    readonly_fields = ("last_login", "date_joined")
     # export_form_class = SelectableFieldsExportForm
 
     list_display = [
@@ -67,13 +81,14 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
         "specialities_display",
     ]
 
-    list_filter = BaseUserAdmin.list_filter + \
-        ('languages', 'specialities', "is_online")
-    filter_horizontal = BaseUserAdmin.filter_horizontal + ('languages', 'specialities')
+    list_filter = BaseUserAdmin.list_filter + ("languages", "specialities", "is_online")
+    filter_horizontal = BaseUserAdmin.filter_horizontal + ("languages", "specialities")
 
     fieldsets = (
-        (_("Personal info"), {
-         "fields": ("email", "first_name", "last_name", "password")}),
+        (
+            _("Personal info"),
+            {"fields": ("email", "first_name", "last_name", "password")},
+        ),
         (
             _("Permissions"),
             {
@@ -86,12 +101,35 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
                 ),
             },
         ),
-        ('Additional Info', {
-            'fields': ('location', 'app_preferences', 'mobile_phone_number', 'communication_method', 'timezone', 'preferred_language', 'languages', 'specialities', 'main_organisation', 'organisations', 'picture', 'accepted_term',)
-        }),
-        ('Authentication', {
-            'fields': ('appointment_auth_token', 'is_appointment_auth_token_used', 'verification_code')
-        }),
+        (
+            "Additional Info",
+            {
+                "fields": (
+                    "location",
+                    "app_preferences",
+                    "mobile_phone_number",
+                    "communication_method",
+                    "timezone",
+                    "preferred_language",
+                    "languages",
+                    "specialities",
+                    "main_organisation",
+                    "organisations",
+                    "picture",
+                    "accepted_term",
+                )
+            },
+        ),
+        (
+            "Authentication",
+            {
+                "fields": (
+                    "appointment_auth_token",
+                    "is_appointment_auth_token_used",
+                    "verification_code",
+                )
+            },
+        ),
         (_("Important dates"), {"fields": ("last_login", "date_joined")}),
     )
 
@@ -106,16 +144,24 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
     )
 
     def languages_display(self, obj):
-        return ", ".join([lang.name for lang in obj.languages.all()[:3]]) + ("..." if obj.languages.count() > 3 else "")
+        return ", ".join([lang.name for lang in obj.languages.all()[:3]]) + (
+            "..." if obj.languages.count() > 3 else ""
+        )
+
     languages_display.short_description = "Languages"
 
     def specialities_display(self, obj):
-        return ", ".join([spec.name for spec in obj.specialities.all()[:3]]) + ("..." if obj.specialities.count() > 3 else "")
+        return ", ".join([spec.name for spec in obj.specialities.all()[:3]]) + (
+            "..." if obj.specialities.count() > 3 else ""
+        )
+
     specialities_display.short_description = "Specialities"
+
 
 admin.site.register(User, UserAdmin)
 
 admin.site.register(UserNotification, ModelAdmin)
+
 
 class DeviceAdmin(ModelAdmin):
     list_display = (
@@ -174,7 +220,7 @@ class DeviceAdmin(ModelAdmin):
             )
         else:
             message = ngettext_lazy(
-                "A message failed to send. %(count)d device was marked as " "inactive.",
+                "A message failed to send. %(count)d device was marked as inactive.",
                 "Some messages failed to send. %(count)d devices were marked as "
                 "inactive.",
                 total_failure,
@@ -257,8 +303,7 @@ class DeviceAdmin(ModelAdmin):
                 if type(response) != SendResponse:
                     total_failure += 1
 
-        self._send_deactivated_message(
-            request, single_responses, total_failure, False)
+        self._send_deactivated_message(request, single_responses, total_failure, False)
 
     def send_message(self, request, queryset):
         self.send_messages(request, queryset)
@@ -308,8 +353,7 @@ class DeviceAdmin(ModelAdmin):
                 )
                 total_failure += len(response.deactivated_registration_ids)
 
-        self._send_deactivated_message(
-            request, single_responses, total_failure, True)
+        self._send_deactivated_message(request, single_responses, total_failure, True)
 
     def subscribe_to_topic(self, request, queryset):
         self.handle_topic_subscription(request, queryset, True)
@@ -319,8 +363,7 @@ class DeviceAdmin(ModelAdmin):
     def bulk_subscribe_to_topic(self, request, queryset):
         self.handle_topic_subscription(request, queryset, True, True)
 
-    bulk_subscribe_to_topic.short_description = _(
-        "Subscribe to test topic in bulk")
+    bulk_subscribe_to_topic.short_description = _("Subscribe to test topic in bulk")
 
     def unsubscribe_to_topic(self, request, queryset):
         self.handle_topic_subscription(request, queryset, False)
@@ -330,8 +373,7 @@ class DeviceAdmin(ModelAdmin):
     def bulk_unsubscribe_to_topic(self, request, queryset):
         self.handle_topic_subscription(request, queryset, False, True)
 
-    bulk_unsubscribe_to_topic.short_description = _(
-        "Unsubscribe to test topic in bulk")
+    bulk_unsubscribe_to_topic.short_description = _("Unsubscribe to test topic in bulk")
 
     def handle_send_topic_message(self, request, queryset):
         FCMDevice.send_topic_message(
@@ -362,17 +404,19 @@ class DeviceAdmin(ModelAdmin):
 admin.site.unregister(FCMDevice)
 admin.site.register(FCMDeviceOverride, DeviceAdmin)
 
+
 @admin.register(Language)
 class LanguageAdmin(ModelAdmin):
-    list_display = ['name']
-    search_fields = ['name']
-    ordering = ['name']
+    list_display = ["name"]
+    search_fields = ["name"]
+    ordering = ["name"]
+
 
 @admin.register(Speciality)
 class SpecialityAdmin(ModelAdmin, TabbedTranslationAdmin):
-    list_display = ['name']
-    search_fields = ['name']
-    ordering = ['name']
+    list_display = ["name"]
+    search_fields = ["name"]
+    ordering = ["name"]
 
 
 @admin.register(Organisation)
@@ -388,164 +432,207 @@ class OrganisationAdmin(ModelAdmin):
         form.base_fields["primary_color"].widget = UnfoldAdminColorInputWidget()
         return form
 
+
 @admin.register(HealthMetric)
 class HealthMetricAdmin(ModelAdmin):
     list_display = [
-        'user',
-        'measured_at',
-        'created_by',
-        'systolic_bp',
-        'diastolic_bp',
-        'heart_rate_bpm',
-        'temperature_c',
+        "user",
+        "measured_at",
+        "created_by",
+        "systolic_bp",
+        "diastolic_bp",
+        "heart_rate_bpm",
+        "temperature_c",
     ]
     list_filter = [
-        'measured_at',
-        'created_by',
-        'measured_by',
-        'source',
+        "measured_at",
+        "created_by",
+        "measured_by",
+        "source",
     ]
     search_fields = [
-        'user__email',
-        'user__first_name',
-        'user__last_name',
-        'notes',
-        'source',
+        "user__email",
+        "user__first_name",
+        "user__last_name",
+        "notes",
+        "source",
     ]
-    raw_id_fields = ['user', 'created_by', 'measured_by']
-    date_hierarchy = 'measured_at'
-    ordering = ['-measured_at']
+    raw_id_fields = ["user", "created_by", "measured_by"]
+    date_hierarchy = "measured_at"
+    ordering = ["-measured_at"]
 
     fieldsets = (
-        ('Basic Information', {
-            'fields': (
-                'user',
-                'measured_at',
-                'measured_by',
-                'source',
-                'notes',
-            ),
-            'classes': ['tab'],
-        }),
-        ('Anthropometrics', {
-            'fields': (
-                'height_cm',
-                'weight_kg',
-                'waist_cm',
-                'hip_cm',
-                'body_fat_pct',
-            ),
-            'classes': ['tab'],
-        }),
-        ('Vital Signs', {
-            'fields': (
-                'systolic_bp',
-                'diastolic_bp',
-                'heart_rate_bpm',
-                'respiratory_rate',
-                'temperature_c',
-                'spo2_pct',
-                'pain_score_0_10',
-            ),
-            'classes': ['tab'],
-        }),
-        ('Glucose & Diabetes', {
-            'fields': (
-                'glucose_fasting_mgdl',
-                'glucose_random_mgdl',
-                'hba1c_pct',
-            ),
-            'classes': ['tab'],
-        }),
-        ('Lipid Panel', {
-            'fields': (
-                'chol_total_mgdl',
-                'hdl_mgdl',
-                'ldl_mgdl',
-                'triglycerides_mgdl',
-            ),
-            'classes': ['tab'],
-        }),
-        ('Renal Function', {
-            'fields': (
-                'creatinine_mgdl',
-                'egfr_ml_min_1_73m2',
-                'bun_mgdl',
-            ),
-            'classes': ['tab'],
-        }),
-        ('Liver Panel', {
-            'fields': (
-                'alt_u_l',
-                'ast_u_l',
-                'alp_u_l',
-                'bilirubin_total_mgdl',
-            ),
-            'classes': ['tab'],
-        }),
-        ('Electrolytes', {
-            'fields': (
-                'sodium_mmol_l',
-                'potassium_mmol_l',
-                'chloride_mmol_l',
-                'bicarbonate_mmol_l',
-            ),
-            'classes': ['tab'],
-        }),
-        ('Hematology', {
-            'fields': (
-                'hemoglobin_g_dl',
-                'wbc_10e9_l',
-                'platelets_10e9_l',
-                'inr',
-            ),
-            'classes': ['tab'],
-        }),
-        ('Inflammation & Thyroid', {
-            'fields': (
-                'crp_mg_l',
-                'esr_mm_h',
-                'tsh_miu_l',
-                't3_ng_dl',
-                't4_ug_dl',
-            ),
-            'classes': ['tab'],
-        }),
-        ('Urinalysis', {
-            'fields': (
-                'urine_protein',
-                'urine_glucose',
-                'urine_ketones',
-            ),
-            'classes': ['tab'],
-        }),
-        ('Respiratory Function', {
-            'fields': (
-                'peak_flow_l_min',
-                'fev1_l',
-                'fvc_l',
-            ),
-            'classes': ['tab'],
-        }),
-        ('Mental Health', {
-            'fields': (
-                'phq9_score',
-                'gad7_score',
-            ),
-            'classes': ['tab'],
-        }),
-        ('Reproductive Health', {
-            'fields': (
-                'pregnant_test_positive',
-            ),
-            'classes': ['tab'],
-        }),
+        (
+            "Basic Information",
+            {
+                "fields": (
+                    "user",
+                    "measured_at",
+                    "measured_by",
+                    "source",
+                    "notes",
+                ),
+                "classes": ["tab"],
+            },
+        ),
+        (
+            "Anthropometrics",
+            {
+                "fields": (
+                    "height_cm",
+                    "weight_kg",
+                    "waist_cm",
+                    "hip_cm",
+                    "body_fat_pct",
+                ),
+                "classes": ["tab"],
+            },
+        ),
+        (
+            "Vital Signs",
+            {
+                "fields": (
+                    "systolic_bp",
+                    "diastolic_bp",
+                    "heart_rate_bpm",
+                    "respiratory_rate",
+                    "temperature_c",
+                    "spo2_pct",
+                    "pain_score_0_10",
+                ),
+                "classes": ["tab"],
+            },
+        ),
+        (
+            "Glucose & Diabetes",
+            {
+                "fields": (
+                    "glucose_fasting_mgdl",
+                    "glucose_random_mgdl",
+                    "hba1c_pct",
+                ),
+                "classes": ["tab"],
+            },
+        ),
+        (
+            "Lipid Panel",
+            {
+                "fields": (
+                    "chol_total_mgdl",
+                    "hdl_mgdl",
+                    "ldl_mgdl",
+                    "triglycerides_mgdl",
+                ),
+                "classes": ["tab"],
+            },
+        ),
+        (
+            "Renal Function",
+            {
+                "fields": (
+                    "creatinine_mgdl",
+                    "egfr_ml_min_1_73m2",
+                    "bun_mgdl",
+                ),
+                "classes": ["tab"],
+            },
+        ),
+        (
+            "Liver Panel",
+            {
+                "fields": (
+                    "alt_u_l",
+                    "ast_u_l",
+                    "alp_u_l",
+                    "bilirubin_total_mgdl",
+                ),
+                "classes": ["tab"],
+            },
+        ),
+        (
+            "Electrolytes",
+            {
+                "fields": (
+                    "sodium_mmol_l",
+                    "potassium_mmol_l",
+                    "chloride_mmol_l",
+                    "bicarbonate_mmol_l",
+                ),
+                "classes": ["tab"],
+            },
+        ),
+        (
+            "Hematology",
+            {
+                "fields": (
+                    "hemoglobin_g_dl",
+                    "wbc_10e9_l",
+                    "platelets_10e9_l",
+                    "inr",
+                ),
+                "classes": ["tab"],
+            },
+        ),
+        (
+            "Inflammation & Thyroid",
+            {
+                "fields": (
+                    "crp_mg_l",
+                    "esr_mm_h",
+                    "tsh_miu_l",
+                    "t3_ng_dl",
+                    "t4_ug_dl",
+                ),
+                "classes": ["tab"],
+            },
+        ),
+        (
+            "Urinalysis",
+            {
+                "fields": (
+                    "urine_protein",
+                    "urine_glucose",
+                    "urine_ketones",
+                ),
+                "classes": ["tab"],
+            },
+        ),
+        (
+            "Respiratory Function",
+            {
+                "fields": (
+                    "peak_flow_l_min",
+                    "fev1_l",
+                    "fvc_l",
+                ),
+                "classes": ["tab"],
+            },
+        ),
+        (
+            "Mental Health",
+            {
+                "fields": (
+                    "phq9_score",
+                    "gad7_score",
+                ),
+                "classes": ["tab"],
+            },
+        ),
+        (
+            "Reproductive Health",
+            {
+                "fields": ("pregnant_test_positive",),
+                "classes": ["tab"],
+            },
+        ),
     )
 
-from django.contrib import admin
-from unfold.admin import ModelAdmin
-from unfold.widgets import UnfoldAdminSelectWidget, UnfoldAdminTextInputWidget
 
+from django.contrib import admin
+from django_celery_beat.admin import ClockedScheduleAdmin as BaseClockedScheduleAdmin
+from django_celery_beat.admin import CrontabScheduleAdmin as BaseCrontabScheduleAdmin
+from django_celery_beat.admin import PeriodicTaskAdmin as BasePeriodicTaskAdmin
+from django_celery_beat.admin import PeriodicTaskForm, TaskSelectWidget
 from django_celery_beat.models import (
     ClockedSchedule,
     CrontabSchedule,
@@ -553,16 +640,15 @@ from django_celery_beat.models import (
     PeriodicTask,
     SolarSchedule,
 )
-from django_celery_beat.admin import ClockedScheduleAdmin as BaseClockedScheduleAdmin
-from django_celery_beat.admin import CrontabScheduleAdmin as BaseCrontabScheduleAdmin
-from django_celery_beat.admin import PeriodicTaskAdmin as BasePeriodicTaskAdmin
-from django_celery_beat.admin import PeriodicTaskForm, TaskSelectWidget
+from unfold.admin import ModelAdmin
+from unfold.widgets import UnfoldAdminSelectWidget, UnfoldAdminTextInputWidget
 
 admin.site.unregister(PeriodicTask)
 admin.site.unregister(IntervalSchedule)
 admin.site.unregister(CrontabSchedule)
 admin.site.unregister(SolarSchedule)
 admin.site.unregister(ClockedSchedule)
+
 
 class UnfoldTaskSelectWidget(UnfoldAdminSelectWidget, TaskSelectWidget):
     pass
@@ -593,6 +679,7 @@ class CrontabScheduleAdmin(BaseCrontabScheduleAdmin, ModelAdmin):
 @admin.register(SolarSchedule)
 class SolarScheduleAdmin(ModelAdmin):
     pass
+
 
 @admin.register(ClockedSchedule)
 class ClockedScheduleAdmin(BaseClockedScheduleAdmin, ModelAdmin):
