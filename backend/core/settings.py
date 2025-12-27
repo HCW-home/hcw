@@ -630,19 +630,18 @@ UNFOLD = {
                     },
                 ],
             },
-            # {
-            #     "title": _("Settings"),
-            #     "separator": True,
-            #     "collapsible": True,
-            #     "items": [
-            #         {
-            #             "title": _("Configuration"),
-            #             "icon": "settings",
-            #             "link": "/admin/configuration/configuration/",
-            #             "permission": lambda request: request.user.has_perm("configuration.view_configuration"),
-            #         },
-            #     ],
-            # },
+            {
+                "title": _("Settings"),
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Configuration"),
+                        "icon": "settings",
+                        "link": reverse_lazy("admin:constance_config_changelist"),
+                    },
+                ],
+            },
         ],
     },
 }
