@@ -116,9 +116,7 @@ class ParticipantSerializer(serializers.ModelSerializer):
 class AppointmentSerializer(serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(default=serializers.CurrentUserDefault())
     consultation = serializers.PrimaryKeyRelatedField(read_only=True)
-    participants = ParticipantSerializer(
-        source="participants", many=True, read_only=True
-    )
+    participants = ParticipantSerializer(many=True, read_only=True)
 
     class Meta:
         model = Appointment
@@ -289,9 +287,7 @@ class BookingSlotSerializer(serializers.ModelSerializer):
 class AppointmentDetailSerializer(serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(read_only=True)
     consultation = ConsultationSerializer(read_only=True)
-    participants = ParticipantSerializer(
-        source="participants", many=True, read_only=True
-    )
+    participants = ParticipantSerializer(many=True, read_only=True)
 
     class Meta:
         model = Appointment
