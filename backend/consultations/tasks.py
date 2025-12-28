@@ -49,7 +49,7 @@ def handle_invites(appointment_id):
             recipient_phone=participant.phone,
             recipient_email=participant.email,
             sent_to=participant.user,
-            sent_by=appointment.consultation.create_by,
+            sent_by=appointment.consultation.created_by,
             template_system_name=template_system_name,
             object_dict=model_to_dict(participant),
         )

@@ -567,8 +567,10 @@ class Message(ModelCeleryAbstract):
     provider_name = models.CharField(_("provider name"), max_length=50, blank=True)
 
     # Recipients
-    recipient_phone = models.CharField(_("recipient phone"), max_length=50, blank=True)
-    recipient_email = models.EmailField(_("recipient email"), blank=True)
+    recipient_phone = models.CharField(
+        _("recipient phone"), max_length=50, blank=True, null=True
+    )
+    recipient_email = models.EmailField(_("recipient email"), blank=True, null=True)
 
     # Status tracking
     status = models.CharField(
