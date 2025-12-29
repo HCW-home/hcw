@@ -3,21 +3,18 @@ from typing import Dict, Optional, Sequence
 from zoneinfo import ZoneInfo
 
 import jinja2
+from constance import config
 from django.apps import apps
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 from django.template.defaultfilters import register
 from django.utils import timezone, translation
 from django.utils.translation import gettext_lazy as _
 from factory.django import DjangoModelFactory
 from modeltranslation.utils import get_translation_fields
-from unfold.mixins.action_model_admin import Model
 
-# Create your models here.
 from . import providers
 from .abstracts import ModelCeleryAbstract
 from .providers import BaseMessagingProvider
@@ -707,7 +704,7 @@ class Message(ModelCeleryAbstract):
                 tz = settings.TIME_ZONE
 
             with translation.override(lang), timezone.override(tz):
-                return text_template.render({"obj": obj})
+                return text_template.render({"obj": obj, "config": config})
         except Exception as e:
             raise Exception(f"Unable to render: {e}")
 

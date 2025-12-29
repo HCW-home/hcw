@@ -141,12 +141,12 @@ class User(AbstractUser):
         default=False,
         help_text="Indicates if this is a temporary user created for appointments",
     )
-    appointment_auth_token = models.CharField(
+    one_time_auth_token = models.CharField(
         max_length=256,
         blank=True,
         help_text="Authentication token for appointment access",
     )
-    is_appointment_auth_token_used = models.BooleanField(
+    is_auth_token_used = models.BooleanField(
         default=False,
         help_text="Whether the appointment auth token has been used before",
     )
@@ -177,8 +177,8 @@ class User(AbstractUser):
         return devices.send_message(message)
 
     def save(self, *args, **kwargs):
-        if self.temporary and not self.appointment_auth_token:
-            self.appointment_auth_token = str(uuid.uuid4())
+        if self.temporary and not self.one_time_auth_token:
+            self.one_time_auth_token = str(uuid.uuid4())
         super().save(*args, **kwargs)
 
 

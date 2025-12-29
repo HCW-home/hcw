@@ -650,16 +650,16 @@ UNFOLD = {
 CONSTANCE_CONFIG = {
     "site_name": ("HCW@Home", "The name of the application displayed to users"),
     "patient_base_url": ("https://localhost:8000", "Base URL of patient frontend"),
-    "practionner_base_url": (
+    "practitionner_base_url": (
         "https://localhost:8000",
-        "Base URL of practionner frontend",
+        "Base URL of practitionner frontend",
     ),
 }
 
 
 CONSTANCE_CONFIG_FIELDSETS = {
     "General Options": ("site_name",),
-    "URLs": ("patient_base_url", "practionner_base_url"),
+    "URLs": ("patient_base_url", "practitionner_base_url"),
 }
 
 # CORS Configuration
@@ -680,8 +680,8 @@ CORS_ALLOW_HEADERS = [
     "x-requested-with",
 ]
 
-PRACTITIONER_URL = os.getenv("PRACTITIONER_URL", "http://localhost:4200")
-PATIENT_URL = os.getenv("PATIENT_URL", "http://localhost:4201")
+# PRACTITIONER_URL = os.getenv("PRACTITIONER_URL", "http://localhost:4200")
+# PATIENT_URL = os.getenv("PATIENT_URL", "http://localhost:4201")
 
 
 # RECOVERY_ITERATION = 720000

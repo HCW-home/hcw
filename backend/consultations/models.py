@@ -195,13 +195,13 @@ class Participant(models.Model):
 
     @property
     def auth_token(self):
-        """Get appointment_auth_token from associated User"""
-        return self.user.appointment_auth_token if self.user else None
+        """Get one_time_auth_token from associated User"""
+        return self.user.one_time_auth_token if self.user else None
 
     @property
     def is_auth_token_used(self):
-        """Get is_appointment_auth_token_used from associated User"""
-        return self.user.is_appointment_auth_token_used if self.user else False
+        """Get is_auth_token_used from associated User"""
+        return self.user.is_auth_token_used if self.user else False
 
     @property
     def name(self) -> str:

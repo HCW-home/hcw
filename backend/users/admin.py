@@ -123,8 +123,8 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
             "Authentication",
             {
                 "fields": (
-                    "appointment_auth_token",
-                    "is_appointment_auth_token_used",
+                    "one_time_auth_token",
+                    "is_auth_token_used",
                     "verification_code",
                 )
             },
