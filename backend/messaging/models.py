@@ -680,16 +680,6 @@ class Message(ModelCeleryAbstract):
         if not self.template_system_name:
             return getattr(self, field)
 
-        template_to_render = Template.get_template(
-            name=self.validated_communication_method,
-            event_type=self.template_system_name,
-            field=field,
-        )
-
-        env = jinja2.Environment()
-        env.filters.update(register.filters)
-
-        text_template = env.from_string(template_to_render)
         try:
             app_label, model_name = self.object_model.split(".")
             obj = apps.get_model(app_label, model_name).objects.get(pk=self.object_pk)
@@ -704,6 +694,16 @@ class Message(ModelCeleryAbstract):
                 tz = settings.TIME_ZONE
 
             with translation.override(lang), timezone.override(tz):
+                template_to_render = Template.get_template(
+                    name=self.validated_communication_method,
+                    event_type=self.template_system_name,
+                    field=field,
+                )
+
+                env = jinja2.Environment()
+                env.filters.update(register.filters)
+
+                text_template = env.from_string(template_to_render)
                 return text_template.render({"obj": obj, "config": config})
         except Exception as e:
             raise Exception(f"Unable to render: {e}")
