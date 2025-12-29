@@ -47,6 +47,10 @@ SECRET_KEY = os.getenv("DJANGOSECRET_KEY")
 DEBUG = True if os.getenv("DEBUG") == "True" else False
 
 ALLOWED_HOSTS = [os.getenv("ALLOWED_HOST")]
+if os.getenv("ALLOWED_HOSTS"):
+    ALLOWED_HOSTS += os.getenv("ALLOWED_HOSTS").replace(" ", "").split(",")
+
+print(ALLOWED_HOSTS)
 
 EMAIL_HOST = os.getenv("EMAIL_HOST")
 EMAIL_PORT = os.getenv("EMAIL_PORT", 25)

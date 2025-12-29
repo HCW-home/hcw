@@ -308,6 +308,8 @@ class AppointmentDetailSerializer(serializers.ModelSerializer):
 class RequestSerializer(serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(read_only=True)
     expected_with = ConsultationUserSerializer(read_only=True)
+    consultation = ConsultationSerializer(read_only=True)
+    appointment = AppointmentSerializer(read_only=True)
     reason = ReasonSerializer(read_only=True)
     reason_id = serializers.IntegerField(write_only=True)
     expected_with_id = serializers.IntegerField(
@@ -328,6 +330,7 @@ class RequestSerializer(serializers.ModelSerializer):
             "status",
             "refused_reason",
             "appointment",
+            "consultation",
         ]
         read_only_fields = ["id", "created_by", "status"]
 
