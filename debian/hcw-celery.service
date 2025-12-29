@@ -7,7 +7,7 @@ User=hcw
 Environment=VIRTUAL_ENV=/usr/share/hcw/venv
 EnvironmentFile=/etc/hcw/backend.conf
 WorkingDirectory=/usr/share/hcw/
-ExecStart=/usr/share/hcw/venv/bin/celery -A core.celery worker --loglevel=info
+ExecStart=/usr/share/hcw/backend/venv/bin/celery -A core.celery worker --loglevel=info
 
 [Install]
 WantedBy=multi-user.target

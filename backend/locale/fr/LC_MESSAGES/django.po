@@ -93,13 +93,13 @@ msgstr "appartient à"
 #, fuzzy
 #| msgid "Configuration"
 msgid "consultation"
-msgstr "Configuration"
+msgstr "consultation"
 
 #: consultations/models.py:79
 #, fuzzy
 #| msgid "Configurations"
 msgid "consultations"
-msgstr "Configurations"
+msgstr "consultations"
 
 #: consultations/models.py:82
 msgid "Can view own assigned consultations"
@@ -139,7 +139,7 @@ msgstr "statut"
 #, fuzzy
 #| msgid "Scheduled"
 msgid "scheduled at"
-msgstr "Planifié"
+msgstr "Prévu le"
 
 #: consultations/models.py:120
 msgid "end expected at"
@@ -177,7 +177,7 @@ msgstr "pièce jointe"
 #, fuzzy
 #| msgid "Messages:"
 msgid "message"
-msgstr "messages"
+msgstr "message"
 
 #: consultations/models.py:254
 #, fuzzy
@@ -189,7 +189,7 @@ msgstr "messages"
 #, fuzzy
 #| msgid "specialities"
 msgid "speciality"
-msgstr "spécialités"
+msgstr "spécialité"
 
 #: consultations/models.py:271
 msgid "queue assignee"
@@ -203,7 +203,7 @@ msgstr "utilisateur assigné"
 #, fuzzy
 #| msgid "Configuration"
 msgid "duration"
-msgstr "Configuration"
+msgstr "durée"
 
 #: consultations/models.py:281
 msgid "Duration in minutes"
@@ -262,7 +262,7 @@ msgstr "nom du médicament"
 #, fuzzy
 #| msgid "Messages:"
 msgid "dosage"
-msgstr "dose"
+msgstr "dosage"
 
 #: consultations/models.py:443
 msgid "frequency"
@@ -282,13 +282,13 @@ msgstr "notes"
 #, fuzzy
 #| msgid "description"
 msgid "prescription"
-msgstr "ordonance"
+msgstr "ordonnance"
 
 #: consultations/models.py:451
 #, fuzzy
 #| msgid "description"
 msgid "prescriptions"
-msgstr "ordonances"
+msgstr "ordonnances"
 
 #: core/settings.py:214
 msgid "English"
@@ -328,7 +328,7 @@ msgstr "Utilisateurs et authentification"
 #, fuzzy
 #| msgid "users"
 msgid "Users"
-msgstr "utilisateurs"
+msgstr "Utilisateurs"
 
 #: core/settings.py:399
 msgid "Health Metric"
@@ -358,7 +358,7 @@ msgstr "Langues"
 #, fuzzy
 #| msgid "specialities"
 msgid "Specialities"
-msgstr "spécialités"
+msgstr "Spécialités"
 
 #: core/settings.py:447
 msgid "FCM Devices"
@@ -368,7 +368,7 @@ msgstr "Appareils FCM"
 #, fuzzy
 #| msgid "Configurations"
 msgid "Consultations"
-msgstr "Configurations"
+msgstr "Consultations"
 
 #: core/settings.py:474 core/views.py:92
 #, fuzzy
@@ -408,21 +408,21 @@ msgstr "Créneaux de réservation"
 #, fuzzy
 #| msgid "Messages:"
 msgid "Messaging"
-msgstr "Messages :"
+msgstr "Messagerie"
 
 #: core/settings.py:533
 #, fuzzy
 #| msgid "messaging providers"
 msgid "Messaging providers"
-msgstr "fournisseurs de messagerie"
+msgstr "Fournisseurs de messagerie"
 
 #: core/settings.py:551
 msgid "Templates"
-msgstr ""
+msgstr "Modèles"
 
 #: core/settings.py:559
 msgid "Template Validations"
-msgstr ""
+msgstr "Validations de modèles"
 
 #: core/settings.py:571
 msgid "Media & API"
@@ -436,33 +436,33 @@ msgstr "Serveur média"
 #, fuzzy
 #| msgid "TURN server"
 msgid "TURN Server"
-msgstr "serveur TURN"
+msgstr "Serveur TURN"
 
 #: core/settings.py:594
 msgid "Celery Tasks"
-msgstr ""
+msgstr "Tâches Celery"
 
 #: core/settings.py:599
 msgid "Clocked"
-msgstr ""
+msgstr "Programmé"
 
 #: core/settings.py:606
 msgid "Crontabs"
-msgstr ""
+msgstr "Crontabs"
 
 #: core/settings.py:613
 #, fuzzy
 #| msgid "Integer"
 msgid "Intervals"
-msgstr "Entier"
+msgstr "Intervalles"
 
 #: core/settings.py:620
 msgid "Periodic tasks"
-msgstr ""
+msgstr "Tâches périodiques"
 
 #: core/settings.py:627
 msgid "Solar events"
-msgstr ""
+msgstr "Événements solaires"
 
 #: core/settings.py:636
 msgid "Settings"
@@ -474,109 +474,109 @@ msgstr "Configuration"
 
 #: core/templates/admin/index.html:10
 msgid "Django site admin"
-msgstr ""
+msgstr "Administration du site Django"
 
 #: core/templates/admin/index.html:33
 #, fuzzy
 #| msgid "Missing argument"
 msgid "Management"
-msgstr "Argument manquant"
+msgstr "Gestion"
 
 #: core/templates/admin/index.html:44
 msgid "Real-time"
-msgstr ""
+msgstr "Temps réel"
 
 #: core/templates/admin/index.html:58
 msgid "Weekly Activity"
-msgstr ""
+msgstr "Activité hebdomadaire"
 
 #: core/templates/admin/index.html:79
 msgid "System Health"
-msgstr ""
+msgstr "Santé du système"
 
 #: core/templates/admin/index.html:82
 msgid "User Activity Rate"
-msgstr ""
+msgstr "Taux d'activité des utilisateurs"
 
 #: core/templates/admin/index.html:86
 msgid "Online Users Rate"
-msgstr ""
+msgstr "Taux d'utilisateurs en ligne"
 
 #: core/templates/admin/index.html:90
 msgid "Consultation Completion Rate"
-msgstr ""
+msgstr "Taux de complétion des consultations"
 
 #: core/templates/admin/index.html:97
 msgid "Platform Overview"
-msgstr ""
+msgstr "Vue d'ensemble de la plateforme"
 
 #: core/templates/admin/index.html:100
 msgid "Platform activity summary for healthcare professionals"
-msgstr ""
+msgstr "Résumé de l'activité de la plateforme pour les professionnels de santé"
 
 #: core/templates/admin/index.html:106
 #, fuzzy
 #| msgid "users"
 msgid "Total Users"
-msgstr "utilisateurs"
+msgstr "Total des utilisateurs"
 
 #: core/templates/admin/index.html:110 core/views.py:71
 #, fuzzy
 #| msgid "Online"
 msgid "Online Now"
-msgstr "En ligne"
+msgstr "Actuellement en ligne"
 
 #: core/templates/admin/index.html:115
 #, fuzzy
 #| msgid "updated at"
 msgid "Last updated:"
-msgstr "mis à jour le"
+msgstr "Dernière mise à jour :"
 
 #: core/views.py:65
 msgid "Active Users"
-msgstr ""
+msgstr "Utilisateurs actifs"
 
 #: core/views.py:108
 msgid "New Users This Week"
-msgstr ""
+msgstr "Nouveaux utilisateurs cette semaine"
 
 #: core/views.py:111
 msgid "New user registrations"
-msgstr ""
+msgstr "Nouvelles inscriptions d'utilisateurs"
 
 #: core/views.py:114
 #, fuzzy
 #| msgid "Configurations"
 msgid "Consultations This Week"
-msgstr "Configurations"
+msgstr "Consultations cette semaine"
 
 #: core/views.py:117
 msgid "Consultations started this week"
-msgstr ""
+msgstr "Consultations démarrées cette semaine"
 
 #: core/views.py:120
 #, fuzzy
 #| msgid "appointments"
 msgid "Appointments This Week"
-msgstr "rendez-vous"
+msgstr "Rendez-vous cette semaine"
 
 #: core/views.py:123
 msgid "Appointments scheduled this week"
-msgstr ""
+msgstr "Rendez-vous planifiés cette semaine"
 
 #: mediaserver/admin.py:39
 msgid "Save and test access"
-msgstr ""
+msgstr "Sauvegarder et tester l'accès"
 
 #: mediaserver/admin.py:49
 #, python-brace-format
 msgid "Connection to server {url} was successful."
-msgstr ""
+msgstr "La connexion au serveur {url} a réussi."
 
 #: mediaserver/admin.py:54
 #, python-brace-format
 msgid "Failed to connect to server {url}: {error}"
-msgstr ""
+msgstr "Échec de connexion au serveur {url} : {error}"
 
 #: mediaserver/models.py:16 mediaserver/models.py:72
 msgid "URL"
@@ -586,7 +586,7 @@ msgstr "URL"
 #, fuzzy
 #| msgid "API key"
 msgid "API token"
-msgstr "clé API"
+msgstr "Jeton API"
 
 #: mediaserver/models.py:18
 msgid "API secret"
@@ -634,17 +634,17 @@ msgstr "URLs TURN"
 
 #: messaging/admin.py:73
 msgid "Test connection wiht selected providers"
-msgstr ""
+msgstr "Tester la connexion avec les fournisseurs sélectionnés"
 
 #: messaging/admin.py:138 messaging/admin.py:361
 #, fuzzy
 #| msgid "status"
 msgid "Status"
-msgstr "statut"
+msgstr "Statut"
 
 #: messaging/admin.py:151
 msgid "Rendering is valid"
-msgstr ""
+msgstr "Le rendu est valide"
 
 #: messaging/admin.py:281
 msgid ""
@@ -652,6 +652,9 @@ msgid ""
 "\n"
 "Your consultation is scheduled for {{ appointment.date }}."
 msgstr ""
+"Bonjour {{ recipient.name }} !\n"
+"\n"
+"Votre consultation est prévue pour le {{ appointment.date }}."
 
 #: messaging/models.py:41
 msgid "API key"
@@ -667,47 +670,47 @@ msgstr "SID du compte"
 
 #: messaging/models.py:50
 msgid "client ID"
-msgstr ""
+msgstr "ID client"
 
 #: messaging/models.py:52
 #, fuzzy
 #| msgid "API secret"
 msgid "client secret"
-msgstr "clé API secrète"
+msgstr "secret client"
 
 #: messaging/models.py:57
 #, fuzzy
 #| msgid "Configuration key"
 msgid "application key"
-msgstr "Clé de configuration"
+msgstr "clé d'application"
 
 #: messaging/models.py:60
 msgid "application secret"
-msgstr ""
+msgstr "secret d'application"
 
 #: messaging/models.py:63
 msgid "consumer key"
-msgstr ""
+msgstr "clé consommateur"
 
 #: messaging/models.py:66
 #, fuzzy
 #| msgid "provider name"
 msgid "service name"
-msgstr "nom du fournisseur"
+msgstr "nom du service"
 
 #: messaging/models.py:70
 #, fuzzy
 #| msgid "source phone"
 msgid "from phone"
-msgstr "téléphone source"
+msgstr "téléphone émetteur"
 
 #: messaging/models.py:71
 msgid "from email"
-msgstr ""
+msgstr "email émetteur"
 
 #: messaging/models.py:72
 msgid "sender ID"
-msgstr ""
+msgstr "ID de l'expéditeur"
 
 #: messaging/models.py:74
 msgid "priority"
@@ -717,19 +720,21 @@ msgstr "priorité"
 #, fuzzy
 #| msgid "prefixes"
 msgid "excluded prefixes"
-msgstr "préfixes"
+msgstr "préfixes exclus"
 
 #: messaging/models.py:84
 msgid ""
 "Phone prefixes that should NOT use this provider. Separate multiple prefixes "
 "with commas (e.g. +33, +41, +1)"
 msgstr ""
+"Préfixes téléphoniques qui ne doivent PAS utiliser ce fournisseur. Séparez "
+"les préfixes multiples par des virgules (ex : +33, +41, +1)"
 
 #: messaging/models.py:91
 #, fuzzy
 #| msgid "prefixes"
 msgid "included prefixes"
-msgstr "préfixes"
+msgstr "préfixes inclus"
 
 #: messaging/models.py:93
 msgid ""
@@ -737,14 +742,17 @@ msgid ""
 "with commas (e.g. +33, +41). If empty, all prefixes except excluded ones are "
 "allowed"
 msgstr ""
+"Préfixes téléphoniques qui doivent utiliser ce fournisseur. Séparez les "
+"préfixes multiples par des virgules (ex : +33, +41). Si vide, tous les "
+"préfixes sauf ceux exclus sont autorisés"
 
 #: messaging/models.py:160
 msgid "All prefixes must start with \"+\". Invalid prefix: \"{}\""
-msgstr ""
+msgstr "Tous les préfixes doivent commencer par \"+\". Préfixe invalide : \"{}\""
 
 #: messaging/models.py:170
 msgid "Prefixes can only contain \"+\" and digits. Invalid prefix: \"{}\""
-msgstr ""
+msgstr "Les préfixes ne peuvent contenir que \"+\" et des chiffres. Préfixe invalide : \"{}\""
 
 #: messaging/models.py:210 messaging/models.py:496
 msgid "messaging provider"
@@ -756,123 +764,127 @@ msgstr "fournisseurs de messagerie"
 
 #: messaging/models.py:230
 msgid "system name"
-msgstr ""
+msgstr "nom système"
 
 #: messaging/models.py:234
 msgid "Unique identifier for the template"
-msgstr ""
+msgstr "Identifiant unique pour le modèle"
 
 #: messaging/models.py:238
 msgid "template text"
-msgstr ""
+msgstr "texte du modèle"
 
 #: messaging/models.py:240
 msgid ""
 "Jinja2 template for message content, use {{ obj }} to get object attributes"
 msgstr ""
+"Modèle Jinja2 pour le contenu du message, utilisez {{ obj }} pour accéder aux attributs de l'objet"
 
 #: messaging/models.py:245
 #, fuzzy
 #| msgid "subject"
 msgid "template subject"
-msgstr "sujet"
+msgstr "sujet du modèle"
 
 #: messaging/models.py:248
 msgid "Jinja2 template for message subject"
-msgstr ""
+msgstr "Modèle Jinja2 pour le sujet du message"
 
 #: messaging/models.py:290 messaging/models.py:502
 msgid "template"
-msgstr ""
+msgstr "modèle"
 
 #: messaging/models.py:291
 msgid "templates"
-msgstr ""
+msgstr "modèles"
 
 #: messaging/models.py:307 messaging/models.py:316
 msgid "Invalid Jinja2 template syntax: {}"
-msgstr ""
+msgstr "Syntaxe de modèle Jinja2 invalide : {}"
 
 #: messaging/models.py:475
 #, fuzzy
 #| msgid "created at"
 msgid "Created"
-msgstr "créé le"
+msgstr "Créé le"
 
 #: messaging/models.py:476
 msgid "Pending"
-msgstr ""
+msgstr "En attente"
 
 #: messaging/models.py:477
 msgid "Validated"
-msgstr ""
+msgstr "Validé"
 
 #: messaging/models.py:478
 msgid "Rejected"
-msgstr ""
+msgstr "Rejeté"
 
 #: messaging/models.py:479
 msgid "Failed"
-msgstr ""
+msgstr "Échoué"
 
 #: messaging/models.py:480
 #, fuzzy
 #| msgid "updated at"
 msgid "Outdated"
-msgstr "mis à jour le"
+msgstr "Obsolète"
 
 #: messaging/models.py:481
 msgid "Unused"
-msgstr ""
+msgstr "Inutilisé"
 
 #: messaging/models.py:486
 msgid "external template ID"
-msgstr ""
+msgstr "ID du modèle externe"
 
 #: messaging/models.py:490
 msgid ""
 "External template ID from the messaging provider (populated after validation "
 "submission)"
 msgstr ""
+"ID du modèle externe fourni par le fournisseur de messagerie (rempli après "
+"soumission de la validation)"
 
 #: messaging/models.py:497
 msgid "The messaging provider where the template is validated"
-msgstr ""
+msgstr "Le fournisseur de messagerie où le modèle est validé"
 
 #: messaging/models.py:503
 msgid "The local template that needs validation"
-msgstr ""
+msgstr "Le modèle local qui nécessite une validation"
 
 #: messaging/models.py:506
 #, fuzzy
 #| msgid "Languages"
 msgid "language code"
-msgstr "Langues"
+msgstr "code de langue"
 
 #: messaging/models.py:509
 msgid ""
 "Language code for the template validation (e.g., \"en\", \"fr\", \"de\")"
 msgstr ""
+"Code de langue pour la validation du modèle (ex : \"en\", \"fr\", \"de\")"
 
 #: messaging/models.py:517
 msgid "Current validation status"
-msgstr ""
+msgstr "Statut de validation actuel"
 
 #: messaging/models.py:524
 msgid "When the template was validated"
-msgstr ""
+msgstr "Quand le modèle a été validé"
 
 #: messaging/models.py:531
 msgid "Response from the messaging provider during validation"
-msgstr ""
+msgstr "Réponse du fournisseur de messagerie lors de la validation"
 
 #: messaging/models.py:535
 msgid "template validation"
-msgstr ""
+msgstr "validation de modèle"
 
 #: messaging/models.py:536
 msgid "template validations"
-msgstr ""
+msgstr "validations de modèles"
 
 #: messaging/models.py:556
 msgid "subject"
@@ -899,26 +911,28 @@ msgid ""
 "You must specify at least a recipient phone, a recipient email or a user in "
 "Sent to"
 msgstr ""
+"Vous devez spécifier au moins un téléphone destinataire, un email "
+"destinataire ou un utilisateur dans Envoyé à"
 
 #: messaging/models.py:735
 msgid "The Sent to user has no phone number, so recipient phone is mandatory"
-msgstr ""
+msgstr "L'utilisateur destinataire n'a pas de numéro de téléphone, le téléphone destinataire est donc obligatoire"
 
 #: messaging/models.py:744
 msgid "The Sent to user has no email, so recipient email is mandatory"
-msgstr ""
+msgstr "L'utilisateur destinataire n'a pas d'email, l'email destinataire est donc obligatoire"
 
 #: messaging/models.py:753
 msgid "Communication method is required if no sent to user"
-msgstr ""
+msgstr "La méthode de communication est requise s'il n'y a pas d'utilisateur destinataire"
 
 #: messaging/providers/email.py:14
 msgid "Email over Django SMTP"
-msgstr ""
+msgstr "Email via Django SMTP"
 
 #: messaging/template.py:22
 msgid "Your appointment planned {{ obj.appointment.scheduled_at|date }}"
-msgstr ""
+msgstr "Votre rendez-vous prévu le {{ obj.appointment.scheduled_at|date }}"
 
 #: messaging/template.py:25
 msgid ""
@@ -926,10 +940,13 @@ msgid ""
 "{{ obj.appointment.scheduled_at|date }} at {{ obj.appointment.scheduled_at|"
 "time }}."
 msgstr ""
+"Ceci est un rappel pour votre rendez-vous prévu le : "
+"{{ obj.appointment.scheduled_at|date }} à {{ obj.appointment.scheduled_at|"
+"time }}."
 
 #: messaging/template.py:32
 msgid "Your appointment will start in {{config.last_appointment_reminder}}"
-msgstr ""
+msgstr "Votre rendez-vous commencera dans {{config.last_appointment_reminder}}"
 
 #: messaging/template.py:35
 msgid ""
@@ -938,10 +955,14 @@ msgid ""
 "Please join immediately with the link: {{config.patient_base_url}}?"
 "auth={{ obj.user.one_time_auth_token }}&action=join"
 msgstr ""
+"Votre rendez-vous de consultation commence à {{ obj.appointment.scheduled_at|"
+"time }}\n"
+"Veuillez rejoindre immédiatement avec le lien : {{config.patient_base_url}}?"
+"auth={{ obj.user.one_time_auth_token }}&action=join"
 
 #: messaging/template.py:42
 msgid "Your consultation has been scheduled"
-msgstr ""
+msgstr "Votre consultation a été planifiée"
 
 #: messaging/template.py:44
 msgid ""
@@ -953,6 +974,13 @@ msgid ""
 "Please confirm your presence: {{config.patient_base_url}}?"
 "auth={{ obj.user.one_time_auth_token }}&action=presence"
 msgstr ""
+"Bonjour,\n"
+"Votre consultation a été planifiée avec succès. \n"
+"Rendez-vous prévu le : {{ obj.appointment.scheduled_at|date }} à "
+"{{ obj.appointment.scheduled_at|time }} "
+"({{ obj.appointment.scheduled_at }})\n"
+"Veuillez confirmer votre présence : {{config.patient_base_url}}?"
+"auth={{ obj.user.one_time_auth_token }}&action=presence"
 
 #: messaging/template.py:61
 msgid "Your confirmation code"
@@ -1113,6 +1141,10 @@ msgstr ""
 msgid "Messages:"
 msgstr "Messages :"
 
+#: users/views.py:538
+msgid "All notifications marked as read."
+msgstr "Toutes les notifications ont été marquées comme lues."
+
 #, fuzzy
 #~| msgid "users"
 #~ msgid "User"
@@ -1121,12 +1153,12 @@ msgstr "Messages :"
 #, fuzzy
 #~| msgid "queues"
 #~ msgid "Queue"
-#~ msgstr "files d'attente"
+#~ msgstr "Files d'attente"
 
 #, fuzzy
 #~| msgid "appointments"
 #~ msgid "Appointment"
-#~ msgstr "rendez-vous"
+#~ msgstr "Rendez-vous"
 
 #, fuzzy
 #~| msgid "Configurations"
