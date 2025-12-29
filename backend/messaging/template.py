@@ -30,7 +30,7 @@ DEFAULT_NOTIFICATION_MESSAGES = {
         "content": _(
             """Hello,\n"""
             """Your consultation has been successfully scheduled. \n"""
-            """Appointment scheduled by: {{ obj.appointment.scheduled_at|date }} at {{ obj.appointment.scheduled_at|time }}"""
+            """Appointment scheduled by: {{ obj.appointment.scheduled_at|date }} at {{ obj.appointment.scheduled_at|time }} ({{ obj.appointment.scheduled_at }})"""
         ),
         "model": "consultations.Participant",
         "helper_text": "Message sent to user with invitation to join a consultation at a later time",

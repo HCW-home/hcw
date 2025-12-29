@@ -1,5 +1,6 @@
 from importlib import import_module
 from typing import Dict, Optional, Sequence
+from zoneinfo import ZoneInfo
 
 import jinja2
 from django.apps import apps
@@ -10,7 +11,7 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.template.defaultfilters import register
-from django.utils import translation
+from django.utils import timezone, translation
 from django.utils.translation import gettext_lazy as _
 from factory.django import DjangoModelFactory
 from modeltranslation.utils import get_translation_fields
@@ -250,13 +251,13 @@ class Template(models.Model):
         help_text=_("Jinja2 template for message subject"),
     )
 
-    model = models.CharField(
-        max_length=100,
-        choices=get_model_choices,
-        blank=True,
-        null=True,
-        help_text="This model will be required to contruct message.",
-    )
+    # model = models.CharField(
+    #     max_length=100,
+    #     choices=get_model_choices,
+    #     blank=True,
+    #     null=True,
+    #     help_text="This model will be required to contruct message.",
+    # )
 
     communication_method = ArrayField(
         base_field=models.CharField(max_length=10, choices=CommunicationMethod.choices),
@@ -695,11 +696,17 @@ class Message(ModelCeleryAbstract):
         try:
             app_label, model_name = self.object_model.split(".")
             obj = apps.get_model(app_label, model_name).objects.get(pk=self.object_pk)
-            if hasattr(obj, "language"):
+            if hasattr(obj, "language") and obj.language:
                 lang = obj.language
             else:
                 lang = settings.LANGUAGE_CODE
-            with translation.override(lang):
+
+            if hasattr(obj, "tz") and obj.tz:
+                tz = ZoneInfo(obj.user.timezone)
+            else:
+                tz = settings.TIME_ZONE
+
+            with translation.override(lang), timezone.override(tz):
                 return text_template.render({"obj": obj})
         except Exception as e:
             raise Exception(f"Unable to render: {e}")

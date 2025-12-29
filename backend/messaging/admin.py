@@ -237,7 +237,7 @@ class TemplateAdmin(ModelAdmin, TabbedTranslationAdmin, ImportExportModelAdmin):
     fieldsets = [
         (
             "Basic Information",
-            {"fields": ["event_type", "communication_method", "model", "is_active"]},
+            {"fields": ["event_type", "communication_method", "is_active"]},
         ),
         (
             "Template Content",
