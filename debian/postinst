@@ -22,7 +22,7 @@ case "$1" in
     configure)
         adduser --system hcw || true
         chown -R hcw /var/lib/hcw/
-        (set -a ; . /etc/hcw/backend.conf ; /usr/share/hcw/backend/venv/bin/python3 /usr/share/hcw/backend/manage.py migrate)
+        # (set -a ; . /etc/hcw/backend.conf ; /usr/share/hcw/backend/venv/bin/python3 /usr/share/hcw/backend/manage.py migrate)
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
