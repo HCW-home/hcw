@@ -57,13 +57,11 @@ export class NotificationService {
   }
 
   markAsRead(notificationId: number): Observable<INotification> {
-    return this.http.patch<INotification>(`${this.apiUrl}${notificationId}/`, {
-      status: NotificationStatus.READ
-    }).pipe(
-      tap(() => {
+    return this.http.post<INotification>(`${this.apiUrl}${notificationId}/read/`, {}).pipe(
+      tap((response) => {
         const current = this.notifications();
         const updated = current.map(n =>
-          n.id === notificationId ? { ...n, status: NotificationStatus.READ, read_at: new Date().toISOString() } : n
+          n.id === notificationId ? { ...n, status: NotificationStatus.READ, read_at: response.read_at } : n
         );
         this.notifications.set(updated);
         this.updateUnreadCount(updated);
@@ -71,14 +69,16 @@ export class NotificationService {
     );
   }
 
-  markAllAsRead(): void {
-    const unreadNotifications = this.notifications().filter(n =>
-      n.status !== NotificationStatus.READ && n.read_at === null
+  markAllAsRead(): Observable<{ detail: string; updated_count: number }> {
+    return this.http.post<{ detail: string; updated_count: number }>(`${this.apiUrl}read/`, {}).pipe(
+      tap(() => {
+        const current = this.notifications();
+        const now = new Date().toISOString();
+        const updated = current.map(n => ({ ...n, status: NotificationStatus.READ, read_at: now }));
+        this.notifications.set(updated);
+        this.unreadCount.set(0);
+      })
     );
-
-    unreadNotifications.forEach(notification => {
-      this.markAsRead(notification.id).subscribe();
-    });
   }
 
   addNotification(notification: INotification): void {

@@ -21,7 +21,8 @@ import {
   ToastController
 } from '@ionic/angular/standalone';
 import { Subscription } from 'rxjs';
-import { NotificationService, Notification as AppNotification } from '../../core/services/notification.service';
+import { NotificationService } from '../../core/services/notification.service';
+import { INotification, NotificationStatus } from '../../core/models/notification.model';
 import { UserWebSocketService } from '../../core/services/user-websocket.service';
 
 interface DisplayNotification {
@@ -99,11 +100,15 @@ export class NotificationsPage implements OnInit, OnDestroy {
   private setupRealtimeNotifications(): void {
     const sub = this.userWs.notifications$.subscribe(event => {
       const data = event.data;
-      const notification: AppNotification = {
+      const notification: INotification = {
         id: Date.now(),
-        title: (data['title'] as string) || 'New Notification',
-        message: (data['message'] as string) || '',
-        status: 'pending',
+        subject: (data['title'] as string) || 'New Notification',
+        content: (data['message'] as string) || '',
+        communication_method: 'push',
+        status: NotificationStatus.PENDING,
+        sent_at: null,
+        delivered_at: null,
+        read_at: null,
         created_at: new Date().toISOString()
       };
       this.notifications.unshift(this.mapNotification(notification));
@@ -111,22 +116,22 @@ export class NotificationsPage implements OnInit, OnDestroy {
     this.subscriptions.push(sub);
   }
 
-  private mapNotification(n: AppNotification): DisplayNotification {
+  private mapNotification(n: INotification): DisplayNotification {
     const type = this.determineType(n);
     return {
       id: n.id,
-      title: n.title || n.subject || 'Notification',
-      message: n.message || n.content || '',
+      title: n.subject || 'Notification',
+      message: n.content || '',
       icon: this.getIconForType(type),
       color: this.getColorForType(type),
       time: this.formatTime(n.created_at),
-      isRead: n.status === 'read',
+      isRead: n.status === NotificationStatus.READ,
       type
     };
   }
 
-  private determineType(n: AppNotification): 'appointment' | 'message' | 'health' | 'system' {
-    const title = (n.title || n.subject || '').toLowerCase();
+  private determineType(n: INotification): 'appointment' | 'message' | 'health' | 'system' {
+    const title = (n.subject || '').toLowerCase();
     if (title.includes('appointment') || title.includes('schedule')) {
       return 'appointment';
     } else if (title.includes('message')) {
@@ -204,11 +209,10 @@ export class NotificationsPage implements OnInit, OnDestroy {
     });
   }
 
-  deleteNotification(notification: DisplayNotification) {
+  dismissNotification(notification: DisplayNotification) {
     const index = this.notifications.indexOf(notification);
     if (index > -1) {
       this.notifications.splice(index, 1);
-      this.notificationService.deleteNotification(notification.id).subscribe();
     }
   }
 

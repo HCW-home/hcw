@@ -21,7 +21,9 @@ export interface Participant {
   is_confirmed: boolean;
   email: string | null;
   phone: string | null;
-  display_name: string | null;
+  timezone?: string;
+  first_name: string | null;
+  last_name: string | null;
   message_type?: string;
   feedback_rate: number | null;
   feedback_message: string | null;
@@ -178,6 +180,7 @@ export interface CreateParticipantRequest {
   user_id?: number;
   email?: string;
   phone?: string;
-  display_name?: string;
+  first_name?: string;
+  last_name?: string;
   message_type: string;
 }

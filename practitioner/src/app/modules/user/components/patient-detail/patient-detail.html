@@ -334,7 +334,7 @@
                                   @if (participant.user) {
                                     {{ participant.user.first_name }} {{ participant.user.last_name }}
                                   } @else {
-                                    {{ participant.display_name || participant.email || 'Unknown' }}
+                                    {{ participant.first_name || participant.last_name ? (participant.first_name || '') + ' ' + (participant.last_name || '') : (participant.email || 'Unknown') }}
                                   }
                                 </span>
                               }

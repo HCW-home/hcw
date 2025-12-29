@@ -70,7 +70,8 @@ export class ManageParticipantsModal implements OnDestroy, OnChanges {
   constructor() {
     this.participantForm = this.fb.group({
       user_id: [null],
-      display_name: [''],
+      first_name: [''],
+      last_name: [''],
       email: ['', [Validators.email]],
       phone: [''],
       message_type: ['email', [Validators.required]],
@@ -82,7 +83,7 @@ export class ManageParticipantsModal implements OnDestroy, OnChanges {
       this.participants.set([]);
       this.isExistingUser.set(false);
       this.selectedParticipantUser.set(null);
-      this.participantForm.reset({ message_type: 'email', display_name: '', user_id: null });
+      this.participantForm.reset({ message_type: 'email', first_name: '', last_name: '', user_id: null });
       if (this.appointment) {
         this.loadParticipants();
       }
@@ -123,6 +124,9 @@ export class ManageParticipantsModal implements OnDestroy, OnChanges {
         `${participant.user.first_name} ${participant.user.last_name}`.trim() ||
         participant.user.email
       );
+    }
+    if (participant.first_name || participant.last_name) {
+      return `${participant.first_name || ''} ${participant.last_name || ''}`.trim();
     }
     return participant.email || 'Unknown';
   }
@@ -174,8 +178,11 @@ export class ManageParticipantsModal implements OnDestroy, OnChanges {
         message_type: formValue.message_type,
       };
 
-      if (formValue.display_name) {
-        data.display_name = formValue.display_name;
+      if (formValue.first_name) {
+        data.first_name = formValue.first_name;
+      }
+      if (formValue.last_name) {
+        data.last_name = formValue.last_name;
       }
 
       if (formValue.message_type === 'email' && formValue.email) {
@@ -197,7 +204,7 @@ export class ManageParticipantsModal implements OnDestroy, OnChanges {
           this.loadParticipants();
           this.isExistingUser.set(false);
           this.selectedParticipantUser.set(null);
-          this.participantForm.reset({ message_type: 'email', display_name: '', user_id: null });
+          this.participantForm.reset({ message_type: 'email', first_name: '', last_name: '', user_id: null });
           this.isAddingParticipant.set(false);
           this.toasterService.show('success', 'Participant added successfully');
           this.participantsChanged.emit();

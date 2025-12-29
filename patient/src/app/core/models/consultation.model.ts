@@ -72,7 +72,9 @@ export interface Participant {
   user?: User;
   email?: string;
   phone?: string;
-  display_name?: string;
+  timezone?: string;
+  first_name?: string;
+  last_name?: string;
   communication_method?: string;
   is_invited: boolean;
   is_confirmed: boolean;

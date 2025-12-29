@@ -21,6 +21,9 @@ export interface User {
   phone: string;
   date_of_birth: string;
   address: string;
+  one_time_auth_token?: string;
+  is_auth_token_used?: boolean;
+  verification_code?: number | null;
 }
 
 export interface LoginRequest {
