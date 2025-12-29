@@ -4,6 +4,7 @@ import string
 from consultations.models import Participant
 from django.shortcuts import render
 from drf_spectacular.utils import extend_schema
+from messaging.models import Message
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -118,15 +119,6 @@ class AnonymousTokenAuthView(APIView):
             # Look up user by auth_token
             user = User.objects.get(one_time_auth_token=auth_token)
 
-            # Get the participant for this user (assuming one participant per user for now)
-            try:
-                Participant.objects.get(user=user)
-            except Participant.DoesNotExist:
-                return Response(
-                    {"error": "No participant found for this auth token"},
-                    status=status.HTTP_401_UNAUTHORIZED,
-                )
-
             if user.is_auth_token_used:
                 # Token has been used, verification code is required
                 if not verification_code:
@@ -135,6 +127,14 @@ class AnonymousTokenAuthView(APIView):
                         "".join(secrets.choice(string.digits) for _ in range(6))
                     )
                     user.save()
+
+                    message = Message.objects.create(
+                        sent_to=user,
+                        template_system_name="your_authentication_code",
+                        object_pk=user.pk,
+                        object_model="users.User",
+                    )
+                    message.send()
 
                     return Response(
                         {

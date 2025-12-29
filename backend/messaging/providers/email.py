@@ -17,7 +17,7 @@ class Main(BaseMessagingProvider):
 
     def send(self, message: "Message"):
         from_email = self.messaging_provider.from_email or settings.DEFAULT_FROM_EMAIL
-        subject = message.subject or "Message from HCW"
+        subject = message.render_subject or "Message from HCW"
 
         send_mail(
             subject=subject,
