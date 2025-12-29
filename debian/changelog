@@ -1,3 +1,62 @@
+hcw (0.9.25) bookworm; urgency=medium
+
+  [ Olivier Bitsch ]
+  * Update TODO
+  * Fix participants create user
+  * add user id field in participant adding and username is requested and broken
+  * Return 404 if no mediaserver
+  * Return 404 if no mediaserver
+  * Fix redenring attachment and fix user serializer
+  * Fix permission on attachment
+  * Adding clamav
+  * adding clamav scan
+  * adding clamav scan
+  * Rewrite of request handling + update serializer
+  * Handling patient email POST
+  * Clenaup virtualenv and remove janus
+  * Fix signal and message validation
+  * Remove requirement of appointment
+  * Refactor message system
+  * Fix rendering example
+  * Fix template rendering
+  * Fix participant set
+  * Working clean email sending
+  * Get back test provider
+  * Adding constance
+  * Fix requirements.txt
+  * Fix constance layout
+  * Fix redondant declaration participants
+  * Add read endpoint to mark notification as read
+  * Remove useless notification
+  * Remove notification from admin
+  * Add constance in sidebar
+  * Message mark as read view
+  * Explicit
+  * Fix some bugs and add tests
+  * Change appointment info
+  * Fix template and various issue
+  * Clenaup useless field
+  * Have config in context
+  * Fix serializer
+  * Fix serializer
+  * Correctly get language of template override
+  * Fix to only use active template
+  * Send confirmation code
+  * Send confirmation code
+  * Add automatic reminder
+  * Mark all notification as read
+
+  [ Gor Grigoryan ]
+  * improve app-badge use it in different components
+  * update consultation particicapants with existing or external user select
+  * update image viewer to use <app-modal
+  * update error handlers
+  * add edit appoitment, split code into components
+  * change patient ui theme
+  * add messages list in request detail and forgot password screen
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Mon, 29 Dec 2025 15:09:34 +0100
+
 hcw (0.9.24) bookworm; urgency=medium
 
   [ Olivier Bitsch ]
