@@ -1,3 +1,9 @@
+hcw (0.9.29) bookworm; urgency=medium
+
+  * Fix services
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Mon, 29 Dec 2025 16:40:50 +0100
+
 hcw (0.9.28) bookworm; urgency=medium
 
   [ Gor Grigoryan ]
