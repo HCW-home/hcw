@@ -324,10 +324,10 @@ CACHES = {
 STATIC_ROOT = os.getenv("STATIC_ROOT", "statics")
 
 CELERY_BEAT_SCHEDULE = {
-    # 'run_all': {
-    #     'task': 'module.tasks.run_all',
-    #     'schedule': crontab(minute=0, hour='*'),
-    # },
+    "handle_reminders": {
+        "task": "consultations.tasks.handle_reminders",
+        "schedule": crontab(minute="*", hour="*"),
+    },
 }
 
 FIREBASE_APP = initialize_app()
@@ -656,12 +656,21 @@ CONSTANCE_CONFIG = {
         "https://localhost:8000",
         "Base URL of practitionner frontend",
     ),
+    "appointment_first_reminder": (
+        "1440",
+        "When to send first appointment reminder, in minute before the appointment time",
+    ),
+    "appointment_last_reminder": (
+        "10",
+        "When to send last appointment reminder, in minute before the appointment time",
+    ),
 }
 
 
 CONSTANCE_CONFIG_FIELDSETS = {
     "General Options": ("site_name",),
     "URLs": ("patient_base_url", "practitionner_base_url"),
+    "Scheduling": ("appointment_first_reminder", "appointment_last_reminder"),
 }
 
 # CORS Configuration

@@ -8,7 +8,7 @@ Environment=VIRTUAL_ENV=/usr/share/hcw/backend/venv
 EnvironmentFile=/etc/hcw/backend.conf
 WorkingDirectory=/usr/share/hcw/backend/
 ExecStartPre=/usr/bin/rm -f /var/lib/hcw/celerybeat-schedule.db
-ExecStart=/usr/share/hcw/backend/venv/bin/celery -A core beat --loglevel=info -s /var/lib/hcw/celerybeat-schedule
+ExecStart=/usr/share/hcw/backend/venv/bin/celery -A core.celery beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
 
 [Install]
 WantedBy=multi-user.target

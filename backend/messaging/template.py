@@ -17,14 +17,27 @@ DEFAULT_NOTIFICATION_MESSAGES = {
     #     "model": "consultations.Requests",
     #     "helper_text": "Message sent to user when a consultation request requires manual processing",
     # },
-    # "a_message_has_been_sent_by_beneficiary": {
-    #     "subject": _("Message sent to user when a beneficiary sends a message"),
-    #     "content": _(
-    #         "You receive this message because a beneficiary has sent you a new message. Please log in to the system to read and respond to the message."
-    #     ),
-    #     "model": "consultations.Consultation",
-    #     "helper_text": "Message sent to user when a beneficiary sends a message",
-    # },
+    "appointment_first_reminder": {
+        "subject": _(
+            "Your appointment planned {{ obj.appointment.scheduled_at|date }}"
+        ),
+        "content": _(
+            "This is a reminder for your appointment scheduled by: {{ obj.appointment.scheduled_at|date }} at {{ obj.appointment.scheduled_at|time }}."
+        ),
+        "model": "consultations.Consultation",
+        "helper_text": "Message sent to user when a beneficiary sends a message",
+    },
+    "appointment_last_reminder": {
+        "subject": _(
+            "Your appointment will start in {{config.last_appointment_reminder}}"
+        ),
+        "content": _(
+            """Your consultation appointment start at {{ obj.appointment.scheduled_at|time }}\n"""
+            """Please join immediately with the link: {{config.patient_base_url}}?auth={{ obj.user.one_time_auth_token }}&action=join"""
+        ),
+        "model": "consultations.Consultation",
+        "helper_text": "Message sent to user when a beneficiary sends a message",
+    },
     "invitation_to_appointment": {
         "subject": _("Your consultation has been scheduled"),
         "content": _(

@@ -1,7 +1,10 @@
 import logging
+from datetime import timedelta
 
 from celery import shared_task
+from constance import config
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from messaging.models import Message
 
 from .assignments import AssignmentManager
@@ -31,18 +34,18 @@ def handle_request(request_id):
 @shared_task
 def handle_invites(appointment_id):
     appointment = Appointment.objects.get(pk=appointment_id)
+    participants = appointment.participants.filter(is_invited=True)
 
     if appointment.status == AppointmentStatus.SCHEDULED:
         template_system_name = "invitation_to_appointment"
+        participants = participants.filter(is_notified=False)
     elif appointment.status == AppointmentStatus.CANCELLED:
         template_system_name = "cancelling_appointment"
     else:
         "Do nothing"
         return
 
-    for participant in appointment.participants.filter(
-        is_invited=True, is_notified=False
-    ):
+    for participant in participants:
         message = Message.objects.create(
             communication_method=participant.communication_method,
             recipient_phone=participant.phone,
@@ -55,3 +58,22 @@ def handle_invites(appointment_id):
         )
         message.send()
         participant.is_notified = True
+
+
+@shared_task
+def handle_reminders():
+    now = timezone.now().replace(second=0, microsecond=0)
+
+    # Handle first reminder
+    for reminder in ["appointment_first_reminder", "appointment_last_reminder"]:
+        reminder_datetime = now + timedelta(minutes=int(getattr(config, reminder)))
+        for appointment in Appointment.objects.filter(
+            scheduled_at=reminder_datetime, status=AppointmentStatus.SCHEDULED
+        ):
+            for participant in appointment.participants:
+                Message.objects.create(
+                    sent_to=participant.user,
+                    template_system_name="appointment_first_reminder",
+                    object_pk=participant.pk,
+                    object_model="consultations.Participant",
+                )
