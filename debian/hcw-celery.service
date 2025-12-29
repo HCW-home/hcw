@@ -4,9 +4,9 @@ After=network.target
 
 [Service]
 User=hcw
-Environment=VIRTUAL_ENV=/usr/share/hcw/venv
+Environment=VIRTUAL_ENV=/usr/share/hcw/backend/venv
 EnvironmentFile=/etc/hcw/backend.conf
-WorkingDirectory=/usr/share/hcw/
+WorkingDirectory=/usr/share/hcw/backend/
 ExecStart=/usr/share/hcw/backend/venv/bin/celery -A core.celery worker --loglevel=info
 
 [Install]
