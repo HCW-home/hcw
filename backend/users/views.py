@@ -518,6 +518,44 @@ class UserNotificationReadView(APIView):
         return Response(serializer.data)
 
 
+class UserNotificationsMarkAllReadView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        responses={
+            200: {
+                "type": "object",
+                "properties": {
+                    "detail": {"type": "string"},
+                    "updated_count": {"type": "integer"},
+                },
+                "example": {
+                    "detail": "All notifications marked as read.",
+                    "updated_count": 15,
+                },
+            },
+        },
+        description="Mark all user notifications as read by setting status to 'read' and read_at to current timestamp for all notifications where the authenticated user is the recipient.",
+    )
+    def post(self, request):
+        """Mark all user notifications as read."""
+        # Get all notifications for the user that are not already read
+        notifications = Message.objects.filter(sent_to=request.user).exclude(
+            status="read"
+        )
+
+        # Update all notifications
+        now = timezone.now()
+        updated_count = notifications.update(status="read", read_at=now)
+
+        return Response(
+            {
+                "detail": "All notifications marked as read.",
+                "updated_count": updated_count,
+            }
+        )
+
+
 class UserAppointmentsView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]

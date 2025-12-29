@@ -28,6 +28,11 @@ urlpatterns = [
         name="user_notifications",
     ),
     path(
+        "api/user/notifications/read/",
+        views.UserNotificationsMarkAllReadView.as_view(),
+        name="user_notifications_mark_all_read",
+    ),
+    path(
         "api/user/notifications/<int:notification_id>/read/",
         views.UserNotificationReadView.as_view(),
         name="user_notification_read",
