@@ -271,6 +271,7 @@ class Template(models.Model):
             template = Template.objects.get(
                 communication_method__contains=[name],
                 event_type=event_type,
+                is_active=True,
             )
             content = getattr(template, f"template_{field}")
         except Template.DoesNotExist:
