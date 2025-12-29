@@ -57,3 +57,6 @@ class AppointmentTest(TestCase):
         handle_invites(self.appointment.pk)
 
         self.assertEqual(Message.objects.count(), 2)
+
+        for message in Message.objects.all():
+            self.assertTrue(message.template_is_valid)

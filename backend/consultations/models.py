@@ -151,15 +151,27 @@ class Participant(models.Model):
     is_confirmed = models.BooleanField(default=False)
     is_notified = models.BooleanField(default=False)
 
-    display_name = models.CharField(null=True, blank=True)
+    first_name = models.CharField(null=True, blank=True)
+    last_name = models.CharField(null=True, blank=True)
     email = models.EmailField(null=True, blank=True)
     phone = models.CharField(null=True, blank=True)
     communication_method = models.CharField(
         choices=CommunicationMethod.choices, max_length=20
     )
+    preferred_language = models.CharField(
+        max_length=10,
+        choices=settings.LANGUAGES,
+        help_text="Preferred language for the user interface",
+        null=True,
+        blank=True,
+    )
 
     feedback_rate = models.IntegerField(null=True, blank=True)
     feedback_message = models.TextField(null=True, blank=True)
+
+    @property
+    def language(self) -> str:
+        return self.user.preferred_language or settings.LANGUAGE_CODE
 
     class Meta:
         unique_together = ["appointment", "user"]
@@ -169,10 +181,13 @@ class Participant(models.Model):
         if not self.user and (self.email or self.phone):
             self.user, _ = User.objects.update_or_create(
                 email=self.email,
-                mobile_phone_number=self.phone,
-                timezone=self.timezone,
                 defaults={
+                    "preferred_language": self.preferred_language,
                     "temporary": True,
+                    "mobile_phone_number": self.phone,
+                    "timezone": self.timezone,
+                    "first_name": self.first_name,
+                    "last_name": self.last_name,
                 },
             )
 

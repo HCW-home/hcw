@@ -45,7 +45,8 @@ class ParticipantSerializer(serializers.ModelSerializer):
             "email",
             "phone",
             "timezone",
-            "display_name",
+            "first_name",
+            "last_name",
             "feedback_rate",
             "feedback_message",
         ]

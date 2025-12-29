@@ -9,6 +9,8 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.template.defaultfilters import register
+from django.utils import translation
 from django.utils.translation import gettext_lazy as _
 from factory.django import DjangoModelFactory
 from modeltranslation.utils import get_translation_fields
@@ -212,19 +214,20 @@ class MessagingProvider(models.Model):
         unique_together = ["communication_method", "priority"]
 
 
+def get_model_choices():
+    """Get choices for all Django models in the format (app_label.model_name, verbose_name)"""
+    choices = []
+    for model in apps.get_models():
+        app_label = model._meta.app_label
+        verbose_name = model._meta.verbose_name.title()
+        choice_key = f"{app_label}.{model.__name__}"
+        choice_display = f"{verbose_name} ({app_label})"
+        choices.append((choice_key, choice_display))
+
+    return sorted(choices, key=lambda x: x[1])
+
+
 class Template(models.Model):
-    def get_model_choices():
-        """Get choices for all Django models in the format (app_label.model_name, verbose_name)"""
-        choices = []
-        for model in apps.get_models():
-            app_label = model._meta.app_label
-            verbose_name = model._meta.verbose_name.title()
-            choice_key = f"{app_label}.{model.__name__}"
-            choice_display = f"{verbose_name} ({app_label})"
-            choices.append((choice_key, choice_display))
-
-        return sorted(choices, key=lambda x: x[1])
-
     event_type = models.CharField(
         _("system name"),
         max_length=100,
@@ -609,7 +612,8 @@ class Message(ModelCeleryAbstract):
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    object_dict = models.JSONField(blank=True, null=True)
+    object_model = models.CharField(choices=get_model_choices, blank=True, null=True)
+    object_pk = models.IntegerField(blank=True, null=True)
 
     class Meta:
         ordering = ["-created_at"]
@@ -685,10 +689,18 @@ class Message(ModelCeleryAbstract):
         )
 
         env = jinja2.Environment()
+        env.filters.update(register.filters)
 
         text_template = env.from_string(template_to_render)
         try:
-            return text_template.render(self.object_dict or {})
+            app_label, model_name = self.object_model.split(".")
+            obj = apps.get_model(app_label, model_name).objects.get(pk=self.object_pk)
+            if hasattr(obj, "language"):
+                lang = obj.language
+            else:
+                lang = settings.LANGUAGE_CODE
+            with translation.override(lang):
+                return text_template.render({"obj": obj})
         except Exception as e:
             raise Exception(f"Unable to render: {e}")
 
@@ -747,7 +759,7 @@ class Message(ModelCeleryAbstract):
         #         }
         #     )
 
-        if self.communication_method == CommunicationMethod.EMAIL and not self.subject:
-            raise ValidationError(
-                {"subject": _("Subject is required for sending email")}
-            )
+        # if self.communication_method == CommunicationMethod.EMAIL and not self.subject:
+        #     raise ValidationError(
+        #         {"subject": _("Subject is required for sending email")}
+        #     )

@@ -28,9 +28,9 @@ DEFAULT_NOTIFICATION_MESSAGES = {
     "invitation_to_appointment": {
         "subject": _("Your consultation has been scheduled"),
         "content": _(
-            """Dear {{ obj.name }},\n"""
-            """Your consultation has been successfully scheduled."""
-            """Appointment Details: {{ obj.appointment.scheduled_at}}"""
+            """Hello,\n"""
+            """Your consultation has been successfully scheduled. \n"""
+            """Appointment scheduled by: {{ obj.appointment.scheduled_at|date }} at {{ obj.appointment.scheduled_at|time }}"""
         ),
         "model": "consultations.Participant",
         "helper_text": "Message sent to user with invitation to join a consultation at a later time",

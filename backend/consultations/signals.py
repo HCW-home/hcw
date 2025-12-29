@@ -94,5 +94,5 @@ def send_appointment_invites(sender, instance, created, **kwargs):
     Prepare invite sending over celery task.
     """
 
-    if instance.status == [AppointmentStatus.SCHEDULED, AppointmentStatus.CANCELLED]:
+    if instance.status in [AppointmentStatus.SCHEDULED, AppointmentStatus.CANCELLED]:
         handle_invites.delay(instance.pk)

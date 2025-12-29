@@ -2,7 +2,6 @@ import logging
 
 from celery import shared_task
 from django.contrib.auth import get_user_model
-from django.forms.models import model_to_dict
 from messaging.models import Message
 
 from .assignments import AssignmentManager
@@ -51,7 +50,8 @@ def handle_invites(appointment_id):
             sent_to=participant.user,
             sent_by=appointment.consultation.created_by,
             template_system_name=template_system_name,
-            object_dict=model_to_dict(participant),
+            object_pk=participant.pk,
+            object_model="consultations.Participant",
         )
         message.send()
         participant.is_notified = True
