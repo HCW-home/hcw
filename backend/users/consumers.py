@@ -8,7 +8,7 @@ from .services import async_user_online_service
 logger = logging.getLogger(__name__)
 
 
-class UserOnlineStatusMixin:
+class UserOnlineStatusMixin(AsyncJsonWebsocketConsumer):
     """Mixin for automatic WebSocket user online status tracking."""
 
     def __init__(self, *args, **kwargs):
@@ -21,7 +21,7 @@ class UserOnlineStatusMixin:
         user = self.scope.get("user")
 
         if not user or not user.is_authenticated:
-            logger.warning("WebSocket connection attempted without authenticated user")
+            logger.error("WebSocket connection attempted without authenticated user")
             await self.close(code=4001)
             return
 
@@ -59,7 +59,17 @@ class UserOnlineStatusMixin:
         await super().disconnect(close_code)
 
     async def _on_status_changed(self, is_online, connection_count):
-        """Override to handle online status changes."""
+        """Notify client about online status changes."""
+        await self.channel_layer.group_send(
+            "broadcast",
+            {
+                "type": "user",
+                "user_id": self.user_id,
+                "data": {
+                    "is_online": is_online,
+                },
+            },
+        )
 
 
 class WebsocketConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
@@ -70,14 +80,14 @@ class WebsocketConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
         await super().connect()
 
         await self.channel_layer.group_add(f"user_{self.user_id}", self.channel_name)
-        await self.channel_layer.group_add("system_broadcasts", self.channel_name)
+        await self.channel_layer.group_add("broadcast", self.channel_name)
 
     async def disconnect(self, close_code):
         """Disconnect and leave all groups."""
         await self.channel_layer.group_discard(
             f"user_{self.user_id}", self.channel_name
         )
-        await self.channel_layer.group_discard("system_broadcasts", self.channel_name)
+        await self.channel_layer.group_discard("broadcast", self.channel_name)
         await super().disconnect(close_code)
 
     async def receive_json(self, content, **kwargs):
@@ -97,20 +107,6 @@ class WebsocketConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
             await handler(content, data)
         else:
             await self._send_error(f"Unknown message type: {msg_type}")
-
-    async def _on_status_changed(self, is_online, connection_count):
-        """Notify client about online status changes."""
-        await self.send_json(
-            {
-                "type": "status_changed",
-                "data": {
-                    "user_id": self.user_id,
-                    "is_online": is_online,
-                    "connection_count": connection_count,
-                    "connection_id": self.connection_id,
-                },
-            }
-        )
 
     # Message handlers
     async def _handle_ping(self, content, _data):
@@ -186,9 +182,9 @@ class WebsocketConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
             return
 
         await self.channel_layer.group_send(
-            "system_broadcasts",
+            "broadcast",
             {
-                "type": "system_broadcast",
+                "type": "broadcast",
                 "data": {
                     "message_type": data.get("message_type", "system_broadcast"),
                     "from_user_id": self.user_id,
@@ -255,6 +251,15 @@ class WebsocketConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
                 "consultation_id": event["consultation_id"],
                 "appointment_id": event["appointment_id"],
                 "state": event["state"],
+            }
+        )
+
+    async def user(self, event):
+        await self.send_json(
+            {
+                "event": "user",
+                "user_id": event["user_id"],
+                "data": event["data"],
             }
         )
 
