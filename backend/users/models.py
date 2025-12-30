@@ -158,7 +158,7 @@ class User(AbstractUser):
             if self.email:
                 return f"{self.first_name} {self.last_name} ({self.email})"
             return f"{self.first_name} {self.last_name}"
-        return self.email
+        return self.email or f"User #{self.pk}"
 
     def send_user_notification(self, title, message) -> FirebaseResponseDict:
         # Docs https://fcm-django.readthedocs.io/en/latest/
