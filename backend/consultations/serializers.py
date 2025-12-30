@@ -147,7 +147,14 @@ class ConsultationMessageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Message
-        fields = ["id", "content", "attachment", "created_at", "created_by"]
+        fields = [
+            "id",
+            "content",
+            "attachment",
+            "created_at",
+            "created_by",
+            "deleted_at",
+        ]
 
     @extend_schema_field(AttachmentMetadataSerializer(allow_null=True))
     def get_attachment(self, obj):
@@ -171,7 +178,14 @@ class ConsultationMessageCreateSerializer(ConsultationMessageSerializer):
 
     class Meta:
         model = Message
-        fields = ["id", "content", "attachment", "created_at", "created_by"]
+        fields = [
+            "id",
+            "content",
+            "attachment",
+            "created_at",
+            "created_by",
+            "deleted_at",
+        ]
 
 
 class ConsultationSerializer(serializers.ModelSerializer):
