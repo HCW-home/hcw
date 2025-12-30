@@ -10,6 +10,7 @@ from .models import (
     AppointmentStatus,
     Consultation,
     Message,
+    Participant,
     Request,
     RequestStatus,
 )
@@ -153,5 +154,32 @@ def mark_message_edited(sender, instance, **kwargs):
             old = Message.objects.get(pk=instance.pk)
             if old.content != instance.content or old.attachment != instance.attachment:
                 instance.is_edited = True
+                instance.save()
         except Message.DoesNotExist:
             pass
+
+
+@receiver(pre_save, sender=Appointment)
+def appointment_previous_scheduled_at(sender, instance, **kwargs):
+    if instance.pk:
+        try:
+            old = Appointment.objects.get(pk=instance.pk)
+            if old.scheduled_at != instance.scheduled_at:
+                instance.previous_scheduled_at = old.scheduled_at
+                instance.save()
+            else:
+                instance.previous_scheduled_at
+                instance.save()
+        except Appointment.DoesNotExist:
+            pass
+
+
+@receiver(post_save, sender=Appointment)
+def send_appointment_invites_update(sender, instance, **kwargs):
+    if instance.previous_scheduled_at:
+        handle_invites.delay(instance.pk)
+
+
+@receiver(post_delete, sender=Participant)
+def rekove_participant(sender, instance, **kwargs):
+    pass

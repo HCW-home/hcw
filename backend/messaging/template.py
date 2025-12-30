@@ -7,25 +7,17 @@ DEFAULT_NOTIFICATION_MESSAGES = {
     #         "You receive this message because you have been assigned to a new consultation. Please log in to the system to view the details and take necessary actions."
     #     ),
     #     "model": "consultations.Consultation",
-    #     "helper_text": "Message sent to user when assigned to a consultation",
-    # },
-    # "an_unprocessed_request_has_been_received": {
-    #     "subject": _("New consultation request requires your attention"),
-    #     "content": _(
-    #         "You receive this message because a new consultation request has been received that requires your attention. Please log in to the system to review and process the request."
-    #     ),
-    #     "model": "consultations.Requests",
-    #     "helper_text": "Message sent to user when a consultation request requires manual processing",
+    #     "helper_text": "Message sent to participant when assigned to a consultation",
     # },
     "appointment_first_reminder": {
         "subject": _(
             "Your appointment planned {{ obj.appointment.scheduled_at|date }}"
         ),
         "content": _(
-            "This is a reminder for your appointment scheduled by: {{ obj.appointment.scheduled_at|date }} at {{ obj.appointment.scheduled_at|time }}."
+            "This is a reminder for your appointment scheduled for {{ obj.appointment.scheduled_at|date }} at {{ obj.appointment.scheduled_at|time }}."
         ),
-        "model": "consultations.Consultation",
-        "helper_text": "Message sent to user when a beneficiary sends a message",
+        "model": "consultations.Participant",
+        "helper_text": "Message sent to participant when a beneficiary sends a message",
     },
     "appointment_last_reminder": {
         "subject": _(
@@ -35,28 +27,36 @@ DEFAULT_NOTIFICATION_MESSAGES = {
             """Your consultation appointment start at {{ obj.appointment.scheduled_at|time }}\n"""
             """Please join immediately with the link: {{config.patient_base_url}}?auth={{ obj.user.one_time_auth_token }}&action=join"""
         ),
-        "model": "consultations.Consultation",
-        "helper_text": "Message sent to user when a beneficiary sends a message",
+        "model": "consultations.Participant",
+        "helper_text": "Message sent to participant when a beneficiary sends a message",
     },
     "invitation_to_appointment": {
         "subject": _("Your consultation has been scheduled"),
         "content": _(
             """Hello,\n"""
             """Your consultation has been successfully scheduled. \n"""
-            """Appointment scheduled by: {{ obj.appointment.scheduled_at|date }} at {{ obj.appointment.scheduled_at|time }} ({{ obj.appointment.scheduled_at }})\n"""
+            """Appointment is scheduled for {{ obj.appointment.scheduled_at|date }} at {{ obj.appointment.scheduled_at|time }} ({{ obj.appointment.scheduled_at }})\n"""
             """Please confirm your presence: {{config.patient_base_url}}?auth={{ obj.user.one_time_auth_token }}&action=presence"""
         ),
         "model": "consultations.Participant",
-        "helper_text": "Message sent to user with invitation to join a consultation at a later time",
+        "helper_text": "Message sent to participant with invitation to join a consultation at a later time",
     },
-    # "your_appointment_is_in_24h": {
-    #     "subject": _("Message sent to user 24 hours before scheduled appointment"),
-    #     "content": _(
-    #         "You receive this message as a reminder that you have an upcoming appointment scheduled for tomorrow. Please log in to the system to view the details and prepare accordingly."
-    #     ),
-    #     "model": "consultations.Participant",
-    #     "helper_text": "Message sent to user 24 hours before scheduled appointment",
-    # },
+    "appointment_cancelled": {
+        "subject": _("Your appointment has been cancelled"),
+        "content": _("Your appointment scheduled at"),
+        "model": "consultations.Participant",
+        "helper_text": "Message sent to participant when appointment is cancelled",
+    },
+    "appointment_updated": {
+        "subject": _("Your appointment has been updated"),
+        "content": _(
+            """Your appointment previously scheduled for {{ obj.appointment.previous_scheduled_at|date }} """
+            """at {{ obj.appointment.previous_scheduled_at|time }} is now scheduled for """
+            """{{ obj.appointment.scheduled_at|date }} at {{ obj.appointment.scheduled_at|time }}"""
+        ),
+        "model": "consultations.Participant",
+        "helper_text": "Message sent to participant when appointment date and time is updated",
+    },
     "your_authentication_code": {
         "subject": _("Your confirmation code"),
         "content": _(

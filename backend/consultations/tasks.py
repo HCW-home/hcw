@@ -37,10 +37,13 @@ def handle_invites(appointment_id):
     participants = appointment.participants.filter(is_invited=True)
 
     if appointment.status == AppointmentStatus.SCHEDULED:
-        template_system_name = "invitation_to_appointment"
-        participants = participants.filter(is_notified=False)
+        if appointment.previous_scheduled_at:
+            template_system_name = "appointment_updated"
+        else:
+            template_system_name = "invitation_to_appointment"
+            participants = participants.filter(is_notified=False)
     elif appointment.status == AppointmentStatus.CANCELLED:
-        template_system_name = "cancelling_appointment"
+        template_system_name = "appointment_cancelled"
     else:
         "Do nothing"
         return

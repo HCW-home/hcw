@@ -117,6 +117,9 @@ class Appointment(models.Model):
         verbose_name=_("consultation"),
     )
     scheduled_at = models.DateTimeField(_("scheduled at"))
+    previous_scheduled_at = models.DateTimeField(
+        _("scheduled at"), null=True, blank=True
+    )
     end_expected_at = models.DateTimeField(_("end expected at"), null=True, blank=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name=_("created by")
