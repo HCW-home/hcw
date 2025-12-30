@@ -1,6 +1,6 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from django.db.models.signals import post_delete, post_save, pre_save
+from django.db.models.signals import post_delete, post_save, pre_delete, pre_save
 from django.dispatch import receiver
 from livekit.protocol.room import SendDataRequest
 
@@ -154,7 +154,6 @@ def mark_message_edited(sender, instance, **kwargs):
             old = Message.objects.get(pk=instance.pk)
             if old.content != instance.content or old.attachment != instance.attachment:
                 instance.is_edited = True
-                instance.save()
         except Message.DoesNotExist:
             pass
 
@@ -166,10 +165,8 @@ def appointment_previous_scheduled_at(sender, instance, **kwargs):
             old = Appointment.objects.get(pk=instance.pk)
             if old.scheduled_at != instance.scheduled_at:
                 instance.previous_scheduled_at = old.scheduled_at
-                instance.save()
             else:
                 instance.previous_scheduled_at
-                instance.save()
         except Appointment.DoesNotExist:
             pass
 
@@ -180,6 +177,17 @@ def send_appointment_invites_update(sender, instance, **kwargs):
         handle_invites.delay(instance.pk)
 
 
-@receiver(post_delete, sender=Participant)
-def rekove_participant(sender, instance, **kwargs):
-    pass
+@receiver(pre_delete, sender=Participant)
+def delete_participant(sender, instance, **kwargs):
+    message = Message.objects.create(
+        communication_method=participant.communication_method,
+        recipient_phone=participant.phone,
+        recipient_email=participant.email,
+        sent_to=participant.user,
+        sent_by=appointment.consultation.created_by,
+        template_system_name="participant_deleted",
+        object_pk=participant.pk,
+        object_model="consultations.Participant",
+    )
+    # Don't use celery here since we need to have participant id.
+    message.send(wait=True)

@@ -871,3 +871,75 @@ class BookingSlotViewSet(CreatedByMixin, viewsets.ModelViewSet):
             raise PermissionDenied("You can only delete your own booking slots.")
 
         instance.delete()
+
+
+class MessageViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for messages - provides PATCH and DELETE operations
+    Users can only edit/delete their own messages
+    """
+
+    serializer_class = ConsultationMessageSerializer
+    permission_classes = [IsAuthenticated, ConsultationAssigneePermission]
+    http_method_names = ["patch", "delete", "head", "options"]
+
+    def get_queryset(self):
+        user = self.request.user
+        if not user.is_authenticated:
+            return Message.objects.none()
+
+        # Return messages from consultations the user has access to
+        return Message.objects.filter(
+            consultation__in=Consultation.objects.filter(
+                Q(created_by=user)
+                | Q(owned_by=user)
+                | Q(group__users=user)
+                | Q(beneficiary=user)
+            )
+        ).distinct()
+
+    def update(self, request, *args, **kwargs):
+        """PATCH - Update message content or attachment"""
+        partial = kwargs.pop("partial", True)  # Force partial update
+        instance = self.get_object()
+
+        # Only allow the creator to update their own message
+        if instance.created_by != request.user:
+            raise PermissionDenied("You can only edit your own messages.")
+
+        # Don't allow updating deleted messages
+        if instance.deleted_at:
+            return Response(
+                {"error": "Cannot edit a deleted message"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        """DELETE - Soft delete by setting content/attachment to null and populating deleted_at"""
+        instance = self.get_object()
+
+        # Only allow the creator to delete their own message
+        if instance.created_by != request.user:
+            raise PermissionDenied("You can only delete your own messages.")
+
+        # Check if already deleted
+        if instance.deleted_at:
+            return Response(
+                {"error": "Message already deleted"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Soft delete: set content and attachment to null, populate deleted_at
+        instance.content = None
+        instance.attachment = None
+        instance.deleted_at = timezone.now()
+        instance.save()
+
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data, status=status.HTTP_200_OK)

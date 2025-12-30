@@ -653,10 +653,16 @@ class Message(ModelCeleryAbstract):
         if self.recipient_email:
             return self.recipient_email
 
-    def send(self):
+    def send(self, wait=False):
         from .tasks import send_message
 
-        send_message.delay(self.pk)
+        if not wait:
+            send_message.delay(self.pk)
+        else:
+            try:
+                send_message(self.pk)
+            except:
+                pass
 
     @property
     def recipient(self):

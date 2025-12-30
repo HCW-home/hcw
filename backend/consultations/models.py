@@ -244,6 +244,7 @@ class Message(models.Model):
     updated_at = models.DateTimeField(_("updated at"), auto_now=True)
 
     is_edited = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(_("deleted at"), blank=True, null=True)
 
     event = models.TextField(_("event"), null=True, blank=True)
     content = models.TextField(_("content"), null=True, blank=True)

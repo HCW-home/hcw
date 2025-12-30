@@ -264,51 +264,6 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
 
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @extend_schema(
-        request=ConsultationMessageSerializer,
-        responses={
-            200: ConsultationMessageSerializer,
-            404: {
-                "type": "object",
-                "properties": {"detail": {"type": "string"}},
-                "example": {"detail": "Message not found."},
-            },
-        },
-        parameters=[
-            OpenApiParameter(
-                name="message_id",
-                type=OpenApiTypes.INT,
-                location=OpenApiParameter.PATH,
-                description="ID of the message to update",
-            )
-        ],
-        description="Update a specific message in this consultation.",
-    )
-    @action(detail=True, methods=["patch"], url_path="messages/(?P<message_id>[^/.]+)")
-    def update_message(self, request, pk=None, message_id=None):
-        """Update a specific message in this consultation."""
-        consultation = self.get_object()
-
-        try:
-            message = consultation.messages.get(id=message_id, created_by=request.user)
-        except ConsultationMessage.DoesNotExist:
-            return Response(
-                {
-                    "detail": "Message not found or you don't have permission to update it."
-                },
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        serializer = ConsultationMessageSerializer(
-            message, data=request.data, partial=True, context={"request": request}
-        )
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class MessageAttachmentView(APIView):
     authentication_classes = [JWTAuthentication]
