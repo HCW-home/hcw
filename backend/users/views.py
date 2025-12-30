@@ -10,6 +10,7 @@ from consultations.models import Message as ConsultationMessage
 from consultations.serializers import (
     AppointmentDetailSerializer,
     AppointmentSerializer,
+    ConsultationMessageCreateSerializer,
     ConsultationMessageSerializer,
     ConsultationSerializer,
     ReasonSerializer,
@@ -220,7 +221,7 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
         return super().retrieve(request, *args, **kwargs)
 
     @extend_schema(
-        request=ConsultationMessageSerializer,
+        request=ConsultationMessageCreateSerializer,
         responses={
             200: ConsultationMessageSerializer(many=True),
             201: ConsultationMessageSerializer,
