@@ -251,7 +251,7 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
             return Response(serializer.data)
 
         elif request.method == "POST":
-            serializer = ConsultationMessageSerializer(
+            serializer = ConsultationMessageCreateSerializer(
                 data=request.data, context={"request": request}
             )
 
