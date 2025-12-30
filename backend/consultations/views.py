@@ -880,7 +880,7 @@ class MessageViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = ConsultationMessageSerializer
-    permission_classes = [IsAuthenticated, ConsultationAssigneePermission]
+    permission_classes = [IsAuthenticated]
     http_method_names = ["patch", "delete", "head", "options"]
 
     def get_queryset(self):
@@ -900,6 +900,7 @@ class MessageViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         """PATCH - Update message content or attachment"""
+
         partial = kwargs.pop("partial", True)  # Force partial update
         instance = self.get_object()
 
