@@ -1,11 +1,18 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from django.db.models.signals import post_delete, post_save
+from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 from livekit.protocol.room import SendDataRequest
 
 from .consumers import get_consultation
-from .models import Appointment, AppointmentStatus, Consultation, Request, RequestStatus
+from .models import (
+    Appointment,
+    AppointmentStatus,
+    Consultation,
+    Message,
+    Request,
+    RequestStatus,
+)
 from .serializers import ConsultationSerializer
 from .tasks import handle_invites
 
@@ -44,6 +51,47 @@ def consultation_saved(sender, instance: Consultation, created, **kwargs):
             {
                 "type": "consultation",
                 "consultation_id": instance.pk,
+                "state": "created" if created else "updated",
+            },
+        )
+
+
+@receiver(post_save, sender=Message)
+def message_saved(sender, instance: Message, created, **kwargs):
+    """
+    Whenever a Message is created, broadcast it over Channels.
+    """
+    channel_layer = get_channel_layer()
+
+    # Send notifications to each user
+    for user_pk in get_users_to_notification_consultation(instance.consultation):
+        async_to_sync(channel_layer.group_send)(
+            f"user_{user_pk}",
+            {
+                "type": "message",
+                "consultation_id": instance.consultation.pk,
+                "message_id": instance.pk,
+                "consultation": ConsultationSerializer(instance.consultation).data,
+                "state": "created" if created else "updated",
+            },
+        )
+
+
+@receiver(post_save, sender=Appointment)
+def appointment_saved(sender, instance: Message, created, **kwargs):
+    """
+    Whenever a Message is created, broadcast it over Channels.
+    """
+    channel_layer = get_channel_layer()
+
+    # Send notifications to each user
+    for user_pk in get_users_to_notification_consultation(instance.consultation):
+        async_to_sync(channel_layer.group_send)(
+            f"user_{user_pk}",
+            {
+                "type": "message",
+                "consultation_id": instance.consultation.pk,
+                "appointment_id": instance.pk,
                 "state": "created" if created else "updated",
             },
         )
@@ -96,3 +144,14 @@ def send_appointment_invites(sender, instance, created, **kwargs):
 
     if instance.status in [AppointmentStatus.SCHEDULED, AppointmentStatus.CANCELLED]:
         handle_invites.delay(instance.pk)
+
+
+@receiver(pre_save, sender=Message)
+def mark_message_edited(sender, instance, **kwargs):
+    if instance.pk:
+        try:
+            old = Message.objects.get(pk=instance.pk)
+            if old.content != instance.content or old.attachment != instance.attachment:
+                instance.is_edited = True
+        except Message.DoesNotExist:
+            pass

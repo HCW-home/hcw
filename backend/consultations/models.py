@@ -238,6 +238,9 @@ class Message(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name=_("created by")
     )
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("updated at"), auto_now=True)
+
+    is_edited = models.BooleanField(default=False)
 
     event = models.TextField(_("event"), null=True, blank=True)
     content = models.TextField(_("content"), null=True, blank=True)
