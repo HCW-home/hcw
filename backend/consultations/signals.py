@@ -2,9 +2,7 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.db.models.signals import post_delete, post_save, pre_delete, pre_save
 from django.dispatch import receiver
-from livekit.protocol.room import SendDataRequest
 
-from .consumers import get_consultation
 from .models import (
     Appointment,
     AppointmentStatus,
@@ -14,7 +12,7 @@ from .models import (
     Request,
     RequestStatus,
 )
-from .serializers import ConsultationSerializer
+from .serializers import ConsultationMessageSerializer
 from .tasks import handle_invites
 
 
@@ -25,6 +23,10 @@ def get_users_to_notification_consultation(consultation: Consultation):
     # Add owned_by user
     if consultation.owned_by:
         users_to_notify_pks.add(consultation.owned_by.pk)
+
+    # Add creator
+    if consultation.created_by:
+        users_to_notify_pks.add(consultation.created_by.pk)
 
     # Add beneficiary user
     if consultation.beneficiary:
@@ -60,26 +62,27 @@ def consultation_saved(sender, instance: Consultation, created, **kwargs):
 @receiver(post_save, sender=Message)
 def message_saved(sender, instance: Message, created, **kwargs):
     """
-    Whenever a Message is created, broadcast it over Channels.
+    Whenever a Message is saved, broadcast it over Channels.
     """
     channel_layer = get_channel_layer()
 
     # Send notifications to each user
     for user_pk in get_users_to_notification_consultation(instance.consultation):
+        print(user_pk)
         async_to_sync(channel_layer.group_send)(
             f"user_{user_pk}",
             {
                 "type": "message",
                 "consultation_id": instance.consultation.pk,
                 "message_id": instance.pk,
-                "consultation": ConsultationSerializer(instance.consultation).data,
+                "data": ConsultationMessageSerializer(instance).data,
                 "state": "created" if created else "updated",
             },
         )
 
 
 @receiver(post_save, sender=Appointment)
-def appointment_saved(sender, instance: Message, created, **kwargs):
+def appointment_saved(sender, instance: Appointment, created, **kwargs):
     """
     Whenever a Message is created, broadcast it over Channels.
     """
@@ -90,7 +93,7 @@ def appointment_saved(sender, instance: Message, created, **kwargs):
         async_to_sync(channel_layer.group_send)(
             f"user_{user_pk}",
             {
-                "type": "message",
+                "type": "appointment",
                 "consultation_id": instance.consultation.pk,
                 "appointment_id": instance.pk,
                 "state": "created" if created else "updated",
