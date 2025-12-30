@@ -152,7 +152,9 @@ class ConsultationMessageSerializer(serializers.ModelSerializer):
             "content",
             "attachment",
             "created_at",
+            "updated_at",
             "created_by",
+            "is_edited",
             "deleted_at",
         ]
 
@@ -183,7 +185,9 @@ class ConsultationMessageCreateSerializer(ConsultationMessageSerializer):
             "content",
             "attachment",
             "created_at",
+            "updated_at",
             "created_by",
+            "is_edited",
             "deleted_at",
         ]
 
