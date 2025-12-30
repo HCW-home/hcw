@@ -19,3 +19,6 @@ update patient user information
 * Add message logic and send link and datetime of appointment
 * Add calculated status field for participant (participant : sent, read, accepted)
 * Add validation on phone number
+
+* Websocket messages
+* edit appointment > reset participant notification status
