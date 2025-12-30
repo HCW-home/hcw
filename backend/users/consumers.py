@@ -97,9 +97,6 @@ class WebsocketConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
 
         handlers = {
             "ping": self._handle_ping,
-            # "get_status": self._handle_get_status,
-            # "send_message": self._handle_send_message,
-            # "broadcast": self._handle_broadcast,
         }
 
         handler = handlers.get(msg_type)
@@ -196,33 +193,6 @@ class WebsocketConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
 
         await self.send_json({"type": "broadcast_sent", "data": {"message": message}})
 
-    # async def _handle_join_group(self, _content, data):
-    #     group_name = data.get("group_name")
-    #     if not group_name:
-    #         await self._send_error("group_name is required")
-    #         return
-
-    #     allowed_prefixes = ["consultation_", "organisation_", "custom_"]
-    #     if not any(group_name.startswith(prefix) for prefix in allowed_prefixes):
-    #         await self._send_error(
-    #             f"Group name must start with one of: {', '.join(allowed_prefixes)}"
-    #         )
-    #         return
-
-    #     await self.channel_layer.group_add(group_name, self.channel_name)
-    #     await self.send_json(
-    #         {"type": "group_joined", "data": {"group_name": group_name}}
-    #     )
-
-    # async def _handle_leave_group(self, _content, data):
-    #     group_name = data.get("group_name")
-    #     if not group_name:
-    #         await self._send_error("group_name is required")
-    #         return
-
-    #     await self.channel_layer.group_discard(group_name, self.channel_name)
-    #     await self.send_json({"type": "group_left", "data": {"group_name": group_name}})
-
     # Channel layer event handlers
     async def consultation(self, event):
         await self.send_json(
@@ -262,15 +232,6 @@ class WebsocketConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
                 "data": event["data"],
             }
         )
-
-    # async def user_notification(self, event):
-    #     await self.send_json({"type": "notification", "data": event["data"]})
-
-    # async def user_message(self, event):
-    #     await self.send_json({"type": "user_message", "data": event["data"]})
-
-    # async def system_broadcast(self, event):
-    #     await self.send_json({"type": "system_broadcast", "data": event["data"]})
 
     # Utility methods
     async def _send_error(self, message):
