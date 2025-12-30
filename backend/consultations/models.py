@@ -365,7 +365,7 @@ class Request(models.Model):
     reason = models.ForeignKey(
         Reason, on_delete=models.PROTECT, related_name="reasons", null=True, blank=True
     )
-    comment = models.TextField()
+    comment = models.TextField(null=True, blank=True)
 
     refused_reason = models.TextField(null=True, blank=True)
     status = models.CharField(
