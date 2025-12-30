@@ -150,11 +150,30 @@ export interface ConsultationMessageEvent {
   };
 }
 
+export interface MessageEventData {
+  id: number;
+  content: string;
+  attachment: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by: {
+    id: number;
+    email: string;
+    first_name: string;
+    last_name: string;
+    is_online: boolean;
+  };
+  is_edited: boolean;
+  deleted_at: string | null;
+}
+
 export interface MessageEvent {
   type: 'message';
+  event?: 'message';
   consultation_id: number;
   message_id: number;
-  state: 'created' | 'updated';
+  state: 'created' | 'updated' | 'deleted';
+  data: MessageEventData;
   consultation?: unknown;
 }
 

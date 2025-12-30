@@ -33,11 +33,12 @@ export class WebSocketService {
 
 
   connect(config: WebSocketConfig): void {
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      console.warn('WebSocket already connected');
+    if (this.ws &&
+        (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
       return;
     }
 
+    this.disconnect();
     this.config = config;
     this.stateSubject.next(WebSocketState.CONNECTING);
 

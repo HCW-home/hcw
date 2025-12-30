@@ -32,14 +32,17 @@ export class UserWebSocketService implements OnDestroy {
   }
 
   async connect(): Promise<void> {
+    const state = this.wsService.getState();
+    if (state === WebSocketState.CONNECTED || state === WebSocketState.CONNECTING) {
+      return;
+    }
+
     const token = await this.authService.getToken();
-    console.log('UserWebSocketService.connect() - token:', token ? 'exists' : 'missing');
     if (!token) {
       return;
     }
 
     const wsUrl = `${environment.wsUrl}/user/?token=${token}`;
-    console.log('Connecting to WebSocket:', wsUrl);
     this.wsService.connect({
       url: wsUrl,
       reconnect: true,

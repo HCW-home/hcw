@@ -28,12 +28,12 @@ export class WebSocketService implements OnDestroy {
   public messages$: Observable<UserIncomingEvent> = this.messageSubject.asObservable();
 
   connect(config: WebSocketConfig): void {
-    console.log('WebSocketService.connect() called with URL:', config.url);
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      console.log('WebSocket already open, skipping');
+    if (this.ws &&
+        (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
       return;
     }
 
+    this.disconnect();
     this.config = config;
     this.stateSubject.next(WebSocketState.CONNECTING);
 

@@ -177,8 +177,26 @@ export class MessagesPage implements OnInit, OnDestroy {
     });
 
     const msgUpdateSub = this.consultationWs.messageUpdated$.subscribe(event => {
-      if (this.selectedConsultation && event.consultation_id === this.selectedConsultation.id && event.state === 'updated') {
-        this.loadMessages(this.selectedConsultation.id);
+      if (this.selectedConsultation && event.consultation_id === this.selectedConsultation.id) {
+        if (event.state === 'created') {
+          const exists = this.messages.some(m => m.id === event.data.id);
+          if (!exists) {
+            const newMessage: ConsultationMessage = {
+              id: event.data.id,
+              content: event.data.content,
+              attachment: event.data.attachment,
+              created_at: event.data.created_at,
+              updated_at: event.data.updated_at,
+              created_by: event.data.created_by,
+              is_edited: event.data.is_edited,
+              deleted_at: event.data.deleted_at
+            };
+            this.messages.push(newMessage);
+            this.scrollToBottom();
+          }
+        } else if (event.state === 'updated' || event.state === 'deleted') {
+          this.loadMessages(this.selectedConsultation.id);
+        }
       }
     });
 
@@ -278,23 +296,17 @@ export class MessagesPage implements OnInit, OnDestroy {
     const content = this.newMessage.trim();
     this.isSending = true;
 
-    if (this.consultationWs.isConnected) {
-      this.consultationWs.sendMessage(content);
-      this.newMessage = '';
-      this.isSending = false;
-    } else {
-      this.consultationService.sendConsultationMessage(this.selectedConsultation.id, content).subscribe({
-        next: (message) => {
-          this.messages.push(message);
-          this.newMessage = '';
-          this.isSending = false;
-          this.scrollToBottom();
-        },
-        error: () => {
-          this.isSending = false;
-        }
-      });
-    }
+    this.consultationService.sendConsultationMessage(this.selectedConsultation.id, content).subscribe({
+      next: (message) => {
+        this.messages.push(message);
+        this.newMessage = '';
+        this.isSending = false;
+        this.scrollToBottom();
+      },
+      error: () => {
+        this.isSending = false;
+      }
+    });
   }
 
   private scrollToBottom(): void {

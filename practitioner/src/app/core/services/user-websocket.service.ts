@@ -35,9 +35,13 @@ export class UserWebSocketService implements OnDestroy {
   }
 
   connect(): void {
+    const state = this.wsService.getState();
+    if (state === WebSocketState.CONNECTED || state === WebSocketState.CONNECTING) {
+      return;
+    }
+
     const token = this.authService.getToken();
     if (!token) {
-      console.error('Cannot connect WebSocket: No authentication token');
       return;
     }
 

@@ -142,7 +142,22 @@ export class ConsultationDetail implements OnInit, OnDestroy {
     });
 
     this.wsService.messageUpdated$.pipe(takeUntil(this.destroy$)).subscribe(event => {
-      if (event.state === 'updated') {
+      if (event.state === 'created') {
+        const exists = this.messages().some(m => m.id === event.data.id);
+        if (!exists) {
+          const currentUser = this.currentUser();
+          const newMessage: Message = {
+            id: event.data.id,
+            username: `${event.data.created_by.first_name} ${event.data.created_by.last_name}`,
+            message: event.data.content,
+            timestamp: event.data.created_at,
+            isCurrentUser: currentUser?.pk === event.data.created_by.id,
+            isEdited: event.data.is_edited,
+            updatedAt: event.data.updated_at,
+          };
+          this.messages.update(msgs => [...msgs, newMessage]);
+        }
+      } else if (event.state === 'updated' || event.state === 'deleted') {
         this.loadMessages();
       }
     });
