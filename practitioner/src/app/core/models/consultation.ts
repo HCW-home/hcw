@@ -62,6 +62,9 @@ export interface ConsultationMessage {
   content: string | null;
   attachment: MessageAttachment | null;
   created_at: string;
+  updated_at: string;
+  is_edited: boolean;
+  deleted_at?: string | null;
   created_by: User;
 }
 

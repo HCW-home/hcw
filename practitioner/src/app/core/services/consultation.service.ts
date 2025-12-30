@@ -284,6 +284,22 @@ export class ConsultationService {
     );
   }
 
+  updateConsultationMessage(
+    messageId: number,
+    content: string
+  ): Observable<ConsultationMessage> {
+    return this.http.patch<ConsultationMessage>(
+      `${this.apiUrl}/messages/${messageId}/`,
+      { content }
+    );
+  }
+
+  deleteConsultationMessage(messageId: number): Observable<ConsultationMessage> {
+    return this.http.delete<ConsultationMessage>(
+      `${this.apiUrl}/messages/${messageId}/`
+    );
+  }
+
   getQueues(): Observable<Queue[]> {
     return this.http.get<Queue[]>(`${this.apiUrl}/queues/`);
   }

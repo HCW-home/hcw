@@ -148,7 +148,8 @@
     background: var(--ion-color-primary);
     color: white;
 
-    .message-time {
+    .message-time,
+    .message-edited {
       color: rgba(255, 255, 255, 0.7);
     }
   }
@@ -166,11 +167,23 @@
     word-break: break-word;
   }
 
+  .message-meta {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    justify-content: flex-end;
+    margin-top: 4px;
+  }
+
   .message-time {
     font-size: 11px;
     color: var(--ion-color-medium);
-    margin-top: 4px;
-    text-align: right;
+  }
+
+  .message-edited {
+    font-size: 11px;
+    color: var(--ion-color-medium);
+    font-style: italic;
   }
 }
 
@@ -204,4 +217,60 @@
       font-size: 22px;
     }
   }
+}
+
+.edit-message-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 75%;
+  background: white;
+  border-radius: 12px;
+  padding: 8px 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+
+  .edit-input {
+    --padding-start: 0;
+    --padding-end: 0;
+    font-size: 15px;
+  }
+
+  .edit-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 4px;
+    margin-top: 4px;
+
+    ion-button {
+      --padding-start: 8px;
+      --padding-end: 8px;
+      margin: 0;
+      height: 28px;
+    }
+  }
+}
+
+.message-wrapper.own .edit-message-container {
+  margin-left: auto;
+}
+
+.edit-button {
+  --padding-start: 4px;
+  --padding-end: 4px;
+  margin: 0;
+  height: 20px;
+  opacity: 0;
+  transition: opacity 0.2s;
+
+  ion-icon {
+    font-size: 14px;
+  }
+}
+
+.message-bubble:hover .edit-button {
+  opacity: 0.7;
+}
+
+.edit-button:hover {
+  opacity: 1;
 }

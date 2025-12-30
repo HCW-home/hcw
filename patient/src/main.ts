@@ -59,7 +59,7 @@ import {
   cameraReverseOutline, ellipse, alertCircle, arrowBackOutline, clipboardOutline, addOutline,
   hourglassOutline, ellipsisVerticalOutline, chatbubbleEllipsesOutline, closeCircleOutline,
   sendOutline, attachOutline, imageOutline, wifiOutline, cloudOfflineOutline, closeOutline,
-  atOutline
+  atOutline, createOutline
 } from 'ionicons/icons';
 
 import { routes } from './app/app.routes';
@@ -133,6 +133,7 @@ addIcons({
   'moon-outline': moonOutline,
   'bulb-outline': bulbOutline,
   'chatbubble-outline': chatbubblesOutline,
+  'chatbubbles-outline': chatbubblesOutline,
   'flask-outline': flaskOutline,
   'pricetag-outline': pricetagOutline,
   'trash': trash,
@@ -167,6 +168,7 @@ addIcons({
   'cloud-offline-outline': cloudOfflineOutline,
   'close-outline': closeOutline,
   'at-outline': atOutline,
+  'create-outline': createOutline,
 });
 
 bootstrapApplication(AppComponent, {

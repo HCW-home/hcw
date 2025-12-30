@@ -144,7 +144,18 @@ export interface ConsultationMessageEvent {
     username: string;
     message: string;
     timestamp: string;
+    is_edited?: boolean;
+    updated_at?: string;
+    state?: 'created' | 'updated';
   };
+}
+
+export interface MessageEvent {
+  type: 'message';
+  consultation_id: number;
+  message_id: number;
+  state: 'created' | 'updated';
+  consultation?: unknown;
 }
 
 export interface ParticipantJoinedEvent {
@@ -185,6 +196,7 @@ export interface ParticipantsEvent {
 
 export type ConsultationIncomingEvent =
   | ConsultationMessageEvent
+  | MessageEvent
   | ParticipantJoinedEvent
   | ParticipantLeftEvent
   | AppointmentUpdatedEvent

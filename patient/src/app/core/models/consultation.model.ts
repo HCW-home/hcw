@@ -92,6 +92,9 @@ export interface ConsultationMessage {
   consultation: number;
   created_by: User;
   created_at: string;
+  updated_at?: string;
+  is_edited?: boolean;
+  deleted_at?: string | null;
   event?: string;
   content: string;
   attachment?: MessageAttachment | null;
@@ -115,6 +118,7 @@ export interface ConsultationRequest {
 
 export interface User {
   id: number;
+  pk: number;
   username: string;
   email: string;
   first_name: string;

@@ -250,7 +250,9 @@
           <app-message-list
             [messages]="messages()"
             [isConnected]="true"
-            (sendMessage)="onSendMessage($event)">
+            (sendMessage)="onSendMessage($event)"
+            (editMessage)="onEditMessage($event)"
+            (deleteMessage)="onDeleteMessage($event)">
           </app-message-list>
         </div>
       </div>

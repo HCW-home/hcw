@@ -23,11 +23,23 @@ export interface Message {
   timestamp: string;
   isCurrentUser: boolean;
   attachment?: MessageAttachment | null;
+  isEdited?: boolean;
+  updatedAt?: string;
+  deletedAt?: string | null;
 }
 
 export interface SendMessageData {
   content?: string;
   attachment?: File;
+}
+
+export interface EditMessageData {
+  messageId: number;
+  content: string;
+}
+
+export interface DeleteMessageData {
+  messageId: number;
 }
 
 @Component({
@@ -39,9 +51,16 @@ export interface SendMessageData {
 export class MessageList implements OnChanges, OnDestroy {
   @Input() messages: Message[] = [];
   @Input() isConnected = false;
+  @Input() currentUserId: number | null = null;
   @Output() sendMessage = new EventEmitter<SendMessageData>();
+  @Output() editMessage = new EventEmitter<EditMessageData>();
+  @Output() deleteMessage = new EventEmitter<DeleteMessageData>();
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+
+  editingMessageId: number | null = null;
+  editContent = '';
+  isEditing = false;
 
   private destroy$ = new Subject<void>();
   private consultationService = inject(ConsultationService);
@@ -72,7 +91,8 @@ export class MessageList implements OnChanges, OnDestroy {
 
   private loadImageAttachments(): void {
     this.messages.forEach(message => {
-      if (message.attachment && this.isImageAttachment(message.attachment) && !this.imageUrlCache.has(message.id)) {
+      const isTempId = message.id > 1000000000000;
+      if (message.attachment && this.isImageAttachment(message.attachment) && !this.imageUrlCache.has(message.id) && !isTempId) {
         this.consultationService.getMessageAttachment(message.id)
           .pipe(takeUntil(this.destroy$))
           .subscribe({
@@ -148,5 +168,49 @@ export class MessageList implements OnChanges, OnDestroy {
 
   closeImageViewer(): void {
     this.viewingImage.set(null);
+  }
+
+  canEditMessage(message: Message): boolean {
+    return message.isCurrentUser && !message.deletedAt;
+  }
+
+  canDeleteMessage(message: Message): boolean {
+    return message.isCurrentUser && !message.deletedAt;
+  }
+
+  isMessageDeleted(message: Message): boolean {
+    return !!message.deletedAt;
+  }
+
+  onDeleteClick(message: Message): void {
+    this.deleteMessage.emit({ messageId: message.id });
+  }
+
+  startEdit(message: Message): void {
+    this.editingMessageId = message.id;
+    this.editContent = message.message;
+  }
+
+  cancelEdit(): void {
+    this.editingMessageId = null;
+    this.editContent = '';
+  }
+
+  saveEdit(): void {
+    if (!this.editingMessageId || !this.editContent.trim()) {
+      return;
+    }
+
+    this.editMessage.emit({
+      messageId: this.editingMessageId,
+      content: this.editContent.trim()
+    });
+    this.onEditComplete();
+  }
+
+  onEditComplete(): void {
+    this.editingMessageId = null;
+    this.editContent = '';
+    this.isEditing = false;
   }
 }

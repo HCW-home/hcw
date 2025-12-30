@@ -16,34 +16,75 @@
     } @else {
       @for (message of messages; track message.id) {
         <div class="message-item" [class.current-user]="message.isCurrentUser" [class.other-user]="!message.isCurrentUser">
-          <div class="message-header">
-            <span class="message-username">{{ message.username }}</span>
-            <span class="message-time">{{ formatTime(message.timestamp) }}</span>
-          </div>
-          <div class="message-content">
-            @if (message.message) {
-              <p class="message-text">{{ message.message }}</p>
-            }
-            @if (message.attachment) {
-              @if (isImageAttachment(message.attachment)) {
-                @if (getImageUrl(message.id)) {
-                  <div class="message-image-attachment" (click)="openImageViewer(message)">
-                    <img [src]="getImageUrl(message.id)" [alt]="message.attachment.file_name" class="attachment-image-preview">
-                  </div>
+          @if (editingMessageId === message.id) {
+            <div class="edit-message-container">
+              <input
+                type="text"
+                class="edit-input"
+                [(ngModel)]="editContent"
+                placeholder="Edit message..."
+                (keyup.enter)="saveEdit()"
+              />
+              <div class="edit-actions">
+                <ion-button fill="clear" size="small" (click)="cancelEdit()">
+                  <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+                </ion-button>
+                <ion-button fill="clear" size="small" (click)="saveEdit()" [disabled]="!editContent.trim() || isEditing">
+                  @if (isEditing) {
+                    <ion-spinner name="dots"></ion-spinner>
+                  } @else {
+                    <ion-icon slot="icon-only" name="checkmark-circle-outline" color="success"></ion-icon>
+                  }
+                </ion-button>
+              </div>
+            </div>
+          } @else {
+            <div class="message-header">
+              <span class="message-username">{{ message.username }}</span>
+              <div class="message-meta">
+                <span class="message-time">{{ formatTime(message.timestamp) }}</span>
+                @if (message.isEdited && !isMessageDeleted(message)) {
+                  <span class="message-edited">(edited)</span>
+                }
+                @if (canEditMessage(message)) {
+                  <button class="edit-button" (click)="startEdit(message)">
+                    <ion-icon name="create-outline"></ion-icon>
+                  </button>
+                }
+                @if (canDeleteMessage(message)) {
+                  <button class="delete-button" (click)="onDeleteClick(message)">
+                    <ion-icon name="trash-outline"></ion-icon>
+                  </button>
+                }
+              </div>
+            </div>
+            <div class="message-content">
+              @if (isMessageDeleted(message)) {
+                <span class="message-deleted-text">{{ message.isCurrentUser ? 'You deleted this message' : 'Message deleted' }}</span>
+              } @else if (message.message) {
+                <p class="message-text">{{ message.message }}</p>
+              }
+              @if (message.attachment && !isMessageDeleted(message)) {
+                @if (isImageAttachment(message.attachment)) {
+                  @if (getImageUrl(message.id)) {
+                    <div class="message-image-attachment" (click)="openImageViewer(message)">
+                      <img [src]="getImageUrl(message.id)" [alt]="message.attachment.file_name" class="attachment-image-preview">
+                    </div>
+                  } @else {
+                    <div class="message-attachment loading">
+                      <ion-spinner name="crescent"></ion-spinner>
+                      <span class="attachment-name">Loading image...</span>
+                    </div>
+                  }
                 } @else {
-                  <div class="message-attachment loading">
-                    <ion-spinner name="crescent"></ion-spinner>
-                    <span class="attachment-name">Loading image...</span>
+                  <div class="message-attachment">
+                    <ion-icon [name]="getAttachmentIcon(message.attachment)"></ion-icon>
+                    <span class="attachment-name">{{ message.attachment.file_name }}</span>
                   </div>
                 }
-              } @else {
-                <div class="message-attachment">
-                  <ion-icon [name]="getAttachmentIcon(message.attachment)"></ion-icon>
-                  <span class="attachment-name">{{ message.attachment.file_name }}</span>
-                </div>
               }
-            }
-          </div>
+            </div>
+          }
         </div>
       }
     }

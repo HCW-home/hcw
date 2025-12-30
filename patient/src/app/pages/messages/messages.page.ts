@@ -23,7 +23,10 @@ import {
   IonButtons,
   IonBackButton,
   NavController,
-  IonNote
+  IonNote,
+  IonInfiniteScroll,
+  IonInfiniteScrollContent,
+  InfiniteScrollCustomEvent
 } from '@ionic/angular/standalone';
 import { Subscription } from 'rxjs';
 import { ConsultationService } from '../../core/services/consultation.service';
@@ -66,8 +69,9 @@ interface ConversationThread {
     IonInput,
     IonButton,
     IonButtons,
-    IonBackButton,
-    IonNote
+    IonNote,
+    IonInfiniteScroll,
+    IonInfiniteScrollContent
   ]
 })
 export class MessagesPage implements OnInit, OnDestroy {
@@ -81,9 +85,16 @@ export class MessagesPage implements OnInit, OnDestroy {
   currentUser: User | null = null;
   isLoading = true;
   isLoadingMessages = false;
+  isLoadingMore = false;
   isSending = false;
   searchTerm = '';
   connectionState: WebSocketState = WebSocketState.DISCONNECTED;
+  currentPage = 1;
+  hasMoreMessages = true;
+  totalMessages = 0;
+  editingMessageId: number | null = null;
+  editContent = '';
+  isEditing = false;
 
   private subscriptions: Subscription[] = [];
 
@@ -110,6 +121,9 @@ export class MessagesPage implements OnInit, OnDestroy {
   private loadCurrentUser(): void {
     const userSub = this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
+      if (!user) {
+        this.authService.getCurrentUser().subscribe();
+      }
     });
     this.subscriptions.push(userSub);
   }
@@ -147,19 +161,28 @@ export class MessagesPage implements OnInit, OnDestroy {
           consultation: message.consultation_id,
           created_by: {
             id: message.user_id,
+            pk: message.user_id,
             username: message.username,
             email: '',
             first_name: message.username.split(' ')[0] || message.username,
             last_name: message.username.split(' ')[1] || ''
           },
           created_at: message.timestamp,
+          updated_at: message.updated_at,
+          is_edited: message.is_edited,
           content: message.message
         });
         this.scrollToBottom();
       }
     });
 
-    this.subscriptions.push(stateSub, msgSub);
+    const msgUpdateSub = this.consultationWs.messageUpdated$.subscribe(event => {
+      if (this.selectedConsultation && event.consultation_id === this.selectedConsultation.id && event.state === 'updated') {
+        this.loadMessages(this.selectedConsultation.id);
+      }
+    });
+
+    this.subscriptions.push(stateSub, msgSub, msgUpdateSub);
   }
 
   searchConversations(event: CustomEvent): void {
@@ -185,6 +208,9 @@ export class MessagesPage implements OnInit, OnDestroy {
 
   selectConversation(thread: ConversationThread): void {
     this.selectedConsultation = thread.consultation;
+    this.currentPage = 1;
+    this.hasMoreMessages = true;
+    this.messages = [];
     this.loadMessages(thread.consultation.id);
     this.consultationWs.connect(thread.consultation.id);
   }
@@ -195,18 +221,51 @@ export class MessagesPage implements OnInit, OnDestroy {
     }
     this.selectedConsultation = null;
     this.messages = [];
+    this.currentPage = 1;
+    this.hasMoreMessages = true;
   }
 
   private loadMessages(consultationId: number): void {
     this.isLoadingMessages = true;
-    this.consultationService.getConsultationMessages(consultationId).subscribe({
-      next: (messages) => {
-        this.messages = messages;
+    this.consultationService.getConsultationMessagesPaginated(consultationId, 1).subscribe({
+      next: (response) => {
+        this.messages = [...response.results].reverse();
+        this.totalMessages = response.count;
+        this.hasMoreMessages = !!response.next;
+        this.currentPage = 1;
         this.isLoadingMessages = false;
         setTimeout(() => this.scrollToBottom(), 100);
       },
       error: () => {
         this.isLoadingMessages = false;
+      }
+    });
+  }
+
+  loadMoreMessages(event: InfiniteScrollCustomEvent): void {
+    if (!this.selectedConsultation || !this.hasMoreMessages || this.isLoadingMore) {
+      event.target.complete();
+      return;
+    }
+
+    this.isLoadingMore = true;
+    const nextPage = this.currentPage + 1;
+
+    this.consultationService.getConsultationMessagesPaginated(this.selectedConsultation.id, nextPage).subscribe({
+      next: (response) => {
+        const olderMessages = [...response.results].reverse();
+        this.messages = [...olderMessages, ...this.messages];
+        this.currentPage = nextPage;
+        this.hasMoreMessages = !!response.next;
+        this.isLoadingMore = false;
+        event.target.complete();
+        if (!response.next) {
+          event.target.disabled = true;
+        }
+      },
+      error: () => {
+        this.isLoadingMore = false;
+        event.target.complete();
       }
     });
   }
@@ -290,5 +349,44 @@ export class MessagesPage implements OnInit, OnDestroy {
 
   get isReconnecting(): boolean {
     return this.connectionState === WebSocketState.RECONNECTING;
+  }
+
+  startEdit(message: ConsultationMessage): void {
+    this.editingMessageId = message.id;
+    this.editContent = message.content;
+  }
+
+  cancelEdit(): void {
+    this.editingMessageId = null;
+    this.editContent = '';
+  }
+
+  saveEdit(): void {
+    if (!this.selectedConsultation || !this.editingMessageId || !this.editContent.trim()) {
+      return;
+    }
+
+    this.isEditing = true;
+    this.consultationService.updateConsultationMessage(
+      this.selectedConsultation.id,
+      this.editingMessageId,
+      this.editContent.trim()
+    ).subscribe({
+      next: (updatedMessage) => {
+        const index = this.messages.findIndex(m => m.id === this.editingMessageId);
+        if (index !== -1) {
+          this.messages[index] = updatedMessage;
+        }
+        this.cancelEdit();
+        this.isEditing = false;
+      },
+      error: () => {
+        this.isEditing = false;
+      }
+    });
+  }
+
+  canEditMessage(message: ConsultationMessage): boolean {
+    return this.currentUser?.id === message.created_by.id;
   }
 }

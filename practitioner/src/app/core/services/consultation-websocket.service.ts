@@ -5,6 +5,7 @@ import {
   WebSocketState,
   ConsultationIncomingEvent,
   ConsultationMessageEvent,
+  MessageEvent as WsMessageEvent,
   ParticipantJoinedEvent,
   ParticipantLeftEvent,
   AppointmentUpdatedEvent,
@@ -21,6 +22,7 @@ export class ConsultationWebSocketService {
 
   private stateSubject = new BehaviorSubject<WebSocketState>(WebSocketState.DISCONNECTED);
   private messagesSubject = new Subject<ConsultationMessageEvent>();
+  private messageUpdatedSubject = new Subject<WsMessageEvent>();
   private participantsSubject = new BehaviorSubject<ConsultationParticipant[]>([]);
   private participantJoinedSubject = new Subject<ParticipantJoinedEvent>();
   private participantLeftSubject = new Subject<ParticipantLeftEvent>();
@@ -29,6 +31,7 @@ export class ConsultationWebSocketService {
 
   public state$: Observable<WebSocketState> = this.stateSubject.asObservable();
   public messages$: Observable<ConsultationMessageEvent> = this.messagesSubject.asObservable();
+  public messageUpdated$: Observable<WsMessageEvent> = this.messageUpdatedSubject.asObservable();
   public participants$: Observable<ConsultationParticipant[]> = this.participantsSubject.asObservable();
   public participantJoined$: Observable<ParticipantJoinedEvent> = this.participantJoinedSubject.asObservable();
   public participantLeft$: Observable<ParticipantLeftEvent> = this.participantLeftSubject.asObservable();
@@ -204,6 +207,10 @@ export class ConsultationWebSocketService {
 
       case 'consultation_message':
         this.messagesSubject.next(message);
+        break;
+
+      case 'message':
+        this.messageUpdatedSubject.next(message as WsMessageEvent);
         break;
 
       case 'participant_joined':

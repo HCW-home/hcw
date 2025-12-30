@@ -91,16 +91,54 @@
         </ion-text>
       </div>
     } @else {
+      <ion-infinite-scroll position="top" (ionInfinite)="loadMoreMessages($any($event))" [disabled]="!hasMoreMessages">
+        <ion-infinite-scroll-content loadingSpinner="crescent" loadingText="Loading older messages...">
+        </ion-infinite-scroll-content>
+      </ion-infinite-scroll>
+
       <div class="messages-container">
         @for (message of messages; track message.id) {
           <div class="message-wrapper" [class.own]="isOwnMessage(message)">
-            <div class="message-bubble" [class.own]="isOwnMessage(message)">
-              @if (!isOwnMessage(message)) {
-                <div class="sender-name">{{ message.created_by.first_name }}</div>
-              }
-              <div class="message-content">{{ message.content }}</div>
-              <div class="message-time">{{ formatTime(message.created_at) }}</div>
-            </div>
+            @if (editingMessageId === message.id) {
+              <div class="edit-message-container">
+                <ion-input
+                  [(ngModel)]="editContent"
+                  placeholder="Edit message..."
+                  (keyup.enter)="saveEdit()"
+                  class="edit-input">
+                </ion-input>
+                <div class="edit-actions">
+                  <ion-button fill="clear" size="small" (click)="cancelEdit()">
+                    <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+                  </ion-button>
+                  <ion-button fill="clear" size="small" (click)="saveEdit()" [disabled]="!editContent.trim() || isEditing">
+                    @if (isEditing) {
+                      <ion-spinner name="dots"></ion-spinner>
+                    } @else {
+                      <ion-icon name="checkmark-circle-outline" slot="icon-only" color="success"></ion-icon>
+                    }
+                  </ion-button>
+                </div>
+              </div>
+            } @else {
+              <div class="message-bubble" [class.own]="isOwnMessage(message)">
+                @if (!isOwnMessage(message)) {
+                  <div class="sender-name">{{ message.created_by.first_name }}</div>
+                }
+                <div class="message-content">{{ message.content }}</div>
+                <div class="message-meta">
+                  <span class="message-time">{{ formatTime(message.created_at) }}</span>
+                  @if (message.is_edited) {
+                    <span class="message-edited">(edited)</span>
+                  }
+                  @if (canEditMessage(message)) {
+                    <ion-button fill="clear" size="small" class="edit-button" (click)="startEdit(message)">
+                      <ion-icon name="create-outline" slot="icon-only"></ion-icon>
+                    </ion-button>
+                  }
+                </div>
+              </div>
+            }
           </div>
         }
       </div>

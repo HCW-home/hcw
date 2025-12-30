@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { ApiService, PaginatedResponse } from './api.service';
 import {
   Consultation,
@@ -73,7 +74,13 @@ export class ConsultationService {
   }
 
   getConsultationMessages(consultationId: number): Observable<ConsultationMessage[]> {
-    return this.api.get<ConsultationMessage[]>(`/consultations/${consultationId}/messages/`);
+    return this.api.get<PaginatedResponse<ConsultationMessage>>(`/user/consultations/${consultationId}/messages/`).pipe(
+      map(response => response.results)
+    );
+  }
+
+  getConsultationMessagesPaginated(consultationId: number, page: number = 1): Observable<PaginatedResponse<ConsultationMessage>> {
+    return this.api.get<PaginatedResponse<ConsultationMessage>>(`/user/consultations/${consultationId}/messages/`, { page });
   }
 
   sendConsultationMessage(consultationId: number, content: string, attachment?: File): Observable<ConsultationMessage> {
@@ -82,7 +89,15 @@ export class ConsultationService {
     if (attachment) {
       formData.append('attachment', attachment);
     }
-    return this.api.post<ConsultationMessage>(`/consultations/${consultationId}/messages/`, formData);
+    return this.api.post<ConsultationMessage>(`/user/consultations/${consultationId}/messages/`, formData);
+  }
+
+  updateConsultationMessage(consultationId: number, messageId: number, content: string): Observable<ConsultationMessage> {
+    return this.api.patch<ConsultationMessage>(`/messages/${messageId}/`, { content });
+  }
+
+  deleteConsultationMessage(messageId: number): Observable<ConsultationMessage> {
+    return this.api.delete<ConsultationMessage>(`/messages/${messageId}/`);
   }
 
   getConsultationParticipants(consultationId: number): Observable<Participant[]> {

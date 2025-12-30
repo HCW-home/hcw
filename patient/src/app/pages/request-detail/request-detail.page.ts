@@ -19,7 +19,7 @@ import { ConsultationWebSocketService } from '../../core/services/consultation-w
 import { AuthService } from '../../core/services/auth.service';
 import { ConsultationRequest, Speciality, User } from '../../core/models/consultation.model';
 import { WebSocketState } from '../../core/models/websocket.model';
-import { MessageListComponent, Message, SendMessageData } from '../../shared/components/message-list/message-list';
+import { MessageListComponent, Message, SendMessageData, EditMessageData, DeleteMessageData } from '../../shared/components/message-list/message-list';
 
 interface RequestStatus {
   label: string;
@@ -94,6 +94,8 @@ export class RequestDetailPage implements OnInit, OnDestroy {
       .subscribe(user => {
         if (user) {
           this.currentUser.set(user as User);
+        } else {
+          this.authService.getCurrentUser().subscribe();
         }
       });
   }
@@ -156,7 +158,7 @@ export class RequestDetailPage implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (messagesResponse) => {
-          const currentUserId = this.currentUser()?.id;
+          const currentUserId = this.currentUser()?.pk;
           const loadedMessages: Message[] = messagesResponse.map(msg => {
             const isCurrentUser = msg.created_by.id === currentUserId;
             return {
@@ -166,8 +168,11 @@ export class RequestDetailPage implements OnInit, OnDestroy {
               timestamp: msg.created_at,
               isCurrentUser,
               attachment: msg.attachment,
+              isEdited: msg.is_edited,
+              updatedAt: msg.updated_at,
+              deletedAt: msg.deleted_at,
             };
-          });
+          }).reverse();
           this.messages.set(loadedMessages);
         },
         error: async (error) => {
@@ -214,6 +219,75 @@ export class RequestDetailPage implements OnInit, OnDestroy {
           this.messages.update(msgs => msgs.filter(m => m.id !== tempId));
           const toast = await this.toastController.create({
             message: error?.error?.detail || 'Failed to send message',
+            duration: 3000,
+            position: 'bottom',
+            color: 'danger'
+          });
+          await toast.present();
+        }
+      });
+  }
+
+  onEditMessage(data: EditMessageData): void {
+    const consultationId = this.consultationId();
+    if (!consultationId) return;
+
+    this.consultationService.updateConsultationMessage(consultationId, data.messageId, data.content)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: async (updatedMessage) => {
+          this.messages.update(msgs =>
+            msgs.map(m => m.id === data.messageId ? {
+              ...m,
+              message: updatedMessage.content || '',
+              isEdited: updatedMessage.is_edited,
+              updatedAt: updatedMessage.updated_at,
+            } : m)
+          );
+          const toast = await this.toastController.create({
+            message: 'Message updated',
+            duration: 2000,
+            position: 'bottom',
+            color: 'success'
+          });
+          await toast.present();
+        },
+        error: async (error) => {
+          const toast = await this.toastController.create({
+            message: error?.error?.detail || 'Failed to update message',
+            duration: 3000,
+            position: 'bottom',
+            color: 'danger'
+          });
+          await toast.present();
+        }
+      });
+  }
+
+  onDeleteMessage(data: DeleteMessageData): void {
+    this.consultationService.deleteConsultationMessage(data.messageId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: async (deletedMessage) => {
+          this.messages.update(msgs =>
+            msgs.map(m => m.id === data.messageId ? {
+              ...m,
+              message: '',
+              attachment: null,
+              deletedAt: deletedMessage.deleted_at,
+            } : m)
+          );
+          const toast = await this.toastController.create({
+            message: 'Message deleted',
+            duration: 2000,
+            position: 'bottom',
+            color: 'success'
+          });
+          await toast.present();
+        },
+        error: async (error) => {
+          const toast = await this.toastController.create({
+            message: error?.error?.detail || 'Failed to delete message',
             duration: 3000,
             position: 'bottom',
             color: 'danger'

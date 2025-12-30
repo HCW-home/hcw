@@ -18,7 +18,7 @@ import { IUser } from '../../models/user';
 
 import { Page } from '../../../../core/components/page/page';
 import { Loader } from '../../../../shared/components/loader/loader';
-import { MessageList, Message, SendMessageData } from '../../../../shared/components/message-list/message-list';
+import { MessageList, Message, SendMessageData, EditMessageData, DeleteMessageData } from '../../../../shared/components/message-list/message-list';
 import { VideoConsultationComponent } from '../video-consultation/video-consultation';
 
 import { Svg } from '../../../../shared/ui-components/svg/svg';
@@ -135,8 +135,16 @@ export class ConsultationDetail implements OnInit, OnDestroy {
         message: event.data.message,
         timestamp: event.data.timestamp,
         isCurrentUser: false,
+        isEdited: event.data.is_edited,
+        updatedAt: event.data.updated_at,
       };
       this.messages.update(msgs => [...msgs, newMessage]);
+    });
+
+    this.wsService.messageUpdated$.pipe(takeUntil(this.destroy$)).subscribe(event => {
+      if (event.state === 'updated') {
+        this.loadMessages();
+      }
     });
 
     this.wsService.participantJoined$.pipe(takeUntil(this.destroy$)).subscribe(event => {
@@ -203,8 +211,11 @@ export class ConsultationDetail implements OnInit, OnDestroy {
               timestamp: msg.created_at,
               isCurrentUser,
               attachment: msg.attachment,
+              isEdited: msg.is_edited,
+              updatedAt: msg.updated_at,
+              deletedAt: msg.deleted_at,
             };
-          });
+          }).reverse();
           this.messages.set(loadedMessages);
         },
         error: (error) => {
@@ -438,5 +449,49 @@ export class ConsultationDetail implements OnInit, OnDestroy {
       return participant.email.charAt(0).toUpperCase();
     }
     return '?';
+  }
+
+  onEditMessage(data: EditMessageData): void {
+    this.consultationService
+      .updateConsultationMessage(data.messageId, data.content)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (updatedMessage) => {
+          this.messages.update(msgs =>
+            msgs.map(m => m.id === data.messageId ? {
+              ...m,
+              message: updatedMessage.content || '',
+              isEdited: updatedMessage.is_edited,
+              updatedAt: updatedMessage.updated_at
+            } : m)
+          );
+          this.toasterService.show('success', 'Message updated');
+        },
+        error: (error) => {
+          this.toasterService.show('error', getErrorMessage(error));
+        },
+      });
+  }
+
+  onDeleteMessage(data: DeleteMessageData): void {
+    this.consultationService
+      .deleteConsultationMessage(data.messageId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (deletedMessage) => {
+          this.messages.update(msgs =>
+            msgs.map(m => m.id === data.messageId ? {
+              ...m,
+              message: '',
+              attachment: null,
+              deletedAt: deletedMessage.deleted_at
+            } : m)
+          );
+          this.toasterService.show('success', 'Message deleted');
+        },
+        error: (error) => {
+          this.toasterService.show('error', getErrorMessage(error));
+        },
+      });
   }
 }

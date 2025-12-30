@@ -14,36 +14,80 @@
     } @else {
       @for (message of messages; track message.id) {
         <div class="message-item" [class.current-user]="message.isCurrentUser" [class.other-user]="!message.isCurrentUser">
-          <div class="message-header">
-            <app-typography [variant]="TypographyTypeEnum['body-s-semibold']">{{ message.username }}</app-typography>
-            <app-typography [variant]="TypographyTypeEnum['body-xs-regular']" class="message-time">
-              {{ formatTime(message.timestamp) }}
-            </app-typography>
-          </div>
-          <div class="message-content">
-            @if (message.message) {
-              <app-typography [variant]="TypographyTypeEnum['body-s-regular']">{{ message.message }}</app-typography>
-            }
-            @if (message.attachment) {
-              @if (isImageAttachment(message.attachment)) {
-                @if (getImageUrl(message.id)) {
-                  <div class="message-image-attachment" (click)="openImageViewer(message)">
-                    <img [src]="getImageUrl(message.id)" [alt]="message.attachment.file_name" class="attachment-image-preview">
-                  </div>
+          @if (editingMessageId === message.id) {
+            <div class="edit-message-container">
+              <app-input
+                [(ngModel)]="editContent"
+                [placeholder]="'Edit message...'"
+                (keyup.enter)="saveEdit()"
+              ></app-input>
+              <div class="edit-actions">
+                <app-button
+                  leftIcon="x"
+                  [size]="ButtonSizeEnum.small"
+                  [style]="ButtonStyleEnum.stroke"
+                  (buttonClick)="cancelEdit()">
+                </app-button>
+                <app-button
+                  leftIcon="check"
+                  [size]="ButtonSizeEnum.small"
+                  [style]="ButtonStyleEnum.primary"
+                  [disabled]="!editContent.trim() || isEditing"
+                  (buttonClick)="saveEdit()">
+                </app-button>
+              </div>
+            </div>
+          } @else {
+            <div class="message-header">
+              <app-typography [variant]="TypographyTypeEnum['body-s-semibold']">{{ message.username }}</app-typography>
+              <div class="message-meta">
+                <app-typography [variant]="TypographyTypeEnum['body-xs-regular']" class="message-time">
+                  {{ formatTime(message.timestamp) }}
+                </app-typography>
+                @if (message.isEdited && !isMessageDeleted(message)) {
+                  <app-typography [variant]="TypographyTypeEnum['body-xs-regular']" class="message-edited">
+                    (edited)
+                  </app-typography>
+                }
+                @if (canEditMessage(message)) {
+                  <button class="edit-button" (click)="startEdit(message)">
+                    <app-svg src="edit" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
+                  </button>
+                }
+                @if (canDeleteMessage(message)) {
+                  <button class="delete-button" (click)="onDeleteClick(message)">
+                    <app-svg src="trash" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
+                  </button>
+                }
+              </div>
+            </div>
+            <div class="message-content">
+              @if (isMessageDeleted(message)) {
+                <span class="message-deleted-text">{{ message.isCurrentUser ? 'You deleted this message' : 'Message deleted' }}</span>
+              } @else if (message.message) {
+                <app-typography [variant]="TypographyTypeEnum['body-s-regular']">{{ message.message }}</app-typography>
+              }
+              @if (message.attachment && !isMessageDeleted(message)) {
+                @if (isImageAttachment(message.attachment)) {
+                  @if (getImageUrl(message.id)) {
+                    <div class="message-image-attachment" (click)="openImageViewer(message)">
+                      <img [src]="getImageUrl(message.id)" [alt]="message.attachment.file_name" class="attachment-image-preview">
+                    </div>
+                  } @else {
+                    <div class="message-attachment loading">
+                      <app-svg src="image" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                      <span class="attachment-name">Loading image...</span>
+                    </div>
+                  }
                 } @else {
-                  <div class="message-attachment loading">
-                    <app-svg src="image" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
-                    <span class="attachment-name">Loading image...</span>
+                  <div class="message-attachment">
+                    <app-svg [src]="getAttachmentIcon(message.attachment)" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                    <span class="attachment-name">{{ message.attachment.file_name }}</span>
                   </div>
                 }
-              } @else {
-                <div class="message-attachment">
-                  <app-svg [src]="getAttachmentIcon(message.attachment)" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
-                  <span class="attachment-name">{{ message.attachment.file_name }}</span>
-                </div>
               }
-            }
-          </div>
+            </div>
+          }
         </div>
       }
     }

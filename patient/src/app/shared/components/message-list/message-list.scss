@@ -123,9 +123,119 @@
   font-weight: 600;
 }
 
+.message-meta {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
 .message-time {
   font-size: 0.75rem;
   color: var(--app-text-muted);
+}
+
+.message-edited {
+  font-size: 0.75rem;
+  color: var(--app-text-muted);
+  font-style: italic;
+}
+
+.edit-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+  border-radius: 4px;
+
+  ion-icon {
+    font-size: 14px;
+    color: var(--app-text-muted);
+  }
+
+  &:hover {
+    background: var(--app-border-color);
+  }
+}
+
+.message-item:hover .edit-button {
+  opacity: 0.7;
+}
+
+.edit-button:hover {
+  opacity: 1 !important;
+}
+
+.delete-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+  border-radius: 4px;
+
+  ion-icon {
+    font-size: 14px;
+    color: var(--ion-color-danger);
+  }
+
+  &:hover {
+    background: var(--app-border-color);
+  }
+}
+
+.message-item:hover .delete-button {
+  opacity: 0.7;
+}
+
+.delete-button:hover {
+  opacity: 1 !important;
+}
+
+.message-deleted-text {
+  font-size: 0.875rem;
+  font-style: italic;
+  color: var(--app-text-muted);
+}
+
+.edit-message-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+
+  .edit-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--ion-color-primary);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    background: var(--app-card-background);
+    color: var(--app-text-primary);
+    outline: none;
+    font-family: inherit;
+  }
+
+  .edit-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 4px;
+
+    ion-button {
+      --padding-start: 8px;
+      --padding-end: 8px;
+      margin: 0;
+      height: 28px;
+    }
+  }
 }
 
 .message-content {

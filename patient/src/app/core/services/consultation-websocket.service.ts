@@ -5,6 +5,7 @@ import { StorageService } from './storage.service';
 import {
   WebSocketState,
   ConsultationMessageEvent,
+  MessageEvent as WsMessageEvent,
   ParticipantJoinedEvent,
   ParticipantLeftEvent,
   AppointmentUpdatedEvent,
@@ -33,6 +34,9 @@ export class ConsultationWebSocketService implements OnDestroy {
 
   private messagesSubject = new Subject<ConsultationMessageEvent>();
   public messages$ = this.messagesSubject.asObservable();
+
+  private messageUpdatedSubject = new Subject<WsMessageEvent>();
+  public messageUpdated$ = this.messageUpdatedSubject.asObservable();
 
   private participantsSubject = new BehaviorSubject<ConsultationParticipant[]>([]);
   public participants$ = this.participantsSubject.asObservable();
@@ -190,6 +194,10 @@ export class ConsultationWebSocketService implements OnDestroy {
 
       case 'consultation_message':
         this.messagesSubject.next(message as ConsultationMessageEvent);
+        break;
+
+      case 'message':
+        this.messageUpdatedSubject.next(message as WsMessageEvent);
         break;
 
       case 'participant_joined':
