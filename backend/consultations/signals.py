@@ -68,7 +68,8 @@ def message_saved(sender, instance: Message, created, **kwargs):
 
     # Send notifications to each user
     for user_pk in get_users_to_notification_consultation(instance.consultation):
-        print(user_pk)
+        if instance.created_by.pk == user_pk:
+            continue
         async_to_sync(channel_layer.group_send)(
             f"user_{user_pk}",
             {
