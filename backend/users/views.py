@@ -239,7 +239,7 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
         consultation = self.get_object()
 
         if request.method == "GET":
-            messages = consultation.messages.all().order_by("-created_at")
+            messages = consultation.messages.order_by("created_at")
 
             # Apply pagination
             page = self.paginate_queryset(messages)
