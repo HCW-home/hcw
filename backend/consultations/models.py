@@ -182,7 +182,7 @@ class Participant(models.Model):
 
     @property
     def status(self):
-        if self.is_confirmed:
+        if self.is_confirmed == True:
             return ParticipantStatus.confirmed.value
         if self.is_confirmed == False:
             return ParticipantStatus.unavailable.value
