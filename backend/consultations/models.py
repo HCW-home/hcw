@@ -10,7 +10,7 @@ from django.utils.translation import gettext_lazy as _
 from django_clamd.validators import validate_file_infection
 from messaging.models import CommunicationMethod
 from users.models import User
-
+from enum import Enum
 from . import assignments
 
 # Create your models here.
@@ -131,6 +131,11 @@ class Appointment(models.Model):
         verbose_name_plural = _("appointments")
         ordering = ["-scheduled_at"]
 
+class ParticipantStatus(Enum)
+    draft = _("Draft")
+    invited = _("Invited")
+    confirmed = _("Confirmed")
+    unavailable = _("Not available")
 
 class Participant(models.Model):
     appointment = models.ForeignKey(
@@ -171,6 +176,17 @@ class Participant(models.Model):
 
     feedback_rate = models.IntegerField(null=True, blank=True)
     feedback_message = models.TextField(null=True, blank=True)
+
+
+    @property
+    def status(self):
+        if self.is_confirmed:
+            return ParticipantStatus.confirmed
+        if self.is_confirmed == False:
+            return ParticipantStatus.unavailable
+        if self.is_invited:
+            return ParticipantStatus.invited
+        return ParticipantStatus.draft
 
     @property
     def language(self) -> str:
