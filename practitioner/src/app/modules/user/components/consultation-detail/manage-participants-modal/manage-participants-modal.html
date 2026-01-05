@@ -38,8 +38,8 @@
                   <span class="participant-name">{{ getUserDisplayName(participant) }}</span>
                   <span class="participant-contact">{{ participant.email || participant.phone || '' }}</span>
                 </div>
-                <app-badge [type]="getParticipantBadgeType(participant.is_confirmed)">
-                  {{ participant.is_confirmed ? 'Confirmed' : 'Pending' }}
+                <app-badge [type]="getParticipantBadgeType(participant.status)">
+                  {{ participant.status }}
                 </app-badge>
                 <app-button
                   leftIcon="close"

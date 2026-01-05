@@ -169,8 +169,8 @@
                                 <span class="participant-name">{{ getUserDisplayName(participant) }}</span>
                                 <span class="participant-contact">{{ participant.email || participant.phone || '' }}</span>
                               </div>
-                              <app-badge [type]="getParticipantBadgeType(participant.is_confirmed)">
-                                {{ participant.is_confirmed ? 'Confirmed' : 'Pending' }}
+                              <app-badge [type]="getParticipantBadgeType(participant.status)">
+                                {{ participant.status }}
                               </app-badge>
                             </div>
                           }
@@ -195,6 +195,13 @@
                           [size]="ButtonSizeEnum.small"
                           [style]="ButtonStyleEnum.primary"
                           (buttonClick)="sendAppointment(appointment)">
+                        </app-button>
+                        <app-button
+                          text="Manage Participants"
+                          leftIcon="users"
+                          [size]="ButtonSizeEnum.small"
+                          [style]="ButtonStyleEnum.stroke"
+                          (buttonClick)="openManageParticipantsModal(appointment)">
                         </app-button>
                         <app-button
                           text="Delete"

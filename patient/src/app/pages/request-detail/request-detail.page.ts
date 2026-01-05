@@ -138,6 +138,7 @@ export class RequestDetailPage implements OnInit, OnDestroy {
               message: event.data.content,
               timestamp: event.data.created_at,
               isCurrentUser: user?.id === event.data.created_by.id,
+              attachment: event.data.attachment,
               isEdited: event.data.is_edited,
               updatedAt: event.data.updated_at,
             };

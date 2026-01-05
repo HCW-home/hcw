@@ -1,9 +1,9 @@
 import { HttpParams } from '@angular/common/http';
 import { BadgeTypeEnum } from '../constants/badge';
-import { AppointmentStatus } from '../../core/models/consultation';
+import { AppointmentStatus, ParticipantStatus } from '../../core/models/consultation';
 
-export function getParticipantBadgeType(isConfirmed: boolean): BadgeTypeEnum {
-  return isConfirmed ? BadgeTypeEnum.green : BadgeTypeEnum.orange;
+export function getParticipantBadgeType(status: ParticipantStatus): BadgeTypeEnum {
+  return  BadgeTypeEnum.orange;
 }
 
 export function getAppointmentBadgeType(status: AppointmentStatus): BadgeTypeEnum {

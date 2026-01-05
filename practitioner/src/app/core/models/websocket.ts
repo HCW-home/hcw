@@ -179,10 +179,15 @@ export interface ConsultationMessageEvent {
   };
 }
 
+export interface MessageAttachment {
+  file_name: string;
+  mime_type: string;
+}
+
 export interface MessageEventData {
   id: number;
   content: string;
-  attachment: string | null;
+  attachment: MessageAttachment | null;
   created_at: string;
   updated_at: string;
   created_by: {

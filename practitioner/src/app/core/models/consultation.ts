@@ -17,8 +17,6 @@ export interface Participant {
   appointment?: number;
   user: User | null;
   auth_token?: string;
-  is_invited: boolean;
-  is_confirmed: boolean;
   email: string | null;
   phone: string | null;
   timezone?: string;
@@ -27,6 +25,14 @@ export interface Participant {
   message_type?: string;
   feedback_rate: number | null;
   feedback_message: string | null;
+  status: ParticipantStatus;
+}
+
+export interface ParticipantStatus {
+  'Draft': 'Draft',
+  'Invited': 'Invited',
+  'Confirmed': 'Confirmed',
+  'Not available': 'Not available',
 }
 
 export enum AppointmentStatus {
