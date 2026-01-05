@@ -1,6 +1,7 @@
 import re
 import uuid
 from datetime import time
+from enum import Enum
 from zoneinfo import available_timezones
 
 from django.conf import settings
@@ -10,7 +11,7 @@ from django.utils.translation import gettext_lazy as _
 from django_clamd.validators import validate_file_infection
 from messaging.models import CommunicationMethod
 from users.models import User
-from enum import Enum
+
 from . import assignments
 
 # Create your models here.
@@ -131,11 +132,13 @@ class Appointment(models.Model):
         verbose_name_plural = _("appointments")
         ordering = ["-scheduled_at"]
 
-class ParticipantStatus(Enum)
+
+class ParticipantStatus(Enum):
     draft = _("Draft")
     invited = _("Invited")
     confirmed = _("Confirmed")
     unavailable = _("Not available")
+
 
 class Participant(models.Model):
     appointment = models.ForeignKey(
@@ -176,7 +179,6 @@ class Participant(models.Model):
 
     feedback_rate = models.IntegerField(null=True, blank=True)
     feedback_message = models.TextField(null=True, blank=True)
-
 
     @property
     def status(self):
