@@ -229,7 +229,7 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
         consultation = self.get_object()
 
         if request.method == "GET":
-            messages = consultation.messages.order_by("created_at")
+            messages = consultation.messages.order_by("-created_at")
 
             page = self.paginate_queryset(messages)
             if page is not None:
