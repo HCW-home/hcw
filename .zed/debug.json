@@ -9,8 +9,8 @@
     "request": "launch",
     "args": ["runserver"],
     "django": true,
-    "autoStartBrowser": false,
+    "autoStartBrowser": true,
     "program": "${ZED_WORKTREE_ROOT}/backend/manage.py",
-    "cwd": "${ZED_WORKTREE_ROOT}/backend/"
-  }
+    "cwd": "${ZED_WORKTREE_ROOT}/backend/",
+  },
 ]

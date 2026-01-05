@@ -66,6 +66,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
     list_editable = ["is_active"]
     ordering = ["email"]
     readonly_fields = ("last_login", "date_joined")
+    search_fields = ("first_name", "last_name", "email")
     # export_form_class = SelectableFieldsExportForm
 
     list_display = [
@@ -74,13 +75,20 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
         "last_name",
         "is_active",
         "is_online",
+        "is_patient",
         "temporary",
         "timezone",
         "languages_display",
         "specialities_display",
+        "get_groups",
     ]
 
-    list_filter = BaseUserAdmin.list_filter + ("languages", "specialities", "is_online")
+    list_filter = BaseUserAdmin.list_filter + (
+        "languages",
+        "specialities",
+        "is_online",
+        "groups",
+    )
     filter_horizontal = BaseUserAdmin.filter_horizontal + ("languages", "specialities")
 
     fieldsets = (
@@ -96,7 +104,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
                     "is_staff",
                     "is_superuser",
                     "groups",
-                    "user_permissions",
+                    # "user_permissions",
                 ),
             },
         ),
@@ -141,6 +149,16 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
             },
         ),
     )
+
+    @admin.display(description="Groups")
+    def get_groups(self, obj):
+        if obj.groups.exists():
+            return ", ".join([g.name for g in obj.groups.all()])
+        return "-"
+
+    @admin.display(description="Is patient", boolean=True)
+    def is_patient(self, obj):
+        return obj.groups.exists()
 
     def languages_display(self, obj):
         return ", ".join([lang.name for lang in obj.languages.all()[:3]]) + (
@@ -188,11 +206,11 @@ class DeviceAdmin(ModelAdmin):
     raw_id_fields = ("user",)
     list_select_related = ("user",)
 
-    def get_search_fields(self, request):
-        if hasattr(User, "USERNAME_FIELD"):
-            return "name", "device_id", f"user__{User.USERNAME_FIELD}"
-        else:
-            return "name", "device_id"
+    # def get_search_fields(self, request):
+    #     if hasattr(User, "USERNAME_FIELD"):
+    #         return "name", "device_id", f"user__{User.USERNAME_FIELD}"
+    #     else:
+    #         return "name", "device_id"
 
     def _send_deactivated_message(
         self,
