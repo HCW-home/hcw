@@ -159,7 +159,7 @@ class Participant(models.Model):
     )
 
     is_invited = models.BooleanField(default=True)
-    is_confirmed = models.BooleanField(default=False)
+    is_confirmed = models.BooleanField(null=True, blank=True)
     is_notified = models.BooleanField(default=False)
 
     first_name = models.CharField(null=True, blank=True)
