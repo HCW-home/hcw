@@ -183,12 +183,12 @@ class Participant(models.Model):
     @property
     def status(self):
         if self.is_confirmed:
-            return ParticipantStatus.confirmed
+            return ParticipantStatus.confirmed.value
         if self.is_confirmed == False:
-            return ParticipantStatus.unavailable
+            return ParticipantStatus.unavailable.value
         if self.is_invited:
-            return ParticipantStatus.invited
-        return ParticipantStatus.draft
+            return ParticipantStatus.invited.value
+        return ParticipantStatus.draft.value
 
     @property
     def language(self) -> str:
