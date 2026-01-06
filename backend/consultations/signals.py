@@ -1,7 +1,11 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.contrib.auth import get_user_model
 from django.db.models.signals import post_delete, post_save, pre_delete, pre_save
 from django.dispatch import receiver
+from django.utils import timezone
+from messaging.models import Message as NotificationMessage
+from users.services import user_online_service
 
 from .models import (
     Appointment,
@@ -14,6 +18,8 @@ from .models import (
 )
 from .serializers import ConsultationMessageSerializer
 from .tasks import handle_invites
+
+User = get_user_model()
 
 
 def get_users_to_notification_consultation(consultation: Consultation):
@@ -62,7 +68,7 @@ def consultation_saved(sender, instance: Consultation, created, **kwargs):
 @receiver(post_save, sender=Message)
 def message_saved(sender, instance: Message, created, **kwargs):
     """
-    Whenever a Message is saved, broadcast it over Channels.
+    Whenever a Message is saved, broadcast it over Channels and send external notifications to offline users.
     """
     channel_layer = get_channel_layer()
 
@@ -70,6 +76,8 @@ def message_saved(sender, instance: Message, created, **kwargs):
     for user_pk in get_users_to_notification_consultation(instance.consultation):
         if instance.created_by.pk == user_pk:
             continue
+
+        # Send WebSocket notification
         async_to_sync(channel_layer.group_send)(
             f"user_{user_pk}",
             {
@@ -80,6 +88,28 @@ def message_saved(sender, instance: Message, created, **kwargs):
                 "state": "created" if created else "updated",
             },
         )
+
+        # Send external notification if user is offline and message is newly created
+        if created and not user_online_service.is_user_online(user_pk):
+            user_to_notify = User.objects.get(pk=user_pk)
+
+            if user_to_notify.last_login < user_to_notify.last_notification:
+                continue
+
+            user_to_notify.last_notification = timezone.now()
+            user_to_notify.save(update_fields=["last_notification"])
+
+            # Create notification message
+            notification = NotificationMessage.objects.create(
+                template_system_name="new_message_notification",
+                sent_to=user_to_notify,
+                sent_by=instance.created_by,
+                object_model="consultations.Message",
+                object_pk=instance.pk,
+            )
+
+            # Send notification asynchronously
+            notification.send()
 
 
 @receiver(post_save, sender=Appointment)

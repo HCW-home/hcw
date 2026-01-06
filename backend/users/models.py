@@ -8,6 +8,7 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models.fields import BLANK_CHOICE_DASH
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from fcm_django.models import AbstractFCMDevice, FirebaseResponseDict
 from firebase_admin.messaging import Message
@@ -109,6 +110,8 @@ class User(AbstractUser):
     )
 
     is_online = models.BooleanField(default=False)
+
+    last_notification = models.DateTimeField(default=timezone.now)
 
     specialities = models.ManyToManyField(Speciality, blank=True)
     organisations = models.ManyToManyField("users.Organisation", blank=True)

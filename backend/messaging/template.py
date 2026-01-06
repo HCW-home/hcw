@@ -65,6 +65,16 @@ DEFAULT_NOTIFICATION_MESSAGES = {
         "model": "users.User",
         "helper_text": "Message sent to participant containing their authentication code",
     },
+    "new_message_notification": {
+        "subject": _("New message in consultation"),
+        "content": _(
+            "You have received a new message from {{ obj.message.created_by.name }} "
+            "in consultation #{{ obj.message.consultation.pk }}: "
+            "{{ obj.message.content|truncatewords:20 }}"
+        ),
+        "model": "consultations.Message",
+        "helper_text": "Notification sent when a new message is posted in a consultation",
+    },
 }
 
 
