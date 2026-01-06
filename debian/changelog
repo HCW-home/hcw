@@ -1,3 +1,41 @@
+hcw (0.9.31) bookworm; urgency=medium
+
+  [ Gor Grigoryan ]
+  * handle empty email of user
+  * add message deleting editing and patient message list
+  * refactor ws connections, improve messages
+  * fix messages update when sending file in messages
+
+  [ Olivier Bitsch ]
+  * Update statics + comment optional
+  * Update statics + comment optional
+  * Use ConsultationMessageCreateSerializer for attachment
+  * Use ConsultationMessageCreateSerializer for attachment
+  * Mark message as edited and websocket for messages and appointment
+  * Missing migration for is_edited field
+  * Handle when appointment is updated
+  * Add patch and delete message
+  * Fix permission on put or delete message
+  * Add deleted_at in message
+  * Add updated_at and deleted_at
+  * Fix websocket
+  * Cleanup and add user online status
+  * Cleanup and trigger proper online status
+  * Ordering message
+  * Fix websocket to not self notify message
+  * Have newest messages first
+  * Have newest messages first
+  * New have status for participant
+  * Add missing syntax
+  * Return value for status
+  * is_confirmed can be null
+  * Adding missing migration
+  * Fix status
+  * Fix admin and improve patient filtering
+  * Notify user by preferred way when message is sent
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Tue, 06 Jan 2026 09:57:23 +0100
+
 hcw (0.9.29) bookworm; urgency=medium
 
   * Fix services
