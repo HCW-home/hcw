@@ -1,43 +1,5 @@
 <app-page>
   <div class="consultation-detail">
-    <button class="back-button" (click)="goBack()">
-      <app-svg src="svg/arrow-left.svg" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
-      <span>Back</span>
-    </button>
-
-    <div class="page-header">
-      @if (consultation()) {
-        <div class="header-actions">
-          <app-button
-            text="Edit"
-            leftIcon="edit"
-            [style]="ButtonStyleEnum.stroke"
-            [size]="ButtonSizeEnum.medium"
-            (buttonClick)="editConsultation()">
-          </app-button>
-
-          @if (!consultation()?.closed_at) {
-            <app-button
-              text="Close Consultation"
-              leftIcon="close"
-              [style]="ButtonStyleEnum.stroke"
-              [state]="ButtonStateEnum.error"
-              [size]="ButtonSizeEnum.medium"
-              (buttonClick)="closeConsultation()">
-            </app-button>
-          } @else {
-            <app-button
-              text="Reopen Consultation"
-              leftIcon="check"
-              [style]="ButtonStyleEnum.primary"
-              [size]="ButtonSizeEnum.medium"
-              (buttonClick)="reopenConsultation()">
-            </app-button>
-          }
-        </div>
-      }
-    </div>
-
     @if (isLoadingConsultation()) {
       <div class="loading-container">
         <app-loader></app-loader>
@@ -48,11 +10,41 @@
         <div class="main-content">
           <div class="consultation-info-card">
             <div class="info-header">
-              <div class="title-row">
-                <h2 class="consultation-title">{{ consultation()?.title || 'Consultation #' + consultation()?.id }}</h2>
-                <app-badge [type]="consultation()?.closed_at ? BadgeTypeEnum.gray : BadgeTypeEnum.green">
-                  {{ consultation()?.closed_at ? 'Closed' : 'Active' }}
-                </app-badge>
+              <div class="header-top-row">
+                <div class="title-row">
+                  <h2 class="consultation-title">{{ consultation()?.title || 'Consultation #' + consultation()?.id }}</h2>
+                  <app-badge [type]="consultation()?.closed_at ? BadgeTypeEnum.gray : BadgeTypeEnum.green">
+                    {{ consultation()?.closed_at ? 'Closed' : 'Active' }}
+                  </app-badge>
+                </div>
+                <div class="card-actions">
+                  <app-button
+                    text="Edit"
+                    leftIcon="edit"
+                    [style]="ButtonStyleEnum.stroke"
+                    [size]="ButtonSizeEnum.small"
+                    (buttonClick)="editConsultation()">
+                  </app-button>
+
+                  @if (!consultation()?.closed_at) {
+                    <app-button
+                      text="Close Consultation"
+                      leftIcon="close"
+                      [style]="ButtonStyleEnum.stroke"
+                      [state]="ButtonStateEnum.error"
+                      [size]="ButtonSizeEnum.small"
+                      (buttonClick)="closeConsultation()">
+                    </app-button>
+                  } @else {
+                    <app-button
+                      text="Reopen Consultation"
+                      leftIcon="check"
+                      [style]="ButtonStyleEnum.primary"
+                      [size]="ButtonSizeEnum.small"
+                      (buttonClick)="reopenConsultation()">
+                    </app-button>
+                  }
+                </div>
               </div>
               <span class="created-date">Created on {{ formatDateTime(consultation()!.created_at) }}</span>
             </div>
@@ -257,9 +249,12 @@
           <app-message-list
             [messages]="messages()"
             [isConnected]="true"
+            [isLoadingMore]="isLoadingMore()"
+            [hasMore]="hasMore()"
             (sendMessage)="onSendMessage($event)"
             (editMessage)="onEditMessage($event)"
-            (deleteMessage)="onDeleteMessage($event)">
+            (deleteMessage)="onDeleteMessage($event)"
+            (loadMore)="onLoadMore()">
           </app-message-list>
         </div>
       </div>

@@ -144,7 +144,7 @@ export class ConsultationService {
     room: string;
   }> {
     return this.api.get<{ url: string; token: string; room: string }>(
-      `/appointments/${appointmentId}/join/`
+      `/user/appointments/${appointmentId}/join/`
     );
   }
 

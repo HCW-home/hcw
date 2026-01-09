@@ -54,6 +54,10 @@ export class RequestDetailPage implements OnInit, OnDestroy {
   messages = signal<Message[]>([]);
   isConnected = signal(false);
   currentUser = signal<User | null>(null);
+  isLoadingMore = signal(false);
+  hasMore = signal(true);
+  private currentPage = 1;
+  private totalMessages = 0;
 
   consultationId = computed(() => {
     const req = this.request();
@@ -183,12 +187,15 @@ export class RequestDetailPage implements OnInit, OnDestroy {
   }
 
   private loadMessages(consultationId: number): void {
-    this.consultationService.getConsultationMessages(consultationId)
+    this.currentPage = 1;
+    this.consultationService.getConsultationMessagesPaginated(consultationId, 1)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (messagesResponse) => {
+        next: (response) => {
+          this.totalMessages = response.count;
+          this.hasMore.set(!!response.next);
           const currentUserId = this.currentUser()?.pk;
-          const loadedMessages: Message[] = messagesResponse.map(msg => {
+          const loadedMessages: Message[] = response.results.map(msg => {
             const isCurrentUser = msg.created_by.id === currentUserId;
             return {
               id: msg.id,
@@ -207,6 +214,50 @@ export class RequestDetailPage implements OnInit, OnDestroy {
         error: async (error) => {
           const toast = await this.toastController.create({
             message: error?.error?.detail || 'Failed to load messages',
+            duration: 3000,
+            position: 'bottom',
+            color: 'danger'
+          });
+          await toast.present();
+        }
+      });
+  }
+
+  onLoadMore(): void {
+    const consultationId = this.consultationId();
+    if (!consultationId || this.isLoadingMore() || !this.hasMore()) return;
+
+    this.isLoadingMore.set(true);
+    this.currentPage++;
+
+    this.consultationService.getConsultationMessagesPaginated(consultationId, this.currentPage)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.hasMore.set(!!response.next);
+          const currentUserId = this.currentUser()?.pk;
+          const olderMessages: Message[] = response.results.map(msg => {
+            const isCurrentUser = msg.created_by.id === currentUserId;
+            return {
+              id: msg.id,
+              username: isCurrentUser ? 'You' : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim(),
+              message: msg.content || '',
+              timestamp: msg.created_at,
+              isCurrentUser,
+              attachment: msg.attachment,
+              isEdited: msg.is_edited,
+              updatedAt: msg.updated_at,
+              deletedAt: msg.deleted_at,
+            };
+          }).reverse();
+          this.messages.update(msgs => [...olderMessages, ...msgs]);
+          this.isLoadingMore.set(false);
+        },
+        error: async (error) => {
+          this.currentPage--;
+          this.isLoadingMore.set(false);
+          const toast = await this.toastController.create({
+            message: error?.error?.detail || 'Failed to load more messages',
             duration: 3000,
             position: 'bottom',
             color: 'danger'
@@ -421,7 +472,7 @@ export class RequestDetailPage implements OnInit, OnDestroy {
   joinAppointment(): void {
     const req = this.request();
     if (req?.appointment) {
-      this.navCtrl.navigateForward(`/consultation/${req.appointment.consultation}/video`);
+      this.navCtrl.navigateForward(`/consultation/${req.appointment.id}/video?type=appointment`);
     }
   }
 

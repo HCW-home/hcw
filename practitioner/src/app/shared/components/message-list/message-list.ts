@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, signal, inject, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, signal, inject, OnDestroy, OnChanges, SimpleChanges, AfterViewChecked, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
@@ -48,15 +48,19 @@ export interface DeleteMessageData {
   templateUrl: './message-list.html',
   styleUrl: './message-list.scss',
 })
-export class MessageList implements OnChanges, OnDestroy {
+export class MessageList implements OnInit, OnChanges, OnDestroy, AfterViewChecked {
   @Input() messages: Message[] = [];
   @Input() isConnected = false;
   @Input() currentUserId: number | null = null;
+  @Input() isLoadingMore = false;
+  @Input() hasMore = true;
   @Output() sendMessage = new EventEmitter<SendMessageData>();
   @Output() editMessage = new EventEmitter<EditMessageData>();
   @Output() deleteMessage = new EventEmitter<DeleteMessageData>();
+  @Output() loadMore = new EventEmitter<void>();
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('messagesContainer') messagesContainer!: ElementRef<HTMLDivElement>;
 
   editingMessageId: number | null = null;
   editContent = '';
@@ -65,6 +69,10 @@ export class MessageList implements OnChanges, OnDestroy {
   private destroy$ = new Subject<void>();
   private consultationService = inject(ConsultationService);
   private imageUrlCache = new Map<number, string>();
+  private shouldScrollToBottom = false;
+  private isInitialLoad = true;
+  private previousScrollHeight = 0;
+  private previousMessagesLength = 0;
 
   viewingImage = signal<{ url: string; fileName: string } | null>(null);
   imageUrls = signal<Map<number, string>>(new Map());
@@ -76,9 +84,59 @@ export class MessageList implements OnChanges, OnDestroy {
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
 
+  ngOnInit(): void {
+    this.isInitialLoad = true;
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['messages']) {
       this.loadImageAttachments();
+      const currentLength = this.messages.length;
+      const wasLoadingMore = this.previousMessagesLength > 0 && currentLength > this.previousMessagesLength;
+
+      if (this.isInitialLoad || !wasLoadingMore) {
+        this.shouldScrollToBottom = true;
+      }
+
+      if (wasLoadingMore && this.messagesContainer?.nativeElement) {
+        this.previousScrollHeight = this.messagesContainer.nativeElement.scrollHeight;
+      }
+
+      this.previousMessagesLength = currentLength;
+    }
+  }
+
+  ngAfterViewChecked(): void {
+    if (this.shouldScrollToBottom) {
+      this.scrollToBottom();
+      this.shouldScrollToBottom = false;
+      this.isInitialLoad = false;
+    } else if (this.previousScrollHeight > 0 && this.messagesContainer?.nativeElement) {
+      const container = this.messagesContainer.nativeElement;
+      const newScrollHeight = container.scrollHeight;
+      if (newScrollHeight > this.previousScrollHeight) {
+        container.scrollTop = newScrollHeight - this.previousScrollHeight;
+        this.previousScrollHeight = 0;
+      }
+    }
+  }
+
+  private scrollToBottom(): void {
+    if (this.messagesContainer?.nativeElement) {
+      const container = this.messagesContainer.nativeElement;
+      container.scrollTop = container.scrollHeight;
+    }
+  }
+
+  onScroll(): void {
+    if (!this.messagesContainer?.nativeElement) return;
+
+    const container = this.messagesContainer.nativeElement;
+    const scrollTop = container.scrollTop;
+
+    if (scrollTop <= 50 && !this.isLoadingMore && this.hasMore) {
+      this.previousScrollHeight = container.scrollHeight;
+      this.loadMore.emit();
     }
   }
 

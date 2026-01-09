@@ -16,7 +16,28 @@
   .header-left {
     display: flex;
     align-items: center;
-    gap: 24px;
+    gap: 16px;
+
+    .back-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      background: var(--White);
+      border: 1px solid var(--slate-200);
+      border-radius: 10px;
+      color: var(--slate-600);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+
+      &:hover {
+        color: var(--slate-800);
+        border-color: var(--slate-300);
+        background: var(--slate-50);
+      }
+    }
 
     .page-info {
       display: flex;

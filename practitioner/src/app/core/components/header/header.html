@@ -1,5 +1,10 @@
 <header class="header">
   <div class="header-left">
+    @if (showBackButton()) {
+      <button class="back-button" (click)="goBack()">
+        <app-svg src="svg/arrow-left.svg" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
+      </button>
+    }
     <div class="page-info">
       <app-typography [variant]="TypographyTypeEnum['h4-bold']" color="var(--slate-800)">
         {{ pageTitle() }}

@@ -50,6 +50,28 @@
   color: var(--slate-400);
 }
 
+.loading-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  color: var(--slate-500);
+
+  .loading-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--slate-200);
+    border-top-color: var(--primary-500);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .message-item {
   display: flex;
   flex-direction: column;

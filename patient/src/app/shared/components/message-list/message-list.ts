@@ -9,7 +9,8 @@ import {
   OnDestroy,
   OnChanges,
   SimpleChanges,
-  AfterViewChecked
+  AfterViewChecked,
+  OnInit
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -65,12 +66,15 @@ export interface DeleteMessageData {
     IonSpinner
   ]
 })
-export class MessageListComponent implements OnChanges, OnDestroy, AfterViewChecked {
+export class MessageListComponent implements OnInit, OnChanges, OnDestroy, AfterViewChecked {
   @Input() messages: Message[] = [];
   @Input() isConnected = false;
+  @Input() isLoadingMore = false;
+  @Input() hasMore = true;
   @Output() sendMessage = new EventEmitter<SendMessageData>();
   @Output() editMessage = new EventEmitter<EditMessageData>();
   @Output() deleteMessage = new EventEmitter<DeleteMessageData>();
+  @Output() loadMore = new EventEmitter<void>();
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
   @ViewChild('messagesContainer') messagesContainer!: ElementRef<HTMLDivElement>;
@@ -82,6 +86,9 @@ export class MessageListComponent implements OnChanges, OnDestroy, AfterViewChec
   private destroy$ = new Subject<void>();
   private imageUrlCache = new Map<number, string>();
   private shouldScrollToBottom = false;
+  private isInitialLoad = true;
+  private previousScrollHeight = 0;
+  private previousMessagesLength = 0;
 
   viewingImage = signal<{ url: string; fileName: string } | null>(null);
   imageUrls = signal<Map<number, string>>(new Map());
@@ -91,10 +98,25 @@ export class MessageListComponent implements OnChanges, OnDestroy, AfterViewChec
 
   constructor(private consultationService: ConsultationService) {}
 
+  ngOnInit(): void {
+    this.isInitialLoad = true;
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['messages']) {
       this.loadImageAttachments();
-      this.shouldScrollToBottom = true;
+      const currentLength = this.messages.length;
+      const wasLoadingMore = this.previousMessagesLength > 0 && currentLength > this.previousMessagesLength;
+
+      if (this.isInitialLoad || !wasLoadingMore) {
+        this.shouldScrollToBottom = true;
+      }
+
+      if (wasLoadingMore && this.messagesContainer?.nativeElement) {
+        this.previousScrollHeight = this.messagesContainer.nativeElement.scrollHeight;
+      }
+
+      this.previousMessagesLength = currentLength;
     }
   }
 
@@ -102,6 +124,26 @@ export class MessageListComponent implements OnChanges, OnDestroy, AfterViewChec
     if (this.shouldScrollToBottom) {
       this.scrollToBottom();
       this.shouldScrollToBottom = false;
+      this.isInitialLoad = false;
+    } else if (this.previousScrollHeight > 0 && this.messagesContainer?.nativeElement) {
+      const container = this.messagesContainer.nativeElement;
+      const newScrollHeight = container.scrollHeight;
+      if (newScrollHeight > this.previousScrollHeight) {
+        container.scrollTop = newScrollHeight - this.previousScrollHeight;
+        this.previousScrollHeight = 0;
+      }
+    }
+  }
+
+  onScroll(): void {
+    if (!this.messagesContainer?.nativeElement) return;
+
+    const container = this.messagesContainer.nativeElement;
+    const scrollTop = container.scrollTop;
+
+    if (scrollTop <= 50 && !this.isLoadingMore && this.hasMore) {
+      this.previousScrollHeight = container.scrollHeight;
+      this.loadMore.emit();
     }
   }
 

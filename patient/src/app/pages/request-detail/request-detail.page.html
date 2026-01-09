@@ -82,12 +82,10 @@
               </div>
             </div>
           </div>
-          @if (request()?.appointment?.type === 'ONLINE') {
             <button class="action-button primary-btn" (click)="joinAppointment()">
               <ion-icon name="videocam-outline"></ion-icon>
               Join Video Call
             </button>
-          }
         </div>
       }
 
@@ -96,9 +94,12 @@
           <app-message-list
             [messages]="messages()"
             [isConnected]="isConnected()"
+            [isLoadingMore]="isLoadingMore()"
+            [hasMore]="hasMore()"
             (sendMessage)="onSendMessage($event)"
             (editMessage)="onEditMessage($event)"
-            (deleteMessage)="onDeleteMessage($event)">
+            (deleteMessage)="onDeleteMessage($event)"
+            (loadMore)="onLoadMore()">
           </app-message-list>
         </div>
       }

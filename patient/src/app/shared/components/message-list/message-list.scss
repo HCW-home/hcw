@@ -78,6 +78,24 @@
   }
 }
 
+.loading-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: var(--app-spacing-sm);
+  color: var(--app-text-muted);
+
+  ion-spinner {
+    width: 20px;
+    height: 20px;
+  }
+
+  span {
+    font-size: 0.8125rem;
+  }
+}
+
 .message-item {
   display: flex;
   flex-direction: column;

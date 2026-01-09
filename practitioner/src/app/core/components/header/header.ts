@@ -1,5 +1,6 @@
 import {Component, inject, signal, OnInit, OnDestroy} from '@angular/core';
 import {Router, NavigationEnd} from '@angular/router';
+import {Location} from '@angular/common';
 import {RoutePaths} from '../../constants/routes';
 import {LanguageSelector} from '../../../shared/components/language-selector/language-selector';
 import {Typography} from '../../../shared/ui-components/typography/typography';
@@ -25,6 +26,7 @@ import {
 })
 export class Header implements OnInit, OnDestroy {
   private router = inject(Router);
+  private location = inject(Location);
   private userService = inject(UserService);
   protected notificationService = inject(NotificationService);
   private userSubscription!: Subscription;
@@ -32,6 +34,7 @@ export class Header implements OnInit, OnDestroy {
   showProfileMenu = signal(false);
   showNotifications = signal(false);
   showNewConsultationButton = signal(false);
+  showBackButton = signal(false);
   pageTitle = signal('Dashboard');
   pageSubtitle = signal('Welcome back');
   currentUser: IUser | null = null;
@@ -59,6 +62,7 @@ export class Header implements OnInit, OnDestroy {
   private updatePageInfo() {
     const url = this.router.url;
     this.showNewConsultationButton.set(false);
+    this.showBackButton.set(false);
 
     if (url.includes('/dashboard')) {
       this.pageTitle.set('Dashboard');
@@ -69,9 +73,11 @@ export class Header implements OnInit, OnDestroy {
     } else if (url.includes('/consultations/new')) {
       this.pageTitle.set('New Consultation');
       this.pageSubtitle.set('Create a new consultation with a patient');
+      this.showBackButton.set(true);
     } else if (url.includes('/consultations/')) {
       this.pageTitle.set('Consultation Details');
       this.pageSubtitle.set('View and manage consultation');
+      this.showBackButton.set(true);
     } else if (url.includes('/consultations')) {
       this.pageTitle.set('Consultations');
       this.pageSubtitle.set('Manage and review all your consultations');
@@ -91,6 +97,7 @@ export class Header implements OnInit, OnDestroy {
     } else if (url.includes('/profile')) {
       this.pageTitle.set('Profile');
       this.pageSubtitle.set('Manage your account settings');
+      this.showBackButton.set(true);
     } else if (url.includes('/test')) {
       this.pageTitle.set('System Test');
       this.pageSubtitle.set('Test your audio and video equipment');
@@ -99,6 +106,10 @@ export class Header implements OnInit, OnDestroy {
 
   navigateToNewConsultation() {
     this.router.navigate([RoutePaths.USER, 'consultations', 'new']);
+  }
+
+  goBack() {
+    this.location.back();
   }
 
   getUserDisplayName(): string {

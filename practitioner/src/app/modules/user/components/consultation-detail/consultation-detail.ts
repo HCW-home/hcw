@@ -63,6 +63,9 @@ export class ConsultationDetail implements OnInit, OnDestroy {
   messages = signal<Message[]>([]);
   isWebSocketConnected = signal(false);
   currentUser = signal<IUser | null>(null);
+  isLoadingMore = signal(false);
+  hasMore = signal(true);
+  private currentPage = 1;
 
   inCall = signal(false);
   activeAppointmentId = signal<number | null>(null);
@@ -209,11 +212,13 @@ export class ConsultationDetail implements OnInit, OnDestroy {
   }
 
   loadMessages(): void {
+    this.currentPage = 1;
     this.consultationService
-      .getConsultationMessages(this.consultationId)
+      .getConsultationMessages(this.consultationId, { page: 1 })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: response => {
+          this.hasMore.set(!!response.next);
           const currentUserId = this.currentUser()?.pk;
           const loadedMessages: Message[] = response.results.map(msg => {
             const isCurrentUser = msg.created_by.id === currentUserId;
@@ -235,6 +240,47 @@ export class ConsultationDetail implements OnInit, OnDestroy {
           this.messages.set(loadedMessages);
         },
         error: (error) => {
+          this.toasterService.show('error', getErrorMessage(error));
+        },
+      });
+  }
+
+  onLoadMore(): void {
+    if (this.isLoadingMore() || !this.hasMore()) return;
+
+    this.isLoadingMore.set(true);
+    this.currentPage++;
+
+    this.consultationService
+      .getConsultationMessages(this.consultationId, { page: this.currentPage })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: response => {
+          this.hasMore.set(!!response.next);
+          const currentUserId = this.currentUser()?.pk;
+          const olderMessages: Message[] = response.results.map(msg => {
+            const isCurrentUser = msg.created_by.id === currentUserId;
+            const username = isCurrentUser
+              ? 'You'
+              : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim() || msg.created_by.email;
+            return {
+              id: msg.id,
+              username,
+              message: msg.content || '',
+              timestamp: msg.created_at,
+              isCurrentUser,
+              attachment: msg.attachment,
+              isEdited: msg.is_edited,
+              updatedAt: msg.updated_at,
+              deletedAt: msg.deleted_at,
+            };
+          }).reverse();
+          this.messages.update(msgs => [...olderMessages, ...msgs]);
+          this.isLoadingMore.set(false);
+        },
+        error: (error) => {
+          this.currentPage--;
+          this.isLoadingMore.set(false);
           this.toasterService.show('error', getErrorMessage(error));
         },
       });

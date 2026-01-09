@@ -7,8 +7,14 @@
     </span>
   </div>
 
-  <div class="message-list-body" #messagesContainer>
-    @if (messages.length === 0) {
+  <div class="message-list-body" #messagesContainer (scroll)="onScroll()">
+    @if (isLoadingMore) {
+      <div class="loading-more">
+        <ion-spinner name="crescent"></ion-spinner>
+        <span>Loading older messages...</span>
+      </div>
+    }
+    @if (messages.length === 0 && !isLoadingMore) {
       <div class="no-messages">
         <ion-icon name="chatbubbles-outline" class="empty-icon"></ion-icon>
         <span>No messages yet</span>
