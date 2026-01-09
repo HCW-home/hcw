@@ -197,6 +197,18 @@ const ICON_MAP: Record<string, string> = {
   'file-text': 'heroDocumentText',
   'file-text.svg': 'heroDocumentText',
   'svg/file-text.svg': 'heroDocumentText',
+  'minimize': 'lucideMinimize2',
+  'minimize.svg': 'lucideMinimize2',
+  'svg/minimize.svg': 'lucideMinimize2',
+  'maximize': 'lucideMaximize2',
+  'maximize.svg': 'lucideMaximize2',
+  'svg/maximize.svg': 'lucideMaximize2',
+  'screen-share': 'lucideScreenShare',
+  'screen-share.svg': 'lucideScreenShare',
+  'svg/screen-share.svg': 'lucideScreenShare',
+  'screen-share-off': 'lucideScreenShareOff',
+  'screen-share-off.svg': 'lucideScreenShareOff',
+  'svg/screen-share-off.svg': 'lucideScreenShareOff',
 };
 
 @Component({

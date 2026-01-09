@@ -1,4 +1,4 @@
-<div class="video-consultation">
+<div class="video-consultation" [class.minimized]="isMinimized">
   @if (isLoading) {
     <div class="loading-overlay">
       <app-loader></app-loader>
@@ -96,7 +96,21 @@
           class="control-button"
           [class.active]="isScreenShareEnabled"
           (click)="toggleScreenShare()">
-          <app-svg src="video" [svgStyle]="{'width.px': 24, 'height.px': 24}"></app-svg>
+          @if (isScreenShareEnabled) {
+            <app-svg src="screen-share-off" [svgStyle]="{'width.px': 24, 'height.px': 24}"></app-svg>
+          } @else {
+            <app-svg src="screen-share" [svgStyle]="{'width.px': 24, 'height.px': 24}"></app-svg>
+          }
+        </button>
+
+        <button
+          class="control-button"
+          (click)="onToggleSize()">
+          @if (isMinimized) {
+            <app-svg src="maximize" [svgStyle]="{'width.px': 24, 'height.px': 24}"></app-svg>
+          } @else {
+            <app-svg src="minimize" [svgStyle]="{'width.px': 24, 'height.px': 24}"></app-svg>
+          }
         </button>
 
         <button class="control-button leave-button" (click)="leaveCall()">

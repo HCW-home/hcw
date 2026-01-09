@@ -88,12 +88,16 @@
           </div>
 
           @if (inCall()) {
-            <div class="video-call-section">
-              <app-video-consultation
-                [consultationId]="activeAppointmentId() ? undefined : consultationId"
-                [appointmentId]="activeAppointmentId() ?? undefined"
-                (leave)="onCallEnded()">
-              </app-video-consultation>
+            <div class="video-call-section" [class.minimized]="isVideoMinimized()">
+              <div class="video-container">
+                <app-video-consultation
+                  [consultationId]="activeAppointmentId() ? undefined : consultationId"
+                  [appointmentId]="activeAppointmentId() ?? undefined"
+                  [isMinimized]="isVideoMinimized()"
+                  (leave)="onCallEnded()"
+                  (toggleSize)="toggleVideoSize()">
+                </app-video-consultation>
+              </div>
             </div>
           }
 

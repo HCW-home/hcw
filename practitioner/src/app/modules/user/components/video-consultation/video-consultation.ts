@@ -43,7 +43,9 @@ import { ButtonStyleEnum } from '../../../../shared/constants/button';
 export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewInit {
   @Input() consultationId?: number;
   @Input() appointmentId?: number;
+  @Input() isMinimized = false;
   @Output() leave = new EventEmitter<void>();
+  @Output() toggleSize = new EventEmitter<void>();
 
   @ViewChild('localVideo') localVideoRef!: ElementRef<HTMLVideoElement>;
   @ViewChild('participantsContainer') participantsContainerRef!: ElementRef<HTMLDivElement>;
@@ -282,6 +284,10 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   async leaveCall(): Promise<void> {
     await this.livekitService.disconnect();
     this.leave.emit();
+  }
+
+  onToggleSize(): void {
+    this.toggleSize.emit();
   }
 
   getParticipantsArray(): ParticipantInfo[] {

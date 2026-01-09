@@ -64,6 +64,10 @@ import {
   lucideCameraOff,
   lucideLayoutDashboard,
   lucideSettings,
+  lucideMinimize2,
+  lucideMaximize2,
+  lucideScreenShare,
+  lucideScreenShareOff,
 } from '@ng-icons/lucide';
 import {authInterceptor} from './core/interceptors/auth.interceptor';
 
@@ -127,6 +131,10 @@ export const appConfig: ApplicationConfig = {
       lucideCameraOff,
       lucideLayoutDashboard,
       lucideSettings,
+      lucideMinimize2,
+      lucideMaximize2,
+      lucideScreenShare,
+      lucideScreenShareOff,
     }),
     provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
     provideTranslateHttpLoader({

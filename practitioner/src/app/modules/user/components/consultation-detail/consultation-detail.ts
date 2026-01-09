@@ -69,6 +69,7 @@ export class ConsultationDetail implements OnInit, OnDestroy {
 
   inCall = signal(false);
   activeAppointmentId = signal<number | null>(null);
+  isVideoMinimized = signal(false);
 
   showCreateAppointmentModal = signal(false);
   showManageParticipantsModal = signal(false);
@@ -456,6 +457,11 @@ export class ConsultationDetail implements OnInit, OnDestroy {
   onCallEnded(): void {
     this.inCall.set(false);
     this.activeAppointmentId.set(null);
+    this.isVideoMinimized.set(false);
+  }
+
+  toggleVideoSize(): void {
+    this.isVideoMinimized.update(v => !v);
   }
 
   goBack(): void {
