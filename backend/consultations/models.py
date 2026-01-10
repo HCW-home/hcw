@@ -212,6 +212,9 @@ class Participant(models.Model):
                 },
             )
 
+        if self.appointment.created_by == self.user:
+            self.is_notified = True
+
         super().save(*args, **kwargs)
 
     @property

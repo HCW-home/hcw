@@ -51,6 +51,9 @@ class AppointmentTest(TestCase):
         self.assertEqual(self.consultation.beneficiary, self.patient)
 
     def test_invite_sent(self):
+        self.assertTrue(self.participant1.is_notified)
+        self.assertFalse(self.participant2.is_notified)
+
         self.appointment.status = AppointmentStatus.SCHEDULED
         self.appointment.save()
 
