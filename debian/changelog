@@ -1,3 +1,24 @@
+hcw (0.9.32) UNRELEASED; urgency=medium
+
+  [ Gor Grigoryan ]
+  * add infinite scroll in messages list, improve consultation detail
+  * improve video consultation layout
+
+  [ Olivier Bitsch ]
+  * Don't self notify
+
+  [ Gor Grigoryan ]
+  * remove consultation join
+
+  [ Olivier Bitsch ]
+  * Fix partcipant related field
+  * Fix partcipant related field
+
+  [ Gor Grigoryan ]
+  * update video layout for patient and practitioner
+
+ -- Gor Grigoryan <gorgrigoryan1997@gmail.com>  Mon, 12 Jan 2026 11:39:22 +0000
+
 hcw (0.9.31) bookworm; urgency=medium
 
   [ Gor Grigoryan ]
