@@ -135,7 +135,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
             "created_at",
             "participants",
         ]
-        read_only_fields = ["id", "status"]
+        read_only_fields = ["id"]
 
     def create(self, validated_data):
         participants_data = validated_data.pop('participants', [])
