@@ -809,7 +809,7 @@ class UserAppointmentViewSet(viewsets.ReadOnlyModelViewSet):
                 "created_by",
             )
             .prefetch_related("participants__user", "consultation__group__users")
-            .filter(participant__user=self.request.user)
+            .filter(participants__user=self.request.user)
             .distinct()
         )
 
