@@ -1,6 +1,11 @@
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 from typing import List
+from .renderers import FHIRRenderer
+from .fhir import (
+    AppointmentFhir
+)
+from rest_framework.renderers import JSONRenderer
 
 from core.mixins import CreatedByMixin
 from django.contrib.auth import get_user_model
@@ -37,7 +42,6 @@ from .models import (
 from .paginations import ConsultationPagination
 from .permissions import ConsultationAssigneePermission, DjangoModelPermissionsWithView
 from .serializers import (
-    # AppointmentFHIRSerializer,
     AppointmentSerializer,
     BookingSlotSerializer,
     ConsultationCreateSerializer,
@@ -315,11 +319,13 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = AppointmentSerializer
+    fhir_class = AppointmentFhir
     permission_classes = [IsAuthenticated, ConsultationAssigneePermission]
     pagination_class = ConsultationPagination
     ordering = ["-created_at"]
     ordering_fields = ["created_at", "updated_at", "scheduled_at"]
     filterset_class = AppointmentFilter
+    renderer_classes = [JSONRenderer, FHIRRenderer]
 
     def get_queryset(self):
         user = self.request.user
@@ -332,49 +338,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                 Q(created_by=user) | Q(owned_by=user) | Q(group__users=user)
             )
         ).distinct()
-
-    # def get_serializer_class(self):
-    #     """
-    #     Override serializer based on 'output' query parameter
-    #     """
-    #     output_param = self.request.query_params.get("output", "").lower()
-    #     if output_param == "fhir":
-    #         return AppointmentFHIRSerializer
-    #     return AppointmentSerializer
-
-    @extend_schema(
-        parameters=[
-            OpenApiParameter(
-                name="output",
-                description="Output format. Use 'fhir' for FHIR-compliant format, or omit for default JSON format.",
-                required=False,
-                type=OpenApiTypes.STR,
-                enum=["fhir", "json"],
-                location=OpenApiParameter.QUERY,
-            ),
-        ],
-    )
-    def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
-
-    @extend_schema(
-        parameters=[
-            OpenApiParameter(
-                name="output",
-                description="Output format. Use 'fhir' for FHIR-compliant format, or omit for default JSON format.",
-                required=False,
-                type=OpenApiTypes.STR,
-                enum=["fhir", "json"],
-                location=OpenApiParameter.QUERY,
-            ),
-        ],
-    )
-    def retrieve(self, request, *args, **kwargs):
-        return super().retrieve(request, *args, **kwargs)
-
-    def perform_create(self, serializer):
-        # When creating via direct appointment endpoint, consultation must be provided
-        serializer.save(created_by=self.request.user)
+    
 
     @extend_schema(
         request=ParticipantSerializer,

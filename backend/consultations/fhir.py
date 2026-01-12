@@ -1,0 +1,5 @@
+
+
+class AppointmentFhir:
+
+    pass
