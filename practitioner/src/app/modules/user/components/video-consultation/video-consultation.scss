@@ -24,24 +24,28 @@
     .video-grid {
       padding: 8px;
       gap: 8px;
+
+      &[data-count="1"],
+      &[data-count="2"],
+      &[data-count="3"],
+      &[data-count="4"],
+      &[data-count="5"],
+      &[data-count="6"] {
+        grid-template-columns: 1fr 1fr;
+      }
     }
 
-    .local-video-container {
-      width: 80px;
-      height: 60px;
-      border-radius: 6px;
+    .video-tile {
+      min-height: 100px;
     }
 
-    .remote-videos-container {
-      grid-template-columns: 1fr;
-    }
-
-    .remote-video-container {
-      min-height: 120px;
+    .video-tile:nth-child(3),
+    .waiting-for-participants {
+      grid-column: auto;
     }
 
     .waiting-for-participants {
-      min-height: 120px;
+      min-height: 100px;
       gap: 8px;
     }
 
@@ -76,31 +80,103 @@
   color: #ef4444;
 }
 
-.video-grid {
+.screen-share-container {
   flex: 1;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   padding: 16px;
-  gap: 16px;
-  overflow: hidden;
+  min-height: 0;
 }
 
-.local-video-container {
+.screen-share-tile {
   position: relative;
-  width: 200px;
-  height: 150px;
+  width: 100%;
+  height: 100%;
+  max-height: calc(100vh - 300px);
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #000000;
+}
+
+.screen-share-video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.screen-share-label {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background-color: rgba(0, 0, 0, 0.7);
+  border-radius: 6px;
+  color: #ffffff;
+}
+
+.video-grid {
+  flex: 1;
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  overflow: hidden;
+  align-content: center;
+  grid-template-columns: 1fr 1fr;
+
+  &[data-count="1"] {
+    grid-template-columns: 1fr;
+
+    .video-tile {
+      max-width: 100%;
+      max-height: calc(100vh - 120px);
+      margin: 0 auto;
+    }
+  }
+
+  .video-tile:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  .waiting-tile:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+
+    .video-tile:last-child:nth-child(odd) {
+      grid-column: auto;
+    }
+
+    .waiting-tile:last-child:nth-child(odd) {
+      grid-column: auto;
+    }
+  }
+}
+
+.video-tile {
+  position: relative;
   border-radius: 12px;
   overflow: hidden;
   background-color: #2d2d44;
-  align-self: flex-end;
-  z-index: 10;
+  aspect-ratio: 16 / 9;
+  min-height: 180px;
 }
 
-.local-video {
+.local-tile {
+  .tile-video {
+    transform: scaleX(-1);
+  }
+}
+
+.tile-video {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transform: scaleX(-1);
 
   &.camera-off {
     display: none;
@@ -122,45 +198,7 @@
   color: #9ca3af;
 }
 
-.local-label {
-  position: absolute;
-  bottom: 8px;
-  left: 8px;
-  padding: 4px 8px;
-  background-color: rgba(0, 0, 0, 0.6);
-  border-radius: 4px;
-  color: #ffffff;
-}
-
-.remote-videos-container {
-  flex: 1;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 16px;
-  align-content: center;
-  justify-content: center;
-}
-
-.remote-video-container {
-  position: relative;
-  border-radius: 12px;
-  overflow: hidden;
-  background-color: #2d2d44;
-  aspect-ratio: 16 / 9;
-  min-height: 200px;
-}
-
-.remote-video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-
-  &.camera-off {
-    display: none;
-  }
-}
-
-.participant-info {
+.participant-label {
   position: absolute;
   bottom: 8px;
   left: 8px;
@@ -276,5 +314,50 @@
   }
   50% {
     opacity: 0.5;
+  }
+}
+
+.chat-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 380px;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  z-index: 30;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.3);
+
+  .chat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .close-chat-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    color: #6b7280;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background-color: #f3f4f6;
+      color: #1f2937;
+    }
+  }
+
+  app-message-list {
+    flex: 1;
+    overflow: hidden;
   }
 }

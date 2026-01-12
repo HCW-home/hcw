@@ -93,8 +93,15 @@
                 <app-video-consultation
                   [appointmentId]="activeAppointmentId()!"
                   [isMinimized]="isVideoMinimized()"
+                  [messages]="messages()"
+                  [isLoadingMore]="isLoadingMore()"
+                  [hasMore]="hasMore()"
                   (leave)="onCallEnded()"
-                  (toggleSize)="toggleVideoSize()">
+                  (toggleSize)="toggleVideoSize()"
+                  (sendMessage)="onSendMessage($event)"
+                  (editMessage)="onEditMessage($event)"
+                  (deleteMessage)="onDeleteMessage($event)"
+                  (loadMore)="onLoadMore()">
                 </app-video-consultation>
               </div>
             </div>

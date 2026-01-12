@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, ChangeDetectorRef, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import {
@@ -19,6 +19,11 @@ import { LocalVideoTrack } from 'livekit-client';
 
 import { LiveKitService, ParticipantInfo, ConnectionStatus } from '../../core/services/livekit.service';
 import { ConsultationService } from '../../core/services/consultation.service';
+import { ConsultationWebSocketService } from '../../core/services/consultation-websocket.service';
+import { AuthService } from '../../core/services/auth.service';
+import { User } from '../../core/models/consultation.model';
+import { WebSocketState } from '../../core/models/websocket.model';
+import { MessageListComponent, Message, SendMessageData, EditMessageData, DeleteMessageData } from '../../shared/components/message-list/message-list';
 
 @Component({
   selector: 'app-video-consultation',
@@ -33,7 +38,8 @@ import { ConsultationService } from '../../core/services/consultation.service';
     IonText,
     IonSpinner,
     IonAvatar,
-    IonChip
+    IonChip,
+    MessageListComponent
   ]
 })
 export class VideoConsultationPage implements OnInit, OnDestroy {
@@ -58,11 +64,20 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
   isLoading = false;
   errorMessage = '';
 
+  showChat = signal(false);
+  messages = signal<Message[]>([]);
+  isLoadingMore = signal(false);
+  hasMore = signal(true);
+
   private destroy$ = new Subject<void>();
   private durationTimer: Subscription | null = null;
   private controlsTimer: ReturnType<typeof setTimeout> | null = null;
   private videoElements = new Map<string, HTMLVideoElement>();
   private audioElements = new Map<string, HTMLAudioElement>();
+  private screenShareElements = new Map<string, HTMLVideoElement>();
+
+  private currentUser = signal<User | null>(null);
+  private currentPage = 1;
 
   constructor(
     private route: ActivatedRoute,
@@ -71,12 +86,15 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     private toastCtrl: ToastController,
     private livekitService: LiveKitService,
     private consultationService: ConsultationService,
+    private wsService: ConsultationWebSocketService,
+    private authService: AuthService,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     const idParam = this.route.snapshot.paramMap.get('id');
     const type = this.route.snapshot.queryParamMap.get('type');
+    const consultationIdParam = this.route.snapshot.queryParamMap.get('consultationId');
 
     if (idParam) {
       const id = parseInt(idParam, 10);
@@ -84,17 +102,110 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
         this.consultationId = id;
       } else {
         this.appointmentId = id;
+        if (consultationIdParam) {
+          this.consultationId = parseInt(consultationIdParam, 10);
+        }
       }
     }
 
+    this.loadCurrentUser();
     this.setupSubscriptions();
+    this.setupWebSocketSubscriptions();
     this.joinRoom();
+  }
+
+  private loadCurrentUser(): void {
+    this.authService.currentUser$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(user => {
+        if (user) {
+          this.currentUser.set(user as User);
+        } else {
+          this.authService.getCurrentUser().subscribe();
+        }
+      });
+  }
+
+  private setupWebSocketSubscriptions(): void {
+    this.wsService.messages$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(event => {
+        const newMessage: Message = {
+          id: event.data.id,
+          username: event.data.username,
+          message: event.data.message,
+          timestamp: event.data.timestamp,
+          isCurrentUser: false,
+        };
+        this.messages.update(msgs => [...msgs, newMessage]);
+      });
+
+    this.wsService.messageUpdated$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(event => {
+        if (!this.consultationId || event.consultation_id !== this.consultationId) {
+          return;
+        }
+
+        if (event.state === 'created') {
+          const exists = this.messages().some(m => m.id === event.data.id);
+          if (!exists) {
+            const user = this.currentUser();
+            const newMessage: Message = {
+              id: event.data.id,
+              username: `${event.data.created_by.first_name} ${event.data.created_by.last_name}`,
+              message: event.data.content,
+              timestamp: event.data.created_at,
+              isCurrentUser: user?.id === event.data.created_by.id,
+              attachment: event.data.attachment,
+              isEdited: event.data.is_edited,
+              updatedAt: event.data.updated_at,
+            };
+            this.messages.update(msgs => [...msgs, newMessage]);
+          }
+        } else if (event.state === 'updated' || event.state === 'deleted') {
+          this.loadMessages();
+        }
+      });
+  }
+
+  private loadMessages(): void {
+    if (!this.consultationId) return;
+
+    this.currentPage = 1;
+    this.consultationService.getConsultationMessagesPaginated(this.consultationId, 1)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.hasMore.set(!!response.next);
+          const currentUserId = this.currentUser()?.pk;
+          const loadedMessages: Message[] = response.results.map(msg => {
+            const isCurrentUser = msg.created_by.id === currentUserId;
+            return {
+              id: msg.id,
+              username: isCurrentUser ? 'You' : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim(),
+              message: msg.content || '',
+              timestamp: msg.created_at,
+              isCurrentUser,
+              attachment: msg.attachment,
+              isEdited: msg.is_edited,
+              updatedAt: msg.updated_at,
+              deletedAt: msg.deleted_at,
+            };
+          }).reverse();
+          this.messages.set(loadedMessages);
+        },
+        error: () => {
+          this.showToast('Failed to load messages');
+        }
+      });
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
     this.livekitService.disconnect();
+    this.wsService.disconnect();
     this.cleanupMediaElements();
     this.stopDurationTimer();
   }
@@ -122,8 +233,8 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(participants => {
         this.participants = participants;
-        this.attachRemoteMedia();
         this.cdr.markForCheck();
+        setTimeout(() => this.attachRemoteMedia(), 0);
       });
 
     this.livekitService.isCameraEnabled$
@@ -184,6 +295,11 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
       await this.livekitService.enableCamera(true);
       await this.livekitService.enableMicrophone(true);
       this.showToast('Connected to consultation');
+
+      if (this.consultationId) {
+        this.loadMessages();
+        this.wsService.connect(this.consultationId);
+      }
     } catch (error) {
       this.errorMessage = error instanceof Error ? error.message : 'Failed to join video call';
       this.showToast(this.errorMessage);
@@ -219,19 +335,14 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     if (participant.videoTrack) {
       let videoEl = this.videoElements.get(identity);
       if (!videoEl) {
-        videoEl = document.createElement('video');
-        videoEl.autoplay = true;
-        videoEl.playsInline = true;
-        videoEl.className = 'participant-video';
-        videoEl.id = `video-${identity}`;
-        this.videoElements.set(identity, videoEl);
-
-        if (this.participantsContainerRef?.nativeElement) {
-          this.participantsContainerRef.nativeElement.appendChild(videoEl);
+        const templateEl = document.getElementById(`video-${identity}`) as HTMLVideoElement;
+        if (templateEl) {
+          videoEl = templateEl;
+          this.videoElements.set(identity, videoEl);
         }
       }
 
-      if (participant.videoTrack.attachedElements.indexOf(videoEl) === -1) {
+      if (videoEl && participant.videoTrack.attachedElements.indexOf(videoEl) === -1) {
         participant.videoTrack.attach(videoEl);
       }
     }
@@ -252,13 +363,33 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
         participant.audioTrack.attach(audioEl);
       }
     }
+
+    if (participant.screenShareTrack) {
+      let screenEl = this.screenShareElements.get(identity);
+      if (!screenEl) {
+        const templateEl = document.getElementById(`screen-${identity}`) as HTMLVideoElement;
+        if (templateEl) {
+          screenEl = templateEl;
+          this.screenShareElements.set(identity, screenEl);
+        }
+      }
+
+      if (screenEl && participant.screenShareTrack.attachedElements.indexOf(screenEl) === -1) {
+        participant.screenShareTrack.attach(screenEl);
+      }
+    } else {
+      const screenEl = this.screenShareElements.get(identity);
+      if (screenEl) {
+        screenEl.srcObject = null;
+        this.screenShareElements.delete(identity);
+      }
+    }
   }
 
   private removeParticipantElements(identity: string): void {
     const videoEl = this.videoElements.get(identity);
     if (videoEl) {
       videoEl.srcObject = null;
-      videoEl.remove();
       this.videoElements.delete(identity);
     }
 
@@ -268,6 +399,12 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
       audioEl.remove();
       this.audioElements.delete(identity);
     }
+
+    const screenEl = this.screenShareElements.get(identity);
+    if (screenEl) {
+      screenEl.srcObject = null;
+      this.screenShareElements.delete(identity);
+    }
   }
 
   private cleanupMediaElements(): void {
@@ -276,6 +413,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     }
     this.videoElements.clear();
     this.audioElements.clear();
+    this.screenShareElements.clear();
   }
 
   private startDurationTimer(): void {
@@ -368,7 +506,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     this.stopDurationTimer();
 
     setTimeout(() => {
-      this.navCtrl.navigateBack('/tabs/appointments');
+      this.navCtrl.back();
     }, 1500);
   }
 
@@ -388,7 +526,121 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
   }
 
   openChat(): void {
-    this.showToast('Chat panel coming soon');
+    this.showChat.update(v => !v);
+  }
+
+  onSendMessage(data: SendMessageData): void {
+    if (!this.consultationId) return;
+
+    const tempId = Date.now();
+    const newMessage: Message = {
+      id: tempId,
+      username: 'You',
+      message: data.content || '',
+      timestamp: new Date().toISOString(),
+      isCurrentUser: true,
+      attachment: data.attachment ? { file_name: data.attachment.name, mime_type: data.attachment.type } : null,
+    };
+    this.messages.update(msgs => [...msgs, newMessage]);
+
+    this.consultationService.sendConsultationMessage(this.consultationId, data.content || '', data.attachment)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (savedMessage) => {
+          this.messages.update(msgs =>
+            msgs.map(m => m.id === tempId ? {
+              ...m,
+              id: savedMessage.id,
+              attachment: savedMessage.attachment
+            } : m)
+          );
+        },
+        error: () => {
+          this.messages.update(msgs => msgs.filter(m => m.id !== tempId));
+          this.showToast('Failed to send message');
+        }
+      });
+  }
+
+  onEditMessage(data: EditMessageData): void {
+    if (!this.consultationId) return;
+
+    this.consultationService.updateConsultationMessage(this.consultationId, data.messageId, data.content)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (updatedMessage) => {
+          this.messages.update(msgs =>
+            msgs.map(m => m.id === data.messageId ? {
+              ...m,
+              message: updatedMessage.content || '',
+              isEdited: updatedMessage.is_edited,
+              updatedAt: updatedMessage.updated_at,
+            } : m)
+          );
+          this.showToast('Message updated');
+        },
+        error: () => {
+          this.showToast('Failed to update message');
+        }
+      });
+  }
+
+  onDeleteMessage(data: DeleteMessageData): void {
+    this.consultationService.deleteConsultationMessage(data.messageId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (deletedMessage) => {
+          this.messages.update(msgs =>
+            msgs.map(m => m.id === data.messageId ? {
+              ...m,
+              message: '',
+              attachment: null,
+              deletedAt: deletedMessage.deleted_at,
+            } : m)
+          );
+          this.showToast('Message deleted');
+        },
+        error: () => {
+          this.showToast('Failed to delete message');
+        }
+      });
+  }
+
+  onLoadMore(): void {
+    if (!this.consultationId || this.isLoadingMore() || !this.hasMore()) return;
+
+    this.isLoadingMore.set(true);
+    this.currentPage++;
+
+    this.consultationService.getConsultationMessagesPaginated(this.consultationId, this.currentPage)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.hasMore.set(!!response.next);
+          const currentUserId = this.currentUser()?.pk;
+          const olderMessages: Message[] = response.results.map(msg => {
+            const isCurrentUser = msg.created_by.id === currentUserId;
+            return {
+              id: msg.id,
+              username: isCurrentUser ? 'You' : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim(),
+              message: msg.content || '',
+              timestamp: msg.created_at,
+              isCurrentUser,
+              attachment: msg.attachment,
+              isEdited: msg.is_edited,
+              updatedAt: msg.updated_at,
+              deletedAt: msg.deleted_at,
+            };
+          }).reverse();
+          this.messages.update(msgs => [...olderMessages, ...msgs]);
+          this.isLoadingMore.set(false);
+        },
+        error: () => {
+          this.currentPage--;
+          this.isLoadingMore.set(false);
+          this.showToast('Failed to load more messages');
+        }
+      });
   }
 
   async showToast(message: string): Promise<void> {
@@ -421,5 +673,25 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
 
   getParticipantVideoElement(identity: string): HTMLVideoElement | undefined {
     return this.videoElements.get(identity);
+  }
+
+  getTotalTileCount(): number {
+    const participants = this.getParticipantsArray();
+    const participantCount = participants.length;
+    const screenShareCount = participants.filter(p => p.isScreenShareEnabled && p.screenShareTrack).length;
+    return 1 + (participantCount > 0 ? participantCount + screenShareCount : 1);
+  }
+
+  getScreenSharingParticipant(): ParticipantInfo | null {
+    for (const participant of this.participants.values()) {
+      if (participant.isScreenShareEnabled && participant.screenShareTrack) {
+        return participant;
+      }
+    }
+    return null;
+  }
+
+  hasActiveScreenShare(): boolean {
+    return this.getScreenSharingParticipant() !== null;
   }
 }

@@ -59,7 +59,7 @@ import {
   cameraReverseOutline, ellipse, alertCircle, arrowBackOutline, clipboardOutline, addOutline,
   hourglassOutline, ellipsisVerticalOutline, chatbubbleEllipsesOutline, closeCircleOutline,
   sendOutline, attachOutline, imageOutline, wifiOutline, cloudOfflineOutline, closeOutline,
-  atOutline, createOutline
+  atOutline, createOutline, close
 } from 'ionicons/icons';
 
 import { routes } from './app/app.routes';
@@ -167,6 +167,7 @@ addIcons({
   'wifi-outline': wifiOutline,
   'cloud-offline-outline': cloudOfflineOutline,
   'close-outline': closeOutline,
+  'close': close,
   'at-outline': atOutline,
   'create-outline': createOutline,
 });

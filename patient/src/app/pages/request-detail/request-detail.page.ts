@@ -472,7 +472,12 @@ export class RequestDetailPage implements OnInit, OnDestroy {
   joinAppointment(): void {
     const req = this.request();
     if (req?.appointment) {
-      this.navCtrl.navigateForward(`/consultation/${req.appointment.id}/video?type=appointment`);
+      const consultationId = this.consultationId();
+      let url = `/consultation/${req.appointment.id}/video?type=appointment`;
+      if (consultationId) {
+        url += `&consultationId=${consultationId}`;
+      }
+      this.navCtrl.navigateForward(url);
     }
   }
 

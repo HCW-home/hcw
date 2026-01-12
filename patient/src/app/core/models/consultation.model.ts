@@ -54,13 +54,18 @@ export interface Prescription {
   prescribed_at?: string;
 }
 
+export type AppointmentStatus = 'DRAFT' | 'SCHEDULED' | 'CANCELLED' | 'IN_PROGRESS' | 'COMPLETED';
+export type AppointmentType = 'ONLINE' | 'IN_PERSON';
+
 export interface Appointment {
   id: number;
   consultation?: number;
-  type: 'ONLINE' | 'IN_PERSON';
-  status: 'SCHEDULED' | 'CANCELLED';
+  type: AppointmentType;
+  status: AppointmentStatus;
   scheduled_at: string;
   end_expected_at?: string;
+  started_at?: string;
+  ended_at?: string;
   created_by: User;
   created_at: string;
   participants?: Participant[];

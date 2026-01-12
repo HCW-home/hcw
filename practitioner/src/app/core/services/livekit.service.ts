@@ -30,6 +30,7 @@ export interface ParticipantInfo {
   isScreenShareEnabled: boolean;
   videoTrack: RemoteTrack | null;
   audioTrack: RemoteTrack | null;
+  screenShareTrack: RemoteTrack | null;
 }
 
 export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'reconnecting' | 'failed';
@@ -169,6 +170,7 @@ export class LiveKitService implements OnDestroy {
         isScreenShareEnabled: screenSharePublication?.isSubscribed || false,
         videoTrack: videoPublication?.track || null,
         audioTrack: audioPublication?.track || null,
+        screenShareTrack: screenSharePublication?.track || null,
       });
     }
 

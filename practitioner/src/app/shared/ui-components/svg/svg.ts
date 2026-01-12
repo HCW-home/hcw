@@ -209,6 +209,9 @@ const ICON_MAP: Record<string, string> = {
   'screen-share-off': 'lucideScreenShareOff',
   'screen-share-off.svg': 'lucideScreenShareOff',
   'svg/screen-share-off.svg': 'lucideScreenShareOff',
+  'message-square': 'lucideMessageSquare',
+  'message-square.svg': 'lucideMessageSquare',
+  'svg/message-square.svg': 'lucideMessageSquare',
 };
 
 @Component({

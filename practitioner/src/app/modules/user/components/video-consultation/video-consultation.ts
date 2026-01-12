@@ -10,6 +10,7 @@ import {
   AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
+  signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subject } from 'rxjs';
@@ -23,6 +24,7 @@ import { Button } from '../../../../shared/ui-components/button/button';
 import { Svg } from '../../../../shared/ui-components/svg/svg';
 import { Typography } from '../../../../shared/ui-components/typography/typography';
 import { Loader } from '../../../../shared/components/loader/loader';
+import { MessageList, Message, SendMessageData, EditMessageData, DeleteMessageData } from '../../../../shared/components/message-list/message-list';
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
 import { ButtonStyleEnum } from '../../../../shared/constants/button';
 
@@ -35,6 +37,7 @@ import { ButtonStyleEnum } from '../../../../shared/constants/button';
     Svg,
     Typography,
     Loader,
+    MessageList,
   ],
   templateUrl: './video-consultation.html',
   styleUrls: ['./video-consultation.scss'],
@@ -43,8 +46,15 @@ import { ButtonStyleEnum } from '../../../../shared/constants/button';
 export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewInit {
   @Input() appointmentId?: number;
   @Input() isMinimized = false;
+  @Input() messages: Message[] = [];
+  @Input() isLoadingMore = false;
+  @Input() hasMore = true;
   @Output() leave = new EventEmitter<void>();
   @Output() toggleSize = new EventEmitter<void>();
+  @Output() sendMessage = new EventEmitter<SendMessageData>();
+  @Output() editMessage = new EventEmitter<EditMessageData>();
+  @Output() deleteMessage = new EventEmitter<DeleteMessageData>();
+  @Output() loadMore = new EventEmitter<void>();
 
   @ViewChild('localVideo') localVideoRef!: ElementRef<HTMLVideoElement>;
   @ViewChild('participantsContainer') participantsContainerRef!: ElementRef<HTMLDivElement>;
@@ -57,6 +67,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   isScreenShareEnabled = false;
   isLoading = false;
   errorMessage = '';
+  showChat = signal(false);
 
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
@@ -64,6 +75,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   private destroy$ = new Subject<void>();
   private videoElements = new Map<string, HTMLVideoElement>();
   private audioElements = new Map<string, HTMLAudioElement>();
+  private screenShareElements = new Map<string, HTMLVideoElement>();
 
   constructor(
     private livekitService: LiveKitService,
@@ -107,8 +119,8 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       .pipe(takeUntil(this.destroy$))
       .subscribe(participants => {
         this.participants = participants;
-        this.attachRemoteMedia();
         this.cdr.markForCheck();
+        setTimeout(() => this.attachRemoteMedia(), 0);
       });
 
     this.livekitService.isCameraEnabled$
@@ -198,15 +210,14 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     if (participant.videoTrack) {
       let videoEl = this.videoElements.get(identity);
       if (!videoEl) {
-        videoEl = document.createElement('video');
-        videoEl.autoplay = true;
-        videoEl.playsInline = true;
-        videoEl.className = 'participant-video';
-        videoEl.id = `video-${identity}`;
-        this.videoElements.set(identity, videoEl);
+        const templateEl = document.getElementById(`video-${identity}`) as HTMLVideoElement;
+        if (templateEl) {
+          videoEl = templateEl;
+          this.videoElements.set(identity, videoEl);
+        }
       }
 
-      if (participant.videoTrack.attachedElements.indexOf(videoEl) === -1) {
+      if (videoEl && participant.videoTrack.attachedElements.indexOf(videoEl) === -1) {
         participant.videoTrack.attach(videoEl);
       }
     }
@@ -218,10 +229,32 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
         audioEl.autoplay = true;
         audioEl.id = `audio-${identity}`;
         this.audioElements.set(identity, audioEl);
+        document.body.appendChild(audioEl);
       }
 
       if (participant.audioTrack.attachedElements.indexOf(audioEl) === -1) {
         participant.audioTrack.attach(audioEl);
+      }
+    }
+
+    if (participant.screenShareTrack) {
+      let screenEl = this.screenShareElements.get(identity);
+      if (!screenEl) {
+        const templateEl = document.getElementById(`screen-${identity}`) as HTMLVideoElement;
+        if (templateEl) {
+          screenEl = templateEl;
+          this.screenShareElements.set(identity, screenEl);
+        }
+      }
+
+      if (screenEl && participant.screenShareTrack.attachedElements.indexOf(screenEl) === -1) {
+        participant.screenShareTrack.attach(screenEl);
+      }
+    } else {
+      const screenEl = this.screenShareElements.get(identity);
+      if (screenEl) {
+        screenEl.srcObject = null;
+        this.screenShareElements.delete(identity);
       }
     }
   }
@@ -240,6 +273,12 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       audioEl.remove();
       this.audioElements.delete(identity);
     }
+
+    const screenEl = this.screenShareElements.get(identity);
+    if (screenEl) {
+      screenEl.srcObject = null;
+      this.screenShareElements.delete(identity);
+    }
   }
 
   private cleanupMediaElements(): void {
@@ -248,6 +287,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     }
     this.videoElements.clear();
     this.audioElements.clear();
+    this.screenShareElements.clear();
   }
 
   async toggleCamera(): Promise<void> {
@@ -283,6 +323,26 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     this.toggleSize.emit();
   }
 
+  toggleChatPanel(): void {
+    this.showChat.update(v => !v);
+  }
+
+  onSendMessage(data: SendMessageData): void {
+    this.sendMessage.emit(data);
+  }
+
+  onEditMessage(data: EditMessageData): void {
+    this.editMessage.emit(data);
+  }
+
+  onDeleteMessage(data: DeleteMessageData): void {
+    this.deleteMessage.emit(data);
+  }
+
+  onLoadMore(): void {
+    this.loadMore.emit();
+  }
+
   getParticipantsArray(): ParticipantInfo[] {
     return Array.from(this.participants.values());
   }
@@ -293,5 +353,24 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
 
   trackByIdentity(index: number, participant: ParticipantInfo): string {
     return participant.identity;
+  }
+
+  getTotalTileCount(): number {
+    const participants = this.getParticipantsArray();
+    const screenShareCount = participants.filter(p => p.isScreenShareEnabled && p.screenShareTrack).length;
+    return 1 + this.participants.size + screenShareCount + (this.participants.size === 0 ? 1 : 0);
+  }
+
+  getScreenSharingParticipant(): ParticipantInfo | null {
+    for (const participant of this.participants.values()) {
+      if (participant.isScreenShareEnabled && participant.screenShareTrack) {
+        return participant;
+      }
+    }
+    return null;
+  }
+
+  hasActiveScreenShare(): boolean {
+    return this.getScreenSharingParticipant() !== null;
   }
 }

@@ -19,51 +19,69 @@
   }
 
   @if (connectionStatus === 'connected' || connectionStatus === 'reconnecting') {
-    <div class="video-grid">
-      <div class="local-video-container">
-        <video #localVideo autoplay playsinline muted class="local-video" [class.camera-off]="!isCameraEnabled"></video>
+    <div class="video-grid" #participantsContainer [attr.data-count]="getTotalTileCount()">
+      <div class="video-tile local-tile">
+        <video #localVideo autoplay playsinline muted class="tile-video" [class.camera-off]="!isCameraEnabled"></video>
         @if (!isCameraEnabled) {
           <div class="camera-off-placeholder">
             <app-svg src="camera-off" [svgStyle]="{'width.px': 32, 'height.px': 32}"></app-svg>
             <app-typography [variant]="TypographyTypeEnum['body-s-regular']">Camera off</app-typography>
           </div>
         }
-        <div class="local-label">
+        <div class="participant-label">
           <app-typography [variant]="TypographyTypeEnum['body-xs-medium']">You</app-typography>
+          @if (!isMicrophoneEnabled) {
+            <app-svg src="microphone-off" [svgStyle]="{'width.px': 14, 'height.px': 14}" class="muted-indicator"></app-svg>
+          }
         </div>
       </div>
 
-      <div class="remote-videos-container" #participantsContainer>
-        @for (participant of getParticipantsArray(); track trackByIdentity($index, participant)) {
-          <div class="remote-video-container">
+      @for (participant of getParticipantsArray(); track trackByIdentity($index, participant)) {
+        <div class="video-tile">
+          <video
+            [id]="'video-' + participant.identity"
+            autoplay
+            playsinline
+            class="tile-video"
+            [class.camera-off]="!participant.isCameraEnabled">
+          </video>
+          @if (!participant.isCameraEnabled) {
+            <div class="camera-off-placeholder">
+              <app-svg src="camera-off" [svgStyle]="{'width.px': 32, 'height.px': 32}"></app-svg>
+            </div>
+          }
+          <div class="participant-label">
+            <app-typography [variant]="TypographyTypeEnum['body-xs-medium']">{{ participant.name }}</app-typography>
+            @if (!participant.isMicrophoneEnabled) {
+              <app-svg src="microphone-off" [svgStyle]="{'width.px': 14, 'height.px': 14}" class="muted-indicator"></app-svg>
+            }
+          </div>
+        </div>
+
+        @if (participant.isScreenShareEnabled && participant.screenShareTrack) {
+          <div class="video-tile screen-share-tile">
             <video
-              [id]="'video-' + participant.identity"
+              [id]="'screen-' + participant.identity"
               autoplay
               playsinline
-              class="remote-video"
-              [class.camera-off]="!participant.isCameraEnabled">
+              class="tile-video">
             </video>
-            @if (!participant.isCameraEnabled) {
-              <div class="camera-off-placeholder">
-                <app-svg src="camera-off" [svgStyle]="{'width.px': 32, 'height.px': 32}"></app-svg>
-              </div>
-            }
-            <div class="participant-info">
-              <app-typography [variant]="TypographyTypeEnum['body-xs-medium']">{{ participant.name }}</app-typography>
-              @if (!participant.isMicrophoneEnabled) {
-                <app-svg src="microphone-off" [svgStyle]="{'width.px': 14, 'height.px': 14}" class="muted-indicator"></app-svg>
-              }
+            <div class="participant-label">
+              <app-svg src="screen-share" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
+              <app-typography [variant]="TypographyTypeEnum['body-xs-medium']">{{ participant.name }}'s screen</app-typography>
             </div>
           </div>
         }
+      }
 
-        @if (participants.size === 0) {
-          <div class="waiting-for-participants">
+      @if (participants.size === 0) {
+        <div class="video-tile waiting-tile">
+          <div class="camera-off-placeholder">
             <app-svg src="users" [svgStyle]="{'width.px': 48, 'height.px': 48}"></app-svg>
             <app-typography [variant]="TypographyTypeEnum['body-l-medium']">Waiting for participants...</app-typography>
           </div>
-        }
-      </div>
+        </div>
+      }
     </div>
 
     <div class="controls-bar">
@@ -103,6 +121,15 @@
           }
         </button>
 
+        @if (!isMinimized) {
+          <button
+            class="control-button"
+            [class.active]="showChat()"
+            (click)="toggleChatPanel()">
+            <app-svg src="message-square" [svgStyle]="{'width.px': 24, 'height.px': 24}"></app-svg>
+          </button>
+        }
+
         <button
           class="control-button"
           (click)="onToggleSize()">
@@ -118,6 +145,27 @@
         </button>
       </div>
     </div>
+
+    @if (showChat() && !isMinimized) {
+      <div class="chat-panel">
+        <div class="chat-header">
+          <app-typography [variant]="TypographyTypeEnum['body-l-bold']">Chat</app-typography>
+          <button class="close-chat-btn" (click)="toggleChatPanel()">
+            <app-svg src="close" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
+          </button>
+        </div>
+        <app-message-list
+          [messages]="messages"
+          [isConnected]="true"
+          [isLoadingMore]="isLoadingMore"
+          [hasMore]="hasMore"
+          (sendMessage)="onSendMessage($event)"
+          (editMessage)="onEditMessage($event)"
+          (deleteMessage)="onDeleteMessage($event)"
+          (loadMore)="onLoadMore()">
+        </app-message-list>
+      </div>
+    }
 
     @if (connectionStatus === 'reconnecting') {
       <div class="reconnecting-banner">
