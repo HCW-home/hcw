@@ -572,7 +572,7 @@ class UserAppointmentsView(APIView):
         """Get all appointments where the authenticated user is a participant."""
         # Get appointments where user is a participant
         appointments = Appointment.objects.filter(
-            participant__user=request.user
+            participants__user=request.user
         ).distinct()
 
         # Filter by status if provided
