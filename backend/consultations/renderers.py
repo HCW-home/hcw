@@ -6,8 +6,6 @@ class FHIRRenderer(BaseRenderer):
     format = 'fhir'
 
     def render(self, data, media_type=None, renderer_context=None):
-        print(data)
         view = renderer_context.get('view') if renderer_context else None
-        print(view.serializer_class)
-        # Transformer en format FHIR
-        return json.dumps(data, default=str).encode('utf-8')
+        fhir_obj = view.fhir_class(data)
+        return fhir_obj.to_representation()

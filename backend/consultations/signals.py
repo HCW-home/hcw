@@ -120,6 +120,8 @@ def appointment_saved(sender, instance: Appointment, created, **kwargs):
     channel_layer = get_channel_layer()
 
     # Send notifications to each user
+    if not instance.consultation:
+        return
     for user_pk in get_users_to_notification_consultation(instance.consultation):
         async_to_sync(channel_layer.group_send)(
             f"user_{user_pk}",

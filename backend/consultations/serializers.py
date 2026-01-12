@@ -1,9 +1,5 @@
 from django.contrib.auth import get_user_model
 from drf_spectacular.utils import extend_schema_field
-from fhir.resources.appointment import Appointment as FHIRAppointment
-from fhir.resources.codeableconcept import CodeableConcept
-from fhir.resources.coding import Coding
-from fhir.resources.reference import Reference
 from rest_framework import serializers
 
 from .models import (
@@ -117,10 +113,79 @@ class ParticipantSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 
+class ConsultationSerializer(serializers.ModelSerializer):
+    created_by = ConsultationUserSerializer(read_only=True)
+    owned_by = ConsultationUserSerializer(read_only=True)
+    beneficiary = ConsultationUserSerializer(read_only=True)
+    group = QueueSerializer(read_only=True)
+
+    # Write-only fields for creating/updating
+    group_id = serializers.IntegerField(
+        write_only=True, required=False, allow_null=True
+    )
+    beneficiary_id = serializers.IntegerField(
+        write_only=True, required=False, allow_null=True
+    )
+
+    class Meta:
+        model = Consultation
+        fields = [
+            "id",
+            "created_at",
+            "updated_at",
+            "beneficiary",
+            "beneficiary_id",
+            "created_by",
+            "owned_by",
+            "group",
+            "group_id",
+            "description",
+            "title",
+        ]
+        read_only_fields = [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "owned_by",
+            "closed_at",
+        ]
+
+    def create(self, validated_data):
+        # Remove write-only fields from validated_data
+        group_id = validated_data.pop("group_id", None)
+        beneficiary_id = validated_data.pop("beneficiary_id", None)
+
+        # Set the user creating the consultation
+        user = self.context["request"].user
+        validated_data["created_by"] = user
+        validated_data["owned_by"] = user
+
+        # Set group and beneficiary if provided
+        if group_id:
+            try:
+                group = Queue.objects.get(id=group_id)
+                # Verify user has access to this group
+                if user in group.users.all():
+                    validated_data["group"] = group
+            except Queue.DoesNotExist:
+                pass
+
+        if beneficiary_id:
+            try:
+                beneficiary = User.objects.get(id=beneficiary_id)
+                validated_data["beneficiary"] = beneficiary
+            except User.DoesNotExist:
+                pass
+
+        return super().create(validated_data)
+
 class AppointmentSerializer(serializers.ModelSerializer):
-    created_by = ConsultationUserSerializer(default=serializers.CurrentUserDefault())
-    consultation = serializers.PrimaryKeyRelatedField(read_only=True)
-    participants = ParticipantSerializer(many=True, read_only=False)
+    created_by = ConsultationUserSerializer(read_only=True)
+    consultation = ConsultationSerializer(read_only=True)
+    consultation_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
+    participants = ParticipantSerializer(
+        many=True, read_only=False, required=False)
 
     class Meta:
         model = Appointment
@@ -130,23 +195,33 @@ class AppointmentSerializer(serializers.ModelSerializer):
             "end_expected_at",
             "type",
             "consultation",
+            "consultation_id",
             "created_by",
             "status",
             "created_at",
             "participants",
         ]
-        read_only_fields = ["id"]
+        read_only_fields = ["id", "created_by", "created_at"]
 
     def create(self, validated_data):
         participants_data = validated_data.pop('participants', [])
+        consultation_id = validated_data.pop('consultation_id', None)
 
-        appointment_serializer = AppointmentSerializer(data=validated_data)
-        appointment_serializer.is_valid(raise_exception=True)
+        if consultation_id:
+            try:
+                consultation = Consultation.objects.get(id=consultation_id)
+                validated_data['consultation'] = consultation
+            except Consultation.DoesNotExist:
+                raise serializers.ValidationError({"consultation_id": "Consultation not found."})
+
+        user = self.context.get('request').user if self.context.get('request') else None
+        if user:
+            validated_data['created_by'] = user
 
         appointment = super().create(validated_data)
 
         for participant_data in participants_data:
-            serializer = ParticipantSerializer(data=participant_data)
+            serializer = ParticipantSerializer(data=participant_data, context={'appointment': appointment})
             serializer.is_valid(raise_exception=True)
             serializer.save(appointment=appointment)
 
@@ -242,73 +317,6 @@ class ConsultationMessageCreateSerializer(ConsultationMessageSerializer):
             "deleted_at",
         ]
 
-
-class ConsultationSerializer(serializers.ModelSerializer):
-    created_by = ConsultationUserSerializer(read_only=True)
-    owned_by = ConsultationUserSerializer(read_only=True)
-    beneficiary = ConsultationUserSerializer(read_only=True)
-    group = QueueSerializer(read_only=True)
-
-    # Write-only fields for creating/updating
-    group_id = serializers.IntegerField(
-        write_only=True, required=False, allow_null=True
-    )
-    beneficiary_id = serializers.IntegerField(
-        write_only=True, required=False, allow_null=True
-    )
-
-    class Meta:
-        model = Consultation
-        fields = [
-            "id",
-            "created_at",
-            "updated_at",
-            "beneficiary",
-            "beneficiary_id",
-            "created_by",
-            "owned_by",
-            "group",
-            "group_id",
-            "description",
-            "title",
-        ]
-        read_only_fields = [
-            "id",
-            "created_at",
-            "updated_at",
-            "created_by",
-            "owned_by",
-            "closed_at",
-        ]
-
-    def create(self, validated_data):
-        # Remove write-only fields from validated_data
-        group_id = validated_data.pop("group_id", None)
-        beneficiary_id = validated_data.pop("beneficiary_id", None)
-
-        # Set the user creating the consultation
-        user = self.context["request"].user
-        validated_data["created_by"] = user
-        validated_data["owned_by"] = user
-
-        # Set group and beneficiary if provided
-        if group_id:
-            try:
-                group = Queue.objects.get(id=group_id)
-                # Verify user has access to this group
-                if user in group.users.all():
-                    validated_data["group"] = group
-            except Queue.DoesNotExist:
-                pass
-
-        if beneficiary_id:
-            try:
-                beneficiary = User.objects.get(id=beneficiary_id)
-                validated_data["beneficiary"] = beneficiary
-            except User.DoesNotExist:
-                pass
-
-        return super().create(validated_data)
 
 
 class ConsultationCreateSerializer(serializers.ModelSerializer):
