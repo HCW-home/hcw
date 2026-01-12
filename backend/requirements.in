@@ -32,3 +32,4 @@ factory-boy
 livekit-api
 django-clamd
 django-constance
+fhir.resources

@@ -37,6 +37,7 @@ from .models import (
 from .paginations import ConsultationPagination
 from .permissions import ConsultationAssigneePermission, DjangoModelPermissionsWithView
 from .serializers import (
+    # AppointmentFHIRSerializer,
     AppointmentSerializer,
     BookingSlotSerializer,
     ConsultationCreateSerializer,
@@ -310,6 +311,7 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
 class AppointmentViewSet(viewsets.ModelViewSet):
     """
     ViewSet for appointments - provides CRUD operations
+    Supports FHIR format by adding ?format=fhir query parameter
     """
 
     serializer_class = AppointmentSerializer
@@ -330,6 +332,45 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                 Q(created_by=user) | Q(owned_by=user) | Q(group__users=user)
             )
         ).distinct()
+
+    # def get_serializer_class(self):
+    #     """
+    #     Override serializer based on 'output' query parameter
+    #     """
+    #     output_param = self.request.query_params.get("output", "").lower()
+    #     if output_param == "fhir":
+    #         return AppointmentFHIRSerializer
+    #     return AppointmentSerializer
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="output",
+                description="Output format. Use 'fhir' for FHIR-compliant format, or omit for default JSON format.",
+                required=False,
+                type=OpenApiTypes.STR,
+                enum=["fhir", "json"],
+                location=OpenApiParameter.QUERY,
+            ),
+        ],
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="output",
+                description="Output format. Use 'fhir' for FHIR-compliant format, or omit for default JSON format.",
+                required=False,
+                type=OpenApiTypes.STR,
+                enum=["fhir", "json"],
+                location=OpenApiParameter.QUERY,
+            ),
+        ],
+    )
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         # When creating via direct appointment endpoint, consultation must be provided

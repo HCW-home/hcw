@@ -1,5 +1,9 @@
 from django.contrib.auth import get_user_model
 from drf_spectacular.utils import extend_schema_field
+from fhir.resources.appointment import Appointment as FHIRAppointment
+from fhir.resources.codeableconcept import CodeableConcept
+from fhir.resources.coding import Coding
+from fhir.resources.reference import Reference
 from rest_framework import serializers
 
 from .models import (
@@ -116,7 +120,7 @@ class ParticipantSerializer(serializers.ModelSerializer):
 class AppointmentSerializer(serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(default=serializers.CurrentUserDefault())
     consultation = serializers.PrimaryKeyRelatedField(read_only=True)
-    participants = ParticipantSerializer(many=True, read_only=True)
+    participants = ParticipantSerializer(many=True, read_only=False)
 
     class Meta:
         model = Appointment
@@ -132,6 +136,54 @@ class AppointmentSerializer(serializers.ModelSerializer):
             "participants",
         ]
         read_only_fields = ["id", "status"]
+
+    def create(self, validated_data):
+        participants_data = validated_data.pop('participants', [])
+
+        appointment_serializer = AppointmentSerializer(data=validated_data)
+        appointment_serializer.is_valid(raise_exception=True)
+
+        appointment = super().create(validated_data)
+
+        for participant_data in participants_data:
+            serializer = ParticipantSerializer(data=participant_data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save(appointment=appointment)
+
+        return appointment
+
+    def update(self, instance, validated_data):
+        participants_data = validated_data.pop('participants', None)
+
+        instance = super().update(instance, validated_data)
+
+        if participants_data is not None:
+            existing_ids = set(
+                instance.participants.values_list('id', flat=True))
+            incoming_ids = set()
+
+            for participant_data in participants_data:
+                participant_id = participant_data.pop('id', None)
+
+                if participant_id and participant_id in existing_ids:
+                    participant = instance.participants.get(id=participant_id)
+                    serializer = ParticipantSerializer(
+                        instance=participant,
+                        data=participant_data,
+                        partial=True
+                    )
+                    serializer.is_valid(raise_exception=True)
+                    serializer.save()
+                    incoming_ids.add(participant_id)
+                else:
+                    serializer = ParticipantSerializer(data=participant_data)
+                    serializer.is_valid(raise_exception=True)
+                    incoming_ids.add(serializer.save(appointment=instance).id)
+
+            to_delete = existing_ids - incoming_ids
+            instance.participants.filter(id__in=to_delete).delete()
+
+        return instance
 
 
 class AttachmentMetadataSerializer(serializers.Serializer):
@@ -376,3 +428,73 @@ class RequestSerializer(serializers.ModelSerializer):
         validated_data["created_by"] = user
 
         return super().create(validated_data)
+
+
+# class AppointmentFHIRSerializer(serializers.Serializer):
+#     """
+#     Serializer that converts Appointment model to FHIR Appointment resource format
+#     """
+
+#     def to_representation(self, instance):
+#         """Convert Django Appointment to FHIR Appointment resource"""
+
+#         # Map status
+#         status_mapping = {
+#             "Draft": "pending",
+#             "Scheduled": "booked",
+#             "Cancelled": "cancelled",
+#         }
+#         fhir_status = status_mapping.get(instance.status, "pending")
+
+#         # Build FHIR Appointment
+#         fhir_appointment = FHIRAppointment(
+#             resourceType="Appointment",
+#             id=str(instance.id),
+#             status=fhir_status,
+#             start=instance.scheduled_at.isoformat() if instance.scheduled_at else None,
+#             end=instance.end_expected_at.isoformat()
+#             if instance.end_expected_at
+#             else None,
+#             created=instance.created_at.isoformat() if instance.created_at else None,
+#         )
+
+#         # Add appointment type
+#         if instance.type:
+#             appointment_type = CodeableConcept(
+#                 coding=[
+#                     Coding(
+#                         system="http://terminology.hl7.org/CodeSystem/v2-0276",
+#                         code="ROUTINE" if instance.type == "Online" else "WALKIN",
+#                         display=instance.type,
+#                     )
+#                 ]
+#             )
+#             fhir_appointment.appointmentType = appointment_type
+
+#         # Add participants
+#         participants = []
+#         for participant in instance.participants.all():
+#             fhir_participant = {
+#                 "actor": {
+#                     "reference": f"Patient/{participant.user.id}"
+#                     if participant.user
+#                     else None,
+#                     "display": participant.name
+#                     if hasattr(participant, "name")
+#                     else participant.email,
+#                 },
+#                 "status": "accepted" if participant.is_confirmed else "tentative",
+#             }
+#             participants.append(fhir_participant)
+
+#         if participants:
+#             fhir_appointment.participant = participants
+
+#         # Add description from consultation if available
+#         if instance.consultation:
+#             fhir_appointment.description = (
+#                 instance.consultation.description or instance.consultation.title
+#             )
+
+#         # Convert to dict for JSON serialization
+#         return fhir_appointment.dict(exclude_none=True)
