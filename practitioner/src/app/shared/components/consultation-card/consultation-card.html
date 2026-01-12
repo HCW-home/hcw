@@ -86,44 +86,19 @@
   </div>
 
   <div class="card-actions">
-    @if (type() === 'active') {
-      @if (consultation().status === 'active') {
-        <app-button
-          text="Join Now"
-          leftIcon="video"
-          [size]="ButtonSizeEnum.small"
-          [style]="ButtonStyleEnum.primary"
-          (buttonClick)="onJoinConsultation()">
-        </app-button>
-      } @else {
-        <app-button
-          text="Join Soon"
-          [size]="ButtonSizeEnum.small"
-          [style]="ButtonStyleEnum.stroke"
-          [disabled]="true">
-        </app-button>
-      }
+    <app-button
+      text="View Details"
+      [size]="ButtonSizeEnum.small"
+      [style]="type() === 'active' ? ButtonStyleEnum.primary : ButtonStyleEnum.stroke"
+      (buttonClick)="onViewDetails()">
+    </app-button>
+    @if (type() === 'past' && consultation().follow_up_required) {
       <app-button
-        text="View Details"
+        text="Schedule Follow-up"
         [size]="ButtonSizeEnum.small"
         [style]="ButtonStyleEnum.text"
-        (buttonClick)="onViewDetails()">
+        (buttonClick)="onScheduleFollowUp()">
       </app-button>
-    } @else {
-      <app-button
-        text="View Details"
-        [size]="ButtonSizeEnum.small"
-        [style]="ButtonStyleEnum.stroke"
-        (buttonClick)="onViewDetails()">
-      </app-button>
-      @if (consultation().follow_up_required) {
-        <app-button
-          text="Schedule Follow-up"
-          [size]="ButtonSizeEnum.small"
-          [style]="ButtonStyleEnum.text"
-          (buttonClick)="onScheduleFollowUp()">
-        </app-button>
-      }
     }
   </div>
 </div>

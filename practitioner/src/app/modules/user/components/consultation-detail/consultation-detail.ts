@@ -110,9 +110,9 @@ export class ConsultationDetail implements OnInit, OnDestroy {
 
   private checkJoinQueryParam(): void {
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(queryParams => {
-      if (queryParams['join'] === 'true') {
-        const appointmentId = queryParams['appointmentId'] ? +queryParams['appointmentId'] : null;
-        this.joinVideoCall(appointmentId ?? undefined);
+      if (queryParams['join'] === 'true' && queryParams['appointmentId']) {
+        const appointmentId = +queryParams['appointmentId'];
+        this.joinVideoCall(appointmentId);
       }
     });
   }
@@ -449,8 +449,8 @@ export class ConsultationDetail implements OnInit, OnDestroy {
     return fullName || beneficiary.email || 'Unknown patient';
   }
 
-  joinVideoCall(appointmentId?: number): void {
-    this.activeAppointmentId.set(appointmentId || null);
+  joinVideoCall(appointmentId: number): void {
+    this.activeAppointmentId.set(appointmentId);
     this.inCall.set(true);
   }
 

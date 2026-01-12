@@ -74,10 +74,10 @@
                         </app-typography>
                       </div>
                       <app-button
-                        [text]="consultation.closed_at ? 'View' : 'Join'"
+                        text="View"
                         [size]="ButtonSizeEnum.small"
                         [style]="ButtonStyleEnum.primary"
-                        (buttonClick)="consultation.closed_at ? viewConsultation(consultation) : joinConsultation(consultation, $event)">
+                        (buttonClick)="viewConsultation(consultation)">
                       </app-button>
                     </div>
                   </div>

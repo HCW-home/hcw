@@ -20,7 +20,6 @@ export class ConsultationCard {
   consultation = input.required<IConsultation>();
   type = input<'active' | 'past'>('active');
 
-  joinConsultation = output<IConsultation>();
   viewDetails = output<IConsultation>();
   scheduleFollowUp = output<IConsultation>();
 
@@ -54,10 +53,6 @@ export class ConsultationCard {
       default:
         return 'consultation';
     }
-  }
-
-  onJoinConsultation() {
-    this.joinConsultation.emit(this.consultation());
   }
 
   onViewDetails() {

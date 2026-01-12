@@ -251,11 +251,6 @@ export class Dashboard implements OnInit {
     this.router.navigate(['/app/consultations', item.consultation.id]);
   }
 
-  joinConsultation(consultation: Consultation, event: Event): void {
-    event.stopPropagation();
-    this.router.navigate(['/app/consultations', consultation.id], { queryParams: { join: true } });
-  }
-
   joinAppointment(item: { appointment: Appointment; consultation: Consultation }, event: Event): void {
     event.stopPropagation();
     this.router.navigate(['/app/consultations', item.consultation.id], {

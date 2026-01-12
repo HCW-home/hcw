@@ -41,7 +41,6 @@ import { ButtonStyleEnum } from '../../../../shared/constants/button';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewInit {
-  @Input() consultationId?: number;
   @Input() appointmentId?: number;
   @Input() isMinimized = false;
   @Output() leave = new EventEmitter<void>();
@@ -148,19 +147,13 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     this.cdr.markForCheck();
 
     try {
-      let config: { url: string; token: string; room: string } | undefined;
-
-      if (this.appointmentId) {
-        config = await this.consultationService
-          .joinAppointment(this.appointmentId)
-          .toPromise();
-      } else if (this.consultationId) {
-        config = await this.consultationService
-          .joinConsultation(this.consultationId)
-          .toPromise();
-      } else {
-        throw new Error('Either consultationId or appointmentId is required');
+      if (!this.appointmentId) {
+        throw new Error('Appointment ID is required');
       }
+
+      const config = await this.consultationService
+        .joinAppointment(this.appointmentId)
+        .toPromise();
 
       if (!config) {
         throw new Error('Failed to get LiveKit configuration');

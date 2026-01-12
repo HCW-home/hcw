@@ -87,12 +87,11 @@
             </div>
           </div>
 
-          @if (inCall()) {
+          @if (inCall() && activeAppointmentId()) {
             <div class="video-call-section" [class.minimized]="isVideoMinimized()">
               <div class="video-container">
                 <app-video-consultation
-                  [consultationId]="activeAppointmentId() ? undefined : consultationId"
-                  [appointmentId]="activeAppointmentId() ?? undefined"
+                  [appointmentId]="activeAppointmentId()!"
                   [isMinimized]="isVideoMinimized()"
                   (leave)="onCallEnded()"
                   (toggleSize)="toggleVideoSize()">
