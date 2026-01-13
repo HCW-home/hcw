@@ -1,4 +1,4 @@
-import { Component, input, output, inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, input, output, inject, OnInit, OnDestroy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
@@ -32,6 +32,15 @@ export class AddEditPatient implements OnInit, OnDestroy {
 
   saved = output<void>();
   cancelled = output<void>();
+
+  constructor() {
+    effect(() => {
+      const patient = this.patient();
+      if (this.form) {
+        this.reinitializeForm(patient);
+      }
+    });
+  }
 
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
@@ -81,6 +90,23 @@ export class AddEditPatient implements OnInit, OnDestroy {
 
     if (this.isEditMode) {
       this.form.get('email')?.disable();
+    }
+  }
+
+  private reinitializeForm(p: IUser | null): void {
+    this.form.patchValue({
+      first_name: p?.first_name || '',
+      last_name: p?.last_name || '',
+      email: p?.email || '',
+      mobile_phone_number: p?.mobile_phone_number || '',
+      timezone: p?.timezone || 'UTC',
+      preferred_language: p?.preferred_language || null
+    });
+
+    if (p) {
+      this.form.get('email')?.disable();
+    } else {
+      this.form.get('email')?.enable();
     }
   }
 

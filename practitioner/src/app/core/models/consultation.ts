@@ -183,6 +183,7 @@ export interface CreateAppointmentRequest {
   type?: AppointmentType;
   scheduled_at: string;
   end_expected_at?: string;
+  participants?: CreateParticipantRequest[];
 }
 
 export interface CreateParticipantRequest {

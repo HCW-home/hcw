@@ -377,7 +377,8 @@ export class ConsultationForm implements OnInit, OnDestroy {
       isExistingUser: [false],
       user_id: [null],
       selectedUser: [null],
-      name: [''],
+      first_name: [''],
+      last_name: [''],
       email: ['', [Validators.email]],
       phone: [''],
       message_type: ['email', [Validators.required]],
@@ -505,7 +506,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
     }
   }
 
-  private createAppointmentsInEditMode(consultationId: number, appointments: { type?: string; date?: string; time?: string; scheduled_at?: string; end_expected_at?: string }[]): void {
+  private createAppointmentsInEditMode(consultationId: number, appointments: { type?: string; date?: string; time?: string; scheduled_at?: string; end_expected_at?: string; participants?: { isExistingUser?: boolean; user_id?: number; first_name?: string; last_name?: string; email?: string; phone?: string; message_type?: string }[] }[]): void {
     const appointmentRequests = appointments.map(apt => {
       let scheduledAt: string;
       if (apt.date && apt.time) {
@@ -516,12 +517,37 @@ export class ConsultationForm implements OnInit, OnDestroy {
         scheduledAt = new Date(apt.scheduled_at!).toISOString();
       }
 
+      const participants: CreateParticipantRequest[] = (apt.participants || [])
+        .filter(p => (p.isExistingUser && p.user_id) || (!p.isExistingUser && (p.email || p.phone)))
+        .map(p => {
+          const data: CreateParticipantRequest = {
+            message_type: p.message_type || 'email',
+          };
+          if (p.isExistingUser && p.user_id) {
+            data.user_id = p.user_id;
+          } else {
+            if (p.first_name) {
+              data.first_name = p.first_name;
+            }
+            if (p.last_name) {
+              data.last_name = p.last_name;
+            }
+            if (p.email) {
+              data.email = p.email;
+            } else if (p.phone) {
+              data.phone = p.phone;
+            }
+          }
+          return data;
+        });
+
       const appointmentData: CreateAppointmentRequest = {
         type: (apt.type as AppointmentType) || AppointmentType.ONLINE,
         scheduled_at: scheduledAt,
         end_expected_at: apt.end_expected_at
           ? new Date(apt.end_expected_at).toISOString()
           : undefined,
+        participants,
       };
 
       return this.consultationService.createConsultationAppointment(
@@ -623,7 +649,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
       });
   }
 
-  createAppointments(consultationId: number, appointments: { type?: string; date?: string; time?: string; scheduled_at?: string; end_expected_at?: string }[]): void {
+  createAppointments(consultationId: number, appointments: { type?: string; date?: string; time?: string; scheduled_at?: string; end_expected_at?: string; participants?: { isExistingUser?: boolean; user_id?: number; first_name?: string; last_name?: string; email?: string; phone?: string; message_type?: string }[] }[]): void {
     const appointmentRequests = appointments
       .filter(apt => apt.date || apt.scheduled_at)
       .map(apt => {
@@ -636,12 +662,37 @@ export class ConsultationForm implements OnInit, OnDestroy {
           scheduledAt = new Date(apt.scheduled_at!).toISOString();
         }
 
+        const participants: CreateParticipantRequest[] = (apt.participants || [])
+          .filter(p => (p.isExistingUser && p.user_id) || (!p.isExistingUser && (p.email || p.phone)))
+          .map(p => {
+            const data: CreateParticipantRequest = {
+              message_type: p.message_type || 'email',
+            };
+            if (p.isExistingUser && p.user_id) {
+              data.user_id = p.user_id;
+            } else {
+              if (p.first_name) {
+                data.first_name = p.first_name;
+              }
+              if (p.last_name) {
+                data.last_name = p.last_name;
+              }
+              if (p.email) {
+                data.email = p.email;
+              } else if (p.phone) {
+                data.phone = p.phone;
+              }
+            }
+            return data;
+          });
+
         const appointmentData: CreateAppointmentRequest = {
           type: (apt.type as AppointmentType) || AppointmentType.ONLINE,
           scheduled_at: scheduledAt,
           end_expected_at: apt.end_expected_at
             ? new Date(apt.end_expected_at).toISOString()
             : undefined,
+          participants,
         };
 
         return this.consultationService.createConsultationAppointment(
@@ -763,12 +814,38 @@ export class ConsultationForm implements OnInit, OnDestroy {
       scheduledDateTime = new Date(scheduledAt).toISOString();
     }
 
+    const participantsArray = this.getParticipantsFormArray(appointmentIndex);
+    const participants: CreateParticipantRequest[] = participantsArray.controls
+      .filter(p => (p.get('isExistingUser')?.value && p.get('user_id')?.value) || (!p.get('isExistingUser')?.value && (p.get('email')?.value || p.get('phone')?.value)))
+      .map(p => {
+        const data: CreateParticipantRequest = {
+          message_type: p.get('message_type')?.value || 'email',
+        };
+        if (p.get('isExistingUser')?.value && p.get('user_id')?.value) {
+          data.user_id = p.get('user_id')?.value;
+        } else {
+          if (p.get('first_name')?.value) {
+            data.first_name = p.get('first_name')?.value;
+          }
+          if (p.get('last_name')?.value) {
+            data.last_name = p.get('last_name')?.value;
+          }
+          if (p.get('email')?.value) {
+            data.email = p.get('email')?.value;
+          } else if (p.get('phone')?.value) {
+            data.phone = p.get('phone')?.value;
+          }
+        }
+        return data;
+      });
+
     const appointmentData: CreateAppointmentRequest = {
       type: (appointmentGroup.get('type')?.value as AppointmentType) || AppointmentType.ONLINE,
       scheduled_at: scheduledDateTime,
       end_expected_at: appointmentGroup.get('end_expected_at')?.value
         ? new Date(appointmentGroup.get('end_expected_at')?.value).toISOString()
         : undefined,
+      participants,
     };
 
     if (appointmentId) {
@@ -935,7 +1012,8 @@ export class ConsultationForm implements OnInit, OnDestroy {
       isExistingUser: isExisting,
       user_id: null,
       selectedUser: null,
-      name: '',
+      first_name: '',
+      last_name: '',
       email: '',
     });
   }

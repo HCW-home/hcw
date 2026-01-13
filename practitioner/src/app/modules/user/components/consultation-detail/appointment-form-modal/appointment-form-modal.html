@@ -84,11 +84,18 @@
                 (userSelected)="onParticipantUserSelected(i, $event)">
               </app-user-search-select>
             } @else {
-              <app-input
-                type="text"
-                label="Name (Optional)"
-                formControlName="name">
-              </app-input>
+              <div class="form-row">
+                <app-input
+                  type="text"
+                  label="First Name (Optional)"
+                  formControlName="first_name">
+                </app-input>
+                <app-input
+                  type="text"
+                  label="Last Name (Optional)"
+                  formControlName="last_name">
+                </app-input>
+              </div>
               <div class="form-group">
                 <label class="form-label">Contact Method</label>
                 <div class="contact-toggle">

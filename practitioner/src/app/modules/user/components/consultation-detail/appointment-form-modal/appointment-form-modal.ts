@@ -26,7 +26,8 @@ interface ParticipantFormValue {
   isExistingUser: boolean;
   user_id: number | null;
   selectedUser: IUser | null;
-  name: string;
+  first_name: string;
+  last_name: string;
   email: string;
   contactType: string;
 }
@@ -143,7 +144,8 @@ export class AppointmentFormModal implements OnInit, OnDestroy, OnChanges {
       isExistingUser: [false],
       user_id: [null],
       selectedUser: [null],
-      name: [''],
+      first_name: [''],
+      last_name: [''],
       email: [''],
       contactType: ['email'],
     });
@@ -182,7 +184,8 @@ export class AppointmentFormModal implements OnInit, OnDestroy, OnChanges {
       isExistingUser: isExisting,
       user_id: null,
       selectedUser: null,
-      name: '',
+      first_name: '',
+      last_name: '',
       email: '',
     });
   }
@@ -258,50 +261,43 @@ export class AppointmentFormModal implements OnInit, OnDestroy, OnChanges {
   }
 
   private createAppointment(appointmentData: CreateAppointmentRequest, participants: ParticipantFormValue[]): void {
-    this.consultationService
-      .createConsultationAppointment(this.consultationId, appointmentData)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (appointment) => {
-          const validParticipants = participants.filter((p: ParticipantFormValue) =>
-            (p.isExistingUser && p.user_id) || (!p.isExistingUser && p.email)
-          );
+    const validParticipants = (participants || []).filter((p: ParticipantFormValue) =>
+      (p.isExistingUser && p.selectedUser) || (!p.isExistingUser && p.email)
+    );
 
-          if (validParticipants.length > 0) {
-            this.createParticipants(appointment, validParticipants);
-          } else {
-            this.finalizeCreation(appointment);
-          }
-        },
-        error: (error) => {
-          this.isSubmitting.set(false);
-          this.toasterService.show('error', getErrorMessage(error));
-        },
-      });
-  }
-
-  private createParticipants(appointment: Appointment, participants: ParticipantFormValue[]): void {
-    const requests = participants.map(p => {
+    appointmentData.participants = validParticipants.map(p => {
       const data: CreateParticipantRequest = {
         message_type: p.contactType === 'email' ? 'email' : 'sms',
       };
       if (p.isExistingUser && p.user_id) {
         data.user_id = p.user_id;
-      } else if (p.contactType === 'email') {
-        data.email = p.email;
       } else {
-        data.phone = p.email;
+        if (p.first_name) {
+          data.first_name = p.first_name;
+        }
+        if (p.last_name) {
+          data.last_name = p.last_name;
+        }
+        if (p.contactType === 'email') {
+          data.email = p.email;
+        } else {
+          data.phone = p.email;
+        }
       }
-      return this.consultationService.addAppointmentParticipant(appointment.id, data).toPromise();
+      return data;
     });
 
-    Promise.all(requests)
-      .then(() => {
-        this.finalizeCreation(appointment);
-      })
-      .catch(() => {
-        this.finalizeCreation(appointment);
-        this.toasterService.show('warning', 'Appointment created but some participants could not be added');
+    this.consultationService
+      .createConsultationAppointment(this.consultationId, appointmentData)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (appointment) => {
+          this.finalizeCreation(appointment);
+        },
+        error: (error) => {
+          this.isSubmitting.set(false);
+          this.toasterService.show('error', getErrorMessage(error));
+        },
       });
   }
 
