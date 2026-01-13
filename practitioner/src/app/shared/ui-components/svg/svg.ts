@@ -212,6 +212,9 @@ const ICON_MAP: Record<string, string> = {
   'message-square': 'lucideMessageSquare',
   'message-square.svg': 'lucideMessageSquare',
   'svg/message-square.svg': 'lucideMessageSquare',
+  'stethoscope': 'lucideStethoscope',
+  'stethoscope.svg': 'lucideStethoscope',
+  'svg/stethoscope.svg': 'lucideStethoscope',
 };
 
 @Component({

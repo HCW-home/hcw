@@ -10,7 +10,7 @@ export const MenuItems: Sidebar[] = [
   {
     name: 'Consultations',
     path: `/${RoutePaths.CONSULTATIONS}`,
-    icon: 'video.svg',
+    icon: 'stethoscope.svg',
   },
   {
     name: 'Patients',
