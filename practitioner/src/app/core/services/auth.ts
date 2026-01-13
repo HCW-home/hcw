@@ -45,6 +45,6 @@ export class Auth {
   }
 
   setPassword(params: IBodySetPassword): Observable<SuccessResponse> {
-    return this.http.post<SuccessResponse>(`${environment.apiUrl}/password/recover/confirm`, params);
+    return this.http.post<SuccessResponse>(`${environment.apiUrl}/auth/password/reset/confirm/`, params);
   }
 }

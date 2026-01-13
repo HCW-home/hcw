@@ -56,6 +56,15 @@ export class AuthService {
     return this.http.post(`${this.apiUrl}/auth/password/reset/`, data);
   }
 
+  resetPasswordConfirm(data: {
+    uid: string;
+    token: string;
+    new_password1: string;
+    new_password2: string;
+  }): Observable<{ detail: string }> {
+    return this.http.post<{ detail: string }>(`${this.apiUrl}/auth/password/reset/confirm/`, data);
+  }
+
   requestMagicLink(data: MagicLinkRequest): Observable<any> {
     return this.http.post(`${this.apiUrl}/auth/magic-link/request/`, data);
   }

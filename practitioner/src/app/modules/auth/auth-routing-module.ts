@@ -21,12 +21,12 @@ const routes: Routes = [
         component: ForgotPassword,
       },
       {
-        path: 'set-password/:code',
+        path: 'set-password/:uid/:token',
         pathMatch: 'full',
         component: ResetPassword,
       },
       {
-        path: 'reset-password/:code',
+        path: 'reset-password/:uid/:token',
         pathMatch: 'full',
         component: ResetPassword,
       },
