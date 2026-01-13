@@ -141,6 +141,7 @@ class ConsultationSerializer(serializers.ModelSerializer):
             "group_id",
             "description",
             "title",
+            "closed_at",
         ]
         read_only_fields = [
             "id",
@@ -186,6 +187,9 @@ class AppointmentSerializer(serializers.ModelSerializer):
     consultation_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
     participants = ParticipantSerializer(
         many=True, read_only=False, required=False)
+    dont_invite_beneficiary = serializers.BooleanField(required=False)
+    dont_invite_practitionner = serializers.BooleanField(required=False)
+    dont_invite_me = serializers.BooleanField(required=False)
 
     class Meta:
         model = Appointment
@@ -200,13 +204,20 @@ class AppointmentSerializer(serializers.ModelSerializer):
             "status",
             "created_at",
             "participants",
+            "dont_invite_beneficiary",
+            "dont_invite_practitionner",
+            "dont_invite_me",
         ]
         read_only_fields = ["id", "created_by", "created_at"]
 
     def create(self, validated_data):
         participants_data = validated_data.pop('participants', [])
         consultation_id = validated_data.pop('consultation_id', None)
+        dont_invite_beneficiary = validated_data.pop('dont_invite_beneficiary', False)
+        dont_invite_practitionner = validated_data.pop('dont_invite_practitionner', False)
+        dont_invite_me = validated_data.pop('dont_invite_me', False)
 
+        consultation = None
         if consultation_id:
             try:
                 consultation = Consultation.objects.get(id=consultation_id)
@@ -220,10 +231,47 @@ class AppointmentSerializer(serializers.ModelSerializer):
 
         appointment = super().create(validated_data)
 
+        # Track user IDs to avoid duplicates
+        added_user_ids = set()
+
+        # Add participants from manual input
         for participant_data in participants_data:
+            user_id = participant_data.get('user_id')
+            if user_id and user_id in added_user_ids:
+                continue
+
             serializer = ParticipantSerializer(data=participant_data, context={'appointment': appointment})
             serializer.is_valid(raise_exception=True)
-            serializer.save(appointment=appointment)
+            participant = serializer.save(appointment=appointment)
+
+            if participant.user_id:
+                added_user_ids.add(participant.user_id)
+
+        # Auto-add participants based on flags
+        if consultation:
+            # Add practitioner (owned_by)
+            if not dont_invite_practitionner and consultation.owned_by_id and consultation.owned_by_id not in added_user_ids:
+                Participant.objects.create(
+                    appointment=appointment,
+                    user=consultation.owned_by
+                )
+                added_user_ids.add(consultation.owned_by_id)
+
+            # Add beneficiary
+            if not dont_invite_beneficiary and consultation.beneficiary_id and consultation.beneficiary_id not in added_user_ids:
+                Participant.objects.create(
+                    appointment=appointment,
+                    user=consultation.beneficiary
+                )
+                added_user_ids.add(consultation.beneficiary_id)
+
+        # Add request user (created_by)
+        if not dont_invite_me and user and user.id not in added_user_ids:
+            Participant.objects.create(
+                appointment=appointment,
+                user=user
+            )
+            added_user_ids.add(user.id)
 
         return appointment
 
