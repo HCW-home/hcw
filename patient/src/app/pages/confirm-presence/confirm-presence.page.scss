@@ -1,0 +1,195 @@
+.presence-content {
+  --background: var(--app-background);
+
+  .presence-container {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: var(--app-spacing-xl);
+
+    .presence-header {
+      text-align: center;
+      margin-bottom: 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      .logo {
+        margin-bottom: var(--app-spacing-md);
+
+        .logo-img {
+          width: 64px;
+          height: 64px;
+        }
+      }
+
+      .logo-text-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        .title {
+          font-size: 2rem;
+          font-weight: 700;
+          color: var(--app-text-primary);
+          line-height: 1.2;
+        }
+
+        .title-subtitle {
+          font-size: 1rem;
+          font-weight: 500;
+          color: var(--app-text-secondary);
+          line-height: 1;
+        }
+      }
+    }
+
+    .loading-state,
+    .error-state,
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+
+      ion-spinner {
+        width: 48px;
+        height: 48px;
+        color: var(--ion-color-primary);
+      }
+
+      .loading-text {
+        margin-top: var(--app-spacing-lg);
+        font-size: var(--app-font-size-base);
+      }
+
+      .error-icon {
+        font-size: 64px;
+        color: var(--ion-color-danger);
+        margin-bottom: var(--app-spacing-lg);
+      }
+
+      .success-icon {
+        font-size: 64px;
+        color: var(--ion-color-success);
+        margin-bottom: var(--app-spacing-lg);
+      }
+
+      .error-title,
+      .success-title {
+        font-size: var(--app-font-size-lg);
+        font-weight: var(--app-font-weight-semibold);
+        margin-bottom: var(--app-spacing-sm);
+      }
+
+      .error-message,
+      .success-message {
+        font-size: var(--app-font-size-base);
+        margin-bottom: var(--app-spacing-2xl);
+      }
+
+      .action-button {
+        width: 100%;
+        max-width: 300px;
+        --background: var(--ion-color-primary);
+        --padding-top: var(--app-button-padding-vertical);
+        --padding-bottom: var(--app-button-padding-vertical);
+        font-weight: var(--app-font-weight-semibold);
+        font-size: var(--app-font-size-base);
+      }
+    }
+
+    .appointments-section {
+      flex: 1;
+
+      .section-title {
+        display: block;
+        font-size: var(--app-font-size-lg);
+        font-weight: var(--app-font-weight-semibold);
+        color: var(--app-text-primary);
+        text-align: center;
+        margin-bottom: var(--app-spacing-sm);
+      }
+
+      .section-subtitle {
+        display: block;
+        font-size: var(--app-font-size-base);
+        text-align: center;
+        margin-bottom: var(--app-spacing-xl);
+      }
+
+      .appointment-card {
+        margin-bottom: var(--app-spacing-lg);
+        border-radius: var(--app-card-radius, 12px);
+
+        ion-card-content {
+          padding: var(--app-spacing-lg);
+        }
+
+        .appointment-info {
+          margin-bottom: var(--app-spacing-lg);
+
+          > div {
+            display: flex;
+            align-items: center;
+            gap: var(--app-spacing-sm);
+            margin-bottom: var(--app-spacing-sm);
+            font-size: var(--app-font-size-base);
+            color: var(--app-text-primary);
+
+            ion-icon {
+              font-size: 20px;
+              color: var(--ion-color-primary);
+              flex-shrink: 0;
+            }
+
+            &:last-child {
+              margin-bottom: 0;
+            }
+          }
+
+          .appointment-type {
+            font-weight: var(--app-font-weight-semibold);
+          }
+        }
+
+        .appointment-actions {
+          display: flex;
+          gap: var(--app-spacing-md);
+
+          ion-button {
+            flex: 1;
+            --padding-top: 12px;
+            --padding-bottom: 12px;
+
+            ion-spinner {
+              width: 20px;
+              height: 20px;
+            }
+          }
+
+          .decline-button {
+            --border-width: 1px;
+          }
+
+          .confirm-button {
+            --background: var(--ion-color-primary);
+          }
+        }
+      }
+
+      .skip-link {
+        text-align: center;
+        margin-top: var(--app-spacing-lg);
+
+        .link-text {
+          font-size: var(--app-font-size-sm);
+          font-weight: var(--app-font-weight-semibold);
+          cursor: pointer;
+        }
+      }
+    }
+  }
+}

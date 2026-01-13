@@ -23,6 +23,14 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/forgot-password/forgot-password.page').then(m => m.ForgotPasswordPage)
   },
   {
+    path: 'verify-invite',
+    loadComponent: () => import('./pages/verify-invite/verify-invite.page').then(m => m.VerifyInvitePage)
+  },
+  {
+    path: 'confirm-presence',
+    loadComponent: () => import('./pages/confirm-presence/confirm-presence.page').then(m => m.ConfirmPresencePage)
+  },
+  {
     path: 'home',
     loadComponent: () => import('./pages/home/home.page').then(m => m.HomePage)
   },

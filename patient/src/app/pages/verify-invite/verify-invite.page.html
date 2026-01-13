@@ -1,0 +1,83 @@
+<ion-content class="verify-content">
+  <div class="verify-container">
+    <div class="verify-header">
+      <div class="logo">
+        <img src="assets/images/logo.svg" alt="HCW Logo" class="logo-img">
+      </div>
+      <div class="logo-text-group">
+        <span class="title">HCW</span>
+        <span class="title-subtitle">Patient</span>
+      </div>
+    </div>
+
+    @if (isLoading) {
+      <div class="loading-state">
+        <ion-spinner name="crescent"></ion-spinner>
+        <ion-text class="loading-text" color="medium">
+          @if (requiresVerification) {
+            Verifying your code...
+          } @else {
+            Authenticating...
+          }
+        </ion-text>
+      </div>
+    } @else if (errorMessage) {
+      <div class="error-state">
+        <ion-icon name="alert-circle-outline" class="error-icon"></ion-icon>
+        <ion-text class="error-title" color="danger">Authentication Failed</ion-text>
+        <ion-text class="error-message" color="medium">{{ errorMessage }}</ion-text>
+        <ion-button
+          expand="block"
+          shape="round"
+          (click)="goToLogin()"
+          class="action-button">
+          Go to Login
+        </ion-button>
+      </div>
+    } @else if (requiresVerification) {
+      <div class="verification-state">
+        <ion-icon name="shield-checkmark-outline" class="verification-icon"></ion-icon>
+        <ion-text class="verification-title">Verification Required</ion-text>
+        <ion-text class="verification-message" color="medium">
+          A verification code has been sent to your email or phone. Please enter it below.
+        </ion-text>
+
+        <form [formGroup]="verificationForm" (ngSubmit)="submitVerificationCode()" class="verification-form">
+          <ion-item lines="full" class="input-item">
+            <ion-icon name="keypad-outline" slot="start"></ion-icon>
+            <ion-input
+              type="text"
+              placeholder="Enter 6-digit code"
+              formControlName="verification_code"
+              maxlength="6"
+              inputmode="numeric">
+            </ion-input>
+          </ion-item>
+          @if (verificationForm.get('verification_code')?.invalid && verificationForm.get('verification_code')?.touched) {
+            <ion-text color="danger" class="error-text">
+              Please enter a valid 6-digit code
+            </ion-text>
+          }
+
+          <ion-button
+            expand="block"
+            shape="round"
+            type="submit"
+            [disabled]="verificationForm.invalid"
+            class="action-button">
+            Verify Code
+          </ion-button>
+        </form>
+
+        <div class="login-link">
+          <ion-text class="link-text" color="medium">
+            Having trouble?
+          </ion-text>
+          <ion-text color="primary" (click)="goToLogin()" class="link-action">
+            Sign in manually
+          </ion-text>
+        </div>
+      </div>
+    }
+  </div>
+</ion-content>

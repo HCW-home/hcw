@@ -56,10 +56,10 @@ import {
   callOutline, barbellOutline, resizeOutline, waterOutline, moonOutline, bulbOutline, chatbubblesOutline, flaskOutline,
   pricetagOutline, trash, shareOutline, arrowUp, downloadOutline, cloudUploadOutline, schoolOutline, briefcaseOutline,
   mic, micOff, videocam, videocamOff, call, volumeHigh, volumeMute, desktopOutline,
-  cameraReverseOutline, ellipse, alertCircle, arrowBackOutline, clipboardOutline, addOutline,
+  cameraReverseOutline, ellipse, alertCircle, alertCircleOutline, arrowBackOutline, clipboardOutline, addOutline,
   hourglassOutline, ellipsisVerticalOutline, chatbubbleEllipsesOutline, closeCircleOutline,
   sendOutline, attachOutline, imageOutline, wifiOutline, cloudOfflineOutline, closeOutline,
-  atOutline, createOutline, close
+  atOutline, createOutline, close, shieldCheckmarkOutline, keypadOutline, checkmarkOutline
 } from 'ionicons/icons';
 
 import { routes } from './app/app.routes';
@@ -170,6 +170,10 @@ addIcons({
   'close': close,
   'at-outline': atOutline,
   'create-outline': createOutline,
+  'alert-circle-outline': alertCircleOutline,
+  'shield-checkmark-outline': shieldCheckmarkOutline,
+  'keypad-outline': keypadOutline,
+  'checkmark-outline': checkmarkOutline,
 });
 
 bootstrapApplication(AppComponent, {

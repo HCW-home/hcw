@@ -56,3 +56,17 @@ export interface MagicLinkRequest {
 export interface MagicLinkVerify {
   token: string;
 }
+
+export interface TokenAuthRequest {
+  auth_token: string;
+  verification_code?: string;
+}
+
+export interface TokenAuthResponse {
+  access?: string;
+  refresh?: string;
+  user_id?: number;
+  requires_verification?: boolean;
+  message?: string;
+  error?: string;
+}

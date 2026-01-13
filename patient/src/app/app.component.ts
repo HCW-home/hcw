@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
+import { IonApp, IonRouterOutlet, NavController } from '@ionic/angular/standalone';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from './core/services/auth.service';
 import { UserWebSocketService } from './core/services/user-websocket.service';
@@ -15,21 +15,36 @@ export class AppComponent implements OnInit, OnDestroy {
 
   constructor(
     private authService: AuthService,
-    private userWsService: UserWebSocketService
+    private userWsService: UserWebSocketService,
+    private navCtrl: NavController
   ) {}
 
   ngOnInit(): void {
+    this.handleDeepLinks();
+
     this.authService.isAuthenticated$
       .pipe(takeUntil(this.destroy$))
       .subscribe((isAuthenticated: boolean) => {
-        console.log('Auth state changed:', isAuthenticated);
         if (isAuthenticated) {
-          console.log('Connecting to WebSocket...');
           this.userWsService.connect();
         } else {
           this.userWsService.disconnect();
         }
       });
+  }
+
+  private handleDeepLinks(): void {
+    const urlParams = new URLSearchParams(window.location.search);
+    const authToken = urlParams.get('auth');
+    const action = urlParams.get('action');
+
+    if (authToken) {
+      const queryParams: { auth: string; action?: string } = { auth: authToken };
+      if (action) {
+        queryParams.action = action;
+      }
+      this.navCtrl.navigateRoot(['/verify-invite'], { queryParams });
+    }
   }
 
   ngOnDestroy(): void {

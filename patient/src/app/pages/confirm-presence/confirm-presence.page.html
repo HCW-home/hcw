@@ -1,0 +1,109 @@
+<ion-content class="presence-content">
+  <div class="presence-container">
+    <div class="presence-header">
+      <div class="logo">
+        <img src="assets/images/logo.svg" alt="HCW Logo" class="logo-img">
+      </div>
+      <div class="logo-text-group">
+        <span class="title">HCW</span>
+        <span class="title-subtitle">Patient</span>
+      </div>
+    </div>
+
+    @if (isLoading) {
+      <div class="loading-state">
+        <ion-spinner name="crescent"></ion-spinner>
+        <ion-text class="loading-text" color="medium">Loading appointments...</ion-text>
+      </div>
+    } @else if (errorMessage) {
+      <div class="error-state">
+        <ion-icon name="alert-circle-outline" class="error-icon"></ion-icon>
+        <ion-text class="error-title" color="danger">Error</ion-text>
+        <ion-text class="error-message" color="medium">{{ errorMessage }}</ion-text>
+        <ion-button expand="block" shape="round" (click)="goToHome()" class="action-button">
+          Go to Home
+        </ion-button>
+      </div>
+    } @else if (pendingAppointments.length === 0) {
+      <div class="empty-state">
+        <ion-icon name="checkmark-circle-outline" class="success-icon"></ion-icon>
+        <ion-text class="success-title">All Done</ion-text>
+        <ion-text class="success-message" color="medium">
+          You have no pending appointments that need confirmation.
+        </ion-text>
+        <ion-button expand="block" shape="round" (click)="goToHome()" class="action-button">
+          Go to Home
+        </ion-button>
+      </div>
+    } @else {
+      <div class="appointments-section">
+        <ion-text class="section-title">Confirm Your Presence</ion-text>
+        <ion-text class="section-subtitle" color="medium">
+          Please confirm or decline your attendance for the following appointments.
+        </ion-text>
+
+        @for (appointment of pendingAppointments; track appointment.id) {
+          <ion-card class="appointment-card">
+            <ion-card-content>
+              <div class="appointment-info">
+                <div class="appointment-type">
+                  <ion-icon [name]="appointment.type === 'Online' ? 'videocam-outline' : 'location-outline'"></ion-icon>
+                  <span>{{ appointment.type === 'Online' ? 'Video Consultation' : 'In-Person Visit' }}</span>
+                </div>
+                <div class="appointment-datetime">
+                  <ion-icon name="calendar-outline"></ion-icon>
+                  <span>{{ formatDate(appointment.scheduled_at) }}</span>
+                </div>
+                <div class="appointment-time">
+                  <ion-icon name="time-outline"></ion-icon>
+                  <span>{{ formatTime(appointment.scheduled_at) }}</span>
+                </div>
+                <div class="appointment-doctor">
+                  <ion-icon name="person-outline"></ion-icon>
+                  <span>{{ appointment.doctorName }}</span>
+                </div>
+              </div>
+
+              <div class="appointment-actions">
+                <ion-button
+                  expand="block"
+                  fill="outline"
+                  shape="round"
+                  color="danger"
+                  [disabled]="appointment.isConfirming || appointment.isDeclining"
+                  (click)="declinePresence(appointment)"
+                  class="decline-button">
+                  @if (appointment.isDeclining) {
+                    <ion-spinner name="crescent"></ion-spinner>
+                  } @else {
+                    <ion-icon name="close-outline" slot="start"></ion-icon>
+                    Decline
+                  }
+                </ion-button>
+                <ion-button
+                  expand="block"
+                  shape="round"
+                  [disabled]="appointment.isConfirming || appointment.isDeclining"
+                  (click)="confirmPresence(appointment)"
+                  class="confirm-button">
+                  @if (appointment.isConfirming) {
+                    <ion-spinner name="crescent"></ion-spinner>
+                  } @else {
+                    <ion-icon name="checkmark-outline" slot="start"></ion-icon>
+                    Confirm
+                  }
+                </ion-button>
+              </div>
+            </ion-card-content>
+          </ion-card>
+        }
+
+        <div class="skip-link">
+          <ion-text color="primary" (click)="goToHome()" class="link-text">
+            Skip and go to home
+          </ion-text>
+        </div>
+      </div>
+    }
+  </div>
+</ion-content>

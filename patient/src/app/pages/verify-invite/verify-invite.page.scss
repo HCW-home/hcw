@@ -1,0 +1,185 @@
+.verify-content {
+  --background: var(--app-background);
+
+  .verify-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: var(--app-spacing-xl);
+    justify-content: center;
+    align-items: center;
+
+    .verify-header {
+      text-align: center;
+      margin-bottom: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      .logo {
+        margin-bottom: var(--app-spacing-md);
+
+        .logo-img {
+          width: 64px;
+          height: 64px;
+        }
+      }
+
+      .logo-text-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        .title {
+          font-size: 2rem;
+          font-weight: 700;
+          color: var(--app-text-primary);
+          line-height: 1.2;
+        }
+
+        .title-subtitle {
+          font-size: 1rem;
+          font-weight: 500;
+          color: var(--app-text-secondary);
+          line-height: 1;
+        }
+      }
+    }
+
+    .loading-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--app-spacing-lg);
+
+      ion-spinner {
+        width: 48px;
+        height: 48px;
+        color: var(--ion-color-primary);
+      }
+
+      .loading-text {
+        font-size: var(--app-font-size-base);
+      }
+    }
+
+    .error-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      width: 100%;
+
+      .error-icon {
+        font-size: 64px;
+        color: var(--ion-color-danger);
+        margin-bottom: var(--app-spacing-lg);
+      }
+
+      .error-title {
+        font-size: var(--app-font-size-lg);
+        font-weight: var(--app-font-weight-semibold);
+        margin-bottom: var(--app-spacing-sm);
+      }
+
+      .error-message {
+        font-size: var(--app-font-size-base);
+        margin-bottom: var(--app-spacing-2xl);
+      }
+
+      .action-button {
+        width: 100%;
+        --background: var(--ion-color-primary);
+        --padding-top: var(--app-button-padding-vertical);
+        --padding-bottom: var(--app-button-padding-vertical);
+        font-weight: var(--app-font-weight-semibold);
+        font-size: var(--app-font-size-base);
+      }
+    }
+
+    .verification-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      width: 100%;
+
+      .verification-icon {
+        font-size: 64px;
+        color: var(--ion-color-primary);
+        margin-bottom: var(--app-spacing-lg);
+      }
+
+      .verification-title {
+        font-size: var(--app-font-size-lg);
+        font-weight: var(--app-font-weight-semibold);
+        color: var(--app-text-primary);
+        margin-bottom: var(--app-spacing-sm);
+      }
+
+      .verification-message {
+        font-size: var(--app-font-size-base);
+        margin-bottom: var(--app-spacing-2xl);
+      }
+
+      .verification-form {
+        width: 100%;
+
+        .input-item {
+          margin-bottom: var(--app-spacing-lg);
+          --background: var(--app-input-background);
+          --border-radius: var(--app-button-radius);
+          --padding-start: var(--app-spacing-lg);
+          --padding-end: var(--app-spacing-lg);
+          --inner-padding-end: var(--app-spacing-lg);
+
+          ion-icon {
+            margin-right: var(--app-spacing-md);
+            color: var(--app-text-tertiary);
+          }
+
+          ion-input {
+            --padding-top: var(--app-spacing-lg);
+            --padding-bottom: var(--app-spacing-lg);
+            color: var(--app-input-text);
+            --placeholder-color: var(--app-input-placeholder);
+            text-align: center;
+            font-size: var(--app-font-size-lg);
+            letter-spacing: 8px;
+          }
+        }
+
+        .error-text {
+          display: block;
+          font-size: var(--app-font-size-xs);
+          margin: calc(var(--app-spacing-md) * -1) 0 var(--app-spacing-md) 0;
+        }
+
+        .action-button {
+          --background: var(--ion-color-primary);
+          --padding-top: var(--app-button-padding-vertical);
+          --padding-bottom: var(--app-button-padding-vertical);
+          font-weight: var(--app-font-weight-semibold);
+          font-size: var(--app-font-size-base);
+          margin-top: var(--app-spacing-lg);
+        }
+      }
+
+      .login-link {
+        margin-top: var(--app-spacing-2xl);
+        display: flex;
+        gap: var(--app-spacing-xs);
+
+        .link-text {
+          font-size: var(--app-font-size-sm);
+        }
+
+        .link-action {
+          font-size: var(--app-font-size-sm);
+          font-weight: var(--app-font-weight-semibold);
+          cursor: pointer;
+        }
+      }
+    }
+  }
+}

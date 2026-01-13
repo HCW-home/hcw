@@ -148,6 +148,16 @@ export class ConsultationService {
     );
   }
 
+  confirmAppointmentPresence(appointmentId: number, isPresent: boolean): Observable<{
+    detail: string;
+    is_confirmed: boolean;
+  }> {
+    return this.api.post<{ detail: string; is_confirmed: boolean }>(
+      `/user/appointments/${appointmentId}/presence/`,
+      { is_present: isPresent }
+    );
+  }
+
   getMessageAttachment(messageId: number): Observable<Blob> {
     return this.api.getBlob(`/messages/${messageId}/attachment/`);
   }

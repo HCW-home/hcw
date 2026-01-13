@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, from, switchMap, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { User, LoginRequest, LoginResponse, RegisterRequest, MagicLinkRequest, MagicLinkVerify } from '../models/user.model';
+import { User, LoginRequest, LoginResponse, RegisterRequest, MagicLinkRequest, MagicLinkVerify, TokenAuthRequest, TokenAuthResponse } from '../models/user.model';
 import { StorageService } from './storage.service';
 
 @Injectable({
@@ -71,6 +71,20 @@ export class AuthService {
             if (response.user) {
               this.currentUserSubject.next(response.user);
             }
+          }
+          return response;
+        })
+      );
+  }
+
+  loginWithToken(data: TokenAuthRequest): Observable<TokenAuthResponse> {
+    return this.http.post<TokenAuthResponse>(`${this.apiUrl}/auth/token/`, data)
+      .pipe(
+        switchMap(async (response) => {
+          if (response.access && response.refresh) {
+            await this.storage.set('access_token', response.access);
+            await this.storage.set('refresh_token', response.refresh);
+            this.isAuthenticatedSubject.next(true);
           }
           return response;
         })
