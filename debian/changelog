@@ -1,4 +1,4 @@
-hcw (0.9.32) UNRELEASED; urgency=medium
+hcw (0.9.33) UNRELEASED; urgency=medium
 
   [ Gor Grigoryan ]
   * add infinite scroll in messages list, improve consultation detail
@@ -17,7 +17,25 @@ hcw (0.9.32) UNRELEASED; urgency=medium
   [ Gor Grigoryan ]
   * update video layout for patient and practitioner
 
- -- Gor Grigoryan <gorgrigoryan1997@gmail.com>  Mon, 12 Jan 2026 11:39:22 +0000
+  [ Olivier Bitsch ]
+  * Add participant in one post now
+  * Make status writable
+  * Draft for Fhir AppointmentSerializer, unfinished
+
+  [ Gor Grigoryan ]
+  * add particiapnt array to appointment creation endpoint
+  * add verify invite
+  * add uid and token for confirming reset password
+  * change consultation icon
+
+  [ Olivier Bitsch ]
+  * Draft Fhir and fix post create consultation
+  * Handle invite automatic participant
+
+  [ Gor Grigoryan ]
+  * add shared screen view for each user, add my consultations in patient home page, and consultation detail
+
+ -- Gor Grigoryan <gorgrigoryan1997@gmail.com>  Wed, 14 Jan 2026 09:31:58 +0000
 
 hcw (0.9.31) bookworm; urgency=medium
 
