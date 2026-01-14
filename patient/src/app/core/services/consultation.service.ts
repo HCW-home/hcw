@@ -50,7 +50,7 @@ export class ConsultationService {
   }
 
   getConsultationById(id: number): Observable<Consultation> {
-    return this.api.get<Consultation>(`/consultations/${id}/`);
+    return this.api.get<Consultation>(`/user/consultations/${id}/`);
   }
 
   getMyAppointments(filters?: AppointmentFilters): Observable<PaginatedResponse<Appointment>> {

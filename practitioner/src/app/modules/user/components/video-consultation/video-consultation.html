@@ -36,6 +36,16 @@
         </div>
       </div>
 
+      @if (isScreenShareEnabled && localScreenShareTrack) {
+        <div class="video-tile screen-share-tile local-screen-share">
+          <video #localScreenShare autoplay playsinline class="tile-video"></video>
+          <div class="participant-label">
+            <app-svg src="screen-share" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
+            <app-typography [variant]="TypographyTypeEnum['body-xs-medium']">Your screen</app-typography>
+          </div>
+        </div>
+      }
+
       @for (participant of getParticipantsArray(); track trackByIdentity($index, participant)) {
         <div class="video-tile">
           <video

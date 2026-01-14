@@ -2,9 +2,8 @@
   <div class="video-container">
     <div class="video-grid" #participantsContainer [attr.data-count]="getTotalTileCount()">
       <div class="video-tile local-tile" [class.camera-off]="!isCameraEnabled">
-        @if (isCameraEnabled) {
-          <video #localVideo autoplay playsinline muted class="tile-video"></video>
-        } @else {
+        <video #localVideo autoplay playsinline muted class="tile-video" [class.hidden]="!isCameraEnabled"></video>
+        @if (!isCameraEnabled) {
           <div class="camera-off-placeholder">
             <ion-icon name="videocam-off"></ion-icon>
           </div>
@@ -16,6 +15,16 @@
           }
         </div>
       </div>
+
+      @if (isScreenShareEnabled && localScreenShareTrack) {
+        <div class="video-tile screen-share-tile local-screen-share">
+          <video #localScreenShare autoplay playsinline class="tile-video"></video>
+          <div class="participant-label">
+            <ion-icon name="desktop-outline"></ion-icon>
+            <ion-text>Your screen</ion-text>
+          </div>
+        </div>
+      }
 
       @if (connectionStatus === 'connected' && getParticipantsArray().length > 0) {
         @for (participant of getParticipantsArray(); track participant.identity) {

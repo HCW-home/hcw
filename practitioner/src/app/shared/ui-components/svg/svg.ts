@@ -215,6 +215,15 @@ const ICON_MAP: Record<string, string> = {
   'stethoscope': 'lucideStethoscope',
   'stethoscope.svg': 'lucideStethoscope',
   'svg/stethoscope.svg': 'lucideStethoscope',
+  'blur': 'lucideSparkles',
+  'blur.svg': 'lucideSparkles',
+  'svg/blur.svg': 'lucideSparkles',
+  'sparkles': 'lucideSparkles',
+  'sparkles.svg': 'lucideSparkles',
+  'svg/sparkles.svg': 'lucideSparkles',
+  'effects': 'lucideSparkles',
+  'effects.svg': 'lucideSparkles',
+  'svg/effects.svg': 'lucideSparkles',
 };
 
 @Component({

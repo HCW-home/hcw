@@ -377,6 +377,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
       isExistingUser: [false],
       user_id: [null],
       selectedUser: [null],
+      name: [''],
       first_name: [''],
       last_name: [''],
       email: ['', [Validators.email]],

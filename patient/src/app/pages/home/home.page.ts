@@ -17,7 +17,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { ConsultationService } from '../../core/services/consultation.service';
 import { User } from '../../core/models/user.model';
-import { ConsultationRequest, Speciality } from '../../core/models/consultation.model';
+import { ConsultationRequest, Consultation, Speciality } from '../../core/models/consultation.model';
 
 interface RequestStatus {
   label: string;
@@ -48,9 +48,12 @@ export class HomePage implements OnInit, OnDestroy {
 
   currentUser = signal<User | null>(null);
   requests = signal<ConsultationRequest[]>([]);
+  consultations = signal<Consultation[]>([]);
   isLoading = signal(false);
+  isLoadingConsultations = signal(false);
 
   totalRequests = computed(() => this.requests().length);
+  totalConsultations = computed(() => this.consultations().length);
 
   constructor(
     private navCtrl: NavController,
@@ -72,6 +75,7 @@ export class HomePage implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadUserData();
     this.loadRequests();
+    this.loadConsultations();
   }
 
   ngOnDestroy(): void {
@@ -81,6 +85,7 @@ export class HomePage implements OnInit, OnDestroy {
 
   ionViewWillEnter(): void {
     this.loadRequests();
+    this.loadConsultations();
   }
 
   loadUserData(): void {
@@ -107,17 +112,59 @@ export class HomePage implements OnInit, OnDestroy {
       });
   }
 
+  loadConsultations(): void {
+    this.isLoadingConsultations.set(true);
+    this.consultationService.getMyConsultations()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.consultations.set(response.results);
+          this.isLoadingConsultations.set(false);
+        },
+        error: (error) => {
+          this.showError(error?.error?.detail || 'Failed to load consultations');
+          this.isLoadingConsultations.set(false);
+        }
+      });
+  }
+
   refreshData(event: { target: { complete: () => void } }): void {
+    let requestsLoaded = false;
+    let consultationsLoaded = false;
+
+    const checkComplete = () => {
+      if (requestsLoaded && consultationsLoaded) {
+        event.target.complete();
+      }
+    };
+
     this.consultationService.getMyRequests()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (requests) => {
           this.requests.set(requests);
-          event.target.complete();
+          requestsLoaded = true;
+          checkComplete();
         },
         error: (error) => {
           this.showError(error?.error?.detail || 'Failed to load requests');
-          event.target.complete();
+          requestsLoaded = true;
+          checkComplete();
+        }
+      });
+
+    this.consultationService.getMyConsultations()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.consultations.set(response.results);
+          consultationsLoaded = true;
+          checkComplete();
+        },
+        error: (error) => {
+          this.showError(error?.error?.detail || 'Failed to load consultations');
+          consultationsLoaded = true;
+          checkComplete();
         }
       });
   }
@@ -199,6 +246,39 @@ export class HomePage implements OnInit, OnDestroy {
 
   isStatusAccepted(request: ConsultationRequest): boolean {
     return request.status?.toLowerCase() === 'accepted';
+  }
+
+  isStatusRefused(request: ConsultationRequest): boolean {
+    return request.status?.toLowerCase() === 'refused';
+  }
+
+  getConsultationDoctorName(consultation: Consultation): string {
+    if (consultation.owned_by) {
+      return `Dr. ${consultation.owned_by.first_name} ${consultation.owned_by.last_name}`;
+    }
+    return '';
+  }
+
+  getConsultationReasonName(consultation: Consultation): string {
+    if (typeof consultation.reason === 'object' && consultation.reason) {
+      return consultation.reason.name;
+    }
+    return 'Consultation';
+  }
+
+  viewConsultationDetails(consultation: Consultation): void {
+    this.navCtrl.navigateForward(`/consultation/${consultation.id}`);
+  }
+
+  getConsultationStatusConfig(status: string): { label: string; color: 'warning' | 'info' | 'primary' | 'success' | 'muted' } {
+    const normalizedStatus = (status || 'REQUESTED').toLowerCase();
+    const statusMap: Record<string, { label: string; color: 'warning' | 'info' | 'primary' | 'success' | 'muted' }> = {
+      'requested': { label: 'Requested', color: 'warning' },
+      'active': { label: 'Active', color: 'success' },
+      'closed': { label: 'Closed', color: 'muted' },
+      'cancelled': { label: 'Cancelled', color: 'muted' }
+    };
+    return statusMap[normalizedStatus] || statusMap['requested'];
   }
 
   getUserInitials(): string {

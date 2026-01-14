@@ -387,6 +387,21 @@ ion-header {
     }
   }
 
+  .refused-sub {
+    background: #fef2f2;
+
+    .sub-section-header {
+      color: #dc2626;
+    }
+
+    .refused-reason {
+      font-size: 0.8125rem;
+      color: #991b1b;
+      margin: 0;
+      font-style: italic;
+    }
+  }
+
   .card-action-btn {
     display: flex;
     align-items: center;
@@ -408,6 +423,67 @@ ion-header {
 
     ion-icon {
       font-size: 20px;
+    }
+  }
+
+  .consultation-card {
+    background: var(--app-card-background);
+    border-radius: var(--app-card-radius);
+    border: 1px solid var(--app-border-color);
+    overflow: hidden;
+    margin-bottom: var(--app-spacing-md);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+
+    &:active {
+      border-color: var(--ion-color-primary);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .consultation-header {
+      padding: var(--app-spacing-md);
+      border-bottom: 1px solid var(--app-border-color);
+    }
+
+    .consultation-title-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--app-spacing-sm);
+      margin-bottom: 4px;
+    }
+
+    .consultation-reason {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--app-text-primary);
+      margin: 0;
+    }
+
+    .consultation-doctor {
+      font-size: 0.8125rem;
+      color: var(--app-text-secondary);
+    }
+
+    .consultation-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--app-spacing-md);
+      padding: var(--app-spacing-md);
+      background: var(--app-background);
+      border-bottom: 1px solid var(--app-border-color);
+
+      .meta-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.8125rem;
+        color: var(--app-text-secondary);
+
+        ion-icon {
+          font-size: 14px;
+        }
+      }
     }
   }
 }

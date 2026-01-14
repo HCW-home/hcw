@@ -15,7 +15,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { LocalVideoTrack } from 'livekit-client';
+import { LocalVideoTrack, LocalTrack } from 'livekit-client';
 
 import { LiveKitService, ParticipantInfo, ConnectionStatus } from '../../../../core/services/livekit.service';
 import { ConsultationService } from '../../../../core/services/consultation.service';
@@ -57,11 +57,13 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   @Output() loadMore = new EventEmitter<void>();
 
   @ViewChild('localVideo') localVideoRef!: ElementRef<HTMLVideoElement>;
+  @ViewChild('localScreenShare') localScreenShareRef!: ElementRef<HTMLVideoElement>;
   @ViewChild('participantsContainer') participantsContainerRef!: ElementRef<HTMLDivElement>;
 
   connectionStatus: ConnectionStatus = 'disconnected';
   participants: Map<string, ParticipantInfo> = new Map();
   localVideoTrack: LocalVideoTrack | null = null;
+  localScreenShareTrack: LocalTrack | null = null;
   isCameraEnabled = false;
   isMicrophoneEnabled = false;
   isScreenShareEnabled = false;
@@ -144,6 +146,14 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
         this.cdr.markForCheck();
       });
 
+    this.livekitService.localScreenShareTrack$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(track => {
+        this.localScreenShareTrack = track;
+        this.cdr.markForCheck();
+        setTimeout(() => this.attachLocalScreenShare(), 0);
+      });
+
     this.livekitService.error$
       .pipe(takeUntil(this.destroy$))
       .subscribe(error => {
@@ -187,6 +197,11 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     if (!this.localVideoRef?.nativeElement || !this.localVideoTrack) return;
 
     this.localVideoTrack.attach(this.localVideoRef.nativeElement);
+  }
+
+  private attachLocalScreenShare(): void {
+    if (!this.localScreenShareRef?.nativeElement || !this.localScreenShareTrack) return;
+    this.localScreenShareTrack.attach(this.localScreenShareRef.nativeElement);
   }
 
   private attachRemoteMedia(): void {
@@ -358,7 +373,8 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   getTotalTileCount(): number {
     const participants = this.getParticipantsArray();
     const screenShareCount = participants.filter(p => p.isScreenShareEnabled && p.screenShareTrack).length;
-    return 1 + this.participants.size + screenShareCount + (this.participants.size === 0 ? 1 : 0);
+    const localScreenShareCount = this.isScreenShareEnabled && this.localScreenShareTrack ? 1 : 0;
+    return 1 + localScreenShareCount + this.participants.size + screenShareCount + (this.participants.size === 0 ? 1 : 0);
   }
 
   getScreenSharingParticipant(): ParticipantInfo | null {

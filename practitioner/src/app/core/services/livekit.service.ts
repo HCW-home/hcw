@@ -6,6 +6,7 @@ import {
   Track,
   LocalVideoTrack,
   LocalAudioTrack,
+  LocalTrack,
   RemoteParticipant,
   RemoteTrack,
   RemoteTrackPublication,
@@ -45,6 +46,7 @@ export class LiveKitService implements OnDestroy {
   private connectionStatusSubject = new BehaviorSubject<ConnectionStatus>('disconnected');
   private localVideoTrackSubject = new BehaviorSubject<LocalVideoTrack | null>(null);
   private localAudioTrackSubject = new BehaviorSubject<LocalAudioTrack | null>(null);
+  private localScreenShareTrackSubject = new BehaviorSubject<LocalTrack | null>(null);
   private participantsSubject = new BehaviorSubject<Map<string, ParticipantInfo>>(new Map());
   private isCameraEnabledSubject = new BehaviorSubject<boolean>(false);
   private isMicrophoneEnabledSubject = new BehaviorSubject<boolean>(false);
@@ -54,6 +56,7 @@ export class LiveKitService implements OnDestroy {
   public connectionStatus$: Observable<ConnectionStatus> = this.connectionStatusSubject.asObservable();
   public localVideoTrack$: Observable<LocalVideoTrack | null> = this.localVideoTrackSubject.asObservable();
   public localAudioTrack$: Observable<LocalAudioTrack | null> = this.localAudioTrackSubject.asObservable();
+  public localScreenShareTrack$: Observable<LocalTrack | null> = this.localScreenShareTrackSubject.asObservable();
   public participants$: Observable<Map<string, ParticipantInfo>> = this.participantsSubject.asObservable();
   public isCameraEnabled$: Observable<boolean> = this.isCameraEnabledSubject.asObservable();
   public isMicrophoneEnabled$: Observable<boolean> = this.isMicrophoneEnabledSubject.asObservable();
@@ -199,6 +202,12 @@ export class LiveKitService implements OnDestroy {
     } else {
       this.localAudioTrackSubject.next(null);
     }
+
+    if (screenSharePublication?.track) {
+      this.localScreenShareTrackSubject.next(screenSharePublication.track as LocalTrack);
+    } else {
+      this.localScreenShareTrackSubject.next(null);
+    }
   }
 
   async enableCamera(enable: boolean = true): Promise<void> {
@@ -287,6 +296,7 @@ export class LiveKitService implements OnDestroy {
   private cleanup(): void {
     this.localVideoTrackSubject.next(null);
     this.localAudioTrackSubject.next(null);
+    this.localScreenShareTrackSubject.next(null);
     this.participantsSubject.next(new Map());
     this.isCameraEnabledSubject.next(false);
     this.isMicrophoneEnabledSubject.next(false);

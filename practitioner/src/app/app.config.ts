@@ -70,6 +70,7 @@ import {
   lucideScreenShareOff,
   lucideMessageSquare,
   lucideStethoscope,
+  lucideSparkles,
 } from '@ng-icons/lucide';
 import {authInterceptor} from './core/interceptors/auth.interceptor';
 
@@ -139,6 +140,7 @@ export const appConfig: ApplicationConfig = {
       lucideScreenShareOff,
       lucideMessageSquare,
       lucideStethoscope,
+      lucideSparkles,
     }),
     provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
     provideTranslateHttpLoader({

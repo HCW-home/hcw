@@ -15,7 +15,7 @@ import {
 } from '@ionic/angular/standalone';
 import { Subject, interval, Subscription } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { LocalVideoTrack } from 'livekit-client';
+import { LocalVideoTrack, LocalTrack } from 'livekit-client';
 
 import { LiveKitService, ParticipantInfo, ConnectionStatus } from '../../core/services/livekit.service';
 import { ConsultationService } from '../../core/services/consultation.service';
@@ -44,6 +44,7 @@ import { MessageListComponent, Message, SendMessageData, EditMessageData, Delete
 })
 export class VideoConsultationPage implements OnInit, OnDestroy {
   @ViewChild('localVideo') localVideoRef!: ElementRef<HTMLVideoElement>;
+  @ViewChild('localScreenShare') localScreenShareRef!: ElementRef<HTMLVideoElement>;
   @ViewChild('participantsContainer') participantsContainerRef!: ElementRef<HTMLDivElement>;
 
   appointmentId: number | null = null;
@@ -52,6 +53,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
   connectionStatus: ConnectionStatus = 'disconnected';
   participants: Map<string, ParticipantInfo> = new Map();
   localVideoTrack: LocalVideoTrack | null = null;
+  localScreenShareTrack: LocalTrack | null = null;
 
   isCameraEnabled = false;
   isMicrophoneEnabled = false;
@@ -258,6 +260,14 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       });
 
+    this.livekitService.localScreenShareTrack$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(track => {
+        this.localScreenShareTrack = track;
+        this.cdr.markForCheck();
+        setTimeout(() => this.attachLocalScreenShare(), 0);
+      });
+
     this.livekitService.error$
       .pipe(takeUntil(this.destroy$))
       .subscribe(error => {
@@ -312,6 +322,11 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
   private attachLocalVideo(): void {
     if (!this.localVideoRef?.nativeElement || !this.localVideoTrack) return;
     this.localVideoTrack.attach(this.localVideoRef.nativeElement);
+  }
+
+  private attachLocalScreenShare(): void {
+    if (!this.localScreenShareRef?.nativeElement || !this.localScreenShareTrack) return;
+    this.localScreenShareTrack.attach(this.localScreenShareRef.nativeElement);
   }
 
   private attachRemoteMedia(): void {
@@ -679,7 +694,8 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     const participants = this.getParticipantsArray();
     const participantCount = participants.length;
     const screenShareCount = participants.filter(p => p.isScreenShareEnabled && p.screenShareTrack).length;
-    return 1 + (participantCount > 0 ? participantCount + screenShareCount : 1);
+    const localScreenShareCount = this.isScreenShareEnabled && this.localScreenShareTrack ? 1 : 0;
+    return 1 + localScreenShareCount + (participantCount > 0 ? participantCount + screenShareCount : 1);
   }
 
   getScreenSharingParticipant(): ParticipantInfo | null {

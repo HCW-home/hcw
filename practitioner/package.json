@@ -22,6 +22,7 @@
     "@fullcalendar/daygrid": "^6.1.19",
     "@fullcalendar/interaction": "^6.1.19",
     "@fullcalendar/timegrid": "^6.1.19",
+    "@livekit/track-processors": "^0.7.0",
     "@ng-icons/core": "^33.0.0",
     "@ng-icons/heroicons": "^33.0.0",
     "@ng-icons/lucide": "^33.0.0",

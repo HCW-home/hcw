@@ -146,6 +146,18 @@
   grid-column: span 1;
 }
 
+.screen-share-tile {
+  aspect-ratio: 16 / 9;
+
+  .tile-video {
+    transform: none;
+  }
+}
+
+.local-screen-share {
+  border: 2px solid var(--ion-color-primary);
+}
+
 .participant-label {
   position: absolute;
   bottom: 8px;
