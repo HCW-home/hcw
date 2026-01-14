@@ -194,13 +194,22 @@
                                   (userSelected)="onParticipantUserSelected(i, j, $event)">
                                 </app-user-search-select>
                               } @else {
-                                <div class="form-group">
-                                  <app-input
-                                    label="Guest Name (Optional)"
-                                    leftIcon="user"
-                                    placeholder="Enter guest name..."
-                                    formControlName="name">
-                                  </app-input>
+                                <div class="name-row">
+                                  <div class="form-group">
+                                    <app-input
+                                      label="First Name"
+                                      leftIcon="user"
+                                      placeholder="Enter first name..."
+                                      formControlName="first_name">
+                                    </app-input>
+                                  </div>
+                                  <div class="form-group">
+                                    <app-input
+                                      label="Last Name"
+                                      placeholder="Enter last name..."
+                                      formControlName="last_name">
+                                    </app-input>
+                                  </div>
                                 </div>
 
                                 <div class="form-group">

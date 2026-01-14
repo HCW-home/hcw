@@ -286,6 +286,17 @@
           app-user-search-select {
             display: block;
           }
+
+          .name-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+
+            .form-group {
+              margin-bottom: 0;
+            }
+          }
         }
 
         .contact-toggle {
