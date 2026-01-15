@@ -620,36 +620,3 @@ class HealthMetric(models.Model):
         return f"{self.user} @ {self.measured_at:%Y-%m-%d %H:%M}"
 
     acknowledged_at = models.DateTimeField(blank=True, null=True)
-
-    def save(self, *args, **kawrgs):
-        if not self.pk:
-            firebase_msg = self.user.send_user_notification(
-                title=self.title,
-                message=self.message,
-            )
-            super(Notification, self).save(*args, **kawrgs)
-            self.send_notification()
-        else:
-            super(Notification, self).save(*args, **kawrgs)
-
-    def send_notification(self):
-        channel_layer = get_channel_layer()
-        # Send via both old method (for backward compatibility) and new user WebSocket
-        async_to_sync(channel_layer.group_send)(
-            f"user_{self.user.id}", {"type": "send_notification", "data": self.pk}
-        )
-        # Send via new user messaging system
-        async_to_sync(channel_layer.group_send)(
-            f"user_{self.user.id}",
-            {
-                "type": "user_notification",
-                "data": {
-                    "title": self.title,
-                    "message": self.message,
-                    "notification_id": self.pk,
-                    "timestamp": self.created_at.isoformat()
-                    if hasattr(self, "created_at")
-                    else None,
-                },
-            },
-        )

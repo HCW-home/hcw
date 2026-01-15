@@ -7,7 +7,7 @@ from decimal import Decimal
 
 from users.models import (
     Term, Organisation, Language, Speciality, HealthMetric,
-    Notification, FCMDeviceOverride
+    FCMDeviceOverride
 )
 
 User = get_user_model()
@@ -184,10 +184,3 @@ class HealthMetricFactory(DjangoModelFactory):
     notes = factory.Faker('text', max_nb_chars=200)
 
 
-class NotificationFactory(DjangoModelFactory):
-    class Meta:
-        model = Notification
-
-    user = factory.SubFactory(UserFactory)
-    title = factory.Faker('sentence', nb_words=4)
-    message = factory.Faker('text', max_nb_chars=200)

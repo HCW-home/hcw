@@ -1,6 +1,7 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.db.models.signals import post_delete, post_save, pre_delete, pre_save
 from django.dispatch import receiver
 from django.utils import timezone
@@ -215,15 +216,32 @@ def send_appointment_invites_update(sender, instance, **kwargs):
 
 @receiver(pre_delete, sender=Participant)
 def delete_participant(sender, instance, **kwargs):
-    message = Message.objects.create(
-        communication_method=participant.communication_method,
-        recipient_phone=participant.phone,
-        recipient_email=participant.email,
-        sent_to=participant.user,
-        sent_by=appointment.consultation.created_by,
-        template_system_name="participant_deleted",
-        object_pk=participant.pk,
-        object_model="consultations.Participant",
-    )
-    # Don't use celery here since we need to have participant id.
-    message.send(wait=True)
+    # Capture participant data before deletion
+    participant_data = {
+        "communication_method": instance.communication_method,
+        "recipient_phone": instance.phone,
+        "recipient_email": instance.email,
+        "sent_to": instance.user,
+        "sent_by": instance.appointment.consultation.created_by,
+        "object_pk": instance.pk,
+    }
+
+    def send_deletion_notification():
+        try:
+            message = NotificationMessage.objects.create(
+                communication_method=participant_data["communication_method"],
+                recipient_phone=participant_data["recipient_phone"],
+                recipient_email=participant_data["recipient_email"],
+                sent_to=participant_data["sent_to"],
+                sent_by=participant_data["sent_by"],
+                template_system_name="appointment_updated",
+                object_pk=participant_data["object_pk"],
+                object_model="consultations.Participant",
+            )
+            message.send(wait=True)
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to send participant deletion notification: {str(e)}")
+
+    transaction.on_commit(send_deletion_notification)
