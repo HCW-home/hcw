@@ -962,7 +962,7 @@ class DashboardPractitionerView(APIView):
         """Récupère les statistiques personnalisées du praticien"""
         user = request.user
 
-        now = timezone.now()
+        now = timezone.now() - timedelta(minutes=30)
         tomorrow = timezone.now().date() + timedelta(days=1)
 
         # Consultations accessibles par l'utilisateur
@@ -980,5 +980,5 @@ class DashboardPractitionerView(APIView):
         return Response({
             "next_appointment": AppointmentSerializer(next_appointment).data,
             "upcoming_appointments": AppointmentSerializer(upcoming_appointments, many=True).data,
-            "overdue_consutations": ConsultationSerializer(consultations_qs.overdue, many=True).data,
+            "overdue_consutations": ConsultationSerializer(consultations_qs.overdue.order_by('-created_at')[:3], many=True).data,
         }, status=status.HTTP_200_OK)
