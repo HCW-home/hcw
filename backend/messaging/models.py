@@ -677,11 +677,17 @@ class Message(ModelCeleryAbstract):
 
     @property
     def render_content(self):
-        return self.render("content")
-
+        try:
+            return self.render("content")
+        except:
+            return ""
+        
     @property
     def render_subject(self):
-        return self.render("subject")
+        try:
+            return self.render("subject")
+        except:
+            return ""
 
     def render(self, field: str):
         if not self.template_system_name:
