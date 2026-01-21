@@ -280,7 +280,7 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
         for consultation in consultations_qs:
             # Condition 1: All appointments are more than 1 hour in the past
             appointments = consultation.appointments.filter(
-                status=AppointmentStatus.SCHEDULED
+                status=AppointmentStatus.scheduled
             )
 
             if appointments.exists():
@@ -436,13 +436,13 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     def send(self, request, pk=None):
         """Send an appointment (change status to SCHEDULED)"""
         appointment = self.get_object()
-        if appointment.status == AppointmentStatus.SCHEDULED:
+        if appointment.status == AppointmentStatus.scheduled:
             return Response(
                 {"error": "This appointment is already scheduled"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        appointment.status = AppointmentStatus.SCHEDULED
+        appointment.status = AppointmentStatus.scheduled
         appointment.save()
 
         serializer = self.get_serializer(appointment)
@@ -531,13 +531,13 @@ class RequestViewSet(CreatedByMixin, viewsets.ModelViewSet):
         """Cancel a consultation request"""
         consultation_request = self.get_object()
 
-        if consultation_request.status == RequestStatus.CANCELLED:
+        if consultation_request.status == RequestStatus.cancelled:
             return Response(
                 {"error": "This request is already cancelled"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        consultation_request.status = RequestStatus.CANCELLED
+        consultation_request.status = RequestStatus.cancelled
         consultation_request.save()
 
         serializer = self.get_serializer(consultation_request)
@@ -681,7 +681,7 @@ class ReasonSlotsView(APIView):
         existing_appointments = Appointment.objects.filter(
             scheduled_at__date__gte=from_date,
             scheduled_at__date__lt=end_date,
-            status=AppointmentStatus.SCHEDULED,
+            status=AppointmentStatus.scheduled,
         ).select_related("consultation")
 
         # Create appointment lookup by practitioner and datetime
@@ -969,7 +969,7 @@ class DashboardPractitionerView(APIView):
 
         upcoming_appointments = Appointment.objects.filter(
             consultation__in=consultations_qs,
-            status=AppointmentStatus.SCHEDULED,
+            status=AppointmentStatus.scheduled,
             scheduled_at__gte=now,
             scheduled_at__lt=tomorrow,
         )

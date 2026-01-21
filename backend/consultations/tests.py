@@ -54,7 +54,7 @@ class AppointmentTest(TestCase):
         self.assertTrue(self.participant1.is_notified)
         self.assertFalse(self.participant2.is_notified)
 
-        self.appointment.status = AppointmentStatus.SCHEDULED
+        self.appointment.status = AppointmentStatus.scheduled
         self.appointment.save()
 
         handle_invites(self.appointment.pk)

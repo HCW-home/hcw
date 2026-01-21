@@ -51,3 +51,4 @@ update patient user information
 
 * Join consultation : add intermediate page similar to google meet.
 * Health Metric : add custom fields on patient + on health metric + endpoints
+* Remove delete appointment

@@ -119,7 +119,7 @@ class AssignmentManager:
             if self.request.consultation:
                 self.request.consultation.delete()
                 self.request.consultation = None
-            self.request.status = RequestStatus.CANCELLED
+            self.request.status = RequestStatus.cancelled
             if exc_type == AssignmentException:
                 self.request.refused_reason = f"{exc_val}"
             else:
@@ -128,7 +128,7 @@ class AssignmentManager:
             print(f"Une exception s'est produite : {exc_val}")
             return
 
-        self.request.status = RequestStatus.ACCEPTED
+        self.request.status = RequestStatus.accepted
         self.request.save()
 
 

@@ -100,9 +100,9 @@ class Consultation(models.Model):
 
 
 class AppointmentStatus(models.TextChoices):
-    DRAFT = "Draft", _("Draft")
-    SCHEDULED = "Scheduled", _("Scheduled")
-    CANCELLED = "Cancelled", _("Cancelled")
+    draft = "draft", _("Draft")
+    scheduled = "scheduled", _("Scheduled")
+    cancelled = "cancelled", _("Cancelled")
 
 
 class Appointment(models.Model):
@@ -110,7 +110,7 @@ class Appointment(models.Model):
     status = models.CharField(
         _("status"),
         choices=AppointmentStatus.choices,
-        default=AppointmentStatus.DRAFT,
+        default=AppointmentStatus.draft,
     )
     consultation = models.ForeignKey(
         Consultation,
@@ -363,10 +363,10 @@ class Reason(models.Model):
 
 
 class RequestStatus(models.TextChoices):
-    REQUESTED = "Requested", _("Requested")
-    ACCEPTED = "Accepted", _("Accepted")
-    CANCELLED = "Cancelled", _("Cancelled")
-    REFUSED = "Refused", _("Refused")
+    requested = "requested", _("Requested")
+    accepted = "accepted", _("Accepted")
+    cancelled = "cancelled", _("Cancelled")
+    refused = "refused", _("Refused")
 
 
 class Request(models.Model):
@@ -400,7 +400,7 @@ class Request(models.Model):
 
     refused_reason = models.TextField(null=True, blank=True)
     status = models.CharField(
-        choices=RequestStatus.choices, default=RequestStatus.REQUESTED
+        choices=RequestStatus.choices, default=RequestStatus.requested
     )
 
     appointment = models.OneToOneField(

@@ -36,13 +36,13 @@ def handle_invites(appointment_id):
     appointment = Appointment.objects.get(pk=appointment_id)
     participants = appointment.participants.filter(is_invited=True)
 
-    if appointment.status == AppointmentStatus.SCHEDULED:
+    if appointment.status == AppointmentStatus.scheduled:
         if appointment.previous_scheduled_at:
             template_system_name = "appointment_updated"
         else:
             template_system_name = "invitation_to_appointment"
             participants = participants.filter(is_notified=False)
-    elif appointment.status == AppointmentStatus.CANCELLED:
+    elif appointment.status == AppointmentStatus.cancelled:
         template_system_name = "appointment_cancelled"
     else:
         "Do nothing"
@@ -71,7 +71,7 @@ def handle_reminders():
     for reminder in ["appointment_first_reminder", "appointment_last_reminder"]:
         reminder_datetime = now + timedelta(minutes=int(getattr(config, reminder)))
         for appointment in Appointment.objects.filter(
-            scheduled_at=reminder_datetime, status=AppointmentStatus.SCHEDULED
+            scheduled_at=reminder_datetime, status=AppointmentStatus.scheduled
         ):
             for participant in appointment.participants:
                 Message.objects.create(

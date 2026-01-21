@@ -155,7 +155,7 @@ def request_saved(sender, instance, created, **kwargs):
     Whenever a Request is created, trigger the celery task to process it.
     Only trigger for newly created requests with REQUESTED status.
     """
-    if created and instance.status == RequestStatus.REQUESTED:
+    if created and instance.status == RequestStatus.requested:
         try:
             # Import the task here to avoid circular imports
             from .tasks import handle_request
@@ -180,7 +180,7 @@ def send_appointment_invites(sender, instance, created, **kwargs):
     Prepare invite sending over celery task.
     """
 
-    if instance.status in [AppointmentStatus.SCHEDULED, AppointmentStatus.CANCELLED]:
+    if instance.status in [AppointmentStatus.scheduled, AppointmentStatus.cancelled]:
         handle_invites.delay(instance.pk)
 
 

@@ -125,7 +125,7 @@ class RequestFactory(DjangoModelFactory):
     type = Type.ONLINE
     reason = factory.SubFactory(ReasonFactory)
     comment = factory.Faker("text", max_nb_chars=100)
-    status = RequestStatus.REQUESTED
+    status = RequestStatus.requested
 
 
 class AppointmentFactory(DjangoModelFactory):
@@ -140,7 +140,7 @@ class AppointmentFactory(DjangoModelFactory):
         lambda obj: obj.scheduled_at + timedelta(minutes=30)
     )
     type = Type.ONLINE
-    status = AppointmentStatus.SCHEDULED
+    status = AppointmentStatus.scheduled
     created_by = factory.SubFactory(UserFactory)
 
 

@@ -16,7 +16,7 @@ class ConsultationQuerySet(models.QuerySet):
         # Get consultations with no future scheduled appointments
         return self.active.exclude(
             appointments__scheduled_at__gte=timezone.now(),
-            appointments__status=AppointmentStatus.SCHEDULED,
+            appointments__status=AppointmentStatus.scheduled,
         ).distinct()
         
 class ConsultationManager(models.Manager):

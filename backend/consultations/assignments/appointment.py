@@ -71,7 +71,7 @@ class AssignmentHandler(BaseAssignmentHandler):
                 appointment_count = Appointment.objects.filter(
                     consultation__owned_by=doctor,
                     scheduled_at__date=request_date,
-                    status=AppointmentStatus.SCHEDULED,
+                    status=AppointmentStatus.scheduled,
                 ).count()
 
                 available_doctors.append((doctor, appointment_count))
@@ -136,7 +136,7 @@ class AssignmentHandler(BaseAssignmentHandler):
                 consultation__owned_by=doctor,
                 scheduled_at__lt=end_time,
                 end_expected_at__gt=requested_datetime,
-                status=AppointmentStatus.SCHEDULED,
+                status=AppointmentStatus.scheduled,
             ).exists()
 
             if not conflicts:
@@ -188,7 +188,7 @@ class AssignmentHandler(BaseAssignmentHandler):
             scheduled_at=self.request.expected_at,
             end_expected_at=end_time,
             type=self.request.type,
-            status=AppointmentStatus.SCHEDULED,
+            status=AppointmentStatus.scheduled,
             created_by=self.request.created_by,
         )
 
