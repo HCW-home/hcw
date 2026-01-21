@@ -34,7 +34,7 @@ def handle_request(request_id):
 @shared_task
 def handle_invites(appointment_id):
     appointment = Appointment.objects.get(pk=appointment_id)
-    participants = appointment.participants.filter(is_invited=True)
+    participants = appointment.participants.filter(is_invited=True, is_active=True)
 
     if appointment.status == AppointmentStatus.scheduled:
         if appointment.previous_scheduled_at:
@@ -73,7 +73,7 @@ def handle_reminders():
         for appointment in Appointment.objects.filter(
             scheduled_at=reminder_datetime, status=AppointmentStatus.scheduled
         ):
-            for participant in appointment.participants:
+            for participant in appointment.participants.filter(is_active=True):
                 Message.objects.create(
                     sent_to=participant.user,
                     template_system_name="appointment_first_reminder",

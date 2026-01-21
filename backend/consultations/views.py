@@ -351,7 +351,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         appointment = self.get_object()
 
         if request.method == "GET":
-            participants = appointment.participants.all()
+            participants = appointment.participants.filter(is_active=True)
 
             page = self.paginate_queryset(participants)
             if page is not None:
@@ -452,21 +452,24 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 
 class ParticipantViewSet(viewsets.ModelViewSet):
     """
-    ViewSet for participants - provides CRUD operations
+    ViewSet for participants - provides CRUD operations (except DELETE)
+    To remove a participant, update is_active to False
     """
 
     serializer_class = ParticipantSerializer
     permission_classes = [IsAuthenticated, ConsultationAssigneePermission]
     pagination_class = ConsultationPagination
     ordering = ["-id"]
+    http_method_names = ["get", "post", "patch", "put", "head", "options"]
 
     def get_queryset(self):
         user = self.request.user
         if not user.is_authenticated:
             return Participant.objects.none()
 
-        # Return participants from appointments in consultations the user has access to
+        # Return active participants from appointments in consultations the user has access to
         return Participant.objects.filter(
+            is_active=True,
             appointment__consultation__in=Consultation.objects.filter(
                 Q(created_by=user) | Q(owned_by=user) | Q(group__users=user)
             )

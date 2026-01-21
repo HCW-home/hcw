@@ -268,7 +268,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
 
         if participants_data is not None:
             existing_ids = set(
-                instance.participants.values_list('id', flat=True))
+                instance.participants.filter(is_active=True).values_list('id', flat=True))
             incoming_ids = set()
 
             for participant_data in participants_data:
@@ -289,8 +289,8 @@ class AppointmentSerializer(serializers.ModelSerializer):
                     serializer.is_valid(raise_exception=True)
                     incoming_ids.add(serializer.save(appointment=instance).id)
 
-            to_delete = existing_ids - incoming_ids
-            instance.participants.filter(id__in=to_delete).delete()
+            to_deactivate = existing_ids - incoming_ids
+            instance.participants.filter(id__in=to_deactivate).update(is_active=False)
 
         return instance
 
@@ -399,7 +399,7 @@ class BookingSlotSerializer(serializers.ModelSerializer):
 class AppointmentDetailSerializer(serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(read_only=True)
     consultation = ConsultationSerializer(read_only=True)
-    participants = ParticipantSerializer(many=True, read_only=True)
+    participants = ParticipantSerializer(source='active_participants', many=True, read_only=True)
 
     class Meta:
         model = Appointment

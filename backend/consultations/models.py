@@ -130,6 +130,10 @@ class Appointment(models.Model):
     )
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
 
+    @property
+    def active_participants(self):
+        return self.participants.filter(is_active=True)
+
     class Meta:
         verbose_name = _("appointment")
         verbose_name_plural = _("appointments")
@@ -161,6 +165,7 @@ class Participant(models.Model):
         help_text="User timezone for displaying dates and times",
     )
 
+    is_active = models.BooleanField(default=True)
     is_invited = models.BooleanField(default=True)
     is_confirmed = models.BooleanField(null=True, blank=True)
     is_notified = models.BooleanField(default=False)
