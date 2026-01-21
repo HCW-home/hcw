@@ -22,3 +22,6 @@ update patient user information
 
 * Websocket messages
 * edit appointment > reset participant notification status
+
+* Add appointment into consultation patient side
+* Send join appointment
