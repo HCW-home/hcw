@@ -123,7 +123,12 @@ class ConsultationSerializer(serializers.ModelSerializer):
     group_id = serializers.IntegerField(
         write_only=True, required=False, allow_null=True
     )
+    
     beneficiary_id = serializers.IntegerField(
+        write_only=True, required=False, allow_null=True
+    )
+
+    owned_by_id = serializers.IntegerField(
         write_only=True, required=False, allow_null=True
     )
 
@@ -137,6 +142,7 @@ class ConsultationSerializer(serializers.ModelSerializer):
             "beneficiary_id",
             "created_by",
             "owned_by",
+            "owned_by_id",
             "group",
             "group_id",
             "description",
@@ -148,7 +154,7 @@ class ConsultationSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
             "created_by",
-            "owned_by",
+            "owned_by_id",
             "closed_at",
         ]
 

@@ -79,8 +79,8 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
     ordering_fields = ["created_at", "updated_at", "closed_at"]
 
     def get_serializer_class(self):
-        if self.action == "create":
-            return ConsultationCreateSerializer
+        # if self.action == "create":
+        #     return ConsultationCreateSerializer
         return ConsultationSerializer
 
     def get_queryset(self):
