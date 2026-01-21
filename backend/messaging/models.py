@@ -22,11 +22,11 @@ from .template import DEFAULT_NOTIFICATION_MESSAGES, NOTIFICATION_CHOICES
 
 
 class CommunicationMethod(models.TextChoices):
-    SMS = "sms", ("SMS")
-    EMAIL = "email", ("Email")
-    WHATSAPP = "whatsapp", ("WhatsApp")
-    PUSH = "push", ("Push Notification")
-    MANUAL = "manual", ("Manual")
+    sms = "sms", ("SMS")
+    email = "email", ("Email")
+    whatsapp = "whatsapp", ("WhatsApp")
+    push = "push", ("Push Notification")
+    manual = "manual", ("Manual")
 
 
 class MessagingProvider(models.Model):
@@ -472,13 +472,13 @@ class Template(models.Model):
 
 
 class TemplateValidationStatus(models.TextChoices):
-    CREATED = "created", _("Created")
-    PENDING = "pending", _("Pending")
-    VALIDATED = "validated", _("Validated")
-    REJECTED = "rejected", _("Rejected")
-    FAILED = "failed", _("Failed")
-    OUTDATED = "outdated", _("Outdated")
-    UNUSED = "unsued", _("Unused")
+    created = "created", _("Created")
+    pending = "pending", _("Pending")
+    validated = "validated", _("Validated")
+    rejected = "rejected", _("Rejected")
+    failed = "failed", _("Failed")
+    outdated = "outdated", _("Outdated")
+    unused = "unsued", _("Unused")
 
 
 class TemplateValidation(ModelCeleryAbstract):
@@ -513,7 +513,7 @@ class TemplateValidation(ModelCeleryAbstract):
         _("status"),
         max_length=20,
         choices=TemplateValidationStatus.choices,
-        default=TemplateValidationStatus.CREATED,
+        default=TemplateValidationStatus.created,
         help_text=_("Current validation status"),
     )
 
@@ -542,12 +542,12 @@ class TemplateValidation(ModelCeleryAbstract):
 
 
 class MessageStatus(models.TextChoices):
-    PENDING = "pending", "Pending"
-    SENDING = "sending", "Sending"
-    SENT = "sent", "Sent"
-    DELIVERED = "delivered", "Delivered"
-    FAILED = "failed", "Failed"
-    READ = "read", "Read"
+    pending = "pending", "Pending"
+    sending = "sending", "Sending"
+    sent = "sent", "Sent"
+    delivered = "delivered", "Delivered"
+    failed = "failed", "Failed"
+    read = "read", "Read"
 
 
 class Message(ModelCeleryAbstract):
@@ -579,7 +579,7 @@ class Message(ModelCeleryAbstract):
         _("status"),
         choices=MessageStatus.choices,
         max_length=20,
-        default=MessageStatus.PENDING,
+        default=MessageStatus.pending,
     )
     sent_at = models.DateTimeField(null=True, blank=True)
     delivered_at = models.DateTimeField(null=True, blank=True)
@@ -730,8 +730,8 @@ class Message(ModelCeleryAbstract):
         if (
             self.communication_method
             in [
-                CommunicationMethod.SMS,
-                CommunicationMethod.WHATSAPP,
+                CommunicationMethod.sms,
+                CommunicationMethod.whatsapp,
             ]
             and not self.phone_number
         ):
@@ -743,7 +743,7 @@ class Message(ModelCeleryAbstract):
                 }
             )
 
-        if self.communication_method == CommunicationMethod.EMAIL and not self.email:
+        if self.communication_method == CommunicationMethod.email and not self.email:
             raise ValidationError(
                 {
                     "recipient_email": _(

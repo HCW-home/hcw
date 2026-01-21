@@ -129,7 +129,7 @@ class Main(BaseMessagingProvider):
 
         template_validation.validation_response = response_data
         template_validation.external_template_id = response_data["sid"]
-        template_validation.status = TemplateValidationStatus.PENDING
+        template_validation.status = TemplateValidationStatus.pending
         template_validation.save()
 
     def check_template_validation(
@@ -159,10 +159,10 @@ class Main(BaseMessagingProvider):
 
         # Map Twilio statuses to our understanding
         if status in ["approved", "active"]:
-            template_validation.status = TemplateValidationStatus.VALIDATED
+            template_validation.status = TemplateValidationStatus.validated
         elif status in ["pending", "in_review"]:
-            template_validation.status = TemplateValidationStatus.PENDING
+            template_validation.status = TemplateValidationStatus.pending
         elif status in ["rejected", "failed"]:
-            template_validation.status = TemplateValidationStatus.REJECTED
+            template_validation.status = TemplateValidationStatus.rejected
         else:
-            template_validation.status = TemplateValidationStatus.UNUSED
+            template_validation.status = TemplateValidationStatus.unused

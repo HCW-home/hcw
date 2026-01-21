@@ -32,7 +32,7 @@ def send_message(self, message_id):
     """
     # Get message and maps to celery task and reset any status
     message = Message.objects.get(id=message_id)
-    message.status = MessageStatus.SENDING
+    message.status = MessageStatus.sending
     message.celery_task_id = self.request.id
     message.error_message = None
     message.save()
@@ -43,7 +43,7 @@ def send_message(self, message_id):
     ).order_by("priority", "id")
 
     if not messaging_providers.exists():
-        message.status = MessageStatus.FAILED
+        message.status = MessageStatus.failed
         message.error_message = f"Unable to find active communication for {message.validated_communication_method}"
         message.save()
         return
@@ -61,7 +61,7 @@ def send_message(self, message_id):
         try:
             # Get the provider class
             messaging_provider.instance.send(message)
-            message.status = MessageStatus.SENT
+            message.status = MessageStatus.sent
             message.save()
             return
 
@@ -77,7 +77,7 @@ def send_message(self, message_id):
     message.task_logs = (
         f"All providers failed for communication method: {message.communication_method}"
     )
-    message.status = MessageStatus.FAILED
+    message.status = MessageStatus.failed
     message.save()
 
 

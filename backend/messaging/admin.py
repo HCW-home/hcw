@@ -137,11 +137,11 @@ class MessageAdmin(ModelAdmin):
     @display(
         description=_("Status"),
         label={
-            MessageStatus.FAILED: "danger",
-            MessageStatus.SENT: "info",
-            MessageStatus.PENDING: "dark",
-            MessageStatus.DELIVERED: "info",
-            MessageStatus.READ: "success",
+            MessageStatus.failed: "danger",
+            MessageStatus.sent: "info",
+            MessageStatus.pending: "dark",
+            MessageStatus.delivered: "info",
+            MessageStatus.read: "success",
         },
     )
     def display_status(self, instance):
@@ -360,10 +360,10 @@ class TemplateValidationAdmin(ModelAdmin):
     @display(
         description=_("Status"),
         label={
-            TemplateValidationStatus.CREATED: "dark",
-            TemplateValidationStatus.PENDING: "warning",
-            TemplateValidationStatus.VALIDATED: "success",
-            TemplateValidationStatus.REJECTED: "danger",
+            TemplateValidationStatus.created: "dark",
+            TemplateValidationStatus.pending: "warning",
+            TemplateValidationStatus.validated: "success",
+            TemplateValidationStatus.rejected: "danger",
         },
     )
     def display_status(self, instance):

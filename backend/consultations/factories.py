@@ -122,7 +122,7 @@ class RequestFactory(DjangoModelFactory):
     expected_at = factory.LazyFunction(
         lambda: timezone.now() + timedelta(days=1, hours=2)
     )
-    type = Type.ONLINE
+    type = Type.online
     reason = factory.SubFactory(ReasonFactory)
     comment = factory.Faker("text", max_nb_chars=100)
     status = RequestStatus.requested
@@ -139,7 +139,7 @@ class AppointmentFactory(DjangoModelFactory):
     end_expected_at = factory.LazyAttribute(
         lambda obj: obj.scheduled_at + timedelta(minutes=30)
     )
-    type = Type.ONLINE
+    type = Type.online
     status = AppointmentStatus.scheduled
     created_by = factory.SubFactory(UserFactory)
 

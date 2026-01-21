@@ -26,16 +26,16 @@ class Main(BaseMessagingProvider):
         
         try:
             if not message.recipient_phone:
-                return MessageStatus.FAILED
+                return MessageStatus.failed
             
             auth_header = self._get_auth_header()
             if not auth_header:
-                return MessageStatus.FAILED
+                return MessageStatus.failed
                 
             account_sid = self.messaging_provider.account_sid
             from_phone = self.messaging_provider.from_phone
             if not from_phone:
-                return MessageStatus.FAILED
+                return MessageStatus.failed
             
             url = f"https://api.twilio.com/2010-04-01/Accounts/{account_sid}/Messages.json"
             
@@ -53,12 +53,12 @@ class Main(BaseMessagingProvider):
             response = requests.post(url, data=data, headers=headers)
             
             if response.status_code == 201:
-                return MessageStatus.SENT
+                return MessageStatus.sent
             else:
-                return MessageStatus.FAILED
+                return MessageStatus.failed
                 
         except Exception:
-            return MessageStatus.FAILED
+            return MessageStatus.failed
     
     def test_connection(self) -> Tuple[bool, Any]:
         try:

@@ -16,15 +16,15 @@ class Main(BaseMessagingProvider):
         
         try:
             if not message.recipient_phone:
-                return MessageStatus.FAILED
+                return MessageStatus.failed
             
             api_key = self.messaging_provider.api_key
             if not api_key:
-                return MessageStatus.FAILED
+                return MessageStatus.failed
             
             from_number = self.messaging_provider.from_phone
             if not from_number:
-                return MessageStatus.FAILED
+                return MessageStatus.failed
             
             url = "https://platform.clickatell.com/messages"
             
@@ -47,14 +47,14 @@ class Main(BaseMessagingProvider):
                 response_data = response.json()
                 messages = response_data.get('messages', [])
                 if messages and messages[0].get('accepted'):
-                    return MessageStatus.SENT
+                    return MessageStatus.sent
                 else:
-                    return MessageStatus.FAILED
+                    return MessageStatus.failed
             else:
-                return MessageStatus.FAILED
+                return MessageStatus.failed
                 
         except Exception:
-            return MessageStatus.FAILED
+            return MessageStatus.failed
     
     def test_connection(self) -> Tuple[bool, Any]:
         try:

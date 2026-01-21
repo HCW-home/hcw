@@ -314,7 +314,7 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
 
 class AppointmentViewSet(viewsets.ModelViewSet):
     """
-    ViewSet for appointments - provides CRUD operations
+    ViewSet for appointments - provides CRUD operations (except DELETE)
     Supports FHIR format by adding ?format=fhir query parameter
     """
 
@@ -326,6 +326,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     ordering_fields = ["created_at", "updated_at", "scheduled_at"]
     filterset_class = AppointmentFilter
     renderer_classes = [JSONRenderer, FHIRRenderer]
+    http_method_names = ["get", "post", "patch", "put", "head", "options"]
 
     def get_queryset(self):
         user = self.request.user
@@ -338,7 +339,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                 Q(created_by=user) | Q(owned_by=user) | Q(group__users=user)
             )
         ).distinct()
-    
+
 
     @extend_schema(
         request=ParticipantSerializer,

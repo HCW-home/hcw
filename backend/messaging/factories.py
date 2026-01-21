@@ -14,7 +14,7 @@ class MessagingProviderFactory(DjangoModelFactory):
         model = MessagingProvider
 
     name = factory.Faker('random_element', elements=['twilio_sms', 'twilio_whatsapp', 'sendgrid_email', 'ovh_sms'])
-    communication_method = CommunicationMethod.SMS
+    communication_method = CommunicationMethod.sms
 
     # Common authentication fields
     api_key = factory.Faker('uuid4')
@@ -35,19 +35,19 @@ class MessagingProviderFactory(DjangoModelFactory):
 
 class SMSProviderFactory(MessagingProviderFactory):
     """Factory for SMS messaging providers"""
-    communication_method = CommunicationMethod.SMS
+    communication_method = CommunicationMethod.sms
     from_phone = factory.Faker('phone_number')
 
 
 class WhatsAppProviderFactory(MessagingProviderFactory):
     """Factory for WhatsApp messaging providers"""
-    communication_method = CommunicationMethod.WHATSAPP
+    communication_method = CommunicationMethod.whatsapp
     from_phone = factory.Faker('phone_number')
 
 
 class EmailProviderFactory(MessagingProviderFactory):
     """Factory for Email messaging providers"""
-    communication_method = CommunicationMethod.EMAIL
+    communication_method = CommunicationMethod.email
     from_email = factory.Faker('email')
 
 
@@ -63,13 +63,13 @@ class TemplateFactory(DjangoModelFactory):
         lambda: "Appointment Reminder for {{ object.first_name }}"
     )
     model = factory.Faker('random_element', elements=['users.user', 'consultations.appointment', 'consultations.consultation'])
-    communication_method = factory.LazyFunction(lambda: [CommunicationMethod.EMAIL])
+    communication_method = factory.LazyFunction(lambda: [CommunicationMethod.email])
     is_active = True
 
 
 class SMSTemplateFactory(TemplateFactory):
     """Factory for SMS templates"""
-    communication_method = factory.LazyFunction(lambda: [CommunicationMethod.SMS])
+    communication_method = factory.LazyFunction(lambda: [CommunicationMethod.sms])
     template_text = factory.LazyFunction(
         lambda: "Hi {{ object.first_name }}, appointment reminder for {{ object.scheduled_at }}. Reply STOP to opt out."
     )
@@ -78,7 +78,7 @@ class SMSTemplateFactory(TemplateFactory):
 
 class WhatsAppTemplateFactory(TemplateFactory):
     """Factory for WhatsApp templates"""
-    communication_method = factory.LazyFunction(lambda: [CommunicationMethod.WHATSAPP])
+    communication_method = factory.LazyFunction(lambda: [CommunicationMethod.whatsapp])
     template_text = factory.LazyFunction(
         lambda: "Hello {{ object.first_name }}, your appointment with Dr. {{ object.doctor.last_name }} is scheduled for {{ object.scheduled_at }}."
     )
@@ -87,7 +87,7 @@ class WhatsAppTemplateFactory(TemplateFactory):
 
 class EmailTemplateFactory(TemplateFactory):
     """Factory for Email templates"""
-    communication_method = factory.LazyFunction(lambda: [CommunicationMethod.EMAIL])
+    communication_method = factory.LazyFunction(lambda: [CommunicationMethod.email])
     template_text = factory.LazyFunction(
         lambda: "Dear {{ object.first_name }},\n\nThis is a reminder that your appointment is scheduled for {{ object.scheduled_at }}.\n\nBest regards,\nThe Team"
     )
@@ -103,7 +103,7 @@ class TemplateValidationFactory(DjangoModelFactory):
     messaging_provider = factory.SubFactory(MessagingProviderFactory)
     template = factory.SubFactory(TemplateFactory)
     language_code = factory.Faker('random_element', elements=['en', 'fr', 'de', 'es', 'it'])
-    status = TemplateValidationStatus.CREATED
+    status = TemplateValidationStatus.created
     external_template_id = factory.Faker('bothify', text='template_#########')
     validation_response = factory.LazyFunction(
         lambda: {"status": "pending", "submitted_at": timezone.now().isoformat()}
@@ -112,7 +112,7 @@ class TemplateValidationFactory(DjangoModelFactory):
 
 class ValidatedTemplateValidationFactory(TemplateValidationFactory):
     """Factory for validated templates"""
-    status = TemplateValidationStatus.VALIDATED
+    status = TemplateValidationStatus.validated
     validated_at = factory.LazyFunction(timezone.now)
     validation_response = factory.LazyFunction(
         lambda: {
@@ -129,14 +129,14 @@ class MessageFactory(DjangoModelFactory):
 
     content = factory.Faker('text', max_nb_chars=200)
     subject = factory.Faker('sentence', nb_words=6)
-    communication_method = CommunicationMethod.SMS
+    communication_method = CommunicationMethod.sms
     provider_name = 'twilio_sms'
 
     # Recipients
     recipient_phone = factory.Faker('phone_number')
     recipient_email = factory.Faker('email')
 
-    status = MessageStatus.PENDING
+    status = MessageStatus.pending
     external_message_id = factory.Faker('bothify', text='msg_#########')
 
     # Users
@@ -146,7 +146,7 @@ class MessageFactory(DjangoModelFactory):
 
 class SMSMessageFactory(MessageFactory):
     """Factory for SMS messages"""
-    communication_method = CommunicationMethod.SMS
+    communication_method = CommunicationMethod.sms
     provider_name = 'twilio_sms'
     recipient_phone = factory.Faker('phone_number')
     recipient_email = ""
@@ -156,7 +156,7 @@ class SMSMessageFactory(MessageFactory):
 
 class WhatsAppMessageFactory(MessageFactory):
     """Factory for WhatsApp messages"""
-    communication_method = CommunicationMethod.WHATSAPP
+    communication_method = CommunicationMethod.whatsapp
     provider_name = 'twilio_whatsapp'
     recipient_phone = factory.Faker('phone_number')
     recipient_email = ""
@@ -166,7 +166,7 @@ class WhatsAppMessageFactory(MessageFactory):
 
 class EmailMessageFactory(MessageFactory):
     """Factory for Email messages"""
-    communication_method = CommunicationMethod.EMAIL
+    communication_method = CommunicationMethod.email
     provider_name = 'sendgrid_email'
     recipient_phone = ""
     recipient_email = factory.Faker('email')
@@ -176,19 +176,19 @@ class EmailMessageFactory(MessageFactory):
 
 class SentMessageFactory(MessageFactory):
     """Factory for messages that have been sent"""
-    status = MessageStatus.SENT
+    status = MessageStatus.sent
     sent_at = factory.LazyFunction(timezone.now)
     external_message_id = factory.Faker('bothify', text='msg_#########')
 
 
 class DeliveredMessageFactory(SentMessageFactory):
     """Factory for messages that have been delivered"""
-    status = MessageStatus.DELIVERED
+    status = MessageStatus.delivered
     delivered_at = factory.LazyFunction(timezone.now)
 
 
 class FailedMessageFactory(MessageFactory):
     """Factory for messages that failed to send"""
-    status = MessageStatus.FAILED
+    status = MessageStatus.failed
     failed_at = factory.LazyFunction(timezone.now)
     error_message = factory.Faker('sentence', nb_words=8)

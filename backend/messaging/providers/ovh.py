@@ -27,7 +27,7 @@ class Main(BaseMessagingProvider):
         
         try:
             if not message.recipient_phone:
-                return MessageStatus.FAILED
+                return MessageStatus.failed
             
             application_key = self.messaging_provider.application_key
             consumer_key = self.messaging_provider.consumer_key
@@ -35,7 +35,7 @@ class Main(BaseMessagingProvider):
             sender = self.messaging_provider.sender_id
             
             if not all([application_key, consumer_key, service_name, sender]):
-                return MessageStatus.FAILED
+                return MessageStatus.failed
             
             url = f"https://eu.api.ovh.com/1.0/sms/{service_name}/jobs"
             
@@ -63,12 +63,12 @@ class Main(BaseMessagingProvider):
             response = requests.post(url, json=body, headers=headers)
             
             if response.status_code == 200:
-                return MessageStatus.SENT
+                return MessageStatus.sent
             else:
-                return MessageStatus.FAILED
+                return MessageStatus.failed
                 
         except Exception:
-            return MessageStatus.FAILED
+            return MessageStatus.failed
     
     def test_connection(self) -> Tuple[bool, Any]:
         try:

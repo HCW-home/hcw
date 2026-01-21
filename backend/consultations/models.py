@@ -36,8 +36,8 @@ class Queue(models.Model):
 
 
 class Type(models.TextChoices):
-    ONLINE = "Online", _("Online")
-    INPERSON = "InPerson", _("In person")
+    online = "online", _("Online")
+    inperson = "inPerson", _("In person")
 
 
 class Consultation(models.Model):
@@ -106,7 +106,7 @@ class AppointmentStatus(models.TextChoices):
 
 
 class Appointment(models.Model):
-    type = models.CharField(choices=Type.choices, default=Type.ONLINE)
+    type = models.CharField(choices=Type.choices, default=Type.online)
     status = models.CharField(
         _("status"),
         choices=AppointmentStatus.choices,
@@ -392,7 +392,7 @@ class Request(models.Model):
         related_name="requests_asbeneficiary",
     )
 
-    type = models.CharField(choices=Type, default=Type.ONLINE)
+    type = models.CharField(choices=Type, default=Type.online)
     reason = models.ForeignKey(
         Reason, on_delete=models.PROTECT, related_name="reasons", null=True, blank=True
     )
@@ -440,10 +440,10 @@ class BookingSlot(models.Model):
 
 
 class PrescriptionStatus(models.TextChoices):
-    DRAFT = "Draft", _("Draft")
-    PRESCRIBED = "Prescribed", _("Prescribed")
-    DISPENSED = "Dispensed", _("Dispensed")
-    CANCELLED = "Cancelled", _("Cancelled")
+    draft = "draft", _("Draft")
+    prescribed = "prescribed", _("Prescribed")
+    dispensed = "dispensed", _("Dispensed")
+    cancelled = "cancelled", _("Cancelled")
 
 
 class Prescription(models.Model):
@@ -465,7 +465,7 @@ class Prescription(models.Model):
     status = models.CharField(
         _("status"),
         choices=PrescriptionStatus.choices,
-        default=PrescriptionStatus.DRAFT,
+        default=PrescriptionStatus.draft,
         max_length=20,
     )
 

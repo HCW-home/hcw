@@ -46,15 +46,15 @@ class Main(BaseMessagingProvider):
         
         try:
             if not message.recipient_phone:
-                return MessageStatus.FAILED
+                return MessageStatus.failed
             
             access_token = self._get_access_token()
             if not access_token:
-                return MessageStatus.FAILED
+                return MessageStatus.failed
             
             sender = self.messaging_provider.sender_id
             if not sender:
-                return MessageStatus.FAILED
+                return MessageStatus.failed
             
             url = "https://api.swisscom.com/messaging/sms"
             
@@ -72,12 +72,12 @@ class Main(BaseMessagingProvider):
             response = requests.post(url, json=data, headers=headers)
             
             if response.status_code in [200, 201, 202]:
-                return MessageStatus.SENT
+                return MessageStatus.sent
             else:
-                return MessageStatus.FAILED
+                return MessageStatus.failed
                 
         except Exception:
-            return MessageStatus.FAILED
+            return MessageStatus.failed
     
     def test_connection(self) -> Tuple[bool, Any]:
         try:

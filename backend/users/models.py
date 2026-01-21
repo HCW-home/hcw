@@ -126,7 +126,7 @@ class User(AbstractUser):
         related_name="users_mainorganisation",
     )
     communication_method = models.CharField(
-        choices=CommunicationMethod.choices, default=CommunicationMethod.EMAIL
+        choices=CommunicationMethod.choices, default=CommunicationMethod.email
     )
     mobile_phone_number = models.CharField(null=True, blank=True)
     timezone = models.CharField(
