@@ -7,6 +7,7 @@ from django.dispatch import receiver
 from django.utils import timezone
 from messaging.models import Message as NotificationMessage
 from users.services import user_online_service
+from django.db import transaction
 
 from .models import (
     Appointment,
@@ -181,7 +182,7 @@ def send_appointment_invites(sender, instance, created, **kwargs):
     """
 
     if instance.status in [AppointmentStatus.scheduled, AppointmentStatus.cancelled]:
-        handle_invites.delay(instance.pk)
+        transaction.on_commit(lambda: handle_invites.delay(instance.pk))
 
 
 @receiver(pre_save, sender=Message)
@@ -211,7 +212,7 @@ def appointment_previous_scheduled_at(sender, instance, **kwargs):
 @receiver(post_save, sender=Appointment)
 def send_appointment_invites_update(sender, instance, **kwargs):
     if instance.previous_scheduled_at:
-        handle_invites.delay(instance.pk)
+        transaction.on_commit(lambda: handle_invites.delay(instance.pk))
 
 
 @receiver(pre_delete, sender=Participant)
