@@ -18,25 +18,25 @@ class AppointmentTest(TestCase):
         self.patient = User.objects.create_user(
             email="patient@example.com", password="testpass123"
         )
-        self.practitionner = User.objects.create_user(
-            email="practitionner@example.com", password="testpass123"
+        self.practitioner = User.objects.create_user(
+            email="practitioner@example.com", password="testpass123"
         )
 
         self.consultation = Consultation.objects.create(
             beneficiary=self.patient,
             title="Fiever",
-            created_by=self.practitionner,
+            created_by=self.practitioner,
         )
 
         self.appointment = Appointment.objects.create(
-            created_by=self.practitionner,
+            created_by=self.practitioner,
             consultation=self.consultation,
             scheduled_at=timezone.now() + timedelta(days=1),
         )
 
         self.participant1 = Participant.objects.create(
             appointment=self.appointment,
-            user=self.practitionner,
+            user=self.practitioner,
         )
 
         self.participant2 = Participant.objects.create(

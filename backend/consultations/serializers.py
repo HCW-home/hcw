@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
+from django.utils.translation import gettext_lazy as _
 
 from .models import (
     Appointment,
@@ -116,20 +117,28 @@ class ParticipantSerializer(serializers.ModelSerializer):
 class ConsultationSerializer(serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(read_only=True)
     owned_by = ConsultationUserSerializer(read_only=True)
+    owned_by_id = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        source='owned_by',
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
     beneficiary = ConsultationUserSerializer(read_only=True)
+    beneficiary_id = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        source='beneficiary',
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
     group = QueueSerializer(read_only=True)
-
-    # Write-only fields for creating/updating
-    group_id = serializers.IntegerField(
-        write_only=True, required=False, allow_null=True
-    )
-    
-    beneficiary_id = serializers.IntegerField(
-        write_only=True, required=False, allow_null=True
-    )
-
-    owned_by_id = serializers.IntegerField(
-        write_only=True, required=False, allow_null=True
+    group_id = serializers.PrimaryKeyRelatedField(
+        queryset=Queue.objects.all(),
+        source='group',
+        write_only=True,
+        required=False,
+        allow_null=True
     )
 
     class Meta:
@@ -154,38 +163,9 @@ class ConsultationSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
             "created_by",
-            "owned_by_id",
             "closed_at",
         ]
 
-    def create(self, validated_data):
-        # Remove write-only fields from validated_data
-        group_id = validated_data.pop("group_id", None)
-        beneficiary_id = validated_data.pop("beneficiary_id", None)
-
-        # Set the user creating the consultation
-        user = self.context["request"].user
-        validated_data["created_by"] = user
-        validated_data["owned_by"] = user
-
-        # Set group and beneficiary if provided
-        if group_id:
-            try:
-                group = Queue.objects.get(id=group_id)
-                # Verify user has access to this group
-                if user in group.users.all():
-                    validated_data["group"] = group
-            except Queue.DoesNotExist:
-                pass
-
-        if beneficiary_id:
-            try:
-                beneficiary = User.objects.get(id=beneficiary_id)
-                validated_data["beneficiary"] = beneficiary
-            except User.DoesNotExist:
-                pass
-
-        return super().create(validated_data)
 
 class AppointmentSerializer(serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(read_only=True)
@@ -194,7 +174,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
     participants = ParticipantSerializer(
         many=True, read_only=False, required=False)
     dont_invite_beneficiary = serializers.BooleanField(required=False)
-    dont_invite_practitionner = serializers.BooleanField(required=False)
+    dont_invite_practitioner = serializers.BooleanField(required=False)
     dont_invite_me = serializers.BooleanField(required=False)
 
     class Meta:
@@ -211,7 +191,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
             "created_at",
             "participants",
             "dont_invite_beneficiary",
-            "dont_invite_practitionner",
+            "dont_invite_practitioner",
             "dont_invite_me",
         ]
         read_only_fields = ["id", "created_by", "created_at"]
@@ -220,7 +200,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
         participants_data = validated_data.pop('participants', [])
         consultation_id = validated_data.pop('consultation_id', None)
         dont_invite_beneficiary = validated_data.pop('dont_invite_beneficiary', False)
-        dont_invite_practitionner = validated_data.pop('dont_invite_practitionner', False)
+        dont_invite_practitioner = validated_data.pop('dont_invite_practitioner', False)
         dont_invite_me = validated_data.pop('dont_invite_me', False)
 
         consultation = None
@@ -256,7 +236,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
         # Auto-add participants based on flags
         if consultation:
             # Add practitioner (owned_by)
-            if not dont_invite_practitionner and consultation.owned_by_id and consultation.owned_by_id not in added_user_ids:
+            if not dont_invite_practitioner and consultation.owned_by_id and consultation.owned_by_id not in added_user_ids:
                 Participant.objects.create(
                     appointment=appointment,
                     user=consultation.owned_by

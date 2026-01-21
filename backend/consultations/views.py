@@ -965,7 +965,7 @@ class DashboardPractitionerView(APIView):
         tomorrow = timezone.now().date() + timedelta(days=1)
 
         # Consultations accessibles par l'utilisateur
-        consultations_qs = Consultation.objects.active(user)
+        consultations_qs = Consultation.objects.accessible_by(user).active
 
         upcoming_appointments = Appointment.objects.filter(
             consultation__in=consultations_qs,
@@ -979,5 +979,5 @@ class DashboardPractitionerView(APIView):
         return Response({
             "next_appointment": AppointmentSerializer(next_appointment).data,
             "upcoming_appointments": AppointmentSerializer(upcoming_appointments, many=True).data,
-            "overdue_consutations": ConsultationSerializer(Consultation.objects.overdue(user), many=True).data,
+            "overdue_consutations": ConsultationSerializer(consultations_qs.overdue, many=True).data,
         }, status=status.HTTP_200_OK)

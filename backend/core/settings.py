@@ -652,9 +652,9 @@ UNFOLD = {
 CONSTANCE_CONFIG = {
     "site_name": ("HCW@Home", "The name of the application displayed to users"),
     "patient_base_url": ("https://localhost:8000", "Base URL of patient frontend"),
-    "practitionner_base_url": (
+    "practitioner_base_url": (
         "https://localhost:8000",
-        "Base URL of practitionner frontend",
+        "Base URL of practitioner frontend",
     ),
     "appointment_first_reminder": (
         "1440",
@@ -669,7 +669,7 @@ CONSTANCE_CONFIG = {
 
 CONSTANCE_CONFIG_FIELDSETS = {
     "General Options": ("site_name",),
-    "URLs": ("patient_base_url", "practitionner_base_url"),
+    "URLs": ("patient_base_url", "practitioner_base_url"),
     "Scheduling": ("appointment_first_reminder", "appointment_last_reminder"),
 }
 
