@@ -32,6 +32,8 @@ class MessageSerializer(serializers.ModelSerializer):
             "sent_by",
             "created_at",
             "updated_at",
+            "object_model",
+            "object_pk",
         ]
         read_only_fields = ["id", "created_at", "updated_at", "sent_by"]
 

@@ -44,7 +44,7 @@ from .permissions import ConsultationAssigneePermission, DjangoModelPermissionsW
 from .serializers import (
     AppointmentSerializer,
     BookingSlotSerializer,
-    ConsultationCreateSerializer,
+    ParticipantDetailSerializer,
     ConsultationMessageCreateSerializer,
     ConsultationMessageSerializer,
     ConsultationSerializer,
@@ -456,7 +456,7 @@ class ParticipantViewSet(viewsets.ModelViewSet):
     To remove a participant, update is_active to False
     """
 
-    serializer_class = ParticipantSerializer
+    serializer_class = ParticipantDetailSerializer
     permission_classes = [IsAuthenticated, ConsultationAssigneePermission]
     pagination_class = ConsultationPagination
     ordering = ["-id"]

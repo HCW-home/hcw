@@ -114,6 +114,8 @@ class ParticipantSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 
+
+
 class ConsultationSerializer(serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(read_only=True)
     owned_by = ConsultationUserSerializer(read_only=True)
@@ -540,3 +542,24 @@ class RequestSerializer(serializers.ModelSerializer):
 
 #         # Convert to dict for JSON serialization
 #         return fhir_appointment.dict(exclude_none=True)
+
+
+class ParticipantDetailSerializer(ParticipantSerializer):
+    appointment = AppointmentDetailSerializer(read_only=True)
+
+    class Meta:
+        model = Participant
+        fields = [
+            "id",
+            "user",
+            "user_id",
+            "status",
+            "email",
+            "phone",
+            "timezone",
+            "first_name",
+            "last_name",
+            "appointment",
+            "communication_method",
+            "preferred_language"
+        ]
