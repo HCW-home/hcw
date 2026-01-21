@@ -4,6 +4,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     AppointmentViewSet,
     ConsultationViewSet,
+    DashboardPractitionerView,
     MessageViewSet,
     ParticipantViewSet,
     QueueViewSet,
@@ -23,4 +24,5 @@ router.register(r"messages", MessageViewSet, basename="message")
 urlpatterns = [
     path("api/", include(router.urls)),
     path("api/reasons/<int:id>/slots/", ReasonSlotsView.as_view(), name="reason_slots"),
+    path("api/dashboard/", DashboardPractitionerView.as_view(), name="dashboard_practitioner"),
 ]

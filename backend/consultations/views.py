@@ -949,3 +949,35 @@ class MessageViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(instance)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class DashboardPractitionerView(APIView):
+    """
+    Vue personnalisée pour afficher les statistiques du tableau de bord du praticien
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """Récupère les statistiques personnalisées du praticien"""
+        user = request.user
+
+        now = timezone.now()
+        tomorrow = timezone.now().date() + timedelta(days=1)
+
+        # Consultations accessibles par l'utilisateur
+        consultations_qs = Consultation.objects.active(user)
+
+        upcoming_appointments = Appointment.objects.filter(
+            consultation__in=consultations_qs,
+            status=AppointmentStatus.SCHEDULED,
+            scheduled_at__gte=now,
+            scheduled_at__lt=tomorrow,
+        )
+
+        next_appointment = upcoming_appointments.first()
+
+        return Response({
+            "next_appointment": AppointmentSerializer(next_appointment).data,
+            "upcoming_appointments": AppointmentSerializer(upcoming_appointments, many=True).data,
+            "overdue_consutations": ConsultationSerializer(Consultation.objects.overdue(user), many=True).data,
+        }, status=status.HTTP_200_OK)

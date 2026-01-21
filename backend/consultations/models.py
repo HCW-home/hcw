@@ -13,6 +13,7 @@ from messaging.models import CommunicationMethod
 from users.models import User
 
 from . import assignments
+from .managers import ConsultationManager
 
 # Create your models here.
 
@@ -74,6 +75,8 @@ class Consultation(models.Model):
         related_name="%(class)s_owned",
         verbose_name=_("owned by"),
     )
+
+    objects = ConsultationManager()
 
     class Meta:
         verbose_name = _("consultation")

@@ -13,7 +13,7 @@ update patient user information
 * Add terms models
 * Add terms for Users
 
-* Add dashboard endpoint
+
 
 * On sent action appointement, I would track partitipant
 * Add message logic and send link and datetime of appointment
@@ -25,3 +25,29 @@ update patient user information
 
 * Add appointment into consultation patient side
 * Send join appointment
+
+## Top priority
+
+* Add dashboard endpoint for both doctor and patient
+    - Next appointment
+    - Up coming appointment
+    - Overdue consultation
+
+* New consultation
+    1 - Select beneficiary + reason + description
+    2 - Owner is either Team or Doctor group or owned_by
+    3 - Improve appointment creation
+        - handling dont_invite_beneficiary, dont_invite_practitionner and dont_invite_me
+        - check there is at least two participants
+        - change button "add participant" and having Existing user selected by default
+        - remove feedback_rate and feedback_message
+        - use timezone, communication_method and preferred_language
+
+* Consultation overview
+    - Edit should have modal or inline edit, not back to wizard
+    - Merge Edit and Manage participant button and modal, participants can be manage on the right.
+
+## Low priority
+
+* Join consultation : add intermediate page similar to google meet.
+* Health Metric : add custom fields on patient + on health metric + endpoints
