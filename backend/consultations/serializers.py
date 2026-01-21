@@ -46,8 +46,8 @@ class ParticipantSerializer(serializers.ModelSerializer):
             "timezone",
             "first_name",
             "last_name",
-            "feedback_rate",
-            "feedback_message",
+            "communication_method",
+            "preferred_language"
         ]
 
     def validate(self, attrs):
