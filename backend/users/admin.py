@@ -158,7 +158,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
 
     @admin.display(description="Is patient", boolean=True)
     def is_patient(self, obj):
-        return obj.groups.exists()
+        return not obj.groups.exists()
 
     def languages_display(self, obj):
         return ", ".join([lang.name for lang in obj.languages.all()[:3]]) + (
