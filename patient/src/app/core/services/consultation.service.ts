@@ -7,7 +7,8 @@ import {
   Appointment,
   Participant,
   ConsultationRequest,
-  ConsultationMessage
+  ConsultationMessage,
+  IDashboardResponse
 } from '../models/consultation.model';
 
 export interface ConsultationFilters {
@@ -44,6 +45,10 @@ export interface ConsultationRequestData {
 })
 export class ConsultationService {
   constructor(private api: ApiService) {}
+
+  getDashboard(): Observable<IDashboardResponse> {
+    return this.api.get<IDashboardResponse>('/user/dashboard/');
+  }
 
   getMyConsultations(filters?: ConsultationFilters): Observable<PaginatedResponse<Consultation>> {
     return this.api.get<PaginatedResponse<Consultation>>('/user/consultations/', filters);

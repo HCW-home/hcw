@@ -129,73 +129,10 @@
                           {{ getRelativeTime(item.scheduled_at) }}
                         </app-typography>
                       </div>
-                      <app-button
-                        leftIcon="video"
-                        [size]="ButtonSizeEnum.small"
-                        [style]="ButtonStyleEnum.primary"
-                        buttonClass="video-btn"
-                        (buttonClick)="joinAppointment(item, $event)">
-                      </app-button>
                     </div>
                   }
                 </div>
               }
-            </div>
-          </div>
-        </div>
-
-        <div class="sidebar-content">
-          <div class="section-card quick-actions">
-            <div class="section-header">
-              <div class="header-left">
-                <div class="section-icon amber">
-                  <app-svg src="activity-history" [svgStyle]="{'width.px': 20, 'height.px': 20, 'color': 'var(--amber-600)'}"></app-svg>
-                </div>
-                <div class="section-title">
-                  <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
-                    Quick Actions
-                  </app-typography>
-                  <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
-                    Frequently used features
-                  </app-typography>
-                </div>
-              </div>
-            </div>
-            <div class="section-content">
-              <div class="quick-actions-grid">
-                <button class="quick-action-btn" (click)="navigateToNewConsultation()">
-                  <div class="action-icon primary">
-                    <app-svg src="plus" [svgStyle]="{'width.px': 24, 'height.px': 24, 'color': 'var(--White)'}"></app-svg>
-                  </div>
-                  <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--slate-700)">
-                    New Consultation
-                  </app-typography>
-                </button>
-                <button class="quick-action-btn" (click)="navigateToAvailability()">
-                  <div class="action-icon green">
-                    <app-svg src="calendar" [svgStyle]="{'width.px': 24, 'height.px': 24, 'color': 'var(--White)'}"></app-svg>
-                  </div>
-                  <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--slate-700)">
-                    Availability
-                  </app-typography>
-                </button>
-                <button class="quick-action-btn" (click)="navigateToSystemTest()">
-                  <div class="action-icon amber">
-                    <app-svg src="video" [svgStyle]="{'width.px': 24, 'height.px': 24, 'color': 'var(--White)'}"></app-svg>
-                  </div>
-                  <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--slate-700)">
-                    System Test
-                  </app-typography>
-                </button>
-                <button class="quick-action-btn" (click)="navigateToConsultations()">
-                  <div class="action-icon gray">
-                    <app-svg src="report" [svgStyle]="{'width.px': 24, 'height.px': 24, 'color': 'var(--White)'}"></app-svg>
-                  </div>
-                  <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--slate-700)">
-                    All Consultations
-                  </app-typography>
-                </button>
-              </div>
             </div>
           </div>
         </div>

@@ -190,6 +190,7 @@ export interface CreateAppointmentRequest {
 }
 
 export interface CreateParticipantRequest {
+  id?: number;
   user_id?: number;
   email?: string;
   phone?: string;

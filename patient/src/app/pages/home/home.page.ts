@@ -17,7 +17,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { ConsultationService } from '../../core/services/consultation.service';
 import { User } from '../../core/models/user.model';
-import { ConsultationRequest, Consultation, Speciality } from '../../core/models/consultation.model';
+import { ConsultationRequest, Consultation, Speciality, Appointment } from '../../core/models/consultation.model';
 
 interface RequestStatus {
   label: string;
@@ -49,11 +49,12 @@ export class HomePage implements OnInit, OnDestroy {
   currentUser = signal<User | null>(null);
   requests = signal<ConsultationRequest[]>([]);
   consultations = signal<Consultation[]>([]);
+  appointments = signal<Appointment[]>([]);
   isLoading = signal(false);
-  isLoadingConsultations = signal(false);
 
   totalRequests = computed(() => this.requests().length);
   totalConsultations = computed(() => this.consultations().length);
+  totalAppointments = computed(() => this.appointments().length);
 
   constructor(
     private navCtrl: NavController,
@@ -74,8 +75,7 @@ export class HomePage implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadUserData();
-    this.loadRequests();
-    this.loadConsultations();
+    this.loadDashboard();
   }
 
   ngOnDestroy(): void {
@@ -84,8 +84,7 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   ionViewWillEnter(): void {
-    this.loadRequests();
-    this.loadConsultations();
+    this.loadDashboard();
   }
 
   loadUserData(): void {
@@ -96,75 +95,37 @@ export class HomePage implements OnInit, OnDestroy {
       });
   }
 
-  loadRequests(): void {
+  loadDashboard(): void {
     this.isLoading.set(true);
-    this.consultationService.getMyRequests()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (requests) => {
-          this.requests.set(requests);
-          this.isLoading.set(false);
-        },
-        error: (error) => {
-          this.showError(error?.error?.detail || 'Failed to load requests');
-          this.isLoading.set(false);
-        }
-      });
-  }
-
-  loadConsultations(): void {
-    this.isLoadingConsultations.set(true);
-    this.consultationService.getMyConsultations()
+    this.consultationService.getDashboard()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          this.consultations.set(response.results);
-          this.isLoadingConsultations.set(false);
+          this.requests.set(response.requests);
+          this.consultations.set(response.consultations);
+          this.appointments.set(response.appointments);
+          this.isLoading.set(false);
         },
         error: (error) => {
-          this.showError(error?.error?.detail || 'Failed to load consultations');
-          this.isLoadingConsultations.set(false);
+          this.showError(error?.error?.detail || 'Failed to load dashboard');
+          this.isLoading.set(false);
         }
       });
   }
 
   refreshData(event: { target: { complete: () => void } }): void {
-    let requestsLoaded = false;
-    let consultationsLoaded = false;
-
-    const checkComplete = () => {
-      if (requestsLoaded && consultationsLoaded) {
-        event.target.complete();
-      }
-    };
-
-    this.consultationService.getMyRequests()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (requests) => {
-          this.requests.set(requests);
-          requestsLoaded = true;
-          checkComplete();
-        },
-        error: (error) => {
-          this.showError(error?.error?.detail || 'Failed to load requests');
-          requestsLoaded = true;
-          checkComplete();
-        }
-      });
-
-    this.consultationService.getMyConsultations()
+    this.consultationService.getDashboard()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          this.consultations.set(response.results);
-          consultationsLoaded = true;
-          checkComplete();
+          this.requests.set(response.requests);
+          this.consultations.set(response.consultations);
+          this.appointments.set(response.appointments);
+          event.target.complete();
         },
         error: (error) => {
-          this.showError(error?.error?.detail || 'Failed to load consultations');
-          consultationsLoaded = true;
-          checkComplete();
+          this.showError(error?.error?.detail || 'Failed to load dashboard');
+          event.target.complete();
         }
       });
   }
@@ -289,5 +250,40 @@ export class HomePage implements OnInit, OnDestroy {
       return (first + last).toUpperCase() || 'U';
     }
     return 'U';
+  }
+
+  getAppointmentStatusConfig(status: string): { label: string; color: 'warning' | 'info' | 'primary' | 'success' | 'muted' } {
+    const normalizedStatus = (status || 'draft').toLowerCase();
+    const statusMap: Record<string, { label: string; color: 'warning' | 'info' | 'primary' | 'success' | 'muted' }> = {
+      'draft': { label: 'Draft', color: 'warning' },
+      'scheduled': { label: 'Scheduled', color: 'primary' },
+      'cancelled': { label: 'Cancelled', color: 'muted' }
+    };
+    return statusMap[normalizedStatus] || statusMap['draft'];
+  }
+
+  getAppointmentDoctorName(appointment: Appointment): string {
+    const currentUserId = this.currentUser()?.id;
+    if (appointment.participants) {
+      const doctor = appointment.participants.find(p => p.user && p.user.id !== currentUserId);
+      if (doctor?.user) {
+        return `Dr. ${doctor.user.first_name} ${doctor.user.last_name}`;
+      }
+    }
+    return '';
+  }
+
+  getAppointmentIcon(appointment: Appointment): string {
+    return appointment.type === 'online' ? 'videocam-outline' : 'location-outline';
+  }
+
+  getAppointmentTypeText(appointment: Appointment): string {
+    return appointment.type === 'online' ? 'Video' : 'In-person';
+  }
+
+  viewAppointmentDetails(appointment: Appointment): void {
+    if (appointment.consultation) {
+      this.navCtrl.navigateForward(`/consultation/${appointment.consultation}`);
+    }
   }
 }

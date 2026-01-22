@@ -150,3 +150,9 @@ export interface CreateRequestPayload {
   expected_with_id?: number;
   comment?: string;
 }
+
+export interface IDashboardResponse {
+  requests: ConsultationRequest[];
+  consultations: Consultation[];
+  appointments: Appointment[];
+}

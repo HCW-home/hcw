@@ -20,7 +20,6 @@ import {
 import { Subject, takeUntil } from 'rxjs';
 
 import { ConsultationService } from '../../../core/services/consultation.service';
-import { ConfirmationService } from '../../../core/services/confirmation.service';
 import { ToasterService } from '../../../core/services/toaster.service';
 import {
   Appointment,
@@ -74,7 +73,6 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   private destroy$ = new Subject<void>();
   private fb = inject(FormBuilder);
   private consultationService = inject(ConsultationService);
-  private confirmationService = inject(ConfirmationService);
   private toasterService = inject(ToasterService);
 
   isSubmitting = signal(false);
@@ -296,28 +294,9 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
       }
     }
 
-    if (this.isEditMode && this.editingAppointment) {
-      this.isAddingParticipant.set(true);
-      this.consultationService
-        .addAppointmentParticipant(this.editingAppointment.id, data)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: () => {
-            this.loadParticipants();
-            this.resetParticipantForm();
-            this.isAddingParticipant.set(false);
-            this.toasterService.show('success', 'Participant added successfully');
-          },
-          error: (error) => {
-            this.isAddingParticipant.set(false);
-            this.toasterService.show('error', getErrorMessage(error));
-          },
-        });
-    } else {
-      this.pendingParticipants.update(list => [...list, data]);
-      this.resetParticipantForm();
-      this.toasterService.show('success', 'Participant added to list');
-    }
+    this.pendingParticipants.update(list => [...list, data]);
+    this.resetParticipantForm();
+    this.toasterService.show('success', 'Participant added to list');
   }
 
   private resetParticipantForm(): void {
@@ -354,32 +333,8 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
     this.pendingParticipants.update(list => list.filter((_, i) => i !== index));
   }
 
-  async removeParticipant(participant: Participant): Promise<void> {
-    if (!this.editingAppointment) return;
-
-    const confirmed = await this.confirmationService.confirm({
-      title: 'Remove Participant',
-      message: 'Are you sure you want to remove this participant?',
-      confirmText: 'Remove',
-      cancelText: 'Cancel',
-      confirmStyle: 'danger',
-    });
-
-    if (confirmed) {
-      this.consultationService
-        .removeAppointmentParticipant(this.editingAppointment.id, participant.id)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: () => {
-            const currentParticipants = this.participants();
-            this.participants.set(currentParticipants.filter(p => p.id !== participant.id));
-            this.toasterService.show('success', 'Participant removed successfully');
-          },
-          error: (error) => {
-            this.toasterService.show('error', getErrorMessage(error));
-          },
-        });
-    }
+  removeParticipant(participant: Participant): void {
+    this.participants.update(list => list.filter(p => p.id !== participant.id));
   }
 
   getUserDisplayName(participant: Participant): string {
@@ -427,6 +382,8 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
       }
     }
 
+    const allParticipants = this.getAllParticipantsForRequest();
+
     if (this.isEditMode && this.editingAppointment) {
       const updateData = {
         type: formValue.type as AppointmentType,
@@ -435,6 +392,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
         dont_invite_beneficiary: formValue.dont_invite_beneficiary || false,
         dont_invite_practitioner: formValue.dont_invite_practitioner || false,
         dont_invite_me: formValue.dont_invite_me || false,
+        participants: allParticipants,
       };
       this.updateAppointment(updateData);
     } else {
@@ -445,10 +403,27 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
         dont_invite_beneficiary: formValue.dont_invite_beneficiary || false,
         dont_invite_practitioner: formValue.dont_invite_practitioner || false,
         dont_invite_me: formValue.dont_invite_me || false,
-        participants: this.pendingParticipants(),
+        participants: allParticipants,
       };
       this.createAppointment(createData);
     }
+  }
+
+  private getAllParticipantsForRequest(): CreateParticipantRequest[] {
+    const existingParticipants: CreateParticipantRequest[] = this.participants().map(p => ({
+      id: p.id,
+      user_id: p.user?.id,
+      email: p.email || undefined,
+      phone: p.phone || undefined,
+      first_name: p.first_name || p.user?.first_name || undefined,
+      last_name: p.last_name || p.user?.last_name || undefined,
+      message_type: p.message_type || 'email',
+      timezone: p.timezone || 'UTC',
+      communication_method: p.communication_method || 'email',
+      preferred_language: p.preferred_language || 'en',
+    }));
+
+    return [...existingParticipants, ...this.pendingParticipants()];
   }
 
   private updateAppointment(appointmentData: {
@@ -458,6 +433,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
     dont_invite_beneficiary: boolean;
     dont_invite_practitioner: boolean;
     dont_invite_me: boolean;
+    participants: CreateParticipantRequest[];
   }): void {
     if (!this.editingAppointment) return;
 

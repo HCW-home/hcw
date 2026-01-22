@@ -167,7 +167,7 @@
         </div>
       </div>
 
-      @if (isLoadingConsultations()) {
+      @if (isLoading()) {
         <div class="loading-container">
           <ion-spinner name="crescent"></ion-spinner>
         </div>
@@ -207,6 +207,64 @@
 
             <button class="card-action-btn">
               <span>View consultation</span>
+              <ion-icon name="chevron-forward-outline"></ion-icon>
+            </button>
+          </div>
+        }
+      }
+    </section>
+
+    <section class="section appointments-section">
+      <div class="section-header">
+        <div class="section-title-group">
+          <h2 class="section-title">My Appointments</h2>
+          @if (totalAppointments() > 0) {
+            <span class="section-badge">{{ totalAppointments() }} total</span>
+          }
+        </div>
+      </div>
+
+      @if (isLoading()) {
+        <div class="loading-container">
+          <ion-spinner name="crescent"></ion-spinner>
+        </div>
+      } @else if (appointments().length === 0) {
+        <div class="empty-state">
+          <ion-icon name="calendar-outline" class="empty-icon"></ion-icon>
+          <p class="empty-text">No appointments yet</p>
+          <p class="empty-hint">Your scheduled appointments will appear here</p>
+        </div>
+      } @else {
+        @for (appointment of appointments(); track appointment.id) {
+          <div class="appointment-card" (click)="viewAppointmentDetails(appointment)">
+            <div class="appointment-header">
+              <div class="appointment-title-row">
+                <div class="appointment-type-badge">
+                  <ion-icon [name]="getAppointmentIcon(appointment)"></ion-icon>
+                  <span>{{ getAppointmentTypeText(appointment) }}</span>
+                </div>
+                <span class="status-badge status-{{ getAppointmentStatusConfig(appointment.status).color }}">
+                  {{ getAppointmentStatusConfig(appointment.status).label }}
+                </span>
+              </div>
+              @if (getAppointmentDoctorName(appointment)) {
+                <span class="appointment-doctor">{{ getAppointmentDoctorName(appointment) }}</span>
+              }
+            </div>
+
+            <div class="appointment-meta">
+              <span class="meta-item">
+                <ion-icon name="calendar-outline"></ion-icon>
+                {{ appointment.scheduled_at | date:'EEE, MMM d, yyyy' }}
+              </span>
+              <span class="meta-item">
+                <ion-icon name="time-outline"></ion-icon>
+                {{ appointment.scheduled_at | date:'HH:mm' }}
+              </span>
+            </div>
+
+            <button class="card-action-btn">
+              <span>View details</span>
               <ion-icon name="chevron-forward-outline"></ion-icon>
             </button>
           </div>

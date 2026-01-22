@@ -565,7 +565,7 @@ export class ConsultationDetail implements OnInit, OnDestroy {
         participant.user.email
       );
     }
-    return participant.email || 'Unknown';
+    return participant.email || participant.first_name  || 'Unknown';
   }
 
   getBeneficiaryDisplayName(): string {
@@ -634,7 +634,10 @@ export class ConsultationDetail implements OnInit, OnDestroy {
       return (first + last).toUpperCase() || '?';
     }
     if (participant.email) {
-      return participant.email.charAt(0).toUpperCase();
+      return (participant.email).charAt(0).toUpperCase();
+    }
+    if (participant.first_name) {
+      return (participant.first_name).charAt(0).toUpperCase();
     }
     return '?';
   }

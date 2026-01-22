@@ -28,8 +28,34 @@ import {
   Consultation,
   CreateConsultationRequest,
   CreateAppointmentRequest,
+  CreateParticipantRequest,
   Queue,
 } from '../../../../core/models/consultation';
+
+interface IAppointmentFormValue {
+  id: number | null;
+  date: string;
+  time: string;
+  type: AppointmentType;
+  dont_invite_beneficiary: boolean;
+  dont_invite_practitioner: boolean;
+  dont_invite_me: boolean;
+  participants: IParticipantFormValue[];
+}
+
+interface IParticipantFormValue {
+  id: number | null;
+  user_id: number | null;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  timezone: string;
+  communication_method: string;
+  preferred_language: string;
+  is_existing_user: boolean;
+  contact_type: 'email' | 'phone';
+}
 
 import { Page } from '../../../../core/components/page/page';
 import { Loader } from '../../../../shared/components/loader/loader';
@@ -434,17 +460,20 @@ export class ConsultationForm implements OnInit, OnDestroy {
   }
 
   private createAppointmentsForConsultation(consultationId: number): void {
-    const appointments = this.appointmentsFormArray.value;
+    const appointments = this.appointmentsFormArray.value as IAppointmentFormValue[];
     let completed = 0;
 
-    appointments.forEach((apt: Record<string, unknown>) => {
-      const scheduledAt = this.combineDateTime(apt['date'] as string, apt['time'] as string);
+    appointments.forEach((apt: IAppointmentFormValue) => {
+      const scheduledAt = this.combineDateTime(apt.date, apt.time);
+      const participants = this.mapParticipantsForRequest(apt.participants);
+
       const appointmentData: CreateAppointmentRequest = {
         scheduled_at: scheduledAt,
-        type: apt['type'] as AppointmentType,
-        dont_invite_beneficiary: apt['dont_invite_beneficiary'] as boolean,
-        dont_invite_practitioner: apt['dont_invite_practitioner'] as boolean,
-        dont_invite_me: apt['dont_invite_me'] as boolean,
+        type: apt.type,
+        dont_invite_beneficiary: apt.dont_invite_beneficiary,
+        dont_invite_practitioner: apt.dont_invite_practitioner,
+        dont_invite_me: apt.dont_invite_me,
+        participants: participants,
       };
 
       this.consultationService
@@ -642,9 +671,10 @@ export class ConsultationForm implements OnInit, OnDestroy {
 
     const appointment = this.appointmentsFormArray.at(index);
     const appointmentId = appointment.get('id')?.value;
-    const formValue = appointment.value;
+    const formValue = appointment.value as IAppointmentFormValue;
 
     const scheduledAt = this.combineDateTime(formValue.date, formValue.time);
+    const participants = this.mapParticipantsForRequest(formValue.participants);
 
     const saving = new Set(this.savingAppointments());
     saving.add(index);
@@ -658,6 +688,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
           dont_invite_beneficiary: formValue.dont_invite_beneficiary,
           dont_invite_practitioner: formValue.dont_invite_practitioner,
           dont_invite_me: formValue.dont_invite_me,
+          participants: participants,
         })
         .pipe(takeUntil(this.destroy$))
         .subscribe({
@@ -681,6 +712,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
         dont_invite_beneficiary: formValue.dont_invite_beneficiary,
         dont_invite_practitioner: formValue.dont_invite_practitioner,
         dont_invite_me: formValue.dont_invite_me,
+        participants: participants,
       };
 
       this.consultationService
@@ -807,6 +839,45 @@ export class ConsultationForm implements OnInit, OnDestroy {
   getAppointmentType(appointmentIndex: number): AppointmentType {
     const appointment = this.appointmentsFormArray.at(appointmentIndex);
     return appointment?.get('type')?.value || AppointmentType.ONLINE;
+  }
+
+  private mapParticipantsForRequest(participants: IParticipantFormValue[]): CreateParticipantRequest[] {
+    if (!participants || participants.length === 0) {
+      return [];
+    }
+
+    return participants.map((p: IParticipantFormValue) => {
+      const request: CreateParticipantRequest = {
+        message_type: p.contact_type === 'phone' ? 'sms' : 'email',
+        timezone: p.timezone,
+        communication_method: p.communication_method,
+        preferred_language: p.preferred_language,
+      };
+
+      if (p.id) {
+        request.id = p.id;
+      }
+
+      if (p.is_existing_user && p.user_id) {
+        request.user_id = p.user_id;
+      } else {
+        if (p.first_name) {
+          request.first_name = p.first_name;
+        }
+
+        if (p.last_name) {
+          request.last_name = p.last_name;
+        }
+
+        if (p.contact_type === 'email' && p.email) {
+          request.email = p.email;
+        } else if (p.contact_type === 'phone' && p.phone) {
+          request.phone = p.phone;
+        }
+      }
+
+      return request;
+    });
   }
 
   private combineDateTime(date: string, time: string): string {
