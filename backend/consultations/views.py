@@ -85,14 +85,8 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if not user.is_authenticated:
-            return Consultation.objects.none()
 
-        # Return consultations created by the user OR
-        # consultations from groups the user belongs to
-        return Consultation.objects.filter(
-            Q(created_by=user) | Q(owned_by=user) | Q(group__users=user)
-        ).distinct()
+        return Consultation.objects.accessible_by(user)
 
     @extend_schema(responses=ConsultationSerializer)
     @action(detail=True, methods=["post"])
@@ -267,48 +261,11 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
     @action(detail=False, methods=["get"], url_path="overdue")
     def overdue(self, request):
         """Get consultations that need attention (overdue)"""
-        one_hour_ago = timezone.now() - timedelta(hours=1)
 
         # Get consultations the user has access to
-        consultations_qs = self.get_queryset()
+        consultations = self.get_queryset()
 
-        # Filter only open consultations
-        consultations_qs = consultations_qs.filter(closed_at__isnull=True)
-
-        overdue_consultation_ids = []
-
-        for consultation in consultations_qs:
-            # Condition 1: All appointments are more than 1 hour in the past
-            appointments = consultation.appointments.filter(
-                status=AppointmentStatus.scheduled
-            )
-
-            if appointments.exists():
-                # Check if ALL appointments are more than 1 hour in the past
-                all_appointments_overdue = all(
-                    apt.scheduled_at < one_hour_ago for apt in appointments
-                )
-
-                if all_appointments_overdue:
-                    overdue_consultation_ids.append(consultation.id)
-                    continue
-
-            # Condition 2: Last message was sent by the beneficiary
-            last_message = consultation.messages.order_by("-created_at").first()
-
-            if last_message and last_message.created_by == consultation.beneficiary:
-                overdue_consultation_ids.append(consultation.id)
-
-        # Get the overdue consultations
-        overdue_consultations = consultations_qs.filter(id__in=overdue_consultation_ids)
-
-        # Apply pagination
-        page = self.paginate_queryset(overdue_consultations)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        serializer = self.get_serializer(overdue_consultations, many=True)
+        serializer = self.get_serializer(consultations.overdue, many=True)
         return Response(serializer.data)
 
 
