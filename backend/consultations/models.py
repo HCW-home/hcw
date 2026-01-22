@@ -145,6 +145,7 @@ class ParticipantStatus(Enum):
     invited = 'invited'
     confirmed = 'confirmed'
     unavailable = 'unavailable'
+    cancelled = 'cancelled'
 
 
 class Participant(models.Model):
@@ -190,13 +191,15 @@ class Participant(models.Model):
 
     @property
     def status(self):
+        if not self.is_active:
+            return ParticipantStatus.cancelled
         if self.is_confirmed == True:
-            return ParticipantStatus.confirmed.value
+            return ParticipantStatus.confirmed
         if self.is_confirmed == False:
-            return ParticipantStatus.unavailable.value
+            return ParticipantStatus.unavailable
         if self.is_invited:
-            return ParticipantStatus.invited.value
-        return ParticipantStatus.draft.value
+            return ParticipantStatus.invited
+        return ParticipantStatus.draft
 
     @property
     def language(self) -> str:
