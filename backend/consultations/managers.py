@@ -1,24 +1,23 @@
 from django.db import models
-from django.db.models import Q, Exists
+from django.db.models import Q
 from django.utils import timezone
 
 
 class ConsultationQuerySet(models.QuerySet):
     """Custom QuerySet for Consultation model"""
 
+    @property
     def active(self):
         return self.filter(closed_at__isnull=True)
 
+    @property
     def overdue(self):
-        from .models import Appointment, AppointmentStatus
-
-        has_future_scheduled = Appointment.objects.filter(
-            consultation=models.OuterRef('pk'),
-            scheduled_at__gte=timezone.now(),
-            status=AppointmentStatus.scheduled,
-        )
-
-        return self.active().exclude(Exists(has_future_scheduled))
+        from .models import AppointmentStatus
+        # Get consultations with no future scheduled appointments
+        return self.active.exclude(
+            appointments__scheduled_at__gte=timezone.now(),
+            appointments__status=AppointmentStatus.scheduled,
+        ).distinct()
 
 class ConsultationManager(models.Manager):
     """Custom Manager for Consultation model"""

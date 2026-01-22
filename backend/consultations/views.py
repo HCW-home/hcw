@@ -257,8 +257,7 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
         """Get consultations that need attention (overdue)"""
 
         # Get consultations the user has access to
-        queryset = self.filter_queryset(self.get_queryset())
-        serializer = self.get_serializer(queryset.overdue, many=True)
+        queryset = self.filter_queryset(self.get_queryset().overdue)
         page = self.paginate_queryset(queryset)
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
