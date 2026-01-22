@@ -37,6 +37,7 @@ export class Input {
   invalidMessage = input<string>('');
   autocomplete = input<string>('');
   label = input<string>();
+  required = input<boolean>(false);
   id = input<string>();
   min = input<string>();
   max = input<string>()

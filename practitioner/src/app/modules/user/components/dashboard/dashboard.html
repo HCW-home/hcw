@@ -21,72 +21,57 @@
         </app-button>
       </div>
     } @else {
-      <div class="active-consultations-section">
-        <div class="section-card">
-          <div class="section-header">
-            <div class="header-left">
-              <div class="section-icon primary">
-                <app-svg src="video" [svgStyle]="{'width.px': 20, 'height.px': 20, 'color': 'var(--primary-600)'}"></app-svg>
+      @if (hasValidNextAppointment()) {
+        <div class="next-appointment-section">
+          <div class="section-card highlight">
+            <div class="section-header">
+              <div class="header-left">
+                <div class="section-icon primary">
+                  <app-svg src="video" [svgStyle]="{'width.px': 20, 'height.px': 20, 'color': 'var(--primary-600)'}"></app-svg>
+                </div>
+                <div class="section-title">
+                  <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
+                    Next Appointment
+                  </app-typography>
+                  <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
+                    {{ getRelativeTime(nextAppointment()!.scheduled_at!) }}
+                  </app-typography>
+                </div>
               </div>
-              <div class="section-title">
-                <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
-                  Active Consultations
-                </app-typography>
-                <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
-                  Currently ongoing sessions
-                </app-typography>
+              <app-button
+                text="Join Now"
+                leftIcon="video"
+                [size]="ButtonSizeEnum.medium"
+                [style]="ButtonStyleEnum.primary"
+                (buttonClick)="joinNextAppointment($event)">
+              </app-button>
+            </div>
+            <div class="section-content">
+              <div class="next-appointment-card" (click)="viewNextAppointment()">
+                <div class="appointment-main">
+                  <div class="patient-avatar">
+                    <span>--</span>
+                  </div>
+                  <div class="appointment-info">
+                    <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-800)">
+                      Appointment
+                    </app-typography>
+                    <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
+                      {{ nextAppointment()!.type || 'Online' }}
+                    </app-typography>
+                  </div>
+                </div>
+                <div class="appointment-schedule">
+                  <app-svg src="calendar" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--slate-400)'}"></app-svg>
+                  <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--slate-600)">
+                    {{ formatDateTime(nextAppointment()!.scheduled_at!) }}
+                  </app-typography>
+                </div>
               </div>
             </div>
           </div>
-          <div class="section-content">
-            @if (recentConsultations().length === 0) {
-              <div class="empty-state-small">
-                <app-svg src="video" [svgStyle]="{'width.px': 32, 'height.px': 32, 'opacity': 0.3}"></app-svg>
-                <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--slate-400)">
-                  No active consultations
-                </app-typography>
-              </div>
-            } @else {
-              <div class="active-consultations-grid">
-                @for (consultation of recentConsultations().slice(0, 4); track consultation.id) {
-                  <div class="active-consultation-card" (click)="viewConsultation(consultation)">
-                    <div class="consultation-header">
-                      <div class="patient-avatar">
-                        <span>{{ getBeneficiaryName(consultation).substring(0, 2).toUpperCase() }}</span>
-                      </div>
-                      <div class="patient-info">
-                        <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-800)">
-                          {{ getBeneficiaryName(consultation) }}
-                        </app-typography>
-                        <div class="status-indicator">
-                          <span class="status-dot"></span>
-                          <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--primary-600)">
-                            {{ consultation.closed_at ? 'Closed' : 'Active' }}
-                          </app-typography>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="consultation-footer">
-                      <div class="consultation-time">
-                        <app-svg src="clock" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--slate-400)'}"></app-svg>
-                        <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--slate-500)">
-                          {{ formatDate(consultation.created_at) }}
-                        </app-typography>
-                      </div>
-                      <app-button
-                        text="View"
-                        [size]="ButtonSizeEnum.small"
-                        [style]="ButtonStyleEnum.primary"
-                        (buttonClick)="viewConsultation(consultation)">
-                      </app-button>
-                    </div>
-                  </div>
-                }
-              </div>
-            }
-          </div>
         </div>
-      </div>
+      }
 
       <div class="dashboard-grid">
         <div class="main-content">
@@ -123,25 +108,25 @@
                 </div>
               } @else {
                 <div class="appointments-list">
-                  @for (item of upcomingAppointments(); track item.appointment.id) {
+                  @for (item of upcomingAppointments(); track item.id) {
                     <div class="appointment-item" (click)="viewAppointment(item)">
                       <div class="patient-avatar small">
-                        <span>{{ getBeneficiaryName(item.consultation).substring(0, 2).toUpperCase() }}</span>
+                        <span>{{ item.type === AppointmentType.ONLINE ? 'ON' : 'IP' }}</span>
                       </div>
                       <div class="appointment-details">
                         <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-800)">
-                          {{ getBeneficiaryName(item.consultation) }}
+                          {{ item.type }} Appointment
                         </app-typography>
                         <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
-                          {{ item.consultation.title || 'Consultation' }}
+                          {{ item.status }}
                         </app-typography>
                       </div>
                       <div class="appointment-time">
                         <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-800)">
-                          {{ formatDateTime(item.appointment.scheduled_at).split(',')[1] }}
+                          {{ formatTime(item.scheduled_at) }}
                         </app-typography>
                         <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
-                          {{ getRelativeTime(item.appointment.scheduled_at) }}
+                          {{ getRelativeTime(item.scheduled_at) }}
                         </app-typography>
                       </div>
                       <app-button
@@ -249,7 +234,7 @@
                 @for (consultation of overdueConsultations(); track consultation.id) {
                   <div class="overdue-item" (click)="viewConsultation(consultation)">
                     <div class="patient-avatar amber">
-                      <span>{{ getBeneficiaryName(consultation).substring(0, 2).toUpperCase() }}</span>
+                      <span>{{ getConsultationInitials(consultation) }}</span>
                     </div>
                     <div class="overdue-details">
                       <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-800)">
@@ -268,7 +253,8 @@
                       text="Review"
                       [size]="ButtonSizeEnum.small"
                       [style]="ButtonStyleEnum.primary"
-                      buttonClass="review-btn">
+                      buttonClass="review-btn"
+                      (buttonClick)="viewConsultation(consultation)">
                     </app-button>
                   </div>
                 }

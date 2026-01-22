@@ -42,7 +42,7 @@ export interface Prescription {
   id: number;
   consultation: number;
   created_by: number;
-  status: 'DRAFT' | 'PRESCRIBED' | 'DISPENSED' | 'CANCELLED';
+  status: 'draft' | 'prescribed' | 'dispensed' | 'cancelled';
   medication_name: string;
   dosage: string;
   frequency: string;
@@ -54,8 +54,8 @@ export interface Prescription {
   prescribed_at?: string;
 }
 
-export type AppointmentStatus = 'DRAFT' | 'SCHEDULED' | 'CANCELLED' | 'IN_PROGRESS' | 'COMPLETED';
-export type AppointmentType = 'ONLINE' | 'IN_PERSON';
+export type AppointmentStatus = 'draft' | 'scheduled' | 'cancelled';
+export type AppointmentType = 'online' | 'inPerson';
 
 export interface Appointment {
   id: number;
@@ -81,10 +81,12 @@ export interface Participant {
   first_name?: string;
   last_name?: string;
   communication_method?: string;
+  preferred_language?: string;
   is_invited: boolean;
   is_confirmed: boolean;
   feedback_rate?: number;
   feedback_message?: string;
+  status?: string;
 }
 
 export interface MessageAttachment {
@@ -112,9 +114,9 @@ export interface ConsultationRequest {
   expected_with?: User | number;
   expected_at?: string;
   reason: Reason | number;
-  type: 'ONLINE' | 'IN_PERSON';
+  type: 'online' | 'inPerson';
   comment?: string;
-  status?: 'REQUESTED' | 'ACCEPTED' | 'CANCELLED' | 'REFUSED';
+  status?: 'requested' | 'accepted' | 'cancelled' | 'refused';
   refused_reason?: string;
   appointment?: Appointment;
   consultation?: Consultation;

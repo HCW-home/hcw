@@ -8,7 +8,7 @@
         <div class="appointment-info-summary">
           <app-svg src="calendar" [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
           <span>{{ formatDateTime(appointment.scheduled_at) }}</span>
-          <span class="appointment-type" [class.online]="appointment.type === 'Online'">
+          <span class="appointment-type" [class.online]="appointment.type === AppointmentType.ONLINE">
             {{ appointment.type }}
           </span>
         </div>

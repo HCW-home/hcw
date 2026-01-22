@@ -120,7 +120,7 @@ export class AppointmentsPage implements OnInit {
     const isPast = scheduledDate < now;
 
     let displayStatus: 'upcoming' | 'completed' | 'cancelled';
-    if (apt.status === 'CANCELLED') {
+    if (apt.status === 'cancelled') {
       displayStatus = 'cancelled';
     } else if (isPast) {
       displayStatus = 'completed';
@@ -140,7 +140,7 @@ export class AppointmentsPage implements OnInit {
       specialty: 'Specialist',
       date: apt.scheduled_at,
       time: scheduledDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      type: apt.type === 'ONLINE' ? 'video' : 'in-person',
+      type: apt.type === 'online' ? 'video' : 'in-person',
       status: displayStatus,
       originalAppointment: apt
     };

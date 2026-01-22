@@ -11,7 +11,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { ConsultationService } from '../../../../../core/services/consultation.service';
 import { ConfirmationService } from '../../../../../core/services/confirmation.service';
 import { ToasterService } from '../../../../../core/services/toaster.service';
-import { Appointment, Participant, CreateParticipantRequest } from '../../../../../core/models/consultation';
+import { Appointment, Participant, CreateParticipantRequest, AppointmentType } from '../../../../../core/models/consultation';
 import { IUser } from '../../../models/user';
 
 import { ModalComponent } from '../../../../../shared/components/modal/modal.component';
@@ -65,6 +65,7 @@ export class ManageParticipantsModal implements OnDestroy, OnChanges {
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
   protected readonly ButtonStateEnum = ButtonStateEnum;
+  protected readonly AppointmentType = AppointmentType;
   protected readonly getParticipantBadgeType = getParticipantBadgeType;
 
   constructor() {

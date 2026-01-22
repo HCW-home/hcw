@@ -85,6 +85,9 @@
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "port": 8001
+          },
           "configurations": {
             "production": {
               "buildTarget": "app:build:production"

@@ -438,15 +438,15 @@ export class RequestDetailPage implements OnInit, OnDestroy {
   }
 
   getAppointmentTypeIcon(): string {
-    return this.request()?.appointment?.type === 'ONLINE' ? 'videocam-outline' : 'location-outline';
+    return this.request()?.appointment?.type === 'online' ? 'videocam-outline' : 'location-outline';
   }
 
   getAppointmentTypeLabel(): string {
-    return this.request()?.appointment?.type === 'ONLINE' ? 'Video Consultation' : 'In-person Visit';
+    return this.request()?.appointment?.type === 'online' ? 'Video Consultation' : 'In-person Visit';
   }
 
   getTypeLabel(): string {
-    return this.request()?.type === 'ONLINE' ? 'Video Consultation' : 'In-person Visit';
+    return this.request()?.type === 'online' ? 'Video Consultation' : 'In-person Visit';
   }
 
   isStatusRequested(): boolean {

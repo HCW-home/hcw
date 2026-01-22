@@ -67,13 +67,13 @@ export class ConfirmPresencePage implements OnInit, OnDestroy {
     this.isLoading = true;
     this.errorMessage = null;
 
-    this.consultationService.getMyAppointments({ status: 'SCHEDULED' })
+    this.consultationService.getMyAppointments({ status: 'scheduled' })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
           this.isLoading = false;
           const now = new Date();
-          const scheduledStatus: AppointmentStatus = 'SCHEDULED';
+          const scheduledStatus: AppointmentStatus = 'scheduled';
           this.pendingAppointments = response.results
             .filter(apt => {
               const scheduledDate = new Date(apt.scheduled_at);

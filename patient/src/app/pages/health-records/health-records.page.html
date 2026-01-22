@@ -75,7 +75,7 @@
             } @else if (prescriptions.length > 0) {
               <div class="prescription-sections">
                 @for (prescription of prescriptions; track prescription.id) {
-                  <ion-card class="prescription-card" [class.inactive]="prescription.status === 'DISPENSED' || prescription.status === 'CANCELLED'">
+                  <ion-card class="prescription-card" [class.inactive]="prescription.status === 'dispensed' || prescription.status === 'cancelled'">
                     <ion-card-content>
                       <div class="prescription-header">
                         <div class="prescription-info">
@@ -110,7 +110,7 @@
                           </ion-item>
                         }
                       </div>
-                      @if (prescription.status === 'PRESCRIBED') {
+                      @if (prescription.status === 'prescribed') {
                         <ion-button expand="block" size="small" (click)="refillPrescription(prescription)">
                           Request Refill
                         </ion-button>

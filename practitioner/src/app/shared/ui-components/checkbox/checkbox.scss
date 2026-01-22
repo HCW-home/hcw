@@ -7,18 +7,20 @@
   display: flex;
   cursor: pointer;
   align-items: center;
+  gap: 8px;
 }
 
 .checkbox-box {
   width: 20px;
   height: 20px;
-  margin-right: 8px;
+  min-width: 20px;
   border-radius: 6px;
   align-items: center;
   display: inline-flex;
   justify-content: center;
   transition: border-color 0.2s, background-color 0.2s;
   border: 2px solid var(--slate-300);
+  background-color: var(--White);
 }
 
 :host(.hover:not(.disabled)) .checkbox-box {
@@ -30,10 +32,9 @@
   border-color: var(--primary-500);
 }
 
-:host(.checked) .checkbox-box svg {
-  color: #fff;
+:host(.checked) .checkbox-box app-svg {
+  color: var(--White);
 }
-
 
 :host(.disabled) {
   opacity: 0.6;
@@ -43,4 +44,8 @@
 :host(.disabled) .checkbox-box {
   border-color: var(--slate-300);
   background-color: var(--slate-200);
+}
+
+.checkbox-label {
+  line-height: 1.4;
 }

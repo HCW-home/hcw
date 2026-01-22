@@ -24,7 +24,7 @@ export interface AppointmentFilters {
 
 export interface CreateAppointmentRequest {
   consultation?: number;
-  type: 'ONLINE' | 'IN_PERSON';
+  type: 'online' | 'inPerson';
   scheduled_at: string;
   end_expected_at?: string;
   participants?: Partial<Participant>[];
@@ -35,7 +35,7 @@ export interface ConsultationRequestData {
   expected_with_id?: number;
   expected_at?: string;
   reason_id: number | undefined;
-  type: 'ONLINE' | 'IN_PERSON';
+  type: 'online' | 'inPerson';
   comment?: string;
 }
 
@@ -70,7 +70,7 @@ export class ConsultationService {
   }
 
   cancelAppointment(id: number): Observable<Appointment> {
-    return this.api.patch<Appointment>(`/appointments/${id}/`, { status: 'CANCELLED' });
+    return this.api.patch<Appointment>(`/appointments/${id}/`, { status: 'cancelled' });
   }
 
   getConsultationMessages(consultationId: number): Observable<ConsultationMessage[]> {

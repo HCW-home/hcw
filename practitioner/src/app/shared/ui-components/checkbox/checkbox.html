@@ -1,10 +1,15 @@
-<label for="" class="checkbox-wrapper">
+<label class="checkbox-wrapper">
   <span class="checkbox-box">
-      <app-svg src="svg/check.svg"></app-svg>
+    @if (checked) {
+      <app-svg src="svg/check.svg" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
+    }
   </span>
-  <span class="checkbox-label">
-    <app-typography color="var(--slate-500)" [variant]="TypographyTypeEnum['body-medium']">
-      <ng-content></ng-content>
-    </app-typography>
-  </span>
+  @if (label()) {
+    <span class="checkbox-label">
+      <app-typography color="var(--slate-700)" [variant]="TypographyTypeEnum['body-s-medium']">
+        {{ label() }}
+      </app-typography>
+    </span>
+  }
+  <ng-content></ng-content>
 </label>

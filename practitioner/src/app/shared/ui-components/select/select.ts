@@ -32,6 +32,7 @@ import { ErrorMessage } from '../../components/error-message/error-message';
 export class Select implements ControlValueAccessor, OnChanges {
   label = input<string>();
   name = input<string>();
+  required = input<boolean>(false);
   options = input<SelectOption[]>([]);
   placeholder = input('Select…');
   multiSelect = input(false);
@@ -40,6 +41,7 @@ export class Select implements ControlValueAccessor, OnChanges {
   invalidMessage = input<string>('');
   creatable = input(false);
   createOptionLabel = input<string>('');
+  clearable = input(false);
   createItem = output<boolean>();
 
   value: string | number | null = null;
@@ -164,6 +166,14 @@ export class Select implements ControlValueAccessor, OnChanges {
     this.display = opt.label;
     this.onChange(opt.value);
     this.open = false;
+  }
+
+  clearValue(event: Event): void {
+    event.stopPropagation();
+    this.value = null;
+    this.display = '';
+    this.searchTerm = '';
+    this.onChange(null);
   }
 
   removeSelected(item: SelectOption): void {

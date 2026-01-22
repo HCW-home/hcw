@@ -85,7 +85,7 @@
                   <span>{{ getAppointmentTypeLabel(appointment) }}</span>
                 </div>
               </div>
-              @if (appointment.type === 'ONLINE') {
+              @if (appointment.type === 'online') {
                 <button class="action-button primary-btn" (click)="joinAppointment(appointment)">
                   <ion-icon name="videocam-outline"></ion-icon>
                   Join Video Call

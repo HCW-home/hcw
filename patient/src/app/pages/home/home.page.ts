@@ -233,11 +233,11 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   getAppointmentTypeIcon(request: ConsultationRequest): string {
-    return request.appointment?.type === 'ONLINE' ? 'videocam-outline' : 'location-outline';
+    return request.appointment?.type === 'online' ? 'videocam-outline' : 'location-outline';
   }
 
   getAppointmentTypeLabel(request: ConsultationRequest): string {
-    return request.appointment?.type === 'ONLINE' ? 'Video' : 'In-person';
+    return request.appointment?.type === 'online' ? 'Video' : 'In-person';
   }
 
   isStatusRequested(request: ConsultationRequest): boolean {

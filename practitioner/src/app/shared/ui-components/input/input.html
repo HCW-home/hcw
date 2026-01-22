@@ -1,6 +1,11 @@
 <div class="input-wrapper">
   @if (label()) {
-    <label class="input-label" [for]="name()">{{ label() }}</label>
+    <label class="input-label" [for]="name()">
+      {{ label() }}
+      @if (required()) {
+        <span class="required-indicator">*</span>
+      }
+    </label>
   }
 
   <div

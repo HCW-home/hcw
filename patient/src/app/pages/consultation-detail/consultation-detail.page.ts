@@ -64,8 +64,7 @@ export class ConsultationDetailPage implements OnInit, OnDestroy {
     const now = new Date();
     return cons.appointments.filter(apt =>
       new Date(apt.scheduled_at) >= now &&
-      apt.status !== 'CANCELLED' &&
-      apt.status !== 'COMPLETED'
+      apt.status !== 'cancelled'
     );
   });
 
@@ -74,8 +73,7 @@ export class ConsultationDetailPage implements OnInit, OnDestroy {
     if (!cons?.appointments) return [];
     const now = new Date();
     return cons.appointments.filter(apt =>
-      new Date(apt.scheduled_at) < now ||
-      apt.status === 'COMPLETED'
+      new Date(apt.scheduled_at) < now
     );
   });
 
@@ -419,11 +417,11 @@ export class ConsultationDetailPage implements OnInit, OnDestroy {
   }
 
   getAppointmentTypeIcon(appointment: Appointment): string {
-    return appointment.type === 'ONLINE' ? 'videocam-outline' : 'location-outline';
+    return appointment.type === 'online' ? 'videocam-outline' : 'location-outline';
   }
 
   getAppointmentTypeLabel(appointment: Appointment): string {
-    return appointment.type === 'ONLINE' ? 'Video Consultation' : 'In-person Visit';
+    return appointment.type === 'online' ? 'Video Consultation' : 'In-person Visit';
   }
 
   isConsultationActive(): boolean {

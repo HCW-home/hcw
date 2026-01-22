@@ -1,6 +1,11 @@
 <div class="select-wrapper">
   @if (label()) {
-    <label class="input-label" [for]="name()">{{ label() }}</label>
+    <label class="input-label" [for]="name()">
+      {{ label() }}
+      @if (required()) {
+        <span class="required-indicator">*</span>
+      }
+    </label>
   }
 
   <select [id]="name()" class="native-select" [disabled]="disabled" autocomplete="off" [value]="value">
@@ -46,6 +51,18 @@
         (input)="onSearchInput($event)"
         (click)="$event.stopPropagation(); open = true" />
     </div>
+
+    @if (clearable() && display && !disabled) {
+      <button
+        type="button"
+        class="select-clear"
+        (click)="clearValue($event)">
+        <app-svg
+          src="close"
+          [svgStyle]="{ 'width.px': 14, 'height.px': 14, 'fill': 'var(--slate-500)' }">
+        </app-svg>
+      </button>
+    }
 
     <div class="select-arrow">
       <app-svg

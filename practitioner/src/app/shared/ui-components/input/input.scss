@@ -16,6 +16,11 @@
       letter-spacing: 0.32px;
       color: var(--slate-800);
       font-family: "Plus Jakarta Sans", "Source Sans Pro", sans-serif;
+
+      .required-indicator {
+        color: var(--rose-500);
+        margin-left: 2px;
+      }
     }
 
     .input-container {

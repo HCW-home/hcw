@@ -1,7 +1,10 @@
 <div class="user-search-select">
-  <app-typography [variant]="TypographyTypeEnum['body-s-medium']" class="label">
+  <label class="label">
     {{ label() }}
-  </app-typography>
+    @if (required()) {
+      <span class="required-indicator">*</span>
+    }
+  </label>
 
   @if (selectedUser()) {
     <div class="selected-user">
@@ -22,11 +25,12 @@
           <app-svg src="svg/search.svg" [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
         </span>
         <input
-          type="text"
+          type="search"
           class="search-input"
+          name="user-search-field"
           [placeholder]="placeholder()"
           [value]="searchQuery()"
-          autocomplete="off"
+          autocomplete="new-password"
           (input)="onSearchInput($event)"
           (focus)="onSearchFocus()">
       </div>

@@ -9,82 +9,155 @@
       <div class="consultation-content-wrapper">
         <div class="main-content">
           <div class="consultation-info-card">
-            <div class="info-header">
-              <div class="header-top-row">
-                <div class="title-row">
-                  <h2 class="consultation-title">{{ consultation()?.title || 'Consultation #' + consultation()?.id }}</h2>
-                  <app-badge [type]="consultation()?.closed_at ? BadgeTypeEnum.gray : BadgeTypeEnum.green">
-                    {{ consultation()?.closed_at ? 'Closed' : 'Active' }}
-                  </app-badge>
-                </div>
-                <div class="card-actions">
-                  <app-button
-                    text="Edit"
-                    leftIcon="edit"
-                    [style]="ButtonStyleEnum.stroke"
-                    [size]="ButtonSizeEnum.small"
-                    (buttonClick)="editConsultation()">
-                  </app-button>
-
-                  @if (!consultation()?.closed_at) {
+            @if (isEditMode()) {
+              <form [formGroup]="editForm" class="edit-form">
+                <div class="edit-form-header">
+                  <h3 class="edit-title">Edit Consultation</h3>
+                  <div class="edit-actions">
                     <app-button
-                      text="Close Consultation"
-                      leftIcon="close"
+                      text="Cancel"
                       [style]="ButtonStyleEnum.stroke"
-                      [state]="ButtonStateEnum.error"
                       [size]="ButtonSizeEnum.small"
-                      (buttonClick)="closeConsultation()">
+                      (buttonClick)="cancelEdit()">
                     </app-button>
-                  } @else {
                     <app-button
-                      text="Reopen Consultation"
-                      leftIcon="check"
+                      text="Save"
                       [style]="ButtonStyleEnum.primary"
                       [size]="ButtonSizeEnum.small"
-                      (buttonClick)="reopenConsultation()">
+                      [loading]="isSavingConsultation()"
+                      [disabled]="isSavingConsultation()"
+                      (buttonClick)="saveConsultationChanges()">
                     </app-button>
+                  </div>
+                </div>
+
+                <div class="edit-form-content">
+                  <div class="form-group">
+                    <app-input
+                      label="Title"
+                      placeholder="Consultation title..."
+                      formControlName="title">
+                    </app-input>
+                  </div>
+
+                  <div class="form-group">
+                    <app-textarea
+                      label="Description"
+                      placeholder="Add description..."
+                      [rows]="3"
+                      formControlName="description">
+                    </app-textarea>
+                  </div>
+
+                  <div class="form-row">
+                    <div class="form-group">
+                      <app-user-search-select
+                        label="Beneficary"
+                        placeholder="Search patient..."
+                        [initialUser]="selectedBeneficiary()"
+                        (userSelected)="onBeneficiarySelected($event)">
+                      </app-user-search-select>
+                    </div>
+
+                    <div class="form-group">
+                      <app-user-search-select
+                        label="Owner"
+                        placeholder="Search owner..."
+                        [initialUser]="selectedOwner()"
+                        (userSelected)="onOwnerSelected($event)">
+                      </app-user-search-select>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <app-select
+                      label="Group"
+                      [options]="queueOptions()"
+                      placeholder="Select group"
+                      [clearable]="true"
+                      formControlName="group_id">
+                    </app-select>
+                  </div>
+                </div>
+              </form>
+            } @else {
+              <div class="info-header">
+                <div class="header-top-row">
+                  <div class="title-row">
+                    <h2 class="consultation-title">{{ consultation()?.title || 'Consultation #' + consultation()?.id }}</h2>
+                    <app-badge [type]="consultation()?.closed_at ? BadgeTypeEnum.gray : BadgeTypeEnum.green">
+                      {{ consultation()?.closed_at ? 'Closed' : 'Active' }}
+                    </app-badge>
+                  </div>
+                  <div class="card-actions">
+                    <app-button
+                      text="Edit"
+                      leftIcon="edit"
+                      [style]="ButtonStyleEnum.stroke"
+                      [size]="ButtonSizeEnum.small"
+                      (buttonClick)="editConsultation()">
+                    </app-button>
+
+                    @if (!consultation()?.closed_at) {
+                      <app-button
+                        text="Close Consultation"
+                        leftIcon="close"
+                        [style]="ButtonStyleEnum.stroke"
+                        [state]="ButtonStateEnum.error"
+                        [size]="ButtonSizeEnum.small"
+                        (buttonClick)="closeConsultation()">
+                      </app-button>
+                    } @else {
+                      <app-button
+                        text="Reopen Consultation"
+                        leftIcon="check"
+                        [style]="ButtonStyleEnum.primary"
+                        [size]="ButtonSizeEnum.small"
+                        (buttonClick)="reopenConsultation()">
+                      </app-button>
+                    }
+                  </div>
+                </div>
+                <span class="created-date">Created on {{ formatDateTime(consultation()!.created_at) }}</span>
+              </div>
+
+              @if (consultation()?.description) {
+                <p class="description">{{ consultation()?.description }}</p>
+              }
+
+              <div class="info-grid">
+                @if (consultation()?.created_by) {
+                  <div class="info-item">
+                    <span class="info-label">Created by</span>
+                    <span class="info-value">{{ consultation()!.created_by.first_name }} {{ consultation()!.created_by.last_name }}</span>
+                    <span class="info-sub">{{ consultation()!.created_by.email }}</span>
+                  </div>
+                }
+
+                @if (consultation()?.owned_by) {
+                  <div class="info-item">
+                    <span class="info-label">Owned by</span>
+                    <span class="info-value">{{ consultation()!.owned_by.first_name }} {{ consultation()!.owned_by.last_name }}</span>
+                    <span class="info-sub">{{ consultation()!.owned_by.email }}</span>
+                  </div>
+                }
+
+                <div class="info-item">
+                  <span class="info-label">Patient</span>
+                  <span class="info-value">{{ getBeneficiaryDisplayName() }}</span>
+                  @if (consultation()?.beneficiary?.email) {
+                    <span class="info-sub">{{ consultation()!.beneficiary!.email }}</span>
                   }
                 </div>
-              </div>
-              <span class="created-date">Created on {{ formatDateTime(consultation()!.created_at) }}</span>
-            </div>
 
-            @if (consultation()?.description) {
-              <p class="description">{{ consultation()?.description }}</p>
-            }
-
-            <div class="info-grid">
-              @if (consultation()?.created_by) {
-                <div class="info-item">
-                  <span class="info-label">Created by</span>
-                  <span class="info-value">{{ consultation()!.created_by.first_name }} {{ consultation()!.created_by.last_name }}</span>
-                  <span class="info-sub">{{ consultation()!.created_by.email }}</span>
-                </div>
-              }
-
-              @if (consultation()?.owned_by) {
-                <div class="info-item">
-                  <span class="info-label">Owned by</span>
-                  <span class="info-value">{{ consultation()!.owned_by.first_name }} {{ consultation()!.owned_by.last_name }}</span>
-                  <span class="info-sub">{{ consultation()!.owned_by.email }}</span>
-                </div>
-              }
-
-              <div class="info-item">
-                <span class="info-label">Patient</span>
-                <span class="info-value">{{ getBeneficiaryDisplayName() }}</span>
-                @if (consultation()?.beneficiary?.email) {
-                  <span class="info-sub">{{ consultation()!.beneficiary!.email }}</span>
+                @if (consultation()?.group) {
+                  <div class="info-item">
+                    <span class="info-label">Queue</span>
+                    <span class="info-value">{{ consultation()!.group!.name }}</span>
+                  </div>
                 }
               </div>
-
-              @if (consultation()?.group) {
-                <div class="info-item">
-                  <span class="info-label">Queue</span>
-                  <span class="info-value">{{ consultation()!.group!.name }}</span>
-                </div>
-              }
-            </div>
+            }
           </div>
 
           @if (inCall() && activeAppointmentId()) {
@@ -142,7 +215,7 @@
                           <app-svg src="calendar" [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
                           <span>{{ formatDateTime(appointment.scheduled_at) }}</span>
                         </div>
-                        <span class="appointment-type" [class.online]="appointment.type === 'Online'">
+                        <span class="appointment-type" [class.online]="appointment.type === AppointmentType.ONLINE">
                           {{ appointment.type }}
                         </span>
                       </div>
@@ -170,6 +243,26 @@
                               <div class="participant-details">
                                 <span class="participant-name">{{ getUserDisplayName(participant) }}</span>
                                 <span class="participant-contact">{{ participant.email || participant.phone || '' }}</span>
+                                <div class="participant-meta">
+                                  @if (participant.timezone) {
+                                    <span class="meta-item">
+                                      <app-svg src="clock" [svgStyle]="{'width.px': 12, 'height.px': 12}"></app-svg>
+                                      {{ participant.timezone }}
+                                    </span>
+                                  }
+                                  @if (participant.preferred_language) {
+                                    <span class="meta-item">
+                                      <app-svg src="globe" [svgStyle]="{'width.px': 12, 'height.px': 12}"></app-svg>
+                                      {{ getLanguageLabel(participant.preferred_language) }}
+                                    </span>
+                                  }
+                                  @if (participant.communication_method) {
+                                    <span class="meta-item">
+                                      <app-svg src="message-square" [svgStyle]="{'width.px': 12, 'height.px': 12}"></app-svg>
+                                      {{ participant.communication_method }}
+                                    </span>
+                                  }
+                                </div>
                               </div>
                               <app-badge [type]="getParticipantBadgeType(participant.status)">
                                 {{ participant.status }}
@@ -199,22 +292,15 @@
                           (buttonClick)="sendAppointment(appointment)">
                         </app-button>
                         <app-button
-                          text="Manage Participants"
-                          leftIcon="users"
-                          [size]="ButtonSizeEnum.small"
-                          [style]="ButtonStyleEnum.stroke"
-                          (buttonClick)="openManageParticipantsModal(appointment)">
-                        </app-button>
-                        <app-button
-                          text="Delete"
-                          leftIcon="trash"
+                          text="Cancel"
+                          leftIcon="close"
                           [size]="ButtonSizeEnum.small"
                           [style]="ButtonStyleEnum.stroke"
                           [state]="ButtonStateEnum.error"
-                          (buttonClick)="deleteAppointment(appointment)">
+                          (buttonClick)="cancelAppointment(appointment)">
                         </app-button>
                       }
-                      @if (appointment.status === AppointmentStatus.SCHEDULED && appointment.type === 'Online') {
+                      @if (appointment.status === AppointmentStatus.SCHEDULED && appointment.type === AppointmentType.ONLINE) {
                         <app-button
                           text="Join"
                           leftIcon="video"
@@ -232,19 +318,12 @@
                           (buttonClick)="openEditAppointmentModal(appointment)">
                         </app-button>
                         <app-button
-                          text="Manage Participants"
-                          leftIcon="users"
-                          [size]="ButtonSizeEnum.small"
-                          [style]="ButtonStyleEnum.stroke"
-                          (buttonClick)="openManageParticipantsModal(appointment)">
-                        </app-button>
-                        <app-button
-                          text="Delete"
-                          leftIcon="trash"
+                          text="Cancel"
+                          leftIcon="close"
                           [size]="ButtonSizeEnum.small"
                           [style]="ButtonStyleEnum.stroke"
                           [state]="ButtonStateEnum.error"
-                          (buttonClick)="deleteAppointment(appointment)">
+                          (buttonClick)="cancelAppointment(appointment)">
                         </app-button>
                       }
                     </div>
@@ -279,12 +358,4 @@
     (appointmentCreated)="onAppointmentCreated($event)"
     (appointmentUpdated)="onAppointmentUpdated($event)">
   </app-appointment-form-modal>
-
-  <app-manage-participants-modal
-    #manageParticipantsModal
-    [isOpen]="showManageParticipantsModal()"
-    [appointment]="selectedAppointment()"
-    (closed)="closeManageParticipantsModal()"
-    (participantsChanged)="loadAppointments()">
-  </app-manage-participants-modal>
 </app-page>

@@ -16,6 +16,7 @@ import {
   CreateParticipantRequest,
   CreateConsultationRequest,
   CreateConsultationRequestPayload,
+  DashboardResponse,
 } from '../models/consultation';
 import { PaginatedResponse } from '../models/global';
 
@@ -455,5 +456,9 @@ export class ConsultationService {
     return this.http.get(`${this.apiUrl}/messages/${messageId}/attachment/`, {
       responseType: 'blob'
     });
+  }
+
+  getDashboard(): Observable<DashboardResponse> {
+    return this.http.get<DashboardResponse>(`${this.apiUrl}/dashboard/`);
   }
 }

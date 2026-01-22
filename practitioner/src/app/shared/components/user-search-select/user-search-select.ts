@@ -9,6 +9,7 @@ import {
   output,
   signal,
   ViewChild,
+  effect,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
@@ -44,6 +45,8 @@ export class UserSearchSelect implements OnInit, OnDestroy, ControlValueAccessor
 
   label = input<string>('Select Beneficiary');
   placeholder = input<string>('Search by name or email...');
+  required = input<boolean>(false);
+  initialUser = input<IUser | null>(null);
 
   userSelected = output<IUser | null>();
 
@@ -66,6 +69,15 @@ export class UserSearchSelect implements OnInit, OnDestroy, ControlValueAccessor
 
   onChange: (value: number | null) => void = () => {};
   onTouched: () => void = () => {};
+
+  constructor() {
+    effect(() => {
+      const user = this.initialUser();
+      if (user) {
+        this.selectedUser.set(user);
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.searchSubject

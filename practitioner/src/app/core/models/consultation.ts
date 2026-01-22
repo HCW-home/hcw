@@ -23,27 +23,24 @@ export interface Participant {
   first_name: string | null;
   last_name: string | null;
   message_type?: string;
+  communication_method?: string;
+  preferred_language?: string;
   feedback_rate: number | null;
   feedback_message: string | null;
   status: ParticipantStatus;
 }
 
-export interface ParticipantStatus {
-  'Draft': 'Draft',
-  'Invited': 'Invited',
-  'Confirmed': 'Confirmed',
-  'Not available': 'Not available',
-}
+export type ParticipantStatus = 'draft' | 'invited' | 'confirmed' | 'not available';
 
 export enum AppointmentStatus {
-  DRAFT = 'Draft',
-  SCHEDULED = 'Scheduled',
-  CANCELLED = 'Cancelled'
+  DRAFT = 'draft',
+  SCHEDULED = 'scheduled',
+  CANCELLED = 'cancelled'
 }
 
 export enum AppointmentType {
-  ONLINE = 'Online',
-  INPERSON = 'InPerson'
+  ONLINE = 'online',
+  INPERSON = 'inPerson'
 }
 
 export interface Appointment {
@@ -90,10 +87,11 @@ export interface Consultation {
 }
 
 export interface CreateConsultationRequest {
-  title?: string;
-  description?: string;
-  group_id?: number;
-  beneficiary?: number;
+  title?: string | null;
+  description?: string | null;
+  group_id?: number | null;
+  beneficiary_id?: number | null;
+  owned_by_id?: number | null;
 }
 
 export interface Reason {
@@ -105,14 +103,15 @@ export interface Reason {
 }
 
 export enum RequestStatus {
-  REQUESTED = 'Requested',
-  ACCEPTED = 'Accepted',
-  CANCELLED = 'Cancelled'
+  REQUESTED = 'requested',
+  ACCEPTED = 'accepted',
+  CANCELLED = 'cancelled',
+  REFUSED = 'refused'
 }
 
 export enum RequestType {
-  ONLINE = 'Online',
-  INPERSON = 'InPerson'
+  ONLINE = 'online',
+  INPERSON = 'inPerson'
 }
 
 export interface ConsultationRequest {
@@ -181,9 +180,13 @@ export interface AvailableSlot {
 
 export interface CreateAppointmentRequest {
   type?: AppointmentType;
-  scheduled_at: string;
+  status?: AppointmentStatus;
+  scheduled_at?: string;
   end_expected_at?: string;
   participants?: CreateParticipantRequest[];
+  dont_invite_beneficiary?: boolean;
+  dont_invite_practitioner?: boolean;
+  dont_invite_me?: boolean;
 }
 
 export interface CreateParticipantRequest {
@@ -193,4 +196,25 @@ export interface CreateParticipantRequest {
   first_name?: string;
   last_name?: string;
   message_type: string;
+  timezone?: string;
+  communication_method?: string;
+  preferred_language?: string;
+}
+
+export interface DashboardNextAppointment {
+  scheduled_at: string | null;
+  end_expected_at: string | null;
+  type: string | null;
+  consultation_id: number | null;
+  status: string | null;
+  participants: Participant[];
+  dont_invite_beneficiary: boolean;
+  dont_invite_practitioner: boolean;
+  dont_invite_me: boolean;
+}
+
+export interface DashboardResponse {
+  next_appointment: DashboardNextAppointment | null;
+  upcoming_appointments: Appointment[];
+  overdue_consultations: Consultation[];
 }

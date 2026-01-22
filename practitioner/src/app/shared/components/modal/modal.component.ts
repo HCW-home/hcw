@@ -13,7 +13,7 @@ import { TypographyTypeEnum } from '../../constants/typography';
 export class ModalComponent {
   isOpen = input<boolean>(false);
   title = input<string>('');
-  size = input<'small' | 'medium' | 'large'>('medium');
+  size = input<'small' | 'medium' | 'large' | 'xlarge'>('medium');
   showCloseButton = input<boolean>(true);
 
   closed = output<void>();

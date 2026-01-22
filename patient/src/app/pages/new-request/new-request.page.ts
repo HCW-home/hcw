@@ -293,7 +293,7 @@ export class NewRequestPage implements OnInit, OnDestroy {
     const requestData: ConsultationRequestData = {
       reason_id: reason.id,
       expected_at: expectedAt,
-      type: 'ONLINE',
+      type: 'online',
       comment: this.comment.trim()
     };
 

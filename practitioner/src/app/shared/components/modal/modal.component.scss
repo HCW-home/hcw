@@ -37,6 +37,11 @@
     width: 720px;
     max-width: 90vw;
   }
+
+  &.modal-xlarge {
+    width: 960px;
+    max-width: 95vw;
+  }
 }
 
 .modal-header {
@@ -108,7 +113,8 @@
   .modal {
     &.modal-small,
     &.modal-medium,
-    &.modal-large {
+    &.modal-large,
+    &.modal-xlarge {
       width: 95vw;
       max-height: 85vh;
     }

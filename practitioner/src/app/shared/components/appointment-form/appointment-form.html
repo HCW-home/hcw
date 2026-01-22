@@ -1,0 +1,274 @@
+<div class="appointment-form-container">
+  <div class="appointment-form-section">
+    <form [formGroup]="appointmentForm">
+      <div class="form-group">
+        <label class="form-label">Appointment Type <span class="required">*</span></label>
+        <div class="type-toggle">
+          <button
+            type="button"
+            class="type-btn"
+            [class.active]="appointmentForm.get('type')?.value === AppointmentType.ONLINE"
+            (click)="setAppointmentType(AppointmentType.ONLINE)">
+            <app-svg src="video" [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
+            Online
+          </button>
+          <button
+            type="button"
+            class="type-btn"
+            [class.active]="appointmentForm.get('type')?.value === AppointmentType.INPERSON"
+            (click)="setAppointmentType(AppointmentType.INPERSON)">
+            <app-svg src="users" [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
+            In Person
+          </button>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <app-input
+          type="date"
+          label="Date"
+          [required]="true"
+          formControlName="date">
+        </app-input>
+        <app-input
+          type="time"
+          label="Time"
+          [required]="true"
+          formControlName="time">
+        </app-input>
+      </div>
+
+      <app-input
+        type="datetime-local"
+        label="Expected End Time (Optional)"
+        formControlName="end_expected_at">
+      </app-input>
+
+      <div class="invite-flags-section">
+        <label class="form-label">Invitation Settings</label>
+        <div class="invite-flags">
+          <app-checkbox
+            label="Do not invite patient"
+            formControlName="dont_invite_beneficiary">
+          </app-checkbox>
+          <app-checkbox
+            label="Do not invite practitioner"
+            formControlName="dont_invite_practitioner">
+          </app-checkbox>
+          <app-checkbox
+            label="Do not invite me"
+            formControlName="dont_invite_me">
+          </app-checkbox>
+        </div>
+      </div>
+
+      @if (showActions) {
+        <div class="form-actions">
+          <app-button
+            text="Cancel"
+            [block]="true"
+            [size]="ButtonSizeEnum.medium"
+            [style]="ButtonStyleEnum.stroke"
+            (buttonClick)="onCancel()">
+          </app-button>
+          <app-button
+            [text]="submitButtonText"
+            [block]="true"
+            [size]="ButtonSizeEnum.medium"
+            [style]="ButtonStyleEnum.primary"
+            [disabled]="appointmentForm.invalid || isSubmitting()"
+            [loading]="isSubmitting()"
+            (buttonClick)="submit()">
+          </app-button>
+        </div>
+      }
+    </form>
+  </div>
+
+  <div class="participants-section">
+    <div class="section-header">
+      <span class="section-title">Participants ({{ getTotalParticipantsCount() }})</span>
+      <app-button
+        [text]="showAddParticipantForm() ? 'Cancel' : 'Add'"
+        [leftIcon]="showAddParticipantForm() ? 'close' : 'plus'"
+        [size]="ButtonSizeEnum.small"
+        [style]="ButtonStyleEnum.stroke"
+        (buttonClick)="toggleAddParticipantForm()">
+      </app-button>
+    </div>
+
+    @if (showAddParticipantForm()) {
+      <div class="add-participant-form">
+        <div class="form-group">
+          <label class="form-label">Participant Type</label>
+          <div class="type-toggle compact">
+            <button
+              type="button"
+              class="type-btn"
+              [class.active]="isExistingUser()"
+              (click)="setParticipantType(true)">
+              Existing User
+            </button>
+            <button
+              type="button"
+              class="type-btn"
+              [class.active]="!isExistingUser()"
+              (click)="setParticipantType(false)">
+              External Guest
+            </button>
+          </div>
+        </div>
+
+        <form [formGroup]="participantForm">
+          @if (isExistingUser()) {
+            <div class="form-group">
+              <app-user-search-select
+                placeholder="Search by name or email..."
+                (userSelected)="onParticipantUserSelected($event)">
+              </app-user-search-select>
+            </div>
+          } @else {
+            <div class="form-row compact">
+              <app-input
+                type="text"
+                label="First Name"
+                placeholder="First name"
+                formControlName="first_name">
+              </app-input>
+              <app-input
+                type="text"
+                label="Last Name"
+                placeholder="Last name"
+                formControlName="last_name">
+              </app-input>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Contact Method</label>
+              <div class="contact-toggle">
+                <button
+                  type="button"
+                  class="contact-btn"
+                  [class.active]="participantForm.get('message_type')?.value === 'email'"
+                  (click)="setParticipantMessageType('email')">
+                  <app-svg src="email" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                  Email
+                </button>
+                <button
+                  type="button"
+                  class="contact-btn"
+                  [class.active]="participantForm.get('message_type')?.value === 'sms'"
+                  (click)="setParticipantMessageType('sms')">
+                  <app-svg src="phone" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                  Phone
+                </button>
+              </div>
+            </div>
+
+            @if (participantForm.get('message_type')?.value === 'email') {
+              <app-input
+                type="email"
+                label="Email Address"
+                placeholder="participant@email.com"
+                formControlName="email">
+              </app-input>
+            } @else {
+              <app-input
+                type="tel"
+                label="Phone Number"
+                placeholder="+33 6 12 34 56 78"
+                formControlName="phone">
+              </app-input>
+            }
+          }
+
+          <div class="participant-settings">
+            <app-select
+              label="Timezone"
+              formControlName="timezone"
+              [options]="timezoneOptions"
+              placeholder="Select timezone">
+            </app-select>
+            <app-select
+              label="Communication"
+              formControlName="communication_method"
+              [options]="communicationMethods"
+              placeholder="Select method">
+            </app-select>
+            <app-select
+              label="Language"
+              formControlName="preferred_language"
+              [options]="languageOptions"
+              placeholder="Select language">
+            </app-select>
+          </div>
+
+          <app-button
+            text="Add Participant"
+            [block]="true"
+            [size]="ButtonSizeEnum.small"
+            [style]="ButtonStyleEnum.primary"
+            [disabled]="isAddingParticipant() || (isExistingUser() && !selectedParticipantUser())"
+            [loading]="isAddingParticipant()"
+            (buttonClick)="addParticipant()">
+          </app-button>
+        </form>
+      </div>
+    }
+
+    @if (isEditMode && isLoadingParticipants()) {
+      <div class="loading-container">
+        <app-loader></app-loader>
+      </div>
+    } @else if (getTotalParticipantsCount() === 0) {
+      <div class="empty-participants">
+        <app-svg src="users" [svgStyle]="{'width.px': 32, 'height.px': 32, 'opacity': 0.3}"></app-svg>
+        <span>No participants yet</span>
+        <span class="empty-hint">Add participants who should join this appointment</span>
+      </div>
+    } @else {
+      <div class="participants-list">
+        @for (participant of participants(); track participant.id) {
+          <div class="participant-item">
+            <div class="participant-avatar">
+              {{ getParticipantInitials(participant) }}
+            </div>
+            <div class="participant-details">
+              <span class="participant-name">{{ getUserDisplayName(participant) }}</span>
+              <span class="participant-contact">{{ participant.email || participant.phone || '' }}</span>
+            </div>
+            <app-badge [type]="getParticipantBadgeType(participant.status)">
+              {{ participant.status }}
+            </app-badge>
+            <app-button
+              leftIcon="close"
+              [size]="ButtonSizeEnum.small"
+              [style]="ButtonStyleEnum.text"
+              [state]="ButtonStateEnum.error"
+              (buttonClick)="removeParticipant(participant)">
+            </app-button>
+          </div>
+        }
+        @for (pending of pendingParticipants(); track $index) {
+          <div class="participant-item pending">
+            <div class="participant-avatar">
+              {{ getPendingParticipantInitials(pending) }}
+            </div>
+            <div class="participant-details">
+              <span class="participant-name">{{ getPendingParticipantName(pending) }}</span>
+              <span class="participant-contact">{{ pending.email || pending.phone || '' }}</span>
+            </div>
+            <app-badge [type]="BadgeTypeEnum.gray">Pending</app-badge>
+            <app-button
+              leftIcon="close"
+              [size]="ButtonSizeEnum.small"
+              [style]="ButtonStyleEnum.text"
+              [state]="ButtonStateEnum.error"
+              (buttonClick)="removePendingParticipant($index)">
+            </app-button>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

@@ -203,9 +203,9 @@ export class HealthRecordsPage implements OnInit {
 
   getPrescriptionStatusColor(status: string): string {
     switch (status) {
-      case 'PRESCRIBED': return 'primary';
-      case 'DISPENSED': return 'success';
-      case 'CANCELLED': return 'danger';
+      case 'prescribed': return 'primary';
+      case 'dispensed': return 'success';
+      case 'cancelled': return 'danger';
       default: return 'medium';
     }
   }

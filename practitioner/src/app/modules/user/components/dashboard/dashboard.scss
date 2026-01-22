@@ -2,8 +2,49 @@
   padding: 32px;
   min-height: calc(100vh - 140px);
 
-  .active-consultations-section {
+  .next-appointment-section {
     margin-bottom: 24px;
+
+    .section-card.highlight {
+      border-color: var(--primary-200);
+      background: linear-gradient(to right, var(--primary-50), var(--White));
+
+      .section-header {
+        background: transparent;
+        border-bottom-color: var(--primary-100);
+      }
+    }
+
+    .next-appointment-card {
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+
+      &:hover {
+        background: rgba(6, 182, 212, 0.03);
+      }
+
+      .appointment-main {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .appointment-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .appointment-schedule {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+    }
   }
 
   .dashboard-grid {

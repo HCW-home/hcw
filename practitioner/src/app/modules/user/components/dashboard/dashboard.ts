@@ -1,7 +1,7 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
+import { CommonModule, DatePipe } from '@angular/common';
 import { Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
 import { Page } from '../../../../core/components/page/page';
 import { Typography } from '../../../../shared/ui-components/typography/typography';
 import { Button } from '../../../../shared/ui-components/button/button';
@@ -11,21 +11,8 @@ import { TypographyTypeEnum } from '../../../../shared/constants/typography';
 import { ButtonSizeEnum, ButtonStyleEnum } from '../../../../shared/constants/button';
 import { ConsultationService } from '../../../../core/services/consultation.service';
 import { ToasterService } from '../../../../core/services/toaster.service';
-import { Consultation, Appointment, AppointmentStatus } from '../../../../core/models/consultation';
-
-interface DashboardStats {
-  totalConsultations: number;
-  activeConsultations: number;
-  closedConsultations: number;
-}
-
-interface StatCard {
-  title: string;
-  value: number;
-  icon: string;
-  color: string;
-  bgColor: string;
-}
+import { Consultation, Appointment, DashboardNextAppointment, AppointmentType } from '../../../../core/models/consultation';
+import { getErrorMessage } from '../../../../core/utils/error-helper';
 
 @Component({
   selector: 'app-dashboard',
@@ -37,155 +24,74 @@ interface StatCard {
     Svg,
     Loader
   ],
+  providers: [DatePipe],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
-export class Dashboard implements OnInit {
+export class Dashboard implements OnInit, OnDestroy {
   private consultationService = inject(ConsultationService);
   private toasterService = inject(ToasterService);
   private router = inject(Router);
+  private datePipe = inject(DatePipe);
+  private destroy$ = new Subject<void>();
 
   loading = signal(true);
   error = signal<string | null>(null);
 
-  stats = signal<DashboardStats>({
-    totalConsultations: 0,
-    activeConsultations: 0,
-    closedConsultations: 0
-  });
-
-  recentConsultations = signal<Consultation[]>([]);
-  upcomingAppointments = signal<{ appointment: Appointment; consultation: Consultation }[]>([]);
+  nextAppointment = signal<DashboardNextAppointment | null>(null);
+  upcomingAppointments = signal<Appointment[]>([]);
   overdueConsultations = signal<Consultation[]>([]);
+
+  hasValidNextAppointment(): boolean {
+    const apt = this.nextAppointment();
+    return apt !== null && apt.scheduled_at !== null && apt.consultation_id !== null;
+  }
 
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
-
-  get statCards(): StatCard[] {
-    const s = this.stats();
-    return [
-      {
-        title: 'Total Consultations',
-        value: s.totalConsultations,
-        icon: 'report',
-        color: 'var(--primary-600)',
-        bgColor: 'var(--primary-100)'
-      },
-      {
-        title: 'Active',
-        value: s.activeConsultations,
-        icon: 'activity-history',
-        color: 'var(--emerald-500)',
-        bgColor: 'var(--emerald-100)'
-      },
-      {
-        title: 'Closed',
-        value: s.closedConsultations,
-        icon: 'check',
-        color: 'var(--slate-400)',
-        bgColor: 'var(--slate-100)'
-      }
-    ];
-  }
+  protected readonly AppointmentType = AppointmentType;
 
   ngOnInit(): void {
     this.loadDashboardData();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   loadDashboardData(): void {
     this.loading.set(true);
     this.error.set(null);
 
-    forkJoin({
-      activeConsultations: this.consultationService.getConsultations({ is_closed: false, page_size: 100 }),
-      closedConsultations: this.consultationService.getConsultations({ is_closed: true, page_size: 100 }),
-      overdueConsultations: this.consultationService.getOverdueConsultations({ page_size: 5 })
-    }).subscribe({
-      next: (data) => {
-        const activeCount = data.activeConsultations.count;
-        const closedCount = data.closedConsultations.count;
-
-        this.stats.set({
-          totalConsultations: activeCount + closedCount,
-          activeConsultations: activeCount,
-          closedConsultations: closedCount
-        });
-
-        const allActive = data.activeConsultations.results;
-
-        this.overdueConsultations.set(data.overdueConsultations.results);
-        this.recentConsultations.set(allActive.slice(0, 4));
-        this.loadUpcomingAppointments(allActive);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.error.set('Failed to load dashboard data');
-        this.toasterService.show('error', 'Error', 'Failed to load dashboard data');
-        this.loading.set(false);
-      }
-    });
-  }
-
-  private loadUpcomingAppointments(consultations: Consultation[]): void {
-    const upcoming: { appointment: Appointment; consultation: Consultation }[] = [];
-    let processed = 0;
-    const toProcess = Math.min(consultations.length, 10);
-
-    if (toProcess === 0) {
-      this.upcomingAppointments.set([]);
-      return;
-    }
-
-    consultations.slice(0, 10).forEach(consultation => {
-      this.consultationService.getConsultationAppointments(consultation.id, { page_size: 5 })
-        .subscribe({
-          next: (appointmentsData) => {
-            const now = new Date();
-            appointmentsData.results
-              .filter(apt => apt.status === AppointmentStatus.SCHEDULED && new Date(apt.scheduled_at) > now)
-              .forEach(apt => {
-                upcoming.push({ appointment: apt, consultation });
-              });
-
-            processed++;
-            if (processed === toProcess) {
-              upcoming.sort((a, b) =>
-                new Date(a.appointment.scheduled_at).getTime() - new Date(b.appointment.scheduled_at).getTime()
-              );
-              this.upcomingAppointments.set(upcoming.slice(0, 5));
-            }
-          },
-          error: () => {
-            processed++;
-            if (processed === toProcess) {
-              upcoming.sort((a, b) =>
-                new Date(a.appointment.scheduled_at).getTime() - new Date(b.appointment.scheduled_at).getTime()
-              );
-              this.upcomingAppointments.set(upcoming.slice(0, 5));
-            }
-          }
-        });
-    });
+    this.consultationService.getDashboard()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (data) => {
+          this.nextAppointment.set(data.next_appointment);
+          this.upcomingAppointments.set(data.upcoming_appointments || []);
+          this.overdueConsultations.set(data.overdue_consultations || []);
+          this.loading.set(false);
+        },
+        error: (err) => {
+          this.error.set('Failed to load dashboard data');
+          this.toasterService.show('error', getErrorMessage(err));
+          this.loading.set(false);
+        }
+      });
   }
 
   formatDate(dateStr: string): string {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
+    return this.datePipe.transform(dateStr, 'MMM d, yyyy') || '';
   }
 
   formatDateTime(dateStr: string): string {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return this.datePipe.transform(dateStr, 'MMM d, h:mm a') || '';
+  }
+
+  formatTime(dateStr: string): string {
+    return this.datePipe.transform(dateStr, 'h:mm a') || '';
   }
 
   getRelativeTime(dateStr: string): string {
@@ -222,9 +128,18 @@ export class Dashboard implements OnInit {
 
   getBeneficiaryName(consultation: Consultation): string {
     if (consultation.beneficiary) {
-      return `${consultation.beneficiary.first_name} ${consultation.beneficiary.last_name}`;
+      return `${consultation.beneficiary.first_name || ''} ${consultation.beneficiary.last_name || ''}`.trim() || consultation.beneficiary.email;
     }
     return 'Unassigned';
+  }
+
+  getConsultationInitials(consultation: Consultation): string {
+    if (consultation.beneficiary) {
+      const first = consultation.beneficiary.first_name?.charAt(0) || '';
+      const last = consultation.beneficiary.last_name?.charAt(0) || '';
+      return (first + last).toUpperCase() || consultation.beneficiary.email.charAt(0).toUpperCase();
+    }
+    return '--';
   }
 
   navigateToConsultations(): void {
@@ -247,15 +162,32 @@ export class Dashboard implements OnInit {
     this.router.navigate(['/app/consultations', consultation.id]);
   }
 
-  viewAppointment(item: { appointment: Appointment; consultation: Consultation }): void {
-    this.router.navigate(['/app/consultations', item.consultation.id]);
+  viewAppointment(appointment: Appointment): void {
+    this.router.navigate(['/app/consultations', appointment.consultation]);
   }
 
-  joinAppointment(item: { appointment: Appointment; consultation: Consultation }, event: Event): void {
+  joinAppointment(appointment: Appointment, event: Event): void {
     event.stopPropagation();
-    this.router.navigate(['/app/consultations', item.consultation.id], {
-      queryParams: { join: true, appointmentId: item.appointment.id }
+    this.router.navigate(['/app/consultations', appointment.consultation], {
+      queryParams: { join: true, appointmentId: appointment.id }
     });
+  }
+
+  joinNextAppointment(event: Event): void {
+    event.stopPropagation();
+    const apt = this.nextAppointment();
+    if (apt && apt.consultation_id) {
+      this.router.navigate(['/app/consultations', apt.consultation_id], {
+        queryParams: { join: true }
+      });
+    }
+  }
+
+  viewNextAppointment(): void {
+    const apt = this.nextAppointment();
+    if (apt && apt.consultation_id) {
+      this.router.navigate(['/app/consultations', apt.consultation_id]);
+    }
   }
 
   retry(): void {

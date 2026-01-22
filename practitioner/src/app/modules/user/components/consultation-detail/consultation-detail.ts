@@ -1,6 +1,7 @@
-import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, inject, computed } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule, Location } from '@angular/common';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 
 import { ConsultationService } from '../../../../core/services/consultation.service';
@@ -13,6 +14,9 @@ import {
   Appointment,
   Participant,
   AppointmentStatus,
+  AppointmentType,
+  Queue,
+  CreateConsultationRequest,
 } from '../../../../core/models/consultation';
 import { IUser } from '../../models/user';
 
@@ -24,12 +28,17 @@ import { VideoConsultationComponent } from '../video-consultation/video-consulta
 import { Svg } from '../../../../shared/ui-components/svg/svg';
 import { Button } from '../../../../shared/ui-components/button/button';
 import { Badge } from '../../../../shared/components/badge/badge';
+import { Input } from '../../../../shared/ui-components/input/input';
+import { Textarea } from '../../../../shared/ui-components/textarea/textarea';
+import { Select } from '../../../../shared/ui-components/select/select';
+import { UserSearchSelect } from '../../../../shared/components/user-search-select/user-search-select';
 import { ButtonStyleEnum, ButtonSizeEnum, ButtonStateEnum } from '../../../../shared/constants/button';
 import { BadgeTypeEnum } from '../../../../shared/constants/badge';
+import { SelectOption } from '../../../../shared/models/select';
 import { getParticipantBadgeType, getAppointmentBadgeType } from '../../../../shared/tools/helper';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
 import { AppointmentFormModal } from './appointment-form-modal/appointment-form-modal';
-import { ManageParticipantsModal } from './manage-participants-modal/manage-participants-modal';
+import { RoutePaths } from '../../../../core/constants/routes';
 
 @Component({
   selector: 'app-consultation-detail',
@@ -42,10 +51,14 @@ import { ManageParticipantsModal } from './manage-participants-modal/manage-part
     MessageList,
     VideoConsultationComponent,
     CommonModule,
+    ReactiveFormsModule,
     Button,
     Badge,
+    Input,
+    Textarea,
+    Select,
+    UserSearchSelect,
     AppointmentFormModal,
-    ManageParticipantsModal,
   ],
 })
 export class ConsultationDetail implements OnInit, OnDestroy {
@@ -72,10 +85,26 @@ export class ConsultationDetail implements OnInit, OnDestroy {
   isVideoMinimized = signal(false);
 
   showCreateAppointmentModal = signal(false);
-  showManageParticipantsModal = signal(false);
   editingAppointment = signal<Appointment | null>(null);
 
+  isEditMode = signal(false);
+  isSavingConsultation = signal(false);
+  queues = signal<Queue[]>([]);
+  editForm!: FormGroup;
+  selectedBeneficiary = signal<IUser | null>(null);
+  selectedOwner = signal<IUser | null>(null);
+
+  private fb = inject(FormBuilder);
+
+  queueOptions = computed<SelectOption[]>(() =>
+    this.queues().map(queue => ({
+      value: queue.id.toString(),
+      label: queue.name,
+    }))
+  );
+
   protected readonly AppointmentStatus = AppointmentStatus;
+  protected readonly AppointmentType = AppointmentType;
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
   protected readonly ButtonStateEnum = ButtonStateEnum;
@@ -92,6 +121,9 @@ export class ConsultationDetail implements OnInit, OnDestroy {
   private userService = inject(UserService);
 
   ngOnInit(): void {
+    this.initEditForm();
+    this.loadQueues();
+
     this.userService.currentUser$.pipe(takeUntil(this.destroy$)).subscribe(user => {
       this.currentUser.set(user);
     });
@@ -106,6 +138,30 @@ export class ConsultationDetail implements OnInit, OnDestroy {
     });
 
     this.setupWebSocketListeners();
+  }
+
+  private initEditForm(): void {
+    this.editForm = this.fb.group({
+      title: [''],
+      description: [''],
+      beneficiary_id: [''],
+      owned_by_id: [''],
+      group_id: [''],
+    });
+  }
+
+  private loadQueues(): void {
+    this.consultationService
+      .getQueues()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: queues => {
+          this.queues.set(queues);
+        },
+        error: (error) => {
+          this.toasterService.show('error', getErrorMessage(error));
+        },
+      });
   }
 
   private checkJoinQueryParam(): void {
@@ -340,24 +396,26 @@ export class ConsultationDetail implements OnInit, OnDestroy {
       });
   }
 
-  async deleteAppointment(appointment: Appointment): Promise<void> {
+  async cancelAppointment(appointment: Appointment): Promise<void> {
     const confirmed = await this.confirmationService.confirm({
-      title: 'Delete Appointment',
-      message: 'Are you sure you want to delete this appointment? This action cannot be undone.',
-      confirmText: 'Delete',
-      cancelText: 'Cancel',
+      title: 'Cancel Appointment',
+      message: 'Are you sure you want to cancel this appointment?',
+      confirmText: 'Cancel Appointment',
+      cancelText: 'Go Back',
       confirmStyle: 'danger',
     });
 
     if (confirmed) {
       this.consultationService
-        .deleteAppointment(appointment.id)
+        .updateAppointment(appointment.id, { status: AppointmentStatus.CANCELLED })
         .pipe(takeUntil(this.destroy$))
         .subscribe({
-          next: () => {
+          next: (updatedAppointment) => {
             const currentAppointments = this.appointments();
-            this.appointments.set(currentAppointments.filter(a => a.id !== appointment.id));
-            this.toasterService.show('success', 'Appointment deleted successfully');
+            this.appointments.set(
+              currentAppointments.map(a => a.id === appointment.id ? updatedAppointment : a)
+            );
+            this.toasterService.show('success', 'Appointment cancelled successfully');
           },
           error: (error) => {
             this.toasterService.show('error', getErrorMessage(error));
@@ -382,9 +440,9 @@ export class ConsultationDetail implements OnInit, OnDestroy {
         .closeConsultation(this.consultationId)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
-          next: updatedConsultation => {
-            this.consultation.set(updatedConsultation);
+          next: () => {
             this.toasterService.show('success', 'Consultation closed successfully');
+            this.router.navigate([`/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`]);
           },
           error: (error) => {
             this.toasterService.show('error', getErrorMessage(error));
@@ -421,7 +479,79 @@ export class ConsultationDetail implements OnInit, OnDestroy {
   }
 
   editConsultation(): void {
-    this.router.navigate(['/app/consultations', this.consultationId, 'edit']);
+    const currentConsultation = this.consultation();
+    if (!currentConsultation) return;
+
+    this.editForm.patchValue({
+      title: currentConsultation.title || '',
+      description: currentConsultation.description || '',
+      beneficiary_id: currentConsultation.beneficiary?.id || '',
+      owned_by_id: currentConsultation.owned_by?.id || '',
+      group_id: currentConsultation.group?.id?.toString() || '',
+    });
+
+    this.selectedBeneficiary.set(currentConsultation.beneficiary ? {
+      pk: currentConsultation.beneficiary.id,
+      email: currentConsultation.beneficiary.email,
+      first_name: currentConsultation.beneficiary.first_name,
+      last_name: currentConsultation.beneficiary.last_name,
+    } as IUser : null);
+
+    this.selectedOwner.set(currentConsultation.owned_by ? {
+      pk: currentConsultation.owned_by.id,
+      email: currentConsultation.owned_by.email,
+      first_name: currentConsultation.owned_by.first_name,
+      last_name: currentConsultation.owned_by.last_name,
+    } as IUser : null);
+
+    this.isEditMode.set(true);
+  }
+
+  cancelEdit(): void {
+    this.isEditMode.set(false);
+    this.selectedBeneficiary.set(null);
+    this.selectedOwner.set(null);
+  }
+
+  onBeneficiarySelected(user: IUser | null): void {
+    this.selectedBeneficiary.set(user);
+    this.editForm.patchValue({ beneficiary_id: user?.pk || '' });
+  }
+
+  onOwnerSelected(user: IUser | null): void {
+    this.selectedOwner.set(user);
+    this.editForm.patchValue({ owned_by_id: user?.pk || '' });
+  }
+
+  saveConsultationChanges(): void {
+    if (!this.consultationId) return;
+
+    this.isSavingConsultation.set(true);
+    const formValue = this.editForm.value;
+
+    const updateData: Partial<CreateConsultationRequest> = {
+      title: formValue.title || null,
+      description: formValue.description || null,
+      beneficiary_id: formValue.beneficiary_id ? Number(formValue.beneficiary_id) : null,
+      owned_by_id: formValue.owned_by_id ? Number(formValue.owned_by_id) : null,
+      group_id: formValue.group_id ? Number(formValue.group_id) : null,
+    };
+
+    this.consultationService
+      .updateConsultation(this.consultationId, updateData)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (updatedConsultation) => {
+          this.consultation.set(updatedConsultation);
+          this.isSavingConsultation.set(false);
+          this.isEditMode.set(false);
+          this.toasterService.show('success', 'Consultation updated successfully');
+        },
+        error: (error) => {
+          this.isSavingConsultation.set(false);
+          this.toasterService.show('error', getErrorMessage(error));
+        },
+      });
   }
 
   formatDateTime(dateString: string): string {
@@ -497,16 +627,6 @@ export class ConsultationDetail implements OnInit, OnDestroy {
     this.appointments.set(updatedAppointments);
   }
 
-  openManageParticipantsModal(appointment: Appointment): void {
-    this.selectedAppointment.set(appointment);
-    this.showManageParticipantsModal.set(true);
-  }
-
-  closeManageParticipantsModal(): void {
-    this.showManageParticipantsModal.set(false);
-    this.loadAppointments();
-  }
-
   getParticipantInitials(participant: Participant): string {
     if (participant.user) {
       const first = participant.user.first_name?.charAt(0) || '';
@@ -517,6 +637,15 @@ export class ConsultationDetail implements OnInit, OnDestroy {
       return participant.email.charAt(0).toUpperCase();
     }
     return '?';
+  }
+
+  getLanguageLabel(code: string): string {
+    const languages: Record<string, string> = {
+      en: 'English',
+      de: 'German',
+      fr: 'French',
+    };
+    return languages[code] || code;
   }
 
   onEditMessage(data: EditMessageData): void {
