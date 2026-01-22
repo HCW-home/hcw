@@ -49,6 +49,11 @@ urlpatterns = [
     ),
     path("api/user/testrtc/", views.TestRTCView.as_view(), name="user_testrtc"),
     path(
+        "api/user/dashboard/",
+        views.UserDashboardView.as_view(),
+        name="user_dashboard",
+    ),
+    path(
         "api/messages/<int:message_id>/attachment/",
         views.MessageAttachmentView.as_view(),
         name="message_attachment",

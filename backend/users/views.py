@@ -5,7 +5,7 @@ from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from allauth.socialaccount.providers.openid_connect.views import (
     OpenIDConnectOAuth2Adapter,
 )
-from consultations.models import Appointment, Consultation, Participant
+from consultations.models import Appointment, Consultation, Participant, Request
 from consultations.models import Message as ConsultationMessage
 from consultations.serializers import (
     AppointmentDetailSerializer,
@@ -14,6 +14,7 @@ from consultations.serializers import (
     ConsultationMessageSerializer,
     ConsultationSerializer,
     ReasonSerializer,
+    RequestSerializer,
 )
 from dj_rest_auth.registration.serializers import SocialLoginSerializer
 from dj_rest_auth.registration.views import SocialLoginView
@@ -987,3 +988,52 @@ class TestRTCView(APIView):
                 {"detail": "No media server available."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+class UserDashboardView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        responses={
+            200: {
+                "type": "object",
+                "properties": {
+                    "requests": {
+                        "type": "array",
+                        "description": "Last 10 requests created by the user",
+                    },
+                    "consultations": {
+                        "type": "array",
+                        "description": "Last 10 consultations where the user is the beneficiary",
+                    },
+                    "appointments": {
+                        "type": "array",
+                        "description": "Last 10 appointments where the user is a participant",
+                    },
+                },
+            },
+        },
+        description="Get dashboard data for the authenticated user: 10 requests, 10 consultations (as beneficiary), and 10 appointments.",
+    )
+    def get(self, request):
+        """Get dashboard data for the authenticated user."""
+        user = request.user
+
+        requests = Request.objects.filter(created_by=user).order_by("-id")[:10]
+        consultations = Consultation.objects.filter(beneficiary=user).order_by(
+            "-created_at"
+        )[:10]
+        appointments = (
+            Appointment.objects.filter(participants__user=user)
+            .distinct()
+            .order_by("-scheduled_at")[:10]
+        )
+
+        return Response(
+            {
+                "requests": RequestSerializer(requests, many=True).data,
+                "consultations": ConsultationSerializer(consultations, many=True).data,
+                "appointments": AppointmentSerializer(appointments, many=True).data,
+            }
+        )
