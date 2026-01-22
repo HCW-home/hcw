@@ -110,7 +110,7 @@ class Appointment(models.Model):
     status = models.CharField(
         _("status"),
         choices=AppointmentStatus.choices,
-        default=AppointmentStatus.draft,
+        default=AppointmentStatus.scheduled,
     )
     consultation = models.ForeignKey(
         Consultation,
