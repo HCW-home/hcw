@@ -37,7 +37,7 @@ update patient user information
     1 - Select beneficiary + reason + description
     2 - Owner is either Team or Doctor group or owned_by
     3 - Improve appointment creation
-        - handling dont_invite_beneficiary, dont_invite_practitionner and dont_invite_me
+        <!-- - handling dont_invite_beneficiary, dont_invite_practitionner and dont_invite_me -->
         - check there is at least two participants
         - change button "add participant" and having Existing user selected by default
         - remove feedback_rate and feedback_message
@@ -47,10 +47,10 @@ update patient user information
     - Edit should have modal or inline edit, not back to wizard
     - Merge Edit and Manage participant button and modal, participants can be manage on the right.
 
-* Participant delete causing many problem : Notification if participant has been deleted, message rending is not working anymore.
+<!-- * Participant delete causing many problem : Notification if participant has been deleted, message rending is not working anymore. -->
 
 ## Low priority
 
 * Join consultation : add intermediate page similar to google meet.
 * Health Metric : add custom fields on patient + on health metric + endpoints
-* Remove delete appointment
+<!-- * Remove delete appointment -->
