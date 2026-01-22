@@ -141,10 +141,10 @@ class Appointment(models.Model):
 
 
 class ParticipantStatus(Enum):
-    draft = _("Draft")
-    invited = _("Invited")
-    confirmed = _("Confirmed")
-    unavailable = _("Not available")
+    draft = 'draft'
+    invited = 'invited'
+    confirmed = 'confirmed'
+    unavailable = 'unavailable'
 
 
 class Participant(models.Model):

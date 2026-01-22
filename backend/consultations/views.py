@@ -78,14 +78,8 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
     ordering = ["-created_at"]
     ordering_fields = ["created_at", "updated_at", "closed_at"]
 
-    def get_serializer_class(self):
-        # if self.action == "create":
-        #     return ConsultationCreateSerializer
-        return ConsultationSerializer
-
     def get_queryset(self):
         user = self.request.user
-
         return Consultation.objects.accessible_by(user)
 
     @extend_schema(responses=ConsultationSerializer)
