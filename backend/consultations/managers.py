@@ -22,7 +22,6 @@ class ConsultationQuerySet(models.QuerySet):
 class ConsultationManager(models.Manager):
     """Custom Manager for Consultation model"""
 
-
     def get_queryset(self):
         return ConsultationQuerySet(self.model, using=self._db)
 

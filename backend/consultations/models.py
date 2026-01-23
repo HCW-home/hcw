@@ -176,7 +176,7 @@ class Participant(models.Model):
     email = models.EmailField(null=True, blank=True)
     phone = models.CharField(null=True, blank=True)
     communication_method = models.CharField(
-        choices=CommunicationMethod.choices, max_length=20
+        choices=CommunicationMethod.choices, max_length=20, null=True, blank=True
     )
     preferred_language = models.CharField(
         max_length=10,

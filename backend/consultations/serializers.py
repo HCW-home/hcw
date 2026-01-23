@@ -2,9 +2,11 @@ from django.contrib.auth import get_user_model
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 from django.utils.translation import gettext_lazy as _
+from django.db.models import Q
 
 from .models import (
     Appointment,
+    AppointmentStatus,
     BookingSlot,
     Consultation,
     Message,
@@ -33,7 +35,12 @@ class QueueSerializer(serializers.ModelSerializer):
 
 class ParticipantSerializer(serializers.ModelSerializer):
     user = ConsultationUserSerializer(read_only=True)
-    user_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
+    user_id = serializers.PrimaryKeyRelatedField(
+        required=False,
+        write_only=True,
+        queryset=User.objects.all(),
+        source='user'
+    )
 
     class Meta:
         model = Participant
@@ -41,7 +48,7 @@ class ParticipantSerializer(serializers.ModelSerializer):
             "id",
             "user",
             "user_id",
-            "status",
+            "is_active",
             "email",
             "phone",
             "timezone",
@@ -52,66 +59,30 @@ class ParticipantSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, attrs):
-        """Validate that the participant doesn't already exist for this appointment."""
-        # Get appointment from context (set when creating participant)
-        appointment = self.context.get("appointment") or attrs.get("appointment")
+        provided_fields = [
+            attrs.get('phone'),
+            attrs.get('email'),
+            attrs.get('user')
+        ]
+        provided_count = sum(1 for field in provided_fields if field)
 
-        if appointment:
-            # Check if user_id is provided
-            user_id = attrs.get("user_id")
-            if user_id:
-                try:
-                    existing_user = User.objects.get(id=user_id)
-                    if Participant.objects.filter(
-                        appointment=appointment, user=existing_user
-                    ).exists():
-                        raise serializers.ValidationError(
-                            {
-                                "user_id": "A participant with this user already exists for this appointment."
-                            }
-                        )
-                except User.DoesNotExist:
-                    raise serializers.ValidationError({"user_id": "User not found."})
+        if provided_count == 0:
+            raise serializers.ValidationError(
+                _("At least one of phone, email, or user must be provided.")
+            )
 
-            # Check if email is provided
-            email = attrs.get("email")
-            phone = attrs.get("phone")
+        if provided_count > 1:
+            raise serializers.ValidationError(
+                _("Only one of phone, email, or user can be provided.")
+            )
 
-            if email:
-                # Check if a participant with this email already exists for this appointment
-                # The email will be used to create/get a user in the model's save method
-                existing_user = User.objects.filter(email=email).first()
-                if existing_user:
-                    # Check if this user is already a participant in this appointment
-                    if Participant.objects.filter(
-                        appointment=appointment, user=existing_user
-                    ).exists():
-                        raise serializers.ValidationError(
-                            {
-                                "email": "A participant with this email already exists for this appointment."
-                            }
-                        )
+        return super().validate(attrs)
 
-            elif phone and not email:
-                # Check if a participant with this phone already exists
-                existing_user = User.objects.filter(mobile_phone_number=phone).first()
-                if existing_user:
-                    if Participant.objects.filter(
-                        appointment=appointment, user=existing_user
-                    ).exists():
-                        raise serializers.ValidationError(
-                            {
-                                "phone": "A participant with this phone number already exists for this appointment."
-                            }
-                        )
-
-        return attrs
-
-    def create(self, validated_data):
-        user_id = validated_data.pop("user_id", None)
-        if user_id:
-            validated_data["user"] = User.objects.get(id=user_id)
-        return super().create(validated_data)
+    # def create(self, validated_data):
+    #     user_id = validated_data.pop("user_id", None)
+    #     if user_id:
+    #         validated_data["user"] = User.objects.get(id=user_id)
+    #     return super().create(validated_data)
 
 
 
@@ -175,9 +146,19 @@ class AppointmentSerializer(serializers.ModelSerializer):
     consultation_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
     participants = ParticipantSerializer(
         many=True, read_only=False, required=False)
-    dont_invite_beneficiary = serializers.BooleanField(required=False)
-    dont_invite_practitioner = serializers.BooleanField(required=False)
-    dont_invite_me = serializers.BooleanField(required=False)
+
+    @property
+    def consultation(self) -> Consultation:
+        if not self._consultation:
+            consultation_id = self.validated_data.get('consultation_id', None)
+            try:
+                self._consultation = Consultation.objects.get(
+                    id=consultation_id)
+            except Consultation.DoesNotExist:
+                # TODO : make this optional when presential consultation is handled
+                raise serializers.ValidationError(
+                    {"consultation_id": "Consultation not found."})
+        return self._consultation
 
     class Meta:
         model = Appointment
@@ -192,109 +173,119 @@ class AppointmentSerializer(serializers.ModelSerializer):
             "status",
             "created_at",
             "participants",
+        ]
+        read_only_fields = ["id", "created_by", "created_at", "status"]
+
+    def update(self, instance, validated_data):
+
+        participants_data = validated_data.pop('participants', None)
+
+        appointment = super().update(instance, validated_data)
+
+        if participants_data is None:
+            return appointment
+
+        participant_users = set(
+            [participant.user for participant in instance.participants.all()])
+        created_participant_users = set()
+
+        for participant in participants_data:
+
+            attr = 'phone' if participant.get(
+                'phone') else 'email' if participant.get('email') else None
+
+            if attr:
+                user, created = User.objects.get_or_create(
+                    **{attr: participant[attr]}, defaults=participant)
+
+                if created:
+                    user.temporary = True
+            else:
+                user = participant['user']
+
+            if user in participant_users:
+                participant_obj = instance.participants.get(user=user)
+                participant_obj.is_active = True
+                participant_obj.save(update_fields=['is_active'])
+                participant_users.remove(user)
+            else:
+                if user in created_participant_users:
+                    continue
+                Participant.objects.create(
+                    appointment=appointment,
+                    user=user,
+                )
+                created_participant_users.add(user)
+
+        instance.participants.filter(user__in=participant_users).update(is_active=False)
+        return appointment
+
+class AppointmentCreateSerializer(AppointmentSerializer):
+    dont_invite_beneficiary = serializers.BooleanField(required=False)
+    dont_invite_practitioner = serializers.BooleanField(required=False)
+    dont_invite_me = serializers.BooleanField(required=False)
+
+    _consultation = None
+
+    class Meta:
+        model = Appointment
+        fields = AppointmentSerializer.Meta.fields + [
             "dont_invite_beneficiary",
             "dont_invite_practitioner",
             "dont_invite_me",
         ]
-        read_only_fields = ["id", "created_by", "created_at"]
 
     def create(self, validated_data):
         participants_data = validated_data.pop('participants', [])
-        consultation_id = validated_data.pop('consultation_id', None)
         dont_invite_beneficiary = validated_data.pop('dont_invite_beneficiary', False)
         dont_invite_practitioner = validated_data.pop('dont_invite_practitioner', False)
         dont_invite_me = validated_data.pop('dont_invite_me', False)
 
-        consultation = None
-        if consultation_id:
-            try:
-                consultation = Consultation.objects.get(id=consultation_id)
-                validated_data['consultation'] = consultation
-            except Consultation.DoesNotExist:
-                raise serializers.ValidationError({"consultation_id": "Consultation not found."})
-
-        user = self.context.get('request').user if self.context.get('request') else None
-        if user:
-            validated_data['created_by'] = user
-
+        validated_data['created_by'] = self.context['request'].user
+        validated_data['status'] = AppointmentStatus.draft
         appointment = super().create(validated_data)
 
-        # Track user IDs to avoid duplicates
-        added_user_ids = set()
+        participant_users = set()
 
-        # Add participants from manual input
-        for participant_data in participants_data:
-            user_id = participant_data.get('user_id')
-            if user_id and user_id in added_user_ids:
-                continue
+        # Users from consultation
+        if not dont_invite_beneficiary and self.consultation.created_by:
+            participant_users.add(self.consultation.created_by)
 
-            serializer = ParticipantSerializer(data=participant_data, context={'appointment': appointment})
-            serializer.is_valid(raise_exception=True)
-            participant = serializer.save(appointment=appointment)
+        if not dont_invite_practitioner and self.consultation.owned_by:
+            participant_users.add(self.consultation.owned_by)
 
-            if participant.user_id:
-                added_user_ids.add(participant.user_id)
+        if not dont_invite_me:
+            participant_users.add(self.context['request'].user)
 
-        # Auto-add participants based on flags
-        if consultation:
-            # Add practitioner (owned_by)
-            if not dont_invite_practitioner and consultation.owned_by_id and consultation.owned_by_id not in added_user_ids:
-                Participant.objects.create(
-                    appointment=appointment,
-                    user=consultation.owned_by
-                )
-                added_user_ids.add(consultation.owned_by_id)
-
-            # Add beneficiary
-            if not dont_invite_beneficiary and consultation.beneficiary_id and consultation.beneficiary_id not in added_user_ids:
-                Participant.objects.create(
-                    appointment=appointment,
-                    user=consultation.beneficiary
-                )
-                added_user_ids.add(consultation.beneficiary_id)
-
-        # Add request user (created_by)
-        if not dont_invite_me and user and user.id not in added_user_ids:
+        for participant_user in participant_users:
             Participant.objects.create(
                 appointment=appointment,
-                user=user
+                user=participant_user,
             )
-            added_user_ids.add(user.id)
 
+        # Users from participant
+        for participant in participants_data:
+
+            attr = 'phone' if participant.get('phone') else 'email' if participant.get('email') else None
+
+            if attr:
+                user, created = User.objects.get_or_create(
+                    **{attr: participant[attr]}, defaults=participant)
+
+                if created:
+                    user.temporary = True
+            else:
+                user = participant['user']
+
+            if user not in participant_users:
+                Participant.objects.create(
+                    appointment=appointment,
+                    user=user,
+                )
+                participant_users.add(user)
+
+        appointment.status = AppointmentStatus.scheduled
         return appointment
-
-    def update(self, instance, validated_data):
-        participants_data = validated_data.pop('participants', None)
-
-        instance = super().update(instance, validated_data)
-
-        if participants_data is not None:
-            existing_ids = set(
-                instance.participants.filter(is_active=True).values_list('id', flat=True))
-            incoming_ids = set()
-
-            for participant_data in participants_data:
-                participant_id = participant_data.pop('id', None)
-
-                if participant_id and participant_id in existing_ids:
-                    participant = instance.participants.get(id=participant_id)
-                    serializer = ParticipantSerializer(
-                        instance=participant,
-                        data=participant_data,
-                        partial=True
-                    )
-                    serializer.is_valid(raise_exception=True)
-                    serializer.save()
-                    incoming_ids.add(participant_id)
-                else:
-                    serializer = ParticipantSerializer(data=participant_data)
-                    serializer.is_valid(raise_exception=True)
-                    incoming_ids.add(serializer.save(appointment=instance).id)
-
-            to_deactivate = existing_ids - incoming_ids
-            instance.participants.filter(id__in=to_deactivate).update(is_active=False)
-
-        return instance
 
 
 class AttachmentMetadataSerializer(serializers.Serializer):
@@ -422,7 +413,7 @@ class RequestSerializer(serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(read_only=True)
     expected_with = ConsultationUserSerializer(read_only=True)
     consultation = ConsultationSerializer(read_only=True)
-    appointment = AppointmentSerializer(read_only=True)
+    appointment = AppointmentCreateSerializer(read_only=True)
     reason = ReasonSerializer(read_only=True)
     reason_id = serializers.IntegerField(write_only=True)
     expected_with_id = serializers.IntegerField(

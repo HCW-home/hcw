@@ -43,6 +43,7 @@ from .paginations import ConsultationPagination
 from .permissions import ConsultationAssigneePermission, DjangoModelPermissionsWithView
 from .serializers import (
     AppointmentSerializer,
+    AppointmentCreateSerializer,
     BookingSlotSerializer,
     ParticipantDetailSerializer,
     ConsultationMessageCreateSerializer,
@@ -173,8 +174,9 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
             )
 
     @extend_schema(
-        request=AppointmentSerializer,
-        responses={200: AppointmentSerializer(many=True), 201: AppointmentSerializer},
+        request=AppointmentCreateSerializer,
+        responses={200: AppointmentSerializer(
+            many=True), 201: AppointmentSerializer},
     )
     @action(detail=True, methods=["get", "post"])
     def appointments(self, request, pk=None):
@@ -186,14 +188,14 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
 
             page = self.paginate_queryset(appointments)
             if page is not None:
-                serializer = AppointmentSerializer(page, many=True)
+                serializer = AppointmentCreateSerializer(page, many=True)
                 return self.get_paginated_response(serializer.data)
 
-            serializer = AppointmentSerializer(appointments, many=True)
+            serializer = AppointmentCreateSerializer(appointments, many=True)
             return Response(serializer.data)
 
         elif request.method == "POST":
-            serializer = AppointmentSerializer(
+            serializer = AppointmentCreateSerializer(
                 data=request.data,
                 context={"request": request, "consultation": consultation},
             )
@@ -203,7 +205,7 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
                     consultation=consultation, created_by=request.user
                 )
 
-                response_serializer = AppointmentSerializer(appointment)
+                response_serializer = AppointmentCreateSerializer(appointment)
                 return Response(
                     response_serializer.data, status=status.HTTP_201_CREATED
                 )
@@ -269,7 +271,6 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     Supports FHIR format by adding ?format=fhir query parameter
     """
 
-    serializer_class = AppointmentSerializer
     fhir_class = AppointmentFhir
     permission_classes = [IsAuthenticated, ConsultationAssigneePermission]
     pagination_class = ConsultationPagination
@@ -279,18 +280,16 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     renderer_classes = [JSONRenderer, FHIRRenderer]
     http_method_names = ["get", "post", "patch", "put", "head", "options"]
 
+    def get_serializer_class(self):
+        if self.action == "create":
+            return AppointmentCreateSerializer
+        return AppointmentSerializer
+
     def get_queryset(self):
         user = self.request.user
-        if not user.is_authenticated:
-            return Appointment.objects.none()
-
-        # Return appointments from consultations the user has access to
         return Appointment.objects.filter(
-            consultation__in=Consultation.objects.filter(
-                Q(created_by=user) | Q(owned_by=user) | Q(group__users=user)
-            )
+            consultation__in=Consultation.objects.accessible_by(user)
         ).distinct()
-
 
     @extend_schema(
         request=ParticipantSerializer,
@@ -932,7 +931,7 @@ class DashboardPractitionerView(APIView):
         next_appointment = upcoming_appointments.first()
 
         return Response({
-            "next_appointment": AppointmentSerializer(next_appointment).data,
-            "upcoming_appointments": AppointmentSerializer(upcoming_appointments, many=True).data,
+            "next_appointment": AppointmentCreateSerializer(next_appointment).data,
+            "upcoming_appointments": AppointmentCreateSerializer(upcoming_appointments, many=True).data,
             "overdue_consultations": ConsultationSerializer(consultations_qs.overdue.order_by('-created_at')[:3], many=True).data,
         }, status=status.HTTP_200_OK)
