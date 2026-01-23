@@ -236,7 +236,6 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     fhir_class = AppointmentFhir
     permission_classes = [IsAuthenticated, ConsultationAssigneePermission]
     pagination_class = ConsultationPagination
-    ordering = ["-created_at"]
     ordering_fields = ["created_at", "updated_at", "scheduled_at"]
     filterset_fields = ["consultation", "status"]
     http_method_names = ["get", "post", "patch", "put", "head", "options"]
