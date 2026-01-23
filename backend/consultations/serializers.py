@@ -51,6 +51,7 @@ class ParticipantSerializer(serializers.ModelSerializer):
             "user",
             "user_id",
             "is_active",
+            "status",
             "email",
             "phone",
             "timezone",
