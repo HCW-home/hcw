@@ -1,4 +1,6 @@
+from datetime import timedelta
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 from django.utils.translation import gettext_lazy as _
@@ -176,6 +178,41 @@ class AppointmentSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "created_by", "created_at", "status"]
 
+    def validate_scheduled_at(self, value):
+        if value < timezone.now():
+            raise serializers.ValidationError(
+                _("Scheduled time cannot be in the past.")
+            )
+        return value
+
+    def validate(self, attrs):
+        participants_data = attrs.get('participants', [])
+        scheduled_at = attrs.get('scheduled_at')
+        end_expected_at = attrs.get('end_expected_at')
+
+        # Validate end_expected_at
+        if end_expected_at and scheduled_at:
+            if end_expected_at <= scheduled_at:
+                raise serializers.ValidationError(
+                    {"end_expected_at": _("End time must be after scheduled time.")}
+                )
+
+            max_duration = timedelta(hours=10)
+            if end_expected_at - scheduled_at > max_duration:
+                raise serializers.ValidationError(
+                    {"end_expected_at": _("Appointment duration cannot exceed 10 hours.")}
+                )
+
+        # Count manual participants
+        invited_count = len(participants_data)
+
+        if invited_count < 2:
+            raise serializers.ValidationError(
+                _("At least 2 participants are required for an appointment.")
+            )
+
+        return super().validate(attrs)
+
     def update(self, instance, validated_data):
 
         participants_data = validated_data.pop('participants', None)
@@ -234,6 +271,31 @@ class AppointmentCreateSerializer(AppointmentSerializer):
             "dont_invite_practitioner",
             "dont_invite_me",
         ]
+
+    def validate(self, attrs):
+        dont_invite_beneficiary = attrs.get('dont_invite_beneficiary', False)
+        dont_invite_practitioner = attrs.get('dont_invite_practitioner', False)
+        dont_invite_me = attrs.get('dont_invite_me', False)
+        participants_data = attrs.get('participants', [])
+
+        # Count auto-invited users
+        invited_count = 0
+        if not dont_invite_beneficiary:
+            invited_count += 1
+        if not dont_invite_practitioner:
+            invited_count += 1
+        if not dont_invite_me:
+            invited_count += 1
+
+        # Count manual participants
+        invited_count += len(participants_data)
+
+        if invited_count < 2:
+            raise serializers.ValidationError(
+                _("At least 2 participants are required for an appointment.")
+            )
+
+        return super().validate(attrs)
 
     def create(self, validated_data):
         participants_data = validated_data.pop('participants', [])
