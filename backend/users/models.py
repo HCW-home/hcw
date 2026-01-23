@@ -1,5 +1,5 @@
 import uuid
-from zoneinfo import available_timezones
+from zoneinfo import available_timezones, ZoneInfo
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -162,6 +162,10 @@ class User(AbstractUser):
                 return f"{self.first_name} {self.last_name} ({self.email})"
             return f"{self.first_name} {self.last_name}"
         return self.email or f"User #{self.pk}"
+
+    @property
+    def user_tz(self) -> ZoneInfo:
+        return ZoneInfo(self.timezone)
 
     def send_user_notification(self, title, message) -> FirebaseResponseDict:
         # Docs https://fcm-django.readthedocs.io/en/latest/

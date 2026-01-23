@@ -195,6 +195,12 @@ class AppointmentSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_by", "created_at"]
 
     def validate_scheduled_at(self, value):
+        user = self.context['request'].user
+
+        # Convert naive datetime from user timezone to UTC
+        if timezone.is_naive(value):
+            value = value.replace(tzinfo=user.user_tz)
+
         if value < timezone.now():
             raise serializers.ValidationError(
                 _("Scheduled time cannot be in the past.")
