@@ -27,7 +27,8 @@ User = get_user_model()
 class ConsultationUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "email", "first_name", "last_name", "is_online"]
+        fields = ["id", "email", "first_name", "mobile_phone_number",
+                  "last_name", "is_online", "languages", "preferred_language", "communication_method", "timezone"]
 
 
 class QueueSerializer(serializers.ModelSerializer):
@@ -50,7 +51,7 @@ class ParticipantSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(write_only=True,)
     last_name = serializers.CharField(write_only=True,)
     email = serializers.EmailField(write_only=True,)
-    phone = serializers.CharField(write_only=True,)
+    mobile_phone_number = serializers.CharField(write_only=True,)
     communication_method = serializers.ChoiceField(
         choices=CommunicationMethod.values, write_only=True,)
     preferred_language = serializers.ChoiceField(
@@ -67,7 +68,7 @@ class ParticipantSerializer(serializers.ModelSerializer):
             "is_active",
             "status",
             "email",
-            "phone",
+            "mobile_phone_number",
             "timezone",
             "first_name",
             "last_name",
@@ -79,7 +80,7 @@ class ParticipantSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         provided_fields = [
-            attrs.get('phone'),
+            attrs.get('mobile_phone_number'),
             attrs.get('email'),
             attrs.get('user')
         ]
@@ -622,17 +623,4 @@ class ParticipantDetailSerializer(ParticipantSerializer):
 
     class Meta:
         model = Participant
-        fields = [
-            "id",
-            "user",
-            "user_id",
-            "status",
-            "email",
-            "phone",
-            "timezone",
-            "first_name",
-            "last_name",
-            "appointment",
-            "communication_method",
-            "preferred_language"
-        ]
+        fields = ParticipantSerializer.Meta.fields + ['appointment']
