@@ -173,44 +173,6 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-    @extend_schema(
-        request=AppointmentCreateSerializer,
-        responses={200: AppointmentSerializer(
-            many=True), 201: AppointmentSerializer},
-    )
-    @action(detail=True, methods=["get", "post"])
-    def appointments(self, request, pk=None):
-        """Get all appointments for this consultation or create a new appointment"""
-        consultation = self.get_object()
-
-        if request.method == "GET":
-            appointments = consultation.appointments.all()
-
-            page = self.paginate_queryset(appointments)
-            if page is not None:
-                serializer = AppointmentCreateSerializer(page, many=True)
-                return self.get_paginated_response(serializer.data)
-
-            serializer = AppointmentCreateSerializer(appointments, many=True)
-            return Response(serializer.data)
-
-        elif request.method == "POST":
-            serializer = AppointmentCreateSerializer(
-                data=request.data,
-                context={"request": request, "consultation": consultation},
-            )
-
-            if serializer.is_valid():
-                appointment = serializer.save(
-                    consultation=consultation, created_by=request.user
-                )
-
-                response_serializer = AppointmentCreateSerializer(appointment)
-                return Response(
-                    response_serializer.data, status=status.HTTP_201_CREATED
-                )
-
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @extend_schema(methods=["GET"], responses=ConsultationMessageSerializer(many=True))
     @extend_schema(
@@ -276,14 +238,18 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     pagination_class = ConsultationPagination
     ordering = ["-created_at"]
     ordering_fields = ["created_at", "updated_at", "scheduled_at"]
-    filterset_class = AppointmentFilter
-    renderer_classes = [JSONRenderer, FHIRRenderer]
+    filterset_fields = ["consultation", "status"]
     http_method_names = ["get", "post", "patch", "put", "head", "options"]
 
     def get_serializer_class(self):
         if self.action == "create":
             return AppointmentCreateSerializer
         return AppointmentSerializer
+
+    def get_renderers(self):
+        if self.action in ["list", "retrieve"]:
+            return super().get_renderers() + [FHIRRenderer()]
+        return super().get_renderers()
 
     def get_queryset(self):
         user = self.request.user
