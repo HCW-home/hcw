@@ -33,5 +33,12 @@
       margin-left: 0;
       width: 100vw;
     }
+
+    &.sidebar-collapsed {
+      .user-main {
+        margin-left: 0;
+        width: 100vw;
+      }
+    }
   }
 }

@@ -685,9 +685,6 @@ export class ConsultationForm implements OnInit, OnDestroy {
         .updateAppointment(appointmentId, {
           scheduled_at: scheduledAt,
           type: formValue.type,
-          dont_invite_beneficiary: formValue.dont_invite_beneficiary,
-          dont_invite_practitioner: formValue.dont_invite_practitioner,
-          dont_invite_me: formValue.dont_invite_me,
           participants: participants,
         })
         .pipe(takeUntil(this.destroy$))

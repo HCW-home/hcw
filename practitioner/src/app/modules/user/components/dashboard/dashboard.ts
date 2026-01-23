@@ -7,12 +7,14 @@ import { Typography } from '../../../../shared/ui-components/typography/typograp
 import { Button } from '../../../../shared/ui-components/button/button';
 import { Svg } from '../../../../shared/ui-components/svg/svg';
 import { Loader } from '../../../../shared/components/loader/loader';
+import { Badge } from '../../../../shared/components/badge/badge';
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
 import { ButtonSizeEnum, ButtonStyleEnum } from '../../../../shared/constants/button';
 import { ConsultationService } from '../../../../core/services/consultation.service';
 import { ToasterService } from '../../../../core/services/toaster.service';
-import { Consultation, Appointment, DashboardNextAppointment, AppointmentType } from '../../../../core/models/consultation';
+import { Consultation, Appointment, DashboardNextAppointment, AppointmentType, AppointmentStatus } from '../../../../core/models/consultation';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
+import { getAppointmentBadgeType } from '../../../../shared/tools/helper';
 
 @Component({
   selector: 'app-dashboard',
@@ -22,7 +24,8 @@ import { getErrorMessage } from '../../../../core/utils/error-helper';
     Typography,
     Button,
     Svg,
-    Loader
+    Loader,
+    Badge
   ],
   providers: [DatePipe],
   templateUrl: './dashboard.html',
@@ -41,6 +44,8 @@ export class Dashboard implements OnInit, OnDestroy {
   nextAppointment = signal<DashboardNextAppointment | null>(null);
   upcomingAppointments = signal<Appointment[]>([]);
   overdueConsultations = signal<Consultation[]>([]);
+
+  protected readonly getAppointmentBadgeType = getAppointmentBadgeType;
 
   hasValidNextAppointment(): boolean {
     const apt = this.nextAppointment();
@@ -80,6 +85,21 @@ export class Dashboard implements OnInit, OnDestroy {
           this.loading.set(false);
         }
       });
+  }
+
+  getAppointmentTypeLabel(type: AppointmentType | string): string {
+    const t = typeof type === 'string' ? type.toLowerCase() : type;
+    switch (t) {
+      case 'online':
+      case AppointmentType.ONLINE:
+        return 'Video Call';
+      case 'inperson':
+      case 'in_person':
+      case AppointmentType.INPERSON:
+        return 'In Person';
+      default:
+        return String(type);
+    }
   }
 
   formatDate(dateStr: string): string {

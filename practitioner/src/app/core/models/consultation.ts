@@ -23,14 +23,15 @@ export interface Participant {
   first_name: string | null;
   last_name: string | null;
   message_type?: string;
-  communication_method?: string;
+  communication_method?: string | null;
   preferred_language?: string;
   feedback_rate: number | null;
   feedback_message: string | null;
-  status: ParticipantStatus;
+  is_active: boolean;
+  status?: ParticipantStatus;
 }
 
-export type ParticipantStatus = 'draft' | 'invited' | 'confirmed' | 'not available';
+export type ParticipantStatus = 'draft' | 'invited' | 'confirmed' | 'unavailable' | 'cancelled';
 
 export enum AppointmentStatus {
   DRAFT = 'draft',
@@ -187,6 +188,14 @@ export interface CreateAppointmentRequest {
   dont_invite_beneficiary?: boolean;
   dont_invite_practitioner?: boolean;
   dont_invite_me?: boolean;
+}
+
+export interface UpdateAppointmentRequest {
+  type?: AppointmentType;
+  status?: AppointmentStatus;
+  scheduled_at?: string;
+  end_expected_at?: string;
+  participants?: CreateParticipantRequest[];
 }
 
 export interface CreateParticipantRequest {

@@ -1,9 +1,29 @@
 import { HttpParams } from '@angular/common/http';
 import { BadgeTypeEnum } from '../constants/badge';
-import { AppointmentStatus, ParticipantStatus } from '../../core/models/consultation';
+import { AppointmentStatus, Participant, ParticipantStatus } from '../../core/models/consultation';
 
-export function getParticipantBadgeType(status: ParticipantStatus): BadgeTypeEnum {
-  return  BadgeTypeEnum.orange;
+export function getParticipantBadgeType(status: ParticipantStatus | undefined): BadgeTypeEnum {
+  switch (status) {
+    case 'confirmed':
+      return BadgeTypeEnum.green;
+    case 'invited':
+      return BadgeTypeEnum.blue;
+    case 'draft':
+      return BadgeTypeEnum.orange;
+    case 'unavailable':
+      return BadgeTypeEnum.gray;
+    case 'cancelled':
+      return BadgeTypeEnum.red;
+    default:
+      return BadgeTypeEnum.gray;
+  }
+}
+
+export function getParticipantStatusLabel(participant: Participant): string {
+  if (participant.status) {
+    return participant.status;
+  }
+  return participant.is_active ? 'active' : 'cancelled';
 }
 
 export function getAppointmentBadgeType(status: AppointmentStatus): BadgeTypeEnum {

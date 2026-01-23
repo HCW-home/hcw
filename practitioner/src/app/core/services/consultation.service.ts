@@ -13,6 +13,7 @@ import {
   ConsultationMessage,
   ConsultationRequest,
   CreateAppointmentRequest,
+  UpdateAppointmentRequest,
   CreateParticipantRequest,
   CreateConsultationRequest,
   CreateConsultationRequestPayload,
@@ -112,6 +113,7 @@ export class ConsultationService {
     params?: {
       page?: number;
       page_size?: number;
+      status?: string;
     }
   ): Observable<PaginatedResponse<Appointment>> {
     let httpParams = new HttpParams();
@@ -122,8 +124,9 @@ export class ConsultationService {
         }
       });
     }
+    httpParams = httpParams.set('consultation', consultationId.toString());
     return this.http.get<PaginatedResponse<Appointment>>(
-      `${this.apiUrl}/consultations/${consultationId}/appointments/`,
+      `${this.apiUrl}/appointments/`,
       { params: httpParams }
     );
   }
@@ -133,8 +136,8 @@ export class ConsultationService {
     data: CreateAppointmentRequest
   ): Observable<Appointment> {
     return this.http.post<Appointment>(
-      `${this.apiUrl}/consultations/${consultationId}/appointments/`,
-      data
+      `${this.apiUrl}/appointments/`,
+      { ...data, consultation_id: consultationId }
     );
   }
 
@@ -168,7 +171,7 @@ export class ConsultationService {
 
   updateAppointment(
     appointmentId: number,
-    data: Partial<CreateAppointmentRequest>
+    data: UpdateAppointmentRequest
   ): Observable<Appointment> {
     return this.http.patch<Appointment>(
       `${this.apiUrl}/appointments/${appointmentId}/`,

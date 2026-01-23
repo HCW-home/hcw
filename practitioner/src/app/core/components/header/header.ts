@@ -1,7 +1,8 @@
 import {Component, inject, signal, OnInit, OnDestroy} from '@angular/core';
-import {Router, NavigationEnd} from '@angular/router';
+import {Router, NavigationEnd, RouterLink, RouterLinkActive} from '@angular/router';
 import {Location} from '@angular/common';
 import {RoutePaths} from '../../constants/routes';
+import {MenuItems} from '../../constants/sidebar';
 import {LanguageSelector} from '../../../shared/components/language-selector/language-selector';
 import {Typography} from '../../../shared/ui-components/typography/typography';
 import {TypographyTypeEnum} from '../../../shared/constants/typography';
@@ -20,12 +21,12 @@ import {
 
 @Component({
   selector: 'app-header',
-  imports: [LanguageSelector, Typography, Svg, NgClass, Button],
+  imports: [LanguageSelector, Typography, Svg, NgClass, Button, RouterLink, RouterLinkActive],
   templateUrl: './header.html',
   styleUrl: './header.scss',
 })
 export class Header implements OnInit, OnDestroy {
-  private router = inject(Router);
+  protected router = inject(Router);
   private location = inject(Location);
   private userService = inject(UserService);
   protected notificationService = inject(NotificationService);
@@ -33,11 +34,14 @@ export class Header implements OnInit, OnDestroy {
 
   showProfileMenu = signal(false);
   showNotifications = signal(false);
+  showMobileMenu = signal(false);
   showNewConsultationButton = signal(false);
   showBackButton = signal(false);
   pageTitle = signal('Dashboard');
   pageSubtitle = signal('Welcome back');
   currentUser: IUser | null = null;
+  menuItems = MenuItems;
+  protected readonly RoutePaths = RoutePaths;
 
   protected readonly NotificationStatus = NotificationStatus;
 
@@ -105,6 +109,7 @@ export class Header implements OnInit, OnDestroy {
   }
 
   navigateToNewConsultation() {
+    this.closeMobileMenu();
     this.router.navigate([RoutePaths.USER, 'consultations', 'new']);
   }
 
@@ -130,19 +135,36 @@ export class Header implements OnInit, OnDestroy {
 
   toggleProfileMenu() {
     this.showProfileMenu.update(v => !v);
+    if (this.showProfileMenu()) {
+      this.showMobileMenu.set(false);
+    }
   }
 
   closeProfileMenu() {
     this.showProfileMenu.set(false);
   }
 
+  toggleMobileMenu() {
+    this.showMobileMenu.update(v => !v);
+    if (this.showMobileMenu()) {
+      this.showProfileMenu.set(false);
+      this.showNotifications.set(false);
+    }
+  }
+
+  closeMobileMenu() {
+    this.showMobileMenu.set(false);
+  }
+
   openProfile() {
     this.closeProfileMenu();
+    this.closeMobileMenu();
     this.router.navigate([RoutePaths.USER, RoutePaths.PROFILE]);
   }
 
   onLogout() {
     this.closeProfileMenu();
+    this.closeMobileMenu();
     localStorage.clear();
     this.router.navigate([RoutePaths.AUTH]);
   }

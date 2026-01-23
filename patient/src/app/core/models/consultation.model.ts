@@ -80,10 +80,11 @@ export interface Participant {
   timezone?: string;
   first_name?: string;
   last_name?: string;
-  communication_method?: string;
+  communication_method?: string | null;
   preferred_language?: string;
   is_invited: boolean;
   is_confirmed: boolean;
+  is_active: boolean;
   feedback_rate?: number;
   feedback_message?: string;
   status?: string;

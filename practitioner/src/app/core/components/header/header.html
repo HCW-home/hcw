@@ -9,13 +9,28 @@
       <app-typography [variant]="TypographyTypeEnum['h4-bold']" color="var(--slate-800)">
         {{ pageTitle() }}
       </app-typography>
-      <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
+      <app-typography class="page-subtitle" [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
         {{ pageSubtitle() }}
       </app-typography>
     </div>
   </div>
 
-  <div class="header-actions">
+  <div class="header-actions-mobile">
+    <div class="notification-section">
+      <button class="notification-btn" (click)="toggleNotifications()">
+        <app-svg src="bell" [svgStyle]="{'width.px': 22, 'height.px': 22, 'color': 'var(--slate-600)'}"></app-svg>
+        @if (notificationService.unreadCount() > 0) {
+          <span class="notification-badge">{{ notificationService.unreadCount() > 9 ? '9+' : notificationService.unreadCount() }}</span>
+        }
+      </button>
+    </div>
+
+    <button class="mobile-menu-btn" (click)="toggleMobileMenu()">
+      <app-svg [src]="showMobileMenu() ? 'svg/x.svg' : 'svg/menu.svg'" [svgStyle]="{'width.px': 24, 'height.px': 24, 'color': 'var(--slate-600)'}"></app-svg>
+    </button>
+  </div>
+
+  <div class="header-actions desktop-only">
     @if (showNewConsultationButton()) {
       <app-button text="New Consultation" leftIcon="plus" [size]="ButtonSizeEnum.medium"
                   [style]="ButtonStyleEnum.stroke"
@@ -133,3 +148,69 @@
     }
   </div>
 </header>
+
+@if (showMobileMenu()) {
+  <div class="mobile-menu-overlay" (click)="closeMobileMenu()"></div>
+  <div class="mobile-menu">
+    <div class="mobile-menu-header">
+      <div class="mobile-profile">
+        <div class="profile-avatar">
+          <span>{{ getUserInitials() }}</span>
+        </div>
+        <div class="profile-details">
+          <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-800)">
+            {{ getUserDisplayName() }}
+          </app-typography>
+          <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
+            {{ currentUser?.email }}
+          </app-typography>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-menu-content">
+      @if (showNewConsultationButton()) {
+        <button class="mobile-menu-item primary" (click)="navigateToNewConsultation()">
+          <app-svg src="plus" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
+          <span>New Consultation</span>
+        </button>
+      }
+
+      <div class="mobile-nav-section">
+        @for (menuItem of menuItems; track menuItem.path) {
+          <a
+            class="mobile-menu-item nav-item"
+            [routerLink]="'/' + RoutePaths.USER + menuItem.path"
+            [routerLinkActive]="'active'"
+            (click)="closeMobileMenu()">
+            <app-svg
+              [src]="'svg/' + menuItem.icon"
+              [svgStyle]="{'width.px': 20, 'height.px': 20, 'color': 'var(--slate-600)'}">
+            </app-svg>
+            <span>{{ menuItem.name }}</span>
+          </a>
+        }
+      </div>
+
+      <div class="mobile-menu-divider"></div>
+
+      <div class="mobile-menu-item language-item">
+        <app-svg src="svg/globe.svg" [svgStyle]="{'width.px': 20, 'height.px': 20, 'color': 'var(--slate-600)'}"></app-svg>
+        <span>Language</span>
+        <app-language-selector></app-language-selector>
+      </div>
+
+      <button class="mobile-menu-item" (click)="openProfile()">
+        <app-svg src="svg/profile.svg" [svgStyle]="{'width.px': 20, 'height.px': 20, 'color': 'var(--slate-600)'}"></app-svg>
+        <span>My Profile</span>
+      </button>
+    </div>
+
+    <div class="mobile-menu-footer">
+      <button class="mobile-menu-item logout" (click)="onLogout()">
+        <app-svg src="svg/log-out.svg" [svgStyle]="{'width.px': 20, 'height.px': 20, 'color': 'var(--rose-500)'}"></app-svg>
+        <span>Sign out</span>
+      </button>
+    </div>
+  </div>
+}

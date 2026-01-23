@@ -389,9 +389,6 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
         type: formValue.type as AppointmentType,
         scheduled_at: scheduledAt,
         end_expected_at: endExpectedAt,
-        dont_invite_beneficiary: formValue.dont_invite_beneficiary || false,
-        dont_invite_practitioner: formValue.dont_invite_practitioner || false,
-        dont_invite_me: formValue.dont_invite_me || false,
         participants: allParticipants,
       };
       this.updateAppointment(updateData);
@@ -430,9 +427,6 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
     type: AppointmentType;
     scheduled_at: string;
     end_expected_at?: string;
-    dont_invite_beneficiary: boolean;
-    dont_invite_practitioner: boolean;
-    dont_invite_me: boolean;
     participants: CreateParticipantRequest[];
   }): void {
     if (!this.editingAppointment) return;

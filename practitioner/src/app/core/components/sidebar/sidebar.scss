@@ -237,10 +237,6 @@
 
 @media (max-width: 768px) {
   .sidebar {
-    transform: translateX(-100%);
-
-    &:not(.collapsed) {
-      transform: translateX(0);
-    }
+    display: none;
   }
 }

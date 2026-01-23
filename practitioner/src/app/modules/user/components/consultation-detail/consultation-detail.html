@@ -183,15 +183,53 @@
           <div class="appointments-section">
             <div class="section-header">
               <h3 class="section-title">Appointments ({{ appointments().length }})</h3>
-              @if (!consultation()?.closed_at) {
-                <app-button
-                  text="New Appointment"
-                  leftIcon="plus"
-                  [size]="ButtonSizeEnum.medium"
-                  [style]="ButtonStyleEnum.primary"
-                  (buttonClick)="openCreateAppointmentModal()">
-                </app-button>
-              }
+              <div class="section-header-actions">
+                <div class="view-toggle">
+                  <button
+                    class="view-toggle-btn"
+                    [class.active]="appointmentViewMode() === 'list'"
+                    (click)="setAppointmentViewMode('list')">
+                    <app-svg src="list" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                    List
+                  </button>
+                  <button
+                    class="view-toggle-btn"
+                    [class.active]="appointmentViewMode() === 'calendar'"
+                    (click)="setAppointmentViewMode('calendar')">
+                    <app-svg src="calendar" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                    Calendar
+                  </button>
+                </div>
+                <div class="status-filter">
+                  <button
+                    class="filter-btn"
+                    [class.active]="appointmentStatusFilter() === 'all'"
+                    (click)="setAppointmentStatusFilter('all')">
+                    All
+                  </button>
+                  <button
+                    class="filter-btn"
+                    [class.active]="appointmentStatusFilter() === AppointmentStatus.SCHEDULED"
+                    (click)="setAppointmentStatusFilter('scheduled')">
+                    Active
+                  </button>
+                  <button
+                    class="filter-btn"
+                    [class.active]="appointmentStatusFilter() === AppointmentStatus.CANCELLED"
+                    (click)="setAppointmentStatusFilter('cancelled')">
+                    Cancelled
+                  </button>
+                </div>
+                @if (!consultation()?.closed_at) {
+                  <app-button
+                    text="New Appointment"
+                    leftIcon="plus"
+                    [size]="ButtonSizeEnum.small"
+                    [style]="ButtonStyleEnum.primary"
+                    (buttonClick)="openCreateAppointmentModal()">
+                  </app-button>
+                }
+              </div>
             </div>
 
             @if (isLoadingAppointments()) {
@@ -203,7 +241,33 @@
               <div class="empty-state">
                 <app-svg src="calendar" [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
                 <span class="empty-title">No appointments found</span>
-                <span class="empty-text">Create an appointment to get started</span>
+                <span class="empty-text">
+                  @if (appointmentStatusFilter() !== 'all') {
+                    No {{ appointmentStatusFilter() }} appointments
+                  } @else {
+                    Create an appointment to get started
+                  }
+                </span>
+              </div>
+            } @else if (appointmentViewMode() === 'calendar') {
+              <div class="calendar-container">
+                <div class="calendar-header">
+                  <div class="calendar-nav">
+                    <button class="nav-btn" (click)="calendarPrev()">
+                      <app-svg src="chevron-left" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
+                    </button>
+                    <button class="nav-btn today-btn" (click)="calendarToday()">Today</button>
+                    <button class="nav-btn" (click)="calendarNext()">
+                      <app-svg src="chevron-right" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
+                    </button>
+                  </div>
+                  <span class="calendar-title">{{ getCalendarTitle() }}</span>
+                </div>
+                <full-calendar
+                  #appointmentCalendar
+                  [options]="calendarOptions"
+                  [events]="calendarEvents()">
+                </full-calendar>
               </div>
             } @else {
               <div class="appointments-list">
@@ -213,7 +277,7 @@
                       <div class="appointment-info">
                         <div class="date-time">
                           <app-svg src="calendar" [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
-                          <span>{{ formatDateTime(appointment.scheduled_at) }}</span>
+                          <span>{{ appointment.scheduled_at | date : 'MMM d, y, hh:mm ' }}</span>
                         </div>
                         <span class="appointment-type" [class.online]="appointment.type === AppointmentType.ONLINE">
                           {{ appointment.type }}

@@ -83,7 +83,7 @@
                 </div>
                 <div class="section-title">
                   <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
-                    Upcoming Consultations
+                    Upcoming Appointments
                   </app-typography>
                   <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
                     Your scheduled appointments
@@ -91,10 +91,9 @@
                 </div>
               </div>
               <app-button
-                text="View all"
-                rightIcon="chevron-right"
+                text="View All"
                 [size]="ButtonSizeEnum.small"
-                [style]="ButtonStyleEnum.text"
+                [style]="ButtonStyleEnum.stroke"
                 (buttonClick)="navigateToConsultations()">
               </app-button>
             </div>
@@ -108,27 +107,33 @@
                 </div>
               } @else {
                 <div class="appointments-list">
-                  @for (item of upcomingAppointments(); track item.id) {
-                    <div class="appointment-item" (click)="viewAppointment(item)">
+                  @for (appointment of upcomingAppointments(); track appointment.id) {
+                    <div class="appointment-item" (click)="viewAppointment(appointment)">
                       <div class="patient-avatar small">
-                        <span>{{ item.type === AppointmentType.ONLINE ? 'ON' : 'IP' }}</span>
+                        <span>--</span>
                       </div>
                       <div class="appointment-details">
                         <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-800)">
-                          {{ item.type }} Appointment
+                          {{ getAppointmentTypeLabel(appointment.type) }}
                         </app-typography>
                         <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
-                          {{ item.status }}
+                          {{ formatDateTime(appointment.scheduled_at) }}
                         </app-typography>
                       </div>
                       <div class="appointment-time">
-                        <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-800)">
-                          {{ formatTime(item.scheduled_at) }}
-                        </app-typography>
-                        <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
-                          {{ getRelativeTime(item.scheduled_at) }}
-                        </app-typography>
+                        <app-badge [type]="getAppointmentBadgeType(appointment.status)">{{ appointment.status }}</app-badge>
                       </div>
+                      @if (appointment.type === AppointmentType.ONLINE) {
+                        <div class="video-btn">
+                          <app-button
+                            text="Join"
+                            leftIcon="video"
+                            [size]="ButtonSizeEnum.small"
+                            [style]="ButtonStyleEnum.primary"
+                            (buttonClick)="joinAppointment(appointment, $event)">
+                          </app-button>
+                        </div>
+                      }
                     </div>
                   }
                 </div>

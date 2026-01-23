@@ -1,8 +1,13 @@
-import { Component, OnInit, OnDestroy, signal, inject, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, inject, computed, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule, Location } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
+import { FullCalendarModule, FullCalendarComponent } from '@fullcalendar/angular';
+import { CalendarOptions, EventInput, EventClickArg } from '@fullcalendar/core';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin from '@fullcalendar/interaction';
 
 import { ConsultationService } from '../../../../core/services/consultation.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
@@ -40,6 +45,9 @@ import { getErrorMessage } from '../../../../core/utils/error-helper';
 import { AppointmentFormModal } from './appointment-form-modal/appointment-form-modal';
 import { RoutePaths } from '../../../../core/constants/routes';
 
+type AppointmentViewMode = 'list' | 'calendar';
+type AppointmentStatusFilter = 'all' | 'scheduled' | 'cancelled';
+
 @Component({
   selector: 'app-consultation-detail',
   templateUrl: './consultation-detail.html',
@@ -59,6 +67,7 @@ import { RoutePaths } from '../../../../core/constants/routes';
     Select,
     UserSearchSelect,
     AppointmentFormModal,
+    FullCalendarModule,
   ],
 })
 export class ConsultationDetail implements OnInit, OnDestroy {
@@ -86,6 +95,44 @@ export class ConsultationDetail implements OnInit, OnDestroy {
 
   showCreateAppointmentModal = signal(false);
   editingAppointment = signal<Appointment | null>(null);
+
+  appointmentViewMode = signal<AppointmentViewMode>('list');
+  appointmentStatusFilter = signal<AppointmentStatusFilter>('all');
+  calendarComponent = viewChild<FullCalendarComponent>('appointmentCalendar');
+
+  calendarEvents = computed<EventInput[]>(() => {
+    return this.appointments().map(appointment => ({
+      id: appointment.id.toString(),
+      title: this.getCalendarEventTitle(appointment),
+      start: appointment.scheduled_at,
+      end: appointment.end_expected_at || undefined,
+      backgroundColor: this.getStatusColor(appointment.status),
+      borderColor: this.getStatusColor(appointment.status),
+      textColor: '#ffffff',
+      extendedProps: { appointment }
+    }));
+  });
+
+  calendarOptions: CalendarOptions = {
+    plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
+    initialView: 'dayGridMonth',
+    headerToolbar: false,
+    height: 'auto',
+    weekends: true,
+    editable: false,
+    selectable: false,
+    dayMaxEvents: 3,
+    eventClick: this.handleCalendarEventClick.bind(this),
+    slotMinTime: '06:00:00',
+    slotMaxTime: '22:00:00',
+    allDaySlot: false,
+    nowIndicator: true,
+    eventTimeFormat: {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }
+  };
 
   isEditMode = signal(false);
   isSavingConsultation = signal(false);
@@ -362,8 +409,13 @@ export class ConsultationDetail implements OnInit, OnDestroy {
 
   loadAppointments(): void {
     this.isLoadingAppointments.set(true);
+    const statusFilter = this.appointmentStatusFilter();
+    const params: { status?: string } = {};
+    if (statusFilter !== 'all') {
+      params.status = statusFilter;
+    }
     this.consultationService
-      .getConsultationAppointments(this.consultationId)
+      .getConsultationAppointments(this.consultationId, params)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: response => {
@@ -693,5 +745,65 @@ export class ConsultationDetail implements OnInit, OnDestroy {
           this.toasterService.show('error', getErrorMessage(error));
         },
       });
+  }
+
+  setAppointmentViewMode(mode: AppointmentViewMode): void {
+    this.appointmentViewMode.set(mode);
+  }
+
+  setAppointmentStatusFilter(filter: AppointmentStatusFilter): void {
+    this.appointmentStatusFilter.set(filter);
+    this.loadAppointments();
+  }
+
+  private getCalendarEventTitle(appointment: Appointment): string {
+    const typeLabel = appointment.type === AppointmentType.ONLINE ? 'Video' : 'In Person';
+    return typeLabel;
+  }
+
+  private getStatusColor(status: AppointmentStatus): string {
+    switch (status) {
+      case AppointmentStatus.SCHEDULED:
+        return '#3b82f6';
+      case AppointmentStatus.CANCELLED:
+        return '#ef4444';
+      case AppointmentStatus.DRAFT:
+        return '#f59e0b';
+      default:
+        return '#6b7280';
+    }
+  }
+
+  handleCalendarEventClick(clickInfo: EventClickArg): void {
+    const appointment = clickInfo.event.extendedProps['appointment'] as Appointment;
+    if (appointment) {
+      this.openEditAppointmentModal(appointment);
+    }
+  }
+
+  calendarPrev(): void {
+    const calendarApi = this.calendarComponent()?.getApi();
+    if (calendarApi) {
+      calendarApi.prev();
+    }
+  }
+
+  calendarNext(): void {
+    const calendarApi = this.calendarComponent()?.getApi();
+    if (calendarApi) {
+      calendarApi.next();
+    }
+  }
+
+  calendarToday(): void {
+    const calendarApi = this.calendarComponent()?.getApi();
+    if (calendarApi) {
+      calendarApi.today();
+    }
+  }
+
+  getCalendarTitle(): string {
+    const calendarApi = this.calendarComponent()?.getApi();
+    return calendarApi?.view.title || '';
   }
 }
