@@ -137,7 +137,7 @@ class Appointment(models.Model):
     class Meta:
         verbose_name = _("appointment")
         verbose_name_plural = _("appointments")
-        ordering = ["-scheduled_at"]
+        ordering = ["scheduled_at"]
 
 
 class ParticipantStatus(Enum):

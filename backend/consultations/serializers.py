@@ -189,6 +189,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
         participants_data = attrs.get('participants', [])
         scheduled_at = attrs.get('scheduled_at')
         end_expected_at = attrs.get('end_expected_at')
+        status = attrs.get('status')
 
         # Validate end_expected_at
         if end_expected_at and scheduled_at:
@@ -206,7 +207,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
         # Count manual participants
         invited_count = len(participants_data)
 
-        if invited_count < 2:
+        if invited_count < 2 and status == AppointmentStatus.scheduled:
             raise serializers.ValidationError(
                 _("At least 2 participants are required for an appointment.")
             )
@@ -276,6 +277,7 @@ class AppointmentCreateSerializer(AppointmentSerializer):
         dont_invite_beneficiary = attrs.get('dont_invite_beneficiary', False)
         dont_invite_practitioner = attrs.get('dont_invite_practitioner', False)
         dont_invite_me = attrs.get('dont_invite_me', False)
+        status = attrs.get('status', False)
         participants_data = attrs.get('participants', [])
 
         # Count auto-invited users
@@ -290,7 +292,7 @@ class AppointmentCreateSerializer(AppointmentSerializer):
         # Count manual participants
         invited_count += len(participants_data)
 
-        if invited_count < 2:
+        if invited_count < 2 and status == AppointmentStatus.scheduled:
             raise serializers.ValidationError(
                 _("At least 2 participants are required for an appointment.")
             )
