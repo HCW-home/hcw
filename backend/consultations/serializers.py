@@ -295,7 +295,7 @@ class AppointmentCreateSerializer(AppointmentSerializer):
                 _("At least 2 participants are required for an appointment.")
             )
 
-        return super().validate(attrs)
+        return serializers.ModelSerializer(self).validate(attrs)
 
     def create(self, validated_data):
         participants_data = validated_data.pop('participants', [])
