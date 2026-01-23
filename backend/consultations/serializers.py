@@ -75,7 +75,7 @@ class ParticipantSerializer(serializers.ModelSerializer):
             "preferred_language"
         ]
 
-        read_only_fields = ["status"]
+        read_only_fields = ["status", "is_active"]
 
     def validate(self, attrs):
         provided_fields = [
