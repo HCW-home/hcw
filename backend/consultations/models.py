@@ -159,32 +159,32 @@ class Participant(models.Model):
         blank=True,
     )
 
-    timezone = models.CharField(
-        max_length=63,
-        choices=[(tz, tz) for tz in sorted(available_timezones())],
-        default="UTC",
-        help_text="User timezone for displaying dates and times",
-    )
 
     is_active = models.BooleanField(default=True)
     is_invited = models.BooleanField(default=True)
     is_confirmed = models.BooleanField(null=True, blank=True)
     is_notified = models.BooleanField(default=False)
 
-    first_name = models.CharField(null=True, blank=True)
-    last_name = models.CharField(null=True, blank=True)
-    email = models.EmailField(null=True, blank=True)
-    phone = models.CharField(null=True, blank=True)
-    communication_method = models.CharField(
-        choices=CommunicationMethod.choices, max_length=20, null=True, blank=True
-    )
-    preferred_language = models.CharField(
-        max_length=10,
-        choices=settings.LANGUAGES,
-        help_text="Preferred language for the user interface",
-        null=True,
-        blank=True,
-    )
+    # first_name = models.CharField(null=True, blank=True)
+    # last_name = models.CharField(null=True, blank=True)
+    # email = models.EmailField(null=True, blank=True)
+    # phone = models.CharField(null=True, blank=True)
+    # communication_method = models.CharField(
+    #     choices=CommunicationMethod.choices, max_length=20, null=True, blank=True
+    # )
+    # preferred_language = models.CharField(
+    #     max_length=10,
+    #     choices=settings.LANGUAGES,
+    #     help_text="Preferred language for the user interface",
+    #     null=True,
+    #     blank=True,
+    # )
+    # timezone = models.CharField(
+    #     max_length=63,
+    #     choices=[(tz, tz) for tz in sorted(available_timezones())],
+    #     default="UTC",
+    #     help_text="User timezone for displaying dates and times",
+    # )
 
     feedback_rate = models.IntegerField(null=True, blank=True)
     feedback_message = models.TextField(null=True, blank=True)

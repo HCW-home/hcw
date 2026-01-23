@@ -47,6 +47,8 @@ update patient user information
     - Edit should have modal or inline edit, not back to wizard
     - Merge Edit and Manage participant button and modal, participants can be manage on the right.
 
+* Handling user timezone
+
 <!-- * Participant delete causing many problem : Notification if participant has been deleted, message rending is not working anymore. -->
 
 ## Low priority

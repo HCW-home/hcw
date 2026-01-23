@@ -5,6 +5,9 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Q
+from users.models import CommunicationMethod, Language
+from zoneinfo import available_timezones
+from django.conf import settings
 
 from .models import (
     Appointment,
@@ -44,6 +47,17 @@ class ParticipantSerializer(serializers.ModelSerializer):
         source='user'
     )
 
+    first_name = serializers.CharField(write_only=True,)
+    last_name = serializers.CharField(write_only=True,)
+    email = serializers.EmailField(write_only=True,)
+    phone = serializers.CharField(write_only=True,)
+    communication_method = serializers.ChoiceField(
+        choices=CommunicationMethod.values, write_only=True,)
+    preferred_language = serializers.ChoiceField(
+        choices=settings.LANGUAGES, write_only=True,)
+    timezone = serializers.ChoiceField(
+        choices=[(tz, tz) for tz in sorted(available_timezones())], write_only=True,)
+
     class Meta:
         model = Participant
         fields = [
@@ -60,6 +74,8 @@ class ParticipantSerializer(serializers.ModelSerializer):
             "communication_method",
             "preferred_language"
         ]
+
+        read_only_fields = ["status"]
 
     def validate(self, attrs):
         provided_fields = [
@@ -145,8 +161,7 @@ class ConsultationSerializer(serializers.ModelSerializer):
 
 class AppointmentSerializer(serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(read_only=True)
-    consultation = ConsultationSerializer(read_only=True)
-    consultation_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
+    consultation_id = serializers.IntegerField(required=False, allow_null=True)
     participants = ParticipantSerializer(
         many=True, read_only=False, required=False)
 
@@ -170,7 +185,6 @@ class AppointmentSerializer(serializers.ModelSerializer):
             "scheduled_at",
             "end_expected_at",
             "type",
-            "consultation",
             "consultation_id",
             "created_by",
             "status",
@@ -274,6 +288,8 @@ class AppointmentCreateSerializer(AppointmentSerializer):
             "dont_invite_me",
         ]
 
+        read_only_fields = AppointmentSerializer.Meta.read_only_fields + ['consultation']
+
     def validate(self, attrs):
         dont_invite_beneficiary = attrs.get('dont_invite_beneficiary', False)
         dont_invite_practitioner = attrs.get('dont_invite_practitioner', False)
@@ -350,6 +366,7 @@ class AppointmentCreateSerializer(AppointmentSerializer):
                 participant_users.add(user)
 
         appointment.status = AppointmentStatus.scheduled
+        appointment.save(update_fields=['status'])
         return appointment
 
 
