@@ -176,7 +176,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
             "created_at",
             "participants",
         ]
-        read_only_fields = ["id", "created_by", "created_at", "status"]
+        read_only_fields = ["id", "created_by", "created_at"]
 
     def validate_scheduled_at(self, value):
         if value < timezone.now():

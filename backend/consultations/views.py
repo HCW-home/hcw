@@ -237,7 +237,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, ConsultationAssigneePermission]
     pagination_class = ConsultationPagination
     ordering_fields = ["created_at", "updated_at", "scheduled_at"]
-    filterset_fields = ["consultation", "status"]
+    filterset_fields = ["consultation", "status", "scheduled_at"]
     http_method_names = ["get", "post", "patch", "put", "head", "options"]
 
     def get_serializer_class(self):
