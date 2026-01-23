@@ -895,9 +895,10 @@ class DashboardPractitionerView(APIView):
         )
 
         next_appointment = upcoming_appointments.first()
+        remaining_appointments = upcoming_appointments[1:] if next_appointment else upcoming_appointments
 
         return Response({
             "next_appointment": AppointmentCreateSerializer(next_appointment).data,
-            "upcoming_appointments": AppointmentCreateSerializer(upcoming_appointments, many=True).data,
+            "upcoming_appointments": AppointmentCreateSerializer(remaining_appointments, many=True).data,
             "overdue_consultations": ConsultationSerializer(consultations_qs.overdue.order_by('-created_at')[:3], many=True).data,
         }, status=status.HTTP_200_OK)

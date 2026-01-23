@@ -3,31 +3,38 @@ from fhir.resources.appointment import Appointment
 from fhir.resources.codeableconcept import CodeableConcept
 from fhir.resources.coding import Coding
 from fhir.resources.reference import Reference
+from rest_framework.renderers import BaseRenderer
 
-class AppointmentFhir:
+
+class BaseFhirRenderer(BaseRenderer):
 
     def __init__(self, data):
         self.data = data
 
+    def to_fhir(self, data, accepted_media_type=None, renderer_context=None):
+        raise NotImplementedError(
+            'Renderer class requires .to_fhir() to be implemented')
+
+class AppointmentFhir(BaseFhirRenderer):
+
     def to_fhir(self):
 
-        appointment_data = self.data
         # Map status
         status_mapping = {
             "Draft": "pending",
             "Scheduled": "booked",
             "Cancelled": "cancelled",
         }
-        fhir_status = status_mapping.get(appointment_data.get("status"), "pending")
+        fhir_status = status_mapping.get(self.data.get("status"), "pending")
 
         # Add participants
-        participants_data = appointment_data.get("participants", [])
+        participants_data = self.data.get("participants", [])
         participants = []
         for participant in participants_data:
             user = participant.get("user")
             fhir_participant = {
                 "actor": {
-                    "reference": f"Patient/{user.get('id')}" if user else None,
+                    "reference": f"Participant/{user.get('id')}" if user else None,
                     "display": participant.get("email") or f"{participant.get('first_name', '')} {participant.get('last_name', '')}".strip(),
                 },
                 "status": "accepted" if participant.get("is_confirmed") else "tentative",
@@ -35,7 +42,7 @@ class AppointmentFhir:
             participants.append(fhir_participant)
 
         # Add appointment type
-        appointment_type = appointment_data.get("type")
+        appointment_type = self.data.get("type")
         appointment_type_coding = None
         if appointment_type:
             appointment_type_coding = CodeableConcept(
@@ -49,14 +56,14 @@ class AppointmentFhir:
             )
 
         # Convert datetime strings to proper format
-        scheduled_at = appointment_data.get("scheduled_at")
-        end_expected_at = appointment_data.get("end_expected_at")
-        created_at = appointment_data.get("created_at")
+        scheduled_at = self.data.get("scheduled_at")
+        end_expected_at = self.data.get("end_expected_at")
+        created_at = self.data.get("created_at")
 
         # Build FHIR Appointment
         fhir_appointment = Appointment(
             resourceType="Appointment",
-            id=str(appointment_data.get("id")),
+            id=str(self.data.get("id")),
             status=fhir_status,
             start=scheduled_at,
             end=end_expected_at,
@@ -66,7 +73,7 @@ class AppointmentFhir:
         )
 
         # Add description from consultation if available
-        consultation = appointment_data.get("consultation")
+        consultation = self.data.get("consultation")
         if consultation and isinstance(consultation, dict):
             fhir_appointment.description = (
                 consultation.get("description") or consultation.get("title")
