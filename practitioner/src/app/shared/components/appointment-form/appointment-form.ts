@@ -261,6 +261,17 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
 
   addParticipant(): void {
     const formValue = this.participantForm.value;
+
+    if (this.isExistingUser() && formValue.user_id) {
+      const data: CreateParticipantRequest = {
+        user_id: formValue.user_id,
+      };
+      this.pendingParticipants.update(list => [...list, data]);
+      this.resetParticipantForm();
+      this.toasterService.show('success', 'Participant added to list');
+      return;
+    }
+
     const data: CreateParticipantRequest = {
       message_type: formValue.message_type,
       timezone: formValue.timezone,
@@ -268,30 +279,20 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
       preferred_language: formValue.preferred_language,
     };
 
-    if (this.isExistingUser() && formValue.user_id) {
-      data.user_id = formValue.user_id;
-      const user = this.selectedParticipantUser();
-      if (user) {
-        data.first_name = user.first_name;
-        data.last_name = user.last_name;
-        data.email = user.email;
-      }
-    } else {
-      if (formValue.first_name) {
-        data.first_name = formValue.first_name;
-      }
-      if (formValue.last_name) {
-        data.last_name = formValue.last_name;
-      }
+    if (formValue.first_name) {
+      data.first_name = formValue.first_name;
+    }
+    if (formValue.last_name) {
+      data.last_name = formValue.last_name;
+    }
 
-      if (formValue.message_type === 'email' && formValue.email) {
-        data.email = formValue.email;
-      } else if (formValue.message_type === 'sms' && formValue.phone) {
-        data.phone = formValue.phone;
-      } else {
-        this.toasterService.show('error', 'Please provide contact information');
-        return;
-      }
+    if (formValue.message_type === 'email' && formValue.email) {
+      data.email = formValue.email;
+    } else if (formValue.message_type === 'sms' && formValue.phone) {
+      data.mobile_phone_number = formValue.phone;
+    } else {
+      this.toasterService.show('error', 'Please provide contact information');
+      return;
     }
 
     this.pendingParticipants.update(list => [...list, data]);
@@ -339,25 +340,22 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
 
   getUserDisplayName(participant: Participant): string {
     if (participant.user) {
-      return (
-        `${participant.user.first_name} ${participant.user.last_name}`.trim() ||
-        participant.user.email
-      );
+      const fullName = `${participant.user.first_name || ''} ${participant.user.last_name || ''}`.trim();
+      return fullName || participant.user.email || 'Unknown';
     }
-    if (participant.first_name || participant.last_name) {
-      return `${participant.first_name || ''} ${participant.last_name || ''}`.trim();
-    }
-    return participant.email || 'Unknown';
+    return 'Unknown';
   }
 
   getParticipantInitials(participant: Participant): string {
     if (participant.user) {
       const first = participant.user.first_name?.charAt(0) || '';
       const last = participant.user.last_name?.charAt(0) || '';
-      return (first + last).toUpperCase() || '?';
-    }
-    if (participant.email) {
-      return participant.email.charAt(0).toUpperCase();
+      if (first || last) {
+        return (first + last).toUpperCase();
+      }
+      if (participant.user.email) {
+        return participant.user.email.charAt(0).toUpperCase();
+      }
     }
     return '?';
   }
@@ -407,18 +405,26 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   }
 
   private getAllParticipantsForRequest(): CreateParticipantRequest[] {
-    const existingParticipants: CreateParticipantRequest[] = this.participants().map(p => ({
-      id: p.id,
-      user_id: p.user?.id,
-      email: p.email || undefined,
-      phone: p.phone || undefined,
-      first_name: p.first_name || p.user?.first_name || undefined,
-      last_name: p.last_name || p.user?.last_name || undefined,
-      message_type: p.message_type || 'email',
-      timezone: p.timezone || 'UTC',
-      communication_method: p.communication_method || 'email',
-      preferred_language: p.preferred_language || 'en',
-    }));
+    const existingParticipants: CreateParticipantRequest[] = this.participants().map(p => {
+      if (p.user?.id) {
+        return {
+          id: p.id,
+          user_id: p.user.id,
+        };
+      }
+
+      return {
+        id: p.id,
+        email: p.user?.email || undefined,
+        mobile_phone_number: p.user?.mobile_phone_number || undefined,
+        first_name: p.user?.first_name || undefined,
+        last_name: p.user?.last_name || undefined,
+        message_type: 'email',
+        timezone: p.user?.timezone || 'UTC',
+        communication_method: p.user?.communication_method || 'email',
+        preferred_language: p.user?.preferred_language || 'en',
+      };
+    });
 
     return [...existingParticipants, ...this.pendingParticipants()];
   }

@@ -3,7 +3,12 @@ export interface User {
   email: string;
   first_name: string;
   last_name: string;
+  mobile_phone_number?: string;
   is_online?: boolean;
+  languages?: { id: number; code: string; name: string }[];
+  preferred_language?: string;
+  communication_method?: string;
+  timezone?: string;
 }
 
 export interface Queue {
@@ -14,19 +19,7 @@ export interface Queue {
 
 export interface Participant {
   id: number;
-  appointment?: number;
   user: User | null;
-  auth_token?: string;
-  email: string | null;
-  phone: string | null;
-  timezone?: string;
-  first_name: string | null;
-  last_name: string | null;
-  message_type?: string;
-  communication_method?: string | null;
-  preferred_language?: string;
-  feedback_rate: number | null;
-  feedback_message: string | null;
   is_active: boolean;
   status?: ParticipantStatus;
 }
@@ -202,10 +195,10 @@ export interface CreateParticipantRequest {
   id?: number;
   user_id?: number;
   email?: string;
-  phone?: string;
+  mobile_phone_number?: string;
   first_name?: string;
   last_name?: string;
-  message_type: string;
+  message_type?: string;
   timezone?: string;
   communication_method?: string;
   preferred_language?: string;

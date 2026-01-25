@@ -209,27 +209,6 @@
   padding: 12px 0;
 }
 
-.info-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
-  background: var(--primary-100);
-  color: var(--primary-700);
-
-  &.blue {
-    background: var(--primary-100);
-    color: var(--primary-700);
-  }
-
-  &.green {
-    background: var(--emerald-100);
-    color: var(--emerald-700);
-  }
-}
-
 .badges-list {
   display: flex;
   flex-wrap: wrap;

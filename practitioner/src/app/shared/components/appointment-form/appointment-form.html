@@ -232,7 +232,7 @@
             </div>
             <div class="participant-details">
               <span class="participant-name">{{ getUserDisplayName(participant) }}</span>
-              <span class="participant-contact">{{ participant.email || participant.phone || '' }}</span>
+              <span class="participant-contact">{{ participant.user?.email || participant.user?.mobile_phone_number || '' }}</span>
             </div>
             <app-badge [type]="getParticipantBadgeType(participant.status)">
               {{ participant.status }}
@@ -253,7 +253,7 @@
             </div>
             <div class="participant-details">
               <span class="participant-name">{{ getPendingParticipantName(pending) }}</span>
-              <span class="participant-contact">{{ pending.email || pending.phone || '' }}</span>
+              <span class="participant-contact">{{ pending.email || pending.mobile_phone_number || '' }}</span>
             </div>
             <app-badge [type]="BadgeTypeEnum.gray">Pending</app-badge>
             <app-button

@@ -121,25 +121,22 @@ export class ManageParticipantsModal implements OnDestroy, OnChanges {
 
   getUserDisplayName(participant: Participant): string {
     if (participant.user) {
-      return (
-        `${participant.user.first_name} ${participant.user.last_name}`.trim() ||
-        participant.user.email
-      );
+      const fullName = `${participant.user.first_name || ''} ${participant.user.last_name || ''}`.trim();
+      return fullName || participant.user.email || 'Unknown';
     }
-    if (participant.first_name || participant.last_name) {
-      return `${participant.first_name || ''} ${participant.last_name || ''}`.trim();
-    }
-    return participant.email || 'Unknown';
+    return 'Unknown';
   }
 
   getParticipantInitials(participant: Participant): string {
     if (participant.user) {
       const first = participant.user.first_name?.charAt(0) || '';
       const last = participant.user.last_name?.charAt(0) || '';
-      return (first + last).toUpperCase() || '?';
-    }
-    if (participant.email) {
-      return participant.email.charAt(0).toUpperCase();
+      if (first || last) {
+        return (first + last).toUpperCase();
+      }
+      if (participant.user.email) {
+        return participant.user.email.charAt(0).toUpperCase();
+      }
     }
     return '?';
   }
@@ -189,7 +186,7 @@ export class ManageParticipantsModal implements OnDestroy, OnChanges {
       if (formValue.message_type === 'email' && formValue.email) {
         data.email = formValue.email;
       } else if (formValue.message_type === 'sms' && formValue.phone) {
-        data.phone = formValue.phone;
+        data.mobile_phone_number = formValue.phone;
       } else {
         this.toasterService.show('error', 'Please provide contact information');
         return;

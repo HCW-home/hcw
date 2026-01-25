@@ -332,9 +332,12 @@
                               @for (participant of appointment.participants; track participant.id) {
                                 <span class="participant-badge">
                                   @if (participant.user) {
-                                    {{ participant.user.first_name }} {{ participant.user.last_name }}
+                                    {{ participant.user.first_name || '' }} {{ participant.user.last_name || '' }}
+                                    @if (!participant.user.first_name && !participant.user.last_name) {
+                                      {{ participant.user.email || 'Unknown' }}
+                                    }
                                   } @else {
-                                    {{ participant.first_name || participant.last_name ? (participant.first_name || '') + ' ' + (participant.last_name || '') : (participant.email || 'Unknown') }}
+                                    Unknown
                                   }
                                 </span>
                               }

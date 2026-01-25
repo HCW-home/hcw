@@ -340,15 +340,15 @@ export class ConsultationForm implements OnInit, OnDestroy {
         participantsArray.push(this.createParticipantGroup({
           id: p.id,
           user_id: p.user?.id,
-          first_name: p.first_name || p.user?.first_name || '',
-          last_name: p.last_name || p.user?.last_name || '',
-          email: p.email || p.user?.email || '',
-          phone: p.phone || '',
-          timezone: p.timezone || 'Europe/Paris',
-          communication_method: p.communication_method || 'email',
-          preferred_language: p.preferred_language || 'en',
+          first_name: p.user?.first_name || '',
+          last_name: p.user?.last_name || '',
+          email: p.user?.email || '',
+          phone: p.user?.mobile_phone_number || '',
+          timezone: p.user?.timezone || 'Europe/Paris',
+          communication_method: p.user?.communication_method || 'email',
+          preferred_language: p.user?.preferred_language || 'en',
           is_existing_user: !!p.user,
-          contact_type: p.phone ? 'phone' : 'email',
+          contact_type: p.user?.mobile_phone_number ? 'phone' : 'email',
         }));
       });
     }
@@ -846,7 +846,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
     return participants.map((p: IParticipantFormValue) => {
       const request: CreateParticipantRequest = {
         message_type: p.contact_type === 'phone' ? 'sms' : 'email',
-        timezone: p.timezone,
+        timezone: p.timezone || '',
         communication_method: p.communication_method,
         preferred_language: p.preferred_language,
       };
@@ -869,7 +869,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
         if (p.contact_type === 'email' && p.email) {
           request.email = p.email;
         } else if (p.contact_type === 'phone' && p.phone) {
-          request.phone = p.phone;
+          request.mobile_phone_number = p.phone;
         }
       }
 

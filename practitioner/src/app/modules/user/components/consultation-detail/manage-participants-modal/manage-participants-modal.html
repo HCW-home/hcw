@@ -36,7 +36,7 @@
                 </div>
                 <div class="participant-details">
                   <span class="participant-name">{{ getUserDisplayName(participant) }}</span>
-                  <span class="participant-contact">{{ participant.email || participant.phone || '' }}</span>
+                  <span class="participant-contact">{{ participant.user?.email || participant.user?.mobile_phone_number || '' }}</span>
                 </div>
                 <app-badge [type]="getParticipantBadgeType(participant.status)">
                   {{ participant.status }}

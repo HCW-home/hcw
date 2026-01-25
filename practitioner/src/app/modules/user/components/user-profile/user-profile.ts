@@ -10,9 +10,11 @@ import {CommunicationMethodOptions, TimezoneOptions} from '../../constants/user'
 
 import {Page} from '../../../../core/components/page/page';
 import {Loader} from '../../../../shared/components/loader/loader';
+import {Badge} from '../../../../shared/components/badge/badge';
 import {Select} from '../../../../shared/ui-components/select/select';
 import {Svg} from '../../../../shared/ui-components/svg/svg';
 
+import {BadgeTypeEnum} from '../../../../shared/constants/badge';
 import {SelectOption} from '../../../../shared/models/select';
 import {ValidationService} from '../../../../core/services/validation.service';
 import {getErrorMessage} from '../../../../core/utils/error-helper';
@@ -25,6 +27,7 @@ import {getErrorMessage} from '../../../../core/utils/error-helper';
     Svg,
     Page,
     Loader,
+    Badge,
     Select,
     CommonModule,
     ReactiveFormsModule,
@@ -34,6 +37,8 @@ export class UserProfile implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   private location = inject(Location);
   public validationService = inject(ValidationService);
+
+  protected readonly BadgeTypeEnum = BadgeTypeEnum;
 
   user = signal<IUser | null>(null);
   languages = signal<ILanguage[]>([]);

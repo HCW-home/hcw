@@ -612,12 +612,10 @@ export class ConsultationDetail implements OnInit, OnDestroy {
 
   getUserDisplayName(participant: Participant): string {
     if (participant.user) {
-      return (
-        `${participant.user.first_name} ${participant.user.last_name}`.trim() ||
-        participant.user.email
-      );
+      const fullName = `${participant.user.first_name || ''} ${participant.user.last_name || ''}`.trim();
+      return fullName || participant.user.email || 'Unknown';
     }
-    return participant.email || participant.first_name  || 'Unknown';
+    return 'Unknown';
   }
 
   getBeneficiaryDisplayName(): string {
@@ -683,13 +681,12 @@ export class ConsultationDetail implements OnInit, OnDestroy {
     if (participant.user) {
       const first = participant.user.first_name?.charAt(0) || '';
       const last = participant.user.last_name?.charAt(0) || '';
-      return (first + last).toUpperCase() || '?';
-    }
-    if (participant.email) {
-      return (participant.email).charAt(0).toUpperCase();
-    }
-    if (participant.first_name) {
-      return (participant.first_name).charAt(0).toUpperCase();
+      if (first || last) {
+        return (first + last).toUpperCase();
+      }
+      if (participant.user.email) {
+        return participant.user.email.charAt(0).toUpperCase();
+      }
     }
     return '?';
   }

@@ -123,7 +123,7 @@
                     invalidMessage="Communication method is required">
                   </app-select>
                 } @else {
-                  <span class="info-badge">{{ getCommunicationMethodLabel(user()!.communication_method) }}</span>
+                  <app-badge [type]="BadgeTypeEnum.gray">{{ getCommunicationMethodLabel(user()!.communication_method) }}</app-badge>
                 }
               </div>
             </div>
@@ -171,7 +171,7 @@
                 } @else if (user()!.languages?.length) {
                   <div class="badges-list">
                     @for (language of user()!.languages; track language.code) {
-                      <span class="info-badge blue">{{ language.name }}</span>
+                      <app-badge [type]="BadgeTypeEnum.blue">{{ language.name }}</app-badge>
                     }
                   </div>
                 } @else {
@@ -189,7 +189,7 @@
                   <label class="form-label">Specialities</label>
                   <div class="badges-list">
                     @for (speciality of user()!.specialities; track speciality.id) {
-                      <span class="info-badge green">{{ speciality.name }}</span>
+                      <app-badge [type]="BadgeTypeEnum.green">{{ speciality.name }}</app-badge>
                     }
                   </div>
                 </div>

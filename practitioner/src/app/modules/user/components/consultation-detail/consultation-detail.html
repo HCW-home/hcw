@@ -306,24 +306,24 @@
                               </div>
                               <div class="participant-details">
                                 <span class="participant-name">{{ getUserDisplayName(participant) }}</span>
-                                <span class="participant-contact">{{ participant.email || participant.phone || '' }}</span>
+                                <span class="participant-contact">{{ participant.user?.email || participant.user?.mobile_phone_number || '' }}</span>
                                 <div class="participant-meta">
-                                  @if (participant.timezone) {
+                                  @if (participant.user?.timezone) {
                                     <span class="meta-item">
                                       <app-svg src="clock" [svgStyle]="{'width.px': 12, 'height.px': 12}"></app-svg>
-                                      {{ participant.timezone }}
+                                      {{ participant.user!.timezone }}
                                     </span>
                                   }
-                                  @if (participant.preferred_language) {
+                                  @if (participant.user?.preferred_language) {
                                     <span class="meta-item">
                                       <app-svg src="globe" [svgStyle]="{'width.px': 12, 'height.px': 12}"></app-svg>
-                                      {{ getLanguageLabel(participant.preferred_language) }}
+                                      {{ getLanguageLabel(participant.user!.preferred_language!) }}
                                     </span>
                                   }
-                                  @if (participant.communication_method) {
+                                  @if (participant.user?.communication_method) {
                                     <span class="meta-item">
                                       <app-svg src="message-square" [svgStyle]="{'width.px': 12, 'height.px': 12}"></app-svg>
-                                      {{ participant.communication_method }}
+                                      {{ participant.user!.communication_method }}
                                     </span>
                                   }
                                 </div>
