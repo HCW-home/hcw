@@ -40,6 +40,16 @@ class QueueSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "users"]
 
 
+class ParticipantReadSerializer(serializers.ModelSerializer):
+    user = ConsultationUserSerializer(read_only=True)
+    status = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = Participant
+        fields = ["id", "user", "status", "is_active", "is_confirmed", "is_invited", "is_notified"]
+        read_only_fields = fields
+
+
 class ParticipantSerializer(serializers.Serializer):
     first_name = serializers.CharField(write_only=True, required=False,)
     last_name = serializers.CharField(write_only=True, required=False,)
@@ -140,8 +150,8 @@ class ConsultationSerializer(serializers.ModelSerializer):
 class AppointmentSerializer(serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(read_only=True)
     consultation_id = serializers.IntegerField(required=False, allow_null=True)
-    participants = ConsultationUserSerializer(
-        many=True, read_only=True, required=False)
+    participants = ParticipantReadSerializer(
+        many=True, read_only=True, required=False, source='participant_set')
     participants_ids = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=User.objects.all(),
@@ -409,7 +419,7 @@ class BookingSlotSerializer(serializers.ModelSerializer):
 class AppointmentDetailSerializer(serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(read_only=True)
     consultation = ConsultationSerializer(read_only=True)
-    participants = ConsultationUserSerializer(many=True, read_only=True)
+    participants = ParticipantReadSerializer(many=True, read_only=True, source='participant_set')
 
     class Meta:
         model = Appointment
