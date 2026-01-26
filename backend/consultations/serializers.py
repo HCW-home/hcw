@@ -252,7 +252,9 @@ class AppointmentSerializer(serializers.ModelSerializer):
 
                 if not created and not participant.is_active:
                     participant.is_active = True
-                    participant.save(update_fields=['is_active'])
+                    participant.is_notified = False
+                    participant.save(
+                        update_fields=['is_active', 'is_notified'])
 
             # Deactivate removed participants
             removed_users = existing_users - new_users
@@ -287,7 +289,9 @@ class AppointmentSerializer(serializers.ModelSerializer):
 
                 if not created and not participant.is_active:
                     participant.is_active = True
-                    participant.save(update_fields=['is_active'])
+                    participant.is_notified = False
+                    participant.save(
+                        update_fields=['is_active', 'is_notified'])
 
         return appointment
 

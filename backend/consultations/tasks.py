@@ -35,11 +35,12 @@ def handle_request(request_id):
 def handle_invites(appointment_id):
     appointment = Appointment.objects.get(pk=appointment_id)
     participants = Participant.objects.filter(
-        is_invited=True, is_active=True, appointment=appointment)
+        is_invited=True, appointment=appointment)
 
     if appointment.status == AppointmentStatus.scheduled:
-        if appointment.previous_scheduled_at:
+        if appointment.previous_scheduled_at and appointment.previous_scheduled_at != appointment.scheduled_at:
             template_system_name = "appointment_updated"
+            participants = participants.filter(is_active=True)
         else:
             template_system_name = "invitation_to_appointment"
             participants = participants.filter(is_notified=False)
@@ -50,6 +51,10 @@ def handle_invites(appointment_id):
         return
 
     for participant in participants:
+
+        if not participant.is_active:
+            template_system_name = "appointment_cancelled"
+
         message = Message.objects.create(
             communication_method=participant.user.communication_method,
             recipient_phone=participant.user.mobile_phone_number,

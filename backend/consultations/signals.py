@@ -209,8 +209,3 @@ def appointment_previous_scheduled_at(sender, instance, **kwargs):
             pass
 
 
-@receiver(post_save, sender=Appointment)
-def send_appointment_invites_update(sender, instance, **kwargs):
-    if instance.previous_scheduled_at:
-        transaction.on_commit(lambda: handle_invites.delay(instance.pk))
-
