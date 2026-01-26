@@ -47,6 +47,14 @@ class AppointmentInline(StackedInline):
     show_change_link = True
 
 
+class ParticipantInline(TabularInline):
+    model = Participant
+    extra = 0
+    fields = [
+        "user",
+        "is_invited",
+    ]
+
 
 @admin.register(Consultation)
 class ConsultationAdmin(ModelAdmin):
@@ -87,6 +95,8 @@ class AppointmentAdmin(ModelAdmin):
     ]
     list_filter = ["scheduled_at", "consultation__group"]
     search_fields = ["consultation__created_by__email"]
+
+    inlines = [ParticipantInline]
 
     @display(description="Participants")
     def participants_count(self, obj):

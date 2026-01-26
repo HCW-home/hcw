@@ -155,7 +155,6 @@ class AppointmentSerializer(serializers.ModelSerializer):
     participants_ids = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=User.objects.all(),
-        write_only=True,
         required=False
     )
 
@@ -221,26 +220,33 @@ class AppointmentSerializer(serializers.ModelSerializer):
         appointment = super().update(instance, validated_data)
 
         if participants_ids is not None:
-            # Récupérer les participants existants
-            existing_users = set(
-                Participant.objects.filter(appointment=appointment)
-                .values_list('user', flat=True)
+            # Get existing active participants
+            existing_participants = Participant.objects.filter(
+                appointment=appointment,
+                is_active=True
             )
+            existing_users = set(existing_participants.values_list('user_id', flat=True))
             new_users = set(user.id for user in participants_ids)
 
-            # Ajouter les nouveaux participants
+            # Add new participants or reactivate existing ones
             for user_id in new_users - existing_users:
-                Participant.objects.create(
+                participant, created = Participant.objects.get_or_create(
                     appointment=appointment,
-                    user_id=user_id
+                    user_id=user_id,
+                    defaults={'is_active': True}
                 )
 
-            # Désactiver les participants retirés
+                if not created and not participant.is_active:
+                    participant.is_active = True
+                    participant.save(update_fields=['is_active'])
+
+            # Deactivate removed participants
             removed_users = existing_users - new_users
             if removed_users:
                 Participant.objects.filter(
                     appointment=appointment,
-                    user_id__in=removed_users
+                    user_id__in=removed_users,
+                    is_active=True
                 ).update(is_active=False)
 
         if temporary_participants_data is not None:
@@ -259,10 +265,15 @@ class AppointmentSerializer(serializers.ModelSerializer):
                     }
                 )
 
-                Participant.objects.get_or_create(
+                participant, created = Participant.objects.get_or_create(
                     appointment=appointment,
-                    user=user
+                    user=user,
+                    defaults={'is_active': True}
                 )
+
+                if not created and not participant.is_active:
+                    participant.is_active = True
+                    participant.save(update_fields=['is_active'])
 
         return appointment
 
@@ -348,6 +359,7 @@ class AppointmentCreateSerializer(AppointmentSerializer):
         if not dont_invite_me:
             participant_users.add(self.context['request'].user)
 
+        # Create participants from consultation
         for participant_user in participant_users:
             Participant.objects.create(
                 appointment=appointment,

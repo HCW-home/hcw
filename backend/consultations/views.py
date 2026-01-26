@@ -252,6 +252,14 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+
+        # For list, retrieve, and join actions: filter by participants
+        if self.action in ['list', 'retrieve', 'join']:
+            return Appointment.objects.filter(
+                participant__user=user, participant__is_active=True
+            ).distinct()
+
+        # For create, update, partial_update, etc.: use consultation access logic
         return Appointment.objects.filter(
             consultation__in=Consultation.objects.accessible_by(user)
         ).distinct()
