@@ -214,35 +214,3 @@ def send_appointment_invites_update(sender, instance, **kwargs):
     if instance.previous_scheduled_at:
         transaction.on_commit(lambda: handle_invites.delay(instance.pk))
 
-
-@receiver(pre_delete, sender=Participant)
-def delete_participant(sender, instance, **kwargs):
-    # Capture participant data before deletion
-    participant_data = {
-        "communication_method": instance.communication_method,
-        "recipient_phone": instance.phone,
-        "recipient_email": instance.email,
-        "sent_to": instance.user,
-        "sent_by": instance.appointment.consultation.created_by,
-        "object_pk": instance.pk,
-    }
-
-    def send_deletion_notification():
-        try:
-            message = NotificationMessage.objects.create(
-                communication_method=participant_data["communication_method"],
-                recipient_phone=participant_data["recipient_phone"],
-                recipient_email=participant_data["recipient_email"],
-                sent_to=participant_data["sent_to"],
-                sent_by=participant_data["sent_by"],
-                template_system_name="appointment_updated",
-                object_pk=participant_data["object_pk"],
-                object_model="consultations.Participant",
-            )
-            message.send(wait=True)
-        except Exception as e:
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"Failed to send participant deletion notification: {str(e)}")
-
-    transaction.on_commit(send_deletion_notification)

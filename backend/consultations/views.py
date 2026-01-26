@@ -43,7 +43,6 @@ from .paginations import ConsultationPagination
 from .permissions import ConsultationAssigneePermission, DjangoModelPermissionsWithView
 from .serializers import (
     AppointmentSerializer,
-    AppointmentCreateSerializer,
     BookingSlotSerializer,
     ParticipantDetailSerializer,
     ConsultationMessageCreateSerializer,
@@ -233,6 +232,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     Supports FHIR format by adding ?format=fhir query parameter
     """
 
+    serializer_class = AppointmentSerializer
     fhir_class = AppointmentFhir
     permission_classes = [IsAuthenticated, ConsultationAssigneePermission]
     pagination_class = ConsultationPagination
@@ -240,10 +240,6 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     filterset_fields = ["consultation", "status", "scheduled_at"]
     http_method_names = ["get", "post", "patch", "put", "head", "options"]
 
-    def get_serializer_class(self):
-        if self.action == "create":
-            return AppointmentCreateSerializer
-        return AppointmentSerializer
 
     def get_renderers(self):
         if self.action in ["list", "retrieve"]:

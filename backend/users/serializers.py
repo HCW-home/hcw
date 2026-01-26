@@ -172,68 +172,6 @@ class HealthMetricSerializer(serializers.ModelSerializer):
             "notes",
             "created_at",
             "updated_at",
-            # Anthropometrics
-            "height_cm",
-            "weight_kg",
-            "waist_cm",
-            "hip_cm",
-            "body_fat_pct",
-            # Vital signs
-            "systolic_bp",
-            "diastolic_bp",
-            "heart_rate_bpm",
-            "respiratory_rate",
-            "temperature_c",
-            "spo2_pct",
-            "pain_score_0_10",
-            # Glucose / diabetes
-            "glucose_fasting_mgdl",
-            "glucose_random_mgdl",
-            "hba1c_pct",
-            # Lipid panel
-            "chol_total_mgdl",
-            "hdl_mgdl",
-            "ldl_mgdl",
-            "triglycerides_mgdl",
-            # Renal function
-            "creatinine_mgdl",
-            "egfr_ml_min_1_73m2",
-            "bun_mgdl",
-            # Liver panel
-            "alt_u_l",
-            "ast_u_l",
-            "alp_u_l",
-            "bilirubin_total_mgdl",
-            # Electrolytes
-            "sodium_mmol_l",
-            "potassium_mmol_l",
-            "chloride_mmol_l",
-            "bicarbonate_mmol_l",
-            # Hematology
-            "hemoglobin_g_dl",
-            "wbc_10e9_l",
-            "platelets_10e9_l",
-            "inr",
-            # Inflammation
-            "crp_mg_l",
-            "esr_mm_h",
-            # Thyroid
-            "tsh_miu_l",
-            "t3_ng_dl",
-            "t4_ug_dl",
-            # Urinalysis
-            "urine_protein",
-            "urine_glucose",
-            "urine_ketones",
-            # Respiratory
-            "peak_flow_l_min",
-            "fev1_l",
-            "fvc_l",
-            # Mental health
-            "phq9_score",
-            "gad7_score",
-            # Reproductive
-            "pregnant_test_positive",
         ]
         read_only_fields = [
             "id",

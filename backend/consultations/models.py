@@ -126,9 +126,18 @@ class Appointment(models.Model):
     )
     end_expected_at = models.DateTimeField(_("end expected at"), null=True, blank=True)
     created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name=_("created by")
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        verbose_name=_("created by"),
+        related_name="appointments_created"
     )
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+
+    participants = models.ManyToManyField(
+        User,
+        through="Participant",
+        related_name="appointments_participating",
+    )
 
     @property
     def active_participants(self):
@@ -150,42 +159,20 @@ class ParticipantStatus(Enum):
 
 class Participant(models.Model):
     appointment = models.ForeignKey(
-        Appointment, on_delete=models.CASCADE, related_name="participants"
+        Appointment,
+        on_delete=models.CASCADE,
+        verbose_name=_("appointment")
     )
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
+        User,
+        on_delete=models.CASCADE,
+        verbose_name=_("user")
     )
-
 
     is_active = models.BooleanField(default=True)
     is_invited = models.BooleanField(default=True)
     is_confirmed = models.BooleanField(null=True, blank=True)
     is_notified = models.BooleanField(default=False)
-
-    # first_name = models.CharField(null=True, blank=True)
-    # last_name = models.CharField(null=True, blank=True)
-    # email = models.EmailField(null=True, blank=True)
-    # phone = models.CharField(null=True, blank=True)
-    # communication_method = models.CharField(
-    #     choices=CommunicationMethod.choices, max_length=20, null=True, blank=True
-    # )
-    # preferred_language = models.CharField(
-    #     max_length=10,
-    #     choices=settings.LANGUAGES,
-    #     help_text="Preferred language for the user interface",
-    #     null=True,
-    #     blank=True,
-    # )
-    # timezone = models.CharField(
-    #     max_length=63,
-    #     choices=[(tz, tz) for tz in sorted(available_timezones())],
-    #     default="UTC",
-    #     help_text="User timezone for displaying dates and times",
-    # )
-
     feedback_rate = models.IntegerField(null=True, blank=True)
     feedback_message = models.TextField(null=True, blank=True)
 
@@ -202,33 +189,6 @@ class Participant(models.Model):
         return ParticipantStatus.draft.value
 
     @property
-    def language(self) -> str:
-        return self.user.preferred_language or settings.LANGUAGE_CODE
-
-    class Meta:
-        unique_together = ["appointment", "user"]
-
-    def save(self, *args, **kwargs):
-        # Create temporary user if no user is provided but email/phone exists
-        if not self.user and (self.email or self.phone):
-            self.user, _ = User.objects.update_or_create(
-                email=self.email,
-                defaults={
-                    "preferred_language": self.preferred_language,
-                    "temporary": True,
-                    "mobile_phone_number": self.phone,
-                    "timezone": self.timezone,
-                    "first_name": self.first_name,
-                    "last_name": self.last_name,
-                },
-            )
-
-        if self.appointment.created_by == self.user:
-            self.is_notified = True
-
-        super().save(*args, **kwargs)
-
-    @property
     def auth_token(self):
         """Get one_time_auth_token from associated User"""
         return self.user.one_time_auth_token if self.user else None
@@ -241,26 +201,10 @@ class Participant(models.Model):
     @property
     def name(self) -> str:
         """Get display name of the participant"""
-        if self.user.temporary:
-            return self.display_name or self.email or self.phone
         return self.user.name or self.user.email
 
-    def clean(self):
-        super().clean()
-        if not self.user and not self.email and not self.phone:
-            raise ValidationError(
-                _("At least one of user, email or phone must be provided.")
-            )
-
-        if self.phone:
-            phone_pattern = r"^(\+\d{1,3}|00\d{1,3})\d{7,14}$"
-            if not re.match(
-                phone_pattern, self.phone.replace(" ", "").replace("-", "")
-            ):
-                raise ValidationError(
-                    _("Phone number must start with +X or 00X followed by 7-14 digits.")
-                )
-
+    class Meta:
+        unique_together = ['user', 'appointment']
 
 class Message(models.Model):
     consultation = models.ForeignKey(
