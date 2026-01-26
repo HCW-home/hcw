@@ -257,41 +257,6 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         ).distinct()
 
     @extend_schema(
-        request=ParticipantSerializer,
-        responses={200: ParticipantSerializer(many=True), 201: ParticipantSerializer},
-    )
-    @action(detail=True, methods=["get", "post"])
-    def participants(self, request, pk=None):
-        """Get all participants for this appointment or create a new participant"""
-        appointment = self.get_object()
-
-        if request.method == "GET":
-            participants = appointment.participants.filter(is_active=True)
-
-            page = self.paginate_queryset(participants)
-            if page is not None:
-                serializer = ParticipantSerializer(page, many=True)
-                return self.get_paginated_response(serializer.data)
-
-            serializer = ParticipantSerializer(participants, many=True)
-            return Response(serializer.data)
-
-        elif request.method == "POST":
-            serializer = ParticipantSerializer(
-                data=request.data,
-                context={"request": request, "appointment": appointment},
-            )
-
-            if serializer.is_valid():
-                participant = serializer.save(appointment=appointment)
-                return Response(
-                    ParticipantSerializer(participant).data,
-                    status=status.HTTP_201_CREATED,
-                )
-
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    @extend_schema(
         responses={
             200: {
                 "type": "object",
