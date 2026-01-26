@@ -59,8 +59,8 @@ export class UserProfile implements OnInit, OnDestroy {
     private toasterService: ToasterService,
   ) {
     this.profileForm = this.fb.group({
-      first_name: ['', [Validators.required, Validators.minLength(2)]],
-      last_name: ['', [Validators.required, Validators.minLength(2)]],
+      first_name: [{value: '', disabled: true}],
+      last_name: [{value: '', disabled: true}],
       email: [{value: '', disabled: true}],
       mobile_phone_number: [''],
       communication_method: ['email', [Validators.required]],
@@ -128,8 +128,6 @@ export class UserProfile implements OnInit, OnDestroy {
 
       const formValue = this.profileForm.value;
       const updateData: IUserUpdateRequest = {
-        first_name: formValue.first_name,
-        last_name: formValue.last_name,
         mobile_phone_number: formValue.mobile_phone_number || undefined,
         communication_method: formValue.communication_method,
         preferred_language: formValue.preferred_language,

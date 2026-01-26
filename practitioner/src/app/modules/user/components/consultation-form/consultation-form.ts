@@ -344,9 +344,9 @@ export class ConsultationForm implements OnInit, OnDestroy {
           last_name: p.user?.last_name || '',
           email: p.user?.email || '',
           phone: p.user?.mobile_phone_number || '',
-          timezone: p.user?.timezone || 'Europe/Paris',
-          communication_method: p.user?.communication_method || 'email',
-          preferred_language: p.user?.preferred_language || 'en',
+          timezone: p.user?.timezone || '',
+          communication_method: p.user?.communication_method || '',
+          preferred_language: p.user?.preferred_language || '',
           is_existing_user: !!p.user,
           contact_type: p.user?.mobile_phone_number ? 'phone' : 'email',
         }));
@@ -771,9 +771,9 @@ export class ConsultationForm implements OnInit, OnDestroy {
       last_name: [data?.['last_name'] || ''],
       email: [data?.['email'] || ''],
       phone: [data?.['phone'] || ''],
-      timezone: [data?.['timezone'] || 'Europe/Paris'],
-      communication_method: [data?.['communication_method'] || 'email'],
-      preferred_language: [data?.['preferred_language'] || 'en'],
+      timezone: [data?.['timezone'] || ''],
+      communication_method: [data?.['communication_method'] || ''],
+      preferred_language: [data?.['preferred_language'] || ''],
       is_existing_user: [data?.['is_existing_user'] !== undefined ? data['is_existing_user'] : true],
       contact_type: [data?.['contact_type'] || 'email'],
     });
@@ -846,10 +846,17 @@ export class ConsultationForm implements OnInit, OnDestroy {
     return participants.map((p: IParticipantFormValue) => {
       const request: CreateParticipantRequest = {
         message_type: p.contact_type === 'phone' ? 'sms' : 'email',
-        timezone: p.timezone || '',
-        communication_method: p.communication_method,
-        preferred_language: p.preferred_language,
       };
+
+      if (p.timezone) {
+        request.timezone = p.timezone;
+      }
+      if (p.communication_method) {
+        request.communication_method = p.communication_method;
+      }
+      if (p.preferred_language) {
+        request.preferred_language = p.preferred_language;
+      }
 
       if (p.id) {
         request.id = p.id;

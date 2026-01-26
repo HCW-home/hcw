@@ -110,26 +110,6 @@
               </app-user-search-select>
             </div>
           } @else {
-            <div class="name-row">
-              <div class="form-group">
-                <app-input
-                  type="text"
-                  label="First Name"
-                  leftIcon="user"
-                  placeholder="Enter first name..."
-                  formControlName="first_name">
-                </app-input>
-              </div>
-              <div class="form-group">
-                <app-input
-                  type="text"
-                  label="Last Name"
-                  placeholder="Enter last name..."
-                  formControlName="last_name">
-                </app-input>
-              </div>
-            </div>
-
             <div class="form-group">
               <label class="form-label">Contact Method</label>
               <div class="contact-toggle">
@@ -152,8 +132,8 @@
               </div>
             </div>
 
-            <div class="form-group">
-              @if (participantForm.get('message_type')?.value === 'email') {
+            @if (participantForm.get('message_type')?.value === 'email') {
+              <div class="form-group">
                 <app-input
                   type="email"
                   label="Email Address"
@@ -161,7 +141,9 @@
                   placeholder="guest@email.com"
                   formControlName="email">
                 </app-input>
-              } @else {
+              </div>
+            } @else {
+              <div class="form-group">
                 <app-input
                   type="tel"
                   label="Phone Number"
@@ -169,36 +151,56 @@
                   placeholder="+33 6 12 34 56 78"
                   formControlName="phone">
                 </app-input>
-              }
+              </div>
+            }
+
+            <div class="name-row">
+              <div class="form-group">
+                <app-input
+                  type="text"
+                  label="First Name"
+                  leftIcon="user"
+                  placeholder="Enter first name..."
+                  formControlName="first_name">
+                </app-input>
+              </div>
+              <div class="form-group">
+                <app-input
+                  type="text"
+                  label="Last Name"
+                  placeholder="Enter last name..."
+                  formControlName="last_name">
+                </app-input>
+              </div>
+            </div>
+
+            <div class="participant-settings">
+              <div class="form-group">
+                <app-select
+                  label="Timezone"
+                  formControlName="timezone"
+                  [options]="timezoneOptions"
+                  placeholder="Select timezone">
+                </app-select>
+              </div>
+              <div class="form-group">
+                <app-select
+                  label="Communication Method"
+                  formControlName="communication_method"
+                  [options]="communicationMethods"
+                  placeholder="Select method">
+                </app-select>
+              </div>
+              <div class="form-group">
+                <app-select
+                  label="Preferred Language"
+                  formControlName="preferred_language"
+                  [options]="languageOptions"
+                  placeholder="Select language">
+                </app-select>
+              </div>
             </div>
           }
-
-          <div class="participant-settings">
-            <div class="form-group">
-              <app-select
-                label="Timezone"
-                formControlName="timezone"
-                [options]="timezoneOptions"
-                placeholder="Select timezone">
-              </app-select>
-            </div>
-            <div class="form-group">
-              <app-select
-                label="Communication Method"
-                formControlName="communication_method"
-                [options]="communicationMethods"
-                placeholder="Select method">
-              </app-select>
-            </div>
-            <div class="form-group">
-              <app-select
-                label="Preferred Language"
-                formControlName="preferred_language"
-                [options]="languageOptions"
-                placeholder="Select language">
-              </app-select>
-            </div>
-          </div>
 
           <app-button
             text="Add participant"

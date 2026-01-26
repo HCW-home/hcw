@@ -97,7 +97,7 @@ export class ConsultationDetail implements OnInit, OnDestroy {
   editingAppointment = signal<Appointment | null>(null);
 
   appointmentViewMode = signal<AppointmentViewMode>('list');
-  appointmentStatusFilter = signal<AppointmentStatusFilter>('all');
+  appointmentStatusFilter = signal<AppointmentStatusFilter>('scheduled');
   calendarComponent = viewChild<FullCalendarComponent>('appointmentCalendar');
 
   calendarEvents = computed<EventInput[]>(() => {

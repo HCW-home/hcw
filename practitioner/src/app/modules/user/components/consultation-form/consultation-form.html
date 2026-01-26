@@ -228,24 +228,6 @@
                                 </app-user-search-select>
                               </div>
                             } @else {
-                              <div class="name-row">
-                                <div class="form-group">
-                                  <app-input
-                                    label="First Name"
-                                    leftIcon="user"
-                                    placeholder="Enter first name..."
-                                    formControlName="first_name">
-                                  </app-input>
-                                </div>
-                                <div class="form-group">
-                                  <app-input
-                                    label="Last Name"
-                                    placeholder="Enter last name..."
-                                    formControlName="last_name">
-                                  </app-input>
-                                </div>
-                              </div>
-
                               <div class="form-group">
                                 <label class="form-label">Contact Method</label>
                                 <div class="contact-toggle">
@@ -277,34 +259,52 @@
                                   formControlName="email">
                                 </app-input>
                               </div>
-                            }
 
-                            <div class="participant-settings">
-                              <div class="form-group">
-                                <app-select
-                                  label="Timezone"
-                                  formControlName="timezone"
-                                  [options]="timezoneOptions"
-                                  placeholder="Select timezone">
-                                </app-select>
+                              <div class="name-row">
+                                <div class="form-group">
+                                  <app-input
+                                    label="First Name"
+                                    leftIcon="user"
+                                    placeholder="Enter first name..."
+                                    formControlName="first_name">
+                                  </app-input>
+                                </div>
+                                <div class="form-group">
+                                  <app-input
+                                    label="Last Name"
+                                    placeholder="Enter last name..."
+                                    formControlName="last_name">
+                                  </app-input>
+                                </div>
                               </div>
-                              <div class="form-group">
-                                <app-select
-                                  label="Communication Method"
-                                  formControlName="communication_method"
-                                  [options]="communicationMethods"
-                                  placeholder="Select method">
-                                </app-select>
+
+                              <div class="participant-settings">
+                                <div class="form-group">
+                                  <app-select
+                                    label="Timezone"
+                                    formControlName="timezone"
+                                    [options]="timezoneOptions"
+                                    placeholder="Select timezone">
+                                  </app-select>
+                                </div>
+                                <div class="form-group">
+                                  <app-select
+                                    label="Communication Method"
+                                    formControlName="communication_method"
+                                    [options]="communicationMethods"
+                                    placeholder="Select method">
+                                  </app-select>
+                                </div>
+                                <div class="form-group">
+                                  <app-select
+                                    label="Preferred Language"
+                                    formControlName="preferred_language"
+                                    [options]="languageOptions"
+                                    placeholder="Select language">
+                                  </app-select>
+                                </div>
                               </div>
-                              <div class="form-group">
-                                <app-select
-                                  label="Preferred Language"
-                                  formControlName="preferred_language"
-                                  [options]="languageOptions"
-                                  placeholder="Select language">
-                                </app-select>
-                              </div>
-                            </div>
+                            }
                           </div>
                         }
                         <app-button

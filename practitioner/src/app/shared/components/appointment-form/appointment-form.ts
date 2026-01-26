@@ -157,9 +157,9 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
       email: ['', [Validators.email]],
       phone: [''],
       message_type: ['email', [Validators.required]],
-      timezone: ['UTC'],
-      communication_method: ['email'],
-      preferred_language: ['en'],
+      timezone: [''],
+      communication_method: [''],
+      preferred_language: [''],
     });
   }
 
@@ -177,9 +177,9 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
     this.selectedParticipantUser.set(null);
     this.participantForm.reset({
       message_type: 'email',
-      timezone: 'UTC',
-      communication_method: 'email',
-      preferred_language: 'en',
+      timezone: '',
+      communication_method: '',
+      preferred_language: '',
     });
   }
 
@@ -232,9 +232,9 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
     this.selectedParticipantUser.set(null);
     this.participantForm.reset({
       message_type: 'email',
-      timezone: 'UTC',
-      communication_method: 'email',
-      preferred_language: 'en',
+      timezone: '',
+      communication_method: '',
+      preferred_language: '',
       user_id: null,
     });
   }
@@ -273,11 +273,17 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
 
     const data: CreateParticipantRequest = {
       message_type: formValue.message_type,
-      timezone: formValue.timezone,
-      communication_method: formValue.communication_method,
-      preferred_language: formValue.preferred_language,
     };
 
+    if (formValue.timezone) {
+      data.timezone = formValue.timezone;
+    }
+    if (formValue.communication_method) {
+      data.communication_method = formValue.communication_method;
+    }
+    if (formValue.preferred_language) {
+      data.preferred_language = formValue.preferred_language;
+    }
     if (formValue.first_name) {
       data.first_name = formValue.first_name;
     }
@@ -301,9 +307,9 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   private resetParticipantForm(): void {
     this.participantForm.reset({
       message_type: 'email',
-      timezone: 'UTC',
-      communication_method: 'email',
-      preferred_language: 'en',
+      timezone: '',
+      communication_method: '',
+      preferred_language: '',
     });
     this.isExistingUser.set(true);
     this.selectedParticipantUser.set(null);
@@ -408,17 +414,32 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
         };
       }
 
-      return {
+      const participant: CreateParticipantRequest = {
         id: p.id,
-        email: p.user?.email || undefined,
-        mobile_phone_number: p.user?.mobile_phone_number || undefined,
-        first_name: p.user?.first_name || undefined,
-        last_name: p.user?.last_name || undefined,
         message_type: 'email',
-        timezone: p.user?.timezone || 'UTC',
-        communication_method: p.user?.communication_method || 'email',
-        preferred_language: p.user?.preferred_language || 'en',
       };
+      if (p.user?.email) {
+        participant.email = p.user.email;
+      }
+      if (p.user?.mobile_phone_number) {
+        participant.mobile_phone_number = p.user.mobile_phone_number;
+      }
+      if (p.user?.first_name) {
+        participant.first_name = p.user.first_name;
+      }
+      if (p.user?.last_name) {
+        participant.last_name = p.user.last_name;
+      }
+      if (p.user?.timezone) {
+        participant.timezone = p.user.timezone;
+      }
+      if (p.user?.communication_method) {
+        participant.communication_method = p.user.communication_method;
+      }
+      if (p.user?.preferred_language) {
+        participant.preferred_language = p.user.preferred_language;
+      }
+      return participant;
     });
 
     return [...existingParticipants, ...this.pendingParticipants()];

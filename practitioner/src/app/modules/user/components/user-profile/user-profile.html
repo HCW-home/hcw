@@ -49,34 +49,26 @@
             <h3 class="section-title">Personal Information</h3>
             <div class="form-grid">
               <div class="form-group">
-                <label class="form-label">First Name @if (isEditing()) {<span class="required">*</span>}</label>
+                <label class="form-label">First Name</label>
                 @if (isEditing()) {
                   <input
                     type="text"
-                    class="form-input"
+                    class="form-input readonly"
                     formControlName="first_name"
-                    placeholder="Enter first name"
-                    [class.invalid]="profileForm.get('first_name')?.invalid && profileForm.get('first_name')?.touched">
-                  @if (profileForm.get('first_name')?.invalid && profileForm.get('first_name')?.touched) {
-                    <span class="error-message">First name is required</span>
-                  }
+                    placeholder="First name cannot be changed">
                 } @else {
                   <span class="info-value">{{ user()!.first_name }}</span>
                 }
               </div>
 
               <div class="form-group">
-                <label class="form-label">Last Name @if (isEditing()) {<span class="required">*</span>}</label>
+                <label class="form-label">Last Name</label>
                 @if (isEditing()) {
                   <input
                     type="text"
-                    class="form-input"
+                    class="form-input readonly"
                     formControlName="last_name"
-                    placeholder="Enter last name"
-                    [class.invalid]="profileForm.get('last_name')?.invalid && profileForm.get('last_name')?.touched">
-                  @if (profileForm.get('last_name')?.invalid && profileForm.get('last_name')?.touched) {
-                    <span class="error-message">Last name is required</span>
-                  }
+                    placeholder="Last name cannot be changed">
                 } @else {
                   <span class="info-value">{{ user()!.last_name }}</span>
                 }
