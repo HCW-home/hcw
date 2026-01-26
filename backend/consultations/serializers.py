@@ -48,16 +48,17 @@ class ParticipantSerializer(serializers.ModelSerializer):
         source='user'
     )
 
-    first_name = serializers.CharField(write_only=True,)
-    last_name = serializers.CharField(write_only=True,)
-    email = serializers.EmailField(write_only=True,)
-    mobile_phone_number = serializers.CharField(write_only=True,)
+    first_name = serializers.CharField(write_only=True, required=False,)
+    last_name = serializers.CharField(write_only=True, required=False,)
+    email = serializers.EmailField(write_only=True, required=False,)
+    mobile_phone_number = serializers.CharField(
+        write_only=True, required=False,)
     communication_method = serializers.ChoiceField(
-        choices=CommunicationMethod.values, write_only=True,)
+        choices=CommunicationMethod.values, write_only=True, required=False,)
     preferred_language = serializers.ChoiceField(
-        choices=settings.LANGUAGES, write_only=True,)
+        choices=settings.LANGUAGES, write_only=True, required=False,)
     timezone = serializers.ChoiceField(
-        choices=[(tz, tz) for tz in sorted(available_timezones())], write_only=True,)
+        choices=[(tz, tz) for tz in sorted(available_timezones())], write_only=True, required=False,)
 
     class Meta:
         model = Participant
