@@ -368,14 +368,11 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
     this.isSubmitting.set(true);
     const formValue = this.appointmentForm.value;
 
-    const scheduledAt = new Date(`${formValue.date}T${formValue.time}`).toISOString();
+    const scheduledAt = `${formValue.date}T${formValue.time}`;
 
     let endExpectedAt: string | undefined;
     if (formValue.end_expected_at && formValue.end_expected_at.trim() !== '') {
-      const endDate = new Date(formValue.end_expected_at);
-      if (!isNaN(endDate.getTime())) {
-        endExpectedAt = endDate.toISOString();
-      }
+      endExpectedAt = formValue.end_expected_at;
     }
 
     const allParticipants = this.getAllParticipantsForRequest();
