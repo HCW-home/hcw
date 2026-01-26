@@ -1,4 +1,5 @@
 from django.utils.translation import gettext as _
+from django.conf import settings
 
 DEFAULT_NOTIFICATION_MESSAGES = {
     # "you_have_been_assigned_to_consultation": {
@@ -27,6 +28,7 @@ DEFAULT_NOTIFICATION_MESSAGES = {
             """Your consultation appointment start at {{ obj.appointment.scheduled_at|time }}\n"""
             """Please join immediately with the link: {{config.patient_base_url}}?auth={{ obj.user.one_time_auth_token }}&action=join"""
         ),
+        "action": "join",
         "model": "consultations.Participant",
         "helper_text": "Message sent to participant when a beneficiary sends a message",
     },
@@ -38,6 +40,7 @@ DEFAULT_NOTIFICATION_MESSAGES = {
             """Appointment is scheduled for {{ obj.appointment.scheduled_at|date }} at {{ obj.appointment.scheduled_at|time }} ({{ obj.appointment.scheduled_at }})\n"""
             """Please confirm your presence: {{config.patient_base_url}}?auth={{ obj.user.one_time_auth_token }}&action=presence"""
         ),
+        "action": "presence",
         "model": "consultations.Participant",
         "helper_text": "Message sent to participant with invitation to join a consultation at a later time",
     },
