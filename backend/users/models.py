@@ -132,7 +132,7 @@ class User(AbstractUser):
     timezone = models.CharField(
         max_length=63,
         choices=[(tz, tz) for tz in sorted(available_timezones())],
-        default="UTC",
+        default=settings.TIME_ZONE,
         help_text="User timezone for displaying dates and times",
     )
     location = PlainLocationField(

@@ -192,7 +192,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
             "created_at",
             "participants",
         ]
-        read_only_fields = ["id", "created_by", "created_at"]
+        read_only_fields = ["id", "created_by", "created_at", "status"]
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -220,6 +220,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
 
         # Convert naive datetime from user timezone to UTC
+        value = value.replace(tzinfo=user.user_tz)
         if timezone.is_naive(value):
             value = value.replace(tzinfo=user.user_tz)
 
