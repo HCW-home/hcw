@@ -203,7 +203,7 @@ LOCALE_PATHS = [
     BASE_DIR / "locale",
 ]
 
-TIME_ZONE = os.getenv("DEFAULT_TIME_ZONE", "USC")
+TIME_ZONE = os.getenv("DEFAULT_TIME_ZONE", "UTC")
 
 USE_I18N = True
 
