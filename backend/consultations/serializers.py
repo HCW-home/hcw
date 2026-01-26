@@ -161,19 +161,6 @@ class AppointmentSerializer(serializers.ModelSerializer):
 
     temporary_participants = ParticipantSerializer(many=True, allow_null=True, write_only=True, required=False)
 
-    @property
-    def consultation(self) -> Consultation:
-        if not self._consultation:
-            consultation_id = self.validated_data.get('consultation_id', None)
-            try:
-                self._consultation = Consultation.objects.get(
-                    id=consultation_id)
-            except Consultation.DoesNotExist:
-                # TODO : make this optional when presential consultation is handled
-                raise serializers.ValidationError(
-                    {"consultation_id": "Consultation not found."})
-        return self._consultation
-
     class Meta:
         model = Appointment
         fields = [
@@ -227,41 +214,6 @@ class AppointmentSerializer(serializers.ModelSerializer):
             )
         return value
 
-    def create(self, validated_data):
-        temporary_participants_data = validated_data.pop('temporary_participants', [])
-        participants_ids = validated_data.pop('participants_ids', [])
-
-        validated_data['created_by'] = self.context['request'].user
-        appointment = super().create(validated_data)
-
-        for user in participants_ids:
-            Participant.objects.create(
-                appointment=appointment,
-                user=user
-            )
-
-        for temp_participant in temporary_participants_data:
-            attr = 'mobile_phone_number' if temp_participant.get('mobile_phone_number') else 'email'
-
-            user, created = User.objects.get_or_create(
-                **{attr: temp_participant[attr]},
-                defaults={
-                    'first_name': temp_participant.get('first_name', ''),
-                    'last_name': temp_participant.get('last_name', ''),
-                    'communication_method': temp_participant.get('communication_method', CommunicationMethod.email),
-                    'preferred_language': temp_participant.get('preferred_language'),
-                    'timezone': temp_participant.get('timezone', 'UTC'),
-                    'temporary': True
-                }
-            )
-
-            Participant.objects.create(
-                appointment=appointment,
-                user=user
-            )
-
-        return appointment
-
     def update(self, instance, validated_data):
         temporary_participants_data = validated_data.pop('temporary_participants', None)
         participants_ids = validated_data.pop('participants_ids', None)
@@ -311,6 +263,131 @@ class AppointmentSerializer(serializers.ModelSerializer):
                     appointment=appointment,
                     user=user
                 )
+
+        return appointment
+
+
+class AppointmentCreateSerializer(AppointmentSerializer):
+    dont_invite_beneficiary = serializers.BooleanField(required=False)
+    dont_invite_practitioner = serializers.BooleanField(required=False)
+    dont_invite_me = serializers.BooleanField(required=False)
+
+    _consultation = None
+
+    class Meta:
+        model = Appointment
+        fields = AppointmentSerializer.Meta.fields + [
+            "dont_invite_beneficiary",
+            "dont_invite_practitioner",
+            "dont_invite_me",
+        ]
+        read_only_fields = AppointmentSerializer.Meta.read_only_fields
+
+    @property
+    def consultation(self) -> Consultation:
+        if not self._consultation:
+            consultation_id = self.validated_data.get('consultation_id', None)
+            try:
+                self._consultation = Consultation.objects.get(
+                    id=consultation_id)
+            except Consultation.DoesNotExist:
+                # TODO : make this optional when presential consultation is handled
+                raise serializers.ValidationError(
+                    {"consultation_id": "Consultation not found."})
+        return self._consultation
+
+    def validate(self, attrs):
+        dont_invite_beneficiary = attrs.get('dont_invite_beneficiary', False)
+        dont_invite_practitioner = attrs.get('dont_invite_practitioner', False)
+        dont_invite_me = attrs.get('dont_invite_me', False)
+        status = attrs.get('status', AppointmentStatus.draft)
+        participants_ids = attrs.get('participants_ids', [])
+        temporary_participants = attrs.get('temporary_participants', [])
+
+        # Count auto-invited users
+        invited_count = 0
+        if not dont_invite_beneficiary:
+            invited_count += 1
+        if not dont_invite_practitioner:
+            invited_count += 1
+        if not dont_invite_me:
+            invited_count += 1
+
+        # Count manual participants
+        invited_count += len(participants_ids)
+        invited_count += len(temporary_participants)
+
+        if invited_count < 2 and status == AppointmentStatus.scheduled:
+            raise serializers.ValidationError(
+                _("At least 2 participants are required for an appointment.")
+            )
+
+        return super().validate(attrs)
+
+    def create(self, validated_data):
+        temporary_participants_data = validated_data.pop('temporary_participants', [])
+        participants_ids = validated_data.pop('participants_ids', [])
+        dont_invite_beneficiary = validated_data.pop('dont_invite_beneficiary', False)
+        dont_invite_practitioner = validated_data.pop('dont_invite_practitioner', False)
+        dont_invite_me = validated_data.pop('dont_invite_me', False)
+
+        validated_data['created_by'] = self.context['request'].user
+        validated_data['status'] = AppointmentStatus.draft
+
+        appointment = Appointment.objects.create(**validated_data)
+
+        participant_users = set()
+
+        # Users from consultation
+        if not dont_invite_beneficiary and self.consultation.beneficiary:
+            participant_users.add(self.consultation.beneficiary)
+
+        if not dont_invite_practitioner and self.consultation.owned_by:
+            participant_users.add(self.consultation.owned_by)
+
+        if not dont_invite_me:
+            participant_users.add(self.context['request'].user)
+
+        for participant_user in participant_users:
+            Participant.objects.create(
+                appointment=appointment,
+                user=participant_user,
+            )
+
+        # Users from participants_ids
+        for user in participants_ids:
+            if user not in participant_users:
+                Participant.objects.create(
+                    appointment=appointment,
+                    user=user
+                )
+                participant_users.add(user)
+
+        # Users from temporary_participants
+        for temp_participant in temporary_participants_data:
+            attr = 'mobile_phone_number' if temp_participant.get('mobile_phone_number') else 'email'
+
+            user, _ = User.objects.get_or_create(
+                **{attr: temp_participant[attr]},
+                defaults={
+                    'first_name': temp_participant.get('first_name', ''),
+                    'last_name': temp_participant.get('last_name', ''),
+                    'communication_method': temp_participant.get('communication_method', CommunicationMethod.email),
+                    'preferred_language': temp_participant.get('preferred_language'),
+                    'timezone': temp_participant.get('timezone', 'UTC'),
+                    'temporary': True
+                }
+            )
+
+            if user not in participant_users:
+                Participant.objects.create(
+                    appointment=appointment,
+                    user=user
+                )
+                participant_users.add(user)
+
+        appointment.status = AppointmentStatus.scheduled
+        appointment.save(update_fields=['status'])
 
         return appointment
 
