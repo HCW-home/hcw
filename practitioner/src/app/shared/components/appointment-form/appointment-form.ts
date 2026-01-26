@@ -26,6 +26,9 @@ import {
   Participant,
   CreateParticipantRequest,
   AppointmentType,
+  ITemporaryParticipant,
+  UpdateAppointmentRequest,
+  CreateAppointmentRequest,
 } from '../../../core/models/consultation';
 import { IUser } from '../../../modules/user/models/user';
 
@@ -156,7 +159,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
       last_name: [''],
       email: ['', [Validators.email]],
       phone: [''],
-      message_type: ['email', [Validators.required]],
+      contact_type: ['email', [Validators.required]],
       timezone: [''],
       communication_method: [''],
       preferred_language: [''],
@@ -176,7 +179,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
     this.isExistingUser.set(true);
     this.selectedParticipantUser.set(null);
     this.participantForm.reset({
-      message_type: 'email',
+      contact_type: 'email',
       timezone: '',
       communication_method: '',
       preferred_language: '',
@@ -207,20 +210,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   loadParticipants(): void {
     if (!this.editingAppointment) return;
 
-    this.isLoadingParticipants.set(true);
-    this.consultationService
-      .getAppointmentParticipants(this.editingAppointment.id)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response) => {
-          this.participants.set(response.results);
-          this.isLoadingParticipants.set(false);
-        },
-        error: (error) => {
-          this.isLoadingParticipants.set(false);
-          this.toasterService.show('error', getErrorMessage(error));
-        },
-      });
+    this.participants.set(this.editingAppointment.participants.filter(p => p.is_active));
   }
 
   setAppointmentType(type: AppointmentType): void {
@@ -231,7 +221,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
     this.isExistingUser.set(isExisting);
     this.selectedParticipantUser.set(null);
     this.participantForm.reset({
-      message_type: 'email',
+      contact_type: 'email',
       timezone: '',
       communication_method: '',
       preferred_language: '',
@@ -240,7 +230,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   }
 
   setParticipantMessageType(type: string): void {
-    this.participantForm.patchValue({ message_type: type });
+    this.participantForm.patchValue({ contact_type: type });
   }
 
   onParticipantUserSelected(user: IUser | null): void {
@@ -271,9 +261,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
       return;
     }
 
-    const data: CreateParticipantRequest = {
-      message_type: formValue.message_type,
-    };
+    const data: CreateParticipantRequest = {};
 
     if (formValue.timezone) {
       data.timezone = formValue.timezone;
@@ -291,9 +279,9 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
       data.last_name = formValue.last_name;
     }
 
-    if (formValue.message_type === 'email' && formValue.email) {
+    if (formValue.contact_type === 'email' && formValue.email) {
       data.email = formValue.email;
-    } else if (formValue.message_type === 'sms' && formValue.phone) {
+    } else if (formValue.contact_type === 'sms' && formValue.phone) {
       data.mobile_phone_number = formValue.phone;
     } else {
       this.toasterService.show('error', 'Please provide contact information');
@@ -306,7 +294,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
 
   private resetParticipantForm(): void {
     this.participantForm.reset({
-      message_type: 'email',
+      contact_type: 'email',
       timezone: '',
       communication_method: '',
       preferred_language: '',
@@ -381,76 +369,79 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
       endExpectedAt = formValue.end_expected_at;
     }
 
-    const allParticipants = this.getAllParticipantsForRequest();
+    const { participants_ids, temporary_participants } = this.getParticipantsForRequest();
 
     if (this.isEditMode && this.editingAppointment) {
-      const updateData = {
+      const updateData: UpdateAppointmentRequest = {
         type: formValue.type as AppointmentType,
         scheduled_at: scheduledAt,
         end_expected_at: endExpectedAt,
-        participants: allParticipants,
+        participants_ids,
+        temporary_participants,
       };
       this.updateAppointment(updateData);
     } else {
-      const createData = {
+      const createData: CreateAppointmentRequest = {
         type: formValue.type as AppointmentType,
         scheduled_at: scheduledAt,
         end_expected_at: endExpectedAt,
         dont_invite_beneficiary: formValue.dont_invite_beneficiary || false,
         dont_invite_practitioner: formValue.dont_invite_practitioner || false,
         dont_invite_me: formValue.dont_invite_me || false,
-        participants: allParticipants,
+        participants_ids,
+        temporary_participants,
       };
       this.createAppointment(createData);
     }
   }
 
-  private getAllParticipantsForRequest(): CreateParticipantRequest[] {
-    const existingParticipants: CreateParticipantRequest[] = this.participants().map(p => {
+  private getParticipantsForRequest(): {
+    participants_ids: number[];
+    temporary_participants: ITemporaryParticipant[];
+  } {
+    const participants_ids: number[] = [];
+    const temporary_participants: ITemporaryParticipant[] = [];
+
+    for (const p of this.participants()) {
       if (p.user?.id) {
-        return {
-          id: p.id,
-          user_id: p.user.id,
-        };
+        participants_ids.push(p.user.id);
       }
+    }
 
-      const participant: CreateParticipantRequest = {
-        id: p.id,
-        message_type: 'email',
-      };
-      if (p.user?.email) {
-        participant.email = p.user.email;
+    for (const pending of this.pendingParticipants()) {
+      if (pending.user_id) {
+        participants_ids.push(pending.user_id);
+      } else {
+        const tempParticipant: ITemporaryParticipant = {};
+        if (pending.first_name) {
+          tempParticipant.first_name = pending.first_name;
+        }
+        if (pending.last_name) {
+          tempParticipant.last_name = pending.last_name;
+        }
+        if (pending.email) {
+          tempParticipant.email = pending.email;
+        }
+        if (pending.mobile_phone_number) {
+          tempParticipant.mobile_phone_number = pending.mobile_phone_number;
+        }
+        if (pending.timezone) {
+          tempParticipant.timezone = pending.timezone;
+        }
+        if (pending.communication_method) {
+          tempParticipant.communication_method = pending.communication_method;
+        }
+        if (pending.preferred_language) {
+          tempParticipant.preferred_language = pending.preferred_language;
+        }
+        temporary_participants.push(tempParticipant);
       }
-      if (p.user?.mobile_phone_number) {
-        participant.mobile_phone_number = p.user.mobile_phone_number;
-      }
-      if (p.user?.first_name) {
-        participant.first_name = p.user.first_name;
-      }
-      if (p.user?.last_name) {
-        participant.last_name = p.user.last_name;
-      }
-      if (p.user?.timezone) {
-        participant.timezone = p.user.timezone;
-      }
-      if (p.user?.communication_method) {
-        participant.communication_method = p.user.communication_method;
-      }
-      if (p.user?.preferred_language) {
-        participant.preferred_language = p.user.preferred_language;
-      }
-      return participant;
-    });
+    }
 
-    return [...existingParticipants, ...this.pendingParticipants()];
+    return { participants_ids, temporary_participants };
   }
 
-  private updateAppointment(appointmentData: {
-    type: AppointmentType;
-    scheduled_at: string;
-    end_expected_at?: string;
-    participants: CreateParticipantRequest[];
-  }): void {
+  private updateAppointment(appointmentData: UpdateAppointmentRequest): void {
     if (!this.editingAppointment) return;
 
     this.consultationService
@@ -469,15 +460,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
       });
   }
 
-  private createAppointment(appointmentData: {
-    type: AppointmentType;
-    scheduled_at: string;
-    end_expected_at?: string;
-    dont_invite_beneficiary: boolean;
-    dont_invite_practitioner: boolean;
-    dont_invite_me: boolean;
-    participants: CreateParticipantRequest[];
-  }): void {
+  private createAppointment(appointmentData: CreateAppointmentRequest): void {
     this.consultationService
       .createConsultationAppointment(this.consultationId, appointmentData)
       .pipe(takeUntil(this.destroy$))

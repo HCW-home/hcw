@@ -117,7 +117,7 @@
                   text="Email"
                   leftIcon="email"
                   [block]="true"
-                  [style]="participantForm.get('message_type')?.value === 'email' ? ButtonStyleEnum.primary : ButtonStyleEnum.stroke"
+                  [style]="participantForm.get('contact_type')?.value === 'email' ? ButtonStyleEnum.primary : ButtonStyleEnum.stroke"
                   [size]="ButtonSizeEnum.small"
                   (buttonClick)="setParticipantMessageType('email')">
                 </app-button>
@@ -125,14 +125,14 @@
                   text="Phone"
                   leftIcon="phone"
                   [block]="true"
-                  [style]="participantForm.get('message_type')?.value === 'sms' ? ButtonStyleEnum.primary : ButtonStyleEnum.stroke"
+                  [style]="participantForm.get('contact_type')?.value === 'sms' ? ButtonStyleEnum.primary : ButtonStyleEnum.stroke"
                   [size]="ButtonSizeEnum.small"
                   (buttonClick)="setParticipantMessageType('sms')">
                 </app-button>
               </div>
             </div>
 
-            @if (participantForm.get('message_type')?.value === 'email') {
+            @if (participantForm.get('contact_type')?.value === 'email') {
               <div class="form-group">
                 <app-input
                   type="email"

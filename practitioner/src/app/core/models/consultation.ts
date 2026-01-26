@@ -172,12 +172,23 @@ export interface AvailableSlot {
   user_last_name: string;
 }
 
+export interface ITemporaryParticipant {
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  mobile_phone_number?: string;
+  communication_method?: string;
+  preferred_language?: string;
+  timezone?: string;
+}
+
 export interface CreateAppointmentRequest {
   type?: AppointmentType;
   status?: AppointmentStatus;
   scheduled_at?: string;
   end_expected_at?: string;
-  participants?: CreateParticipantRequest[];
+  participants_ids?: number[];
+  temporary_participants?: ITemporaryParticipant[];
   dont_invite_beneficiary?: boolean;
   dont_invite_practitioner?: boolean;
   dont_invite_me?: boolean;
@@ -188,17 +199,16 @@ export interface UpdateAppointmentRequest {
   status?: AppointmentStatus;
   scheduled_at?: string;
   end_expected_at?: string;
-  participants?: CreateParticipantRequest[];
+  participants_ids?: number[];
+  temporary_participants?: ITemporaryParticipant[];
 }
 
 export interface CreateParticipantRequest {
-  id?: number;
   user_id?: number;
   email?: string;
   mobile_phone_number?: string;
   first_name?: string;
   last_name?: string;
-  message_type?: string;
   timezone?: string;
   communication_method?: string;
   preferred_language?: string;

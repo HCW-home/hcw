@@ -28,7 +28,7 @@ import {
   Consultation,
   CreateConsultationRequest,
   CreateAppointmentRequest,
-  CreateParticipantRequest,
+  ITemporaryParticipant,
   Queue,
 } from '../../../../core/models/consultation';
 
@@ -82,6 +82,7 @@ import { SelectOption } from '../../../../shared/models/select';
 import { IBreadcrumb } from '../../../../shared/models/breadcrumb';
 import { RoutePaths } from '../../../../core/constants/routes';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
+import { TIMEZONE_OPTIONS } from '../../../../shared/constants/timezone';
 
 @Component({
   selector: 'app-consultation-form',
@@ -134,13 +135,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
     { value: AppointmentType.INPERSON, label: 'In Person' },
   ];
 
-  timezoneOptions: SelectOption[] = [
-    { value: 'Europe/Paris', label: 'Europe/Paris (CET)' },
-    { value: 'Europe/London', label: 'Europe/London (GMT)' },
-    { value: 'America/New_York', label: 'America/New_York (EST)' },
-    { value: 'America/Los_Angeles', label: 'America/Los_Angeles (PST)' },
-    { value: 'Asia/Tokyo', label: 'Asia/Tokyo (JST)' },
-  ];
+  timezoneOptions: SelectOption[] = TIMEZONE_OPTIONS;
 
   communicationMethods: SelectOption[] = [
     { value: 'email', label: 'Email' },
@@ -465,7 +460,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
 
     appointments.forEach((apt: IAppointmentFormValue) => {
       const scheduledAt = this.combineDateTime(apt.date, apt.time);
-      const participants = this.mapParticipantsForRequest(apt.participants);
+      const { participants_ids, temporary_participants } = this.mapParticipantsForRequest(apt.participants);
 
       const appointmentData: CreateAppointmentRequest = {
         scheduled_at: scheduledAt,
@@ -473,7 +468,8 @@ export class ConsultationForm implements OnInit, OnDestroy {
         dont_invite_beneficiary: apt.dont_invite_beneficiary,
         dont_invite_practitioner: apt.dont_invite_practitioner,
         dont_invite_me: apt.dont_invite_me,
-        participants: participants,
+        participants_ids,
+        temporary_participants,
       };
 
       this.consultationService
@@ -674,7 +670,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
     const formValue = appointment.value as IAppointmentFormValue;
 
     const scheduledAt = this.combineDateTime(formValue.date, formValue.time);
-    const participants = this.mapParticipantsForRequest(formValue.participants);
+    const { participants_ids, temporary_participants } = this.mapParticipantsForRequest(formValue.participants);
 
     const saving = new Set(this.savingAppointments());
     saving.add(index);
@@ -685,7 +681,8 @@ export class ConsultationForm implements OnInit, OnDestroy {
         .updateAppointment(appointmentId, {
           scheduled_at: scheduledAt,
           type: formValue.type,
-          participants: participants,
+          participants_ids,
+          temporary_participants,
         })
         .pipe(takeUntil(this.destroy$))
         .subscribe({
@@ -709,7 +706,8 @@ export class ConsultationForm implements OnInit, OnDestroy {
         dont_invite_beneficiary: formValue.dont_invite_beneficiary,
         dont_invite_practitioner: formValue.dont_invite_practitioner,
         dont_invite_me: formValue.dont_invite_me,
-        participants: participants,
+        participants_ids,
+        temporary_participants,
       };
 
       this.consultationService
@@ -838,50 +836,49 @@ export class ConsultationForm implements OnInit, OnDestroy {
     return appointment?.get('type')?.value || AppointmentType.ONLINE;
   }
 
-  private mapParticipantsForRequest(participants: IParticipantFormValue[]): CreateParticipantRequest[] {
+  private mapParticipantsForRequest(participants: IParticipantFormValue[]): {
+    participants_ids: number[];
+    temporary_participants: ITemporaryParticipant[];
+  } {
+    const participants_ids: number[] = [];
+    const temporary_participants: ITemporaryParticipant[] = [];
+
     if (!participants || participants.length === 0) {
-      return [];
+      return { participants_ids, temporary_participants };
     }
 
-    return participants.map((p: IParticipantFormValue) => {
-      const request: CreateParticipantRequest = {
-        message_type: p.contact_type === 'phone' ? 'sms' : 'email',
-      };
-
-      if (p.timezone) {
-        request.timezone = p.timezone;
-      }
-      if (p.communication_method) {
-        request.communication_method = p.communication_method;
-      }
-      if (p.preferred_language) {
-        request.preferred_language = p.preferred_language;
-      }
-
-      if (p.id) {
-        request.id = p.id;
-      }
-
+    for (const p of participants) {
       if (p.is_existing_user && p.user_id) {
-        request.user_id = p.user_id;
+        participants_ids.push(p.user_id);
       } else {
+        const tempParticipant: ITemporaryParticipant = {};
+
         if (p.first_name) {
-          request.first_name = p.first_name;
+          tempParticipant.first_name = p.first_name;
         }
-
         if (p.last_name) {
-          request.last_name = p.last_name;
+          tempParticipant.last_name = p.last_name;
         }
-
         if (p.contact_type === 'email' && p.email) {
-          request.email = p.email;
+          tempParticipant.email = p.email;
         } else if (p.contact_type === 'phone' && p.phone) {
-          request.mobile_phone_number = p.phone;
+          tempParticipant.mobile_phone_number = p.phone;
         }
-      }
+        if (p.timezone) {
+          tempParticipant.timezone = p.timezone;
+        }
+        if (p.communication_method) {
+          tempParticipant.communication_method = p.communication_method;
+        }
+        if (p.preferred_language) {
+          tempParticipant.preferred_language = p.preferred_language;
+        }
 
-      return request;
-    });
+        temporary_participants.push(tempParticipant);
+      }
+    }
+
+    return { participants_ids, temporary_participants };
   }
 
   private combineDateTime(date: string, time: string): string {

@@ -199,59 +199,6 @@ export class ConsultationService {
     );
   }
 
-  getAppointmentParticipants(
-    appointmentId: number,
-    params?: { page?: number; page_size?: number }
-  ): Observable<PaginatedResponse<Participant>> {
-    let httpParams = new HttpParams();
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          httpParams = httpParams.set(key, value.toString());
-        }
-      });
-    }
-    return this.http.get<PaginatedResponse<Participant>>(
-      `${this.apiUrl}/appointments/${appointmentId}/participants/`,
-      { params: httpParams }
-    );
-  }
-
-  addAppointmentParticipant(
-    appointmentId: number,
-    data: CreateParticipantRequest
-  ): Observable<Participant> {
-    return this.http.post<Participant>(
-      `${this.apiUrl}/appointments/${appointmentId}/participants/`,
-      data
-    );
-  }
-
-  getParticipant(participantId: number): Observable<Participant> {
-    return this.http.get<Participant>(
-      `${this.apiUrl}/participants/${participantId}/`
-    );
-  }
-
-  updateParticipant(
-    participantId: number,
-    data: Partial<CreateParticipantRequest>
-  ): Observable<Participant> {
-    return this.http.patch<Participant>(
-      `${this.apiUrl}/participants/${participantId}/`,
-      data
-    );
-  }
-
-  removeAppointmentParticipant(
-    appointmentId: number,
-    participantId: number
-  ): Observable<void> {
-    return this.http.delete<void>(
-      `${this.apiUrl}/participants/${participantId}/`
-    );
-  }
-
   getConsultationMessages(
     consultationId: number,
     params?: { page?: number; page_size?: number }
