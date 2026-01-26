@@ -48,10 +48,10 @@
 
                 <div class="consultation-info">
                   <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-800)">
-                    {{ getBeneficiaryName(consultation) }}
+                    {{  consultation.title}}
                   </app-typography>
                   <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
-                    {{ consultation.title || 'Consultation' }}
+                    {{ getBeneficiaryName(consultation) || 'Consultation' }}
                   </app-typography>
                 </div>
 
@@ -92,10 +92,10 @@
 
               <div class="consultation-info">
                 <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-800)">
-                  {{ getBeneficiaryName(consultation) }}
+                  {{ consultation.title }}
                 </app-typography>
                 <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
-                  {{ consultation.title || 'Consultation' }} - {{ getConsultationSubtitle(consultation) }}
+                  {{ getBeneficiaryName(consultation) || 'Consultation' }} - {{ getConsultationSubtitle(consultation) }}
                 </app-typography>
               </div>
 
