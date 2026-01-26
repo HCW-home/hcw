@@ -8,7 +8,7 @@ from django.utils import timezone
 from messaging.models import Message
 
 from .assignments import AssignmentManager
-from .models import Appointment, AppointmentStatus, Request
+from .models import Appointment, AppointmentStatus, Request, Participant
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -34,7 +34,8 @@ def handle_request(request_id):
 @shared_task
 def handle_invites(appointment_id):
     appointment = Appointment.objects.get(pk=appointment_id)
-    participants = appointment.participants.filter(is_invited=True, is_active=True)
+    participants = Participant.objects.filter(
+        is_invited=True, is_active=True, appointment=appointment)
 
     if appointment.status == AppointmentStatus.scheduled:
         if appointment.previous_scheduled_at:
@@ -50,9 +51,9 @@ def handle_invites(appointment_id):
 
     for participant in participants:
         message = Message.objects.create(
-            communication_method=participant.communication_method,
-            recipient_phone=participant.phone,
-            recipient_email=participant.email,
+            communication_method=participant.user.communication_method,
+            recipient_phone=participant.user.mobile_phone_number,
+            recipient_email=participant.user.email,
             sent_to=participant.user,
             sent_by=appointment.consultation.created_by,
             template_system_name=template_system_name,
@@ -61,6 +62,7 @@ def handle_invites(appointment_id):
         )
         message.send()
         participant.is_notified = True
+        participant.save(update_fields=['is_notified'])
 
 
 @shared_task

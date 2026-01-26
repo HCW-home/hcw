@@ -213,6 +213,20 @@ class AppointmentSerializer(serializers.ModelSerializer):
             )
         return value
 
+    def end_expected_at_at(self, value):
+        user = self.context['request'].user
+
+        # Convert naive datetime from user timezone to UTC
+        value = value.replace(tzinfo=user.user_tz)
+        if timezone.is_naive(value):
+            value = value.replace(tzinfo=user.user_tz)
+
+        if value < timezone.now():
+            raise serializers.ValidationError(
+                _("End expected at time cannot be in the past.")
+            )
+        return value
+
     def update(self, instance, validated_data):
         temporary_participants_data = validated_data.pop('temporary_participants', None)
         participants_ids = validated_data.pop('participants_ids', None)
