@@ -52,12 +52,7 @@ class ParticipantInline(TabularInline):
     extra = 0
     fields = [
         "user",
-        "first_name",
-        "last_name",
-        "email",
-        "phone",
         "is_invited",
-        "communication_method",
     ]
 
 
