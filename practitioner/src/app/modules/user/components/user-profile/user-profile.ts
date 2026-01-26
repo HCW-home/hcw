@@ -6,7 +6,7 @@ import {Subject, takeUntil} from 'rxjs';
 import {UserService} from '../../../../core/services/user.service';
 import {ToasterService} from '../../../../core/services/toaster.service';
 import {IUser, IUserUpdateRequest, ILanguage} from '../../models/user';
-import {CommunicationMethodOptions, TimezoneOptions} from '../../constants/user';
+import {CommunicationMethodOptions} from '../../constants/user';
 
 import {Page} from '../../../../core/components/page/page';
 import {Loader} from '../../../../shared/components/loader/loader';
@@ -18,6 +18,7 @@ import {BadgeTypeEnum} from '../../../../shared/constants/badge';
 import {SelectOption} from '../../../../shared/models/select';
 import {ValidationService} from '../../../../core/services/validation.service';
 import {getErrorMessage} from '../../../../core/utils/error-helper';
+import { TIMEZONE_OPTIONS } from '../../../../shared/constants/timezone';
 
 @Component({
   selector: 'app-user-profile',
@@ -49,7 +50,7 @@ export class UserProfile implements OnInit, OnDestroy {
   profileForm: FormGroup;
 
   communicationMethods: SelectOption[] = CommunicationMethodOptions;
-  timezoneOptions: SelectOption[] = TimezoneOptions;
+  timezoneOptions: SelectOption[] = TIMEZONE_OPTIONS;
   languageOptions = signal<SelectOption[]>([]);
 
   constructor(

@@ -265,6 +265,9 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
     if (this.isExistingUser() && formValue.user_id) {
       const data: CreateParticipantRequest = {
         user_id: formValue.user_id,
+        communication_method: formValue.communication_method,
+        preferred_language: formValue.preferred_language,
+        timezone: formValue.timezone,
       };
       this.pendingParticipants.update(list => [...list, data]);
       this.resetParticipantForm();
@@ -410,6 +413,9 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
         return {
           id: p.id,
           user_id: p.user.id,
+          communication_method: p.user?.communication_method || 'email',
+          preferred_language: p.user?.preferred_language || 'en',
+          timezone: p.user?.timezone || 'UTC',
         };
       }
 
