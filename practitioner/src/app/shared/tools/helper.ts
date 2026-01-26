@@ -75,6 +75,41 @@ export function toHttpParams(obj: Record<string, unknown>): HttpParams {
   return params;
 }
 
+export function extractDateFromISO(isoString: string): string {
+  const match = isoString.match(/^(\d{4}-\d{2}-\d{2})/);
+  return match ? match[1] : '';
+}
+
+export function extractTimeFromISO(isoString: string): string {
+  const match = isoString.match(/T(\d{2}:\d{2})/);
+  return match ? match[1] : '';
+}
+
+export function parseDateWithoutTimezone(isoString: string): Date | null {
+  const datePart = extractDateFromISO(isoString);
+  const timePart = extractTimeFromISO(isoString);
+  if (!datePart) return null;
+
+  const [year, month, day] = datePart.split('-').map(Number);
+  const [hours, minutes] = timePart ? timePart.split(':').map(Number) : [0, 0];
+
+  return new Date(year, month - 1, day, hours, minutes);
+}
+
+export function formatDateTimeFromISO(isoString: string, format: string = 'MMM d, y, HH:mm'): string {
+  const date = parseDateWithoutTimezone(isoString);
+  if (!date) return '';
+
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const month = months[date.getMonth()];
+  const day = date.getDate();
+  const year = date.getFullYear();
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+
+  return `${month} ${day}, ${year}, ${hours}:${minutes}`;
+}
+
 export function toFormData<T extends object>(data: Partial<T>): FormData {
   const formData = new FormData();
 

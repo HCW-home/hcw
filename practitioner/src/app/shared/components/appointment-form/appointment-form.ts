@@ -43,7 +43,7 @@ import { UserSearchSelect } from '../user-search-select/user-search-select';
 import { ButtonStyleEnum, ButtonSizeEnum, ButtonStateEnum } from '../../constants/button';
 import { BadgeTypeEnum } from '../../constants/badge';
 import { SelectOption } from '../../models/select';
-import { getParticipantBadgeType } from '../../tools/helper';
+import { getParticipantBadgeType, extractDateFromISO, extractTimeFromISO } from '../../tools/helper';
 import { getErrorMessage } from '../../../core/utils/error-helper';
 import { TIMEZONE_OPTIONS } from '../../constants/timezone';
 
@@ -145,7 +145,8 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
       type: [AppointmentType.ONLINE, [Validators.required]],
       date: ['', [Validators.required]],
       time: ['', [Validators.required]],
-      end_expected_at: [''],
+      end_date: [''],
+      end_time: [''],
       dont_invite_beneficiary: [false],
       dont_invite_practitioner: [false],
       dont_invite_me: [false],
@@ -189,21 +190,22 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   private populateFormForEdit(): void {
     if (!this.editingAppointment) return;
 
-    const scheduledDate = new Date(this.editingAppointment.scheduled_at);
-    const dateStr = scheduledDate.toISOString().split('T')[0];
-    const timeStr = scheduledDate.toTimeString().slice(0, 5);
+    const dateStr = extractDateFromISO(this.editingAppointment.scheduled_at);
+    const timeStr = extractTimeFromISO(this.editingAppointment.scheduled_at);
 
-    let endExpectedAt = '';
+    let endDateStr = '';
+    let endTimeStr = '';
     if (this.editingAppointment.end_expected_at) {
-      const endDate = new Date(this.editingAppointment.end_expected_at);
-      endExpectedAt = endDate.toISOString().slice(0, 16);
+      endDateStr = extractDateFromISO(this.editingAppointment.end_expected_at);
+      endTimeStr = extractTimeFromISO(this.editingAppointment.end_expected_at);
     }
 
     this.appointmentForm.patchValue({
       type: this.editingAppointment.type || AppointmentType.ONLINE,
       date: dateStr,
       time: timeStr,
-      end_expected_at: endExpectedAt,
+      end_date: endDateStr,
+      end_time: endTimeStr,
     });
   }
 
@@ -365,8 +367,8 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
     const scheduledAt = `${formValue.date}T${formValue.time}`;
 
     let endExpectedAt: string | undefined;
-    if (formValue.end_expected_at && formValue.end_expected_at.trim() !== '') {
-      endExpectedAt = formValue.end_expected_at;
+    if (formValue.end_date && formValue.end_time) {
+      endExpectedAt = `${formValue.end_date}T${formValue.end_time}`;
     }
 
     const { participants_ids, temporary_participants } = this.getParticipantsForRequest();

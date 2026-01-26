@@ -277,7 +277,7 @@
                       <div class="appointment-info">
                         <div class="date-time">
                           <app-svg src="calendar" [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
-                          <span>{{ appointment.scheduled_at | date : 'MMM d, y, hh:mm ' }}</span>
+                          <span>{{ appointment.scheduled_at | localDate : 'MMM d, y, HH:mm' }}</span>
                         </div>
                         <span class="appointment-type" [class.online]="appointment.type === AppointmentType.ONLINE">
                           {{ appointment.type }}
@@ -291,7 +291,7 @@
                     @if (appointment.end_expected_at) {
                       <div class="expected-end">
                         <app-svg src="schedule" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
-                        <span>Expected end: {{ formatDateTime(appointment.end_expected_at) }}</span>
+                        <span>Expected end: {{ appointment.end_expected_at | localDate : 'MMM d, y, HH:mm' }}</span>
                       </div>
                     }
 

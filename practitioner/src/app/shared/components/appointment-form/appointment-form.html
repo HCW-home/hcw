@@ -39,15 +39,21 @@
           </app-input>
         </div>
 
-        <app-input
-          type="datetime-local"
-          label="Expected End Time (Optional)"
-          formControlName="end_expected_at">
-        </app-input>
+        <div class="form-row">
+          <app-input
+            type="date"
+            label="Expected End Date"
+            formControlName="end_date">
+          </app-input>
+          <app-input
+            type="time"
+            label="Expected End Time"
+            formControlName="end_time">
+          </app-input>
+        </div>
 
         @if (!isEditMode) {
           <div class="invite-flags-section">
-            <label class="form-label">Invitation Settings</label>
             <div class="invite-flags">
               <app-checkbox
                 label="Do not invite patient"
