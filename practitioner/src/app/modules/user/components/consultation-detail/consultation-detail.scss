@@ -115,7 +115,7 @@
     .card-actions {
       display: flex;
       gap: 8px;
-      flex-shrink: 0;
+      flex-wrap: wrap;
     }
 
     .consultation-title {
@@ -618,12 +618,13 @@
   }
 
   .participant-item {
-    display: flex;
-    align-items: center;
     gap: 12px;
-    padding: 10px 12px;
-    background: var(--White);
+    display: flex;
+    flex-wrap: wrap;
     border-radius: 8px;
+    padding: 10px 12px;
+    align-items: center;
+    background: var(--White);
     border: 1px solid var(--slate-100);
 
     .participant-avatar {
