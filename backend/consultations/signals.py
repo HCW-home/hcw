@@ -95,7 +95,7 @@ def message_saved(sender, instance: Message, created, **kwargs):
         if created and not user_online_service.is_user_online(user_pk):
             user_to_notify = User.objects.get(pk=user_pk)
 
-            if user_to_notify.last_notification and user_to_notify.last_login < user_to_notify.last_notification:
+            if user_to_notify.last_login and user_to_notify.last_login < user_to_notify.last_notification:
                 continue
 
             user_to_notify.last_notification = timezone.now()
