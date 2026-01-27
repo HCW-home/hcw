@@ -13,7 +13,7 @@ router.register(r"users", views.UserViewSet)
 user_router = DefaultRouter()
 user_router.register(r"bookingslots", BookingSlotViewSet, basename="user-bookingslots")
 user_router.register(
-    r"appointments", views.UserAppointmentViewSet, basename="user-appointments"
+    r"appointments", views.UserAppointmentsViewSet, basename="user-appointments"
 )
 user_router.register(
     r"consultations", views.UserConsultationsViewSet, basename="user-consultations"
@@ -36,11 +36,6 @@ urlpatterns = [
         "api/user/notifications/<int:notification_id>/read/",
         views.UserNotificationReadView.as_view(),
         name="user_notification_read",
-    ),
-    path(
-        "api/user/appointments/",
-        views.UserAppointmentsView.as_view(),
-        name="user_appointments",
     ),
     path(
         "api/user/healthmetrics/",

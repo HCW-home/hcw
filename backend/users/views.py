@@ -173,38 +173,7 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         """Get consultations for the authenticated user."""
         user = self.request.user
-
-        # For regular users, get consultations where they are the beneficiary
-        consultations = Consultation.objects.filter(beneficiary=user)
-
-        # Filter by status if provided
-        status = self.request.query_params.get("status")
-        if status == "open":
-            consultations = consultations.filter(closed_at__isnull=True)
-        elif status == "closed":
-            consultations = consultations.filter(closed_at__isnull=False)
-
-        return consultations.order_by("-created_at")
-
-    @extend_schema(
-        parameters=[
-            OpenApiParameter(
-                name="status",
-                description="Filter consultations by status: 'open' for consultations without closed_at, 'closed' for consultations with closed_at",
-                required=False,
-                type=OpenApiTypes.STR,
-                location=OpenApiParameter.QUERY,
-                enum=["open", "closed"],
-            ),
-        ],
-        responses={
-            200: ConsultationSerializer(many=True),
-        },
-        description="Get paginated consultations where the authenticated user is the beneficiary or participant.",
-    )
-    def list(self, request, *args, **kwargs):
-        """List all consultations for the authenticated user."""
-        return super().list(request, *args, **kwargs)
+        return Consultation.objects.filter(beneficiary=user)
 
     @extend_schema(
         responses={
@@ -513,81 +482,19 @@ class UserNotificationsMarkAllReadView(APIView):
         )
 
 
-class UserAppointmentsView(APIView):
+class UserAppointmentsViewSet(viewsets.ReadOnlyModelViewSet):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     pagination_class = UniversalPagination
+    serializer_class = AppointmentSerializer
+    filterset_fields = ['status']
 
-    @extend_schema(
-        parameters=[
-            OpenApiParameter(
-                name="status",
-                description="Filter appointments by status: 'Scheduled' or 'Cancelled'",
-                required=False,
-                type=OpenApiTypes.STR,
-                location=OpenApiParameter.QUERY,
-                enum=["Scheduled", "Cancelled"],
-            ),
-            OpenApiParameter(
-                name="page",
-                description="Page number for pagination",
-                required=False,
-                type=OpenApiTypes.INT,
-                location=OpenApiParameter.QUERY,
-            ),
-            OpenApiParameter(
-                name="page_size",
-                description="Number of results per page (max 100)",
-                required=False,
-                type=OpenApiTypes.INT,
-                location=OpenApiParameter.QUERY,
-            ),
-        ],
-        responses={
-            200: AppointmentSerializer(many=True),
-        },
-        examples=[
-            OpenApiExample(
-                "Get paginated appointments",
-                description="Returns paginated appointments where user is a participant",
-                value={
-                    "count": 15,
-                    "next": "http://localhost:8000/api/user/appointments/?page=2",
-                    "previous": None,
-                    "results": [
-                        {
-                            "id": 1,
-                            "scheduled_at": "2025-01-16T10:00:00Z",
-                            "end_expected_at": "2025-01-16T10:30:00Z",
-                            "status": "Scheduled",
-                            "created_at": "2025-01-15T08:00:00Z",
-                        }
-                    ],
-                },
-                response_only=True,
-            ),
-        ],
-        description="Get paginated appointments where the authenticated user is a participant. Filter by appointment status. Default page size is 20, max 100.",
-    )
-    def get(self, request):
-        """Get all appointments where the authenticated user is a participant."""
-        # Get appointments where user is a participant
-        appointments = Appointment.objects.filter(
-            participants=request.user
-        ).distinct()
-
-        # Filter by status if provided
-        status = request.query_params.get("status")
-        if status:
-            appointments = appointments.filter(status=status)
-
-        appointments = appointments.order_by("-scheduled_at")
-
-        # Apply pagination
-        paginator = self.pagination_class()
-        paginated_appointments = paginator.paginate_queryset(appointments, request)
-        serializer = AppointmentSerializer(paginated_appointments, many=True)
-        return paginator.get_paginated_response(serializer.data)
+    def get_queryset(self):
+        """Get appointments where the authenticated user is an active participant."""
+        return Appointment.objects.filter(
+            participant__user=self.request.user,
+            participant__is_active=True
+        ).distinct().order_by("-scheduled_at")
 
 
 class UserHealthMetricsView(APIView):
