@@ -120,6 +120,7 @@ class ConsultationSerializer(serializers.ModelSerializer):
         required=False,
         allow_null=True
     )
+    next_appointment = serializers.SerializerMethodField()
 
     class Meta:
         model = Consultation
@@ -137,6 +138,7 @@ class ConsultationSerializer(serializers.ModelSerializer):
             "description",
             "title",
             "closed_at",
+            "next_appointment",
         ]
         read_only_fields = [
             "id",
@@ -144,7 +146,20 @@ class ConsultationSerializer(serializers.ModelSerializer):
             "updated_at",
             "created_by",
             "closed_at",
+            "next_appointment",
         ]
+
+    def get_next_appointment(self, obj):
+        """Get the next non-cancelled appointment for this consultation."""
+        next_appt = obj.appointments.exclude(
+            status=AppointmentStatus.cancelled
+        ).filter(
+            scheduled_at__gte=timezone.now()
+        ).order_by('scheduled_at').first()
+
+        if next_appt:
+            return AppointmentSerializer(next_appt, context=self.context).data
+        return None
 
 
 class AppointmentSerializer(serializers.ModelSerializer):

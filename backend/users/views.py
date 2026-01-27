@@ -871,10 +871,10 @@ class UserDashboardView(APIView):
         """Get dashboard data for the authenticated user."""
         user = request.user
 
-        requests = Request.objects.filter(created_by=user).order_by("-id")[:10]
+        user_requests = Request.objects.filter(created_by=user).order_by("-id")
 
         consultations = Consultation.objects.exclude(
-            request__in=request
+            request__in=user_requests
         ).filter(beneficiary=user, closed_at__isnull=False).order_by(
             "-created_at"
         )
@@ -883,12 +883,12 @@ class UserDashboardView(APIView):
             Appointment.objects.exclude(consultation__in=consultations).filter(
                 participant__user=user, participant__is_active=True)
             .distinct()
-            .order_by("-scheduled_at")[:10]
+            .order_by("-scheduled_at")
         )
 
         return Response(
             {
-                "requests": RequestSerializer(requests, many=True).data,
+                "requests": RequestSerializer(user_requests, many=True).data,
                 "consultations": ConsultationSerializer(consultations, many=True).data,
                 "appointments": AppointmentSerializer(appointments, many=True).data,
             }
