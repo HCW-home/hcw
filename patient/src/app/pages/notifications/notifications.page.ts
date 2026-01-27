@@ -34,6 +34,10 @@ interface DisplayNotification {
   time: string;
   isRead: boolean;
   type: 'appointment' | 'message' | 'health' | 'system';
+  senderName: string | null;
+  objectModel: string | null;
+  objectPk: number | null;
+  actionLabel: string | null;
 }
 
 @Component({
@@ -109,7 +113,14 @@ export class NotificationsPage implements OnInit, OnDestroy {
         sent_at: null,
         delivered_at: null,
         read_at: null,
-        created_at: new Date().toISOString()
+        failed_at: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        sent_by: null,
+        object_model: null,
+        object_pk: null,
+        access_link: null,
+        action_label: null
       };
       this.notifications.unshift(this.mapNotification(notification));
     });
@@ -118,6 +129,7 @@ export class NotificationsPage implements OnInit, OnDestroy {
 
   private mapNotification(n: INotification): DisplayNotification {
     const type = this.determineType(n);
+    const sender = n.sent_by;
     return {
       id: n.id,
       title: n.subject || 'Notification',
@@ -126,11 +138,22 @@ export class NotificationsPage implements OnInit, OnDestroy {
       color: this.getColorForType(type),
       time: this.formatTime(n.created_at),
       isRead: n.status === NotificationStatus.READ,
-      type
+      type,
+      senderName: sender ? `${sender.first_name} ${sender.last_name}`.trim() : null,
+      objectModel: n.object_model || null,
+      objectPk: n.object_pk || null,
+      actionLabel: n.action_label || null
     };
   }
 
   private determineType(n: INotification): 'appointment' | 'message' | 'health' | 'system' {
+    if (n.object_model) {
+      const model = n.object_model.toLowerCase();
+      if (model.includes('participant')) return 'appointment';
+      if (model.includes('message')) return 'message';
+      if (model.includes('user')) return 'system';
+    }
+
     const title = (n.subject || '').toLowerCase();
     if (title.includes('appointment') || title.includes('schedule')) {
       return 'appointment';
@@ -207,6 +230,26 @@ export class NotificationsPage implements OnInit, OnDestroy {
         await toast.present();
       }
     });
+  }
+
+  onNotificationClick(notification: DisplayNotification) {
+    if (!notification.isRead) {
+      notification.isRead = true;
+      this.notificationService.markAsRead(notification.id).subscribe();
+    }
+
+    if (notification.objectModel && notification.objectPk) {
+      const model = notification.objectModel.toLowerCase();
+      const label = (notification.actionLabel || '').toLowerCase();
+
+      if (model.includes('participant') && label.includes('join')) {
+        this.navCtrl.navigateForward(`/appointments/${notification.objectPk}/video`);
+      } else if (model.includes('participant')) {
+        this.navCtrl.navigateForward(`/confirm-presence/${notification.objectPk}`);
+      } else if (model.includes('message')) {
+        this.navCtrl.navigateForward(`/consultations/${notification.objectPk}`);
+      }
+    }
   }
 
   dismissNotification(notification: DisplayNotification) {

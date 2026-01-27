@@ -88,8 +88,18 @@
                       {{ notification.subject }}
                     </app-typography>
                     <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
-                      <span [innerHTML]="notification.content | linkify"></span>
+                      <span [innerHTML]="notification.content"></span>
                     </app-typography>
+                    @if (notification.action_label && notification.object_model) {
+                      <button class="notification-action-btn" (click)="onNotificationClick(notification); $event.stopPropagation()">
+                        {{ notification.action_label }}
+                      </button>
+                    }
+                    @if (notification.sent_by) {
+                      <app-typography [variant]="TypographyTypeEnum['body-xs-regular']" color="var(--slate-500)">
+                        From {{ notification.sent_by.first_name }} {{ notification.sent_by.last_name }}
+                      </app-typography>
+                    }
                     <app-typography [variant]="TypographyTypeEnum['body-xs-regular']" color="var(--slate-400)">
                       {{ notificationService.getRelativeTime(notification.created_at) }}
                     </app-typography>

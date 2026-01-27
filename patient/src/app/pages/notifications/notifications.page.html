@@ -26,14 +26,22 @@
   <ion-list class="notifications-list">
     @for (notification of notifications; track notification.id) {
       <ion-item-sliding class="notification-sliding">
-        <ion-item lines="none" [class.unread]="!notification.isRead" class="notification-item">
+        <ion-item lines="none" [class.unread]="!notification.isRead" class="notification-item" (click)="onNotificationClick(notification)">
           @if (!notification.isRead) {
             <div class="notification-indicator"></div>
           }
           <ion-icon [name]="notification.icon" [color]="notification.color" slot="start" class="notification-icon"></ion-icon>
           <ion-label>
             <ion-text class="notification-title">{{ notification.title }}</ion-text>
-            <ion-text class="notification-message" color="medium">{{ notification.message }}</ion-text>
+            <ion-text class="notification-message" color="medium"><span [innerHTML]="notification.message"></span></ion-text>
+            @if (notification.actionLabel && notification.objectModel) {
+              <ion-button size="small" fill="outline" (click)="onNotificationClick(notification); $event.stopPropagation()">
+                {{ notification.actionLabel }}
+              </ion-button>
+            }
+            @if (notification.senderName) {
+              <ion-text class="notification-sender" color="medium">From {{ notification.senderName }}</ion-text>
+            }
             <ion-text class="notification-time" color="medium">{{ notification.time }}</ion-text>
           </ion-label>
         </ion-item>

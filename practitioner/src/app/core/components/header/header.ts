@@ -18,11 +18,10 @@ import {
   ButtonSizeEnum,
   ButtonStyleEnum,
 } from '../../../shared/constants/button';
-import { LinkifyPipe } from '../../../shared/pipes/linkify.pipe';
 
 @Component({
   selector: 'app-header',
-  imports: [LanguageSelector, Typography, Svg, NgClass, Button, RouterLink, RouterLinkActive, LinkifyPipe],
+  imports: [LanguageSelector, Typography, Svg, NgClass, Button, RouterLink, RouterLinkActive],
   templateUrl: './header.html',
   styleUrl: './header.scss',
 })
@@ -182,7 +181,7 @@ export class Header implements OnInit, OnDestroy {
   }
 
   markAllNotificationsRead() {
-    this.notificationService.markAllAsRead();
+    this.notificationService.markAllAsRead().subscribe();
   }
 
   onNotificationClick(notification: INotification) {
@@ -190,6 +189,19 @@ export class Header implements OnInit, OnDestroy {
       this.notificationService.markAsRead(notification.id).subscribe();
     }
     this.closeNotifications();
+
+    if (notification.object_model && notification.object_pk) {
+      const model = notification.object_model.toLowerCase();
+      const label = (notification.action_label || '').toLowerCase();
+
+      if (model.includes('participant') && label.includes('join')) {
+        this.router.navigate([RoutePaths.USER, 'appointments', notification.object_pk, 'video']);
+      } else if (model.includes('participant')) {
+        this.router.navigate([RoutePaths.USER, 'confirm-presence', notification.object_pk]);
+      } else if (model.includes('message')) {
+        this.router.navigate([RoutePaths.USER, 'consultations', notification.object_pk]);
+      }
+    }
   }
 
   isNotificationUnread(notification: INotification): boolean {
