@@ -718,12 +718,14 @@ class Message(ModelCeleryAbstract):
 
     @property
     def access_link(self):
+        if not self.template.action:
+            return
         """Generate access link if template has an action defined"""
         base_url = config.patient_base_url if self.sent_to.is_patient else config.practitioner_base_url
 
         if self.sent_to.one_time_auth_token:
-            return f"{base_url}?auth={self.sent_to.one_time_auth_token}&action={self.action}"
-        return f"{base_url}?email={self.sent_to.email}&action={self.action}"
+            return f"{base_url}?auth={self.sent_to.one_time_auth_token}?&action={self.action}&id={self.object_pk}&model={self.object_model}"
+        return f"{base_url}?&action={self.action}&id={self.object_pk}&model={self.object_model}"
 
     @property
     def render_content(self):

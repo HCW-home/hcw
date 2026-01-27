@@ -34,7 +34,8 @@ class MessageSerializer(serializers.ModelSerializer):
             "updated_at",
             "object_model",
             "object_pk",
-            "access_link"
+            "access_link",
+            "action_label",
         ]
         read_only_fields = ["id", "created_at", "updated_at", "sent_by"]
 
