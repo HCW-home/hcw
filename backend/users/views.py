@@ -873,9 +873,11 @@ class UserDashboardView(APIView):
 
         requests = Request.objects.filter(created_by=user).order_by("-id")[:10]
 
-        consultations = Consultation.objects.filter(beneficiary=user).order_by(
+        consultations = Consultation.objects.exclude(
+            request__in=request
+        ).filter(beneficiary=user, closed_at__isnull=False).order_by(
             "-created_at"
-        )[:10]
+        )
 
         appointments = (
             Appointment.objects.exclude(consultation__in=consultations).filter(
