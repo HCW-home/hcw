@@ -875,7 +875,7 @@ class UserDashboardView(APIView):
 
         consultations = Consultation.objects.exclude(
             request__in=user_requests
-        ).filter(beneficiary=user, closed_at__isnull=False).order_by(
+        ).filter(beneficiary=user, closed_at__isnull=True).order_by(
             "-created_at"
         )
 
