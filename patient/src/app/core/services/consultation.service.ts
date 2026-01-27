@@ -159,7 +159,7 @@ export class ConsultationService {
   }> {
     return this.api.post<{ detail: string; is_confirmed: boolean }>(
       `/user/appointments/${appointmentId}/presence/`,
-      { is_present: isPresent }
+      { is_confirmed: isPresent }
     );
   }
 

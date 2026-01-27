@@ -415,7 +415,7 @@ export class ConsultationService {
   confirmAppointmentPresence(appointmentId: number, isPresent: boolean): Observable<Appointment> {
     return this.http.post<Appointment>(
       `${this.apiUrl}/user/appointments/${appointmentId}/presence/`,
-      { is_present: isPresent }
+      { is_confirmed: isPresent }
     );
   }
 }

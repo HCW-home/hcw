@@ -81,12 +81,6 @@ export class NotificationService {
     );
   }
 
-  addNotification(notification: INotification): void {
-    const current = this.notifications();
-    this.notifications.set([notification, ...current]);
-    this.updateUnreadCount([notification, ...current]);
-  }
-
   getRelativeTime(dateStr: string): string {
     const date = new Date(dateStr);
     const now = new Date();

@@ -19,12 +19,35 @@
 }
 
 .lobby-content {
+  position: relative;
   display: flex;
   gap: 40px;
   align-items: stretch;
   width: 100%;
   max-width: 1000px;
   max-height: 600px;
+}
+
+.lobby-close-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #ffffff;
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
 }
 
 .lobby-video-section {

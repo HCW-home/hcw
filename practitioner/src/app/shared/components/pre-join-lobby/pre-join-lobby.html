@@ -6,6 +6,9 @@
     </div>
   } @else {
     <div class="lobby-content">
+      <button class="lobby-close-btn" (click)="onClose()">
+        <app-svg src="close" [svgStyle]="{'width.px': 24, 'height.px': 24}"></app-svg>
+      </button>
       <div class="lobby-video-section">
         <div class="video-preview-area">
           @if (cameraEnabled() && !permissionDenied()) {

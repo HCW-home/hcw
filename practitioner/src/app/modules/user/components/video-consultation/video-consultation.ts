@@ -196,6 +196,10 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     }
   }
 
+  onLobbyClose(): void {
+    this.leave.emit();
+  }
+
   async onJoinFromLobby(settings: IPreJoinSettings): Promise<void> {
     this.phase.set('connecting');
     this.isLoading = true;

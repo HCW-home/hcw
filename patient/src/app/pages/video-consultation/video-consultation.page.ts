@@ -322,6 +322,10 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     }
   }
 
+  onLobbyClose(): void {
+    this.navCtrl.back();
+  }
+
   async onJoinFromLobby(settings: IPreJoinSettings): Promise<void> {
     this.phase.set('connecting');
     this.isLoading = true;

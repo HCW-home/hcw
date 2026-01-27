@@ -48,6 +48,7 @@ interface DeviceOption {
 })
 export class PreJoinLobbyComponent implements OnInit, OnDestroy {
   @Output() join = new EventEmitter<IPreJoinSettings>();
+  @Output() close = new EventEmitter<void>();
   @ViewChild('videoPreview') videoPreviewRef!: ElementRef<HTMLVideoElement>;
 
   cameraEnabled = signal(true);
@@ -216,6 +217,10 @@ export class PreJoinLobbyComponent implements OnInit, OnDestroy {
 
   onSpeakerChange(event: CustomEvent): void {
     this.selectedSpeakerId = event.detail.value;
+  }
+
+  onClose(): void {
+    this.close.emit();
   }
 
   onJoin(): void {

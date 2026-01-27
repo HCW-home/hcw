@@ -6,6 +6,9 @@
     </div>
   } @else {
     <div class="lobby-card">
+      <ion-button fill="clear" color="light" class="lobby-close-btn" (click)="onClose()">
+        <ion-icon name="close" slot="icon-only"></ion-icon>
+      </ion-button>
       <ion-text class="lobby-title">Ready to join?</ion-text>
 
       <div class="video-preview-area">

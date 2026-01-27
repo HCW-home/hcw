@@ -44,6 +44,7 @@ import { ButtonStyleEnum } from '../../constants/button';
 })
 export class PreJoinLobby implements OnInit, OnDestroy {
   @Output() join = new EventEmitter<IPreJoinSettings>();
+  @Output() close = new EventEmitter<void>();
   @ViewChild('videoPreview') videoPreviewRef!: ElementRef<HTMLVideoElement>;
 
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
@@ -215,6 +216,10 @@ export class PreJoinLobby implements OnInit, OnDestroy {
 
   onSpeakerChange(deviceId: string | number): void {
     this.selectedSpeakerId = String(deviceId);
+  }
+
+  onClose(): void {
+    this.close.emit();
   }
 
   onJoin(): void {

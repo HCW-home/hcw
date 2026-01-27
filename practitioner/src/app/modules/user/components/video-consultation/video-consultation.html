@@ -1,6 +1,6 @@
 <div class="video-consultation" [class.minimized]="isMinimized">
   @if (phase() === 'lobby') {
-    <app-pre-join-lobby (join)="onJoinFromLobby($event)"></app-pre-join-lobby>
+    <app-pre-join-lobby (join)="onJoinFromLobby($event)" (close)="onLobbyClose()"></app-pre-join-lobby>
   }
 
   @if (phase() === 'connecting') {
