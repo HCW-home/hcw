@@ -496,6 +496,94 @@ class UserAppointmentsViewSet(viewsets.ReadOnlyModelViewSet):
             participant__is_active=True
         ).distinct().order_by("-scheduled_at")
 
+    @action(detail=True, methods=["post"])
+    def presence(self, request, pk=None):
+        """Update participant presence (is_confirmed field)."""
+        is_confirmed = request.data.get("is_confirmed")
+
+        if is_confirmed is None:
+            return Response(
+                {"detail": "is_confirmed parameter is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        appointment = self.get_object()
+
+        try:
+            participant = Participant.objects.get(
+                appointment=appointment, user=request.user
+            )
+            participant.is_confirmed = bool(is_confirmed)
+            participant.save()
+
+            return Response(
+                {
+                    "detail": "Presence updated successfully."
+                }
+            )
+
+        except Participant.DoesNotExist:
+            return Response(
+                {"detail": "You are not a participant in this appointment."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+    @extend_schema(
+        responses={
+            200: {
+                "type": "object",
+                "properties": {
+                    "url": {"type": "string", "description": "Media server URL"},
+                    "token": {
+                        "type": "string",
+                        "description": "JWT token for RTC connection",
+                    },
+                    "room": {"type": "string", "description": "Test room name"},
+                },
+                "example": {
+                    "url": "wss://livekit.example.com",
+                    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                    "room": "usertest_123",
+                },
+            },
+            500: {
+                "type": "object",
+                "properties": {"detail": {"type": "string"}},
+                "example": {"detail": "No media server available."},
+            },
+        },
+        description="Get RTC test connection information for the authenticated user. Returns server URL, JWT token, and room name for testing WebRTC connection.",
+    )
+    @action(detail=True, methods=["get"])
+    def join(self, request, pk=None):
+        """Join consultation call"""
+        appointment = self.get_object()
+        if appointment.consultation.closed_at:
+            return Response(
+                {"error": "Cannot join call in closed consultation"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            server = Server.get_server()
+
+            consultation_call_info = server.instance.appointment_participant_info(
+                appointment, request.user
+            )
+
+            return Response(
+                {
+                    "url": server.url,
+                    "token": consultation_call_info,
+                    "room": f"appointment_{appointment.pk}",
+                }
+            )
+        except Exception as e:
+            return Response(
+                {"detail": "No media server available."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
 
 class UserHealthMetricsView(APIView):
     permission_classes = [IsAuthenticated]
@@ -702,150 +790,6 @@ class OpenIDView(SocialLoginView):
     client_class = OAuth2Client
 
 
-class UserAppointmentViewSet(viewsets.ReadOnlyModelViewSet):
-    permission_classes = [IsAuthenticated]
-    serializer_class = AppointmentDetailSerializer
-
-    def get_queryset(self):
-        """Get appointments where the user is a participant."""
-        return (
-            Appointment.objects.select_related(
-                "consultation__created_by",
-                "consultation__owned_by",
-                "consultation__beneficiary",
-                "consultation__group",
-                "created_by",
-            )
-            .prefetch_related("participants__user", "consultation__group__users")
-            .filter(participants__user=self.request.user)
-            .distinct()
-        )
-
-    @extend_schema(
-        request={
-            "application/json": {
-                "type": "object",
-                "properties": {"is_present": {"type": "boolean", "example": True}},
-                "required": ["is_present"],
-            }
-        },
-        responses={
-            200: {
-                "type": "object",
-                "properties": {
-                    "detail": {"type": "string"},
-                    "is_confirmed": {"type": "boolean"},
-                },
-                "example": {
-                    "detail": "Presence updated successfully.",
-                    "is_confirmed": True,
-                },
-            },
-            400: {
-                "type": "object",
-                "properties": {"detail": {"type": "string"}},
-                "example": {"detail": "is_present parameter is required."},
-            },
-            404: {
-                "type": "object",
-                "properties": {"detail": {"type": "string"}},
-                "example": {
-                    "detail": "Appointment not found or you are not a participant."
-                },
-            },
-        },
-        description="Update the presence (is_confirmed) of the authenticated user in the appointment.",
-    )
-    @action(detail=True, methods=["post"])
-    def presence(self, request, pk=None):
-        """Update participant presence (is_confirmed field)."""
-        is_present = request.data.get("is_present")
-
-        if is_present is None:
-            return Response(
-                {"detail": "is_present parameter is required."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        appointment = self.get_object()
-
-        try:
-            participant = Participant.objects.get(
-                appointment=appointment, user=request.user
-            )
-            participant.is_confirmed = bool(is_present)
-            participant.save()
-
-            return Response(
-                {
-                    "detail": "Presence updated successfully.",
-                    "is_confirmed": participant.is_confirmed,
-                }
-            )
-
-        except Participant.DoesNotExist:
-            return Response(
-                {"detail": "You are not a participant in this appointment."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-    @extend_schema(
-        responses={
-            200: {
-                "type": "object",
-                "properties": {
-                    "url": {"type": "string", "description": "Media server URL"},
-                    "token": {
-                        "type": "string",
-                        "description": "JWT token for RTC connection",
-                    },
-                    "room": {"type": "string", "description": "Test room name"},
-                },
-                "example": {
-                    "url": "wss://livekit.example.com",
-                    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-                    "room": "usertest_123",
-                },
-            },
-            500: {
-                "type": "object",
-                "properties": {"detail": {"type": "string"}},
-                "example": {"detail": "No media server available."},
-            },
-        },
-        description="Get RTC test connection information for the authenticated user. Returns server URL, JWT token, and room name for testing WebRTC connection.",
-    )
-    @action(detail=True, methods=["get"])
-    def join(self, request, pk=None):
-        """Join consultation call"""
-        appointment = self.get_object()
-        if appointment.consultation.closed_at:
-            return Response(
-                {"error": "Cannot join call in closed consultation"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        try:
-            server = Server.get_server()
-
-            consultation_call_info = server.instance.appointment_participant_info(
-                appointment, request.user
-            )
-
-            return Response(
-                {
-                    "url": server.url,
-                    "token": consultation_call_info,
-                    "room": f"appointment_{appointment.pk}",
-                }
-            )
-        except Exception as e:
-            return Response(
-                {"detail": "No media server available."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-
-
 class TestRTCView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -928,11 +872,14 @@ class UserDashboardView(APIView):
         user = request.user
 
         requests = Request.objects.filter(created_by=user).order_by("-id")[:10]
+
         consultations = Consultation.objects.filter(beneficiary=user).order_by(
             "-created_at"
         )[:10]
+
         appointments = (
-            Appointment.objects.filter(participants=user)
+            Appointment.objects.exclude(consultation__in=consultations).filter(
+                participant__user=user, participant__is_active=True)
             .distinct()
             .order_by("-scheduled_at")[:10]
         )
