@@ -48,7 +48,7 @@ DEFAULT_NOTIFICATION_MESSAGES = {
             """<p>Appointment is scheduled for <strong>{{ obj.appointment.scheduled_at|date }}</strong> at <strong>{{ obj.appointment.scheduled_at|time }}</strong> ({{ obj.appointment.scheduled_at }})</p>"""
         ) + DEFAULT_ACTION_BUTTON,
         "action": "presence",
-        "action_label": _("Click here to join consultation"),
+        "action_label": _("Click here to confirm your presence"),
         "model": "consultations.Participant",
         "helper_text": "Message sent to participant with invitation to join a consultation at a later time",
     },
