@@ -17,6 +17,9 @@ DEFAULT_NOTIFICATION_MESSAGES = {
         "content": _(
             "This is a reminder for your appointment scheduled for {{ obj.appointment.scheduled_at|date }} at {{ obj.appointment.scheduled_at|time }}."
         ),
+        "content_html": _(
+            "<p>This is a reminder for your appointment scheduled for <strong>{{ obj.appointment.scheduled_at|date }}</strong> at <strong>{{ obj.appointment.scheduled_at|time }}</strong>.</p>"
+        ),
         "model": "consultations.Participant",
         "helper_text": "Message sent to participant when a beneficiary sends a message",
     },
@@ -27,6 +30,10 @@ DEFAULT_NOTIFICATION_MESSAGES = {
         "content": _(
             """Your consultation appointment start at {{ obj.appointment.scheduled_at|time }}\n"""
             """Please join immediately with the link: {{config.patient_base_url}}?auth={{ obj.user.one_time_auth_token }}&action=join"""
+        ),
+        "content_html": _(
+            """<p>Your consultation appointment start at <strong>{{ obj.appointment.scheduled_at|time }}</strong></p>"""
+            """<p>Please join immediately with the link: <a href="{{config.patient_base_url}}?auth={{ obj.user.one_time_auth_token }}&action=join">Join consultation</a></p>"""
         ),
         "action": "join",
         "model": "consultations.Participant",
@@ -40,6 +47,12 @@ DEFAULT_NOTIFICATION_MESSAGES = {
             """Appointment is scheduled for {{ obj.appointment.scheduled_at|date }} at {{ obj.appointment.scheduled_at|time }} ({{ obj.appointment.scheduled_at }})\n"""
             """Please confirm your presence: {{config.patient_base_url}}?auth={{ obj.user.one_time_auth_token }}&action=presence"""
         ),
+        "content_html": _(
+            """<p>Hello,</p>"""
+            """<p>Your consultation has been successfully scheduled.</p>"""
+            """<p>Appointment is scheduled for <strong>{{ obj.appointment.scheduled_at|date }}</strong> at <strong>{{ obj.appointment.scheduled_at|time }}</strong> ({{ obj.appointment.scheduled_at }})</p>"""
+            """<p>Please confirm your presence: <a href="{{config.patient_base_url}}?auth={{ obj.user.one_time_auth_token }}&action=presence">Confirm presence</a></p>"""
+        ),
         "action": "presence",
         "model": "consultations.Participant",
         "helper_text": "Message sent to participant with invitation to join a consultation at a later time",
@@ -47,6 +60,7 @@ DEFAULT_NOTIFICATION_MESSAGES = {
     "appointment_cancelled": {
         "subject": _("Your appointment has been cancelled"),
         "content": _("Your appointment scheduled at"),
+        "content_html": _("<p>Your appointment scheduled at</p>"),
         "model": "consultations.Participant",
         "helper_text": "Message sent to participant when appointment is cancelled",
     },
@@ -57,6 +71,11 @@ DEFAULT_NOTIFICATION_MESSAGES = {
             """at {{ obj.appointment.previous_scheduled_at|time }} is now scheduled for """
             """{{ obj.appointment.scheduled_at|date }} at {{ obj.appointment.scheduled_at|time }}"""
         ),
+        "content_html": _(
+            """<p>Your appointment previously scheduled for <strong>{{ obj.appointment.previous_scheduled_at|date }}</strong> """
+            """at <strong>{{ obj.appointment.previous_scheduled_at|time }}</strong> is now scheduled for """
+            """<strong>{{ obj.appointment.scheduled_at|date }}</strong> at <strong>{{ obj.appointment.scheduled_at|time }}</strong></p>"""
+        ),
         "model": "consultations.Participant",
         "helper_text": "Message sent to participant when appointment date and time is updated",
     },
@@ -64,6 +83,9 @@ DEFAULT_NOTIFICATION_MESSAGES = {
         "subject": _("Your confirmation code"),
         "content": _(
             "To continue your login process, please use your the confirmation code: {{ obj.verification_code }}"
+        ),
+        "content_html": _(
+            "<p>To continue your login process, please use your the confirmation code: <strong>{{ obj.verification_code }}</strong></p>"
         ),
         "model": "users.User",
         "helper_text": "Message sent to participant containing their authentication code",
@@ -74,6 +96,11 @@ DEFAULT_NOTIFICATION_MESSAGES = {
             "You have received a new message from {{ obj.message.created_by.name }} "
             "in consultation #{{ obj.message.consultation.pk }}: "
             "{{ obj.message.content|truncatewords:20 }}"
+        ),
+        "content_html": _(
+            "<p>You have received a new message from <strong>{{ obj.message.created_by.name }}</strong> "
+            "in consultation #{{ obj.message.consultation.pk }}:</p>"
+            "<p>{{ obj.message.content|truncatewords:20 }}</p>"
         ),
         "model": "consultations.Message",
         "helper_text": "Notification sent when a new message is posted in a consultation",

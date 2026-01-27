@@ -1025,7 +1025,7 @@ class UserDashboardView(APIView):
             "-created_at"
         )[:10]
         appointments = (
-            Appointment.objects.filter(participants__user=user)
+            Appointment.objects.filter(participants=user)
             .distinct()
             .order_by("-scheduled_at")[:10]
         )

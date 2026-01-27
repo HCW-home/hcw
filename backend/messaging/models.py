@@ -234,6 +234,15 @@ class Template(models.Model):
         help_text=_("Unique identifier for the template"),
     )
 
+    template_content_html = models.TextField(
+        _("template html"),
+        help_text=_(
+            "Jinja2 template for message content in html, use {{ obj }} to get object attributes"
+        ),
+        blank=True,
+        null=True
+    )
+
     template_content = models.TextField(
         _("template text"),
         help_text=_(
@@ -247,14 +256,6 @@ class Template(models.Model):
         blank=True,
         help_text=_("Jinja2 template for message subject"),
     )
-
-    # model = models.CharField(
-    #     max_length=100,
-    #     choices=get_model_choices,
-    #     blank=True,
-    #     null=True,
-    #     help_text="This model will be required to contruct message.",
-    # )
 
     communication_method = ArrayField(
         base_field=models.CharField(max_length=10, choices=CommunicationMethod.choices),
@@ -553,6 +554,7 @@ class MessageStatus(models.TextChoices):
 class Message(ModelCeleryAbstract):
     # Message content
     content = models.TextField(_("content"), blank=True, null=True)
+    content_html = models.TextField(_("content"), blank=True, null=True)
     subject = models.CharField(_("subject"), max_length=200, blank=True, null=True)
     template_system_name = models.CharField(
         choices=NOTIFICATION_CHOICES, blank=True, null=True
@@ -676,6 +678,18 @@ class Message(ModelCeleryAbstract):
             return self.sent_to.communication_method
 
     @property
+    def render_content_html(self):
+        try:
+            return self.render("content_html")
+        except:
+            return ""
+
+    @property
+    def link_access(self):
+        # TODO continue ici
+        return self.sent_to
+
+    @property
     def render_content(self):
         try:
             return self.render("content")
@@ -732,7 +746,6 @@ class Message(ModelCeleryAbstract):
                 )
             )
 
-        print(self.phone_number)
         if (
             self.communication_method
             in [
