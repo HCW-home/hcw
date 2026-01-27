@@ -1,10 +1,6 @@
 from django.utils.translation import gettext as _
 from django.conf import settings
 
-DEFAULT_ACTION_BUTTON = """<div class="btn-container">
-<a href="{{access_link}}" class="btn">{{action_label}}</a>
-</div>"""
-
 DEFAULT_NOTIFICATION_MESSAGES = {
     "appointment_first_reminder": {
         "template_subject": _(
@@ -28,7 +24,7 @@ DEFAULT_NOTIFICATION_MESSAGES = {
         ),
         "template_content_html": _(
             """<p>Your consultation appointment start at <strong>{{ obj.appointment.scheduled_at|time }}</strong></p>"""
-        ) + DEFAULT_ACTION_BUTTON,
+        ),
         "action": "join",
         "action_label": _("Click here to join consultation"),
         "model": "consultations.Participant",
@@ -46,7 +42,7 @@ DEFAULT_NOTIFICATION_MESSAGES = {
             """<p>Hello,</p>"""
             """<p>Your consultation has been successfully scheduled.</p>"""
             """<p>Appointment is scheduled for <strong>{{ obj.appointment.scheduled_at|date }}</strong> at <strong>{{ obj.appointment.scheduled_at|time }}</strong> ({{ obj.appointment.scheduled_at }})</p>"""
-        ) + DEFAULT_ACTION_BUTTON,
+        ),
         "action": "presence",
         "action_label": _("Click here to confirm your presence"),
         "model": "consultations.Participant",
