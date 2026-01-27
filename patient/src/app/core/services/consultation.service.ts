@@ -63,7 +63,7 @@ export class ConsultationService {
   }
 
   getAppointmentById(id: number): Observable<Appointment> {
-    return this.api.get<Appointment>(`/appointments/${id}/`);
+    return this.api.get<Appointment>(`/user/appointments/${id}/`);
   }
 
   createAppointment(data: CreateAppointmentRequest): Observable<Appointment> {

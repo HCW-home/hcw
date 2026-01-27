@@ -452,7 +452,6 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
       .subscribe({
         next: (updatedAppointment) => {
           this.isSubmitting.set(false);
-          this.toasterService.show('success', 'Appointment updated successfully');
           this.appointmentUpdated.emit(updatedAppointment);
         },
         error: (error) => {

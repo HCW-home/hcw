@@ -1,0 +1,101 @@
+<div class="pre-join-lobby">
+  @if (isLoading()) {
+    <div class="lobby-loading">
+      <ion-spinner name="crescent" color="light"></ion-spinner>
+      <ion-text color="light">Setting up your devices...</ion-text>
+    </div>
+  } @else {
+    <div class="lobby-card">
+      <ion-text class="lobby-title">Ready to join?</ion-text>
+
+      <div class="video-preview-area">
+        @if (cameraEnabled() && !permissionDenied()) {
+          <video #videoPreview autoplay playsinline muted class="preview-video"></video>
+        } @else {
+          <div class="camera-off-state">
+            <ion-icon name="videocam-off"></ion-icon>
+            @if (permissionDenied()) {
+              <ion-text class="permission-text">{{ permissionError() }}</ion-text>
+            } @else {
+              <ion-text color="medium">Camera off</ion-text>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="audio-level-container">
+        @for (active of getAudioBars(); track $index) {
+          <div class="audio-bar" [class.active]="active && microphoneEnabled()"></div>
+        }
+      </div>
+
+      <div class="toggle-buttons">
+        <ion-button
+          [color]="cameraEnabled() ? 'light' : 'danger'"
+          class="toggle-btn"
+          (click)="toggleCamera()"
+          [disabled]="permissionDenied()">
+          <ion-icon [name]="cameraEnabled() ? 'videocam' : 'videocam-off'" slot="icon-only"></ion-icon>
+        </ion-button>
+        <ion-button
+          [color]="microphoneEnabled() ? 'light' : 'danger'"
+          class="toggle-btn"
+          (click)="toggleMicrophone()"
+          [disabled]="permissionDenied()">
+          <ion-icon [name]="microphoneEnabled() ? 'mic' : 'mic-off'" slot="icon-only"></ion-icon>
+        </ion-button>
+      </div>
+
+      <div class="device-selectors">
+        @if (cameraOptions.length > 0) {
+          <div class="device-row">
+            <ion-text class="device-label">Camera</ion-text>
+            <ion-select
+              [value]="selectedCameraId"
+              (ionChange)="onCameraChange($event)"
+              interface="action-sheet"
+              placeholder="Select camera">
+              @for (option of cameraOptions; track option.value) {
+                <ion-select-option [value]="option.value">{{ option.label }}</ion-select-option>
+              }
+            </ion-select>
+          </div>
+        }
+
+        @if (microphoneOptions.length > 0) {
+          <div class="device-row">
+            <ion-text class="device-label">Microphone</ion-text>
+            <ion-select
+              [value]="selectedMicrophoneId"
+              (ionChange)="onMicrophoneChange($event)"
+              interface="action-sheet"
+              placeholder="Select microphone">
+              @for (option of microphoneOptions; track option.value) {
+                <ion-select-option [value]="option.value">{{ option.label }}</ion-select-option>
+              }
+            </ion-select>
+          </div>
+        }
+
+        @if (speakerSupported && speakerOptions.length > 0) {
+          <div class="device-row">
+            <ion-text class="device-label">Speaker</ion-text>
+            <ion-select
+              [value]="selectedSpeakerId"
+              (ionChange)="onSpeakerChange($event)"
+              interface="action-sheet"
+              placeholder="Select speaker">
+              @for (option of speakerOptions; track option.value) {
+                <ion-select-option [value]="option.value">{{ option.label }}</ion-select-option>
+              }
+            </ion-select>
+          </div>
+        }
+      </div>
+
+      <ion-button expand="block" class="join-button" (click)="onJoin()">
+        Join Now
+      </ion-button>
+    </div>
+  }
+</div>

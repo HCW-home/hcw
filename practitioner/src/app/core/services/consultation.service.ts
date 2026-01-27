@@ -411,4 +411,11 @@ export class ConsultationService {
   getDashboard(): Observable<DashboardResponse> {
     return this.http.get<DashboardResponse>(`${this.apiUrl}/dashboard/`);
   }
+
+  confirmAppointmentPresence(appointmentId: number, isPresent: boolean): Observable<Appointment> {
+    return this.http.post<Appointment>(
+      `${this.apiUrl}/user/appointments/${appointmentId}/presence/`,
+      { is_present: isPresent }
+    );
+  }
 }

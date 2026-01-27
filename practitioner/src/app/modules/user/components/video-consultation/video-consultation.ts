@@ -20,10 +20,12 @@ import { LocalVideoTrack, LocalTrack } from 'livekit-client';
 import { LiveKitService, ParticipantInfo, ConnectionStatus } from '../../../../core/services/livekit.service';
 import { ConsultationService } from '../../../../core/services/consultation.service';
 import { ToasterService } from '../../../../core/services/toaster.service';
+import { IPreJoinSettings } from '../../../../core/models/media-device';
 import { Button } from '../../../../shared/ui-components/button/button';
 import { Svg } from '../../../../shared/ui-components/svg/svg';
 import { Typography } from '../../../../shared/ui-components/typography/typography';
 import { Loader } from '../../../../shared/components/loader/loader';
+import { PreJoinLobby } from '../../../../shared/components/pre-join-lobby/pre-join-lobby';
 import { MessageList, Message, SendMessageData, EditMessageData, DeleteMessageData } from '../../../../shared/components/message-list/message-list';
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
 import { ButtonStyleEnum } from '../../../../shared/constants/button';
@@ -38,6 +40,7 @@ import { ButtonStyleEnum } from '../../../../shared/constants/button';
     Typography,
     Loader,
     MessageList,
+    PreJoinLobby,
   ],
   templateUrl: './video-consultation.html',
   styleUrls: ['./video-consultation.scss'],
@@ -70,6 +73,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   isLoading = false;
   errorMessage = '';
   showChat = signal(false);
+  phase = signal<'lobby' | 'connecting' | 'in-call'>('lobby');
 
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
@@ -91,7 +95,6 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   }
 
   ngAfterViewInit(): void {
-    this.joinRoom();
   }
 
   ngOnDestroy(): void {
@@ -187,6 +190,57 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     } catch (error) {
       this.errorMessage = error instanceof Error ? error.message : 'Failed to join video call';
       this.toasterService.show('error', 'Connection Error', this.errorMessage);
+    } finally {
+      this.isLoading = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  async onJoinFromLobby(settings: IPreJoinSettings): Promise<void> {
+    this.phase.set('connecting');
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.cdr.markForCheck();
+
+    try {
+      if (!this.appointmentId) {
+        throw new Error('Appointment ID is required');
+      }
+
+      const config = await this.consultationService
+        .joinAppointment(this.appointmentId)
+        .toPromise();
+
+      if (!config) {
+        throw new Error('Failed to get LiveKit configuration');
+      }
+
+      const deviceIds: { camera?: string; microphone?: string } = {};
+      if (settings.cameraDeviceId) {
+        deviceIds.camera = settings.cameraDeviceId;
+      }
+      if (settings.microphoneDeviceId) {
+        deviceIds.microphone = settings.microphoneDeviceId;
+      }
+
+      await this.livekitService.connect(config, undefined, deviceIds);
+      await this.livekitService.enableCamera(settings.cameraEnabled);
+      await this.livekitService.enableMicrophone(settings.microphoneEnabled);
+
+      if (settings.speakerDeviceId) {
+        await this.livekitService.switchSpeaker(settings.speakerDeviceId);
+      }
+
+      this.phase.set('in-call');
+      this.cdr.markForCheck();
+      setTimeout(() => {
+        this.attachLocalVideo();
+        this.attachRemoteMedia();
+      });
+    } catch (error) {
+      this.errorMessage = error instanceof Error ? error.message : 'Failed to join video call';
+      this.toasterService.show('error', 'Connection Error', this.errorMessage);
+      this.phase.set('lobby');
     } finally {
       this.isLoading = false;
       this.cdr.markForCheck();

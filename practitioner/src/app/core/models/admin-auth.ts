@@ -21,3 +21,17 @@ export interface IBodySetPassword {
   new_password1: string;
   new_password2: string;
 }
+
+export interface ITokenAuthRequest {
+  auth_token: string;
+  verification_code?: string;
+}
+
+export interface ITokenAuthResponse {
+  access?: string;
+  refresh?: string;
+  user_id?: number;
+  requires_verification?: boolean;
+  message?: string;
+  error?: string;
+}

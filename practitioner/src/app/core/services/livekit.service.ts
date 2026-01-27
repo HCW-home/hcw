@@ -63,7 +63,11 @@ export class LiveKitService implements OnDestroy {
   public isScreenShareEnabled$: Observable<boolean> = this.isScreenShareEnabledSubject.asObservable();
   public error$: Observable<string> = this.errorSubject.asObservable();
 
-  async connect(config: LiveKitConfig, options?: Partial<RoomOptions>): Promise<void> {
+  async connect(
+    config: LiveKitConfig,
+    options?: Partial<RoomOptions>,
+    deviceIds?: { camera?: string; microphone?: string }
+  ): Promise<void> {
     if (this.room) {
       await this.disconnect();
     }
@@ -79,6 +83,10 @@ export class LiveKitService implements OnDestroy {
         },
         videoCaptureDefaults: {
           resolution: { width: 1280, height: 720 },
+          ...(deviceIds?.camera ? { deviceId: deviceIds.camera } : {}),
+        },
+        audioCaptureDefaults: {
+          ...(deviceIds?.microphone ? { deviceId: deviceIds.microphone } : {}),
         },
         ...options,
       };
@@ -284,6 +292,11 @@ export class LiveKitService implements OnDestroy {
     } else {
       await this.startScreenShare();
     }
+  }
+
+  async switchSpeaker(deviceId: string): Promise<void> {
+    if (!this.room) return;
+    await this.room.switchActiveDevice('audiooutput', deviceId);
   }
 
   async disconnect(): Promise<void> {

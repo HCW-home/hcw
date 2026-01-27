@@ -1,25 +1,22 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import {
-  IonContent,
-  IonCard,
-  IonCardContent,
-  IonIcon,
-  IonText,
-  IonButton,
-  IonSpinner,
-  NavController,
-  ToastController
-} from '@ionic/angular/standalone';
+import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { ConsultationService } from '../../core/services/consultation.service';
-import { Appointment, AppointmentStatus } from '../../core/models/consultation.model';
-import { formatDateFromISO, formatTimeFromISO } from '../../core/utils/date-helper';
+import { Appointment, AppointmentStatus, AppointmentType } from '../../core/models/consultation';
+import { ToasterService } from '../../core/services/toaster.service';
+import { Typography } from '../../shared/ui-components/typography/typography';
+import { Button } from '../../shared/ui-components/button/button';
+import { Svg } from '../../shared/ui-components/svg/svg';
+import { Loader } from '../../shared/components/loader/loader';
+import { TypographyTypeEnum } from '../../shared/constants/typography';
+import { ButtonStyleEnum, ButtonStateEnum } from '../../shared/constants/button';
+import { RoutePaths } from '../../core/constants/routes';
+import { formatDateFromISO, formatTimeFromISO } from '../../shared/tools/helper';
 
-interface PendingAppointment {
+interface IPendingAppointment {
   id: number;
   scheduled_at: string;
-  type: string;
+  type: AppointmentType;
   doctorName: string;
   isConfirming: boolean;
   isDeclining: boolean;
@@ -27,31 +24,32 @@ interface PendingAppointment {
 
 @Component({
   selector: 'app-confirm-presence',
-  templateUrl: './confirm-presence.page.html',
-  styleUrls: ['./confirm-presence.page.scss'],
   standalone: true,
   imports: [
-    CommonModule,
-    IonContent,
-    IonCard,
-    IonCardContent,
-    IonIcon,
-    IonText,
-    IonButton,
-    IonSpinner
-  ]
+    Typography,
+    Button,
+    Svg,
+    Loader,
+  ],
+  templateUrl: './confirm-presence.html',
+  styleUrl: './confirm-presence.scss',
 })
-export class ConfirmPresencePage implements OnInit, OnDestroy {
+export class ConfirmPresence implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   isLoading = true;
-  pendingAppointments: PendingAppointment[] = [];
+  pendingAppointments: IPendingAppointment[] = [];
   errorMessage: string | null = null;
+
+  protected readonly TypographyTypeEnum = TypographyTypeEnum;
+  protected readonly ButtonStyleEnum = ButtonStyleEnum;
+  protected readonly ButtonStateEnum = ButtonStateEnum;
+  protected readonly AppointmentType = AppointmentType;
 
   constructor(
     private consultationService: ConsultationService,
-    private navCtrl: NavController,
-    private toastCtrl: ToastController
+    private router: Router,
+    private toasterService: ToasterService
   ) {}
 
   ngOnInit(): void {
@@ -67,17 +65,16 @@ export class ConfirmPresencePage implements OnInit, OnDestroy {
     this.isLoading = true;
     this.errorMessage = null;
 
-    this.consultationService.getMyAppointments({ status: 'scheduled' })
+    this.consultationService.getAppointments({ status: 'scheduled' })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
           this.isLoading = false;
           const now = new Date();
-          const scheduledStatus: AppointmentStatus = 'scheduled';
           this.pendingAppointments = response.results
             .filter(apt => {
               const scheduledDate = new Date(apt.scheduled_at);
-              return scheduledDate > now && apt.status === scheduledStatus;
+              return scheduledDate > now && apt.status === AppointmentStatus.SCHEDULED;
             })
             .map(apt => this.mapAppointment(apt));
         },
@@ -88,7 +85,7 @@ export class ConfirmPresencePage implements OnInit, OnDestroy {
       });
   }
 
-  private mapAppointment(apt: Appointment): PendingAppointment {
+  private mapAppointment(apt: Appointment): IPendingAppointment {
     const createdBy = apt.created_by;
     const doctorName = createdBy
       ? `${createdBy.first_name || ''} ${createdBy.last_name || ''}`.trim() || 'Healthcare Provider'
@@ -104,64 +101,40 @@ export class ConfirmPresencePage implements OnInit, OnDestroy {
     };
   }
 
-  confirmPresence(appointment: PendingAppointment): void {
+  confirmPresence(appointment: IPendingAppointment): void {
     appointment.isConfirming = true;
 
     this.consultationService.confirmAppointmentPresence(appointment.id, true)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: async () => {
+        next: () => {
           appointment.isConfirming = false;
           this.pendingAppointments = this.pendingAppointments.filter(a => a.id !== appointment.id);
-          const toast = await this.toastCtrl.create({
-            message: 'Presence confirmed successfully',
-            duration: 2000,
-            position: 'top',
-            color: 'success'
-          });
-          await toast.present();
+          this.toasterService.show('success', 'Presence confirmed successfully');
           this.checkAllConfirmed();
         },
-        error: async () => {
+        error: () => {
           appointment.isConfirming = false;
-          const toast = await this.toastCtrl.create({
-            message: 'Failed to confirm presence',
-            duration: 2000,
-            position: 'top',
-            color: 'danger'
-          });
-          await toast.present();
+          this.toasterService.show('error', 'Failed to confirm presence');
         }
       });
   }
 
-  declinePresence(appointment: PendingAppointment): void {
+  declinePresence(appointment: IPendingAppointment): void {
     appointment.isDeclining = true;
 
     this.consultationService.confirmAppointmentPresence(appointment.id, false)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: async () => {
+        next: () => {
           appointment.isDeclining = false;
           this.pendingAppointments = this.pendingAppointments.filter(a => a.id !== appointment.id);
-          const toast = await this.toastCtrl.create({
-            message: 'You have declined the appointment',
-            duration: 2000,
-            position: 'top',
-            color: 'warning'
-          });
-          await toast.present();
+          this.toasterService.show('warning', 'You have declined the appointment');
           this.checkAllConfirmed();
         },
-        error: async () => {
+        error: () => {
           appointment.isDeclining = false;
-          const toast = await this.toastCtrl.create({
-            message: 'Failed to decline',
-            duration: 2000,
-            position: 'top',
-            color: 'danger'
-          });
-          await toast.present();
+          this.toasterService.show('error', 'Failed to decline');
         }
       });
   }
@@ -169,13 +142,13 @@ export class ConfirmPresencePage implements OnInit, OnDestroy {
   private checkAllConfirmed(): void {
     if (this.pendingAppointments.length === 0) {
       setTimeout(() => {
-        this.navCtrl.navigateRoot('/home');
+        this.goToHome();
       }, 1500);
     }
   }
 
   goToHome(): void {
-    this.navCtrl.navigateRoot('/home');
+    this.router.navigateByUrl(`/${RoutePaths.USER}/${RoutePaths.DASHBOARD}`);
   }
 
   formatDate(dateString: string): string {

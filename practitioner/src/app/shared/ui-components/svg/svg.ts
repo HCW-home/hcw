@@ -224,6 +224,9 @@ const ICON_MAP: Record<string, string> = {
   'effects': 'lucideSparkles',
   'effects.svg': 'lucideSparkles',
   'svg/effects.svg': 'lucideSparkles',
+  'shield-check': 'heroShieldCheck',
+  'shield-check.svg': 'heroShieldCheck',
+  'svg/shield-check.svg': 'heroShieldCheck',
 };
 
 @Component({

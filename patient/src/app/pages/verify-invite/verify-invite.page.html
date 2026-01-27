@@ -63,11 +63,28 @@
             expand="block"
             shape="round"
             type="submit"
-            [disabled]="verificationForm.invalid"
+            [disabled]="verificationForm.invalid || isLoading"
             class="action-button">
             Verify Code
           </ion-button>
         </form>
+
+        <div class="resend-code">
+          <ion-text class="resend-text" color="medium">
+            Didn't receive the code?
+          </ion-text>
+          <ion-text
+            color="primary"
+            (click)="resendVerificationCode()"
+            [class.disabled]="isResending"
+            class="resend-action">
+            @if (isResending) {
+              Sending...
+            } @else {
+              Resend Code
+            }
+          </ion-text>
+        </div>
 
         <div class="login-link">
           <ion-text class="link-text" color="medium">

@@ -221,8 +221,8 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   getConsultationReasonName(consultation: Consultation): string {
-    if (typeof consultation.reason === 'object' && consultation.reason) {
-      return consultation.reason.name;
+    if (consultation.title) {
+      return consultation.title;
     }
     return 'Consultation';
   }
@@ -282,8 +282,6 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   viewAppointmentDetails(appointment: Appointment): void {
-    if (appointment.consultation) {
-      this.navCtrl.navigateForward(`/consultation/${appointment.consultation}`);
-    }
+    this.navCtrl.navigateForward(`/appointment/${appointment.id}`);
   }
 }

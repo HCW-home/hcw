@@ -1,0 +1,313 @@
+ion-header {
+  ion-toolbar {
+    --background: var(--app-background);
+    --border-width: 0;
+    padding: var(--app-spacing-sm) var(--app-spacing-md);
+  }
+}
+
+.appointment-detail-content {
+  --background: var(--app-background);
+
+  .loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50vh;
+  }
+
+  .main-content {
+    padding: var(--app-spacing-lg);
+    padding-bottom: 100px;
+  }
+
+  .appointment-header-section {
+    margin-bottom: var(--app-spacing-xl);
+    text-align: center;
+
+    .appointment-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--app-text-primary);
+      margin: var(--app-spacing-md) 0 var(--app-spacing-xs) 0;
+    }
+
+    .appointment-doctor {
+      font-size: 1rem;
+      color: var(--app-text-secondary);
+      margin: 0 0 var(--app-spacing-sm) 0;
+    }
+
+    .appointment-type {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.875rem;
+      color: var(--app-text-muted);
+      margin: 0;
+
+      ion-icon {
+        font-size: 16px;
+      }
+    }
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 14px;
+    border-radius: 9999px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    white-space: nowrap;
+
+    &.status-warning {
+      background: var(--app-warning-bg);
+      color: var(--ion-color-warning-shade);
+    }
+
+    &.status-info {
+      background: var(--app-info-bg);
+      color: var(--ion-color-tertiary);
+    }
+
+    &.status-primary {
+      background: var(--ion-color-primary-bg);
+      color: var(--ion-color-primary);
+    }
+
+    &.status-success {
+      background: var(--app-success-bg);
+      color: var(--ion-color-success);
+    }
+
+    &.status-muted {
+      background: var(--app-background-secondary);
+      color: var(--app-text-muted);
+    }
+  }
+
+  .info-card {
+    background: var(--app-card-background);
+    border-radius: var(--app-card-radius);
+    border: 1px solid var(--app-border-color);
+    padding: var(--app-spacing-lg);
+    margin-bottom: var(--app-spacing-md);
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: var(--app-spacing-sm);
+      margin-bottom: var(--app-spacing-md);
+
+      .card-icon {
+        font-size: 20px;
+        color: var(--ion-color-primary);
+      }
+    }
+
+    .info-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--app-text-primary);
+      margin: 0;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: var(--app-spacing-sm) 0;
+      border-bottom: 1px solid var(--app-border-color);
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .info-label {
+        font-size: 0.875rem;
+        color: var(--app-text-secondary);
+      }
+
+      .info-value {
+        font-size: 0.875rem;
+        color: var(--app-text-primary);
+        font-weight: 500;
+        text-align: right;
+      }
+    }
+  }
+
+  .doctor-card {
+    .doctor-row {
+      display: flex;
+      align-items: center;
+      gap: var(--app-spacing-md);
+
+      .doctor-avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: var(--ion-color-primary-bg);
+        color: var(--ion-color-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1rem;
+      }
+
+      .doctor-name {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--app-text-primary);
+      }
+    }
+  }
+
+  .participants-card {
+    .participant-row {
+      display: flex;
+      align-items: center;
+      gap: var(--app-spacing-md);
+      padding: var(--app-spacing-sm) 0;
+      border-bottom: 1px solid var(--app-border-color);
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .participant-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--app-background-secondary);
+        color: var(--app-text-secondary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.875rem;
+      }
+
+      .participant-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+
+        .participant-name {
+          font-size: 0.9375rem;
+          font-weight: 500;
+          color: var(--app-text-primary);
+        }
+
+        .confirmed-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 0.75rem;
+          color: var(--ion-color-success);
+
+          ion-icon {
+            font-size: 14px;
+          }
+        }
+      }
+    }
+  }
+
+  .cancelled-card {
+    background: var(--app-danger-bg);
+    border-color: transparent;
+
+    .card-icon {
+      color: var(--ion-color-danger);
+    }
+
+    .cancelled-text {
+      font-size: 0.875rem;
+      color: var(--app-text-secondary);
+      margin: 0;
+      line-height: 1.5;
+    }
+  }
+
+  .actions-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--app-spacing-sm);
+    margin-top: var(--app-spacing-lg);
+  }
+
+  .action-button {
+    width: 100%;
+    padding: var(--app-spacing-md);
+    border: none;
+    border-radius: var(--app-button-radius);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--app-spacing-sm);
+    transition: opacity 0.2s;
+    font-family: inherit;
+
+    &:active {
+      opacity: 0.8;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    ion-icon {
+      font-size: 18px;
+    }
+
+    ion-spinner {
+      width: 18px;
+      height: 18px;
+    }
+
+    &.primary-btn {
+      background: linear-gradient(135deg, var(--ion-color-primary), var(--ion-color-primary-shade));
+      color: white;
+    }
+
+    &.secondary-btn {
+      background: var(--ion-color-primary-bg);
+      color: var(--ion-color-primary);
+    }
+
+    &.danger-btn {
+      background: transparent;
+      color: var(--ion-color-danger);
+      border: 1px solid var(--ion-color-danger);
+    }
+  }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 50vh;
+    text-align: center;
+
+    .empty-icon {
+      font-size: 64px;
+      color: var(--app-text-muted);
+      margin-bottom: var(--app-spacing-md);
+    }
+
+    .empty-text {
+      font-size: 1rem;
+      color: var(--app-text-secondary);
+      margin: 0;
+    }
+  }
+}

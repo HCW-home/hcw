@@ -88,7 +88,7 @@
                       {{ notification.subject }}
                     </app-typography>
                     <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
-                      {{ notification.content }}
+                      <span [innerHTML]="notification.content | linkify"></span>
                     </app-typography>
                     <app-typography [variant]="TypographyTypeEnum['body-xs-regular']" color="var(--slate-400)">
                       {{ notificationService.getRelativeTime(notification.created_at) }}

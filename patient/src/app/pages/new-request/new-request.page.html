@@ -235,7 +235,7 @@
           <div class="comment-section">
             <div class="comment-label">
               <ion-icon name="chatbubble-outline"></ion-icon>
-              <span>Describe your symptoms or concerns <span class="required">*</span></span>
+              <span>Describe your symptoms or concerns</span>
             </div>
             <ion-textarea
               [(ngModel)]="comment"
@@ -248,7 +248,7 @@
           <div class="step-actions">
             <button
               class="primary-action"
-              [disabled]="isSubmitting() || !comment.trim()"
+              [disabled]="isSubmitting()"
               (click)="submitRequest()">
               @if (isSubmitting()) {
                 <ion-spinner name="crescent"></ion-spinner>

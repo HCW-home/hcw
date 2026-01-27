@@ -1,0 +1,110 @@
+<div class="verify-page">
+  <div class="verify-container">
+
+    @if (isLoading) {
+      <div class="loading-state">
+        <app-loader></app-loader>
+        <app-typography
+          [variant]="TypographyTypeEnum['body-medium']"
+          color="var(--slate-500)">
+          @if (requiresVerification) {
+            Verifying your code...
+          } @else {
+            Authenticating...
+          }
+        </app-typography>
+      </div>
+    } @else if (errorMessage) {
+      <div class="error-state">
+        <app-svg
+          src="error"
+          [svgStyle]="{ 'width.px': 48, 'height.px': 48, color: 'var(--error-500)' }">
+        </app-svg>
+        <app-typography
+          [variant]="TypographyTypeEnum['h6-semibold']"
+          color="var(--error-600)">
+          Authentication Failed
+        </app-typography>
+        <app-typography
+          [variant]="TypographyTypeEnum['body-regular']"
+          color="var(--slate-500)">
+          {{ errorMessage }}
+        </app-typography>
+        <app-button
+          [block]="true"
+          [style]="ButtonStyleEnum.primary"
+          text="Go to Login"
+          (buttonClick)="goToLogin()">
+        </app-button>
+      </div>
+    } @else if (requiresVerification) {
+      <div class="verification-state">
+        <app-svg
+          src="shield-check"
+          [svgStyle]="{ 'width.px': 48, 'height.px': 48, color: 'var(--primary-600)' }">
+        </app-svg>
+        <app-typography
+          [variant]="TypographyTypeEnum['h6-semibold']"
+          color="var(--slate-800)">
+          Verification Required
+        </app-typography>
+        <app-typography
+          [variant]="TypographyTypeEnum['body-regular']"
+          color="var(--slate-500)">
+          A verification code has been sent to your email. Please enter it below.
+        </app-typography>
+
+        <form [formGroup]="verificationForm" (ngSubmit)="submitVerificationCode()" class="verification-form">
+          <app-input
+            label="Verification Code"
+            name="verification_code"
+            placeholder="Enter 6-digit code"
+            formControlName="verification_code"
+            [invalid]="!!(verificationForm.get('verification_code')?.invalid && verificationForm.get('verification_code')?.touched)"
+            invalidMessage="Please enter a valid 6-digit code">
+          </app-input>
+
+          @if (errorMessage) {
+            <app-error-message [message]="errorMessage"></app-error-message>
+          }
+
+          <app-button
+            [block]="true"
+            [type]="ButtonTypeEnum.submit"
+            [style]="ButtonStyleEnum.primary"
+            text="Verify Code"
+            [disabled]="verificationForm.invalid"
+            [loading]="loadingButton">
+          </app-button>
+        </form>
+
+        <div class="resend-code">
+          <app-typography
+            [variant]="TypographyTypeEnum['body-s-regular']"
+            color="var(--slate-500)">
+            Didn't receive the code?
+          </app-typography>
+          <span
+            class="resend-link"
+            [class.disabled]="isResending"
+            (click)="resendVerificationCode()">
+            @if (isResending) {
+              Sending...
+            } @else {
+              Resend Code
+            }
+          </span>
+        </div>
+
+        <div class="login-link">
+          <app-typography
+            [variant]="TypographyTypeEnum['body-s-regular']"
+            color="var(--slate-500)">
+            Having trouble?
+          </app-typography>
+          <span class="action-link" (click)="goToLogin()">Sign in manually</span>
+        </div>
+      </div>
+    }
+  </div>
+</div>

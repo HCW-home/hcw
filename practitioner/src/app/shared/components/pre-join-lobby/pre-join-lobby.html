@@ -1,0 +1,114 @@
+<div class="pre-join-lobby">
+  @if (isLoading()) {
+    <div class="lobby-loading">
+      <app-loader></app-loader>
+      <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="#ffffff">Setting up your devices...</app-typography>
+    </div>
+  } @else {
+    <div class="lobby-content">
+      <div class="lobby-video-section">
+        <div class="video-preview-area">
+          @if (cameraEnabled() && !permissionDenied()) {
+            <video #videoPreview autoplay playsinline muted class="preview-video"></video>
+          } @else {
+            <div class="camera-off-state">
+              <app-svg src="camera-off" [svgStyle]="{'width.px': 56, 'height.px': 56}"></app-svg>
+              @if (permissionDenied()) {
+                <app-typography [variant]="TypographyTypeEnum['body-l-regular']" color="#f87171">
+                  {{ permissionError() }}
+                </app-typography>
+              } @else {
+                <app-typography [variant]="TypographyTypeEnum['body-l-regular']" color="#9ca3af">Camera off</app-typography>
+              }
+            </div>
+          }
+
+          <div class="video-overlay-controls">
+            <div class="audio-level-container">
+              @for (active of getAudioBars(); track $index) {
+                <div class="audio-bar" [class.active]="active && microphoneEnabled()"></div>
+              }
+            </div>
+
+            <div class="toggle-buttons">
+              <button
+                class="toggle-btn"
+                [class.off]="!cameraEnabled()"
+                (click)="toggleCamera()"
+                [disabled]="permissionDenied()">
+                @if (cameraEnabled()) {
+                  <app-svg src="camera" [svgStyle]="{'width.px': 22, 'height.px': 22}"></app-svg>
+                } @else {
+                  <app-svg src="camera-off" [svgStyle]="{'width.px': 22, 'height.px': 22}"></app-svg>
+                }
+              </button>
+              <button
+                class="toggle-btn"
+                [class.off]="!microphoneEnabled()"
+                (click)="toggleMicrophone()"
+                [disabled]="permissionDenied()">
+                @if (microphoneEnabled()) {
+                  <app-svg src="microphone" [svgStyle]="{'width.px': 22, 'height.px': 22}"></app-svg>
+                } @else {
+                  <app-svg src="microphone-off" [svgStyle]="{'width.px': 22, 'height.px': 22}"></app-svg>
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="lobby-controls-section">
+        <app-typography [variant]="TypographyTypeEnum['h3-semibold']" color="#ffffff">Ready to join?</app-typography>
+        <app-typography [variant]="TypographyTypeEnum['body-l-regular']" color="#d1d5db" class="lobby-subtitle">Check your camera and microphone before joining</app-typography>
+
+        <div class="device-selectors">
+          @if (cameraOptions.length > 0) {
+            <div class="device-row">
+              <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="#d1d5db">Camera</app-typography>
+              <app-select
+                [options]="cameraOptions"
+                [ngModel]="selectedCameraId"
+                (ngModelChange)="onCameraChange($event)"
+                placeholder="Select camera">
+              </app-select>
+            </div>
+          }
+
+          @if (microphoneOptions.length > 0) {
+            <div class="device-row">
+              <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="#d1d5db">Microphone</app-typography>
+              <app-select
+                [options]="microphoneOptions"
+                [ngModel]="selectedMicrophoneId"
+                (ngModelChange)="onMicrophoneChange($event)"
+                placeholder="Select microphone">
+              </app-select>
+            </div>
+          }
+
+          @if (speakerSupported && speakerOptions.length > 0) {
+            <div class="device-row">
+              <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="#d1d5db">Speaker</app-typography>
+              <app-select
+                [options]="speakerOptions"
+                [ngModel]="selectedSpeakerId"
+                (ngModelChange)="onSpeakerChange($event)"
+                placeholder="Select speaker">
+              </app-select>
+            </div>
+          }
+        </div>
+
+        <div class="join-action">
+          <app-button
+            text="Join Now"
+            [style]="ButtonStyleEnum.primary"
+            [fullWidth]="true"
+            (buttonClick)="onJoin()">
+          </app-button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -1,40 +1,35 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
-import {
-  IonContent,
-  IonItem,
-  IonInput,
-  IonButton,
-  IonIcon,
-  IonText,
-  IonSpinner,
-  NavController,
-  ToastController
-} from '@ionic/angular/standalone';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
-import { AuthService } from '../../core/services/auth.service';
+import { Auth } from '../../core/services/auth';
 import { ActionHandlerService } from '../../core/services/action-handler.service';
+import { ToasterService } from '../../core/services/toaster.service';
+import { Typography } from '../../shared/ui-components/typography/typography';
+import { Button } from '../../shared/ui-components/button/button';
+import { Input } from '../../shared/ui-components/input/input';
+import { Svg } from '../../shared/ui-components/svg/svg';
+import { Loader } from '../../shared/components/loader/loader';
+import { ErrorMessage } from '../../shared/components/error-message/error-message';
+import { TypographyTypeEnum } from '../../shared/constants/typography';
+import { ButtonTypeEnum, ButtonStyleEnum } from '../../shared/constants/button';
 
 @Component({
   selector: 'app-verify-invite',
-  templateUrl: './verify-invite.page.html',
-  styleUrls: ['./verify-invite.page.scss'],
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
-    IonContent,
-    IonItem,
-    IonInput,
-    IonButton,
-    IonIcon,
-    IonText,
-    IonSpinner
-  ]
+    Typography,
+    Button,
+    Input,
+    Svg,
+    Loader,
+    ErrorMessage,
+  ],
+  templateUrl: './verify-invite.html',
+  styleUrl: './verify-invite.scss',
 })
-export class VerifyInvitePage implements OnInit, OnDestroy {
+export class VerifyInvite implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   authToken: string | null = null;
@@ -43,16 +38,21 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
   requiresVerification = false;
   errorMessage: string | null = null;
   isResending = false;
+  loadingButton = false;
 
   verificationForm: FormGroup;
+
+  protected readonly TypographyTypeEnum = TypographyTypeEnum;
+  protected readonly ButtonTypeEnum = ButtonTypeEnum;
+  protected readonly ButtonStyleEnum = ButtonStyleEnum;
 
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
-    private authService: AuthService,
-    private navCtrl: NavController,
-    private toastCtrl: ToastController,
-    private actionHandler: ActionHandlerService
+    private router: Router,
+    private authService: Auth,
+    private actionHandler: ActionHandlerService,
+    private toasterService: ToasterService
   ) {
     this.verificationForm = this.fb.group({
       verification_code: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6)]]
@@ -86,6 +86,7 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
         next: (response) => {
           this.isLoading = false;
           if (response.access && response.refresh) {
+            this.authService.setToken(response.access);
             this.onAuthenticationSuccess();
           } else if (response.requires_verification) {
             this.requiresVerification = true;
@@ -93,7 +94,7 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
             this.errorMessage = response.error;
           }
         },
-        error: async (error) => {
+        error: (error) => {
           this.isLoading = false;
           if (error.status === 202) {
             this.requiresVerification = true;
@@ -111,7 +112,7 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
       return;
     }
 
-    this.isLoading = true;
+    this.loadingButton = true;
     this.errorMessage = null;
 
     const verificationCode = this.verificationForm.get('verification_code')?.value;
@@ -123,15 +124,16 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          this.isLoading = false;
+          this.loadingButton = false;
           if (response.access && response.refresh) {
+            this.authService.setToken(response.access);
             this.onAuthenticationSuccess();
           } else if (response.error) {
             this.errorMessage = response.error;
           }
         },
-        error: async (error) => {
-          this.isLoading = false;
+        error: (error) => {
+          this.loadingButton = false;
           if (error.status === 401) {
             this.errorMessage = error.error?.error || 'Invalid verification code';
           } else {
@@ -141,17 +143,10 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
       });
   }
 
-  private async onAuthenticationSuccess(): Promise<void> {
-    const toast = await this.toastCtrl.create({
-      message: 'Successfully authenticated',
-      duration: 2000,
-      position: 'top',
-      color: 'success'
-    });
-    await toast.present();
-
+  private onAuthenticationSuccess(): void {
+    this.toasterService.show('success', 'Successfully authenticated');
     const route = this.actionHandler.getRouteForAction(this.action);
-    this.navCtrl.navigateRoot(route);
+    this.router.navigateByUrl(route);
   }
 
   resendVerificationCode(): void {
@@ -165,44 +160,27 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
     this.authService.loginWithToken({ auth_token: this.authToken })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: async (response) => {
+        next: (response) => {
           this.isResending = false;
           if (response.access && response.refresh) {
+            this.authService.setToken(response.access);
             this.onAuthenticationSuccess();
           } else {
-            const toast = await this.toastCtrl.create({
-              message: 'Verification code sent to your email',
-              duration: 2000,
-              position: 'top',
-              color: 'success'
-            });
-            await toast.present();
+            this.toasterService.show('success', 'Verification code sent to your email');
           }
         },
-        error: async (error) => {
+        error: (error) => {
           this.isResending = false;
           if (error.status === 202) {
-            const toast = await this.toastCtrl.create({
-              message: 'Verification code sent to your email',
-              duration: 2000,
-              position: 'top',
-              color: 'success'
-            });
-            await toast.present();
+            this.toasterService.show('success', 'Verification code sent to your email');
           } else {
-            const toast = await this.toastCtrl.create({
-              message: 'Failed to resend code. Please try again.',
-              duration: 2000,
-              position: 'top',
-              color: 'danger'
-            });
-            await toast.present();
+            this.toasterService.show('error', 'Failed to resend code. Please try again.');
           }
         }
       });
   }
 
   goToLogin(): void {
-    this.navCtrl.navigateRoot('/login');
+    this.router.navigateByUrl('/auth');
   }
 }

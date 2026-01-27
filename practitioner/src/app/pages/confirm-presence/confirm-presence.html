@@ -1,0 +1,149 @@
+<div class="presence-page">
+  <div class="presence-container">
+
+    @if (isLoading) {
+      <div class="loading-state">
+        <app-loader></app-loader>
+        <app-typography
+          [variant]="TypographyTypeEnum['body-medium']"
+          color="var(--slate-500)">
+          Loading appointments...
+        </app-typography>
+      </div>
+    } @else if (errorMessage) {
+      <div class="error-state">
+        <app-svg
+          src="error"
+          [svgStyle]="{ 'width.px': 48, 'height.px': 48, color: 'var(--error-500)' }">
+        </app-svg>
+        <app-typography
+          [variant]="TypographyTypeEnum['h6-semibold']"
+          color="var(--error-600)">
+          Error
+        </app-typography>
+        <app-typography
+          [variant]="TypographyTypeEnum['body-regular']"
+          color="var(--slate-500)">
+          {{ errorMessage }}
+        </app-typography>
+        <app-button
+          [block]="true"
+          [style]="ButtonStyleEnum.primary"
+          text="Go to Dashboard"
+          (buttonClick)="goToHome()">
+        </app-button>
+      </div>
+    } @else if (pendingAppointments.length === 0) {
+      <div class="empty-state">
+        <app-svg
+          src="approve"
+          [svgStyle]="{ 'width.px': 48, 'height.px': 48, color: 'var(--success-500)' }">
+        </app-svg>
+        <app-typography
+          [variant]="TypographyTypeEnum['h6-semibold']"
+          color="var(--slate-800)">
+          All Done
+        </app-typography>
+        <app-typography
+          [variant]="TypographyTypeEnum['body-regular']"
+          color="var(--slate-500)">
+          You have no pending appointments that need confirmation.
+        </app-typography>
+        <app-button
+          [block]="true"
+          [style]="ButtonStyleEnum.primary"
+          text="Go to Dashboard"
+          (buttonClick)="goToHome()">
+        </app-button>
+      </div>
+    } @else {
+      <div class="appointments-section">
+        <app-typography
+          [variant]="TypographyTypeEnum['h6-semibold']"
+          color="var(--slate-800)">
+          Confirm Your Presence
+        </app-typography>
+        <app-typography
+          [variant]="TypographyTypeEnum['body-regular']"
+          color="var(--slate-500)">
+          Please confirm or decline your attendance for the following appointments.
+        </app-typography>
+
+        @for (appointment of pendingAppointments; track appointment.id) {
+          <div class="appointment-card">
+            <div class="appointment-info">
+              <div class="info-row">
+                <app-svg
+                  [src]="appointment.type === AppointmentType.ONLINE ? 'video' : 'calendar'"
+                  [svgStyle]="{ 'width.px': 18, 'height.px': 18, color: 'var(--slate-500)' }">
+                </app-svg>
+                <app-typography
+                  [variant]="TypographyTypeEnum['body-s-medium']"
+                  color="var(--slate-700)">
+                  {{ appointment.type === AppointmentType.ONLINE ? 'Video Consultation' : 'In-Person Visit' }}
+                </app-typography>
+              </div>
+              <div class="info-row">
+                <app-svg
+                  src="calendar"
+                  [svgStyle]="{ 'width.px': 18, 'height.px': 18, color: 'var(--slate-500)' }">
+                </app-svg>
+                <app-typography
+                  [variant]="TypographyTypeEnum['body-s-regular']"
+                  color="var(--slate-600)">
+                  {{ formatDate(appointment.scheduled_at) }}
+                </app-typography>
+              </div>
+              <div class="info-row">
+                <app-svg
+                  src="clock"
+                  [svgStyle]="{ 'width.px': 18, 'height.px': 18, color: 'var(--slate-500)' }">
+                </app-svg>
+                <app-typography
+                  [variant]="TypographyTypeEnum['body-s-regular']"
+                  color="var(--slate-600)">
+                  {{ formatTime(appointment.scheduled_at) }}
+                </app-typography>
+              </div>
+              <div class="info-row">
+                <app-svg
+                  src="user"
+                  [svgStyle]="{ 'width.px': 18, 'height.px': 18, color: 'var(--slate-500)' }">
+                </app-svg>
+                <app-typography
+                  [variant]="TypographyTypeEnum['body-s-regular']"
+                  color="var(--slate-600)">
+                  {{ appointment.doctorName }}
+                </app-typography>
+              </div>
+            </div>
+
+            <div class="appointment-actions">
+              <app-button
+                [style]="ButtonStyleEnum.stroke"
+                [state]="ButtonStateEnum.error"
+                text="Decline"
+                leftIcon="close"
+                [disabled]="appointment.isConfirming || appointment.isDeclining"
+                [loading]="appointment.isDeclining"
+                (buttonClick)="declinePresence(appointment)">
+              </app-button>
+              <app-button
+                [style]="ButtonStyleEnum.primary"
+                text="Confirm"
+                leftIcon="check"
+                [disabled]="appointment.isConfirming || appointment.isDeclining"
+                [loading]="appointment.isConfirming"
+                (buttonClick)="confirmPresence(appointment)">
+              </app-button>
+            </div>
+          </div>
+        }
+
+        <div class="skip-link">
+          <span class="action-link" (click)="goToHome()">Skip and go to dashboard</span>
+        </div>
+      </div>
+    }
+  </div>
+</div>

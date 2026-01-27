@@ -24,6 +24,8 @@ import { AuthService } from '../../core/services/auth.service';
 import { User } from '../../core/models/consultation.model';
 import { WebSocketState } from '../../core/models/websocket.model';
 import { MessageListComponent, Message, SendMessageData, EditMessageData, DeleteMessageData } from '../../shared/components/message-list/message-list';
+import { PreJoinLobbyComponent } from '../../shared/components/pre-join-lobby/pre-join-lobby.component';
+import { IPreJoinSettings } from '../../core/models/media-device.model';
 
 @Component({
   selector: 'app-video-consultation',
@@ -39,7 +41,8 @@ import { MessageListComponent, Message, SendMessageData, EditMessageData, Delete
     IonSpinner,
     IonAvatar,
     IonChip,
-    MessageListComponent
+    MessageListComponent,
+    PreJoinLobbyComponent
   ]
 })
 export class VideoConsultationPage implements OnInit, OnDestroy {
@@ -67,6 +70,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
   errorMessage = '';
 
   showChat = signal(false);
+  phase = signal<'lobby' | 'connecting' | 'in-call'>('lobby');
   messages = signal<Message[]>([]);
   isLoadingMore = signal(false);
   hasMore = signal(true);
@@ -113,7 +117,6 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     this.loadCurrentUser();
     this.setupSubscriptions();
     this.setupWebSocketSubscriptions();
-    this.joinRoom();
   }
 
   private loadCurrentUser(): void {
@@ -313,6 +316,69 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     } catch (error) {
       this.errorMessage = error instanceof Error ? error.message : 'Failed to join video call';
       this.showToast(this.errorMessage);
+    } finally {
+      this.isLoading = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  async onJoinFromLobby(settings: IPreJoinSettings): Promise<void> {
+    this.phase.set('connecting');
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.cdr.markForCheck();
+
+    try {
+      let config: { url: string; token: string; room: string } | undefined;
+
+      if (this.appointmentId) {
+        config = await this.consultationService
+          .joinAppointment(this.appointmentId)
+          .toPromise();
+      } else if (this.consultationId) {
+        config = await this.consultationService
+          .joinConsultation(this.consultationId)
+          .toPromise();
+      } else {
+        throw new Error('Either consultationId or appointmentId is required');
+      }
+
+      if (!config) {
+        throw new Error('Failed to get LiveKit configuration');
+      }
+
+      const deviceIds: { camera?: string; microphone?: string } = {};
+      if (settings.cameraDeviceId) {
+        deviceIds.camera = settings.cameraDeviceId;
+      }
+      if (settings.microphoneDeviceId) {
+        deviceIds.microphone = settings.microphoneDeviceId;
+      }
+
+      await this.livekitService.connect(config, undefined, deviceIds);
+      await this.livekitService.enableCamera(settings.cameraEnabled);
+      await this.livekitService.enableMicrophone(settings.microphoneEnabled);
+
+      if (settings.speakerDeviceId) {
+        await this.livekitService.switchSpeaker(settings.speakerDeviceId);
+      }
+
+      this.phase.set('in-call');
+      this.cdr.markForCheck();
+      setTimeout(() => {
+        this.attachLocalVideo();
+        this.attachRemoteMedia();
+      });
+      this.showToast('Connected to consultation');
+
+      if (this.consultationId) {
+        this.loadMessages();
+        this.wsService.connect(this.consultationId);
+      }
+    } catch (error) {
+      this.errorMessage = error instanceof Error ? error.message : 'Failed to join video call';
+      this.showToast(this.errorMessage);
+      this.phase.set('lobby');
     } finally {
       this.isLoading = false;
       this.cdr.markForCheck();

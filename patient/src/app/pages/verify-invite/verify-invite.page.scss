@@ -165,8 +165,29 @@
         }
       }
 
+      .resend-code {
+        margin-top: var(--app-spacing-xl);
+        display: flex;
+        gap: var(--app-spacing-xs);
+
+        .resend-text {
+          font-size: var(--app-font-size-sm);
+        }
+
+        .resend-action {
+          font-size: var(--app-font-size-sm);
+          font-weight: var(--app-font-weight-semibold);
+          cursor: pointer;
+
+          &.disabled {
+            opacity: 0.6;
+            pointer-events: none;
+          }
+        }
+      }
+
       .login-link {
-        margin-top: var(--app-spacing-2xl);
+        margin-top: var(--app-spacing-lg);
         display: flex;
         gap: var(--app-spacing-xs);
 

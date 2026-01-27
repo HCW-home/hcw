@@ -18,10 +18,11 @@ import {
   ButtonSizeEnum,
   ButtonStyleEnum,
 } from '../../../shared/constants/button';
+import { LinkifyPipe } from '../../../shared/pipes/linkify.pipe';
 
 @Component({
   selector: 'app-header',
-  imports: [LanguageSelector, Typography, Svg, NgClass, Button, RouterLink, RouterLinkActive],
+  imports: [LanguageSelector, Typography, Svg, NgClass, Button, RouterLink, RouterLinkActive, LinkifyPipe],
   templateUrl: './header.html',
   styleUrl: './header.scss',
 })

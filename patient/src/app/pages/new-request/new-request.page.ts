@@ -275,11 +275,6 @@ export class NewRequestPage implements OnInit, OnDestroy {
       return;
     }
 
-    if (!this.comment.trim()) {
-      this.showToast('Please describe your symptoms or concerns', 'warning');
-      return;
-    }
-
     let expectedAt: string;
     if (slot) {
       expectedAt = `${slot.date}T${slot.start_time}`;
@@ -294,7 +289,7 @@ export class NewRequestPage implements OnInit, OnDestroy {
       reason_id: reason.id,
       expected_at: expectedAt,
       type: 'online',
-      comment: this.comment.trim()
+      comment: this.comment.trim() || ''
     };
 
     if (doctor) {

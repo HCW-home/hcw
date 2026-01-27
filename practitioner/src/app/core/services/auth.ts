@@ -8,6 +8,8 @@ import {
   IResponseLogin,
   IBodySetPassword,
   IBodyForgotPassword,
+  ITokenAuthRequest,
+  ITokenAuthResponse,
 } from '../models/admin-auth';
 
 @Injectable({
@@ -46,5 +48,9 @@ export class Auth {
 
   setPassword(params: IBodySetPassword): Observable<SuccessResponse> {
     return this.http.post<SuccessResponse>(`${environment.apiUrl}/auth/password/reset/confirm/`, params);
+  }
+
+  loginWithToken(data: ITokenAuthRequest): Observable<ITokenAuthResponse> {
+    return this.http.post<ITokenAuthResponse>(`${environment.apiUrl}/auth/token/`, data);
   }
 }

@@ -11,4 +11,6 @@ export enum RoutePaths {
   PATIENT_DETAIL = 'patients/:id',
   APPOINTMENTS = 'appointments',
   CONFIGURATION = 'configuration',
+  VERIFY_INVITE = 'verify-invite',
+  CONFIRM_PRESENCE = 'confirm-presence',
 }
