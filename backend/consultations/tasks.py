@@ -80,10 +80,10 @@ def handle_reminders():
         for appointment in Appointment.objects.filter(
             scheduled_at=reminder_datetime, status=AppointmentStatus.scheduled
         ):
-            for participant in appointment.participants.filter(is_active=True):
+            for user in appointment.participants.filter(is_active=True):
                 Message.objects.create(
-                    sent_to=participant.user,
+                    sent_to=user,
                     template_system_name="appointment_first_reminder",
-                    object_pk=participant.pk,
+                    object_pk=user.pk,
                     object_model="consultations.Participant",
                 )

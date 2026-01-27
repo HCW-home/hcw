@@ -34,12 +34,13 @@ class MessageSerializer(serializers.ModelSerializer):
             "updated_at",
             "object_model",
             "object_pk",
+            "access_link"
         ]
         read_only_fields = ["id", "created_at", "updated_at", "sent_by"]
 
     def get_content(self, obj):
         """Get rendered content from the model property."""
-        return obj.render_content
+        return obj.render_content_html
 
     def get_subject(self, obj):
         """Get rendered subject from the model property."""
