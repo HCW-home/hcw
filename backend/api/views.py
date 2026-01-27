@@ -1,5 +1,4 @@
 import secrets
-import string
 
 from consultations.models import Participant
 from django.shortcuts import render
@@ -123,9 +122,7 @@ class AnonymousTokenAuthView(APIView):
                 # Token has been used, verification code is required
                 if not verification_code:
                     # Generate and save verification code on user
-                    user.verification_code = int(
-                        "".join(secrets.choice(string.digits) for _ in range(6))
-                    )
+                    user.verification_code = secrets.randbelow(1000000)
                     user.save()
 
                     message = Message.objects.create(
@@ -144,8 +141,8 @@ class AnonymousTokenAuthView(APIView):
                         status=status.HTTP_202_ACCEPTED,
                     )
 
-                # Verify the provided code
-                if int(user.verification_code) != int(verification_code):
+                # Verify the provided code (pad both to 6 digits for comparison)
+                if str(user.verification_code).zfill(6) != str(verification_code).zfill(6):
                     return Response(
                         {"error": "Invalid verification_code"},
                         status=status.HTTP_401_UNAUTHORIZED,
