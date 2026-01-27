@@ -156,6 +156,10 @@ class User(AbstractUser):
     verification_code = models.IntegerField(null=True, blank=True)
 
     @property
+    def is_patient(self):
+        return not self.groups.exists()
+
+    @property
     def name(self) -> str:
         if self.first_name or self.last_name:
             if self.email:
@@ -165,7 +169,7 @@ class User(AbstractUser):
 
     @property
     def user_tz(self) -> ZoneInfo:
-        return ZoneInfo(self.timezone)
+        return ZoneInfo(self.timezone) or ZoneInfo(settings.TIME_ZONE)
 
     def send_user_notification(self, title, message) -> FirebaseResponseDict:
         # Docs https://fcm-django.readthedocs.io/en/latest/

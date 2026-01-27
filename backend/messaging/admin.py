@@ -4,6 +4,7 @@ from typing import DefaultDict
 from django.conf import settings
 from django.contrib import admin, messages
 from django.utils.functional import cached_property
+from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from import_export.admin import ImportExportModelAdmin
 from modeltranslation.admin import TabbedTranslationAdmin
@@ -130,6 +131,10 @@ class MessageAdmin(ModelAdmin):
         "display_template_is_valid",
         "display_render_content",
         "display_render_subject",
+        "display_render_content_html",
+        "action",
+        "action_label",
+        "access_link",
     ]
 
     actions = ["send_message"]
@@ -169,6 +174,13 @@ class MessageAdmin(ModelAdmin):
         except Exception as e:
             return f"Unable to render the message content: {e}"
 
+    @display(description=_("Rendered HTML Content"))
+    def display_render_content_html(self, instance):
+        try:
+            return format_html(instance.render_content_html)
+        except Exception as e:
+            return f"Unable to render the message content: {e}"
+
     def display_render_subject(self, instance):
         try:
             return instance.render_subject
@@ -195,44 +207,6 @@ class TemplateAdmin(ModelAdmin, TabbedTranslationAdmin, ImportExportModelAdmin):
     import_form_class = ImportForm
     export_form_class = ExportForm
     list_editable = ["is_active"]
-
-    # def changelist_view(self, request, extra_context=None):
-    #     # Check coverage of notification messages x communication methods
-    #     missing_combinations = []
-    #     notification_messages = [choice[0] for choice in NOTIFICATION_CHOICES]
-    #     communication_methods = [choice[0] for choice in CommunicationMethod.choices]
-
-    #     for event_type in notification_messages:
-    #         for comm_method in communication_methods:
-    #             # Check if there's a template for this combination
-    #             template_exists = Template.objects.filter(
-    #                 event_type=event_type, communication_method__contains=[comm_method]
-    #             ).exists()
-
-    #             if not template_exists:
-    #                 missing_combinations.append(f"{event_type} with {comm_method}")
-
-    #     if missing_combinations:
-    #         messages.warning(
-    #             request,
-    #             _(
-    #                 _(
-    #                     "Missing template combinations, some message will use native messages: {}"
-    #                 )
-    #             ).format(
-    #                 ", ".join(missing_combinations[:10])
-    #                 + (", ..." if len(missing_combinations) > 10 else "")
-    #             ),
-    #         )
-    #     else:
-    #         messages.success(
-    #             request,
-    #             _(
-    #                 "All notification message x communication method combinations are configured"
-    #             ),
-    #         )
-
-    #     return super().changelist_view(request, extra_context=extra_context)
 
     fieldsets = [
         (

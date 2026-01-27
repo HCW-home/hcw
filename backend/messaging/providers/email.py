@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Any, Tuple
 
 from django.conf import settings
-from django.core.mail import get_connection, send_mail
+from django.core.mail import EmailMultiAlternatives, get_connection
 from django.utils.translation import gettext_lazy as _
 
 from . import BaseMessagingProvider
@@ -19,13 +19,15 @@ class Main(BaseMessagingProvider):
         from_email = self.messaging_provider.from_email or settings.DEFAULT_FROM_EMAIL
         subject = message.render_subject or "Message from HCW"
 
-        send_mail(
+        email = EmailMultiAlternatives(
             subject=subject,
-            message=message.render_content,
+            body=message.render_content,
             from_email=from_email,
-            recipient_list=[message.email],
-            fail_silently=False,
+            to=[message.email],
         )
+
+        email.attach_alternative(message.render_full_html, "text/html")
+        email.send(fail_silently=False)
 
     def test_connection(self):
         if not hasattr(settings, "EMAIL_HOST") or not settings.EMAIL_HOST:

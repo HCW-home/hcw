@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>{{ subject }}</title>
+    <style>
+        /* Email-safe CSS */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0f0f0f;
+            color: #ffffff;
+            line-height: 1.6;
+        }
+
+        .email-wrapper {
+            width: 100%;
+            background-color: #0f0f0f;
+            padding: 20px 0;
+        }
+
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #1a1a1a;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .email-header {
+            background: linear-gradient(90deg, #ff4d80, #ff9933);
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .email-header h1 {
+            margin: 0;
+            color: #000;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .email-body {
+            padding: 30px 20px;
+            color: #ffffff;
+        }
+
+        .email-body p {
+            margin: 0 0 15px 0;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .email-body strong {
+            color: #ff4d80;
+        }
+
+        .email-body a {
+            color: #ff4d80;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .email-body a:hover {
+            color: #ff9933;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            margin: 20px 0;
+            background: linear-gradient(90deg, #ff4d80, #ff9933);
+            color: #000;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .btn:hover {
+            opacity: 0.85;
+        }
+
+        .email-footer {
+            padding: 20px;
+            text-align: center;
+            background-color: #0a0a0a;
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        .email-footer a {
+            color: #ff4d80;
+            text-decoration: none;
+        }
+
+        .email-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                border-radius: 0;
+            }
+
+            .email-body {
+                padding: 20px 15px;
+            }
+
+            .btn {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-wrapper">
+        <div class="email-container">
+            <div class="email-header">
+                <h1>HCW</h1>
+            </div>
+
+            <div class="email-body">
+                {{ content|safe }}
+            </div>
+
+            <div class="email-footer">
+                <p>&copy; 2026 HCW. All rights reserved.</p>
+                <p>
+                    <a href="#">Privacy Policy</a> |
+                    <a href="#">Contact Us</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -10,6 +10,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.template.defaultfilters import register
+from django.template.loader import render_to_string
 from django.utils import timezone, translation
 from django.utils.translation import gettext_lazy as _
 from factory.django import DjangoModelFactory
@@ -226,6 +227,21 @@ def get_model_choices():
 
 
 class Template(models.Model):
+
+    _action = None
+
+    @property
+    def action(self):
+        if not self._action:
+            self._action = DEFAULT_NOTIFICATION_MESSAGES[self.event_type].get("action")
+        return self._action
+
+    action_label = models.CharField(
+        _("action label"),
+        max_length=100,
+        help_text=_("Label display in the action"),
+    )
+
     event_type = models.CharField(
         _("system name"),
         max_length=100,
@@ -267,7 +283,24 @@ class Template(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     @staticmethod
-    def get_template(name: str, event_type: str, field: str) -> str:
+    def get_template(name: str, event_type: str) -> 'Template':
+        try:
+            return Template.objects.get(
+                communication_method__contains=[name],
+                event_type=event_type,
+                is_active=True,
+            )
+        except Template.DoesNotExist:
+            return Template(
+                event_type=event_type,
+                template_subject=DEFAULT_NOTIFICATION_MESSAGES[event_type]['template_subject'],
+                template_content=DEFAULT_NOTIFICATION_MESSAGES[event_type]['template_content'],
+                action_label=DEFAULT_NOTIFICATION_MESSAGES[event_type].get('action_label'),
+                template_content_html=DEFAULT_NOTIFICATION_MESSAGES[event_type]['template_content_html'],
+            )
+
+    @staticmethod
+    def get_field_template(name: str, event_type: str, field: str) -> str:
         try:
             template = Template.objects.get(
                 communication_method__contains=[name],
@@ -290,9 +323,6 @@ class Template(models.Model):
     class Meta:
         verbose_name = _("template")
         verbose_name_plural = _("templates")
-
-    def __str__(self):
-        return f"{self.event_type}"
 
     def clean(self):
         """Validate Jinja2 template syntax"""
@@ -636,6 +666,7 @@ class Message(ModelCeleryAbstract):
         try:
             self.render_content
             self.render_subject
+            self.render_content_html
             return True
         except:
             return False
@@ -678,30 +709,71 @@ class Message(ModelCeleryAbstract):
             return self.sent_to.communication_method
 
     @property
-    def render_content_html(self):
-        try:
-            return self.render("content_html")
-        except:
-            return ""
+    def action(self):
+        return self.template.action
 
     @property
-    def link_access(self):
-        # TODO continue ici
-        return self.sent_to
+    def action_label(self):
+        return self.template.action_label
+
+    @property
+    def access_link(self):
+        """Generate access link if template has an action defined"""
+        base_url = config.patient_base_url if self.sent_to.is_patient else config.practitioner_base_url
+
+        if self.sent_to.one_time_auth_token:
+            return f"{base_url}?auth={self.sent_to.one_time_auth_token}&action={self.action}"
+        return f"{base_url}?email={self.sent_to.email}&action={self.action}"
 
     @property
     def render_content(self):
         try:
-            return self.render("content")
+            return self.render("template_content")
         except:
             return ""
-        
+
+    @property
+    def render_content_html(self):
+        try:
+            return self.render("template_content_html")
+        except:
+            return ""
+
+    @property
+    def render_full_html(self):
+        """Render the complete HTML email with base template"""
+        try:
+            content_html = self.render_content_html
+            subject = self.render_subject
+
+            return render_to_string(
+                'messaging/email_base.html',
+                {
+                    'content': content_html,
+                    'subject': subject,
+                }
+            )
+        except Exception as e:
+            return f"Unable to render full HTML: {e}"
+
     @property
     def render_subject(self):
-        try:
-            return self.render("subject")
-        except:
-            return ""
+        return self.render("template_subject")
+
+    _template = None
+
+    @property
+    def template(self) -> Template:
+        if not self._template:
+            self._template = Template.get_template(
+                name=self.validated_communication_method,
+                event_type=self.template_system_name,
+            )
+        return self._template
+
+    @property
+    def language(self):
+        return self.sent_to.preferred_language or settings.LANGUAGE_CODE
 
     def render(self, field: str):
         if not self.template_system_name:
@@ -710,28 +782,22 @@ class Message(ModelCeleryAbstract):
         try:
             app_label, model_name = self.object_model.split(".")
             obj = apps.get_model(app_label, model_name).objects.get(pk=self.object_pk)
-            if hasattr(obj, "language") and obj.language:
-                lang = obj.language
-            else:
-                lang = settings.LANGUAGE_CODE
 
-            if hasattr(obj, "tz") and obj.tz:
-                tz = ZoneInfo(obj.user.timezone)
-            else:
-                tz = settings.TIME_ZONE
-
-            with translation.override(lang), timezone.override(tz):
-                template_to_render = Template.get_template(
-                    name=self.validated_communication_method,
-                    event_type=self.template_system_name,
-                    field=field,
-                )
+            with translation.override(self.language), timezone.override(self.sent_to.user_tz):
 
                 env = jinja2.Environment()
                 env.filters.update(register.filters)
 
-                text_template = env.from_string(template_to_render)
-                return text_template.render({"obj": obj, "config": config})
+                template_str = getattr(self.template, field)
+
+                text_template = env.from_string(template_str)
+                return text_template.render({
+                    "obj": obj,
+                    "config": config,
+                    "action": self.action,
+                    "action_label": self.action_label,
+                    "access_link": self.access_link,
+                })
         except Exception as e:
             raise Exception(f"Unable to render: {e}")
 
