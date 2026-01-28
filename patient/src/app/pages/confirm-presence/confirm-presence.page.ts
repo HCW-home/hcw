@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import {
   IonContent,
   IonCard,
@@ -43,24 +44,51 @@ interface PendingAppointment {
 })
 export class ConfirmPresencePage implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  private appointmentId: number | null = null;
 
   isLoading = true;
   pendingAppointments: PendingAppointment[] = [];
   errorMessage: string | null = null;
 
   constructor(
+    private route: ActivatedRoute,
     private consultationService: ConsultationService,
     private navCtrl: NavController,
     private toastCtrl: ToastController
   ) {}
 
   ngOnInit(): void {
-    this.loadPendingAppointments();
+    const idParam = this.route.snapshot.paramMap.get('id');
+    this.appointmentId = idParam ? parseInt(idParam, 10) : null;
+
+    if (this.appointmentId) {
+      this.loadSingleAppointment(this.appointmentId);
+    } else {
+      this.loadPendingAppointments();
+    }
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  private loadSingleAppointment(id: number): void {
+    this.isLoading = true;
+    this.errorMessage = null;
+
+    this.consultationService.getAppointmentById(id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (appointment) => {
+          this.isLoading = false;
+          this.pendingAppointments = [this.mapAppointment(appointment)];
+        },
+        error: () => {
+          this.isLoading = false;
+          this.errorMessage = 'Failed to load appointment';
+        }
+      });
   }
 
   private loadPendingAppointments(): void {

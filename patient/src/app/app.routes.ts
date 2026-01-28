@@ -35,6 +35,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/confirm-presence/confirm-presence.page').then(m => m.ConfirmPresencePage)
   },
   {
+    path: 'confirm-presence/:id',
+    loadComponent: () => import('./pages/confirm-presence/confirm-presence.page').then(m => m.ConfirmPresencePage)
+  },
+  {
     path: 'home',
     loadComponent: () => import('./pages/home/home.page').then(m => m.HomePage)
   },

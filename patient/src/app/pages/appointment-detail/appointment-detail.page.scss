@@ -202,17 +202,6 @@ ion-header {
           color: var(--app-text-primary);
         }
 
-        .confirmed-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          font-size: 0.75rem;
-          color: var(--ion-color-success);
-
-          ion-icon {
-            font-size: 14px;
-          }
-        }
       }
     }
   }

@@ -39,6 +39,7 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
 
   authToken: string | null = null;
   action: string | null = null;
+  actionId: string | null = null;
   isLoading = true;
   requiresVerification = false;
   errorMessage: string | null = null;
@@ -62,6 +63,7 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.authToken = this.route.snapshot.queryParamMap.get('auth');
     this.action = this.route.snapshot.queryParamMap.get('action');
+    this.actionId = this.route.snapshot.queryParamMap.get('id');
 
     if (this.authToken) {
       this.authenticateWithToken();
@@ -150,7 +152,7 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
     });
     await toast.present();
 
-    const route = this.actionHandler.getRouteForAction(this.action);
+    const route = this.actionHandler.getRouteForAction(this.action, this.actionId);
     this.navCtrl.navigateRoot(route);
   }
 

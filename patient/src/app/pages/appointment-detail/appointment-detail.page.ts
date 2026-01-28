@@ -77,10 +77,7 @@ export class AppointmentDetailPage implements OnInit, OnDestroy {
 
   canJoin = computed(() => {
     const apt = this.appointment();
-    if (!apt || apt.status !== 'scheduled' || apt.type !== 'online') return false;
-    const scheduledDate = new Date(apt.scheduled_at);
-    const now = new Date();
-    return scheduledDate.toDateString() === now.toDateString();
+    return apt?.status === 'scheduled' && apt?.type === 'online';
   });
 
   canCancel = computed(() => {
