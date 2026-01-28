@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import {
@@ -57,25 +57,6 @@ export class ConsultationDetailPage implements OnInit, OnDestroy {
   isLoadingMore = signal(false);
   hasMore = signal(true);
   private currentPage = 1;
-
-  upcomingAppointments = computed(() => {
-    const cons = this.consultation();
-    if (!cons?.appointments) return [];
-    const now = new Date();
-    return cons.appointments.filter(apt =>
-      new Date(apt.scheduled_at) >= now &&
-      apt.status !== 'cancelled'
-    );
-  });
-
-  pastAppointments = computed(() => {
-    const cons = this.consultation();
-    if (!cons?.appointments) return [];
-    const now = new Date();
-    return cons.appointments.filter(apt =>
-      new Date(apt.scheduled_at) < now
-    );
-  });
 
   constructor(
     private route: ActivatedRoute,

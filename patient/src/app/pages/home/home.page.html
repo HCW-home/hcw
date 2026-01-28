@@ -193,14 +193,10 @@
             </div>
 
             <div class="consultation-meta">
-              <span class="meta-item">
-                <ion-icon name="calendar-outline"></ion-icon>
-                {{ consultation.created_at | date:'MMM d, yyyy' }}
-              </span>
-              @if (consultation.appointments && consultation.appointments.length > 0) {
+              @if (consultation.next_appointment) {
                 <span class="meta-item">
                   <ion-icon name="videocam-outline"></ion-icon>
-                  {{ consultation.appointments.length }} appointment{{ consultation.appointments.length > 1 ? 's' : '' }}
+                  {{ consultation.next_appointment.scheduled_at }}
                 </span>
               }
             </div>

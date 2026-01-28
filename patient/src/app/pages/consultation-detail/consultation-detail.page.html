@@ -63,63 +63,34 @@
         </div>
       }
 
-      @if (upcomingAppointments().length > 0) {
+      @if (consultation()?.next_appointment; as appointment) {
         <div class="info-card appointments-card">
           <div class="card-header">
             <ion-icon name="calendar-outline" class="card-icon"></ion-icon>
-            <h3 class="info-title">Upcoming Appointments</h3>
+            <h3 class="info-title">Next Appointment</h3>
           </div>
-          @for (appointment of upcomingAppointments(); track appointment.id) {
-            <div class="appointment-item">
-              <div class="appointment-meta">
-                <div class="meta-item">
-                  <ion-icon name="calendar-outline"></ion-icon>
-                  <span>{{ appointment.scheduled_at | date:'EEEE, MMM d, yyyy' }}</span>
-                </div>
-                <div class="meta-item">
-                  <ion-icon name="time-outline"></ion-icon>
-                  <span>{{ appointment.scheduled_at | date:'HH:mm' }}</span>
-                </div>
-                <div class="meta-item type-item">
-                  <ion-icon [name]="getAppointmentTypeIcon(appointment)"></ion-icon>
-                  <span>{{ getAppointmentTypeLabel(appointment) }}</span>
-                </div>
+          <div class="appointment-item">
+            <div class="appointment-meta">
+              <div class="meta-item">
+                <ion-icon name="calendar-outline"></ion-icon>
+                <span>{{ appointment.scheduled_at | date:'EEEE, MMM d, yyyy' }}</span>
               </div>
-              @if (appointment.type === 'online') {
-                <button class="action-button primary-btn" (click)="joinAppointment(appointment)">
-                  <ion-icon name="videocam-outline"></ion-icon>
-                  Join Video Call
-                </button>
-              }
-            </div>
-          }
-        </div>
-      }
-
-      @if (pastAppointments().length > 0) {
-        <div class="info-card past-appointments-card">
-          <div class="card-header">
-            <ion-icon name="time-outline" class="card-icon"></ion-icon>
-            <h3 class="info-title">Past Appointments</h3>
-          </div>
-          @for (appointment of pastAppointments(); track appointment.id) {
-            <div class="appointment-item past">
-              <div class="appointment-meta">
-                <div class="meta-item">
-                  <ion-icon name="calendar-outline"></ion-icon>
-                  <span>{{ appointment.scheduled_at | date:'MMM d, yyyy' }}</span>
-                </div>
-                <div class="meta-item">
-                  <ion-icon name="time-outline"></ion-icon>
-                  <span>{{ appointment.scheduled_at | date:'HH:mm' }}</span>
-                </div>
-                <div class="meta-item type-item">
-                  <ion-icon [name]="getAppointmentTypeIcon(appointment)"></ion-icon>
-                  <span>{{ getAppointmentTypeLabel(appointment) }}</span>
-                </div>
+              <div class="meta-item">
+                <ion-icon name="time-outline"></ion-icon>
+                <span>{{ appointment.scheduled_at | date:'HH:mm' }}</span>
+              </div>
+              <div class="meta-item type-item">
+                <ion-icon [name]="getAppointmentTypeIcon(appointment)"></ion-icon>
+                <span>{{ getAppointmentTypeLabel(appointment) }}</span>
               </div>
             </div>
-          }
+            @if (appointment.type === 'online') {
+              <button class="action-button primary-btn" (click)="joinAppointment(appointment)">
+                <ion-icon name="videocam-outline"></ion-icon>
+                Join Video Call
+              </button>
+            }
+          </div>
         </div>
       }
 

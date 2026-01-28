@@ -15,7 +15,7 @@ export interface Consultation {
   reason?: Reason;
   notes?: string;
   prescriptions?: Prescription[];
-  appointments?: Appointment[];
+  next_appointment?: Appointment;
   messages?: ConsultationMessage[];
 }
 
