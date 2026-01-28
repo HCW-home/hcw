@@ -19,6 +19,7 @@ import { PatientService } from '../../../../core/services/patient.service';
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { IUser } from '../../models/user';
 import { getOnlineStatusBadgeType } from '../../../../shared/tools/helper';
+import { getErrorMessage } from '../../../../core/utils/error-helper';
 
 @Component({
   selector: 'app-patients',
@@ -77,8 +78,8 @@ export class Patients implements OnInit, OnDestroy {
         this.totalCount.set(response.count);
         this.loading.set(false);
       },
-      error: () => {
-        this.toasterService.show('error', 'Error', 'Failed to load patients');
+      error: (err) => {
+        this.toasterService.show('error', 'Error', getErrorMessage(err));
         this.loading.set(false);
       }
     });

@@ -8,7 +8,6 @@ import { ConsultationDetail } from './components/consultation-detail/consultatio
 import { ConsultationForm } from './components/consultation-form/consultation-form';
 import { UserProfile } from './components/user-profile/user-profile';
 import { Test } from './components/test/test';
-import { Availability } from './components/availability/availability';
 import { Patients } from './components/patients/patients';
 import { PatientDetail } from './components/patient-detail/patient-detail';
 import { Appointments } from './components/appointments/appointments';
@@ -51,11 +50,6 @@ const routes: Routes = [
         path: RoutePaths.TEST,
         pathMatch: 'full',
         component: Test,
-      },
-      {
-        path: RoutePaths.AVAILABILITY,
-        pathMatch: 'full',
-        component: Availability,
       },
       {
         path: RoutePaths.PROFILE,

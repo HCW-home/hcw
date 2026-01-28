@@ -5,7 +5,6 @@ export enum RoutePaths {
   CONSULTATION_DETAIL = 'consultations/:id',
   DASHBOARD = 'dashboard',
   TEST = 'test',
-  AVAILABILITY = 'availability',
   PROFILE = 'profile',
   PATIENTS = 'patients',
   PATIENT_DETAIL = 'patients/:id',

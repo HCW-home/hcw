@@ -46,7 +46,7 @@
             <video #localScreenShare autoplay playsinline class="tile-video"></video>
             <div class="participant-label">
               <app-svg src="screen-share" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
-              <app-typography [variant]="TypographyTypeEnum['body-xs-medium']">Your screen</app-typography>
+              <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--White)">Your screen</app-typography>
             </div>
           </div>
         }
@@ -66,7 +66,7 @@
               </div>
             }
             <div class="participant-label">
-              <app-typography [variant]="TypographyTypeEnum['body-xs-medium']">{{ participant.name }}</app-typography>
+              <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--White)">{{ participant.name }}</app-typography>
               @if (!participant.isMicrophoneEnabled) {
                 <app-svg src="microphone-off" [svgStyle]="{'width.px': 14, 'height.px': 14}" class="muted-indicator"></app-svg>
               }
@@ -83,7 +83,7 @@
               </video>
               <div class="participant-label">
                 <app-svg src="screen-share" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
-                <app-typography [variant]="TypographyTypeEnum['body-xs-medium']">{{ participant.name }}'s screen</app-typography>
+                <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--White)">{{ participant.name }}'s screen</app-typography>
               </div>
             </div>
           }

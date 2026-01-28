@@ -16,6 +16,7 @@ import { ToasterService } from '../../../../core/services/toaster.service';
 import { Appointment, AppointmentStatus, AppointmentType } from '../../../../core/models/consultation';
 import { RoutePaths } from '../../../../core/constants/routes';
 import { getAppointmentBadgeType } from '../../../../shared/tools/helper';
+import { getErrorMessage } from '../../../../core/utils/error-helper';
 
 type CalendarView = 'dayGridMonth' | 'timeGridWeek' | 'timeGridDay' | 'list';
 
@@ -97,8 +98,8 @@ export class Appointments implements OnInit, OnDestroy {
           this.calendarEvents.set(this.transformToCalendarEvents(response.results));
           this.loading.set(false);
         },
-        error: () => {
-          this.toasterService.show('error', 'Error', 'Failed to load appointments');
+        error: (err) => {
+          this.toasterService.show('error', 'Error', getErrorMessage(err));
           this.loading.set(false);
         }
       });

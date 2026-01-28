@@ -29,6 +29,7 @@ import { PreJoinLobby } from '../../../../shared/components/pre-join-lobby/pre-j
 import { MessageList, Message, SendMessageData, EditMessageData, DeleteMessageData } from '../../../../shared/components/message-list/message-list';
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
 import { ButtonStyleEnum } from '../../../../shared/constants/button';
+import { getErrorMessage } from '../../../../core/utils/error-helper';
 
 @Component({
   selector: 'app-video-consultation',
@@ -187,8 +188,8 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       await this.livekitService.connect(config);
       await this.livekitService.enableCamera(true);
       await this.livekitService.enableMicrophone(true);
-    } catch (error) {
-      this.errorMessage = error instanceof Error ? error.message : 'Failed to join video call';
+    } catch (error: any) {
+      this.errorMessage = getErrorMessage(error)
       this.toasterService.show('error', 'Connection Error', this.errorMessage);
     } finally {
       this.isLoading = false;
@@ -241,8 +242,8 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
         this.attachLocalVideo();
         this.attachRemoteMedia();
       });
-    } catch (error) {
-      this.errorMessage = error instanceof Error ? error.message : 'Failed to join video call';
+    } catch (error: any) {
+      this.errorMessage = getErrorMessage(error);
       this.toasterService.show('error', 'Connection Error', this.errorMessage);
       this.phase.set('lobby');
     } finally {

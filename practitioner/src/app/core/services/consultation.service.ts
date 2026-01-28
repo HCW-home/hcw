@@ -259,65 +259,6 @@ export class ConsultationService {
     return this.http.get<Queue>(`${this.apiUrl}/queues/${id}/`);
   }
 
-  getConsultationRequests(params?: {
-    page?: number;
-    page_size?: number;
-  }): Observable<PaginatedResponse<ConsultationRequest>> {
-    let httpParams = new HttpParams();
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          httpParams = httpParams.set(key, value.toString());
-        }
-      });
-    }
-    return this.http.get<PaginatedResponse<ConsultationRequest>>(
-      `${this.apiUrl}/requests/`,
-      { params: httpParams }
-    );
-  }
-
-  getConsultationRequest(id: number): Observable<ConsultationRequest> {
-    return this.http.get<ConsultationRequest>(`${this.apiUrl}/requests/${id}/`);
-  }
-
-  createConsultationRequest(
-    data: CreateConsultationRequestPayload
-  ): Observable<ConsultationRequest> {
-    return this.http.post<ConsultationRequest>(
-      `${this.apiUrl}/requests/`,
-      data
-    );
-  }
-
-  cancelConsultationRequest(id: number): Observable<ConsultationRequest> {
-    return this.http.post<ConsultationRequest>(
-      `${this.apiUrl}/requests/${id}/cancel/`,
-      {}
-    );
-  }
-
-  getAvailableSlots(
-    reasonId: number,
-    params?: {
-      from_date?: string;
-      user_id?: number;
-    }
-  ): Observable<AvailableSlot[]> {
-    let httpParams = new HttpParams();
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          httpParams = httpParams.set(key, value.toString());
-        }
-      });
-    }
-    return this.http.get<AvailableSlot[]>(
-      `${this.apiUrl}/reasons/${reasonId}/slots/`,
-      { params: httpParams }
-    );
-  }
-
   getBookingSlots(params?: {
     page?: number;
     page_size?: number;
@@ -345,12 +286,6 @@ export class ConsultationService {
     );
   }
 
-  getBookingSlot(id: number): Observable<BookingSlot> {
-    return this.http.get<BookingSlot>(
-      `${this.apiUrl}/user/bookingslots/${id}/`
-    );
-  }
-
   createBookingSlot(data: CreateBookingSlot): Observable<BookingSlot> {
     return this.http.post<BookingSlot>(
       `${this.apiUrl}/user/bookingslots/`,
@@ -370,16 +305,6 @@ export class ConsultationService {
 
   deleteBookingSlot(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/user/bookingslots/${id}/`);
-  }
-
-  getLivekitToken(consultationId: number): Observable<{
-    url: string;
-    room: string;
-    token: string;
-  }> {
-    return this.http.get<{ url: string; room: string; token: string }>(
-      `${this.apiUrl}/consultations/${consultationId}/livekit_token/`
-    );
   }
 
   joinConsultation(consultationId: number): Observable<{

@@ -26,6 +26,7 @@ import { ConfirmationService } from '../../../../core/services/confirmation.serv
 
 import { BookingSlot, CreateBookingSlot } from '../../../../core/models/consultation';
 import { LocalVideoTrack, LocalAudioTrack } from 'livekit-client';
+import { getErrorMessage } from '../../../../core/utils/error-helper';
 
 type TestStatus = 'idle' | 'testing' | 'working' | 'error' | 'playing';
 
@@ -526,7 +527,7 @@ export class Configuration implements OnInit, OnDestroy {
         error: (error) => {
           this.logger.error('Error loading booking slots:', error);
           this.isLoading.set(false);
-          this.toasterService.show('error', 'Error', 'Failed to load availability');
+          this.toasterService.show('error', 'Error', getErrorMessage(error));
         }
       });
   }

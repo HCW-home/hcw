@@ -19,6 +19,7 @@ import {
 import { ValidationService } from '../../../../core/services/validation.service';
 import { Auth } from '../../../../core/services/auth';
 import { ErrorMessage } from '../../../../shared/components/error-message/error-message';
+import { getErrorMessage as getHttpErrorMessage } from '../../../../core/utils/error-helper';
 
 interface LoginForm {
   email: FormControl<string>;
@@ -72,7 +73,7 @@ export class Login {
         },
         error: err => {
           this.loadingButton = false;
-          this.errorMessage = err.message;
+          this.errorMessage = getHttpErrorMessage(err);
         },
       });
     } else {
