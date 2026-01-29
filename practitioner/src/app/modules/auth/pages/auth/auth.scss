@@ -1,5 +1,4 @@
 .auth-page {
-
   display: flex;
   height: 100vh;
   min-height: 100vh;
@@ -26,5 +25,17 @@
 
   .auth-main {
     flex-grow: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .auth-page {
+    .banner {
+      display: none;
+    }
+
+    .auth-main {
+      width: 100%;
+    }
   }
 }
