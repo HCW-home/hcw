@@ -147,26 +147,6 @@ export class PushNotificationService {
     }
   }
 
-  async unregisterToken(): Promise<void> {
-    const token = this.tokenSubject.value;
-
-    if (token) {
-      this.api.delete(`/user/devices/${token}/`).subscribe({
-        error: () => {}
-      });
-    }
-
-    this.tokenSubject.next(null);
-  }
-
-  get hasPermission(): boolean {
-    return this.permissionGranted;
-  }
-
-  get currentToken(): string | null {
-    return this.tokenSubject.value;
-  }
-
   get isSupported(): boolean {
     return !this.isNativePlatform && typeof window !== 'undefined' && 'Notification' in window;
   }

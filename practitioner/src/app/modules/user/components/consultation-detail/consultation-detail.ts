@@ -40,7 +40,7 @@ import { UserSearchSelect } from '../../../../shared/components/user-search-sele
 import { ButtonStyleEnum, ButtonSizeEnum, ButtonStateEnum } from '../../../../shared/constants/button';
 import { BadgeTypeEnum } from '../../../../shared/constants/badge';
 import { SelectOption } from '../../../../shared/models/select';
-import { getParticipantBadgeType, getAppointmentBadgeType, formatDateTimeFromISO } from '../../../../shared/tools/helper';
+import { getParticipantBadgeType, getAppointmentBadgeType } from '../../../../shared/tools/helper';
 import { LocalDatePipe } from '../../../../shared/pipes/local-date.pipe';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
 import { AppointmentFormModal } from './appointment-form-modal/appointment-form-modal';
@@ -607,11 +607,6 @@ export class ConsultationDetail implements OnInit, OnDestroy {
         },
       });
   }
-
-  formatDateTime(dateString: string): string {
-    return formatDateTimeFromISO(dateString);
-  }
-
   getUserDisplayName(participant: Participant): string {
     if (participant.user) {
       const fullName = `${participant.user.first_name || ''} ${participant.user.last_name || ''}`.trim();

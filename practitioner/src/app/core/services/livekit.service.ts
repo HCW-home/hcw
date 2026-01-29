@@ -317,10 +317,6 @@ export class LiveKitService implements OnDestroy {
     this.room = null;
   }
 
-  getRoom(): Room | null {
-    return this.room;
-  }
-
   isConnected(): boolean {
     return this.connectionStatusSubject.value === 'connected';
   }

@@ -65,27 +65,6 @@ export class AuthService {
     return this.http.post<{ detail: string }>(`${this.apiUrl}/auth/password/reset/confirm/`, data);
   }
 
-  requestMagicLink(data: MagicLinkRequest): Observable<any> {
-    return this.http.post(`${this.apiUrl}/auth/magic-link/request/`, data);
-  }
-
-  verifyMagicLink(data: MagicLinkVerify): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.apiUrl}/auth/magic-link/verify/`, data)
-      .pipe(
-        switchMap(async (response) => {
-          if (response.access) {
-            await this.storage.set('access_token', response.access);
-            await this.storage.set('refresh_token', response.refresh);
-            this.isAuthenticatedSubject.next(true);
-            if (response.user) {
-              this.currentUserSubject.next(response.user);
-            }
-          }
-          return response;
-        })
-      );
-  }
-
   loginWithToken(data: TokenAuthRequest): Observable<TokenAuthResponse> {
     return this.http.post<TokenAuthResponse>(`${this.apiUrl}/auth/token/`, data)
       .pipe(
@@ -116,10 +95,6 @@ export class AuthService {
 
   async getToken(): Promise<string | null> {
     return await this.storage.get('access_token');
-  }
-
-  isLoggedIn(): boolean {
-    return this.isAuthenticatedSubject.value;
   }
 
   async refreshToken(): Promise<Observable<any>> {

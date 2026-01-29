@@ -18,8 +18,4 @@ export class UserService {
   searchUsers(params?: UserSearchParams): Observable<PaginatedResponse<User>> {
     return this.api.get<PaginatedResponse<User>>('/users/', params);
   }
-
-  getUserById(id: number): Observable<User> {
-    return this.api.get<User>(`/users/${id}/`);
-  }
 }

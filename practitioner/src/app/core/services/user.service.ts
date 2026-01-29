@@ -44,10 +44,6 @@ export class UserService {
     return this.http.get<ILanguage[]>(`${this.apiUrl}/languages/`);
   }
 
-  getSpecialities(): Observable<ISpeciality[]> {
-    return this.http.get<ISpeciality[]>(`${this.apiUrl}/specialities/`, {});
-  }
-
   getTestRtcInfo(): Observable<{ url: string; token: string; room: string }> {
     return this.http.get<{ url: string; token: string; room: string }>(
       `${this.apiUrl}/user/testrtc/`

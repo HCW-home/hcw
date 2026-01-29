@@ -650,7 +650,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
   onEditMessage(data: EditMessageData): void {
     if (!this.consultationId) return;
 
-    this.consultationService.updateConsultationMessage(this.consultationId, data.messageId, data.content)
+    this.consultationService.updateConsultationMessage(data.messageId, data.content)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (updatedMessage) => {

@@ -82,7 +82,4 @@ export class PatientService {
     );
   }
 
-  getPatientSpecialities(id: number): Observable<ISpeciality[]> {
-    return this.http.get<ISpeciality[]>(`${this.apiUrl}/users/${id}/specialities/`);
-  }
 }

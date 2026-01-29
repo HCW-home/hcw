@@ -189,7 +189,8 @@ export class MessagesPage implements OnInit, OnDestroy {
               updated_at: event.data.updated_at,
               created_by: event.data.created_by,
               is_edited: event.data.is_edited,
-              deleted_at: event.data.deleted_at
+              deleted_at: event.data.deleted_at,
+              consultation: event.consultation_id
             };
             this.messages.push(newMessage);
             this.scrollToBottom();
@@ -380,7 +381,6 @@ export class MessagesPage implements OnInit, OnDestroy {
 
     this.isEditing = true;
     this.consultationService.updateConsultationMessage(
-      this.selectedConsultation.id,
       this.editingMessageId,
       this.editContent.trim()
     ).subscribe({

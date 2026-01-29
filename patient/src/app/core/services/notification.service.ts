@@ -9,7 +9,6 @@ import { INotification, INotificationResponse, NotificationFilters, Notification
 })
 export class NotificationService {
   private unreadCountSubject = new BehaviorSubject<number>(0);
-  public unreadCount$ = this.unreadCountSubject.asObservable();
 
   constructor(private api: ApiService) {}
 
@@ -39,7 +38,4 @@ export class NotificationService {
     );
   }
 
-  updateUnreadCount(count: number): void {
-    this.unreadCountSubject.next(count);
-  }
 }

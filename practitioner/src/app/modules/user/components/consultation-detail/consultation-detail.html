@@ -118,7 +118,7 @@
                     }
                   </div>
                 </div>
-                <span class="created-date">Created on {{ formatDateTime(consultation()!.created_at) }}</span>
+                <span class="created-date">Created on {{ consultation()!.created_at | date: 'longDate' }}</span>
               </div>
 
               @if (consultation()?.description) {

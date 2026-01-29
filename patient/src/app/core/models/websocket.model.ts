@@ -1,3 +1,5 @@
+import { User } from './consultation.model';
+
 export enum WebSocketState {
   CONNECTING = 'CONNECTING',
   CONNECTED = 'CONNECTED',
@@ -161,13 +163,7 @@ export interface MessageEventData {
   attachment: MessageAttachment | null;
   created_at: string;
   updated_at: string;
-  created_by: {
-    id: number;
-    email: string;
-    first_name: string;
-    last_name: string;
-    is_online: boolean;
-  };
+  created_by: User;
   is_edited: boolean;
   deleted_at: string | null;
 }

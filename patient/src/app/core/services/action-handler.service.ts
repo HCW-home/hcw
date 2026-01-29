@@ -6,12 +6,6 @@ export interface ActionConfig {
   appendId: boolean;
 }
 
-export interface ActionParams {
-  action: string | null;
-  id: string | null;
-  model: string | null;
-}
-
 const ACTION_ROUTES: Record<string, ActionConfig> = {
   'presence': { route: '/confirm-presence', requiresAuth: true, appendId: true },
   'join': { route: '/consultation', requiresAuth: true, appendId: true },
@@ -39,16 +33,5 @@ export class ActionHandlerService {
       return `${config.route}/${id}`;
     }
     return config.route;
-  }
-
-  isValidAction(action: string | null): boolean {
-    return action !== null && action in ACTION_ROUTES;
-  }
-
-  getActionConfig(action: string | null): ActionConfig {
-    if (!action) {
-      return DEFAULT_ACTION;
-    }
-    return ACTION_ROUTES[action] || DEFAULT_ACTION;
   }
 }

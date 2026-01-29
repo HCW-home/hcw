@@ -312,7 +312,7 @@ export class RequestDetailPage implements OnInit, OnDestroy {
     const consultationId = this.consultationId();
     if (!consultationId) return;
 
-    this.consultationService.updateConsultationMessage(consultationId, data.messageId, data.content)
+    this.consultationService.updateConsultationMessage(data.messageId, data.content)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: async (updatedMessage) => {

@@ -78,10 +78,6 @@ export class ConsultationWebSocketService implements OnDestroy {
     return this.userWsService.isConnected();
   }
 
-  get currentConsultationId(): number | null {
-    return this.consultationId;
-  }
-
   private setupEventListeners(): void {
     this.wsService.messages$
       .pipe(takeUntil(this.destroy$))

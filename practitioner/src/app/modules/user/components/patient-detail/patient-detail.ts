@@ -21,6 +21,7 @@ import { Consultation, Appointment } from '../../../../core/models/consultation'
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { Badge } from '../../../../shared/components/badge/badge';
 import { getConsultationBadgeType, getAppointmentBadgeType } from '../../../../shared/tools/helper';
+import { getErrorMessage } from '../../../../core/utils/error-helper';
 
 @Component({
   selector: 'app-patient-detail',
@@ -97,8 +98,8 @@ export class PatientDetail implements OnInit, OnDestroy {
         this.healthMetrics.set(this.transformHealthMetrics(healthMetrics.results));
         this.loading.set(false);
       },
-      error: () => {
-        this.toasterService.show('error', 'Error', 'Failed to load patient');
+      error: (err) => {
+        this.toasterService.show('error', 'Error', getErrorMessage(err));
         this.loading.set(false);
       }
     });
@@ -116,8 +117,8 @@ export class PatientDetail implements OnInit, OnDestroy {
           this.consultations.set(response.results);
           this.loadingConsultations.set(false);
         },
-        error: () => {
-          this.toasterService.show('error', 'Error', 'Failed to load consultations');
+        error: (err) => {
+          this.toasterService.show('error', 'Error', getErrorMessage(err));
           this.loadingConsultations.set(false);
         }
       });
@@ -135,8 +136,8 @@ export class PatientDetail implements OnInit, OnDestroy {
           this.appointments.set(response.results);
           this.loadingAppointments.set(false);
         },
-        error: () => {
-          this.toasterService.show('error', 'Error', 'Failed to load appointments');
+        error: (err) => {
+          this.toasterService.show('error', 'Error', getErrorMessage(err));
           this.loadingAppointments.set(false);
         }
       });

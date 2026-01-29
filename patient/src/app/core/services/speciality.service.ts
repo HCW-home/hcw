@@ -14,15 +14,7 @@ export class SpecialityService {
     return this.api.get<Speciality[]>('/specialities/');
   }
 
-  getSpecialityById(id: number): Observable<Speciality> {
-    return this.api.get<Speciality>(`/specialities/${id}/`);
-  }
-
   getReasonsBySpeciality(specialityId: number): Observable<Reason[]> {
     return this.api.get<Reason[]>(`/specialities/${specialityId}/reasons/`);
-  }
-
-  getOrganisationsBySpeciality(specialityId: number): Observable<any[]> {
-    return this.api.get<any[]>(`/specialities/${specialityId}/organisations/`);
   }
 }

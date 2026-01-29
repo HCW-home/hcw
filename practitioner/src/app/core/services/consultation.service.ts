@@ -307,16 +307,6 @@ export class ConsultationService {
     return this.http.delete<void>(`${this.apiUrl}/user/bookingslots/${id}/`);
   }
 
-  joinConsultation(consultationId: number): Observable<{
-    url: string;
-    token: string;
-    room: string;
-  }> {
-    return this.http.get<{ url: string; token: string; room: string }>(
-      `${this.apiUrl}/consultations/${consultationId}/join/`
-    );
-  }
-
   joinAppointment(appointmentId: number): Observable<{
     url: string;
     token: string;

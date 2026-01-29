@@ -91,18 +91,7 @@
                 <app-typography
                   [variant]="TypographyTypeEnum['body-s-regular']"
                   color="var(--slate-600)">
-                  {{ formatDate(appointment.scheduled_at) }}
-                </app-typography>
-              </div>
-              <div class="info-row">
-                <app-svg
-                  src="clock"
-                  [svgStyle]="{ 'width.px': 18, 'height.px': 18, color: 'var(--slate-500)' }">
-                </app-svg>
-                <app-typography
-                  [variant]="TypographyTypeEnum['body-s-regular']"
-                  color="var(--slate-600)">
-                  {{ formatTime(appointment.scheduled_at) }}
+                  {{ appointment.scheduled_at | localDate : 'MMM d, y, HH:mm' }}
                 </app-typography>
               </div>
               <div class="info-row">

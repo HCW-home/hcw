@@ -31,8 +31,4 @@ export class HealthService {
   getHealthMetrics(filters?: HealthMetricFilters): Observable<PaginatedResponse<HealthMetric>> {
     return this.api.get<PaginatedResponse<HealthMetric>>('/user/healthmetrics/', filters);
   }
-
-  getLatestMetrics(): Observable<HealthMetric[]> {
-    return this.api.get<HealthMetric[]>('/user/healthmetrics/', { limit: 10, ordering: '-measured_at' });
-  }
 }

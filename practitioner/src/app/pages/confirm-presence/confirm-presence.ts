@@ -11,7 +11,7 @@ import { Loader } from '../../shared/components/loader/loader';
 import { TypographyTypeEnum } from '../../shared/constants/typography';
 import { ButtonStyleEnum, ButtonStateEnum } from '../../shared/constants/button';
 import { RoutePaths } from '../../core/constants/routes';
-import { formatDateFromISO, formatTimeFromISO } from '../../shared/tools/helper';
+import { LocalDatePipe } from '../../shared/pipes/local-date.pipe';
 
 interface IPendingAppointment {
   id: number;
@@ -30,6 +30,7 @@ interface IPendingAppointment {
     Button,
     Svg,
     Loader,
+    LocalDatePipe,
   ],
   templateUrl: './confirm-presence.html',
   styleUrl: './confirm-presence.scss',
@@ -180,11 +181,4 @@ export class ConfirmPresence implements OnInit, OnDestroy {
     this.router.navigateByUrl(`/${RoutePaths.USER}/${RoutePaths.DASHBOARD}`);
   }
 
-  formatDate(dateString: string): string {
-    return formatDateFromISO(dateString);
-  }
-
-  formatTime(dateString: string): string {
-    return formatTimeFromISO(dateString);
-  }
 }

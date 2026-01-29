@@ -55,7 +55,6 @@ export class LiveKitService implements OnDestroy {
 
   public connectionStatus$: Observable<ConnectionStatus> = this.connectionStatusSubject.asObservable();
   public localVideoTrack$: Observable<LocalVideoTrack | null> = this.localVideoTrackSubject.asObservable();
-  public localAudioTrack$: Observable<LocalAudioTrack | null> = this.localAudioTrackSubject.asObservable();
   public localScreenShareTrack$: Observable<LocalTrack | null> = this.localScreenShareTrackSubject.asObservable();
   public participants$: Observable<Map<string, ParticipantInfo>> = this.participantsSubject.asObservable();
   public isCameraEnabled$: Observable<boolean> = this.isCameraEnabledSubject.asObservable();
@@ -315,10 +314,6 @@ export class LiveKitService implements OnDestroy {
     this.isMicrophoneEnabledSubject.next(false);
     this.isScreenShareEnabledSubject.next(false);
     this.room = null;
-  }
-
-  getRoom(): Room | null {
-    return this.room;
   }
 
   isConnected(): boolean {

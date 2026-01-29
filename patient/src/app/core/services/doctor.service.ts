@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService, PaginatedResponse } from './api.service';
-import { Doctor, Speciality } from '../models/doctor.model';
-import { BookingSlot, TimeSlot } from '../models/booking.model';
+import { Doctor } from '../models/doctor.model';
 import { Slot } from '../models/consultation.model';
 
 export interface DoctorFilters {
@@ -36,7 +35,4 @@ export class DoctorService {
     return this.api.get<Slot[]>(`/reasons/${reasonId}/slots/`, params);
   }
 
-  getDoctorBookingSlots(doctorId: number): Observable<BookingSlot[]> {
-    return this.api.get<BookingSlot[]>('/user/bookingslots/', { user: doctorId });
-  }
 }

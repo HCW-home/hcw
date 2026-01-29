@@ -19,8 +19,6 @@ export class UserWebSocketService implements OnDestroy {
   private messagesSubject = new Subject<UserMessageEvent>();
   private notificationsSubject = new Subject<NotificationEvent>();
 
-  public isOnline$: Observable<boolean> = this.isOnlineSubject.asObservable();
-  public connectionCount$: Observable<number> = this.connectionCountSubject.asObservable();
   public messages$: Observable<UserMessageEvent> = this.messagesSubject.asObservable();
   public notifications$: Observable<NotificationEvent> = this.notificationsSubject.asObservable();
 
