@@ -4,24 +4,35 @@ import { RoutePaths } from '../constants/routes';
 export interface IActionConfig {
   route: string;
   requiresAuth: boolean;
+  appendId: boolean;
 }
 
 const ACTION_ROUTES: Record<string, IActionConfig> = {
-  'presence': { route: `/${RoutePaths.CONFIRM_PRESENCE}`, requiresAuth: true },
-  'join': { route: `/${RoutePaths.USER}/${RoutePaths.APPOINTMENTS}`, requiresAuth: true },
+  'presence': { route: `/${RoutePaths.CONFIRM_PRESENCE}`, requiresAuth: true, appendId: true },
+  'join': { route: `/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`, requiresAuth: true, appendId: true },
 };
 
-const DEFAULT_ACTION: IActionConfig = { route: `/${RoutePaths.USER}/${RoutePaths.DASHBOARD}`, requiresAuth: true };
+const DEFAULT_ACTION: IActionConfig = { route: `/${RoutePaths.USER}/${RoutePaths.DASHBOARD}`, requiresAuth: true, appendId: false };
 
 @Injectable({
   providedIn: 'root'
 })
 export class ActionHandlerService {
-  getRouteForAction(action: string | null): string {
+  getRouteForAction(action: string | null, id: string | null = null): string {
     if (!action) {
       return DEFAULT_ACTION.route;
     }
     const config = ACTION_ROUTES[action];
-    return config ? config.route : DEFAULT_ACTION.route;
+    if (!config) {
+      return DEFAULT_ACTION.route;
+    }
+
+    if (config.appendId && id) {
+      if (action === 'join') {
+        return `${config.route}/${id}/video`;
+      }
+      return `${config.route}/${id}`;
+    }
+    return config.route;
   }
 }

@@ -17,6 +17,11 @@ export const routes: Routes = [
       import('./pages/confirm-presence/confirm-presence').then(c => c.ConfirmPresence),
   },
   {
+    path: `${RoutePaths.CONFIRM_PRESENCE}/:id`,
+    loadComponent: () =>
+      import('./pages/confirm-presence/confirm-presence').then(c => c.ConfirmPresence),
+  },
+  {
     path: RoutePaths.AUTH,
     loadChildren: () =>
       import('./modules/auth/auth-module').then(c => c.AuthModule),

@@ -5,6 +5,7 @@ import { ToasterContainerComponent } from './core/components/toaster-container/t
 import { Confirmation } from './shared/components/confirmation/confirmation';
 import { Auth } from './core/services/auth';
 import { UserWebSocketService } from './core/services/user-websocket.service';
+import { ActionHandlerService } from './core/services/action-handler.service';
 import { RoutePaths } from './core/constants/routes';
 
 @Component({
@@ -20,6 +21,7 @@ export class App implements OnInit, OnDestroy {
   constructor(
     private authService: Auth,
     private userWsService: UserWebSocketService,
+    private actionHandler: ActionHandlerService,
     private router: Router
   ) {}
 
@@ -41,11 +43,15 @@ export class App implements OnInit, OnDestroy {
     const urlParams = new URLSearchParams(window.location.search);
     const authToken = urlParams.get('auth');
     const action = urlParams.get('action');
+    const id = urlParams.get('id');
 
     if (authToken) {
       this.router.navigate([`/${RoutePaths.VERIFY_INVITE}`], {
-        queryParams: { auth: authToken, action }
+        queryParams: { auth: authToken, action, id }
       });
+    } else if (action && this.authService.isLoggedIn()) {
+      const route = this.actionHandler.getRouteForAction(action, id);
+      this.router.navigateByUrl(route);
     }
   }
 

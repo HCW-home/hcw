@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { ConsultationService } from '../../core/services/consultation.service';
 import { Appointment, AppointmentStatus, AppointmentType } from '../../core/models/consultation';
@@ -47,13 +47,19 @@ export class ConfirmPresence implements OnInit, OnDestroy {
   protected readonly AppointmentType = AppointmentType;
 
   constructor(
+    private route: ActivatedRoute,
     private consultationService: ConsultationService,
     private router: Router,
     private toasterService: ToasterService
   ) {}
 
   ngOnInit(): void {
-    this.loadPendingAppointments();
+    const appointmentId = this.route.snapshot.paramMap.get('id');
+    if (appointmentId) {
+      this.loadSingleAppointment(Number(appointmentId));
+    } else {
+      this.loadPendingAppointments();
+    }
   }
 
   ngOnDestroy(): void {
@@ -81,6 +87,29 @@ export class ConfirmPresence implements OnInit, OnDestroy {
         error: () => {
           this.isLoading = false;
           this.errorMessage = 'Failed to load appointments';
+        }
+      });
+  }
+
+  private loadSingleAppointment(appointmentId: number): void {
+    this.isLoading = true;
+    this.errorMessage = null;
+
+    this.consultationService.getAppointment(appointmentId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (appointment) => {
+          this.isLoading = false;
+          if (appointment.status === AppointmentStatus.SCHEDULED) {
+            this.pendingAppointments = [this.mapAppointment(appointment)];
+          } else {
+            this.pendingAppointments = [];
+            this.errorMessage = 'This appointment is no longer pending confirmation';
+          }
+        },
+        error: () => {
+          this.isLoading = false;
+          this.errorMessage = 'Failed to load appointment';
         }
       });
   }
