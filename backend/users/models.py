@@ -192,6 +192,8 @@ class User(AbstractUser):
             self.one_time_auth_token = str(uuid.uuid4())
         super().save(*args, **kwargs)
 
+    class Meta:
+        ordering = ['first_name', 'last_name', 'email']
 
 class HealthMetric(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
