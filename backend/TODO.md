@@ -57,3 +57,7 @@ update patient user information
 * Health Metric : add custom fields on patient + on health metric + endpoints
 <!-- * Remove delete appointment -->
 check permission for /dashboard
+
+
+## Add filter patient (user) to only have doctor
+
