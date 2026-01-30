@@ -25,6 +25,8 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework import filters
+from django_filters.rest_framework import DjangoFilterBackend
 
 from .filters import AppointmentFilter, ConsultationFilter
 from .models import (
@@ -241,12 +243,14 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     Supports FHIR format by adding ?format=fhir query parameter
     """
 
+    queryset = Appointment.objects.all()
     fhir_class = AppointmentFhir
     permission_classes = [IsAuthenticated, ConsultationAssigneePermission]
     pagination_class = ConsultationPagination
     ordering_fields = ["created_at", "updated_at", "scheduled_at"]
-    filterset_fields = ["consultation", "status", "scheduled_at"]
+    # filterset_fields = ["consultation", "status"]
     http_method_names = ["get", "post", "patch", "put", "head", "options"]
+    filterset_class = AppointmentFilter
 
     def get_serializer_class(self):
         if self.action == 'create':

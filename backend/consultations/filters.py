@@ -1,5 +1,7 @@
 import django_filters
 from .models import Consultation, Appointment
+from django.utils import timezone
+from datetime import timedelta
 
 class ConsultationFilter(django_filters.FilterSet):
     # Custom boolean filter to check if closed_at is set
@@ -21,14 +23,19 @@ class ConsultationFilter(django_filters.FilterSet):
 
 
 class AppointmentFilter(django_filters.FilterSet):
+    future = django_filters.BooleanFilter(method='filter_future')
 
     class Meta:
         model = Appointment
-        fields = [
-            "consultation__beneficiary",
-            "consultation__beneficiary",
-            "consultation__created_by",
-            "consultation__owned_by",
-            "consultation__closed_at",
-            "status"
-        ]
+        fields = {
+            "consultation": ['exact',],
+            "status": ['exact',],
+            'scheduled_at': ['day__gt'],
+        }
+
+    def filter_future(self, queryset, name, value):
+        if value is True:
+            return queryset.filter(scheduled_at__gte=timezone.now() - timedelta(hours=1))
+        elif value is False:
+            return queryset.filter(scheduled_at__lt=timezone.now() - timedelta(hours=1))
+        return queryset
