@@ -96,6 +96,23 @@ DEFAULT_NOTIFICATION_MESSAGES = {
         "model": "consultations.Message",
         "helper_text": "Notification sent when a new message is posted in a consultation",
     },
+    "reset_password": {
+        "template_subject": _("New message in consultation"),
+        "template_content": _(
+            "You have received a new message from {{ obj.message.created_by.name }} "
+            "in consultation #{{ obj.message.consultation.pk }}: "
+            "{{ obj.message.content|truncatewords:20 }}"
+        ),
+        "template_content_html": _(
+            "<p>You have received a new message from <strong>{{ obj.message.created_by.name }}</strong> "
+            "in consultation #{{ obj.message.consultation.pk }}:</p>"
+            "<p>{{ obj.message.content|truncatewords:20 }}</p>"
+        ),
+        "model": "consultations.Message",
+        "helper_text": "Notification sent when a new message is posted in a consultation",
+        "action": "reset",
+        "action_label": _("Click here to reset your password"),
+    },
 }
 
 

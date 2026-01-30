@@ -590,6 +590,8 @@ class Message(ModelCeleryAbstract):
         choices=NOTIFICATION_CHOICES, blank=True, null=True
     )
 
+    in_notification = models.BooleanField(help_text="Show in notification user ring", default=True)
+
     # Message type and provider
     communication_method = models.CharField(
         _("communication method"),
@@ -673,9 +675,13 @@ class Message(ModelCeleryAbstract):
 
     @property
     def template_invalid_msg(self):
+        self.render_content
+        self.render_subject
+        self.render_content_html
         try:
             self.render_content
             self.render_subject
+            self.render_content_html
         except Exception as e:
             return e
 
@@ -715,6 +721,8 @@ class Message(ModelCeleryAbstract):
     @property
     def action_label(self):
         return self.template.action_label
+    
+    additionnal_link_args = models.JSONField(blank=True, null=True)
 
     @property
     def access_link(self):
@@ -724,8 +732,17 @@ class Message(ModelCeleryAbstract):
         base_url = config.patient_base_url if self.sent_to.is_patient else config.practitioner_base_url
 
         if self.sent_to.one_time_auth_token:
-            return f"{base_url}?auth={self.sent_to.one_time_auth_token}?&action={self.action}&id={self.object_pk}&model={self.object_model}"
-        return f"{base_url}?&action={self.action}&id={self.object_pk}&model={self.object_model}"
+            full_url = f"{base_url}?auth={self.sent_to.one_time_auth_token}&action={self.action}&id={self.object_pk}&model={self.object_model}"
+        else:
+            full_url = f"{base_url}?&action={self.action}&id={self.object_pk}&model={self.object_model}"
+
+        if self.additionnal_link_args:
+            full_url += "".join([f"&{key}={value}" for key,
+                                value in self.additionnal_link_args.items()])
+        
+        return full_url
+
+
 
     @property
     def render_content(self):

@@ -378,7 +378,7 @@ class UserNotificationsView(APIView):
     )
     def get(self, request):
         """Get all notifications for the authenticated user as recipient."""
-        notifications = Message.objects.filter(sent_to=request.user)
+        notifications = Message.objects.filter(sent_to=request.user, in_notification=True)
 
         # Filter by status if provided
         status = request.query_params.get("status")
