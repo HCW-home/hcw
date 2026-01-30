@@ -230,8 +230,8 @@ export class AppointmentsPage implements OnInit {
   }
 
   viewDetails(appointment: DisplayAppointment): void {
-    if (appointment.originalAppointment.consultation) {
-      this.navCtrl.navigateForward(`/consultation/${appointment.originalAppointment.consultation}`);
+    if (appointment.originalAppointment.consultation_id) {
+      this.navCtrl.navigateForward(`/consultation/${appointment.originalAppointment.consultation_id}`);
     } else {
       this.showToast('Appointment details coming soon');
     }

@@ -10,6 +10,7 @@ import { Button } from '../../../../shared/ui-components/button/button';
 import { Input } from '../../../../shared/ui-components/input/input';
 import { Loader } from '../../../../shared/components/loader/loader';
 import { Badge } from '../../../../shared/components/badge/badge';
+import { Tabs, TabItem } from '../../../../shared/components/tabs/tabs';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { AddEditPatient } from '../add-edit-patient/add-edit-patient';
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
@@ -21,9 +22,11 @@ import { IUser } from '../../models/user';
 import { getOnlineStatusBadgeType } from '../../../../shared/tools/helper';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
 
+type PatientTabType = 'all' | 'registered' | 'temporary';
+
 @Component({
   selector: 'app-patients',
-  imports: [CommonModule, FormsModule, Page, Svg, Typography, Button, Input, Loader, Badge, ModalComponent, AddEditPatient],
+  imports: [CommonModule, FormsModule, Page, Svg, Typography, Button, Input, Loader, Badge, Tabs, ModalComponent, AddEditPatient],
   templateUrl: './patients.html',
   styleUrl: './patients.scss',
 })
@@ -44,6 +47,12 @@ export class Patients implements OnInit, OnDestroy {
   totalCount = signal(0);
   searchQuery = '';
   showAddModal = signal(false);
+  activeTab = signal<PatientTabType>('all');
+  tabItems: TabItem[] = [
+    { id: 'all', label: 'All' },
+    { id: 'registered', label: 'Registered' },
+    { id: 'temporary', label: 'Temporary' }
+  ];
 
   ngOnInit(): void {
     this.loadPatients();
@@ -65,9 +74,16 @@ export class Patients implements OnInit, OnDestroy {
 
   loadPatients(): void {
     this.loading.set(true);
-    const params: { search?: string; page_size?: number } = { page_size: 50 };
+    const params: { search?: string; page_size?: number; temporary?: boolean } = { page_size: 50 };
     if (this.searchQuery) {
       params.search = this.searchQuery;
+    }
+
+    const currentTab = this.activeTab();
+    if (currentTab === 'registered') {
+      params.temporary = false;
+    } else if (currentTab === 'temporary') {
+      params.temporary = true;
     }
 
     this.patientService.getPatients(params).pipe(
@@ -83,6 +99,11 @@ export class Patients implements OnInit, OnDestroy {
         this.loading.set(false);
       }
     });
+  }
+
+  setActiveTab(tabId: string): void {
+    this.activeTab.set(tabId as PatientTabType);
+    this.loadPatients();
   }
 
   onSearchChange(query: string): void {

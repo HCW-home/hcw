@@ -60,6 +60,7 @@ export interface IUser {
   specialities?: ISpeciality[];
   accepted_term?: ITerm;
   is_online?: boolean;
+  temporary?: boolean;
 }
 
 export interface IUserUpdateRequest {

@@ -107,29 +107,14 @@
       }
 
       <div class="actions-section">
-        @if (canJoin()) {
-          <button class="action-button primary-btn" (click)="joinVideoCall()">
-            <ion-icon name="videocam-outline"></ion-icon>
-            Join Video Call
-          </button>
-        }
-
-        @if (appointment()?.consultation) {
+        <button class="action-button primary-btn" (click)="joinVideoCall()">
+          <ion-icon name="videocam-outline"></ion-icon>
+          Join Video Call
+        </button>
+        @if (appointment()?.consultation_id) {
           <button class="action-button secondary-btn" (click)="viewConsultation()">
             <ion-icon name="chatbubbles-outline"></ion-icon>
             View Consultation
-          </button>
-        }
-
-        @if (canCancel()) {
-          <button class="action-button danger-btn" [disabled]="isCancelling()" (click)="cancelAppointment()">
-            @if (isCancelling()) {
-              <ion-spinner name="crescent"></ion-spinner>
-              Cancelling...
-            } @else {
-              <ion-icon name="close-circle-outline"></ion-icon>
-              Cancel Appointment
-            }
           </button>
         }
       </div>

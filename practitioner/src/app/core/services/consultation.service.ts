@@ -18,6 +18,7 @@ import {
   CreateConsultationRequest,
   CreateConsultationRequestPayload,
   DashboardResponse,
+  IParticipantDetail,
 } from '../models/consultation';
 import { PaginatedResponse } from '../models/global';
 
@@ -327,10 +328,14 @@ export class ConsultationService {
     return this.http.get<DashboardResponse>(`${this.apiUrl}/dashboard/`);
   }
 
-  confirmAppointmentPresence(appointmentId: number, isPresent: boolean): Observable<Appointment> {
-    return this.http.post<Appointment>(
-      `${this.apiUrl}/user/appointments/${appointmentId}/presence/`,
-      { is_confirmed: isPresent }
+  getParticipantById(id: string): Observable<IParticipantDetail> {
+    return this.http.get<IParticipantDetail>(`${this.apiUrl}/participants/${id}/`);
+  }
+
+  confirmParticipantPresence(participantId: string, isConfirmed: boolean | null): Observable<IParticipantDetail> {
+    return this.http.patch<IParticipantDetail>(
+      `${this.apiUrl}/user/participants/${participantId}/`,
+      { is_confirmed: isConfirmed }
     );
   }
 }

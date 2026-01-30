@@ -36,6 +36,7 @@ export class PatientService {
     search?: string;
     page?: number;
     page_size?: number;
+    temporary?: boolean;
   }): Observable<PaginatedResponse<IUser>> {
     let httpParams = new HttpParams();
     if (params) {

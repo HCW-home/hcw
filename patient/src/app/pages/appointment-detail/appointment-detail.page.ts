@@ -75,16 +75,6 @@ export class AppointmentDetailPage implements OnInit, OnDestroy {
   isCancelled = computed(() => this.appointment()?.status === 'cancelled');
   isOnline = computed(() => this.appointment()?.type === 'online');
 
-  canJoin = computed(() => {
-    const apt = this.appointment();
-    return apt?.status === 'scheduled' && apt?.type === 'online';
-  });
-
-  canCancel = computed(() => {
-    const apt = this.appointment();
-    return apt?.status === 'scheduled';
-  });
-
   constructor(
     private route: ActivatedRoute,
     private navCtrl: NavController,
@@ -162,49 +152,17 @@ export class AppointmentDetailPage implements OnInit, OnDestroy {
     const apt = this.appointment();
     if (!apt) return;
     let url = `/consultation/${apt.id}/video?type=appointment`;
-    if (apt.consultation) {
-      url += `&consultationId=${apt.consultation}`;
+    if (apt.consultation_id) {
+      url += `&consultationId=${apt.consultation_id}`;
     }
     this.navCtrl.navigateForward(url);
   }
 
   viewConsultation(): void {
     const apt = this.appointment();
-    if (apt?.consultation) {
-      this.navCtrl.navigateForward(`/consultation/${apt.consultation}`);
+    if (apt?.consultation_id) {
+      this.navCtrl.navigateForward(`/consultation/${apt.consultation_id}`);
     }
-  }
-
-  async cancelAppointment(): Promise<void> {
-    const apt = this.appointment();
-    if (!apt) return;
-
-    this.isCancelling.set(true);
-    this.consultationService.cancelAppointment(apt.id)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: async (updated) => {
-          this.appointment.set(updated);
-          this.isCancelling.set(false);
-          const toast = await this.toastController.create({
-            message: 'Appointment cancelled',
-            duration: 3000,
-            position: 'bottom',
-            color: 'success'
-          });
-          await toast.present();
-        },
-        error: async () => {
-          this.isCancelling.set(false);
-          const toast = await this.toastController.create({
-            message: 'Failed to cancel appointment',
-            duration: 3000,
-            position: 'bottom',
-            color: 'danger'
-          });
-          await toast.present();
-        }
-      });
   }
 
   getParticipants(): { name: string; isConfirmed: boolean }[] {

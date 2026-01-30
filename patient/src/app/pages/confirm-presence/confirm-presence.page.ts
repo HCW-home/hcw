@@ -14,11 +14,12 @@ import {
 } from '@ionic/angular/standalone';
 import { Subject, takeUntil } from 'rxjs';
 import { ConsultationService } from '../../core/services/consultation.service';
-import { Appointment, AppointmentStatus } from '../../core/models/consultation.model';
+import { IParticipantDetail } from '../../core/models/consultation.model';
 import { formatDateFromISO, formatTimeFromISO } from '../../core/utils/date-helper';
 
 interface PendingAppointment {
   id: number;
+  participantId: number;
   scheduled_at: string;
   type: string;
   doctorName: string;
@@ -44,7 +45,6 @@ interface PendingAppointment {
 })
 export class ConfirmPresencePage implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
-  private appointmentId: number | null = null;
 
   isLoading = true;
   pendingAppointments: PendingAppointment[] = [];
@@ -59,12 +59,13 @@ export class ConfirmPresencePage implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     const idParam = this.route.snapshot.paramMap.get('id');
-    this.appointmentId = idParam ? parseInt(idParam, 10) : null;
+    const participantId = idParam ? parseInt(idParam, 10) : null;
 
-    if (this.appointmentId) {
-      this.loadSingleAppointment(this.appointmentId);
+    if (participantId) {
+      this.loadParticipant(participantId);
     } else {
-      this.loadPendingAppointments();
+      this.isLoading = false;
+      this.errorMessage = 'Invalid confirmation link';
     }
   }
 
@@ -73,16 +74,22 @@ export class ConfirmPresencePage implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  private loadSingleAppointment(id: number): void {
+  private loadParticipant(participantId: number): void {
     this.isLoading = true;
     this.errorMessage = null;
 
-    this.consultationService.getAppointmentById(id)
+    this.consultationService.getParticipantById(participantId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (appointment) => {
+        next: (participant) => {
           this.isLoading = false;
-          this.pendingAppointments = [this.mapAppointment(appointment)];
+          const appointment = participant.appointment;
+          if (appointment.status === 'scheduled') {
+            this.pendingAppointments = [this.mapParticipant(participant)];
+          } else {
+            this.pendingAppointments = [];
+            this.errorMessage = 'This appointment is no longer pending confirmation';
+          }
         },
         error: () => {
           this.isLoading = false;
@@ -91,32 +98,8 @@ export class ConfirmPresencePage implements OnInit, OnDestroy {
       });
   }
 
-  private loadPendingAppointments(): void {
-    this.isLoading = true;
-    this.errorMessage = null;
-
-    this.consultationService.getMyAppointments({ status: 'scheduled' })
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response) => {
-          this.isLoading = false;
-          const now = new Date();
-          const scheduledStatus: AppointmentStatus = 'scheduled';
-          this.pendingAppointments = response.results
-            .filter(apt => {
-              const scheduledDate = new Date(apt.scheduled_at);
-              return scheduledDate > now && apt.status === scheduledStatus;
-            })
-            .map(apt => this.mapAppointment(apt));
-        },
-        error: () => {
-          this.isLoading = false;
-          this.errorMessage = 'Failed to load appointments';
-        }
-      });
-  }
-
-  private mapAppointment(apt: Appointment): PendingAppointment {
+  private mapParticipant(participant: IParticipantDetail): PendingAppointment {
+    const apt = participant.appointment;
     const createdBy = apt.created_by;
     const doctorName = createdBy
       ? `${createdBy.first_name || ''} ${createdBy.last_name || ''}`.trim() || 'Healthcare Provider'
@@ -124,6 +107,7 @@ export class ConfirmPresencePage implements OnInit, OnDestroy {
 
     return {
       id: apt.id,
+      participantId: participant.id,
       scheduled_at: apt.scheduled_at,
       type: apt.type,
       doctorName,
@@ -135,7 +119,7 @@ export class ConfirmPresencePage implements OnInit, OnDestroy {
   confirmPresence(appointment: PendingAppointment): void {
     appointment.isConfirming = true;
 
-    this.consultationService.confirmAppointmentPresence(appointment.id, true)
+    this.consultationService.confirmParticipantPresence(appointment.participantId, true)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: async () => {
@@ -166,7 +150,7 @@ export class ConfirmPresencePage implements OnInit, OnDestroy {
   declinePresence(appointment: PendingAppointment): void {
     appointment.isDeclining = true;
 
-    this.consultationService.confirmAppointmentPresence(appointment.id, false)
+    this.consultationService.confirmParticipantPresence(appointment.participantId, false)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: async () => {

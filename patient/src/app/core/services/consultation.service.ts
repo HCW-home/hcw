@@ -8,7 +8,8 @@ import {
   Participant,
   ConsultationRequest,
   ConsultationMessage,
-  IDashboardResponse
+  IDashboardResponse,
+  IParticipantDetail
 } from '../models/consultation.model';
 
 export interface ConsultationFilters {
@@ -128,5 +129,16 @@ export class ConsultationService {
 
   getMessageAttachment(messageId: number): Observable<Blob> {
     return this.api.getBlob(`/messages/${messageId}/attachment/`);
+  }
+
+  getParticipantById(id: number): Observable<IParticipantDetail> {
+    return this.api.get<IParticipantDetail>(`/user/participants/${id}/`);
+  }
+
+  confirmParticipantPresence(participantId: number, isConfirmed: boolean | null): Observable<IParticipantDetail> {
+    return this.api.patch<IParticipantDetail>(
+      `/user/participants/${participantId}/`,
+      { is_confirmed: isConfirmed }
+    );
   }
 }

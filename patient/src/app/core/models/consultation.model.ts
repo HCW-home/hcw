@@ -59,7 +59,7 @@ export type AppointmentType = 'online' | 'inPerson';
 
 export interface Appointment {
   id: number;
-  consultation?: number;
+  consultation_id?: number;
   type: AppointmentType;
   status: AppointmentStatus;
   scheduled_at: string;
@@ -156,4 +156,17 @@ export interface IDashboardResponse {
   requests: ConsultationRequest[];
   consultations: Consultation[];
   appointments: Appointment[];
+}
+
+export interface IParticipantDetail {
+  id: number;
+  is_active: boolean;
+  is_confirmed: boolean | null;
+  is_invited: boolean;
+  status: string;
+  appointment: Appointment;
+  user?: User;
+  email?: string;
+  first_name?: string;
+  last_name?: string;
 }

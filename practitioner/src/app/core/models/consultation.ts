@@ -231,3 +231,13 @@ export interface DashboardResponse {
   upcoming_appointments: Appointment[];
   overdue_consultations: Consultation[];
 }
+
+export interface IParticipantDetail {
+  id: number;
+  is_active: boolean;
+  is_confirmed: boolean | null;
+  is_invited: boolean;
+  status: ParticipantStatus;
+  appointment: Appointment;
+  user: User | null;
+}

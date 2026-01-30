@@ -109,6 +109,8 @@
 
             <div class="appointment-actions">
               <app-button
+                [block]="true"
+                [size]="ButtonSizeEnum.medium"
                 [style]="ButtonStyleEnum.stroke"
                 [state]="ButtonStateEnum.error"
                 text="Decline"
@@ -118,6 +120,8 @@
                 (buttonClick)="declinePresence(appointment)">
               </app-button>
               <app-button
+                [block]="true"
+                [size]="ButtonSizeEnum.medium"
                 [style]="ButtonStyleEnum.primary"
                 text="Confirm"
                 leftIcon="check"
@@ -130,7 +134,12 @@
         }
 
         <div class="skip-link">
-          <span class="action-link" (click)="goToHome()">Skip and go to dashboard</span>
+          <app-button
+            [size]="ButtonSizeEnum.small"
+            [style]="ButtonStyleEnum.text"
+            text="Skip"
+            (buttonClick)="goToHome()">
+          </app-button>
         </div>
       </div>
     }

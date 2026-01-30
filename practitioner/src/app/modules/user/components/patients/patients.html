@@ -23,6 +23,12 @@
       </div>
     </div>
 
+    <app-tabs
+      [tabs]="tabItems"
+      [activeTab]="activeTab()"
+      (tabChange)="setActiveTab($event)">
+    </app-tabs>
+
     <div class="patients-card">
       <div class="table-header">
         <div class="header-cell patient-col">Patient</div>

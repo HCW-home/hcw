@@ -2,19 +2,20 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { ConsultationService } from '../../core/services/consultation.service';
-import { Appointment, AppointmentStatus, AppointmentType } from '../../core/models/consultation';
+import {  AppointmentType, IParticipantDetail } from '../../core/models/consultation';
 import { ToasterService } from '../../core/services/toaster.service';
 import { Typography } from '../../shared/ui-components/typography/typography';
 import { Button } from '../../shared/ui-components/button/button';
 import { Svg } from '../../shared/ui-components/svg/svg';
 import { Loader } from '../../shared/components/loader/loader';
 import { TypographyTypeEnum } from '../../shared/constants/typography';
-import { ButtonStyleEnum, ButtonStateEnum } from '../../shared/constants/button';
+import { ButtonStyleEnum, ButtonStateEnum, ButtonSizeEnum } from '../../shared/constants/button';
 import { RoutePaths } from '../../core/constants/routes';
 import { LocalDatePipe } from '../../shared/pipes/local-date.pipe';
 
 interface IPendingAppointment {
   id: number;
+  participantId: number;
   scheduled_at: string;
   type: AppointmentType;
   doctorName: string;
@@ -41,6 +42,7 @@ export class ConfirmPresence implements OnInit, OnDestroy {
   isLoading = true;
   pendingAppointments: IPendingAppointment[] = [];
   errorMessage: string | null = null;
+  participantId: string;
 
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
@@ -52,14 +54,16 @@ export class ConfirmPresence implements OnInit, OnDestroy {
     private consultationService: ConsultationService,
     private router: Router,
     private toasterService: ToasterService
-  ) {}
+  ) {
+    this.participantId = this.route.snapshot.paramMap.get('id') as string;
+  }
 
   ngOnInit(): void {
-    const appointmentId = this.route.snapshot.paramMap.get('id');
-    if (appointmentId) {
-      this.loadSingleAppointment(Number(appointmentId));
+    if (this.participantId) {
+      this.loadParticipant();
     } else {
-      this.loadPendingAppointments();
+      this.isLoading = false;
+      this.errorMessage = 'Invalid confirmation link';
     }
   }
 
@@ -68,41 +72,18 @@ export class ConfirmPresence implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  private loadPendingAppointments(): void {
+  private loadParticipant(): void {
     this.isLoading = true;
     this.errorMessage = null;
 
-    this.consultationService.getAppointments({ status: 'scheduled' })
+    this.consultationService.getParticipantById(this.participantId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response) => {
+        next: (participant) => {
           this.isLoading = false;
-          const now = new Date();
-          this.pendingAppointments = response.results
-            .filter(apt => {
-              const scheduledDate = new Date(apt.scheduled_at);
-              return scheduledDate > now && apt.status === AppointmentStatus.SCHEDULED;
-            })
-            .map(apt => this.mapAppointment(apt));
-        },
-        error: () => {
-          this.isLoading = false;
-          this.errorMessage = 'Failed to load appointments';
-        }
-      });
-  }
-
-  private loadSingleAppointment(appointmentId: number): void {
-    this.isLoading = true;
-    this.errorMessage = null;
-
-    this.consultationService.getAppointment(appointmentId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (appointment) => {
-          this.isLoading = false;
-          if (appointment.status === AppointmentStatus.SCHEDULED) {
-            this.pendingAppointments = [this.mapAppointment(appointment)];
+          const appointment = participant.appointment;
+          if (appointment) {
+            this.pendingAppointments = [this.mapParticipant(participant)];
           } else {
             this.pendingAppointments = [];
             this.errorMessage = 'This appointment is no longer pending confirmation';
@@ -115,14 +96,15 @@ export class ConfirmPresence implements OnInit, OnDestroy {
       });
   }
 
-  private mapAppointment(apt: Appointment): IPendingAppointment {
+  private mapParticipant(participant: IParticipantDetail): IPendingAppointment {
+    const apt = participant.appointment;
     const createdBy = apt.created_by;
     const doctorName = createdBy
-      ? `${createdBy.first_name || ''} ${createdBy.last_name || ''}`.trim() || 'Healthcare Provider'
-      : 'Healthcare Provider';
+      ? `${createdBy.first_name || ''} ${createdBy.last_name || ''}`.trim() : '';
 
     return {
       id: apt.id,
+      participantId: participant.id,
       scheduled_at: apt.scheduled_at,
       type: apt.type,
       doctorName,
@@ -134,7 +116,7 @@ export class ConfirmPresence implements OnInit, OnDestroy {
   confirmPresence(appointment: IPendingAppointment): void {
     appointment.isConfirming = true;
 
-    this.consultationService.confirmAppointmentPresence(appointment.id, true)
+    this.consultationService.confirmParticipantPresence(this.participantId, true)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
@@ -153,7 +135,7 @@ export class ConfirmPresence implements OnInit, OnDestroy {
   declinePresence(appointment: IPendingAppointment): void {
     appointment.isDeclining = true;
 
-    this.consultationService.confirmAppointmentPresence(appointment.id, false)
+    this.consultationService.confirmParticipantPresence(this.participantId, false)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
@@ -181,4 +163,5 @@ export class ConfirmPresence implements OnInit, OnDestroy {
     this.router.navigateByUrl(`/${RoutePaths.USER}/${RoutePaths.DASHBOARD}`);
   }
 
+  protected readonly ButtonSizeEnum = ButtonSizeEnum;
 }
