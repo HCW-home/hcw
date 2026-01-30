@@ -48,7 +48,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import HealthMetric, Language, Speciality
+from .models import HealthMetric, Language, Speciality, User
 from .serializers import (
     HealthMetricSerializer,
     LanguageSerializer,
@@ -57,9 +57,7 @@ from .serializers import (
     UserDetailsSerializer,
     UserParticipantDetailSerializer
 )
-
-User = get_user_model()
-
+from django_filters.rest_framework import DjangoFilterBackend
 
 class DjangoModelPermissionsWithView(DjangoModelPermissions):
     """
@@ -572,12 +570,13 @@ class UserViewSet(viewsets.ModelViewSet):
     Supports search by first name, last name, and email
     """
 
-    queryset = User.objects.filter(temporary=False)
+    queryset = User.objects.filter()
     serializer_class = UserDetailsSerializer
     permission_classes = [IsAuthenticated, DjangoModelPermissionsWithView]
     pagination_class = UniversalPagination
-    filter_backends = [filters.SearchFilter]
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     search_fields = ["first_name", "last_name", "email"]
+    filterset_fields = ["temporary"]
 
     def update(self, request, *args, **kwargs):
         """Prevent updating users with superuser, staff access, or users in groups."""
@@ -618,30 +617,6 @@ class UserViewSet(viewsets.ModelViewSet):
             )
 
         return super().partial_update(request, *args, **kwargs)
-
-    @extend_schema(responses=HealthMetricSerializer(many=True))
-    @action(detail=True, methods=["get"])
-    def healthmetric(self, request, pk=None):
-        """Get health metrics for this user"""
-        user = self.get_object()
-        health_metrics = HealthMetric.objects.filter(user=user).order_by("-measured_at")
-
-        page = self.paginate_queryset(health_metrics)
-        if page is not None:
-            serializer = HealthMetricSerializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        serializer = HealthMetricSerializer(health_metrics, many=True)
-        return Response(serializer.data)
-
-    @extend_schema(responses=SpecialitySerializer(many=True))
-    @action(detail=True, methods=["get"])
-    def specialities(self, request, pk=None):
-        """Get specialities for this user"""
-        user = self.get_object()
-        specialities = user.specialities.all()
-        serializer = SpecialitySerializer(specialities, many=True)
-        return Response(serializer.data)
 
 
 class OpenIDView(SocialLoginView):
