@@ -94,6 +94,13 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        now = timezone.now()
+        if consultation.appointments.filter(scheduled_at__gt=now, status=AppointmentStatus.scheduled).exists():
+            return Response(
+                {"error": "Unable to close consultation with appointment in future"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         consultation.closed_at = timezone.now()
         consultation.save()
 
