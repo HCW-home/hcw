@@ -251,6 +251,7 @@ REST_AUTH = {
     "USER_DETAILS_SERIALIZER": "users.serializers.UserDetailsSerializer",
     "REGISTER_SERIALIZER": "users.serializers.RegisterSerializer",
     "LOGIN_SERIALIZER": "users.serializers.LoginSerializer",
+    "PASSWORD_RESET_SERIALIZER": "users.serializers.CustomPasswordResetSerializer",
 }
 
 LOGIN_REDIRECT_URL = "/home/"

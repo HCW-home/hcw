@@ -86,30 +86,26 @@ DEFAULT_NOTIFICATION_MESSAGES = {
         "template_content": _(
             "You have received a new message from {{ obj.message.created_by.name }} "
             "in consultation #{{ obj.message.consultation.pk }}: "
-            "{{ obj.message.content|truncatewords:20 }}"
+            "{{ obj.message.content }}"
         ),
         "template_content_html": _(
             "<p>You have received a new message from <strong>{{ obj.message.created_by.name }}</strong> "
             "in consultation #{{ obj.message.consultation.pk }}:</p>"
-            "<p>{{ obj.message.content|truncatewords:20 }}</p>"
+            "<p>{{ obj.message.content }}</p>"
         ),
         "model": "consultations.Message",
         "helper_text": "Notification sent when a new message is posted in a consultation",
     },
     "reset_password": {
-        "template_subject": _("New message in consultation"),
+        "template_subject": _("Reset your password"),
         "template_content": _(
-            "You have received a new message from {{ obj.message.created_by.name }} "
-            "in consultation #{{ obj.message.consultation.pk }}: "
-            "{{ obj.message.content|truncatewords:20 }}"
+            "You requested a password change, delete this email if it was not requested by email."
         ),
         "template_content_html": _(
-            "<p>You have received a new message from <strong>{{ obj.message.created_by.name }}</strong> "
-            "in consultation #{{ obj.message.consultation.pk }}:</p>"
-            "<p>{{ obj.message.content|truncatewords:20 }}</p>"
+            "<p>You requested a password change, delete this email if it was not requested by email."
         ),
         "model": "consultations.Message",
-        "helper_text": "Notification sent when a new message is posted in a consultation",
+        "helper_text": "Notification sent user request to change password",
         "action": "reset",
         "action_label": _("Click here to reset your password"),
     },

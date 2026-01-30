@@ -7,9 +7,9 @@ from django.contrib.auth import authenticate, get_user_model
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers, status
 from rest_framework.response import Response
-
+from dj_rest_auth.serializers import PasswordResetSerializer
 from .models import HealthMetric, Language, Organisation, Speciality
-
+from .forms import CustomAllAuthPasswordResetForm
 UserModel = get_user_model()
 
 
@@ -181,3 +181,10 @@ class HealthMetricSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+
+
+class CustomPasswordResetSerializer(PasswordResetSerializer):
+    @property
+    def password_reset_form_class(self):
+        return CustomAllAuthPasswordResetForm
+

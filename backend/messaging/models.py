@@ -675,9 +675,6 @@ class Message(ModelCeleryAbstract):
 
     @property
     def template_invalid_msg(self):
-        self.render_content
-        self.render_subject
-        self.render_content_html
         try:
             self.render_content
             self.render_subject
@@ -743,7 +740,6 @@ class Message(ModelCeleryAbstract):
         return full_url
 
 
-
     @property
     def render_content(self):
         try:
@@ -770,6 +766,8 @@ class Message(ModelCeleryAbstract):
                 {
                     'content': content_html,
                     'subject': subject,
+                    "action_label": self.action_label,
+                    "access_link": self.access_link,
                 }
             )
         except Exception as e:
