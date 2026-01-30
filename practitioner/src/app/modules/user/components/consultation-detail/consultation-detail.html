@@ -220,6 +220,26 @@
                     Cancelled
                   </button>
                 </div>
+                <div class="time-filter">
+                  <button
+                    class="filter-btn"
+                    [class.active]="appointmentTimeFilter() === 'upcoming'"
+                    (click)="setAppointmentTimeFilter('upcoming')">
+                    Upcoming
+                  </button>
+                  <button
+                    class="filter-btn"
+                    [class.active]="appointmentTimeFilter() === 'past'"
+                    (click)="setAppointmentTimeFilter('past')">
+                    Past
+                  </button>
+                  <button
+                    class="filter-btn"
+                    [class.active]="appointmentTimeFilter() === 'all'"
+                    (click)="setAppointmentTimeFilter('all')">
+                    All
+                  </button>
+                </div>
                 @if (!consultation()?.closed_at) {
                   <app-button
                     text="New Appointment"

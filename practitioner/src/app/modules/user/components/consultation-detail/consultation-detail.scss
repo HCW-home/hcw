@@ -265,7 +265,8 @@
     }
   }
 
-  .status-filter {
+  .status-filter,
+  .time-filter {
     display: flex;
     background: var(--slate-100);
     border-radius: 8px;

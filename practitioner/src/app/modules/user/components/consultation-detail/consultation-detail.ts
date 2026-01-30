@@ -48,6 +48,7 @@ import { RoutePaths } from '../../../../core/constants/routes';
 
 type AppointmentViewMode = 'list' | 'calendar';
 type AppointmentStatusFilter = 'all' | 'scheduled' | 'cancelled';
+type AppointmentTimeFilter = 'all' | 'upcoming' | 'past';
 
 @Component({
   selector: 'app-consultation-detail',
@@ -100,6 +101,7 @@ export class ConsultationDetail implements OnInit, OnDestroy {
 
   appointmentViewMode = signal<AppointmentViewMode>('list');
   appointmentStatusFilter = signal<AppointmentStatusFilter>('scheduled');
+  appointmentTimeFilter = signal<AppointmentTimeFilter>('upcoming');
   calendarComponent = viewChild<FullCalendarComponent>('appointmentCalendar');
 
   calendarEvents = computed<EventInput[]>(() => {
@@ -412,9 +414,15 @@ export class ConsultationDetail implements OnInit, OnDestroy {
   loadAppointments(): void {
     this.isLoadingAppointments.set(true);
     const statusFilter = this.appointmentStatusFilter();
-    const params: { status?: string } = {};
+    const timeFilter = this.appointmentTimeFilter();
+    const params: { status?: string; future?: boolean } = {};
     if (statusFilter !== 'all') {
       params.status = statusFilter;
+    }
+    if (timeFilter === 'upcoming') {
+      params.future = true;
+    } else if (timeFilter === 'past') {
+      params.future = false;
     }
     this.consultationService
       .getConsultationAppointments(this.consultationId, params)
@@ -747,6 +755,11 @@ export class ConsultationDetail implements OnInit, OnDestroy {
 
   setAppointmentStatusFilter(filter: AppointmentStatusFilter): void {
     this.appointmentStatusFilter.set(filter);
+    this.loadAppointments();
+  }
+
+  setAppointmentTimeFilter(tabId: string): void {
+    this.appointmentTimeFilter.set(tabId as AppointmentTimeFilter);
     this.loadAppointments();
   }
 

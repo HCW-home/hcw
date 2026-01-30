@@ -115,6 +115,7 @@ export class ConsultationService {
       page?: number;
       page_size?: number;
       status?: string;
+      future?: boolean;
     }
   ): Observable<PaginatedResponse<Appointment>> {
     let httpParams = new HttpParams();

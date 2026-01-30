@@ -89,13 +89,12 @@ export class PatientDetail implements OnInit, OnDestroy {
     this.loading.set(true);
     forkJoin({
       patient: this.patientService.getPatient(this.patientId),
-      healthMetrics: this.patientService.getPatientHealthMetrics(this.patientId, { page_size: 10 })
     }).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
-      next: ({ patient, healthMetrics }) => {
+      next: ({ patient }) => {
         this.patient.set(patient);
-        this.healthMetrics.set(this.transformHealthMetrics(healthMetrics.results));
+        // this.healthMetrics.set(this.transformHealthMetrics(healthMetrics.results));
         this.loading.set(false);
       },
       error: (err) => {
