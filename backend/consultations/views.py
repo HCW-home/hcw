@@ -38,6 +38,7 @@ from .models import (
     Reason,
     Request,
     RequestStatus,
+    Type
 )
 from .paginations import ConsultationPagination
 from .permissions import ConsultationAssigneePermission, DjangoModelPermissionsWithView
@@ -97,7 +98,7 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
         now = timezone.now()
         if consultation.appointments.filter(scheduled_at__gt=now, status=AppointmentStatus.scheduled).exists():
             return Response(
-                {"error": "Unable to close consultation with appointment in future"},
+                {"error": _("Unable to close consultation with appointment scheduled in future")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -304,7 +305,13 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         appointment = self.get_object()
         if appointment.consultation.closed_at:
             return Response(
-                {"error": "Cannot join call in closed consultation"},
+                {"error": _("Cannot join call in closed consultation")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if appointment.consultation.type != Type.online:
+            return Response(
+                {"error": _("Cannot join consultation if not online")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
