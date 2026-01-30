@@ -11,6 +11,7 @@ import { Input } from '../../../../shared/ui-components/input/input';
 import { Loader } from '../../../../shared/components/loader/loader';
 import { Badge } from '../../../../shared/components/badge/badge';
 import { Tabs, TabItem } from '../../../../shared/components/tabs/tabs';
+import { ListItem } from '../../../../shared/components/list-item/list-item';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { AddEditPatient } from '../add-edit-patient/add-edit-patient';
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
@@ -24,9 +25,15 @@ import { getErrorMessage } from '../../../../core/utils/error-helper';
 
 type PatientTabType = 'all' | 'registered' | 'temporary';
 
+interface TabCache {
+  data: IUser[];
+  loaded: boolean;
+  searchQuery: string;
+}
+
 @Component({
   selector: 'app-patients',
-  imports: [CommonModule, FormsModule, Page, Svg, Typography, Button, Input, Loader, Badge, Tabs, ModalComponent, AddEditPatient],
+  imports: [CommonModule, FormsModule, Page, Svg, Typography, Button, Input, Loader, Badge, Tabs, ListItem, ModalComponent, AddEditPatient],
   templateUrl: './patients.html',
   styleUrl: './patients.scss',
 })
@@ -37,6 +44,12 @@ export class Patients implements OnInit, OnDestroy {
   private toasterService = inject(ToasterService);
   private router = inject(Router);
 
+  private tabCache: Record<PatientTabType, TabCache> = {
+    all: { data: [], loaded: false, searchQuery: '' },
+    registered: { data: [], loaded: false, searchQuery: '' },
+    temporary: { data: [], loaded: false, searchQuery: '' }
+  };
+
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
@@ -45,24 +58,30 @@ export class Patients implements OnInit, OnDestroy {
   loading = signal(false);
   patients = signal<IUser[]>([]);
   totalCount = signal(0);
+  permanentCount = signal(0);
+  temporaryCount = signal(0);
   searchQuery = '';
   showAddModal = signal(false);
   activeTab = signal<PatientTabType>('all');
-  tabItems: TabItem[] = [
-    { id: 'all', label: 'All' },
-    { id: 'registered', label: 'Permanent' },
-    { id: 'temporary', label: 'Temporary' }
-  ];
+
+  get tabItems(): TabItem[] {
+    return [
+      { id: 'all', label: 'All', count: this.totalCount() },
+      { id: 'registered', label: 'Permanent', count: this.permanentCount() },
+      { id: 'temporary', label: 'Temporary', count: this.temporaryCount() }
+    ];
+  }
 
   ngOnInit(): void {
     this.loadPatients();
+    this.loadCounts();
 
     this.searchSubject$.pipe(
       debounceTime(300),
       distinctUntilChanged(),
       takeUntil(this.destroy$)
     ).subscribe(query => {
-      this.searchQuery = query;
+      this.invalidateCache();
       this.loadPatients();
     });
   }
@@ -73,13 +92,20 @@ export class Patients implements OnInit, OnDestroy {
   }
 
   loadPatients(): void {
+    const currentTab = this.activeTab();
+    const cache = this.tabCache[currentTab];
+
+    if (cache.loaded && cache.searchQuery === this.searchQuery) {
+      this.patients.set(cache.data);
+      return;
+    }
+
     this.loading.set(true);
     const params: { search?: string; page_size?: number; temporary?: boolean } = { page_size: 50 };
     if (this.searchQuery) {
       params.search = this.searchQuery;
     }
 
-    const currentTab = this.activeTab();
     if (currentTab === 'registered') {
       params.temporary = false;
     } else if (currentTab === 'temporary') {
@@ -91,7 +117,11 @@ export class Patients implements OnInit, OnDestroy {
     ).subscribe({
       next: (response) => {
         this.patients.set(response.results);
-        this.totalCount.set(response.count);
+        this.tabCache[currentTab] = {
+          data: response.results,
+          loaded: true,
+          searchQuery: this.searchQuery
+        };
         this.loading.set(false);
       },
       error: (err) => {
@@ -107,6 +137,7 @@ export class Patients implements OnInit, OnDestroy {
   }
 
   onSearchChange(query: string): void {
+    this.searchQuery = query;
     this.searchSubject$.next(query);
   }
 
@@ -134,6 +165,36 @@ export class Patients implements OnInit, OnDestroy {
 
   onPatientCreated(): void {
     this.closeAddModal();
+    this.invalidateCache();
     this.loadPatients();
+    this.loadCounts();
+  }
+
+  private invalidateCache(): void {
+    this.tabCache = {
+      all: { data: [], loaded: false, searchQuery: '' },
+      registered: { data: [], loaded: false, searchQuery: '' },
+      temporary: { data: [], loaded: false, searchQuery: '' }
+    };
+  }
+
+  private loadCounts(): void {
+    this.patientService.getPatients({ page_size: 1 }).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (response) => this.totalCount.set(response.count)
+    });
+
+    this.patientService.getPatients({ page_size: 1, temporary: false }).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (response) => this.permanentCount.set(response.count)
+    });
+
+    this.patientService.getPatients({ page_size: 1, temporary: true }).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (response) => this.temporaryCount.set(response.count)
+    });
   }
 }

@@ -1,11 +1,14 @@
 import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
-import { firstValueFrom, Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Page } from '../../../../core/components/page/page';
 import { Button } from '../../../../shared/ui-components/button/button';
 import { Typography } from '../../../../shared/ui-components/typography/typography';
+import { Input } from '../../../../shared/ui-components/input/input';
 import { Tabs, TabItem } from '../../../../shared/components/tabs/tabs';
+import { ListItem } from '../../../../shared/components/list-item/list-item';
 import {
   ButtonSizeEnum,
   ButtonStyleEnum,
@@ -17,25 +20,42 @@ import { Consultation } from '../../../../core/models/consultation';
 import { Loader } from '../../../../shared/components/loader/loader';
 import { RoutePaths } from '../../../../core/constants/routes';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
+import { ToasterService } from '../../../../core/services/toaster.service';
+
+type ConsultationTabType = 'active' | 'past' | 'overdue';
+
+interface TabCache {
+  data: Consultation[];
+  loaded: boolean;
+  searchQuery: string;
+}
 
 @Component({
   selector: 'app-consultations',
-  imports: [CommonModule, Page, Button, Typography, Tabs, Svg, Loader],
+  imports: [CommonModule, FormsModule, Page, Button, Typography, Input, Tabs, Svg, Loader, ListItem],
   templateUrl: './consultations.html',
   styleUrl: './consultations.scss',
 })
 export class Consultations implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  private searchSubject$ = new Subject<string>();
   private route = inject(ActivatedRoute);
+  private toasterService = inject(ToasterService);
 
-  breadcrumbs = [{ label: 'Consultations' }];
+  private tabCache: Record<ConsultationTabType, TabCache> = {
+    active: { data: [], loaded: false, searchQuery: '' },
+    past: { data: [], loaded: false, searchQuery: '' },
+    overdue: { data: [], loaded: false, searchQuery: '' }
+  };
 
-  activeTab = signal<'active' | 'past' | 'overdue'>('active');
-  activeConsultationsData = signal<Consultation[]>([]);
-  pastConsultationsData = signal<Consultation[]>([]);
-  overdueConsultationsData = signal<Consultation[]>([]);
+  activeTab = signal<ConsultationTabType>('active');
+  consultations = signal<Consultation[]>([]);
+  activeCount = signal(0);
+  pastCount = signal(0);
+  overdueCount = signal(0);
   loading = signal<boolean>(false);
   error = signal<string | null>(null);
+  searchQuery = '';
 
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
@@ -50,10 +70,21 @@ export class Consultations implements OnInit, OnDestroy {
     this.route.fragment.pipe(takeUntil(this.destroy$)).subscribe(fragment => {
       if (fragment === 'active' || fragment === 'past' || fragment === 'overdue') {
         this.activeTab.set(fragment);
+        this.loadConsultations();
       }
     });
 
     this.loadConsultations();
+    this.loadCounts();
+
+    this.searchSubject$.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      this.invalidateCache();
+      this.loadConsultations();
+    });
   }
 
   ngOnDestroy() {
@@ -61,47 +92,85 @@ export class Consultations implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  get activeConsultations(): Consultation[] {
-    return this.activeConsultationsData();
-  }
-
-  get pastConsultations(): Consultation[] {
-    return this.pastConsultationsData();
-  }
-
-  get overdueConsultations(): Consultation[] {
-    return this.overdueConsultationsData();
-  }
-
   get tabItems(): TabItem[] {
     return [
-      {
-        id: 'active',
-        label: 'Active',
-        count: this.activeConsultations.length,
-      },
-      {
-        id: 'past',
-        label: 'Closed',
-        count: this.pastConsultations.length,
-      },
-      {
-        id: 'overdue',
-        label: 'Overdue',
-        count: this.overdueConsultations.length,
-      },
+      { id: 'active', label: 'Active', count: this.activeCount() },
+      { id: 'past', label: 'Closed', count: this.pastCount() },
+      { id: 'overdue', label: 'Overdue', count: this.overdueCount() }
     ];
   }
 
-  get currentConsultations(): Consultation[] {
-    return this.activeTab() === 'active' ? this.activeConsultations : this.pastConsultations;
+  onSearchChange(query: string): void {
+    this.searchQuery = query;
+    this.searchSubject$.next(query);
   }
 
   setActiveTab(tab: string) {
-    this.activeTab.set(tab as 'active' | 'past' | 'overdue');
+    this.activeTab.set(tab as ConsultationTabType);
     this.router.navigate([], { fragment: tab, replaceUrl: true });
-    if (tab === 'overdue') {
-      this.loadOverdueConsultations();
+    this.loadConsultations();
+  }
+
+  loadConsultations(): void {
+    const currentTab = this.activeTab();
+    const cache = this.tabCache[currentTab];
+
+    if (cache.loaded && cache.searchQuery === this.searchQuery) {
+      this.consultations.set(cache.data);
+      return;
+    }
+
+    this.loading.set(true);
+    this.error.set(null);
+
+    if (currentTab === 'overdue') {
+      const params: { search?: string } = {};
+      if (this.searchQuery) {
+        params.search = this.searchQuery;
+      }
+
+      this.consultationService.getOverdueConsultations(params).pipe(
+        takeUntil(this.destroy$)
+      ).subscribe({
+        next: (response) => {
+          this.consultations.set(response.results);
+          this.tabCache[currentTab] = {
+            data: response.results,
+            loaded: true,
+            searchQuery: this.searchQuery
+          };
+          this.loading.set(false);
+        },
+        error: (err) => {
+          this.toasterService.show('error', 'Error', getErrorMessage(err));
+          this.loading.set(false);
+        }
+      });
+    } else {
+      const params: { is_closed: boolean; search?: string } = {
+        is_closed: currentTab === 'past'
+      };
+      if (this.searchQuery) {
+        params.search = this.searchQuery;
+      }
+
+      this.consultationService.getConsultations(params).pipe(
+        takeUntil(this.destroy$)
+      ).subscribe({
+        next: (response) => {
+          this.consultations.set(response.results);
+          this.tabCache[currentTab] = {
+            data: response.results,
+            loaded: true,
+            searchQuery: this.searchQuery
+          };
+          this.loading.set(false);
+        },
+        error: (err) => {
+          this.toasterService.show('error', 'Error', getErrorMessage(err));
+          this.loading.set(false);
+        }
+      });
     }
   }
 
@@ -118,6 +187,7 @@ export class Consultations implements OnInit, OnDestroy {
   }
 
   retryLoadConsultations() {
+    this.invalidateCache();
     this.loadConsultations();
   }
 
@@ -173,48 +243,31 @@ export class Consultations implements OnInit, OnDestroy {
     return consultation.group?.name || 'Completed';
   }
 
-  private loadConsultations() {
-    this.loading.set(true);
-    this.error.set(null);
-
-    const activeConsultations$ = this.consultationService.getConsultations({ is_closed: false });
-    const pastConsultations$ = this.consultationService.getConsultations({ is_closed: true });
-    const overdueConsultations$ = this.consultationService.getOverdueConsultations();
-
-    Promise.all([
-      firstValueFrom(activeConsultations$),
-      firstValueFrom(pastConsultations$),
-      firstValueFrom(overdueConsultations$)
-    ]).then(([activeResponse, pastResponse, overdueResponse]) => {
-      this.activeConsultationsData.set(activeResponse.results);
-      this.pastConsultationsData.set(pastResponse.results);
-      this.overdueConsultationsData.set(overdueResponse.results);
-      this.loading.set(false);
-    }).catch((error) => {
-      this.error.set(getErrorMessage(error));
-      this.activeConsultationsData.set([]);
-      this.pastConsultationsData.set([]);
-      this.overdueConsultationsData.set([]);
-      this.loading.set(false);
-    });
+  private invalidateCache(): void {
+    this.tabCache = {
+      active: { data: [], loaded: false, searchQuery: '' },
+      past: { data: [], loaded: false, searchQuery: '' },
+      overdue: { data: [], loaded: false, searchQuery: '' }
+    };
   }
 
-  private loadOverdueConsultations() {
-    this.loading.set(true);
-    this.error.set(null);
-
-    this.consultationService.getOverdueConsultations().pipe(
+  private loadCounts(): void {
+    this.consultationService.getConsultations({ is_closed: false, page_size: 1 }).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
-      next: (response) => {
-        this.overdueConsultationsData.set(response.results);
-        this.loading.set(false);
-      },
-      error: (error) => {
-        this.error.set(getErrorMessage(error));
-        this.overdueConsultationsData.set([]);
-        this.loading.set(false);
-      }
+      next: (response) => this.activeCount.set(response.count)
+    });
+
+    this.consultationService.getConsultations({ is_closed: true, page_size: 1 }).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (response) => this.pastCount.set(response.count)
+    });
+
+    this.consultationService.getOverdueConsultations({ page_size: 1 }).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (response) => this.overdueCount.set(response.count)
     });
   }
 }

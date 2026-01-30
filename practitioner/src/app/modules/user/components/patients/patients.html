@@ -1,43 +1,31 @@
 <app-page>
   <div class="patients-container">
     <div class="page-header">
-      <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
-        {{ totalCount() }} total patients
-      </app-typography>
-      <div class="header-actions">
-        <div class="search-wrapper">
-          <app-input
-            placeholder="Search patients..."
-            leftIcon="search"
-            [ngModel]="searchQuery"
-            (ngModelChange)="onSearchChange($event)">
-          </app-input>
-        </div>
-        <app-button
-          text="Add Patient"
-          leftIcon="plus"
-          [style]="ButtonStyleEnum.stroke"
-          [size]="ButtonSizeEnum.medium"
-          (buttonClick)="openAddModal()">
-        </app-button>
+      <div class="search-wrapper">
+        <app-input
+          placeholder="Search patients..."
+          leftIcon="search"
+          [ngModel]="searchQuery"
+          (ngModelChange)="onSearchChange($event)">
+        </app-input>
       </div>
+      <app-button
+        text="Add Patient"
+        leftIcon="plus"
+        [style]="ButtonStyleEnum.primary"
+        [size]="ButtonSizeEnum.small"
+        (buttonClick)="openAddModal()">
+      </app-button>
     </div>
 
-    <app-tabs
-      [tabs]="tabItems"
-      [activeTab]="activeTab()"
-      (tabChange)="setActiveTab($event)">
-    </app-tabs>
-
     <div class="patients-card">
-      <div class="table-header">
-        <div class="header-cell patient-col">Patient</div>
-        <div class="header-cell contact-col">Contact</div>
-        <div class="header-cell status-col">Status</div>
-        <div class="header-cell action-col"></div>
-      </div>
+      <app-tabs
+        [tabs]="tabItems"
+        [activeTab]="activeTab()"
+        (tabChange)="setActiveTab($event)">
+      </app-tabs>
 
-      <div class="table-body">
+      <div class="patients-list">
         @if (loading()) {
           <div class="loading-state">
             <app-loader></app-loader>
@@ -58,48 +46,44 @@
           </div>
         } @else {
           @for (patient of patients(); track patient.pk) {
-            <div class="table-row" (click)="viewPatient(patient)">
-              <div class="row-cell patient-col">
-                <div class="patient-avatar">
-                  {{ getInitials(patient) }}
-                </div>
-                <div class="patient-info">
-                  <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-800)">
-                    {{ getFullName(patient) }}
-                  </app-typography>
+            <app-list-item
+              [variant]="patient.temporary ? 'temporary' : 'default'"
+              [avatarText]="getInitials(patient)"
+              [showOnlineIndicator]="patient.is_online ?? false"
+              (itemClick)="viewPatient(patient)">
+              <div slot="content">
+                <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-800)">
+                  {{ getFullName(patient) }}
+                </app-typography>
+                <div class="contact-info">
+                  @if (patient.email) {
+                    <div class="contact-item">
+                      <app-svg src="email" [svgStyle]="{'width.px': 14, 'height.px': 14, 'color': 'var(--slate-400)'}"></app-svg>
+                      <span class="contact-text">{{ patient.email }}</span>
+                    </div>
+                  }
+                  @if (patient.mobile_phone_number) {
+                    <div class="contact-item">
+                      <app-svg src="phone" [svgStyle]="{'width.px': 14, 'height.px': 14, 'color': 'var(--slate-400)'}"></app-svg>
+                      <span class="contact-text">{{ patient.mobile_phone_number }}</span>
+                    </div>
+                  }
+                  @if (!patient.email && !patient.mobile_phone_number) {
+                    <span class="contact-text no-contact">No contact info</span>
+                  }
                 </div>
               </div>
-
-              <div class="row-cell contact-col">
-                @if (patient.email) {
-                  <div class="contact-item">
-                    <app-svg src="email" [svgStyle]="{'width.px': 14, 'height.px': 14, 'color': 'var(--slate-400)'}"></app-svg>
-                    <span class="contact-text">{{ patient.email }}</span>
-                  </div>
-                }
-                @if (patient.mobile_phone_number) {
-                  <div class="contact-item">
-                    <app-svg src="phone" [svgStyle]="{'width.px': 14, 'height.px': 14, 'color': 'var(--slate-400)'}"></app-svg>
-                    <span class="contact-text">{{ patient.mobile_phone_number }}</span>
-                  </div>
-                }
-                @if (!patient.email && !patient.mobile_phone_number) {
-                  <span class="contact-text no-contact">No contact info</span>
-                }
-              </div>
-
-              <div class="row-cell status-col">
+              <div slot="meta">
                 <app-badge [type]="getOnlineStatusBadgeType(patient.is_online ?? false)">
                   {{ patient.is_online ? 'Online' : 'Offline' }}
                 </app-badge>
               </div>
-
-              <div class="row-cell action-col">
+              <div slot="action">
                 <div class="row-action">
                   <app-svg src="arrow-right" [svgStyle]="{'width.px': 20, 'height.px': 20, 'color': 'var(--slate-400)'}"></app-svg>
                 </div>
               </div>
-            </div>
+            </app-list-item>
           }
         }
       </div>

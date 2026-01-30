@@ -2,6 +2,14 @@
   padding: 32px;
   animation: fadeIn 0.3s ease-out;
 
+  .page-header {
+    margin-bottom: 16px;
+
+    .search-wrapper {
+      max-width: 320px;
+    }
+  }
+
   .consultations-card {
     background: var(--White);
     border-radius: 16px;
@@ -10,196 +18,72 @@
     overflow: hidden;
   }
 
-  .search-section {
-    padding: 16px;
-    border-bottom: 1px solid var(--slate-100);
-
-    .search-input-wrapper {
-      position: relative;
-      flex: 1;
-
-      app-svg {
-        position: absolute;
-        left: 14px;
-        top: 50%;
-        transform: translateY(-50%);
-        pointer-events: none;
-      }
-
-      .search-input {
-        width: 100%;
-        padding: 10px 16px 10px 40px;
-        background: var(--slate-50);
-        border: 2px solid transparent;
-        border-radius: 12px;
-        font-size: 14px;
-        font-family: inherit;
-        color: var(--slate-800);
-        transition: all 0.2s ease;
-
-        &::placeholder {
-          color: var(--slate-400);
-        }
-
-        &:focus {
-          outline: none;
-          border-color: var(--primary-400);
-          background: var(--White);
-        }
-      }
-    }
-  }
-
   .consultations-list {
-    .consultation-item {
+    .status-active {
       display: flex;
       align-items: center;
-      gap: 16px;
-      padding: 16px;
-      border-bottom: 1px solid var(--slate-100);
+      gap: 6px;
+
+      .status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--primary-500);
+        animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+    }
+
+    .status-completed {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .status-overdue {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .action-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
       cursor: pointer;
       transition: all 0.2s ease;
+      flex-shrink: 0;
 
-      &:last-child {
-        border-bottom: none;
-      }
+      &.active {
+        background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
+        color: var(--White);
+        box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
 
-      &:hover {
-        background: rgba(248, 250, 252, 0.8);
-
-        .action-btn {
-          opacity: 1;
+        &:hover {
+          background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
         }
       }
 
-      .patient-avatar {
-        position: relative;
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 600;
-        font-size: 14px;
-        flex-shrink: 0;
+      &.past {
+        background: var(--slate-200);
+        color: var(--slate-700);
 
-        &.active {
-          background: var(--primary-200);
-          color: var(--primary-700);
-        }
-
-        &.past {
-          background: var(--slate-100);
-          color: var(--slate-600);
-        }
-
-        &.overdue {
-          background: var(--amber-100);
-          color: var(--amber-700);
-        }
-
-        .online-indicator {
-          position: absolute;
-          bottom: -2px;
-          right: -2px;
-          width: 14px;
-          height: 14px;
-          border-radius: 50%;
-          background: var(--emerald-500);
-          border: 2px solid var(--White);
+        &:hover {
+          background: var(--slate-300);
         }
       }
 
-      .consultation-info {
-        flex: 1;
-        min-width: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
+      &.overdue {
+        background: var(--amber-500);
+        color: var(--White);
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
 
-        app-typography {
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-      }
-
-      .consultation-status {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 4px;
-        flex-shrink: 0;
-
-        .status-active {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-
-          .status-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: var(--primary-500);
-            animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-          }
-        }
-
-        .status-completed {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-        }
-
-        .status-overdue {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-        }
-      }
-
-      .action-btn {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: 8px 16px;
-        border: none;
-        border-radius: 8px;
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        opacity: 0;
-        flex-shrink: 0;
-
-        &.active {
-          background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
-          color: var(--White);
-          box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
-
-          &:hover {
-            background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
-          }
-        }
-
-        &.past {
-          background: var(--slate-200);
-          color: var(--slate-700);
-
-          &:hover {
-            background: var(--slate-300);
-          }
-        }
-
-        &.overdue {
-          background: var(--amber-500);
-          color: var(--White);
-          box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
-
-          &:hover {
-            background: var(--amber-600);
-          }
+        &:hover {
+          background: var(--amber-600);
         }
       }
     }
@@ -257,30 +141,5 @@
 @media (max-width: 768px) {
   .consultations-container {
     padding: 16px;
-
-    .consultations-list {
-      .consultation-item {
-        flex-wrap: wrap;
-
-        .consultation-info {
-          flex: 1 1 calc(100% - 64px);
-        }
-
-        .consultation-status {
-          order: 3;
-          width: 100%;
-          flex-direction: row;
-          justify-content: space-between;
-          align-items: center;
-          margin-top: 8px;
-          padding-top: 12px;
-          border-top: 1px solid var(--slate-100);
-        }
-
-        .action-btn {
-          opacity: 1;
-        }
-      }
-    }
   }
 }

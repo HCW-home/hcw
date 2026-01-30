@@ -38,6 +38,7 @@ export class ConsultationService {
     owned_by?: number;
     is_closed?: boolean;
     closed_at?: string;
+    search?: string;
   }): Observable<PaginatedResponse<Consultation>> {
     let httpParams = new HttpParams();
     if (params) {
@@ -94,6 +95,7 @@ export class ConsultationService {
   getOverdueConsultations(params?: {
     page?: number;
     page_size?: number;
+    search?: string;
   }): Observable<PaginatedResponse<Consultation>> {
     let httpParams = new HttpParams();
     if (params) {

@@ -1,0 +1,130 @@
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--slate-100);
+  transition: background-color 0.2s ease;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &.clickable {
+    cursor: pointer;
+
+    &:hover {
+      background: rgba(248, 250, 252, 0.8);
+
+      .item-action {
+        opacity: 1;
+      }
+    }
+  }
+}
+
+.item-avatar {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  .avatar-text {
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  &.default {
+    background: linear-gradient(135deg, var(--primary-100), var(--primary-200));
+    color: var(--primary-700);
+  }
+
+  &.active {
+    background: var(--primary-200);
+    color: var(--primary-700);
+  }
+
+  &.past {
+    background: var(--slate-100);
+    color: var(--slate-600);
+  }
+
+  &.overdue {
+    background: var(--amber-100);
+    color: var(--amber-700);
+  }
+
+  &.temporary {
+    background: var(--slate-100);
+    color: var(--slate-500);
+  }
+
+  .online-indicator {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--emerald-500);
+    border: 2px solid var(--White);
+  }
+}
+
+.item-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  ::ng-deep app-typography {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.item-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.item-action {
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+@media (max-width: 768px) {
+  .list-item {
+    flex-wrap: wrap;
+    padding: 16px;
+
+    .item-content {
+      flex: 1 1 calc(100% - 64px);
+    }
+
+    .item-meta {
+      order: 3;
+      width: 100%;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      padding-top: 12px;
+      border-top: 1px solid var(--slate-100);
+    }
+
+    .item-action {
+      opacity: 1;
+    }
+  }
+}

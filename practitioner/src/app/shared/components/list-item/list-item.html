@@ -1,0 +1,28 @@
+<div
+  class="list-item"
+  [class.clickable]="clickable"
+  [class.variant-active]="variant === 'active'"
+  [class.variant-past]="variant === 'past'"
+  [class.variant-overdue]="variant === 'overdue'"
+  [class.variant-temporary]="variant === 'temporary'"
+  (click)="onClick()">
+
+  <div class="item-avatar" [ngClass]="variant">
+    <span class="avatar-text">{{ avatarText }}</span>
+    @if (showOnlineIndicator) {
+      <span class="online-indicator"></span>
+    }
+  </div>
+
+  <div class="item-content">
+    <ng-content select="[slot=content]"></ng-content>
+  </div>
+
+  <div class="item-meta">
+    <ng-content select="[slot=meta]"></ng-content>
+  </div>
+
+  <div class="item-action">
+    <ng-content select="[slot=action]"></ng-content>
+  </div>
+</div>

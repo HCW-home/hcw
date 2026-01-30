@@ -1,5 +1,16 @@
 <app-page>
   <div class="consultations-container">
+    <div class="page-header">
+      <div class="search-wrapper">
+        <app-input
+          placeholder="Search consultations..."
+          leftIcon="search"
+          [ngModel]="searchQuery"
+          (ngModelChange)="onSearchChange($event)">
+        </app-input>
+      </div>
+    </div>
+
     <div class="consultations-card">
       <app-tabs
         [tabs]="tabItems"
@@ -28,79 +39,63 @@
               (buttonClick)="retryLoadConsultations()">
             </app-button>
           </div>
-        } @else if (activeTab() === 'overdue') {
-          @if (overdueConsultations.length === 0) {
-            <div class="empty-state">
+        } @else if (consultations().length === 0) {
+          <div class="empty-state">
+            @if (activeTab() === 'overdue') {
               <app-svg src="alert-circle" [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
               <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--slate-400)">
                 No overdue consultations
               </app-typography>
               <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
-                Consultations requiring attention will appear here
+                @if (searchQuery) {
+                  Try a different search term
+                } @else {
+                  Consultations requiring attention will appear here
+                }
               </app-typography>
-            </div>
-          } @else {
-            @for (consultation of overdueConsultations; track consultation.id) {
-              <div class="consultation-item" (click)="viewConsultationDetails(consultation)">
-                <div class="patient-avatar overdue">
-                  <span>{{ getPatientInitials(consultation) }}</span>
-                </div>
-
-                <div class="consultation-info">
-                  <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-800)">
-                    {{  consultation.title}}
-                  </app-typography>
-                  <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
-                    {{ getBeneficiaryName(consultation) || 'Consultation' }}
-                  </app-typography>
-                </div>
-
-                <div class="consultation-status">
+            } @else {
+              <app-svg src="calendar" [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
+              <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--slate-400)">
+                No consultations found
+              </app-typography>
+              <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
+                @if (searchQuery) {
+                  Try a different search term
+                } @else if (activeTab() === 'active') {
+                  Your active consultations will appear here
+                } @else {
+                  Your completed consultations will appear here
+                }
+              </app-typography>
+            }
+          </div>
+        } @else {
+          @for (consultation of consultations(); track consultation.id) {
+            <app-list-item
+              [variant]="activeTab() === 'overdue' ? 'overdue' : (activeTab() === 'active' ? 'active' : 'past')"
+              [avatarText]="getPatientInitials(consultation)"
+              [showOnlineIndicator]="activeTab() === 'active'"
+              (itemClick)="viewConsultationDetails(consultation)">
+              <div slot="content">
+                <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-800)">
+                  {{ consultation.title }}
+                </app-typography>
+                <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
+                  {{ getBeneficiaryName(consultation) || 'Consultation' }}
+                  @if (activeTab() !== 'overdue') {
+                    - {{ getConsultationSubtitle(consultation) }}
+                  }
+                </app-typography>
+              </div>
+              <div slot="meta">
+                @if (activeTab() === 'overdue') {
                   <div class="status-overdue">
                     <app-svg src="alert-circle" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--amber-600)'}"></app-svg>
                     <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--amber-600)">
                       {{ formatDate(consultation.created_at) }}
                     </app-typography>
                   </div>
-                </div>
-
-                <button class="action-btn overdue">
-                  <span>Review</span>
-                </button>
-              </div>
-            }
-          }
-        } @else if (currentConsultations.length === 0) {
-          <div class="empty-state">
-            <app-svg src="calendar" [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
-            <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--slate-400)">
-              No consultations found
-            </app-typography>
-            <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
-              {{ activeTab() === 'active' ? 'Your active consultations will appear here' : 'Your completed consultations will appear here' }}
-            </app-typography>
-          </div>
-        } @else {
-          @for (consultation of currentConsultations; track consultation.id) {
-            <div class="consultation-item" (click)="viewConsultationDetails(consultation)">
-              <div class="patient-avatar" [ngClass]="{'active': activeTab() === 'active', 'past': activeTab() === 'past'}">
-                <span>{{ getPatientInitials(consultation) }}</span>
-                @if (activeTab() === 'active') {
-                  <span class="online-indicator"></span>
-                }
-              </div>
-
-              <div class="consultation-info">
-                <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-800)">
-                  {{ consultation.title }}
-                </app-typography>
-                <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
-                  {{ getBeneficiaryName(consultation) || 'Consultation' }} - {{ getConsultationSubtitle(consultation) }}
-                </app-typography>
-              </div>
-
-              <div class="consultation-status">
-                @if (activeTab() === 'active') {
+                } @else if (activeTab() === 'active') {
                   <div class="status-active">
                     <span class="status-dot"></span>
                     <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--primary-600)">
@@ -122,16 +117,23 @@
                   </app-typography>
                 }
               </div>
-
-              <button class="action-btn" [ngClass]="{'active': activeTab() === 'active', 'past': activeTab() === 'past'}">
-                @if (activeTab() === 'active') {
-                  <app-svg src="video" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--White)'}"></app-svg>
-                  <span>Resume</span>
+              <div slot="action">
+                @if (activeTab() === 'overdue') {
+                  <button class="action-btn overdue">
+                    <span>Review</span>
+                  </button>
                 } @else {
-                  <span>View Details</span>
+                  <button class="action-btn" [ngClass]="{'active': activeTab() === 'active', 'past': activeTab() === 'past'}">
+                    @if (activeTab() === 'active') {
+                      <app-svg src="video" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--White)'}"></app-svg>
+                      <span>Resume</span>
+                    } @else {
+                      <span>View Details</span>
+                    }
+                  </button>
                 }
-              </button>
-            </div>
+              </div>
+            </app-list-item>
           }
         }
       </div>
