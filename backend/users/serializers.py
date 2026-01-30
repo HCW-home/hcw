@@ -10,6 +10,8 @@ from rest_framework.response import Response
 from dj_rest_auth.serializers import PasswordResetSerializer
 from .models import HealthMetric, Language, Organisation, Speciality
 from .forms import CustomAllAuthPasswordResetForm
+from consultations.serializers import AppointmentDetailSerializer
+from consultations.models import Participant
 UserModel = get_user_model()
 
 
@@ -188,3 +190,19 @@ class CustomPasswordResetSerializer(PasswordResetSerializer):
     def password_reset_form_class(self):
         return CustomAllAuthPasswordResetForm
 
+
+class UserParticipantDetailSerializer(serializers.ModelSerializer):
+
+    appointment = AppointmentDetailSerializer(read_only=True)
+
+    class Meta:
+        model = Participant
+        fields = [
+            'is_confirmed',
+            'appointment',
+            'status',
+        ]
+        read_only_field = [
+            "status",
+            'appointment',
+        ]

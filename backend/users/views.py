@@ -55,6 +55,7 @@ from .serializers import (
     OrganisationSerializer,
     SpecialitySerializer,
     UserDetailsSerializer,
+    UserParticipantDetailSerializer
 )
 
 User = get_user_model()
@@ -163,6 +164,16 @@ def verify_magic_token(token, max_age=900):  # 15 minutes
     serializer = URLSafeTimedSerializer(settings.SECRET_KEY)
     return serializer.loads(token, max_age=max_age)
 
+
+class UserParticipantViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    pagination_class = UniversalPagination
+    serializer_class = UserParticipantDetailSerializer
+    http_method_names = ["get", "patch", "head", "options"]
+
+    def get_queryset(self):
+        user = self.request.user
+        return Participant.objects.filter(user=user, is_active=True)
 
 class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
     authentication_classes = [JWTAuthentication]
@@ -496,37 +507,6 @@ class UserAppointmentsViewSet(viewsets.ReadOnlyModelViewSet):
             participant__is_active=True
         ).distinct().order_by("-scheduled_at")
 
-    @action(detail=True, methods=["post"])
-    def presence(self, request, pk=None):
-        """Update participant presence (is_confirmed field)."""
-        is_confirmed = request.data.get("is_confirmed")
-
-        if is_confirmed is None:
-            return Response(
-                {"detail": "is_confirmed parameter is required."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        appointment = self.get_object()
-
-        try:
-            participant = Participant.objects.get(
-                appointment=appointment, user=request.user
-            )
-            participant.is_confirmed = bool(is_confirmed)
-            participant.save()
-
-            return Response(
-                {
-                    "detail": "Presence updated successfully."
-                }
-            )
-
-        except Participant.DoesNotExist:
-            return Response(
-                {"detail": "You are not a participant in this appointment."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
 
     @extend_schema(
         responses={
@@ -584,126 +564,6 @@ class UserAppointmentsViewSet(viewsets.ReadOnlyModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-
-class UserHealthMetricsView(APIView):
-    permission_classes = [IsAuthenticated]
-    pagination_class = UniversalPagination
-
-    @extend_schema(
-        parameters=[
-            OpenApiParameter(
-                name="from_date",
-                description="Filter health metrics from this date (format: YYYY-MM-DD)",
-                required=False,
-                type=OpenApiTypes.DATE,
-                location=OpenApiParameter.QUERY,
-            ),
-            OpenApiParameter(
-                name="to_date",
-                description="Filter health metrics up to this date (format: YYYY-MM-DD)",
-                required=False,
-                type=OpenApiTypes.DATE,
-                location=OpenApiParameter.QUERY,
-            ),
-            OpenApiParameter(
-                name="source",
-                description="Filter by measurement source (e.g., 'manual', 'device', 'EHR')",
-                required=False,
-                type=OpenApiTypes.STR,
-                location=OpenApiParameter.QUERY,
-            ),
-            OpenApiParameter(
-                name="page",
-                description="Page number for pagination",
-                required=False,
-                type=OpenApiTypes.INT,
-                location=OpenApiParameter.QUERY,
-            ),
-            OpenApiParameter(
-                name="page_size",
-                description="Number of results per page (max 100)",
-                required=False,
-                type=OpenApiTypes.INT,
-                location=OpenApiParameter.QUERY,
-            ),
-        ],
-        responses={
-            200: HealthMetricSerializer(many=True),
-        },
-        examples=[
-            OpenApiExample(
-                "Get paginated health metrics",
-                description="Returns paginated health metrics for the authenticated user",
-                value={
-                    "count": 25,
-                    "next": "http://localhost:8000/api/user/healthmetrics/?page=2",
-                    "previous": None,
-                    "results": [
-                        {
-                            "id": 1,
-                            "measured_at": "2025-01-15T10:30:00Z",
-                            "systolic_bp": 120,
-                            "diastolic_bp": 80,
-                            "heart_rate_bpm": 72,
-                            "temperature_c": "36.5",
-                            "source": "manual",
-                            "notes": "Regular checkup",
-                            "created_at": "2025-01-15T10:35:00Z",
-                        }
-                    ],
-                },
-                response_only=True,
-            ),
-        ],
-        description="Get paginated health metrics for the authenticated user. Filter by date range and source. All health metrics fields are included in the response. Default page size is 20, max 100.",
-    )
-    def get(self, request):
-        """Get all health metrics for the authenticated user."""
-        health_metrics = HealthMetric.objects.filter(user=request.user)
-
-        # Filter by date range
-        from_date = request.query_params.get("from_date")
-        if from_date:
-            try:
-                from datetime import datetime
-
-                from_date_obj = datetime.strptime(from_date, "%Y-%m-%d").date()
-                health_metrics = health_metrics.filter(
-                    measured_at__date__gte=from_date_obj
-                )
-            except ValueError:
-                return Response(
-                    {"error": "Invalid from_date format. Use YYYY-MM-DD"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-        to_date = request.query_params.get("to_date")
-        if to_date:
-            try:
-                from datetime import datetime
-
-                to_date_obj = datetime.strptime(to_date, "%Y-%m-%d").date()
-                health_metrics = health_metrics.filter(
-                    measured_at__date__lte=to_date_obj
-                )
-            except ValueError:
-                return Response(
-                    {"error": "Invalid to_date format. Use YYYY-MM-DD"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-        # Filter by source
-        source = request.query_params.get("source")
-        if source:
-            health_metrics = health_metrics.filter(source__icontains=source)
-
-        health_metrics = health_metrics.order_by("-measured_at")
-
-        # Apply pagination
-        paginator = self.pagination_class()
-        paginated_health_metrics = paginator.paginate_queryset(health_metrics, request)
-        serializer = HealthMetricSerializer(paginated_health_metrics, many=True)
-        return paginator.get_paginated_response(serializer.data)
 
 
 class UserViewSet(viewsets.ModelViewSet):

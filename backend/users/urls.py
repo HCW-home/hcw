@@ -19,6 +19,10 @@ user_router.register(
     r"consultations", views.UserConsultationsViewSet, basename="user-consultations"
 )
 
+user_router.register(
+    r"participants", views.UserParticipantViewSet, basename="user-participants"
+)
+
 urlpatterns = [
     path("api/", include(router.urls)),
     path("api/auth/openid/", views.OpenIDView.as_view(), name="openid_login"),
@@ -36,11 +40,6 @@ urlpatterns = [
         "api/user/notifications/<int:notification_id>/read/",
         views.UserNotificationReadView.as_view(),
         name="user_notification_read",
-    ),
-    path(
-        "api/user/healthmetrics/",
-        views.UserHealthMetricsView.as_view(),
-        name="user_healthmetrics",
     ),
     path("api/user/testrtc/", views.TestRTCView.as_view(), name="user_testrtc"),
     path(
