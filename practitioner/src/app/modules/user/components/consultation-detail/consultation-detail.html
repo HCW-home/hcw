@@ -182,7 +182,18 @@
 
           <div class="appointments-section">
             <div class="section-header">
-              <h3 class="section-title">Appointments ({{ appointments().length }})</h3>
+              <div class="section-title-row">
+                <h3 class="section-title">Appointments ({{ appointments().length }})</h3>
+                @if (!consultation()?.closed_at) {
+                  <app-button
+                    text="New Appointment"
+                    leftIcon="plus"
+                    [size]="ButtonSizeEnum.small"
+                    [style]="ButtonStyleEnum.primary"
+                    (buttonClick)="openCreateAppointmentModal()">
+                  </app-button>
+                }
+              </div>
               <div class="section-header-actions">
                 <div class="view-toggle">
                   <button
@@ -203,12 +214,6 @@
                 <div class="status-filter">
                   <button
                     class="filter-btn"
-                    [class.active]="appointmentStatusFilter() === 'all'"
-                    (click)="setAppointmentStatusFilter('all')">
-                    All
-                  </button>
-                  <button
-                    class="filter-btn"
                     [class.active]="appointmentStatusFilter() === AppointmentStatus.SCHEDULED"
                     (click)="setAppointmentStatusFilter('scheduled')">
                     Active
@@ -218,6 +223,12 @@
                     [class.active]="appointmentStatusFilter() === AppointmentStatus.CANCELLED"
                     (click)="setAppointmentStatusFilter('cancelled')">
                     Cancelled
+                  </button>
+                  <button
+                    class="filter-btn"
+                    [class.active]="appointmentStatusFilter() === 'all'"
+                    (click)="setAppointmentStatusFilter('all')">
+                    All
                   </button>
                 </div>
                 <div class="time-filter">
@@ -240,15 +251,6 @@
                     All
                   </button>
                 </div>
-                @if (!consultation()?.closed_at) {
-                  <app-button
-                    text="New Appointment"
-                    leftIcon="plus"
-                    [size]="ButtonSizeEnum.small"
-                    [style]="ButtonStyleEnum.primary"
-                    (buttonClick)="openCreateAppointmentModal()">
-                  </app-button>
-                }
               </div>
             </div>
 
