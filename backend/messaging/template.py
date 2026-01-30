@@ -84,17 +84,19 @@ DEFAULT_NOTIFICATION_MESSAGES = {
     "new_message_notification": {
         "template_subject": _("New message in consultation"),
         "template_content": _(
-            "You have received a new message from {{ obj.message.created_by.name }} "
-            "in consultation #{{ obj.message.consultation.pk }}: "
-            "{{ obj.message.content }}"
+            "{{ obj.created_by.name }} sent you a message "
+            'in consultation "{{ obj.consultation.title }}":'
+            "{{ obj.content }}"
         ),
         "template_content_html": _(
-            "<p>You have received a new message from <strong>{{ obj.message.created_by.name }}</strong> "
-            "in consultation #{{ obj.message.consultation.pk }}:</p>"
-            "<p>{{ obj.message.content }}</p>"
+            "<p>{{ obj.created_by.name }} sent you a message "
+            'in consultation "{{ obj.consultation.title }}":</p>'
+            "<p>{{ obj.content }}</p>"
         ),
+        "action": "message",
         "model": "consultations.Message",
         "helper_text": "Notification sent when a new message is posted in a consultation",
+        "action_label": _("Click here to answer"),
     },
     "reset_password": {
         "template_subject": _("Reset your password"),
