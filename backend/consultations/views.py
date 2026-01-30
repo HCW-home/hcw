@@ -6,7 +6,7 @@ from .fhir import (
     AppointmentFhir
 )
 from rest_framework.renderers import JSONRenderer
-
+from django.utils.translation import gettext_lazy as _
 from core.mixins import CreatedByMixin
 from django.contrib.auth import get_user_model
 from django.db.models import Q
