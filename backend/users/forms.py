@@ -58,6 +58,7 @@ class CustomAllAuthPasswordResetForm(DefaultPasswordResetForm):
                 template_system_name="reset_password",
                 object_pk=user.pk,
                 object_model="users.User",
+                in_notification=False,
                 additionnal_link_args={'token': temp_key, 'uid': uid}
             )
             message.send()
