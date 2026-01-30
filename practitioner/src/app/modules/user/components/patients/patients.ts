@@ -50,7 +50,7 @@ export class Patients implements OnInit, OnDestroy {
   activeTab = signal<PatientTabType>('all');
   tabItems: TabItem[] = [
     { id: 'all', label: 'All' },
-    { id: 'registered', label: 'Registered' },
+    { id: 'registered', label: 'Permanent' },
     { id: 'temporary', label: 'Temporary' }
   ];
 
