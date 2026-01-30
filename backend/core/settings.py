@@ -743,3 +743,28 @@ LOGGING = {
         },
     },
 }
+
+
+S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME", None)
+S3_ENDPOINT_URL = os.getenv("S3_ENDPOINT_URL", None)
+S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY", None)
+S3_SECRET_KEY = os.getenv("S3_SECRET_KEY", None)
+S3_VERIFY = os.getenv("S3_VERIFY", None)
+
+if S3_BUCKET_NAME and S3_ENDPOINT_URL and S3_ACCESS_KEY and S3_SECRET_KEY:
+
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3.S3Storage",
+            "OPTIONS": {
+                "bucket_name": S3_BUCKET_NAME,
+                "endpoint_url": S3_ENDPOINT_URL,
+                "access_key": S3_ACCESS_KEY,
+                "secret_key": S3_SECRET_KEY,
+                "verify": False if S3_VERIFY == "false" else True,
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }

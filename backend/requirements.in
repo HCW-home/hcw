@@ -33,3 +33,4 @@ livekit-api
 django-clamd
 django-constance
 fhir.resources
+django-storages
