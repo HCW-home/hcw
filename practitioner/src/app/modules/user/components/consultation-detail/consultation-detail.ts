@@ -45,6 +45,7 @@ import { LocalDatePipe } from '../../../../shared/pipes/local-date.pipe';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
 import { AppointmentFormModal } from './appointment-form-modal/appointment-form-modal';
 import { RoutePaths } from '../../../../core/constants/routes';
+import { ParticipantItem } from '../../../../shared/components/participant-item/participant-item';
 
 type AppointmentViewMode = 'list' | 'calendar';
 type AppointmentStatusFilter = 'all' | 'scheduled' | 'cancelled';
@@ -71,6 +72,7 @@ type AppointmentTimeFilter = 'all' | 'upcoming' | 'past';
     AppointmentFormModal,
     FullCalendarModule,
     LocalDatePipe,
+    ParticipantItem,
   ],
 })
 export class ConsultationDetail implements OnInit, OnDestroy {
@@ -84,6 +86,10 @@ export class ConsultationDetail implements OnInit, OnDestroy {
 
   isLoadingConsultation = signal(false);
   isLoadingAppointments = signal(false);
+  isLoadingMoreAppointments = signal(false);
+  hasMoreAppointments = signal(false);
+  private appointmentPage = 1;
+  private appointmentPageSize = 20;
 
   messages = signal<Message[]>([]);
   isWebSocketConnected = signal(false);
@@ -413,9 +419,13 @@ export class ConsultationDetail implements OnInit, OnDestroy {
 
   loadAppointments(): void {
     this.isLoadingAppointments.set(true);
+    this.appointmentPage = 1;
     const statusFilter = this.appointmentStatusFilter();
     const timeFilter = this.appointmentTimeFilter();
-    const params: { status?: string; future?: boolean } = {};
+    const params: { status?: string; future?: boolean; page?: number; page_size?: number } = {
+      page: 1,
+      page_size: this.appointmentPageSize
+    };
     if (statusFilter !== 'all') {
       params.status = statusFilter;
     }
@@ -430,10 +440,48 @@ export class ConsultationDetail implements OnInit, OnDestroy {
       .subscribe({
         next: response => {
           this.appointments.set(response.results);
+          this.hasMoreAppointments.set(response.next !== null);
           this.isLoadingAppointments.set(false);
         },
         error: (error) => {
           this.isLoadingAppointments.set(false);
+          this.toasterService.show('error', getErrorMessage(error));
+        },
+      });
+  }
+
+  loadMoreAppointments(): void {
+    if (this.isLoadingMoreAppointments() || !this.hasMoreAppointments()) return;
+
+    this.isLoadingMoreAppointments.set(true);
+    this.appointmentPage++;
+    const statusFilter = this.appointmentStatusFilter();
+    const timeFilter = this.appointmentTimeFilter();
+    const params: { status?: string; future?: boolean; page?: number; page_size?: number } = {
+      page: this.appointmentPage,
+      page_size: this.appointmentPageSize
+    };
+    if (statusFilter !== 'all') {
+      params.status = statusFilter;
+    }
+    if (timeFilter === 'upcoming') {
+      params.future = true;
+    } else if (timeFilter === 'past') {
+      params.future = false;
+    }
+    this.consultationService
+      .getConsultationAppointments(this.consultationId, params)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: response => {
+          const currentAppointments = this.appointments();
+          this.appointments.set([...currentAppointments, ...response.results]);
+          this.hasMoreAppointments.set(response.next !== null);
+          this.isLoadingMoreAppointments.set(false);
+        },
+        error: (error) => {
+          this.appointmentPage--;
+          this.isLoadingMoreAppointments.set(false);
           this.toasterService.show('error', getErrorMessage(error));
         },
       });

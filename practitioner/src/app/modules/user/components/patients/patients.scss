@@ -73,6 +73,13 @@
       background: var(--slate-100);
     }
   }
+
+  .load-more-container {
+    display: flex;
+    justify-content: flex-start;
+    padding: 24px;
+    border-top: 1px solid var(--slate-100);
+  }
 }
 
 @keyframes fadeIn {

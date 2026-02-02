@@ -234,44 +234,19 @@
     } @else if (getTotalParticipantsCount() > 0) {
       <div class="participants-list">
         @for (participant of participants(); track participant.id) {
-          <div class="participant-item">
-            <div class="participant-avatar">
-              {{ getParticipantInitials(participant) }}
-            </div>
-            <div class="participant-details">
-              <span class="participant-name">{{ getUserDisplayName(participant) }}</span>
-              <span class="participant-contact">{{ participant.user?.email || participant.user?.mobile_phone_number || '' }}</span>
-            </div>
-            <app-badge [type]="getParticipantBadgeType(participant.status)">
-              {{ participant.status }}
-            </app-badge>
-            <app-button
-              leftIcon="close"
-              [size]="ButtonSizeEnum.small"
-              [style]="ButtonStyleEnum.text"
-              [state]="ButtonStateEnum.error"
-              (buttonClick)="removeParticipant(participant)">
-            </app-button>
-          </div>
+          <app-participant-item
+            [participant]="participant"
+            [showRemoveAction]="true"
+            (remove)="removeParticipant(participant)">
+          </app-participant-item>
         }
         @for (pending of pendingParticipants(); track $index) {
-          <div class="participant-item pending">
-            <div class="participant-avatar">
-              {{ getPendingParticipantInitials(pending) }}
-            </div>
-            <div class="participant-details">
-              <span class="participant-name">{{ getPendingParticipantName(pending) }}</span>
-              <span class="participant-contact">{{ pending.email || pending.mobile_phone_number || '' }}</span>
-            </div>
-            <app-badge [type]="BadgeTypeEnum.gray">Pending</app-badge>
-            <app-button
-              leftIcon="close"
-              [size]="ButtonSizeEnum.small"
-              [style]="ButtonStyleEnum.text"
-              [state]="ButtonStateEnum.error"
-              (buttonClick)="removePendingParticipant($index)">
-            </app-button>
-          </div>
+          <app-participant-item
+            [pendingParticipant]="pending"
+            [isPending]="true"
+            [showRemoveAction]="true"
+            (remove)="removePendingParticipant($index)">
+          </app-participant-item>
         }
       </div>
     }

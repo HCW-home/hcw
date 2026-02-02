@@ -37,13 +37,12 @@ import { Input as InputComponent } from '../../ui-components/input/input';
 import { Select } from '../../ui-components/select/select';
 import { Checkbox } from '../../ui-components/checkbox/checkbox';
 import { Svg } from '../../ui-components/svg/svg';
-import { Badge } from '../badge/badge';
 import { Loader } from '../loader/loader';
 import { UserSearchSelect } from '../user-search-select/user-search-select';
+import { ParticipantItem } from '../participant-item/participant-item';
 import { ButtonStyleEnum, ButtonSizeEnum, ButtonStateEnum } from '../../constants/button';
-import { BadgeTypeEnum } from '../../constants/badge';
 import { SelectOption } from '../../models/select';
-import { getParticipantBadgeType, extractDateFromISO, extractTimeFromISO } from '../../tools/helper';
+import { extractDateFromISO, extractTimeFromISO } from '../../tools/helper';
 import { getErrorMessage } from '../../../core/utils/error-helper';
 import { TIMEZONE_OPTIONS } from '../../constants/timezone';
 
@@ -59,9 +58,9 @@ import { TIMEZONE_OPTIONS } from '../../constants/timezone';
     Select,
     Checkbox,
     Svg,
-    Badge,
     Loader,
     UserSearchSelect,
+    ParticipantItem,
   ],
 })
 export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
@@ -108,9 +107,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
   protected readonly ButtonStateEnum = ButtonStateEnum;
-  protected readonly BadgeTypeEnum = BadgeTypeEnum;
   protected readonly AppointmentType = AppointmentType;
-  protected readonly getParticipantBadgeType = getParticipantBadgeType;
 
   get isEditMode(): boolean {
     return this.editingAppointment !== null;
@@ -310,48 +307,12 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
     return this.participants().length + this.pendingParticipants().length;
   }
 
-  getPendingParticipantName(pending: CreateParticipantRequest): string {
-    const name = `${pending.first_name || ''} ${pending.last_name || ''}`.trim();
-    return name || pending.email || 'Participant';
-  }
-
-  getPendingParticipantInitials(pending: CreateParticipantRequest): string {
-    const first = pending.first_name?.charAt(0) || '';
-    const last = pending.last_name?.charAt(0) || '';
-    if (first || last) {
-      return (first + last).toUpperCase();
-    }
-    return pending.email?.charAt(0).toUpperCase() || '?';
-  }
-
   removePendingParticipant(index: number): void {
     this.pendingParticipants.update(list => list.filter((_, i) => i !== index));
   }
 
   removeParticipant(participant: Participant): void {
     this.participants.update(list => list.filter(p => p.id !== participant.id));
-  }
-
-  getUserDisplayName(participant: Participant): string {
-    if (participant.user) {
-      const fullName = `${participant.user.first_name || ''} ${participant.user.last_name || ''}`.trim();
-      return fullName || participant.user.email || 'Unknown';
-    }
-    return 'Unknown';
-  }
-
-  getParticipantInitials(participant: Participant): string {
-    if (participant.user) {
-      const first = participant.user.first_name?.charAt(0) || '';
-      const last = participant.user.last_name?.charAt(0) || '';
-      if (first || last) {
-        return (first + last).toUpperCase();
-      }
-      if (participant.user.email) {
-        return participant.user.email.charAt(0).toUpperCase();
-      }
-    }
-    return '?';
   }
 
   onCancel(): void {

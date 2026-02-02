@@ -54,6 +54,7 @@
                       <app-user-search-select
                         label="Beneficary"
                         placeholder="Search patient..."
+                        [temporary]="false"
                         [initialUser]="selectedBeneficiary()"
                         (userSelected)="onBeneficiarySelected($event)">
                       </app-user-search-select>
@@ -63,6 +64,7 @@
                       <app-user-search-select
                         label="Owner"
                         placeholder="Search owner..."
+                        [temporary]="false"
                         [initialUser]="selectedOwner()"
                         (userSelected)="onOwnerSelected($event)">
                       </app-user-search-select>
@@ -322,38 +324,7 @@
                       @if (appointment.participants.length) {
                         <div class="participants-list">
                           @for (participant of appointment.participants; track participant.id) {
-                            <div class="participant-item">
-                              <div class="participant-avatar">
-                                {{ getParticipantInitials(participant) }}
-                              </div>
-                              <div class="participant-details">
-                                <span class="participant-name">{{ getUserDisplayName(participant) }}</span>
-                                <span class="participant-contact">{{ participant.user?.email || participant.user?.mobile_phone_number || '' }}</span>
-                                <div class="participant-meta">
-                                  @if (participant.user?.timezone) {
-                                    <span class="meta-item">
-                                      <app-svg src="clock" [svgStyle]="{'width.px': 12, 'height.px': 12}"></app-svg>
-                                      {{ participant.user!.timezone }}
-                                    </span>
-                                  }
-                                  @if (participant.user?.preferred_language) {
-                                    <span class="meta-item">
-                                      <app-svg src="globe" [svgStyle]="{'width.px': 12, 'height.px': 12}"></app-svg>
-                                      {{ getLanguageLabel(participant.user!.preferred_language!) }}
-                                    </span>
-                                  }
-                                  @if (participant.user?.communication_method) {
-                                    <span class="meta-item">
-                                      <app-svg src="message-square" [svgStyle]="{'width.px': 12, 'height.px': 12}"></app-svg>
-                                      {{ participant.user!.communication_method }}
-                                    </span>
-                                  }
-                                </div>
-                              </div>
-                              <app-badge [type]="getParticipantBadgeType(participant.status)">
-                                {{ participant.status }}
-                              </app-badge>
-                            </div>
+                            <app-participant-item [participant]="participant"></app-participant-item>
                           }
                         </div>
                       } @else {
@@ -413,6 +384,19 @@
                         </app-button>
                       }
                     </div>
+                  </div>
+                }
+
+                @if (hasMoreAppointments()) {
+                  <div class="load-more-container">
+                    <app-button
+                      text="View More"
+                      [style]="ButtonStyleEnum.text"
+                      [size]="ButtonSizeEnum.medium"
+                      [loading]="isLoadingMoreAppointments()"
+                      [disabled]="isLoadingMoreAppointments()"
+                      (buttonClick)="loadMoreAppointments()">
+                    </app-button>
                   </div>
                 }
               </div>

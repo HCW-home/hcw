@@ -28,6 +28,8 @@ interface TabCache {
   data: Consultation[];
   loaded: boolean;
   searchQuery: string;
+  hasMore: boolean;
+  currentPage: number;
 }
 
 @Component({
@@ -43,10 +45,12 @@ export class Consultations implements OnInit, OnDestroy {
   private toasterService = inject(ToasterService);
 
   private tabCache: Record<ConsultationTabType, TabCache> = {
-    active: { data: [], loaded: false, searchQuery: '' },
-    past: { data: [], loaded: false, searchQuery: '' },
-    overdue: { data: [], loaded: false, searchQuery: '' }
+    active: { data: [], loaded: false, searchQuery: '', hasMore: false, currentPage: 1 },
+    past: { data: [], loaded: false, searchQuery: '', hasMore: false, currentPage: 1 },
+    overdue: { data: [], loaded: false, searchQuery: '', hasMore: false, currentPage: 1 }
   };
+
+  private pageSize = 20;
 
   activeTab = signal<ConsultationTabType>('active');
   consultations = signal<Consultation[]>([]);
@@ -54,6 +58,8 @@ export class Consultations implements OnInit, OnDestroy {
   pastCount = signal(0);
   overdueCount = signal(0);
   loading = signal<boolean>(false);
+  loadingMore = signal<boolean>(false);
+  hasMore = signal<boolean>(false);
   error = signal<string | null>(null);
   searchQuery = '';
 
@@ -117,6 +123,7 @@ export class Consultations implements OnInit, OnDestroy {
 
     if (cache.loaded && cache.searchQuery === this.searchQuery) {
       this.consultations.set(cache.data);
+      this.hasMore.set(cache.hasMore);
       return;
     }
 
@@ -124,7 +131,7 @@ export class Consultations implements OnInit, OnDestroy {
     this.error.set(null);
 
     if (currentTab === 'overdue') {
-      const params: { search?: string } = {};
+      const params: { search?: string; page_size?: number } = { page_size: this.pageSize };
       if (this.searchQuery) {
         params.search = this.searchQuery;
       }
@@ -133,11 +140,15 @@ export class Consultations implements OnInit, OnDestroy {
         takeUntil(this.destroy$)
       ).subscribe({
         next: (response) => {
+          const hasMore = response.next !== null;
           this.consultations.set(response.results);
+          this.hasMore.set(hasMore);
           this.tabCache[currentTab] = {
             data: response.results,
             loaded: true,
-            searchQuery: this.searchQuery
+            searchQuery: this.searchQuery,
+            hasMore,
+            currentPage: 1
           };
           this.loading.set(false);
         },
@@ -147,8 +158,9 @@ export class Consultations implements OnInit, OnDestroy {
         }
       });
     } else {
-      const params: { is_closed: boolean; search?: string } = {
-        is_closed: currentTab === 'past'
+      const params: { is_closed: boolean; search?: string; page_size?: number } = {
+        is_closed: currentTab === 'past',
+        page_size: this.pageSize
       };
       if (this.searchQuery) {
         params.search = this.searchQuery;
@@ -158,17 +170,94 @@ export class Consultations implements OnInit, OnDestroy {
         takeUntil(this.destroy$)
       ).subscribe({
         next: (response) => {
+          const hasMore = response.next !== null;
           this.consultations.set(response.results);
+          this.hasMore.set(hasMore);
           this.tabCache[currentTab] = {
             data: response.results,
             loaded: true,
-            searchQuery: this.searchQuery
+            searchQuery: this.searchQuery,
+            hasMore,
+            currentPage: 1
           };
           this.loading.set(false);
         },
         error: (err) => {
           this.toasterService.show('error', 'Error', getErrorMessage(err));
           this.loading.set(false);
+        }
+      });
+    }
+  }
+
+  loadMore(): void {
+    if (this.loadingMore() || !this.hasMore()) return;
+
+    const currentTab = this.activeTab();
+    const cache = this.tabCache[currentTab];
+    const nextPage = cache.currentPage + 1;
+
+    this.loadingMore.set(true);
+
+    if (currentTab === 'overdue') {
+      const params: { search?: string; page_size?: number; page?: number } = {
+        page_size: this.pageSize,
+        page: nextPage
+      };
+      if (this.searchQuery) {
+        params.search = this.searchQuery;
+      }
+
+      this.consultationService.getOverdueConsultations(params).pipe(
+        takeUntil(this.destroy$)
+      ).subscribe({
+        next: (response) => {
+          const hasMore = response.next !== null;
+          const newData = [...cache.data, ...response.results];
+          this.consultations.set(newData);
+          this.hasMore.set(hasMore);
+          this.tabCache[currentTab] = {
+            ...cache,
+            data: newData,
+            hasMore,
+            currentPage: nextPage
+          };
+          this.loadingMore.set(false);
+        },
+        error: (err) => {
+          this.toasterService.show('error', 'Error', getErrorMessage(err));
+          this.loadingMore.set(false);
+        }
+      });
+    } else {
+      const params: { is_closed: boolean; search?: string; page_size?: number; page?: number } = {
+        is_closed: currentTab === 'past',
+        page_size: this.pageSize,
+        page: nextPage
+      };
+      if (this.searchQuery) {
+        params.search = this.searchQuery;
+      }
+
+      this.consultationService.getConsultations(params).pipe(
+        takeUntil(this.destroy$)
+      ).subscribe({
+        next: (response) => {
+          const hasMore = response.next !== null;
+          const newData = [...cache.data, ...response.results];
+          this.consultations.set(newData);
+          this.hasMore.set(hasMore);
+          this.tabCache[currentTab] = {
+            ...cache,
+            data: newData,
+            hasMore,
+            currentPage: nextPage
+          };
+          this.loadingMore.set(false);
+        },
+        error: (err) => {
+          this.toasterService.show('error', 'Error', getErrorMessage(err));
+          this.loadingMore.set(false);
         }
       });
     }
@@ -245,9 +334,9 @@ export class Consultations implements OnInit, OnDestroy {
 
   private invalidateCache(): void {
     this.tabCache = {
-      active: { data: [], loaded: false, searchQuery: '' },
-      past: { data: [], loaded: false, searchQuery: '' },
-      overdue: { data: [], loaded: false, searchQuery: '' }
+      active: { data: [], loaded: false, searchQuery: '', hasMore: false, currentPage: 1 },
+      past: { data: [], loaded: false, searchQuery: '', hasMore: false, currentPage: 1 },
+      overdue: { data: [], loaded: false, searchQuery: '', hasMore: false, currentPage: 1 }
     };
   }
 

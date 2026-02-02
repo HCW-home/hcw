@@ -47,6 +47,7 @@ export class UserSearchSelect implements OnInit, OnDestroy, ControlValueAccessor
   placeholder = input<string>('Search by name or email...');
   required = input<boolean>(false);
   initialUser = input<IUser | null>(null);
+  temporary = input<boolean | undefined>(undefined);
 
   userSelected = output<IUser | null>();
 
@@ -134,7 +135,7 @@ export class UserSearchSelect implements OnInit, OnDestroy, ControlValueAccessor
     this.isLoading.set(true);
     const query = search ?? this.searchQuery() ?? '';
 
-    this.userService.searchUsers(query, this.currentPage(), this.pageSize)
+    this.userService.searchUsers(query, this.currentPage(), this.pageSize, this.temporary())
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {

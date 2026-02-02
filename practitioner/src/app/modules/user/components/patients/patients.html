@@ -85,6 +85,19 @@
               </div>
             </app-list-item>
           }
+
+          @if (hasMore()) {
+            <div class="load-more-container">
+              <app-button
+                text="View More"
+                [style]="ButtonStyleEnum.text"
+                [size]="ButtonSizeEnum.medium"
+                [loading]="loadingMore()"
+                [disabled]="loadingMore()"
+                (buttonClick)="loadMore()">
+              </app-button>
+            </div>
+          }
         }
       </div>
     </div>

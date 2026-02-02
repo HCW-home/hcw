@@ -29,6 +29,8 @@ interface TabCache {
   data: IUser[];
   loaded: boolean;
   searchQuery: string;
+  hasMore: boolean;
+  currentPage: number;
 }
 
 @Component({
@@ -45,10 +47,12 @@ export class Patients implements OnInit, OnDestroy {
   private router = inject(Router);
 
   private tabCache: Record<PatientTabType, TabCache> = {
-    all: { data: [], loaded: false, searchQuery: '' },
-    registered: { data: [], loaded: false, searchQuery: '' },
-    temporary: { data: [], loaded: false, searchQuery: '' }
+    all: { data: [], loaded: false, searchQuery: '', hasMore: false, currentPage: 1 },
+    registered: { data: [], loaded: false, searchQuery: '', hasMore: false, currentPage: 1 },
+    temporary: { data: [], loaded: false, searchQuery: '', hasMore: false, currentPage: 1 }
   };
+
+  private pageSize = 20;
 
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
@@ -56,6 +60,8 @@ export class Patients implements OnInit, OnDestroy {
   protected readonly getOnlineStatusBadgeType = getOnlineStatusBadgeType;
 
   loading = signal(false);
+  loadingMore = signal(false);
+  hasMore = signal(false);
   patients = signal<IUser[]>([]);
   totalCount = signal(0);
   permanentCount = signal(0);
@@ -97,11 +103,12 @@ export class Patients implements OnInit, OnDestroy {
 
     if (cache.loaded && cache.searchQuery === this.searchQuery) {
       this.patients.set(cache.data);
+      this.hasMore.set(cache.hasMore);
       return;
     }
 
     this.loading.set(true);
-    const params: { search?: string; page_size?: number; temporary?: boolean } = { page_size: 50 };
+    const params: { search?: string; page_size?: number; temporary?: boolean } = { page_size: this.pageSize };
     if (this.searchQuery) {
       params.search = this.searchQuery;
     }
@@ -116,17 +123,66 @@ export class Patients implements OnInit, OnDestroy {
       takeUntil(this.destroy$)
     ).subscribe({
       next: (response) => {
+        const hasMore = response.next !== null;
         this.patients.set(response.results);
+        this.hasMore.set(hasMore);
         this.tabCache[currentTab] = {
           data: response.results,
           loaded: true,
-          searchQuery: this.searchQuery
+          searchQuery: this.searchQuery,
+          hasMore,
+          currentPage: 1
         };
         this.loading.set(false);
       },
       error: (err) => {
         this.toasterService.show('error', 'Error', getErrorMessage(err));
         this.loading.set(false);
+      }
+    });
+  }
+
+  loadMore(): void {
+    if (this.loadingMore() || !this.hasMore()) return;
+
+    const currentTab = this.activeTab();
+    const cache = this.tabCache[currentTab];
+    const nextPage = cache.currentPage + 1;
+
+    this.loadingMore.set(true);
+    const params: { search?: string; page_size?: number; page?: number; temporary?: boolean } = {
+      page_size: this.pageSize,
+      page: nextPage
+    };
+    if (this.searchQuery) {
+      params.search = this.searchQuery;
+    }
+
+    if (currentTab === 'registered') {
+      params.temporary = false;
+    } else if (currentTab === 'temporary') {
+      params.temporary = true;
+    }
+
+    this.patientService.getPatients(params).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (response) => {
+        const hasMore = response.next !== null;
+        const newData = [...cache.data, ...response.results];
+        this.patients.set(newData);
+        this.hasMore.set(hasMore);
+        this.tabCache[currentTab] = {
+          ...cache,
+          data: newData,
+          hasMore,
+          currentPage: nextPage
+        };
+        this.loadingMore.set(false);
+      },
+      error: (err) => {
+        this.toasterService.show('error', 'Error', getErrorMessage(err));
+        this.loadingMore.set(false);
       }
     });
   }
@@ -172,9 +228,9 @@ export class Patients implements OnInit, OnDestroy {
 
   private invalidateCache(): void {
     this.tabCache = {
-      all: { data: [], loaded: false, searchQuery: '' },
-      registered: { data: [], loaded: false, searchQuery: '' },
-      temporary: { data: [], loaded: false, searchQuery: '' }
+      all: { data: [], loaded: false, searchQuery: '', hasMore: false, currentPage: 1 },
+      registered: { data: [], loaded: false, searchQuery: '', hasMore: false, currentPage: 1 },
+      temporary: { data: [], loaded: false, searchQuery: '', hasMore: false, currentPage: 1 }
     };
   }
 

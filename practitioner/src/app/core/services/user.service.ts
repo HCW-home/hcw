@@ -32,10 +32,11 @@ export class UserService {
     );
   }
 
-  searchUsers(query: string, page?: number, pageSize?: number): Observable<PaginatedResponse<IUser>> {
-    const params: Record<string, string | number> = {search: query};
+  searchUsers(query: string, page?: number, pageSize?: number, temporary?: boolean): Observable<PaginatedResponse<IUser>> {
+    const params: Record<string, string | number | boolean> = {search: query};
     if (page) params['page'] = page;
     if (pageSize) params['page_size'] = pageSize;
+    if (temporary !== undefined) params['temporary'] = temporary;
 
     return this.http.get<PaginatedResponse<IUser>>(`${this.apiUrl}/users/`, {params});
   }

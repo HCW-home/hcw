@@ -33,6 +33,7 @@
                 <app-user-search-select
                   label="Select Beneficiary"
                   placeholder="Search by name or email..."
+                  [temporary]="false"
                   formControlName="beneficiary_id">
                 </app-user-search-select>
               </div>
@@ -74,6 +75,7 @@
                 <app-user-search-select
                   label="Select Owner"
                   placeholder="Search by name or email..."
+                  [temporary]="false"
                   (userSelected)="onOwnerSelected($event)">
                 </app-user-search-select>
               </div>
