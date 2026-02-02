@@ -13,7 +13,7 @@ DEFAULT_NOTIFICATION_MESSAGES = {
             "<p>This is a reminder for your appointment scheduled for <strong>{{ obj.appointment.scheduled_at|date }}</strong> at <strong>{{ obj.appointment.scheduled_at|time }}</strong>.</p>"
         ),
         "model": "consultations.Participant",
-        "helper_text": "Message sent to participant when a beneficiary sends a message",
+        "helper_text": "First reminder about appointment",
     },
     "appointment_last_reminder": {
         "template_subject": _(
@@ -28,7 +28,7 @@ DEFAULT_NOTIFICATION_MESSAGES = {
         "action": "join",
         "action_label": _("Click here to join consultation"),
         "model": "consultations.Participant",
-        "helper_text": "Message sent to participant when a beneficiary sends a message",
+        "helper_text": "Last reminder when it's time to join appointment",
     },
     "invitation_to_appointment": {
         "template_subject": _("Your consultation has been scheduled"),

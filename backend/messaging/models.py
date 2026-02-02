@@ -731,7 +731,7 @@ class Message(ModelCeleryAbstract):
         if self.sent_to.one_time_auth_token:
             full_url = f"{base_url}?auth={self.sent_to.one_time_auth_token}&action={self.action}&id={self.object_pk}&model={self.object_model}"
         else:
-            full_url = f"{base_url}?auth={self.sent_to.email}?&action={self.action}&id={self.object_pk}&model={self.object_model}"
+            full_url = f"{base_url}?email={self.sent_to.email}?&action={self.action}&id={self.object_pk}&model={self.object_model}"
 
         if self.additionnal_link_args:
             full_url += "".join([f"&{key}={value}" for key,
@@ -781,7 +781,7 @@ class Message(ModelCeleryAbstract):
 
     @property
     def template(self) -> Template:
-        if not self._template:
+        if not self._template and self.template_system_name:
             self._template = Template.get_template(
                 name=self.validated_communication_method,
                 event_type=self.template_system_name,

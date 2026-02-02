@@ -57,6 +57,7 @@ from .serializers import (
     UserDetailsSerializer,
     UserParticipantDetailSerializer
 )
+from .filters import UserFilter
 from django_filters.rest_framework import DjangoFilterBackend
 
 class DjangoModelPermissionsWithView(DjangoModelPermissions):
@@ -576,7 +577,7 @@ class UserViewSet(viewsets.ModelViewSet):
     pagination_class = UniversalPagination
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     search_fields = ["first_name", "last_name", "email"]
-    filterset_fields = ["temporary"]
+    filterset_class = UserFilter
 
     def update(self, request, *args, **kwargs):
         """Prevent updating users with superuser, staff access, or users in groups."""

@@ -2,7 +2,7 @@ How to run tasks manually
 
 ```
 # In a first console, run the scheduler (reddis is required)
-celery -A core worker --loglevel=info
+celery -A core worker --beat -l info
 
 # In a second console
 ./manage.py shell
