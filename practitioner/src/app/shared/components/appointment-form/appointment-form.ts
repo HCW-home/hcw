@@ -1,34 +1,36 @@
 import {
-  Component,
   Input,
-  Output,
-  EventEmitter,
-  OnInit,
-  OnDestroy,
-  OnChanges,
-  SimpleChanges,
-  signal,
   inject,
+  signal,
+  Output,
+  OnInit,
+  OnChanges,
+  OnDestroy,
+  Component,
+  EventEmitter,
+  SimpleChanges,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
-  FormBuilder,
   FormGroup,
   Validators,
+  FormBuilder,
   ReactiveFormsModule,
 } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 
 import { ConsultationService } from '../../../core/services/consultation.service';
 import { ToasterService } from '../../../core/services/toaster.service';
+import { UserService } from '../../../core/services/user.service';
 import {
-  Appointment,
+  User,
   Participant,
-  CreateParticipantRequest,
+  Appointment,
   AppointmentType,
   ITemporaryParticipant,
   UpdateAppointmentRequest,
   CreateAppointmentRequest,
+  CreateParticipantRequest,
 } from '../../../core/models/consultation';
 import { IUser } from '../../../modules/user/models/user';
 
@@ -51,22 +53,24 @@ import { TIMEZONE_OPTIONS } from '../../constants/timezone';
   templateUrl: './appointment-form.html',
   styleUrl: './appointment-form.scss',
   imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    Button,
-    InputComponent,
-    Select,
-    Checkbox,
     Svg,
     Loader,
-    UserSearchSelect,
+    Select,
+    Button,
+    Checkbox,
+    CommonModule,
+    InputComponent,
     ParticipantItem,
+    UserSearchSelect,
+    ReactiveFormsModule,
   ],
 })
 export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   @Input() consultationId!: number;
   @Input() editingAppointment: Appointment | null = null;
   @Input() showActions = true;
+  @Input() beneficiary: User | null = null;
+  @Input() owner: User | null = null;
 
   @Output() cancelled = new EventEmitter<void>();
   @Output() appointmentCreated = new EventEmitter<Appointment>();
@@ -76,8 +80,10 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   private fb = inject(FormBuilder);
   private consultationService = inject(ConsultationService);
   private toasterService = inject(ToasterService);
+  private userService = inject(UserService);
 
   isSubmitting = signal(false);
+  currentUser = signal<IUser | null>(null);
   appointmentForm!: FormGroup;
 
   participants = signal<Participant[]>([]);
@@ -120,6 +126,37 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   ngOnInit(): void {
     this.initForm();
     this.initParticipantForm();
+    this.loadCurrentUser();
+    this.updateInviteCheckboxStates();
+  }
+
+  private loadCurrentUser(): void {
+    this.userService.currentUser$.pipe(takeUntil(this.destroy$)).subscribe(user => {
+      this.currentUser.set(user);
+    });
+    if (!this.currentUser()) {
+      this.userService.getCurrentUser().pipe(takeUntil(this.destroy$)).subscribe();
+    }
+  }
+
+  isBeneficiaryCheckboxDisabled(): boolean {
+    return !this.beneficiary;
+  }
+
+  isPractitionerCheckboxDisabled(): boolean {
+    return !this.owner;
+  }
+
+  getBeneficiaryUser(): User | null {
+    return this.beneficiary;
+  }
+
+  getOwnerUser(): User | null {
+    return this.owner;
+  }
+
+  getCurrentUserForInvite(): IUser | null {
+    return this.currentUser();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -129,6 +166,26 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
         this.populateFormForEdit();
         this.loadParticipants();
       }
+    }
+    if ((changes['beneficiary'] || changes['owner']) && this.appointmentForm) {
+      this.updateInviteCheckboxStates();
+    }
+  }
+
+  updateInviteCheckboxStates(): void {
+    const beneficiaryControl = this.appointmentForm.get('dont_invite_beneficiary');
+    const practitionerControl = this.appointmentForm.get('dont_invite_practitioner');
+
+    if (this.isBeneficiaryCheckboxDisabled()) {
+      beneficiaryControl?.disable();
+    } else {
+      beneficiaryControl?.enable();
+    }
+
+    if (this.isPractitionerCheckboxDisabled()) {
+      practitionerControl?.disable();
+    } else {
+      practitionerControl?.enable();
     }
   }
 

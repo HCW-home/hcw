@@ -60,7 +60,10 @@ interface IParticipantFormValue {
 import { Page } from '../../../../core/components/page/page';
 import { Loader } from '../../../../shared/components/loader/loader';
 import { UserSearchSelect } from '../../../../shared/components/user-search-select/user-search-select';
+import { ParticipantItem } from '../../../../shared/components/participant-item/participant-item';
 import { IUser } from '../../models/user';
+import { UserService } from '../../../../core/services/user.service';
+import { CommunicationMethodEnum } from '../../constants/user';
 import { Stepper } from '../../../../shared/components/stepper/stepper';
 import { IStep } from '../../../../shared/components/stepper/stepper-models';
 import { Checkbox } from '../../../../shared/ui-components/checkbox/checkbox';
@@ -94,6 +97,7 @@ import { TIMEZONE_OPTIONS } from '../../../../shared/constants/timezone';
     Page,
     Loader,
     UserSearchSelect,
+    ParticipantItem,
     Stepper,
     Typography,
     Select,
@@ -127,6 +131,8 @@ export class ConsultationForm implements OnInit, OnDestroy {
   ];
 
   selectedOwner = signal<IUser | null>(null);
+  selectedBeneficiary = signal<IUser | null>(null);
+  currentUser = signal<IUser | null>(null);
 
   consultationForm!: FormGroup;
 
@@ -187,6 +193,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
   private consultationService = inject(ConsultationService);
   private toasterService = inject(ToasterService);
   private validationService = inject(ValidationService);
+  private userService = inject(UserService);
 
   get appointmentsFormArray(): FormArray {
     return this.consultationForm.get('appointments') as FormArray;
@@ -217,6 +224,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadQueues();
+    this.loadCurrentUser();
 
     this.route.params.pipe(takeUntil(this.destroy$)).subscribe(params => {
       if (params['id']) {
@@ -239,6 +247,15 @@ export class ConsultationForm implements OnInit, OnDestroy {
     });
 
     this.setupAutoSave();
+  }
+
+  private loadCurrentUser(): void {
+    this.userService.currentUser$.pipe(takeUntil(this.destroy$)).subscribe(user => {
+      this.currentUser.set(user);
+    });
+    if (!this.currentUser()) {
+      this.userService.getCurrentUser().pipe(takeUntil(this.destroy$)).subscribe();
+    }
   }
 
   ngOnDestroy(): void {
@@ -575,6 +592,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
     } else {
       this.consultationForm.patchValue({ owned_by_id: '' });
     }
+    this.updateInviteCheckboxStates();
   }
 
   nextStep(): void {
@@ -632,12 +650,35 @@ export class ConsultationForm implements OnInit, OnDestroy {
       date: ['', Validators.required],
       time: ['', Validators.required],
       type: [AppointmentType.ONLINE, Validators.required],
-      dont_invite_beneficiary: [false],
-      dont_invite_practitioner: [false],
+      dont_invite_beneficiary: [{ value: false, disabled: this.isBeneficiaryCheckboxDisabled() }],
+      dont_invite_practitioner: [{ value: false, disabled: this.isPractitionerCheckboxDisabled() }],
       dont_invite_me: [false],
       participants: this.fb.array([]),
     });
     this.appointmentsFormArray.push(appointmentGroup);
+  }
+
+  updateInviteCheckboxStates(): void {
+    const beneficiaryDisabled = this.isBeneficiaryCheckboxDisabled();
+    const practitionerDisabled = this.isPractitionerCheckboxDisabled();
+
+    for (let i = 0; i < this.appointmentsFormArray.length; i++) {
+      const appointment = this.appointmentsFormArray.at(i);
+      const beneficiaryControl = appointment.get('dont_invite_beneficiary');
+      const practitionerControl = appointment.get('dont_invite_practitioner');
+
+      if (beneficiaryDisabled) {
+        beneficiaryControl?.disable();
+      } else {
+        beneficiaryControl?.enable();
+      }
+
+      if (practitionerDisabled) {
+        practitionerControl?.disable();
+      } else {
+        practitionerControl?.enable();
+      }
+    }
   }
 
   removeAppointment(index: number): void {
@@ -834,6 +875,79 @@ export class ConsultationForm implements OnInit, OnDestroy {
   getAppointmentType(appointmentIndex: number): AppointmentType {
     const appointment = this.appointmentsFormArray.at(appointmentIndex);
     return appointment?.get('type')?.value || AppointmentType.ONLINE;
+  }
+
+  getAppointmentControl(appointmentIndex: number, controlName: string): { value: boolean } {
+    const appointment = this.appointmentsFormArray.at(appointmentIndex);
+    return appointment?.get(controlName) || { value: false };
+  }
+
+  getBeneficiaryUser(): IUser | null {
+    const beneficiary = this.selectedBeneficiary();
+    if (beneficiary) {
+      return beneficiary;
+    }
+    const consultation = this.consultation();
+    if (consultation?.beneficiary) {
+      return {
+        pk: consultation.beneficiary.id,
+        email: consultation.beneficiary.email,
+        first_name: consultation.beneficiary.first_name,
+        last_name: consultation.beneficiary.last_name,
+        is_active: true,
+        is_staff: false,
+        is_superuser: false,
+        date_joined: '',
+        communication_method: CommunicationMethodEnum.EMAIL,
+        timezone: consultation.beneficiary.timezone || '',
+      };
+    }
+    return null;
+  }
+
+  getOwnerUser(): IUser | null {
+    const owner = this.selectedOwner();
+    if (owner) {
+      return owner;
+    }
+    const consultation = this.consultation();
+    if (consultation?.owned_by) {
+      return {
+        pk: consultation.owned_by.id,
+        email: consultation.owned_by.email,
+        first_name: consultation.owned_by.first_name,
+        last_name: consultation.owned_by.last_name,
+        is_active: true,
+        is_staff: false,
+        is_superuser: false,
+        date_joined: '',
+        communication_method: CommunicationMethodEnum.EMAIL,
+        timezone: consultation.owned_by.timezone || '',
+      };
+    }
+    return null;
+  }
+
+  getCurrentUserForInvite(): IUser | null {
+    return this.currentUser();
+  }
+
+  isBeneficiaryCheckboxDisabled(): boolean {
+    return !this.getBeneficiaryUser();
+  }
+
+  isPractitionerCheckboxDisabled(): boolean {
+    return !this.getOwnerUser();
+  }
+
+  onBeneficiarySelected(user: IUser | null): void {
+    this.selectedBeneficiary.set(user);
+    if (user) {
+      this.consultationForm.patchValue({ beneficiary_id: user.pk });
+    } else {
+      this.consultationForm.patchValue({ beneficiary_id: '' });
+    }
+    this.updateInviteCheckboxStates();
   }
 
   private mapParticipantsForRequest(participants: IParticipantFormValue[]): {

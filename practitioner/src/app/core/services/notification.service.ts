@@ -10,10 +10,14 @@ import { INotification, INotificationResponse, NotificationStatus } from '../mod
 export class NotificationService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/user/notifications/`;
+  private currentPage = 1;
+  private pageSize = 10;
 
   notifications = signal<INotification[]>([]);
   unreadCount = signal<number>(0);
   isLoading = signal<boolean>(false);
+  isLoadingMore = signal<boolean>(false);
+  hasMore = signal<boolean>(false);
 
   getNotifications(params?: {
     status?: NotificationStatus;
@@ -37,14 +41,36 @@ export class NotificationService {
 
   loadNotifications(): void {
     this.isLoading.set(true);
-    this.getNotifications({ page_size: 10 }).subscribe({
+    this.currentPage = 1;
+    this.getNotifications({ page: 1, page_size: this.pageSize }).subscribe({
       next: (response) => {
         this.notifications.set(response.results);
         this.updateUnreadCount(response.results);
+        this.hasMore.set(response.next !== null);
         this.isLoading.set(false);
       },
       error: () => {
         this.isLoading.set(false);
+      }
+    });
+  }
+
+  loadMore(): void {
+    if (this.isLoadingMore() || !this.hasMore()) return;
+
+    this.isLoadingMore.set(true);
+    this.currentPage++;
+
+    this.getNotifications({ page: this.currentPage, page_size: this.pageSize }).subscribe({
+      next: (response) => {
+        const current = this.notifications();
+        this.notifications.set([...current, ...response.results]);
+        this.hasMore.set(response.next !== null);
+        this.isLoadingMore.set(false);
+      },
+      error: () => {
+        this.currentPage--;
+        this.isLoadingMore.set(false);
       }
     });
   }

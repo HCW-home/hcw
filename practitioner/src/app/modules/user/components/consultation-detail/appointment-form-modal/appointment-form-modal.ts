@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-import { Appointment } from '../../../../../core/models/consultation';
+import { Appointment, User } from '../../../../../core/models/consultation';
 import { ModalComponent } from '../../../../../shared/components/modal/modal.component';
 import { AppointmentForm } from '../../../../../shared/components/appointment-form/appointment-form';
 
@@ -19,6 +19,8 @@ export class AppointmentFormModal {
   @Input() isOpen = false;
   @Input() consultationId!: number;
   @Input() editingAppointment: Appointment | null = null;
+  @Input() beneficiary: User | null = null;
+  @Input() owner: User | null = null;
 
   @Output() closed = new EventEmitter<void>();
   @Output() appointmentCreated = new EventEmitter<Appointment>();

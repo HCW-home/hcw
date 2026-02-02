@@ -117,6 +117,74 @@
     gap: 12px;
     margin-top: 12px;
   }
+
+  .invite-preview {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--slate-100);
+
+    .preview-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--slate-700);
+      margin-bottom: 12px;
+    }
+
+    .invite-preview-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      .preview-item {
+        position: relative;
+        transition: opacity 0.2s ease;
+
+        &.excluded {
+          opacity: 0.5;
+
+          app-participant-item {
+            text-decoration: line-through;
+          }
+
+          .role-label {
+            text-decoration: line-through;
+          }
+
+          &::after {
+            content: 'Excluded';
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--rose-500);
+            background: var(--rose-50);
+            padding: 2px 8px;
+            border-radius: 4px;
+          }
+        }
+
+        .role-label {
+          position: absolute;
+          right: 12px;
+          top: 50%;
+          transform: translateY(-50%);
+          font-size: 11px;
+          font-weight: 500;
+          color: var(--slate-500);
+          background: var(--slate-100);
+          padding: 2px 8px;
+          border-radius: 4px;
+        }
+
+        &.excluded .role-label {
+          display: none;
+        }
+      }
+    }
+  }
 }
 
 .participants-section {

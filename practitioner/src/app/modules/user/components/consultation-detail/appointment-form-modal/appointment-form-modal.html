@@ -6,6 +6,8 @@
   <app-appointment-form
     [consultationId]="consultationId"
     [editingAppointment]="editingAppointment"
+    [beneficiary]="beneficiary"
+    [owner]="owner"
     (cancelled)="onClose()"
     (appointmentCreated)="onAppointmentCreated($event)"
     (appointmentUpdated)="onAppointmentUpdated($event)">

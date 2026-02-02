@@ -262,6 +262,13 @@
               }
             }
           }
+
+          .notification-load-more {
+            display: flex;
+            justify-content: center;
+            padding: 12px;
+            border-top: 1px solid var(--slate-100);
+          }
         }
       }
     }
@@ -567,6 +574,13 @@
               cursor: pointer;
             }
           }
+        }
+
+        .notification-load-more {
+          display: flex;
+          justify-content: center;
+          padding: 12px;
+          border-top: 1px solid var(--slate-100);
         }
       }
     }

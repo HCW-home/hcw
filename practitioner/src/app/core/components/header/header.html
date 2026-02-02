@@ -81,6 +81,18 @@
                   </div>
                 </div>
               }
+              @if (notificationService.hasMore()) {
+                <div class="notification-load-more">
+                  <app-button
+                    text="View More"
+                    [style]="ButtonStyleEnum.text"
+                    [size]="ButtonSizeEnum.small"
+                    [loading]="notificationService.isLoadingMore()"
+                    [disabled]="notificationService.isLoadingMore()"
+                    (buttonClick)="loadMoreNotifications()">
+                  </app-button>
+                </div>
+              }
             }
           </div>
         </div>
@@ -166,6 +178,18 @@
                       {{ notificationService.getRelativeTime(notification.created_at) }}
                     </app-typography>
                   </div>
+                </div>
+              }
+              @if (notificationService.hasMore()) {
+                <div class="notification-load-more">
+                  <app-button
+                    text="View More"
+                    [style]="ButtonStyleEnum.text"
+                    [size]="ButtonSizeEnum.small"
+                    [loading]="notificationService.isLoadingMore()"
+                    [disabled]="notificationService.isLoadingMore()"
+                    (buttonClick)="loadMoreNotifications()">
+                  </app-button>
                 </div>
               }
             }

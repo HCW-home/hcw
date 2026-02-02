@@ -424,6 +424,8 @@
     [isOpen]="showCreateAppointmentModal()"
     [consultationId]="consultationId"
     [editingAppointment]="editingAppointment()"
+    [beneficiary]="consultation()?.beneficiary || null"
+    [owner]="consultation()?.owned_by || null"
     (closed)="closeCreateAppointmentModal()"
     (appointmentCreated)="onAppointmentCreated($event)"
     (appointmentUpdated)="onAppointmentUpdated($event)">

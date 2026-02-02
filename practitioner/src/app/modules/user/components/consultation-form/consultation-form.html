@@ -34,7 +34,8 @@
                   label="Select Beneficiary"
                   placeholder="Search by name or email..."
                   [temporary]="false"
-                  formControlName="beneficiary_id">
+                  formControlName="beneficiary_id"
+                  (userSelected)="onBeneficiarySelected($event)">
                 </app-user-search-select>
               </div>
 
@@ -76,6 +77,7 @@
                   label="Select Owner"
                   placeholder="Search by name or email..."
                   [temporary]="false"
+                  [hasGroupPermissions]="true"
                   (userSelected)="onOwnerSelected($event)">
                 </app-user-search-select>
               </div>
@@ -173,22 +175,54 @@
                       </div>
                     </div>
 
-                    <div class="invite-flags-section">
-                      <div class="invite-flags">
-                        <app-checkbox
-                          label="Do not invite patient"
-                          formControlName="dont_invite_beneficiary">
-                        </app-checkbox>
-                        <app-checkbox
-                          label="Do not invite practitioner"
-                          formControlName="dont_invite_practitioner">
-                        </app-checkbox>
-                        <app-checkbox
-                          label="Do not invite me"
-                          formControlName="dont_invite_me">
-                        </app-checkbox>
+                    @if (mode === 'create') {
+                      <div class="invite-flags-section">
+                        <div class="invite-flags">
+                          <app-checkbox
+                            label="Do not invite patient"
+                            formControlName="dont_invite_beneficiary">
+                          </app-checkbox>
+                          <app-checkbox
+                            label="Do not invite practitioner"
+                            formControlName="dont_invite_practitioner">
+                          </app-checkbox>
+                          <app-checkbox
+                            label="Do not invite me"
+                            formControlName="dont_invite_me">
+                          </app-checkbox>
+                        </div>
+
+                        <div class="invite-preview">
+                          <span class="preview-label">Will be invited:</span>
+                          <div class="invite-preview-list">
+                            @if (getBeneficiaryUser(); as beneficiary) {
+                              <div class="preview-item" [class.excluded]="getAppointmentControl(i, 'dont_invite_beneficiary').value">
+                                <app-participant-item
+                                  [participant]="{id: 0, user: {id: beneficiary.pk, email: beneficiary.email, first_name: beneficiary.first_name, last_name: beneficiary.last_name}, is_active: true}">
+                                </app-participant-item>
+                                <span class="role-label">Patient</span>
+                              </div>
+                            }
+                            @if (getOwnerUser(); as owner) {
+                              <div class="preview-item" [class.excluded]="getAppointmentControl(i, 'dont_invite_practitioner').value">
+                                <app-participant-item
+                                  [participant]="{id: 0, user: {id: owner.pk, email: owner.email, first_name: owner.first_name, last_name: owner.last_name}, is_active: true}">
+                                </app-participant-item>
+                                <span class="role-label">Practitioner</span>
+                              </div>
+                            }
+                            @if (getCurrentUserForInvite(); as user) {
+                              <div class="preview-item" [class.excluded]="getAppointmentControl(i, 'dont_invite_me').value">
+                                <app-participant-item
+                                  [participant]="{id: 0, user: {id: user.pk, email: user.email, first_name: user.first_name, last_name: user.last_name}, is_active: true}">
+                                </app-participant-item>
+                                <span class="role-label">You</span>
+                              </div>
+                            }
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    }
 
                     <div class="participants-section" formArrayName="participants">
                       <div class="guest-form">

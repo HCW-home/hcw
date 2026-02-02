@@ -48,6 +48,7 @@ export class UserSearchSelect implements OnInit, OnDestroy, ControlValueAccessor
   required = input<boolean>(false);
   initialUser = input<IUser | null>(null);
   temporary = input<boolean | undefined>(undefined);
+  hasGroupPermissions = input<boolean | undefined>(undefined);
 
   userSelected = output<IUser | null>();
 
@@ -135,7 +136,13 @@ export class UserSearchSelect implements OnInit, OnDestroy, ControlValueAccessor
     this.isLoading.set(true);
     const query = search ?? this.searchQuery() ?? '';
 
-    this.userService.searchUsers(query, this.currentPage(), this.pageSize, this.temporary())
+    this.userService.searchUsers(
+      query,
+      this.currentPage(),
+      this.pageSize,
+      this.temporary(),
+      this.hasGroupPermissions()
+    )
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {

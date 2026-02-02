@@ -1,4 +1,5 @@
 import {
+  Input,
   input,
   Component,
   forwardRef,
@@ -25,11 +26,19 @@ import { Svg } from '../svg/svg';
 })
 export class Checkbox {
   @HostBinding('class.checked') checked = false;
-  @HostBinding('class.disabled') disabled = false;
+  @HostBinding('class.disabled') isDisabled = false;
   @HostBinding('class.hover') hover = false;
 
   label = input<string>('');
   name = input<string>('');
+
+  @Input()
+  set disabled(value: boolean) {
+    this.isDisabled = value;
+  }
+  get disabled(): boolean {
+    return this.isDisabled;
+  }
 
   onChange: (value: boolean) => void = () => {
     //
@@ -40,7 +49,7 @@ export class Checkbox {
 
   @HostListener('click')
   toggle() {
-    if (this.disabled) return;
+    if (this.isDisabled) return;
     this.checked = !this.checked;
     this.onChange(this.checked);
     this.onTouched();
@@ -67,7 +76,7 @@ export class Checkbox {
   }
 
   setDisabledState(isDisabled: boolean): void {
-    this.disabled = isDisabled;
+    this.isDisabled = isDisabled;
   }
 
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
