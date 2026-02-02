@@ -1,15 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError, from, BehaviorSubject } from 'rxjs';
-import { catchError, filter, take, switchMap, mergeMap } from 'rxjs/operators';
+import { Observable, throwError, from } from 'rxjs';
+import { catchError, switchMap } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 import { NavController } from '@ionic/angular';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
-  private isRefreshing = false;
-  private refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(null);
-
   constructor(
     private authService: AuthService,
     private navCtrl: NavController
@@ -17,14 +14,16 @@ export class AuthInterceptor implements HttpInterceptor {
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     return from(this.authService.getToken()).pipe(
-      mergeMap(token => {
+      switchMap(token => {
         if (token) {
           request = this.addToken(request, token);
         }
         return next.handle(request).pipe(
           catchError(error => {
             if (error instanceof HttpErrorResponse && error.status === 401) {
-              return this.handle401Error(request, next);
+              if (error.error?.code === 'token_not_valid') {
+                this.forceLogout();
+              }
             }
             return throwError(() => error);
           })
@@ -33,7 +32,7 @@ export class AuthInterceptor implements HttpInterceptor {
     );
   }
 
-  private addToken(request: HttpRequest<any>, token: string) {
+  private addToken(request: HttpRequest<any>, token: string): HttpRequest<any> {
     return request.clone({
       setHeaders: {
         Authorization: `Bearer ${token}`
@@ -41,33 +40,9 @@ export class AuthInterceptor implements HttpInterceptor {
     });
   }
 
-  private handle401Error(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    if (!this.isRefreshing) {
-      this.isRefreshing = true;
-      this.refreshTokenSubject.next(null);
-
-      return from(this.authService.refreshToken()).pipe(
-        mergeMap(refreshCall => refreshCall),
-        switchMap((token: any) => {
-          this.isRefreshing = false;
-          this.refreshTokenSubject.next(token.access);
-          return next.handle(this.addToken(request, token.access));
-        }),
-        catchError(error => {
-          this.isRefreshing = false;
-          this.authService.logout();
-          this.navCtrl.navigateRoot('/login');
-          return throwError(() => error);
-        })
-      );
-    } else {
-      return this.refreshTokenSubject.pipe(
-        filter(token => token != null),
-        take(1),
-        switchMap(jwt => {
-          return next.handle(this.addToken(request, jwt));
-        })
-      );
-    }
+  private forceLogout(): void {
+    this.authService.logout().then(() => {
+      this.navCtrl.navigateRoot('/login');
+    });
   }
 }
