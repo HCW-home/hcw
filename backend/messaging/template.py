@@ -67,6 +67,8 @@ DEFAULT_NOTIFICATION_MESSAGES = {
             """at <strong>{{ obj.appointment.previous_scheduled_at|time }}</strong> is now scheduled for """
             """<strong>{{ obj.appointment.scheduled_at|date }}</strong> at <strong>{{ obj.appointment.scheduled_at|time }}</strong></p>"""
         ),
+        "action": "presence",
+        "action_label": _("Click here to confirm your presence"),
         "model": "consultations.Participant",
         "helper_text": "Message sent to participant when appointment date and time is updated",
     },

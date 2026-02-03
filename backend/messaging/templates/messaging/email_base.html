@@ -180,9 +180,11 @@
 
             <div class="email-body">
                 {{ content|safe }}
+                {% if action_label %}
                 <div class="btn-container">
                     <a href="{{access_link}}" class="btn">{{action_label}}</a>
                 </div>
+                {% endif %}
             </div>
 
             <div class="email-divider"></div>

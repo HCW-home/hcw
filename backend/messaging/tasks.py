@@ -17,6 +17,7 @@ from .models import (
     TemplateValidation,
     TemplateValidationStatus,
 )
+from datetime import timedelta
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -113,8 +114,6 @@ def cleanup_old_message_logs(days=30):
     Removes logs older than 30 days
     """
     logger.info("Starting cleanup_old_message_logs task")
-
-    from datetime import timedelta
 
     cutoff_time = timezone.now() - timedelta(days=days)
 
