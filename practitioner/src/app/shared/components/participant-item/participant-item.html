@@ -1,6 +1,10 @@
 <div class="participant-item" [class.pending]="isPending">
   <div class="participant-avatar">
-    {{ getInitials() }}
+    @if (getAvatarImage()) {
+      <img [src]="getAvatarImage()" class="avatar-image" alt="">
+    } @else {
+      {{ getInitials() }}
+    }
     @if (isOnline()) {
       <span class="online-indicator"></span>
     }

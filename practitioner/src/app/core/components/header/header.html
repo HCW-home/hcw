@@ -205,7 +205,11 @@
         </app-typography>
       </div>
       <div class="profile-avatar">
-        <span>{{ getUserInitials() }}</span>
+        @if (getUserPicture()) {
+          <img [src]="getUserPicture()" alt="" class="avatar-image">
+        } @else {
+          <span>{{ getUserInitials() }}</span>
+        }
       </div>
       <app-svg
         src="svg/chevron-down.svg"
@@ -251,7 +255,11 @@
     <div class="mobile-menu-header">
       <div class="mobile-profile">
         <div class="profile-avatar">
-          <span>{{ getUserInitials() }}</span>
+          @if (getUserPicture()) {
+            <img [src]="getUserPicture()" alt="" class="avatar-image">
+          } @else {
+            <span>{{ getUserInitials() }}</span>
+          }
         </div>
         <div class="profile-details">
           <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-800)">

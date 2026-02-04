@@ -133,6 +133,10 @@ export class Header implements OnInit, OnDestroy {
     return this.currentUser.email?.substring(0, 2).toUpperCase() || '';
   }
 
+  getUserPicture(): string {
+    return this.currentUser?.picture || '';
+  }
+
   toggleProfileMenu() {
     this.showProfileMenu.update(v => !v);
     if (this.showProfileMenu()) {

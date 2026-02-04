@@ -32,6 +32,14 @@ export class UserService {
     );
   }
 
+  uploadProfilePicture(file: File): Observable<IUser> {
+    const formData = new FormData();
+    formData.append('picture', file);
+    return this.http.patch<IUser>(`${this.apiUrl}/auth/user/`, formData).pipe(
+      tap(user => this.currentUserSubject.next(user))
+    );
+  }
+
   searchUsers(
     query: string,
     page?: number,

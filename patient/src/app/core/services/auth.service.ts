@@ -86,6 +86,15 @@ export class AuthService {
       );
   }
 
+  uploadProfilePicture(file: File): Observable<User> {
+    const formData = new FormData();
+    formData.append('picture', file);
+    return this.http.patch<User>(`${this.apiUrl}/auth/user/`, formData)
+      .pipe(
+        tap(user => this.currentUserSubject.next(user))
+      );
+  }
+
   async logout() {
     await this.storage.remove('access_token');
     await this.storage.remove('refresh_token');

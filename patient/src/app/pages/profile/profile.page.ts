@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { IonSpinner } from '@ionic/angular/standalone';
 import {
   IonHeader,
   IonToolbar,
@@ -64,13 +65,17 @@ interface ProfileMenuItem {
     IonModal,
     IonDatetime,
     IonSelect,
-    IonSelectOption
+    IonSelectOption,
+    IonSpinner
   ]
 })
 export class ProfilePage implements OnInit {
+  @ViewChild('avatarFileInput') avatarFileInput!: ElementRef<HTMLInputElement>;
+
   currentUser: User | null = null;
   showEditModal = false;
   editedUser: Partial<User> = {};
+  isUploadingAvatar = false;
 
   profileMenuItems: ProfileMenuItem[] = [
     {
@@ -79,58 +84,15 @@ export class ProfilePage implements OnInit {
       action: 'edit'
     },
     {
-      title: 'Medical History',
-      icon: 'medical-outline',
-      route: '/health-records'
-    },
-    {
-      title: 'Emergency Contacts',
-      icon: 'call-outline',
-      action: 'emergency'
-    },
-    {
-      title: 'Insurance Information',
-      icon: 'card-outline',
-      action: 'insurance'
-    },
-    {
       title: 'Settings',
       icon: 'settings-outline',
       action: 'settings'
-    },
-    {
-      title: 'Privacy & Security',
-      icon: 'lock-closed-outline',
-      action: 'privacy'
-    },
-    {
-      title: 'Help & Support',
-      icon: 'help-circle-outline',
-      action: 'help'
-    },
-    {
-      title: 'About',
-      icon: 'information-circle-outline',
-      action: 'about'
     },
     {
       title: 'Logout',
       icon: 'log-out-outline',
       action: 'logout',
       color: 'danger'
-    }
-  ];
-
-  emergencyContacts = [
-    {
-      name: 'John Doe',
-      relationship: 'Spouse',
-      phone: '+1 234-567-8900'
-    },
-    {
-      name: 'Jane Smith',
-      relationship: 'Sister',
-      phone: '+1 234-567-8901'
     }
   ];
 
@@ -189,23 +151,8 @@ export class ProfilePage implements OnInit {
         case 'edit':
           this.openEditProfile();
           break;
-        case 'emergency':
-          this.showEmergencyContacts();
-          break;
-        case 'insurance':
-          this.showInsuranceInfo();
-          break;
         case 'settings':
           this.openSettings();
-          break;
-        case 'privacy':
-          this.openPrivacySettings();
-          break;
-        case 'help':
-          this.openHelp();
-          break;
-        case 'about':
-          this.showAbout();
           break;
         case 'logout':
           this.confirmLogout();
@@ -240,76 +187,8 @@ export class ProfilePage implements OnInit {
     }
   }
 
-  async showEmergencyContacts() {
-    const alert = await this.alertCtrl.create({
-      header: 'Emergency Contacts',
-      message: this.emergencyContacts.map(c =>
-        `<strong>${c.name}</strong> (${c.relationship})<br>${c.phone}`
-      ).join('<br><br>'),
-      buttons: [
-        {
-          text: 'Edit',
-          handler: () => {
-            this.showToast('Edit emergency contacts coming soon');
-          }
-        },
-        {
-          text: 'Close',
-          role: 'cancel'
-        }
-      ]
-    });
-    await alert.present();
-  }
-
-  async showInsuranceInfo() {
-    const alert = await this.alertCtrl.create({
-      header: 'Insurance Information',
-      message: `
-        <strong>Provider:</strong> Blue Cross Blue Shield<br>
-        <strong>Policy Number:</strong> BC123456789<br>
-        <strong>Group Number:</strong> GRP001<br>
-        <strong>Valid Until:</strong> 12/31/2024
-      `,
-      buttons: [
-        {
-          text: 'Update',
-          handler: () => {
-            this.showToast('Update insurance coming soon');
-          }
-        },
-        {
-          text: 'Close',
-          role: 'cancel'
-        }
-      ]
-    });
-    await alert.present();
-  }
-
   openSettings() {
     this.navCtrl.navigateForward('/notification-settings');
-  }
-
-  openPrivacySettings() {
-    this.showToast('Privacy settings coming soon');
-  }
-
-  openHelp() {
-    this.showToast('Help & Support coming soon');
-  }
-
-  async showAbout() {
-    const alert = await this.alertCtrl.create({
-      header: 'About',
-      message: `
-        <strong>HealthCare App</strong><br>
-        Version 1.0.0<br><br>
-        Your health companion for managing appointments, medical records, and connecting with healthcare providers.
-      `,
-      buttons: ['OK']
-    });
-    await alert.present();
   }
 
   async confirmLogout() {
@@ -349,5 +228,38 @@ export class ProfilePage implements OnInit {
   getInitials(): string {
     if (!this.currentUser) return 'U';
     return `${this.currentUser.first_name?.charAt(0) || ''}${this.currentUser.last_name?.charAt(0) || ''}`.toUpperCase();
+  }
+
+  openAvatarFilePicker(): void {
+    this.avatarFileInput.nativeElement.click();
+  }
+
+  onAvatarFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+      if (file.type.startsWith('image/')) {
+        this.uploadAvatar(file);
+      } else {
+        this.showToast('Please select an image file');
+      }
+    }
+    input.value = '';
+  }
+
+  uploadAvatar(file: File): void {
+    this.isUploadingAvatar = true;
+    this.authService.uploadProfilePicture(file).subscribe({
+      next: (updatedUser) => {
+        this.currentUser = updatedUser;
+        this.editedUser = { ...updatedUser };
+        this.isUploadingAvatar = false;
+        this.showToast('Profile picture updated');
+      },
+      error: () => {
+        this.isUploadingAvatar = false;
+        this.showToast('Failed to upload profile picture');
+      }
+    });
   }
 }

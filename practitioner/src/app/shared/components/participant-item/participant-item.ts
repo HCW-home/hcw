@@ -103,4 +103,8 @@ export class ParticipantItem {
   onRemove(): void {
     this.remove.emit();
   }
+
+  getAvatarImage(): string {
+    return this.participant?.user?.picture || '';
+  }
 }

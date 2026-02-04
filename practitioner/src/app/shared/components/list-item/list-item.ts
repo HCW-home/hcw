@@ -14,6 +14,7 @@ export type ListItemVariant = 'default' | 'active' | 'past' | 'overdue' | 'tempo
 export class ListItem {
   @Input() variant: ListItemVariant = 'default';
   @Input() avatarText = '';
+  @Input() avatarImage = '';
   @Input() showOnlineIndicator = false;
   @Input() clickable = true;
   @Output() itemClick = new EventEmitter<void>();

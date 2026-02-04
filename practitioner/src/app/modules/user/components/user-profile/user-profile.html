@@ -36,8 +36,26 @@
       <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
         <div class="profile-card">
           <div class="profile-header-section">
-            <div class="user-avatar">
-              <span class="avatar-initials">{{ getInitials() }}</span>
+            <input
+              #avatarFileInput
+              type="file"
+              accept="image/*"
+              class="file-input-hidden"
+              (change)="onAvatarFileSelected($event)"
+            />
+            <div class="user-avatar" (click)="openAvatarFilePicker()">
+              @if (isUploadingAvatar()) {
+                <div class="avatar-loading">
+                  <span class="avatar-spinner"></span>
+                </div>
+              } @else if (user()!.picture) {
+                <img [src]="user()!.picture" [alt]="user()!.first_name" class="avatar-image">
+              } @else {
+                <span class="avatar-initials">{{ getInitials() }}</span>
+              }
+              <div class="avatar-overlay">
+                <app-svg src="camera" [svgStyle]="{'width.px': 20, 'height.px': 20, 'color': 'white'}"></app-svg>
+              </div>
             </div>
             <div class="user-info">
               <h2 class="user-name">{{ user()!.first_name }} {{ user()!.last_name }}</h2>

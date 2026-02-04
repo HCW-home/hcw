@@ -3,6 +3,7 @@ export interface User {
   email: string;
   first_name: string;
   last_name: string;
+  picture?: string;
   mobile_phone_number?: string;
   is_online?: boolean;
   languages?: { id: number; code: string; name: string }[];

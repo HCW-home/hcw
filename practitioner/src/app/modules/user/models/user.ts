@@ -40,6 +40,7 @@ export interface IUser {
   email: string;
   first_name: string;
   last_name: string;
+  picture?: string;
   is_active: boolean;
   is_staff: boolean;
   is_superuser: boolean;

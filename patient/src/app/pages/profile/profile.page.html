@@ -9,14 +9,25 @@
     <ion-card class="profile-card">
       <ion-card-content>
         <div class="avatar-section">
+          <input
+            #avatarFileInput
+            type="file"
+            accept="image/*"
+            class="file-input-hidden"
+            (change)="onAvatarFileSelected($event)"
+          />
           <ion-avatar class="profile-avatar">
-            @if (currentUser && currentUser.picture) {
+            @if (isUploadingAvatar) {
+              <div class="avatar-placeholder">
+                <ion-spinner name="crescent"></ion-spinner>
+              </div>
+            } @else if (currentUser && currentUser.picture) {
               <img [src]="currentUser.picture" [alt]="currentUser.first_name">
             } @else {
               <div class="avatar-placeholder">{{ getInitials() }}</div>
             }
           </ion-avatar>
-          <ion-button size="small" fill="clear" class="edit-photo-btn">
+          <ion-button size="small" fill="clear" class="edit-photo-btn" (click)="openAvatarFilePicker()">
             <ion-icon name="camera-outline"></ion-icon>
           </ion-button>
         </div>
@@ -31,43 +42,6 @@
             <ion-text class="user-phone" color="medium">
               {{ currentUser.phone }}
             </ion-text>
-          }
-        </div>
-      </ion-card-content>
-    </ion-card>
-  </div>
-
-  <div class="quick-info">
-    <ion-card>
-      <ion-card-content>
-        <div class="info-grid">
-          @if (currentUser && currentUser.blood_type) {
-            <div class="info-item">
-              <ion-icon name="water-outline" color="danger"></ion-icon>
-              <ion-text class="info-label">Blood Type</ion-text>
-              <ion-text class="info-value">{{ currentUser.blood_type }}</ion-text>
-            </div>
-          }
-          @if (currentUser && currentUser.date_of_birth) {
-            <div class="info-item">
-              <ion-icon name="calendar-outline" color="primary"></ion-icon>
-              <ion-text class="info-label">Date of Birth</ion-text>
-              <ion-text class="info-value">{{ currentUser.date_of_birth }}</ion-text>
-            </div>
-          }
-          @if (currentUser && currentUser.height) {
-            <div class="info-item">
-              <ion-icon name="resize-outline" color="tertiary"></ion-icon>
-              <ion-text class="info-label">Height</ion-text>
-              <ion-text class="info-value">{{ currentUser.height }}</ion-text>
-            </div>
-          }
-          @if (currentUser && currentUser.weight) {
-            <div class="info-item">
-              <ion-icon name="barbell-outline" color="secondary"></ion-icon>
-              <ion-text class="info-label">Weight</ion-text>
-              <ion-text class="info-value">{{ currentUser.weight }}</ion-text>
-            </div>
           }
         </div>
       </ion-card-content>

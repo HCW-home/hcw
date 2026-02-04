@@ -8,7 +8,11 @@
   (click)="onClick()">
 
   <div class="item-avatar" [ngClass]="variant">
-    <span class="avatar-text">{{ avatarText }}</span>
+    @if (avatarImage) {
+      <img [src]="avatarImage" class="avatar-image" alt="">
+    } @else {
+      <span class="avatar-text">{{ avatarText }}</span>
+    }
     @if (showOnlineIndicator) {
       <span class="online-indicator"></span>
     }

@@ -1,4 +1,4 @@
-import {Component, OnInit, OnDestroy, signal, inject} from '@angular/core';
+import {Component, OnInit, OnDestroy, signal, inject, ViewChild, ElementRef} from '@angular/core';
 import {FormBuilder, FormGroup, Validators, ReactiveFormsModule} from '@angular/forms';
 import {CommonModule, Location} from '@angular/common';
 import {Subject, takeUntil} from 'rxjs';
@@ -35,6 +35,8 @@ import { TIMEZONE_OPTIONS } from '../../../../shared/constants/timezone';
   ]
 })
 export class UserProfile implements OnInit, OnDestroy {
+  @ViewChild('avatarFileInput') avatarFileInput!: ElementRef<HTMLInputElement>;
+
   private destroy$ = new Subject<void>();
   private location = inject(Location);
   public validationService = inject(ValidationService);
@@ -46,6 +48,7 @@ export class UserProfile implements OnInit, OnDestroy {
   isLoadingUser = signal(false);
   isEditing = signal(false);
   isSaving = signal(false);
+  isUploadingAvatar = signal(false);
 
   profileForm: FormGroup;
 
@@ -199,5 +202,39 @@ export class UserProfile implements OnInit, OnDestroy {
     const first = user.first_name?.charAt(0) || '';
     const last = user.last_name?.charAt(0) || '';
     return (first + last).toUpperCase();
+  }
+
+  openAvatarFilePicker(): void {
+    this.avatarFileInput.nativeElement.click();
+  }
+
+  onAvatarFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+      if (file.type.startsWith('image/')) {
+        this.uploadAvatar(file);
+      } else {
+        this.toasterService.show('error', 'Please select an image file');
+      }
+    }
+    input.value = '';
+  }
+
+  uploadAvatar(file: File): void {
+    this.isUploadingAvatar.set(true);
+    this.userService.uploadProfilePicture(file)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (updatedUser) => {
+          this.user.set(updatedUser);
+          this.isUploadingAvatar.set(false);
+          this.toasterService.show('success', 'Profile picture updated');
+        },
+        error: (error) => {
+          this.isUploadingAvatar.set(false);
+          this.toasterService.show('error', getErrorMessage(error));
+        }
+      });
   }
 }

@@ -28,7 +28,7 @@ class ConsultationUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id", "email", "first_name", "mobile_phone_number",
-                  "last_name", "is_online", "languages", "preferred_language", "communication_method", "timezone"]
+                  "last_name", "picture", "is_online", "languages", "preferred_language", "communication_method", "timezone"]
         read_only_field = fields
 
 

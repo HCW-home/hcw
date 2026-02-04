@@ -304,11 +304,18 @@
         align-items: center;
         justify-content: center;
         box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+        overflow: hidden;
 
         span {
           color: var(--White);
           font-weight: 700;
           font-size: 14px;
+        }
+
+        .avatar-image {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
         }
       }
 
@@ -666,11 +673,18 @@
         justify-content: center;
         box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
         flex-shrink: 0;
+        overflow: hidden;
 
         span {
           color: var(--White);
           font-weight: 700;
           font-size: 16px;
+        }
+
+        .avatar-image {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
         }
       }
 
