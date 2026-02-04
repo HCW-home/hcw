@@ -171,7 +171,14 @@ DATABASES = {
     }
 }
 
-SIMPLE_JWT = {"ACCESS_TOKEN_LIFETIME": timedelta(days=1), "ROTATE_REFRESH_TOKENS": True}
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(
+        minutes=int(os.getenv("ACCESS_TOKEN_LIFETIME", 60))
+    ),
+    "ROTATE_REFRESH_TOKENS": timedelta(
+        minutes=int(os.getenv("ROTATE_REFRESH_TOKENS", 60))
+    ),
+}
 
 CONSTANCE_BACKEND = "constance.backends.database.DatabaseBackend"
 

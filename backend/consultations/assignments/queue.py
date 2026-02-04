@@ -25,3 +25,6 @@ class AssignmentHandler(BaseAssignmentHandler):
         consultation.group = self.request.reason.queue_assignee
         consultation.owned_by = None  # No specific owner, queue will handle assignment
         consultation.save()
+
+        self.request.consultation = consultation
+        self.request.save()

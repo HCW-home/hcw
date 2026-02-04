@@ -25,3 +25,6 @@ class AssignmentHandler(BaseAssignmentHandler):
         consultation.owned_by = self.request.reason.user_assignee
         consultation.group = None  # No group assignment for direct user assignment
         consultation.save()
+
+        self.request.consultation = consultation
+        self.request.save()
