@@ -252,6 +252,10 @@ export class HomePage implements OnInit, OnDestroy {
     return 'U';
   }
 
+  getUserPicture(): string {
+    return this.currentUser()?.picture || '';
+  }
+
   getAppointmentStatusConfig(status: string): { label: string; color: 'warning' | 'info' | 'primary' | 'success' | 'muted' } {
     const normalizedStatus = (status || 'draft').toLowerCase();
     const statusMap: Record<string, { label: string; color: 'warning' | 'info' | 'primary' | 'success' | 'muted' }> = {

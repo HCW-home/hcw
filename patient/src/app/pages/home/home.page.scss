@@ -58,6 +58,13 @@ ion-header {
       justify-content: center;
       font-weight: 700;
       font-size: 0.875rem;
+      overflow: hidden;
+
+      .avatar-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
     }
   }
 }

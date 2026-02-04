@@ -10,7 +10,13 @@
       </div>
       <ion-buttons slot="end">
         <ion-button class="user-avatar-btn" (click)="goToProfile()">
-          <div class="user-avatar">{{ getUserInitials() }}</div>
+          <div class="user-avatar">
+            @if (getUserPicture()) {
+              <img [src]="getUserPicture()" alt="" class="avatar-image">
+            } @else {
+              {{ getUserInitials() }}
+            }
+          </div>
         </ion-button>
       </ion-buttons>
     </div>
