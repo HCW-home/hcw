@@ -137,8 +137,7 @@
           }
 
           ion-input,
-          ion-select,
-          ion-datetime {
+          ion-select {
             --background: var(--ion-color-light);
             --padding-start: 12px;
             --padding-end: 12px;
@@ -146,6 +145,12 @@
             --padding-bottom: 8px;
             border-radius: 8px;
             margin-top: 4px;
+          }
+
+          ion-input.readonly-input {
+            --background: var(--app-background);
+            opacity: 0.7;
+            pointer-events: none;
           }
         }
       }

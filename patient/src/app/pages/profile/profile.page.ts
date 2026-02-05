@@ -20,7 +20,6 @@ import {
   IonButtons,
   IonBackButton,
   IonModal,
-  IonDatetime,
   IonSelect,
   IonSelectOption,
   NavController,
@@ -28,7 +27,6 @@ import {
   ToastController
 } from '@ionic/angular/standalone';
 import { AuthService } from '../../core/services/auth.service';
-import { ApiService } from '../../core/services/api.service';
 import { User } from '../../core/models/user.model';
 
 interface ProfileMenuItem {
@@ -65,7 +63,6 @@ interface ProfileMenuItem {
     IonButtons,
     IonBackButton,
     IonModal,
-    IonDatetime,
     IonSelect,
     IonSelectOption,
     IonSpinner
@@ -78,6 +75,25 @@ export class ProfilePage implements OnInit {
   showEditModal = false;
   editedUser: Partial<User> = {};
   isUploadingAvatar = false;
+  isSaving = false;
+
+  timezones: string[] = [
+    'UTC',
+    'Europe/London',
+    'Europe/Paris',
+    'Europe/Berlin',
+    'Europe/Zurich',
+    'Europe/Rome',
+    'Europe/Madrid',
+    'America/New_York',
+    'America/Chicago',
+    'America/Denver',
+    'America/Los_Angeles',
+    'Asia/Tokyo',
+    'Asia/Shanghai',
+    'Asia/Dubai',
+    'Australia/Sydney'
+  ];
 
   profileMenuItems: ProfileMenuItem[] = [
     {
@@ -106,7 +122,6 @@ export class ProfilePage implements OnInit {
   constructor(
     private navCtrl: NavController,
     private authService: AuthService,
-    private apiService: ApiService,
     private alertCtrl: AlertController,
     private toastCtrl: ToastController
   ) {}
@@ -123,31 +138,14 @@ export class ProfilePage implements OnInit {
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
       if (user) {
-        this.editedUser = { ...user };
+        this.editedUser = {
+          mobile_phone_number: user.mobile_phone_number,
+          communication_method: user.communication_method,
+          preferred_language: user.preferred_language,
+          timezone: user.timezone
+        };
       }
     });
-
-    // Load mock data if no user
-    if (!this.currentUser) {
-      this.currentUser = {
-        id: 1,
-        first_name: 'John',
-        last_name: 'Doe',
-        email: 'john.doe@example.com',
-        phone: '+1 234-567-8900',
-        date_of_birth: '1985-06-15',
-        gender: 'Male',
-        blood_type: 'O+',
-        height: '5\'10"',
-        weight: '165 lbs',
-        address: '123 Main St, New York, NY 10001',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        is_active: true,
-        user_type: 'patient'
-      } as any as User;
-      this.editedUser = { ...this.currentUser };
-    }
   }
 
   handleMenuItemClick(item: ProfileMenuItem) {
@@ -174,24 +172,30 @@ export class ProfilePage implements OnInit {
 
   closeEditModal() {
     this.showEditModal = false;
-    this.editedUser = { ...this.currentUser };
+    if (this.currentUser) {
+      this.editedUser = {
+        mobile_phone_number: this.currentUser.mobile_phone_number,
+        communication_method: this.currentUser.communication_method,
+        preferred_language: this.currentUser.preferred_language,
+        timezone: this.currentUser.timezone
+      };
+    }
   }
 
-  async saveProfile() {
-    try {
-      const response = await this.apiService.patch(`/users/${this.currentUser?.id}/`, this.editedUser).toPromise();
-      if (response) {
-        this.currentUser = { ...this.currentUser, ...this.editedUser } as User;
-        // this.authService.updateUser(this.currentUser); // TODO: Add this method to AuthService
+  saveProfile() {
+    this.isSaving = true;
+    this.authService.updateProfile(this.editedUser).subscribe({
+      next: (updatedUser) => {
+        this.currentUser = updatedUser;
+        this.isSaving = false;
         this.showEditModal = false;
-        this.showToast('Profile updated successfully');
+        this.showToast('Profile updated successfully', 'success');
+      },
+      error: () => {
+        this.isSaving = false;
+        this.showToast('Failed to update profile', 'danger');
       }
-    } catch (error) {
-      // Mock success for now
-      this.currentUser = { ...this.currentUser, ...this.editedUser } as User;
-      this.showEditModal = false;
-      this.showToast('Profile updated successfully');
-    }
+    });
   }
 
   openSettings() {
@@ -223,11 +227,11 @@ export class ProfilePage implements OnInit {
     this.navCtrl.navigateRoot('/login');
   }
 
-  async showToast(message: string) {
+  async showToast(message: string, color: 'success' | 'danger' | 'warning' = 'success') {
     const toast = await this.toastCtrl.create({
       message,
       duration: 2000,
-      color: 'success'
+      color
     });
     toast.present();
   }
@@ -248,7 +252,7 @@ export class ProfilePage implements OnInit {
       if (file.type.startsWith('image/')) {
         this.uploadAvatar(file);
       } else {
-        this.showToast('Please select an image file');
+        this.showToast('Please select an image file', 'warning');
       }
     }
     input.value = '';
@@ -259,13 +263,12 @@ export class ProfilePage implements OnInit {
     this.authService.uploadProfilePicture(file).subscribe({
       next: (updatedUser) => {
         this.currentUser = updatedUser;
-        this.editedUser = { ...updatedUser };
         this.isUploadingAvatar = false;
-        this.showToast('Profile picture updated');
+        this.showToast('Profile picture updated', 'success');
       },
       error: () => {
         this.isUploadingAvatar = false;
-        this.showToast('Failed to upload profile picture');
+        this.showToast('Failed to upload profile picture', 'danger');
       }
     });
   }

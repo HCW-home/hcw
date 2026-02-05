@@ -37,6 +37,7 @@ export class AppComponent implements OnInit, OnDestroy {
     const urlParams = new URLSearchParams(window.location.search);
     const authToken = urlParams.get('auth');
     const action = urlParams.get('action');
+    const actionId = urlParams.get('id');
     const uid = urlParams.get('uid');
     const token = urlParams.get('token');
 
@@ -45,9 +46,12 @@ export class AppComponent implements OnInit, OnDestroy {
         queryParams: { uid, token }
       });
     } else if (authToken) {
-      const queryParams: { auth: string; action?: string } = { auth: authToken };
+      const queryParams: { auth: string; action?: string; id?: string } = { auth: authToken };
       if (action) {
         queryParams.action = action;
+      }
+      if (actionId) {
+        queryParams.id = actionId;
       }
       this.navCtrl.navigateRoot(['/verify-invite'], { queryParams });
     }

@@ -95,6 +95,13 @@ export class AuthService {
       );
   }
 
+  updateProfile(data: Partial<User>): Observable<User> {
+    return this.http.patch<User>(`${this.apiUrl}/auth/user/`, data)
+      .pipe(
+        tap(user => this.currentUserSubject.next(user))
+      );
+  }
+
   async logout() {
     await this.storage.remove('access_token');
     await this.storage.remove('refresh_token');

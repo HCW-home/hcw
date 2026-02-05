@@ -9,7 +9,7 @@ export interface User {
   preferred_language?: string;
   timezone?: string;
   mobile_phone_number?: string;
-  communication_method?: 'EMAIL' | 'SMS' | 'WHATSAPP';
+  communication_method?: 'email' | 'sms' | 'whatsapp' | 'push' | 'manual';
   is_online?: boolean;
   app_preferences?: any;
   location?: string;

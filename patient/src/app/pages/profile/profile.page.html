@@ -81,8 +81,12 @@
             <ion-button (click)="closeEditModal()">Cancel</ion-button>
           </ion-buttons>
           <ion-buttons slot="end">
-            <ion-button (click)="saveProfile()" color="primary">
-              <ion-text>Save</ion-text>
+            <ion-button (click)="saveProfile()" [disabled]="isSaving" color="primary">
+              @if (isSaving) {
+                <ion-spinner name="crescent"></ion-spinner>
+              } @else {
+                <ion-text>Save</ion-text>
+              }
             </ion-button>
           </ion-buttons>
         </ion-toolbar>
@@ -92,86 +96,62 @@
           <ion-item>
             <ion-label position="stacked">First Name</ion-label>
             <ion-input
-              [(ngModel)]="editedUser.first_name"
+              [value]="currentUser?.first_name"
               type="text"
-              placeholder="Enter first name">
+              [readonly]="true"
+              class="readonly-input">
             </ion-input>
           </ion-item>
           <ion-item>
             <ion-label position="stacked">Last Name</ion-label>
             <ion-input
-              [(ngModel)]="editedUser.last_name"
+              [value]="currentUser?.last_name"
               type="text"
-              placeholder="Enter last name">
+              [readonly]="true"
+              class="readonly-input">
             </ion-input>
           </ion-item>
           <ion-item>
             <ion-label position="stacked">Email</ion-label>
             <ion-input
-              [(ngModel)]="editedUser.email"
+              [value]="currentUser?.email"
               type="email"
-              placeholder="Enter email">
+              [readonly]="true"
+              class="readonly-input">
             </ion-input>
           </ion-item>
           <ion-item>
-            <ion-label position="stacked">Phone</ion-label>
+            <ion-label position="stacked">Phone Number</ion-label>
             <ion-input
-              [(ngModel)]="editedUser.phone"
+              [(ngModel)]="editedUser.mobile_phone_number"
               type="tel"
               placeholder="Enter phone number">
             </ion-input>
           </ion-item>
           <ion-item>
-            <ion-label position="stacked">Date of Birth</ion-label>
-            <ion-datetime
-              [(ngModel)]="editedUser.date_of_birth"
-              presentation="date">
-            </ion-datetime>
-          </ion-item>
-          <ion-item>
-            <ion-label position="stacked">Gender</ion-label>
-            <ion-select [(ngModel)]="editedUser.gender">
-              <ion-select-option value="Male">Male</ion-select-option>
-              <ion-select-option value="Female">Female</ion-select-option>
-              <ion-select-option value="Other">Other</ion-select-option>
+            <ion-label position="stacked">Communication Method</ion-label>
+            <ion-select [(ngModel)]="editedUser.communication_method" placeholder="Select method">
+              <ion-select-option value="email">Email</ion-select-option>
+              <ion-select-option value="sms">SMS</ion-select-option>
+              <ion-select-option value="whatsapp">WhatsApp</ion-select-option>
             </ion-select>
           </ion-item>
           <ion-item>
-            <ion-label position="stacked">Blood Type</ion-label>
-            <ion-select [(ngModel)]="editedUser.blood_type">
-              <ion-select-option value="A+">A+</ion-select-option>
-              <ion-select-option value="A-">A-</ion-select-option>
-              <ion-select-option value="B+">B+</ion-select-option>
-              <ion-select-option value="B-">B-</ion-select-option>
-              <ion-select-option value="AB+">AB+</ion-select-option>
-              <ion-select-option value="AB-">AB-</ion-select-option>
-              <ion-select-option value="O+">O+</ion-select-option>
-              <ion-select-option value="O-">O-</ion-select-option>
+            <ion-label position="stacked">Preferred Language</ion-label>
+            <ion-select [(ngModel)]="editedUser.preferred_language" placeholder="Select language">
+              <ion-select-option value="en">English</ion-select-option>
+              <ion-select-option value="fr">French</ion-select-option>
+              <ion-select-option value="de">German</ion-select-option>
+              <ion-select-option value="es">Spanish</ion-select-option>
             </ion-select>
           </ion-item>
           <ion-item>
-            <ion-label position="stacked">Height</ion-label>
-            <ion-input
-              [(ngModel)]="editedUser.height"
-              type="text"
-              placeholder="Enter height">
-            </ion-input>
-          </ion-item>
-          <ion-item>
-            <ion-label position="stacked">Weight</ion-label>
-            <ion-input
-              [(ngModel)]="editedUser.weight"
-              type="text"
-              placeholder="Enter weight">
-            </ion-input>
-          </ion-item>
-          <ion-item>
-            <ion-label position="stacked">Address</ion-label>
-            <ion-input
-              [(ngModel)]="editedUser.address"
-              type="text"
-              placeholder="Enter address">
-            </ion-input>
+            <ion-label position="stacked">Timezone</ion-label>
+            <ion-select [(ngModel)]="editedUser.timezone" placeholder="Select timezone">
+              @for (tz of timezones; track tz) {
+                <ion-select-option [value]="tz">{{ tz }}</ion-select-option>
+              }
+            </ion-select>
           </ion-item>
         </ion-list>
       </ion-content>
