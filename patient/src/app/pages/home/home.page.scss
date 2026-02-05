@@ -42,6 +42,35 @@ ion-header {
       }
     }
 
+    .notification-btn {
+      --padding-start: 0;
+      --padding-end: 0;
+      position: relative;
+      margin-right: var(--app-spacing-sm);
+
+      ion-icon {
+        font-size: 28px;
+        color: var(--app-text-primary);
+      }
+
+      .notification-badge {
+        position: absolute;
+        top: 0;
+        right: -2px;
+        min-width: 18px;
+        height: 18px;
+        background: var(--ion-color-danger);
+        color: white;
+        border-radius: 9px;
+        font-size: 0.625rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 4px;
+      }
+    }
+
     .user-avatar-btn {
       --padding-start: 0;
       --padding-end: 0;

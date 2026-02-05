@@ -85,7 +85,7 @@ export class ConfirmPresencePage implements OnInit, OnDestroy {
           this.isLoading = false;
           const appointment = participant.appointment;
           if (appointment.status === 'scheduled') {
-            this.pendingAppointments = [this.mapParticipant(participant)];
+            this.pendingAppointments = [this.mapParticipant(participant, participantId)];
           } else {
             this.pendingAppointments = [];
             this.errorMessage = 'This appointment is no longer pending confirmation';
@@ -98,7 +98,7 @@ export class ConfirmPresencePage implements OnInit, OnDestroy {
       });
   }
 
-  private mapParticipant(participant: IParticipantDetail): PendingAppointment {
+  private mapParticipant(participant: IParticipantDetail, participantId: number): PendingAppointment {
     const apt = participant.appointment;
     const createdBy = apt.created_by;
     const doctorName = createdBy
@@ -107,7 +107,7 @@ export class ConfirmPresencePage implements OnInit, OnDestroy {
 
     return {
       id: apt.id,
-      participantId: participant.id,
+      participantId: participant.id ?? participantId,
       scheduled_at: apt.scheduled_at,
       type: apt.type,
       doctorName,

@@ -198,6 +198,11 @@ export class Header implements OnInit, OnDestroy {
     }
     this.closeNotifications();
 
+    if (notification.access_link) {
+      window.open(notification.access_link, '_blank');
+      return;
+    }
+
     if (notification.object_model && notification.object_pk) {
       const model = notification.object_model.toLowerCase();
       const label = (notification.action_label || '').toLowerCase();

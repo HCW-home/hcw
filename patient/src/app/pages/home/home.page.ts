@@ -16,6 +16,7 @@ import {
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { ConsultationService } from '../../core/services/consultation.service';
+import { NotificationService } from '../../core/services/notification.service';
 import { User } from '../../core/models/user.model';
 import { ConsultationRequest, Consultation, Speciality, Appointment } from '../../core/models/consultation.model';
 
@@ -51,6 +52,7 @@ export class HomePage implements OnInit, OnDestroy {
   consultations = signal<Consultation[]>([]);
   appointments = signal<Appointment[]>([]);
   isLoading = signal(false);
+  unreadNotificationCount = signal(0);
 
   totalRequests = computed(() => this.requests().length);
   totalConsultations = computed(() => this.consultations().length);
@@ -60,6 +62,7 @@ export class HomePage implements OnInit, OnDestroy {
     private navCtrl: NavController,
     private authService: AuthService,
     private consultationService: ConsultationService,
+    private notificationService: NotificationService,
     private toastController: ToastController
   ) {}
 
@@ -76,6 +79,7 @@ export class HomePage implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadUserData();
     this.loadDashboard();
+    this.loadNotificationCount();
   }
 
   ngOnDestroy(): void {
@@ -140,6 +144,21 @@ export class HomePage implements OnInit, OnDestroy {
 
   goToProfile(): void {
     this.navCtrl.navigateForward('/profile');
+  }
+
+  goToNotifications(): void {
+    this.navCtrl.navigateForward('/notifications');
+  }
+
+  loadNotificationCount(): void {
+    this.notificationService.getNotifications({ limit: 10 })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          const unread = response.results.filter(n => n.status !== 'read').length;
+          this.unreadNotificationCount.set(unread);
+        }
+      });
   }
 
   getStatusConfig(status: string | undefined): RequestStatus {

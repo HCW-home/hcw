@@ -18,6 +18,7 @@ import {
   IonButton,
   IonInput,
   IonButtons,
+  IonBackButton,
   IonModal,
   IonDatetime,
   IonSelect,
@@ -62,6 +63,7 @@ interface ProfileMenuItem {
     IonButton,
     IonInput,
     IonButtons,
+    IonBackButton,
     IonModal,
     IonDatetime,
     IonSelect,
@@ -82,6 +84,11 @@ export class ProfilePage implements OnInit {
       title: 'Personal Information',
       icon: 'person-outline',
       action: 'edit'
+    },
+    {
+      title: 'Notifications',
+      icon: 'notifications-outline',
+      route: '/notifications'
     },
     {
       title: 'Settings',
