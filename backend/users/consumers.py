@@ -215,14 +215,15 @@ class WebsocketConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
         )
 
     async def appointment(self, event):
-        await self.send_json(
-            {
-                "event": "appointment",
-                "consultation_id": event["consultation_id"],
-                "appointment_id": event["appointment_id"],
-                "state": event["state"],
-            }
-        )
+        response = {
+            "event": "appointment",
+            "consultation_id": event["consultation_id"],
+            "appointment_id": event["appointment_id"],
+            "state": event["state"],
+        }
+        if "data" in event:
+            response["data"] = event["data"]
+        await self.send_json(response)
 
     async def user(self, event):
         await self.send_json(
