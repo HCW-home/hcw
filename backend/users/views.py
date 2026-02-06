@@ -47,6 +47,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 
 from .models import HealthMetric, Language, Speciality, User
 from .serializers import (
@@ -549,6 +551,28 @@ class UserAppointmentsViewSet(viewsets.ReadOnlyModelViewSet):
             consultation_call_info = server.instance.appointment_participant_info(
                 appointment, request.user
             )
+
+            # Send websocket notification to all active participants except the user who joined
+            channel_layer = get_channel_layer()
+            active_participants = appointment.participant_set.filter(is_active=True)
+
+            for participant in active_participants:
+                if participant.user.pk == request.user.pk:
+                    continue
+
+                async_to_sync(channel_layer.group_send)(
+                    f"user_{participant.user.pk}",
+                    {
+                        "type": "appointment",
+                        "consultation_id": appointment.consultation.pk,
+                        "appointment_id": appointment.pk,
+                        "state": "participant_joined",
+                        "data": {
+                            "user_id": request.user.pk,
+                            "user_name": request.user.name or request.user.email,
+                        },
+                    },
+                )
 
             return Response(
                 {
