@@ -1,10 +1,10 @@
 import mimetypes
 import os
+import logging
 
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
-from allauth.socialaccount.providers.openid_connect.views import (
-    OpenIDConnectOAuth2Adapter,
-)
+from dj_rest_auth.registration.views import SocialLoginView
+from allauth.socialaccount.providers.openid_connect.views import OpenIDConnectOAuth2Adapter
 from consultations.models import Appointment, Consultation, Participant, Request
 from consultations.models import Message as ConsultationMessage
 from consultations.serializers import (
@@ -620,10 +620,188 @@ class UserViewSet(viewsets.ModelViewSet):
         return super().partial_update(request, *args, **kwargs)
 
 
+class Adapter(OpenIDConnectOAuth2Adapter):
+    provider_id = 'openid'
+
+    def __init__(self, request):
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Initializing OpenID adapter with provider_id='openid'")
+        super().__init__(request, provider_id='openid')
+
+    def complete_login(self, request, app, token, **kwargs):
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Complete login called with token: {token}")
+        try:
+            result = super().complete_login(request, app, token, **kwargs)
+            logger.debug(f"Complete login successful")
+            return result
+        except Exception as e:
+            logger.error(f"Complete login failed: {str(e)}", exc_info=True)
+            raise
+
+    def get_callback_url(self, request, app):
+        """Override to log and control the callback URL being used"""
+        logger = logging.getLogger(__name__)
+
+        # First try to get from request data (sent by frontend)
+        callback_url = None
+        if hasattr(request, 'data') and 'callback_url' in request.data:
+            callback_url = request.data['callback_url']
+            logger.debug(f"Using callback_url from request data: {callback_url}")
+        else:
+            # Fallback to parent implementation
+            callback_url = super().get_callback_url(request, app)
+            logger.debug(f"Using callback_url from parent: {callback_url}")
+
+        return callback_url
+
+class LoggingOAuth2Client(OAuth2Client):
+    """Custom OAuth2Client that logs all requests"""
+
+    # Class variable to store PKCE verifier temporarily
+    _pkce_code_verifier = None
+
+    def get_access_token(self, code, pkce_code_verifier=None):
+        logger = logging.getLogger(__name__)
+
+        # Use class variable if not provided as parameter
+        if pkce_code_verifier is None and self._pkce_code_verifier is not None:
+            pkce_code_verifier = self._pkce_code_verifier
+            logger.debug(f"Using PKCE verifier from class variable")
+
+        # Log the parameters being sent
+        logger.debug(f"=== OAuth2Client.get_access_token ===")
+        logger.debug(f"Code: {code[:20] if len(code) > 20 else code}...")
+        logger.debug(f"Consumer key (client_id): {self.consumer_key}")
+        logger.debug(f"Consumer secret: {'*' * 10}")
+        logger.debug(f"PKCE verifier: {pkce_code_verifier}")
+        logger.debug(f"Callback URL (redirect_uri): {self.callback_url}")
+
+        logger.debug(f"Token endpoint: {self.access_token_url}")
+
+        try:
+            result = super().get_access_token(code, pkce_code_verifier)
+            logger.debug(f"Token exchange successful!")
+            # Clear the class variable after successful exchange
+            self._pkce_code_verifier = None
+            return result
+        except Exception as e:
+            logger.error(f"Exception during token exchange: {e}", exc_info=True)
+            # Clear the class variable on error too
+            self._pkce_code_verifier = None
+            raise
+
+
 class OpenIDView(SocialLoginView):
-    adapter_class = OpenIDConnectOAuth2Adapter
+    adapter_class = Adapter
     serializer_class = SocialLoginSerializer
-    client_class = OAuth2Client
+    client_class = LoggingOAuth2Client
+
+    def post(self, request, *args, **kwargs):
+        logger = logging.getLogger(__name__)
+
+        # Get the origin from the request headers
+        origin = request.META.get('HTTP_ORIGIN', request.META.get('HTTP_REFERER', ''))
+        if origin.endswith('/'):
+            origin = origin[:-1]
+
+        # Set the callback URL dynamically
+        callback_url = f"{origin}/auth/callback"
+        self.callback_url = callback_url
+
+        # Log the incoming request data for debugging
+        logger.debug(f"=== OpenID Login Request ===")
+        logger.debug(f"Request data: {request.data}")
+        logger.debug(f"Origin: {origin}")
+        logger.debug(f"Callback URL: {callback_url}")
+
+        # Handle PKCE code_verifier
+        if 'code_verifier' in request.data:
+            code_verifier = request.data['code_verifier']
+            logger.debug(f"PKCE code_verifier present: {code_verifier[:20]}...")
+            # Store it in the client class for use during token exchange
+            LoggingOAuth2Client._pkce_code_verifier = code_verifier
+        else:
+            logger.debug("No PKCE code_verifier in request")
+            LoggingOAuth2Client._pkce_code_verifier = None
+
+        # Ensure callback_url is in the request data
+        if 'code' in request.data and 'callback_url' not in request.data:
+            # Add callback_url to request data if not present
+            request.data['callback_url'] = callback_url
+            logger.debug(f"Added callback_url to request data: {callback_url}")
+
+        try:
+            response = super().post(request, *args, **kwargs)
+            logger.debug(f"OpenID login successful")
+            return response
+        except Exception as e:
+            logger.error(f"OpenID login failed: {str(e)}", exc_info=True)
+            raise
+
+
+class OpenIDConfigView(APIView):
+    """
+    Public endpoint to get OpenID Connect configuration for the frontend.
+    Returns client_id and authorization URL, but NOT the client secret.
+    """
+    permission_classes = []  # Public endpoint
+    authentication_classes = []
+
+    @extend_schema(
+        responses={
+            200: {
+                "type": "object",
+                "properties": {
+                    "enabled": {"type": "boolean", "description": "Whether OpenID Connect is enabled"},
+                    "client_id": {"type": "string", "description": "OpenID Client ID"},
+                    "authorization_url": {"type": "string", "description": "OpenID authorization endpoint URL"},
+                    "provider_name": {"type": "string", "description": "Name of the OpenID provider"},
+                },
+                "example": {
+                    "enabled": True,
+                    "client_id": "my-client-id",
+                    "authorization_url": "https://keycloak.example.com/realms/myrealm/protocol/openid-connect/auth",
+                    "provider_name": "Keycloak",
+                },
+            }
+        },
+        description="Get OpenID Connect configuration for frontend authentication flow. Returns public configuration only (no secrets).",
+    )
+    def get(self, request):
+        """Get OpenID Connect public configuration."""
+        openid_config = settings.SOCIALACCOUNT_PROVIDERS.get("openid_connect", {})
+        apps = openid_config.get("APPS", [])
+
+        if not apps:
+            return Response({
+                "enabled": False,
+                "client_id": None,
+                "authorization_url": None,
+                "provider_name": None,
+            })
+
+        # Get first OpenID Connect app configuration
+        app = apps[0]
+        client_id = app.get("client_id")
+        provider_name = app.get("name")
+        server_url = app.get("settings", {}).get("server_url")
+
+        # If server_url is the .well-known URL, we need to fetch it to get the authorization endpoint
+        # For now, return a constructed URL (user can override in settings if needed)
+        authorization_url = None
+        if server_url:
+            # Remove .well-known/openid-configuration suffix if present
+            base_url = server_url.replace("/.well-known/openid-configuration", "")
+            # Construct authorization URL (standard OIDC path)
+            authorization_url = f"{base_url}/protocol/openid-connect/auth"
+
+        return Response({
+            "enabled": bool(client_id),
+            "client_id": client_id,
+            "authorization_url": authorization_url,
+            "provider_name": provider_name,
+        })
 
 
 class TestRTCView(APIView):

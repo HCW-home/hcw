@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { Typography } from '../../../../shared/ui-components/typography/typography';
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
 import { Input } from '../../../../shared/ui-components/input/input';
@@ -39,9 +39,11 @@ interface LoginForm {
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })
-export class Login {
+export class Login implements OnInit {
   errorMessage = '';
   loadingButton = false;
+  openIdEnabled = false;
+  openIdProviderName = '';
   private router = inject(Router);
   private formBuilder = inject(FormBuilder);
   private adminAuthService = inject(Auth);
@@ -54,6 +56,20 @@ export class Login {
   constructor() {
     this.form.valueChanges.subscribe(() => {
       this.errorMessage = '';
+    });
+  }
+
+  ngOnInit() {
+    // Check if OpenID Connect is enabled
+    this.adminAuthService.getOpenIDConfig().subscribe({
+      next: (config) => {
+        this.openIdEnabled = config.enabled;
+        this.openIdProviderName = config.provider_name || 'OpenID';
+      },
+      error: (err) => {
+        console.error('Failed to get OpenID config:', err);
+        this.openIdEnabled = false;
+      }
     });
   }
 
@@ -92,6 +108,11 @@ export class Login {
       default:
         return 'Field is required';
     }
+  }
+
+  onOpenIDLogin() {
+    // Initiate OpenID Connect login flow
+    this.adminAuthService.initiateOpenIDLogin();
   }
 
   protected readonly TypographyTypeEnum = TypographyTypeEnum;

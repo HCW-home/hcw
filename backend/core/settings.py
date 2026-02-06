@@ -247,7 +247,8 @@ REST_FRAMEWORK = {
 }
 
 SITE_ID = 1
-ACCOUNT_EMAIL_VERIFICATION = "optional"
+ACCOUNT_EMAIL_VERIFICATION = "none"  # Disable email verification for social auth
+ACCOUNT_EMAIL_REQUIRED = False
 AUTH_USER_MODEL = "users.User"
 
 REST_AUTH = {
@@ -746,6 +747,16 @@ LOGGING = {
         "core": {  # Ton app
             "handlers": ["console"],
             "level": "DEBUG" if DEBUG else "INFO",
+            "propagate": True,
+        },
+        "allauth": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": True,
+        },
+        "dj_rest_auth": {
+            "handlers": ["console"],
+            "level": "DEBUG",
             "propagate": True,
         },
     },

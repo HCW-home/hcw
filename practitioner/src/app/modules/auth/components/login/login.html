@@ -49,5 +49,18 @@
         text="Sign In"
         [loading]="loadingButton"></app-button>
     </form>
+
+    @if (openIdEnabled) {
+      <div class="divider">
+        <span>or</span>
+      </div>
+
+      <app-button
+        [type]="ButtonTypeEnum.button"
+        [block]="true"
+        [style]="ButtonStyleEnum.stroke"
+        [text]="'Login with ' + openIdProviderName"
+        (click)="onOpenIDLogin()"></app-button>
+    }
   </div>
 </div>

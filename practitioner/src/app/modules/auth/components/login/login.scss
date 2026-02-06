@@ -32,6 +32,31 @@
         justify-content: flex-end;
       }
     }
+
+    .divider {
+      width: 100%;
+      text-align: center;
+      position: relative;
+      margin: 16px 0;
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: var(--slate-300);
+      }
+
+      span {
+        position: relative;
+        background: var(--White);
+        padding: 0 12px;
+        color: var(--slate-600);
+        font-size: 14px;
+      }
+    }
   }
 }
 

@@ -5,6 +5,7 @@ daphne
 dj-rest-auth
 Django
 django-allauth
+django-allauth[socialaccount]
 django-appconf
 django-celery-beat
 django-celery-results

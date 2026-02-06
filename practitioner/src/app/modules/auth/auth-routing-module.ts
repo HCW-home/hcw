@@ -4,6 +4,7 @@ import { Auth } from './pages/auth/auth';
 import { Login } from './components/login/login';
 import { ForgotPassword } from './components/forgot-password/forgot-password';
 import { ResetPassword } from './components/reset-password/reset-password';
+import { OpenIdCallback } from './components/openid-callback/openid-callback';
 
 const routes: Routes = [
   {
@@ -29,6 +30,11 @@ const routes: Routes = [
         path: 'reset/:uid/:token',
         pathMatch: 'full',
         component: ResetPassword,
+      },
+      {
+        path: 'callback',
+        pathMatch: 'full',
+        component: OpenIdCallback,
       },
       {
         path: '**',
