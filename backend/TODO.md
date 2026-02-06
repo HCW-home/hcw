@@ -61,3 +61,45 @@ check permission for /dashboard
 
 ## Add filter patient (user) to only have doctor
 
+
+## Permission check
+No permission (=patient) but : can still go own appointment or group appointment
+
+# Role improvement (Olivier)
+
+- add role doctor (default = patient)
+- consultation owner must not be patient (role =doctor)
+
+# Consultation
+
+- add consultation filter (owned by, group, mine)
+- Add owner column + group in consultation table
+
+# Terms
+
+- Add realonly model view for terms (by id) (Olivier)
+- Add term select = patient or practitioner
+- Show term page :
+    - for practitioner, must have company + default terms configured, show terms if not the same, update into accepted_term field
+    - for patient, must get term data (id + content, new endpoint) and show if id not same than accepted_term field
+
+# Appointement
+
+- move consultation user into participant area (not under tickbox) (Gor)
+- on appointment calendar, click must bring to consultation detail.
+
+# Toast
+
+- Add toast with title, description (details or error if backend give)
+- Add traceback with detail and copy button in case of error (Gor)
+
+# Misc
+
+- Add register endpoint, but can be disable from .env file (Olivier)
+- Add openid authentication (Olivier)
+- Patient dashboard : having next appointment on top
+- Remove Review button on Dashboard (click on line is enough)
+- Remove resume button on consultation list (click on line is enough)
+- Remove arrow on Patient page list (click on line is enough)
+- Websocket, add event when somebody join appointment, have ring page (Accept or later)
+- Implement system message in backend in consultation, to log system event, created_by will be empty

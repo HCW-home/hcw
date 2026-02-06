@@ -531,7 +531,12 @@ class ReasonSlotsView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # Parse from_date parameter
+        if reason.duration <= 0:
+            return Response(
+                {"error": "Invalid reason duration"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         from_date_str = request.query_params.get("from_date")
         if from_date_str:
             try:
@@ -542,10 +547,8 @@ class ReasonSlotsView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
         else:
-            # Use user's timezone to determine today's date
             from_date = timezone.now().date()
 
-        # Parse user_id filter
         user_id_filter = request.query_params.get("user_id")
         if user_id_filter:
             try:
@@ -555,7 +558,6 @@ class ReasonSlotsView(APIView):
                     {"error": "Invalid user_id"}, status=status.HTTP_400_BAD_REQUEST
                 )
 
-        # Parse organisation_id filter
         organisation_id_filter = request.query_params.get("organisation_id")
         if organisation_id_filter:
             try:
@@ -566,7 +568,6 @@ class ReasonSlotsView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-        # Get practitioners with the required specialty
         practitioners_query = User.objects.filter(specialities=reason.speciality)
         if user_id_filter:
             practitioners_query = practitioners_query.filter(id=user_id_filter)
@@ -579,15 +580,12 @@ class ReasonSlotsView(APIView):
         if not practitioners:
             return Response([], status=status.HTTP_200_OK)
 
-        # Generate dates for next 7 days
         dates = [from_date + timedelta(days=i) for i in range(7)]
 
-        # Get all booking slots for practitioners
         booking_slots = BookingSlot.objects.filter(
             user__in=practitioners
         ).select_related("user")
 
-        # Get all existing appointments for the next 7 days
         end_date = from_date + timedelta(days=7)
         existing_appointments = Appointment.objects.filter(
             scheduled_at__date__gte=from_date,
@@ -595,11 +593,8 @@ class ReasonSlotsView(APIView):
             status=AppointmentStatus.scheduled,
         ).select_related("consultation")
 
-        # Create appointment lookup by practitioner and datetime
         appointment_lookup = {}
         for apt in existing_appointments:
-            # Get practitioners from consultation participants or other logic
-            # For simplicity, we'll check if the practitioner is the consultation owner
             consultation = apt.consultation
             if consultation.owned_by:
                 practitioner_id = consultation.owned_by.id
@@ -612,95 +607,86 @@ class ReasonSlotsView(APIView):
                     appointment_lookup[practitioner_id] = []
                 appointment_lookup[practitioner_id].append((apt_start, apt_end))
 
-        # Generate available slots
         available_slots = []
-        # Use a set to track unique slots to prevent duplicates from overlapping booking slots
         seen_slots = set()
 
         for practitioner in practitioners:
             practitioner_slots = booking_slots.filter(user=practitioner)
 
             for booking_slot in practitioner_slots:
+                if booking_slot.start_time >= booking_slot.end_time:
+                    continue
+
                 for target_date in dates:
-                    # Check if slot is valid for this specific date
                     if (
                         booking_slot.valid_until
                         and booking_slot.valid_until <= target_date
                     ):
                         continue
 
-                    # Check if this day is enabled in booking slot
-                    weekday = target_date.weekday()  # 0=Monday, 6=Sunday
-                    day_enabled = False
-
-                    if weekday == 0 and booking_slot.monday:
-                        day_enabled = True
-                    elif weekday == 1 and booking_slot.tuesday:
-                        day_enabled = True
-                    elif weekday == 2 and booking_slot.wednesday:
-                        day_enabled = True
-                    elif (
-                        weekday == 3 and booking_slot.thursday
-                    ):  # Note: there's a typo in the model
-                        day_enabled = True
-                    elif weekday == 4 and booking_slot.friday:
-                        day_enabled = True
-                    elif weekday == 5 and booking_slot.saturday:
-                        day_enabled = True
-                    elif weekday == 6 and booking_slot.sunday:
-                        day_enabled = True
+                    weekday = target_date.weekday()
+                    day_enabled = (
+                        (weekday == 0 and booking_slot.monday) or
+                        (weekday == 1 and booking_slot.tuesday) or
+                        (weekday == 2 and booking_slot.wednesday) or
+                        (weekday == 3 and booking_slot.thursday) or
+                        (weekday == 4 and booking_slot.friday) or
+                        (weekday == 5 and booking_slot.saturday) or
+                        (weekday == 6 and booking_slot.sunday)
+                    )
 
                     if not day_enabled:
                         continue
 
-                    # Generate time slots for this day
                     current_time = booking_slot.start_time
                     end_time = booking_slot.end_time
+                    slot_duration_delta = timedelta(minutes=reason.duration)
+
+                    iteration_count = 0
+                    max_iterations = 200
 
                     while current_time < end_time:
-                        slot_start_datetime = timezone.make_aware(
-                            datetime.combine(target_date, current_time)
-                        )
-                        slot_end_time = (
-                            datetime.combine(target_date, current_time)
-                            + timedelta(minutes=reason.duration)
-                        ).time()
+                        iteration_count += 1
+                        if iteration_count > max_iterations:
+                            break
 
-                        # Check if slot goes beyond end_time
+                        current_datetime = datetime.combine(target_date, current_time)
+                        slot_end_datetime = current_datetime + slot_duration_delta
+
+                        if slot_end_datetime.date() != target_date:
+                            break
+
+                        slot_end_time = slot_end_datetime.time()
+
                         if slot_end_time > end_time:
                             break
 
-                        # Skip if slot overlaps with break time (only if break times are set)
                         if (
                             booking_slot.start_break
                             and booking_slot.end_break
-                            and current_time < booking_slot.end_break
-                            and slot_end_time > booking_slot.start_break
+                            and booking_slot.start_break < booking_slot.end_break
                         ):
-                            current_time = booking_slot.end_break
-                            continue
+                            if current_time < booking_slot.end_break and slot_end_time > booking_slot.start_break:
+                                if booking_slot.end_break < end_time:
+                                    current_time = booking_slot.end_break
+                                else:
+                                    break
+                                continue
 
-                        # Check if slot conflicts with existing appointments
+                        slot_start_aware = timezone.make_aware(current_datetime)
+                        slot_end_aware = timezone.make_aware(slot_end_datetime)
+
                         slot_conflicts = False
                         practitioner_appointments = appointment_lookup.get(
                             practitioner.id, []
                         )
 
                         for apt_start, apt_end in practitioner_appointments:
-                            slot_end_datetime = timezone.make_aware(
-                                datetime.combine(target_date, slot_end_time)
-                            )
-
-                            # Check for overlap
-                            if (
-                                slot_start_datetime < apt_end
-                                and slot_end_datetime > apt_start
-                            ):
+                            if slot_start_aware < apt_end and slot_end_aware > apt_start:
                                 slot_conflicts = True
                                 break
 
                         if not slot_conflicts:
-                            # Create unique identifier for this slot to prevent duplicates
                             slot_key = (target_date, current_time, practitioner.id)
 
                             if slot_key not in seen_slots:
@@ -718,27 +704,21 @@ class ReasonSlotsView(APIView):
                                     )
                                 )
 
-                        # Move to next slot
-                        current_time = (
-                            datetime.combine(target_date, current_time)
-                            + timedelta(minutes=reason.duration)
-                        ).time()
+                        current_time = slot_end_time
 
-        # Convert slots to dict for JSON response
-        slots_data = []
-        for slot in available_slots:
-            slots_data.append(
-                {
-                    "date": slot.date.isoformat(),
-                    "start_time": slot.start_time.isoformat(),
-                    "end_time": slot.end_time.isoformat(),
-                    "duration": slot.duration,
-                    "user_id": slot.user_id,
-                    "user_email": slot.user_email,
-                    "user_first_name": slot.user_first_name,
-                    "user_last_name": slot.user_last_name,
-                }
-            )
+        slots_data = [
+            {
+                "date": slot.date.isoformat(),
+                "start_time": slot.start_time.isoformat(),
+                "end_time": slot.end_time.isoformat(),
+                "duration": slot.duration,
+                "user_id": slot.user_id,
+                "user_email": slot.user_email,
+                "user_first_name": slot.user_first_name,
+                "user_last_name": slot.user_last_name,
+            }
+            for slot in available_slots
+        ]
 
         return Response(slots_data, status=status.HTTP_200_OK)
 

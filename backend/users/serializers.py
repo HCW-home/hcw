@@ -77,6 +77,7 @@ class UserDetailsSerializer(serializers.ModelSerializer):
             "languages_ids",
             "languages",
             "is_online",
+            "accepted_term",
         ]
         read_only_fields = ["is_online", "first_name", "last_name", UserModel.EMAIL_FIELD]
 

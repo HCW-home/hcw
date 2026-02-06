@@ -216,7 +216,7 @@ class TemplateAdmin(ModelAdmin, TabbedTranslationAdmin, ImportExportModelAdmin):
         (
             "Template Content",
             {
-                "fields": ["template_subject", "template_content"],
+                "fields": ["template_subject", "template_content", "template_content_html"],
                 "description": "Use Jinja2 template syntax. Example: Hello {{ user.name }}!",
             },
         ),

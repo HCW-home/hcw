@@ -30,7 +30,7 @@ class AppointmentFilter(django_filters.FilterSet):
         fields = {
             "consultation": ['exact',],
             "status": ['exact',],
-            'scheduled_at': ['day__gt'],
+            'scheduled_at': ['day__gte', 'day__lte'],
         }
 
     def filter_future(self, queryset, name, value):
