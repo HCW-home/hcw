@@ -160,6 +160,127 @@
   }
 }
 
+.calendar-tooltip {
+  position: fixed;
+  z-index: 1000;
+  background: var(--White);
+  border: 1px solid var(--slate-200);
+  border-radius: 12px;
+  padding: 16px;
+  min-width: 280px;
+  max-width: 360px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  animation: tooltip-fade-in 0.15s ease;
+  pointer-events: none;
+
+  .tooltip-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--slate-100);
+
+    .tooltip-type {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--slate-600);
+      padding: 4px 10px;
+      background: var(--slate-100);
+      border-radius: 6px;
+
+      &.online {
+        background: var(--primary-100);
+        color: var(--primary-700);
+      }
+    }
+
+    .tooltip-status {
+      font-size: 13px;
+      font-weight: 600;
+    }
+  }
+
+  .tooltip-datetime,
+  .tooltip-time {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--slate-600);
+    margin-bottom: 8px;
+  }
+
+  .tooltip-participants {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--slate-100);
+
+    .participants-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--slate-500);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    .participants-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .participant-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 6px 8px;
+      background: var(--slate-50);
+      border-radius: 6px;
+
+      .participant-name {
+        font-size: 13px;
+        color: var(--slate-700);
+        font-weight: 500;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex: 1;
+      }
+
+      .participant-status {
+        font-size: 12px;
+        font-weight: 600;
+        flex-shrink: 0;
+      }
+    }
+  }
+
+  .tooltip-no-participants {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--slate-100);
+    font-size: 13px;
+    color: var(--slate-400);
+    font-style: italic;
+  }
+}
+
+@keyframes tooltip-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .appointment-date {
   display: flex;
   flex-direction: column;

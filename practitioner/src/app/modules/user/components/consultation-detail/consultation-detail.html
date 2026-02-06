@@ -296,7 +296,10 @@
             } @else {
               <div class="appointments-list">
                 @for (appointment of appointments(); track appointment.id) {
-                  <div class="appointment-card">
+                  <div class="appointment-card"
+                       #appointmentCard
+                       [attr.data-appointment-id]="appointment.id"
+                       [class.highlighted]="highlightedAppointmentId() === appointment.id">
                     <div class="appointment-header">
                       <div class="appointment-info">
                         <div class="date-time">

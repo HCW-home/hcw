@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, inject, computed, viewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, inject, computed, viewChild, ViewChildren, QueryList, ElementRef, AfterViewInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule, Location } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
@@ -75,7 +75,7 @@ type AppointmentTimeFilter = 'all' | 'upcoming' | 'past';
     ParticipantItem,
   ],
 })
-export class ConsultationDetail implements OnInit, OnDestroy {
+export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   private destroy$ = new Subject<void>();
   private location = inject(Location);
 
@@ -109,6 +109,10 @@ export class ConsultationDetail implements OnInit, OnDestroy {
   appointmentStatusFilter = signal<AppointmentStatusFilter>('scheduled');
   appointmentTimeFilter = signal<AppointmentTimeFilter>('upcoming');
   calendarComponent = viewChild<FullCalendarComponent>('appointmentCalendar');
+  highlightedAppointmentId = signal<number | null>(null);
+  private pendingScrollToAppointmentId: number | null = null;
+
+  @ViewChildren('appointmentCard') appointmentCards!: QueryList<ElementRef>;
 
   calendarEvents = computed<EventInput[]>(() => {
     return this.appointments().map(appointment => ({
@@ -223,11 +227,46 @@ export class ConsultationDetail implements OnInit, OnDestroy {
 
   private checkJoinQueryParam(): void {
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(queryParams => {
-      if (queryParams['join'] === 'true' && queryParams['appointmentId']) {
+      if (queryParams['appointmentId']) {
         const appointmentId = +queryParams['appointmentId'];
-        this.joinVideoCall(appointmentId);
+        this.pendingScrollToAppointmentId = appointmentId;
+        this.highlightAndScrollToAppointment(appointmentId);
+
+        if (queryParams['join'] === 'true') {
+          this.joinVideoCall(appointmentId);
+        }
       }
     });
+  }
+
+  ngAfterViewInit(): void {
+    if (this.appointmentCards) {
+      this.appointmentCards.changes.pipe(takeUntil(this.destroy$)).subscribe(() => {
+        if (this.pendingScrollToAppointmentId) {
+          this.scrollToAppointment(this.pendingScrollToAppointmentId);
+        }
+      });
+    }
+  }
+
+  private highlightAndScrollToAppointment(appointmentId: number): void {
+    this.highlightedAppointmentId.set(appointmentId);
+    setTimeout(() => {
+      this.scrollToAppointment(appointmentId);
+    }, 300);
+  }
+
+  private scrollToAppointment(appointmentId: number): void {
+    if (!this.appointmentCards) return;
+
+    const cardRef = this.appointmentCards.find(
+      (el) => +el.nativeElement.dataset['appointmentId'] === appointmentId
+    );
+
+    if (cardRef) {
+      cardRef.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      this.pendingScrollToAppointmentId = null;
+    }
   }
 
   ngOnDestroy(): void {

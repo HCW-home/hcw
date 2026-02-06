@@ -48,6 +48,7 @@ export interface Appointment {
   status: AppointmentStatus;
   created_at: string;
   participants: Participant[];
+  consultation_id: number;
 }
 
 export interface MessageAttachment {
@@ -216,6 +217,7 @@ export interface CreateParticipantRequest {
 }
 
 export interface DashboardNextAppointment {
+  id: number | null;
   scheduled_at: string | null;
   end_expected_at: string | null;
   type: string | null;

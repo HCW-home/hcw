@@ -183,22 +183,17 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
   viewAppointment(appointment: Appointment): void {
-    this.router.navigate(['/app/consultations', appointment.consultation]);
-  }
-
-  joinAppointment(appointment: Appointment, event: Event): void {
-    event.stopPropagation();
-    this.router.navigate(['/app/consultations', appointment.consultation], {
-      queryParams: { join: true, appointmentId: appointment.id }
+    this.router.navigate(['/app/consultations', appointment.consultation_id], {
+      queryParams: { appointmentId: appointment.id }
     });
   }
 
   joinNextAppointment(event: Event): void {
     event.stopPropagation();
     const apt = this.nextAppointment();
-    if (apt && apt.consultation_id) {
+    if (apt && apt.id && apt.consultation_id) {
       this.router.navigate(['/app/consultations', apt.consultation_id], {
-        queryParams: { join: true }
+        queryParams: { join: true, appointmentId: apt.id }
       });
     }
   }
@@ -206,7 +201,9 @@ export class Dashboard implements OnInit, OnDestroy {
   viewNextAppointment(): void {
     const apt = this.nextAppointment();
     if (apt && apt.consultation_id) {
-      this.router.navigate(['/app/consultations', apt.consultation_id]);
+      this.router.navigate(['/app/consultations', apt.consultation_id], {
+        queryParams: { appointmentId: apt.id }
+      });
     }
   }
 

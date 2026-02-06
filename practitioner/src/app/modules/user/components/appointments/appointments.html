@@ -81,7 +81,7 @@
               </div>
               <div class="appointment-status">
                 <app-badge [type]="getAppointmentBadgeType(appointment.status)">
-                  {{ appointment.status }}
+                  {{ getAppointmentStatusLabel(appointment.status) }}
                 </app-badge>
               </div>
             </div>
@@ -96,6 +96,56 @@
           [events]="calendarEvents()">
         </full-calendar>
       </div>
+
+      @if (hoveredAppointment()) {
+        <div class="calendar-tooltip"
+             [style.top.px]="tooltipPosition().top"
+             [style.left.px]="tooltipPosition().left">
+          <div class="tooltip-header">
+            <span class="tooltip-type" [class.online]="hoveredAppointment()!.type === AppointmentType.ONLINE">
+              {{ getAppointmentTypeLabel(hoveredAppointment()!.type) }}
+            </span>
+            <span class="tooltip-status" [style.color]="getStatusColor(hoveredAppointment()!.status)">
+              {{ getAppointmentStatusLabel(hoveredAppointment()!.status) }}
+            </span>
+          </div>
+
+          <div class="tooltip-datetime">
+            <app-svg src="calendar" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
+            <span>{{ hoveredAppointment()!.scheduled_at | localDate : 'EEEE, MMM d, y' }}</span>
+          </div>
+
+          <div class="tooltip-time">
+            <app-svg src="clock" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
+            <span>
+              {{ hoveredAppointment()!.scheduled_at | localDate : 'HH:mm' }}
+              @if (hoveredAppointment()!.end_expected_at) {
+                - {{ hoveredAppointment()!.end_expected_at | localDate : 'HH:mm' }}
+              }
+            </span>
+          </div>
+
+          @if (hoveredAppointment()!.participants && hoveredAppointment()!.participants.length > 0) {
+            <div class="tooltip-participants">
+              <span class="participants-title">Participants ({{ hoveredAppointment()!.participants.length }})</span>
+              <div class="participants-list">
+                @for (participant of hoveredAppointment()!.participants; track participant.id) {
+                  <div class="participant-row">
+                    <span class="participant-name">{{ getParticipantName(participant) }}</span>
+                    <span class="participant-status" [style.color]="getParticipantStatusColor(participant.status)">
+                      {{ getParticipantStatusLabel(participant.status) }}
+                    </span>
+                  </div>
+                }
+              </div>
+            </div>
+          } @else {
+            <div class="tooltip-no-participants">
+              <span>No participants added</span>
+            </div>
+          }
+        </div>
+      }
     }
 
     <div class="legend">

@@ -53,49 +53,6 @@
       <div class="tab-content">
         @if (activeTab() === 'overview') {
           <div class="overview-section">
-            <div class="section-header">
-              <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
-                Health Metrics
-              </app-typography>
-            </div>
-            <div class="metrics-grid">
-              @if (healthMetrics().length === 0) {
-                <div class="no-metrics">
-                  <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
-                    No health metrics recorded
-                  </app-typography>
-                </div>
-              }
-              @for (metric of healthMetrics(); track metric.id) {
-                <div class="metric-card" [ngClass]="getMetricColorClass(metric.color)">
-                  <div class="metric-header">
-                    <div class="metric-icon">
-                      <app-svg [src]="metric.icon" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
-                    </div>
-                    <div class="metric-trend" [ngClass]="getTrendClass(metric.trend)">
-                      @if (metric.trend === 'up') {
-                        <app-svg src="arrow-up" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
-                      } @else if (metric.trend === 'down') {
-                        <app-svg src="arrow-down" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
-                      } @else {
-                        <app-svg src="minus" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
-                      }
-                    </div>
-                  </div>
-                  <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--slate-600)">
-                    {{ metric.name }}
-                  </app-typography>
-                  <div class="metric-value">
-                    <span class="value">{{ metric.value }}</span>
-                    <span class="unit">{{ metric.unit }}</span>
-                  </div>
-                  <app-typography [variant]="TypographyTypeEnum['body-xs-regular']" color="var(--slate-400)">
-                    Updated {{ formatDate(metric.lastUpdated) }}
-                  </app-typography>
-                </div>
-              }
-            </div>
-
             <div class="stats-grid">
               <div class="stat-card">
                 <div class="stat-icon primary">

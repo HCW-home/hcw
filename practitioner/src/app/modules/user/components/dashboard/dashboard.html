@@ -123,17 +123,6 @@
                       <div class="appointment-time">
                         <app-badge [type]="getAppointmentBadgeType(appointment.status)">{{ appointment.status }}</app-badge>
                       </div>
-                      @if (appointment.type === AppointmentType.ONLINE) {
-                        <div class="video-btn">
-                          <app-button
-                            text="Join"
-                            leftIcon="video"
-                            [size]="ButtonSizeEnum.small"
-                            [style]="ButtonStyleEnum.primary"
-                            (buttonClick)="joinAppointment(appointment, $event)">
-                          </app-button>
-                        </div>
-                      }
                     </div>
                   }
                 </div>
