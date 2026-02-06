@@ -88,12 +88,4 @@ export class LoginPage {
     this.navCtrl.navigateForward('/forgot-password');
   }
 
-  async socialLogin(provider: string) {
-    const toast = await this.toastCtrl.create({
-      message: `${provider} login coming soon!`,
-      duration: 2000,
-      position: 'top'
-    });
-    await toast.present();
-  }
 }

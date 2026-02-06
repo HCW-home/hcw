@@ -117,22 +117,6 @@
                   </app-typography>
                 }
               </div>
-              <div slot="action">
-                @if (activeTab() === 'overdue') {
-                  <button class="action-btn overdue">
-                    <span>Review</span>
-                  </button>
-                } @else {
-                  <button class="action-btn" [ngClass]="{'active': activeTab() === 'active', 'past': activeTab() === 'past'}">
-                    @if (activeTab() === 'active') {
-                      <app-svg src="video" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--White)'}"></app-svg>
-                      <span>Resume</span>
-                    } @else {
-                      <span>View Details</span>
-                    }
-                  </button>
-                }
-              </div>
             </app-list-item>
           }
 

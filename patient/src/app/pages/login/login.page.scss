@@ -108,29 +108,6 @@
       }
     }
 
-    .divider {
-      text-align: center;
-      margin: var(--app-spacing-3xl) 0 var(--app-spacing-2xl) 0;
-      position: relative;
-
-      .divider-text {
-        background: var(--app-background);
-        padding: 0 var(--app-spacing-lg);
-        font-size: var(--app-font-size-sm);
-        position: relative;
-      }
-
-      &::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 0;
-        right: 0;
-        height: 1px;
-        background: var(--app-border-color);
-      }
-    }
-
     .social-login {
       .social-button {
         margin-bottom: var(--app-spacing-md);
