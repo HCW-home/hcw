@@ -26,9 +26,24 @@ class Term(models.Model):
     name = models.CharField()
     content = models.TextField()
     # valid_until = models.DateTimeField(null=True, blank=True)
+    use_for_patient = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        if self.use_for_patient:
+            # Save first if this is a new instance to get a pk
+            is_new = self.pk is None
+            if is_new:
+                super().save(*args, **kwargs)
+            # Set all other terms to False
+            Term.objects.exclude(pk=self.pk).update(use_for_patient=False)
+            # Save again only if it's an existing instance
+            if not is_new:
+                super().save(*args, **kwargs)
+        else:
+            super().save(*args, **kwargs)
 
 
 class Organisation(models.Model):
