@@ -37,11 +37,7 @@ export class OpenIdCallback implements OnInit {
       }
 
       if (code) {
-        // Get PKCE verifier from localStorage
-        const pkceVerifier = localStorage.getItem('pkce_verifier');
-
-        // Exchange authorization code for JWT tokens
-        this.authService.loginWithOpenID(code, pkceVerifier).subscribe({
+        this.authService.loginWithOpenID(code).subscribe({
           next: (response) => {
             // Store the JWT token
             this.authService.setToken(response.access);

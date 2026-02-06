@@ -744,19 +744,9 @@ LOGGING = {
         #     "level": "DEBUG" if DEBUG else "INFO",
         #     "propagate": False,
         # },
-        "core": {  # Ton app
+        "core": {
             "handlers": ["console"],
             "level": "DEBUG" if DEBUG else "INFO",
-            "propagate": True,
-        },
-        "allauth": {
-            "handlers": ["console"],
-            "level": "DEBUG",
-            "propagate": True,
-        },
-        "dj_rest_auth": {
-            "handlers": ["console"],
-            "level": "DEBUG",
             "propagate": True,
         },
     },
