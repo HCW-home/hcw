@@ -98,7 +98,10 @@ export class ConsultationWebSocketService implements OnDestroy {
     }
 
     if (eventType === 'appointment') {
-      this.appointmentUpdatedSubject.next(message as AppointmentUpdatedEvent);
+      const state = msgAny['state'] as string | undefined;
+      if (state && state !== 'participant_joined') {
+        this.appointmentUpdatedSubject.next(message as AppointmentUpdatedEvent);
+      }
       return;
     }
 

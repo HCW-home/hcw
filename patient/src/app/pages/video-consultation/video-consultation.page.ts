@@ -21,6 +21,7 @@ import { LiveKitService, ParticipantInfo, ConnectionStatus } from '../../core/se
 import { ConsultationService } from '../../core/services/consultation.service';
 import { ConsultationWebSocketService } from '../../core/services/consultation-websocket.service';
 import { AuthService } from '../../core/services/auth.service';
+import { IncomingCallService } from '../../core/services/incoming-call.service';
 import { User } from '../../core/models/consultation.model';
 import { WebSocketState } from '../../core/models/websocket.model';
 import { MessageListComponent, Message, SendMessageData, EditMessageData, DeleteMessageData } from '../../shared/components/message-list/message-list';
@@ -94,17 +95,23 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     private consultationService: ConsultationService,
     private wsService: ConsultationWebSocketService,
     private authService: AuthService,
+    private incomingCallService: IncomingCallService,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     const idParam = this.route.snapshot.paramMap.get('id');
     const type = this.route.snapshot.queryParamMap.get('type');
+    const appointmentIdParam = this.route.snapshot.queryParamMap.get('appointmentId');
     const consultationIdParam = this.route.snapshot.queryParamMap.get('consultationId');
 
     if (idParam) {
       const id = parseInt(idParam, 10);
-      if (type === 'consultation') {
+
+      if (appointmentIdParam) {
+        this.consultationId = id;
+        this.appointmentId = parseInt(appointmentIdParam, 10);
+      } else if (type === 'consultation') {
         this.consultationId = id;
       } else {
         this.appointmentId = id;
@@ -213,6 +220,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     this.wsService.disconnect();
     this.cleanupMediaElements();
     this.stopDurationTimer();
+    this.incomingCallService.clearActiveCall();
   }
 
   private setupSubscriptions(): void {
@@ -368,6 +376,9 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
       }
 
       this.phase.set('in-call');
+      if (this.appointmentId) {
+        this.incomingCallService.setActiveCall(this.appointmentId);
+      }
       this.cdr.markForCheck();
       setTimeout(() => {
         this.attachLocalVideo();
@@ -589,6 +600,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
   private async performEndCall(): Promise<void> {
     await this.livekitService.disconnect();
     this.stopDurationTimer();
+    this.incomingCallService.clearActiveCall();
 
     setTimeout(() => {
       this.navCtrl.back();

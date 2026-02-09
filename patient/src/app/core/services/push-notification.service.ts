@@ -128,13 +128,13 @@ export class PushNotificationService {
 
     switch (type) {
       case 'appointment':
-        window.location.href = `/tabs/appointments`;
+        window.location.href = `/home`;
         break;
       case 'message':
         if (id) {
-          window.location.href = `/consultation/${id}/messages`;
+          window.location.href = `/consultation/${id}`;
         } else {
-          window.location.href = `/tabs/messages`;
+          window.location.href = `/home`;
         }
         break;
       case 'consultation':
@@ -143,7 +143,7 @@ export class PushNotificationService {
         }
         break;
       default:
-        window.location.href = `/tabs/notifications`;
+        window.location.href = `/notifications`;
     }
   }
 

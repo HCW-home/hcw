@@ -3,12 +3,14 @@ import { IonApp, IonRouterOutlet, NavController } from '@ionic/angular/standalon
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from './core/services/auth.service';
 import { UserWebSocketService } from './core/services/user-websocket.service';
+import { IncomingCallService } from './core/services/incoming-call.service';
+import { IncomingCallComponent } from './shared/components/incoming-call/incoming-call.component';
 
 @Component({
   selector: 'app-root',
   templateUrl: 'app.component.html',
   styleUrls: ['app.component.scss'],
-  imports: [IonApp, IonRouterOutlet]
+  imports: [IonApp, IonRouterOutlet, IncomingCallComponent]
 })
 export class AppComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
@@ -16,11 +18,13 @@ export class AppComponent implements OnInit, OnDestroy {
   constructor(
     private authService: AuthService,
     private userWsService: UserWebSocketService,
+    private incomingCallService: IncomingCallService,
     private navCtrl: NavController
   ) {}
 
   ngOnInit(): void {
     this.handleDeepLinks();
+    this.setupWebSocketSubscriptions();
 
     this.authService.isAuthenticated$
       .pipe(takeUntil(this.destroy$))
@@ -30,6 +34,18 @@ export class AppComponent implements OnInit, OnDestroy {
         } else {
           this.userWsService.disconnect();
         }
+      });
+  }
+
+  private setupWebSocketSubscriptions(): void {
+    this.userWsService.appointmentJoined$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(event => {
+        this.incomingCallService.showIncomingCall({
+          callerName: event.data.user_name,
+          appointmentId: event.appointment_id,
+          consultationId: event.consultation_id,
+        });
       });
   }
 

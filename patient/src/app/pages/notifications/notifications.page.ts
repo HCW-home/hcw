@@ -199,10 +199,6 @@ export class NotificationsPage implements OnInit, OnDestroy {
     return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
   }
 
-  openNotificationSettings() {
-    this.navCtrl.navigateForward('/notification-settings');
-  }
-
   async markAllAsRead() {
     const unreadNotifications = this.notifications.filter(n => !n.isRead);
     if (unreadNotifications.length === 0) {
@@ -243,7 +239,7 @@ export class NotificationsPage implements OnInit, OnDestroy {
       const label = (notification.actionLabel || '').toLowerCase();
 
       if (model.includes('participant') && label.includes('join')) {
-        this.navCtrl.navigateForward(`/appointments/${notification.objectPk}/video`);
+        this.navCtrl.navigateForward(`/consultation/${notification.objectPk}/video?type=appointment`);
       } else if (model.includes('participant')) {
         this.navCtrl.navigateForward(`/confirm-presence/${notification.objectPk}`);
       } else if (model.includes('message')) {

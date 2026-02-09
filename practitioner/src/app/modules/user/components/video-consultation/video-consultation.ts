@@ -20,6 +20,7 @@ import { LocalVideoTrack, LocalTrack } from 'livekit-client';
 import { LiveKitService, ParticipantInfo, ConnectionStatus } from '../../../../core/services/livekit.service';
 import { ConsultationService } from '../../../../core/services/consultation.service';
 import { ToasterService } from '../../../../core/services/toaster.service';
+import { IncomingCallService } from '../../../../core/services/incoming-call.service';
 import { IPreJoinSettings } from '../../../../core/models/media-device';
 import { Button } from '../../../../shared/ui-components/button/button';
 import { Svg } from '../../../../shared/ui-components/svg/svg';
@@ -88,6 +89,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     private livekitService: LiveKitService,
     private consultationService: ConsultationService,
     private toasterService: ToasterService,
+    private incomingCallService: IncomingCallService,
     private cdr: ChangeDetectorRef
   ) {}
 

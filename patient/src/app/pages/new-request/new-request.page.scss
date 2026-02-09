@@ -548,12 +548,9 @@ ion-header {
     --padding-end: var(--app-spacing-md);
     --padding-top: var(--app-spacing-md);
     --padding-bottom: var(--app-spacing-md);
+    --border-radius: var(--app-card-radius);
     border-radius: var(--app-card-radius);
     border: 1px solid var(--app-border-color);
     font-size: 0.9375rem;
-
-    &:focus-within {
-      border-color: var(--ion-color-primary);
-    }
   }
 }

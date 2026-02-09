@@ -107,11 +107,6 @@ export class ProfilePage implements OnInit {
       route: '/notifications'
     },
     {
-      title: 'Settings',
-      icon: 'settings-outline',
-      action: 'settings'
-    },
-    {
       title: 'Logout',
       icon: 'log-out-outline',
       action: 'logout',
@@ -156,9 +151,6 @@ export class ProfilePage implements OnInit {
         case 'edit':
           this.openEditProfile();
           break;
-        case 'settings':
-          this.openSettings();
-          break;
         case 'logout':
           this.confirmLogout();
           break;
@@ -196,10 +188,6 @@ export class ProfilePage implements OnInit {
         this.showToast('Failed to update profile', 'danger');
       }
     });
-  }
-
-  openSettings() {
-    this.navCtrl.navigateForward('/notification-settings');
   }
 
   async confirmLogout() {

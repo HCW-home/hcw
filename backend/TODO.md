@@ -105,3 +105,4 @@ No permission (=patient) but : can still go own appointment or group appointment
 - Implement system message in backend in consultation, to log system event, created_by will be empty
 
 ![alt text](image.png)
+- specialities/id/doctors/ is not returning full image path for picture

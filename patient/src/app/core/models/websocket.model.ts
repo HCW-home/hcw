@@ -126,6 +126,17 @@ export interface ErrorEvent {
   message: string;
 }
 
+export interface AppointmentJoinedEvent {
+  type: 'appointment';
+  consultation_id: number;
+  appointment_id: number;
+  state: 'participant_joined';
+  data: {
+    user_id: number;
+    user_name: string;
+  };
+}
+
 export type UserIncomingEvent =
   | StatusChangedEvent
   | StatusResponseEvent
@@ -135,7 +146,8 @@ export type UserIncomingEvent =
   | SystemBroadcastEvent
   | GroupJoinedEvent
   | GroupLeftEvent
-  | ErrorEvent;
+  | ErrorEvent
+  | AppointmentJoinedEvent;
 
 export interface ConsultationMessageEvent {
   type: 'consultation_message';

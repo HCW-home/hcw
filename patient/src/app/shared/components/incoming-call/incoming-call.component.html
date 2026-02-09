@@ -1,0 +1,43 @@
+@if (incomingCall) {
+  <div class="incoming-call-overlay">
+    <div class="incoming-call-container">
+      <div class="caller-info">
+        <div class="avatar-wrapper">
+          <div class="pulse-ring"></div>
+          <div class="pulse-ring pulse-ring--delayed"></div>
+          @if (incomingCall.callerPicture) {
+            <ion-avatar class="avatar">
+              <img [src]="incomingCall.callerPicture" [alt]="incomingCall.callerName" />
+            </ion-avatar>
+          } @else {
+            <div class="avatar avatar--placeholder">
+              {{ getInitials(incomingCall.callerName) }}
+            </div>
+          }
+        </div>
+        <h2 class="caller-name">{{ incomingCall.callerName }}</h2>
+        <p class="call-label">is calling...</p>
+      </div>
+      <div class="actions">
+        <ion-button
+          class="action-button action-button--accept"
+          (click)="onAccept()"
+          color="success"
+          shape="round"
+        >
+          <ion-icon slot="start" name="call-outline"></ion-icon>
+          Accept
+        </ion-button>
+        <ion-button
+          class="action-button action-button--decline"
+          (click)="onDecline()"
+          fill="outline"
+          shape="round"
+        >
+          <ion-icon slot="start" name="close-outline"></ion-icon>
+          Later
+        </ion-button>
+      </div>
+    </div>
+  </div>
+}
