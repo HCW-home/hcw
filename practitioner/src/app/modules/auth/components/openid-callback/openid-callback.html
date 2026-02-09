@@ -2,20 +2,20 @@
   @if (isLoading) {
     <div class="loading">
       <app-typography [variant]="TypographyTypeEnum['h6-semibold']">
-        Authentification en cours...
+        Authenticating...
       </app-typography>
-      <div class="spinner"></div>
+      <app-loader></app-loader>
     </div>
   } @else if (errorMessage) {
     <div class="error">
       <app-typography [variant]="TypographyTypeEnum['h6-semibold']">
-        Erreur d'authentification
+        Authentication Error
       </app-typography>
       <app-typography [variant]="TypographyTypeEnum['body-regular']">
         {{ errorMessage }}
       </app-typography>
       <app-typography [variant]="TypographyTypeEnum['body-s-regular']">
-        Redirection vers la page de connexion...
+        Redirecting to login page...
       </app-typography>
     </div>
   }

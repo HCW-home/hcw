@@ -10,14 +10,9 @@ import {
   IBodyForgotPassword,
   ITokenAuthRequest,
   ITokenAuthResponse,
+  IOpenIDConfig,
+  IOpenIDLoginBody,
 } from '../models/admin-auth';
-
-interface IOpenIDConfig {
-  enabled: boolean;
-  client_id: string | null;
-  authorization_url: string | null;
-  provider_name: string | null;
-}
 
 @Injectable({
   providedIn: 'root'
@@ -65,42 +60,39 @@ export class Auth {
     return this.http.get<IOpenIDConfig>(`${environment.apiUrl}/auth/openid/config/`);
   }
 
-  /**
-   * Login with OpenID Connect authorization code
-   */
-  loginWithOpenID(authorizationCode: string, pkceVerifier: string | null = null): Observable<IResponseLogin> {
-    const body: any = {
+  loginWithOpenID(authorizationCode: string): Observable<IResponseLogin> {
+    const body: IOpenIDLoginBody = {
       code: authorizationCode,
       callback_url: `${window.location.origin}/auth/callback`
     };
-
-    if (pkceVerifier) {
-      body.code_verifier = pkceVerifier;
-    }
 
     return this.http.post<IResponseLogin>(`${environment.apiUrl}/auth/openid/`, body);
   }
 
   async initiateOpenIDLogin(): Promise<void> {
-    try {
-      const config = await firstValueFrom(this.getOpenIDConfig());
+    const config = await firstValueFrom(this.getOpenIDConfig());
 
-      if (!config.enabled || !config.client_id || !config.authorization_url) {
-        console.error('OpenID Connect is not properly configured');
-        return;
-      }
-
-      const params = new URLSearchParams({
-        client_id: config.client_id,
-        redirect_uri: `${window.location.origin}/auth/callback`,
-        response_type: 'code',
-        scope: 'openid profile email',
-      });
-
-      window.location.href = `${config.authorization_url}?${params.toString()}`;
-    } catch (error) {
-      console.error('Failed to get OpenID configuration:', error);
+    if (!config.enabled || !config.client_id || !config.authorization_url) {
+      return;
     }
+
+    const state = this.generateRandomState();
+    sessionStorage.setItem('openid_state', state);
+
+    const params = new URLSearchParams({
+      client_id: config.client_id,
+      redirect_uri: `${window.location.origin}/auth/callback`,
+      response_type: 'code',
+      scope: 'openid profile email',
+      state,
+    });
+
+    window.location.href = `${config.authorization_url}?${params.toString()}`;
   }
 
+  private generateRandomState(): string {
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    return Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
+  }
 }

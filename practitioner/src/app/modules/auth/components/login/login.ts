@@ -60,7 +60,6 @@ export class Login implements OnInit {
   }
 
   ngOnInit() {
-    // Check if OpenID Connect is enabled
     this.adminAuthService.getOpenIDConfig().subscribe({
       next: (config) => {
         this.openIdEnabled = config.enabled;
@@ -111,7 +110,6 @@ export class Login implements OnInit {
   }
 
   onOpenIDLogin() {
-    // Initiate OpenID Connect login flow
     this.adminAuthService.initiateOpenIDLogin();
   }
 

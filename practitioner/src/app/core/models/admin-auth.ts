@@ -35,3 +35,15 @@ export interface ITokenAuthResponse {
   message?: string;
   error?: string;
 }
+
+export interface IOpenIDConfig {
+  enabled: boolean;
+  client_id: string | null;
+  authorization_url: string | null;
+  provider_name: string | null;
+}
+
+export interface IOpenIDLoginBody {
+  code: string;
+  callback_url: string;
+}
