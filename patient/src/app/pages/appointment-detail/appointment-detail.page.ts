@@ -27,7 +27,6 @@ interface StatusConfig {
   selector: 'app-appointment-detail',
   templateUrl: './appointment-detail.page.html',
   styleUrls: ['./appointment-detail.page.scss'],
-  standalone: true,
   imports: [
     CommonModule,
     DatePipe,

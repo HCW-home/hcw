@@ -152,8 +152,8 @@ export class ConsultationService {
     consultation__created_by?: number;
     consultation__owned_by?: number;
     status?: string;
-    scheduled_at__day__gte?: string;
-    scheduled_at__day__lte?: string;
+    scheduled_at__date__gte?: string;
+    scheduled_at__date__lte?: string;
     future?: boolean;
   }): Observable<PaginatedResponse<Appointment>> {
     let httpParams = new HttpParams();

@@ -11,6 +11,8 @@ import { Page } from '../../../../core/components/page/page';
 import { Loader } from '../../../../shared/components/loader/loader';
 import { Badge } from '../../../../shared/components/badge/badge';
 import { Svg } from '../../../../shared/ui-components/svg/svg';
+import { Button } from '../../../../shared/ui-components/button/button';
+import { ButtonStyleEnum, ButtonSizeEnum } from '../../../../shared/constants/button';
 import { ConsultationService } from '../../../../core/services/consultation.service';
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { Appointment, AppointmentStatus, AppointmentType, Participant, ParticipantStatus } from '../../../../core/models/consultation';
@@ -23,7 +25,7 @@ type CalendarView = 'dayGridMonth' | 'timeGridWeek' | 'timeGridDay' | 'list';
 
 @Component({
   selector: 'app-appointments',
-  imports: [CommonModule, DatePipe, Page, Loader, Svg, Badge, FullCalendarModule, LocalDatePipe],
+  imports: [CommonModule, DatePipe, Page, Loader, Svg, Badge, Button, FullCalendarModule, LocalDatePipe],
   templateUrl: './appointments.html',
   styleUrl: './appointments.scss',
 })
@@ -35,17 +37,23 @@ export class Appointments implements OnInit, OnDestroy {
 
   protected readonly getAppointmentBadgeType = getAppointmentBadgeType;
   protected readonly AppointmentType = AppointmentType;
+  protected readonly ButtonStyleEnum = ButtonStyleEnum;
+  protected readonly ButtonSizeEnum = ButtonSizeEnum;
 
   calendarComponent = viewChild<FullCalendarComponent>('calendar');
   hoveredAppointment = signal<Appointment | null>(null);
   tooltipPosition = signal<{ top: number; left: number }>({ top: 0, left: 0 });
 
   loading = signal(true);
+  loadingMore = signal(false);
+  hasMore = signal(false);
   appointments = signal<Appointment[]>([]);
   calendarEvents = signal<EventInput[]>([]);
   currentView = signal<CalendarView>('timeGridWeek');
   currentTitle = signal<string>('');
 
+  private readonly pageSize = 20;
+  private listCurrentPage = 1;
   private currentDateRange: { start: string; end: string } | null = null;
 
   calendarOptions: CalendarOptions = {
@@ -95,24 +103,24 @@ export class Appointments implements OnInit, OnDestroy {
   }
 
   loadAppointments(): void {
+    if (this.currentView() === 'list') {
+      this.loadAllAppointments();
+      return;
+    }
+
     if (!this.currentDateRange) {
       return;
     }
 
     this.loading.set(true);
 
-    const params: {
-      page_size: number;
-      scheduled_at__day__gte: string;
-      scheduled_at__day__lte: string;
-    } = {
-      page_size: 100,
-      scheduled_at__day__gte: this.currentDateRange.start,
-      scheduled_at__day__lte: this.currentDateRange.end,
-    };
-
     this.consultationService
-      .getAppointments(params)
+      .getAppointments({
+        page_size: 100,
+        status: AppointmentStatus.SCHEDULED,
+        scheduled_at__date__gte: this.currentDateRange.start,
+        scheduled_at__date__lte: this.currentDateRange.end,
+      })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: response => {
@@ -123,6 +131,48 @@ export class Appointments implements OnInit, OnDestroy {
         error: (err) => {
           this.toasterService.show('error', 'Error', getErrorMessage(err));
           this.loading.set(false);
+        }
+      });
+  }
+
+  private loadAllAppointments(): void {
+    this.loading.set(true);
+    this.listCurrentPage = 1;
+
+    this.consultationService
+      .getAppointments({ page_size: this.pageSize, status: AppointmentStatus.SCHEDULED })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: response => {
+          this.appointments.set(response.results);
+          this.hasMore.set(!!response.next);
+          this.loading.set(false);
+        },
+        error: (err) => {
+          this.toasterService.show('error', 'Error', getErrorMessage(err));
+          this.loading.set(false);
+        }
+      });
+  }
+
+  loadMore(): void {
+    if (this.loadingMore() || !this.hasMore()) return;
+
+    this.loadingMore.set(true);
+    this.listCurrentPage++;
+
+    this.consultationService
+      .getAppointments({ page_size: this.pageSize, page: this.listCurrentPage, status: AppointmentStatus.SCHEDULED })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: response => {
+          this.appointments.update(current => [...current, ...response.results]);
+          this.hasMore.set(!!response.next);
+          this.loadingMore.set(false);
+        },
+        error: (err) => {
+          this.toasterService.show('error', 'Error', getErrorMessage(err));
+          this.loadingMore.set(false);
         }
       });
   }
@@ -235,11 +285,18 @@ export class Appointments implements OnInit, OnDestroy {
   }
 
   setView(view: CalendarView): void {
+    const previousView = this.currentView();
     this.currentView.set(view);
-    if (view !== 'list') {
+
+    if (view === 'list') {
+      this.loadAllAppointments();
+    } else {
       const calendarApi = this.calendarComponent()?.getApi();
       if (calendarApi) {
         calendarApi.changeView(view);
+      }
+      if (previousView === 'list') {
+        this.loadAppointments();
       }
     }
   }

@@ -47,7 +47,9 @@
       <div class="loading-state">
         <app-loader></app-loader>
       </div>
-    } @else if (currentView() === 'list') {
+    }
+
+    @if (!loading() && currentView() === 'list') {
       <div class="list-view">
         @if (appointments().length === 0) {
           <div class="empty-state">
@@ -87,9 +89,23 @@
             </div>
           }
         }
+
+        @if (hasMore()) {
+          <div class="load-more-container">
+            <app-button
+              text="View More"
+              [style]="ButtonStyleEnum.text"
+              [size]="ButtonSizeEnum.medium"
+              [loading]="loadingMore()"
+              [disabled]="loadingMore()"
+              (buttonClick)="loadMore()">
+            </app-button>
+          </div>
+        }
       </div>
-    } @else {
-      <div class="calendar-wrapper">
+    }
+
+    <div class="calendar-wrapper" [style.display]="loading() || currentView() === 'list' ? 'none' : 'block'">
         <full-calendar
           #calendar
           [options]="calendarOptions"
@@ -146,7 +162,6 @@
           }
         </div>
       }
-    }
 
     <div class="legend">
       <div class="legend-item">
