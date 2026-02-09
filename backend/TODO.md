@@ -103,3 +103,5 @@ No permission (=patient) but : can still go own appointment or group appointment
 - Remove arrow on Patient page list (click on line is enough)
 - Websocket, add event when somebody join appointment, have ring page (Accept or later)
 - Implement system message in backend in consultation, to log system event, created_by will be empty
+
+- specialities/id/doctors/ is not returining full image path for picture 

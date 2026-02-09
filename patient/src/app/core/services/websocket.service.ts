@@ -77,7 +77,9 @@ export class WebSocketService implements OnDestroy {
     type: T
   ): Observable<Extract<UserIncomingEvent, { type: T }>> {
     return this.messages$.pipe(
-      filter((msg): msg is Extract<UserIncomingEvent, { type: T }> => msg.type === type)
+      filter((msg): msg is Extract<UserIncomingEvent, { type: T }> =>
+        msg.type === type || (msg as unknown as { event?: string }).event === type
+      )
     );
   }
 
@@ -126,9 +128,10 @@ export class WebSocketService implements OnDestroy {
     this.ws.onmessage = (event: MessageEvent) => {
       try {
         const message: UserIncomingEvent = JSON.parse(event.data) as UserIncomingEvent;
+        console.log('[WS] Received message:', message);
         this.messageSubject.next(message);
       } catch (error) {
-        // Silent fail
+        console.error('Error parsing WebSocket message:', error);
       }
     };
 

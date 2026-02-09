@@ -43,10 +43,6 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/home/home.page').then(m => m.HomePage)
   },
   {
-    path: 'appointments',
-    loadComponent: () => import('./pages/appointments/appointments.page').then(m => m.AppointmentsPage)
-  },
-  {
     path: 'notifications',
     loadComponent: () => import('./pages/notifications/notifications.page').then(m => m.NotificationsPage)
   },
@@ -71,14 +67,6 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/new-request/new-request.page').then(m => m.NewRequestPage)
   },
   {
-    path: 'health-records',
-    loadComponent: () => import('./pages/health-records/health-records.page').then(m => m.HealthRecordsPage)
-  },
-  {
-    path: 'notification-settings',
-    loadComponent: () => import('./pages/notification-settings/notification-settings.page').then(m => m.NotificationSettingsPage)
-  },
-  {
     path: 'appointment/:id',
     loadComponent: () => import('./pages/appointment-detail/appointment-detail.page').then(m => m.AppointmentDetailPage)
   },
@@ -90,8 +78,4 @@ export const routes: Routes = [
     path: 'consultation/:id/video',
     loadComponent: () => import('./pages/video-consultation/video-consultation.page').then(m => m.VideoConsultationPage)
   },
-  {
-    path: 'tabs',
-    loadChildren: () => import('./pages/tabs/tabs.routes').then(m => m.routes)
-  }
 ];

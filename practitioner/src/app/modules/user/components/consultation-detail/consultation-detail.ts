@@ -14,6 +14,7 @@ import { ConfirmationService } from '../../../../core/services/confirmation.serv
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { ConsultationWebSocketService } from '../../../../core/services/consultation-websocket.service';
 import { UserService } from '../../../../core/services/user.service';
+import { IncomingCallService } from '../../../../core/services/incoming-call.service';
 import {
   Consultation,
   Appointment,
@@ -180,6 +181,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   private toasterService = inject(ToasterService);
   private wsService = inject(ConsultationWebSocketService);
   private userService = inject(UserService);
+  private incomingCallService = inject(IncomingCallService);
 
   ngOnInit(): void {
     this.initEditForm();
@@ -724,12 +726,20 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   joinVideoCall(appointmentId: number): void {
     this.activeAppointmentId.set(appointmentId);
     this.inCall.set(true);
+    this.incomingCallService.setActiveCall(appointmentId);
   }
 
   onCallEnded(): void {
     this.inCall.set(false);
     this.activeAppointmentId.set(null);
     this.isVideoMinimized.set(false);
+    this.incomingCallService.clearActiveCall();
+
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {},
+      replaceUrl: true,
+    });
   }
 
   toggleVideoSize(): void {

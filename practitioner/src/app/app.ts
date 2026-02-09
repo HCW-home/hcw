@@ -3,14 +3,16 @@ import { Router, RouterOutlet } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { ToasterContainerComponent } from './core/components/toaster-container/toaster-container.component';
 import { Confirmation } from './shared/components/confirmation/confirmation';
+import { IncomingCall } from './shared/components/incoming-call/incoming-call';
 import { Auth } from './core/services/auth';
 import { UserWebSocketService } from './core/services/user-websocket.service';
 import { ActionHandlerService } from './core/services/action-handler.service';
+import { IncomingCallService } from './core/services/incoming-call.service';
 import { RoutePaths } from './core/constants/routes';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, ToasterContainerComponent, Confirmation],
+  imports: [RouterOutlet, ToasterContainerComponent, Confirmation, IncomingCall],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
@@ -22,11 +24,13 @@ export class App implements OnInit, OnDestroy {
     private authService: Auth,
     private userWsService: UserWebSocketService,
     private actionHandler: ActionHandlerService,
+    private incomingCallService: IncomingCallService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
     this.handleDeepLinks();
+    this.setupWebSocketSubscriptions();
 
     this.authService.isAuthenticated$
       .pipe(takeUntil(this.destroy$))
@@ -37,6 +41,19 @@ export class App implements OnInit, OnDestroy {
           this.userWsService.disconnect();
         }
       });
+  }
+
+  private setupWebSocketSubscriptions(): void {
+    this.userWsService.appointmentJoined$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(event => {
+        this.incomingCallService.showIncomingCall({
+          callerName: event.data.user_name,
+          appointmentId: event.appointment_id,
+          consultationId: event.consultation_id,
+        });
+      });
+
   }
 
   private handleDeepLinks(): void {

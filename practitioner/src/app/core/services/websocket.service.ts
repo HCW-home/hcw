@@ -85,7 +85,7 @@ export class WebSocketService {
     return this.messages$.pipe(
       filter(
         (msg): msg is Extract<UserIncomingEvent, { type: T }> =>
-          msg.type === type
+          msg.type === type || (msg as unknown as { event?: string }).event === type
       )
     );
   }
@@ -139,6 +139,7 @@ export class WebSocketService {
         const message: UserIncomingEvent = JSON.parse(
           event.data
         ) as UserIncomingEvent;
+        console.log('[WS] Received message:', message);
         this.messageSubject.next(message);
       } catch (error) {
         console.error('Error parsing WebSocket message:', error);

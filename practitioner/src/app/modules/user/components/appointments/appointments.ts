@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
 import { FullCalendarModule, FullCalendarComponent } from '@fullcalendar/angular';
-import { CalendarOptions, EventInput, EventClickArg, EventHoveringArg } from '@fullcalendar/core';
+import { CalendarOptions, EventInput, EventClickArg, EventHoveringArg, DatesSetArg } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -46,6 +46,8 @@ export class Appointments implements OnInit, OnDestroy {
   currentView = signal<CalendarView>('timeGridWeek');
   currentTitle = signal<string>('');
 
+  private currentDateRange: { start: string; end: string } | null = null;
+
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
     initialView: 'timeGridWeek',
@@ -85,7 +87,6 @@ export class Appointments implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.loadAppointments();
   }
 
   ngOnDestroy(): void {
@@ -94,9 +95,24 @@ export class Appointments implements OnInit, OnDestroy {
   }
 
   loadAppointments(): void {
+    if (!this.currentDateRange) {
+      return;
+    }
+
     this.loading.set(true);
+
+    const params: {
+      page_size: number;
+      scheduled_at__day__gte: string;
+      scheduled_at__day__lte: string;
+    } = {
+      page_size: 100,
+      scheduled_at__day__gte: this.currentDateRange.start,
+      scheduled_at__day__lte: this.currentDateRange.end,
+    };
+
     this.consultationService
-      .getAppointments({ page_size: 100 })
+      .getAppointments(params)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: response => {
@@ -174,8 +190,25 @@ export class Appointments implements OnInit, OnDestroy {
     }
   }
 
-  handleDatesSet(): void {
+  handleDatesSet(arg: DatesSetArg): void {
     this.updateTitle();
+
+    const formatDate = (date: Date): string => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    const newStart = formatDate(arg.start);
+    const newEnd = formatDate(arg.end);
+
+    if (!this.currentDateRange ||
+        this.currentDateRange.start !== newStart ||
+        this.currentDateRange.end !== newEnd) {
+      this.currentDateRange = { start: newStart, end: newEnd };
+      this.loadAppointments();
+    }
   }
 
   handleEventMouseEnter(info: EventHoveringArg): void {
