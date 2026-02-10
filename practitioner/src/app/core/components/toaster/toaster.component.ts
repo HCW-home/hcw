@@ -1,18 +1,25 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Toast } from '../../models/toast';
-import { Typography } from '../../../shared/ui-components/typography/typography';
-import { TypographyTypeEnum } from '../../../shared/constants/typography';
+import { IToast } from '../../models/toast';
+import { Svg } from '../../../shared/ui-components/svg/svg';
+import { Button } from '../../../shared/ui-components/button/button';
+import { ButtonStyleEnum, ButtonSizeEnum } from '../../../shared/constants/button';
 
 @Component({
   selector: 'app-toaster',
-  imports: [Typography],
+  imports: [Svg, Button],
   templateUrl: './toaster.component.html',
   styleUrl: './toaster.component.scss',
 })
 export class ToasterComponent {
-  @Input() toast!: Toast;
-  @Input() i!: number;
+  @Input() toast!: IToast;
+  @Output() close = new EventEmitter<string>();
 
-  @Output() remove = new EventEmitter<number>();
-  protected readonly TypographyTypeEnum = TypographyTypeEnum;
+  protected readonly ButtonStyleEnum = ButtonStyleEnum;
+  protected readonly ButtonSizeEnum = ButtonSizeEnum;
+
+  traceExpanded = false;
+
+  onClose(): void {
+    this.close.emit(this.toast.id);
+  }
 }

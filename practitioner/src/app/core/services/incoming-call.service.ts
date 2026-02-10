@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable } from 'rxjs';
 import { RoutePaths } from '../constants/routes';
+import { ToasterService } from './toaster.service';
 
 export interface IncomingCallData {
   callerName: string;
@@ -10,55 +10,64 @@ export interface IncomingCallData {
   consultationId: number;
 }
 
+const INCOMING_CALL_TOAST_ID = 'incoming-call';
+
 @Injectable({
   providedIn: 'root',
 })
 export class IncomingCallService {
-  private incomingCallSubject = new BehaviorSubject<IncomingCallData | null>(null);
   private timeoutId: ReturnType<typeof setTimeout> | null = null;
   private audioElement: HTMLAudioElement | null = null;
   private activeCallAppointmentId: number | null = null;
+  private currentCallData: IncomingCallData | null = null;
 
-  public incomingCall$: Observable<IncomingCallData | null> = this.incomingCallSubject.asObservable();
-
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private toasterService: ToasterService
+  ) {}
 
   showIncomingCall(data: IncomingCallData): void {
-    console.log('[IncomingCall] showIncomingCall called:', data);
-    console.log('[IncomingCall] Current URL:', this.router.url);
-
-    if (this.incomingCallSubject.value) {
-      console.log('[IncomingCall] Already showing a call, skipping');
+    if (this.currentCallData) {
       return;
     }
-
 
     if (this.activeCallAppointmentId === data.appointmentId) {
-      console.log('[IncomingCall] Already in call for this appointment, skipping');
       return;
     }
 
-    console.log('[IncomingCall] Showing incoming call screen');
-    this.incomingCallSubject.next(data);
+    this.currentCallData = data;
     this.playRingtone();
     this.startTimeout();
+
+    this.toasterService.show('neutral', `${data.callerName}`, 'is calling...', {
+      id: INCOMING_CALL_TOAST_ID,
+      delay: -1,
+      closable: false,
+      icon: 'phone',
+      actions: [
+        { label: 'Accept', callback: () => this.acceptCall() },
+        { label: 'Decline', callback: () => this.dismissIncomingCall() },
+      ],
+    });
   }
 
   dismissIncomingCall(): void {
     this.stopRingtone();
     this.clearTimeout();
-    this.incomingCallSubject.next(null);
+    this.currentCallData = null;
+    this.toasterService.dismiss(INCOMING_CALL_TOAST_ID);
   }
 
   acceptCall(): void {
-    const callData = this.incomingCallSubject.value;
+    const callData = this.currentCallData;
     if (!callData) {
       return;
     }
 
     this.stopRingtone();
     this.clearTimeout();
-    this.incomingCallSubject.next(null);
+    this.currentCallData = null;
+    this.toasterService.dismiss(INCOMING_CALL_TOAST_ID);
 
     this.router.navigate([
       '/',

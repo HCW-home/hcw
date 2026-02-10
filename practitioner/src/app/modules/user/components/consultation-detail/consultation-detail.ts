@@ -700,7 +700,9 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
         },
         error: (error) => {
           this.isSavingConsultation.set(false);
-          this.toasterService.show('error', getErrorMessage(error));
+          this.toasterService.show('error', 'Update Failed', getErrorMessage(error), {
+            trace: JSON.stringify(error.error, null, 2),
+          });
         },
       });
   }

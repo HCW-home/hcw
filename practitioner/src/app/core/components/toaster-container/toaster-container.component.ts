@@ -1,27 +1,14 @@
-import { Component, OnInit } from '@angular/core';
-import { Toast } from '../../models/toast';
+import { Component, inject } from '@angular/core';
+import { AsyncPipe } from '@angular/common';
 import { ToasterService } from '../../services/toaster.service';
 import { ToasterComponent } from '../toaster/toaster.component';
 
 @Component({
   selector: 'app-toaster-container',
-  imports: [ToasterComponent],
+  imports: [AsyncPipe, ToasterComponent],
   templateUrl: './toaster-container.component.html',
   styleUrl: './toaster-container.component.scss',
 })
-export class ToasterContainerComponent implements OnInit {
-  toasts: Toast[] = [];
-
-  constructor(protected toaster: ToasterService) {}
-
-  ngOnInit() {
-    this.toaster.toast$.subscribe(toast => {
-      this.toasts = [toast, ...this.toasts];
-      setTimeout(() => this.toasts.pop(), toast.delay || 5000);
-    });
-  }
-
-  remove(index: number) {
-    this.toasts = this.toasts.filter((v, i) => i !== index);
-  }
+export class ToasterContainerComponent {
+  protected toaster = inject(ToasterService);
 }

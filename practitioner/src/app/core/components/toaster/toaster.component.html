@@ -1,14 +1,51 @@
-<div class="toast toast-{{ toast.type }}" [style.top.px]="i * 100">
-  <app-typography
-    [variant]="TypographyTypeEnum['body-xxl-bold']"
-    class="toast-heading"
-    color="var(--White)"
-    >{{ toast.title }}
-  </app-typography>
-  <app-typography
-    [variant]="TypographyTypeEnum['body-l-regular']"
-    class="toast-body"
-    color="var(--White)"
-    >{{ toast.body }}
-  </app-typography>
+<div class="toast toast-{{ toast.type }}">
+  <div class="toast-main">
+    @if (toast.icon) {
+      <div class="toast-icon-wrapper">
+        <app-svg [src]="toast.icon" [svgStyle]="{ 'width.px': 18, 'height.px': 18 }"></app-svg>
+      </div>
+    }
+
+    <div class="toast-content">
+      @if (toast.title) {
+        <div class="toast-title">{{ toast.title }}</div>
+      }
+      @if (toast.body) {
+        <div class="toast-body">{{ toast.body }}</div>
+      }
+    </div>
+
+    @if (toast.closable !== false) {
+      <button class="toast-close" (click)="onClose()">
+        <app-svg src="close" [svgStyle]="{ 'width.px': 14, 'height.px': 14 }"></app-svg>
+      </button>
+    }
+  </div>
+
+  @if (toast.actions?.length) {
+    <div class="toast-actions">
+      @for (action of toast.actions; track action.label) {
+        <app-button
+          [text]="action.label"
+          [size]="ButtonSizeEnum.small"
+          [style]="ButtonStyleEnum.text"
+          (buttonClick)="action.callback()"
+        ></app-button>
+      }
+    </div>
+  }
+
+  @if (toast.trace) {
+    <div class="toast-trace-wrapper">
+      <app-button
+        [text]="traceExpanded ? 'Hide details' : 'Show details'"
+        [size]="ButtonSizeEnum.small"
+        [style]="ButtonStyleEnum.text"
+        (buttonClick)="traceExpanded = !traceExpanded"
+      ></app-button>
+    </div>
+    @if (traceExpanded) {
+      <pre class="toast-trace">{{ toast.trace }}</pre>
+    }
+  }
 </div>

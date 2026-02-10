@@ -3,7 +3,6 @@ import { Router, RouterOutlet } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { ToasterContainerComponent } from './core/components/toaster-container/toaster-container.component';
 import { Confirmation } from './shared/components/confirmation/confirmation';
-import { IncomingCall } from './shared/components/incoming-call/incoming-call';
 import { Auth } from './core/services/auth';
 import { UserWebSocketService } from './core/services/user-websocket.service';
 import { ActionHandlerService } from './core/services/action-handler.service';
@@ -12,7 +11,7 @@ import { RoutePaths } from './core/constants/routes';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, ToasterContainerComponent, Confirmation, IncomingCall],
+  imports: [RouterOutlet, ToasterContainerComponent, Confirmation],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })

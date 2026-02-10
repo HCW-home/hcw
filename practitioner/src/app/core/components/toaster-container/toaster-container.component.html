@@ -1,7 +1,6 @@
-@for (toast of toasts; track toast; let idx = $index) {
+@for (toast of toaster.toasts$ | async; track toast.id) {
   <app-toaster
-    [toast]="toast" [i]="idx"
-    (remove)="remove($event)"></app-toaster>
+    [toast]="toast"
+    (close)="toaster.dismiss($event)">
+  </app-toaster>
 }
-
-
