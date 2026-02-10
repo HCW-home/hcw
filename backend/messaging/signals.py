@@ -5,6 +5,7 @@ from django.dispatch import receiver
 
 from .models import Message, MessageStatus, Template
 from .tasks import send_message
+from django.db import transaction
 
 @receiver(post_save, sender=Message)
 def notify_message_recipient(sender, instance: Message, created, **kwargs):
@@ -26,4 +27,5 @@ def notify_message_recipient(sender, instance: Message, created, **kwargs):
                 "created_at": instance.created_at.isoformat() if instance.created_at else None,
             }
         )
-        send_message.delay(instance.pk)
+
+        transaction.on_commit(lambda: send_message.delay(instance.pk))

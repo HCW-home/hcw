@@ -114,7 +114,7 @@ def message_saved(sender, instance: Message, created, **kwargs):
 @receiver(post_save, sender=Appointment)
 def appointment_saved(sender, instance: Appointment, created, **kwargs):
     """
-    Whenever a Message is created, broadcast it over Channels.
+    Whenever an Appointment is created, broadcast it over Channels.
     """
     channel_layer = get_channel_layer()
 
@@ -173,7 +173,7 @@ def request_saved(sender, instance, created, **kwargs):
 
 
 @receiver(post_save, sender=Appointment)
-def send_appointment_invites(sender, instance, created, **kwargs):
+def send_appointment_invites(sender, instance: Appointment, created, **kwargs):
     """
     Prepare invite sending over celery task.
     """
@@ -206,3 +206,14 @@ def appointment_previous_scheduled_at(sender, instance, **kwargs):
             pass
 
 
+@receiver(post_save, sender=Participant)
+def participant_cancelling(sender, instance: Participant, **kwargs):
+
+    if not instance.is_active:
+        NotificationMessage.objects.create(
+            template_system_name="appointment_cancelled",
+            sent_to=instance.user,
+            object_model="consultations.Participant",
+            object_pk=instance.pk,
+
+        )

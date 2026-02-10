@@ -106,10 +106,9 @@ No permission (=patient) but : can still go own appointment or group appointment
 
 ![alt text](image.png)
 - specialities/id/doctors/ is not returning full image path for picture
-
 - permissions : doctor without permission should see dashboard and consultation
-- on notificaton create, send websocket message also.
-- add terms view by ID
+<!-- - on notificaton create, send websocket message also. -->
+<!-- - add terms view by ID -->
 - User messages for patient is giving 404 not found
 - picture on reason is not correct, fix for debug mode
-. patient will be redirected to patient app if login in doctor app
+- patient will be redirected to patient app if login in doctor app

@@ -274,11 +274,14 @@ class AppointmentSerializer(serializers.ModelSerializer):
             # Deactivate removed participants
             removed_users = existing_users - new_users
             if removed_users:
-                Participant.objects.filter(
+                participants_to_deactivate = Participant.objects.filter(
                     appointment=appointment,
                     user_id__in=removed_users,
                     is_active=True
-                ).update(is_active=False)
+                )
+                for participant in participants_to_deactivate:
+                    participant.is_active = False
+                    participant.save(update_fields=['is_active'])
 
         if temporary_participants_data is not None:
             for temp_participant in temporary_participants_data:
