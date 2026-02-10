@@ -201,19 +201,17 @@ def appointment_previous_scheduled_at(sender, instance, **kwargs):
             if old.scheduled_at != instance.scheduled_at:
                 instance.previous_scheduled_at = old.scheduled_at
             else:
-                instance.previous_scheduled_at
+                instance.previous_scheduled_at = None
         except Appointment.DoesNotExist:
             pass
 
 
 @receiver(post_save, sender=Participant)
 def participant_cancelling(sender, instance: Participant, **kwargs):
-
     if not instance.is_active:
         NotificationMessage.objects.create(
             template_system_name="appointment_cancelled",
             sent_to=instance.user,
             object_model="consultations.Participant",
             object_pk=instance.pk,
-
         )
