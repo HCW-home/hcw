@@ -33,7 +33,6 @@ interface StatusConfig {
     IonHeader,
     IonToolbar,
     IonButtons,
-    IonButton,
     IonIcon,
     IonBackButton,
     IonContent,

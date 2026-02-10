@@ -37,7 +37,6 @@ interface ConsultationStatus {
     IonHeader,
     IonToolbar,
     IonButtons,
-    IonButton,
     IonIcon,
     IonBackButton,
     IonContent,

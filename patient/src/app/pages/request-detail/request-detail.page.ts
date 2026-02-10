@@ -37,7 +37,6 @@ interface RequestStatus {
     IonHeader,
     IonToolbar,
     IonButtons,
-    IonButton,
     IonIcon,
     IonBackButton,
     IonContent,
