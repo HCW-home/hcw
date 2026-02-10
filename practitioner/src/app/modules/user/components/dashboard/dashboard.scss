@@ -16,33 +16,77 @@
     }
 
     .next-appointment-card {
-      padding: 20px 24px;
+      padding: 32px 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
+      gap: 32px;
 
-      &:hover {
-        background: rgba(6, 182, 212, 0.03);
+      @media (max-width: 768px) {
+        flex-direction: column;
+        gap: 24px;
+        align-items: stretch;
       }
 
-      .appointment-main {
+      .appointment-left {
         display: flex;
         align-items: center;
         gap: 16px;
+        cursor: pointer;
+        padding: 8px;
+        margin: -8px;
+        border-radius: 12px;
+        transition: background-color 0.2s ease;
+        flex-shrink: 0;
+
+        &:hover {
+          background: rgba(6, 182, 212, 0.05);
+        }
+
+        &:focus {
+          outline: 2px solid var(--primary-300);
+          outline-offset: 2px;
+        }
+
+        .appointment-info {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
       }
 
-      .appointment-info {
+      .appointment-center {
+        flex: 1;
         display: flex;
         flex-direction: column;
+        align-items: center;
+        justify-content: center;
         gap: 4px;
+        text-align: center;
+        padding: 0 16px;
+
+        @media (max-width: 768px) {
+          align-items: flex-start;
+          text-align: left;
+          padding: 16px 0;
+          border-top: 1px solid var(--primary-100);
+          border-bottom: 1px solid var(--primary-100);
+        }
       }
 
-      .appointment-schedule {
+      .appointment-action {
         display: flex;
         align-items: center;
-        gap: 8px;
+        justify-content: center;
+        flex-shrink: 0;
+
+        @media (max-width: 768px) {
+          width: 100%;
+
+          app-button {
+            width: 100%;
+          }
+        }
       }
     }
   }

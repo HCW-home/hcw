@@ -27,28 +27,23 @@
             <div class="section-header">
               <div class="header-left">
                 <div class="section-icon primary">
-                  <app-svg src="video" [svgStyle]="{'width.px': 20, 'height.px': 20, 'color': 'var(--primary-600)'}"></app-svg>
+                  <app-svg src="clock" [svgStyle]="{'width.px': 20, 'height.px': 20, 'color': 'var(--primary-600)'}"></app-svg>
                 </div>
                 <div class="section-title">
                   <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
                     Next Appointment
                   </app-typography>
-                  <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
-                    {{ getRelativeTime(nextAppointment()!.scheduled_at!) }}
-                  </app-typography>
                 </div>
               </div>
-              <app-button
-                text="Join Now"
-                leftIcon="video"
-                [size]="ButtonSizeEnum.medium"
-                [style]="ButtonStyleEnum.primary"
-                (buttonClick)="joinNextAppointment($event)">
-              </app-button>
             </div>
             <div class="section-content">
-              <div class="next-appointment-card" (click)="viewNextAppointment()">
-                <div class="appointment-main">
+              <div class="next-appointment-card">
+                <div class="appointment-left"
+                     (click)="viewNextAppointment()"
+                     (keyup.enter)="viewNextAppointment()"
+                     (keyup.space)="viewNextAppointment()"
+                     role="button"
+                     tabindex="0">
                   <div class="patient-avatar">
                     <span>--</span>
                   </div>
@@ -61,11 +56,22 @@
                     </app-typography>
                   </div>
                 </div>
-                <div class="appointment-schedule">
-                  <app-svg src="calendar" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--slate-400)'}"></app-svg>
-                  <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--slate-600)">
+                <div class="appointment-center">
+                  <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--primary-600)">
+                    {{ getRelativeTime(nextAppointment()!.scheduled_at!) }}
+                  </app-typography>
+                  <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
                     {{ formatDateTime(nextAppointment()!.scheduled_at!) }}
                   </app-typography>
+                </div>
+                <div class="appointment-action">
+                  <app-button
+                    text="Join Now"
+                    leftIcon="video"
+                    [size]="ButtonSizeEnum.large"
+                    [style]="ButtonStyleEnum.primary"
+                    (buttonClick)="joinNextAppointment($event)">
+                  </app-button>
                 </div>
               </div>
             </div>
