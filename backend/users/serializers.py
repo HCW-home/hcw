@@ -8,7 +8,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers, status
 from rest_framework.response import Response
 from dj_rest_auth.serializers import PasswordResetSerializer
-from .models import HealthMetric, Language, Organisation, Speciality
+from .models import HealthMetric, Language, Organisation, Speciality, Term
 from .forms import CustomAllAuthPasswordResetForm
 from consultations.serializers import AppointmentDetailSerializer
 from consultations.models import Participant
@@ -19,6 +19,12 @@ class LanguageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Language
         fields = ["id", "name", "code"]
+
+
+class TermSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Term
+        fields = ["id", "name", "content", "use_for_patient"]
 
 
 class OrganisationSerializer(serializers.ModelSerializer):

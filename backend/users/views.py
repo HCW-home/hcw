@@ -50,12 +50,13 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
-from .models import HealthMetric, Language, Speciality, User
+from .models import HealthMetric, Language, Speciality, Term, User
 from .serializers import (
     HealthMetricSerializer,
     LanguageSerializer,
     OrganisationSerializer,
     SpecialitySerializer,
+    TermSerializer,
     UserDetailsSerializer,
     UserParticipantDetailSerializer
 )
@@ -104,6 +105,16 @@ class LanguageViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = Language.objects.all()
     serializer_class = LanguageSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class TermViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for terms - read only
+    """
+
+    queryset = Term.objects.all()
+    serializer_class = TermSerializer
     permission_classes = [IsAuthenticated]
 
 
