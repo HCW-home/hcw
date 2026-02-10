@@ -50,8 +50,8 @@ DEFAULT_NOTIFICATION_MESSAGES = {
     },
     "appointment_cancelled": {
         "template_subject": _("Your appointment has been cancelled"),
-        "template_content": _("Your appointment scheduled at"),
-        "template_content_html": _("<p>Your appointment scheduled at</p>"),
+        "template_content": _("Your appointment scheduled for {{ obj.appointment.scheduled_at|date }} at {{ obj.appointment.scheduled_at|time }} has been cancelled."),
+        "template_content_html": _("<p>Your appointment scheduled for {{ obj.appointment.scheduled_at|date }} at {{ obj.appointment.scheduled_at|time }} has been cancelled.</p>"),
         "model": "consultations.Participant",
         "helper_text": "Message sent to participant when appointment is cancelled",
     },
