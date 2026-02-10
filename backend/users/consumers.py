@@ -214,6 +214,19 @@ class WebsocketConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
             }
         )
 
+    async def notification(self, event):
+        await self.send_json(
+            {
+                "event": "notification",
+                "render_content_html": event["render_content_html"],
+                "access_link": event["access_link"],
+                "render_subject": event["render_subject"],
+                "action_label": event['action_label'],
+                "action": event['action'],
+                "created_at": event['created_at'],
+            }
+        )
+
     async def appointment(self, event):
         response = {
             "event": "appointment",
