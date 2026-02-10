@@ -110,9 +110,6 @@ def message_saved(sender, instance: Message, created, **kwargs):
                 object_pk=instance.pk,
             )
 
-            # Send notification asynchronously
-            notification.send()
-
 
 @receiver(post_save, sender=Appointment)
 def appointment_saved(sender, instance: Appointment, created, **kwargs):

@@ -65,7 +65,6 @@ def handle_invites(appointment_id):
             object_pk=participant.pk,
             object_model="consultations.Participant",
         )
-        message.send()
         participant.is_notified = True
         participant.save(update_fields=['is_notified'])
 
@@ -87,4 +86,3 @@ def handle_reminders():
                     object_pk=participant.pk,
                     object_model="consultations.Participant",
                 )
-                message.send()

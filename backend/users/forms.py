@@ -61,5 +61,4 @@ class CustomAllAuthPasswordResetForm(DefaultPasswordResetForm):
                 in_notification=False,
                 additionnal_link_args={'token': temp_key, 'uid': uid}
             )
-            message.send()
         return self.cleaned_data['email']

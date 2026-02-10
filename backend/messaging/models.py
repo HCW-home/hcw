@@ -583,8 +583,8 @@ class MessageStatus(models.TextChoices):
 
 class Message(ModelCeleryAbstract):
     # Message content
-    content = models.TextField(_("content"), blank=True, null=True)
-    content_html = models.TextField(_("content"), blank=True, null=True)
+    content = models.TextField(_("content text"), blank=True, null=True)
+    content_html = models.TextField(_("content html"), blank=True, null=True)
     subject = models.CharField(_("subject"), max_length=200, blank=True, null=True)
     template_system_name = models.CharField(
         choices=NOTIFICATION_CHOICES, blank=True, null=True
@@ -689,17 +689,6 @@ class Message(ModelCeleryAbstract):
         if self.recipient_email:
             return self.recipient_email
 
-    def send(self, wait=False):
-        from .tasks import send_message
-
-        if not wait:
-            send_message.delay(self.pk)
-        else:
-            try:
-                send_message(self.pk)
-            except:
-                pass
-
     @property
     def recipient(self):
         return self.email or self.phone_number
@@ -717,13 +706,14 @@ class Message(ModelCeleryAbstract):
 
     @property
     def action_label(self):
-        return self.template.action_label
+        if self.template:
+            return self.template.action_label
     
     additionnal_link_args = models.JSONField(blank=True, null=True)
 
     @property
     def access_link(self):
-        if not self.template.action:
+        if not self.template or not self.template.action:
             return
         """Generate access link if template has an action defined"""
         base_url = config.patient_base_url if self.sent_to.is_patient else config.practitioner_base_url
@@ -794,7 +784,7 @@ class Message(ModelCeleryAbstract):
 
     def render(self, field: str):
         if not self.template_system_name:
-            return getattr(self, field)
+            return getattr(self, field.replace("template_", ''))
 
         try:
             app_label, model_name = self.object_model.split(".")

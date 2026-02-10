@@ -125,13 +125,12 @@ class AnonymousTokenAuthView(APIView):
                     user.verification_code = secrets.randbelow(1000000)
                     user.save()
 
-                    message = Message.objects.create(
+                    Message.objects.create(
                         sent_to=user,
                         template_system_name="your_authentication_code",
                         object_pk=user.pk,
                         object_model="users.User",
                     )
-                    message.send()
 
                     return Response(
                         {
