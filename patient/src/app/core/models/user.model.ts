@@ -1,3 +1,19 @@
+export interface ITerm {
+  id: number;
+  name: string;
+  content: string;
+  use_for_patient: boolean;
+}
+
+export interface IOrganisation {
+  id: number;
+  name: string;
+  logo_large?: string;
+  logo_small?: string;
+  primary_color?: string;
+  default_term?: number | null;
+}
+
 export interface User {
   id: number;
   pk: number;
@@ -22,6 +38,8 @@ export interface User {
   phone: string;
   date_of_birth: string;
   address: string;
+  main_organisation?: IOrganisation | null;
+  accepted_term?: number | null;
   one_time_auth_token?: string;
   is_auth_token_used?: boolean;
   verification_code?: number | null;

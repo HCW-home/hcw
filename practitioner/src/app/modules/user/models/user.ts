@@ -4,7 +4,7 @@ export interface ITerm {
   id: number;
   name: string;
   content: string;
-  valid_until: string;
+  use_for_patient: boolean;
 }
 
 export interface IOrganisation {
@@ -59,7 +59,7 @@ export interface IUser {
   main_organisation?: IOrganisation;
   organisations?: IOrganisation[];
   specialities?: ISpeciality[];
-  accepted_term?: ITerm;
+  accepted_term?: number | null;
   is_online?: boolean;
   temporary?: boolean;
 }

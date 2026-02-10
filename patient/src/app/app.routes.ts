@@ -1,4 +1,6 @@
 import { Routes } from '@angular/router';
+import { AuthGuard } from './core/guards/auth.guard';
+import { TermsGuard } from './core/guards/terms.guard';
 
 export const routes: Routes = [
   {
@@ -39,43 +41,58 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/confirm-presence/confirm-presence.page').then(m => m.ConfirmPresencePage)
   },
   {
+    path: 'cgu',
+    loadComponent: () => import('./pages/cgu/cgu.page').then(m => m.CguPage),
+    canActivate: [AuthGuard],
+  },
+  {
     path: 'home',
-    loadComponent: () => import('./pages/home/home.page').then(m => m.HomePage)
+    loadComponent: () => import('./pages/home/home.page').then(m => m.HomePage),
+    canActivate: [AuthGuard, TermsGuard],
   },
   {
     path: 'notifications',
-    loadComponent: () => import('./pages/notifications/notifications.page').then(m => m.NotificationsPage)
+    loadComponent: () => import('./pages/notifications/notifications.page').then(m => m.NotificationsPage),
+    canActivate: [AuthGuard, TermsGuard],
   },
   {
     path: 'profile',
-    loadComponent: () => import('./pages/profile/profile.page').then(m => m.ProfilePage)
+    loadComponent: () => import('./pages/profile/profile.page').then(m => m.ProfilePage),
+    canActivate: [AuthGuard, TermsGuard],
   },
   {
     path: 'request-detail/:id',
-    loadComponent: () => import('./pages/request-detail/request-detail.page').then(m => m.RequestDetailPage)
+    loadComponent: () => import('./pages/request-detail/request-detail.page').then(m => m.RequestDetailPage),
+    canActivate: [AuthGuard, TermsGuard],
   },
   {
     path: 'doctors',
-    loadComponent: () => import('./pages/doctors/doctors.page').then(m => m.DoctorsPage)
+    loadComponent: () => import('./pages/doctors/doctors.page').then(m => m.DoctorsPage),
+    canActivate: [AuthGuard, TermsGuard],
   },
   {
     path: 'doctor/:id',
-    loadComponent: () => import('./pages/doctor-detail/doctor-detail.page').then(m => m.DoctorDetailPage)
+    loadComponent: () => import('./pages/doctor-detail/doctor-detail.page').then(m => m.DoctorDetailPage),
+    canActivate: [AuthGuard, TermsGuard],
   },
   {
     path: 'new-request',
-    loadComponent: () => import('./pages/new-request/new-request.page').then(m => m.NewRequestPage)
+    loadComponent: () => import('./pages/new-request/new-request.page').then(m => m.NewRequestPage),
+    canActivate: [AuthGuard, TermsGuard],
   },
   {
     path: 'appointment/:id',
-    loadComponent: () => import('./pages/appointment-detail/appointment-detail.page').then(m => m.AppointmentDetailPage)
+    loadComponent: () => import('./pages/appointment-detail/appointment-detail.page').then(m => m.AppointmentDetailPage),
+    canActivate: [AuthGuard, TermsGuard],
   },
   {
     path: 'consultation/:id',
-    loadComponent: () => import('./pages/consultation-detail/consultation-detail.page').then(m => m.ConsultationDetailPage)
+    loadComponent: () => import('./pages/consultation-detail/consultation-detail.page').then(m => m.ConsultationDetailPage),
+    canActivate: [AuthGuard, TermsGuard],
   },
   {
     path: 'consultation/:id/video',
-    loadComponent: () => import('./pages/video-consultation/video-consultation.page').then(m => m.VideoConsultationPage)
+    loadComponent: () => import('./pages/video-consultation/video-consultation.page').then(m => m.VideoConsultationPage),
+    canActivate: [AuthGuard, TermsGuard],
   },
 ];

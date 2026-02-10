@@ -1,0 +1,23 @@
+<div class="cgu-page">
+  @if (loading) {
+    <app-loader></app-loader>
+  } @else if (term) {
+    <div class="cgu-card">
+      <app-typography
+        color="var(--slate-800)"
+        [variant]="TypographyTypeEnum['h6-semibold']">
+        {{ term.name }}
+      </app-typography>
+
+      <div class="cgu-content" [innerHTML]="term.content"></div>
+
+      <app-button
+        [type]="ButtonTypeEnum.button"
+        [block]="true"
+        [style]="ButtonStyleEnum.primary"
+        text="Accept"
+        [loading]="accepting"
+        (click)="onAccept()"></app-button>
+    </div>
+  }
+</div>

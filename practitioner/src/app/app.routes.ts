@@ -3,6 +3,7 @@ import { RoutePaths } from './core/constants/routes';
 import {
   redirectIfAuthenticated,
   redirectIfUnauthenticated,
+  redirectIfTermsNotAccepted,
 } from './core/services/auth.guard';
 
 export const routes: Routes = [
@@ -22,6 +23,12 @@ export const routes: Routes = [
       import('./pages/confirm-presence/confirm-presence').then(c => c.ConfirmPresence),
   },
   {
+    path: RoutePaths.CGU,
+    loadComponent: () =>
+      import('./pages/cgu/cgu').then(c => c.CguPage),
+    canMatch: [redirectIfUnauthenticated],
+  },
+  {
     path: RoutePaths.AUTH,
     loadChildren: () =>
       import('./modules/auth/auth-module').then(c => c.AuthModule),
@@ -32,6 +39,7 @@ export const routes: Routes = [
     loadChildren: () =>
       import('./modules/user/user-module').then(c => c.UserModule),
     canMatch: [redirectIfUnauthenticated],
+    canActivate: [redirectIfTermsNotAccepted],
   },
   {
     path: '',
