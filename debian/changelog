@@ -1,4 +1,4 @@
-hcw (0.9.33) UNRELEASED; urgency=medium
+hcw (0.9.34) UNRELEASED; urgency=medium
 
   [ Gor Grigoryan ]
   * add infinite scroll in messages list, improve consultation detail
@@ -34,8 +34,245 @@ hcw (0.9.33) UNRELEASED; urgency=medium
 
   [ Gor Grigoryan ]
   * add shared screen view for each user, add my consultations in patient home page, and consultation detail
+  * improve consultation-form
 
- -- Gor Grigoryan <gorgrigoryan1997@gmail.com>  Wed, 14 Jan 2026 09:31:58 +0000
+  [ Olivier Bitsch ]
+  * Fix issue  with delete appointment
+  * Fix redis port
+  * Fix Consultation Serializer
+  * Add new fields
+  * Add Consultation manager
+  * Fix typo and serializer
+  * Various fix for status field
+  * Fix types casing
+  * Esure instance is commited before running task
+  * Limit overdue consultation in dashboard
+  * Fix rendering when not possible
+  * Fix to soft delete participant
+  * Adding forgotten migration
+  * Add more detail about participant
+  * Remove unwanted files
+  * Update TODO
+  * Add patient dashboard
+  * Fix is_patient
+  * Fix typo in overdue consultation
+  * Fix consultation overdue
+  * Return paginated for overdue
+  * Fix Participant status + unfixed overdue
+  * Fix overdue
+
+  [ Gor Grigoryan ]
+  * update enums, change new consultation form
+
+  [ Olivier Bitsch ]
+  * Fix default status for appointment
+
+  [ Gor Grigoryan ]
+  * updat edit consultation, use dashboard endpoint in patient home page
+
+  [ Olivier Bitsch ]
+  * Fix participant status
+  * Fix participant handling
+  * Add more validation
+  * Fix Fhir with a good new good layout
+  * Remove duplicate appointment
+  * Fix validation
+  * Fix Appointment ordering
+  * Order and appointment status
+  * Fix status update
+  * Fix status on participant
+
+  [ Gor Grigoryan ]
+  * improve mobile header, consultation detail
+
+  [ Olivier Bitsch ]
+  * Change serializer again
+  * Add is_active readonly
+  * Adding more user details
+  * Handle user timezone
+  * Return response to user timezone as well
+
+  [ Gor Grigoryan ]
+  * improve consultation detail, add filters and calendar view
+
+  [ Olivier Bitsch ]
+  * Fix participant inline
+
+  [ Gor Grigoryan ]
+  * update timezones
+
+  [ Olivier Bitsch ]
+  * Add default timezone + force override timezone
+  * Fix wrong default timezone
+  * Make external participant fields optional
+
+  [ Gor Grigoryan ]
+  * mobile responsive improvements
+  * fix scheduled_at date
+  * update profile edit, improve appointment form
+  * update consultation title in list
+
+  [ Olivier Bitsch ]
+  * Intermediate commit with Participant rewrite
+  * Show back participants
+  * Add back different serializer for create
+  * Remove participants actions
+
+  [ Gor Grigoryan ]
+  * add temporary participant logic
+
+  [ Olivier Bitsch ]
+  * Fix all logic for appointment
+  * Fix appointemnt list
+
+  [ Gor Grigoryan ]
+  * fix scheduled_at and end_expected_at values in consultation detail
+
+  [ Olivier Bitsch ]
+  * Fix email and time extented at timezone
+  * Fix ignore files
+  * Fixing notification
+  * Adding action on template
+  * New html template + fix user dashboard
+
+  [ Gor Grigoryan ]
+  * add pre join lobby
+
+  [ Olivier Bitsch ]
+  * Improve html rendering structure
+  * Fix text
+  * Render Notification in HTML
+
+  [ Gor Grigoryan ]
+  * update email template
+
+  [ Olivier Bitsch ]
+  * Update serializer with link
+  * Return appointment
+
+  [ Gor Grigoryan ]
+  * update notification model
+
+  [ Olivier Bitsch ]
+  * Fix signal for notification
+  * Fix signal for notification
+  * Fix views /api/user/appointments/
+  * Fix appointment endpoint
+
+  [ Gor Grigoryan ]
+  * add close button for closing pre join screen
+
+  [ Olivier Bitsch ]
+  * Remove duplicated item in dashboard
+  * Add next_appointment
+  * Fix mistake in filter consultation
+  * Verification with 00 padded
+
+  [ Gor Grigoryan ]
+  * update patient consultation detail next appointment
+
+  [ Olivier Bitsch ]
+  * Update TODO
+
+  [ Gor Grigoryan ]
+  * ui improvements
+  * improve patieint detail
+  * ui improvements
+  * update presence
+  * remove unused code
+
+  [ Olivier Bitsch ]
+  * Add additionnal_link_args
+  * Update email format for reset password
+  * Add in_notification False for password reset
+  * Add Participant presence
+  * Filtering Patient on temporary user
+  * Implement S3 storage
+
+  [ Gor Grigoryan ]
+  * update patient list, precene endpoint
+
+  [ Olivier Bitsch ]
+  * Prevent closing consultation with appointment in future
+  * Return error on not online consultation join
+
+  [ Gor Grigoryan ]
+  * text change
+
+  [ Olivier Bitsch ]
+  * Fix type on right object
+  * Fix lazy translation import
+  * Adding future filtering
+  * Add default patient ordering
+
+  [ Gor Grigoryan ]
+  * update consultation detail filter for appointment
+
+  [ Olivier Bitsch ]
+  * Fix link and template on new message
+
+  [ Gor Grigoryan ]
+  * improve consultation detail ui
+  * add list item component for consultation and patieint list
+  * fix patient interceptor
+  * add view more button, improve participant item
+
+  [ Olivier Bitsch ]
+  * Adding filter for user and fix Messaging
+
+  [ Gor Grigoryan ]
+  * improve particpant block, add user search select filters
+
+  [ Olivier Bitsch ]
+  * Fix invite reminder
+  * Fix consultation assignment
+
+  [ Gor Grigoryan ]
+  * add a way to change user profile picture
+  * show patient picture in header
+  * update notifications redirections in patient and practitioner
+  * improve patient profile edit
+  * remove unused buttons
+  * improve appointments navigation
+
+  [ Olivier Bitsch ]
+  * Fix slot select and add filter appointment by date less or more
+  * Working openid
+  * Openid cleanup
+  * Adding notification to participant
+  * Add patient terms
+  * Add websocket event on join
+
+  [ Gor Grigoryan ]
+  * add incomming call when patient or practitiner joining
+  * fix OpenID frontend, store refresh token, type interfaces, translate to English
+  * ui improvements,add appointments list filter
+
+  [ Olivier Bitsch ]
+  * Improve a bit next appointment
+  * Adding terms for users
+
+  [ Gor Grigoryan ]
+  * update auth page card, change 'later' to danger button on patient ringing screen
+  * implement terms acceptance
+
+  [ Olivier Bitsch ]
+  * Change flow for message
+
+  [ Gor Grigoryan ]
+  * update toaster
+
+  [ Olivier Bitsch ]
+  * Fix cancelling message
+  * Fix signal when scheduled at is not updated on consultation save
+  * Appointment cancelled
+
+  [ Gor Grigoryan ]
+  * update browser notifications
+  * update toasts titles
+  * update particpant block with switcher in add/edit appointment
+
+ -- Gor Grigoryan <gorgrigoryan1997@gmail.com>  Wed, 11 Feb 2026 14:52:35 +0000
 
 hcw (0.9.31) bookworm; urgency=medium
 
