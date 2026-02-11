@@ -68,36 +68,6 @@
                 formControlName="dont_invite_me">
               </app-checkbox>
             </div>
-
-            <div class="invite-preview">
-              <span class="preview-label">Will be invited:</span>
-              <div class="invite-preview-list">
-                @if (getBeneficiaryUser(); as beneficiary) {
-                  <div class="preview-item" [class.excluded]="appointmentForm.get('dont_invite_beneficiary')?.value">
-                    <app-participant-item
-                      [participant]="{id: 0, user: beneficiary, is_active: true}">
-                    </app-participant-item>
-                    <span class="role-label">Patient</span>
-                  </div>
-                }
-                @if (getOwnerUser(); as owner) {
-                  <div class="preview-item" [class.excluded]="appointmentForm.get('dont_invite_practitioner')?.value">
-                    <app-participant-item
-                      [participant]="{id: 0, user: owner, is_active: true}">
-                    </app-participant-item>
-                    <span class="role-label">Practitioner</span>
-                  </div>
-                }
-                @if (getCurrentUserForInvite(); as user) {
-                  <div class="preview-item" [class.excluded]="appointmentForm.get('dont_invite_me')?.value">
-                    <app-participant-item
-                      [participant]="{id: 0, user: {id: user.pk, email: user.email, first_name: user.first_name, last_name: user.last_name}, is_active: true}">
-                    </app-participant-item>
-                    <span class="role-label">You</span>
-                  </div>
-                }
-              </div>
-            </div>
           </div>
         }
       </form>
@@ -278,6 +248,50 @@
             (remove)="removePendingParticipant($index)">
           </app-participant-item>
         }
+      </div>
+    }
+
+    @if (!isEditMode) {
+      <div class="invitations-block">
+        <span class="invitations-title">Invitations</span>
+        <div class="invitations-list">
+          @if (getBeneficiaryUser(); as beneficiary) {
+            <app-participant-item
+              [class.excluded]="appointmentForm.get('dont_invite_beneficiary')?.value"
+              [participant]="{id: 0, user: beneficiary, is_active: true}">
+              <span class="role-tag">Patient</span>
+              <app-switch
+                [ngModel]="!appointmentForm.get('dont_invite_beneficiary')?.value"
+                [ngModelOptions]="{standalone: true}"
+                (ngModelChange)="toggleInvite('dont_invite_beneficiary', $event)">
+              </app-switch>
+            </app-participant-item>
+          }
+          @if (getOwnerUser(); as owner) {
+            <app-participant-item
+              [class.excluded]="appointmentForm.get('dont_invite_practitioner')?.value"
+              [participant]="{id: 0, user: owner, is_active: true}">
+              <span class="role-tag">Practitioner</span>
+              <app-switch
+                [ngModel]="!appointmentForm.get('dont_invite_practitioner')?.value"
+                [ngModelOptions]="{standalone: true}"
+                (ngModelChange)="toggleInvite('dont_invite_practitioner', $event)">
+              </app-switch>
+            </app-participant-item>
+          }
+          @if (getCurrentUserForInvite(); as user) {
+            <app-participant-item
+              [class.excluded]="appointmentForm.get('dont_invite_me')?.value"
+              [participant]="{id: 0, user: {id: user.pk, email: user.email, first_name: user.first_name, last_name: user.last_name}, is_active: true}">
+              <span class="role-tag">You</span>
+              <app-switch
+                [ngModel]="!appointmentForm.get('dont_invite_me')?.value"
+                [ngModelOptions]="{standalone: true}"
+                (ngModelChange)="toggleInvite('dont_invite_me', $event)">
+              </app-switch>
+            </app-participant-item>
+          }
+        </div>
       </div>
     }
   </div>

@@ -11,6 +11,7 @@ import {
   FormArray,
   FormBuilder,
   FormGroup,
+  FormsModule,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
@@ -67,6 +68,7 @@ import { CommunicationMethodEnum } from '../../constants/user';
 import { Stepper } from '../../../../shared/components/stepper/stepper';
 import { IStep } from '../../../../shared/components/stepper/stepper-models';
 import { Checkbox } from '../../../../shared/ui-components/checkbox/checkbox';
+import { Switch } from '../../../../shared/ui-components/switch/switch';
 
 import { Typography } from '../../../../shared/ui-components/typography/typography';
 import { Select } from '../../../../shared/ui-components/select/select';
@@ -106,6 +108,8 @@ import { TIMEZONE_OPTIONS } from '../../../../shared/constants/timezone';
     Textarea,
     Button,
     Checkbox,
+    Switch,
+    FormsModule,
   ],
 })
 export class ConsultationForm implements OnInit, OnDestroy {
@@ -884,6 +888,11 @@ export class ConsultationForm implements OnInit, OnDestroy {
   getAppointmentControl(appointmentIndex: number, controlName: string): { value: boolean } {
     const appointment = this.appointmentsFormArray.at(appointmentIndex);
     return appointment?.get(controlName) || { value: false };
+  }
+
+  toggleInvite(appointmentIndex: number, controlName: string, invited: boolean): void {
+    const appointment = this.appointmentsFormArray.at(appointmentIndex);
+    appointment?.get(controlName)?.setValue(!invited);
   }
 
   getBeneficiaryUser(): IUser | null {

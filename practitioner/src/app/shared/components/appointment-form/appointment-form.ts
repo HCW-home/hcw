@@ -13,6 +13,7 @@ import {
 import { CommonModule } from '@angular/common';
 import {
   FormGroup,
+  FormsModule,
   Validators,
   FormBuilder,
   ReactiveFormsModule,
@@ -38,6 +39,7 @@ import { Button } from '../../ui-components/button/button';
 import { Input as InputComponent } from '../../ui-components/input/input';
 import { Select } from '../../ui-components/select/select';
 import { Checkbox } from '../../ui-components/checkbox/checkbox';
+import { Switch } from '../../ui-components/switch/switch';
 import { Svg } from '../../ui-components/svg/svg';
 import { Loader } from '../loader/loader';
 import { UserSearchSelect } from '../user-search-select/user-search-select';
@@ -57,12 +59,14 @@ import { TIMEZONE_OPTIONS } from '../../constants/timezone';
     Loader,
     Select,
     Button,
+    Switch,
     Checkbox,
     CommonModule,
     InputComponent,
     ParticipantItem,
     UserSearchSelect,
     ReactiveFormsModule,
+    FormsModule,
   ],
 })
 export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
@@ -187,6 +191,10 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
     } else {
       practitionerControl?.enable();
     }
+  }
+
+  toggleInvite(controlName: string, invited: boolean): void {
+    this.appointmentForm.get(controlName)?.setValue(!invited);
   }
 
   ngOnDestroy(): void {

@@ -196,28 +196,40 @@
                           <span class="preview-label">Will be invited:</span>
                           <div class="invite-preview-list">
                             @if (getBeneficiaryUser(); as beneficiary) {
-                              <div class="preview-item" [class.excluded]="getAppointmentControl(i, 'dont_invite_beneficiary').value">
-                                <app-participant-item
-                                  [participant]="{id: 0, user: {id: beneficiary.pk, email: beneficiary.email, first_name: beneficiary.first_name, last_name: beneficiary.last_name}, is_active: true}">
-                                </app-participant-item>
+                              <app-participant-item
+                                [class.excluded]="getAppointmentControl(i, 'dont_invite_beneficiary').value"
+                                [participant]="{id: 0, user: {id: beneficiary.pk, email: beneficiary.email, first_name: beneficiary.first_name, last_name: beneficiary.last_name}, is_active: true}">
                                 <span class="role-label">Patient</span>
-                              </div>
+                                <app-switch
+                                  [ngModel]="!getAppointmentControl(i, 'dont_invite_beneficiary').value"
+                                  [ngModelOptions]="{standalone: true}"
+                                  (ngModelChange)="toggleInvite(i, 'dont_invite_beneficiary', $event)">
+                                </app-switch>
+                              </app-participant-item>
                             }
                             @if (getOwnerUser(); as owner) {
-                              <div class="preview-item" [class.excluded]="getAppointmentControl(i, 'dont_invite_practitioner').value">
-                                <app-participant-item
-                                  [participant]="{id: 0, user: {id: owner.pk, email: owner.email, first_name: owner.first_name, last_name: owner.last_name}, is_active: true}">
-                                </app-participant-item>
+                              <app-participant-item
+                                [class.excluded]="getAppointmentControl(i, 'dont_invite_practitioner').value"
+                                [participant]="{id: 0, user: {id: owner.pk, email: owner.email, first_name: owner.first_name, last_name: owner.last_name}, is_active: true}">
                                 <span class="role-label">Practitioner</span>
-                              </div>
+                                <app-switch
+                                  [ngModel]="!getAppointmentControl(i, 'dont_invite_practitioner').value"
+                                  [ngModelOptions]="{standalone: true}"
+                                  (ngModelChange)="toggleInvite(i, 'dont_invite_practitioner', $event)">
+                                </app-switch>
+                              </app-participant-item>
                             }
                             @if (getCurrentUserForInvite(); as user) {
-                              <div class="preview-item" [class.excluded]="getAppointmentControl(i, 'dont_invite_me').value">
-                                <app-participant-item
-                                  [participant]="{id: 0, user: {id: user.pk, email: user.email, first_name: user.first_name, last_name: user.last_name}, is_active: true}">
-                                </app-participant-item>
+                              <app-participant-item
+                                [class.excluded]="getAppointmentControl(i, 'dont_invite_me').value"
+                                [participant]="{id: 0, user: {id: user.pk, email: user.email, first_name: user.first_name, last_name: user.last_name}, is_active: true}">
                                 <span class="role-label">You</span>
-                              </div>
+                                <app-switch
+                                  [ngModel]="!getAppointmentControl(i, 'dont_invite_me').value"
+                                  [ngModelOptions]="{standalone: true}"
+                                  (ngModelChange)="toggleInvite(i, 'dont_invite_me', $event)">
+                                </app-switch>
+                              </app-participant-item>
                             }
                           </div>
                         </div>

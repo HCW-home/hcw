@@ -35,6 +35,7 @@
       </div>
     }
   </div>
+  <ng-content></ng-content>
   @if (isPending) {
     <app-badge [type]="BadgeTypeEnum.gray">Pending</app-badge>
   } @else if (participant?.status) {

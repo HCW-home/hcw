@@ -164,52 +164,21 @@
           flex-direction: column;
           gap: 8px;
 
-          .preview-item {
-            position: relative;
+          app-participant-item {
             transition: opacity 0.2s ease;
 
             &.excluded {
               opacity: 0.5;
-
-              app-participant-item {
-                text-decoration: line-through;
-              }
-
-              .role-label {
-                text-decoration: line-through;
-              }
-
-              &::after {
-                content: 'Excluded';
-                position: absolute;
-                right: 12px;
-                top: 50%;
-                transform: translateY(-50%);
-                font-size: 11px;
-                font-weight: 600;
-                color: var(--rose-500);
-                background: var(--rose-50);
-                padding: 2px 8px;
-                border-radius: 4px;
-              }
             }
+          }
 
-            .role-label {
-              position: absolute;
-              right: 12px;
-              top: 50%;
-              transform: translateY(-50%);
-              font-size: 11px;
-              font-weight: 500;
-              color: var(--slate-500);
-              background: var(--slate-100);
-              padding: 2px 8px;
-              border-radius: 4px;
-            }
-
-            &.excluded .role-label {
-              display: none;
-            }
+          .role-label {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--slate-500);
+            background: var(--slate-100);
+            padding: 2px 8px;
+            border-radius: 4px;
           }
         }
       }
