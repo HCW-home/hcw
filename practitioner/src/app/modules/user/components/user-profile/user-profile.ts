@@ -95,7 +95,7 @@ export class UserProfile implements OnInit, OnDestroy {
         },
         error: (error) => {
           this.isLoadingUser.set(false);
-          this.toasterService.show('error', getErrorMessage(error));
+          this.toasterService.show('error', 'Error Loading Profile', getErrorMessage(error));
         }
       });
   }
@@ -145,11 +145,11 @@ export class UserProfile implements OnInit, OnDestroy {
             this.user.set(updatedUser);
             this.isEditing.set(false);
             this.isSaving.set(false);
-            this.toasterService.show('success', 'Profile updated successfully');
+            this.toasterService.show('success', 'Profile Updated', 'Profile updated successfully');
           },
           error: (error) => {
             this.isSaving.set(false);
-            this.toasterService.show('error', getErrorMessage(error));
+            this.toasterService.show('error', 'Error Updating Profile', getErrorMessage(error));
           }
         });
     } else {
@@ -183,7 +183,7 @@ export class UserProfile implements OnInit, OnDestroy {
           );
         },
         error: (error) => {
-          this.toasterService.show('error', getErrorMessage(error));
+          this.toasterService.show('error', 'Error Loading Languages', getErrorMessage(error));
         }
       });
   }
@@ -215,7 +215,7 @@ export class UserProfile implements OnInit, OnDestroy {
       if (file.type.startsWith('image/')) {
         this.uploadAvatar(file);
       } else {
-        this.toasterService.show('error', 'Please select an image file');
+        this.toasterService.show('error', 'Invalid File', 'Please select an image file');
       }
     }
     input.value = '';
@@ -229,11 +229,11 @@ export class UserProfile implements OnInit, OnDestroy {
         next: (updatedUser) => {
           this.user.set(updatedUser);
           this.isUploadingAvatar.set(false);
-          this.toasterService.show('success', 'Profile picture updated');
+          this.toasterService.show('success', 'Picture Updated', 'Profile picture updated');
         },
         error: (error) => {
           this.isUploadingAvatar.set(false);
-          this.toasterService.show('error', getErrorMessage(error));
+          this.toasterService.show('error', 'Error Uploading Picture', getErrorMessage(error));
         }
       });
   }

@@ -122,12 +122,12 @@ export class ConfirmPresence implements OnInit, OnDestroy {
         next: () => {
           appointment.isConfirming = false;
           this.pendingAppointments = this.pendingAppointments.filter(a => a.id !== appointment.id);
-          this.toasterService.show('success', 'Presence confirmed successfully');
+          this.toasterService.show('success', 'Presence Confirmed', 'Your presence has been confirmed');
           this.checkAllConfirmed();
         },
         error: () => {
           appointment.isConfirming = false;
-          this.toasterService.show('error', 'Failed to confirm presence');
+          this.toasterService.show('error', 'Confirm Presence Failed', 'Could not confirm your presence');
         }
       });
   }
@@ -141,12 +141,12 @@ export class ConfirmPresence implements OnInit, OnDestroy {
         next: () => {
           appointment.isDeclining = false;
           this.pendingAppointments = this.pendingAppointments.filter(a => a.id !== appointment.id);
-          this.toasterService.show('warning', 'You have declined the appointment');
+          this.toasterService.show('warning', 'Appointment Declined', 'You have declined the appointment');
           this.checkAllConfirmed();
         },
         error: () => {
           appointment.isDeclining = false;
-          this.toasterService.show('error', 'Failed to decline');
+          this.toasterService.show('error', 'Decline Failed', 'Could not decline the appointment');
         }
       });
   }

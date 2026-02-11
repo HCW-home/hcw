@@ -81,7 +81,7 @@ export class Dashboard implements OnInit, OnDestroy {
         },
         error: (err) => {
           this.error.set('Failed to load dashboard data');
-          this.toasterService.show('error', getErrorMessage(err));
+          this.toasterService.show('error', 'Error Loading Dashboard', getErrorMessage(err));
           this.loading.set(false);
         }
       });

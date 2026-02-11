@@ -98,7 +98,7 @@ export class PatientDetail implements OnInit, OnDestroy {
         this.loading.set(false);
       },
       error: (err) => {
-        this.toasterService.show('error', 'Error', getErrorMessage(err));
+        this.toasterService.show('error', 'Error Loading Patient', getErrorMessage(err));
         this.loading.set(false);
       }
     });
@@ -117,7 +117,7 @@ export class PatientDetail implements OnInit, OnDestroy {
           this.loadingConsultations.set(false);
         },
         error: (err) => {
-          this.toasterService.show('error', 'Error', getErrorMessage(err));
+          this.toasterService.show('error', 'Error Loading Consultations', getErrorMessage(err));
           this.loadingConsultations.set(false);
         }
       });
@@ -136,7 +136,7 @@ export class PatientDetail implements OnInit, OnDestroy {
           this.loadingAppointments.set(false);
         },
         error: (err) => {
-          this.toasterService.show('error', 'Error', getErrorMessage(err));
+          this.toasterService.show('error', 'Error Loading Appointments', getErrorMessage(err));
           this.loadingAppointments.set(false);
         }
       });

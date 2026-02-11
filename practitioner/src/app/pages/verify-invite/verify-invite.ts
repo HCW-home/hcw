@@ -146,7 +146,7 @@ export class VerifyInvite implements OnInit, OnDestroy {
   }
 
   private onAuthenticationSuccess(): void {
-    this.toasterService.show('success', 'Successfully authenticated');
+    this.toasterService.show('success', 'Authentication', 'Successfully authenticated');
     const route = this.actionHandler.getRouteForAction(this.action, this.actionId);
     this.router.navigateByUrl(route);
   }
@@ -168,15 +168,15 @@ export class VerifyInvite implements OnInit, OnDestroy {
             this.authService.setToken(response.access);
             this.onAuthenticationSuccess();
           } else {
-            this.toasterService.show('success', 'Verification code sent to your email');
+            this.toasterService.show('success', 'Code Sent', 'Verification code sent to your email');
           }
         },
         error: (error) => {
           this.isResending = false;
           if (error.status === 202) {
-            this.toasterService.show('success', 'Verification code sent to your email');
+            this.toasterService.show('success', 'Code Sent', 'Verification code sent to your email');
           } else {
-            this.toasterService.show('error', 'Failed to resend code. Please try again.');
+            this.toasterService.show('error', 'Resend Failed', 'Failed to resend code. Please try again.');
           }
         }
       });

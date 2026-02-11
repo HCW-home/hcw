@@ -64,7 +64,7 @@ export class CguPage implements OnInit, OnDestroy {
         },
         error: () => {
           this.loading = false;
-          this.toasterService.show('error', 'Failed to load terms');
+          this.toasterService.show('error', 'Terms & Conditions', 'Failed to load terms');
         },
       });
   }
@@ -85,7 +85,7 @@ export class CguPage implements OnInit, OnDestroy {
         },
         error: () => {
           this.accepting = false;
-          this.toasterService.show('error', 'Failed to accept terms');
+          this.toasterService.show('error', 'Terms & Conditions', 'Failed to accept terms');
         },
       });
   }

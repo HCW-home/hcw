@@ -272,7 +272,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
           this.queues.set(queues);
         },
         error: (error) => {
-          this.toasterService.show('error', getErrorMessage(error));
+          this.toasterService.show('error', 'Error Loading Queues', getErrorMessage(error));
           this.queues.set([]);
         },
       });
@@ -294,7 +294,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
         },
         error: (error) => {
           this.isLoading.set(false);
-          this.toasterService.show('error', getErrorMessage(error));
+          this.toasterService.show('error', 'Error Loading Consultation', getErrorMessage(error));
           this.router.navigate([
             `/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`,
           ]);
@@ -325,7 +325,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
           });
         },
         error: (error) => {
-          this.toasterService.show('error', getErrorMessage(error));
+          this.toasterService.show('error', 'Error Loading Appointments', getErrorMessage(error));
         },
       });
   }
@@ -424,6 +424,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
       this.validationService.validateAllFormFields(this.consultationForm);
       this.toasterService.show(
         'error',
+        'Validation Error',
         'Please fill in the reason field'
       );
     }
@@ -455,6 +456,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
           } else {
             this.toasterService.show(
               'success',
+              'Consultation Created',
               'Consultation created successfully'
             );
             this.isSaving.set(false);
@@ -466,7 +468,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
         },
         error: (error) => {
           this.isSaving.set(false);
-          this.toasterService.show('error', getErrorMessage(error));
+          this.toasterService.show('error', 'Error Creating Consultation', getErrorMessage(error));
         },
       });
   }
@@ -498,6 +500,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
             if (completed === appointments.length) {
               this.toasterService.show(
                 'success',
+                'Consultation Created',
                 'Consultation created successfully'
               );
               this.isSaving.set(false);
@@ -508,7 +511,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
             }
           },
           error: (error: HttpErrorResponse) => {
-            this.toasterService.show('error', getErrorMessage(error));
+            this.toasterService.show('error', 'Error Creating Appointment', getErrorMessage(error));
             completed++;
             if (completed === appointments.length) {
               this.isSaving.set(false);
@@ -543,6 +546,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
           this.consultation.set(consultation);
           this.toasterService.show(
             'success',
+            'Consultation Updated',
             'Consultation updated successfully'
           );
           this.isSaving.set(false);
@@ -553,7 +557,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
         },
         error: (error) => {
           this.isSaving.set(false);
-          this.toasterService.show('error', getErrorMessage(error));
+          this.toasterService.show('error', 'Error Updating Consultation', getErrorMessage(error));
         },
       });
   }
@@ -692,10 +696,10 @@ export class ConsultationForm implements OnInit, OnDestroy {
         .subscribe({
           next: () => {
             this.appointmentsFormArray.removeAt(index);
-            this.toasterService.show('success', 'Appointment removed');
+            this.toasterService.show('success', 'Appointment Removed', 'Appointment removed successfully');
           },
           error: (error) => {
-            this.toasterService.show('error', getErrorMessage(error));
+            this.toasterService.show('error', 'Error Removing Appointment', getErrorMessage(error));
           },
         });
     } else {
@@ -731,13 +735,13 @@ export class ConsultationForm implements OnInit, OnDestroy {
             const s = new Set(this.savingAppointments());
             s.delete(index);
             this.savingAppointments.set(s);
-            this.toasterService.show('success', 'Appointment updated');
+            this.toasterService.show('success', 'Appointment Updated', 'Appointment updated successfully');
           },
           error: (error) => {
             const s = new Set(this.savingAppointments());
             s.delete(index);
             this.savingAppointments.set(s);
-            this.toasterService.show('error', getErrorMessage(error));
+            this.toasterService.show('error', 'Error Updating Appointment', getErrorMessage(error));
           },
         });
     } else {
@@ -760,13 +764,13 @@ export class ConsultationForm implements OnInit, OnDestroy {
             const s = new Set(this.savingAppointments());
             s.delete(index);
             this.savingAppointments.set(s);
-            this.toasterService.show('success', 'Appointment created');
+            this.toasterService.show('success', 'Appointment Created', 'Appointment created successfully');
           },
           error: (error: HttpErrorResponse) => {
             const s = new Set(this.savingAppointments());
             s.delete(index);
             this.savingAppointments.set(s);
-            this.toasterService.show('error', getErrorMessage(error));
+            this.toasterService.show('error', 'Error Creating Appointment', getErrorMessage(error));
           },
         });
     }

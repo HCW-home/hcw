@@ -527,7 +527,7 @@ export class Configuration implements OnInit, OnDestroy {
         error: (error) => {
           this.logger.error('Error loading booking slots:', error);
           this.isLoading.set(false);
-          this.toasterService.show('error', 'Error', getErrorMessage(error));
+          this.toasterService.show('error', 'Error Loading Booking Slots', getErrorMessage(error));
         }
       });
   }
@@ -599,8 +599,9 @@ export class Configuration implements OnInit, OnDestroy {
       operation.pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {
-            this.toasterService.show('success', 'Success',
-              this.modalMode() === 'edit' ? 'Time slot updated' : 'Time slot created'
+            this.toasterService.show('success',
+              this.modalMode() === 'edit' ? 'Time Slot Updated' : 'Time Slot Created',
+              this.modalMode() === 'edit' ? 'Time slot updated successfully' : 'Time slot created successfully'
             );
             this.isSaving.set(false);
             this.closeSlotModal();
@@ -609,12 +610,12 @@ export class Configuration implements OnInit, OnDestroy {
           error: (error) => {
             this.logger.error('Error saving time slot:', error);
             this.isSaving.set(false);
-            this.toasterService.show('error', 'Error', 'Failed to save time slot');
+            this.toasterService.show('error', 'Error Saving Time Slot', 'Failed to save time slot');
           }
         });
     } else {
       this.validationService.validateAllFormFields(this.slotForm);
-      this.toasterService.show('error', 'Validation Error', 'Please fill in all required fields');
+      this.toasterService.show('error', 'Validation Error', 'Please fill in all required time slot fields');
     }
   }
 
@@ -637,12 +638,12 @@ export class Configuration implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
-          this.toasterService.show('success', 'Success', 'Time slot deleted');
+          this.toasterService.show('success', 'Time Slot Deleted', 'Time slot deleted successfully');
           this.loadBookingSlots();
         },
         error: (error) => {
           this.logger.error('Error deleting time slot:', error);
-          this.toasterService.show('error', 'Error', 'Failed to delete time slot');
+          this.toasterService.show('error', 'Error Deleting Time Slot', 'Failed to delete time slot');
         }
       });
   }

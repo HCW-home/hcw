@@ -340,7 +340,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
     } else if (formValue.contact_type === 'sms' && formValue.phone) {
       data.mobile_phone_number = formValue.phone;
     } else {
-      this.toasterService.show('error', 'Please provide contact information');
+      this.toasterService.show('error', 'Missing Information', 'Please provide contact information');
       return;
     }
 
@@ -474,7 +474,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
         },
         error: (error) => {
           this.isSubmitting.set(false);
-          this.toasterService.show('error', getErrorMessage(error));
+          this.toasterService.show('error', 'Error Updating Appointment', getErrorMessage(error));
         },
       });
   }
@@ -486,12 +486,12 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
       .subscribe({
         next: (appointment) => {
           this.isSubmitting.set(false);
-          this.toasterService.show('success', 'Appointment created successfully');
+          this.toasterService.show('success', 'Appointment Created', 'Appointment created successfully');
           this.appointmentCreated.emit(appointment);
         },
         error: (error) => {
           this.isSubmitting.set(false);
-          this.toasterService.show('error', getErrorMessage(error));
+          this.toasterService.show('error', 'Error Creating Appointment', getErrorMessage(error));
         },
       });
   }

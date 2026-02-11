@@ -141,12 +141,12 @@ export class AddEditPatient implements OnInit, OnDestroy {
         takeUntil(this.destroy$)
       ).subscribe({
         next: () => {
-          this.toasterService.show('success', 'Success', 'Patient updated successfully');
+          this.toasterService.show('success', 'Patient Updated', 'Patient updated successfully');
           this.loading = false;
           this.saved.emit();
         },
         error: (error) => {
-          this.toasterService.show('error', getErrorMessage(error));
+          this.toasterService.show('error', 'Error Updating Patient', getErrorMessage(error));
           this.loading = false;
         }
       });
@@ -165,12 +165,12 @@ export class AddEditPatient implements OnInit, OnDestroy {
         takeUntil(this.destroy$)
       ).subscribe({
         next: () => {
-          this.toasterService.show('success', 'Success', 'Patient created successfully');
+          this.toasterService.show('success', 'Patient Created', 'Patient created successfully');
           this.loading = false;
           this.saved.emit();
         },
         error: (error) => {
-          this.toasterService.show('error', getErrorMessage(error));
+          this.toasterService.show('error', 'Error Creating Patient', getErrorMessage(error));
           this.loading = false;
         }
       });

@@ -153,7 +153,7 @@ export class Consultations implements OnInit, OnDestroy {
           this.loading.set(false);
         },
         error: (err) => {
-          this.toasterService.show('error', 'Error', getErrorMessage(err));
+          this.toasterService.show('error', 'Error Loading Consultations', getErrorMessage(err));
           this.loading.set(false);
         }
       });
@@ -183,7 +183,7 @@ export class Consultations implements OnInit, OnDestroy {
           this.loading.set(false);
         },
         error: (err) => {
-          this.toasterService.show('error', 'Error', getErrorMessage(err));
+          this.toasterService.show('error', 'Error Loading Consultations', getErrorMessage(err));
           this.loading.set(false);
         }
       });
@@ -225,7 +225,7 @@ export class Consultations implements OnInit, OnDestroy {
           this.loadingMore.set(false);
         },
         error: (err) => {
-          this.toasterService.show('error', 'Error', getErrorMessage(err));
+          this.toasterService.show('error', 'Error Loading Consultations', getErrorMessage(err));
           this.loadingMore.set(false);
         }
       });
@@ -256,7 +256,7 @@ export class Consultations implements OnInit, OnDestroy {
           this.loadingMore.set(false);
         },
         error: (err) => {
-          this.toasterService.show('error', 'Error', getErrorMessage(err));
+          this.toasterService.show('error', 'Error Loading Consultations', getErrorMessage(err));
           this.loadingMore.set(false);
         }
       });
