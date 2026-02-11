@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { INotification, INotificationResponse, NotificationStatus } from '../models/notification';
+import { NotificationEvent } from '../models/websocket';
 
 @Injectable({
   providedIn: 'root'
@@ -105,6 +106,33 @@ export class NotificationService {
         this.unreadCount.set(0);
       })
     );
+  }
+
+  handleWebSocketNotification(event: NotificationEvent): void {
+    console.log('[NotificationService] Handling WS notification:', event);
+    const notification: INotification = {
+      id: event.id ?? Date.now(),
+      content: event.render_content_html,
+      subject: event.render_subject,
+      communication_method: 'websocket',
+      status: NotificationStatus.DELIVERED,
+      sent_at: event.created_at,
+      delivered_at: event.created_at,
+      read_at: null,
+      failed_at: null,
+      created_at: event.created_at,
+      updated_at: event.created_at,
+      sent_by: null,
+      object_model: null,
+      object_pk: null,
+      access_link: event.access_link,
+      action_label: event.action_label,
+    };
+
+    const current = this.notifications();
+    this.notifications.set([notification, ...current]);
+    this.unreadCount.update(count => count + 1);
+    console.log('[NotificationService] Notifications count:', this.notifications().length, 'Unread:', this.unreadCount());
   }
 
   getRelativeTime(dateStr: string): string {

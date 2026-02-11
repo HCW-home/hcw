@@ -7,6 +7,7 @@ import { Auth } from './core/services/auth';
 import { UserWebSocketService } from './core/services/user-websocket.service';
 import { ActionHandlerService } from './core/services/action-handler.service';
 import { IncomingCallService } from './core/services/incoming-call.service';
+import { BrowserNotificationService } from './core/services/browser-notification.service';
 import { RoutePaths } from './core/constants/routes';
 
 @Component({
@@ -24,6 +25,7 @@ export class App implements OnInit, OnDestroy {
     private userWsService: UserWebSocketService,
     private actionHandler: ActionHandlerService,
     private incomingCallService: IncomingCallService,
+    private browserNotificationService: BrowserNotificationService,
     private router: Router
   ) {}
 
@@ -36,6 +38,7 @@ export class App implements OnInit, OnDestroy {
       .subscribe((isAuthenticated: boolean) => {
         if (isAuthenticated) {
           this.userWsService.connect();
+          this.browserNotificationService.requestPermission();
         } else {
           this.userWsService.disconnect();
         }

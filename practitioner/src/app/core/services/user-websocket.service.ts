@@ -103,6 +103,7 @@ export class UserWebSocketService implements OnDestroy {
     });
 
     this.wsService.on('notification').subscribe((event: NotificationEvent) => {
+      console.log('[UserWS] Notification event received:', event);
       this.notificationsSubject.next(event);
     });
 

@@ -112,3 +112,8 @@ No permission (=patient) but : can still go own appointment or group appointment
 - User messages for patient is giving 404 not found
 - picture on reason is not correct, fix for debug mode
 - patient will be redirected to patient app if login in doctor app
+
+
+
+- online status is not properly updated in consultations detail for particiapnt
+- think about patient terms

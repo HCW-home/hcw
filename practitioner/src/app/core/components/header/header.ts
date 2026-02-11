@@ -7,10 +7,12 @@ import {LanguageSelector} from '../../../shared/components/language-selector/lan
 import {Typography} from '../../../shared/ui-components/typography/typography';
 import {TypographyTypeEnum} from '../../../shared/constants/typography';
 import {Svg} from '../../../shared/ui-components/svg/svg';
-import {filter, Subscription} from 'rxjs';
+import {filter, Subject, takeUntil} from 'rxjs';
 import {NgClass} from '@angular/common';
 import {UserService} from '../../services/user.service';
 import {NotificationService} from '../../services/notification.service';
+import {UserWebSocketService} from '../../services/user-websocket.service';
+import {BrowserNotificationService} from '../../services/browser-notification.service';
 import {IUser} from '../../../modules/user/models/user';
 import {INotification, NotificationStatus} from '../../models/notification';
 import { Button } from '../../../shared/ui-components/button/button';
@@ -30,7 +32,9 @@ export class Header implements OnInit, OnDestroy {
   private location = inject(Location);
   private userService = inject(UserService);
   protected notificationService = inject(NotificationService);
-  private userSubscription!: Subscription;
+  private userWsService = inject(UserWebSocketService);
+  private browserNotificationService = inject(BrowserNotificationService);
+  private destroy$ = new Subject<void>();
 
   showProfileMenu = signal(false);
   showNotifications = signal(false);
@@ -46,21 +50,48 @@ export class Header implements OnInit, OnDestroy {
   protected readonly NotificationStatus = NotificationStatus;
 
   ngOnInit() {
-    this.userSubscription = this.userService.currentUser$.subscribe(user => {
-      this.currentUser = user;
-    });
+    this.userService.currentUser$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(user => {
+        this.currentUser = user;
+      });
 
     this.router.events
-      .pipe(filter(event => event instanceof NavigationEnd))
+      .pipe(
+        filter(event => event instanceof NavigationEnd),
+        takeUntil(this.destroy$)
+      )
       .subscribe(() => {
         this.updatePageInfo();
       });
     this.updatePageInfo();
     this.notificationService.loadNotifications();
+
+    this.userWsService.notifications$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(event => {
+        console.log('[Header] WS notification received:', event.render_subject);
+        this.notificationService.handleWebSocketNotification(event);
+
+        if (!document.hasFocus()) {
+          console.log('[Header] Tab not focused, showing browser notification');
+          const plainText = event.render_content_html.replace(/<[^>]*>/g, '');
+          this.browserNotificationService.showNotification(
+            event.render_subject,
+            plainText,
+            () => {
+              if (event.access_link) {
+                window.open(event.access_link, '_blank');
+              }
+            }
+          );
+        }
+      });
   }
 
   ngOnDestroy() {
-    this.userSubscription?.unsubscribe();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   private updatePageInfo() {
