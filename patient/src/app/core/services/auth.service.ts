@@ -102,6 +102,10 @@ export class AuthService {
       );
   }
 
+  get currentUserValue(): User | null {
+    return this.currentUserSubject.value;
+  }
+
   async logout() {
     await this.storage.remove('access_token');
     await this.storage.remove('refresh_token');

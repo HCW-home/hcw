@@ -24,6 +24,9 @@ import { Subscription } from 'rxjs';
 import { NotificationService } from '../../core/services/notification.service';
 import { INotification, NotificationStatus } from '../../core/models/notification.model';
 import { UserWebSocketService } from '../../core/services/user-websocket.service';
+import { ActionHandlerService } from '../../core/services/action-handler.service';
+import { ConsultationService } from '../../core/services/consultation.service';
+import { AuthService } from '../../core/services/auth.service';
 
 interface DisplayNotification {
   id: number;
@@ -38,6 +41,7 @@ interface DisplayNotification {
   objectModel: string | null;
   objectPk: number | null;
   actionLabel: string | null;
+  accessLink: string | null;
 }
 
 @Component({
@@ -74,7 +78,10 @@ export class NotificationsPage implements OnInit, OnDestroy {
     private navCtrl: NavController,
     private toastCtrl: ToastController,
     private notificationService: NotificationService,
-    private userWs: UserWebSocketService
+    private userWs: UserWebSocketService,
+    private actionHandler: ActionHandlerService,
+    private consultationService: ConsultationService,
+    private authService: AuthService
   ) {}
 
   ngOnInit() {
@@ -142,7 +149,8 @@ export class NotificationsPage implements OnInit, OnDestroy {
       senderName: sender ? `${sender.first_name} ${sender.last_name}`.trim() : null,
       objectModel: n.object_model || null,
       objectPk: n.object_pk || null,
-      actionLabel: n.action_label || null
+      actionLabel: n.action_label || null,
+      accessLink: n.access_link || null
     };
   }
 
@@ -228,24 +236,61 @@ export class NotificationsPage implements OnInit, OnDestroy {
     });
   }
 
-  onNotificationClick(notification: DisplayNotification) {
+  async onNotificationClick(notification: DisplayNotification) {
     if (!notification.isRead) {
       notification.isRead = true;
       this.notificationService.markAsRead(notification.id).subscribe();
     }
 
-    if (notification.objectModel && notification.objectPk) {
-      const model = notification.objectModel.toLowerCase();
-      const label = (notification.actionLabel || '').toLowerCase();
+    let action: string | null = null;
+    let id: string | null = null;
+    let email: string | null = null;
 
-      if (model.includes('participant') && label.includes('join')) {
-        this.navCtrl.navigateForward(`/consultation/${notification.objectPk}/video?type=appointment`);
-      } else if (model.includes('participant')) {
-        this.navCtrl.navigateForward(`/confirm-presence/${notification.objectPk}`);
-      } else if (model.includes('message')) {
-        this.navCtrl.navigateForward(`/consultations/${notification.objectPk}`);
+    if (notification.accessLink) {
+      try {
+        const url = new URL(notification.accessLink);
+        action = url.searchParams.get('action');
+        id = url.searchParams.get('id');
+        email = url.searchParams.get('email');
+      } catch { /* invalid URL, fall through */ }
+    }
+
+    if (email) {
+      const currentUser = this.authService.currentUserValue;
+      if (currentUser && currentUser.email !== email) {
+        const toast = await this.toastCtrl.create({
+          message: `This notification was intended for ${email}`,
+          duration: 3000,
+          position: 'top',
+          color: 'warning'
+        });
+        await toast.present();
       }
     }
+
+    if (action === 'join' && id) {
+      this.consultationService.getParticipantById(Number(id)).subscribe({
+        next: (participant) => {
+          const consultation = participant.appointment.consultation;
+          const consultationId = typeof consultation === 'object' ? (consultation as {id: number}).id : consultation;
+          this.navCtrl.navigateForward(
+            `/consultation/${participant.appointment.id}/video`,
+            { queryParams: { type: 'appointment', consultationId } }
+          );
+        },
+        error: () => {
+          this.navCtrl.navigateForward(`/confirm-presence/${id}`);
+        }
+      });
+      return;
+    }
+
+    if (action && id) {
+      const route = this.actionHandler.getRouteForAction(action, id);
+      this.navCtrl.navigateForward(route);
+      return;
+    }
+
   }
 
   dismissNotification(notification: DisplayNotification) {

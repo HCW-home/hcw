@@ -33,12 +33,11 @@ export class BrowserNotificationService {
   }
 
   showNotification(title: string, body: string, onClick?: () => void): void {
-    console.log('[BrowserNotification] showNotification called:', { title, body, supported: this.isSupported, granted: this.isGranted });
     if (!this.isSupported || !this.isGranted) {
       return;
     }
 
-    const notification = new Notification(title, {
+    const notification = new Notification(title || 'New Notification', {
       body,
       icon: '/svg/logo.svg',
       tag: 'hcw-notification',

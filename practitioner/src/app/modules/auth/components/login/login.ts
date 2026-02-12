@@ -7,8 +7,10 @@ import {
   ButtonStyleEnum,
   ButtonTypeEnum,
 } from '../../../../shared/constants/button';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { RoutePaths } from '../../../../core/constants/routes';
+import { ActionHandlerService } from '../../../../core/services/action-handler.service';
+import { ConsultationService } from '../../../../core/services/consultation.service';
 import {
   FormGroup,
   Validators,
@@ -45,11 +47,15 @@ export class Login implements OnInit {
   openIdEnabled = false;
   openIdProviderName = '';
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private formBuilder = inject(FormBuilder);
   private adminAuthService = inject(Auth);
+  private actionHandler = inject(ActionHandlerService);
+  private consultationService = inject(ConsultationService);
   public validationService = inject(ValidationService);
   form: FormGroup<LoginForm> = this.formBuilder.nonNullable.group({
-    email: ['info@iabsis.com', [Validators.required, Validators.email]],
+    email: ['', [Validators.required, Validators.email]],
+    // email: ['info@iabsis.com', [Validators.required, Validators.email]],
     password: ['nHVih82Umdv@Qtk', [Validators.required]],
   });
 
@@ -70,6 +76,11 @@ export class Login implements OnInit {
         this.openIdEnabled = false;
       }
     });
+
+    const email = this.route.snapshot.queryParamMap.get('email');
+    if (email) {
+      this.form.patchValue({ email });
+    }
   }
 
   onSubmit() {
@@ -82,9 +93,32 @@ export class Login implements OnInit {
       };
       this.adminAuthService.login(body).subscribe({
         next: (res) => {
-          localStorage.setItem('token', res.access)
-          this.router.navigate([`/${RoutePaths.USER}`, RoutePaths.DASHBOARD]);
+          localStorage.setItem('token', res.access);
           this.loadingButton = false;
+
+          const action = this.route.snapshot.queryParamMap.get('action');
+          const id = this.route.snapshot.queryParamMap.get('id');
+
+          if (action === 'join' && id) {
+            this.consultationService.getParticipantById(id).subscribe({
+              next: (participant) => {
+                const consultation = participant.appointment.consultation;
+                const consultationId = typeof consultation === 'object' ? (consultation as {id: number}).id : consultation;
+                this.router.navigate(
+                  ['/', RoutePaths.USER, RoutePaths.CONSULTATIONS, consultationId],
+                  { queryParams: { join: 'true', appointmentId: participant.appointment.id } }
+                );
+              },
+              error: () => {
+                this.router.navigate(['/', RoutePaths.CONFIRM_PRESENCE, id]);
+              }
+            });
+          } else if (action) {
+            const route = this.actionHandler.getRouteForAction(action, id);
+            this.router.navigateByUrl(route);
+          } else {
+            this.router.navigate([`/${RoutePaths.USER}`, RoutePaths.DASHBOARD]);
+          }
         },
         error: err => {
           this.loadingButton = false;

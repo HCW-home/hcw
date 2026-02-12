@@ -65,7 +65,7 @@
                     <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
                       <span [innerHTML]="notification.content"></span>
                     </app-typography>
-                    @if (notification.action_label && notification.object_model) {
+                    @if (notification.action_label && notification.access_link) {
                       <button class="notification-action-btn" (click)="onNotificationClick(notification); $event.stopPropagation()">
                         {{ notification.action_label }}
                       </button>
@@ -164,7 +164,7 @@
                     <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
                       <span [innerHTML]="notification.content"></span>
                     </app-typography>
-                    @if (notification.action_label && notification.object_model) {
+                    @if (notification.action_label && notification.access_link) {
                       <button class="notification-action-btn" (click)="onNotificationClick(notification); $event.stopPropagation()">
                         {{ notification.action_label }}
                       </button>

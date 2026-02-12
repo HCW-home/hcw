@@ -8,6 +8,7 @@ import { UserWebSocketService } from './core/services/user-websocket.service';
 import { ActionHandlerService } from './core/services/action-handler.service';
 import { IncomingCallService } from './core/services/incoming-call.service';
 import { BrowserNotificationService } from './core/services/browser-notification.service';
+import { ConsultationService } from './core/services/consultation.service';
 import { RoutePaths } from './core/constants/routes';
 
 @Component({
@@ -26,6 +27,7 @@ export class App implements OnInit, OnDestroy {
     private actionHandler: ActionHandlerService,
     private incomingCallService: IncomingCallService,
     private browserNotificationService: BrowserNotificationService,
+    private consultationService: ConsultationService,
     private router: Router
   ) {}
 
@@ -63,14 +65,35 @@ export class App implements OnInit, OnDestroy {
     const authToken = urlParams.get('auth');
     const action = urlParams.get('action');
     const id = urlParams.get('id');
+    const email = urlParams.get('email');
 
     if (authToken) {
       this.router.navigate([`/${RoutePaths.VERIFY_INVITE}`], {
         queryParams: { auth: authToken, action, id }
       });
     } else if (action && this.authService.isLoggedIn()) {
-      const route = this.actionHandler.getRouteForAction(action, id);
-      this.router.navigateByUrl(route);
+      if (action === 'join' && id) {
+        this.consultationService.getParticipantById(id).subscribe({
+          next: (participant) => {
+            const consultation = participant.appointment.consultation;
+            const consultationId = typeof consultation === 'object' ? (consultation as {id: number}).id : consultation;
+            this.router.navigate(
+              ['/', RoutePaths.USER, RoutePaths.CONSULTATIONS, consultationId],
+              { queryParams: { join: 'true', appointmentId: participant.appointment.id } }
+            );
+          },
+          error: () => {
+            this.router.navigate(['/', RoutePaths.CONFIRM_PRESENCE, id]);
+          }
+        });
+      } else {
+        const route = this.actionHandler.getRouteForAction(action, id);
+        this.router.navigateByUrl(route);
+      }
+    } else if (!this.authService.isLoggedIn() && (action || email)) {
+      this.router.navigate([`/${RoutePaths.AUTH}`], {
+        queryParams: { email, action, id }
+      });
     }
   }
 

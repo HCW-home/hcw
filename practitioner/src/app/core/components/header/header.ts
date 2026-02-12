@@ -13,6 +13,9 @@ import {UserService} from '../../services/user.service';
 import {NotificationService} from '../../services/notification.service';
 import {UserWebSocketService} from '../../services/user-websocket.service';
 import {BrowserNotificationService} from '../../services/browser-notification.service';
+import {ActionHandlerService} from '../../services/action-handler.service';
+import {ConsultationService} from '../../services/consultation.service';
+import {ToasterService} from '../../services/toaster.service';
 import {IUser} from '../../../modules/user/models/user';
 import {INotification, NotificationStatus} from '../../models/notification';
 import { Button } from '../../../shared/ui-components/button/button';
@@ -34,6 +37,9 @@ export class Header implements OnInit, OnDestroy {
   protected notificationService = inject(NotificationService);
   private userWsService = inject(UserWebSocketService);
   private browserNotificationService = inject(BrowserNotificationService);
+  private actionHandler = inject(ActionHandlerService);
+  private consultationService = inject(ConsultationService);
+  private toasterService = inject(ToasterService);
   private destroy$ = new Subject<void>();
 
   showProfileMenu = signal(false);
@@ -70,18 +76,38 @@ export class Header implements OnInit, OnDestroy {
     this.userWsService.notifications$
       .pipe(takeUntil(this.destroy$))
       .subscribe(event => {
-        console.log('[Header] WS notification received:', event.render_subject);
         this.notificationService.handleWebSocketNotification(event);
 
         if (!document.hasFocus()) {
-          console.log('[Header] Tab not focused, showing browser notification');
           const plainText = event.render_content_html.replace(/<[^>]*>/g, '');
           this.browserNotificationService.showNotification(
             event.render_subject,
             plainText,
             () => {
               if (event.access_link) {
-                window.open(event.access_link, '_blank');
+                try {
+                  const url = new URL(event.access_link);
+                  const action = url.searchParams.get('action');
+                  const id = url.searchParams.get('id');
+                  if (action === 'join' && id) {
+                    this.consultationService.getParticipantById(id).subscribe({
+                      next: (participant) => {
+                        const consultation = participant.appointment.consultation;
+                        const consultationId = typeof consultation === 'object' ? (consultation as {id: number}).id : consultation;
+                        this.router.navigate(
+                          ['/', RoutePaths.USER, RoutePaths.CONSULTATIONS, consultationId],
+                          { queryParams: { join: 'true', appointmentId: participant.appointment.id } }
+                        );
+                      },
+                      error: () => {
+                        this.router.navigate(['/', RoutePaths.CONFIRM_PRESENCE, id]);
+                      }
+                    });
+                  } else if (action && id) {
+                    const route = this.actionHandler.getRouteForAction(action, id);
+                    this.router.navigateByUrl(route);
+                  }
+                } catch { /* invalid URL */ }
               }
             }
           );
@@ -229,23 +255,47 @@ export class Header implements OnInit, OnDestroy {
     }
     this.closeNotifications();
 
+    let action: string | null = null;
+    let id: string | null = null;
+    let email: string | null = null;
+
     if (notification.access_link) {
-      window.open(notification.access_link, '_blank');
+      try {
+        const url = new URL(notification.access_link);
+        action = url.searchParams.get('action');
+        id = url.searchParams.get('id');
+        email = url.searchParams.get('email');
+      } catch { /* invalid URL, fall through */ }
+    }
+
+    if (email && this.currentUser && this.currentUser.email !== email) {
+      this.toasterService.show('warning', 'Email Mismatch',
+        `This notification was intended for ${email}`);
+    }
+
+    if (action === 'join' && id) {
+      this.consultationService.getParticipantById(id).subscribe({
+        next: (participant) => {
+          const consultation = participant.appointment.consultation;
+          const consultationId = typeof consultation === 'object' ? (consultation as {id: number}).id : consultation;
+          this.router.navigate(
+            ['/', RoutePaths.USER, RoutePaths.CONSULTATIONS, consultationId],
+            { queryParams: { join: 'true', appointmentId: participant.appointment.id } }
+          );
+        },
+        error: () => {
+          this.router.navigate(['/', RoutePaths.CONFIRM_PRESENCE, id]);
+        }
+      });
       return;
     }
 
-    if (notification.object_model && notification.object_pk) {
-      const model = notification.object_model.toLowerCase();
-      const label = (notification.action_label || '').toLowerCase();
-
-      if (model.includes('participant') && label.includes('join')) {
-        this.router.navigate([RoutePaths.USER, 'appointments', notification.object_pk, 'video']);
-      } else if (model.includes('participant')) {
-        this.router.navigate([RoutePaths.USER, 'confirm-presence', notification.object_pk]);
-      } else if (model.includes('message')) {
-        this.router.navigate([RoutePaths.USER, 'consultations', notification.object_pk]);
-      }
+    if (action && id) {
+      const route = this.actionHandler.getRouteForAction(action, id);
+      this.router.navigateByUrl(route);
+      return;
     }
+
   }
 
   isNotificationUnread(notification: INotification): boolean {

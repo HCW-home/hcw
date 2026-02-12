@@ -8,7 +8,8 @@ export interface ActionConfig {
 
 const ACTION_ROUTES: Record<string, ActionConfig> = {
   'presence': { route: '/confirm-presence', requiresAuth: true, appendId: true },
-  'join': { route: '/consultation', requiresAuth: true, appendId: true },
+  'join': { route: '/confirm-presence', requiresAuth: true, appendId: true },
+  'message': { route: '/home', requiresAuth: true, appendId: false },
 };
 
 const DEFAULT_ACTION: ActionConfig = { route: '/home', requiresAuth: true, appendId: false };
@@ -27,9 +28,6 @@ export class ActionHandlerService {
     }
 
     if (config.appendId && id) {
-      if (action === 'join') {
-        return `${config.route}/${id}/video?type=appointment`;
-      }
       return `${config.route}/${id}`;
     }
     return config.route;

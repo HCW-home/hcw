@@ -59,6 +59,7 @@ export type AppointmentType = 'online' | 'inPerson';
 
 export interface Appointment {
   id: number;
+  consultation: number;
   consultation_id?: number;
   type: AppointmentType;
   status: AppointmentStatus;

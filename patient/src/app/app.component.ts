@@ -4,6 +4,8 @@ import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from './core/services/auth.service';
 import { UserWebSocketService } from './core/services/user-websocket.service';
 import { IncomingCallService } from './core/services/incoming-call.service';
+import { ActionHandlerService } from './core/services/action-handler.service';
+import { ConsultationService } from './core/services/consultation.service';
 import { IncomingCallComponent } from './shared/components/incoming-call/incoming-call.component';
 
 @Component({
@@ -19,6 +21,8 @@ export class AppComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private userWsService: UserWebSocketService,
     private incomingCallService: IncomingCallService,
+    private actionHandler: ActionHandlerService,
+    private consultationService: ConsultationService,
     private navCtrl: NavController
   ) {}
 
@@ -54,6 +58,7 @@ export class AppComponent implements OnInit, OnDestroy {
     const authToken = urlParams.get('auth');
     const action = urlParams.get('action');
     const actionId = urlParams.get('id');
+    const email = urlParams.get('email');
     const uid = urlParams.get('uid');
     const token = urlParams.get('token');
 
@@ -62,14 +67,33 @@ export class AppComponent implements OnInit, OnDestroy {
         queryParams: { uid, token }
       });
     } else if (authToken) {
-      const queryParams: { auth: string; action?: string; id?: string } = { auth: authToken };
-      if (action) {
-        queryParams.action = action;
-      }
-      if (actionId) {
-        queryParams.id = actionId;
-      }
+      const queryParams: Record<string, string> = { auth: authToken };
+      if (action) queryParams['action'] = action;
+      if (actionId) queryParams['id'] = actionId;
       this.navCtrl.navigateRoot(['/verify-invite'], { queryParams });
+    } else if (email) {
+      this.navCtrl.navigateRoot(['/login'], {
+        queryParams: { email, action, id: actionId }
+      });
+    } else if (action && actionId) {
+      if (action === 'join') {
+        this.consultationService.getParticipantById(Number(actionId)).subscribe({
+          next: (participant) => {
+            const consultation = participant.appointment.consultation;
+            const consultationId = typeof consultation === 'object' ? (consultation as {id: number}).id : consultation;
+            this.navCtrl.navigateRoot(
+              [`/consultation/${participant.appointment.id}/video`],
+              { queryParams: { type: 'appointment', consultationId } }
+            );
+          },
+          error: () => {
+            this.navCtrl.navigateRoot([`/confirm-presence/${actionId}`]);
+          }
+        });
+      } else {
+        const route = this.actionHandler.getRouteForAction(action, actionId);
+        this.navCtrl.navigateRoot([route]);
+      }
     }
   }
 

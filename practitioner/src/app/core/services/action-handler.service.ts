@@ -9,7 +9,8 @@ export interface IActionConfig {
 
 const ACTION_ROUTES: Record<string, IActionConfig> = {
   'presence': { route: `/${RoutePaths.CONFIRM_PRESENCE}`, requiresAuth: true, appendId: true },
-  'join': { route: `/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`, requiresAuth: true, appendId: true },
+  'join': { route: `/${RoutePaths.CONFIRM_PRESENCE}`, requiresAuth: true, appendId: true },
+  'message': { route: `/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`, requiresAuth: true, appendId: false },
 };
 
 const DEFAULT_ACTION: IActionConfig = { route: `/${RoutePaths.USER}/${RoutePaths.DASHBOARD}`, requiresAuth: true, appendId: false };
@@ -28,9 +29,6 @@ export class ActionHandlerService {
     }
 
     if (config.appendId && id) {
-      if (action === 'join') {
-        return `${config.route}/${id}/video`;
-      }
       return `${config.route}/${id}`;
     }
     return config.route;
