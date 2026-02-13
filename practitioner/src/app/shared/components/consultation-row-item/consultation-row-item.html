@@ -1,0 +1,52 @@
+<div class="consultation-row" (click)="onClick()">
+  <div class="row-header">
+    <app-typography [variant]="TypographyTypeEnum['body-l-semibold']" color="var(--slate-800)">
+      {{ consultation().title || 'Untitled Consultation' }}
+    </app-typography>
+  </div>
+
+  <div class="row-details">
+    <app-label-value
+      label="Patient"
+      [value]="getBeneficiaryName()"
+      [image]="consultation().beneficiary?.picture || ''"
+      icon="svg/user.svg">
+    </app-label-value>
+    <app-label-value
+      label="Created by"
+      [value]="getCreatedByName()"
+      [image]="consultation().created_by.picture || ''"
+      icon="svg/user.svg">
+    </app-label-value>
+    <app-label-value
+      label="Owner"
+      [value]="getOwnerName()"
+      [image]="consultation()?.owned_by?.picture || ''"
+      icon="svg/user.svg">
+    </app-label-value>
+    <app-label-value
+      label="Queue"
+      [value]="consultation().group?.name || '-'">
+    </app-label-value>
+    <app-label-value
+      label="Created"
+      [value]="(consultation().created_at | date:'MMM d, y, h:mm a') || '-'">
+    </app-label-value>
+    @if (showClosedDate()) {
+      <app-label-value
+        label="Closed"
+        [value]="(consultation().closed_at | date:'MMM d, y, h:mm a') || '-'">
+      </app-label-value>
+    }
+    <app-label-value
+      label="Description"
+      [value]="consultation().description || '-'">
+    </app-label-value>
+    <div class="detail-item-status">
+      <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--slate-400)">
+        Status
+      </app-typography>
+      <app-badge [type]="statusBadgeType()">{{ statusLabel() }}</app-badge>
+    </div>
+  </div>
+</div>

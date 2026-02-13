@@ -1,0 +1,27 @@
+.label-value {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+
+  .value-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+
+    .value-image {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    app-typography {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+}

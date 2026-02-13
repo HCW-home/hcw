@@ -1,0 +1,15 @@
+<div class="label-value">
+  <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--slate-400)">
+    {{ label() }}
+  </app-typography>
+  <div class="value-row">
+    @if (image()) {
+      <img [src]="image()" alt="" class="value-image">
+    } @else if (icon()) {
+      <app-svg [src]="icon()" [svgStyle]="{'width.px': 14, 'height.px': 14, 'color': 'var(--slate-500)'}"></app-svg>
+    }
+    <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--slate-700)">
+      {{ value() }}
+    </app-typography>
+  </div>
+</div>

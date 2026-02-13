@@ -71,53 +71,13 @@
           </div>
         } @else {
           @for (consultation of consultations(); track consultation.id) {
-            <app-list-item
-              [variant]="activeTab() === 'overdue' ? 'overdue' : (activeTab() === 'active' ? 'active' : 'past')"
-              [avatarText]="getPatientInitials(consultation)"
-              [showOnlineIndicator]="activeTab() === 'active'"
-              (itemClick)="viewConsultationDetails(consultation)">
-              <div slot="content">
-                <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-800)">
-                  {{ consultation.title }}
-                </app-typography>
-                <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
-                  {{ getBeneficiaryName(consultation) || 'Consultation' }}
-                  @if (activeTab() !== 'overdue') {
-                    - {{ getConsultationSubtitle(consultation) }}
-                  }
-                </app-typography>
-              </div>
-              <div slot="meta">
-                @if (activeTab() === 'overdue') {
-                  <div class="status-overdue">
-                    <app-svg src="alert-circle" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--amber-600)'}"></app-svg>
-                    <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--amber-600)">
-                      {{ formatDate(consultation.created_at) }}
-                    </app-typography>
-                  </div>
-                } @else if (activeTab() === 'active') {
-                  <div class="status-active">
-                    <span class="status-dot"></span>
-                    <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--primary-600)">
-                      Active
-                    </app-typography>
-                  </div>
-                  <app-typography [variant]="TypographyTypeEnum['body-xs-regular']" color="var(--slate-400)">
-                    {{ formatDate(consultation.created_at) }}
-                  </app-typography>
-                } @else {
-                  <div class="status-completed">
-                    <app-svg src="check" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--emerald-600)'}"></app-svg>
-                    <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--emerald-600)">
-                      Completed
-                    </app-typography>
-                  </div>
-                  <app-typography [variant]="TypographyTypeEnum['body-xs-regular']" color="var(--slate-400)">
-                    {{ formatDate(consultation.closed_at || consultation.created_at) }}
-                  </app-typography>
-                }
-              </div>
-            </app-list-item>
+            <app-consultation-row-item
+              [consultation]="consultation"
+              [showClosedDate]="activeTab() !== 'active'"
+              [statusBadgeType]="getStatusBadgeType()"
+              [statusLabel]="getStatusLabel()"
+              (rowClick)="viewConsultationDetails($event)">
+            </app-consultation-row-item>
           }
 
           @if (hasMore()) {

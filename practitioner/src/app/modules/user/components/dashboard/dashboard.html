@@ -169,24 +169,12 @@
             } @else {
               <div class="overdue-list">
                 @for (consultation of overdueConsultations(); track consultation.id) {
-                  <div class="overdue-item" (click)="viewConsultation(consultation)">
-                    <div class="patient-avatar amber">
-                      <span>{{ getConsultationInitials(consultation) }}</span>
-                    </div>
-                    <div class="overdue-details">
-                      <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-800)">
-                        {{ getBeneficiaryName(consultation) }}
-                      </app-typography>
-                      <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
-                        {{ consultation.title || 'Consultation' }}
-                      </app-typography>
-                    </div>
-                    <div class="overdue-time">
-                      <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--amber-600)">
-                        Waiting {{ getWaitingTime(consultation) }}
-                      </app-typography>
-                    </div>
-                  </div>
+                  <app-consultation-row-item
+                    [consultation]="consultation"
+                    [statusBadgeType]="BadgeTypeEnum.orange"
+                    statusLabel="Overdue"
+                    (rowClick)="viewConsultation($event)">
+                  </app-consultation-row-item>
                 }
               </div>
             }

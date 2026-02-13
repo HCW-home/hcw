@@ -8,12 +8,13 @@ import { Button } from '../../../../shared/ui-components/button/button';
 import { Typography } from '../../../../shared/ui-components/typography/typography';
 import { Input } from '../../../../shared/ui-components/input/input';
 import { Tabs, TabItem } from '../../../../shared/components/tabs/tabs';
-import { ListItem } from '../../../../shared/components/list-item/list-item';
+import { ConsultationRowItem } from '../../../../shared/components/consultation-row-item/consultation-row-item';
 import {
   ButtonSizeEnum,
   ButtonStyleEnum,
 } from '../../../../shared/constants/button';
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
+import { BadgeTypeEnum } from '../../../../shared/constants/badge';
 import { Svg } from '../../../../shared/ui-components/svg/svg';
 import { ConsultationService } from '../../../../core/services/consultation.service';
 import { Consultation } from '../../../../core/models/consultation';
@@ -34,7 +35,7 @@ interface TabCache {
 
 @Component({
   selector: 'app-consultations',
-  imports: [CommonModule, FormsModule, Page, Button, Typography, Input, Tabs, Svg, Loader, ListItem],
+  imports: [CommonModule, FormsModule, Page, Button, Typography, Input, Tabs, Svg, Loader, ConsultationRowItem],
   templateUrl: './consultations.html',
   styleUrl: './consultations.scss',
 })
@@ -66,6 +67,7 @@ export class Consultations implements OnInit, OnDestroy {
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
+  protected readonly BadgeTypeEnum = BadgeTypeEnum;
 
   constructor(
     private router: Router,
@@ -280,56 +282,20 @@ export class Consultations implements OnInit, OnDestroy {
     this.loadConsultations();
   }
 
-  getBeneficiaryName(consultation: Consultation): string {
-    if (!consultation.beneficiary) return 'No Patient Assigned';
-
-    const firstName = consultation.beneficiary.first_name?.trim() || '';
-    const lastName = consultation.beneficiary.last_name?.trim() || '';
-    const fullName = `${firstName} ${lastName}`.trim();
-
-    return fullName || consultation.beneficiary.email || 'Unknown Patient';
-  }
-
-  getOwnerName(consultation: Consultation): string {
-    if (!consultation.owned_by) return 'Unassigned';
-
-    const firstName = consultation.owned_by.first_name?.trim() || '';
-    const lastName = consultation.owned_by.last_name?.trim() || '';
-    const fullName = `${firstName} ${lastName}`.trim();
-
-    return fullName || consultation.owned_by.email || 'Unknown';
-  }
-
-  formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) {
-      return 'Today, ' + date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    } else if (diffDays === 1) {
-      return 'Yesterday, ' + date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    } else if (diffDays < 7) {
-      return `${diffDays} days ago`;
+  getStatusBadgeType(): BadgeTypeEnum {
+    switch (this.activeTab()) {
+      case 'active': return BadgeTypeEnum.green;
+      case 'past': return BadgeTypeEnum.gray;
+      case 'overdue': return BadgeTypeEnum.orange;
     }
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
-  getPatientInitials(consultation: Consultation): string {
-    if (!consultation.beneficiary) return '?';
-    const firstName = consultation.beneficiary.first_name?.trim() || '';
-    const lastName = consultation.beneficiary.last_name?.trim() || '';
-    const firstInitial = firstName.charAt(0).toUpperCase();
-    const lastInitial = lastName.charAt(0).toUpperCase();
-    return (firstInitial + lastInitial) || '?';
-  }
-
-  getConsultationSubtitle(consultation: Consultation): string {
-    if (this.activeTab() === 'active') {
-      return 'Created ' + this.formatDate(consultation.created_at);
+  getStatusLabel(): string {
+    switch (this.activeTab()) {
+      case 'active': return 'Active';
+      case 'past': return 'Closed';
+      case 'overdue': return 'Overdue';
     }
-    return consultation.group?.name || 'Completed';
   }
 
   private invalidateCache(): void {

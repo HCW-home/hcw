@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { Subject, takeUntil, forkJoin } from 'rxjs';
 import { Page } from '../../../../core/components/page/page';
 import { Svg } from '../../../../shared/ui-components/svg/svg';
@@ -20,12 +20,13 @@ import { ConsultationService } from '../../../../core/services/consultation.serv
 import { Consultation, Appointment } from '../../../../core/models/consultation';
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { Badge } from '../../../../shared/components/badge/badge';
+import { ConsultationRowItem } from '../../../../shared/components/consultation-row-item/consultation-row-item';
 import { getConsultationBadgeType, getAppointmentBadgeType } from '../../../../shared/tools/helper';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
 
 @Component({
   selector: 'app-patient-detail',
-  imports: [CommonModule, Page, Svg, Typography, Button, Loader, Tabs, ModalComponent, AddEditPatient, Badge],
+  imports: [CommonModule, DatePipe, Page, Svg, Typography, Button, Loader, Tabs, ModalComponent, AddEditPatient, Badge, ConsultationRowItem],
   templateUrl: './patient-detail.html',
   styleUrl: './patient-detail.scss',
 })
@@ -256,36 +257,6 @@ export class PatientDetail implements OnInit, OnDestroy {
     this.router.navigate([RoutePaths.USER, 'consultations', consultation.id]);
   }
 
-  getConsultationTitle(consultation: Consultation): string {
-    return consultation.title || `Consultation #${consultation.id}`;
-  }
-
-  getOwnerName(consultation: Consultation): string {
-    if (!consultation.owned_by) return 'Unassigned';
-    const first = consultation.owned_by.first_name || '';
-    const last = consultation.owned_by.last_name || '';
-    return `${first} ${last}`.trim() || consultation.owned_by.email;
-  }
-
-  formatDateTime(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  }
-
-  formatTime(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  }
-
   getAppointmentType(type: string): string {
     const t = type?.toLowerCase();
     switch (t) {
@@ -308,14 +279,6 @@ export class PatientDetail implements OnInit, OnDestroy {
   onPatientSaved(): void {
     this.closeEditModal();
     this.loadPatient();
-  }
-
-  formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
-    });
   }
 
   getTrendClass(trend: string): string {

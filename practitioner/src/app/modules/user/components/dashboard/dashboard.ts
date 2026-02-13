@@ -8,7 +8,9 @@ import { Button } from '../../../../shared/ui-components/button/button';
 import { Svg } from '../../../../shared/ui-components/svg/svg';
 import { Loader } from '../../../../shared/components/loader/loader';
 import { Badge } from '../../../../shared/components/badge/badge';
+import { ConsultationRowItem } from '../../../../shared/components/consultation-row-item/consultation-row-item';
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
+import { BadgeTypeEnum } from '../../../../shared/constants/badge';
 import { ButtonSizeEnum, ButtonStyleEnum } from '../../../../shared/constants/button';
 import { ConsultationService } from '../../../../core/services/consultation.service';
 import { ToasterService } from '../../../../core/services/toaster.service';
@@ -25,7 +27,8 @@ import { getAppointmentBadgeType } from '../../../../shared/tools/helper';
     Button,
     Svg,
     Loader,
-    Badge
+    Badge,
+    ConsultationRowItem
   ],
   providers: [DatePipe],
   templateUrl: './dashboard.html',
@@ -46,6 +49,7 @@ export class Dashboard implements OnInit, OnDestroy {
   overdueConsultations = signal<Consultation[]>([]);
 
   protected readonly getAppointmentBadgeType = getAppointmentBadgeType;
+  protected readonly BadgeTypeEnum = BadgeTypeEnum;
 
   hasValidNextAppointment(): boolean {
     const apt = this.nextAppointment();
@@ -128,38 +132,6 @@ export class Dashboard implements OnInit, OnDestroy {
     } else {
       return 'Soon';
     }
-  }
-
-  getWaitingTime(consultation: Consultation): string {
-    const updatedAt = new Date(consultation.updated_at);
-    const now = new Date();
-    const diffMs = now.getTime() - updatedAt.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 1) {
-      return '1 day';
-    } else if (diffDays > 1) {
-      return `${diffDays} days`;
-    } else {
-      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-      return diffHours === 1 ? '1 hour' : `${diffHours} hours`;
-    }
-  }
-
-  getBeneficiaryName(consultation: Consultation): string {
-    if (consultation.beneficiary) {
-      return `${consultation.beneficiary.first_name || ''} ${consultation.beneficiary.last_name || ''}`.trim() || consultation.beneficiary.email;
-    }
-    return 'Unassigned';
-  }
-
-  getConsultationInitials(consultation: Consultation): string {
-    if (consultation.beneficiary) {
-      const first = consultation.beneficiary.first_name?.charAt(0) || '';
-      const last = consultation.beneficiary.last_name?.charAt(0) || '';
-      return (first + last).toUpperCase() || consultation.beneficiary.email.charAt(0).toUpperCase();
-    }
-    return '--';
   }
 
   navigateToConsultations(): void {
