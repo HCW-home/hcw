@@ -62,8 +62,8 @@
 
                     <div class="form-group">
                       <app-user-search-select
-                        label="Owner"
-                        placeholder="Search owner..."
+                        label="Practitioner"
+                        placeholder="Search practitioner..."
                         [temporary]="false"
                         [initialUser]="selectedOwner()"
                         (userSelected)="onOwnerSelected($event)">
@@ -138,7 +138,7 @@
 
                 @if (consultation()?.owned_by) {
                   <div class="info-item">
-                    <span class="info-label">Owned by</span>
+                    <span class="info-label">Practitioner</span>
                     <span class="info-value">{{ consultation()!.owned_by.first_name }} {{ consultation()!.owned_by.last_name }}</span>
                     <span class="info-sub">{{ consultation()!.owned_by.email }}</span>
                   </div>
