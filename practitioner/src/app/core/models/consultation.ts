@@ -77,7 +77,7 @@ export interface Consultation {
   beneficiary: User | null;
   beneficiary_id?: number;
   created_by: User;
-  owned_by: User;
+  owned_by?: User | null;
   group: Queue | null;
   group_id?: number;
 }
