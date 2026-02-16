@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, from, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, Observable, firstValueFrom, from, switchMap, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { User, LoginRequest, LoginResponse, RegisterRequest, MagicLinkRequest, MagicLinkVerify, TokenAuthRequest, TokenAuthResponse } from '../models/user.model';
 import { StorageService } from './storage.service';
@@ -14,20 +14,26 @@ export class AuthService {
   public currentUser$ = this.currentUserSubject.asObservable();
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
   public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
+  public authReady: Promise<void>;
 
   constructor(
     private http: HttpClient,
     private storage: StorageService
   ) {
-    this.checkAuthStatus();
+    this.authReady = this.checkAuthStatus();
   }
 
-  async checkAuthStatus() {
+  private async checkAuthStatus(): Promise<void> {
     const token = await this.storage.get('access_token');
-    console.log('checkAuthStatus - token:', token ? 'exists' : 'missing');
     if (token) {
       this.isAuthenticatedSubject.next(true);
-      this.getCurrentUser().subscribe();
+      try {
+        await firstValueFrom(this.getCurrentUser());
+      } catch {
+        this.isAuthenticatedSubject.next(false);
+        await this.storage.remove('access_token');
+        await this.storage.remove('refresh_token');
+      }
     }
   }
 
@@ -104,6 +110,10 @@ export class AuthService {
 
   get currentUserValue(): User | null {
     return this.currentUserSubject.value;
+  }
+
+  get isAuthenticatedValue(): boolean {
+    return this.isAuthenticatedSubject.value;
   }
 
   async logout() {

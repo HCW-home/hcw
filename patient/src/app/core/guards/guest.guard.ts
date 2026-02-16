@@ -1,7 +1,5 @@
 import { Injectable } from '@angular/core';
 import { CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot, UrlTree } from '@angular/router';
-import { Observable } from 'rxjs';
-import { map, take } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 import { NavController } from '@ionic/angular';
 
@@ -14,20 +12,18 @@ export class GuestGuard implements CanActivate {
     private navCtrl: NavController
   ) {}
 
-  canActivate(
+  async canActivate(
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
-  ): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
-    return this.authService.isAuthenticated$.pipe(
-      take(1),
-      map(isAuthenticated => {
-        if (!isAuthenticated) {
-          return true;
-        } else {
-          this.navCtrl.navigateRoot('/tabs/home');
-          return false;
-        }
-      })
-    );
+  ): Promise<boolean | UrlTree> {
+    await this.authService.authReady;
+
+    const isAuthenticated = this.authService.isAuthenticatedValue;
+    if (!isAuthenticated) {
+      return true;
+    }
+
+    this.navCtrl.navigateRoot('/tabs/home');
+    return false;
   }
 }
