@@ -26,6 +26,7 @@ from .models import (
     TemplateValidationStatus,
 )
 from .template import NOTIFICATION_CHOICES
+from .tasks import send_message
 
 # admin.site.register(MessagingProvider, ModelAdmin)
 
@@ -166,7 +167,7 @@ class MessageAdmin(ModelAdmin):
         """Resend failed messages via Celery"""
 
         for message in queryset.all():
-            message.send()
+            send_message.delay(message.pk)
 
     def display_render_content(self, instance):
         try:
