@@ -121,3 +121,5 @@ No permission (=patient) but : can still go own appointment or group appointment
 - dashboard overdue consultations is missing profile picture full path
 - after openid login everything is 403 except for dashboard end-point
 - getting 403 on consultation messages in patient app
+- add ability to override backend translations
+- test sms and preferred communication method

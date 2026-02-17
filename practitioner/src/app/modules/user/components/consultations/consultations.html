@@ -3,7 +3,7 @@
     <div class="page-header">
       <div class="search-wrapper">
         <app-input
-          placeholder="Search consultations..."
+          [placeholder]="'consultations.searchPlaceholder' | translate"
           leftIcon="search"
           [ngModel]="searchQuery"
           (ngModelChange)="onSearchChange($event)">
@@ -23,7 +23,7 @@
           <div class="loading-state">
             <app-loader></app-loader>
             <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
-              Loading consultations...
+              {{ 'consultations.loading' | translate }}
             </app-typography>
           </div>
         } @else if (error()) {
@@ -33,7 +33,7 @@
               {{ error() }}
             </app-typography>
             <app-button
-              text="Retry"
+              [text]="'consultations.retry' | translate"
               [size]="ButtonSizeEnum.medium"
               [style]="ButtonStyleEnum.stroke"
               (buttonClick)="retryLoadConsultations()">
@@ -44,27 +44,27 @@
             @if (activeTab() === 'overdue') {
               <app-svg src="alert-circle" [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
               <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--slate-400)">
-                No overdue consultations
+                {{ 'consultations.noOverdue' | translate }}
               </app-typography>
               <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
                 @if (searchQuery) {
-                  Try a different search term
+                  {{ 'consultations.tryDifferentSearch' | translate }}
                 } @else {
-                  Consultations requiring attention will appear here
+                  {{ 'consultations.overdueWillAppear' | translate }}
                 }
               </app-typography>
             } @else {
               <app-svg src="calendar" [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
               <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--slate-400)">
-                No consultations found
+                {{ 'consultations.noConsultations' | translate }}
               </app-typography>
               <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
                 @if (searchQuery) {
-                  Try a different search term
+                  {{ 'consultations.tryDifferentSearch' | translate }}
                 } @else if (activeTab() === 'active') {
-                  Your active consultations will appear here
+                  {{ 'consultations.activeWillAppear' | translate }}
                 } @else {
-                  Your completed consultations will appear here
+                  {{ 'consultations.pastWillAppear' | translate }}
                 }
               </app-typography>
             }
@@ -83,7 +83,7 @@
           @if (hasMore()) {
             <div class="load-more-container">
               <app-button
-                text="View More"
+                [text]="'consultations.viewMore' | translate"
                 [style]="ButtonStyleEnum.text"
                 [size]="ButtonSizeEnum.medium"
                 [loading]="loadingMore()"

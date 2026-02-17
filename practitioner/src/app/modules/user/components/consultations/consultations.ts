@@ -22,6 +22,8 @@ import { Loader } from '../../../../shared/components/loader/loader';
 import { RoutePaths } from '../../../../core/constants/routes';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
 import { ToasterService } from '../../../../core/services/toaster.service';
+import { TranslatePipe } from '@ngx-translate/core';
+import { TranslationService } from '../../../../core/services/translation.service';
 
 type ConsultationTabType = 'active' | 'past' | 'overdue';
 
@@ -35,7 +37,7 @@ interface TabCache {
 
 @Component({
   selector: 'app-consultations',
-  imports: [CommonModule, FormsModule, Page, Button, Typography, Input, Tabs, Svg, Loader, ConsultationRowItem],
+  imports: [CommonModule, FormsModule, Page, Button, Typography, Input, Tabs, Svg, Loader, ConsultationRowItem, TranslatePipe],
   templateUrl: './consultations.html',
   styleUrl: './consultations.scss',
 })
@@ -44,6 +46,7 @@ export class Consultations implements OnInit, OnDestroy {
   private searchSubject$ = new Subject<string>();
   private route = inject(ActivatedRoute);
   private toasterService = inject(ToasterService);
+  private t = inject(TranslationService);
 
   private tabCache: Record<ConsultationTabType, TabCache> = {
     active: { data: [], loaded: false, searchQuery: '', hasMore: false, currentPage: 1 },
@@ -102,9 +105,9 @@ export class Consultations implements OnInit, OnDestroy {
 
   get tabItems(): TabItem[] {
     return [
-      { id: 'active', label: 'Active', count: this.activeCount() },
-      { id: 'past', label: 'Closed', count: this.pastCount() },
-      { id: 'overdue', label: 'Overdue', count: this.overdueCount() }
+      { id: 'active', label: this.t.instant('consultations.tabActive'), count: this.activeCount() },
+      { id: 'past', label: this.t.instant('consultations.tabClosed'), count: this.pastCount() },
+      { id: 'overdue', label: this.t.instant('consultations.tabOverdue'), count: this.overdueCount() }
     ];
   }
 
@@ -155,7 +158,7 @@ export class Consultations implements OnInit, OnDestroy {
           this.loading.set(false);
         },
         error: (err) => {
-          this.toasterService.show('error', 'Error Loading Consultations', getErrorMessage(err));
+          this.toasterService.show('error', this.t.instant('consultations.errorLoading'), getErrorMessage(err));
           this.loading.set(false);
         }
       });
@@ -185,7 +188,7 @@ export class Consultations implements OnInit, OnDestroy {
           this.loading.set(false);
         },
         error: (err) => {
-          this.toasterService.show('error', 'Error Loading Consultations', getErrorMessage(err));
+          this.toasterService.show('error', this.t.instant('consultations.errorLoading'), getErrorMessage(err));
           this.loading.set(false);
         }
       });
@@ -227,7 +230,7 @@ export class Consultations implements OnInit, OnDestroy {
           this.loadingMore.set(false);
         },
         error: (err) => {
-          this.toasterService.show('error', 'Error Loading Consultations', getErrorMessage(err));
+          this.toasterService.show('error', this.t.instant('consultations.errorLoading'), getErrorMessage(err));
           this.loadingMore.set(false);
         }
       });
@@ -258,7 +261,7 @@ export class Consultations implements OnInit, OnDestroy {
           this.loadingMore.set(false);
         },
         error: (err) => {
-          this.toasterService.show('error', 'Error Loading Consultations', getErrorMessage(err));
+          this.toasterService.show('error', this.t.instant('consultations.errorLoading'), getErrorMessage(err));
           this.loadingMore.set(false);
         }
       });
@@ -292,9 +295,9 @@ export class Consultations implements OnInit, OnDestroy {
 
   getStatusLabel(): string {
     switch (this.activeTab()) {
-      case 'active': return 'Active';
-      case 'past': return 'Closed';
-      case 'overdue': return 'Overdue';
+      case 'active': return this.t.instant('consultations.statusActive');
+      case 'past': return this.t.instant('consultations.statusClosed');
+      case 'overdue': return this.t.instant('consultations.statusOverdue');
     }
   }
 

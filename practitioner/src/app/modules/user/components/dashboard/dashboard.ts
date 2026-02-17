@@ -17,6 +17,8 @@ import { ToasterService } from '../../../../core/services/toaster.service';
 import { Consultation, Appointment, DashboardNextAppointment, AppointmentType, AppointmentStatus } from '../../../../core/models/consultation';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
 import { getAppointmentBadgeType } from '../../../../shared/tools/helper';
+import { TranslatePipe } from '@ngx-translate/core';
+import { TranslationService } from '../../../../core/services/translation.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -28,7 +30,8 @@ import { getAppointmentBadgeType } from '../../../../shared/tools/helper';
     Svg,
     Loader,
     Badge,
-    ConsultationRowItem
+    ConsultationRowItem,
+    TranslatePipe,
   ],
   providers: [DatePipe],
   templateUrl: './dashboard.html',
@@ -38,6 +41,7 @@ export class Dashboard implements OnInit, OnDestroy {
   private consultationService = inject(ConsultationService);
   private toasterService = inject(ToasterService);
   private router = inject(Router);
+  private t = inject(TranslationService);
   private datePipe = inject(DatePipe);
   private destroy$ = new Subject<void>();
 
@@ -84,23 +88,23 @@ export class Dashboard implements OnInit, OnDestroy {
           this.loading.set(false);
         },
         error: (err) => {
-          this.error.set('Failed to load dashboard data');
-          this.toasterService.show('error', 'Error Loading Dashboard', getErrorMessage(err));
+          this.error.set(this.t.instant('dashboard.failedToLoad'));
+          this.toasterService.show('error', this.t.instant('dashboard.errorLoading'), getErrorMessage(err));
           this.loading.set(false);
         }
       });
   }
 
   getAppointmentTypeLabel(type: AppointmentType | string): string {
-    const t = typeof type === 'string' ? type.toLowerCase() : type;
-    switch (t) {
+    const tp = typeof type === 'string' ? type.toLowerCase() : type;
+    switch (tp) {
       case 'online':
       case AppointmentType.ONLINE:
-        return 'Video Call';
+        return this.t.instant('dashboard.videoCall');
       case 'inperson':
       case 'in_person':
       case AppointmentType.INPERSON:
-        return 'In Person';
+        return this.t.instant('dashboard.inPerson');
       default:
         return String(type);
     }
@@ -126,11 +130,11 @@ export class Dashboard implements OnInit, OnDestroy {
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
     if (diffDays > 0) {
-      return diffDays === 1 ? 'Tomorrow' : `In ${diffDays} days`;
+      return diffDays === 1 ? this.t.instant('dashboard.tomorrow') : this.t.instant('dashboard.inDays', { count: String(diffDays) });
     } else if (diffHours > 0) {
-      return `In ${diffHours} hours`;
+      return this.t.instant('dashboard.inHours', { count: String(diffHours) });
     } else {
-      return 'Soon';
+      return this.t.instant('dashboard.soon');
     }
   }
 
