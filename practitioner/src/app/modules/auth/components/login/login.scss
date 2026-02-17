@@ -33,8 +33,9 @@
     color: var(--White);
 
     .logo-img {
-      width: 80px;
-      height: 80px;
+      max-width: 80px;
+      max-height: 80px;
+      object-fit: contain;
       margin-bottom: 20px;
     }
 
@@ -125,8 +126,8 @@
 
     .left-content {
       .logo-img {
-        width: 56px;
-        height: 56px;
+        max-width: 56px;
+        max-height: 56px;
       }
 
       h1 {

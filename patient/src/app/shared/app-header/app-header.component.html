@@ -3,13 +3,22 @@
     <div class="header-content">
       <div class="header-left">
         @if (showBackButton) {
-          <ion-back-button [defaultHref]="backHref" text="" icon="arrow-back-outline" class="back-btn"></ion-back-button>
+          <ion-back-button
+            [defaultHref]="backHref"
+            text=""
+            icon="arrow-back-outline"
+            class="back-btn"
+          ></ion-back-button>
         }
         @if (pageTitle) {
           <h1 class="page-title">{{ pageTitle }}</h1>
         } @else {
           <div class="logo">
-            <img src="assets/images/logo.svg" alt="Logo" class="logo-img">
+            @if (siteLogo()) {
+              <img [src]="siteLogo()" alt="Logo" class="logo-img" />
+            } @else {
+              <img src="assets/images/logo.svg" alt="Logo" class="logo-img" />
+            }
             <span class="logo-text">{{ branding() }}</span>
           </div>
         }
@@ -18,13 +27,15 @@
         <ion-button class="notification-btn" (click)="goToNotifications()">
           <ion-icon name="notifications-outline"></ion-icon>
           @if (unreadNotificationCount() > 0) {
-            <span class="notification-badge">{{ unreadNotificationCount() > 9 ? '9+' : unreadNotificationCount() }}</span>
+            <span class="notification-badge">{{
+              unreadNotificationCount() > 9 ? "9+" : unreadNotificationCount()
+            }}</span>
           }
         </ion-button>
         <ion-button class="user-avatar-btn" (click)="goToProfile()">
           <div class="user-avatar">
             @if (getUserPicture()) {
-              <img [src]="getUserPicture()" alt="" class="avatar-image">
+              <img [src]="getUserPicture()" alt="" class="avatar-image" />
             } @else {
               {{ getUserInitials() }}
             }

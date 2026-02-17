@@ -2,9 +2,16 @@
   <div class="auth-card">
     <div class="left-side">
       <div class="left-content">
-        <img src="assets/images/logo.svg" alt="HCW Logo" class="logo-img">
-        <h1>HCW@Home</h1>
-        <p>Your secure telemedicine platform for remote consultations with your healthcare provider.</p>
+        @if (siteLogoWhite) {
+        <img [src]="siteLogoWhite" alt="Logo" class="logo-img" />
+        } @else {
+        <img src="assets/images/logo.svg" alt="Logo" class="logo-img" />
+        }
+        <h1>{{ branding }}</h1>
+        <p>
+          Your secure telemedicine platform for remote consultations with your
+          healthcare provider.
+        </p>
       </div>
     </div>
     <div class="right-side">
@@ -15,16 +22,14 @@
         <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="login-form">
           <ion-item lines="full" class="input-item">
             <ion-icon name="mail-outline" slot="start"></ion-icon>
-            <ion-input
-              type="email"
-              placeholder="Email"
-              formControlName="email">
+            <ion-input type="email" placeholder="Email" formControlName="email">
             </ion-input>
           </ion-item>
-          @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
-            <ion-text color="danger" class="error-message">
-              <span class="error-text">Valid email is required</span>
-            </ion-text>
+          @if (loginForm.get('email')?.invalid &&
+          loginForm.get('email')?.touched) {
+          <ion-text color="danger" class="error-message">
+            <span class="error-text">Valid email is required</span>
+          </ion-text>
           }
 
           <ion-item lines="full" class="input-item">
@@ -32,23 +37,32 @@
             <ion-input
               [type]="showPassword ? 'text' : 'password'"
               placeholder="Password"
-              formControlName="password">
+              formControlName="password"
+            >
             </ion-input>
             <ion-icon
               [name]="showPassword ? 'eye-off-outline' : 'eye-outline'"
               slot="end"
               (click)="togglePassword()"
-              class="password-toggle">
+              class="password-toggle"
+            >
             </ion-icon>
           </ion-item>
-          @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
-            <ion-text color="danger" class="error-message">
-              <span class="error-text">Password must be at least 6 characters</span>
-            </ion-text>
+          @if (loginForm.get('password')?.invalid &&
+          loginForm.get('password')?.touched) {
+          <ion-text color="danger" class="error-message">
+            <span class="error-text"
+              >Password must be at least 6 characters</span
+            >
+          </ion-text>
           }
 
           <div class="forgot-password">
-            <ion-text color="primary" (click)="forgotPassword()" class="link-text">
+            <ion-text
+              color="primary"
+              (click)="forgotPassword()"
+              class="link-text"
+            >
               Forgot Password?
             </ion-text>
           </div>
@@ -58,20 +72,21 @@
             shape="round"
             type="submit"
             [disabled]="loginForm.invalid"
-            class="login-button">
+            class="login-button"
+          >
             Sign In
           </ion-button>
         </form>
 
         @if (registrationEnabled) {
-          <div class="register-link">
-            <ion-text class="register-text" color="medium">
-              Don't have an account?
-            </ion-text>
-            <ion-text color="primary" (click)="goToRegister()" class="link-text">
-              Sign Up
-            </ion-text>
-          </div>
+        <div class="register-link">
+          <ion-text class="register-text" color="medium">
+            Don't have an account?
+          </ion-text>
+          <ion-text color="primary" (click)="goToRegister()" class="link-text">
+            Sign Up
+          </ion-text>
+        </div>
         }
       </div>
     </div>

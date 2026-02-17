@@ -1,19 +1,31 @@
 <div class="sidebar" [class.collapsed]="isCollapsed">
   <div class="sidebar-header">
     <div class="logo-section">
+      @if (siteLogo) {
+      <img
+        [src]="siteLogo"
+        alt="Logo"
+        class="logo-custom-img"
+        [style.width.px]="isCollapsed ? 40 : 44"
+        [style.height.px]="isCollapsed ? 40 : 44" />
+      } @else {
       <app-svg
         src="svg/logo.svg"
         [svgStyle]="{'width.px': isCollapsed ? 40 : 44, 'height.px': isCollapsed ? 40 : 44}">
       </app-svg>
-      @if (!isCollapsed) {
-        <div class="logo-text">
-          <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
-            HCW
-          </app-typography>
-          <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--slate-500)">
-            {{ 'sidebar.practitioner' | translate }}
-          </app-typography>
-        </div>
+      } @if (!isCollapsed) {
+      <div class="logo-text">
+        <app-typography
+          [variant]="TypographyTypeEnum['body-l-bold']"
+          color="var(--slate-800)">
+          {{ branding }}
+        </app-typography>
+        <app-typography
+          [variant]="TypographyTypeEnum['body-xs-medium']"
+          color="var(--slate-500)">
+          {{ 'sidebar.practitioner' | translate }}
+        </app-typography>
+      </div>
       }
     </div>
     <button class="toggle-btn" (click)="toggleSidebar()">
@@ -26,16 +38,16 @@
 
   <div class="sidebar-main">
     @for (menuItem of menuItems; track menuItem.path) {
-      <a
-        class="menu-item"
-        [routerLink]="'/' + RoutePaths.USER + menuItem.path"
-        [routerLinkActive]="'active'"
-        [title]="isCollapsed ? (menuItem.name | translate) : ''">
-        <div class="menu-item-content">
-          <app-svg
-            class="menu-icon"
-            [src]="'svg/' + menuItem.icon"
-            [svgStyle]="{
+    <a
+      class="menu-item"
+      [routerLink]="'/' + RoutePaths.USER + menuItem.path"
+      [routerLinkActive]="'active'"
+      [title]="isCollapsed ? (menuItem.name | translate) : ''">
+      <div class="menu-item-content">
+        <app-svg
+          class="menu-icon"
+          [src]="'svg/' + menuItem.icon"
+          [svgStyle]="{
               'width.px': 24,
               'height.px': 24,
               'color': router.isActive('/' + RoutePaths.USER + menuItem.path, {
@@ -47,17 +59,16 @@
                 ? 'var(--primary-500)'
                 : 'var(--slate-400)'
             }">
-          </app-svg>
-          @if (!isCollapsed) {
-            <app-typography
-              class="menu-label"
-              [variant]="TypographyTypeEnum['body-s-medium']">
-              {{ menuItem.name | translate }}
-            </app-typography>
-          }
-        </div>
-      </a>
+        </app-svg>
+        @if (!isCollapsed) {
+        <app-typography
+          class="menu-label"
+          [variant]="TypographyTypeEnum['body-s-medium']">
+          {{ menuItem.name | translate }}
+        </app-typography>
+        }
+      </div>
+    </a>
     }
   </div>
-
 </div>

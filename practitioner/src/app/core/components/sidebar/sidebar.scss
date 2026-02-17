@@ -63,8 +63,9 @@
       align-items: center;
       gap: 12px;
 
-      app-svg {
+      app-svg, .logo-custom-img {
         flex-shrink: 0;
+        object-fit: contain;
       }
 
       .logo-text {

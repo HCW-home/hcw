@@ -661,6 +661,13 @@ UNFOLD = {
 # Default Configuration Values
 CONSTANCE_CONFIG = {
     "site_name": ("HCW@Home", "The name of the application displayed to users"),
+    "site_logo": ("", "Site logo", "image_field"),
+    "site_logo_white": (
+        "",
+        "White version of the site logo (used on dark backgrounds)",
+        "image_field",
+    ),
+    "site_favicon": ("", "Site favicon", "image_field"),
     "patient_base_url": ("https://localhost:8000", "Base URL of patient frontend"),
     "practitioner_base_url": (
         "https://localhost:8000",
@@ -678,7 +685,7 @@ CONSTANCE_CONFIG = {
 
 
 CONSTANCE_CONFIG_FIELDSETS = {
-    "General Options": ("site_name",),
+    "General Options": ("site_name", "site_logo", "site_logo_white", "site_favicon"),
     "URLs": ("patient_base_url", "practitioner_base_url"),
     "Scheduling": ("appointment_first_reminder", "appointment_last_reminder"),
 }
@@ -720,6 +727,8 @@ ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 CONSTANCE_ADDITIONAL_FIELDS = {
     **UNFOLD_CONSTANCE_ADDITIONAL_FIELDS,
 }
+
+CONSTANCE_FILE_ROOT = "constance"
 
 
 LOGGING = {
@@ -763,7 +772,6 @@ S3_SECRET_KEY = os.getenv("S3_SECRET_KEY", None)
 S3_VERIFY = os.getenv("S3_VERIFY", None)
 
 if S3_BUCKET_NAME and S3_ENDPOINT_URL and S3_ACCESS_KEY and S3_SECRET_KEY:
-
     STORAGES = {
         "default": {
             "BACKEND": "storages.backends.s3.S3Storage",
@@ -788,6 +796,12 @@ LIVEKIT_S3_SECRET_KEY = os.getenv("LIVEKIT_S3_SECRET_KEY", None)
 LIVEKIT_S3_REGION = os.getenv("LIVEKIT_S3_REGION", "us-east-1")
 
 # Recording task configuration
-RECORDING_CHECK_INITIAL_DELAY = int(os.getenv("RECORDING_CHECK_INITIAL_DELAY", 120))  # seconds before first S3 check
-RECORDING_CHECK_MAX_RETRIES = int(os.getenv("RECORDING_CHECK_MAX_RETRIES", 4))        # number of retries after initial check
-RECORDING_CHECK_RETRY_DELAY = int(os.getenv("RECORDING_CHECK_RETRY_DELAY", 30))       # seconds between retries
+RECORDING_CHECK_INITIAL_DELAY = int(
+    os.getenv("RECORDING_CHECK_INITIAL_DELAY", 120)
+)  # seconds before first S3 check
+RECORDING_CHECK_MAX_RETRIES = int(
+    os.getenv("RECORDING_CHECK_MAX_RETRIES", 4)
+)  # number of retries after initial check
+RECORDING_CHECK_RETRY_DELAY = int(
+    os.getenv("RECORDING_CHECK_RETRY_DELAY", 30)
+)  # seconds between retries

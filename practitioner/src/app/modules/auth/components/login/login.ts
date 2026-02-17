@@ -1,4 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
+import { Title } from '@angular/platform-browser';
 import { TranslatePipe } from '@ngx-translate/core';
 import { Typography } from '../../../../shared/ui-components/typography/typography';
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
@@ -49,8 +50,11 @@ export class Login implements OnInit {
   loadingButton = false;
   openIdEnabled = false;
   openIdProviderName = '';
+  siteLogoWhite: string | null = null;
+  branding = 'HCW@Home';
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private titleService = inject(Title);
   private formBuilder = inject(FormBuilder);
   private adminAuthService = inject(Auth);
   private actionHandler = inject(ActionHandlerService);
@@ -71,14 +75,22 @@ export class Login implements OnInit {
 
   ngOnInit() {
     this.adminAuthService.getOpenIDConfig().subscribe({
-      next: (config) => {
+      next: config => {
         this.openIdEnabled = config.enabled;
         this.openIdProviderName = config.provider_name || 'OpenID';
+        this.siteLogoWhite = config.site_logo_white;
+        if (config.branding) {
+          this.branding = config.branding;
+          this.titleService.setTitle(config.branding);
+        }
+        if (config.site_favicon) {
+          this.updateFavicon(config.site_favicon);
+        }
       },
-      error: (err) => {
+      error: err => {
         console.error('Failed to get OpenID config:', err);
         this.openIdEnabled = false;
-      }
+      },
     });
 
     const email = this.route.snapshot.queryParamMap.get('email');
@@ -96,7 +108,7 @@ export class Login implements OnInit {
         password: value.password,
       };
       this.adminAuthService.login(body).subscribe({
-        next: (res) => {
+        next: res => {
           localStorage.setItem('token', res.access);
           this.loadingButton = false;
 
@@ -105,17 +117,30 @@ export class Login implements OnInit {
 
           if (action === 'join' && id) {
             this.consultationService.getParticipantById(id).subscribe({
-              next: (participant) => {
+              next: participant => {
                 const consultation = participant.appointment.consultation;
-                const consultationId = typeof consultation === 'object' ? (consultation as {id: number}).id : consultation;
+                const consultationId =
+                  typeof consultation === 'object'
+                    ? (consultation as { id: number }).id
+                    : consultation;
                 this.router.navigate(
-                  ['/', RoutePaths.USER, RoutePaths.CONSULTATIONS, consultationId],
-                  { queryParams: { join: 'true', appointmentId: participant.appointment.id } }
+                  [
+                    '/',
+                    RoutePaths.USER,
+                    RoutePaths.CONSULTATIONS,
+                    consultationId,
+                  ],
+                  {
+                    queryParams: {
+                      join: 'true',
+                      appointmentId: participant.appointment.id,
+                    },
+                  }
                 );
               },
               error: () => {
                 this.router.navigate(['/', RoutePaths.CONFIRM_PRESENCE, id]);
-              }
+              },
             });
           } else if (action) {
             const route = this.actionHandler.getRouteForAction(action, id);
@@ -149,6 +174,15 @@ export class Login implements OnInit {
 
   onOpenIDLogin() {
     this.adminAuthService.initiateOpenIDLogin();
+  }
+
+  private updateFavicon(url: string): void {
+    const link: HTMLLinkElement =
+      document.querySelector("link[rel~='icon']") ||
+      document.createElement('link');
+    link.rel = 'icon';
+    link.href = url;
+    document.head.appendChild(link);
   }
 
   protected readonly TypographyTypeEnum = TypographyTypeEnum;

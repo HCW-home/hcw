@@ -47,6 +47,10 @@ export interface IOpenIDConfig {
   authorization_url: string | null;
   provider_name: string | null;
   languages: IConfigLanguage[];
+  branding: string;
+  site_logo: string | null;
+  site_logo_white: string | null;
+  site_favicon: string | null;
 }
 
 export interface IOpenIDLoginBody {

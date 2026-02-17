@@ -42,6 +42,8 @@ export class RegisterPage implements OnInit {
   registrationEnabled = true;
   loading = true;
   successMessage: string | null = null;
+  siteLogoWhite: string | null = null;
+  branding = "HCW@Home";
 
   constructor(
     private fb: FormBuilder,
@@ -64,8 +66,12 @@ export class RegisterPage implements OnInit {
 
   ngOnInit() {
     this.authService.getConfig().subscribe({
-      next: (config) => {
+      next: (config: any) => {
         this.registrationEnabled = config.registration_enabled;
+        this.siteLogoWhite = config.site_logo_white;
+        if (config.branding) {
+          this.branding = config.branding;
+        }
         this.loading = false;
       },
       error: () => {

@@ -801,6 +801,11 @@ class AppConfigView(APIView):
 
         from constance import config as constance_config
 
+        def _file_url(value):
+            if not value:
+                return None
+            return request.build_absolute_uri(f"{settings.MEDIA_URL}{value}")
+
         languages = [
             {"code": code, "name": str(name)} for code, name in settings.LANGUAGES
         ]
@@ -811,6 +816,9 @@ class AppConfigView(APIView):
                 "registration_enabled": settings.ENABLE_REGISTRATION,
                 "main_organization": main_organization,
                 "branding": constance_config.site_name,
+                "site_logo": _file_url(constance_config.site_logo),
+                "site_logo_white": _file_url(constance_config.site_logo_white),
+                "site_favicon": _file_url(constance_config.site_favicon),
                 "languages": languages,
             }
         )

@@ -2,8 +2,12 @@
   <div class="auth-card">
     <div class="left-side">
       <div class="left-content">
-        <img src="/images/logo.svg" alt="HCW Logo" class="logo-img">
-        <h1>HCW@Home</h1>
+        @if (siteLogoWhite) {
+        <img [src]="siteLogoWhite" alt="Logo" class="logo-img" />
+        } @else {
+        <img src="/images/logo.svg" alt="Logo" class="logo-img" />
+        }
+        <h1>{{ branding }}</h1>
         <p>Practitioner portal for managing consultations and patient care.</p>
       </div>
     </div>
@@ -39,7 +43,7 @@
             [autocomplete]="'current-password'"
             [placeholder]="'login.passwordPlaceholder' | translate"></app-input>
           @if (errorMessage) {
-            <app-error-message [message]="errorMessage"></app-error-message>
+          <app-error-message [message]="errorMessage"></app-error-message>
           }
           <div class="remember-me-wrapper">
             <app-typography
@@ -59,16 +63,16 @@
             [loading]="loadingButton"></app-button>
 
           @if (openIdEnabled) {
-            <div class="divider">
-              <span>{{ 'login.or' | translate }}</span>
-            </div>
+          <div class="divider">
+            <span>{{ 'login.or' | translate }}</span>
+          </div>
 
-            <app-button
-              [type]="ButtonTypeEnum.button"
-              [block]="true"
-              [style]="ButtonStyleEnum.stroke"
-              [text]="'login.loginWith' | translate: { provider: openIdProviderName }"
-              (click)="onOpenIDLogin()"></app-button>
+          <app-button
+            [type]="ButtonTypeEnum.button"
+            [block]="true"
+            [style]="ButtonStyleEnum.stroke"
+            [text]="'login.loginWith' | translate: { provider: openIdProviderName }"
+            (click)="onOpenIDLogin()"></app-button>
           }
         </form>
       </div>
