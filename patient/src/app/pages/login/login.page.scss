@@ -1,144 +1,202 @@
 .login-content {
-  --background: var(--app-background);
+  --background: #e2e8f0;
 
-  .login-container {
-    height: 100%;
+  &::part(scroll) {
     display: flex;
-    flex-direction: column;
-    padding: var(--app-spacing-xl);
+    align-items: center;
     justify-content: center;
+    min-height: 100%;
+  }
 
-    .login-header {
+  .auth-card {
+    display: flex;
+    width: 90%;
+    max-width: 900px;
+    min-height: 520px;
+    margin: 0 auto;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+    background: #fff;
+  }
+
+  .left-side {
+    flex: 1;
+    background: var(--ion-color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+
+    .left-content {
       text-align: center;
-      margin-bottom: 40px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      color: #fff;
 
-      .logo {
-        margin-bottom: var(--app-spacing-md);
-
-        .logo-img {
-          width: 64px;
-          height: 64px;
-        }
+      .logo-img {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 20px;
       }
 
-      .logo-text-group {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        margin-bottom: var(--app-spacing-lg);
+      h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0 0 12px;
+      }
 
-        .title {
-          font-size: 2rem;
-          font-weight: 700;
-          color: var(--app-text-primary);
-          line-height: 1.2;
-        }
+      p {
+        font-size: 0.95rem;
+        opacity: 0.9;
+        line-height: 1.5;
+        max-width: 280px;
+        margin: 0 auto;
+      }
+    }
+  }
 
-        .title-subtitle {
-          font-size: 1rem;
-          font-weight: 500;
-          color: var(--app-text-secondary);
-          line-height: 1;
-        }
+  .right-side {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+
+    .right-content {
+      width: 100%;
+      max-width: 360px;
+
+      h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--app-text-primary);
+        margin: 0 0 4px;
       }
 
       .subtitle {
-        display: block;
-        font-size: var(--app-font-size-base);
+        font-size: 0.9rem;
         color: var(--app-text-secondary);
-      }
-    }
-
-    .login-form {
-      .input-item {
-        margin-bottom: var(--app-spacing-lg);
-        --background: var(--app-input-background);
-        --border-radius: var(--app-button-radius);
-        --padding-start: var(--app-spacing-lg);
-        --padding-end: var(--app-spacing-lg);
-        --inner-padding-end: var(--app-spacing-lg);
-
-        ion-icon {
-          margin-right: var(--app-spacing-md);
-          color: var(--app-text-tertiary);
-        }
-
-        ion-input {
-          --padding-top: var(--app-spacing-lg);
-          --padding-bottom: var(--app-spacing-lg);
-          color: var(--app-input-text);
-          --placeholder-color: var(--app-input-placeholder);
-        }
-
-        .password-toggle {
-          cursor: pointer;
-        }
-      }
-
-      .error-message {
+        margin: 0 0 28px;
         display: block;
-        margin: calc(var(--app-spacing-md) * -1) 0 var(--app-spacing-md) var(--app-spacing-lg);
+      }
+    }
+  }
 
-        .error-text {
-          font-size: var(--app-font-size-xs);
-        }
+  .login-form {
+    .input-item {
+      margin-bottom: 16px;
+      --background: var(--app-input-background, #f7f8fa);
+      --border-radius: 10px;
+      --padding-start: 16px;
+      --padding-end: 16px;
+      --inner-padding-end: 16px;
+      border-radius: 10px;
+
+      ion-icon {
+        margin-right: 10px;
+        color: var(--app-text-tertiary);
       }
 
-      .forgot-password {
-        text-align: right;
-        margin: var(--app-spacing-sm) 0 var(--app-spacing-2xl) 0;
-
-        .link-text {
-          font-size: var(--app-font-size-sm);
-          font-weight: var(--app-font-weight-medium);
-          cursor: pointer;
-        }
+      ion-input {
+        --padding-top: 14px;
+        --padding-bottom: 14px;
+        color: var(--app-input-text);
+        --placeholder-color: var(--app-input-placeholder);
       }
 
-      .login-button {
-        --background: var(--ion-color-primary);
-        --padding-top: var(--app-button-padding-vertical);
-        --padding-bottom: var(--app-button-padding-vertical);
-        font-weight: var(--app-font-weight-semibold);
-        font-size: var(--app-font-size-base);
-        margin-top: var(--app-spacing-sm);
+      .password-toggle {
+        cursor: pointer;
       }
     }
 
-    .social-login {
-      .social-button {
-        margin-bottom: var(--app-spacing-md);
-        --border-color: var(--app-border-color);
-        --border-width: 1px;
-        --color: var(--app-text-primary);
-        --padding-top: var(--app-button-padding-vertical);
-        --padding-bottom: var(--app-button-padding-vertical);
-        font-weight: var(--app-font-weight-medium);
+    .error-message {
+      display: block;
+      margin: -10px 0 10px 16px;
 
-        ion-icon {
-          margin-right: var(--app-spacing-sm);
-        }
+      .error-text {
+        font-size: 0.75rem;
       }
     }
 
-    .register-link {
-      text-align: center;
-      margin-top: var(--app-spacing-3xl);
-      display: flex;
-      justify-content: center;
-      gap: var(--app-spacing-xs);
-
-      .register-text {
-        font-size: var(--app-font-size-sm);
-      }
+    .forgot-password {
+      text-align: right;
+      margin: 4px 0 24px;
 
       .link-text {
-        font-size: var(--app-font-size-sm);
-        font-weight: var(--app-font-weight-semibold);
+        font-size: 0.85rem;
+        font-weight: 500;
         cursor: pointer;
+      }
+    }
+
+    .login-button {
+      --background: var(--ion-color-primary);
+      --padding-top: 14px;
+      --padding-bottom: 14px;
+      font-weight: 600;
+      font-size: 1rem;
+      margin-top: 4px;
+    }
+  }
+
+  .register-link {
+    text-align: center;
+    margin-top: 28px;
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+
+    .register-text {
+      font-size: 0.85rem;
+    }
+
+    .link-text {
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+  }
+}
+
+@media (max-width: 700px) {
+  .login-content {
+    --background: #fff;
+
+    .auth-card {
+      flex-direction: column;
+      width: 100%;
+      margin: 0;
+      border-radius: 0;
+      box-shadow: none;
+      min-height: 100%;
+    }
+
+    .left-side {
+      padding: 32px 24px;
+      min-height: auto;
+
+      .left-content {
+        .logo-img {
+          width: 56px;
+          height: 56px;
+          margin-bottom: 12px;
+        }
+
+        h1 {
+          font-size: 1.5rem;
+          margin-bottom: 8px;
+        }
+
+        p {
+          font-size: 0.85rem;
+        }
+      }
+    }
+
+    .right-side {
+      padding: 24px;
+
+      .right-content {
+        max-width: 100%;
       }
     }
   }

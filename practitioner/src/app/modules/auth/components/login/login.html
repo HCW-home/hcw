@@ -1,64 +1,77 @@
 <div class="login-page">
-  <form
-    action=""
-    [formGroup]="form"
-    (ngSubmit)="onSubmit()"
-    class="login-form">
-    <app-typography
-      color="var(--slate-800)"
-      [variant]="TypographyTypeEnum['h6-semibold']"
-      >Sign In</app-typography
-    >
-    <app-input
-      label="Email"
-      name="email"
-      (focus)="validationService.resetInputValidation(form, 'email')"
-      [invalid]="validationService.showError(form, 'email')"
-      [invalidMessage]="getErrorMessage('email')"
-      formControlName="email"
-      type="email"
-      [autocomplete]="'email'"
-      placeholder="example@gmail.com"></app-input>
-    <app-input
-      label="Password"
-      name="password"
-      [invalid]="validationService.showError(form, 'password')"
-      [invalidMessage]="getErrorMessage('password')"
-      type="password"
-      formControlName="password"
-      [autocomplete]="'current-password'"
-      placeholder="********"></app-input>
-    @if (errorMessage) {
-      <app-error-message [message]="errorMessage"></app-error-message>
-    }
-    <div class="remember-me-wrapper">
-      <app-typography
-        [variant]="TypographyTypeEnum['body-semibold']"
-        color="var(--primary-600)">
-        <a [routerLink]="'/' + RoutePaths.AUTH + '/forgot-password'"
-          >Forgot Password?</a
-        >
-      </app-typography>
-    </div>
-
-    <app-button
-      [type]="ButtonTypeEnum.submit"
-      [block]="true"
-      [style]="ButtonStyleEnum.primary"
-      text="Sign In"
-      [loading]="loadingButton"></app-button>
-
-    @if (openIdEnabled) {
-      <div class="divider">
-        <span>or</span>
+  <div class="auth-card">
+    <div class="left-side">
+      <div class="left-content">
+        <img src="/images/logo.svg" alt="HCW Logo" class="logo-img">
+        <h1>HCW@Home</h1>
+        <p>Practitioner portal for managing consultations and patient care.</p>
       </div>
+    </div>
+    <div class="right-side">
+      <div class="right-content">
+        <form
+          action=""
+          [formGroup]="form"
+          (ngSubmit)="onSubmit()"
+          class="login-form">
+          <app-typography
+            color="var(--slate-800)"
+            [variant]="TypographyTypeEnum['h6-semibold']"
+            >Sign In</app-typography
+          >
+          <app-input
+            label="Email"
+            name="email"
+            (focus)="validationService.resetInputValidation(form, 'email')"
+            [invalid]="validationService.showError(form, 'email')"
+            [invalidMessage]="getErrorMessage('email')"
+            formControlName="email"
+            type="email"
+            [autocomplete]="'email'"
+            placeholder="example@gmail.com"></app-input>
+          <app-input
+            label="Password"
+            name="password"
+            [invalid]="validationService.showError(form, 'password')"
+            [invalidMessage]="getErrorMessage('password')"
+            type="password"
+            formControlName="password"
+            [autocomplete]="'current-password'"
+            placeholder="********"></app-input>
+          @if (errorMessage) {
+            <app-error-message [message]="errorMessage"></app-error-message>
+          }
+          <div class="remember-me-wrapper">
+            <app-typography
+              [variant]="TypographyTypeEnum['body-semibold']"
+              color="var(--primary-600)">
+              <a [routerLink]="'/' + RoutePaths.AUTH + '/forgot-password'"
+                >Forgot Password?</a
+              >
+            </app-typography>
+          </div>
 
-      <app-button
-        [type]="ButtonTypeEnum.button"
-        [block]="true"
-        [style]="ButtonStyleEnum.stroke"
-        [text]="'Login with ' + openIdProviderName"
-        (click)="onOpenIDLogin()"></app-button>
-    }
-  </form>
+          <app-button
+            [type]="ButtonTypeEnum.submit"
+            [block]="true"
+            [style]="ButtonStyleEnum.primary"
+            text="Sign In"
+            [loading]="loadingButton"></app-button>
+
+          @if (openIdEnabled) {
+            <div class="divider">
+              <span>or</span>
+            </div>
+
+            <app-button
+              [type]="ButtonTypeEnum.button"
+              [block]="true"
+              [style]="ButtonStyleEnum.stroke"
+              [text]="'Login with ' + openIdProviderName"
+              (click)="onOpenIDLogin()"></app-button>
+          }
+        </form>
+      </div>
+    </div>
+  </div>
 </div>
