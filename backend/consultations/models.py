@@ -149,6 +149,40 @@ class Appointment(models.Model):
         ordering = ["scheduled_at"]
 
 
+class AppointmentRecording(models.Model):
+    appointment = models.ForeignKey(
+        Appointment,
+        on_delete=models.CASCADE,
+        related_name="recordings",
+        verbose_name=_("appointment")
+    )
+    egress_id = models.CharField(
+        _("egress ID"),
+        max_length=255,
+        unique=True
+    )
+    filepath = models.CharField(
+        _("S3 filepath"),
+        max_length=500,
+        help_text=_("S3 key set at recording start")
+    )
+    started_at = models.DateTimeField(_("started at"), auto_now_add=True)
+    stopped_at = models.DateTimeField(_("stopped at"), null=True, blank=True)
+    message = models.OneToOneField(
+        "Message",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="recording",
+        verbose_name=_("message")
+    )
+
+    class Meta:
+        verbose_name = _("appointment recording")
+        verbose_name_plural = _("appointment recordings")
+        ordering = ["-started_at"]
+
+
 class ParticipantStatus(Enum):
     draft = 'draft'
     invited = 'invited'
@@ -230,6 +264,13 @@ class Message(models.Model):
         null=True,
         blank=True,
         validators=[validate_file_infection],
+    )
+    recording_url = models.CharField(
+        _("recording S3 key"),
+        max_length=500,
+        null=True,
+        blank=True,
+        help_text=_("S3 key/path for call recordings")
     )
 
     class Meta:

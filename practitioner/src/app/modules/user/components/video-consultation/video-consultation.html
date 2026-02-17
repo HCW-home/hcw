@@ -136,6 +136,17 @@
             }
           </button>
 
+          <button
+            class="control-button record-button"
+            [class.active]="isRecording"
+            (click)="toggleRecording()">
+            @if (isRecording) {
+              <app-svg src="record-stop" [svgStyle]="{'width.px': 24, 'height.px': 24}"></app-svg>
+            } @else {
+              <app-svg src="record" [svgStyle]="{'width.px': 24, 'height.px': 24}"></app-svg>
+            }
+          </button>
+
           @if (!isMinimized) {
             <button
               class="control-button"

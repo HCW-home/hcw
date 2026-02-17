@@ -1,3 +1,5 @@
+import asyncio
+import boto3
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 from typing import List
@@ -6,10 +8,12 @@ from .fhir import (
     AppointmentFhir
 )
 from rest_framework.renderers import JSONRenderer
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from core.mixins import CreatedByMixin
 from django.contrib.auth import get_user_model
 from django.db.models import Q
+from django.http import StreamingHttpResponse
 from django.shortcuts import render
 from django.utils import timezone
 from drf_spectacular.utils import (
@@ -379,6 +383,109 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(appointment)
         return Response(serializer.data)
+
+    @action(detail=True, methods=["post"])
+    def start_recording(self, request, pk=None):
+        """Start recording the appointment (doctors only)"""
+        from .models import AppointmentRecording
+        appointment = self.get_object()
+        consultation = appointment.consultation
+
+        # Permission check: only doctors in Queue
+        if not self._is_doctor(request.user, consultation):
+            return Response(
+                {"error": _("Only doctors can start recording")},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Check if already recording
+        active_recording = AppointmentRecording.objects.filter(
+            appointment=appointment,
+            stopped_at__isnull=True
+        ).first()
+        if active_recording:
+            return Response(
+                {"error": _("Recording already in progress")},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        room_name = f"appointment_{appointment.pk}"
+
+        try:
+            server = Server.get_server()
+            egress_id, filepath = async_to_sync(server.instance.start_room_recording)(
+                room_name, appointment.pk
+            )
+
+            AppointmentRecording.objects.create(
+                appointment=appointment,
+                egress_id=egress_id,
+                filepath=filepath,
+            )
+
+            return Response({"status": "recording_started"})
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=True, methods=["post"])
+    def stop_recording(self, request, pk=None):
+        """Stop recording the appointment"""
+        from .models import AppointmentRecording
+        from .tasks import check_recording_ready
+        appointment = self.get_object()
+        consultation = appointment.consultation
+
+        # Permission check
+        if not self._is_doctor(request.user, consultation):
+            return Response(
+                {"error": _("Only doctors can stop recording")},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Find active recording
+        recording = AppointmentRecording.objects.filter(
+            appointment=appointment,
+            stopped_at__isnull=True
+        ).last()
+        if not recording:
+            return Response(
+                {"error": _("No recording in progress")},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            server = Server.get_server()
+            async_to_sync(server.instance.stop_room_recording)(recording.egress_id)
+
+            recording.stopped_at = timezone.now()
+            recording.save(update_fields=['stopped_at'])
+
+            check_recording_ready.apply_async(
+                args=[recording.pk],
+                countdown=settings.RECORDING_CHECK_INITIAL_DELAY
+            )
+
+            return Response({"status": "recording_stopped"})
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def _is_doctor(self, user, consultation):
+        """Check if user is a doctor (in Queue group)"""
+        if not consultation:
+            return False
+        # Check if user is in consultation's group (Queue)
+        if consultation.group and user in consultation.group.users.all():
+            return True
+        # Check if user owns the consultation
+        if consultation.owned_by == user or consultation.created_by == user:
+            return True
+        return False
 
 
 class ParticipantViewSet(viewsets.ModelViewSet):
@@ -801,7 +908,7 @@ class MessageViewSet(viewsets.ModelViewSet):
 
     serializer_class = ConsultationMessageSerializer
     permission_classes = [IsAuthenticated]
-    http_method_names = ["patch", "delete", "head", "options"]
+    http_method_names = ["post", "patch", "delete", "head", "options"]
 
     def get_queryset(self):
         user = self.request.user
@@ -864,6 +971,52 @@ class MessageViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(instance)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
+    def download_recording(self, request, pk=None):
+        """Download recording from S3 through proxy"""
+        message = self.get_object()
+
+        # Check if message has a recording
+        if not message.recording_url:
+            return Response(
+                {"error": "This message does not have a recording"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        try:
+            # Initialize S3 client
+            s3_client = boto3.client(
+                's3',
+                endpoint_url=settings.LIVEKIT_S3_ENDPOINT_URL,
+                aws_access_key_id=settings.LIVEKIT_S3_ACCESS_KEY,
+                aws_secret_access_key=settings.LIVEKIT_S3_SECRET_KEY,
+            )
+
+            # Get file from S3 using recording_url as the key
+            response = s3_client.get_object(
+                Bucket=settings.LIVEKIT_S3_BUCKET_NAME,
+                Key=message.recording_url
+            )
+
+            # Extract filename from S3 key
+            filename = message.recording_url.split('/')[-1]
+
+            # Stream the file back to the user
+            streaming_response = StreamingHttpResponse(
+                response['Body'].iter_chunks(chunk_size=8192),
+                content_type=response.get('ContentType', 'video/mp4')
+            )
+            streaming_response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            streaming_response['Content-Length'] = response.get('ContentLength', 0)
+
+            return streaming_response
+
+        except Exception as e:
+            return Response(
+                {"error": f"Failed to download recording: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class DashboardPractitionerView(APIView):

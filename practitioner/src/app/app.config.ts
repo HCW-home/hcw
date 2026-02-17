@@ -73,6 +73,8 @@ import {
   lucideMessageSquare,
   lucideStethoscope,
   lucideSparkles,
+  lucideCircleDot,
+  lucideSquare,
 } from '@ng-icons/lucide';
 import {authInterceptor} from './core/interceptors/auth.interceptor';
 
@@ -145,6 +147,8 @@ export const appConfig: ApplicationConfig = {
       lucideMessageSquare,
       lucideStethoscope,
       lucideSparkles,
+      lucideCircleDot,
+      lucideSquare,
     }),
     provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
     provideTranslateHttpLoader({

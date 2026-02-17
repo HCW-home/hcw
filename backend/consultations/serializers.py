@@ -456,6 +456,7 @@ class ConsultationMessageSerializer(serializers.ModelSerializer):
             "id",
             "content",
             "attachment",
+            "recording_url",
             "created_at",
             "updated_at",
             "created_by",

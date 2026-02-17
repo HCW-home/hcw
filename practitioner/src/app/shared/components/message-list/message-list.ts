@@ -23,6 +23,7 @@ export interface Message {
   timestamp: string;
   isCurrentUser: boolean;
   attachment?: MessageAttachment | null;
+  recording_url?: string | null;
   isEdited?: boolean;
   updatedAt?: string;
   deletedAt?: string | null;
@@ -229,7 +230,7 @@ export class MessageList implements OnInit, OnChanges, OnDestroy, AfterViewCheck
   }
 
   canEditMessage(message: Message): boolean {
-    return message.isCurrentUser && !message.deletedAt;
+    return message.isCurrentUser && !message.deletedAt && !message.recording_url;
   }
 
   canDeleteMessage(message: Message): boolean {
@@ -270,5 +271,37 @@ export class MessageList implements OnInit, OnChanges, OnDestroy, AfterViewCheck
     this.editingMessageId = null;
     this.editContent = '';
     this.isEditing = false;
+  }
+
+  downloadRecording(message: Message): void {
+    if (message.recording_url) {
+      const filename = this.getRecordingFilename(message.recording_url);
+      this.consultationService.downloadMessageRecording(message.id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (blob) => {
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+          },
+          error: (error) => {
+            console.error('Failed to download recording:', error);
+          }
+        });
+    }
+  }
+
+  getRecordingFilename(recordingUrl: string): string {
+    const parts = recordingUrl.split('/');
+    return parts[parts.length - 1]
+  }
+
+  isRecording(message: Message): boolean {
+    return !!message.recording_url;
   }
 }

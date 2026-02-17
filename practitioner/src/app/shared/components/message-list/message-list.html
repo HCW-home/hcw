@@ -87,10 +87,31 @@
                   }
                 } @else {
                   <div class="message-attachment">
-                    <app-svg [src]="getAttachmentIcon(message.attachment)" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
-                    <span class="attachment-name">{{ message.attachment.file_name }}</span>
+                    <div class="attachment-info">
+                      <app-svg [src]="getAttachmentIcon(message.attachment)" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                      <div class="attachment-details">
+                        <span class="attachment-name">{{ message.attachment.file_name }}</span>
+                      </div>
+                    </div>
                   </div>
                 }
+              }
+              @if (isRecording(message) && !isMessageDeleted(message)) {
+                <div
+                  class="message-attachment recording clickable"
+                  tabindex="0"
+                  role="button"
+                  (click)="downloadRecording(message)"
+                  (keydown.enter)="downloadRecording(message)"
+                  (keydown.space)="downloadRecording(message)">
+                  <div class="attachment-info">
+                    <app-svg src="video" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                    <div class="attachment-details">
+                      <span class="attachment-name">{{ getRecordingFilename(message.recording_url!) }}</span>
+                    </div>
+                  </div>
+                  <app-svg src="arrow-down" [svgStyle]="{'width.px': 20, 'height.px': 20, 'color': 'var(--primary-600)'}"></app-svg>
+                </div>
               }
             </div>
           }

@@ -293,6 +293,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
         message: event.data.message,
         timestamp: event.data.timestamp,
         isCurrentUser: false,
+        recording_url: event.data.recording_url,
         isEdited: event.data.is_edited,
         updatedAt: event.data.updated_at,
       };
@@ -311,6 +312,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
             timestamp: event.data.created_at,
             isCurrentUser: currentUser?.pk === event.data.created_by.id,
             attachment: event.data.attachment,
+            recording_url: event.data.recording_url,
             isEdited: event.data.is_edited,
             updatedAt: event.data.updated_at,
           };
@@ -387,6 +389,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
               timestamp: msg.created_at,
               isCurrentUser,
               attachment: msg.attachment,
+              recording_url: msg.recording_url,
               isEdited: msg.is_edited,
               updatedAt: msg.updated_at,
               deletedAt: msg.deleted_at,
@@ -425,6 +428,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
               timestamp: msg.created_at,
               isCurrentUser,
               attachment: msg.attachment,
+              recording_url: msg.recording_url,
               isEdited: msg.is_edited,
               updatedAt: msg.updated_at,
               deletedAt: msg.deleted_at,

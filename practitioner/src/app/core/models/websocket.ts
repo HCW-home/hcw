@@ -192,6 +192,7 @@ export interface ConsultationMessageEvent {
     username: string;
     message: string;
     timestamp: string;
+    recording_url?: string | null;
     is_edited?: boolean;
     updated_at?: string;
     state?: 'created' | 'updated';
@@ -207,6 +208,7 @@ export interface MessageEventData {
   id: number;
   content: string;
   attachment: MessageAttachment | null;
+  recording_url: string | null;
   created_at: string;
   updated_at: string;
   created_by: {

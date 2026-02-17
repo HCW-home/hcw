@@ -776,3 +776,15 @@ if S3_BUCKET_NAME and S3_ENDPOINT_URL and S3_ACCESS_KEY and S3_SECRET_KEY:
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
         },
     }
+
+# LiveKit Recording S3 Configuration
+LIVEKIT_S3_BUCKET_NAME = os.getenv("LIVEKIT_S3_BUCKET_NAME", None)
+LIVEKIT_S3_ENDPOINT_URL = os.getenv("LIVEKIT_S3_ENDPOINT_URL", None)
+LIVEKIT_S3_ACCESS_KEY = os.getenv("LIVEKIT_S3_ACCESS_KEY", None)
+LIVEKIT_S3_SECRET_KEY = os.getenv("LIVEKIT_S3_SECRET_KEY", None)
+LIVEKIT_S3_REGION = os.getenv("LIVEKIT_S3_REGION", "us-east-1")
+
+# Recording task configuration
+RECORDING_CHECK_INITIAL_DELAY = int(os.getenv("RECORDING_CHECK_INITIAL_DELAY", 120))  # seconds before first S3 check
+RECORDING_CHECK_MAX_RETRIES = int(os.getenv("RECORDING_CHECK_MAX_RETRIES", 4))        # number of retries after initial check
+RECORDING_CHECK_RETRY_DELAY = int(os.getenv("RECORDING_CHECK_RETRY_DELAY", 30))       # seconds between retries

@@ -1,14 +1,19 @@
 import logging
 from datetime import timedelta
 
+import boto3
+from asgiref.sync import async_to_sync
+from botocore.exceptions import ClientError
 from celery import shared_task
+from channels.layers import get_channel_layer
 from constance import config
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from messaging.models import Message
 
 from .assignments import AssignmentManager
-from .models import Appointment, AppointmentStatus, Request, Participant
+from .models import Appointment, AppointmentRecording, AppointmentStatus, Request, Participant
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -86,3 +91,79 @@ def handle_reminders():
                     object_pk=participant.pk,
                     object_model="consultations.Participant",
                 )
+
+
+@shared_task(
+    bind=True,
+    max_retries=settings.RECORDING_CHECK_MAX_RETRIES,
+    default_retry_delay=settings.RECORDING_CHECK_RETRY_DELAY,
+)
+def check_recording_ready(self, recording_id):
+    """
+    Check if a recording file has been uploaded to S3 after recording stops.
+    Initial delay is set via apply_async(countdown=120).
+    Retries up to 4 times with 30s between each retry (~3.5 min total window).
+    """
+    from .models import Message as ConsultationMessage
+    from .serializers import ConsultationMessageSerializer
+    from .signals import get_users_to_notification_consultation
+
+    try:
+        recording = AppointmentRecording.objects.get(pk=recording_id)
+    except AppointmentRecording.DoesNotExist:
+        logger.error(f"AppointmentRecording {recording_id} not found")
+        return
+
+    # Already processed (duplicate task guard)
+    if recording.message_id:
+        return
+
+    # Check if file exists in S3
+    s3 = boto3.client(
+        's3',
+        endpoint_url=settings.LIVEKIT_S3_ENDPOINT_URL,
+        aws_access_key_id=settings.LIVEKIT_S3_ACCESS_KEY,
+        aws_secret_access_key=settings.LIVEKIT_S3_SECRET_KEY,
+        region_name=settings.LIVEKIT_S3_REGION,
+        config=boto3.session.Config(signature_version='s3v4'),
+    )
+
+    try:
+        s3.head_object(Bucket=settings.LIVEKIT_S3_BUCKET_NAME, Key=recording.filepath)
+    except ClientError as e:
+        if e.response['Error']['Code'] in ('404', 'NoSuchKey'):
+            logger.info(f"Recording {recording.filepath} not in S3 yet, retrying...")
+            raise self.retry()
+        raise
+
+    # File confirmed in S3 — create message
+    appointment = recording.appointment
+    message = ConsultationMessage.objects.create(
+        consultation=appointment.consultation,
+        created_by=appointment.consultation.created_by,
+        content=f"Recording: Appointment on {appointment.scheduled_at.strftime('%Y-%m-%d %H:%M')}",
+        event="recording_available",
+        recording_url=recording.filepath
+    )
+
+    # Link message to recording row
+    recording.message = message
+    recording.save(update_fields=['message'])
+
+    # WebSocket notification
+    channel_layer = get_channel_layer()
+    message_data = ConsultationMessageSerializer(message).data
+    for user_pk in get_users_to_notification_consultation(appointment.consultation):
+        async_to_sync(channel_layer.group_send)(
+            f"user_{user_pk}",
+            {
+                "type": "message",
+                "event": "message",
+                "consultation_id": appointment.consultation.pk,
+                "message_id": message.id,
+                "state": "created",
+                "data": message_data
+            }
+        )
+
+    logger.info(f"Recording message created for AppointmentRecording {recording_id}: message {message.id}")

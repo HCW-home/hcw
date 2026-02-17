@@ -49,6 +49,10 @@ export interface Appointment {
   created_at: string;
   participants: Participant[];
   consultation_id: number;
+  is_recording?: boolean;
+  egress_id?: string | null;
+  recording_started_at?: string | null;
+  recording_stopped_at?: string | null;
 }
 
 export interface MessageAttachment {
@@ -60,6 +64,7 @@ export interface ConsultationMessage {
   id: number;
   content: string | null;
   attachment: MessageAttachment | null;
+  recording_url: string | null;
   created_at: string;
   updated_at: string;
   is_edited: boolean;

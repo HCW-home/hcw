@@ -344,4 +344,26 @@ export class ConsultationService {
       { is_confirmed: isConfirmed }
     );
   }
+
+  startRecording(appointmentId: number): Observable<{ status: string; egress_id: string }> {
+    return this.http.post<{ status: string; egress_id: string }>(
+      `${this.apiUrl}/appointments/${appointmentId}/start_recording/`,
+      {}
+    );
+  }
+
+  stopRecording(appointmentId: number): Observable<{ status: string }> {
+    return this.http.post<{ status: string }>(
+      `${this.apiUrl}/appointments/${appointmentId}/stop_recording/`,
+      {}
+    );
+  }
+
+  downloadMessageRecording(messageId: number): Observable<Blob> {
+    return this.http.post(
+      `${this.apiUrl}/messages/${messageId}/download_recording/`,
+      {},
+      { responseType: 'blob' }
+    );
+  }
 }

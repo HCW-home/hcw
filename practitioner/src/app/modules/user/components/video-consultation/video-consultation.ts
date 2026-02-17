@@ -72,6 +72,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   isCameraEnabled = false;
   isMicrophoneEnabled = false;
   isScreenShareEnabled = false;
+  isRecording = false;
   isLoading = false;
   errorMessage = '';
   showChat = signal(false);
@@ -387,6 +388,46 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       await this.livekitService.toggleScreenShare();
     } catch (error) {
       this.toasterService.show('error', 'Screen Share Error', 'Failed to toggle screen share');
+    }
+  }
+
+  async toggleRecording(): Promise<void> {
+    if (this.isRecording) {
+      await this.stopRecording();
+    } else {
+      await this.startRecording();
+    }
+  }
+
+  private async startRecording(): Promise<void> {
+    if (!this.appointmentId) {
+      this.toasterService.show('error', 'Recording Error', 'No appointment ID');
+      return;
+    }
+
+    try {
+      await this.consultationService.startRecording(this.appointmentId).toPromise();
+      this.isRecording = true;
+      this.cdr.markForCheck();
+      this.toasterService.show('success', 'Recording Started', 'Appointment recording has begun');
+    } catch (error) {
+      this.toasterService.show('error', 'Recording Error', 'Failed to start recording');
+    }
+  }
+
+  private async stopRecording(): Promise<void> {
+    if (!this.appointmentId) {
+      this.toasterService.show('error', 'Recording Error', 'No appointment ID');
+      return;
+    }
+
+    try {
+      await this.consultationService.stopRecording(this.appointmentId).toPromise();
+      this.isRecording = false;
+      this.cdr.markForCheck();
+      this.toasterService.show('success', 'Recording Stopped', 'Recording will be available in chat shortly');
+    } catch (error) {
+      this.toasterService.show('error', 'Recording Error', 'Failed to stop recording');
     }
   }
 

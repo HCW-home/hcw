@@ -230,6 +230,12 @@ const ICON_MAP: Record<string, string> = {
   'shield-check': 'heroShieldCheck',
   'shield-check.svg': 'heroShieldCheck',
   'svg/shield-check.svg': 'heroShieldCheck',
+  'record': 'lucideCircleDot',
+  'record.svg': 'lucideCircleDot',
+  'svg/record.svg': 'lucideCircleDot',
+  'record-stop': 'lucideSquare',
+  'record-stop.svg': 'lucideSquare',
+  'svg/record-stop.svg': 'lucideSquare',
 };
 
 @Component({
