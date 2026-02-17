@@ -1,4 +1,18 @@
-import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, signal, inject, OnDestroy, OnChanges, SimpleChanges, AfterViewChecked, OnInit } from '@angular/core';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  ViewChild,
+  ElementRef,
+  signal,
+  inject,
+  OnDestroy,
+  OnChanges,
+  SimpleChanges,
+  AfterViewChecked,
+  OnInit,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
@@ -45,11 +59,21 @@ export interface DeleteMessageData {
 
 @Component({
   selector: 'app-message-list',
-  imports: [CommonModule, FormsModule, Typography, Button, InputComponent, Svg, ModalComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    Typography,
+    Button,
+    InputComponent,
+    Svg,
+    ModalComponent,
+  ],
   templateUrl: './message-list.html',
   styleUrl: './message-list.scss',
 })
-export class MessageList implements OnInit, OnChanges, OnDestroy, AfterViewChecked {
+export class MessageList
+  implements OnInit, OnChanges, OnDestroy, AfterViewChecked
+{
   @Input() messages: Message[] = [];
   @Input() isConnected = false;
   @Input() currentUserId: number | null = null;
@@ -61,7 +85,8 @@ export class MessageList implements OnInit, OnChanges, OnDestroy, AfterViewCheck
   @Output() loadMore = new EventEmitter<void>();
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
-  @ViewChild('messagesContainer') messagesContainer!: ElementRef<HTMLDivElement>;
+  @ViewChild('messagesContainer')
+  messagesContainer!: ElementRef<HTMLDivElement>;
 
   editingMessageId: number | null = null;
   editContent = '';
@@ -93,14 +118,17 @@ export class MessageList implements OnInit, OnChanges, OnDestroy, AfterViewCheck
     if (changes['messages']) {
       this.loadImageAttachments();
       const currentLength = this.messages.length;
-      const wasLoadingMore = this.previousMessagesLength > 0 && currentLength > this.previousMessagesLength;
+      const wasLoadingMore =
+        this.previousMessagesLength > 0 &&
+        currentLength > this.previousMessagesLength;
 
       if (this.isInitialLoad || !wasLoadingMore) {
         this.shouldScrollToBottom = true;
       }
 
       if (wasLoadingMore && this.messagesContainer?.nativeElement) {
-        this.previousScrollHeight = this.messagesContainer.nativeElement.scrollHeight;
+        this.previousScrollHeight =
+          this.messagesContainer.nativeElement.scrollHeight;
       }
 
       this.previousMessagesLength = currentLength;
@@ -112,7 +140,10 @@ export class MessageList implements OnInit, OnChanges, OnDestroy, AfterViewCheck
       this.scrollToBottom();
       this.shouldScrollToBottom = false;
       this.isInitialLoad = false;
-    } else if (this.previousScrollHeight > 0 && this.messagesContainer?.nativeElement) {
+    } else if (
+      this.previousScrollHeight > 0 &&
+      this.messagesContainer?.nativeElement
+    ) {
       const container = this.messagesContainer.nativeElement;
       const newScrollHeight = container.scrollHeight;
       if (newScrollHeight > this.previousScrollHeight) {
@@ -151,15 +182,21 @@ export class MessageList implements OnInit, OnChanges, OnDestroy, AfterViewCheck
   private loadImageAttachments(): void {
     this.messages.forEach(message => {
       const isTempId = message.id > 1000000000000;
-      if (message.attachment && this.isImageAttachment(message.attachment) && !this.imageUrlCache.has(message.id) && !isTempId) {
-        this.consultationService.getMessageAttachment(message.id)
+      if (
+        message.attachment &&
+        this.isImageAttachment(message.attachment) &&
+        !this.imageUrlCache.has(message.id) &&
+        !isTempId
+      ) {
+        this.consultationService
+          .getMessageAttachment(message.id)
           .pipe(takeUntil(this.destroy$))
           .subscribe({
-            next: (blob) => {
+            next: blob => {
               const url = URL.createObjectURL(blob);
               this.imageUrlCache.set(message.id, url);
               this.imageUrls.set(new Map(this.imageUrlCache));
-            }
+            },
           });
       }
     });
@@ -173,7 +210,7 @@ export class MessageList implements OnInit, OnChanges, OnDestroy, AfterViewCheck
     if ((this.newMessage.trim() || this.selectedFile) && this.isConnected) {
       this.sendMessage.emit({
         content: this.newMessage.trim() || undefined,
-        attachment: this.selectedFile || undefined
+        attachment: this.selectedFile || undefined,
       });
       this.newMessage = '';
       this.selectedFile = null;
@@ -210,17 +247,29 @@ export class MessageList implements OnInit, OnChanges, OnDestroy, AfterViewCheck
   getAttachmentIcon(attachment: MessageAttachment): string {
     if (attachment.mime_type.startsWith('image/')) return 'image';
     if (attachment.mime_type === 'application/pdf') return 'file-text';
-    if (attachment.mime_type.includes('word') || attachment.mime_type.includes('document')) return 'file-text';
-    if (attachment.mime_type.includes('spreadsheet') || attachment.mime_type.includes('excel')) return 'file-text';
+    if (
+      attachment.mime_type.includes('word') ||
+      attachment.mime_type.includes('document')
+    )
+      return 'file-text';
+    if (
+      attachment.mime_type.includes('spreadsheet') ||
+      attachment.mime_type.includes('excel')
+    )
+      return 'file-text';
     return 'paperclip';
   }
 
   openImageViewer(message: Message): void {
     const url = this.getImageUrl(message.id);
-    if (message.attachment && this.isImageAttachment(message.attachment) && url) {
+    if (
+      message.attachment &&
+      this.isImageAttachment(message.attachment) &&
+      url
+    ) {
       this.viewingImage.set({
         url,
-        fileName: message.attachment.file_name
+        fileName: message.attachment.file_name,
       });
     }
   }
@@ -230,7 +279,9 @@ export class MessageList implements OnInit, OnChanges, OnDestroy, AfterViewCheck
   }
 
   canEditMessage(message: Message): boolean {
-    return message.isCurrentUser && !message.deletedAt && !message.recording_url;
+    return (
+      message.isCurrentUser && !message.deletedAt && !message.recording_url
+    );
   }
 
   canDeleteMessage(message: Message): boolean {
@@ -262,7 +313,7 @@ export class MessageList implements OnInit, OnChanges, OnDestroy, AfterViewCheck
 
     this.editMessage.emit({
       messageId: this.editingMessageId,
-      content: this.editContent.trim()
+      content: this.editContent.trim(),
     });
     this.onEditComplete();
   }
@@ -273,13 +324,14 @@ export class MessageList implements OnInit, OnChanges, OnDestroy, AfterViewCheck
     this.isEditing = false;
   }
 
-  downloadRecording(message: Message): void {
-    if (message.recording_url) {
-      const filename = this.getRecordingFilename(message.recording_url);
-      this.consultationService.downloadMessageRecording(message.id)
+  downloadAttachment(message: Message): void {
+    if (message.attachment) {
+      const filename = message.attachment.file_name;
+      this.consultationService
+        .getMessageAttachment(message.id)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
-          next: (blob) => {
+          next: blob => {
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
@@ -289,16 +341,40 @@ export class MessageList implements OnInit, OnChanges, OnDestroy, AfterViewCheck
             document.body.removeChild(link);
             window.URL.revokeObjectURL(url);
           },
-          error: (error) => {
+          error: error => {
+            console.error('Failed to download attachment:', error);
+          },
+        });
+    }
+  }
+
+  downloadRecording(message: Message): void {
+    if (message.recording_url) {
+      const filename = this.getRecordingFilename(message.recording_url);
+      this.consultationService
+        .downloadMessageRecording(message.id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: blob => {
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+          },
+          error: error => {
             console.error('Failed to download recording:', error);
-          }
+          },
         });
     }
   }
 
   getRecordingFilename(recordingUrl: string): string {
     const parts = recordingUrl.split('/');
-    return parts[parts.length - 1]
+    return parts[parts.length - 1];
   }
 
   isRecording(message: Message): boolean {
