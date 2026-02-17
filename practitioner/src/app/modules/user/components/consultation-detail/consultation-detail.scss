@@ -659,20 +659,15 @@
 
 .messages-sidebar {
   position: sticky;
-  top: 24px;
+  top: 32px;
   background: var(--White);
   border-radius: 20px;
   overflow: hidden;
-  height: calc(100vh - 180px);
-  min-height: 400px;
+  height: calc(100vh - 72px - 50px - 64px - 32px);
   display: flex;
   flex-direction: column;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   border: 1px solid var(--slate-100);
-
-  &.with-video {
-    height: calc(100vh - 140px);
-  }
 
   @media (max-width: 968px) {
     position: static;

@@ -38,8 +38,9 @@ ion-header {
       gap: var(--app-spacing-sm);
 
       .logo-img {
-        width: 36px;
-        height: 36px;
+        max-width: 120px;
+        max-height: 36px;
+        object-fit: contain;
       }
 
       .logo-text {
