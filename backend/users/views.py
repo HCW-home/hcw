@@ -775,10 +775,13 @@ class AppConfigView(APIView):
         main_org = Organisation.objects.filter(is_main=True).first()
         main_organization = OrganisationSerializer(main_org).data if main_org else None
 
+        from constance import config as constance_config
+
         return Response({
             **openid,
             "registration_enabled": settings.ENABLE_REGISTRATION,
             "main_organization": main_organization,
+            "branding": constance_config.site_name,
         })
 
 

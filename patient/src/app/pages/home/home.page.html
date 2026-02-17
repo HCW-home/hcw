@@ -3,10 +3,7 @@
     <div class="header-content">
       <div class="logo">
         <img src="assets/images/logo.svg" alt="HCW Logo" class="logo-img">
-        <div class="logo-text-group">
-          <span class="logo-text">HCW</span>
-          <span class="logo-subtitle">Patient</span>
-        </div>
+        <span class="logo-text">{{ branding() }}</span>
       </div>
       <ion-buttons slot="end">
         <ion-button class="notification-btn" (click)="goToNotifications()">
@@ -84,7 +81,7 @@
       } @else if (requests().length === 0) {
         <div class="empty-state">
           <ion-icon name="document-text-outline" class="empty-icon"></ion-icon>
-          <p class="empty-text">No requests yet</p>
+          <p class="empty-text">No pending requests yet</p>
           <button class="card-btn empty-cta" [class.card-btn-primary]="hasNoItems()" [class.card-btn-outline]="!hasNoItems()" (click)="goToNewRequest()">
             <ion-icon name="add-outline"></ion-icon>
             <span>Request a consultation</span>

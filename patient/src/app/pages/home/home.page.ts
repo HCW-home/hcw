@@ -57,6 +57,7 @@ export class HomePage implements OnInit, OnDestroy {
   isLoading = signal(false);
   unreadNotificationCount = signal(0);
   footerHtml = signal<string | null>(null);
+  branding = signal<string>('HCW');
 
   totalRequests = computed(() => this.requests().length);
   totalConsultations = computed(() => this.consultations().length);
@@ -164,6 +165,9 @@ export class HomePage implements OnInit, OnDestroy {
       .subscribe({
         next: (config) => {
           this.footerHtml.set(config?.main_organization?.footer || null);
+          if (config?.branding) {
+            this.branding.set(config.branding);
+          }
         }
       });
   }
