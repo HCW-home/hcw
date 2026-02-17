@@ -92,25 +92,42 @@ class RegisterSerializer(serializers.Serializer):
     email = serializers.EmailField(
         required=app_settings.SIGNUP_FIELDS["email"]["required"]
     )
-    password = serializers.CharField(write_only=True)
+    first_name = serializers.CharField(required=False, allow_blank=True)
+    last_name = serializers.CharField(required=False, allow_blank=True)
+    password1 = serializers.CharField(write_only=True)
+    password2 = serializers.CharField(write_only=True)
 
     def validate_email(self, email):
         email = get_adapter().clean_email(email)
         return email
 
-    def validate_password(self, password):
-        return get_adapter().clean_password(password)
+    def validate(self, attrs):
+        if attrs.get("password1") != attrs.get("password2"):
+            raise serializers.ValidationError(
+                {"password2": "Passwords do not match."}
+            )
+        return attrs
 
     def get_cleaned_data(self):
         return {
-            "password": self.validated_data.get("password", ""),
+            "password": self.validated_data.get("password1", ""),
             "email": self.validated_data.get("email", ""),
+            "first_name": self.validated_data.get("first_name", ""),
+            "last_name": self.validated_data.get("last_name", ""),
         }
 
     def save(self, request):
+        self.cleaned_data = self.get_cleaned_data()
+        email = self.cleaned_data.get("email", "")
+
+        # If user already exists, silently return existing user
+        # to avoid leaking information about registered emails
+        existing_user = UserModel.objects.filter(email=email).first()
+        if existing_user:
+            return existing_user
+
         adapter = get_adapter()
         user = adapter.new_user(request)
-        self.cleaned_data = self.get_cleaned_data()
         user = adapter.save_user(request, user, self, commit=False)
         if "password" in self.cleaned_data:
             try:
@@ -119,6 +136,8 @@ class RegisterSerializer(serializers.Serializer):
                 raise serializers.ValidationError(
                     detail=serializers.as_serializer_error(exc)
                 )
+        user.first_name = self.cleaned_data.get("first_name", "")
+        user.last_name = self.cleaned_data.get("last_name", "")
         user.save()
         setup_user_email(request, user, [])
         return user

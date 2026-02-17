@@ -1,9 +1,10 @@
 import mimetypes
 import os
 import logging
+import uuid
 
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
-from dj_rest_auth.registration.views import SocialLoginView
+from dj_rest_auth.registration.views import SocialLoginView, RegisterView as DjRestAuthRegisterView
 from allauth.socialaccount.providers.openid_connect.views import OpenIDConnectOAuth2Adapter
 from consultations.models import Appointment, Consultation, Participant, Request
 from consultations.models import Message as ConsultationMessage
@@ -789,7 +790,68 @@ class OpenIDConfigView(APIView):
             "client_id": client_id,
             "authorization_url": authorization_url,
             "provider_name": provider_name,
+            "registration_enabled": settings.ENABLE_REGISTRATION,
         })
+
+
+class RegisterView(DjRestAuthRegisterView):
+    """Registration endpoint controlled by ENABLE_REGISTRATION setting."""
+
+    def create(self, request, *args, **kwargs):
+        if not settings.ENABLE_REGISTRATION:
+            return Response(
+                {"detail": "Registration is currently disabled."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        super().create(request, *args, **kwargs)
+
+        # Send email verification message
+        email = request.data.get("email")
+        if email:
+            user = User.objects.filter(email=email).first()
+            if user and not user.email_verified:
+                user.email_verification_token = str(uuid.uuid4())
+                user.save(update_fields=["email_verification_token"])
+                Message.objects.create(
+                    sent_to=user,
+                    template_system_name="email_verification",
+                    object_pk=user.pk,
+                    object_model="users.User",
+                    in_notification=False,
+                    additionnal_link_args={"token": user.email_verification_token},
+                )
+
+        return Response(
+            {"detail": "A verification email has been sent to your email address."},
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class EmailVerifyView(APIView):
+    """Verify user email address via token."""
+    permission_classes = []
+    authentication_classes = []
+
+    def get(self, request):
+        token = request.query_params.get("token")
+        if not token:
+            return Response(
+                {"detail": "Verification token is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = User.objects.filter(email_verification_token=token).first()
+        if not user:
+            return Response(
+                {"detail": "Invalid or expired verification token."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user.email_verified = True
+        user.email_verification_token = None
+        user.save(update_fields=["email_verified", "email_verification_token"])
+
+        return Response({"detail": "Email verified successfully."})
 
 
 class TestRTCView(APIView):

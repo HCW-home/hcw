@@ -62,7 +62,11 @@ export class AppComponent implements OnInit, OnDestroy {
     const uid = urlParams.get('uid');
     const token = urlParams.get('token');
 
-    if (uid && token) {
+    if (action === 'verify-email' && token) {
+      this.navCtrl.navigateRoot(['/verify-email'], {
+        queryParams: { token }
+      });
+    } else if (uid && token) {
       this.navCtrl.navigateRoot(['/reset-password'], {
         queryParams: { uid, token }
       });

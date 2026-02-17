@@ -100,6 +100,19 @@ DEFAULT_NOTIFICATION_MESSAGES = {
         "helper_text": "Notification sent when a new message is posted in a consultation",
         "action_label": _("Click here to answer"),
     },
+    "email_verification": {
+        "template_subject": _("Verify your email address"),
+        "template_content": _(
+            "Please verify your email address by clicking the link below."
+        ),
+        "template_content_html": _(
+            "<p>Please verify your email address by clicking the link below.</p>"
+        ),
+        "model": "users.User",
+        "helper_text": "Message sent to user to verify their email address after registration",
+        "action": "verify-email",
+        "action_label": _("Verify my email"),
+    },
     "reset_password": {
         "template_subject": _("Reset your password"),
         "template_content": _(

@@ -62,13 +62,15 @@
       </ion-button>
     </form>
 
-    <div class="register-link">
-      <ion-text class="register-text" color="medium">
-        Don't have an account?
-      </ion-text>
-      <ion-text color="primary" (click)="goToRegister()" class="link-text">
-        Sign Up
-      </ion-text>
-    </div>
+    @if (registrationEnabled) {
+      <div class="register-link">
+        <ion-text class="register-text" color="medium">
+          Don't have an account?
+        </ion-text>
+        <ion-text color="primary" (click)="goToRegister()" class="link-text">
+          Sign Up
+        </ion-text>
+      </div>
+    }
   </div>
 </ion-content>

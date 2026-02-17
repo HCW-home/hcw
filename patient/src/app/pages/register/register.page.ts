@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -32,10 +32,13 @@ import { AuthService } from '../../core/services/auth.service';
     IonText
   ]
 })
-export class RegisterPage {
+export class RegisterPage implements OnInit {
   registerForm: FormGroup;
   showPassword = false;
   showConfirmPassword = false;
+  registrationEnabled = true;
+  loading = true;
+  successMessage: string | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -48,10 +51,22 @@ export class RegisterPage {
       first_name: ['', [Validators.required, Validators.minLength(2)]],
       last_name: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
-      username: ['', [Validators.required, Validators.minLength(3)]],
       password1: ['', [Validators.required, Validators.minLength(8)]],
       password2: ['', [Validators.required]]
     }, { validators: this.passwordMatchValidator });
+  }
+
+  ngOnInit() {
+    this.authService.getConfig().subscribe({
+      next: (config) => {
+        this.registrationEnabled = config.registration_enabled;
+        this.loading = false;
+      },
+      error: () => {
+        this.registrationEnabled = false;
+        this.loading = false;
+      },
+    });
   }
 
   passwordMatchValidator(form: FormGroup) {
@@ -81,16 +96,9 @@ export class RegisterPage {
       await loading.present();
 
       this.authService.register(this.registerForm.value).subscribe({
-        next: async () => {
+        next: async (response) => {
           await loading.dismiss();
-          const toast = await this.toastCtrl.create({
-            message: 'Account created successfully! Please log in.',
-            duration: 3000,
-            position: 'top',
-            color: 'success'
-          });
-          await toast.present();
-          this.navCtrl.navigateBack('/login');
+          this.successMessage = response.detail || 'A verification email has been sent to your email address.';
         },
         error: async (error) => {
           await loading.dismiss();
