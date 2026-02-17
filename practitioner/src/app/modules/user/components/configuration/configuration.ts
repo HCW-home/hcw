@@ -27,6 +27,8 @@ import { ConfirmationService } from '../../../../core/services/confirmation.serv
 import { BookingSlot, CreateBookingSlot } from '../../../../core/models/consultation';
 import { LocalVideoTrack, LocalAudioTrack } from 'livekit-client';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
+import { TranslatePipe } from '@ngx-translate/core';
+import { TranslationService } from '../../../../core/services/translation.service';
 
 type TestStatus = 'idle' | 'testing' | 'working' | 'error' | 'playing';
 
@@ -47,6 +49,7 @@ interface WeekDay {
     SlotModal,
     Button,
     Svg,
+    TranslatePipe,
   ],
   templateUrl: './configuration.html',
   styleUrl: './configuration.scss',
@@ -66,6 +69,7 @@ export class Configuration implements OnInit, OnDestroy {
   private userService = inject(UserService);
   private confirmationService = inject(ConfirmationService);
   private destroyRef = inject(DestroyRef);
+  private t = inject(TranslationService);
 
   activeTab = signal<'system-test' | 'availability'>('system-test');
 
@@ -94,22 +98,22 @@ export class Configuration implements OnInit, OnDestroy {
   slotForm: FormGroup;
 
   weekDays: WeekDay[] = [
-    { key: 'monday', label: 'Monday', short: 'Mon' },
-    { key: 'tuesday', label: 'Tuesday', short: 'Tue' },
-    { key: 'wednesday', label: 'Wednesday', short: 'Wed' },
-    { key: 'thursday', label: 'Thursday', short: 'Thu' },
-    { key: 'friday', label: 'Friday', short: 'Fri' },
-    { key: 'saturday', label: 'Saturday', short: 'Sat' },
-    { key: 'sunday', label: 'Sunday', short: 'Sun' }
+    { key: 'monday', label: 'configuration.dayMonday', short: 'configuration.dayMon' },
+    { key: 'tuesday', label: 'configuration.dayTuesday', short: 'configuration.dayTue' },
+    { key: 'wednesday', label: 'configuration.dayWednesday', short: 'configuration.dayWed' },
+    { key: 'thursday', label: 'configuration.dayThursday', short: 'configuration.dayThu' },
+    { key: 'friday', label: 'configuration.dayFriday', short: 'configuration.dayFri' },
+    { key: 'saturday', label: 'configuration.daySaturday', short: 'configuration.daySat' },
+    { key: 'sunday', label: 'configuration.daySunday', short: 'configuration.daySun' }
   ];
 
   tabItems = computed<TabItem[]>(() => [
-    { id: 'system-test', label: 'System Test' },
-    { id: 'availability', label: 'Availability', count: this.bookingSlots().length }
+    { id: 'system-test', label: this.t.instant('configuration.tabSystemTest') },
+    { id: 'availability', label: this.t.instant('configuration.tabAvailability'), count: this.bookingSlots().length }
   ]);
 
   modalTitle = computed(() =>
-    this.modalMode() === 'create' ? 'Create New Time Slot' : 'Edit Time Slot'
+    this.modalMode() === 'create' ? this.t.instant('configuration.createNewSlot') : this.t.instant('configuration.editTimeSlot')
   );
 
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
@@ -194,7 +198,7 @@ export class Configuration implements OnInit, OnDestroy {
     this.livekitService.error$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(error => {
-        this.toasterService.show('error', 'Error', error);
+        this.toasterService.show('error', this.t.instant('common.error'), error);
       });
   }
 
@@ -215,7 +219,7 @@ export class Configuration implements OnInit, OnDestroy {
         .toPromise();
 
       if (!config) {
-        throw new Error('Failed to get test connection info');
+        throw new Error(this.t.instant('configuration.failedToGetTestInfo'));
       }
 
       await this.livekitService.connect({
@@ -226,8 +230,8 @@ export class Configuration implements OnInit, OnDestroy {
 
       return true;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to connect to server';
-      this.toasterService.show('error', 'Connection Error', message);
+      const message = error instanceof Error ? error.message : this.t.instant('configuration.failedToConnect');
+      this.toasterService.show('error', this.t.instant('configuration.connectionError'), message);
       return false;
     } finally {
       this.isConnecting = false;
@@ -236,12 +240,12 @@ export class Configuration implements OnInit, OnDestroy {
 
   getConnectionStatusText(): string {
     switch (this.connectionStatus()) {
-      case 'disconnected': return 'Not connected';
-      case 'connecting': return 'Connecting...';
-      case 'connected': return 'Connected';
-      case 'reconnecting': return 'Reconnecting...';
-      case 'failed': return 'Connection failed';
-      default: return 'Unknown';
+      case 'disconnected': return this.t.instant('configuration.connectionNotConnected');
+      case 'connecting': return this.t.instant('configuration.connectionConnecting');
+      case 'connected': return this.t.instant('configuration.connectionConnected');
+      case 'reconnecting': return this.t.instant('configuration.connectionReconnecting');
+      case 'failed': return this.t.instant('configuration.connectionFailed');
+      default: return '';
     }
   }
 
@@ -257,23 +261,23 @@ export class Configuration implements OnInit, OnDestroy {
 
   getCameraStatusText(): string {
     switch (this.cameraStatus()) {
-      case 'idle': return 'Not tested';
-      case 'testing': return 'Testing...';
-      case 'working': return 'Working';
-      case 'error': return 'Error';
-      default: return 'Unknown';
+      case 'idle': return this.t.instant('configuration.statusNotTested');
+      case 'testing': return this.t.instant('configuration.statusTesting');
+      case 'working': return this.t.instant('configuration.statusWorking');
+      case 'error': return this.t.instant('configuration.statusError');
+      default: return '';
     }
   }
 
   getCameraPlaceholderText(): string {
     if (this.connectionStatus() === 'connecting') {
-      return 'Connecting to server...';
+      return this.t.instant('configuration.connectingToServer');
     }
     switch (this.cameraStatus()) {
-      case 'idle': return 'Click "Test" to begin';
-      case 'testing': return 'Accessing camera...';
-      case 'error': return 'Camera access denied or unavailable';
-      default: return 'Camera preview will appear here';
+      case 'idle': return this.t.instant('configuration.cameraClickToBegin');
+      case 'testing': return this.t.instant('configuration.cameraAccessing');
+      case 'error': return this.t.instant('configuration.cameraDenied');
+      default: return this.t.instant('configuration.cameraPreviewHere');
     }
   }
 
@@ -289,8 +293,8 @@ export class Configuration implements OnInit, OnDestroy {
 
       await this.livekitService.enableCamera(true);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Camera test failed';
-      this.toasterService.show('error', 'Camera Error', message);
+      const message = error instanceof Error ? error.message : this.t.instant('configuration.cameraTestFailed');
+      this.toasterService.show('error', this.t.instant('configuration.cameraError'), message);
       this.cameraStatus.set('error');
     }
   }
@@ -309,19 +313,19 @@ export class Configuration implements OnInit, OnDestroy {
       }
       await this.livekitService.enableCamera(false);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to stop camera';
-      this.toasterService.show('error', 'Camera Error', message);
+      const message = error instanceof Error ? error.message : this.t.instant('configuration.failedToStopCamera');
+      this.toasterService.show('error', this.t.instant('configuration.cameraError'), message);
     }
     this.cameraStatus.set('idle');
   }
 
   getMicrophoneStatusText(): string {
     switch (this.microphoneStatus()) {
-      case 'idle': return 'Not tested';
-      case 'testing': return 'Testing...';
-      case 'working': return 'Working';
-      case 'error': return 'Error';
-      default: return 'Unknown';
+      case 'idle': return this.t.instant('configuration.statusNotTested');
+      case 'testing': return this.t.instant('configuration.statusTesting');
+      case 'working': return this.t.instant('configuration.statusWorking');
+      case 'error': return this.t.instant('configuration.statusError');
+      default: return '';
     }
   }
 
@@ -337,8 +341,8 @@ export class Configuration implements OnInit, OnDestroy {
 
       await this.livekitService.enableMicrophone(true);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Microphone test failed';
-      this.toasterService.show('error', 'Microphone Error', message);
+      const message = error instanceof Error ? error.message : this.t.instant('configuration.microphoneTestFailed');
+      this.toasterService.show('error', this.t.instant('configuration.microphoneError'), message);
       this.microphoneStatus.set('error');
     }
   }
@@ -348,8 +352,8 @@ export class Configuration implements OnInit, OnDestroy {
     try {
       await this.livekitService.enableMicrophone(false);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to stop microphone';
-      this.toasterService.show('error', 'Microphone Error', message);
+      const message = error instanceof Error ? error.message : this.t.instant('configuration.failedToStopMicrophone');
+      this.toasterService.show('error', this.t.instant('configuration.microphoneError'), message);
     }
     this.microphoneStatus.set('idle');
   }
@@ -366,7 +370,7 @@ export class Configuration implements OnInit, OnDestroy {
 
       this.visualizeAudio();
     } catch (error) {
-      this.toasterService.show('error', 'Audio Error', 'Audio visualization setup failed');
+      this.toasterService.show('error', this.t.instant('configuration.audioError'), this.t.instant('configuration.audioVisualizationFailed'));
     }
   }
 
@@ -410,11 +414,11 @@ export class Configuration implements OnInit, OnDestroy {
 
   getSpeakerStatusText(): string {
     switch (this.speakerStatus()) {
-      case 'idle': return 'Not tested';
-      case 'playing': return 'Playing';
-      case 'working': return 'Working';
-      case 'error': return 'Error';
-      default: return 'Unknown';
+      case 'idle': return this.t.instant('configuration.statusNotTested');
+      case 'playing': return this.t.instant('configuration.statusPlaying');
+      case 'working': return this.t.instant('configuration.statusWorking');
+      case 'error': return this.t.instant('configuration.statusError');
+      default: return '';
     }
   }
 
@@ -433,11 +437,11 @@ export class Configuration implements OnInit, OnDestroy {
           }, 3000);
         })
         .catch(() => {
-          this.toasterService.show('error', 'Speaker Error', 'Failed to play test sound');
+          this.toasterService.show('error', this.t.instant('configuration.speakerError'), this.t.instant('configuration.speakerTestFailed'));
           this.speakerStatus.set('error');
         });
     } catch (error) {
-      this.toasterService.show('error', 'Speaker Error', 'Speaker test setup failed');
+      this.toasterService.show('error', this.t.instant('configuration.speakerError'), this.t.instant('configuration.speakerSetupFailed'));
       this.speakerStatus.set('error');
     }
   }
@@ -527,7 +531,7 @@ export class Configuration implements OnInit, OnDestroy {
         error: (error) => {
           this.logger.error('Error loading booking slots:', error);
           this.isLoading.set(false);
-          this.toasterService.show('error', 'Error Loading Booking Slots', getErrorMessage(error));
+          this.toasterService.show('error', this.t.instant('configuration.errorLoadingSlots'), getErrorMessage(error));
         }
       });
   }
@@ -600,8 +604,8 @@ export class Configuration implements OnInit, OnDestroy {
         .subscribe({
           next: () => {
             this.toasterService.show('success',
-              this.modalMode() === 'edit' ? 'Time Slot Updated' : 'Time Slot Created',
-              this.modalMode() === 'edit' ? 'Time slot updated successfully' : 'Time slot created successfully'
+              this.modalMode() === 'edit' ? this.t.instant('configuration.slotUpdated') : this.t.instant('configuration.slotCreated'),
+              this.modalMode() === 'edit' ? this.t.instant('configuration.slotUpdatedMessage') : this.t.instant('configuration.slotCreatedMessage')
             );
             this.isSaving.set(false);
             this.closeSlotModal();
@@ -610,21 +614,21 @@ export class Configuration implements OnInit, OnDestroy {
           error: (error) => {
             this.logger.error('Error saving time slot:', error);
             this.isSaving.set(false);
-            this.toasterService.show('error', 'Error Saving Time Slot', 'Failed to save time slot');
+            this.toasterService.show('error', this.t.instant('configuration.errorSavingSlot'), this.t.instant('configuration.failedToSaveSlot'));
           }
         });
     } else {
       this.validationService.validateAllFormFields(this.slotForm);
-      this.toasterService.show('error', 'Validation Error', 'Please fill in all required time slot fields');
+      this.toasterService.show('error', this.t.instant('configuration.validationError'), this.t.instant('configuration.fillRequiredFields'));
     }
   }
 
   async confirmDeleteSlot(slot: BookingSlot): Promise<void> {
     const confirmed = await this.confirmationService.confirm({
-      title: 'Delete Time Slot',
-      message: 'Are you sure you want to delete this time slot? This action cannot be undone.',
-      confirmText: 'Delete',
-      cancelText: 'Cancel',
+      title: this.t.instant('configuration.deleteSlotTitle'),
+      message: this.t.instant('configuration.deleteSlotMessage'),
+      confirmText: this.t.instant('configuration.deleteConfirm'),
+      cancelText: this.t.instant('configuration.deleteCancel'),
       confirmStyle: 'danger'
     });
 
@@ -638,12 +642,12 @@ export class Configuration implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
-          this.toasterService.show('success', 'Time Slot Deleted', 'Time slot deleted successfully');
+          this.toasterService.show('success', this.t.instant('configuration.slotDeleted'), this.t.instant('configuration.slotDeletedMessage'));
           this.loadBookingSlots();
         },
         error: (error) => {
           this.logger.error('Error deleting time slot:', error);
-          this.toasterService.show('error', 'Error Deleting Time Slot', 'Failed to delete time slot');
+          this.toasterService.show('error', this.t.instant('configuration.errorDeletingSlot'), this.t.instant('configuration.failedToDeleteSlot'));
         }
       });
   }
@@ -654,13 +658,13 @@ export class Configuration implements OnInit, OnDestroy {
 
   getActiveDaysForSlot(slot: BookingSlot): string[] {
     const activeDays = [];
-    if (slot.monday) activeDays.push('Mon');
-    if (slot.tuesday) activeDays.push('Tue');
-    if (slot.wednesday) activeDays.push('Wed');
-    if (slot.thursday) activeDays.push('Thu');
-    if (slot.friday) activeDays.push('Fri');
-    if (slot.saturday) activeDays.push('Sat');
-    if (slot.sunday) activeDays.push('Sun');
+    if (slot.monday) activeDays.push(this.t.instant('configuration.dayMon'));
+    if (slot.tuesday) activeDays.push(this.t.instant('configuration.dayTue'));
+    if (slot.wednesday) activeDays.push(this.t.instant('configuration.dayWed'));
+    if (slot.thursday) activeDays.push(this.t.instant('configuration.dayThu'));
+    if (slot.friday) activeDays.push(this.t.instant('configuration.dayFri'));
+    if (slot.saturday) activeDays.push(this.t.instant('configuration.daySat'));
+    if (slot.sunday) activeDays.push(this.t.instant('configuration.daySun'));
     return activeDays;
   }
 
@@ -671,7 +675,7 @@ export class Configuration implements OnInit, OnDestroy {
   }
 
   getBreakTimeRange(slot: BookingSlot): string {
-    if (!slot.start_break || !slot.end_break) return 'No break';
+    if (!slot.start_break || !slot.end_break) return this.t.instant('configuration.noBreak');
     const start = this.formatTimeForInput(slot.start_break);
     const end = this.formatTimeForInput(slot.end_break);
     return `${start} - ${end}`;
@@ -684,7 +688,7 @@ export class Configuration implements OnInit, OnDestroy {
   getFieldError(formGroup: FormGroup, fieldName: string): string {
     const field = formGroup.get(fieldName);
     if (field?.errors && field?.touched) {
-      if (field.errors['required']) return `${fieldName} is required`;
+      if (field.errors['required']) return this.t.instant('configuration.fieldRequired', { field: fieldName });
     }
     return '';
   }
