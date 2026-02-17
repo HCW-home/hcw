@@ -171,7 +171,7 @@
         </div>
       }
 
-      @if (connectionStatus === 'disconnected' && !isLoading && callDuration > 0) {
+      @if (phase() === 'in-call' && connectionStatus === 'disconnected' && !isLoading && callDuration > 0) {
         <div class="call-ended-overlay">
           <ion-icon name="checkmark-circle" color="success"></ion-icon>
           <ion-text>Consultation Ended</ion-text>

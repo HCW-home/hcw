@@ -1,13 +1,8 @@
 import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import {
-  IonHeader,
-  IonToolbar,
-  IonButtons,
-  IonButton,
   IonIcon,
   IonContent,
-  IonFooter,
   IonRefresher,
   IonRefresherContent,
   IonSpinner,
@@ -17,8 +12,9 @@ import {
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { ConsultationService } from '../../core/services/consultation.service';
-import { NotificationService } from '../../core/services/notification.service';
 import { User } from '../../core/models/user.model';
+import { AppHeaderComponent } from '../../shared/app-header/app-header.component';
+import { AppFooterComponent } from '../../shared/app-footer/app-footer.component';
 import { ConsultationRequest, Consultation, Speciality, Appointment } from '../../core/models/consultation.model';
 
 interface RequestStatus {
@@ -34,16 +30,13 @@ interface RequestStatus {
   imports: [
     CommonModule,
     DatePipe,
-    IonHeader,
-    IonToolbar,
-    IonButtons,
-    IonButton,
     IonIcon,
     IonContent,
-    IonFooter,
     IonRefresher,
     IonRefresherContent,
-    IonSpinner
+    IonSpinner,
+    AppHeaderComponent,
+    AppFooterComponent,
   ]
 })
 export class HomePage implements OnInit, OnDestroy {
@@ -55,9 +48,6 @@ export class HomePage implements OnInit, OnDestroy {
   consultations = signal<Consultation[]>([]);
   appointments = signal<Appointment[]>([]);
   isLoading = signal(false);
-  unreadNotificationCount = signal(0);
-  footerHtml = signal<string | null>(null);
-  branding = signal<string>('HCW');
 
   totalRequests = computed(() => this.requests().length);
   totalConsultations = computed(() => this.consultations().length);
@@ -68,7 +58,6 @@ export class HomePage implements OnInit, OnDestroy {
     private navCtrl: NavController,
     private authService: AuthService,
     private consultationService: ConsultationService,
-    private notificationService: NotificationService,
     private toastController: ToastController
   ) {}
 
@@ -85,8 +74,6 @@ export class HomePage implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadUserData();
     this.loadDashboard();
-    this.loadNotificationCount();
-    this.loadConfig();
   }
 
   ngOnDestroy(): void {
@@ -149,38 +136,6 @@ export class HomePage implements OnInit, OnDestroy {
 
   viewRequestDetails(request: ConsultationRequest): void {
     this.navCtrl.navigateForward(`/request-detail/${request.id}`);
-  }
-
-  goToProfile(): void {
-    this.navCtrl.navigateForward('/profile');
-  }
-
-  goToNotifications(): void {
-    this.navCtrl.navigateForward('/notifications');
-  }
-
-  loadConfig(): void {
-    this.authService.getConfig()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (config) => {
-          this.footerHtml.set(config?.main_organization?.footer || null);
-          if (config?.branding) {
-            this.branding.set(config.branding);
-          }
-        }
-      });
-  }
-
-  loadNotificationCount(): void {
-    this.notificationService.getNotifications({ limit: 10 })
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response) => {
-          const unread = response.results.filter(n => n.status !== 'read').length;
-          this.unreadNotificationCount.set(unread);
-        }
-      });
   }
 
   getStatusConfig(status: string | undefined): RequestStatus {
@@ -283,20 +238,6 @@ export class HomePage implements OnInit, OnDestroy {
     return statusMap[normalizedStatus] || statusMap['requested'];
   }
 
-  getUserInitials(): string {
-    const user = this.currentUser();
-    if (user) {
-      const first = user.first_name?.charAt(0) || '';
-      const last = user.last_name?.charAt(0) || '';
-      return (first + last).toUpperCase() || 'U';
-    }
-    return 'U';
-  }
-
-  getUserPicture(): string {
-    return this.currentUser()?.picture || '';
-  }
-
   getAppointmentStatusConfig(status: string): { label: string; color: 'warning' | 'info' | 'primary' | 'success' | 'muted' } {
     const normalizedStatus = (status || 'draft').toLowerCase();
     const statusMap: Record<string, { label: string; color: 'warning' | 'info' | 'primary' | 'success' | 'muted' }> = {
@@ -338,8 +279,10 @@ export class HomePage implements OnInit, OnDestroy {
 
   joinNextAppointment(): void {
     const appt = this.nextAppointment();
-    if (appt?.consultation_id) {
-      this.navCtrl.navigateForward(`/consultation/${appt.consultation_id}/video`);
+    if (appt) {
+      this.navCtrl.navigateForward(`/consultation/${appt.consultation_id || 0}/video`, {
+        queryParams: { appointmentId: appt.id }
+      });
     }
   }
 
@@ -350,8 +293,8 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   joinAppointment(appointment: Appointment): void {
-    if (appointment.consultation_id) {
-      this.navCtrl.navigateForward(`/consultation/${appointment.consultation_id}/video`);
-    }
+    this.navCtrl.navigateForward(`/consultation/${appointment.consultation_id || 0}/video`, {
+      queryParams: { appointmentId: appointment.id }
+    });
   }
 }

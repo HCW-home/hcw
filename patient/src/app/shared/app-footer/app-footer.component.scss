@@ -1,0 +1,20 @@
+.app-footer {
+  ion-toolbar {
+    --background: var(--app-card-background);
+    --border-width: 0;
+    border-top: 1px solid var(--app-border-color);
+    padding: var(--app-spacing-sm) var(--app-spacing-lg);
+  }
+
+  .footer-html {
+    font-size: 0.8125rem;
+    color: var(--app-text-secondary);
+    line-height: 1.5;
+    text-align: left;
+
+    a {
+      color: var(--ion-color-primary);
+      text-decoration: none;
+    }
+  }
+}

@@ -18,7 +18,6 @@ import {
   IonButton,
   IonInput,
   IonButtons,
-  IonBackButton,
   IonModal,
   IonSelect,
   IonSelectOption,
@@ -29,6 +28,8 @@ import {
 import { AuthService } from '../../core/services/auth.service';
 import { User } from '../../core/models/user.model';
 import { TIMEZONES } from '../../core/constants/timezone';
+import { AppHeaderComponent } from '../../shared/app-header/app-header.component';
+import { AppFooterComponent } from '../../shared/app-footer/app-footer.component';
 
 interface ProfileMenuItem {
   title: string;
@@ -62,11 +63,12 @@ interface ProfileMenuItem {
     IonButton,
     IonInput,
     IonButtons,
-    IonBackButton,
     IonModal,
     IonSelect,
     IonSelectOption,
-    IonSpinner
+    IonSpinner,
+    AppHeaderComponent,
+    AppFooterComponent,
   ]
 })
 export class ProfilePage implements OnInit {

@@ -1,30 +1,4 @@
-<ion-header class="ion-no-border">
-  <ion-toolbar>
-    <div class="header-content">
-      <div class="logo">
-        <img src="assets/images/logo.svg" alt="HCW Logo" class="logo-img">
-        <span class="logo-text">{{ branding() }}</span>
-      </div>
-      <ion-buttons slot="end">
-        <ion-button class="notification-btn" (click)="goToNotifications()">
-          <ion-icon name="notifications-outline"></ion-icon>
-          @if (unreadNotificationCount() > 0) {
-            <span class="notification-badge">{{ unreadNotificationCount() > 9 ? '9+' : unreadNotificationCount() }}</span>
-          }
-        </ion-button>
-        <ion-button class="user-avatar-btn" (click)="goToProfile()">
-          <div class="user-avatar">
-            @if (getUserPicture()) {
-              <img [src]="getUserPicture()" alt="" class="avatar-image">
-            } @else {
-              {{ getUserInitials() }}
-            }
-          </div>
-        </ion-button>
-      </ion-buttons>
-    </div>
-  </ion-toolbar>
-</ion-header>
+<app-header></app-header>
 
 <ion-content class="home-content">
   <ion-refresher slot="fixed" (ionRefresh)="refreshData($any($event))">
@@ -266,10 +240,4 @@
   </div>
 </ion-content>
 
-@if (footerHtml()) {
-  <ion-footer class="ion-no-border home-footer">
-    <ion-toolbar>
-      <div class="footer-html" [innerHTML]="footerHtml()"></div>
-    </ion-toolbar>
-  </ion-footer>
-}
+<app-footer></app-footer>

@@ -368,7 +368,6 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                 {"error": _("Cannot join call in closed consultation")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
         if appointment.type != Type.online:
             return Response(
                 {"error": _("Cannot join consultation if not online")},

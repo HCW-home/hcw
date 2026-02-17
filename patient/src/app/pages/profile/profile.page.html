@@ -1,11 +1,4 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-buttons slot="start">
-      <ion-back-button defaultHref="/home" text="" icon="arrow-back-outline"></ion-back-button>
-    </ion-buttons>
-    <ion-title>Profile</ion-title>
-  </ion-toolbar>
-</ion-header>
+<app-header pageTitle="Profile" [showBackButton]="true"></app-header>
 
 <ion-content class="profile-content">
   <div class="profile-header">
@@ -158,3 +151,5 @@
     </ng-template>
   </ion-modal>
 </ion-content>
+
+<app-footer></app-footer>

@@ -1,0 +1,107 @@
+ion-header {
+  ion-toolbar {
+    --background: var(--app-card-background);
+    --border-width: 0;
+    padding: var(--app-spacing-md) var(--app-spacing-lg);
+    border-bottom: 1px solid var(--app-border-color);
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: var(--app-spacing-sm);
+
+      .back-btn {
+        --color: var(--app-text-primary);
+        --icon-font-size: 22px;
+        margin-right: 4px;
+      }
+
+      .page-title {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--app-text-primary);
+        margin: 0;
+        line-height: 1.2;
+      }
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: var(--app-spacing-sm);
+
+      .logo-img {
+        width: 36px;
+        height: 36px;
+      }
+
+      .logo-text {
+        font-weight: 700;
+        font-size: 1.125rem;
+        color: var(--app-text-primary);
+        line-height: 1.2;
+      }
+    }
+
+    .notification-btn {
+      --padding-start: 0;
+      --padding-end: 0;
+      position: relative;
+      margin-right: var(--app-spacing-sm);
+
+      ion-icon {
+        font-size: 28px;
+        color: var(--app-text-primary);
+      }
+
+      .notification-badge {
+        position: absolute;
+        top: 0;
+        right: -2px;
+        min-width: 18px;
+        height: 18px;
+        background: var(--ion-color-danger);
+        color: white;
+        border-radius: 9px;
+        font-size: 0.625rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 4px;
+      }
+    }
+
+    .user-avatar-btn {
+      --padding-start: 0;
+      --padding-end: 0;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--ion-color-primary-bg);
+      color: var(--ion-color-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.875rem;
+      overflow: hidden;
+
+      .avatar-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
+  }
+}
