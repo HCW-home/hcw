@@ -69,7 +69,7 @@ class Organisation(models.Model):
     def save(self, *args, **kwargs):
         if self.is_main:
             domain_list = self.__class__.objects.filter(is_main=True).exclude(pk=self.pk)
-            domain_list.update(is_admin=False)
+            domain_list.update(is_main=False)
 
         return super().save(*args, **kwargs)
 

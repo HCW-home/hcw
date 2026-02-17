@@ -35,11 +35,6 @@
   </ion-refresher>
 
   <div class="main-content">
-    <div class="greeting">
-      <p class="greeting-text">Welcome back,</p>
-      <h1 class="greeting-name">{{ currentUser()?.first_name || 'User' }}</h1>
-    </div>
-
     @if (nextAppointment()) {
       <div class="next-appointment-banner">
         <div class="next-appointment-icon">

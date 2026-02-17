@@ -95,9 +95,9 @@ No permission (=patient) but : can still go own appointment or group appointment
 
 # Misc
 
-- Add register endpoint, but can be disable from .env file (Olivier)
-- Add openid authentication (Olivier)
-- Patient dashboard : having next appointment on top
+<!--- Add register endpoint, but can be disable from .env file (Olivier)-->
+<!--- Add openid authentication (Olivier)-->
+<!--- Patient dashboard : having next appointment on top-->
 - Remove Review button on Dashboard (click on line is enough)
 - Remove resume button on consultation list (click on line is enough)
 - Remove arrow on Patient page list (click on line is enough)

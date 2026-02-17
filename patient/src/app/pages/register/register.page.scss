@@ -1,5 +1,5 @@
 .register-content {
-  --background: #e2e8f0;
+  --background: linear-gradient(135deg, #f1f5f9 0%, #ecfeff 50%, #f1f5f9 100%);
 
   &::part(scroll) {
     display: flex;
@@ -206,7 +206,7 @@
 
 @media (max-width: 700px) {
   .register-content {
-    --background: #fff;
+    --background: var(--app-background);
 
     .auth-card {
       flex-direction: column;

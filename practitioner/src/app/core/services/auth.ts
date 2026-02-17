@@ -57,7 +57,7 @@ export class Auth {
   }
 
   getOpenIDConfig(): Observable<IOpenIDConfig> {
-    return this.http.get<IOpenIDConfig>(`${environment.apiUrl}/auth/openid/config/`);
+    return this.http.get<IOpenIDConfig>(`${environment.apiUrl}/config/`);
   }
 
   loginWithOpenID(authorizationCode: string): Observable<IResponseLogin> {

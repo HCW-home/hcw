@@ -54,7 +54,7 @@ body {
 /* Desktop/Tablet container - constrain app to mobile-like width */
 @media (min-width: 768px) {
   body {
-    background-color: #e2e8f0;
+    background: linear-gradient(135deg, #f1f5f9 0%, #ecfeff 50%, #f1f5f9 100%);
   }
 
   ion-app {
