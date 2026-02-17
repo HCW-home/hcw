@@ -47,6 +47,8 @@ import { getErrorMessage } from '../../../../core/utils/error-helper';
 import { AppointmentFormModal } from './appointment-form-modal/appointment-form-modal';
 import { RoutePaths } from '../../../../core/constants/routes';
 import { ParticipantItem } from '../../../../shared/components/participant-item/participant-item';
+import { TranslatePipe } from '@ngx-translate/core';
+import { TranslationService } from '../../../../core/services/translation.service';
 
 type AppointmentViewMode = 'list' | 'calendar';
 type AppointmentStatusFilter = 'all' | 'scheduled' | 'cancelled';
@@ -74,6 +76,7 @@ type AppointmentTimeFilter = 'all' | 'upcoming' | 'past';
     FullCalendarModule,
     LocalDatePipe,
     ParticipantItem,
+    TranslatePipe,
   ],
 })
 export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
@@ -184,6 +187,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   private wsService = inject(ConsultationWebSocketService);
   private userService = inject(UserService);
   private incomingCallService = inject(IncomingCallService);
+  private t = inject(TranslationService);
 
   ngOnInit(): void {
     this.initEditForm();
@@ -224,7 +228,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
           this.queues.set(queues);
         },
         error: (error) => {
-          this.toasterService.show('error', 'Error Loading Queues', getErrorMessage(error));
+          this.toasterService.show('error', this.t.instant('consultationDetail.errorLoadingQueues'), getErrorMessage(error));
         },
       });
   }
@@ -326,17 +330,17 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     });
 
     this.wsService.participantJoined$.pipe(takeUntil(this.destroy$)).subscribe(event => {
-      this.toasterService.show('success', 'Participant Joined', `${event.data.username} joined the consultation`);
+      this.toasterService.show('success', this.t.instant('consultationDetail.participantJoined'), this.t.instant('consultationDetail.participantJoinedMessage', { name: event.data.username }));
       this.loadAppointments();
     });
 
     this.wsService.participantLeft$.pipe(takeUntil(this.destroy$)).subscribe(event => {
-      this.toasterService.show('warning', 'Participant Left', `${event.data.username} left the consultation`);
+      this.toasterService.show('warning', this.t.instant('consultationDetail.participantLeft'), this.t.instant('consultationDetail.participantLeftMessage', { name: event.data.username }));
       this.loadAppointments();
     });
 
     this.wsService.appointmentUpdated$.pipe(takeUntil(this.destroy$)).subscribe(() => {
-      this.toasterService.show('success', 'Appointment Updated', 'An appointment has been updated');
+      this.toasterService.show('success', this.t.instant('consultationDetail.appointmentUpdated'), this.t.instant('consultationDetail.appointmentUpdatedMessage'));
       this.loadAppointments();
     });
   }
@@ -364,7 +368,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
           );
         },
         error: (error) => {
-          this.toasterService.show('error', 'Error Sending Message', getErrorMessage(error));
+          this.toasterService.show('error', this.t.instant('consultationDetail.errorSendingMessage'), getErrorMessage(error));
           this.messages.update(msgs => msgs.filter(m => m.id !== tempId));
         },
       });
@@ -382,7 +386,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
           const loadedMessages: Message[] = response.results.map(msg => {
             const isCurrentUser = msg.created_by.id === currentUserId;
             const username = isCurrentUser
-              ? 'You'
+              ? this.t.instant('consultationDetail.you')
               : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim() || msg.created_by.email;
             return {
               id: msg.id,
@@ -400,7 +404,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
           this.messages.set(loadedMessages);
         },
         error: (error) => {
-          this.toasterService.show('error', 'Error Loading Messages', getErrorMessage(error));
+          this.toasterService.show('error', this.t.instant('consultationDetail.errorLoadingMessages'), getErrorMessage(error));
         },
       });
   }
@@ -421,7 +425,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
           const olderMessages: Message[] = response.results.map(msg => {
             const isCurrentUser = msg.created_by.id === currentUserId;
             const username = isCurrentUser
-              ? 'You'
+              ? this.t.instant('consultationDetail.you')
               : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim() || msg.created_by.email;
             return {
               id: msg.id,
@@ -442,7 +446,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
         error: (error) => {
           this.currentPage--;
           this.isLoadingMore.set(false);
-          this.toasterService.show('error', 'Error Loading Messages', getErrorMessage(error));
+          this.toasterService.show('error', this.t.instant('consultationDetail.errorLoadingMessages'), getErrorMessage(error));
         },
       });
   }
@@ -459,7 +463,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
         },
         error: (error) => {
           this.isLoadingConsultation.set(false);
-          this.toasterService.show('error', 'Error Loading Consultation', getErrorMessage(error));
+          this.toasterService.show('error', this.t.instant('consultationDetail.errorLoadingConsultation'), getErrorMessage(error));
         },
       });
   }
@@ -492,7 +496,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
         },
         error: (error) => {
           this.isLoadingAppointments.set(false);
-          this.toasterService.show('error', 'Error Loading Appointments', getErrorMessage(error));
+          this.toasterService.show('error', this.t.instant('consultationDetail.errorLoadingAppointments'), getErrorMessage(error));
         },
       });
   }
@@ -529,7 +533,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
         error: (error) => {
           this.appointmentPage--;
           this.isLoadingMoreAppointments.set(false);
-          this.toasterService.show('error', 'Error Loading Appointments', getErrorMessage(error));
+          this.toasterService.show('error', this.t.instant('consultationDetail.errorLoadingAppointments'), getErrorMessage(error));
         },
       });
   }
@@ -545,20 +549,20 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
             a.id === appointment.id ? updatedAppointment : a
           );
           this.appointments.set(updatedAppointments);
-          this.toasterService.show('success', 'Appointment Sent', 'Appointment sent successfully');
+          this.toasterService.show('success', this.t.instant('consultationDetail.appointmentSent'), this.t.instant('consultationDetail.appointmentSentMessage'));
         },
         error: (error) => {
-          this.toasterService.show('error', 'Error Sending Appointment', getErrorMessage(error));
+          this.toasterService.show('error', this.t.instant('consultationDetail.errorSendingAppointment'), getErrorMessage(error));
         },
       });
   }
 
   async cancelAppointment(appointment: Appointment): Promise<void> {
     const confirmed = await this.confirmationService.confirm({
-      title: 'Cancel Appointment',
-      message: 'Are you sure you want to cancel this appointment?',
-      confirmText: 'Cancel Appointment',
-      cancelText: 'Go Back',
+      title: this.t.instant('consultationDetail.cancelAppointmentTitle'),
+      message: this.t.instant('consultationDetail.cancelAppointmentMessage'),
+      confirmText: this.t.instant('consultationDetail.cancelAppointmentConfirm'),
+      cancelText: this.t.instant('consultationDetail.goBack'),
       confirmStyle: 'danger',
     });
 
@@ -572,10 +576,10 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
             this.appointments.set(
               currentAppointments.map(a => a.id === appointment.id ? updatedAppointment : a)
             );
-            this.toasterService.show('success', 'Appointment Cancelled', 'Appointment cancelled successfully');
+            this.toasterService.show('success', this.t.instant('consultationDetail.appointmentCancelled'), this.t.instant('consultationDetail.appointmentCancelledMessage'));
           },
           error: (error) => {
-            this.toasterService.show('error', 'Error Cancelling Appointment', getErrorMessage(error));
+            this.toasterService.show('error', this.t.instant('consultationDetail.errorCancellingAppointment'), getErrorMessage(error));
           },
         });
     }
@@ -585,10 +589,10 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     if (!this.consultation()) return;
 
     const confirmed = await this.confirmationService.confirm({
-      title: 'Close Consultation',
-      message: 'Are you sure you want to close this consultation?',
-      confirmText: 'Close',
-      cancelText: 'Cancel',
+      title: this.t.instant('consultationDetail.closeConsultationTitle'),
+      message: this.t.instant('consultationDetail.closeConsultationMessage'),
+      confirmText: this.t.instant('consultationDetail.close'),
+      cancelText: this.t.instant('consultationDetail.cancel'),
       confirmStyle: 'danger',
     });
 
@@ -598,11 +602,11 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {
-            this.toasterService.show('success', 'Consultation Closed', 'Consultation closed successfully');
+            this.toasterService.show('success', this.t.instant('consultationDetail.consultationClosed'), this.t.instant('consultationDetail.consultationClosedMessage'));
             this.router.navigate([`/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`]);
           },
           error: (error) => {
-            this.toasterService.show('error', 'Error Closing Consultation', getErrorMessage(error));
+            this.toasterService.show('error', this.t.instant('consultationDetail.errorClosingConsultation'), getErrorMessage(error));
           },
         });
     }
@@ -612,10 +616,10 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     if (!this.consultation()) return;
 
     const confirmed = await this.confirmationService.confirm({
-      title: 'Reopen Consultation',
-      message: 'Are you sure you want to reopen this consultation?',
-      confirmText: 'Reopen',
-      cancelText: 'Cancel',
+      title: this.t.instant('consultationDetail.reopenConsultationTitle'),
+      message: this.t.instant('consultationDetail.reopenConsultationMessage'),
+      confirmText: this.t.instant('consultationDetail.reopen'),
+      cancelText: this.t.instant('consultationDetail.cancel'),
       confirmStyle: 'primary',
     });
 
@@ -626,10 +630,10 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
         .subscribe({
           next: updatedConsultation => {
             this.consultation.set(updatedConsultation);
-            this.toasterService.show('success', 'Consultation Reopened', 'Consultation reopened successfully');
+            this.toasterService.show('success', this.t.instant('consultationDetail.consultationReopened'), this.t.instant('consultationDetail.consultationReopenedMessage'));
           },
           error: (error) => {
-            this.toasterService.show('error', 'Error Reopening Consultation', getErrorMessage(error));
+            this.toasterService.show('error', this.t.instant('consultationDetail.errorReopeningConsultation'), getErrorMessage(error));
           },
         });
     }
@@ -655,11 +659,11 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
           link.click();
           window.URL.revokeObjectURL(url);
           this.isExportingPdf.set(false);
-          this.toasterService.show('success', 'PDF Exported', 'Consultation PDF downloaded successfully');
+          this.toasterService.show('success', this.t.instant('consultationDetail.pdfExported'), this.t.instant('consultationDetail.pdfExportedMessage'));
         },
         error: (error) => {
           this.isExportingPdf.set(false);
-          this.toasterService.show('error', 'Export Failed', getErrorMessage(error));
+          this.toasterService.show('error', this.t.instant('consultationDetail.exportFailed'), getErrorMessage(error));
         },
       });
   }
@@ -731,11 +735,11 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
           this.consultation.set(updatedConsultation);
           this.isSavingConsultation.set(false);
           this.isEditMode.set(false);
-          this.toasterService.show('success', 'Consultation Updated', 'Consultation updated successfully');
+          this.toasterService.show('success', this.t.instant('consultationDetail.consultationUpdated'), this.t.instant('consultationDetail.consultationUpdatedMessage'));
         },
         error: (error) => {
           this.isSavingConsultation.set(false);
-          this.toasterService.show('error', 'Update Failed', getErrorMessage(error), {
+          this.toasterService.show('error', this.t.instant('consultationDetail.updateFailed'), getErrorMessage(error), {
             trace: JSON.stringify(error.error, null, 2),
           });
         },
@@ -744,20 +748,20 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   getUserDisplayName(participant: Participant): string {
     if (participant.user) {
       const fullName = `${participant.user.first_name || ''} ${participant.user.last_name || ''}`.trim();
-      return fullName || participant.user.email || 'Unknown';
+      return fullName || participant.user.email || this.t.instant('consultationDetail.unknown');
     }
-    return 'Unknown';
+    return this.t.instant('consultationDetail.unknown');
   }
 
   getBeneficiaryDisplayName(): string {
     const beneficiary = this.consultation()?.beneficiary;
-    if (!beneficiary) return 'No beneficiary assigned';
+    if (!beneficiary) return this.t.instant('consultationDetail.noBeneficiary');
 
     const firstName = beneficiary.first_name?.trim() || '';
     const lastName = beneficiary.last_name?.trim() || '';
     const fullName = `${firstName} ${lastName}`.trim();
 
-    return fullName || beneficiary.email || 'Unknown patient';
+    return fullName || beneficiary.email || this.t.instant('consultationDetail.unknownPatient');
   }
 
   joinVideoCall(appointmentId: number): void {
@@ -832,9 +836,9 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
 
   getLanguageLabel(code: string): string {
     const languages: Record<string, string> = {
-      en: 'English',
-      de: 'German',
-      fr: 'French',
+      en: this.t.instant('consultationDetail.languageEnglish'),
+      de: this.t.instant('consultationDetail.languageGerman'),
+      fr: this.t.instant('consultationDetail.languageFrench'),
     };
     return languages[code] || code;
   }
@@ -853,10 +857,10 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
               updatedAt: updatedMessage.updated_at
             } : m)
           );
-          this.toasterService.show('success', 'Message Updated', 'Message updated successfully');
+          this.toasterService.show('success', this.t.instant('consultationDetail.messageUpdated'), this.t.instant('consultationDetail.messageUpdatedMessage'));
         },
         error: (error) => {
-          this.toasterService.show('error', 'Error Updating Message', getErrorMessage(error));
+          this.toasterService.show('error', this.t.instant('consultationDetail.errorUpdatingMessage'), getErrorMessage(error));
         },
       });
   }
@@ -875,10 +879,10 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
               deletedAt: deletedMessage.deleted_at
             } : m)
           );
-          this.toasterService.show('success', 'Message Deleted', 'Message deleted successfully');
+          this.toasterService.show('success', this.t.instant('consultationDetail.messageDeleted'), this.t.instant('consultationDetail.messageDeletedMessage'));
         },
         error: (error) => {
-          this.toasterService.show('error', 'Error Deleting Message', getErrorMessage(error));
+          this.toasterService.show('error', this.t.instant('consultationDetail.errorDeletingMessage'), getErrorMessage(error));
         },
       });
   }
@@ -898,7 +902,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private getCalendarEventTitle(appointment: Appointment): string {
-    const typeLabel = appointment.type === AppointmentType.ONLINE ? 'Video' : 'In Person';
+    const typeLabel = appointment.type === AppointmentType.ONLINE ? this.t.instant('consultationDetail.video') : this.t.instant('consultationDetail.inPersonLabel');
     return typeLabel;
   }
 

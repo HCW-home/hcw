@@ -49,6 +49,8 @@ import { SelectOption } from '../../models/select';
 import { extractDateFromISO, extractTimeFromISO } from '../../tools/helper';
 import { getErrorMessage } from '../../../core/utils/error-helper';
 import { TIMEZONE_OPTIONS } from '../../constants/timezone';
+import { TranslatePipe } from '@ngx-translate/core';
+import { TranslationService } from '../../../core/services/translation.service';
 
 @Component({
   selector: 'app-appointment-form',
@@ -67,6 +69,7 @@ import { TIMEZONE_OPTIONS } from '../../constants/timezone';
     UserSearchSelect,
     ReactiveFormsModule,
     FormsModule,
+    TranslatePipe,
   ],
 })
 export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
@@ -85,6 +88,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   private consultationService = inject(ConsultationService);
   private toasterService = inject(ToasterService);
   private userService = inject(UserService);
+  private t = inject(TranslationService);
 
   isSubmitting = signal(false);
   currentUser = signal<IUser | null>(null);
@@ -101,18 +105,22 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
 
   timezoneOptions: SelectOption[] = TIMEZONE_OPTIONS;
 
-  communicationMethods: SelectOption[] = [
-    { value: 'email', label: 'Email' },
-    { value: 'sms', label: 'SMS' },
-    { value: 'whatsapp', label: 'WhatsApp' },
-    { value: 'push', label: 'Push Notification' },
-  ];
+  get communicationMethods(): SelectOption[] {
+    return [
+      { value: 'email', label: this.t.instant('appointmentForm.email') },
+      { value: 'sms', label: this.t.instant('appointmentForm.sms') },
+      { value: 'whatsapp', label: this.t.instant('appointmentForm.whatsApp') },
+      { value: 'push', label: this.t.instant('appointmentForm.pushNotification') },
+    ];
+  }
 
-  languageOptions: SelectOption[] = [
-    { value: 'en', label: 'English' },
-    { value: 'de', label: 'German' },
-    { value: 'fr', label: 'French' },
-  ];
+  get languageOptions(): SelectOption[] {
+    return [
+      { value: 'en', label: this.t.instant('appointmentForm.english') },
+      { value: 'de', label: this.t.instant('appointmentForm.german') },
+      { value: 'fr', label: this.t.instant('appointmentForm.french') },
+    ];
+  }
 
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
@@ -124,7 +132,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   }
 
   get submitButtonText(): string {
-    return this.isEditMode ? 'Save Changes' : 'Create Appointment';
+    return this.isEditMode ? this.t.instant('appointmentForm.saveChanges') : this.t.instant('appointmentForm.createAppointment');
   }
 
   ngOnInit(): void {
@@ -348,7 +356,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
     } else if (formValue.contact_type === 'sms' && formValue.phone) {
       data.mobile_phone_number = formValue.phone;
     } else {
-      this.toasterService.show('error', 'Missing Information', 'Please provide contact information');
+      this.toasterService.show('error', this.t.instant('appointmentForm.missingInfo'), this.t.instant('appointmentForm.provideContact'));
       return;
     }
 
@@ -482,7 +490,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
         },
         error: (error) => {
           this.isSubmitting.set(false);
-          this.toasterService.show('error', 'Error Updating Appointment', getErrorMessage(error));
+          this.toasterService.show('error', this.t.instant('appointmentForm.errorUpdatingAppointment'), getErrorMessage(error));
         },
       });
   }
@@ -494,12 +502,12 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
       .subscribe({
         next: (appointment) => {
           this.isSubmitting.set(false);
-          this.toasterService.show('success', 'Appointment Created', 'Appointment created successfully');
+          this.toasterService.show('success', this.t.instant('appointmentForm.appointmentCreated'), this.t.instant('appointmentForm.appointmentCreatedMessage'));
           this.appointmentCreated.emit(appointment);
         },
         error: (error) => {
           this.isSubmitting.set(false);
-          this.toasterService.show('error', 'Error Creating Appointment', getErrorMessage(error));
+          this.toasterService.show('error', this.t.instant('appointmentForm.errorCreatingAppointment'), getErrorMessage(error));
         },
       });
   }

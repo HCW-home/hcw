@@ -1,9 +1,10 @@
-import { Component, Input, Output, EventEmitter, ViewChild } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { Appointment, User } from '../../../../../core/models/consultation';
 import { ModalComponent } from '../../../../../shared/components/modal/modal.component';
 import { AppointmentForm } from '../../../../../shared/components/appointment-form/appointment-form';
+import { TranslationService } from '../../../../../core/services/translation.service';
 
 @Component({
   selector: 'app-appointment-form-modal',
@@ -16,6 +17,8 @@ import { AppointmentForm } from '../../../../../shared/components/appointment-fo
   ],
 })
 export class AppointmentFormModal {
+  private t = inject(TranslationService);
+
   @Input() isOpen = false;
   @Input() consultationId!: number;
   @Input() editingAppointment: Appointment | null = null;
@@ -33,7 +36,7 @@ export class AppointmentFormModal {
   }
 
   get modalTitle(): string {
-    return this.isEditMode ? 'Edit Appointment' : 'Create New Appointment';
+    return this.isEditMode ? this.t.instant('appointmentFormModal.editAppointment') : this.t.instant('appointmentFormModal.createNewAppointment');
   }
 
   onClose(): void {

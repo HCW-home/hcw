@@ -3,7 +3,7 @@
     <div class="appointment-form-section">
       <form [formGroup]="appointmentForm">
         <div class="form-group">
-          <label class="form-label">Appointment Type <span class="required">*</span></label>
+          <label class="form-label">{{ 'appointmentForm.appointmentType' | translate }} <span class="required">*</span></label>
           <div class="type-toggle">
             <button
               type="button"
@@ -11,7 +11,7 @@
               [class.active]="appointmentForm.get('type')?.value === AppointmentType.ONLINE"
               (click)="setAppointmentType(AppointmentType.ONLINE)">
               <app-svg src="video" [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
-              Online
+              {{ 'appointmentForm.online' | translate }}
             </button>
             <button
               type="button"
@@ -19,7 +19,7 @@
               [class.active]="appointmentForm.get('type')?.value === AppointmentType.INPERSON"
               (click)="setAppointmentType(AppointmentType.INPERSON)">
               <app-svg src="users" [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
-              In Person
+              {{ 'appointmentForm.inPerson' | translate }}
             </button>
           </div>
         </div>
@@ -27,13 +27,13 @@
         <div class="form-row">
           <app-input
             type="date"
-            label="Date"
+            [label]="'appointmentForm.date' | translate"
             [required]="true"
             formControlName="date">
           </app-input>
           <app-input
             type="time"
-            label="Time"
+            [label]="'appointmentForm.time' | translate"
             [required]="true"
             formControlName="time">
           </app-input>
@@ -42,12 +42,12 @@
         <div class="form-row">
           <app-input
             type="date"
-            label="Expected End Date"
+            [label]="'appointmentForm.expectedEndDate' | translate"
             formControlName="end_date">
           </app-input>
           <app-input
             type="time"
-            label="Expected End Time"
+            [label]="'appointmentForm.expectedEndTime' | translate"
             formControlName="end_time">
           </app-input>
         </div>
@@ -56,15 +56,15 @@
           <div class="invite-flags-section">
             <div class="invite-flags">
               <app-checkbox
-                label="Do not invite patient"
+                [label]="'appointmentForm.dontInvitePatient' | translate"
                 formControlName="dont_invite_beneficiary">
               </app-checkbox>
               <app-checkbox
-                label="Do not invite practitioner"
+                [label]="'appointmentForm.dontInvitePractitioner' | translate"
                 formControlName="dont_invite_practitioner">
               </app-checkbox>
               <app-checkbox
-                label="Do not invite me"
+                [label]="'appointmentForm.dontInviteMe' | translate"
                 formControlName="dont_invite_me">
               </app-checkbox>
             </div>
@@ -75,9 +75,9 @@
 
   <div class="participants-section">
     <div class="section-header">
-      <span class="section-title">Participants ({{ getTotalParticipantsCount() }})</span>
+      <span class="section-title">{{ 'appointmentForm.participantsCount' | translate: { count: getTotalParticipantsCount() } }}</span>
       <app-button
-        [text]="showAddParticipantForm() ? 'Cancel' : 'Add participant'"
+        [text]="showAddParticipantForm() ? ('appointmentForm.cancelLabel' | translate) : ('appointmentForm.addParticipant' | translate)"
         [leftIcon]="showAddParticipantForm() ? 'close' : 'plus'"
         [size]="ButtonSizeEnum.small"
         [style]="ButtonStyleEnum.text"
@@ -88,21 +88,21 @@
     @if (showAddParticipantForm()) {
       <div class="add-participant-form">
         <div class="form-group">
-          <label class="form-label">Participant Type</label>
+          <label class="form-label">{{ 'appointmentForm.participantType' | translate }}</label>
           <div class="type-toggle compact">
             <button
               type="button"
               class="type-btn"
               [class.active]="isExistingUser()"
               (click)="setParticipantType(true)">
-              Existing User
+              {{ 'appointmentForm.existingUser' | translate }}
             </button>
             <button
               type="button"
               class="type-btn"
               [class.active]="!isExistingUser()"
               (click)="setParticipantType(false)">
-              External Guest
+              {{ 'appointmentForm.externalGuest' | translate }}
             </button>
           </div>
         </div>
@@ -111,16 +111,16 @@
           @if (isExistingUser()) {
             <div class="form-group">
               <app-user-search-select
-                placeholder="Search by name or email..."
+                [placeholder]="'appointmentForm.searchByNameOrEmail' | translate"
                 (userSelected)="onParticipantUserSelected($event)">
               </app-user-search-select>
             </div>
           } @else {
             <div class="form-group">
-              <label class="form-label">Contact Method</label>
+              <label class="form-label">{{ 'appointmentForm.contactMethod' | translate }}</label>
               <div class="contact-toggle">
                 <app-button
-                  text="Email"
+                  [text]="'appointmentForm.email' | translate"
                   leftIcon="email"
                   [block]="true"
                   [style]="participantForm.get('contact_type')?.value === 'email' ? ButtonStyleEnum.primary : ButtonStyleEnum.stroke"
@@ -128,7 +128,7 @@
                   (buttonClick)="setParticipantMessageType('email')">
                 </app-button>
                 <app-button
-                  text="Phone"
+                  [text]="'appointmentForm.phone' | translate"
                   leftIcon="phone"
                   [block]="true"
                   [style]="participantForm.get('contact_type')?.value === 'sms' ? ButtonStyleEnum.primary : ButtonStyleEnum.stroke"
@@ -142,9 +142,9 @@
               <div class="form-group">
                 <app-input
                   type="email"
-                  label="Email Address"
+                  [label]="'appointmentForm.emailAddress' | translate"
                   leftIcon="email"
-                  placeholder="guest@email.com"
+                  [placeholder]="'appointmentForm.emailPlaceholder' | translate"
                   formControlName="email">
                 </app-input>
               </div>
@@ -152,9 +152,9 @@
               <div class="form-group">
                 <app-input
                   type="tel"
-                  label="Phone Number"
+                  [label]="'appointmentForm.phoneNumber' | translate"
                   leftIcon="phone"
-                  placeholder="+33 6 12 34 56 78"
+                  [placeholder]="'appointmentForm.phonePlaceholder' | translate"
                   formControlName="phone">
                 </app-input>
               </div>
@@ -164,17 +164,17 @@
               <div class="form-group">
                 <app-input
                   type="text"
-                  label="First Name"
+                  [label]="'appointmentForm.firstName' | translate"
                   leftIcon="user"
-                  placeholder="Enter first name..."
+                  [placeholder]="'appointmentForm.firstNamePlaceholder' | translate"
                   formControlName="first_name">
                 </app-input>
               </div>
               <div class="form-group">
                 <app-input
                   type="text"
-                  label="Last Name"
-                  placeholder="Enter last name..."
+                  [label]="'appointmentForm.lastName' | translate"
+                  [placeholder]="'appointmentForm.lastNamePlaceholder' | translate"
                   formControlName="last_name">
                 </app-input>
               </div>
@@ -183,33 +183,33 @@
             <div class="participant-settings">
               <div class="form-group">
                 <app-select
-                  label="Timezone"
+                  [label]="'appointmentForm.timezone' | translate"
                   formControlName="timezone"
                   [options]="timezoneOptions"
-                  placeholder="Select timezone">
+                  [placeholder]="'appointmentForm.selectTimezone' | translate">
                 </app-select>
               </div>
               <div class="form-group">
                 <app-select
-                  label="Communication Method"
+                  [label]="'appointmentForm.communicationMethod' | translate"
                   formControlName="communication_method"
                   [options]="communicationMethods"
-                  placeholder="Select method">
+                  [placeholder]="'appointmentForm.selectMethod' | translate">
                 </app-select>
               </div>
               <div class="form-group">
                 <app-select
-                  label="Preferred Language"
+                  [label]="'appointmentForm.preferredLanguage' | translate"
                   formControlName="preferred_language"
                   [options]="languageOptions"
-                  placeholder="Select language">
+                  [placeholder]="'appointmentForm.selectLanguage' | translate">
                 </app-select>
               </div>
             </div>
           }
 
           <app-button
-            text="Add participant"
+            [text]="'appointmentForm.addParticipant' | translate"
             leftIcon="plus"
             [style]="ButtonStyleEnum.primary"
             [size]="ButtonSizeEnum.small"
@@ -228,8 +228,8 @@
     } @else if (getTotalParticipantsCount() === 0 && !showAddParticipantForm()) {
       <div class="empty-participants">
         <app-svg src="users" [svgStyle]="{'width.px': 32, 'height.px': 32, 'opacity': 0.3}"></app-svg>
-        <span>No participants yet</span>
-        <span class="empty-hint">Add participants who should join this appointment</span>
+        <span>{{ 'appointmentForm.noParticipants' | translate }}</span>
+        <span class="empty-hint">{{ 'appointmentForm.noParticipantsHint' | translate }}</span>
       </div>
     } @else if (getTotalParticipantsCount() > 0) {
       <div class="participants-list">
@@ -253,13 +253,13 @@
 
     @if (!isEditMode) {
       <div class="invitations-block">
-        <span class="invitations-title">Invitations</span>
+        <span class="invitations-title">{{ 'appointmentForm.invitations' | translate }}</span>
         <div class="invitations-list">
           @if (getBeneficiaryUser(); as beneficiary) {
             <app-participant-item
               [class.excluded]="appointmentForm.get('dont_invite_beneficiary')?.value"
               [participant]="{id: 0, user: beneficiary, is_active: true}">
-              <span class="role-tag">Patient</span>
+              <span class="role-tag">{{ 'appointmentForm.rolePatient' | translate }}</span>
               <app-switch
                 [ngModel]="!appointmentForm.get('dont_invite_beneficiary')?.value"
                 [ngModelOptions]="{standalone: true}"
@@ -271,7 +271,7 @@
             <app-participant-item
               [class.excluded]="appointmentForm.get('dont_invite_practitioner')?.value"
               [participant]="{id: 0, user: owner, is_active: true}">
-              <span class="role-tag">Practitioner</span>
+              <span class="role-tag">{{ 'appointmentForm.rolePractitioner' | translate }}</span>
               <app-switch
                 [ngModel]="!appointmentForm.get('dont_invite_practitioner')?.value"
                 [ngModelOptions]="{standalone: true}"
@@ -283,7 +283,7 @@
             <app-participant-item
               [class.excluded]="appointmentForm.get('dont_invite_me')?.value"
               [participant]="{id: 0, user: {id: user.pk, email: user.email, first_name: user.first_name, last_name: user.last_name}, is_active: true}">
-              <span class="role-tag">You</span>
+              <span class="role-tag">{{ 'appointmentForm.roleYou' | translate }}</span>
               <app-switch
                 [ngModel]="!appointmentForm.get('dont_invite_me')?.value"
                 [ngModelOptions]="{standalone: true}"
@@ -300,7 +300,7 @@
   @if (showActions) {
     <div class="form-actions">
       <app-button
-        text="Cancel"
+        [text]="'appointmentForm.cancelButton' | translate"
         [size]="ButtonSizeEnum.medium"
         [style]="ButtonStyleEnum.stroke"
         (buttonClick)="onCancel()">
