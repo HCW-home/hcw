@@ -1,4 +1,4 @@
-<ion-content class="video-consultation-content" [scrollY]="false" (click)="onVideoAreaTap()">
+<ion-content class="video-consultation-content" [scrollY]="false">
   <div class="video-container">
     @if (phase() === 'lobby') {
       <app-pre-join-lobby (join)="onJoinFromLobby($event)" (close)="onLobbyClose()"></app-pre-join-lobby>
@@ -97,7 +97,6 @@
         }
       </div>
 
-      @if (showControls || connectionStatus !== 'connected') {
         <div class="top-bar">
           <div class="call-info">
             @if (connectionStatus === 'connected') {
@@ -114,7 +113,7 @@
             }
           </div>
           <div class="top-actions">
-            <ion-button fill="clear" color="light" (click)="switchCamera(); $event.stopPropagation()">
+            <ion-button fill="clear" color="light" (click)="switchCamera()">
               <ion-icon name="camera-reverse-outline" slot="icon-only"></ion-icon>
             </ion-button>
           </div>
@@ -125,51 +124,52 @@
             <ion-button
               [color]="!isMicrophoneEnabled ? 'danger' : 'light'"
               class="control-button"
-              (click)="toggleMicrophone(); $event.stopPropagation()">
+              (click)="toggleMicrophone()">
               <ion-icon [name]="!isMicrophoneEnabled ? 'mic-off' : 'mic'" slot="icon-only"></ion-icon>
             </ion-button>
 
             <ion-button
               [color]="!isCameraEnabled ? 'danger' : 'light'"
               class="control-button"
-              (click)="toggleCamera(); $event.stopPropagation()">
+              (click)="toggleCamera()">
               <ion-icon [name]="!isCameraEnabled ? 'videocam-off' : 'videocam'" slot="icon-only"></ion-icon>
             </ion-button>
 
             <ion-button
               color="danger"
               class="control-button end-call"
-              (click)="endCall(); $event.stopPropagation()">
+              (click)="endCall()">
               <ion-icon name="call" slot="icon-only"></ion-icon>
             </ion-button>
 
             <ion-button
               [color]="isSpeakerOn ? 'light' : 'medium'"
               class="control-button"
-              (click)="toggleSpeaker(); $event.stopPropagation()">
+              (click)="toggleSpeaker()">
               <ion-icon [name]="isSpeakerOn ? 'volume-high' : 'volume-mute'" slot="icon-only"></ion-icon>
             </ion-button>
 
             <ion-button
               [color]="isScreenShareEnabled ? 'primary' : 'light'"
               class="control-button"
-              (click)="toggleScreenShare(); $event.stopPropagation()">
+              (click)="toggleScreenShare()">
               <ion-icon name="desktop-outline" slot="icon-only"></ion-icon>
             </ion-button>
           </div>
 
-          <div class="secondary-controls">
-            <ion-button
-              fill="clear"
-              color="light"
-              class="secondary-button"
-              (click)="openChat(); $event.stopPropagation()">
-              <ion-icon name="chatbubble-outline" slot="start"></ion-icon>
-              Chat
-            </ion-button>
-          </div>
+          @if (chatAvailable()) {
+            <div class="secondary-controls">
+              <ion-button
+                fill="clear"
+                color="light"
+                class="secondary-button"
+                (click)="openChat()">
+                <ion-icon name="chatbubble-outline" slot="start"></ion-icon>
+                Chat
+              </ion-button>
+            </div>
+          }
         </div>
-      }
 
       @if (phase() === 'in-call' && connectionStatus === 'disconnected' && !isLoading && callDuration > 0) {
         <div class="call-ended-overlay">
@@ -196,7 +196,7 @@
       }
 
       @if (showChat()) {
-        <div class="chat-panel" (click)="$event.stopPropagation()">
+        <div class="chat-panel">
           <div class="chat-header">
             <ion-text class="chat-title">Chat</ion-text>
             <ion-button fill="clear" size="small" (click)="openChat()">

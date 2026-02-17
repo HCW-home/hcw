@@ -63,7 +63,6 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
   isMicrophoneEnabled = false;
   isScreenShareEnabled = false;
   isSpeakerOn = true;
-  showControls = true;
 
   callDuration = 0;
   formattedDuration = '00:00';
@@ -71,6 +70,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
   errorMessage = '';
 
   showChat = signal(false);
+  chatAvailable = signal(true);
   phase = signal<'lobby' | 'connecting' | 'in-call'>('lobby');
   messages = signal<Message[]>([]);
   isLoadingMore = signal(false);
@@ -78,7 +78,6 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
   private durationTimer: Subscription | null = null;
-  private controlsTimer: ReturnType<typeof setTimeout> | null = null;
   private videoElements = new Map<string, HTMLVideoElement>();
   private audioElements = new Map<string, HTMLAudioElement>();
   private screenShareElements = new Map<string, HTMLVideoElement>();
@@ -207,8 +206,12 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
           }).reverse();
           this.messages.set(loadedMessages);
         },
-        error: () => {
-          this.showToast('Failed to load messages');
+        error: (err) => {
+          if (err?.status === 404) {
+            this.chatAvailable.set(false);
+          } else {
+            this.showToast('Failed to load messages');
+          }
         }
       });
   }
@@ -610,21 +613,6 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     setTimeout(() => {
       this.navCtrl.back();
     }, 1500);
-  }
-
-  onVideoAreaTap(): void {
-    this.showControls = !this.showControls;
-
-    if (this.controlsTimer) {
-      clearTimeout(this.controlsTimer);
-    }
-
-    if (this.showControls) {
-      this.controlsTimer = setTimeout(() => {
-        this.showControls = false;
-        this.cdr.markForCheck();
-      }, 5000);
-    }
   }
 
   openChat(): void {
