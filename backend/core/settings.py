@@ -709,6 +709,8 @@ CORS_ALLOW_HEADERS = [
 # MFA_ADAPTER_CLASS = "dj_rest_auth_mfa.adapters.DjangoMFA2Adapter"
 # MFA_GRACE_WINDOW_DAYS = 7
 
+ENABLE_REGISTRATION = os.getenv("ENABLE_REGISTRATION", "False") == "True"
+
 ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None

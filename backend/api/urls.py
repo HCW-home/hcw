@@ -1,3 +1,4 @@
+from django.conf import settings
 from rest_framework.routers import DefaultRouter
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 from . import views
@@ -12,3 +13,8 @@ urlpatterns = [
     path('auth/', include('dj_rest_auth.urls')),
     path('auth/token/', views.AnonymousTokenAuthView.as_view(), name='anonymous_token_auth'),
 ]
+
+if settings.ENABLE_REGISTRATION:
+    urlpatterns += [
+        path('auth/registration/', include('dj_rest_auth.registration.urls')),
+    ]
