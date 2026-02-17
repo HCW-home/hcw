@@ -31,6 +31,8 @@ import { MessageList, Message, SendMessageData, EditMessageData, DeleteMessageDa
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
 import { ButtonStyleEnum } from '../../../../shared/constants/button';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
+import { TranslatePipe } from '@ngx-translate/core';
+import { TranslationService } from '../../../../core/services/translation.service';
 
 @Component({
   selector: 'app-video-consultation',
@@ -43,6 +45,7 @@ import { getErrorMessage } from '../../../../core/utils/error-helper';
     Loader,
     MessageList,
     PreJoinLobby,
+    TranslatePipe,
   ],
   templateUrl: './video-consultation.html',
   styleUrls: ['./video-consultation.scss'],
@@ -86,13 +89,18 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   private audioElements = new Map<string, HTMLAudioElement>();
   private screenShareElements = new Map<string, HTMLVideoElement>();
 
+  private t: TranslationService;
+
   constructor(
     private livekitService: LiveKitService,
     private consultationService: ConsultationService,
     private toasterService: ToasterService,
     private incomingCallService: IncomingCallService,
-    private cdr: ChangeDetectorRef
-  ) {}
+    private cdr: ChangeDetectorRef,
+    translationService: TranslationService
+  ) {
+    this.t = translationService;
+  }
 
   ngOnInit(): void {
     this.setupSubscriptions();
@@ -165,7 +173,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       .pipe(takeUntil(this.destroy$))
       .subscribe(error => {
         this.errorMessage = error;
-        this.toasterService.show('error', 'Error', error);
+        this.toasterService.show('error', this.t.instant('videoConsultation.error'), error);
         this.cdr.markForCheck();
       });
   }
@@ -177,7 +185,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
 
     try {
       if (!this.appointmentId) {
-        throw new Error('Appointment ID is required');
+        throw new Error(this.t.instant('videoConsultation.appointmentRequired'));
       }
 
       const config = await this.consultationService
@@ -185,7 +193,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
         .toPromise();
 
       if (!config) {
-        throw new Error('Failed to get LiveKit configuration');
+        throw new Error(this.t.instant('videoConsultation.failedLivekitConfig'));
       }
 
       await this.livekitService.connect(config);
@@ -193,7 +201,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       await this.livekitService.enableMicrophone(true);
     } catch (error: any) {
       this.errorMessage = getErrorMessage(error)
-      this.toasterService.show('error', 'Connection Error', this.errorMessage);
+      this.toasterService.show('error', this.t.instant('videoConsultation.connectionError'), this.errorMessage);
     } finally {
       this.isLoading = false;
       this.cdr.markForCheck();
@@ -212,7 +220,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
 
     try {
       if (!this.appointmentId) {
-        throw new Error('Appointment ID is required');
+        throw new Error(this.t.instant('videoConsultation.appointmentRequired'));
       }
 
       const config = await this.consultationService
@@ -220,7 +228,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
         .toPromise();
 
       if (!config) {
-        throw new Error('Failed to get LiveKit configuration');
+        throw new Error(this.t.instant('videoConsultation.failedLivekitConfig'));
       }
 
       const deviceIds: { camera?: string; microphone?: string } = {};
@@ -247,7 +255,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       });
     } catch (error: any) {
       this.errorMessage = getErrorMessage(error);
-      this.toasterService.show('error', 'Connection Error', this.errorMessage);
+      this.toasterService.show('error', this.t.instant('videoConsultation.connectionError'), this.errorMessage);
       this.phase.set('lobby');
     } finally {
       this.isLoading = false;
@@ -371,7 +379,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     try {
       await this.livekitService.toggleCamera();
     } catch (error) {
-      this.toasterService.show('error', 'Camera Error', 'Failed to toggle camera');
+      this.toasterService.show('error', this.t.instant('videoConsultation.cameraError'), this.t.instant('videoConsultation.failedToggleCamera'));
     }
   }
 
@@ -379,7 +387,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     try {
       await this.livekitService.toggleMicrophone();
     } catch (error) {
-      this.toasterService.show('error', 'Microphone Error', 'Failed to toggle microphone');
+      this.toasterService.show('error', this.t.instant('videoConsultation.microphoneError'), this.t.instant('videoConsultation.failedToggleMicrophone'));
     }
   }
 
@@ -387,7 +395,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     try {
       await this.livekitService.toggleScreenShare();
     } catch (error) {
-      this.toasterService.show('error', 'Screen Share Error', 'Failed to toggle screen share');
+      this.toasterService.show('error', this.t.instant('videoConsultation.screenShareError'), this.t.instant('videoConsultation.failedToggleScreenShare'));
     }
   }
 
@@ -401,7 +409,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
 
   private async startRecording(): Promise<void> {
     if (!this.appointmentId) {
-      this.toasterService.show('error', 'Recording Error', 'No appointment ID');
+      this.toasterService.show('error', this.t.instant('videoConsultation.recordingError'), this.t.instant('videoConsultation.noAppointmentId'));
       return;
     }
 
@@ -409,15 +417,15 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       await this.consultationService.startRecording(this.appointmentId).toPromise();
       this.isRecording = true;
       this.cdr.markForCheck();
-      this.toasterService.show('success', 'Recording Started', 'Appointment recording has begun');
+      this.toasterService.show('success', this.t.instant('videoConsultation.recordingStarted'), this.t.instant('videoConsultation.recordingStartedMessage'));
     } catch (error) {
-      this.toasterService.show('error', 'Recording Error', 'Failed to start recording');
+      this.toasterService.show('error', this.t.instant('videoConsultation.recordingError'), this.t.instant('videoConsultation.failedStartRecording'));
     }
   }
 
   private async stopRecording(): Promise<void> {
     if (!this.appointmentId) {
-      this.toasterService.show('error', 'Recording Error', 'No appointment ID');
+      this.toasterService.show('error', this.t.instant('videoConsultation.recordingError'), this.t.instant('videoConsultation.noAppointmentId'));
       return;
     }
 
@@ -425,9 +433,9 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       await this.consultationService.stopRecording(this.appointmentId).toPromise();
       this.isRecording = false;
       this.cdr.markForCheck();
-      this.toasterService.show('success', 'Recording Stopped', 'Recording will be available in chat shortly');
+      this.toasterService.show('success', this.t.instant('videoConsultation.recordingStopped'), this.t.instant('videoConsultation.recordingStoppedMessage'));
     } catch (error) {
-      this.toasterService.show('error', 'Recording Error', 'Failed to stop recording');
+      this.toasterService.show('error', this.t.instant('videoConsultation.recordingError'), this.t.instant('videoConsultation.failedStopRecording'));
     }
   }
 

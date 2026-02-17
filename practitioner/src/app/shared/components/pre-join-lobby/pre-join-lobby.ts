@@ -25,6 +25,8 @@ import { Loader } from '../loader/loader';
 import { SelectOption } from '../../models/select';
 import { TypographyTypeEnum } from '../../constants/typography';
 import { ButtonStyleEnum } from '../../constants/button';
+import { TranslatePipe } from '@ngx-translate/core';
+import { TranslationService } from '../../../core/services/translation.service';
 
 @Component({
   selector: 'app-pre-join-lobby',
@@ -37,6 +39,7 @@ import { ButtonStyleEnum } from '../../constants/button';
     Typography,
     Select,
     Loader,
+    TranslatePipe,
   ],
   templateUrl: './pre-join-lobby.html',
   styleUrls: ['./pre-join-lobby.scss'],
@@ -69,10 +72,15 @@ export class PreJoinLobby implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
 
+  private t: TranslationService;
+
   constructor(
     private mediaDeviceService: MediaDeviceService,
-    private cdr: ChangeDetectorRef
-  ) {}
+    private cdr: ChangeDetectorRef,
+    translationService: TranslationService
+  ) {
+    this.t = translationService;
+  }
 
   async ngOnInit(): Promise<void> {
     this.speakerSupported = this.mediaDeviceService.isSpeakerSelectionSupported();
@@ -122,11 +130,11 @@ export class PreJoinLobby implements OnInit, OnDestroy {
     } catch (error) {
       if (error instanceof DOMException && error.name === 'NotAllowedError') {
         this.permissionDenied.set(true);
-        this.permissionError.set('Camera/microphone access was denied. Please allow access in your browser settings.');
+        this.permissionError.set(this.t.instant('preJoinLobby.permissionDenied'));
         this.cameraEnabled.set(false);
         this.microphoneEnabled.set(false);
       } else {
-        this.permissionError.set('Failed to access media devices.');
+        this.permissionError.set(this.t.instant('preJoinLobby.failedAccessDevices'));
       }
     } finally {
       this.isLoading.set(false);

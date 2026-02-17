@@ -6,7 +6,7 @@
   @if (phase() === 'connecting') {
     <div class="loading-overlay">
       <app-loader></app-loader>
-      <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--primary-500)">Connecting to video call...</app-typography>
+      <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--primary-500)">{{ 'videoConsultation.connecting' | translate }}</app-typography>
     </div>
   }
 
@@ -16,7 +16,7 @@
         <app-svg src="error" [svgStyle]="{'width.px': 48, 'height.px': 48}" class="error-icon"></app-svg>
         <app-typography [variant]="TypographyTypeEnum['body-l-medium']">{{ errorMessage }}</app-typography>
         <app-button
-          text="Leave"
+          [text]="'videoConsultation.leave' | translate"
           [style]="ButtonStyleEnum.primary"
           (buttonClick)="leaveCall()">
         </app-button>
@@ -30,11 +30,11 @@
           @if (!isCameraEnabled) {
             <div class="camera-off-placeholder">
               <app-svg src="camera-off" [svgStyle]="{'width.px': 32, 'height.px': 32}"></app-svg>
-              <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--White)">Camera off</app-typography>
+              <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--White)">{{ 'videoConsultation.cameraOff' | translate }}</app-typography>
             </div>
           }
           <div class="participant-label">
-            <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--White)">You</app-typography>
+            <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--White)">{{ 'videoConsultation.you' | translate }}</app-typography>
             @if (!isMicrophoneEnabled) {
               <app-svg src="microphone-off" [svgStyle]="{'width.px': 14, 'height.px': 14}" class="muted-indicator"></app-svg>
             }
@@ -46,7 +46,7 @@
             <video #localScreenShare autoplay playsinline class="tile-video"></video>
             <div class="participant-label">
               <app-svg src="screen-share" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
-              <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--White)">Your screen</app-typography>
+              <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--White)">{{ 'videoConsultation.yourScreen' | translate }}</app-typography>
             </div>
           </div>
         }
@@ -83,7 +83,7 @@
               </video>
               <div class="participant-label">
                 <app-svg src="screen-share" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
-                <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--White)">{{ participant.name }}'s screen</app-typography>
+                <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--White)">{{ 'videoConsultation.participantScreen' | translate: { name: participant.name } }}</app-typography>
               </div>
             </div>
           }
@@ -93,7 +93,7 @@
           <div class="video-tile waiting-tile">
             <div class="camera-off-placeholder">
               <app-svg src="users" [svgStyle]="{'width.px': 48, 'height.px': 48}"></app-svg>
-              <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--White)">Waiting for participants...</app-typography>
+              <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--White)">{{ 'videoConsultation.waitingForParticipants' | translate }}</app-typography>
             </div>
           </div>
         }
@@ -175,7 +175,7 @@
       @if (showChat() && !isMinimized) {
         <div class="chat-panel">
           <div class="chat-header">
-            <app-typography [variant]="TypographyTypeEnum['body-l-bold']">Chat</app-typography>
+            <app-typography [variant]="TypographyTypeEnum['body-l-bold']">{{ 'videoConsultation.chat' | translate }}</app-typography>
             <button class="close-chat-btn" (click)="toggleChatPanel()">
               <app-svg src="close" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
             </button>
@@ -195,7 +195,7 @@
 
       @if (connectionStatus === 'reconnecting') {
         <div class="reconnecting-banner">
-          <app-typography [variant]="TypographyTypeEnum['body-s-regular']">Reconnecting...</app-typography>
+          <app-typography [variant]="TypographyTypeEnum['body-s-regular']">{{ 'videoConsultation.reconnecting' | translate }}</app-typography>
         </div>
       }
     }

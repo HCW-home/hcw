@@ -3,14 +3,14 @@
     <div class="page-header">
       <div class="search-wrapper">
         <app-input
-          placeholder="Search patients..."
+          [placeholder]="'patients.searchPlaceholder' | translate"
           leftIcon="search"
           [ngModel]="searchQuery"
           (ngModelChange)="onSearchChange($event)">
         </app-input>
       </div>
       <app-button
-        text="Add Patient"
+        [text]="'patients.addPatient' | translate"
         leftIcon="plus"
         [style]="ButtonStyleEnum.primary"
         [size]="ButtonSizeEnum.small"
@@ -34,13 +34,13 @@
           <div class="empty-state">
             <app-svg src="user" [svgStyle]="{'width.px': 48, 'height.px': 48, 'color': 'var(--slate-300)'}"></app-svg>
             <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--slate-600)">
-              No patients found
+              {{ 'patients.noPatients' | translate }}
             </app-typography>
             <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-400)">
               @if (searchQuery) {
-                Try a different search term
+                {{ 'patients.tryDifferentSearch' | translate }}
               } @else {
-                Add your first patient to get started
+                {{ 'patients.addFirstPatient' | translate }}
               }
             </app-typography>
           </div>
@@ -69,13 +69,13 @@
                     </div>
                   }
                   @if (!patient.email && !patient.mobile_phone_number) {
-                    <span class="contact-text no-contact">No contact info</span>
+                    <span class="contact-text no-contact">{{ 'patients.noContactInfo' | translate }}</span>
                   }
                 </div>
               </div>
               <div slot="meta">
                 <app-badge [type]="getOnlineStatusBadgeType(patient.is_online ?? false)">
-                  {{ patient.is_online ? 'Online' : 'Offline' }}
+                  {{ patient.is_online ? ('patients.online' | translate) : ('patients.offline' | translate) }}
                 </app-badge>
               </div>
             </app-list-item>
@@ -84,7 +84,7 @@
           @if (hasMore()) {
             <div class="load-more-container">
               <app-button
-                text="View More"
+                [text]="'patients.viewMore' | translate"
                 [style]="ButtonStyleEnum.text"
                 [size]="ButtonSizeEnum.medium"
                 [loading]="loadingMore()"

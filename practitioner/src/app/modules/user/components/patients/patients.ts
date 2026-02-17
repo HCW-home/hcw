@@ -22,6 +22,8 @@ import { ToasterService } from '../../../../core/services/toaster.service';
 import { IUser } from '../../models/user';
 import { getOnlineStatusBadgeType } from '../../../../shared/tools/helper';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
+import { TranslatePipe } from '@ngx-translate/core';
+import { TranslationService } from '../../../../core/services/translation.service';
 
 type PatientTabType = 'all' | 'registered' | 'temporary';
 
@@ -35,7 +37,7 @@ interface TabCache {
 
 @Component({
   selector: 'app-patients',
-  imports: [CommonModule, FormsModule, Page, Svg, Typography, Button, Input, Loader, Badge, Tabs, ListItem, ModalComponent, AddEditPatient],
+  imports: [CommonModule, FormsModule, Page, Svg, Typography, Button, Input, Loader, Badge, Tabs, ListItem, ModalComponent, AddEditPatient, TranslatePipe],
   templateUrl: './patients.html',
   styleUrl: './patients.scss',
 })
@@ -45,6 +47,7 @@ export class Patients implements OnInit, OnDestroy {
   private patientService = inject(PatientService);
   private toasterService = inject(ToasterService);
   private router = inject(Router);
+  private t = inject(TranslationService);
 
   private tabCache: Record<PatientTabType, TabCache> = {
     all: { data: [], loaded: false, searchQuery: '', hasMore: false, currentPage: 1 },
@@ -72,9 +75,9 @@ export class Patients implements OnInit, OnDestroy {
 
   get tabItems(): TabItem[] {
     return [
-      { id: 'all', label: 'All', count: this.totalCount() },
-      { id: 'registered', label: 'Permanent', count: this.permanentCount() },
-      { id: 'temporary', label: 'Temporary', count: this.temporaryCount() }
+      { id: 'all', label: this.t.instant('patients.tabAll'), count: this.totalCount() },
+      { id: 'registered', label: this.t.instant('patients.tabPermanent'), count: this.permanentCount() },
+      { id: 'temporary', label: this.t.instant('patients.tabTemporary'), count: this.temporaryCount() }
     ];
   }
 
@@ -136,7 +139,7 @@ export class Patients implements OnInit, OnDestroy {
         this.loading.set(false);
       },
       error: (err) => {
-        this.toasterService.show('error', 'Error Loading Patients', getErrorMessage(err));
+        this.toasterService.show('error', this.t.instant('patients.errorLoading'), getErrorMessage(err));
         this.loading.set(false);
       }
     });
@@ -181,7 +184,7 @@ export class Patients implements OnInit, OnDestroy {
         this.loadingMore.set(false);
       },
       error: (err) => {
-        this.toasterService.show('error', 'Error Loading Patients', getErrorMessage(err));
+        this.toasterService.show('error', this.t.instant('patients.errorLoading'), getErrorMessage(err));
         this.loadingMore.set(false);
       }
     });

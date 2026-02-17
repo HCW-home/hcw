@@ -2,7 +2,7 @@
   @if (isLoading()) {
     <div class="lobby-loading">
       <app-loader></app-loader>
-      <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="#ffffff">Setting up your devices...</app-typography>
+      <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="#ffffff">{{ 'preJoinLobby.settingUpDevices' | translate }}</app-typography>
     </div>
   } @else {
     <div class="lobby-content">
@@ -21,7 +21,7 @@
                   {{ permissionError() }}
                 </app-typography>
               } @else {
-                <app-typography [variant]="TypographyTypeEnum['body-l-regular']" color="#9ca3af">Camera off</app-typography>
+                <app-typography [variant]="TypographyTypeEnum['body-l-regular']" color="#9ca3af">{{ 'preJoinLobby.cameraOff' | translate }}</app-typography>
               }
             </div>
           }
@@ -62,42 +62,42 @@
       </div>
 
       <div class="lobby-controls-section">
-        <app-typography [variant]="TypographyTypeEnum['h3-semibold']" color="#ffffff">Ready to join?</app-typography>
-        <app-typography [variant]="TypographyTypeEnum['body-l-regular']" color="#d1d5db" class="lobby-subtitle">Check your camera and microphone before joining</app-typography>
+        <app-typography [variant]="TypographyTypeEnum['h3-semibold']" color="#ffffff">{{ 'preJoinLobby.readyToJoin' | translate }}</app-typography>
+        <app-typography [variant]="TypographyTypeEnum['body-l-regular']" color="#d1d5db" class="lobby-subtitle">{{ 'preJoinLobby.checkDevices' | translate }}</app-typography>
 
         <div class="device-selectors">
           @if (cameraOptions.length > 0) {
             <div class="device-row">
-              <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="#d1d5db">Camera</app-typography>
+              <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="#d1d5db">{{ 'preJoinLobby.camera' | translate }}</app-typography>
               <app-select
                 [options]="cameraOptions"
                 [ngModel]="selectedCameraId"
                 (ngModelChange)="onCameraChange($event)"
-                placeholder="Select camera">
+                [placeholder]="'preJoinLobby.selectCamera' | translate">
               </app-select>
             </div>
           }
 
           @if (microphoneOptions.length > 0) {
             <div class="device-row">
-              <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="#d1d5db">Microphone</app-typography>
+              <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="#d1d5db">{{ 'preJoinLobby.microphone' | translate }}</app-typography>
               <app-select
                 [options]="microphoneOptions"
                 [ngModel]="selectedMicrophoneId"
                 (ngModelChange)="onMicrophoneChange($event)"
-                placeholder="Select microphone">
+                [placeholder]="'preJoinLobby.selectMicrophone' | translate">
               </app-select>
             </div>
           }
 
           @if (speakerSupported && speakerOptions.length > 0) {
             <div class="device-row">
-              <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="#d1d5db">Speaker</app-typography>
+              <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="#d1d5db">{{ 'preJoinLobby.speaker' | translate }}</app-typography>
               <app-select
                 [options]="speakerOptions"
                 [ngModel]="selectedSpeakerId"
                 (ngModelChange)="onSpeakerChange($event)"
-                placeholder="Select speaker">
+                [placeholder]="'preJoinLobby.selectSpeaker' | translate">
               </app-select>
             </div>
           }
@@ -105,7 +105,7 @@
 
         <div class="join-action">
           <app-button
-            text="Join Now"
+            [text]="'preJoinLobby.joinNow' | translate"
             [style]="ButtonStyleEnum.primary"
             [fullWidth]="true"
             (buttonClick)="onJoin()">

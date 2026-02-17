@@ -88,6 +88,8 @@ import { IBreadcrumb } from '../../../../shared/models/breadcrumb';
 import { RoutePaths } from '../../../../core/constants/routes';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
 import { TIMEZONE_OPTIONS } from '../../../../shared/constants/timezone';
+import { TranslatePipe } from '@ngx-translate/core';
+import { TranslationService } from '../../../../core/services/translation.service';
 
 @Component({
   selector: 'app-consultation-form',
@@ -110,6 +112,7 @@ import { TIMEZONE_OPTIONS } from '../../../../shared/constants/timezone';
     Checkbox,
     Switch,
     FormsModule,
+    TranslatePipe,
   ],
 })
 export class ConsultationForm implements OnInit, OnDestroy {
@@ -128,11 +131,13 @@ export class ConsultationForm implements OnInit, OnDestroy {
   formReady = signal(false);
   savingAppointments = signal<Set<number>>(new Set());
 
-  stepItems: IStep[] = [
-    { id: 'details', title: 'Details' },
-    { id: 'owner', title: 'Assignment', isOptional: true },
-    { id: 'schedule', title: 'Schedule', isOptional: true },
-  ];
+  get stepItems(): IStep[] {
+    return [
+      { id: 'details', title: this.t.instant('consultationForm.stepDetails') },
+      { id: 'owner', title: this.t.instant('consultationForm.stepAssignment'), isOptional: true },
+      { id: 'schedule', title: this.t.instant('consultationForm.stepSchedule'), isOptional: true },
+    ];
+  }
 
   selectedOwner = signal<IUser | null>(null);
   selectedBeneficiary = signal<IUser | null>(null);
@@ -140,26 +145,32 @@ export class ConsultationForm implements OnInit, OnDestroy {
 
   consultationForm!: FormGroup;
 
-  appointmentTypeOptions: SelectOption[] = [
-    { value: AppointmentType.ONLINE, label: 'Online' },
-    { value: AppointmentType.INPERSON, label: 'In Person' },
-  ];
+  get appointmentTypeOptions(): SelectOption[] {
+    return [
+      { value: AppointmentType.ONLINE, label: this.t.instant('consultationForm.online') },
+      { value: AppointmentType.INPERSON, label: this.t.instant('consultationForm.inPerson') },
+    ];
+  }
 
   timezoneOptions: SelectOption[] = TIMEZONE_OPTIONS;
 
-  communicationMethods: SelectOption[] = [
-    { value: 'email', label: 'Email' },
-    { value: 'sms', label: 'SMS' },
-    { value: 'whatsapp', label: 'WhatsApp' },
-    { value: 'push', label: 'Push Notification' },
-  ];
+  get communicationMethods(): SelectOption[] {
+    return [
+      { value: 'email', label: this.t.instant('consultationForm.email') },
+      { value: 'sms', label: this.t.instant('consultationForm.sms') },
+      { value: 'whatsapp', label: this.t.instant('consultationForm.whatsApp') },
+      { value: 'push', label: this.t.instant('consultationForm.pushNotification') },
+    ];
+  }
 
-  languageOptions: SelectOption[] = [
-    { value: 'en', label: 'English' },
-    { value: 'fr', label: 'French' },
-    { value: 'es', label: 'Spanish' },
-    { value: 'de', label: 'German' },
-  ];
+  get languageOptions(): SelectOption[] {
+    return [
+      { value: 'en', label: this.t.instant('consultationForm.english') },
+      { value: 'fr', label: this.t.instant('consultationForm.french') },
+      { value: 'es', label: this.t.instant('consultationForm.spanish') },
+      { value: 'de', label: this.t.instant('consultationForm.german') },
+    ];
+  }
 
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
@@ -168,9 +179,9 @@ export class ConsultationForm implements OnInit, OnDestroy {
   protected readonly AppointmentType = AppointmentType;
 
   breadcrumbs = computed<IBreadcrumb[]>(() => [
-    { label: 'Consultations', link: '/user/consultations' },
+    { label: this.t.instant('consultations.tabActive'), link: '/user/consultations' },
     {
-      label: this.mode === 'create' ? 'New Consultation' : 'Edit Consultation',
+      label: this.mode === 'create' ? this.t.instant('consultationForm.createConsultation') : this.t.instant('consultationForm.saveChanges'),
     },
   ]);
 
@@ -181,16 +192,6 @@ export class ConsultationForm implements OnInit, OnDestroy {
     }))
   );
 
-  pageTitle = computed(() =>
-    this.mode === 'create' ? 'Create New Consultation' : 'Edit Consultation'
-  );
-
-  pageDescription = computed(() =>
-    this.mode === 'create'
-      ? 'Create a new consultation and schedule appointments with patients'
-      : 'Update consultation details and manage appointments'
-  );
-
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private fb = inject(FormBuilder);
@@ -198,6 +199,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
   private toasterService = inject(ToasterService);
   private validationService = inject(ValidationService);
   private userService = inject(UserService);
+  private t = inject(TranslationService);
 
   get appointmentsFormArray(): FormArray {
     return this.consultationForm.get('appointments') as FormArray;
@@ -276,7 +278,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
           this.queues.set(queues);
         },
         error: (error) => {
-          this.toasterService.show('error', 'Error Loading Queues', getErrorMessage(error));
+          this.toasterService.show('error', this.t.instant('consultationForm.errorLoadingQueues'), getErrorMessage(error));
           this.queues.set([]);
         },
       });
@@ -298,7 +300,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
         },
         error: (error) => {
           this.isLoading.set(false);
-          this.toasterService.show('error', 'Error Loading Consultation', getErrorMessage(error));
+          this.toasterService.show('error', this.t.instant('consultationForm.errorLoadingConsultation'), getErrorMessage(error));
           this.router.navigate([
             `/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`,
           ]);
@@ -329,7 +331,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
           });
         },
         error: (error) => {
-          this.toasterService.show('error', 'Error Loading Appointments', getErrorMessage(error));
+          this.toasterService.show('error', this.t.instant('consultationForm.errorLoadingAppointments'), getErrorMessage(error));
         },
       });
   }
@@ -428,8 +430,8 @@ export class ConsultationForm implements OnInit, OnDestroy {
       this.validationService.validateAllFormFields(this.consultationForm);
       this.toasterService.show(
         'error',
-        'Validation Error',
-        'Please fill in the reason field'
+        this.t.instant('consultationForm.validationError'),
+        this.t.instant('consultationForm.fillReasonField')
       );
     }
   }
@@ -460,8 +462,8 @@ export class ConsultationForm implements OnInit, OnDestroy {
           } else {
             this.toasterService.show(
               'success',
-              'Consultation Created',
-              'Consultation created successfully'
+              this.t.instant('consultationForm.consultationCreated'),
+              this.t.instant('consultationForm.consultationCreatedMessage')
             );
             this.isSaving.set(false);
             this.router.navigate([
@@ -472,7 +474,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
         },
         error: (error) => {
           this.isSaving.set(false);
-          this.toasterService.show('error', 'Error Creating Consultation', getErrorMessage(error));
+          this.toasterService.show('error', this.t.instant('consultationForm.errorCreating'), getErrorMessage(error));
         },
       });
   }
@@ -515,7 +517,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
             }
           },
           error: (error: HttpErrorResponse) => {
-            this.toasterService.show('error', 'Error Creating Appointment', getErrorMessage(error));
+            this.toasterService.show('error', this.t.instant('consultationForm.errorCreatingAppointment'), getErrorMessage(error));
             completed++;
             if (completed === appointments.length) {
               this.isSaving.set(false);
@@ -550,8 +552,8 @@ export class ConsultationForm implements OnInit, OnDestroy {
           this.consultation.set(consultation);
           this.toasterService.show(
             'success',
-            'Consultation Updated',
-            'Consultation updated successfully'
+            this.t.instant('consultationForm.consultationUpdated'),
+            this.t.instant('consultationForm.consultationUpdatedMessage')
           );
           this.isSaving.set(false);
           this.router.navigate([
@@ -561,7 +563,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
         },
         error: (error) => {
           this.isSaving.set(false);
-          this.toasterService.show('error', 'Error Updating Consultation', getErrorMessage(error));
+          this.toasterService.show('error', this.t.instant('consultationForm.errorUpdating'), getErrorMessage(error));
         },
       });
   }
@@ -585,10 +587,10 @@ export class ConsultationForm implements OnInit, OnDestroy {
   getFieldError(fieldName: string): string {
     const field = this.consultationForm.get(fieldName);
     if (field?.errors && field?.touched) {
-      if (field.errors['required']) return `${fieldName} is required`;
-      if (field.errors['minlength']) return `${fieldName} is too short`;
-      if (field.errors['maxlength']) return `${fieldName} is too long`;
-      if (field.errors['email']) return `Invalid email format`;
+      if (field.errors['required']) return this.t.instant('consultationForm.fieldRequired', { field: fieldName });
+      if (field.errors['minlength']) return this.t.instant('consultationForm.fieldTooShort', { field: fieldName });
+      if (field.errors['maxlength']) return this.t.instant('consultationForm.fieldTooLong', { field: fieldName });
+      if (field.errors['email']) return this.t.instant('consultationForm.invalidEmail');
     }
     return '';
   }
@@ -700,10 +702,10 @@ export class ConsultationForm implements OnInit, OnDestroy {
         .subscribe({
           next: () => {
             this.appointmentsFormArray.removeAt(index);
-            this.toasterService.show('success', 'Appointment Removed', 'Appointment removed successfully');
+            this.toasterService.show('success', this.t.instant('consultationForm.appointmentRemoved'), this.t.instant('consultationForm.appointmentRemovedMessage'));
           },
           error: (error) => {
-            this.toasterService.show('error', 'Error Removing Appointment', getErrorMessage(error));
+            this.toasterService.show('error', this.t.instant('consultationForm.errorRemovingAppointment'), getErrorMessage(error));
           },
         });
     } else {
@@ -739,13 +741,13 @@ export class ConsultationForm implements OnInit, OnDestroy {
             const s = new Set(this.savingAppointments());
             s.delete(index);
             this.savingAppointments.set(s);
-            this.toasterService.show('success', 'Appointment Updated', 'Appointment updated successfully');
+            this.toasterService.show('success', this.t.instant('consultationForm.appointmentUpdated'), this.t.instant('consultationForm.appointmentUpdatedMessage'));
           },
           error: (error) => {
             const s = new Set(this.savingAppointments());
             s.delete(index);
             this.savingAppointments.set(s);
-            this.toasterService.show('error', 'Error Updating Appointment', getErrorMessage(error));
+            this.toasterService.show('error', this.t.instant('consultationForm.errorUpdatingAppointment'), getErrorMessage(error));
           },
         });
     } else {
@@ -768,13 +770,13 @@ export class ConsultationForm implements OnInit, OnDestroy {
             const s = new Set(this.savingAppointments());
             s.delete(index);
             this.savingAppointments.set(s);
-            this.toasterService.show('success', 'Appointment Created', 'Appointment created successfully');
+            this.toasterService.show('success', this.t.instant('consultationForm.appointmentCreated'), this.t.instant('consultationForm.appointmentCreatedMessage'));
           },
           error: (error: HttpErrorResponse) => {
             const s = new Set(this.savingAppointments());
             s.delete(index);
             this.savingAppointments.set(s);
-            this.toasterService.show('error', 'Error Creating Appointment', getErrorMessage(error));
+            this.toasterService.show('error', this.t.instant('consultationForm.errorCreatingAppointment'), getErrorMessage(error));
           },
         });
     }
