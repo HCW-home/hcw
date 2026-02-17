@@ -36,11 +36,17 @@ export interface ITokenAuthResponse {
   error?: string;
 }
 
+export interface IConfigLanguage {
+  code: string;
+  name: string;
+}
+
 export interface IOpenIDConfig {
   enabled: boolean;
   client_id: string | null;
   authorization_url: string | null;
   provider_name: string | null;
+  languages: IConfigLanguage[];
 }
 
 export interface IOpenIDLoginBody {

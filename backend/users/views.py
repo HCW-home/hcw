@@ -1,11 +1,14 @@
+import logging
 import mimetypes
 import os
-import logging
 import uuid
 
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
-from dj_rest_auth.registration.views import SocialLoginView, RegisterView as DjRestAuthRegisterView
-from allauth.socialaccount.providers.openid_connect.views import OpenIDConnectOAuth2Adapter
+from allauth.socialaccount.providers.openid_connect.views import (
+    OpenIDConnectOAuth2Adapter,
+)
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from consultations.models import Appointment, Consultation, Participant, Request
 from consultations.models import Message as ConsultationMessage
 from consultations.serializers import (
@@ -18,15 +21,17 @@ from consultations.serializers import (
     RequestSerializer,
 )
 from dj_rest_auth.registration.serializers import SocialLoginSerializer
+from dj_rest_auth.registration.views import RegisterView as DjRestAuthRegisterView
 from dj_rest_auth.registration.views import SocialLoginView
 from django.conf import settings
-from django.db.models import Q
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
+from django.db.models import Q
 from django.http import FileResponse
 from django.shortcuts import render
 from django.utils import timezone
 from django.views.generic import View
+from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import (
     OpenApiExample,
     OpenApiParameter,
@@ -49,9 +54,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
-from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
 
+from .filters import UserFilter
 from .models import HealthMetric, Language, Organisation, Speciality, Term, User
 from .serializers import (
     HealthMetricSerializer,
@@ -60,10 +64,9 @@ from .serializers import (
     SpecialitySerializer,
     TermSerializer,
     UserDetailsSerializer,
-    UserParticipantDetailSerializer
+    UserParticipantDetailSerializer,
 )
-from .filters import UserFilter
-from django_filters.rest_framework import DjangoFilterBackend
+
 
 class DjangoModelPermissionsWithView(DjangoModelPermissions):
     """
@@ -188,6 +191,7 @@ class UserParticipantViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         return Participant.objects.filter(user=user, is_active=True)
+
 
 class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
     authentication_classes = [JWTAuthentication]
@@ -403,7 +407,9 @@ class UserNotificationsView(APIView):
     )
     def get(self, request):
         """Get all notifications for the authenticated user as recipient."""
-        notifications = Message.objects.filter(sent_to=request.user, in_notification=True)
+        notifications = Message.objects.filter(
+            sent_to=request.user, in_notification=True
+        )
 
         # Filter by status if provided
         status = request.query_params.get("status")
@@ -512,15 +518,17 @@ class UserAppointmentsViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
     pagination_class = UniversalPagination
     serializer_class = AppointmentSerializer
-    filterset_fields = ['status']
+    filterset_fields = ["status"]
 
     def get_queryset(self):
         """Get appointments where the authenticated user is an active participant."""
-        return Appointment.objects.filter(
-            participant__user=self.request.user,
-            participant__is_active=True
-        ).distinct().order_by("-scheduled_at")
-
+        return (
+            Appointment.objects.filter(
+                participant__user=self.request.user, participant__is_active=True
+            )
+            .distinct()
+            .order_by("-scheduled_at")
+        )
 
     @extend_schema(
         responses={
@@ -601,7 +609,6 @@ class UserAppointmentsViewSet(viewsets.ReadOnlyModelViewSet):
             )
 
 
-
 class UserViewSet(viewsets.ModelViewSet):
     """
     ViewSet for users - read only with GET endpoint
@@ -659,29 +666,44 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class OpenIDAdapter(OpenIDConnectOAuth2Adapter):
     """Custom OpenID Connect adapter for handling callback URLs from frontend"""
-    provider_id = 'openid'
+
+    provider_id = "openid"
 
     def __init__(self, request):
-        super().__init__(request, provider_id='openid')
+        super().__init__(request, provider_id="openid")
 
     def get_callback_url(self, request, app):
         """Use callback_url from frontend request if provided"""
-        if hasattr(request, 'data') and 'callback_url' in request.data:
-            return request.data['callback_url']
+        if hasattr(request, "data") and "callback_url" in request.data:
+            return request.data["callback_url"]
         return super().get_callback_url(request, app)
 
 
 class CustomOAuth2Client(OAuth2Client):
     _pkce_code_verifier = None
 
-    def __init__(self, request, consumer_key, consumer_secret,
-                 access_token_method, access_token_url, callback_url,
-                 _scope=None, scope_delimiter=" ", headers=None,
-                 basic_auth=False):
+    def __init__(
+        self,
+        request,
+        consumer_key,
+        consumer_secret,
+        access_token_method,
+        access_token_url,
+        callback_url,
+        _scope=None,
+        scope_delimiter=" ",
+        headers=None,
+        basic_auth=False,
+    ):
         super().__init__(
-            request, consumer_key, consumer_secret,
-            access_token_method, access_token_url, callback_url,
-            scope_delimiter=scope_delimiter, headers=headers,
+            request,
+            consumer_key,
+            consumer_secret,
+            access_token_method,
+            access_token_url,
+            callback_url,
+            scope_delimiter=scope_delimiter,
+            headers=headers,
             basic_auth=basic_auth,
         )
 
@@ -703,14 +725,15 @@ class CustomOAuth2Client(OAuth2Client):
 
 class OpenIDView(SocialLoginView):
     """OpenID Connect login view with PKCE support"""
+
     adapter_class = OpenIDAdapter
     serializer_class = SocialLoginSerializer
     client_class = CustomOAuth2Client
 
     def post(self, request, *args, **kwargs):
         # Get origin from request headers
-        origin = request.META.get('HTTP_ORIGIN', request.META.get('HTTP_REFERER', ''))
-        if origin.endswith('/'):
+        origin = request.META.get("HTTP_ORIGIN", request.META.get("HTTP_REFERER", ""))
+        if origin.endswith("/"):
             origin = origin[:-1]
 
         # Set callback URL dynamically
@@ -718,14 +741,14 @@ class OpenIDView(SocialLoginView):
         self.callback_url = callback_url
 
         # Store PKCE code_verifier if present (for PKCE flow)
-        if 'code_verifier' in request.data:
-            CustomOAuth2Client._pkce_code_verifier = request.data['code_verifier']
+        if "code_verifier" in request.data:
+            CustomOAuth2Client._pkce_code_verifier = request.data["code_verifier"]
         else:
             CustomOAuth2Client._pkce_code_verifier = None
 
         # Add callback_url to request data if not present
-        if 'code' in request.data and 'callback_url' not in request.data:
-            request.data['callback_url'] = callback_url
+        if "code" in request.data and "callback_url" not in request.data:
+            request.data["callback_url"] = callback_url
 
         return super().post(request, *args, **kwargs)
 
@@ -735,6 +758,7 @@ class AppConfigView(APIView):
     Public endpoint returning application configuration for the frontend.
     Includes OpenID, registration settings, and main organization info.
     """
+
     permission_classes = []
     authentication_classes = []
 
@@ -777,12 +801,19 @@ class AppConfigView(APIView):
 
         from constance import config as constance_config
 
-        return Response({
-            **openid,
-            "registration_enabled": settings.ENABLE_REGISTRATION,
-            "main_organization": main_organization,
-            "branding": constance_config.site_name,
-        })
+        languages = [
+            {"code": code, "name": str(name)} for code, name in settings.LANGUAGES
+        ]
+
+        return Response(
+            {
+                **openid,
+                "registration_enabled": settings.ENABLE_REGISTRATION,
+                "main_organization": main_organization,
+                "branding": constance_config.site_name,
+                "languages": languages,
+            }
+        )
 
 
 class RegisterView(DjRestAuthRegisterView):
@@ -820,6 +851,7 @@ class RegisterView(DjRestAuthRegisterView):
 
 class EmailVerifyView(APIView):
     """Verify user email address via token."""
+
     permission_classes = []
     authentication_classes = []
 
@@ -931,10 +963,10 @@ class UserDashboardView(APIView):
             created_by=user,
         ).order_by("-id")
 
-        consultations = Consultation.objects.exclude(
-            request__in=user_requests
-        ).filter(beneficiary=user, closed_at__isnull=True).order_by(
-            "-created_at"
+        consultations = (
+            Consultation.objects.exclude(request__in=user_requests)
+            .filter(beneficiary=user, closed_at__isnull=True)
+            .order_by("-created_at")
         )
 
         now = timezone.now()
@@ -953,11 +985,11 @@ class UserDashboardView(APIView):
         )
 
         appointments = (
-            Appointment.objects.exclude(
-                consultation__in=consultations
-            ).exclude(
+            Appointment.objects.exclude(consultation__in=consultations)
+            .exclude(
                 consultation__request__in=user_requests,
-            ).filter(
+            )
+            .filter(
                 participant__user=user,
                 participant__is_active=True,
                 scheduled_at__gte=now,
@@ -966,10 +998,11 @@ class UserDashboardView(APIView):
             .order_by("-scheduled_at")
         )
 
-
         return Response(
             {
-                "next_appointment": AppointmentSerializer(next_appointment).data if next_appointment else None,
+                "next_appointment": AppointmentSerializer(next_appointment).data
+                if next_appointment
+                else None,
                 "requests": RequestSerializer(user_requests, many=True).data,
                 "consultations": ConsultationSerializer(consultations, many=True).data,
                 "appointments": AppointmentSerializer(appointments, many=True).data,

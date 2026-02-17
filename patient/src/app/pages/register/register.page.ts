@@ -1,36 +1,39 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { Component, OnInit } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import {
+  FormBuilder,
+  FormGroup,
+  Validators,
+  ReactiveFormsModule,
+} from "@angular/forms";
 import {
   IonContent,
   IonItem,
-  IonLabel,
   IonInput,
   IonButton,
   IonIcon,
   IonText,
   NavController,
   LoadingController,
-  ToastController
-} from '@ionic/angular/standalone';
-import { AuthService } from '../../core/services/auth.service';
+  ToastController,
+} from "@ionic/angular/standalone";
+import { AuthService } from "../../core/services/auth.service";
 
 @Component({
-  selector: 'app-register',
-  templateUrl: './register.page.html',
-  styleUrls: ['./register.page.scss'],
+  selector: "app-register",
+  templateUrl: "./register.page.html",
+  styleUrls: ["./register.page.scss"],
   standalone: true,
   imports: [
     CommonModule,
     ReactiveFormsModule,
     IonContent,
     IonItem,
-    IonLabel,
     IonInput,
     IonButton,
     IonIcon,
-    IonText
-  ]
+    IonText,
+  ],
 })
 export class RegisterPage implements OnInit {
   registerForm: FormGroup;
@@ -45,15 +48,18 @@ export class RegisterPage implements OnInit {
     private authService: AuthService,
     private navCtrl: NavController,
     private loadingCtrl: LoadingController,
-    private toastCtrl: ToastController
+    private toastCtrl: ToastController,
   ) {
-    this.registerForm = this.fb.group({
-      first_name: ['', [Validators.required, Validators.minLength(2)]],
-      last_name: ['', [Validators.required, Validators.minLength(2)]],
-      email: ['', [Validators.required, Validators.email]],
-      password1: ['', [Validators.required, Validators.minLength(8)]],
-      password2: ['', [Validators.required]]
-    }, { validators: this.passwordMatchValidator });
+    this.registerForm = this.fb.group(
+      {
+        first_name: ["", [Validators.required, Validators.minLength(2)]],
+        last_name: ["", [Validators.required, Validators.minLength(2)]],
+        email: ["", [Validators.required, Validators.email]],
+        password1: ["", [Validators.required, Validators.minLength(8)]],
+        password2: ["", [Validators.required]],
+      },
+      { validators: this.passwordMatchValidator },
+    );
   }
 
   ngOnInit() {
@@ -70,9 +76,13 @@ export class RegisterPage implements OnInit {
   }
 
   passwordMatchValidator(form: FormGroup) {
-    const password = form.get('password1');
-    const confirmPassword = form.get('password2');
-    if (password && confirmPassword && password.value !== confirmPassword.value) {
+    const password = form.get("password1");
+    const confirmPassword = form.get("password2");
+    if (
+      password &&
+      confirmPassword &&
+      password.value !== confirmPassword.value
+    ) {
       confirmPassword.setErrors({ passwordMismatch: true });
       return { passwordMismatch: true };
     }
@@ -90,19 +100,21 @@ export class RegisterPage implements OnInit {
   async onRegister() {
     if (this.registerForm.valid) {
       const loading = await this.loadingCtrl.create({
-        message: 'Creating account...',
-        spinner: 'crescent'
+        message: "Creating account...",
+        spinner: "crescent",
       });
       await loading.present();
 
       this.authService.register(this.registerForm.value).subscribe({
         next: async (response) => {
           await loading.dismiss();
-          this.successMessage = response.detail || 'A verification email has been sent to your email address.';
+          this.successMessage =
+            response.detail ||
+            "A verification email has been sent to your email address.";
         },
         error: async (error) => {
           await loading.dismiss();
-          let errorMessage = 'Registration failed. Please try again.';
+          let errorMessage = "Registration failed. Please try again.";
           if (error.error) {
             if (error.error.email) {
               errorMessage = error.error.email[0];
@@ -117,16 +129,16 @@ export class RegisterPage implements OnInit {
           const toast = await this.toastCtrl.create({
             message: errorMessage,
             duration: 3000,
-            position: 'top',
-            color: 'danger'
+            position: "top",
+            color: "danger",
           });
           await toast.present();
-        }
+        },
       });
     }
   }
 
   goToLogin() {
-    this.navCtrl.navigateBack('/login');
+    this.navCtrl.navigateBack("/login");
   }
 }

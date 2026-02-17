@@ -1,213 +1,168 @@
 <app-page>
   <div class="user-profile">
-    <button class="back-button" (click)="goBack()">
-      <app-svg src="svg/arrow-left.svg" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
-      <span>Back</span>
-    </button>
-
-    <div class="page-header">
-      <h1 class="page-title">User Profile</h1>
-      @if (user()) {
-        <div class="header-actions">
-          @if (!isEditing()) {
-            <button class="btn-edit" (click)="toggleEdit()">
-              <app-svg src="svg/edit.svg" [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
-              Edit Profile
-            </button>
-          } @else {
-            <button class="btn-cancel" (click)="toggleEdit()">Cancel</button>
-            <button class="btn-save" [disabled]="isSaving()" (click)="saveProfile()">
-              @if (isSaving()) {
-                <span class="btn-loader"></span>
-              }
-              Save Changes
-            </button>
-          }
-        </div>
-      }
-    </div>
-
     @if (isLoadingUser()) {
-      <div class="loading-container">
-        <app-loader></app-loader>
-        <span class="loading-text">Loading profile...</span>
-      </div>
+    <div class="loading-container">
+      <app-loader></app-loader>
+      <span class="loading-text">Loading profile...</span>
+    </div>
     } @else if (user()) {
-      <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
-        <div class="profile-card">
-          <div class="profile-header-section">
-            <input
-              #avatarFileInput
-              type="file"
-              accept="image/*"
-              class="file-input-hidden"
-              (change)="onAvatarFileSelected($event)"
-            />
-            <div class="user-avatar" (click)="openAvatarFilePicker()">
-              @if (isUploadingAvatar()) {
-                <div class="avatar-loading">
-                  <span class="avatar-spinner"></span>
-                </div>
-              } @else if (user()!.picture) {
-                <img [src]="user()!.picture" [alt]="user()!.first_name" class="avatar-image">
-              } @else {
-                <span class="avatar-initials">{{ getInitials() }}</span>
-              }
-              <div class="avatar-overlay">
-                <app-svg src="camera" [svgStyle]="{'width.px': 20, 'height.px': 20, 'color': 'white'}"></app-svg>
-              </div>
+    <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
+      <div class="profile-card">
+        <div class="profile-header-section">
+          <input
+            #avatarFileInput
+            type="file"
+            accept="image/*"
+            class="file-input-hidden"
+            (change)="onAvatarFileSelected($event)" />
+          <div class="user-avatar" (click)="openAvatarFilePicker()">
+            @if (isUploadingAvatar()) {
+            <div class="avatar-loading">
+              <span class="avatar-spinner"></span>
             </div>
-            <div class="user-info">
-              <h2 class="user-name">{{ user()!.first_name }} {{ user()!.last_name }}</h2>
-              <span class="user-email">{{ user()!.email }}</span>
-            </div>
-          </div>
-
-          <div class="profile-section">
-            <h3 class="section-title">Personal Information</h3>
-            <div class="form-grid">
-              <div class="form-group">
-                <label class="form-label">First Name</label>
-                @if (isEditing()) {
-                  <input
-                    type="text"
-                    class="form-input readonly"
-                    formControlName="first_name"
-                    placeholder="First name cannot be changed">
-                } @else {
-                  <span class="info-value">{{ user()!.first_name }}</span>
-                }
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Last Name</label>
-                @if (isEditing()) {
-                  <input
-                    type="text"
-                    class="form-input readonly"
-                    formControlName="last_name"
-                    placeholder="Last name cannot be changed">
-                } @else {
-                  <span class="info-value">{{ user()!.last_name }}</span>
-                }
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Email Address</label>
-                @if (isEditing()) {
-                  <input
-                    type="email"
-                    class="form-input readonly"
-                    formControlName="email"
-                    placeholder="Email cannot be changed">
-                } @else {
-                  <span class="info-value">{{ user()!.email }}</span>
-                }
-              </div>
+            } @else if (user()!.picture) {
+            <img
+              [src]="user()!.picture"
+              [alt]="user()!.first_name"
+              class="avatar-image" />
+            } @else {
+            <span class="avatar-initials">{{ getInitials() }}</span>
+            }
+            <div class="avatar-overlay">
+              <app-svg
+                src="camera"
+                [svgStyle]="{'width.px': 20, 'height.px': 20, 'color': 'white'}"></app-svg>
             </div>
           </div>
-
-          <div class="profile-section">
-            <h3 class="section-title">Contact Information</h3>
-            <div class="form-grid">
-              <div class="form-group">
-                <label class="form-label">Mobile Phone</label>
-                @if (isEditing()) {
-                  <input
-                    type="tel"
-                    class="form-input"
-                    formControlName="mobile_phone_number"
-                    placeholder="+1 234 567 8900">
-                } @else {
-                  <span class="info-value">{{ user()!.mobile_phone_number || 'Not provided' }}</span>
-                }
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Preferred Communication @if (isEditing()) {<span class="required">*</span>}</label>
-                @if (isEditing()) {
-                  <app-select
-                    formControlName="communication_method"
-                    [options]="communicationMethods"
-                    [invalid]="(profileForm.get('communication_method')?.invalid && profileForm.get('communication_method')?.touched) || false"
-                    invalidMessage="Communication method is required">
-                  </app-select>
-                } @else {
-                  <app-badge [type]="BadgeTypeEnum.gray">{{ getCommunicationMethodLabel(user()!.communication_method) }}</app-badge>
-                }
-              </div>
-            </div>
+          <div class="user-info">
+            <h2 class="user-name">
+              {{ user()!.first_name }} {{ user()!.last_name }}
+            </h2>
+            <span class="user-email">{{ user()!.email }}</span>
           </div>
-
-          <div class="profile-section">
-            <h3 class="section-title">Preferences</h3>
-            <div class="form-grid">
-              <div class="form-group">
-                <label class="form-label">Timezone @if (isEditing()) {<span class="required">*</span>}</label>
-                @if (isEditing()) {
-                  <app-select
-                    formControlName="timezone"
-                    [options]="timezoneOptions"
-                    [invalid]="(profileForm.get('timezone')?.invalid && profileForm.get('timezone')?.touched) || false"
-                    invalidMessage="Timezone is required">
-                  </app-select>
-                } @else {
-                  <span class="info-value">{{ user()!.timezone || 'UTC' }}</span>
-                }
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Preferred Language</label>
-                @if (isEditing()) {
-                  <app-select
-                    formControlName="preferred_language"
-                    [options]="languageOptions()"
-                    placeholder="Select your preferred language">
-                  </app-select>
-                } @else {
-                  <span class="info-value">{{ getPreferredLanguageName() }}</span>
-                }
-              </div>
-
-              <div class="form-group full-width">
-                <label class="form-label">Available Languages</label>
-                @if (isEditing()) {
-                  <app-select
-                    formControlName="language_ids"
-                    [options]="languageOptions()"
-                    placeholder="Select languages you can communicate in"
-                    [multiSelect]="true">
-                  </app-select>
-                } @else if (user()!.languages?.length) {
-                  <div class="badges-list">
-                    @for (language of user()!.languages; track language.code) {
-                      <app-badge [type]="BadgeTypeEnum.blue">{{ language.name }}</app-badge>
-                    }
-                  </div>
-                } @else {
-                  <span class="info-value">Not set</span>
-                }
-              </div>
-            </div>
-          </div>
-
-          @if (user()!.specialities?.length && !isEditing()) {
-            <div class="profile-section">
-              <h3 class="section-title">Professional Information</h3>
-              <div class="form-grid">
-                <div class="form-group full-width">
-                  <label class="form-label">Specialities</label>
-                  <div class="badges-list">
-                    @for (speciality of user()!.specialities; track speciality.id) {
-                      <app-badge [type]="BadgeTypeEnum.green">{{ speciality.name }}</app-badge>
-                    }
-                  </div>
-                </div>
-              </div>
-            </div>
-          }
         </div>
-      </form>
+
+        <div class="profile-section">
+          <h3 class="section-title">Personal Information</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">First Name</label>
+              <input
+                type="text"
+                class="form-input readonly"
+                formControlName="first_name"
+                placeholder="First name cannot be changed" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Last Name</label>
+              <input
+                type="text"
+                class="form-input readonly"
+                formControlName="last_name"
+                placeholder="Last name cannot be changed" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Email Address</label>
+              <input
+                type="email"
+                class="form-input readonly"
+                formControlName="email"
+                placeholder="Email cannot be changed" />
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-section">
+          <h3 class="section-title">Contact Information</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Mobile Phone</label>
+              <input
+                type="tel"
+                class="form-input"
+                formControlName="mobile_phone_number"
+                placeholder="+1 234 567 8900" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label"
+                >Preferred Communication <span class="required">*</span></label
+              >
+              <app-select
+                formControlName="communication_method"
+                [options]="communicationMethods"
+                [invalid]="(profileForm.get('communication_method')?.invalid && profileForm.get('communication_method')?.touched) || false"
+                invalidMessage="Communication method is required">
+              </app-select>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-section">
+          <h3 class="section-title">Preferences</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label"
+                >Timezone <span class="required">*</span></label
+              >
+              <app-select
+                formControlName="timezone"
+                [options]="timezoneOptions"
+                [invalid]="(profileForm.get('timezone')?.invalid && profileForm.get('timezone')?.touched) || false"
+                invalidMessage="Timezone is required">
+              </app-select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Preferred Language</label>
+              <app-select
+                formControlName="preferred_language"
+                [options]="preferredLanguageOptions()"
+                placeholder="Select your preferred language">
+              </app-select>
+            </div>
+
+            <div class="form-group full-width">
+              <label class="form-label">Available Languages</label>
+              <app-select
+                formControlName="language_ids"
+                [options]="languageOptions()"
+                placeholder="Select languages you can communicate in"
+                [multiSelect]="true">
+              </app-select>
+            </div>
+          </div>
+        </div>
+
+        @if (user()!.specialities?.length) {
+        <div class="profile-section">
+          <h3 class="section-title">Professional Information</h3>
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label class="form-label">Specialities</label>
+              <div class="badges-list">
+                @for (speciality of user()!.specialities; track speciality.id) {
+                <app-badge [type]="BadgeTypeEnum.green"
+                  >{{ speciality.name }}</app-badge
+                >
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+        }
+
+        <div class="form-actions">
+          <button class="btn-save" type="submit" [disabled]="isSaving()">
+            @if (isSaving()) {
+            <span class="btn-loader"></span>
+            } Save Changes
+          </button>
+        </div>
+      </div>
+    </form>
     }
   </div>
 </app-page>

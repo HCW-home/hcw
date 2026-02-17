@@ -1,23 +1,37 @@
-import {Component, OnInit, OnDestroy, signal, inject, ViewChild, ElementRef} from '@angular/core';
-import {FormBuilder, FormGroup, Validators, ReactiveFormsModule} from '@angular/forms';
-import {CommonModule, Location} from '@angular/common';
-import {Subject, takeUntil} from 'rxjs';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  signal,
+  inject,
+  ViewChild,
+  ElementRef,
+} from '@angular/core';
+import {
+  FormBuilder,
+  FormGroup,
+  Validators,
+  ReactiveFormsModule,
+} from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { Subject, takeUntil } from 'rxjs';
 
-import {UserService} from '../../../../core/services/user.service';
-import {ToasterService} from '../../../../core/services/toaster.service';
-import {IUser, IUserUpdateRequest, ILanguage} from '../../models/user';
-import {CommunicationMethodOptions} from '../../constants/user';
+import { UserService } from '../../../../core/services/user.service';
+import { Auth } from '../../../../core/services/auth';
+import { ToasterService } from '../../../../core/services/toaster.service';
+import { IUser, IUserUpdateRequest, ILanguage } from '../../models/user';
+import { CommunicationMethodOptions } from '../../constants/user';
 
-import {Page} from '../../../../core/components/page/page';
-import {Loader} from '../../../../shared/components/loader/loader';
-import {Badge} from '../../../../shared/components/badge/badge';
-import {Select} from '../../../../shared/ui-components/select/select';
-import {Svg} from '../../../../shared/ui-components/svg/svg';
+import { Page } from '../../../../core/components/page/page';
+import { Loader } from '../../../../shared/components/loader/loader';
+import { Badge } from '../../../../shared/components/badge/badge';
+import { Select } from '../../../../shared/ui-components/select/select';
+import { Svg } from '../../../../shared/ui-components/svg/svg';
 
-import {BadgeTypeEnum} from '../../../../shared/constants/badge';
-import {SelectOption} from '../../../../shared/models/select';
-import {ValidationService} from '../../../../core/services/validation.service';
-import {getErrorMessage} from '../../../../core/utils/error-helper';
+import { BadgeTypeEnum } from '../../../../shared/constants/badge';
+import { SelectOption } from '../../../../shared/models/select';
+import { ValidationService } from '../../../../core/services/validation.service';
+import { getErrorMessage } from '../../../../core/utils/error-helper';
 import { TIMEZONE_OPTIONS } from '../../../../shared/constants/timezone';
 
 @Component({
@@ -32,13 +46,12 @@ import { TIMEZONE_OPTIONS } from '../../../../shared/constants/timezone';
     Select,
     CommonModule,
     ReactiveFormsModule,
-  ]
+  ],
 })
 export class UserProfile implements OnInit, OnDestroy {
   @ViewChild('avatarFileInput') avatarFileInput!: ElementRef<HTMLInputElement>;
 
   private destroy$ = new Subject<void>();
-  private location = inject(Location);
   public validationService = inject(ValidationService);
 
   protected readonly BadgeTypeEnum = BadgeTypeEnum;
@@ -46,7 +59,6 @@ export class UserProfile implements OnInit, OnDestroy {
   user = signal<IUser | null>(null);
   languages = signal<ILanguage[]>([]);
   isLoadingUser = signal(false);
-  isEditing = signal(false);
   isSaving = signal(false);
   isUploadingAvatar = signal(false);
 
@@ -55,21 +67,23 @@ export class UserProfile implements OnInit, OnDestroy {
   communicationMethods: SelectOption[] = CommunicationMethodOptions;
   timezoneOptions: SelectOption[] = TIMEZONE_OPTIONS;
   languageOptions = signal<SelectOption[]>([]);
+  preferredLanguageOptions = signal<SelectOption[]>([]);
 
   constructor(
     private fb: FormBuilder,
     private userService: UserService,
-    private toasterService: ToasterService,
+    private authService: Auth,
+    private toasterService: ToasterService
   ) {
     this.profileForm = this.fb.group({
-      first_name: [{value: '', disabled: true}],
-      last_name: [{value: '', disabled: true}],
-      email: [{value: '', disabled: true}],
+      first_name: [{ value: '', disabled: true }],
+      last_name: [{ value: '', disabled: true }],
+      email: [{ value: '', disabled: true }],
       mobile_phone_number: [''],
       communication_method: ['email', [Validators.required]],
       preferred_language: [null],
       timezone: ['UTC', Validators.required],
-      language_ids: [[]]
+      language_ids: [[]],
     });
   }
 
@@ -85,18 +99,23 @@ export class UserProfile implements OnInit, OnDestroy {
 
   loadUserProfile(): void {
     this.isLoadingUser.set(true);
-    this.userService.getCurrentUser()
+    this.userService
+      .getCurrentUser()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (user) => {
+        next: user => {
           this.user.set(user);
           this.populateForm(user);
           this.isLoadingUser.set(false);
         },
-        error: (error) => {
+        error: error => {
           this.isLoadingUser.set(false);
-          this.toasterService.show('error', 'Error Loading Profile', getErrorMessage(error));
-        }
+          this.toasterService.show(
+            'error',
+            'Error Loading Profile',
+            getErrorMessage(error)
+          );
+        },
       });
   }
 
@@ -111,18 +130,8 @@ export class UserProfile implements OnInit, OnDestroy {
       communication_method: user.communication_method || 'email',
       preferred_language: user.preferred_language || null,
       timezone: user.timezone || 'UTC',
-      language_ids: languageIds
+      language_ids: languageIds,
     });
-  }
-
-  toggleEdit(): void {
-    const currentEditState = this.isEditing();
-    if (currentEditState) {
-      if (this.user()) {
-        this.populateForm(this.user()!);
-      }
-    }
-    this.isEditing.set(!currentEditState);
   }
 
   saveProfile(): void {
@@ -135,42 +144,53 @@ export class UserProfile implements OnInit, OnDestroy {
         communication_method: formValue.communication_method,
         preferred_language: formValue.preferred_language,
         timezone: formValue.timezone,
-        language_ids: this.getLanguageIds(formValue.language_ids)
+        language_ids: this.getLanguageIds(formValue.language_ids),
       };
 
-      this.userService.updateCurrentUser(updateData)
+      this.userService
+        .updateCurrentUser(updateData)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
-          next: (updatedUser) => {
+          next: updatedUser => {
             this.user.set(updatedUser);
-            this.isEditing.set(false);
             this.isSaving.set(false);
-            this.toasterService.show('success', 'Profile Updated', 'Profile updated successfully');
+            this.toasterService.show(
+              'success',
+              'Profile Updated',
+              'Profile updated successfully'
+            );
           },
-          error: (error) => {
+          error: error => {
             this.isSaving.set(false);
-            this.toasterService.show('error', 'Error Updating Profile', getErrorMessage(error));
-          }
+            this.toasterService.show(
+              'error',
+              'Error Updating Profile',
+              getErrorMessage(error)
+            );
+          },
         });
     } else {
       this.validationService.validateAllFormFields(this.profileForm);
     }
   }
 
-  getCommunicationMethodLabel(method: string): string {
-    const option = this.communicationMethods.find(opt => opt.value === method);
-    return option?.label || method;
-  }
-
-  getPreferredLanguageName(): string {
-    const user = this.user();
-    if (!user?.preferred_language) return 'Not set';
-    const language = this.languages().find(lang => lang.id === user.preferred_language);
-    return language?.name || 'Not set';
-  }
-
   loadDropdownData(): void {
-    this.userService.getLanguages()
+    this.authService
+      .getOpenIDConfig()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: config => {
+          this.preferredLanguageOptions.set(
+            (config.languages || []).map(lang => ({
+              label: lang.name,
+              value: lang.code,
+            }))
+          );
+        },
+      });
+
+    this.userService
+      .getLanguages()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: languages => {
@@ -178,22 +198,22 @@ export class UserProfile implements OnInit, OnDestroy {
           this.languageOptions.set(
             languages.map(lang => ({
               label: lang.name,
-              value: lang.code
+              value: lang.code,
             }))
           );
         },
-        error: (error) => {
-          this.toasterService.show('error', 'Error Loading Languages', getErrorMessage(error));
-        }
+        error: error => {
+          this.toasterService.show(
+            'error',
+            'Error Loading Languages',
+            getErrorMessage(error)
+          );
+        },
       });
   }
 
   private getLanguageIds(languageIds: number[]): number[] {
     return languageIds || [];
-  }
-
-  goBack(): void {
-    this.location.back();
   }
 
   getInitials(): string {
@@ -215,7 +235,11 @@ export class UserProfile implements OnInit, OnDestroy {
       if (file.type.startsWith('image/')) {
         this.uploadAvatar(file);
       } else {
-        this.toasterService.show('error', 'Invalid File', 'Please select an image file');
+        this.toasterService.show(
+          'error',
+          'Invalid File',
+          'Please select an image file'
+        );
       }
     }
     input.value = '';
@@ -223,18 +247,27 @@ export class UserProfile implements OnInit, OnDestroy {
 
   uploadAvatar(file: File): void {
     this.isUploadingAvatar.set(true);
-    this.userService.uploadProfilePicture(file)
+    this.userService
+      .uploadProfilePicture(file)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (updatedUser) => {
+        next: updatedUser => {
           this.user.set(updatedUser);
           this.isUploadingAvatar.set(false);
-          this.toasterService.show('success', 'Picture Updated', 'Profile picture updated');
+          this.toasterService.show(
+            'success',
+            'Picture Updated',
+            'Profile picture updated'
+          );
         },
-        error: (error) => {
+        error: error => {
           this.isUploadingAvatar.set(false);
-          this.toasterService.show('error', 'Error Uploading Picture', getErrorMessage(error));
-        }
+          this.toasterService.show(
+            'error',
+            'Error Uploading Picture',
+            getErrorMessage(error)
+          );
+        },
       });
   }
 }
