@@ -14,3 +14,11 @@ class TemplateForm(forms.ModelForm):
     class Meta:
         model = Template
         fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if "event_type" in self.fields:
+            choices = list(self.fields["event_type"].choices)
+            if choices and choices[0][0] != "":
+                choices.insert(0, ("", "---------"))
+            self.fields["event_type"].choices = choices

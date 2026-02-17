@@ -1,76 +1,79 @@
-<ion-content class="login-content">
-  <div class="login-container">
-    <div class="login-header">
-      <div class="logo">
+<ion-content class="login-content" [scrollY]="false">
+  <div class="auth-card">
+    <div class="left-side">
+      <div class="left-content">
         <img src="assets/images/logo.svg" alt="HCW Logo" class="logo-img">
+        <h1>HCW@Home</h1>
+        <p>Your secure telemedicine platform for remote consultations with your healthcare provider.</p>
       </div>
-      <div class="logo-text-group">
-        <span class="title">HCW</span>
-        <span class="title-subtitle">Patient</span>
-      </div>
-      <ion-text class="subtitle" color="medium">Sign in to your account</ion-text>
     </div>
+    <div class="right-side">
+      <div class="right-content">
+        <h2>Sign In</h2>
+        <p class="subtitle">Sign in to your account</p>
 
-    <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="login-form">
-      <ion-item lines="full" class="input-item">
-        <ion-icon name="mail-outline" slot="start"></ion-icon>
-        <ion-input
-          type="email"
-          placeholder="Email"
-          formControlName="email">
-        </ion-input>
-      </ion-item>
-      @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
-        <ion-text color="danger" class="error-message">
-          <ion-label class="error-text">Valid email is required</ion-label>
-        </ion-text>
-      }
+        <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="login-form">
+          <ion-item lines="full" class="input-item">
+            <ion-icon name="mail-outline" slot="start"></ion-icon>
+            <ion-input
+              type="email"
+              placeholder="Email"
+              formControlName="email">
+            </ion-input>
+          </ion-item>
+          @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
+            <ion-text color="danger" class="error-message">
+              <span class="error-text">Valid email is required</span>
+            </ion-text>
+          }
 
-      <ion-item lines="full" class="input-item">
-        <ion-icon name="lock-closed-outline" slot="start"></ion-icon>
-        <ion-input
-          [type]="showPassword ? 'text' : 'password'"
-          placeholder="Password"
-          formControlName="password">
-        </ion-input>
-        <ion-icon
-          [name]="showPassword ? 'eye-off-outline' : 'eye-outline'"
-          slot="end"
-          (click)="togglePassword()"
-          class="password-toggle">
-        </ion-icon>
-      </ion-item>
-      @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
-        <ion-text color="danger" class="error-message">
-          <ion-label class="error-text">Password must be at least 6 characters</ion-label>
-        </ion-text>
-      }
+          <ion-item lines="full" class="input-item">
+            <ion-icon name="lock-closed-outline" slot="start"></ion-icon>
+            <ion-input
+              [type]="showPassword ? 'text' : 'password'"
+              placeholder="Password"
+              formControlName="password">
+            </ion-input>
+            <ion-icon
+              [name]="showPassword ? 'eye-off-outline' : 'eye-outline'"
+              slot="end"
+              (click)="togglePassword()"
+              class="password-toggle">
+            </ion-icon>
+          </ion-item>
+          @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
+            <ion-text color="danger" class="error-message">
+              <span class="error-text">Password must be at least 6 characters</span>
+            </ion-text>
+          }
 
-      <div class="forgot-password">
-        <ion-text color="primary" (click)="forgotPassword()" class="link-text">
-          Forgot Password?
-        </ion-text>
+          <div class="forgot-password">
+            <ion-text color="primary" (click)="forgotPassword()" class="link-text">
+              Forgot Password?
+            </ion-text>
+          </div>
+
+          <ion-button
+            expand="block"
+            shape="round"
+            type="submit"
+            [disabled]="loginForm.invalid"
+            class="login-button">
+            Sign In
+          </ion-button>
+        </form>
+
+        @if (registrationEnabled) {
+          <div class="register-link">
+            <ion-text class="register-text" color="medium">
+              Don't have an account?
+            </ion-text>
+            <ion-text color="primary" (click)="goToRegister()" class="link-text">
+              Sign Up
+            </ion-text>
+          </div>
+        }
       </div>
-
-      <ion-button
-        expand="block"
-        shape="round"
-        type="submit"
-        [disabled]="loginForm.invalid"
-        class="login-button">
-        Sign In
-      </ion-button>
-    </form>
-
-    @if (registrationEnabled) {
-      <div class="register-link">
-        <ion-text class="register-text" color="medium">
-          Don't have an account?
-        </ion-text>
-        <ion-text color="primary" (click)="goToRegister()" class="link-text">
-          Sign Up
-        </ion-text>
-      </div>
-    }
+    </div>
   </div>
 </ion-content>

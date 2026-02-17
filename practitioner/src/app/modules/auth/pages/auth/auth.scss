@@ -1,41 +1,4 @@
 .auth-page {
-  display: flex;
   height: 100vh;
   min-height: 100vh;
-
-  .banner {
-    width: 44%;
-    overflow: hidden;
-    max-width: 600px;
-    position: relative;
-    background-color: #131312;
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-    background-image: url("/images/banner.jpg");
-
-    .logo {
-      left: 50%;
-      margin: 0;
-      padding: 0;
-      bottom: 150px;
-      position: absolute;
-      transform: translateX(-50%);
-    }
-  }
-
-  .auth-main {
-    flex-grow: 1;
-  }
-}
-
-@media (max-width: 768px) {
-  .auth-page {
-    .banner {
-      display: none;
-    }
-
-    .auth-main {
-      width: 100%;
-    }
-  }
 }

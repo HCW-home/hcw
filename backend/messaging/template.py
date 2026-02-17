@@ -1,4 +1,4 @@
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 
 DEFAULT_NOTIFICATION_MESSAGES = {
@@ -119,7 +119,7 @@ DEFAULT_NOTIFICATION_MESSAGES = {
             "You requested a password change, delete this email if it was not requested by email."
         ),
         "template_content_html": _(
-            "<p>You requested a password change, delete this email if it was not requested by email."
+            "<p>You requested a password change, delete this email if it was not requested by email.</p>"
         ),
         "model": "consultations.Message",
         "helper_text": "Notification sent user request to change password",
@@ -132,4 +132,3 @@ DEFAULT_NOTIFICATION_MESSAGES = {
 NOTIFICATION_CHOICES = [
     (key, v["helper_text"]) for key, v in DEFAULT_NOTIFICATION_MESSAGES.items()
 ]
-

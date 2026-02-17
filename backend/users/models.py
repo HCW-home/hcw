@@ -61,9 +61,17 @@ class Organisation(models.Model):
     country = models.CharField(max_length=50, blank=True, null=True)
     footer = models.TextField(blank=True, null=True)
 
+    is_main = models.BooleanField(default=False, help_text="Define is this organisation will be default for patient")
+
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        if self.is_main:
+            domain_list = self.__class__.objects.filter(is_main=True).exclude(pk=self.pk)
+            domain_list.update(is_admin=False)
+
+        return super().save(*args, **kwargs)
 
 class Language(models.Model):
     name = models.CharField(max_length=100)

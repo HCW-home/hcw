@@ -795,7 +795,7 @@ class Message(ModelCeleryAbstract):
                 env = jinja2.Environment()
                 env.filters.update(register.filters)
 
-                template_str = getattr(self.template, field)
+                template_str = str(getattr(self.template, field))
 
                 text_template = env.from_string(template_str)
                 return text_template.render({
