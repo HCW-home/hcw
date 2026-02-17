@@ -90,6 +90,31 @@
       }
     }
 
+    .success-container {
+      text-align: center;
+      padding: var(--app-spacing-xl);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--app-spacing-md);
+
+      p {
+        font-size: var(--app-font-size-base);
+        color: var(--app-text-primary);
+        line-height: 1.5;
+      }
+
+      .register-button {
+        width: 100%;
+        max-width: 300px;
+        margin-top: var(--app-spacing-lg);
+        --background: var(--ion-color-primary);
+        --padding-top: var(--app-button-padding-vertical);
+        --padding-bottom: var(--app-button-padding-vertical);
+        font-weight: var(--app-font-weight-semibold);
+      }
+    }
+
     .login-link {
       text-align: center;
       margin-top: var(--app-spacing-2xl);

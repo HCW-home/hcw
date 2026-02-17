@@ -38,6 +38,7 @@ import { ConsultationService } from '../../core/services/consultation.service';
 export class LoginPage implements OnInit {
   loginForm: FormGroup;
   showPassword = false;
+  registrationEnabled = false;
 
   constructor(
     private fb: FormBuilder,
@@ -60,6 +61,11 @@ export class LoginPage implements OnInit {
     if (email) {
       this.loginForm.patchValue({ email });
     }
+    this.authService.getConfig().subscribe({
+      next: (config) => {
+        this.registrationEnabled = config.registration_enabled;
+      },
+    });
   }
 
   togglePassword() {

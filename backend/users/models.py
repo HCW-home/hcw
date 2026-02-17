@@ -170,6 +170,17 @@ class User(AbstractUser):
     )
     verification_code = models.IntegerField(null=True, blank=True)
 
+    email_verified = models.BooleanField(
+        default=False,
+        help_text="Whether the user's email address has been verified",
+    )
+    email_verification_token = models.CharField(
+        max_length=256,
+        blank=True,
+        null=True,
+        help_text="Token used for email verification",
+    )
+
     @property
     def is_patient(self):
         return not self.groups.exists()

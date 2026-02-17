@@ -1,0 +1,64 @@
+.verify-email-content {
+  --background: var(--app-background);
+
+  .verify-email-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: var(--app-spacing-xl);
+    justify-content: center;
+
+    .verify-email-header {
+      text-align: center;
+      margin-bottom: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      .logo {
+        margin-bottom: var(--app-spacing-xl);
+
+        .logo-img {
+          width: 64px;
+          height: 64px;
+        }
+      }
+
+      .title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--app-text-primary);
+        margin: 0;
+      }
+    }
+
+    .status-container {
+      text-align: center;
+      padding: var(--app-spacing-xl);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--app-spacing-md);
+
+      ion-icon {
+        font-size: 48px;
+      }
+
+      ion-spinner {
+        width: 48px;
+        height: 48px;
+        margin-bottom: var(--app-spacing-md);
+      }
+
+      .action-button {
+        margin-top: var(--app-spacing-lg);
+        --background: var(--ion-color-primary);
+        --padding-top: var(--app-button-padding-vertical);
+        --padding-bottom: var(--app-button-padding-vertical);
+        font-weight: var(--app-font-weight-semibold);
+        width: 100%;
+        max-width: 300px;
+      }
+    }
+  }
+}

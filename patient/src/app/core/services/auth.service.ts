@@ -58,6 +58,14 @@ export class AuthService {
     return this.http.post(`${this.apiUrl}/auth/registration/`, data);
   }
 
+  getConfig(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/auth/openid/config/`);
+  }
+
+  verifyEmail(token: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/auth/verify-email/`, { params: { token } });
+  }
+
   forgotPassword(data: { email: string }): Observable<any> {
     return this.http.post(`${this.apiUrl}/auth/password/reset/`, data);
   }
