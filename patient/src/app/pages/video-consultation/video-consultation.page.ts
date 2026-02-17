@@ -315,6 +315,11 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
       await this.livekitService.connect(config);
       await this.livekitService.enableCamera(true);
       await this.livekitService.enableMicrophone(true);
+
+      this.phase.set('in-call');
+      if (this.appointmentId) {
+        this.incomingCallService.setActiveCall(this.appointmentId);
+      }
       this.showToast('Connected to consultation');
 
       if (this.consultationId) {

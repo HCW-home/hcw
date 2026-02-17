@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { IonApp, IonRouterOutlet, NavController } from '@ionic/angular/standalone';
+import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from './core/services/auth.service';
 import { UserWebSocketService } from './core/services/user-websocket.service';
@@ -23,7 +24,8 @@ export class AppComponent implements OnInit, OnDestroy {
     private incomingCallService: IncomingCallService,
     private actionHandler: ActionHandlerService,
     private consultationService: ConsultationService,
-    private navCtrl: NavController
+    private navCtrl: NavController,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -45,6 +47,11 @@ export class AppComponent implements OnInit, OnDestroy {
     this.userWsService.appointmentJoined$
       .pipe(takeUntil(this.destroy$))
       .subscribe(event => {
+        // Don't show incoming call if already on video consultation page
+        if (this.router.url.includes('/video')) {
+          return;
+        }
+
         this.incomingCallService.showIncomingCall({
           callerName: event.data.user_name,
           appointmentId: event.appointment_id,
