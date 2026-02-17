@@ -119,3 +119,4 @@ No permission (=patient) but : can still go own appointment or group appointment
 - think about patient terms
 - consultations list search is not working
 - dashboard overdue consultations is missing profile picture full path
+- after openid login everything is 403 except for dashboard end-point 

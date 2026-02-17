@@ -103,6 +103,8 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   activeAppointmentId = signal<number | null>(null);
   isVideoMinimized = signal(false);
 
+  isExportingPdf = signal(false);
+
   showCreateAppointmentModal = signal(false);
   editingAppointment = signal<Appointment | null>(null);
 
@@ -631,6 +633,35 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
           },
         });
     }
+  }
+
+  exportPdf(): void {
+    if (this.isExportingPdf()) return;
+
+    this.isExportingPdf.set(true);
+    this.consultationService
+      .exportConsultationPdf(this.consultationId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (blob: Blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          const title = this.consultation()?.title;
+          const filename = title
+            ? `consultation_${this.consultationId}_${title.toLowerCase().replace(/\s+/g, '_')}.pdf`
+            : `consultation_${this.consultationId}.pdf`;
+          link.download = filename;
+          link.click();
+          window.URL.revokeObjectURL(url);
+          this.isExportingPdf.set(false);
+          this.toasterService.show('success', 'PDF Exported', 'Consultation PDF downloaded successfully');
+        },
+        error: (error) => {
+          this.isExportingPdf.set(false);
+          this.toasterService.show('error', 'Export Failed', getErrorMessage(error));
+        },
+      });
   }
 
   editConsultation(): void {

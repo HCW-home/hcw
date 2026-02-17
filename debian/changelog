@@ -1,8 +1,13 @@
-hcw (0.9.34) UNRELEASED; urgency=medium
+hcw (0.9.34) bookworm; urgency=medium
 
   [ Gor Grigoryan ]
   * add infinite scroll in messages list, improve consultation detail
   * improve video consultation layout
+  * update notification actions
+  * add consultation row
+  * rename owner
+  * remove onboarding screens
+  * fix owned_by warning on consultation row
 
   [ Olivier Bitsch ]
   * Don't self notify
@@ -272,7 +277,7 @@ hcw (0.9.34) UNRELEASED; urgency=medium
   * update toasts titles
   * update particpant block with switcher in add/edit appointment
 
- -- Gor Grigoryan <gorgrigoryan1997@gmail.com>  Wed, 11 Feb 2026 14:52:35 +0000
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Mon, 16 Feb 2026 15:01:52 +0100
 
 hcw (0.9.31) bookworm; urgency=medium
 

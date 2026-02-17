@@ -670,8 +670,18 @@ class OpenIDAdapter(OpenIDConnectOAuth2Adapter):
 
 
 class CustomOAuth2Client(OAuth2Client):
-    """Custom OAuth2Client with PKCE support"""
     _pkce_code_verifier = None
+
+    def __init__(self, request, consumer_key, consumer_secret,
+                 access_token_method, access_token_url, callback_url,
+                 _scope=None, scope_delimiter=" ", headers=None,
+                 basic_auth=False):
+        super().__init__(
+            request, consumer_key, consumer_secret,
+            access_token_method, access_token_url, callback_url,
+            scope_delimiter=scope_delimiter, headers=headers,
+            basic_auth=basic_auth,
+        )
 
     def get_access_token(self, code, pkce_code_verifier=None):
         # Use stored PKCE verifier if not provided as parameter
