@@ -258,6 +258,7 @@ export class Header implements OnInit, OnDestroy {
     let action: string | null = null;
     let id: string | null = null;
     let email: string | null = null;
+    let model: string | null = null;
 
     if (notification.access_link) {
       try {
@@ -265,6 +266,7 @@ export class Header implements OnInit, OnDestroy {
         action = url.searchParams.get('action');
         id = url.searchParams.get('id');
         email = url.searchParams.get('email');
+        model = url.searchParams.get('model');
       } catch { /* invalid URL, fall through */ }
     }
 
@@ -285,6 +287,20 @@ export class Header implements OnInit, OnDestroy {
         },
         error: () => {
           this.router.navigate(['/', RoutePaths.CONFIRM_PRESENCE, id]);
+        }
+      });
+      return;
+    }
+
+    if (action === 'message' && id && model === 'consultations.Participant') {
+      this.consultationService.getParticipantById(id).subscribe({
+        next: (participant) => {
+          const consultation = participant.appointment.consultation;
+          const consultationId = typeof consultation === 'object' ? (consultation as {id: number}).id : consultation;
+          this.router.navigate(['/', RoutePaths.USER, RoutePaths.CONSULTATIONS, consultationId]);
+        },
+        error: () => {
+          this.router.navigate(['/', RoutePaths.USER, RoutePaths.CONSULTATIONS]);
         }
       });
       return;
