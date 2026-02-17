@@ -330,6 +330,12 @@ export class ConsultationService {
     });
   }
 
+  exportConsultationPdf(consultationId: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/consultations/${consultationId}/export/pdf/`, {
+      responseType: 'blob',
+    });
+  }
+
   getDashboard(): Observable<DashboardResponse> {
     return this.http.get<DashboardResponse>(`${this.apiUrl}/dashboard/`);
   }

@@ -100,6 +100,16 @@
                       (buttonClick)="editConsultation()">
                     </app-button>
 
+                    <app-button
+                      text="Export PDF"
+                      leftIcon="report"
+                      [style]="ButtonStyleEnum.stroke"
+                      [size]="ButtonSizeEnum.small"
+                      [loading]="isExportingPdf()"
+                      [disabled]="isExportingPdf()"
+                      (buttonClick)="exportPdf()">
+                    </app-button>
+
                     @if (!consultation()?.closed_at) {
                       <app-button
                         text="Close Consultation"

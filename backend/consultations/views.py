@@ -1,3 +1,5 @@
+import io
+
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 from typing import List
@@ -6,6 +8,8 @@ from .fhir import (
     AppointmentFhir
 )
 from rest_framework.renderers import JSONRenderer
+from django.http import HttpResponse
+from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from core.mixins import CreatedByMixin
 from django.contrib.auth import get_user_model
@@ -237,6 +241,53 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
         page = self.paginate_queryset(queryset)
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
+
+    @extend_schema(
+        responses={200: {"type": "string", "format": "binary"}},
+        description="Export consultation data as a PDF document.",
+    )
+    @action(detail=True, methods=["get"], url_path="export/pdf")
+    def export_pdf(self, request, pk=None):
+        from .pdf_export import generate_consultation_pdf
+
+        consultation = self.get_object()
+
+        appointments = (
+            consultation.appointments
+            .all()
+            .prefetch_related("participant_set__user")
+            .select_related("created_by")
+            .order_by("scheduled_at")
+        )
+
+        messages = (
+            consultation.messages
+            .filter(deleted_at__isnull=True)
+            .select_related("created_by")
+            .order_by("created_at")
+        )
+
+        organisation = request.user.main_organisation
+
+        pdf_buffer = generate_consultation_pdf(
+            consultation=consultation,
+            appointments=appointments,
+            messages=messages,
+            organisation=organisation,
+        )
+
+        title_slug = slugify(consultation.title or "")
+        filename = f"consultation_{consultation.pk}"
+        if title_slug:
+            filename += f"_{title_slug}"
+        filename += ".pdf"
+
+        response = HttpResponse(
+            pdf_buffer.read(),
+            content_type="application/pdf",
+        )
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
 
 
 class AppointmentViewSet(viewsets.ModelViewSet):
