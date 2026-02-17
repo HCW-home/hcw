@@ -28,6 +28,7 @@ import {
 } from '@ionic/angular/standalone';
 import { AuthService } from '../../core/services/auth.service';
 import { User } from '../../core/models/user.model';
+import { TIMEZONES } from '../../core/constants/timezone';
 
 interface ProfileMenuItem {
   title: string;
@@ -77,23 +78,7 @@ export class ProfilePage implements OnInit {
   isUploadingAvatar = false;
   isSaving = false;
 
-  timezones: string[] = [
-    'UTC',
-    'Europe/London',
-    'Europe/Paris',
-    'Europe/Berlin',
-    'Europe/Zurich',
-    'Europe/Rome',
-    'Europe/Madrid',
-    'America/New_York',
-    'America/Chicago',
-    'America/Denver',
-    'America/Los_Angeles',
-    'Asia/Tokyo',
-    'Asia/Shanghai',
-    'Asia/Dubai',
-    'Australia/Sydney'
-  ];
+  timezones: string[] = TIMEZONES;
 
   profileMenuItems: ProfileMenuItem[] = [
     {
