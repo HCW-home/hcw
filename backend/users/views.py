@@ -20,6 +20,7 @@ from consultations.serializers import (
 from dj_rest_auth.registration.serializers import SocialLoginSerializer
 from dj_rest_auth.registration.views import SocialLoginView
 from django.conf import settings
+from django.db.models import Q
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.http import FileResponse
@@ -935,7 +936,10 @@ class UserDashboardView(APIView):
         """Get dashboard data for the authenticated user."""
         user = request.user
 
-        user_requests = Request.objects.filter(created_by=user).order_by("-id")
+        user_requests = Request.objects.filter(
+            Q(status="Requested") | Q(consultation__closed_at__isnull=True),
+            created_by=user,
+        ).order_by("-id")
 
         consultations = Consultation.objects.exclude(
             request__in=user_requests
@@ -943,15 +947,39 @@ class UserDashboardView(APIView):
             "-created_at"
         )
 
+        now = timezone.now()
+
+        # Next upcoming appointment (with 1 hour grace period)
+        next_appointment = (
+            Appointment.objects.filter(
+                participant__user=user,
+                participant__is_active=True,
+                scheduled_at__gte=now - timezone.timedelta(hours=1),
+                status="scheduled",
+            )
+            .distinct()
+            .order_by("scheduled_at")
+            .first()
+        )
+
         appointments = (
-            Appointment.objects.exclude(consultation__in=consultations).filter(
-                participant__user=user, participant__is_active=True)
+            Appointment.objects.exclude(
+                consultation__in=consultations
+            ).exclude(
+                consultation__request__in=user_requests,
+            ).filter(
+                participant__user=user,
+                participant__is_active=True,
+                scheduled_at__gte=now,
+            )
             .distinct()
             .order_by("-scheduled_at")
         )
 
+
         return Response(
             {
+                "next_appointment": AppointmentSerializer(next_appointment).data if next_appointment else None,
                 "requests": RequestSerializer(user_requests, many=True).data,
                 "consultations": ConsultationSerializer(consultations, many=True).data,
                 "appointments": AppointmentSerializer(appointments, many=True).data,

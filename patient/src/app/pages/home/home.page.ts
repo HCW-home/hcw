@@ -7,6 +7,7 @@ import {
   IonButton,
   IonIcon,
   IonContent,
+  IonFooter,
   IonRefresher,
   IonRefresherContent,
   IonSpinner,
@@ -39,6 +40,7 @@ interface RequestStatus {
     IonButton,
     IonIcon,
     IonContent,
+    IonFooter,
     IonRefresher,
     IonRefresherContent,
     IonSpinner
@@ -48,6 +50,7 @@ export class HomePage implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   currentUser = signal<User | null>(null);
+  nextAppointment = signal<Appointment | null>(null);
   requests = signal<ConsultationRequest[]>([]);
   consultations = signal<Consultation[]>([]);
   appointments = signal<Appointment[]>([]);
@@ -105,6 +108,7 @@ export class HomePage implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
+          this.nextAppointment.set(response.next_appointment);
           this.requests.set(response.requests);
           this.consultations.set(response.consultations);
           this.appointments.set(response.appointments);
@@ -122,6 +126,7 @@ export class HomePage implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
+          this.nextAppointment.set(response.next_appointment);
           this.requests.set(response.requests);
           this.consultations.set(response.consultations);
           this.appointments.set(response.appointments);
@@ -306,5 +311,18 @@ export class HomePage implements OnInit, OnDestroy {
 
   viewAppointmentDetails(appointment: Appointment): void {
     this.navCtrl.navigateForward(`/appointment/${appointment.id}`);
+  }
+
+  getNextAppointmentDoctorName(): string {
+    const appt = this.nextAppointment();
+    if (!appt) return '';
+    return this.getAppointmentDoctorName(appt);
+  }
+
+  viewNextAppointment(): void {
+    const appt = this.nextAppointment();
+    if (appt) {
+      this.navCtrl.navigateForward(`/appointment/${appt.id}`);
+    }
   }
 }

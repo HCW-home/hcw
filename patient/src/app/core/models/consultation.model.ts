@@ -154,6 +154,7 @@ export interface CreateRequestPayload {
 }
 
 export interface IDashboardResponse {
+  next_appointment: Appointment | null;
   requests: ConsultationRequest[];
   consultations: Consultation[];
   appointments: Appointment[];

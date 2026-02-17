@@ -40,14 +40,23 @@
       <h1 class="greeting-name">{{ currentUser()?.first_name || 'User' }}</h1>
     </div>
 
-    <div class="cta-section">
-      <button class="cta-button" (click)="goToNewRequest()">
-        <span class="cta-icon">
-          <ion-icon name="add-outline"></ion-icon>
-        </span>
-        Request a Consultation
-      </button>
-    </div>
+    @if (nextAppointment()) {
+      <div class="next-appointment-banner" (click)="viewNextAppointment()">
+        <div class="next-appointment-icon">
+          <ion-icon [name]="nextAppointment()!.type === 'online' ? 'videocam' : 'location'"></ion-icon>
+        </div>
+        <div class="next-appointment-info">
+          <span class="next-appointment-label">Next Appointment</span>
+          <span class="next-appointment-date">
+            {{ nextAppointment()!.scheduled_at | date:'EEEE, MMM d' }} at {{ nextAppointment()!.scheduled_at | date:'HH:mm' }}
+          </span>
+          @if (getNextAppointmentDoctorName()) {
+            <span class="next-appointment-doctor">{{ getNextAppointmentDoctorName() }}</span>
+          }
+        </div>
+        <ion-icon name="chevron-forward-outline" class="next-appointment-arrow"></ion-icon>
+      </div>
+    }
 
     <section class="section requests-section">
       <div class="section-header">
@@ -70,102 +79,104 @@
           <p class="empty-hint">Tap the button above to request a consultation</p>
         </div>
       } @else {
-        @for (request of requests(); track request.id) {
-          <div class="request-card" (click)="viewRequestDetails(request)">
-            <div class="request-header">
-              <div class="request-title-row">
-                <h3 class="request-reason">{{ getReasonName(request) }}</h3>
-                <span class="status-badge status-{{ getStatusConfig(request.status).color }}">
-                  {{ getStatusConfig(request.status).label }}
-                </span>
-              </div>
-              @if (getSpecialityName(request)) {
-                <span class="request-specialty">{{ getSpecialityName(request) }}</span>
-              }
-            </div>
-
-            @if (hasAppointment(request)) {
-              <div class="sub-section appointment-sub">
-                <div class="sub-section-header">
-                  <ion-icon name="calendar-outline"></ion-icon>
-                  <span>Upcoming appointment</span>
+        <div class="cards-grid">
+          @for (request of requests(); track request.id) {
+            <div class="request-card" (click)="viewRequestDetails(request)">
+              <div class="request-header">
+                <div class="request-title-row">
+                  <h3 class="request-reason">{{ getReasonName(request) }}</h3>
+                  <span class="status-badge status-{{ getStatusConfig(request.status).color }}">
+                    {{ getStatusConfig(request.status).label }}
+                  </span>
                 </div>
-                <div class="appointment-content">
-                  <div class="doctor-avatar">
-                    {{ getDoctorName(request) ? getDoctorName(request).charAt(0) : '?' }}
+                @if (getSpecialityName(request)) {
+                  <span class="request-specialty">{{ getSpecialityName(request) }}</span>
+                }
+              </div>
+
+              @if (hasAppointment(request)) {
+                <div class="sub-section appointment-sub">
+                  <div class="sub-section-header">
+                    <ion-icon name="calendar-outline"></ion-icon>
+                    <span>Upcoming appointment</span>
                   </div>
-                  <div class="appointment-details">
-                    @if (getDoctorName(request)) {
-                      <p class="doctor-name">{{ getDoctorName(request) }}</p>
-                    }
-                    <div class="appointment-meta">
-                      <span class="meta-item">
-                        <ion-icon name="calendar-outline"></ion-icon>
-                        {{ request.appointment?.scheduled_at | date:'EEE, MMM d' }}
-                      </span>
-                      <span class="meta-item">
-                        <ion-icon name="time-outline"></ion-icon>
-                        {{ request.appointment?.scheduled_at | date:'HH:mm' }}
-                      </span>
-                      <span class="meta-item type-tag">
-                        <ion-icon [name]="getAppointmentTypeIcon(request)"></ion-icon>
-                        {{ getAppointmentTypeLabel(request) }}
-                      </span>
+                  <div class="appointment-content">
+                    <div class="doctor-avatar">
+                      {{ getDoctorName(request) ? getDoctorName(request).charAt(0) : '?' }}
+                    </div>
+                    <div class="appointment-details">
+                      @if (getDoctorName(request)) {
+                        <p class="doctor-name">{{ getDoctorName(request) }}</p>
+                      }
+                      <div class="appointment-meta">
+                        <span class="meta-item">
+                          <ion-icon name="calendar-outline"></ion-icon>
+                          {{ request.appointment?.scheduled_at | date:'EEE, MMM d' }}
+                        </span>
+                        <span class="meta-item">
+                          <ion-icon name="time-outline"></ion-icon>
+                          {{ request.appointment?.scheduled_at | date:'HH:mm' }}
+                        </span>
+                        <span class="meta-item type-tag">
+                          <ion-icon [name]="getAppointmentTypeIcon(request)"></ion-icon>
+                          {{ getAppointmentTypeLabel(request) }}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            }
+              }
 
-            @if (hasConsultation(request)) {
-              <div class="sub-section consultation-sub">
-                <div class="sub-section-header">
-                  <ion-icon name="chatbubbles-outline"></ion-icon>
-                  <span>Active consultation</span>
+              @if (hasConsultation(request)) {
+                <div class="sub-section consultation-sub">
+                  <div class="sub-section-header">
+                    <ion-icon name="chatbubbles-outline"></ion-icon>
+                    <span>Active consultation</span>
+                  </div>
+                  <div class="consultation-content">
+                    <p class="consultation-hint">Tap to view messages</p>
+                  </div>
                 </div>
-                <div class="consultation-content">
-                  <p class="consultation-hint">Tap to view messages</p>
-                </div>
-              </div>
-            }
+              }
 
-            @if (isStatusRequested(request)) {
-              <div class="sub-section pending-sub">
-                <div class="sub-section-header">
-                  <ion-icon name="hourglass-outline"></ion-icon>
-                  <span>Awaiting doctor assignment</span>
+              @if (isStatusRequested(request)) {
+                <div class="sub-section pending-sub">
+                  <div class="sub-section-header">
+                    <ion-icon name="hourglass-outline"></ion-icon>
+                    <span>Awaiting doctor assignment</span>
+                  </div>
                 </div>
-              </div>
-            }
+              }
 
-            @if (isStatusAccepted(request) && !hasAppointment(request)) {
-              <div class="sub-section accepted-sub">
-                <div class="sub-section-header">
-                  <ion-icon name="checkmark-circle-outline"></ion-icon>
-                  <span>Request accepted</span>
+              @if (isStatusAccepted(request) && !hasAppointment(request)) {
+                <div class="sub-section accepted-sub">
+                  <div class="sub-section-header">
+                    <ion-icon name="checkmark-circle-outline"></ion-icon>
+                    <span>Request accepted</span>
+                  </div>
+                  <p class="sub-hint">Appointment will be scheduled soon</p>
                 </div>
-                <p class="sub-hint">Appointment will be scheduled soon</p>
-              </div>
-            }
+              }
 
-            @if (isStatusRefused(request)) {
-              <div class="sub-section refused-sub">
-                <div class="sub-section-header">
-                  <ion-icon name="close-circle-outline"></ion-icon>
-                  <span>Request refused</span>
+              @if (isStatusRefused(request)) {
+                <div class="sub-section refused-sub">
+                  <div class="sub-section-header">
+                    <ion-icon name="close-circle-outline"></ion-icon>
+                    <span>Request refused</span>
+                  </div>
+                  @if (request.refused_reason) {
+                    <p class="sub-hint refused-reason">{{ request.refused_reason }}</p>
+                  }
                 </div>
-                @if (request.refused_reason) {
-                  <p class="sub-hint refused-reason">{{ request.refused_reason }}</p>
-                }
-              </div>
-            }
+              }
 
-            <button class="card-action-btn">
-              <span>View details</span>
-              <ion-icon name="chevron-forward-outline"></ion-icon>
-            </button>
-          </div>
-        }
+              <button class="card-action-btn">
+                <span>View details</span>
+                <ion-icon name="chevron-forward-outline"></ion-icon>
+              </button>
+            </div>
+          }
+        </div>
       }
     </section>
 
@@ -190,35 +201,37 @@
           <p class="empty-hint">Your consultations will appear here once created</p>
         </div>
       } @else {
-        @for (consultation of consultations(); track consultation.id) {
-          <div class="consultation-card" (click)="viewConsultationDetails(consultation)">
-            <div class="consultation-header">
-              <div class="consultation-title-row">
-                <h3 class="consultation-reason">{{ getConsultationReasonName(consultation) }}</h3>
-                <span class="status-badge status-{{ getConsultationStatusConfig(consultation.status).color }}">
-                  {{ getConsultationStatusConfig(consultation.status).label }}
-                </span>
+        <div class="cards-grid">
+          @for (consultation of consultations(); track consultation.id) {
+            <div class="consultation-card" (click)="viewConsultationDetails(consultation)">
+              <div class="consultation-header">
+                <div class="consultation-title-row">
+                  <h3 class="consultation-reason">{{ getConsultationReasonName(consultation) }}</h3>
+                  <span class="status-badge status-{{ getConsultationStatusConfig(consultation.status).color }}">
+                    {{ getConsultationStatusConfig(consultation.status).label }}
+                  </span>
+                </div>
+                @if (getConsultationDoctorName(consultation)) {
+                  <span class="consultation-doctor">{{ getConsultationDoctorName(consultation) }}</span>
+                }
               </div>
-              @if (getConsultationDoctorName(consultation)) {
-                <span class="consultation-doctor">{{ getConsultationDoctorName(consultation) }}</span>
-              }
-            </div>
 
-            <div class="consultation-meta">
-              @if (consultation.next_appointment) {
-                <span class="meta-item">
-                  <ion-icon name="videocam-outline"></ion-icon>
-                  {{ consultation.next_appointment.scheduled_at }}
-                </span>
-              }
-            </div>
+              <div class="consultation-meta">
+                @if (consultation.next_appointment) {
+                  <span class="meta-item">
+                    <ion-icon name="videocam-outline"></ion-icon>
+                    {{ consultation.next_appointment.scheduled_at }}
+                  </span>
+                }
+              </div>
 
-            <button class="card-action-btn">
-              <span>View consultation</span>
-              <ion-icon name="chevron-forward-outline"></ion-icon>
-            </button>
-          </div>
-        }
+              <button class="card-action-btn">
+                <span>View consultation</span>
+                <ion-icon name="chevron-forward-outline"></ion-icon>
+              </button>
+            </div>
+          }
+        </div>
       }
     </section>
 
@@ -243,41 +256,55 @@
           <p class="empty-hint">Your scheduled appointments will appear here</p>
         </div>
       } @else {
-        @for (appointment of appointments(); track appointment.id) {
-          <div class="appointment-card" (click)="viewAppointmentDetails(appointment)">
-            <div class="appointment-header">
-              <div class="appointment-title-row">
-                <div class="appointment-type-badge">
-                  <ion-icon [name]="getAppointmentIcon(appointment)"></ion-icon>
-                  <span>{{ getAppointmentTypeText(appointment) }}</span>
+        <div class="cards-grid">
+          @for (appointment of appointments(); track appointment.id) {
+            <div class="appointment-card" (click)="viewAppointmentDetails(appointment)">
+              <div class="appointment-header">
+                <div class="appointment-title-row">
+                  <div class="appointment-type-badge">
+                    <ion-icon [name]="getAppointmentIcon(appointment)"></ion-icon>
+                    <span>{{ getAppointmentTypeText(appointment) }}</span>
+                  </div>
+                  <span class="status-badge status-{{ getAppointmentStatusConfig(appointment.status).color }}">
+                    {{ getAppointmentStatusConfig(appointment.status).label }}
+                  </span>
                 </div>
-                <span class="status-badge status-{{ getAppointmentStatusConfig(appointment.status).color }}">
-                  {{ getAppointmentStatusConfig(appointment.status).label }}
+                @if (getAppointmentDoctorName(appointment)) {
+                  <span class="appointment-doctor">{{ getAppointmentDoctorName(appointment) }}</span>
+                }
+              </div>
+
+              <div class="appointment-meta">
+                <span class="meta-item">
+                  <ion-icon name="calendar-outline"></ion-icon>
+                  {{ appointment.scheduled_at | date:'EEE, MMM d, yyyy' }}
+                </span>
+                <span class="meta-item">
+                  <ion-icon name="time-outline"></ion-icon>
+                  {{ appointment.scheduled_at | date:'HH:mm' }}
                 </span>
               </div>
-              @if (getAppointmentDoctorName(appointment)) {
-                <span class="appointment-doctor">{{ getAppointmentDoctorName(appointment) }}</span>
-              }
-            </div>
 
-            <div class="appointment-meta">
-              <span class="meta-item">
-                <ion-icon name="calendar-outline"></ion-icon>
-                {{ appointment.scheduled_at | date:'EEE, MMM d, yyyy' }}
-              </span>
-              <span class="meta-item">
-                <ion-icon name="time-outline"></ion-icon>
-                {{ appointment.scheduled_at | date:'HH:mm' }}
-              </span>
+              <button class="card-action-btn">
+                <span>View details</span>
+                <ion-icon name="chevron-forward-outline"></ion-icon>
+              </button>
             </div>
-
-            <button class="card-action-btn">
-              <span>View details</span>
-              <ion-icon name="chevron-forward-outline"></ion-icon>
-            </button>
-          </div>
-        }
+          }
+        </div>
       }
     </section>
   </div>
 </ion-content>
+
+<ion-footer class="ion-no-border home-footer">
+  <ion-toolbar>
+    <div class="footer-content">
+      <div class="footer-html-placeholder"></div>
+      <button class="cta-button" (click)="goToNewRequest()">
+        <ion-icon name="add-outline"></ion-icon>
+        <span>Request a consultation</span>
+      </button>
+    </div>
+  </ion-toolbar>
+</ion-footer>

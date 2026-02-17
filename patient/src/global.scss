@@ -58,7 +58,7 @@ body {
   }
 
   ion-app {
-    max-width: 680px;
+    max-width: 1100px;
     margin: 0 auto;
     box-shadow: 0 0 40px rgba(0, 0, 0, 0.15);
     position: relative;
@@ -77,22 +77,22 @@ body {
   }
 
   ion-header ion-toolbar {
-    max-width: 680px;
+    max-width: 1100px;
   }
 
   ion-footer {
-    max-width: 680px;
+    max-width: 1100px;
     margin: 0 auto;
   }
 
   ion-modal {
-    --max-width: 680px;
+    --max-width: 1100px;
   }
 
   ion-action-sheet,
   ion-alert,
   ion-toast {
-    --max-width: 680px;
+    --max-width: 1100px;
   }
 }
 
