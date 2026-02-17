@@ -1,10 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonButtons,
   IonButton,
   IonText,
   IonLabel,
@@ -20,6 +16,8 @@ import {
   NavController,
   ToastController
 } from '@ionic/angular/standalone';
+import { AppHeaderComponent } from '../../shared/app-header/app-header.component';
+import { AppFooterComponent } from '../../shared/app-footer/app-footer.component';
 import { Subscription } from 'rxjs';
 import { NotificationService } from '../../core/services/notification.service';
 import { INotification, NotificationStatus } from '../../core/models/notification.model';
@@ -51,10 +49,6 @@ interface DisplayNotification {
   standalone: true,
   imports: [
     CommonModule,
-    IonHeader,
-    IonToolbar,
-    IonTitle,
-    IonButtons,
     IonButton,
     IonText,
     IonLabel,
@@ -66,7 +60,9 @@ interface DisplayNotification {
     IonItem,
     IonIcon,
     IonItemOptions,
-    IonItemOption
+    IonItemOption,
+    AppHeaderComponent,
+    AppFooterComponent
   ]
 })
 export class NotificationsPage implements OnInit, OnDestroy {

@@ -1,47 +1,11 @@
-ion-header {
-  ion-toolbar {
-    --background: var(--app-background);
-
-    .page-title {
-      font-size: var(--app-font-size-xl);
-      font-weight: var(--app-font-weight-semibold);
-      color: var(--app-text-primary);
-    }
-
-    .mark-read-button {
-      --color: var(--ion-color-primary);
-
-      .mark-read-text {
-        font-size: var(--app-font-size-sm);
-        font-weight: var(--app-font-weight-medium);
-      }
-    }
-
-    .notification-segment {
-      --background: var(--app-background);
-
-      ion-segment-button {
-        --indicator-color: var(--ion-color-primary);
-        --color-checked: var(--ion-color-primary);
-        position: relative;
-
-        .unread-badge {
-          position: absolute;
-          top: 8px;
-          right: 20px;
-          font-size: 10px;
-          min-width: 20px;
-          height: 20px;
-          padding: 2px 6px;
-          border-radius: 10px;
-        }
-      }
-    }
-  }
-}
-
 .notifications-content {
   --background: var(--app-background-secondary);
+
+  .mark-all-read {
+    display: flex;
+    justify-content: flex-end;
+    padding: var(--app-spacing-sm) var(--app-spacing-md) 0;
+  }
 
   .notifications-list {
     background: transparent;

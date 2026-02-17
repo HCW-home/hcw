@@ -1,15 +1,7 @@
+<app-header pageTitle="Confirm Your Presence" [showBackButton]="true"></app-header>
+
 <ion-content class="presence-content">
   <div class="presence-container">
-    <div class="presence-header">
-      <div class="logo">
-        <img src="assets/images/logo.svg" alt="HCW Logo" class="logo-img">
-      </div>
-      <div class="logo-text-group">
-        <span class="title">HCW</span>
-        <span class="title-subtitle">Patient</span>
-      </div>
-    </div>
-
     @if (isLoading) {
       <div class="loading-state">
         <ion-spinner name="crescent"></ion-spinner>
@@ -37,9 +29,8 @@
       </div>
     } @else {
       <div class="appointments-section">
-        <ion-text class="section-title">Confirm Your Presence</ion-text>
         <ion-text class="section-subtitle" color="medium">
-          Please confirm or decline your attendance for the following appointments.
+          Please confirm your availability for the following appointments.
         </ion-text>
 
         @for (appointment of pendingAppointments; track appointment.id) {
@@ -47,12 +38,12 @@
             <ion-card-content>
               <div class="appointment-info">
                 <div class="appointment-type">
-                  <ion-icon [name]="appointment.type === 'Online' ? 'videocam-outline' : 'location-outline'"></ion-icon>
-                  <span>{{ appointment.type === 'Online' ? 'Video Consultation' : 'In-Person Visit' }}</span>
+                  <ion-icon [name]="appointment.type === 'online' ? 'videocam-outline' : 'location-outline'"></ion-icon>
+                  <span>{{ appointment.type === 'online' ? 'Online' : 'In person' }}</span>
                 </div>
                 <div class="appointment-datetime">
                   <ion-icon name="calendar-outline"></ion-icon>
-                  <span>{{ appointment.scheduled_at }}</span>
+                  <span>{{ appointment.scheduled_at | date:'EEEE, MMM d' }} at {{ appointment.scheduled_at | date:'HH:mm' }}</span>
                 </div>
               </div>
 
@@ -69,7 +60,7 @@
                     <ion-spinner name="crescent"></ion-spinner>
                   } @else {
                     <ion-icon name="close-outline" slot="start"></ion-icon>
-                    Decline
+                    I am not available
                   }
                 </ion-button>
                 <ion-button
@@ -82,7 +73,7 @@
                     <ion-spinner name="crescent"></ion-spinner>
                   } @else {
                     <ion-icon name="checkmark-outline" slot="start"></ion-icon>
-                    Confirm
+                    I am available
                   }
                 </ion-button>
               </div>
@@ -99,3 +90,5 @@
     }
   </div>
 </ion-content>
+
+<app-footer></app-footer>

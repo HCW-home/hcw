@@ -16,6 +16,8 @@ import { Subject, takeUntil } from 'rxjs';
 import { ConsultationService } from '../../core/services/consultation.service';
 import { IParticipantDetail } from '../../core/models/consultation.model';
 import { formatDateFromISO, formatTimeFromISO } from '../../core/utils/date-helper';
+import { AppHeaderComponent } from '../../shared/app-header/app-header.component';
+import { AppFooterComponent } from '../../shared/app-footer/app-footer.component';
 
 interface PendingAppointment {
   id: number;
@@ -40,7 +42,9 @@ interface PendingAppointment {
     IonIcon,
     IonText,
     IonButton,
-    IonSpinner
+    IonSpinner,
+    AppHeaderComponent,
+    AppFooterComponent
   ]
 })
 export class ConfirmPresencePage implements OnInit, OnDestroy {

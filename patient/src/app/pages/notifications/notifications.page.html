@@ -1,20 +1,17 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-title>
-      <ion-text class="page-title">Notifications</ion-text>
-    </ion-title>
-    <ion-buttons slot="end">
-      <ion-button (click)="markAllAsRead()" class="mark-read-button">
-        <ion-text class="mark-read-text">Mark all read</ion-text>
-      </ion-button>
-    </ion-buttons>
-  </ion-toolbar>
-</ion-header>
+<app-header pageTitle="Notifications" [showBackButton]="true"></app-header>
 
 <ion-content class="notifications-content">
   <ion-refresher slot="fixed" (ionRefresh)="refreshNotifications($event)">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
+
+  @if (notifications.length > 0) {
+    <div class="mark-all-read">
+      <ion-button fill="clear" size="small" (click)="markAllAsRead()">
+        Mark all as read
+      </ion-button>
+    </div>
+  }
 
   <ion-list class="notifications-list">
     @for (notification of notifications; track notification.id) {
@@ -57,3 +54,5 @@
     </div>
   }
 </ion-content>
+
+<app-footer></app-footer>

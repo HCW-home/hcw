@@ -155,20 +155,16 @@
               (click)="toggleScreenShare()">
               <ion-icon name="desktop-outline" slot="icon-only"></ion-icon>
             </ion-button>
-          </div>
 
-          @if (chatAvailable()) {
-            <div class="secondary-controls">
+            @if (chatAvailable()) {
               <ion-button
-                fill="clear"
-                color="light"
-                class="secondary-button"
+                [color]="showChat() ? 'primary' : 'light'"
+                class="control-button"
                 (click)="openChat()">
-                <ion-icon name="chatbubble-outline" slot="start"></ion-icon>
-                Chat
+                <ion-icon name="chatbubble-outline" slot="icon-only"></ion-icon>
               </ion-button>
-            </div>
-          }
+            }
+          </div>
         </div>
 
       @if (phase() === 'in-call' && connectionStatus === 'disconnected' && !isLoading && callDuration > 0) {
