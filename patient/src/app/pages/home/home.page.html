@@ -41,12 +41,16 @@
     </div>
 
     @if (nextAppointment()) {
-      <div class="next-appointment-banner" (click)="viewNextAppointment()">
+      <div class="next-appointment-banner">
         <div class="next-appointment-icon">
-          <ion-icon [name]="nextAppointment()!.type === 'online' ? 'videocam' : 'location'"></ion-icon>
+          <ion-icon [name]="nextAppointment()!.type === 'online' ? 'videocam' : 'location-outline'"></ion-icon>
         </div>
         <div class="next-appointment-info">
-          <span class="next-appointment-label">Next Appointment</span>
+          <span class="next-appointment-label">
+            Next Appointment —
+            <ion-icon [name]="nextAppointment()!.type === 'online' ? 'videocam-outline' : 'location-outline'"></ion-icon>
+            {{ nextAppointment()!.type === 'online' ? 'Online' : 'In person' }}
+          </span>
           <span class="next-appointment-date">
             {{ nextAppointment()!.scheduled_at | date:'EEEE, MMM d' }} at {{ nextAppointment()!.scheduled_at | date:'HH:mm' }}
           </span>
@@ -54,7 +58,17 @@
             <span class="next-appointment-doctor">{{ getNextAppointmentDoctorName() }}</span>
           }
         </div>
-        <ion-icon name="chevron-forward-outline" class="next-appointment-arrow"></ion-icon>
+        @if (nextAppointment()!.type === 'online') {
+          <button class="join-button" (click)="joinNextAppointment()">
+            <ion-icon name="videocam"></ion-icon>
+            <span>Join</span>
+          </button>
+        } @else {
+          <div class="in-person-badge">
+            <ion-icon name="location-outline"></ion-icon>
+            <span>In person</span>
+          </div>
+        }
       </div>
     }
 
@@ -180,27 +194,15 @@
       }
     </section>
 
-    <section class="section consultations-section">
-      <div class="section-header">
-        <div class="section-title-group">
-          <h2 class="section-title">My Consultations</h2>
-          @if (totalConsultations() > 0) {
+    @if (consultations().length > 0) {
+      <section class="section consultations-section">
+        <div class="section-header">
+          <div class="section-title-group">
+            <h2 class="section-title">My Consultations</h2>
             <span class="section-badge">{{ totalConsultations() }} total</span>
-          }
+          </div>
         </div>
-      </div>
 
-      @if (isLoading()) {
-        <div class="loading-container">
-          <ion-spinner name="crescent"></ion-spinner>
-        </div>
-      } @else if (consultations().length === 0) {
-        <div class="empty-state">
-          <ion-icon name="chatbubbles-outline" class="empty-icon"></ion-icon>
-          <p class="empty-text">No consultations yet</p>
-          <p class="empty-hint">Your consultations will appear here once created</p>
-        </div>
-      } @else {
         <div class="cards-grid">
           @for (consultation of consultations(); track consultation.id) {
             <div class="consultation-card" (click)="viewConsultationDetails(consultation)">
@@ -232,30 +234,18 @@
             </div>
           }
         </div>
-      }
-    </section>
+      </section>
+    }
 
-    <section class="section appointments-section">
-      <div class="section-header">
-        <div class="section-title-group">
-          <h2 class="section-title">My Appointments</h2>
-          @if (totalAppointments() > 0) {
+    @if (appointments().length > 0) {
+      <section class="section appointments-section">
+        <div class="section-header">
+          <div class="section-title-group">
+            <h2 class="section-title">My Appointments</h2>
             <span class="section-badge">{{ totalAppointments() }} total</span>
-          }
+          </div>
         </div>
-      </div>
 
-      @if (isLoading()) {
-        <div class="loading-container">
-          <ion-spinner name="crescent"></ion-spinner>
-        </div>
-      } @else if (appointments().length === 0) {
-        <div class="empty-state">
-          <ion-icon name="calendar-outline" class="empty-icon"></ion-icon>
-          <p class="empty-text">No appointments yet</p>
-          <p class="empty-hint">Your scheduled appointments will appear here</p>
-        </div>
-      } @else {
         <div class="cards-grid">
           @for (appointment of appointments(); track appointment.id) {
             <div class="appointment-card" (click)="viewAppointmentDetails(appointment)">
@@ -292,8 +282,8 @@
             </div>
           }
         </div>
-      }
-    </section>
+      </section>
+    }
   </div>
 </ion-content>
 
@@ -301,7 +291,7 @@
   <ion-toolbar>
     <div class="footer-content">
       <div class="footer-html-placeholder"></div>
-      <button class="cta-button" (click)="goToNewRequest()">
+      <button class="cta-button" [class.cta-filled]="totalRequests() === 0 && totalConsultations() === 0 && totalAppointments() === 0" (click)="goToNewRequest()">
         <ion-icon name="add-outline"></ion-icon>
         <span>Request a consultation</span>
       </button>

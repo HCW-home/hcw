@@ -132,13 +132,7 @@ ion-header {
     background: linear-gradient(135deg, var(--ion-color-primary), var(--ion-color-primary-shade));
     border-radius: var(--app-card-radius);
     color: white;
-    cursor: pointer;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 4px 14px -3px rgba(8, 145, 178, 0.4);
-    transition: transform 0.15s;
-
-    &:active {
-      transform: scale(0.99);
-    }
 
     .next-appointment-icon {
       width: 48px;
@@ -167,6 +161,13 @@ ion-header {
         text-transform: uppercase;
         letter-spacing: 0.04em;
         opacity: 0.85;
+        display: flex;
+        align-items: center;
+        gap: 3px;
+
+        ion-icon {
+          font-size: 12px;
+        }
       }
 
       .next-appointment-date {
@@ -182,10 +183,52 @@ ion-header {
       }
     }
 
-    .next-appointment-arrow {
-      font-size: 20px;
-      opacity: 0.7;
+    .join-button {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: 8px;
+      color: white;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
       flex-shrink: 0;
+      font-family: inherit;
+      transition: background 0.15s;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+
+      &:active {
+        background: rgba(255, 255, 255, 0.4);
+      }
+
+      ion-icon {
+        font-size: 18px;
+      }
+    }
+
+    .in-person-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      white-space: nowrap;
+      flex-shrink: 0;
+      opacity: 0.9;
+
+      ion-icon {
+        font-size: 18px;
+      }
     }
   }
 
@@ -657,25 +700,35 @@ ion-header {
     align-items: center;
     gap: 8px;
     padding: 10px 20px;
-    background: linear-gradient(135deg, var(--ion-color-primary), var(--ion-color-primary-shade));
-    color: white;
-    border: none;
+    background: transparent;
+    color: var(--ion-color-primary);
+    border: 2px solid var(--ion-color-primary);
     border-radius: var(--app-button-radius);
     font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
     white-space: nowrap;
     font-family: inherit;
-    box-shadow: 0 2px 8px rgba(8, 145, 178, 0.3);
-    transition: transform 0.15s;
+    transition: background 0.15s;
     flex-shrink: 0;
 
+    &:hover {
+      background: var(--ion-color-primary-bg, rgba(8, 145, 178, 0.08));
+    }
+
     &:active {
-      transform: scale(0.97);
+      background: var(--ion-color-primary-bg, rgba(8, 145, 178, 0.15));
     }
 
     ion-icon {
       font-size: 18px;
+    }
+
+    &.cta-filled {
+      background: linear-gradient(135deg, var(--ion-color-primary), var(--ion-color-primary-shade));
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 2px 8px rgba(8, 145, 178, 0.3);
     }
   }
 }

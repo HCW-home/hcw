@@ -319,10 +319,10 @@ export class HomePage implements OnInit, OnDestroy {
     return this.getAppointmentDoctorName(appt);
   }
 
-  viewNextAppointment(): void {
+  joinNextAppointment(): void {
     const appt = this.nextAppointment();
-    if (appt) {
-      this.navCtrl.navigateForward(`/appointment/${appt.id}`);
+    if (appt?.consultation_id) {
+      this.navCtrl.navigateForward(`/consultation/${appt.consultation_id}/video`);
     }
   }
 }
