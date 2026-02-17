@@ -1,24 +1,22 @@
-import io
-import boto3
 import asyncio
-
+import io
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 from typing import List
-from .renderers import FHIRRenderer
-from .fhir import (
-    AppointmentFhir
-)
-from rest_framework.renderers import JSONRenderer
-from django.conf import settings
-from django.http import HttpResponse, StreamingHttpResponse
-from django.utils.text import slugify
-from django.utils.translation import gettext_lazy as _
+
+import boto3
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from core.mixins import CreatedByMixin
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Q
+from django.http import HttpResponse, StreamingHttpResponse
 from django.shortcuts import render
 from django.utils import timezone
+from django.utils.text import slugify
+from django.utils.translation import gettext_lazy as _
+from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import (
     OpenApiExample,
     OpenApiParameter,
@@ -26,17 +24,15 @@ from drf_spectacular.utils import (
     extend_schema,
 )
 from mediaserver.models import Server
-from rest_framework import status, viewsets
+from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import filters
-from django_filters.rest_framework import DjangoFilterBackend
-from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
 
+from .fhir import AppointmentFhir
 from .filters import AppointmentFilter, ConsultationFilter
 from .models import (
     Appointment,
@@ -49,18 +45,19 @@ from .models import (
     Reason,
     Request,
     RequestStatus,
-    Type
+    Type,
 )
 from .paginations import ConsultationPagination
 from .permissions import ConsultationAssigneePermission, DjangoModelPermissionsWithView
+from .renderers import FHIRRenderer
 from .serializers import (
-    AppointmentSerializer,
     AppointmentCreateSerializer,
+    AppointmentSerializer,
     BookingSlotSerializer,
-    ParticipantDetailSerializer,
     ConsultationMessageCreateSerializer,
     ConsultationMessageSerializer,
     ConsultationSerializer,
+    ParticipantDetailSerializer,
     ParticipantSerializer,
     QueueSerializer,
     RequestSerializer,
@@ -84,6 +81,7 @@ class Slot:
 class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
     """Consultation endpoint"""
 
+    queryset = Consultation.objects.all()
     serializer_class = ConsultationSerializer
     permission_classes = [IsAuthenticated, ConsultationAssigneePermission]
     pagination_class = ConsultationPagination
@@ -107,9 +105,15 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
             )
 
         now = timezone.now()
-        if consultation.appointments.filter(scheduled_at__gt=now, status=AppointmentStatus.scheduled).exists():
+        if consultation.appointments.filter(
+            scheduled_at__gt=now, status=AppointmentStatus.scheduled
+        ).exists():
             return Response(
-                {"error": _("Unable to close consultation with appointment scheduled in future")},
+                {
+                    "error": _(
+                        "Unable to close consultation with appointment scheduled in future"
+                    )
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -192,7 +196,6 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-
     @extend_schema(methods=["GET"], responses=ConsultationMessageSerializer(many=True))
     @extend_schema(
         methods=["POST"],
@@ -256,16 +259,14 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
         consultation = self.get_object()
 
         appointments = (
-            consultation.appointments
-            .all()
+            consultation.appointments.all()
             .prefetch_related("participant_set__user")
             .select_related("created_by")
             .order_by("scheduled_at")
         )
 
         messages = (
-            consultation.messages
-            .filter(deleted_at__isnull=True)
+            consultation.messages.filter(deleted_at__isnull=True)
             .select_related("created_by")
             .order_by("created_at")
         )
@@ -309,7 +310,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     filterset_class = AppointmentFilter
 
     def get_serializer_class(self):
-        if self.action == 'create':
+        if self.action == "create":
             return AppointmentCreateSerializer
         return AppointmentSerializer
 
@@ -322,10 +323,10 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         user = self.request.user
 
         # For list, retrieve, and join actions: filter by participants or consultation access
-        if self.action in ['list', 'retrieve', 'join']:
+        if self.action in ["list", "retrieve", "join"]:
             return Appointment.objects.filter(
-                Q(participant__user=user, participant__is_active=True) |
-                Q(consultation__in=Consultation.objects.accessible_by(user))
+                Q(participant__user=user, participant__is_active=True)
+                | Q(consultation__in=Consultation.objects.accessible_by(user))
             ).distinct()
 
         # For create, update, partial_update, etc.: use consultation access logic
@@ -437,6 +438,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     def start_recording(self, request, pk=None):
         """Start recording the appointment (doctors only)"""
         from .models import AppointmentRecording
+
         appointment = self.get_object()
         consultation = appointment.consultation
 
@@ -444,18 +446,17 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         if not self._is_doctor(request.user, consultation):
             return Response(
                 {"error": _("Only doctors can start recording")},
-                status=status.HTTP_403_FORBIDDEN
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         # Check if already recording
         active_recording = AppointmentRecording.objects.filter(
-            appointment=appointment,
-            stopped_at__isnull=True
+            appointment=appointment, stopped_at__isnull=True
         ).first()
         if active_recording:
             return Response(
                 {"error": _("Recording already in progress")},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         room_name = f"appointment_{appointment.pk}"
@@ -475,8 +476,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             return Response({"status": "recording_started"})
         except Exception as e:
             return Response(
-                {"error": str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
     @action(detail=True, methods=["post"])
@@ -484,6 +484,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         """Stop recording the appointment"""
         from .models import AppointmentRecording
         from .tasks import check_recording_ready
+
         appointment = self.get_object()
         consultation = appointment.consultation
 
@@ -491,18 +492,17 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         if not self._is_doctor(request.user, consultation):
             return Response(
                 {"error": _("Only doctors can stop recording")},
-                status=status.HTTP_403_FORBIDDEN
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         # Find active recording
         recording = AppointmentRecording.objects.filter(
-            appointment=appointment,
-            stopped_at__isnull=True
+            appointment=appointment, stopped_at__isnull=True
         ).last()
         if not recording:
             return Response(
                 {"error": _("No recording in progress")},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         try:
@@ -510,18 +510,16 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             async_to_sync(server.instance.stop_room_recording)(recording.egress_id)
 
             recording.stopped_at = timezone.now()
-            recording.save(update_fields=['stopped_at'])
+            recording.save(update_fields=["stopped_at"])
 
             check_recording_ready.apply_async(
-                args=[recording.pk],
-                countdown=settings.RECORDING_CHECK_INITIAL_DELAY
+                args=[recording.pk], countdown=settings.RECORDING_CHECK_INITIAL_DELAY
             )
 
             return Response({"status": "recording_stopped"})
         except Exception as e:
             return Response(
-                {"error": str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
     def _is_doctor(self, user, consultation):
@@ -559,7 +557,7 @@ class ParticipantViewSet(viewsets.ModelViewSet):
             is_active=True,
             appointment__consultation__in=Consultation.objects.filter(
                 Q(created_by=user) | Q(owned_by=user) | Q(group__users=user)
-            )
+            ),
         ).distinct()
 
     def perform_create(self, serializer):
@@ -806,13 +804,13 @@ class ReasonSlotsView(APIView):
 
                     weekday = target_date.weekday()
                     day_enabled = (
-                        (weekday == 0 and booking_slot.monday) or
-                        (weekday == 1 and booking_slot.tuesday) or
-                        (weekday == 2 and booking_slot.wednesday) or
-                        (weekday == 3 and booking_slot.thursday) or
-                        (weekday == 4 and booking_slot.friday) or
-                        (weekday == 5 and booking_slot.saturday) or
-                        (weekday == 6 and booking_slot.sunday)
+                        (weekday == 0 and booking_slot.monday)
+                        or (weekday == 1 and booking_slot.tuesday)
+                        or (weekday == 2 and booking_slot.wednesday)
+                        or (weekday == 3 and booking_slot.thursday)
+                        or (weekday == 4 and booking_slot.friday)
+                        or (weekday == 5 and booking_slot.saturday)
+                        or (weekday == 6 and booking_slot.sunday)
                     )
 
                     if not day_enabled:
@@ -846,7 +844,10 @@ class ReasonSlotsView(APIView):
                             and booking_slot.end_break
                             and booking_slot.start_break < booking_slot.end_break
                         ):
-                            if current_time < booking_slot.end_break and slot_end_time > booking_slot.start_break:
+                            if (
+                                current_time < booking_slot.end_break
+                                and slot_end_time > booking_slot.start_break
+                            ):
                                 if booking_slot.end_break < end_time:
                                     current_time = booking_slot.end_break
                                 else:
@@ -862,7 +863,10 @@ class ReasonSlotsView(APIView):
                         )
 
                         for apt_start, apt_end in practitioner_appointments:
-                            if slot_start_aware < apt_end and slot_end_aware > apt_start:
+                            if (
+                                slot_start_aware < apt_end
+                                and slot_end_aware > apt_start
+                            ):
                                 slot_conflicts = True
                                 break
 
@@ -1030,13 +1034,13 @@ class MessageViewSet(viewsets.ModelViewSet):
         if not message.recording_url:
             return Response(
                 {"error": "This message does not have a recording"},
-                status=status.HTTP_404_NOT_FOUND
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         try:
             # Initialize S3 client
             s3_client = boto3.client(
-                's3',
+                "s3",
                 endpoint_url=settings.LIVEKIT_S3_ENDPOINT_URL,
                 aws_access_key_id=settings.LIVEKIT_S3_ACCESS_KEY,
                 aws_secret_access_key=settings.LIVEKIT_S3_SECRET_KEY,
@@ -1044,27 +1048,28 @@ class MessageViewSet(viewsets.ModelViewSet):
 
             # Get file from S3 using recording_url as the key
             response = s3_client.get_object(
-                Bucket=settings.LIVEKIT_S3_BUCKET_NAME,
-                Key=message.recording_url
+                Bucket=settings.LIVEKIT_S3_BUCKET_NAME, Key=message.recording_url
             )
 
             # Extract filename from S3 key
-            filename = message.recording_url.split('/')[-1]
+            filename = message.recording_url.split("/")[-1]
 
             # Stream the file back to the user
             streaming_response = StreamingHttpResponse(
-                response['Body'].iter_chunks(chunk_size=8192),
-                content_type=response.get('ContentType', 'video/mp4')
+                response["Body"].iter_chunks(chunk_size=8192),
+                content_type=response.get("ContentType", "video/mp4"),
             )
-            streaming_response['Content-Disposition'] = f'attachment; filename="{filename}"'
-            streaming_response['Content-Length'] = response.get('ContentLength', 0)
+            streaming_response["Content-Disposition"] = (
+                f'attachment; filename="{filename}"'
+            )
+            streaming_response["Content-Length"] = response.get("ContentLength", 0)
 
             return streaming_response
 
         except Exception as e:
             return Response(
                 {"error": f"Failed to download recording: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
 
@@ -1072,6 +1077,7 @@ class DashboardPractitionerView(APIView):
     """
     Vue personnalisée pour afficher les statistiques du tableau de bord du praticien
     """
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -1092,10 +1098,19 @@ class DashboardPractitionerView(APIView):
         )
 
         next_appointment = upcoming_appointments.first()
-        remaining_appointments = upcoming_appointments[1:] if next_appointment else upcoming_appointments
+        remaining_appointments = (
+            upcoming_appointments[1:] if next_appointment else upcoming_appointments
+        )
 
-        return Response({
-            "next_appointment": AppointmentCreateSerializer(next_appointment).data,
-            "upcoming_appointments": AppointmentCreateSerializer(remaining_appointments, many=True).data,
-            "overdue_consultations": ConsultationSerializer(consultations_qs.overdue.order_by('-created_at')[:3], many=True).data,
-        }, status=status.HTTP_200_OK)
+        return Response(
+            {
+                "next_appointment": AppointmentCreateSerializer(next_appointment).data,
+                "upcoming_appointments": AppointmentCreateSerializer(
+                    remaining_appointments, many=True
+                ).data,
+                "overdue_consultations": ConsultationSerializer(
+                    consultations_qs.overdue.order_by("-created_at")[:3], many=True
+                ).data,
+            },
+            status=status.HTTP_200_OK,
+        )

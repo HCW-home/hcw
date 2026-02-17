@@ -1,43 +1,38 @@
-import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { Component, OnInit, OnDestroy, signal, computed } from "@angular/core";
+import { CommonModule, DatePipe } from "@angular/common";
+import { ActivatedRoute } from "@angular/router";
 import {
-  IonHeader,
-  IonToolbar,
-  IonButtons,
-  IonButton,
   IonIcon,
-  IonBackButton,
   IonContent,
   IonSpinner,
   NavController,
-  ToastController
-} from '@ionic/angular/standalone';
-import { Subject, takeUntil } from 'rxjs';
-import { ConsultationService } from '../../core/services/consultation.service';
-import { AuthService } from '../../core/services/auth.service';
-import { Appointment, User } from '../../core/models/consultation.model';
+  ToastController,
+} from "@ionic/angular/standalone";
+import { Subject, takeUntil } from "rxjs";
+import { ConsultationService } from "../../core/services/consultation.service";
+import { AuthService } from "../../core/services/auth.service";
+import { Appointment, User } from "../../core/models/consultation.model";
+import { AppHeaderComponent } from "../../shared/app-header/app-header.component";
+import { AppFooterComponent } from "../../shared/app-footer/app-footer.component";
 
 interface StatusConfig {
   label: string;
-  color: 'warning' | 'info' | 'primary' | 'success' | 'muted';
+  color: "warning" | "info" | "primary" | "success" | "muted";
 }
 
 @Component({
-  selector: 'app-appointment-detail',
-  templateUrl: './appointment-detail.page.html',
-  styleUrls: ['./appointment-detail.page.scss'],
+  selector: "app-appointment-detail",
+  templateUrl: "./appointment-detail.page.html",
+  styleUrls: ["./appointment-detail.page.scss"],
   imports: [
     CommonModule,
     DatePipe,
-    IonHeader,
-    IonToolbar,
-    IonButtons,
     IonIcon,
-    IonBackButton,
     IonContent,
-    IonSpinner
-  ]
+    IonSpinner,
+    AppHeaderComponent,
+    AppFooterComponent,
+  ],
 })
 export class AppointmentDetailPage implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
@@ -52,39 +47,41 @@ export class AppointmentDetailPage implements OnInit, OnDestroy {
     const apt = this.appointment();
     const currentUserId = this.currentUser()?.id;
     if (apt?.participants) {
-      const doctor = apt.participants.find(p => p.user && p.user.id !== currentUserId);
+      const doctor = apt.participants.find(
+        (p) => p.user && p.user.id !== currentUserId,
+      );
       if (doctor?.user) {
         return `Dr. ${doctor.user.first_name} ${doctor.user.last_name}`;
       }
     }
-    return '';
+    return "";
   });
 
   doctorInitial = computed(() => {
     const name = this.doctorName();
     if (name) {
-      const parts = name.replace('Dr. ', '').split(' ');
-      return parts[0]?.charAt(0)?.toUpperCase() || '?';
+      const parts = name.replace("Dr. ", "").split(" ");
+      return parts[0]?.charAt(0)?.toUpperCase() || "?";
     }
-    return '?';
+    return "?";
   });
 
-  isScheduled = computed(() => this.appointment()?.status === 'scheduled');
-  isCancelled = computed(() => this.appointment()?.status === 'cancelled');
-  isOnline = computed(() => this.appointment()?.type === 'online');
+  isScheduled = computed(() => this.appointment()?.status === "scheduled");
+  isCancelled = computed(() => this.appointment()?.status === "cancelled");
+  isOnline = computed(() => this.appointment()?.type === "online");
 
   constructor(
     private route: ActivatedRoute,
     private navCtrl: NavController,
     private consultationService: ConsultationService,
     private authService: AuthService,
-    private toastController: ToastController
+    private toastController: ToastController,
   ) {}
 
   ngOnInit(): void {
     this.loadCurrentUser();
-    this.route.params.pipe(takeUntil(this.destroy$)).subscribe(params => {
-      this.appointmentId = +params['id'];
+    this.route.params.pipe(takeUntil(this.destroy$)).subscribe((params) => {
+      this.appointmentId = +params["id"];
       this.loadAppointment();
     });
   }
@@ -97,7 +94,7 @@ export class AppointmentDetailPage implements OnInit, OnDestroy {
   private loadCurrentUser(): void {
     this.authService.currentUser$
       .pipe(takeUntil(this.destroy$))
-      .subscribe(user => {
+      .subscribe((user) => {
         if (user) {
           this.currentUser.set(user as User);
         }
@@ -108,7 +105,8 @@ export class AppointmentDetailPage implements OnInit, OnDestroy {
     if (!this.appointmentId) return;
 
     this.isLoading.set(true);
-    this.consultationService.getAppointmentById(this.appointmentId)
+    this.consultationService
+      .getAppointmentById(this.appointmentId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (appointment) => {
@@ -118,32 +116,36 @@ export class AppointmentDetailPage implements OnInit, OnDestroy {
         error: async () => {
           this.isLoading.set(false);
           const toast = await this.toastController.create({
-            message: 'Failed to load appointment details',
+            message: "Failed to load appointment details",
             duration: 3000,
-            position: 'bottom',
-            color: 'danger'
+            position: "bottom",
+            color: "danger",
           });
           await toast.present();
-        }
+        },
       });
   }
 
   getStatusConfig(status: string | undefined): StatusConfig {
-    const normalizedStatus = (status || 'draft').toLowerCase();
+    const normalizedStatus = (status || "draft").toLowerCase();
     const statusMap: Record<string, StatusConfig> = {
-      'draft': { label: 'Draft', color: 'warning' },
-      'scheduled': { label: 'Scheduled', color: 'primary' },
-      'cancelled': { label: 'Cancelled', color: 'muted' }
+      draft: { label: "Draft", color: "warning" },
+      scheduled: { label: "Scheduled", color: "primary" },
+      cancelled: { label: "Cancelled", color: "muted" },
     };
-    return statusMap[normalizedStatus] || statusMap['draft'];
+    return statusMap[normalizedStatus] || statusMap["draft"];
   }
 
   getTypeIcon(): string {
-    return this.appointment()?.type === 'online' ? 'videocam-outline' : 'location-outline';
+    return this.appointment()?.type === "online"
+      ? "videocam-outline"
+      : "location-outline";
   }
 
   getTypeLabel(): string {
-    return this.appointment()?.type === 'online' ? 'Video Consultation' : 'In-person Visit';
+    return this.appointment()?.type === "online"
+      ? "Video Consultation"
+      : "In-person Visit";
   }
 
   joinVideoCall(): void {
@@ -166,11 +168,11 @@ export class AppointmentDetailPage implements OnInit, OnDestroy {
   getParticipants(): { name: string; isConfirmed: boolean }[] {
     const apt = this.appointment();
     if (!apt?.participants) return [];
-    return apt.participants.map(p => ({
+    return apt.participants.map((p) => ({
       name: p.user
         ? `${p.user.first_name} ${p.user.last_name}`
-        : `${p.first_name || ''} ${p.last_name || p.email || ''}`.trim(),
-      isConfirmed: p.is_confirmed
+        : `${p.first_name || ""} ${p.last_name || p.email || ""}`.trim(),
+      isConfirmed: p.is_confirmed,
     }));
   }
 }

@@ -1,123 +1,102 @@
-<ion-header class="ion-no-border">
-  <ion-toolbar>
-    <ion-buttons slot="start">
-      <ion-back-button defaultHref="/home" text="" icon="arrow-back-outline"></ion-back-button>
-    </ion-buttons>
-  </ion-toolbar>
-</ion-header>
+<app-header
+  pageTitle="Appointment"
+  [showBackButton]="true"
+  backHref="/home"
+></app-header>
 
 <ion-content class="appointment-detail-content">
   @if (isLoading()) {
-    <div class="loading-container">
-      <ion-spinner name="crescent"></ion-spinner>
-    </div>
+  <div class="loading-container">
+    <ion-spinner name="crescent"></ion-spinner>
+  </div>
   } @else if (appointment()) {
-    <div class="main-content">
-      <div class="appointment-header-section">
-        <span class="status-badge status-{{ getStatusConfig(appointment()?.status).color }}">
+  <div class="main-content">
+    <div class="appointment-header-section">
+      <div class="header-top">
+        <span
+          class="status-badge status-{{ getStatusConfig(appointment()?.status).color }}"
+        >
           {{ getStatusConfig(appointment()?.status).label }}
         </span>
-        <h1 class="appointment-title">{{ getTypeLabel() }}</h1>
-        @if (doctorName()) {
-          <p class="appointment-doctor">{{ doctorName() }}</p>
-        }
-        <p class="appointment-type">
+        <span class="appointment-type-tag">
           <ion-icon [name]="getTypeIcon()"></ion-icon>
-          {{ appointment()?.type === 'online' ? 'Online' : 'In-person' }}
-        </p>
+          {{ getTypeLabel() }}
+        </span>
       </div>
-
-      <div class="info-card">
-        <h3 class="info-title">Appointment Details</h3>
-        <div class="info-row">
-          <span class="info-label">Date</span>
-          <span class="info-value">{{ appointment()?.scheduled_at | date:'EEEE, MMM d, yyyy' }}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Time</span>
-          <span class="info-value">{{ appointment()?.scheduled_at | date:'HH:mm' }}</span>
-        </div>
-        @if (appointment()?.end_expected_at) {
-          <div class="info-row">
-            <span class="info-label">Expected End</span>
-            <span class="info-value">{{ appointment()?.end_expected_at | date:'HH:mm' }}</span>
-          </div>
-        }
-        <div class="info-row">
-          <span class="info-label">Type</span>
-          <span class="info-value">{{ getTypeLabel() }}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Status</span>
-          <span class="info-value">{{ getStatusConfig(appointment()?.status).label }}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Created</span>
-          <span class="info-value">{{ appointment()?.created_at | date:'MMM d, yyyy - HH:mm' }}</span>
-        </div>
+      <div class="header-date">
+        <ion-icon name="calendar-outline"></ion-icon>
+        <span
+          >{{ appointment()?.scheduled_at | date:'EEEE, MMM d, yyyy' }}</span
+        >
       </div>
-
-      @if (doctorName()) {
-        <div class="info-card doctor-card">
-          <div class="card-header">
-            <ion-icon name="person-outline" class="card-icon"></ion-icon>
-            <h3 class="info-title">Doctor</h3>
-          </div>
-          <div class="doctor-row">
-            <div class="doctor-avatar">
-              {{ doctorInitial() }}
-            </div>
-            <span class="doctor-name">{{ doctorName() }}</span>
-          </div>
-        </div>
-      }
-
-      @if (getParticipants().length > 0) {
-        <div class="info-card participants-card">
-          <div class="card-header">
-            <ion-icon name="people-outline" class="card-icon"></ion-icon>
-            <h3 class="info-title">Participants</h3>
-          </div>
-          @for (participant of getParticipants(); track participant.name) {
-            <div class="participant-row">
-              <div class="participant-avatar">
-                {{ participant.name.charAt(0).toUpperCase() }}
-              </div>
-              <div class="participant-info">
-                <span class="participant-name">{{ participant.name }}</span>
-              </div>
-            </div>
-          }
-        </div>
-      }
-
-      @if (isCancelled()) {
-        <div class="info-card cancelled-card">
-          <div class="card-header">
-            <ion-icon name="close-circle-outline" class="card-icon"></ion-icon>
-            <h3 class="info-title">Appointment Cancelled</h3>
-          </div>
-          <p class="cancelled-text">This appointment has been cancelled.</p>
-        </div>
-      }
-
-      <div class="actions-section">
-        <button class="action-button primary-btn" (click)="joinVideoCall()">
-          <ion-icon name="videocam-outline"></ion-icon>
-          Join Video Call
-        </button>
-        @if (appointment()?.consultation_id) {
-          <button class="action-button secondary-btn" (click)="viewConsultation()">
-            <ion-icon name="chatbubbles-outline"></ion-icon>
-            View Consultation
-          </button>
-        }
+      <div class="header-time">
+        <ion-icon name="time-outline"></ion-icon>
+        <span>
+          {{ appointment()?.scheduled_at | date:'HH:mm' }} @if
+          (appointment()?.end_expected_at) { — {{ appointment()?.end_expected_at
+          | date:'HH:mm' }} }
+        </span>
       </div>
     </div>
+
+    @if (doctorName()) {
+    <div class="info-card doctor-card">
+      <div class="card-header">
+        <ion-icon name="person-outline" class="card-icon"></ion-icon>
+        <h3 class="info-title">Consultation handled by</h3>
+      </div>
+      <div class="doctor-row">
+        <div class="doctor-avatar">{{ doctorInitial() }}</div>
+        <span class="doctor-name">{{ doctorName() }}</span>
+      </div>
+    </div>
+    } @if (getParticipants().length > 0) {
+    <div class="info-card participants-card">
+      <div class="card-header">
+        <ion-icon name="people-outline" class="card-icon"></ion-icon>
+        <h3 class="info-title">Participants</h3>
+      </div>
+      @for (participant of getParticipants(); track participant.name) {
+      <div class="participant-row">
+        <div class="participant-avatar">
+          {{ participant.name.charAt(0).toUpperCase() }}
+        </div>
+        <div class="participant-info">
+          <span class="participant-name">{{ participant.name }}</span>
+        </div>
+      </div>
+      }
+    </div>
+    } @if (isCancelled()) {
+    <div class="info-card cancelled-card">
+      <div class="card-header">
+        <ion-icon name="close-circle-outline" class="card-icon"></ion-icon>
+        <h3 class="info-title">Appointment Cancelled</h3>
+      </div>
+      <p class="cancelled-text">This appointment has been cancelled.</p>
+    </div>
+    } @if (!isCancelled()) {
+    <div class="actions-section">
+      @if (isOnline()) {
+      <button class="action-button primary-btn" (click)="joinVideoCall()">
+        <ion-icon name="videocam-outline"></ion-icon>
+        Join Video Call
+      </button>
+      } @if (appointment()?.consultation_id) {
+      <button class="action-button secondary-btn" (click)="viewConsultation()">
+        <ion-icon name="chatbubbles-outline"></ion-icon>
+        View Consultation
+      </button>
+      }
+    </div>
+    }
+  </div>
   } @else {
-    <div class="empty-state">
-      <ion-icon name="calendar-outline" class="empty-icon"></ion-icon>
-      <p class="empty-text">Appointment not found</p>
-    </div>
+  <div class="empty-state">
+    <ion-icon name="calendar-outline" class="empty-icon"></ion-icon>
+    <p class="empty-text">Appointment not found</p>
+  </div>
   }
 </ion-content>
+
+<app-footer></app-footer>

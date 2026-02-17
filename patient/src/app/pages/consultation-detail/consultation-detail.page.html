@@ -1,125 +1,137 @@
-<ion-header class="ion-no-border">
-  <ion-toolbar>
-    <ion-buttons slot="start">
-      <ion-back-button defaultHref="/home" text="" icon="arrow-back-outline"></ion-back-button>
-    </ion-buttons>
-  </ion-toolbar>
-</ion-header>
+<app-header
+  pageTitle="Consultation"
+  [showBackButton]="true"
+  backHref="/home"
+></app-header>
 
 <ion-content class="consultation-detail-content">
   @if (isLoading()) {
-    <div class="loading-container">
-      <ion-spinner name="crescent"></ion-spinner>
-    </div>
+  <div class="loading-container">
+    <ion-spinner name="crescent"></ion-spinner>
+  </div>
   } @else if (consultation()) {
-    <div class="main-content">
-      <div class="consultation-header-section">
-        <span class="status-badge status-{{ getStatusConfig(consultation()?.status).color }}">
+  <div class="main-content">
+    <div class="consultation-header-section">
+      <div class="header-top">
+        <span
+          class="status-badge status-{{ getStatusConfig(consultation()?.status).color }}"
+        >
           {{ getStatusConfig(consultation()?.status).label }}
         </span>
-        <h1 class="consultation-title">{{ getReasonName() }}</h1>
-        @if (getDoctorName()) {
-          <p class="consultation-doctor">{{ getDoctorName() }}</p>
-        }
       </div>
-
-      <div class="info-card">
-        <h3 class="info-title">Consultation Details</h3>
-        <div class="info-row">
-          <span class="info-label">Started</span>
-          <span class="info-value">{{ consultation()?.created_at | date:'MMM d, yyyy - HH:mm' }}</span>
+      <h2 class="consultation-title">{{ getReasonName() }}</h2>
+      <div class="header-dates">
+        <div class="date-item">
+          <ion-icon name="calendar-outline"></ion-icon>
+          <span
+            >Created {{ consultation()?.created_at | date:'MMM d, yyyy - HH:mm'
+            }}</span
+          >
         </div>
         @if (consultation()?.started_at) {
-          <div class="info-row">
-            <span class="info-label">Active Since</span>
-            <span class="info-value">{{ consultation()?.started_at | date:'MMM d, yyyy - HH:mm' }}</span>
-          </div>
+        <div class="date-item">
+          <ion-icon name="time-outline"></ion-icon>
+          <span
+            >Active since {{ consultation()?.started_at | date:'MMM d, yyyy -
+            HH:mm' }}</span
+          >
+        </div>
+        } @if (consultation()?.closed_at) {
+        <div class="date-item">
+          <ion-icon name="checkmark-circle-outline"></ion-icon>
+          <span
+            >Closed {{ consultation()?.closed_at | date:'MMM d, yyyy - HH:mm'
+            }}</span
+          >
+        </div>
         }
-        @if (consultation()?.closed_at) {
-          <div class="info-row">
-            <span class="info-label">Closed</span>
-            <span class="info-value">{{ consultation()?.closed_at | date:'MMM d, yyyy - HH:mm' }}</span>
-          </div>
-        }
-      </div>
-
-      @if (getDoctorName()) {
-        <div class="info-card doctor-card">
-          <div class="card-header">
-            <ion-icon name="person-outline" class="card-icon"></ion-icon>
-            <h3 class="info-title">Your Doctor</h3>
-          </div>
-          <div class="doctor-row">
-            <div class="doctor-avatar">
-              {{ getDoctorInitial() }}
-            </div>
-            <span class="doctor-name">{{ getDoctorName() }}</span>
-          </div>
-        </div>
-      }
-
-      @if (consultation()?.next_appointment; as appointment) {
-        <div class="info-card appointments-card">
-          <div class="card-header">
-            <ion-icon name="calendar-outline" class="card-icon"></ion-icon>
-            <h3 class="info-title">Next Appointment</h3>
-          </div>
-          <div class="appointment-item">
-            <div class="appointment-meta">
-              <div class="meta-item">
-                <ion-icon name="calendar-outline"></ion-icon>
-                <span>{{ appointment.scheduled_at | date:'EEEE, MMM d, yyyy' }}</span>
-              </div>
-              <div class="meta-item">
-                <ion-icon name="time-outline"></ion-icon>
-                <span>{{ appointment.scheduled_at | date:'HH:mm' }}</span>
-              </div>
-              <div class="meta-item type-item">
-                <ion-icon [name]="getAppointmentTypeIcon(appointment)"></ion-icon>
-                <span>{{ getAppointmentTypeLabel(appointment) }}</span>
-              </div>
-            </div>
-            @if (appointment.type === 'online') {
-              <button class="action-button primary-btn" (click)="joinAppointment(appointment)">
-                <ion-icon name="videocam-outline"></ion-icon>
-                Join Video Call
-              </button>
-            }
-          </div>
-        </div>
-      }
-
-      @if (isConsultationClosed()) {
-        <div class="info-card closed-card">
-          <div class="card-header">
-            <ion-icon name="checkmark-circle-outline" class="card-icon"></ion-icon>
-            <h3 class="info-title">Consultation Closed</h3>
-          </div>
-          <p class="closed-text">This consultation has been completed. You can view the message history below.</p>
-        </div>
-      }
-
-      <div class="chat-section" [class.read-only]="isConsultationClosed()">
-        <div class="chat-header">
-          <ion-icon name="chatbubbles-outline"></ion-icon>
-          <span>{{ isConsultationClosed() ? 'Message History' : 'Messages' }}</span>
-        </div>
-        <app-message-list
-          [messages]="messages()"
-          [isConnected]="isConsultationClosed() ? false : isConnected()"
-          [isLoadingMore]="isLoadingMore()"
-          [hasMore]="hasMore()"
-          (sendMessage)="onSendMessage($event)"
-          (editMessage)="onEditMessage($event)"
-          (deleteMessage)="onDeleteMessage($event)"
-          (loadMore)="onLoadMore()">
-        </app-message-list>
       </div>
     </div>
+
+    @if (getDoctorName()) {
+    <div class="info-card doctor-card">
+      <div class="card-header">
+        <ion-icon name="person-outline" class="card-icon"></ion-icon>
+        <h3 class="info-title">Consultation handled by</h3>
+      </div>
+      <div class="doctor-row">
+        <div class="doctor-avatar">{{ getDoctorInitial() }}</div>
+        <span class="doctor-name">{{ getDoctorName() }}</span>
+      </div>
+    </div>
+    } @if (consultation()?.next_appointment; as appointment) {
+    <div class="info-card appointments-card">
+      <div class="card-header">
+        <ion-icon name="calendar-outline" class="card-icon"></ion-icon>
+        <h3 class="info-title">Next Appointment</h3>
+      </div>
+      <div class="appointment-item">
+        <div class="appointment-meta">
+          <div class="meta-item">
+            <ion-icon name="calendar-outline"></ion-icon>
+            <span
+              >{{ appointment.scheduled_at | date:'EEEE, MMM d, yyyy' }}</span
+            >
+          </div>
+          <div class="meta-item">
+            <ion-icon name="time-outline"></ion-icon>
+            <span>{{ appointment.scheduled_at | date:'HH:mm' }}</span>
+          </div>
+          <div class="meta-item type-item">
+            <ion-icon [name]="getAppointmentTypeIcon(appointment)"></ion-icon>
+            <span>{{ getAppointmentTypeLabel(appointment) }}</span>
+          </div>
+        </div>
+        @if (appointment.type === 'online') {
+        <button
+          class="action-button primary-btn"
+          (click)="joinAppointment(appointment)"
+        >
+          <ion-icon name="videocam-outline"></ion-icon>
+          Join Video Call
+        </button>
+        }
+      </div>
+    </div>
+    } @if (isConsultationClosed()) {
+    <div class="info-card closed-card">
+      <div class="card-header">
+        <ion-icon name="checkmark-circle-outline" class="card-icon"></ion-icon>
+        <h3 class="info-title">Consultation Closed</h3>
+      </div>
+      <p class="closed-text">
+        This consultation has been completed. You can view the message history
+        below.
+      </p>
+    </div>
+    }
+
+    <div class="chat-section" [class.read-only]="isConsultationClosed()">
+      <div class="chat-header">
+        <ion-icon name="chatbubbles-outline"></ion-icon>
+        <span
+          >{{ isConsultationClosed() ? 'Message History' : 'Messages' }}</span
+        >
+      </div>
+      <app-message-list
+        [messages]="messages()"
+        [isConnected]="isConsultationClosed() ? false : isConnected()"
+        [isLoadingMore]="isLoadingMore()"
+        [hasMore]="hasMore()"
+        (sendMessage)="onSendMessage($event)"
+        (editMessage)="onEditMessage($event)"
+        (deleteMessage)="onDeleteMessage($event)"
+        (loadMore)="onLoadMore()"
+      >
+      </app-message-list>
+    </div>
+  </div>
   } @else {
-    <div class="empty-state">
-      <ion-icon name="document-text-outline" class="empty-icon"></ion-icon>
-      <p class="empty-text">Consultation not found</p>
-    </div>
+  <div class="empty-state">
+    <ion-icon name="document-text-outline" class="empty-icon"></ion-icon>
+    <p class="empty-text">Consultation not found</p>
+  </div>
   }
 </ion-content>
+
+<app-footer></app-footer>
