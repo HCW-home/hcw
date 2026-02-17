@@ -12,6 +12,7 @@ export interface IOrganisation {
   logo_small?: string;
   primary_color?: string;
   default_term?: number | null;
+  footer?: string | null;
 }
 
 export interface User {

@@ -924,7 +924,7 @@ class UserDashboardView(APIView):
         user = request.user
 
         user_requests = Request.objects.filter(
-            Q(status="Requested") | Q(consultation__closed_at__isnull=True),
+            status="Requested",
             created_by=user,
         ).order_by("-id")
 

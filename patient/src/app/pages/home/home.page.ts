@@ -56,10 +56,12 @@ export class HomePage implements OnInit, OnDestroy {
   appointments = signal<Appointment[]>([]);
   isLoading = signal(false);
   unreadNotificationCount = signal(0);
+  footerHtml = signal<string | null>(null);
 
   totalRequests = computed(() => this.requests().length);
   totalConsultations = computed(() => this.consultations().length);
   totalAppointments = computed(() => this.appointments().length);
+  hasNoItems = computed(() => this.totalRequests() === 0 && this.totalConsultations() === 0 && this.totalAppointments() === 0);
 
   constructor(
     private navCtrl: NavController,
@@ -83,6 +85,7 @@ export class HomePage implements OnInit, OnDestroy {
     this.loadUserData();
     this.loadDashboard();
     this.loadNotificationCount();
+    this.loadConfig();
   }
 
   ngOnDestroy(): void {
@@ -155,6 +158,16 @@ export class HomePage implements OnInit, OnDestroy {
     this.navCtrl.navigateForward('/notifications');
   }
 
+  loadConfig(): void {
+    this.authService.getConfig()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (config) => {
+          this.footerHtml.set(config?.main_organization?.footer || null);
+        }
+      });
+  }
+
   loadNotificationCount(): void {
     this.notificationService.getNotifications({ limit: 10 })
       .pipe(takeUntil(this.destroy$))
@@ -207,12 +220,12 @@ export class HomePage implements OnInit, OnDestroy {
     if (request.appointment?.participants) {
       const doctor = request.appointment.participants.find(p => p.user && p.user.id !== request.created_by?.id);
       if (doctor?.user) {
-        return `Dr. ${doctor.user.first_name} ${doctor.user.last_name}`;
+        return `${doctor.user.first_name} ${doctor.user.last_name}`;
       }
     }
     if (typeof request.expected_with === 'object' && request.expected_with) {
       const user = request.expected_with as { first_name?: string; last_name?: string };
-      return `Dr. ${user.first_name || ''} ${user.last_name || ''}`.trim();
+      return `${user.first_name || ''} ${user.last_name || ''}`.trim();
     }
     return '';
   }
@@ -239,7 +252,7 @@ export class HomePage implements OnInit, OnDestroy {
 
   getConsultationDoctorName(consultation: Consultation): string {
     if (consultation.owned_by) {
-      return `Dr. ${consultation.owned_by.first_name} ${consultation.owned_by.last_name}`;
+      return `${consultation.owned_by.first_name} ${consultation.owned_by.last_name}`;
     }
     return '';
   }
@@ -295,7 +308,7 @@ export class HomePage implements OnInit, OnDestroy {
     if (appointment.participants) {
       const doctor = appointment.participants.find(p => p.user && p.user.id !== currentUserId);
       if (doctor?.user) {
-        return `Dr. ${doctor.user.first_name} ${doctor.user.last_name}`;
+        return `${doctor.user.first_name} ${doctor.user.last_name}`;
       }
     }
     return '';
@@ -323,6 +336,18 @@ export class HomePage implements OnInit, OnDestroy {
     const appt = this.nextAppointment();
     if (appt?.consultation_id) {
       this.navCtrl.navigateForward(`/consultation/${appt.consultation_id}/video`);
+    }
+  }
+
+  viewConsultationFromRequest(request: ConsultationRequest): void {
+    if (request.consultation?.id) {
+      this.navCtrl.navigateForward(`/consultation/${request.consultation.id}`);
+    }
+  }
+
+  joinAppointment(appointment: Appointment): void {
+    if (appointment.consultation_id) {
+      this.navCtrl.navigateForward(`/consultation/${appointment.consultation_id}/video`);
     }
   }
 }

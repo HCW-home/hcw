@@ -304,53 +304,182 @@ ion-header {
       font-size: 1rem;
       font-weight: 600;
       color: var(--app-text-secondary);
-      margin: 0 0 var(--app-spacing-xs) 0;
+      margin: 0 0 var(--app-spacing-md) 0;
     }
 
-    .empty-hint {
-      font-size: 0.875rem;
-      color: var(--app-text-muted);
-      margin: 0;
+    .empty-cta {
+      margin: 0 auto;
+      padding: 10px 24px;
+      font-size: 0.9rem;
     }
   }
 
-  .request-card {
+  // Shared card styles
+  .request-card,
+  .consultation-card,
+  .appointment-card {
     background: var(--app-card-background);
     border-radius: var(--app-card-radius);
     border: 1px solid var(--app-border-color);
-    overflow: hidden;
-    margin-bottom: var(--app-spacing-md);
+    padding: var(--app-spacing-md);
+    margin-bottom: 0;
     transition: border-color 0.2s, box-shadow 0.2s;
     cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    &:hover {
+      border-color: rgba(var(--ion-color-primary-rgb), 0.3);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
 
     &:active {
       border-color: var(--ion-color-primary);
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  .card-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--app-spacing-sm);
+  }
+
+  .card-date {
+    font-size: 0.75rem;
+    color: var(--app-text-muted);
+  }
+
+  .card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--app-text-primary);
+    margin: 0;
+    line-height: 1.3;
+  }
+
+  .card-subtitle {
+    font-size: 0.8125rem;
+    color: var(--app-text-secondary);
+  }
+
+  .card-doctor {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.875rem;
+    color: var(--app-text-primary);
+    font-weight: 500;
+  }
+
+  .doctor-avatar-sm {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--ion-color-primary-bg);
+    color: var(--ion-color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+  }
+
+  .card-info-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8125rem;
+    color: var(--app-text-secondary);
+    padding: 8px 10px;
+    background: var(--app-background);
+    border-radius: 8px;
+
+    > ion-icon {
+      font-size: 16px;
+      flex-shrink: 0;
+      color: var(--ion-color-primary);
     }
 
-    .request-header {
-      padding: var(--app-spacing-md);
-      border-bottom: 1px solid var(--app-border-color);
+    > span {
+      flex: 1;
+      min-width: 0;
     }
 
-    .request-title-row {
-      display: flex;
+    &.card-info-waiting {
+      background: var(--app-warning-bg);
+      color: var(--ion-color-warning-shade);
+
+      > ion-icon {
+        color: var(--ion-color-warning-shade);
+      }
+    }
+
+    &.card-info-refused {
+      background: #fef2f2;
+      color: #dc2626;
+
+      > ion-icon {
+        color: #dc2626;
+      }
+    }
+
+    &.card-info-stacked {
+      flex-direction: column;
       align-items: flex-start;
-      justify-content: space-between;
-      gap: var(--app-spacing-sm);
-      margin-bottom: 4px;
-    }
+      gap: 4px;
 
-    .request-reason {
-      font-size: 1rem;
+      .card-info-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--app-text-muted);
+
+        ion-icon {
+          font-size: 14px;
+          color: var(--ion-color-primary);
+        }
+      }
+
+      .card-info-value {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.8125rem;
+        color: var(--app-text-primary);
+        font-weight: 500;
+      }
+    }
+  }
+
+  .type-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--ion-color-primary-bg);
+    color: var(--ion-color-primary);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
+
+    ion-icon {
+      font-size: 13px;
+    }
+  }
+
+  .appointment-datetime {
+    .appointment-date-text {
       font-weight: 600;
       color: var(--app-text-primary);
-      margin: 0;
-    }
-
-    .request-specialty {
-      font-size: 0.8125rem;
-      color: var(--app-text-secondary);
     }
   }
 
@@ -390,286 +519,64 @@ ion-header {
     }
   }
 
-  .sub-section {
-    padding: var(--app-spacing-md);
-    border-bottom: 1px solid var(--app-border-color);
-    background: var(--app-background);
-
-    &:last-of-type {
-      border-bottom: none;
-    }
-
-    .sub-section-header {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.75rem;
-      font-weight: 500;
-      color: var(--app-text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.02em;
-      margin-bottom: var(--app-spacing-sm);
-
-      ion-icon {
-        font-size: 14px;
-      }
-    }
-  }
-
-  .appointment-sub {
-    background: var(--ion-color-primary-bg);
-
-    .appointment-content {
-      display: flex;
-      align-items: flex-start;
-      gap: var(--app-spacing-md);
-    }
-
-    .doctor-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: var(--app-card-background);
-      color: var(--ion-color-primary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 0.875rem;
-      flex-shrink: 0;
-    }
-
-    .appointment-details {
-      flex: 1;
-      min-width: 0;
-
-      .doctor-name {
-        font-weight: 600;
-        color: var(--app-text-primary);
-        margin: 0 0 4px 0;
-      }
-    }
-
-    .appointment-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--app-spacing-sm);
-
-      .meta-item {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        font-size: 0.8125rem;
-        color: var(--app-text-secondary);
-
-        ion-icon {
-          font-size: 14px;
-        }
-
-        &.type-tag {
-          background: var(--app-card-background);
-          padding: 2px 8px;
-          border-radius: 0.5rem;
-          color: var(--ion-color-primary);
-        }
-      }
-    }
-  }
-
-  .consultation-sub {
-    background: var(--app-background);
-
-    .consultation-content {
-      background: var(--app-card-background);
-      border-radius: 0.5rem;
-      padding: var(--app-spacing-sm);
-
-      .consultation-hint {
-        font-size: 0.8125rem;
-        color: var(--app-text-secondary);
-        margin: 0;
-      }
-    }
-  }
-
-  .pending-sub {
-    background: var(--app-warning-bg);
-  }
-
-  .accepted-sub {
-    background: var(--app-info-bg);
-
-    .sub-hint {
-      font-size: 0.8125rem;
-      color: var(--app-text-secondary);
-      margin: 0;
-    }
-  }
-
-  .refused-sub {
-    background: #fef2f2;
-
-    .sub-section-header {
-      color: #dc2626;
-    }
-
-    .refused-reason {
-      font-size: 0.8125rem;
-      color: #991b1b;
-      margin: 0;
-      font-style: italic;
-    }
-  }
-
-  .card-action-btn {
+  .card-actions {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    padding: var(--app-spacing-md);
-    background: var(--app-card-background);
-    border: none;
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--ion-color-primary);
-    transition: background 0.2s;
-    font-family: inherit;
+    gap: 8px;
+    margin-top: 2px;
+  }
 
-    &:active {
-      background: var(--ion-color-primary-bg);
-    }
+  .card-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    font-family: inherit;
+    transition: background 0.15s, box-shadow 0.15s;
 
     ion-icon {
-      font-size: 20px;
-    }
-  }
-
-  .consultation-card {
-    background: var(--app-card-background);
-    border-radius: var(--app-card-radius);
-    border: 1px solid var(--app-border-color);
-    overflow: hidden;
-    margin-bottom: var(--app-spacing-md);
-    transition: border-color 0.2s, box-shadow 0.2s;
-    cursor: pointer;
-
-    &:active {
-      border-color: var(--ion-color-primary);
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      font-size: 16px;
     }
 
-    .consultation-header {
-      padding: var(--app-spacing-md);
-      border-bottom: 1px solid var(--app-border-color);
-    }
+    &.card-btn-primary {
+      background: var(--ion-color-primary);
+      color: white;
 
-    .consultation-title-row {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: var(--app-spacing-sm);
-      margin-bottom: 4px;
-    }
-
-    .consultation-reason {
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--app-text-primary);
-      margin: 0;
-    }
-
-    .consultation-doctor {
-      font-size: 0.8125rem;
-      color: var(--app-text-secondary);
-    }
-
-    .consultation-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--app-spacing-md);
-      padding: var(--app-spacing-md);
-      background: var(--app-background);
-      border-bottom: 1px solid var(--app-border-color);
-
-      .meta-item {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        font-size: 0.8125rem;
-        color: var(--app-text-secondary);
-
-        ion-icon {
-          font-size: 14px;
-        }
+      &:hover {
+        box-shadow: 0 2px 6px rgba(8, 145, 178, 0.35);
       }
-    }
-  }
 
-  .appointment-card {
-    background: var(--app-card-background);
-    border-radius: var(--app-card-radius);
-    border: 1px solid var(--app-border-color);
-    overflow: hidden;
-    margin-bottom: var(--app-spacing-md);
-    transition: border-color 0.2s, box-shadow 0.2s;
-    cursor: pointer;
-
-    &:active {
-      border-color: var(--ion-color-primary);
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-
-    .appointment-header {
-      padding: var(--app-spacing-md);
-      border-bottom: 1px solid var(--app-border-color);
-    }
-
-    .appointment-title-row {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: var(--app-spacing-sm);
-      margin-bottom: 4px;
-    }
-
-    .appointment-type-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--app-text-primary);
-
-      ion-icon {
-        font-size: 18px;
-        color: var(--ion-color-primary);
+      &:active {
+        background: var(--ion-color-primary-shade);
       }
     }
 
-    .appointment-doctor {
-      font-size: 0.8125rem;
-      color: var(--app-text-secondary);
+    &.card-btn-outline {
+      background: transparent;
+      color: var(--ion-color-primary);
+      border: 1.5px solid var(--ion-color-primary);
+
+      &:hover {
+        background: var(--ion-color-primary-bg);
+      }
+
+      &:active {
+        background: rgba(var(--ion-color-primary-rgb), 0.12);
+      }
     }
 
-    .appointment-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--app-spacing-md);
-      padding: var(--app-spacing-md);
-      background: var(--app-background);
-      border-bottom: 1px solid var(--app-border-color);
+    &.card-btn-secondary {
+      background: transparent;
+      color: var(--ion-color-primary);
+      padding: 8px 12px;
 
-      .meta-item {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        font-size: 0.8125rem;
-        color: var(--app-text-secondary);
-
-        ion-icon {
-          font-size: 14px;
-        }
+      &:hover {
+        background: var(--ion-color-primary-bg);
       }
     }
   }
@@ -683,52 +590,17 @@ ion-header {
     padding: var(--app-spacing-sm) var(--app-spacing-lg);
   }
 
-  .footer-content {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--app-spacing-md);
-  }
+  .footer-html {
+    font-size: 0.8125rem;
+    color: var(--app-text-secondary);
+    line-height: 1.5;
+    text-align: left;
 
-  .footer-html-placeholder {
-    flex: 1;
-    min-height: 1px;
-  }
-
-  .cta-button {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 20px;
-    background: transparent;
-    color: var(--ion-color-primary);
-    border: 2px solid var(--ion-color-primary);
-    border-radius: var(--app-button-radius);
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    white-space: nowrap;
-    font-family: inherit;
-    transition: background 0.15s;
-    flex-shrink: 0;
-
-    &:hover {
-      background: var(--ion-color-primary-bg, rgba(8, 145, 178, 0.08));
-    }
-
-    &:active {
-      background: var(--ion-color-primary-bg, rgba(8, 145, 178, 0.15));
-    }
-
-    ion-icon {
-      font-size: 18px;
-    }
-
-    &.cta-filled {
-      background: linear-gradient(135deg, var(--ion-color-primary), var(--ion-color-primary-shade));
-      color: white;
-      border-color: transparent;
-      box-shadow: 0 2px 8px rgba(8, 145, 178, 0.3);
+    a {
+      color: var(--ion-color-primary);
+      text-decoration: none;
     }
   }
 }
+
+
