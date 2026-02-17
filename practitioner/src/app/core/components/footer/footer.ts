@@ -1,14 +1,33 @@
-import { Component } from '@angular/core';
-import { Typography } from '../../../shared/ui-components/typography/typography';
-import { TypographyTypeEnum } from '../../../shared/constants/typography';
-import { TranslatePipe } from '@ngx-translate/core';
+import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Subject, takeUntil } from 'rxjs';
+import { UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-footer',
-  imports: [Typography, TranslatePipe],
+  imports: [CommonModule],
   templateUrl: './footer.html',
   styleUrl: './footer.scss',
 })
-export class Footer {
-  protected readonly TypographyTypeEnum = TypographyTypeEnum;
+export class Footer implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+  private userService = inject(UserService);
+
+  footerHtml = signal<string | null>(null);
+
+  ngOnInit(): void {
+    this.userService
+      .getCurrentUser()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: user => {
+          this.footerHtml.set(user?.main_organisation?.footer || null);
+        },
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 }

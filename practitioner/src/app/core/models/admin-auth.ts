@@ -41,6 +41,13 @@ export interface IConfigLanguage {
   name: string;
 }
 
+export interface IOrganization {
+  id: number;
+  name: string;
+  footer: string | null;
+  [key: string]: unknown;
+}
+
 export interface IOpenIDConfig {
   enabled: boolean;
   client_id: string | null;
@@ -51,6 +58,7 @@ export interface IOpenIDConfig {
   site_logo: string | null;
   site_logo_white: string | null;
   site_favicon: string | null;
+  main_organization: IOrganization | null;
 }
 
 export interface IOpenIDLoginBody {

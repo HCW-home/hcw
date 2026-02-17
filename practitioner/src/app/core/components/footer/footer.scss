@@ -1,8 +1,22 @@
 .footer {
-  gap: 16px;
   display: flex;
-  padding: 16px 0;
-  max-width: 400px;
+  padding: 16px 32px;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
+
+  .footer-html {
+    color: var(--slate-500);
+    font-size: 14px;
+    text-align: left;
+
+    a {
+      color: var(--primary-600);
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
 }

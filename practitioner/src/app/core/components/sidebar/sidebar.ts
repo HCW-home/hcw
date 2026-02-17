@@ -18,6 +18,7 @@ import { UserService } from '../../services/user.service';
 import { Auth } from '../../services/auth';
 import { TranslatePipe } from '@ngx-translate/core';
 import { CommonModule } from '@angular/common';
+import { Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-sidebar',
@@ -36,6 +37,7 @@ export class Sidebar implements OnInit, OnDestroy {
   public router = inject(Router);
   private userService = inject(UserService);
   private authService = inject(Auth);
+  private titleService = inject(Title);
 
   menuItems = MenuItems;
   currentUserSubscription!: Subscription;
@@ -63,6 +65,10 @@ export class Sidebar implements OnInit, OnDestroy {
         this.siteLogo = config.site_logo;
         if (config.branding) {
           this.branding = config.branding;
+          this.titleService.setTitle(config.branding);
+        }
+        if (config.site_favicon) {
+          this.updateFavicon(config.site_favicon);
         }
       },
     });
@@ -88,6 +94,15 @@ export class Sidebar implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.currentUserSubscription?.unsubscribe();
+  }
+
+  private updateFavicon(url: string): void {
+    const link: HTMLLinkElement =
+      document.querySelector("link[rel~='icon']") ||
+      document.createElement('link');
+    link.rel = 'icon';
+    link.href = url;
+    document.head.appendChild(link);
   }
 
   protected readonly TypographyTypeEnum = TypographyTypeEnum;

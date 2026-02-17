@@ -1,14 +1,5 @@
+@if (footerHtml()) {
 <footer class="footer">
-  <app-typography
-    class="pointer"
-    [variant]="TypographyTypeEnum['body-medium']"
-    color="var(--slate-500)"
-    >{{ 'footer.privacyPolicy' | translate }}</app-typography
-  >
-  <app-typography
-    class="pointer"
-    [variant]="TypographyTypeEnum['body-medium']"
-    color="var(--slate-500)"
-    >{{ 'footer.termsAndConditions' | translate }}</app-typography
-  >
+  <div class="footer-html" [innerHTML]="footerHtml()"></div>
 </footer>
+}

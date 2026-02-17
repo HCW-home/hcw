@@ -1,4 +1,4 @@
-import {CommunicationMethodType} from '../constants/user';
+import { CommunicationMethodType } from '../constants/user';
 
 export interface ITerm {
   id: number;
@@ -14,6 +14,7 @@ export interface IOrganisation {
   logo_small?: string;
   primary_color?: string;
   default_term?: number;
+  footer?: string | null;
   location_latitude?: number;
   location_longitude?: number;
   street?: string;
