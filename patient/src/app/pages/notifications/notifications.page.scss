@@ -121,10 +121,11 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 13px;
-      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      font-family: inherit;
       cursor: pointer;
       background: transparent;
       color: var(--ion-color-primary);
@@ -132,7 +133,7 @@
       transition: background-color 0.15s ease;
 
       &:active {
-        background: rgba(var(--ion-color-primary-rgb), 0.08);
+        background: rgba(var(--ion-color-primary-rgb), 0.12);
       }
     }
   }
