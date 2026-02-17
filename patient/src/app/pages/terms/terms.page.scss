@@ -4,7 +4,7 @@
   }
 }
 
-.cgu-container {
+.terms-container {
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -23,7 +23,7 @@
   min-height: 200px;
 }
 
-.cgu-title {
+.terms-title {
   margin: 0;
   font-size: 20px;
   font-weight: 600;
@@ -31,7 +31,7 @@
   text-align: center;
 }
 
-.cgu-content {
+.terms-content {
   flex: 1;
   background: #ffffff;
   border-radius: 12px;

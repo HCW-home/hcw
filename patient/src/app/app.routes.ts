@@ -41,8 +41,8 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/confirm-presence/confirm-presence.page').then(m => m.ConfirmPresencePage)
   },
   {
-    path: 'cgu',
-    loadComponent: () => import('./pages/cgu/cgu.page').then(m => m.CguPage),
+    path: 'terms',
+    loadComponent: () => import('./pages/terms/terms.page').then(m => m.TermsPage),
     canActivate: [AuthGuard],
   },
   {

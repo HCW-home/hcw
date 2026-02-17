@@ -7,6 +7,7 @@ import {
 } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { NavController } from '@ionic/angular';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -28,7 +29,18 @@ export class TermsGuard implements CanActivate {
       return true;
     }
 
-    const requiredTermId = user.main_organisation?.default_term;
+    let requiredTermId = user.main_organisation?.default_term;
+
+    // Fallback to main organization from app config
+    if (requiredTermId == null) {
+      try {
+        const config = await firstValueFrom(this.authService.getConfig());
+        requiredTermId = config?.main_organization?.default_term;
+      } catch {
+        // Ignore config fetch errors
+      }
+    }
+
     if (requiredTermId == null) {
       return true;
     }
@@ -37,7 +49,7 @@ export class TermsGuard implements CanActivate {
       return true;
     }
 
-    this.navCtrl.navigateRoot('/cgu');
+    this.navCtrl.navigateRoot('/terms');
     return false;
   }
 }

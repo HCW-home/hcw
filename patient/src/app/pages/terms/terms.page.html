@@ -1,5 +1,5 @@
 <ion-content>
-  <div class="cgu-container">
+  <div class="terms-container">
     <ng-container *ngIf="loading; else loaded">
       <div class="loading-wrapper">
         <ion-spinner name="crescent"></ion-spinner>
@@ -8,9 +8,9 @@
 
     <ng-template #loaded>
       <ng-container *ngIf="term">
-        <h2 class="cgu-title">{{ term.name }}</h2>
+        <h2 class="terms-title">{{ term.name }}</h2>
 
-        <div class="cgu-content" [innerHTML]="term.content"></div>
+        <div class="terms-content" [innerHTML]="term.content"></div>
 
         <ion-button
           expand="block"
