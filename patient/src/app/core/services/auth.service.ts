@@ -59,7 +59,7 @@ export class AuthService {
   }
 
   getConfig(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/auth/openid/config/`);
+    return this.http.get(`${this.apiUrl}/config/`);
   }
 
   verifyEmail(token: string): Observable<any> {

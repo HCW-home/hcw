@@ -27,7 +27,7 @@ user_router.register(
 urlpatterns = [
     path("api/", include(router.urls)),
     path("api/auth/openid/", views.OpenIDView.as_view(), name="openid_login"),
-    path("api/auth/openid/config/", views.OpenIDConfigView.as_view(), name="openid_config"),
+    path("api/config/", views.AppConfigView.as_view(), name="app_config"),
     path(
         "api/user/notifications/",
         views.UserNotificationsView.as_view(),

@@ -52,7 +52,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
-from .models import HealthMetric, Language, Speciality, Term, User
+from .models import HealthMetric, Language, Organisation, Speciality, Term, User
 from .serializers import (
     HealthMetricSerializer,
     LanguageSerializer,
@@ -730,68 +730,55 @@ class OpenIDView(SocialLoginView):
         return super().post(request, *args, **kwargs)
 
 
-class OpenIDConfigView(APIView):
+class AppConfigView(APIView):
     """
-    Public endpoint to get OpenID Connect configuration for the frontend.
-    Returns client_id and authorization URL, but NOT the client secret.
+    Public endpoint returning application configuration for the frontend.
+    Includes OpenID, registration settings, and main organization info.
     """
-    permission_classes = []  # Public endpoint
+    permission_classes = []
     authentication_classes = []
 
     @extend_schema(
-        responses={
-            200: {
-                "type": "object",
-                "properties": {
-                    "enabled": {"type": "boolean", "description": "Whether OpenID Connect is enabled"},
-                    "client_id": {"type": "string", "description": "OpenID Client ID"},
-                    "authorization_url": {"type": "string", "description": "OpenID authorization endpoint URL"},
-                    "provider_name": {"type": "string", "description": "Name of the OpenID provider"},
-                },
-                "example": {
-                    "enabled": True,
-                    "client_id": "my-client-id",
-                    "authorization_url": "https://keycloak.example.com/realms/myrealm/protocol/openid-connect/auth",
-                    "provider_name": "Keycloak",
-                },
-            }
-        },
-        description="Get OpenID Connect configuration for frontend authentication flow. Returns public configuration only (no secrets).",
+        description="Get application configuration for the frontend.",
     )
     def get(self, request):
-        """Get OpenID Connect public configuration."""
+        # OpenID Connect configuration
         openid_config = settings.SOCIALACCOUNT_PROVIDERS.get("openid_connect", {})
         apps = openid_config.get("APPS", [])
 
-        if not apps:
-            return Response({
-                "enabled": False,
-                "client_id": None,
-                "authorization_url": None,
-                "provider_name": None,
-            })
+        openid = {
+            "enabled": False,
+            "client_id": None,
+            "authorization_url": None,
+            "provider_name": None,
+        }
 
-        # Get first OpenID Connect app configuration
-        app = apps[0]
-        client_id = app.get("client_id")
-        provider_name = app.get("name")
-        server_url = app.get("settings", {}).get("server_url")
+        if apps:
+            app = apps[0]
+            client_id = app.get("client_id")
+            provider_name = app.get("name")
+            server_url = app.get("settings", {}).get("server_url")
 
-        # If server_url is the .well-known URL, we need to fetch it to get the authorization endpoint
-        # For now, return a constructed URL (user can override in settings if needed)
-        authorization_url = None
-        if server_url:
-            # Remove .well-known/openid-configuration suffix if present
-            base_url = server_url.replace("/.well-known/openid-configuration", "")
-            # Construct authorization URL (standard OIDC path)
-            authorization_url = f"{base_url}/protocol/openid-connect/auth"
+            authorization_url = None
+            if server_url:
+                base_url = server_url.replace("/.well-known/openid-configuration", "")
+                authorization_url = f"{base_url}/protocol/openid-connect/auth"
+
+            openid = {
+                "enabled": bool(client_id),
+                "client_id": client_id,
+                "authorization_url": authorization_url,
+                "provider_name": provider_name,
+            }
+
+        # Main organization
+        main_org = Organisation.objects.filter(is_main=True).first()
+        main_organization = OrganisationSerializer(main_org).data if main_org else None
 
         return Response({
-            "enabled": bool(client_id),
-            "client_id": client_id,
-            "authorization_url": authorization_url,
-            "provider_name": provider_name,
+            **openid,
             "registration_enabled": settings.ENABLE_REGISTRATION,
+            "main_organization": main_organization,
         })
 
 

@@ -6,7 +6,7 @@
   justify-content: center;
   padding: 16px;
   box-sizing: border-box;
-  background: var(--slate-200);
+  background: linear-gradient(135deg, var(--slate-100) 0%, var(--primary-50) 50%, var(--slate-100) 100%);
 }
 
 .auth-card {
