@@ -7,9 +7,11 @@ import { Button } from '../../../../shared/ui-components/button/button';
 import { Input as InputComponent } from '../../../../shared/ui-components/input/input';
 import { Switch } from '../../../../shared/ui-components/switch/switch';
 import { ValidationService } from '../../../../core/services/validation.service';
+import { TranslationService } from '../../../../core/services/translation.service';
 
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
 import { ButtonSizeEnum, ButtonStyleEnum } from '../../../../shared/constants/button';
+import { TranslatePipe } from '@ngx-translate/core';
 
 interface WeekDay {
   key: string;
@@ -25,7 +27,8 @@ interface WeekDay {
     Typography,
     Button,
     InputComponent,
-    Switch
+    Switch,
+    TranslatePipe
   ],
   templateUrl: './slot-modal.html',
   styleUrl: './slot-modal.scss'
@@ -41,6 +44,7 @@ export class SlotModal {
   @Output() save = new EventEmitter<void>();
 
   private validationService = inject(ValidationService);
+  private t = inject(TranslationService);
 
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
@@ -61,9 +65,9 @@ export class SlotModal {
   getFieldError(form: FormGroup, fieldName: string): string {
     const field = form.get(fieldName);
     if (field?.errors && field?.touched) {
-      if (field.errors['required']) return `${fieldName} is required`;
-      if (field.errors['minlength']) return `${fieldName} is too short`;
-      if (field.errors['maxlength']) return `${fieldName} is too long`;
+      if (field.errors['required']) return this.t.instant('slotModal.fieldRequired', { field: fieldName });
+      if (field.errors['minlength']) return this.t.instant('slotModal.fieldTooShort', { field: fieldName });
+      if (field.errors['maxlength']) return this.t.instant('slotModal.fieldTooLong', { field: fieldName });
     }
     return '';
   }

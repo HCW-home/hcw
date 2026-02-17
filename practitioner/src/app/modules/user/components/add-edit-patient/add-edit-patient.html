@@ -5,7 +5,7 @@
     </div>
     <div class="header-info">
       <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
-        {{ isEditMode ? 'Edit Patient Information' : 'Add New Patient' }}
+        {{ isEditMode ? ('addEditPatient.editTitle' | translate) : ('addEditPatient.addTitle' | translate) }}
       </app-typography>
       @if (isEditMode) {
         <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
@@ -19,9 +19,9 @@
     <div class="form-row">
       <div class="form-group">
         <app-input
-          label="First Name"
+          [label]="'addEditPatient.firstName' | translate"
           leftIcon="user"
-          placeholder="Enter first name"
+          [placeholder]="'addEditPatient.firstNamePlaceholder' | translate"
           [formControl]="$any(form.get('first_name'))"
           [invalid]="isFieldInvalid('first_name')"
           [invalidMessage]="getFieldError('first_name')">
@@ -29,9 +29,9 @@
       </div>
       <div class="form-group">
         <app-input
-          label="Last Name"
+          [label]="'addEditPatient.lastName' | translate"
           leftIcon="user"
-          placeholder="Enter last name"
+          [placeholder]="'addEditPatient.lastNamePlaceholder' | translate"
           [formControl]="$any(form.get('last_name'))"
           [invalid]="isFieldInvalid('last_name')"
           [invalidMessage]="getFieldError('last_name')">
@@ -41,10 +41,10 @@
 
     <div class="form-group">
       <app-input
-        label="Email"
+        [label]="'addEditPatient.email' | translate"
         type="email"
         leftIcon="email"
-        placeholder="Enter email address"
+        [placeholder]="'addEditPatient.emailPlaceholder' | translate"
         [formControl]="$any(form.get('email'))"
         [invalid]="isFieldInvalid('email')"
         [invalidMessage]="getFieldError('email')">
@@ -54,16 +54,16 @@
     <div class="form-row">
       <div class="form-group">
         <app-input
-          label="Phone Number"
+          [label]="'addEditPatient.phoneNumber' | translate"
           leftIcon="phone"
-          placeholder="Enter phone number"
+          [placeholder]="'addEditPatient.phonePlaceholder' | translate"
           [formControl]="$any(form.get('mobile_phone_number'))">
         </app-input>
       </div>
       <div class="form-group">
         <app-select
-          label="Preferred Language"
-          placeholder="Select language"
+          [label]="'addEditPatient.preferredLanguage' | translate"
+          [placeholder]="'addEditPatient.selectLanguage' | translate"
           [options]="languageOptions"
           [formControl]="$any(form.get('preferred_language'))"
           [invalid]="isFieldInvalid('preferred_language')"
@@ -75,7 +75,7 @@
 
   <div class="form-footer">
     <app-button
-      text="Cancel"
+      [text]="'addEditPatient.cancel' | translate"
       [block]="true"
       [style]="ButtonStyleEnum.stroke"
       [size]="ButtonSizeEnum.medium"
@@ -83,7 +83,7 @@
       (buttonClick)="onCancel()">
     </app-button>
     <app-button
-      [text]="isEditMode ? 'Save Changes' : 'Add Patient'"
+      [text]="isEditMode ? ('addEditPatient.saveChanges' | translate) : ('addEditPatient.addPatient' | translate)"
       [block]="true"
       [style]="ButtonStyleEnum.primary"
       [size]="ButtonSizeEnum.medium"

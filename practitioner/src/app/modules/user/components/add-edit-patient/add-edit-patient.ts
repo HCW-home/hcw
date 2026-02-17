@@ -14,10 +14,12 @@ import { ToasterService } from '../../../../core/services/toaster.service';
 import { IUser, ILanguage } from '../../models/user';
 import { SelectOption } from '../../../../shared/models/select';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
+import { TranslatePipe } from '@ngx-translate/core';
+import { TranslationService } from '../../../../core/services/translation.service';
 
 @Component({
   selector: 'app-add-edit-patient',
-  imports: [CommonModule, ReactiveFormsModule, Typography, Button, Input, Select],
+  imports: [CommonModule, ReactiveFormsModule, Typography, Button, Input, Select, TranslatePipe],
   templateUrl: './add-edit-patient.html',
   styleUrl: './add-edit-patient.scss',
 })
@@ -27,6 +29,7 @@ export class AddEditPatient implements OnInit, OnDestroy {
   private patientService = inject(PatientService);
   private userService = inject(UserService);
   private toasterService = inject(ToasterService);
+  private t = inject(TranslationService);
 
   patient = input<IUser | null>(null);
 
@@ -141,12 +144,12 @@ export class AddEditPatient implements OnInit, OnDestroy {
         takeUntil(this.destroy$)
       ).subscribe({
         next: () => {
-          this.toasterService.show('success', 'Patient Updated', 'Patient updated successfully');
+          this.toasterService.show('success', this.t.instant('addEditPatient.patientUpdated'), this.t.instant('addEditPatient.patientUpdatedMessage'));
           this.loading = false;
           this.saved.emit();
         },
         error: (error) => {
-          this.toasterService.show('error', 'Error Updating Patient', getErrorMessage(error));
+          this.toasterService.show('error', this.t.instant('addEditPatient.errorUpdating'), getErrorMessage(error));
           this.loading = false;
         }
       });
@@ -165,12 +168,12 @@ export class AddEditPatient implements OnInit, OnDestroy {
         takeUntil(this.destroy$)
       ).subscribe({
         next: () => {
-          this.toasterService.show('success', 'Patient Created', 'Patient created successfully');
+          this.toasterService.show('success', this.t.instant('addEditPatient.patientCreated'), this.t.instant('addEditPatient.patientCreatedMessage'));
           this.loading = false;
           this.saved.emit();
         },
         error: (error) => {
-          this.toasterService.show('error', 'Error Creating Patient', getErrorMessage(error));
+          this.toasterService.show('error', this.t.instant('addEditPatient.errorCreating'), getErrorMessage(error));
           this.loading = false;
         }
       });
@@ -189,10 +192,10 @@ export class AddEditPatient implements OnInit, OnDestroy {
   getFieldError(fieldName: string): string {
     const field = this.form.get(fieldName);
     if (field?.errors?.['required']) {
-      return 'This field is required';
+      return this.t.instant('addEditPatient.fieldRequired');
     }
     if (field?.errors?.['email']) {
-      return 'Please enter a valid email address';
+      return this.t.instant('addEditPatient.invalidEmail');
     }
     return '';
   }
