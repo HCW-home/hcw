@@ -4,6 +4,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { ToasterContainerComponent } from './core/components/toaster-container/toaster-container.component';
 import { Confirmation } from './shared/components/confirmation/confirmation';
 import { Auth } from './core/services/auth';
+import { TranslationService } from './core/services/translation.service';
 import { UserWebSocketService } from './core/services/user-websocket.service';
 import { ActionHandlerService } from './core/services/action-handler.service';
 import { IncomingCallService } from './core/services/incoming-call.service';
@@ -23,6 +24,7 @@ export class App implements OnInit, OnDestroy {
 
   constructor(
     private authService: Auth,
+    private translationService: TranslationService,
     private userWsService: UserWebSocketService,
     private actionHandler: ActionHandlerService,
     private incomingCallService: IncomingCallService,

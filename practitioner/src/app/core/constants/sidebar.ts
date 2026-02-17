@@ -3,27 +3,27 @@ import { RoutePaths } from './routes';
 
 export const MenuItems: Sidebar[] = [
   {
-    name: 'Dashboard',
+    name: 'sidebar.dashboard',
     path: `/${RoutePaths.DASHBOARD}`,
     icon: 'dashboard.svg',
   },
   {
-    name: 'Consultations',
+    name: 'sidebar.consultations',
     path: `/${RoutePaths.CONSULTATIONS}`,
     icon: 'stethoscope.svg',
   },
   {
-    name: 'Patients',
+    name: 'sidebar.patients',
     path: `/${RoutePaths.PATIENTS}`,
     icon: 'user.svg',
   },
   {
-    name: 'Appointments',
+    name: 'sidebar.appointments',
     path: `/${RoutePaths.APPOINTMENTS}`,
     icon: 'clock.svg',
   },
   {
-    name: 'Configuration',
+    name: 'sidebar.configuration',
     path: `/${RoutePaths.CONFIGURATION}`,
     icon: 'settings.svg',
   },

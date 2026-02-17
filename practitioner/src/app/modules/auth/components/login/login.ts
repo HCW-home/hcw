@@ -1,4 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Typography } from '../../../../shared/ui-components/typography/typography';
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
 import { Input } from '../../../../shared/ui-components/input/input';
@@ -11,6 +12,7 @@ import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { RoutePaths } from '../../../../core/constants/routes';
 import { ActionHandlerService } from '../../../../core/services/action-handler.service';
 import { ConsultationService } from '../../../../core/services/consultation.service';
+import { TranslationService } from '../../../../core/services/translation.service';
 import {
   FormGroup,
   Validators,
@@ -36,6 +38,7 @@ interface LoginForm {
     Typography,
     RouterLink,
     ErrorMessage,
+    TranslatePipe,
     ReactiveFormsModule,
   ],
   templateUrl: './login.html',
@@ -53,6 +56,7 @@ export class Login implements OnInit {
   private actionHandler = inject(ActionHandlerService);
   private consultationService = inject(ConsultationService);
   public validationService = inject(ValidationService);
+  private t = inject(TranslationService);
   form: FormGroup<LoginForm> = this.formBuilder.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     // email: ['info@iabsis.com', [Validators.required, Validators.email]],
@@ -134,12 +138,12 @@ export class Login implements OnInit {
     switch (field) {
       case 'email':
         if (this.form.get('email')?.errors?.['required']) {
-          return 'Field is required';
+          return this.t.instant('login.fieldRequired');
         } else {
-          return 'Invalid email address';
+          return this.t.instant('login.invalidEmail');
         }
       default:
-        return 'Field is required';
+        return this.t.instant('login.fieldRequired');
     }
   }
 

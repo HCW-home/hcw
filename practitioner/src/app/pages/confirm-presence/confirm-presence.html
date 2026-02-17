@@ -7,7 +7,7 @@
         <app-typography
           [variant]="TypographyTypeEnum['body-medium']"
           color="var(--slate-500)">
-          Loading appointments...
+          {{ 'confirmPresence.loadingAppointments' | translate }}
         </app-typography>
       </div>
     } @else if (errorMessage) {
@@ -19,7 +19,7 @@
         <app-typography
           [variant]="TypographyTypeEnum['h6-semibold']"
           color="var(--error-600)">
-          Error
+          {{ 'confirmPresence.error' | translate }}
         </app-typography>
         <app-typography
           [variant]="TypographyTypeEnum['body-regular']"
@@ -29,7 +29,7 @@
         <app-button
           [block]="true"
           [style]="ButtonStyleEnum.primary"
-          text="Go to Dashboard"
+          [text]="'confirmPresence.goToDashboard' | translate"
           (buttonClick)="goToHome()">
         </app-button>
       </div>
@@ -42,17 +42,17 @@
         <app-typography
           [variant]="TypographyTypeEnum['h6-semibold']"
           color="var(--slate-800)">
-          All Done
+          {{ 'confirmPresence.allDone' | translate }}
         </app-typography>
         <app-typography
           [variant]="TypographyTypeEnum['body-regular']"
           color="var(--slate-500)">
-          You have no pending appointments that need confirmation.
+          {{ 'confirmPresence.noPending' | translate }}
         </app-typography>
         <app-button
           [block]="true"
           [style]="ButtonStyleEnum.primary"
-          text="Go to Dashboard"
+          [text]="'confirmPresence.goToDashboard' | translate"
           (buttonClick)="goToHome()">
         </app-button>
       </div>
@@ -61,12 +61,12 @@
         <app-typography
           [variant]="TypographyTypeEnum['h6-semibold']"
           color="var(--slate-800)">
-          Confirm Your Presence
+          {{ 'confirmPresence.title' | translate }}
         </app-typography>
         <app-typography
           [variant]="TypographyTypeEnum['body-regular']"
           color="var(--slate-500)">
-          Please confirm or decline your attendance for the following appointments.
+          {{ 'confirmPresence.subtitle' | translate }}
         </app-typography>
 
         @for (appointment of pendingAppointments; track appointment.id) {
@@ -80,7 +80,7 @@
                 <app-typography
                   [variant]="TypographyTypeEnum['body-s-medium']"
                   color="var(--slate-700)">
-                  {{ appointment.type === AppointmentType.ONLINE ? 'Video Consultation' : 'In-Person Visit' }}
+                  {{ appointment.type === AppointmentType.ONLINE ? ('confirmPresence.videoConsultation' | translate) : ('confirmPresence.inPersonVisit' | translate) }}
                 </app-typography>
               </div>
               <div class="info-row">
@@ -113,7 +113,7 @@
                 [size]="ButtonSizeEnum.medium"
                 [style]="ButtonStyleEnum.stroke"
                 [state]="ButtonStateEnum.error"
-                text="Decline"
+                [text]="'confirmPresence.decline' | translate"
                 leftIcon="close"
                 [disabled]="appointment.isConfirming || appointment.isDeclining"
                 [loading]="appointment.isDeclining"
@@ -123,7 +123,7 @@
                 [block]="true"
                 [size]="ButtonSizeEnum.medium"
                 [style]="ButtonStyleEnum.primary"
-                text="Confirm"
+                [text]="'confirmPresence.confirm' | translate"
                 leftIcon="check"
                 [disabled]="appointment.isConfirming || appointment.isDeclining"
                 [loading]="appointment.isConfirming"
@@ -137,7 +137,7 @@
           <app-button
             [size]="ButtonSizeEnum.small"
             [style]="ButtonStyleEnum.text"
-            text="Skip"
+            [text]="'confirmPresence.skip' | translate"
             (buttonClick)="goToHome()">
           </app-button>
         </div>

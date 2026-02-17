@@ -1,4 +1,5 @@
 import { Component, inject } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Input } from '../../../../shared/ui-components/input/input';
 import { Button } from '../../../../shared/ui-components/button/button';
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
@@ -19,6 +20,7 @@ import {
 import { Auth } from '../../../../core/services/auth';
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { ValidationService } from '../../../../core/services/validation.service';
+import { TranslationService } from '../../../../core/services/translation.service';
 
 interface ForgotPasswordForm {
   email: FormControl<string>;
@@ -26,7 +28,7 @@ interface ForgotPasswordForm {
 
 @Component({
   selector: 'app-forgot-password',
-  imports: [Button, Input, Typography, RouterLink, ReactiveFormsModule],
+  imports: [Button, Input, Typography, RouterLink, ReactiveFormsModule, TranslatePipe],
   templateUrl: './forgot-password.html',
   styleUrl: './forgot-password.scss',
 })
@@ -37,6 +39,7 @@ export class ForgotPassword {
   private toaster = inject(ToasterService);
   private adminAuthService = inject(Auth);
   public validationService = inject(ValidationService);
+  private t = inject(TranslationService);
 
   form: FormGroup<ForgotPasswordForm> = this.formBuilder.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -54,14 +57,14 @@ export class ForgotPassword {
           this.loadingButton = false;
           this.toaster.show(
             'success',
-            'Check Your Email',
-            "If the email address provided matches an active account in our system, you'll receive a link  containing a verification code."
+            this.t.instant('forgotPassword.checkEmailTitle'),
+            this.t.instant('forgotPassword.checkEmailMessage')
           );
           this.router.navigate([`/${RoutePaths.AUTH}`]);
         },
         error: err => {
           this.loadingButton = false;
-          this.toaster.show('error', 'Error!', err.message);
+          this.toaster.show('error', this.t.instant('forgotPassword.errorTitle'), err.message);
         },
       });
     } else {
@@ -73,9 +76,9 @@ export class ForgotPassword {
     switch (field) {
       case 'email':
         if (this.form.get('email')?.errors?.['required']) {
-          return 'Field is required';
+          return this.t.instant('forgotPassword.fieldRequired');
         } else {
-          return 'Invalid email address';
+          return this.t.instant('forgotPassword.invalidEmail');
         }
       default:
         return '';

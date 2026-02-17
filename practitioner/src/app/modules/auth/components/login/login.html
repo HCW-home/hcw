@@ -7,10 +7,10 @@
     <app-typography
       color="var(--slate-800)"
       [variant]="TypographyTypeEnum['h6-semibold']"
-      >Sign In</app-typography
+      >{{ 'login.signIn' | translate }}</app-typography
     >
     <app-input
-      label="Email"
+      [label]="'login.email' | translate"
       name="email"
       (focus)="validationService.resetInputValidation(form, 'email')"
       [invalid]="validationService.showError(form, 'email')"
@@ -18,16 +18,16 @@
       formControlName="email"
       type="email"
       [autocomplete]="'email'"
-      placeholder="example@gmail.com"></app-input>
+      [placeholder]="'login.emailPlaceholder' | translate"></app-input>
     <app-input
-      label="Password"
+      [label]="'login.password' | translate"
       name="password"
       [invalid]="validationService.showError(form, 'password')"
       [invalidMessage]="getErrorMessage('password')"
       type="password"
       formControlName="password"
       [autocomplete]="'current-password'"
-      placeholder="********"></app-input>
+      [placeholder]="'login.passwordPlaceholder' | translate"></app-input>
     @if (errorMessage) {
       <app-error-message [message]="errorMessage"></app-error-message>
     }
@@ -36,7 +36,7 @@
         [variant]="TypographyTypeEnum['body-semibold']"
         color="var(--primary-600)">
         <a [routerLink]="'/' + RoutePaths.AUTH + '/forgot-password'"
-          >Forgot Password?</a
+          >{{ 'login.forgotPassword' | translate }}</a
         >
       </app-typography>
     </div>
@@ -45,19 +45,19 @@
       [type]="ButtonTypeEnum.submit"
       [block]="true"
       [style]="ButtonStyleEnum.primary"
-      text="Sign In"
+      [text]="'login.signIn' | translate"
       [loading]="loadingButton"></app-button>
 
     @if (openIdEnabled) {
       <div class="divider">
-        <span>or</span>
+        <span>{{ 'login.or' | translate }}</span>
       </div>
 
       <app-button
         [type]="ButtonTypeEnum.button"
         [block]="true"
         [style]="ButtonStyleEnum.stroke"
-        [text]="'Login with ' + openIdProviderName"
+        [text]="'login.loginWith' | translate: { provider: openIdProviderName }"
         (click)="onOpenIDLogin()"></app-button>
     }
   </form>

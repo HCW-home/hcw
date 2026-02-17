@@ -1,14 +1,16 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Auth } from '../../../../core/services/auth';
 import { RoutePaths } from '../../../../core/constants/routes';
+import { TranslationService } from '../../../../core/services/translation.service';
 import { Typography } from '../../../../shared/ui-components/typography/typography';
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
 import { Loader } from '../../../../shared/components/loader/loader';
 
 @Component({
   selector: 'app-openid-callback',
-  imports: [Typography, Loader],
+  imports: [Typography, Loader, TranslatePipe],
   templateUrl: './openid-callback.html',
   styleUrl: './openid-callback.scss',
 })
@@ -16,6 +18,7 @@ export class OpenIdCallback implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private authService = inject(Auth);
+  private t = inject(TranslationService);
 
   errorMessage = '';
   isLoading = true;
@@ -36,7 +39,7 @@ export class OpenIdCallback implements OnInit {
       sessionStorage.removeItem('openid_state');
 
       if (!state || state !== savedState) {
-        this.handleError('Invalid state parameter. Please try again.');
+        this.handleError(this.t.instant('openIdCallback.invalidState'));
         return;
       }
 
@@ -50,12 +53,12 @@ export class OpenIdCallback implements OnInit {
           error: (err) => {
             const message = err.error?.non_field_errors?.[0]
               || err.error?.detail
-              || 'Authentication failed. Please try again.';
+              || this.t.instant('openIdCallback.authFailed');
             this.handleError(message);
           }
         });
       } else {
-        this.handleError('No authorization code received');
+        this.handleError(this.t.instant('openIdCallback.noCode'));
       }
     });
   }

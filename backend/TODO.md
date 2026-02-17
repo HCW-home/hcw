@@ -115,7 +115,7 @@ No permission (=patient) but : can still go own appointment or group appointment
 
 
 
-- online status is not properly updated in consultations detail for particiapnt
+- online status is not properly updated in consultations detail for participant
 - think about patient terms
 - consultations list search is not working
 - dashboard overdue consultations is missing profile picture full path

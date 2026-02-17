@@ -1,9 +1,11 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subject, takeUntil, switchMap } from 'rxjs';
+import { TranslatePipe } from '@ngx-translate/core';
 import { UserService } from '../../core/services/user.service';
 import { TermsService } from '../../core/services/terms.service';
 import { ToasterService } from '../../core/services/toaster.service';
+import { TranslationService } from '../../core/services/translation.service';
 import { ITerm } from '../../modules/user/models/user';
 import { RoutePaths } from '../../core/constants/routes';
 import { Typography } from '../../shared/ui-components/typography/typography';
@@ -15,7 +17,7 @@ import { ButtonTypeEnum, ButtonStyleEnum } from '../../shared/constants/button';
 @Component({
   selector: 'app-cgu',
   standalone: true,
-  imports: [Typography, Button, Loader],
+  imports: [Typography, Button, Loader, TranslatePipe],
   templateUrl: './cgu.html',
   styleUrl: './cgu.scss',
 })
@@ -24,6 +26,7 @@ export class CguPage implements OnInit, OnDestroy {
   private userService = inject(UserService);
   private termsService = inject(TermsService);
   private toasterService = inject(ToasterService);
+  private t = inject(TranslationService);
   private destroy$ = new Subject<void>();
 
   TypographyTypeEnum = TypographyTypeEnum;
@@ -64,7 +67,7 @@ export class CguPage implements OnInit, OnDestroy {
         },
         error: () => {
           this.loading = false;
-          this.toasterService.show('error', 'Terms & Conditions', 'Failed to load terms');
+          this.toasterService.show('error', this.t.instant('cgu.title'), this.t.instant('cgu.loadError'));
         },
       });
   }
@@ -85,7 +88,7 @@ export class CguPage implements OnInit, OnDestroy {
         },
         error: () => {
           this.accepting = false;
-          this.toasterService.show('error', 'Terms & Conditions', 'Failed to accept terms');
+          this.toasterService.show('error', this.t.instant('cgu.title'), this.t.instant('cgu.acceptError'));
         },
       });
   }

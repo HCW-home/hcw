@@ -23,10 +23,12 @@ import {
   ButtonSizeEnum,
   ButtonStyleEnum,
 } from '../../../shared/constants/button';
+import { TranslatePipe } from '@ngx-translate/core';
+import { TranslationService } from '../../services/translation.service';
 
 @Component({
   selector: 'app-header',
-  imports: [LanguageSelector, Typography, Svg, NgClass, Button, RouterLink, RouterLinkActive],
+  imports: [LanguageSelector, Typography, Svg, NgClass, Button, RouterLink, RouterLinkActive, TranslatePipe],
   templateUrl: './header.html',
   styleUrl: './header.scss',
 })
@@ -40,6 +42,7 @@ export class Header implements OnInit, OnDestroy {
   private actionHandler = inject(ActionHandlerService);
   private consultationService = inject(ConsultationService);
   private toasterService = inject(ToasterService);
+  private t = inject(TranslationService);
   private destroy$ = new Subject<void>();
 
   showProfileMenu = signal(false);
@@ -126,42 +129,45 @@ export class Header implements OnInit, OnDestroy {
     this.showBackButton.set(false);
 
     if (url.includes('/dashboard')) {
-      this.pageTitle.set('Dashboard');
+      this.pageTitle.set(this.t.instant('header.dashboard'));
+      const name = this.getUserDisplayName();
       this.pageSubtitle.set(
-        `Welcome back, ${this.getUserDisplayName() || 'Doctor'}`
+        name
+          ? this.t.instant('header.welcomeBack', { name })
+          : this.t.instant('header.welcomeBackDefault')
       );
       this.showNewConsultationButton.set(true);
     } else if (url.includes('/consultations/new')) {
-      this.pageTitle.set('New Consultation');
-      this.pageSubtitle.set('Create a new consultation with a patient');
+      this.pageTitle.set(this.t.instant('header.newConsultationTitle'));
+      this.pageSubtitle.set(this.t.instant('header.newConsultationSubtitle'));
       this.showBackButton.set(true);
     } else if (url.includes('/consultations/')) {
-      this.pageTitle.set('Consultation Details');
-      this.pageSubtitle.set('View and manage consultation');
+      this.pageTitle.set(this.t.instant('header.consultationDetailsTitle'));
+      this.pageSubtitle.set(this.t.instant('header.consultationDetailsSubtitle'));
       this.showBackButton.set(true);
     } else if (url.includes('/consultations')) {
-      this.pageTitle.set('Consultations');
-      this.pageSubtitle.set('Manage and review all your consultations');
+      this.pageTitle.set(this.t.instant('header.consultationsTitle'));
+      this.pageSubtitle.set(this.t.instant('header.consultationsSubtitle'));
       this.showNewConsultationButton.set(true);
     } else if (url.includes('/patients')) {
-      this.pageTitle.set('Patients');
-      this.pageSubtitle.set('View and manage your patients');
+      this.pageTitle.set(this.t.instant('header.patientsTitle'));
+      this.pageSubtitle.set(this.t.instant('header.patientsSubtitle'));
     } else if (url.includes('/appointments')) {
-      this.pageTitle.set('Appointments');
-      this.pageSubtitle.set('Schedule and manage appointments');
+      this.pageTitle.set(this.t.instant('header.appointmentsTitle'));
+      this.pageSubtitle.set(this.t.instant('header.appointmentsSubtitle'));
     } else if (url.includes('/configuration')) {
-      this.pageTitle.set('Configuration');
-      this.pageSubtitle.set('Manage your system settings and availability');
+      this.pageTitle.set(this.t.instant('header.configurationTitle'));
+      this.pageSubtitle.set(this.t.instant('header.configurationSubtitle'));
     } else if (url.includes('/availability')) {
-      this.pageTitle.set('Availability');
-      this.pageSubtitle.set('Manage your schedule and booking slots');
+      this.pageTitle.set(this.t.instant('header.availabilityTitle'));
+      this.pageSubtitle.set(this.t.instant('header.availabilitySubtitle'));
     } else if (url.includes('/profile')) {
-      this.pageTitle.set('Profile');
-      this.pageSubtitle.set('Manage your account settings');
+      this.pageTitle.set(this.t.instant('header.profileTitle'));
+      this.pageSubtitle.set(this.t.instant('header.profileSubtitle'));
       this.showBackButton.set(true);
     } else if (url.includes('/test')) {
-      this.pageTitle.set('System Test');
-      this.pageSubtitle.set('Test your audio and video equipment');
+      this.pageTitle.set(this.t.instant('header.systemTestTitle'));
+      this.pageSubtitle.set(this.t.instant('header.systemTestSubtitle'));
     }
   }
 
@@ -271,8 +277,8 @@ export class Header implements OnInit, OnDestroy {
     }
 
     if (email && this.currentUser && this.currentUser.email !== email) {
-      this.toasterService.show('warning', 'Email Mismatch',
-        `This notification was intended for ${email}`);
+      this.toasterService.show('warning', this.t.instant('header.emailMismatch'),
+        this.t.instant('header.emailMismatchMessage', { email }));
     }
 
     if (action === 'join' && id) {

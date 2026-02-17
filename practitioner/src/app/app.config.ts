@@ -1,9 +1,9 @@
-import {ApplicationConfig, importProvidersFrom, provideBrowserGlobalErrorListeners, provideZoneChangeDetection} from '@angular/core';
+import {ApplicationConfig, provideBrowserGlobalErrorListeners, provideZoneChangeDetection} from '@angular/core';
 import {provideRouter} from '@angular/router';
 import {provideHttpClient, withFetch, withInterceptors} from '@angular/common/http';
 
-import {TranslateModule} from '@ngx-translate/core';
-import {TranslateHttpLoader, provideTranslateHttpLoader} from '@ngx-translate/http-loader';
+import {provideTranslateService} from "@ngx-translate/core";
+import {provideTranslateHttpLoader} from "@ngx-translate/http-loader";
 
 import {routes} from './app.routes';
 import {provideEnvironmentNgxMask} from 'ngx-mask';
@@ -151,18 +151,15 @@ export const appConfig: ApplicationConfig = {
       lucideSquare,
     }),
     provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
-    provideTranslateHttpLoader({
-      prefix: './i18n/',
-      suffix: '.json',
-    }),
-    importProvidersFrom(
-      TranslateModule.forRoot({
-        loader: {
-          provide: TranslateHttpLoader,
-          useClass: TranslateHttpLoader,
-        },
-        defaultLanguage: 'en',
-      })
-    ),
+    provideTranslateService({
+      loader: provideTranslateHttpLoader({
+        prefix: './i18n/',
+        suffix: '.json',
+        useHttpBackend: true,
+      }),
+      fallbackLang: 'en',
+      lang: 'en',
+    })
+
   ]
 };

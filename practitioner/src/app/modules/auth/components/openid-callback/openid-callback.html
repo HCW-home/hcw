@@ -2,20 +2,20 @@
   @if (isLoading) {
     <div class="loading">
       <app-typography [variant]="TypographyTypeEnum['h6-semibold']">
-        Authenticating...
+        {{ 'openIdCallback.authenticating' | translate }}
       </app-typography>
       <app-loader></app-loader>
     </div>
   } @else if (errorMessage) {
     <div class="error">
       <app-typography [variant]="TypographyTypeEnum['h6-semibold']">
-        Authentication Error
+        {{ 'openIdCallback.authError' | translate }}
       </app-typography>
       <app-typography [variant]="TypographyTypeEnum['body-regular']">
         {{ errorMessage }}
       </app-typography>
       <app-typography [variant]="TypographyTypeEnum['body-s-regular']">
-        Redirecting to login page...
+        {{ 'openIdCallback.redirecting' | translate }}
       </app-typography>
     </div>
   }

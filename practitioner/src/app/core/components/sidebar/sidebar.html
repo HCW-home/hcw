@@ -11,7 +11,7 @@
             HCW
           </app-typography>
           <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--slate-500)">
-            Practitioner
+            {{ 'sidebar.practitioner' | translate }}
           </app-typography>
         </div>
       }
@@ -30,7 +30,7 @@
         class="menu-item"
         [routerLink]="'/' + RoutePaths.USER + menuItem.path"
         [routerLinkActive]="'active'"
-        [title]="isCollapsed ? menuItem.name : ''">
+        [title]="isCollapsed ? (menuItem.name | translate) : ''">
         <div class="menu-item-content">
           <app-svg
             class="menu-icon"
@@ -52,7 +52,7 @@
             <app-typography
               class="menu-label"
               [variant]="TypographyTypeEnum['body-s-medium']">
-              {{ menuItem.name }}
+              {{ menuItem.name | translate }}
             </app-typography>
           }
         </div>

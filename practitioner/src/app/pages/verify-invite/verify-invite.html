@@ -8,9 +8,9 @@
           [variant]="TypographyTypeEnum['body-medium']"
           color="var(--slate-500)">
           @if (requiresVerification) {
-            Verifying your code...
+            {{ 'verifyInvite.verifyingCode' | translate }}
           } @else {
-            Authenticating...
+            {{ 'verifyInvite.authenticating' | translate }}
           }
         </app-typography>
       </div>
@@ -23,7 +23,7 @@
         <app-typography
           [variant]="TypographyTypeEnum['h6-semibold']"
           color="var(--error-600)">
-          Authentication Failed
+          {{ 'verifyInvite.authFailed' | translate }}
         </app-typography>
         <app-typography
           [variant]="TypographyTypeEnum['body-regular']"
@@ -33,7 +33,7 @@
         <app-button
           [block]="true"
           [style]="ButtonStyleEnum.primary"
-          text="Go to Login"
+          [text]="'verifyInvite.goToLogin' | translate"
           (buttonClick)="goToLogin()">
         </app-button>
       </div>
@@ -46,22 +46,22 @@
         <app-typography
           [variant]="TypographyTypeEnum['h6-semibold']"
           color="var(--slate-800)">
-          Verification Required
+          {{ 'verifyInvite.verificationRequired' | translate }}
         </app-typography>
         <app-typography
           [variant]="TypographyTypeEnum['body-regular']"
           color="var(--slate-500)">
-          A verification code has been sent to your email. Please enter it below.
+          {{ 'verifyInvite.codeSentMessage' | translate }}
         </app-typography>
 
         <form [formGroup]="verificationForm" (ngSubmit)="submitVerificationCode()" class="verification-form">
           <app-input
-            label="Verification Code"
+            [label]="'verifyInvite.verificationCode' | translate"
             name="verification_code"
-            placeholder="Enter 6-digit code"
+            [placeholder]="'verifyInvite.codePlaceholder' | translate"
             formControlName="verification_code"
             [invalid]="!!(verificationForm.get('verification_code')?.invalid && verificationForm.get('verification_code')?.touched)"
-            invalidMessage="Please enter a valid 6-digit code">
+            [invalidMessage]="'verifyInvite.invalidCode' | translate">
           </app-input>
 
           @if (errorMessage) {
@@ -72,7 +72,7 @@
             [block]="true"
             [type]="ButtonTypeEnum.submit"
             [style]="ButtonStyleEnum.primary"
-            text="Verify Code"
+            [text]="'verifyInvite.verifyCode' | translate"
             [disabled]="verificationForm.invalid"
             [loading]="loadingButton">
           </app-button>
@@ -82,16 +82,16 @@
           <app-typography
             [variant]="TypographyTypeEnum['body-s-regular']"
             color="var(--slate-500)">
-            Didn't receive the code?
+            {{ 'verifyInvite.didntReceive' | translate }}
           </app-typography>
           <span
             class="resend-link"
             [class.disabled]="isResending"
             (click)="resendVerificationCode()">
             @if (isResending) {
-              Sending...
+              {{ 'verifyInvite.sending' | translate }}
             } @else {
-              Resend Code
+              {{ 'verifyInvite.resendCode' | translate }}
             }
           </span>
         </div>
@@ -100,9 +100,9 @@
           <app-typography
             [variant]="TypographyTypeEnum['body-s-regular']"
             color="var(--slate-500)">
-            Having trouble?
+            {{ 'verifyInvite.havingTrouble' | translate }}
           </app-typography>
-          <span class="action-link" (click)="goToLogin()">Sign in manually</span>
+          <span class="action-link" (click)="goToLogin()">{{ 'verifyInvite.signInManually' | translate }}</span>
         </div>
       </div>
     }

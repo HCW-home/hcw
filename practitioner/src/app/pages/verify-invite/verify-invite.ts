@@ -2,9 +2,11 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Auth } from '../../core/services/auth';
 import { ActionHandlerService } from '../../core/services/action-handler.service';
 import { ToasterService } from '../../core/services/toaster.service';
+import { TranslationService } from '../../core/services/translation.service';
 import { Typography } from '../../shared/ui-components/typography/typography';
 import { Button } from '../../shared/ui-components/button/button';
 import { Input } from '../../shared/ui-components/input/input';
@@ -19,6 +21,7 @@ import { ButtonTypeEnum, ButtonStyleEnum } from '../../shared/constants/button';
   standalone: true,
   imports: [
     ReactiveFormsModule,
+    TranslatePipe,
     Typography,
     Button,
     Input,
@@ -53,7 +56,8 @@ export class VerifyInvite implements OnInit, OnDestroy {
     private router: Router,
     private authService: Auth,
     private actionHandler: ActionHandlerService,
-    private toasterService: ToasterService
+    private toasterService: ToasterService,
+    private t: TranslationService
   ) {
     this.verificationForm = this.fb.group({
       verification_code: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6)]]
@@ -69,7 +73,7 @@ export class VerifyInvite implements OnInit, OnDestroy {
       this.authenticateWithToken();
     } else {
       this.isLoading = false;
-      this.errorMessage = 'No authentication token provided';
+      this.errorMessage = this.t.instant('verifyInvite.noToken');
     }
   }
 
@@ -101,9 +105,9 @@ export class VerifyInvite implements OnInit, OnDestroy {
           if (error.status === 202) {
             this.requiresVerification = true;
           } else if (error.status === 401) {
-            this.errorMessage = error.error?.error || 'Invalid or expired authentication token';
+            this.errorMessage = error.error?.error || this.t.instant('verifyInvite.invalidOrExpired');
           } else {
-            this.errorMessage = 'An error occurred. Please try again.';
+            this.errorMessage = this.t.instant('verifyInvite.genericError');
           }
         }
       });
@@ -137,16 +141,16 @@ export class VerifyInvite implements OnInit, OnDestroy {
         error: (error) => {
           this.loadingButton = false;
           if (error.status === 401) {
-            this.errorMessage = error.error?.error || 'Invalid verification code';
+            this.errorMessage = error.error?.error || this.t.instant('verifyInvite.invalidVerificationCode');
           } else {
-            this.errorMessage = 'An error occurred. Please try again.';
+            this.errorMessage = this.t.instant('verifyInvite.genericError');
           }
         }
       });
   }
 
   private onAuthenticationSuccess(): void {
-    this.toasterService.show('success', 'Authentication', 'Successfully authenticated');
+    this.toasterService.show('success', this.t.instant('verifyInvite.authTitle'), this.t.instant('verifyInvite.authSuccess'));
     const route = this.actionHandler.getRouteForAction(this.action, this.actionId);
     this.router.navigateByUrl(route);
   }
@@ -168,15 +172,15 @@ export class VerifyInvite implements OnInit, OnDestroy {
             this.authService.setToken(response.access);
             this.onAuthenticationSuccess();
           } else {
-            this.toasterService.show('success', 'Code Sent', 'Verification code sent to your email');
+            this.toasterService.show('success', this.t.instant('verifyInvite.codeSentTitle'), this.t.instant('verifyInvite.codeSentSuccess'));
           }
         },
         error: (error) => {
           this.isResending = false;
           if (error.status === 202) {
-            this.toasterService.show('success', 'Code Sent', 'Verification code sent to your email');
+            this.toasterService.show('success', this.t.instant('verifyInvite.codeSentTitle'), this.t.instant('verifyInvite.codeSentSuccess'));
           } else {
-            this.toasterService.show('error', 'Resend Failed', 'Failed to resend code. Please try again.');
+            this.toasterService.show('error', this.t.instant('verifyInvite.resendFailedTitle'), this.t.instant('verifyInvite.resendFailedMessage'));
           }
         }
       });

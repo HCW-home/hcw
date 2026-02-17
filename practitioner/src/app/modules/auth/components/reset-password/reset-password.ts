@@ -7,6 +7,7 @@ import {
   FormBuilder,
   ReactiveFormsModule,
 } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { Button } from '../../../../shared/ui-components/button/button';
 import { Input } from '../../../../shared/ui-components/input/input';
@@ -19,6 +20,7 @@ import {
 
 import { Auth } from '../../../../core/services/auth';
 import { ValidationService } from '../../../../core/services/validation.service';
+import { TranslationService } from '../../../../core/services/translation.service';
 import { regexpPasswordSpec } from '../../../../shared/tools/regular-expressions';
 import { ErrorMessage } from '../../../../shared/components/error-message/error-message';
 import { ToasterService } from '../../../../core/services/toaster.service';
@@ -31,7 +33,7 @@ interface SetPasswordForm {
 
 @Component({
   selector: 'app-reset-password',
-  imports: [Button, Input, Typography, ReactiveFormsModule, ErrorMessage],
+  imports: [Button, Input, Typography, ReactiveFormsModule, ErrorMessage, TranslatePipe],
   templateUrl: './reset-password.html',
   styleUrl: './reset-password.scss',
 })
@@ -45,6 +47,7 @@ export class ResetPassword implements OnInit {
   private router = inject(Router);
   private toaster = inject(ToasterService);
   public validationService = inject(ValidationService);
+  private t = inject(TranslationService);
   token = this.route.snapshot.params['token'];
   uid = this.route.snapshot.params['uid'];
 
@@ -85,15 +88,15 @@ export class ResetPassword implements OnInit {
             this.loadingButton = true;
             this.toaster.show(
               'success',
-              'Success!',
-              'Your password has been reset'
+              this.t.instant('resetPassword.successTitle'),
+              this.t.instant('resetPassword.successMessage')
             );
             this.router.navigate([`/${RoutePaths.AUTH}`]);
           },
           error: err => {
             this.errorMessage = '';
             this.loadingButton = false;
-            this.toaster.show('error', 'Error!', err.message);
+            this.toaster.show('error', this.t.instant('resetPassword.errorTitle'), err.message);
           },
         });
       } else {
@@ -105,19 +108,19 @@ export class ResetPassword implements OnInit {
   getErrorMessage(): string {
     const data = this.form.value;
     if (data.password !== data.confirmPassword) {
-      return 'Passwords should match';
+      return this.t.instant('resetPassword.passwordsMismatch');
     }
     if (
       !regexpPasswordSpec.test(data.password || '') ||
       !regexpPasswordSpec.test(data.confirmPassword || '')
     ) {
-      return 'Password must be at least 8 characters and contain at least 1 capital, 1 lowercase and 1 special character.';
+      return this.t.instant('resetPassword.passwordRequirements');
     }
     return '';
   }
 
   getFormErrorMessage(): string {
-    return 'Field is required';
+    return this.t.instant('resetPassword.fieldRequired');
   }
 
   protected readonly TypographyTypeEnum = TypographyTypeEnum;

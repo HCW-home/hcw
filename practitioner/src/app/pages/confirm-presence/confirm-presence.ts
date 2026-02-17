@@ -1,9 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ConsultationService } from '../../core/services/consultation.service';
 import {  AppointmentType, IParticipantDetail } from '../../core/models/consultation';
 import { ToasterService } from '../../core/services/toaster.service';
+import { TranslationService } from '../../core/services/translation.service';
 import { Typography } from '../../shared/ui-components/typography/typography';
 import { Button } from '../../shared/ui-components/button/button';
 import { Svg } from '../../shared/ui-components/svg/svg';
@@ -32,6 +34,7 @@ interface IPendingAppointment {
     Svg,
     Loader,
     LocalDatePipe,
+    TranslatePipe,
   ],
   templateUrl: './confirm-presence.html',
   styleUrl: './confirm-presence.scss',
@@ -53,7 +56,8 @@ export class ConfirmPresence implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private consultationService: ConsultationService,
     private router: Router,
-    private toasterService: ToasterService
+    private toasterService: ToasterService,
+    private t: TranslationService
   ) {
     this.participantId = this.route.snapshot.paramMap.get('id') as string;
   }
@@ -63,7 +67,7 @@ export class ConfirmPresence implements OnInit, OnDestroy {
       this.loadParticipant();
     } else {
       this.isLoading = false;
-      this.errorMessage = 'Invalid confirmation link';
+      this.errorMessage = this.t.instant('confirmPresence.invalidLink');
     }
   }
 
@@ -86,12 +90,12 @@ export class ConfirmPresence implements OnInit, OnDestroy {
             this.pendingAppointments = [this.mapParticipant(participant)];
           } else {
             this.pendingAppointments = [];
-            this.errorMessage = 'This appointment is no longer pending confirmation';
+            this.errorMessage = this.t.instant('confirmPresence.noLongerPending');
           }
         },
         error: () => {
           this.isLoading = false;
-          this.errorMessage = 'Failed to load appointment';
+          this.errorMessage = this.t.instant('confirmPresence.loadError');
         }
       });
   }
@@ -122,12 +126,12 @@ export class ConfirmPresence implements OnInit, OnDestroy {
         next: () => {
           appointment.isConfirming = false;
           this.pendingAppointments = this.pendingAppointments.filter(a => a.id !== appointment.id);
-          this.toasterService.show('success', 'Presence Confirmed', 'Your presence has been confirmed');
+          this.toasterService.show('success', this.t.instant('confirmPresence.confirmSuccess'), this.t.instant('confirmPresence.confirmSuccessMessage'));
           this.checkAllConfirmed();
         },
         error: () => {
           appointment.isConfirming = false;
-          this.toasterService.show('error', 'Confirm Presence Failed', 'Could not confirm your presence');
+          this.toasterService.show('error', this.t.instant('confirmPresence.confirmError'), this.t.instant('confirmPresence.confirmErrorMessage'));
         }
       });
   }
@@ -141,12 +145,12 @@ export class ConfirmPresence implements OnInit, OnDestroy {
         next: () => {
           appointment.isDeclining = false;
           this.pendingAppointments = this.pendingAppointments.filter(a => a.id !== appointment.id);
-          this.toasterService.show('warning', 'Appointment Declined', 'You have declined the appointment');
+          this.toasterService.show('warning', this.t.instant('confirmPresence.declineSuccess'), this.t.instant('confirmPresence.declineSuccessMessage'));
           this.checkAllConfirmed();
         },
         error: () => {
           appointment.isDeclining = false;
-          this.toasterService.show('error', 'Decline Failed', 'Could not decline the appointment');
+          this.toasterService.show('error', this.t.instant('confirmPresence.declineError'), this.t.instant('confirmPresence.declineErrorMessage'));
         }
       });
   }

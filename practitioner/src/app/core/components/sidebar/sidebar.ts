@@ -8,10 +8,11 @@ import { RoutePaths } from '../../constants/routes';
 import { IUser } from '../../../modules/user/models/user';
 import { Subscription } from 'rxjs';
 import { UserService } from '../../services/user.service';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [Svg, Typography, RouterLink, RouterLinkActive],
+  imports: [Svg, Typography, RouterLink, RouterLinkActive, TranslatePipe],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.scss',
 })
