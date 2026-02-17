@@ -25,7 +25,8 @@ from .models import (
     TemplateValidation,
     TemplateValidationStatus,
 )
-from .template import NOTIFICATION_CHOICES
+import json
+from .template import DEFAULT_NOTIFICATION_MESSAGES, NOTIFICATION_CHOICES
 from .tasks import send_message
 
 # admin.site.register(MessagingProvider, ModelAdmin)
@@ -208,6 +209,40 @@ class TemplateAdmin(ModelAdmin, TabbedTranslationAdmin, ImportExportModelAdmin):
     import_form_class = ImportForm
     export_form_class = ExportForm
     list_editable = ["is_active"]
+
+    class Media:
+        js = ("messaging/js/template_prefill.js",)
+
+    def get_urls(self):
+        from django.urls import path
+        from django.http import JsonResponse
+
+        def template_defaults_view(request):
+            from django.utils import translation
+
+            languages = [lang_code for lang_code, _ in settings.LANGUAGES]
+            defaults = {}
+            for key, v in DEFAULT_NOTIFICATION_MESSAGES.items():
+                entry = {
+                    "action_label": str(v.get("action_label", "")),
+                }
+                # Translated fields: render in each language
+                for lang in languages:
+                    with translation.override(lang):
+                        entry[f"template_subject_{lang}"] = str(v.get("template_subject", ""))
+                        entry[f"template_content_{lang}"] = str(v.get("template_content", ""))
+                        entry[f"template_content_html_{lang}"] = str(v.get("template_content_html", ""))
+                defaults[key] = entry
+            return JsonResponse(defaults)
+
+        custom_urls = [
+            path(
+                "template-defaults/",
+                self.admin_site.admin_view(template_defaults_view),
+                name="messaging_template_defaults",
+            ),
+        ]
+        return custom_urls + super().get_urls()
 
     fieldsets = [
         (
