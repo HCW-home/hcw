@@ -84,6 +84,15 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  getUserFullName(): string {
+    const user = this.currentUser();
+    if (user) {
+      const name = `${user.first_name || ''} ${user.last_name || ''}`.trim();
+      return name || '';
+    }
+    return '';
+  }
+
   getUserInitials(): string {
     const user = this.currentUser();
     if (user) {

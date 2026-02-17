@@ -1,5 +1,5 @@
 .notifications-content {
-  --background: var(--app-background-secondary);
+  --background: var(--app-background);
 
   .mark-all-read {
     display: flex;
@@ -8,71 +8,142 @@
   }
 
   .notifications-list {
-    background: transparent;
     padding: var(--app-spacing-md);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
 
-    .notification-sliding {
-      margin-bottom: var(--app-spacing-sm);
+  .notification-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    cursor: pointer;
+    position: relative;
+    transition: background-color 0.15s ease;
+
+    &:active {
+      background-color: #f3f4f6;
     }
 
-    .notification-item {
-      --background: var(--app-background);
-      border-radius: var(--app-card-radius);
-      --padding-start: var(--app-spacing-md);
-      --padding-end: var(--app-spacing-md);
-      --padding-top: var(--app-spacing-md);
-      --padding-bottom: var(--app-spacing-md);
-      position: relative;
+    &.unread {
+      background: #f0f4ff;
+      border-left: 3px solid var(--ion-color-primary);
+    }
+  }
 
-      &.unread {
-        --background: var(--app-background);
-        border-left: 3px solid var(--ion-color-primary);
-      }
+  .notification-icon-wrapper {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-      .notification-indicator {
-        position: absolute;
-        top: 12px;
-        right: 8px;
-        width: 8px;
-        height: 8px;
-        background: var(--ion-color-primary);
-        border-radius: 50%;
-      }
-
-      .notification-icon {
-        font-size: 28px;
-        margin-right: var(--app-spacing-md);
-      }
-
-      ion-label {
-        display: flex;
-        flex-direction: column;
-        gap: var(--app-spacing-xs);
-
-        .notification-title {
-          font-size: var(--app-font-size-base);
-          font-weight: var(--app-font-weight-medium);
-          color: var(--app-text-primary);
-          display: block;
-        }
-
-        .notification-message {
-          font-size: var(--app-font-size-sm);
-          line-height: 1.4;
-          display: block;
-        }
-
-        .notification-time {
-          font-size: var(--app-font-size-xs);
-          display: block;
-          margin-top: var(--app-spacing-xs);
-        }
-      }
+    ion-icon {
+      font-size: 20px;
+      color: #ffffff;
     }
 
-    ion-item-option {
-      border-radius: 0 var(--app-card-radius) var(--app-card-radius) 0;
+    &[data-color="primary"] {
+      background: var(--ion-color-primary);
     }
+
+    &[data-color="secondary"] {
+      background: var(--ion-color-secondary);
+    }
+
+    &[data-color="success"] {
+      background: var(--ion-color-success);
+    }
+
+    &[data-color="warning"] {
+      background: var(--ion-color-warning);
+    }
+
+    &[data-color="danger"] {
+      background: var(--ion-color-danger);
+    }
+  }
+
+  .notification-body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .notification-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+
+  .notification-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .notification-time {
+    font-size: 11px;
+    color: #9ca3af;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .notification-message {
+    font-size: 13px;
+    color: #6b7280;
+    line-height: 1.4;
+    margin-bottom: 2px;
+  }
+
+  .notification-sender {
+    font-size: 12px;
+    color: #9ca3af;
+    margin-top: 4px;
+  }
+
+  .notification-action {
+    display: flex;
+    margin-top: 8px;
+
+    .action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      background: transparent;
+      color: var(--ion-color-primary);
+      border: 1.5px solid var(--ion-color-primary);
+      transition: background-color 0.15s ease;
+
+      &:active {
+        background: rgba(var(--ion-color-primary-rgb), 0.08);
+      }
+    }
+  }
+
+  .unread-dot {
+    flex-shrink: 0;
+    width: 8px;
+    height: 8px;
+    background: var(--ion-color-primary);
+    border-radius: 50%;
+    margin-top: 6px;
   }
 
   .empty-state {

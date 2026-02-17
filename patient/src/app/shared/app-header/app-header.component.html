@@ -32,7 +32,8 @@
             }}</span>
           }
         </ion-button>
-        <ion-button class="user-avatar-btn" (click)="goToProfile()">
+        <button class="user-profile-btn" (click)="goToProfile()">
+          <span class="user-name">{{ getUserFullName() }}</span>
           <div class="user-avatar">
             @if (getUserPicture()) {
               <img [src]="getUserPicture()" alt="" class="avatar-image" />
@@ -40,7 +41,7 @@
               {{ getUserInitials() }}
             }
           </div>
-        </ion-button>
+        </button>
       </ion-buttons>
     </div>
   </ion-toolbar>

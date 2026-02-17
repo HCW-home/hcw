@@ -13,36 +13,35 @@
     </div>
   }
 
-  <ion-list class="notifications-list">
+  <div class="notifications-list">
     @for (notification of notifications; track notification.id) {
-      <ion-item-sliding class="notification-sliding">
-        <ion-item lines="none" [class.unread]="!notification.isRead" class="notification-item" (click)="onNotificationClick(notification)">
-          @if (!notification.isRead) {
-            <div class="notification-indicator"></div>
+      <div class="notification-card" [class.unread]="!notification.isRead" (click)="onNotificationClick(notification)">
+        <div class="notification-icon-wrapper" [attr.data-color]="notification.color">
+          <ion-icon [name]="notification.icon"></ion-icon>
+        </div>
+        <div class="notification-body">
+          <div class="notification-header-row">
+            <span class="notification-title">{{ notification.title }}</span>
+            <span class="notification-time">{{ notification.time }}</span>
+          </div>
+          <div class="notification-message"><span [innerHTML]="notification.message"></span></div>
+          @if (notification.senderName) {
+            <div class="notification-sender">Sent by {{ notification.senderName }}</div>
           }
-          <ion-icon [name]="notification.icon" [color]="notification.color" slot="start" class="notification-icon"></ion-icon>
-          <ion-label>
-            <ion-text class="notification-title">{{ notification.title }}</ion-text>
-            <ion-text class="notification-message" color="medium"><span [innerHTML]="notification.message"></span></ion-text>
-            @if (notification.actionLabel && notification.objectModel) {
-              <ion-button size="small" fill="outline" (click)="onNotificationClick(notification); $event.stopPropagation()">
+          @if (notification.actionLabel && notification.objectModel) {
+            <div class="notification-action">
+              <button class="action-btn" (click)="onNotificationClick(notification); $event.stopPropagation()">
                 {{ notification.actionLabel }}
-              </ion-button>
-            }
-            @if (notification.senderName) {
-              <ion-text class="notification-sender" color="medium">From {{ notification.senderName }}</ion-text>
-            }
-            <ion-text class="notification-time" color="medium">{{ notification.time }}</ion-text>
-          </ion-label>
-        </ion-item>
-        <ion-item-options side="end">
-          <ion-item-option color="danger" (click)="dismissNotification(notification)">
-            <ion-icon slot="icon-only" name="trash"></ion-icon>
-          </ion-item-option>
-        </ion-item-options>
-      </ion-item-sliding>
+              </button>
+            </div>
+          }
+        </div>
+        @if (!notification.isRead) {
+          <div class="unread-dot"></div>
+        }
+      </div>
     }
-  </ion-list>
+  </div>
 
   @if (notifications.length === 0) {
     <div class="empty-state">

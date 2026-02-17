@@ -80,9 +80,25 @@ ion-header {
       }
     }
 
-    .user-avatar-btn {
-      --padding-start: 0;
-      --padding-end: 0;
+    .user-profile-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+
+      .user-name {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--app-text-secondary);
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
     }
 
     .user-avatar {

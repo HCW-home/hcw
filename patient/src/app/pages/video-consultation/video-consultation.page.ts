@@ -585,8 +585,8 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
 
   async endCall(): Promise<void> {
     const alert = await this.alertCtrl.create({
-      header: 'End Consultation',
-      message: 'Are you sure you want to end this consultation?',
+      header: 'End call',
+      message: 'Are you sure you want to end this call?',
       buttons: [
         {
           text: 'Cancel',

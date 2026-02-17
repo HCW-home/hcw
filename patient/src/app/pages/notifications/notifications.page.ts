@@ -3,16 +3,10 @@ import { CommonModule } from '@angular/common';
 import {
   IonButton,
   IonText,
-  IonLabel,
   IonContent,
   IonRefresher,
   IonRefresherContent,
-  IonList,
-  IonItemSliding,
-  IonItem,
   IonIcon,
-  IonItemOptions,
-  IonItemOption,
   NavController,
   ToastController
 } from '@ionic/angular/standalone';
@@ -51,16 +45,10 @@ interface DisplayNotification {
     CommonModule,
     IonButton,
     IonText,
-    IonLabel,
     IonContent,
     IonRefresher,
     IonRefresherContent,
-    IonList,
-    IonItemSliding,
-    IonItem,
     IonIcon,
-    IonItemOptions,
-    IonItemOption,
     AppHeaderComponent,
     AppFooterComponent
   ]
