@@ -44,13 +44,14 @@
         </div>
       </div>
 
-      <app-tabs
-        [tabs]="tabItems"
-        [activeTab]="activeTab()"
-        (tabChange)="setActiveTab($event)">
-      </app-tabs>
+      <div class="detail-card">
+        <app-tabs
+          [tabs]="tabItems"
+          [activeTab]="activeTab()"
+          (tabChange)="setActiveTab($event)">
+        </app-tabs>
 
-      <div class="tab-content">
+        <div class="tab-content">
         @if (activeTab() === 'overview') {
           <div class="overview-section">
             <div class="stats-grid">
@@ -241,6 +242,7 @@
             </div>
           </div>
         }
+        </div>
       </div>
     } @else {
       <div class="not-found">
