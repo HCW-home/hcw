@@ -123,3 +123,4 @@ No permission (=patient) but : can still go own appointment or group appointment
 - getting 403 on consultation messages in patient app
 - add ability to override backend translations
 - test sms and preferred communication method
+- dashboard is returning no appointment for patient, but you can join practitioner, and patient is receiving call 
