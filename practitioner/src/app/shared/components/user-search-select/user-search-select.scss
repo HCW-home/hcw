@@ -195,6 +195,10 @@
               font-size: 12px;
               font-weight: 600;
             }
+
+            &.me-avatar {
+              background: var(--slate-500);
+            }
           }
 
           .user-info {

@@ -26,12 +26,7 @@ import { TypographyTypeEnum } from '../../constants/typography';
   selector: 'app-user-search-select',
   templateUrl: './user-search-select.html',
   styleUrl: './user-search-select.scss',
-  imports: [
-    CommonModule,
-    Typography,
-    Svg,
-    Loader,
-  ],
+  imports: [CommonModule, Typography, Svg, Loader],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -40,8 +35,11 @@ import { TypographyTypeEnum } from '../../constants/typography';
     },
   ],
 })
-export class UserSearchSelect implements OnInit, OnDestroy, ControlValueAccessor {
-  @ViewChild('searchInputWrapper') searchInputWrapper!: ElementRef<HTMLDivElement>;
+export class UserSearchSelect
+  implements OnInit, OnDestroy, ControlValueAccessor
+{
+  @ViewChild('searchInputWrapper')
+  searchInputWrapper!: ElementRef<HTMLDivElement>;
 
   label = input<string>('Select Beneficiary');
   placeholder = input<string>('Search by name or email...');
@@ -49,6 +47,7 @@ export class UserSearchSelect implements OnInit, OnDestroy, ControlValueAccessor
   initialUser = input<IUser | null>(null);
   temporary = input<boolean | undefined>(undefined);
   hasGroupPermissions = input<boolean | undefined>(undefined);
+  meUser = input<IUser | null>(null);
 
   userSelected = output<IUser | null>();
 
@@ -62,7 +61,11 @@ export class UserSearchSelect implements OnInit, OnDestroy, ControlValueAccessor
   hasMore = signal(true);
   currentPage = signal(1);
   showDropdown = signal(false);
-  dropdownStyle = signal<{ top: string; left: string; width: string }>({ top: '0', left: '0', width: '0' });
+  dropdownStyle = signal<{ top: string; left: string; width: string }>({
+    top: '0',
+    left: '0',
+    width: '0',
+  });
   pageSize = 20;
 
   private searchSubject = new Subject<string>();
@@ -83,10 +86,7 @@ export class UserSearchSelect implements OnInit, OnDestroy, ControlValueAccessor
 
   ngOnInit(): void {
     this.searchSubject
-      .pipe(
-        debounceTime(300),
-        takeUntil(this.destroy$)
-      )
+      .pipe(debounceTime(300), takeUntil(this.destroy$))
       .subscribe(query => {
         this.performSearch(query);
       });
@@ -136,16 +136,17 @@ export class UserSearchSelect implements OnInit, OnDestroy, ControlValueAccessor
     this.isLoading.set(true);
     const query = search ?? this.searchQuery() ?? '';
 
-    this.userService.searchUsers(
-      query,
-      this.currentPage(),
-      this.pageSize,
-      this.temporary(),
-      this.hasGroupPermissions()
-    )
+    this.userService
+      .searchUsers(
+        query,
+        this.currentPage(),
+        this.pageSize,
+        this.temporary(),
+        this.hasGroupPermissions()
+      )
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response) => {
+        next: response => {
           if (this.currentPage() === 1) {
             this.users.set(response.results);
           } else {
@@ -187,9 +188,16 @@ export class UserSearchSelect implements OnInit, OnDestroy, ControlValueAccessor
   onDropdownScroll(event: Event): void {
     const element = event.target as HTMLElement;
     const threshold = 50;
-    const isNearBottom = element.scrollHeight - element.scrollTop - element.clientHeight < threshold;
+    const isNearBottom =
+      element.scrollHeight - element.scrollTop - element.clientHeight <
+      threshold;
 
-    if (isNearBottom && this.hasMore() && !this.isLoadingMore() && !this.isLoading()) {
+    if (
+      isNearBottom &&
+      this.hasMore() &&
+      !this.isLoadingMore() &&
+      !this.isLoading()
+    ) {
       this.loadMore();
     }
   }

@@ -95,6 +95,10 @@ export class ConsultationService {
   getOverdueConsultations(params?: {
     page?: number;
     page_size?: number;
+    group?: number;
+    beneficiary?: number;
+    created_by?: number;
+    owned_by?: number;
     search?: string;
   }): Observable<PaginatedResponse<Consultation>> {
     let httpParams = new HttpParams();
@@ -139,10 +143,10 @@ export class ConsultationService {
     consultationId: number,
     data: CreateAppointmentRequest
   ): Observable<Appointment> {
-    return this.http.post<Appointment>(
-      `${this.apiUrl}/appointments/`,
-      { ...data, consultation_id: consultationId }
-    );
+    return this.http.post<Appointment>(`${this.apiUrl}/appointments/`, {
+      ...data,
+      consultation_id: consultationId,
+    });
   }
 
   getAppointments(params?: {
@@ -252,7 +256,9 @@ export class ConsultationService {
     );
   }
 
-  deleteConsultationMessage(messageId: number): Observable<ConsultationMessage> {
+  deleteConsultationMessage(
+    messageId: number
+  ): Observable<ConsultationMessage> {
     return this.http.delete<ConsultationMessage>(
       `${this.apiUrl}/messages/${messageId}/`
     );
@@ -326,14 +332,17 @@ export class ConsultationService {
 
   getMessageAttachment(messageId: number): Observable<Blob> {
     return this.http.get(`${this.apiUrl}/messages/${messageId}/attachment/`, {
-      responseType: 'blob'
+      responseType: 'blob',
     });
   }
 
   exportConsultationPdf(consultationId: number): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/consultations/${consultationId}/export/pdf/`, {
-      responseType: 'blob',
-    });
+    return this.http.get(
+      `${this.apiUrl}/consultations/${consultationId}/export/pdf/`,
+      {
+        responseType: 'blob',
+      }
+    );
   }
 
   getDashboard(): Observable<DashboardResponse> {
@@ -341,17 +350,24 @@ export class ConsultationService {
   }
 
   getParticipantById(id: string): Observable<IParticipantDetail> {
-    return this.http.get<IParticipantDetail>(`${this.apiUrl}/participants/${id}/`);
+    return this.http.get<IParticipantDetail>(
+      `${this.apiUrl}/participants/${id}/`
+    );
   }
 
-  confirmParticipantPresence(participantId: string, isConfirmed: boolean | null): Observable<IParticipantDetail> {
+  confirmParticipantPresence(
+    participantId: string,
+    isConfirmed: boolean | null
+  ): Observable<IParticipantDetail> {
     return this.http.patch<IParticipantDetail>(
       `${this.apiUrl}/user/participants/${participantId}/`,
       { is_confirmed: isConfirmed }
     );
   }
 
-  startRecording(appointmentId: number): Observable<{ status: string; egress_id: string }> {
+  startRecording(
+    appointmentId: number
+  ): Observable<{ status: string; egress_id: string }> {
     return this.http.post<{ status: string; egress_id: string }>(
       `${this.apiUrl}/appointments/${appointmentId}/start_recording/`,
       {}

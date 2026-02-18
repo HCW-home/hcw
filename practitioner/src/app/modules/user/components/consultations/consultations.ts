@@ -1,4 +1,11 @@
-import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  signal,
+  inject,
+  computed,
+} from '@angular/core';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -17,13 +24,16 @@ import { TypographyTypeEnum } from '../../../../shared/constants/typography';
 import { BadgeTypeEnum } from '../../../../shared/constants/badge';
 import { Svg } from '../../../../shared/ui-components/svg/svg';
 import { ConsultationService } from '../../../../core/services/consultation.service';
-import { Consultation } from '../../../../core/models/consultation';
+import { Consultation, Queue } from '../../../../core/models/consultation';
 import { Loader } from '../../../../shared/components/loader/loader';
 import { RoutePaths } from '../../../../core/constants/routes';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { TranslatePipe } from '@ngx-translate/core';
 import { TranslationService } from '../../../../core/services/translation.service';
+import { UserSearchSelect } from '../../../../shared/components/user-search-select/user-search-select';
+import { UserService } from '../../../../core/services/user.service';
+import { IUser } from '../../models/user';
 
 type ConsultationTabType = 'active' | 'past' | 'overdue';
 
@@ -37,7 +47,20 @@ interface TabCache {
 
 @Component({
   selector: 'app-consultations',
-  imports: [CommonModule, FormsModule, Page, Button, Typography, Input, Tabs, Svg, Loader, ConsultationRowItem, TranslatePipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    Page,
+    Button,
+    Typography,
+    Input,
+    Tabs,
+    Svg,
+    Loader,
+    ConsultationRowItem,
+    TranslatePipe,
+    UserSearchSelect,
+  ],
   templateUrl: './consultations.html',
   styleUrl: './consultations.scss',
 })
@@ -47,11 +70,30 @@ export class Consultations implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private toasterService = inject(ToasterService);
   private t = inject(TranslationService);
+  private userService = inject(UserService);
 
   private tabCache: Record<ConsultationTabType, TabCache> = {
-    active: { data: [], loaded: false, searchQuery: '', hasMore: false, currentPage: 1 },
-    past: { data: [], loaded: false, searchQuery: '', hasMore: false, currentPage: 1 },
-    overdue: { data: [], loaded: false, searchQuery: '', hasMore: false, currentPage: 1 }
+    active: {
+      data: [],
+      loaded: false,
+      searchQuery: '',
+      hasMore: false,
+      currentPage: 1,
+    },
+    past: {
+      data: [],
+      loaded: false,
+      searchQuery: '',
+      hasMore: false,
+      currentPage: 1,
+    },
+    overdue: {
+      data: [],
+      loaded: false,
+      searchQuery: '',
+      hasMore: false,
+      currentPage: 1,
+    },
   };
 
   private pageSize = 20;
@@ -67,6 +109,24 @@ export class Consultations implements OnInit, OnDestroy {
   error = signal<string | null>(null);
   searchQuery = '';
 
+  currentUser = signal<IUser | null>(null);
+
+  // Filters
+  showFilters = signal(false);
+  queues = signal<Queue[]>([]);
+  filterBeneficiary = signal<number | null>(null);
+  filterCreatedBy = signal<number | null>(null);
+  filterOwnedBy = signal<number | null>(null);
+  filterGroup = signal<number | null>(null);
+  activeFilterCount = computed(() => {
+    let count = 0;
+    if (this.filterBeneficiary()) count++;
+    if (this.filterCreatedBy()) count++;
+    if (this.filterOwnedBy()) count++;
+    if (this.filterGroup()) count++;
+    return count;
+  });
+
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
@@ -79,7 +139,11 @@ export class Consultations implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.route.fragment.pipe(takeUntil(this.destroy$)).subscribe(fragment => {
-      if (fragment === 'active' || fragment === 'past' || fragment === 'overdue') {
+      if (
+        fragment === 'active' ||
+        fragment === 'past' ||
+        fragment === 'overdue'
+      ) {
         this.activeTab.set(fragment);
         this.loadConsultations();
       }
@@ -87,15 +151,18 @@ export class Consultations implements OnInit, OnDestroy {
 
     this.loadConsultations();
     this.loadCounts();
+    this.loadQueues();
 
-    this.searchSubject$.pipe(
-      debounceTime(300),
-      distinctUntilChanged(),
-      takeUntil(this.destroy$)
-    ).subscribe(() => {
-      this.invalidateCache();
-      this.loadConsultations();
-    });
+    this.userService.currentUser$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(user => this.currentUser.set(user));
+
+    this.searchSubject$
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.invalidateCache();
+        this.loadConsultations();
+      });
   }
 
   ngOnDestroy() {
@@ -105,10 +172,26 @@ export class Consultations implements OnInit, OnDestroy {
 
   get tabItems(): TabItem[] {
     return [
-      { id: 'active', label: this.t.instant('consultations.tabActive'), count: this.activeCount() },
-      { id: 'past', label: this.t.instant('consultations.tabClosed'), count: this.pastCount() },
-      { id: 'overdue', label: this.t.instant('consultations.tabOverdue'), count: this.overdueCount() }
+      {
+        id: 'active',
+        label: this.t.instant('consultations.tabActive'),
+        count: this.activeCount(),
+      },
+      {
+        id: 'past',
+        label: this.t.instant('consultations.tabClosed'),
+        count: this.pastCount(),
+      },
+      {
+        id: 'overdue',
+        label: this.t.instant('consultations.tabOverdue'),
+        count: this.overdueCount(),
+      },
     ];
+  }
+
+  toggleFilters(): void {
+    this.showFilters.update(v => !v);
   }
 
   onSearchChange(query: string): void {
@@ -136,62 +219,76 @@ export class Consultations implements OnInit, OnDestroy {
     this.error.set(null);
 
     if (currentTab === 'overdue') {
-      const params: { search?: string; page_size?: number } = { page_size: this.pageSize };
-      if (this.searchQuery) {
-        params.search = this.searchQuery;
-      }
-
-      this.consultationService.getOverdueConsultations(params).pipe(
-        takeUntil(this.destroy$)
-      ).subscribe({
-        next: (response) => {
-          const hasMore = response.next !== null;
-          this.consultations.set(response.results);
-          this.hasMore.set(hasMore);
-          this.tabCache[currentTab] = {
-            data: response.results,
-            loaded: true,
-            searchQuery: this.searchQuery,
-            hasMore,
-            currentPage: 1
-          };
-          this.loading.set(false);
-        },
-        error: (err) => {
-          this.toasterService.show('error', this.t.instant('consultations.errorLoading'), getErrorMessage(err));
-          this.loading.set(false);
-        }
-      });
-    } else {
-      const params: { is_closed: boolean; search?: string; page_size?: number } = {
-        is_closed: currentTab === 'past',
-        page_size: this.pageSize
+      const params: Record<string, any> = {
+        page_size: this.pageSize,
+        ...this.getFilterParams(),
       };
       if (this.searchQuery) {
-        params.search = this.searchQuery;
+        params['search'] = this.searchQuery;
       }
 
-      this.consultationService.getConsultations(params).pipe(
-        takeUntil(this.destroy$)
-      ).subscribe({
-        next: (response) => {
-          const hasMore = response.next !== null;
-          this.consultations.set(response.results);
-          this.hasMore.set(hasMore);
-          this.tabCache[currentTab] = {
-            data: response.results,
-            loaded: true,
-            searchQuery: this.searchQuery,
-            hasMore,
-            currentPage: 1
-          };
-          this.loading.set(false);
-        },
-        error: (err) => {
-          this.toasterService.show('error', this.t.instant('consultations.errorLoading'), getErrorMessage(err));
-          this.loading.set(false);
-        }
-      });
+      this.consultationService
+        .getOverdueConsultations(params)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: response => {
+            const hasMore = response.next !== null;
+            this.consultations.set(response.results);
+            this.hasMore.set(hasMore);
+            this.tabCache[currentTab] = {
+              data: response.results,
+              loaded: true,
+              searchQuery: this.searchQuery,
+              hasMore,
+              currentPage: 1,
+            };
+            this.loading.set(false);
+          },
+          error: err => {
+            this.toasterService.show(
+              'error',
+              this.t.instant('consultations.errorLoading'),
+              getErrorMessage(err)
+            );
+            this.loading.set(false);
+          },
+        });
+    } else {
+      const params: Record<string, any> = {
+        is_closed: currentTab === 'past',
+        page_size: this.pageSize,
+        ...this.getFilterParams(),
+      };
+      if (this.searchQuery) {
+        params['search'] = this.searchQuery;
+      }
+
+      this.consultationService
+        .getConsultations(params)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: response => {
+            const hasMore = response.next !== null;
+            this.consultations.set(response.results);
+            this.hasMore.set(hasMore);
+            this.tabCache[currentTab] = {
+              data: response.results,
+              loaded: true,
+              searchQuery: this.searchQuery,
+              hasMore,
+              currentPage: 1,
+            };
+            this.loading.set(false);
+          },
+          error: err => {
+            this.toasterService.show(
+              'error',
+              this.t.instant('consultations.errorLoading'),
+              getErrorMessage(err)
+            );
+            this.loading.set(false);
+          },
+        });
     }
   }
 
@@ -205,79 +302,100 @@ export class Consultations implements OnInit, OnDestroy {
     this.loadingMore.set(true);
 
     if (currentTab === 'overdue') {
-      const params: { search?: string; page_size?: number; page?: number } = {
+      const params: Record<string, any> = {
         page_size: this.pageSize,
-        page: nextPage
+        page: nextPage,
+        ...this.getFilterParams(),
       };
       if (this.searchQuery) {
-        params.search = this.searchQuery;
+        params['search'] = this.searchQuery;
       }
 
-      this.consultationService.getOverdueConsultations(params).pipe(
-        takeUntil(this.destroy$)
-      ).subscribe({
-        next: (response) => {
-          const hasMore = response.next !== null;
-          const newData = [...cache.data, ...response.results];
-          this.consultations.set(newData);
-          this.hasMore.set(hasMore);
-          this.tabCache[currentTab] = {
-            ...cache,
-            data: newData,
-            hasMore,
-            currentPage: nextPage
-          };
-          this.loadingMore.set(false);
-        },
-        error: (err) => {
-          this.toasterService.show('error', this.t.instant('consultations.errorLoading'), getErrorMessage(err));
-          this.loadingMore.set(false);
-        }
-      });
+      this.consultationService
+        .getOverdueConsultations(params)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: response => {
+            const hasMore = response.next !== null;
+            const newData = [...cache.data, ...response.results];
+            this.consultations.set(newData);
+            this.hasMore.set(hasMore);
+            this.tabCache[currentTab] = {
+              ...cache,
+              data: newData,
+              hasMore,
+              currentPage: nextPage,
+            };
+            this.loadingMore.set(false);
+          },
+          error: err => {
+            this.toasterService.show(
+              'error',
+              this.t.instant('consultations.errorLoading'),
+              getErrorMessage(err)
+            );
+            this.loadingMore.set(false);
+          },
+        });
     } else {
-      const params: { is_closed: boolean; search?: string; page_size?: number; page?: number } = {
+      const params: Record<string, any> = {
         is_closed: currentTab === 'past',
         page_size: this.pageSize,
-        page: nextPage
+        page: nextPage,
+        ...this.getFilterParams(),
       };
       if (this.searchQuery) {
-        params.search = this.searchQuery;
+        params['search'] = this.searchQuery;
       }
 
-      this.consultationService.getConsultations(params).pipe(
-        takeUntil(this.destroy$)
-      ).subscribe({
-        next: (response) => {
-          const hasMore = response.next !== null;
-          const newData = [...cache.data, ...response.results];
-          this.consultations.set(newData);
-          this.hasMore.set(hasMore);
-          this.tabCache[currentTab] = {
-            ...cache,
-            data: newData,
-            hasMore,
-            currentPage: nextPage
-          };
-          this.loadingMore.set(false);
-        },
-        error: (err) => {
-          this.toasterService.show('error', this.t.instant('consultations.errorLoading'), getErrorMessage(err));
-          this.loadingMore.set(false);
-        }
-      });
+      this.consultationService
+        .getConsultations(params)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: response => {
+            const hasMore = response.next !== null;
+            const newData = [...cache.data, ...response.results];
+            this.consultations.set(newData);
+            this.hasMore.set(hasMore);
+            this.tabCache[currentTab] = {
+              ...cache,
+              data: newData,
+              hasMore,
+              currentPage: nextPage,
+            };
+            this.loadingMore.set(false);
+          },
+          error: err => {
+            this.toasterService.show(
+              'error',
+              this.t.instant('consultations.errorLoading'),
+              getErrorMessage(err)
+            );
+            this.loadingMore.set(false);
+          },
+        });
     }
   }
 
   viewConsultationDetails(consultation: Consultation) {
-    this.router.navigate([`/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`, consultation.id]);
+    this.router.navigate([
+      `/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`,
+      consultation.id,
+    ]);
   }
 
   editConsultation(consultation: Consultation) {
-    this.router.navigate([`/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`, consultation.id, 'edit']);
+    this.router.navigate([
+      `/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`,
+      consultation.id,
+      'edit',
+    ]);
   }
 
   createConsultation() {
-    this.router.navigate([`/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}/new`]);
+    this.router.navigate([
+      `/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}/new`,
+    ]);
   }
 
   retryLoadConsultations() {
@@ -287,45 +405,120 @@ export class Consultations implements OnInit, OnDestroy {
 
   getStatusBadgeType(): BadgeTypeEnum {
     switch (this.activeTab()) {
-      case 'active': return BadgeTypeEnum.green;
-      case 'past': return BadgeTypeEnum.gray;
-      case 'overdue': return BadgeTypeEnum.orange;
+      case 'active':
+        return BadgeTypeEnum.green;
+      case 'past':
+        return BadgeTypeEnum.gray;
+      case 'overdue':
+        return BadgeTypeEnum.orange;
     }
   }
 
   getStatusLabel(): string {
     switch (this.activeTab()) {
-      case 'active': return this.t.instant('consultations.statusActive');
-      case 'past': return this.t.instant('consultations.statusClosed');
-      case 'overdue': return this.t.instant('consultations.statusOverdue');
+      case 'active':
+        return this.t.instant('consultations.statusActive');
+      case 'past':
+        return this.t.instant('consultations.statusClosed');
+      case 'overdue':
+        return this.t.instant('consultations.statusOverdue');
     }
   }
 
   private invalidateCache(): void {
     this.tabCache = {
-      active: { data: [], loaded: false, searchQuery: '', hasMore: false, currentPage: 1 },
-      past: { data: [], loaded: false, searchQuery: '', hasMore: false, currentPage: 1 },
-      overdue: { data: [], loaded: false, searchQuery: '', hasMore: false, currentPage: 1 }
+      active: {
+        data: [],
+        loaded: false,
+        searchQuery: '',
+        hasMore: false,
+        currentPage: 1,
+      },
+      past: {
+        data: [],
+        loaded: false,
+        searchQuery: '',
+        hasMore: false,
+        currentPage: 1,
+      },
+      overdue: {
+        data: [],
+        loaded: false,
+        searchQuery: '',
+        hasMore: false,
+        currentPage: 1,
+      },
     };
   }
 
+  onBeneficiaryChange(user: IUser | null): void {
+    this.filterBeneficiary.set(user?.pk ?? null);
+    this.applyFilters();
+  }
+
+  onCreatedByChange(user: IUser | null): void {
+    this.filterCreatedBy.set(user?.pk ?? null);
+    this.applyFilters();
+  }
+
+  onOwnedByChange(user: IUser | null): void {
+    this.filterOwnedBy.set(user?.pk ?? null);
+    this.applyFilters();
+  }
+
+  onGroupChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    this.filterGroup.set(value ? +value : null);
+    this.applyFilters();
+  }
+
+  private applyFilters(): void {
+    this.invalidateCache();
+    this.loadConsultations();
+    this.loadCounts();
+  }
+
+  private getFilterParams(): Record<string, number> {
+    const params: Record<string, number> = {};
+    if (this.filterBeneficiary())
+      params['beneficiary'] = this.filterBeneficiary()!;
+    if (this.filterCreatedBy()) params['created_by'] = this.filterCreatedBy()!;
+    if (this.filterOwnedBy()) params['owned_by'] = this.filterOwnedBy()!;
+    if (this.filterGroup()) params['group'] = this.filterGroup()!;
+    return params;
+  }
+
+  private loadQueues(): void {
+    this.consultationService
+      .getQueues()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: queues => this.queues.set(queues),
+      });
+  }
+
   private loadCounts(): void {
-    this.consultationService.getConsultations({ is_closed: false, page_size: 1 }).pipe(
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: (response) => this.activeCount.set(response.count)
-    });
+    const filters = this.getFilterParams();
 
-    this.consultationService.getConsultations({ is_closed: true, page_size: 1 }).pipe(
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: (response) => this.pastCount.set(response.count)
-    });
+    this.consultationService
+      .getConsultations({ is_closed: false, page_size: 1, ...filters })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: response => this.activeCount.set(response.count),
+      });
 
-    this.consultationService.getOverdueConsultations({ page_size: 1 }).pipe(
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: (response) => this.overdueCount.set(response.count)
-    });
+    this.consultationService
+      .getConsultations({ is_closed: true, page_size: 1, ...filters })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: response => this.pastCount.set(response.count),
+      });
+
+    this.consultationService
+      .getOverdueConsultations({ page_size: 1, ...filters })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: response => this.overdueCount.set(response.count),
+      });
   }
 }

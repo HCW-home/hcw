@@ -1,14 +1,68 @@
 <app-page>
   <div class="consultations-container">
     <div class="page-header">
-      <div class="search-wrapper">
-        <app-input
-          [placeholder]="'consultations.searchPlaceholder' | translate"
-          leftIcon="search"
-          [ngModel]="searchQuery"
-          (ngModelChange)="onSearchChange($event)">
-        </app-input>
+      <div class="search-row">
+        <div class="search-wrapper">
+          <app-input
+            [placeholder]="'consultations.searchPlaceholder' | translate"
+            leftIcon="search"
+            [ngModel]="searchQuery"
+            (ngModelChange)="onSearchChange($event)">
+          </app-input>
+        </div>
+        <button class="advanced-filter-toggle" (click)="toggleFilters()">
+          <app-svg
+            src="settings"
+            [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+          <span>{{ showFilters() ? 'Hide filters' : 'Advanced filters' }}</span>
+          @if (activeFilterCount() > 0) {
+          <span class="filter-count">{{ activeFilterCount() }}</span>
+          }
+        </button>
       </div>
+      @if (showFilters()) {
+      <div class="filters-wrapper">
+        <div class="filter-item">
+          <app-user-search-select
+            [label]="'Beneficiary'"
+            [placeholder]="'Search beneficiary...'"
+            (userSelected)="onBeneficiaryChange($event)">
+          </app-user-search-select>
+        </div>
+        <div class="filter-item">
+          <app-user-search-select
+            [label]="'Created by'"
+            [placeholder]="'Search creator...'"
+            [meUser]="currentUser()"
+            (userSelected)="onCreatedByChange($event)">
+          </app-user-search-select>
+        </div>
+        <div class="filter-item">
+          <app-user-search-select
+            [label]="'Owned by'"
+            [placeholder]="'Search practitioner...'"
+            [hasGroupPermissions]="true"
+            [meUser]="currentUser()"
+            (userSelected)="onOwnedByChange($event)">
+          </app-user-search-select>
+        </div>
+        <div class="filter-item">
+          <label class="filter-label">Group</label>
+          <div class="filter-select-wrapper">
+            <select class="filter-select" (change)="onGroupChange($event)">
+              <option value="">All groups</option>
+              @for (queue of queues(); track queue.id) {
+              <option [value]="queue.id">{{ queue.name }}</option>
+              }
+            </select>
+            <app-svg
+              src="chevron-down"
+              [svgStyle]="{'width.px': 16, 'height.px': 16}"
+              class="select-icon"></app-svg>
+          </div>
+        </div>
+      </div>
+      }
     </div>
 
     <div class="consultations-card">
@@ -20,79 +74,89 @@
 
       <div class="consultations-list">
         @if (loading()) {
-          <div class="loading-state">
-            <app-loader></app-loader>
-            <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
-              {{ 'consultations.loading' | translate }}
-            </app-typography>
-          </div>
+        <div class="loading-state">
+          <app-loader></app-loader>
+          <app-typography
+            [variant]="TypographyTypeEnum['body-regular']"
+            color="var(--slate-500)">
+            {{ 'consultations.loading' | translate }}
+          </app-typography>
+        </div>
         } @else if (error()) {
-          <div class="error-state">
-            <app-svg src="alert-circle" [svgStyle]="{'width.px': 48, 'height.px': 48, 'color': 'var(--rose-500)'}"></app-svg>
-            <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--rose-500)">
-              {{ error() }}
-            </app-typography>
-            <app-button
-              [text]="'consultations.retry' | translate"
-              [size]="ButtonSizeEnum.medium"
-              [style]="ButtonStyleEnum.stroke"
-              (buttonClick)="retryLoadConsultations()">
-            </app-button>
-          </div>
+        <div class="error-state">
+          <app-svg
+            src="alert-circle"
+            [svgStyle]="{'width.px': 48, 'height.px': 48, 'color': 'var(--rose-500)'}"></app-svg>
+          <app-typography
+            [variant]="TypographyTypeEnum['body-l-medium']"
+            color="var(--rose-500)">
+            {{ error() }}
+          </app-typography>
+          <app-button
+            [text]="'consultations.retry' | translate"
+            [size]="ButtonSizeEnum.medium"
+            [style]="ButtonStyleEnum.stroke"
+            (buttonClick)="retryLoadConsultations()">
+          </app-button>
+        </div>
         } @else if (consultations().length === 0) {
-          <div class="empty-state">
-            @if (activeTab() === 'overdue') {
-              <app-svg src="alert-circle" [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
-              <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--slate-400)">
-                {{ 'consultations.noOverdue' | translate }}
-              </app-typography>
-              <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
-                @if (searchQuery) {
-                  {{ 'consultations.tryDifferentSearch' | translate }}
-                } @else {
-                  {{ 'consultations.overdueWillAppear' | translate }}
-                }
-              </app-typography>
-            } @else {
-              <app-svg src="calendar" [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
-              <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--slate-400)">
-                {{ 'consultations.noConsultations' | translate }}
-              </app-typography>
-              <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
-                @if (searchQuery) {
-                  {{ 'consultations.tryDifferentSearch' | translate }}
-                } @else if (activeTab() === 'active') {
-                  {{ 'consultations.activeWillAppear' | translate }}
-                } @else {
-                  {{ 'consultations.pastWillAppear' | translate }}
-                }
-              </app-typography>
-            }
-          </div>
-        } @else {
-          @for (consultation of consultations(); track consultation.id) {
-            <app-consultation-row-item
-              [consultation]="consultation"
-              [showClosedDate]="activeTab() !== 'active'"
-              [statusBadgeType]="getStatusBadgeType()"
-              [statusLabel]="getStatusLabel()"
-              (rowClick)="viewConsultationDetails($event)">
-            </app-consultation-row-item>
+        <div class="empty-state">
+          @if (activeTab() === 'overdue') {
+          <app-svg
+            src="alert-circle"
+            [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
+          <app-typography
+            [variant]="TypographyTypeEnum['body-l-medium']"
+            color="var(--slate-400)">
+            {{ 'consultations.noOverdue' | translate }}
+          </app-typography>
+          <app-typography
+            [variant]="TypographyTypeEnum['body-regular']"
+            color="var(--slate-500)">
+            @if (searchQuery) { {{ 'consultations.tryDifferentSearch' |
+            translate }} } @else { {{ 'consultations.overdueWillAppear' |
+            translate }} }
+          </app-typography>
+          } @else {
+          <app-svg
+            src="calendar"
+            [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
+          <app-typography
+            [variant]="TypographyTypeEnum['body-l-medium']"
+            color="var(--slate-400)">
+            {{ 'consultations.noConsultations' | translate }}
+          </app-typography>
+          <app-typography
+            [variant]="TypographyTypeEnum['body-regular']"
+            color="var(--slate-500)">
+            @if (searchQuery) { {{ 'consultations.tryDifferentSearch' |
+            translate }} } @else if (activeTab() === 'active') { {{
+            'consultations.activeWillAppear' | translate }} } @else { {{
+            'consultations.pastWillAppear' | translate }} }
+          </app-typography>
           }
-
-          @if (hasMore()) {
-            <div class="load-more-container">
-              <app-button
-                [text]="'consultations.viewMore' | translate"
-                [style]="ButtonStyleEnum.text"
-                [size]="ButtonSizeEnum.medium"
-                [loading]="loadingMore()"
-                [disabled]="loadingMore()"
-                (buttonClick)="loadMore()">
-              </app-button>
-            </div>
-          }
-        }
+        </div>
+        } @else { @for (consultation of consultations(); track consultation.id)
+        {
+        <app-consultation-row-item
+          [consultation]="consultation"
+          [showClosedDate]="activeTab() !== 'active'"
+          [statusBadgeType]="getStatusBadgeType()"
+          [statusLabel]="getStatusLabel()"
+          (rowClick)="viewConsultationDetails($event)">
+        </app-consultation-row-item>
+        } @if (hasMore()) {
+        <div class="load-more-container">
+          <app-button
+            [text]="'consultations.viewMore' | translate"
+            [style]="ButtonStyleEnum.text"
+            [size]="ButtonSizeEnum.medium"
+            [loading]="loadingMore()"
+            [disabled]="loadingMore()"
+            (buttonClick)="loadMore()">
+          </app-button>
+        </div>
+        } }
       </div>
     </div>
   </div>

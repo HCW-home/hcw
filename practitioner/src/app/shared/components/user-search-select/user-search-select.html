@@ -1,88 +1,114 @@
 <div class="user-search-select">
   <label class="label">
-    {{ label() }}
-    @if (required()) {
-      <span class="required-indicator">*</span>
+    {{ label() }} @if (required()) {
+    <span class="required-indicator">*</span>
     }
   </label>
 
   @if (selectedUser()) {
-    <div class="selected-user">
-      <div class="user-chip">
-        <div class="avatar">
-          <span class="avatar-initials">{{ getUserInitials(selectedUser()!) }}</span>
-        </div>
-        <span class="user-name">{{ getUserDisplayName(selectedUser()!) }}</span>
-        <button type="button" class="clear-btn" (click)="clearSelection()">
-          <app-svg src="close" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
-        </button>
+  <div class="selected-user">
+    <div class="user-chip">
+      <div class="avatar">
+        <span class="avatar-initials"
+          >{{ getUserInitials(selectedUser()!) }}</span
+        >
       </div>
+      <span class="user-name">{{ getUserDisplayName(selectedUser()!) }}</span>
+      <button type="button" class="clear-btn" (click)="clearSelection()">
+        <app-svg
+          src="close"
+          [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+      </button>
     </div>
+  </div>
   } @else {
-    <div class="search-container">
-      <div class="search-input-wrapper" #searchInputWrapper>
-        <span class="search-icon">
-          <app-svg src="svg/search.svg" [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
-        </span>
-        <input
-          type="search"
-          class="search-input"
-          name="user-search-field"
-          [placeholder]="placeholder()"
-          [value]="searchQuery()"
-          autocomplete="new-password"
-          (input)="onSearchInput($event)"
-          (focus)="onSearchFocus()">
+  <div class="search-container">
+    <div class="search-input-wrapper" #searchInputWrapper>
+      <span class="search-icon">
+        <app-svg
+          src="svg/search.svg"
+          [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
+      </span>
+      <input
+        type="search"
+        class="search-input"
+        name="user-search-field"
+        [placeholder]="placeholder()"
+        [value]="searchQuery()"
+        autocomplete="new-password"
+        (input)="onSearchInput($event)"
+        (focus)="onSearchFocus()" />
+    </div>
+
+    @if (showDropdown()) {
+    <div class="dropdown-backdrop" (click)="closeDropdown()"></div>
+    <div class="users-dropdown" (scroll)="onDropdownScroll($event)">
+      @if (isLoading() && users().length === 0) {
+      <div class="loading-container">
+        <app-loader></app-loader>
+        <app-typography
+          [variant]="TypographyTypeEnum['body-s-regular']"
+          color="var(--slate-500)">
+          Searching users...
+        </app-typography>
       </div>
-
-      @if (showDropdown()) {
-        <div class="dropdown-backdrop" (click)="closeDropdown()"></div>
-        <div class="users-dropdown" (scroll)="onDropdownScroll($event)">
-          @if (isLoading() && users().length === 0) {
-            <div class="loading-container">
-              <app-loader></app-loader>
-              <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
-                Searching users...
-              </app-typography>
-            </div>
-          } @else if (users().length === 0) {
-            <div class="empty-state">
-              <app-svg src="user" [svgStyle]="{'width.px': 32, 'height.px': 32, 'color': 'var(--slate-500)'}"></app-svg>
-              <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
-                @if (searchQuery()) {
-                  No users found for "{{ searchQuery() }}"
-                } @else {
-                  Start typing to search users
-                }
-              </app-typography>
-            </div>
-          } @else {
-            <div class="users-list">
-              @for (user of users(); track user.pk) {
-                <div class="user-item" (click)="selectUser(user)">
-                  <div class="avatar">
-                    <span class="avatar-initials">{{ getUserInitials(user) }}</span>
-                  </div>
-                  <div class="user-info">
-                    <app-typography [variant]="TypographyTypeEnum['body-s-medium']">
-                      {{ getUserDisplayName(user) }}
-                    </app-typography>
-                    <app-typography [variant]="TypographyTypeEnum['body-xs-regular']" color="var(--slate-500)">
-                      {{ user.email }}
-                    </app-typography>
-                  </div>
-                </div>
-              }
-
-              @if (isLoadingMore()) {
-                <div class="loading-more">
-                  <app-loader></app-loader>
-                </div>
-              }
-            </div>
-          }
+      } @else if (users().length === 0) {
+      <div class="empty-state">
+        <app-svg
+          src="user"
+          [svgStyle]="{'width.px': 32, 'height.px': 32, 'color': 'var(--slate-500)'}"></app-svg>
+        <app-typography
+          [variant]="TypographyTypeEnum['body-s-regular']"
+          color="var(--slate-500)">
+          @if (searchQuery()) { No users found for "{{ searchQuery() }}" } @else
+          { Start typing to search users }
+        </app-typography>
+      </div>
+      } @else {
+      <div class="users-list">
+        @if (meUser() && !searchQuery()) {
+        <div class="user-item me-item" (click)="selectUser(meUser()!)">
+          <div class="avatar me-avatar">
+            <app-svg
+              src="user"
+              [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'white'}"></app-svg>
+          </div>
+          <div class="user-info">
+            <app-typography [variant]="TypographyTypeEnum['body-s-medium']">
+              Me
+            </app-typography>
+            <app-typography
+              [variant]="TypographyTypeEnum['body-xs-regular']"
+              color="var(--slate-500)">
+              {{ meUser()!.email }}
+            </app-typography>
+          </div>
         </div>
+        } @for (user of users(); track user.pk) {
+        <div class="user-item" (click)="selectUser(user)">
+          <div class="avatar">
+            <span class="avatar-initials">{{ getUserInitials(user) }}</span>
+          </div>
+          <div class="user-info">
+            <app-typography [variant]="TypographyTypeEnum['body-s-medium']">
+              {{ getUserDisplayName(user) }}
+            </app-typography>
+            <app-typography
+              [variant]="TypographyTypeEnum['body-xs-regular']"
+              color="var(--slate-500)">
+              {{ user.email }}
+            </app-typography>
+          </div>
+        </div>
+        } @if (isLoadingMore()) {
+        <div class="loading-more">
+          <app-loader></app-loader>
+        </div>
+        }
+      </div>
       }
     </div>
+    }
+  </div>
   }
 </div>
