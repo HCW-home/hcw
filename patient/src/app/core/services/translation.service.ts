@@ -1,5 +1,8 @@
-import { Injectable, signal } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
+import { inject, Injectable, signal } from '@angular/core';
+import { HttpClient, HttpBackend } from '@angular/common/http';
+import { TranslateService, TranslationObject } from '@ngx-translate/core';
+import { catchError, EMPTY } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface AppLanguage {
   code: string;
@@ -20,6 +23,7 @@ const DEFAULT_LANGUAGE = 'en';
 })
 export class TranslationService {
   private currentLanguageSignal = signal<string>(DEFAULT_LANGUAGE);
+  private http = new HttpClient(inject(HttpBackend));
 
   readonly currentLanguage = this.currentLanguageSignal.asReadonly();
   readonly availableLanguages = AVAILABLE_LANGUAGES;
@@ -48,6 +52,7 @@ export class TranslationService {
     }
 
     this.translate.use(langCode);
+    this.fetchAndApplyOverrides(langCode);
     this.currentLanguageSignal.set(langCode);
     localStorage.setItem(STORAGE_KEY, langCode);
     document.documentElement.lang = langCode;
@@ -59,5 +64,32 @@ export class TranslationService {
 
   instant(key: string, params?: Record<string, string>): string {
     return this.translate.instant(key, params);
+  }
+
+  private fetchAndApplyOverrides(langCode: string): void {
+    this.http.get<Record<string, string>>(`${environment.apiUrl}/translations/patient/${langCode}/`)
+      .pipe(catchError(() => EMPTY))
+      .subscribe(overrides => {
+        if (overrides && Object.keys(overrides).length > 0) {
+          const nested = this.expandDotNotation(overrides);
+          this.translate.setTranslation(langCode, nested, true);
+        }
+      });
+  }
+
+  private expandDotNotation(flat: Record<string, string>): TranslationObject {
+    const result: TranslationObject = {};
+    for (const key of Object.keys(flat)) {
+      const parts = key.split('.');
+      let current: TranslationObject = result;
+      for (let i = 0; i < parts.length - 1; i++) {
+        if (!current[parts[i]] || typeof current[parts[i]] !== 'object') {
+          current[parts[i]] = {};
+        }
+        current = current[parts[i]] as TranslationObject;
+      }
+      current[parts[parts.length - 1]] = flat[key];
+    }
+    return result;
   }
 }
