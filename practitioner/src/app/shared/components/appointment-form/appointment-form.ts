@@ -377,7 +377,13 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   }
 
   getTotalParticipantsCount(): number {
-    return this.participants().length + this.pendingParticipants().length;
+    let count = this.participants().length + this.pendingParticipants().length;
+    if (!this.isEditMode) {
+      if (this.beneficiary) count++;
+      if (this.owner) count++;
+      if (this.currentUser()) count++;
+    }
+    return count;
   }
 
   removePendingParticipant(index: number): void {

@@ -311,12 +311,14 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
         const exists = this.messages().some(m => m.id === event.data.id);
         if (!exists) {
           const currentUser = this.currentUser();
+          const isSystem = !event.data.created_by;
           const newMessage: Message = {
             id: event.data.id,
-            username: `${event.data.created_by.first_name} ${event.data.created_by.last_name}`,
+            username: isSystem ? '' : `${event.data.created_by.first_name} ${event.data.created_by.last_name}`,
             message: event.data.content,
             timestamp: event.data.created_at,
-            isCurrentUser: currentUser?.pk === event.data.created_by.id,
+            isCurrentUser: isSystem ? false : currentUser?.pk === event.data.created_by.id,
+            isSystem,
             attachment: event.data.attachment,
             recording_url: event.data.recording_url,
             isEdited: event.data.is_edited,
@@ -384,16 +386,20 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
           this.hasMore.set(!!response.next);
           const currentUserId = this.currentUser()?.pk;
           const loadedMessages: Message[] = response.results.map(msg => {
-            const isCurrentUser = msg.created_by.id === currentUserId;
-            const username = isCurrentUser
-              ? this.t.instant('consultationDetail.you')
-              : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim() || msg.created_by.email;
+            const isSystem = !msg.created_by;
+            const isCurrentUser = isSystem ? false : msg.created_by.id === currentUserId;
+            const username = isSystem
+              ? ''
+              : isCurrentUser
+                ? this.t.instant('consultationDetail.you')
+                : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim() || msg.created_by.email;
             return {
               id: msg.id,
               username,
               message: msg.content || '',
               timestamp: msg.created_at,
               isCurrentUser,
+              isSystem,
               attachment: msg.attachment,
               recording_url: msg.recording_url,
               isEdited: msg.is_edited,
@@ -423,16 +429,20 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
           this.hasMore.set(!!response.next);
           const currentUserId = this.currentUser()?.pk;
           const olderMessages: Message[] = response.results.map(msg => {
-            const isCurrentUser = msg.created_by.id === currentUserId;
-            const username = isCurrentUser
-              ? this.t.instant('consultationDetail.you')
-              : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim() || msg.created_by.email;
+            const isSystem = !msg.created_by;
+            const isCurrentUser = isSystem ? false : msg.created_by.id === currentUserId;
+            const username = isSystem
+              ? ''
+              : isCurrentUser
+                ? this.t.instant('consultationDetail.you')
+                : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim() || msg.created_by.email;
             return {
               id: msg.id,
               username,
               message: msg.content || '',
               timestamp: msg.created_at,
               isCurrentUser,
+              isSystem,
               attachment: msg.attachment,
               recording_url: msg.recording_url,
               isEdited: msg.is_edited,

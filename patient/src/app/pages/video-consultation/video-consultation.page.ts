@@ -167,12 +167,14 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
           const exists = this.messages().some(m => m.id === event.data.id);
           if (!exists) {
             const user = this.currentUser();
+            const isSystem = !event.data.created_by;
             const newMessage: Message = {
               id: event.data.id,
-              username: `${event.data.created_by.first_name} ${event.data.created_by.last_name}`,
+              username: isSystem ? '' : `${event.data.created_by.first_name} ${event.data.created_by.last_name}`,
               message: event.data.content,
               timestamp: event.data.created_at,
-              isCurrentUser: user?.id === event.data.created_by.id,
+              isCurrentUser: isSystem ? false : user?.id === event.data.created_by.id,
+              isSystem,
               attachment: event.data.attachment,
               isEdited: event.data.is_edited,
               updatedAt: event.data.updated_at,
@@ -196,13 +198,15 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
           this.hasMore.set(!!response.next);
           const currentUserId = this.currentUser()?.pk;
           const loadedMessages: Message[] = response.results.map(msg => {
-            const isCurrentUser = msg.created_by.id === currentUserId;
+            const isSystem = !msg.created_by;
+            const isCurrentUser = isSystem ? false : msg.created_by.id === currentUserId;
             return {
               id: msg.id,
-              username: isCurrentUser ? this.t.instant('videoConsultation.you') : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim(),
+              username: isSystem ? '' : isCurrentUser ? this.t.instant('videoConsultation.you') : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim(),
               message: msg.content || '',
               timestamp: msg.created_at,
               isCurrentUser,
+              isSystem,
               attachment: msg.attachment,
               isEdited: msg.is_edited,
               updatedAt: msg.updated_at,
@@ -714,13 +718,15 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
           this.hasMore.set(!!response.next);
           const currentUserId = this.currentUser()?.pk;
           const olderMessages: Message[] = response.results.map(msg => {
-            const isCurrentUser = msg.created_by.id === currentUserId;
+            const isSystem = !msg.created_by;
+            const isCurrentUser = isSystem ? false : msg.created_by.id === currentUserId;
             return {
               id: msg.id,
-              username: isCurrentUser ? this.t.instant('videoConsultation.you') : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim(),
+              username: isSystem ? '' : isCurrentUser ? this.t.instant('videoConsultation.you') : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim(),
               message: msg.content || '',
               timestamp: msg.created_at,
               isCurrentUser,
+              isSystem,
               attachment: msg.attachment,
               isEdited: msg.is_edited,
               updatedAt: msg.updated_at,

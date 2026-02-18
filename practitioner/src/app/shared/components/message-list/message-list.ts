@@ -38,6 +38,7 @@ export interface Message {
   message: string;
   timestamp: string;
   isCurrentUser: boolean;
+  isSystem?: boolean;
   attachment?: MessageAttachment | null;
   recording_url?: string | null;
   isEdited?: boolean;

@@ -119,43 +119,6 @@
   }
 }
 
-.invitations-block {
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid var(--slate-200);
-
-  .invitations-title {
-    display: block;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--slate-800);
-    margin-bottom: 12px;
-  }
-
-  .invitations-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-
-    app-participant-item {
-      transition: opacity 0.2s ease;
-
-      &.excluded {
-        opacity: 0.5;
-      }
-    }
-
-    .role-tag {
-      font-size: 11px;
-      font-weight: 500;
-      color: var(--slate-500);
-      background: var(--slate-100);
-      padding: 2px 8px;
-      border-radius: 4px;
-    }
-  }
-}
-
 .participants-section {
   background: var(--slate-50);
   padding: 24px;
@@ -183,22 +146,6 @@
     padding: 24px;
   }
 
-  .empty-participants {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding: 32px 24px;
-    color: var(--slate-500);
-    font-size: 14px;
-    gap: 8px;
-
-    .empty-hint {
-      font-size: 13px;
-      color: var(--slate-400);
-    }
-  }
-
   .participants-list {
     display: flex;
     flex-direction: column;
@@ -206,6 +153,23 @@
     overflow-y: auto;
     flex: 1;
     min-height: 0;
+
+    app-participant-item {
+      transition: opacity 0.2s ease;
+
+      &.excluded {
+        opacity: 0.5;
+      }
+    }
+
+    .role-tag {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--slate-500);
+      background: var(--slate-100);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
   }
 
 }

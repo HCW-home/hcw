@@ -128,6 +128,12 @@
       color: var(--app-text-primary);
     }
   }
+
+  &.system-message {
+    align-self: center;
+    background: var(--app-card-background);
+    border: 1px solid var(--app-border-color);
+  }
 }
 
 .message-header {

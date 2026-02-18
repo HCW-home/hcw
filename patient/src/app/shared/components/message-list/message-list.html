@@ -21,6 +21,37 @@
       </div>
     } @else {
       @for (message of messages; track message.id) {
+        @if (message.isSystem) {
+          <div class="message-item system-message">
+            <div class="message-meta">
+              <span class="message-time">{{ formatTime(message.timestamp) }}</span>
+            </div>
+            <div class="message-content">
+              @if (message.message) {
+                <p class="message-text">{{ message.message }}</p>
+              }
+              @if (message.attachment) {
+                @if (isImageAttachment(message.attachment)) {
+                  @if (getImageUrl(message.id)) {
+                    <div class="message-image-attachment" (click)="openImageViewer(message)">
+                      <img [src]="getImageUrl(message.id)" [alt]="message.attachment.file_name" class="attachment-image-preview">
+                    </div>
+                  } @else {
+                    <div class="message-attachment loading">
+                      <ion-spinner name="crescent"></ion-spinner>
+                      <span class="attachment-name">{{ 'messageList.loadingImage' | translate }}</span>
+                    </div>
+                  }
+                } @else {
+                  <div class="message-attachment">
+                    <ion-icon [name]="getAttachmentIcon(message.attachment)"></ion-icon>
+                    <span class="attachment-name">{{ message.attachment.file_name }}</span>
+                  </div>
+                }
+              }
+            </div>
+          </div>
+        } @else {
         <div class="message-item" [class.current-user]="message.isCurrentUser" [class.other-user]="!message.isCurrentUser">
           @if (editingMessageId === message.id) {
             <div class="edit-message-container">
@@ -92,6 +123,7 @@
             </div>
           }
         </div>
+        }
       }
     }
   </div>

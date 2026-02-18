@@ -225,36 +225,9 @@
       <div class="loading-container">
         <app-loader></app-loader>
       </div>
-    } @else if (getTotalParticipantsCount() === 0 && !showAddParticipantForm()) {
-      <div class="empty-participants">
-        <app-svg src="users" [svgStyle]="{'width.px': 32, 'height.px': 32, 'opacity': 0.3}"></app-svg>
-        <span>{{ 'appointmentForm.noParticipants' | translate }}</span>
-        <span class="empty-hint">{{ 'appointmentForm.noParticipantsHint' | translate }}</span>
-      </div>
-    } @else if (getTotalParticipantsCount() > 0) {
+    } @else {
       <div class="participants-list">
-        @for (participant of participants(); track participant.id) {
-          <app-participant-item
-            [participant]="participant"
-            [showRemoveAction]="true"
-            (remove)="removeParticipant(participant)">
-          </app-participant-item>
-        }
-        @for (pending of pendingParticipants(); track $index) {
-          <app-participant-item
-            [pendingParticipant]="pending"
-            [isPending]="true"
-            [showRemoveAction]="true"
-            (remove)="removePendingParticipant($index)">
-          </app-participant-item>
-        }
-      </div>
-    }
-
-    @if (!isEditMode) {
-      <div class="invitations-block">
-        <span class="invitations-title">{{ 'appointmentForm.invitations' | translate }}</span>
-        <div class="invitations-list">
+        @if (!isEditMode) {
           @if (getBeneficiaryUser(); as beneficiary) {
             <app-participant-item
               [class.excluded]="appointmentForm.get('dont_invite_beneficiary')?.value"
@@ -291,7 +264,22 @@
               </app-switch>
             </app-participant-item>
           }
-        </div>
+        }
+        @for (participant of participants(); track participant.id) {
+          <app-participant-item
+            [participant]="participant"
+            [showRemoveAction]="true"
+            (remove)="removeParticipant(participant)">
+          </app-participant-item>
+        }
+        @for (pending of pendingParticipants(); track $index) {
+          <app-participant-item
+            [pendingParticipant]="pending"
+            [isPending]="true"
+            [showRemoveAction]="true"
+            (remove)="removePendingParticipant($index)">
+          </app-participant-item>
+        }
       </div>
     }
   </div>

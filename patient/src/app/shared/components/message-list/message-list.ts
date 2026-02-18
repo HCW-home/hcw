@@ -36,6 +36,7 @@ export interface Message {
   message: string;
   timestamp: string;
   isCurrentUser: boolean;
+  isSystem?: boolean;
   attachment?: MessageAttachment | null;
   isEdited?: boolean;
   updatedAt?: string;

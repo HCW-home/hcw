@@ -93,6 +93,11 @@
     align-self: flex-start;
     background: var(--slate-100);
   }
+
+  &.system-message {
+    align-self: center;
+    background: var(--slate-100);
+  }
 }
 
 .message-header {
