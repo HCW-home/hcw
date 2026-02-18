@@ -1,3 +1,58 @@
+hcw (0.9.35) bookworm; urgency=medium
+
+  [ Gor Grigoryan ]
+  * add ability to download consultatin pdf report
+  * handle new message notidication
+  * fix openid login
+  * update timezone options for patient
+  * feat: add video recording ability
+  * add todo
+  * add tranlsations keys for auth pages
+  * add translation keys for add-edit-patient and slot-modal
+  * add translations for Configuration page
+  * add tanslations for consultations and dashoard
+  * add translations for video conusltations , pre join join lobby and consultations form
+  * add consultation detail translations
+  * add backend todo
+  * add missing translations
+  * add translations
+
+  [ Olivier Bitsch ]
+  * Fix resend from admin
+  * Add registration
+  * Add registration
+  * Now template override prefill values
+  * Fix template rendering bug
+  * Rewrite design for login page
+  * Update login screen
+  * Redesign and fix bug
+  * Rewrite patient dashboard
+  * Fix login screen
+  * Change config path
+  * Rename cgu to terms and handle patient interface terms
+  * Update patient dashboard
+  * Show branding name
+  * Few design rewrite
+  * Fix video call
+  * Don't hide control
+  * Fix missing boto3
+  * Fix profile page
+  * Fix branding and logo
+  * Fix chat hiehg
+  * Add download attachment on chat
+  * Fix footer
+  * Harmonize style
+  * Fix button and various layout
+  * Fix edit patient name
+  * Fix footer and title of page
+  * Improve consultation details in patient
+  * Add consultation filter
+  * Fix selecting users
+  * Toaster show 404
+  * Fix calendar view
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Wed, 18 Feb 2026 15:02:17 +0100
+
 hcw (0.9.34) bookworm; urgency=medium
 
   [ Gor Grigoryan ]
