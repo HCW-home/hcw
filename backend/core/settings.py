@@ -250,7 +250,7 @@ REST_FRAMEWORK = {
 
 SITE_ID = 1
 ACCOUNT_EMAIL_VERIFICATION = "none"  # Disable email verification for social auth
-ACCOUNT_EMAIL_REQUIRED = False
+ACCOUNT_EMAIL_REQUIRED = True
 AUTH_USER_MODEL = "users.User"
 
 REST_AUTH = {
@@ -303,12 +303,17 @@ SOCIALACCOUNT_PROVIDERS = {
                     "server_url": os.getenv("OPENID_CONFIGURATION_URL"),
                 },
             }
-        ]
+        ],
+        "EMAIL_AUTHENTICATION": True,
+        "VERIFIED_EMAIL": True,
     }
 }
 
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+SOCIALACCOUNT_LOGIN_ON_GET = True
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
 
 REDIS_HOST = os.getenv("REDIS_HOST") or "127.0.0.1"
 REDIS_PORT = os.getenv("REDIS_PORT") or "6379"
