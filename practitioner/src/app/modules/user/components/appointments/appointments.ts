@@ -1,9 +1,28 @@
-import { Component, OnInit, OnDestroy, signal, inject, viewChild, HostListener } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  AfterViewInit,
+  signal,
+  inject,
+  viewChild,
+  ElementRef,
+  HostListener,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
-import { FullCalendarModule, FullCalendarComponent } from '@fullcalendar/angular';
-import { CalendarOptions, EventInput, EventClickArg, EventHoveringArg, DatesSetArg } from '@fullcalendar/core';
+import {
+  FullCalendarModule,
+  FullCalendarComponent,
+} from '@fullcalendar/angular';
+import {
+  CalendarOptions,
+  EventInput,
+  EventClickArg,
+  EventHoveringArg,
+  DatesSetArg,
+} from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -12,10 +31,19 @@ import { Loader } from '../../../../shared/components/loader/loader';
 import { Badge } from '../../../../shared/components/badge/badge';
 import { Svg } from '../../../../shared/ui-components/svg/svg';
 import { Button } from '../../../../shared/ui-components/button/button';
-import { ButtonStyleEnum, ButtonSizeEnum } from '../../../../shared/constants/button';
+import {
+  ButtonStyleEnum,
+  ButtonSizeEnum,
+} from '../../../../shared/constants/button';
 import { ConsultationService } from '../../../../core/services/consultation.service';
 import { ToasterService } from '../../../../core/services/toaster.service';
-import { Appointment, AppointmentStatus, AppointmentType, Participant, ParticipantStatus } from '../../../../core/models/consultation';
+import {
+  Appointment,
+  AppointmentStatus,
+  AppointmentType,
+  Participant,
+  ParticipantStatus,
+} from '../../../../core/models/consultation';
 import { RoutePaths } from '../../../../core/constants/routes';
 import { getAppointmentBadgeType } from '../../../../shared/tools/helper';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
@@ -25,15 +53,26 @@ type CalendarView = 'dayGridMonth' | 'timeGridWeek' | 'timeGridDay' | 'list';
 
 @Component({
   selector: 'app-appointments',
-  imports: [CommonModule, DatePipe, Page, Loader, Svg, Badge, Button, FullCalendarModule, LocalDatePipe],
+  imports: [
+    CommonModule,
+    DatePipe,
+    Page,
+    Loader,
+    Svg,
+    Badge,
+    Button,
+    FullCalendarModule,
+    LocalDatePipe,
+  ],
   templateUrl: './appointments.html',
   styleUrl: './appointments.scss',
 })
-export class Appointments implements OnInit, OnDestroy {
+export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   private destroy$ = new Subject<void>();
   private router = inject(Router);
   private consultationService = inject(ConsultationService);
   private toasterService = inject(ToasterService);
+  private el = inject(ElementRef);
 
   protected readonly getAppointmentBadgeType = getAppointmentBadgeType;
   protected readonly AppointmentType = AppointmentType;
@@ -70,31 +109,61 @@ export class Appointments implements OnInit, OnDestroy {
     datesSet: this.handleDatesSet.bind(this),
     eventMouseEnter: this.handleEventMouseEnter.bind(this),
     eventMouseLeave: this.handleEventMouseLeave.bind(this),
-    slotMinTime: '06:00:00',
-    slotMaxTime: '22:00:00',
+    slotMinTime: '00:00:00',
+    slotMaxTime: '24:00:00',
     allDaySlot: false,
     nowIndicator: true,
     slotDuration: '00:30:00',
     eventTimeFormat: {
       hour: '2-digit',
       minute: '2-digit',
-      hour12: false
+      hour12: false,
     },
     dayHeaderFormat: {
       weekday: 'short',
-      day: 'numeric'
-    }
+      day: 'numeric',
+    },
   };
 
   @HostListener('window:resize')
   onResize(): void {
-    const calendarApi = this.calendarComponent()?.getApi();
-    if (calendarApi) {
-      calendarApi.updateSize();
-    }
+    this.updateCalendarHeight();
   }
 
-  ngOnInit(): void {
+  ngOnInit(): void {}
+
+  ngAfterViewInit(): void {
+    setTimeout(() => {
+      this.updateCalendarHeight();
+      this.scrollToNowIndicator();
+    });
+  }
+
+  private updateCalendarHeight(): void {
+    const calendarApi = this.calendarComponent()?.getApi();
+    if (!calendarApi) return;
+
+    const wrapperEl = this.el.nativeElement.querySelector('.calendar-wrapper');
+    if (!wrapperEl) return;
+
+    const rect = wrapperEl.getBoundingClientRect();
+    const availableHeight = window.innerHeight - rect.top - 320;
+    calendarApi.setOption('height', Math.max(400, availableHeight));
+    calendarApi.updateSize();
+  }
+
+  private scrollToNowIndicator(): void {
+    const indicator = this.el.nativeElement.querySelector(
+      '.fc-timegrid-now-indicator-line'
+    );
+    if (indicator) {
+      const scroller = indicator.closest('.fc-scroller');
+      if (scroller) {
+        const indicatorTop = indicator.offsetTop;
+        const scrollerHeight = scroller.clientHeight;
+        scroller.scrollTop = indicatorTop - scrollerHeight / 3;
+      }
+    }
   }
 
   ngOnDestroy(): void {
@@ -125,13 +194,19 @@ export class Appointments implements OnInit, OnDestroy {
       .subscribe({
         next: response => {
           this.appointments.set(response.results);
-          this.calendarEvents.set(this.transformToCalendarEvents(response.results));
+          this.calendarEvents.set(
+            this.transformToCalendarEvents(response.results)
+          );
           this.loading.set(false);
         },
-        error: (err) => {
-          this.toasterService.show('error', 'Error Loading Appointments', getErrorMessage(err));
+        error: err => {
+          this.toasterService.show(
+            'error',
+            'Error Loading Appointments',
+            getErrorMessage(err)
+          );
           this.loading.set(false);
-        }
+        },
       });
   }
 
@@ -140,7 +215,10 @@ export class Appointments implements OnInit, OnDestroy {
     this.listCurrentPage = 1;
 
     this.consultationService
-      .getAppointments({ page_size: this.pageSize, status: AppointmentStatus.SCHEDULED })
+      .getAppointments({
+        page_size: this.pageSize,
+        status: AppointmentStatus.SCHEDULED,
+      })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: response => {
@@ -148,10 +226,14 @@ export class Appointments implements OnInit, OnDestroy {
           this.hasMore.set(!!response.next);
           this.loading.set(false);
         },
-        error: (err) => {
-          this.toasterService.show('error', 'Error Loading Appointments', getErrorMessage(err));
+        error: err => {
+          this.toasterService.show(
+            'error',
+            'Error Loading Appointments',
+            getErrorMessage(err)
+          );
           this.loading.set(false);
-        }
+        },
       });
   }
 
@@ -162,18 +244,29 @@ export class Appointments implements OnInit, OnDestroy {
     this.listCurrentPage++;
 
     this.consultationService
-      .getAppointments({ page_size: this.pageSize, page: this.listCurrentPage, status: AppointmentStatus.SCHEDULED })
+      .getAppointments({
+        page_size: this.pageSize,
+        page: this.listCurrentPage,
+        status: AppointmentStatus.SCHEDULED,
+      })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: response => {
-          this.appointments.update(current => [...current, ...response.results]);
+          this.appointments.update(current => [
+            ...current,
+            ...response.results,
+          ]);
           this.hasMore.set(!!response.next);
           this.loadingMore.set(false);
         },
-        error: (err) => {
-          this.toasterService.show('error', 'Error Loading Appointments', getErrorMessage(err));
+        error: err => {
+          this.toasterService.show(
+            'error',
+            'Error Loading Appointments',
+            getErrorMessage(err)
+          );
           this.loadingMore.set(false);
-        }
+        },
       });
   }
 
@@ -186,7 +279,7 @@ export class Appointments implements OnInit, OnDestroy {
       backgroundColor: this.getStatusColor(appointment.status),
       borderColor: this.getStatusColor(appointment.status),
       textColor: '#ffffff',
-      extendedProps: { appointment }
+      extendedProps: { appointment },
     }));
   }
 
@@ -231,11 +324,14 @@ export class Appointments implements OnInit, OnDestroy {
   }
 
   handleEventClick(clickInfo: EventClickArg): void {
-    const appointment = clickInfo.event.extendedProps['appointment'] as Appointment;
-    const consultationId = appointment?.consultation_id || appointment?.consultation;
+    const appointment = clickInfo.event.extendedProps[
+      'appointment'
+    ] as Appointment;
+    const consultationId =
+      appointment?.consultation_id || appointment?.consultation;
     if (consultationId) {
       this.router.navigate([RoutePaths.USER, 'consultations', consultationId], {
-        queryParams: { appointmentId: appointment.id }
+        queryParams: { appointmentId: appointment.id },
       });
     }
   }
@@ -253,9 +349,11 @@ export class Appointments implements OnInit, OnDestroy {
     const newStart = formatDate(arg.start);
     const newEnd = formatDate(arg.end);
 
-    if (!this.currentDateRange ||
-        this.currentDateRange.start !== newStart ||
-        this.currentDateRange.end !== newEnd) {
+    if (
+      !this.currentDateRange ||
+      this.currentDateRange.start !== newStart ||
+      this.currentDateRange.end !== newEnd
+    ) {
       this.currentDateRange = { start: newStart, end: newEnd };
       this.loadAppointments();
     }
@@ -267,7 +365,7 @@ export class Appointments implements OnInit, OnDestroy {
       const rect = info.el.getBoundingClientRect();
       this.tooltipPosition.set({
         top: rect.bottom + window.scrollY + 8,
-        left: rect.left + window.scrollX
+        left: rect.left + window.scrollX,
       });
       this.hoveredAppointment.set(appointment);
     }
@@ -327,10 +425,11 @@ export class Appointments implements OnInit, OnDestroy {
   }
 
   viewAppointment(appointment: Appointment): void {
-    const consultationId = appointment.consultation_id || appointment.consultation;
+    const consultationId =
+      appointment.consultation_id || appointment.consultation;
     if (consultationId) {
       this.router.navigate([RoutePaths.USER, 'consultations', consultationId], {
-        queryParams: { appointmentId: appointment.id }
+        queryParams: { appointmentId: appointment.id },
       });
     }
   }
@@ -415,5 +514,4 @@ export class Appointments implements OnInit, OnDestroy {
         return 'scheduled';
     }
   }
-
 }

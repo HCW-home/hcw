@@ -343,49 +343,7 @@
   flex-shrink: 0;
 }
 
-.legend {
-  display: flex;
-  gap: 24px;
-  margin-top: 20px;
-  padding: 16px 20px;
-  background: var(--White);
-  border-radius: 12px;
-  border: 1px solid var(--slate-100);
 
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .legend-color {
-    width: 12px;
-    height: 12px;
-    border-radius: 4px;
-
-    &.scheduled {
-      background: #3b82f6;
-    }
-
-    &.in-progress {
-      background: #f59e0b;
-    }
-
-    &.completed {
-      background: #10b981;
-    }
-
-    &.cancelled {
-      background: #ef4444;
-    }
-  }
-
-  .legend-label {
-    font-size: 13px;
-    color: var(--slate-600);
-    font-weight: 500;
-  }
-}
 
 :host ::ng-deep {
   .fc {
@@ -415,7 +373,7 @@
   }
 
   .fc-timegrid-slot {
-    height: 48px;
+    height: 28px;
 
     .fc-timegrid-slot-label-cushion {
       color: var(--slate-500);
@@ -597,7 +555,7 @@
     }
 
     .fc-timegrid-slot {
-      height: 40px;
+      height: 24px;
     }
   }
 }
