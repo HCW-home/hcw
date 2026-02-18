@@ -144,15 +144,36 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private updateCalendarHeight(): void {
+    if (this.currentView() === 'list') return;
+
     const calendarApi = this.calendarComponent()?.getApi();
     if (!calendarApi) return;
 
-    const wrapperEl = this.el.nativeElement.querySelector('.calendar-wrapper');
-    if (!wrapperEl) return;
+    const userContent = this.el.nativeElement.closest('.user-content') as HTMLElement;
+    if (!userContent) return;
 
-    const rect = wrapperEl.getBoundingClientRect();
-    const availableHeight = window.innerHeight - rect.top - 320;
-    calendarApi.setOption('height', Math.max(400, availableHeight));
+    const containerEl = this.el.nativeElement.querySelector('.appointments-container') as HTMLElement;
+    const headerEl = this.el.nativeElement.querySelector('.calendar-header') as HTMLElement;
+    const wrapperEl = this.el.nativeElement.querySelector('.calendar-wrapper') as HTMLElement;
+    if (!containerEl || !headerEl || !wrapperEl) return;
+
+    const contentHeight = userContent.clientHeight;
+    const containerStyle = getComputedStyle(containerEl);
+    const headerStyle = getComputedStyle(headerEl);
+    const wrapperStyle = getComputedStyle(wrapperEl);
+
+    const usedHeight =
+      parseFloat(containerStyle.paddingTop) +
+      parseFloat(containerStyle.paddingBottom) +
+      headerEl.offsetHeight +
+      parseFloat(headerStyle.marginBottom) +
+      parseFloat(wrapperStyle.paddingTop) +
+      parseFloat(wrapperStyle.paddingBottom) +
+      parseFloat(wrapperStyle.borderTopWidth) +
+      parseFloat(wrapperStyle.borderBottomWidth);
+
+    const availableHeight = contentHeight - usedHeight;
+    calendarApi.setOption('height', Math.max(200, availableHeight));
     calendarApi.updateSize();
   }
 
