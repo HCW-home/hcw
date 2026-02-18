@@ -328,17 +328,17 @@ class MessageAttachmentView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        file_path = message.attachment.path
-        file_name = os.path.basename(file_path)
+        file_name = os.path.basename(message.attachment.name)
 
         # Guess the content type
-        content_type, _ = mimetypes.guess_type(file_path)
+        content_type, _ = mimetypes.guess_type(file_name)
         if content_type is None:
             content_type = "application/octet-stream"
 
         # Open and return the file
         try:
-            response = FileResponse(open(file_path, "rb"), content_type=content_type)
+            attachment_file = message.attachment.open("rb")
+            response = FileResponse(attachment_file, content_type=content_type)
             response["Content-Disposition"] = f'inline; filename="{file_name}"'
             return response
         except FileNotFoundError:
