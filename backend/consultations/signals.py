@@ -76,7 +76,7 @@ def message_saved(sender, instance: Message, created, **kwargs):
 
     # Send notifications to each user
     for user_pk in get_users_to_notification_consultation(instance.consultation):
-        if instance.created_by.pk == user_pk:
+        if instance.created_by and instance.created_by.pk == user_pk:
             continue
 
         # Send WebSocket notification
