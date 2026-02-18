@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import {
@@ -20,6 +20,8 @@ import { AuthService } from '../../core/services/auth.service';
 import { ConsultationRequest, Speciality, User } from '../../core/models/consultation.model';
 import { WebSocketState } from '../../core/models/websocket.model';
 import { MessageListComponent, Message, SendMessageData, EditMessageData, DeleteMessageData } from '../../shared/components/message-list/message-list';
+import { TranslatePipe } from '@ngx-translate/core';
+import { TranslationService } from '../../core/services/translation.service';
 
 interface RequestStatus {
   label: string;
@@ -41,10 +43,12 @@ interface RequestStatus {
     IonBackButton,
     IonContent,
     IonSpinner,
-    MessageListComponent
+    MessageListComponent,
+    TranslatePipe
   ]
 })
 export class RequestDetailPage implements OnInit, OnDestroy {
+  private t = inject(TranslationService);
   private destroy$ = new Subject<void>();
   private requestId: number | null = null;
 
@@ -175,7 +179,7 @@ export class RequestDetailPage implements OnInit, OnDestroy {
         error: async (error) => {
           this.isLoading.set(false);
           const toast = await this.toastController.create({
-            message: error?.error?.detail || 'Failed to load request details',
+            message: error?.error?.detail || this.t.instant('requestDetail.failedLoad'),
             duration: 3000,
             position: 'bottom',
             color: 'danger'
@@ -198,7 +202,7 @@ export class RequestDetailPage implements OnInit, OnDestroy {
             const isCurrentUser = msg.created_by.id === currentUserId;
             return {
               id: msg.id,
-              username: isCurrentUser ? 'You' : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim(),
+              username: isCurrentUser ? this.t.instant('requestDetail.you') : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim(),
               message: msg.content || '',
               timestamp: msg.created_at,
               isCurrentUser,
@@ -212,7 +216,7 @@ export class RequestDetailPage implements OnInit, OnDestroy {
         },
         error: async (error) => {
           const toast = await this.toastController.create({
-            message: error?.error?.detail || 'Failed to load messages',
+            message: error?.error?.detail || this.t.instant('requestDetail.failedLoadMessages'),
             duration: 3000,
             position: 'bottom',
             color: 'danger'
@@ -239,7 +243,7 @@ export class RequestDetailPage implements OnInit, OnDestroy {
             const isCurrentUser = msg.created_by.id === currentUserId;
             return {
               id: msg.id,
-              username: isCurrentUser ? 'You' : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim(),
+              username: isCurrentUser ? this.t.instant('requestDetail.you') : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim(),
               message: msg.content || '',
               timestamp: msg.created_at,
               isCurrentUser,
@@ -256,7 +260,7 @@ export class RequestDetailPage implements OnInit, OnDestroy {
           this.currentPage--;
           this.isLoadingMore.set(false);
           const toast = await this.toastController.create({
-            message: error?.error?.detail || 'Failed to load more messages',
+            message: error?.error?.detail || this.t.instant('requestDetail.failedLoadMore'),
             duration: 3000,
             position: 'bottom',
             color: 'danger'
@@ -274,7 +278,7 @@ export class RequestDetailPage implements OnInit, OnDestroy {
     const tempId = Date.now();
     const newMessage: Message = {
       id: tempId,
-      username: 'You',
+      username: this.t.instant('requestDetail.you'),
       message: data.content || '',
       timestamp: new Date().toISOString(),
       isCurrentUser: true,
@@ -297,7 +301,7 @@ export class RequestDetailPage implements OnInit, OnDestroy {
         error: async (error) => {
           this.messages.update(msgs => msgs.filter(m => m.id !== tempId));
           const toast = await this.toastController.create({
-            message: error?.error?.detail || 'Failed to send message',
+            message: error?.error?.detail || this.t.instant('requestDetail.failedSend'),
             duration: 3000,
             position: 'bottom',
             color: 'danger'
@@ -324,7 +328,7 @@ export class RequestDetailPage implements OnInit, OnDestroy {
             } : m)
           );
           const toast = await this.toastController.create({
-            message: 'Message updated',
+            message: this.t.instant('requestDetail.messageUpdated'),
             duration: 2000,
             position: 'bottom',
             color: 'success'
@@ -333,7 +337,7 @@ export class RequestDetailPage implements OnInit, OnDestroy {
         },
         error: async (error) => {
           const toast = await this.toastController.create({
-            message: error?.error?.detail || 'Failed to update message',
+            message: error?.error?.detail || this.t.instant('requestDetail.failedUpdate'),
             duration: 3000,
             position: 'bottom',
             color: 'danger'
@@ -357,7 +361,7 @@ export class RequestDetailPage implements OnInit, OnDestroy {
             } : m)
           );
           const toast = await this.toastController.create({
-            message: 'Message deleted',
+            message: this.t.instant('requestDetail.messageDeleted'),
             duration: 2000,
             position: 'bottom',
             color: 'success'
@@ -366,7 +370,7 @@ export class RequestDetailPage implements OnInit, OnDestroy {
         },
         error: async (error) => {
           const toast = await this.toastController.create({
-            message: error?.error?.detail || 'Failed to delete message',
+            message: error?.error?.detail || this.t.instant('requestDetail.failedDelete'),
             duration: 3000,
             position: 'bottom',
             color: 'danger'
@@ -383,11 +387,11 @@ export class RequestDetailPage implements OnInit, OnDestroy {
   getStatusConfig(status: string | undefined): RequestStatus {
     const normalizedStatus = (status || 'Requested').toLowerCase();
     const statusMap: Record<string, RequestStatus> = {
-      'requested': { label: 'Pending', color: 'warning' },
-      'accepted': { label: 'Accepted', color: 'info' },
-      'scheduled': { label: 'Scheduled', color: 'primary' },
-      'cancelled': { label: 'Cancelled', color: 'muted' },
-      'refused': { label: 'Refused', color: 'muted' }
+      'requested': { label: this.t.instant('requestDetail.statusPending'), color: 'warning' },
+      'accepted': { label: this.t.instant('requestDetail.statusAccepted'), color: 'info' },
+      'scheduled': { label: this.t.instant('requestDetail.statusScheduled'), color: 'primary' },
+      'cancelled': { label: this.t.instant('requestDetail.statusCancelled'), color: 'muted' },
+      'refused': { label: this.t.instant('requestDetail.statusRefused'), color: 'muted' }
     };
     return statusMap[normalizedStatus] || statusMap['requested'];
   }
@@ -405,7 +409,7 @@ export class RequestDetailPage implements OnInit, OnDestroy {
     if (req && typeof req.reason === 'object' && req.reason) {
       return req.reason.name;
     }
-    return 'Consultation';
+    return this.t.instant('requestDetail.consultation');
   }
 
   getSpecialityName(): string {
@@ -441,11 +445,11 @@ export class RequestDetailPage implements OnInit, OnDestroy {
   }
 
   getAppointmentTypeLabel(): string {
-    return this.request()?.appointment?.type === 'online' ? 'Video Consultation' : 'In-person Visit';
+    return this.request()?.appointment?.type === 'online' ? this.t.instant('requestDetail.videoConsultation') : this.t.instant('requestDetail.inPersonVisit');
   }
 
   getTypeLabel(): string {
-    return this.request()?.type === 'online' ? 'Video Consultation' : 'In-person Visit';
+    return this.request()?.type === 'online' ? this.t.instant('requestDetail.videoConsultation') : this.t.instant('requestDetail.inPersonVisit');
   }
 
   isStatusRequested(): boolean {
@@ -489,7 +493,7 @@ export class RequestDetailPage implements OnInit, OnDestroy {
       .subscribe({
         next: async () => {
           const toast = await this.toastController.create({
-            message: 'Request cancelled successfully',
+            message: this.t.instant('requestDetail.cancelSuccess'),
             duration: 3000,
             position: 'bottom',
             color: 'success'
@@ -499,7 +503,7 @@ export class RequestDetailPage implements OnInit, OnDestroy {
         },
         error: async (error) => {
           const toast = await this.toastController.create({
-            message: error?.error?.detail || 'Failed to cancel request',
+            message: error?.error?.detail || this.t.instant('requestDetail.failedCancel'),
             duration: 3000,
             position: 'bottom',
             color: 'danger'

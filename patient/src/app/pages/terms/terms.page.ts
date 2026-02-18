@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   IonContent,
@@ -7,9 +7,11 @@ import {
   NavController,
   ToastController,
 } from '@ionic/angular/standalone';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Subject, takeUntil, switchMap, take, EMPTY, firstValueFrom } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { TermsService } from '../../core/services/terms.service';
+import { TranslationService } from '../../core/services/translation.service';
 import { ITerm } from '../../core/models/user.model';
 
 @Component({
@@ -17,9 +19,10 @@ import { ITerm } from '../../core/models/user.model';
   templateUrl: './terms.page.html',
   styleUrls: ['./terms.page.scss'],
   standalone: true,
-  imports: [CommonModule, IonContent, IonButton, IonSpinner],
+  imports: [CommonModule, IonContent, IonButton, IonSpinner, TranslatePipe],
 })
 export class TermsPage implements OnInit, OnDestroy {
+  private t = inject(TranslationService);
   private destroy$ = new Subject<void>();
 
   term: ITerm | null = null;
@@ -68,7 +71,7 @@ export class TermsPage implements OnInit, OnDestroy {
     } catch {
       this.loading = false;
       const toast = await this.toastController.create({
-        message: 'Failed to load terms',
+        message: this.t.instant('terms.failedLoad'),
         duration: 3000,
         color: 'danger',
       });
@@ -93,7 +96,7 @@ export class TermsPage implements OnInit, OnDestroy {
         error: async () => {
           this.accepting = false;
           const toast = await this.toastController.create({
-            message: 'Failed to accept terms',
+            message: this.t.instant('terms.failedAccept'),
             duration: 3000,
             color: 'danger',
           });

@@ -1,4 +1,4 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, inject } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import {
   FormBuilder,
@@ -18,9 +18,12 @@ import {
   ToastController,
 } from "@ionic/angular/standalone";
 import { ActivatedRoute } from "@angular/router";
+import { TranslatePipe } from "@ngx-translate/core";
 import { AuthService } from "../../core/services/auth.service";
+import { TranslationService } from "../../core/services/translation.service";
 import { ActionHandlerService } from "../../core/services/action-handler.service";
 import { ConsultationService } from "../../core/services/consultation.service";
+import { LanguageSelectorComponent } from "../../shared/components/language-selector/language-selector.component";
 
 @Component({
   selector: "app-login",
@@ -30,15 +33,19 @@ import { ConsultationService } from "../../core/services/consultation.service";
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    TranslatePipe,
     IonContent,
     IonItem,
     IonInput,
     IonButton,
     IonIcon,
     IonText,
+    LanguageSelectorComponent,
   ],
 })
 export class LoginPage implements OnInit {
+  private t = inject(TranslationService);
+
   loginForm: FormGroup;
   showPassword = false;
   registrationEnabled = false;
@@ -87,7 +94,7 @@ export class LoginPage implements OnInit {
   async onLogin() {
     if (this.loginForm.valid) {
       const loading = await this.loadingCtrl.create({
-        message: "Logging in...",
+        message: this.t.instant('login.loggingIn'),
         spinner: "crescent",
       });
       await loading.present();
@@ -127,7 +134,7 @@ export class LoginPage implements OnInit {
           await loading.dismiss();
           const toast = await this.toastCtrl.create({
             message:
-              error.error?.detail || "Invalid credentials. Please try again.",
+              error.error?.detail || this.t.instant('login.invalidCredentials'),
             duration: 3000,
             position: "top",
             color: "danger",

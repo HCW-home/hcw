@@ -1,36 +1,36 @@
-<app-header pageTitle="Confirm Your Presence" [showBackButton]="true"></app-header>
+<app-header [pageTitle]="'confirmPresence.title' | translate" [showBackButton]="true"></app-header>
 
 <ion-content class="presence-content">
   <div class="presence-container">
     @if (isLoading) {
       <div class="loading-state">
         <ion-spinner name="crescent"></ion-spinner>
-        <ion-text class="loading-text" color="medium">Loading appointments...</ion-text>
+        <ion-text class="loading-text" color="medium">{{ 'confirmPresence.loadingAppointments' | translate }}</ion-text>
       </div>
     } @else if (errorMessage) {
       <div class="error-state">
         <ion-icon name="alert-circle-outline" class="error-icon"></ion-icon>
-        <ion-text class="error-title" color="danger">Error</ion-text>
+        <ion-text class="error-title" color="danger">{{ 'confirmPresence.error' | translate }}</ion-text>
         <ion-text class="error-message" color="medium">{{ errorMessage }}</ion-text>
         <ion-button expand="block" shape="round" (click)="goToHome()" class="action-button">
-          Go to Home
+          {{ 'confirmPresence.goToHome' | translate }}
         </ion-button>
       </div>
     } @else if (pendingAppointments.length === 0) {
       <div class="empty-state">
         <ion-icon name="checkmark-circle-outline" class="success-icon"></ion-icon>
-        <ion-text class="success-title">All Done</ion-text>
+        <ion-text class="success-title">{{ 'confirmPresence.allDone' | translate }}</ion-text>
         <ion-text class="success-message" color="medium">
-          You have no pending appointments that need confirmation.
+          {{ 'confirmPresence.noPending' | translate }}
         </ion-text>
         <ion-button expand="block" shape="round" (click)="goToHome()" class="action-button">
-          Go to Home
+          {{ 'confirmPresence.goToHome' | translate }}
         </ion-button>
       </div>
     } @else {
       <div class="appointments-section">
         <ion-text class="section-subtitle" color="medium">
-          Please confirm your availability for the following appointments.
+          {{ 'confirmPresence.pleaseConfirm' | translate }}
         </ion-text>
 
         @for (appointment of pendingAppointments; track appointment.id) {
@@ -39,7 +39,7 @@
               <div class="appointment-info">
                 <div class="appointment-type">
                   <ion-icon [name]="appointment.type === 'online' ? 'videocam-outline' : 'location-outline'"></ion-icon>
-                  <span>{{ appointment.type === 'online' ? 'Online' : 'In person' }}</span>
+                  <span>{{ appointment.type === 'online' ? ('confirmPresence.online' | translate) : ('confirmPresence.inPerson' | translate) }}</span>
                 </div>
                 <div class="appointment-datetime">
                   <ion-icon name="calendar-outline"></ion-icon>
@@ -60,7 +60,7 @@
                     <ion-spinner name="crescent"></ion-spinner>
                   } @else {
                     <ion-icon name="close-outline" slot="start"></ion-icon>
-                    I am not available
+                    {{ 'confirmPresence.notAvailable' | translate }}
                   }
                 </ion-button>
                 <ion-button
@@ -73,7 +73,7 @@
                     <ion-spinner name="crescent"></ion-spinner>
                   } @else {
                     <ion-icon name="checkmark-outline" slot="start"></ion-icon>
-                    I am available
+                    {{ 'confirmPresence.available' | translate }}
                   }
                 </ion-button>
               </div>
@@ -83,7 +83,7 @@
 
         <div class="skip-link">
           <ion-text color="primary" (click)="goToHome()" class="link-text">
-            Skip and go to home
+            {{ 'confirmPresence.skipToHome' | translate }}
           </ion-text>
         </div>
       </div>

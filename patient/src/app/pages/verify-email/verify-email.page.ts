@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import {
@@ -9,7 +9,9 @@ import {
   IonSpinner,
   NavController,
 } from '@ionic/angular/standalone';
+import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../core/services/auth.service';
+import { TranslationService } from '../../core/services/translation.service';
 
 @Component({
   selector: 'app-verify-email',
@@ -23,9 +25,11 @@ import { AuthService } from '../../core/services/auth.service';
     IonText,
     IonButton,
     IonSpinner,
+    TranslatePipe,
   ]
 })
 export class VerifyEmailPage implements OnInit {
+  private t = inject(TranslationService);
   isLoading = true;
   success = false;
   errorMessage: string | null = null;
@@ -40,7 +44,7 @@ export class VerifyEmailPage implements OnInit {
     const token = this.route.snapshot.queryParamMap.get('token');
     if (!token) {
       this.isLoading = false;
-      this.errorMessage = 'Invalid or missing verification link.';
+      this.errorMessage = this.t.instant('verifyEmail.invalidLink');
       return;
     }
 
@@ -51,7 +55,7 @@ export class VerifyEmailPage implements OnInit {
       },
       error: (error) => {
         this.isLoading = false;
-        this.errorMessage = error.error?.detail || 'Email verification failed. The link may be invalid or expired.';
+        this.errorMessage = error.error?.detail || this.t.instant('verifyEmail.verificationFailed');
       },
     });
   }

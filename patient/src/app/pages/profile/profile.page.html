@@ -1,4 +1,4 @@
-<app-header pageTitle="Profile" [showBackButton]="true"></app-header>
+<app-header [pageTitle]="'profile.title' | translate" [showBackButton]="true"></app-header>
 
 <ion-content class="profile-content">
   <div class="profile-header">
@@ -69,16 +69,16 @@
     <ng-template>
       <ion-header>
         <ion-toolbar>
-          <ion-title>Edit Profile</ion-title>
+          <ion-title>{{ 'profile.editProfile' | translate }}</ion-title>
           <ion-buttons slot="start">
-            <ion-button (click)="closeEditModal()">Cancel</ion-button>
+            <ion-button (click)="closeEditModal()">{{ 'common.cancel' | translate }}</ion-button>
           </ion-buttons>
           <ion-buttons slot="end">
             <ion-button (click)="saveProfile()" [disabled]="isSaving" color="primary">
               @if (isSaving) {
                 <ion-spinner name="crescent"></ion-spinner>
               } @else {
-                <ion-text>Save</ion-text>
+                <ion-text>{{ 'common.save' | translate }}</ion-text>
               }
             </ion-button>
           </ion-buttons>
@@ -87,7 +87,7 @@
       <ion-content>
         <ion-list>
           <ion-item>
-            <ion-label position="stacked">First Name</ion-label>
+            <ion-label position="stacked">{{ 'profile.firstName' | translate }}</ion-label>
             <ion-input
               [value]="currentUser?.first_name"
               type="text"
@@ -96,7 +96,7 @@
             </ion-input>
           </ion-item>
           <ion-item>
-            <ion-label position="stacked">Last Name</ion-label>
+            <ion-label position="stacked">{{ 'profile.lastName' | translate }}</ion-label>
             <ion-input
               [value]="currentUser?.last_name"
               type="text"
@@ -105,7 +105,7 @@
             </ion-input>
           </ion-item>
           <ion-item>
-            <ion-label position="stacked">Email</ion-label>
+            <ion-label position="stacked">{{ 'profile.emailLabel' | translate }}</ion-label>
             <ion-input
               [value]="currentUser?.email"
               type="email"
@@ -114,33 +114,33 @@
             </ion-input>
           </ion-item>
           <ion-item>
-            <ion-label position="stacked">Phone Number</ion-label>
+            <ion-label position="stacked">{{ 'profile.phoneNumber' | translate }}</ion-label>
             <ion-input
               [(ngModel)]="editedUser.mobile_phone_number"
               type="tel"
-              placeholder="Enter phone number">
+              [placeholder]="'profile.phonePlaceholder' | translate">
             </ion-input>
           </ion-item>
           <ion-item>
-            <ion-label position="stacked">Communication Method</ion-label>
-            <ion-select [(ngModel)]="editedUser.communication_method" placeholder="Select method">
-              <ion-select-option value="email">Email</ion-select-option>
-              <ion-select-option value="sms">SMS</ion-select-option>
-              <ion-select-option value="whatsapp">WhatsApp</ion-select-option>
+            <ion-label position="stacked">{{ 'profile.communicationMethod' | translate }}</ion-label>
+            <ion-select [(ngModel)]="editedUser.communication_method" [placeholder]="'profile.selectMethod' | translate">
+              <ion-select-option value="email">{{ 'profile.commEmail' | translate }}</ion-select-option>
+              <ion-select-option value="sms">{{ 'profile.commSms' | translate }}</ion-select-option>
+              <ion-select-option value="whatsapp">{{ 'profile.commWhatsApp' | translate }}</ion-select-option>
             </ion-select>
           </ion-item>
           <ion-item>
-            <ion-label position="stacked">Preferred Language</ion-label>
-            <ion-select [(ngModel)]="editedUser.preferred_language" placeholder="Select language">
-              <ion-select-option value="en">English</ion-select-option>
-              <ion-select-option value="fr">French</ion-select-option>
-              <ion-select-option value="de">German</ion-select-option>
-              <ion-select-option value="es">Spanish</ion-select-option>
+            <ion-label position="stacked">{{ 'profile.preferredLanguage' | translate }}</ion-label>
+            <ion-select [(ngModel)]="editedUser.preferred_language" [placeholder]="'profile.selectLanguage' | translate">
+              <ion-select-option value="en">{{ 'profile.langEnglish' | translate }}</ion-select-option>
+              <ion-select-option value="fr">{{ 'profile.langFrench' | translate }}</ion-select-option>
+              <ion-select-option value="de">{{ 'profile.langGerman' | translate }}</ion-select-option>
+              <ion-select-option value="es">{{ 'profile.langSpanish' | translate }}</ion-select-option>
             </ion-select>
           </ion-item>
           <ion-item>
-            <ion-label position="stacked">Timezone</ion-label>
-            <ion-select [(ngModel)]="editedUser.timezone" placeholder="Select timezone">
+            <ion-label position="stacked">{{ 'profile.timezone' | translate }}</ion-label>
+            <ion-select [(ngModel)]="editedUser.timezone" [placeholder]="'profile.selectTimezone' | translate">
               @for (tz of timezones; track tz) {
                 <ion-select-option [value]="tz">{{ tz }}</ion-select-option>
               }

@@ -1,0 +1,27 @@
+{
+  "common": {
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "signIn": "Se connecter",
+    "signUp": "S'inscrire",
+    "loading": "Chargement...",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "error": "Erreur",
+    "success": "Succes"
+  },
+  "login": {
+    "title": "Se connecter",
+    "subtitle": "Connectez-vous a votre compte",
+    "platformDescription": "Votre plateforme de telemedecine securisee pour des consultations a distance avec votre professionnel de sante.",
+    "emailPlaceholder": "E-mail",
+    "passwordPlaceholder": "Mot de passe",
+    "emailRequired": "Un e-mail valide est requis",
+    "passwordMinLength": "Le mot de passe doit contenir au moins 6 caracteres",
+    "forgotPassword": "Mot de passe oublie ?",
+    "noAccount": "Vous n'avez pas de compte ?",
+    "signUp": "S'inscrire",
+    "loggingIn": "Connexion en cours...",
+    "invalidCredentials": "Identifiants invalides. Veuillez reessayer."
+  }
+}

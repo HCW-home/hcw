@@ -3,13 +3,14 @@ import { CommonModule } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
 import { IonButton, IonIcon, IonAvatar } from '@ionic/angular/standalone';
 import { IncomingCallService, IncomingCallData } from '../../../core/services/incoming-call.service';
+import { TranslatePipe } from '@ngx-translate/core';
 import { addIcons } from 'ionicons';
 import { callOutline, closeOutline } from 'ionicons/icons';
 
 @Component({
   selector: 'app-incoming-call',
   standalone: true,
-  imports: [CommonModule, IonButton, IonIcon, IonAvatar],
+  imports: [CommonModule, IonButton, IonIcon, IonAvatar, TranslatePipe],
   templateUrl: './incoming-call.component.html',
   styleUrls: ['./incoming-call.component.scss'],
 })

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -14,7 +14,9 @@ import {
   ToastController
 } from '@ionic/angular/standalone';
 import { Subject, takeUntil } from 'rxjs';
+import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../core/services/auth.service';
+import { TranslationService } from '../../core/services/translation.service';
 
 @Component({
   selector: 'app-reset-password',
@@ -30,10 +32,12 @@ import { AuthService } from '../../core/services/auth.service';
     IonButton,
     IonIcon,
     IonText,
-    IonSpinner
+    IonSpinner,
+    TranslatePipe
   ]
 })
 export class ResetPasswordPage implements OnInit, OnDestroy {
+  private t = inject(TranslationService);
   private destroy$ = new Subject<void>();
 
   uid: string | null = null;
@@ -62,7 +66,7 @@ export class ResetPasswordPage implements OnInit, OnDestroy {
     this.token = this.route.snapshot.queryParamMap.get('token');
 
     if (!this.uid || !this.token) {
-      this.errorMessage = 'Invalid or missing reset link parameters';
+      this.errorMessage = this.t.instant('resetPassword.invalidLink');
     }
   }
 
@@ -87,7 +91,7 @@ export class ResetPasswordPage implements OnInit, OnDestroy {
     const { password, confirmPassword } = this.resetPasswordForm.value;
 
     if (password !== confirmPassword) {
-      this.errorMessage = 'Passwords do not match';
+      this.errorMessage = this.t.instant('resetPassword.passwordsMismatch');
       return;
     }
 
@@ -106,7 +110,7 @@ export class ResetPasswordPage implements OnInit, OnDestroy {
           next: async () => {
             this.isLoading = false;
             const toast = await this.toastCtrl.create({
-              message: 'Password has been reset successfully',
+              message: this.t.instant('resetPassword.resetSuccess'),
               duration: 3000,
               position: 'top',
               color: 'success'
@@ -116,15 +120,15 @@ export class ResetPasswordPage implements OnInit, OnDestroy {
           },
           error: async (error) => {
             this.isLoading = false;
-            let message = 'Failed to reset password. Please try again.';
+            let message = this.t.instant('resetPassword.resetFailed');
             if (error.error?.new_password1) {
               message = error.error.new_password1[0];
             } else if (error.error?.new_password2) {
               message = error.error.new_password2[0];
             } else if (error.error?.token) {
-              message = 'Reset link has expired or is invalid';
+              message = this.t.instant('resetPassword.linkExpired');
             } else if (error.error?.uid) {
-              message = 'Invalid reset link';
+              message = this.t.instant('resetPassword.invalidResetLink');
             }
             const toast = await this.toastCtrl.create({
               message,

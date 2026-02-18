@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal } from "@angular/core";
+import { Component, OnInit, OnDestroy, signal, inject } from "@angular/core";
 import { CommonModule, DatePipe } from "@angular/common";
 import { ActivatedRoute } from "@angular/router";
 import {
@@ -27,6 +27,8 @@ import {
 } from "../../shared/components/message-list/message-list";
 import { AppHeaderComponent } from "../../shared/app-header/app-header.component";
 import { AppFooterComponent } from "../../shared/app-footer/app-footer.component";
+import { TranslatePipe } from "@ngx-translate/core";
+import { TranslationService } from "../../core/services/translation.service";
 
 interface ConsultationStatus {
   label: string;
@@ -47,9 +49,11 @@ interface ConsultationStatus {
     MessageListComponent,
     AppHeaderComponent,
     AppFooterComponent,
+    TranslatePipe,
   ],
 })
 export class ConsultationDetailPage implements OnInit, OnDestroy {
+  private t = inject(TranslationService);
   private destroy$ = new Subject<void>();
   private consultationId: number | null = null;
 
@@ -167,7 +171,7 @@ export class ConsultationDetailPage implements OnInit, OnDestroy {
           this.isLoading.set(false);
           const toast = await this.toastController.create({
             message:
-              error?.error?.detail || "Failed to load consultation details",
+              error?.error?.detail || this.t.instant('consultationDetail.failedLoad'),
             duration: 3000,
             position: "bottom",
             color: "danger",
@@ -194,7 +198,7 @@ export class ConsultationDetailPage implements OnInit, OnDestroy {
               return {
                 id: msg.id,
                 username: isCurrentUser
-                  ? "You"
+                  ? this.t.instant('consultationDetail.you')
                   : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim(),
                 message: msg.content || "",
                 timestamp: msg.created_at,
@@ -210,7 +214,7 @@ export class ConsultationDetailPage implements OnInit, OnDestroy {
         },
         error: async (error) => {
           const toast = await this.toastController.create({
-            message: error?.error?.detail || "Failed to load messages",
+            message: error?.error?.detail || this.t.instant('consultationDetail.failedLoadMessages'),
             duration: 3000,
             position: "bottom",
             color: "danger",
@@ -239,7 +243,7 @@ export class ConsultationDetailPage implements OnInit, OnDestroy {
               return {
                 id: msg.id,
                 username: isCurrentUser
-                  ? "You"
+                  ? this.t.instant('consultationDetail.you')
                   : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim(),
                 message: msg.content || "",
                 timestamp: msg.created_at,
@@ -258,7 +262,7 @@ export class ConsultationDetailPage implements OnInit, OnDestroy {
           this.currentPage--;
           this.isLoadingMore.set(false);
           const toast = await this.toastController.create({
-            message: error?.error?.detail || "Failed to load more messages",
+            message: error?.error?.detail || this.t.instant('consultationDetail.failedLoadMore'),
             duration: 3000,
             position: "bottom",
             color: "danger",
@@ -274,7 +278,7 @@ export class ConsultationDetailPage implements OnInit, OnDestroy {
     const tempId = Date.now();
     const newMessage: Message = {
       id: tempId,
-      username: "You",
+      username: this.t.instant('consultationDetail.you'),
       message: data.content || "",
       timestamp: new Date().toISOString(),
       isCurrentUser: true,
@@ -308,7 +312,7 @@ export class ConsultationDetailPage implements OnInit, OnDestroy {
         error: async (error) => {
           this.messages.update((msgs) => msgs.filter((m) => m.id !== tempId));
           const toast = await this.toastController.create({
-            message: error?.error?.detail || "Failed to send message",
+            message: error?.error?.detail || this.t.instant('consultationDetail.failedSend'),
             duration: 3000,
             position: "bottom",
             color: "danger",
@@ -339,7 +343,7 @@ export class ConsultationDetailPage implements OnInit, OnDestroy {
             ),
           );
           const toast = await this.toastController.create({
-            message: "Message updated",
+            message: this.t.instant('consultationDetail.messageUpdated'),
             duration: 2000,
             position: "bottom",
             color: "success",
@@ -348,7 +352,7 @@ export class ConsultationDetailPage implements OnInit, OnDestroy {
         },
         error: async (error) => {
           const toast = await this.toastController.create({
-            message: error?.error?.detail || "Failed to update message",
+            message: error?.error?.detail || this.t.instant('consultationDetail.failedUpdate'),
             duration: 3000,
             position: "bottom",
             color: "danger",
@@ -377,7 +381,7 @@ export class ConsultationDetailPage implements OnInit, OnDestroy {
             ),
           );
           const toast = await this.toastController.create({
-            message: "Message deleted",
+            message: this.t.instant('consultationDetail.messageDeleted'),
             duration: 2000,
             position: "bottom",
             color: "success",
@@ -386,7 +390,7 @@ export class ConsultationDetailPage implements OnInit, OnDestroy {
         },
         error: async (error) => {
           const toast = await this.toastController.create({
-            message: error?.error?.detail || "Failed to delete message",
+            message: error?.error?.detail || this.t.instant('consultationDetail.failedDelete'),
             duration: 3000,
             position: "bottom",
             color: "danger",
@@ -403,10 +407,10 @@ export class ConsultationDetailPage implements OnInit, OnDestroy {
   getStatusConfig(status: string | undefined): ConsultationStatus {
     const normalizedStatus = (status || "REQUESTED").toLowerCase();
     const statusMap: Record<string, ConsultationStatus> = {
-      requested: { label: "Requested", color: "warning" },
-      active: { label: "Active", color: "success" },
-      closed: { label: "Closed", color: "muted" },
-      cancelled: { label: "Cancelled", color: "muted" },
+      requested: { label: this.t.instant('consultationDetail.statusRequested'), color: "warning" },
+      active: { label: this.t.instant('consultationDetail.statusActive'), color: "success" },
+      closed: { label: this.t.instant('consultationDetail.statusClosed'), color: "muted" },
+      cancelled: { label: this.t.instant('consultationDetail.statusCancelled'), color: "muted" },
     };
     return statusMap[normalizedStatus] || statusMap["requested"];
   }
@@ -416,7 +420,7 @@ export class ConsultationDetailPage implements OnInit, OnDestroy {
     if (cons?.reason && typeof cons.reason === "object") {
       return cons.reason.name;
     }
-    return "Consultation";
+    return this.t.instant('consultationDetail.consultation');
   }
 
   getDoctorName(): string {
@@ -443,8 +447,8 @@ export class ConsultationDetailPage implements OnInit, OnDestroy {
 
   getAppointmentTypeLabel(appointment: Appointment): string {
     return appointment.type === "online"
-      ? "Video Consultation"
-      : "In-person Visit";
+      ? this.t.instant('consultationDetail.videoConsultation')
+      : this.t.instant('consultationDetail.inPersonVisit');
   }
 
   isConsultationActive(): boolean {

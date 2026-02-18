@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -16,7 +16,9 @@ import {
   NavController,
   ToastController
 } from '@ionic/angular/standalone';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
+import { TranslationService } from '../../core/services/translation.service';
 import { SpecialityService } from '../../core/services/speciality.service';
 import { DoctorService } from '../../core/services/doctor.service';
 import { ConsultationService, ConsultationRequestData } from '../../core/services/consultation.service';
@@ -41,11 +43,13 @@ import { Reason, Slot } from '../../core/models/consultation.model';
     IonCardContent,
     IonSpinner,
     IonTextarea,
-    IonProgressBar
+    IonProgressBar,
+    TranslatePipe
   ]
 })
 export class NewRequestPage implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  private t = inject(TranslationService);
 
   currentStep = signal(1);
   totalSteps = 5;
@@ -69,12 +73,12 @@ export class NewRequestPage implements OnInit, OnDestroy {
 
   stepTitle = computed(() => {
     switch (this.currentStep()) {
-      case 1: return 'Select Specialty';
-      case 2: return 'Select Reason';
-      case 3: return 'Choose Time Slot';
-      case 4: return 'Select Doctor';
-      case 5: return 'Review & Submit';
-      default: return 'New Request';
+      case 1: return this.t.instant('newRequest.selectSpecialty');
+      case 2: return this.t.instant('newRequest.selectReason');
+      case 3: return this.t.instant('newRequest.chooseTimeSlot');
+      case 4: return this.t.instant('newRequest.selectDoctor');
+      case 5: return this.t.instant('newRequest.reviewAndSubmit');
+      default: return this.t.instant('newRequest.newRequest');
     }
   });
 
@@ -130,7 +134,7 @@ export class NewRequestPage implements OnInit, OnDestroy {
           this.isLoading.set(false);
         },
         error: () => {
-          this.showToast('Failed to load specialties', 'danger');
+          this.showToast(this.t.instant('newRequest.failedSpecialties'), 'danger');
           this.isLoading.set(false);
         }
       });
@@ -152,7 +156,7 @@ export class NewRequestPage implements OnInit, OnDestroy {
           this.isLoading.set(false);
         },
         error: () => {
-          this.showToast('Failed to load reasons', 'danger');
+          this.showToast(this.t.instant('newRequest.failedReasons'), 'danger');
           this.isLoading.set(false);
         }
       });
@@ -175,7 +179,7 @@ export class NewRequestPage implements OnInit, OnDestroy {
           this.isLoading.set(false);
         },
         error: () => {
-          this.showToast('Failed to load available slots', 'danger');
+          this.showToast(this.t.instant('newRequest.failedSlots'), 'danger');
           this.isLoading.set(false);
         }
       });
@@ -237,7 +241,7 @@ export class NewRequestPage implements OnInit, OnDestroy {
           this.isLoading.set(false);
         },
         error: () => {
-          this.showToast('Failed to load doctors', 'danger');
+          this.showToast(this.t.instant('newRequest.failedDoctors'), 'danger');
           this.isLoading.set(false);
         }
       });
@@ -271,7 +275,7 @@ export class NewRequestPage implements OnInit, OnDestroy {
     const doctor = this.selectedDoctor();
 
     if (!reason) {
-      this.showToast('Please select a reason', 'warning');
+      this.showToast(this.t.instant('newRequest.selectReasonWarning'), 'warning');
       return;
     }
 
@@ -301,11 +305,11 @@ export class NewRequestPage implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
-          this.showToast('Request submitted successfully', 'success');
+          this.showToast(this.t.instant('newRequest.submitSuccess'), 'success');
           this.navCtrl.navigateBack('/home');
         },
         error: () => {
-          this.showToast('Failed to submit request', 'danger');
+          this.showToast(this.t.instant('newRequest.submitFailed'), 'danger');
           this.isSubmitting.set(false);
         }
       });
@@ -374,7 +378,7 @@ export class NewRequestPage implements OnInit, OnDestroy {
         minute: '2-digit'
       });
     }
-    return 'Not selected (system will assign)';
+    return this.t.instant('newRequest.notSelectedSystemAssign');
   }
 
   private async showToast(message: string, color: string = 'primary'): Promise<void> {

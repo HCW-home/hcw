@@ -1,5 +1,5 @@
 <app-header
-  pageTitle="Consultation"
+  [pageTitle]="'consultationDetail.title' | translate"
   [showBackButton]="true"
   backHref="/home"
 ></app-header>
@@ -24,7 +24,7 @@
         <div class="date-item">
           <ion-icon name="calendar-outline"></ion-icon>
           <span
-            >Created {{ consultation()?.created_at | date:'MMM d, yyyy - HH:mm'
+            >{{ 'consultationDetail.created' | translate }} {{ consultation()?.created_at | date:'MMM d, yyyy - HH:mm'
             }}</span
           >
         </div>
@@ -32,7 +32,7 @@
         <div class="date-item">
           <ion-icon name="time-outline"></ion-icon>
           <span
-            >Active since {{ consultation()?.started_at | date:'MMM d, yyyy -
+            >{{ 'consultationDetail.activeSince' | translate }} {{ consultation()?.started_at | date:'MMM d, yyyy -
             HH:mm' }}</span
           >
         </div>
@@ -40,7 +40,7 @@
         <div class="date-item">
           <ion-icon name="checkmark-circle-outline"></ion-icon>
           <span
-            >Closed {{ consultation()?.closed_at | date:'MMM d, yyyy - HH:mm'
+            >{{ 'consultationDetail.closed' | translate }} {{ consultation()?.closed_at | date:'MMM d, yyyy - HH:mm'
             }}</span
           >
         </div>
@@ -52,7 +52,7 @@
     <div class="info-card doctor-card">
       <div class="card-header">
         <ion-icon name="person-outline" class="card-icon"></ion-icon>
-        <h3 class="info-title">Consultation handled by</h3>
+        <h3 class="info-title">{{ 'consultationDetail.handledBy' | translate }}</h3>
       </div>
       <div class="doctor-row">
         <div class="doctor-avatar">{{ getDoctorInitial() }}</div>
@@ -63,7 +63,7 @@
     <div class="info-card appointments-card">
       <div class="card-header">
         <ion-icon name="calendar-outline" class="card-icon"></ion-icon>
-        <h3 class="info-title">Next Appointment</h3>
+        <h3 class="info-title">{{ 'consultationDetail.nextAppointment' | translate }}</h3>
       </div>
       <div class="appointment-item">
         <div class="appointment-meta">
@@ -88,7 +88,7 @@
           (click)="joinAppointment(appointment)"
         >
           <ion-icon name="videocam-outline"></ion-icon>
-          Join Video Call
+          {{ 'consultationDetail.joinVideoCall' | translate }}
         </button>
         }
       </div>
@@ -97,11 +97,10 @@
     <div class="info-card closed-card">
       <div class="card-header">
         <ion-icon name="checkmark-circle-outline" class="card-icon"></ion-icon>
-        <h3 class="info-title">Consultation Closed</h3>
+        <h3 class="info-title">{{ 'consultationDetail.consultationClosed' | translate }}</h3>
       </div>
       <p class="closed-text">
-        This consultation has been completed. You can view the message history
-        below.
+        {{ 'consultationDetail.closedText' | translate }}
       </p>
     </div>
     }
@@ -110,7 +109,7 @@
       <div class="chat-header">
         <ion-icon name="chatbubbles-outline"></ion-icon>
         <span
-          >{{ isConsultationClosed() ? 'Message History' : 'Messages' }}</span
+          >{{ isConsultationClosed() ? ('consultationDetail.messageHistory' | translate) : ('consultationDetail.messages' | translate) }}</span
         >
       </div>
       <app-message-list
@@ -129,7 +128,7 @@
   } @else {
   <div class="empty-state">
     <ion-icon name="document-text-outline" class="empty-icon"></ion-icon>
-    <p class="empty-text">Consultation not found</p>
+    <p class="empty-text">{{ 'consultationDetail.notFound' | translate }}</p>
   </div>
   }
 </ion-content>

@@ -9,14 +9,14 @@
         }
         <h1>{{ branding }}</h1>
         <p>
-          Create your account and start your telemedicine consultations today.
+          {{ 'register.platformDescription' | translate }}
         </p>
       </div>
     </div>
     <div class="right-side">
       <div class="right-content">
-        <h2>Create Account</h2>
-        <p class="subtitle">Sign up to get started</p>
+        <h2>{{ 'register.title' | translate }}</h2>
+        <p class="subtitle">{{ 'register.subtitle' | translate }}</p>
 
         @if (loading) { } @else if (successMessage) {
         <div class="success-container">
@@ -32,7 +32,7 @@
             (click)="goToLogin()"
             class="action-button"
           >
-            Sign In
+            {{ 'common.signIn' | translate }}
           </ion-button>
         </div>
         } @else if (!registrationEnabled) {
@@ -42,7 +42,7 @@
             color="medium"
             class="disabled-icon"
           ></ion-icon>
-          <p>Registration is currently disabled.</p>
+          <p>{{ 'register.registrationDisabled' | translate }}</p>
         </div>
         } @else {
         <form
@@ -55,7 +55,7 @@
               <ion-icon name="person-outline" slot="start"></ion-icon>
               <ion-input
                 type="text"
-                placeholder="First Name"
+                [placeholder]="'register.firstName' | translate"
                 formControlName="first_name"
               >
               </ion-input>
@@ -64,7 +64,7 @@
             <ion-item lines="full" class="input-item">
               <ion-input
                 type="text"
-                placeholder="Last Name"
+                [placeholder]="'register.lastName' | translate"
                 formControlName="last_name"
               >
               </ion-input>
@@ -73,19 +73,19 @@
           @if (registerForm.get('first_name')?.invalid &&
           registerForm.get('first_name')?.touched) {
           <ion-text color="danger" class="error-message">
-            <span class="error-text">First name is required</span>
+            <span class="error-text">{{ 'register.firstNameRequired' | translate }}</span>
           </ion-text>
           }
 
           <ion-item lines="full" class="input-item">
             <ion-icon name="mail-outline" slot="start"></ion-icon>
-            <ion-input type="email" placeholder="Email" formControlName="email">
+            <ion-input type="email" [placeholder]="'register.emailPlaceholder' | translate" formControlName="email">
             </ion-input>
           </ion-item>
           @if (registerForm.get('email')?.invalid &&
           registerForm.get('email')?.touched) {
           <ion-text color="danger" class="error-message">
-            <span class="error-text">Please enter a valid email</span>
+            <span class="error-text">{{ 'register.emailInvalid' | translate }}</span>
           </ion-text>
           }
 
@@ -93,7 +93,7 @@
             <ion-icon name="lock-closed-outline" slot="start"></ion-icon>
             <ion-input
               [type]="showPassword ? 'text' : 'password'"
-              placeholder="Password"
+              [placeholder]="'register.passwordPlaceholder' | translate"
               formControlName="password1"
             >
             </ion-input>
@@ -108,9 +108,7 @@
           @if (registerForm.get('password1')?.invalid &&
           registerForm.get('password1')?.touched) {
           <ion-text color="danger" class="error-message">
-            <span class="error-text"
-              >Password must be at least 8 characters</span
-            >
+            <span class="error-text">{{ 'register.passwordMinLength' | translate }}</span>
           </ion-text>
           }
 
@@ -118,7 +116,7 @@
             <ion-icon name="lock-closed-outline" slot="start"></ion-icon>
             <ion-input
               [type]="showConfirmPassword ? 'text' : 'password'"
-              placeholder="Confirm Password"
+              [placeholder]="'register.confirmPassword' | translate"
               formControlName="password2"
             >
             </ion-input>
@@ -133,7 +131,7 @@
           @if (registerForm.get('password2')?.errors?.['passwordMismatch'] &&
           registerForm.get('password2')?.touched) {
           <ion-text color="danger" class="error-message">
-            <span class="error-text">Passwords do not match</span>
+            <span class="error-text">{{ 'register.passwordsMismatch' | translate }}</span>
           </ion-text>
           }
 
@@ -144,17 +142,17 @@
             [disabled]="registerForm.invalid"
             class="action-button"
           >
-            Create Account
+            {{ 'register.title' | translate }}
           </ion-button>
         </form>
         }
 
         <div class="login-link">
           <ion-text class="login-text" color="medium">
-            Already have an account?
+            {{ 'register.hasAccount' | translate }}
           </ion-text>
           <ion-text color="primary" (click)="goToLogin()" class="link-text">
-            Sign In
+            {{ 'common.signIn' | translate }}
           </ion-text>
         </div>
       </div>

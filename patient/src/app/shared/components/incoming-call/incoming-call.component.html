@@ -16,7 +16,7 @@
           }
         </div>
         <h2 class="caller-name">{{ incomingCall.callerName }}</h2>
-        <p class="call-label">is calling...</p>
+        <p class="call-label">{{ 'incomingCall.isCalling' | translate }}</p>
       </div>
       <div class="actions">
         <ion-button
@@ -26,7 +26,7 @@
           shape="round"
         >
           <ion-icon slot="start" name="call-outline"></ion-icon>
-          Accept
+          {{ 'incomingCall.accept' | translate }}
         </ion-button>
         <ion-button
           class="action-button action-button--decline"
@@ -35,7 +35,7 @@
           shape="round"
         >
           <ion-icon slot="start" name="close-outline"></ion-icon>
-          Later
+          {{ 'incomingCall.later' | translate }}
         </ion-button>
       </div>
     </div>

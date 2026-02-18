@@ -1,9 +1,9 @@
 <div class="message-list-container">
   <div class="message-list-header">
-    <span class="header-title">Messages</span>
+    <span class="header-title">{{ 'messageList.messages' | translate }}</span>
     <span class="connection-status" [class.connected]="isConnected" [class.disconnected]="!isConnected">
       <ion-icon [name]="isConnected ? 'wifi-outline' : 'cloud-offline-outline'"></ion-icon>
-      {{ isConnected ? 'Connected' : 'Disconnected' }}
+      {{ isConnected ? ('messageList.connected' | translate) : ('messageList.disconnected' | translate) }}
     </span>
   </div>
 
@@ -11,13 +11,13 @@
     @if (isLoadingMore) {
       <div class="loading-more">
         <ion-spinner name="crescent"></ion-spinner>
-        <span>Loading older messages...</span>
+        <span>{{ 'messageList.loadingOlder' | translate }}</span>
       </div>
     }
     @if (messages.length === 0 && !isLoadingMore) {
       <div class="no-messages">
         <ion-icon name="chatbubbles-outline" class="empty-icon"></ion-icon>
-        <span>No messages yet</span>
+        <span>{{ 'messageList.noMessages' | translate }}</span>
       </div>
     } @else {
       @for (message of messages; track message.id) {
@@ -28,7 +28,7 @@
                 type="text"
                 class="edit-input"
                 [(ngModel)]="editContent"
-                placeholder="Edit message..."
+                [placeholder]="'messageList.editPlaceholder' | translate"
                 (keyup.enter)="saveEdit()"
               />
               <div class="edit-actions">
@@ -50,7 +50,7 @@
               <div class="message-meta">
                 <span class="message-time">{{ formatTime(message.timestamp) }}</span>
                 @if (message.isEdited && !isMessageDeleted(message)) {
-                  <span class="message-edited">(edited)</span>
+                  <span class="message-edited">{{ 'messageList.edited' | translate }}</span>
                 }
                 @if (canEditMessage(message)) {
                   <button class="edit-button" (click)="startEdit(message)">
@@ -66,7 +66,7 @@
             </div>
             <div class="message-content">
               @if (isMessageDeleted(message)) {
-                <span class="message-deleted-text">{{ message.isCurrentUser ? 'You deleted this message' : 'Message deleted' }}</span>
+                <span class="message-deleted-text">{{ message.isCurrentUser ? ('messageList.youDeleted' | translate) : ('messageList.messageDeleted' | translate) }}</span>
               } @else if (message.message) {
                 <p class="message-text">{{ message.message }}</p>
               }
@@ -79,7 +79,7 @@
                   } @else {
                     <div class="message-attachment loading">
                       <ion-spinner name="crescent"></ion-spinner>
-                      <span class="attachment-name">Loading image...</span>
+                      <span class="attachment-name">{{ 'messageList.loadingImage' | translate }}</span>
                     </div>
                   }
                 } @else {
@@ -120,7 +120,7 @@
       type="text"
       class="message-input"
       [(ngModel)]="newMessage"
-      placeholder="Type a message..."
+      [placeholder]="'messageList.typePlaceholder' | translate"
       [disabled]="!isConnected"
       (keyup.enter)="onSendMessage()"
     />

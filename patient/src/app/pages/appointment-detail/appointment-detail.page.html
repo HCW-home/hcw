@@ -1,5 +1,5 @@
 <app-header
-  pageTitle="Appointment"
+  [pageTitle]="'appointmentDetail.title' | translate"
   [showBackButton]="true"
   backHref="/home"
 ></app-header>
@@ -43,7 +43,7 @@
     <div class="info-card doctor-card">
       <div class="card-header">
         <ion-icon name="person-outline" class="card-icon"></ion-icon>
-        <h3 class="info-title">Consultation handled by</h3>
+        <h3 class="info-title">{{ 'appointmentDetail.handledBy' | translate }}</h3>
       </div>
       <div class="doctor-row">
         <div class="doctor-avatar">{{ doctorInitial() }}</div>
@@ -54,7 +54,7 @@
     <div class="info-card participants-card">
       <div class="card-header">
         <ion-icon name="people-outline" class="card-icon"></ion-icon>
-        <h3 class="info-title">Participants</h3>
+        <h3 class="info-title">{{ 'appointmentDetail.participants' | translate }}</h3>
       </div>
       @for (participant of getParticipants(); track participant.name) {
       <div class="participant-row">
@@ -71,21 +71,21 @@
     <div class="info-card cancelled-card">
       <div class="card-header">
         <ion-icon name="close-circle-outline" class="card-icon"></ion-icon>
-        <h3 class="info-title">Appointment Cancelled</h3>
+        <h3 class="info-title">{{ 'appointmentDetail.cancelled' | translate }}</h3>
       </div>
-      <p class="cancelled-text">This appointment has been cancelled.</p>
+      <p class="cancelled-text">{{ 'appointmentDetail.cancelledText' | translate }}</p>
     </div>
     } @if (!isCancelled()) {
     <div class="actions-section">
       @if (isOnline()) {
       <button class="action-button primary-btn" (click)="joinVideoCall()">
         <ion-icon name="videocam-outline"></ion-icon>
-        Join Video Call
+        {{ 'appointmentDetail.joinVideoCall' | translate }}
       </button>
       } @if (appointment()?.consultation_id) {
       <button class="action-button secondary-btn" (click)="viewConsultation()">
         <ion-icon name="chatbubbles-outline"></ion-icon>
-        View Consultation
+        {{ 'appointmentDetail.viewConsultation' | translate }}
       </button>
       }
     </div>
@@ -94,7 +94,7 @@
   } @else {
   <div class="empty-state">
     <ion-icon name="calendar-outline" class="empty-icon"></ion-icon>
-    <p class="empty-text">Appointment not found</p>
+    <p class="empty-text">{{ 'appointmentDetail.notFound' | translate }}</p>
   </div>
   }
 </ion-content>

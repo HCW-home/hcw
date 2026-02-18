@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, computed } from "@angular/core";
+import { Component, OnInit, OnDestroy, signal, computed, inject } from "@angular/core";
 import { CommonModule, DatePipe } from "@angular/common";
 import { ActivatedRoute } from "@angular/router";
 import {
@@ -14,6 +14,8 @@ import { AuthService } from "../../core/services/auth.service";
 import { Appointment, User } from "../../core/models/consultation.model";
 import { AppHeaderComponent } from "../../shared/app-header/app-header.component";
 import { AppFooterComponent } from "../../shared/app-footer/app-footer.component";
+import { TranslatePipe } from "@ngx-translate/core";
+import { TranslationService } from "../../core/services/translation.service";
 
 interface StatusConfig {
   label: string;
@@ -32,9 +34,11 @@ interface StatusConfig {
     IonSpinner,
     AppHeaderComponent,
     AppFooterComponent,
+    TranslatePipe,
   ],
 })
 export class AppointmentDetailPage implements OnInit, OnDestroy {
+  private t = inject(TranslationService);
   private destroy$ = new Subject<void>();
   private appointmentId: number | null = null;
 
@@ -116,7 +120,7 @@ export class AppointmentDetailPage implements OnInit, OnDestroy {
         error: async () => {
           this.isLoading.set(false);
           const toast = await this.toastController.create({
-            message: "Failed to load appointment details",
+            message: this.t.instant("appointmentDetail.failedLoad"),
             duration: 3000,
             position: "bottom",
             color: "danger",
@@ -129,9 +133,9 @@ export class AppointmentDetailPage implements OnInit, OnDestroy {
   getStatusConfig(status: string | undefined): StatusConfig {
     const normalizedStatus = (status || "draft").toLowerCase();
     const statusMap: Record<string, StatusConfig> = {
-      draft: { label: "Draft", color: "warning" },
-      scheduled: { label: "Scheduled", color: "primary" },
-      cancelled: { label: "Cancelled", color: "muted" },
+      draft: { label: this.t.instant("appointmentDetail.statusDraft"), color: "warning" },
+      scheduled: { label: this.t.instant("appointmentDetail.statusScheduled"), color: "primary" },
+      cancelled: { label: this.t.instant("appointmentDetail.statusCancelled"), color: "muted" },
     };
     return statusMap[normalizedStatus] || statusMap["draft"];
   }
@@ -144,8 +148,8 @@ export class AppointmentDetailPage implements OnInit, OnDestroy {
 
   getTypeLabel(): string {
     return this.appointment()?.type === "online"
-      ? "Video Consultation"
-      : "In-person Visit";
+      ? this.t.instant("appointmentDetail.videoConsultation")
+      : this.t.instant("appointmentDetail.inPersonVisit");
   }
 
   joinVideoCall(): void {

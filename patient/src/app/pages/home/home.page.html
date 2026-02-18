@@ -13,9 +13,9 @@
         </div>
         <div class="next-appointment-info">
           <span class="next-appointment-label">
-            Next Appointment —
+            {{ 'home.nextAppointment' | translate }} —
             <ion-icon [name]="nextAppointment()!.type === 'online' ? 'videocam-outline' : 'location-outline'"></ion-icon>
-            {{ nextAppointment()!.type === 'online' ? 'Online' : 'In person' }}
+            {{ nextAppointment()!.type === 'online' ? ('common.online' | translate) : ('common.inPerson' | translate) }}
           </span>
           <span class="next-appointment-date">
             {{ nextAppointment()!.scheduled_at | date:'EEEE, MMM d' }} at {{ nextAppointment()!.scheduled_at | date:'HH:mm' }}
@@ -27,12 +27,12 @@
         @if (nextAppointment()!.type === 'online') {
           <button class="join-button" (click)="joinNextAppointment()">
             <ion-icon name="videocam"></ion-icon>
-            <span>Join</span>
+            <span>{{ 'common.join' | translate }}</span>
           </button>
         } @else {
           <div class="in-person-badge">
             <ion-icon name="location-outline"></ion-icon>
-            <span>In person</span>
+            <span>{{ 'common.inPerson' | translate }}</span>
           </div>
         }
       </div>
@@ -41,9 +41,9 @@
     <section class="section requests-section">
       <div class="section-header">
         <div class="section-title-group">
-          <h2 class="section-title">My Requests</h2>
+          <h2 class="section-title">{{ 'home.myRequests' | translate }}</h2>
           @if (totalRequests() > 0) {
-            <span class="section-badge">{{ totalRequests() }} total</span>
+            <span class="section-badge">{{ totalRequests() }} {{ 'common.total' | translate }}</span>
           }
         </div>
       </div>
@@ -55,10 +55,10 @@
       } @else if (requests().length === 0) {
         <div class="empty-state">
           <ion-icon name="document-text-outline" class="empty-icon"></ion-icon>
-          <p class="empty-text">No pending requests yet</p>
+          <p class="empty-text">{{ 'home.noPendingRequests' | translate }}</p>
           <button class="card-btn empty-cta" [class.card-btn-primary]="hasNoItems()" [class.card-btn-outline]="!hasNoItems()" (click)="goToNewRequest()">
             <ion-icon name="add-outline"></ion-icon>
-            <span>Request a consultation</span>
+            <span>{{ 'home.requestConsultation' | translate }}</span>
           </button>
         </div>
       } @else {
@@ -101,7 +101,7 @@
               @if (isStatusRequested(request)) {
                 <div class="card-info-row card-info-waiting">
                   <ion-icon name="hourglass-outline"></ion-icon>
-                  <span>Awaiting doctor assignment</span>
+                  <span>{{ 'home.awaitingAssignment' | translate }}</span>
                 </div>
               }
 
@@ -116,11 +116,11 @@
                 @if (hasConsultation(request)) {
                   <button class="card-btn card-btn-outline" (click)="viewConsultationFromRequest(request); $event.stopPropagation()">
                     <ion-icon name="chatbubbles-outline"></ion-icon>
-                    <span>Access consultation</span>
+                    <span>{{ 'home.accessConsultation' | translate }}</span>
                   </button>
                 } @else {
                   <button class="card-btn card-btn-secondary">
-                    <span>View details</span>
+                    <span>{{ 'common.viewDetails' | translate }}</span>
                     <ion-icon name="chevron-forward-outline"></ion-icon>
                   </button>
                 }
@@ -135,8 +135,8 @@
       <section class="section consultations-section">
         <div class="section-header">
           <div class="section-title-group">
-            <h2 class="section-title">My Consultations</h2>
-            <span class="section-badge">{{ totalConsultations() }} total</span>
+            <h2 class="section-title">{{ 'home.myConsultations' | translate }}</h2>
+            <span class="section-badge">{{ totalConsultations() }} {{ 'common.total' | translate }}</span>
           </div>
         </div>
 
@@ -154,7 +154,7 @@
               @if (getConsultationDoctorName(consultation)) {
                 <div class="card-doctor">
                   <div class="doctor-avatar-sm">{{ getConsultationDoctorName(consultation).charAt(0) }}</div>
-                  <span>Managed by {{ getConsultationDoctorName(consultation) }}</span>
+                  <span>{{ 'home.managedBy' | translate:{ name: getConsultationDoctorName(consultation) } }}</span>
                 </div>
               }
 
@@ -162,13 +162,13 @@
                 <div class="card-info-row card-info-stacked">
                   <div class="card-info-label">
                     <ion-icon name="calendar-outline"></ion-icon>
-                    <span>Next appointment</span>
+                    <span>{{ 'home.nextAppointmentLabel' | translate }}</span>
                   </div>
                   <div class="card-info-value">
                     <span>{{ consultation.next_appointment.scheduled_at | date:'EEE, MMM d' }} at {{ consultation.next_appointment.scheduled_at | date:'HH:mm' }}</span>
                     <span class="type-tag">
                       <ion-icon [name]="consultation.next_appointment.type === 'online' ? 'videocam-outline' : 'location-outline'"></ion-icon>
-                      {{ consultation.next_appointment.type === 'online' ? 'Video' : 'In-person' }}
+                      {{ consultation.next_appointment.type === 'online' ? ('common.video' | translate) : ('common.inPerson' | translate) }}
                     </span>
                   </div>
                 </div>
@@ -177,7 +177,7 @@
               <div class="card-actions">
                 <button class="card-btn card-btn-outline">
                   <ion-icon name="chatbubbles-outline"></ion-icon>
-                  <span>Access consultation</span>
+                  <span>{{ 'home.accessConsultation' | translate }}</span>
                 </button>
               </div>
             </div>
@@ -190,8 +190,8 @@
       <section class="section appointments-section">
         <div class="section-header">
           <div class="section-title-group">
-            <h2 class="section-title">My Appointments</h2>
-            <span class="section-badge">{{ totalAppointments() }} total</span>
+            <h2 class="section-title">{{ 'home.myAppointments' | translate }}</h2>
+            <span class="section-badge">{{ totalAppointments() }} {{ 'common.total' | translate }}</span>
           </div>
         </div>
 
@@ -224,11 +224,11 @@
                 @if (appointment.type === 'online' && appointment.consultation_id) {
                   <button class="card-btn card-btn-primary" (click)="joinAppointment(appointment); $event.stopPropagation()">
                     <ion-icon name="videocam"></ion-icon>
-                    <span>Join</span>
+                    <span>{{ 'common.join' | translate }}</span>
                   </button>
                 }
                 <button class="card-btn card-btn-secondary">
-                  <span>View details</span>
+                  <span>{{ 'common.viewDetails' | translate }}</span>
                   <ion-icon name="chevron-forward-outline"></ion-icon>
                 </button>
               </div>

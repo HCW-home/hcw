@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -13,9 +13,11 @@ import {
   NavController,
   ToastController
 } from '@ionic/angular/standalone';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { ActionHandlerService } from '../../core/services/action-handler.service';
+import { TranslationService } from '../../core/services/translation.service';
 
 @Component({
   selector: 'app-verify-invite',
@@ -31,10 +33,12 @@ import { ActionHandlerService } from '../../core/services/action-handler.service
     IonButton,
     IonIcon,
     IonText,
-    IonSpinner
+    IonSpinner,
+    TranslatePipe
   ]
 })
 export class VerifyInvitePage implements OnInit, OnDestroy {
+  private t = inject(TranslationService);
   private destroy$ = new Subject<void>();
 
   authToken: string | null = null;
@@ -69,7 +73,7 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
       this.authenticateWithToken();
     } else {
       this.isLoading = false;
-      this.errorMessage = 'No authentication token provided';
+      this.errorMessage = this.t.instant('verifyInvite.noAuthToken');
     }
   }
 
@@ -100,9 +104,9 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
           if (error.status === 202) {
             this.requiresVerification = true;
           } else if (error.status === 401) {
-            this.errorMessage = error.error?.error || 'Invalid or expired authentication token';
+            this.errorMessage = error.error?.error || this.t.instant('verifyInvite.invalidToken');
           } else {
-            this.errorMessage = 'An error occurred. Please try again.';
+            this.errorMessage = this.t.instant('verifyInvite.genericError');
           }
         }
       });
@@ -135,9 +139,9 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
         error: async (error) => {
           this.isLoading = false;
           if (error.status === 401) {
-            this.errorMessage = error.error?.error || 'Invalid verification code';
+            this.errorMessage = error.error?.error || this.t.instant('verifyInvite.invalidVerificationCode');
           } else {
-            this.errorMessage = 'An error occurred. Please try again.';
+            this.errorMessage = this.t.instant('verifyInvite.genericError');
           }
         }
       });
@@ -145,7 +149,7 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
 
   private async onAuthenticationSuccess(): Promise<void> {
     const toast = await this.toastCtrl.create({
-      message: 'Successfully authenticated',
+      message: this.t.instant('verifyInvite.authSuccess'),
       duration: 2000,
       position: 'top',
       color: 'success'
@@ -173,7 +177,7 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
             this.onAuthenticationSuccess();
           } else {
             const toast = await this.toastCtrl.create({
-              message: 'Verification code sent to your email',
+              message: this.t.instant('verifyInvite.codeSent'),
               duration: 2000,
               position: 'top',
               color: 'success'
@@ -185,7 +189,7 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
           this.isResending = false;
           if (error.status === 202) {
             const toast = await this.toastCtrl.create({
-              message: 'Verification code sent to your email',
+              message: this.t.instant('verifyInvite.codeSent'),
               duration: 2000,
               position: 'top',
               color: 'success'
@@ -193,7 +197,7 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
             await toast.present();
           } else {
             const toast = await this.toastCtrl.create({
-              message: 'Failed to resend code. Please try again.',
+              message: this.t.instant('verifyInvite.resendFailed'),
               duration: 2000,
               position: 'top',
               color: 'danger'

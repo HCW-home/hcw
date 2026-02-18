@@ -8,6 +8,7 @@ import {
   ElementRef,
   ChangeDetectorRef,
   signal,
+  inject,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -19,10 +20,12 @@ import {
   IonSelect,
   IonSelectOption,
 } from '@ionic/angular/standalone';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 import { MediaDeviceService } from '../../../core/services/media-device.service';
+import { TranslationService } from '../../../core/services/translation.service';
 import { IMediaDevices, IPreJoinSettings } from '../../../core/models/media-device.model';
 
 interface DeviceOption {
@@ -42,11 +45,14 @@ interface DeviceOption {
     IonSpinner,
     IonSelect,
     IonSelectOption,
+    TranslatePipe,
   ],
   templateUrl: './pre-join-lobby.component.html',
   styleUrls: ['./pre-join-lobby.component.scss'],
 })
 export class PreJoinLobbyComponent implements OnInit, OnDestroy {
+  private t = inject(TranslationService);
+
   @Output() join = new EventEmitter<IPreJoinSettings>();
   @Output() close = new EventEmitter<void>();
   @ViewChild('videoPreview') videoPreviewRef!: ElementRef<HTMLVideoElement>;
@@ -123,11 +129,11 @@ export class PreJoinLobbyComponent implements OnInit, OnDestroy {
     } catch (error) {
       if (error instanceof DOMException && error.name === 'NotAllowedError') {
         this.permissionDenied.set(true);
-        this.permissionError.set('Camera/microphone access was denied. Please allow access in your browser settings.');
+        this.permissionError.set(this.t.instant('preJoinLobby.permissionDenied'));
         this.cameraEnabled.set(false);
         this.microphoneEnabled.set(false);
       } else {
-        this.permissionError.set('Failed to access media devices.');
+        this.permissionError.set(this.t.instant('preJoinLobby.failedDevices'));
       }
     } finally {
       this.isLoading.set(false);

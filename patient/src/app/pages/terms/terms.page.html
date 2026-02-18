@@ -18,7 +18,7 @@
           (click)="onAccept()"
           [disabled]="accepting">
           <ion-spinner *ngIf="accepting" name="crescent" slot="start"></ion-spinner>
-          Accept
+          {{ 'terms.accept' | translate }}
         </ion-button>
       </ng-container>
     </ng-template>

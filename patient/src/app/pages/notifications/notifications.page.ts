@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   IonButton,
@@ -19,6 +19,8 @@ import { UserWebSocketService } from '../../core/services/user-websocket.service
 import { ActionHandlerService } from '../../core/services/action-handler.service';
 import { ConsultationService } from '../../core/services/consultation.service';
 import { AuthService } from '../../core/services/auth.service';
+import { TranslatePipe } from '@ngx-translate/core';
+import { TranslationService } from '../../core/services/translation.service';
 
 interface DisplayNotification {
   id: number;
@@ -50,13 +52,15 @@ interface DisplayNotification {
     IonRefresherContent,
     IonIcon,
     AppHeaderComponent,
-    AppFooterComponent
+    AppFooterComponent,
+    TranslatePipe
   ]
 })
 export class NotificationsPage implements OnInit, OnDestroy {
   notifications: DisplayNotification[] = [];
   isLoading = true;
   private subscriptions: Subscription[] = [];
+  private t = inject(TranslationService);
 
   constructor(
     private navCtrl: NavController,
@@ -97,7 +101,7 @@ export class NotificationsPage implements OnInit, OnDestroy {
       const data = event.data;
       const notification: INotification = {
         id: Date.now(),
-        subject: (data['title'] as string) || 'New Notification',
+        subject: (data['title'] as string) || this.t.instant('notifications.newNotification'),
         content: (data['message'] as string) || '',
         communication_method: 'push',
         status: NotificationStatus.PENDING,
@@ -123,7 +127,7 @@ export class NotificationsPage implements OnInit, OnDestroy {
     const sender = n.sent_by;
     return {
       id: n.id,
-      title: n.subject || 'Notification',
+      title: n.subject || this.t.instant('notifications.notification'),
       message: n.content || '',
       icon: this.getIconForType(type),
       color: this.getColorForType(type),
@@ -183,11 +187,13 @@ export class NotificationsPage implements OnInit, OnDestroy {
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
-    if (minutes < 1) return 'Just now';
-    if (minutes < 60) return `${minutes} min ago`;
-    if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
-    if (days === 1) return 'Yesterday';
-    if (days < 7) return `${days} days ago`;
+    if (minutes < 1) return this.t.instant('notifications.justNow');
+    if (minutes < 60) return this.t.instant('notifications.minAgo', { count: String(minutes) });
+    if (hours < 24) return hours === 1
+      ? this.t.instant('notifications.hourAgo', { count: String(hours) })
+      : this.t.instant('notifications.hoursAgo', { count: String(hours) });
+    if (days === 1) return this.t.instant('notifications.yesterday');
+    if (days < 7) return this.t.instant('notifications.daysAgo', { count: String(days) });
     return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
   }
 
@@ -201,7 +207,7 @@ export class NotificationsPage implements OnInit, OnDestroy {
     this.notificationService.markAllAsRead().subscribe({
       next: async () => {
         const toast = await this.toastCtrl.create({
-          message: 'All notifications marked as read',
+          message: this.t.instant('notifications.markedAllRead'),
           duration: 2000,
           position: 'top',
           color: 'success'
@@ -210,7 +216,7 @@ export class NotificationsPage implements OnInit, OnDestroy {
       },
       error: async () => {
         const toast = await this.toastCtrl.create({
-          message: 'Failed to mark notifications as read',
+          message: this.t.instant('notifications.failedMarkRead'),
           duration: 2000,
           position: 'top',
           color: 'danger'
@@ -243,7 +249,7 @@ export class NotificationsPage implements OnInit, OnDestroy {
       const currentUser = this.authService.currentUserValue;
       if (currentUser && currentUser.email !== email) {
         const toast = await this.toastCtrl.create({
-          message: `This notification was intended for ${email}`,
+          message: this.t.instant('notifications.intendedFor', { email }),
           duration: 3000,
           position: 'top',
           color: 'warning'

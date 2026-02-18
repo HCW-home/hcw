@@ -10,7 +10,8 @@ import {
   OnChanges,
   SimpleChanges,
   AfterViewChecked,
-  OnInit
+  OnInit,
+  inject
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -19,8 +20,10 @@ import {
   IonButton,
   IonSpinner
 } from '@ionic/angular/standalone';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 import { ConsultationService } from '../../../core/services/consultation.service';
+import { TranslationService } from '../../../core/services/translation.service';
 
 export interface MessageAttachment {
   file_name: string;
@@ -63,10 +66,13 @@ export interface DeleteMessageData {
     FormsModule,
     IonIcon,
     IonButton,
-    IonSpinner
+    IonSpinner,
+    TranslatePipe
   ]
 })
 export class MessageListComponent implements OnInit, OnChanges, OnDestroy, AfterViewChecked {
+  private t = inject(TranslationService);
+
   @Input() messages: Message[] = [];
   @Input() isConnected = false;
   @Input() isLoadingMore = false;
@@ -219,7 +225,7 @@ export class MessageListComponent implements OnInit, OnChanges, OnDestroy, After
     if (diffDays === 0) {
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     } else if (diffDays === 1) {
-      return 'Yesterday';
+      return this.t.instant('messageList.yesterday');
     } else if (diffDays < 7) {
       return date.toLocaleDateString([], { weekday: 'short' });
     } else {

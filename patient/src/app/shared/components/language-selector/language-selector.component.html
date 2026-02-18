@@ -1,0 +1,11 @@
+<div class="language-selector">
+  <ion-icon name="globe-outline" class="globe-icon"></ion-icon>
+  <ion-select
+    [value]="currentLanguageCode"
+    interface="popover"
+    (ionChange)="onLanguageChange($any($event))">
+    @for (lang of availableLanguages; track lang.code) {
+      <ion-select-option [value]="lang.code">{{ lang.nativeName }}</ion-select-option>
+    }
+  </ion-select>
+</div>

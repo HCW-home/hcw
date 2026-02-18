@@ -3,16 +3,23 @@ import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor, HttpErrorResponse
 import { Observable, throwError, from } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
+import { TranslationService } from '../services/translation.service';
 import { NavController } from '@ionic/angular';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
   constructor(
     private authService: AuthService,
+    private translationService: TranslationService,
     private navCtrl: NavController
   ) {}
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    const lang = this.translationService.currentLanguage();
+    request = request.clone({
+      setHeaders: { 'Accept-Language': lang }
+    });
+
     return from(this.authService.getToken()).pipe(
       switchMap(token => {
         if (token) {

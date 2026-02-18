@@ -17,14 +17,14 @@
   @if (isLoading()) {
     <div class="loading-container">
       <ion-spinner name="crescent" color="primary"></ion-spinner>
-      <span>Loading...</span>
+      <span>{{ 'common.loading' | translate }}</span>
     </div>
   } @else {
     @switch (currentStep()) {
       @case (1) {
         <div class="step-content">
-          <h2 class="step-title">Choose Specialty</h2>
-          <p class="step-description">Choose a medical specialty for your consultation</p>
+          <h2 class="step-title">{{ 'newRequest.chooseSpecialty' | translate }}</h2>
+          <p class="step-description">{{ 'newRequest.chooseSpecialtyDesc' | translate }}</p>
           <div class="speciality-grid">
             @for (speciality of specialities(); track speciality.id) {
               <div class="speciality-card" (click)="selectSpeciality(speciality)">
@@ -40,7 +40,7 @@
           @if (specialities().length === 0) {
             <div class="empty-state">
               <ion-icon name="information-circle-outline"></ion-icon>
-              <span>No specialties available</span>
+              <span>{{ 'newRequest.noSpecialties' | translate }}</span>
             </div>
           }
         </div>
@@ -48,8 +48,8 @@
 
       @case (2) {
         <div class="step-content">
-          <h2 class="step-title">Reason for Visit</h2>
-          <p class="step-description">Select the reason for your consultation</p>
+          <h2 class="step-title">{{ 'newRequest.reasonForVisit' | translate }}</h2>
+          <p class="step-description">{{ 'newRequest.selectReasonDesc' | translate }}</p>
           <div class="reason-list">
             @for (reason of reasons(); track reason.id) {
               <div class="reason-item" (click)="selectReason(reason)">
@@ -59,7 +59,7 @@
                 <div class="reason-details">
                   <p class="reason-name">{{ reason.name }}</p>
                   @if (reason.duration) {
-                    <p class="reason-duration">Duration: {{ reason.duration }} minutes</p>
+                    <p class="reason-duration">{{ 'newRequest.duration' | translate:{ duration: reason.duration } }}</p>
                   }
                 </div>
                 <ion-icon name="chevron-forward-outline" class="reason-arrow"></ion-icon>
@@ -69,7 +69,7 @@
           @if (reasons().length === 0) {
             <div class="empty-state">
               <ion-icon name="information-circle-outline"></ion-icon>
-              <span>No reasons available for this specialty</span>
+              <span>{{ 'newRequest.noReasons' | translate }}</span>
             </div>
           }
         </div>
@@ -77,8 +77,8 @@
 
       @case (3) {
         <div class="step-content">
-          <h2 class="step-title">Choose Time Slot</h2>
-          <p class="step-description">Select a preferred time slot (optional)</p>
+          <h2 class="step-title">{{ 'newRequest.chooseTimeSlot' | translate }}</h2>
+          <p class="step-description">{{ 'newRequest.selectTimeSlotDesc' | translate }}</p>
 
           <div class="week-navigation">
             <ion-button fill="clear" (click)="previousWeek()">
@@ -111,7 +111,7 @@
                     </ion-button>
                   }
                   @if (getSlotsForDate(date).length === 0) {
-                    <span class="no-slots">No slots</span>
+                    <span class="no-slots">{{ 'newRequest.noSlots' | translate }}</span>
                   }
                 </div>
               </div>
@@ -121,11 +121,11 @@
           <div class="step-actions">
             @if (selectedSlot()) {
               <button class="primary-action" (click)="proceedToDoctor()">
-                Continue with selected slot
+                {{ 'newRequest.continueWithSlot' | translate }}
               </button>
             }
             <button class="secondary-action" (click)="skipSlotSelection()">
-              Skip - Let system assign time
+              {{ 'newRequest.skipSlot' | translate }}
             </button>
           </div>
         </div>
@@ -133,8 +133,8 @@
 
       @case (4) {
         <div class="step-content">
-          <h2 class="step-title">Select Doctor</h2>
-          <p class="step-description">Select a preferred doctor (optional)</p>
+          <h2 class="step-title">{{ 'newRequest.selectDoctor' | translate }}</h2>
+          <p class="step-description">{{ 'newRequest.selectDoctorDesc' | translate }}</p>
           <div class="doctors-list">
             @for (doctor of doctors(); track doctor.id) {
               <div
@@ -167,17 +167,17 @@
           @if (doctors().length === 0) {
             <div class="empty-state">
               <ion-icon name="information-circle-outline"></ion-icon>
-              <span>No doctors available for this specialty</span>
+              <span>{{ 'newRequest.noDoctors' | translate }}</span>
             </div>
           }
           <div class="step-actions">
             @if (selectedDoctor()) {
               <button class="primary-action" (click)="proceedToReview()">
-                Continue with selected doctor
+                {{ 'newRequest.continueWithDoctor' | translate }}
               </button>
             }
             <button class="secondary-action" (click)="skipDoctorSelection()">
-              Skip - Any available doctor
+              {{ 'newRequest.skipDoctor' | translate }}
             </button>
           </div>
         </div>
@@ -185,19 +185,19 @@
 
       @case (5) {
         <div class="step-content review-step">
-          <h2 class="step-title">Review & Submit</h2>
-          <p class="step-description">Review your request before submitting</p>
+          <h2 class="step-title">{{ 'newRequest.reviewAndSubmit' | translate }}</h2>
+          <p class="step-description">{{ 'newRequest.reviewDesc' | translate }}</p>
 
           <div class="review-card">
-            <h3 class="review-title">Request Summary</h3>
+            <h3 class="review-title">{{ 'newRequest.requestSummary' | translate }}</h3>
 
             <div class="review-item">
               <div class="review-icon">
                 <ion-icon name="medical-outline"></ion-icon>
               </div>
               <div class="review-details">
-                <p class="review-label">Specialty</p>
-                <p class="review-value">{{ selectedSpeciality()?.name || 'Not selected' }}</p>
+                <p class="review-label">{{ 'newRequest.specialty' | translate }}</p>
+                <p class="review-value">{{ selectedSpeciality()?.name || ('common.notSelected' | translate) }}</p>
               </div>
             </div>
 
@@ -206,8 +206,8 @@
                 <ion-icon name="clipboard-outline"></ion-icon>
               </div>
               <div class="review-details">
-                <p class="review-label">Reason</p>
-                <p class="review-value">{{ selectedReason()?.name || 'Not selected' }}</p>
+                <p class="review-label">{{ 'newRequest.reason' | translate }}</p>
+                <p class="review-value">{{ selectedReason()?.name || ('common.notSelected' | translate) }}</p>
               </div>
             </div>
 
@@ -216,7 +216,7 @@
                 <ion-icon name="time-outline"></ion-icon>
               </div>
               <div class="review-details">
-                <p class="review-label">Preferred Time</p>
+                <p class="review-label">{{ 'newRequest.preferredTime' | translate }}</p>
                 <p class="review-value">{{ getExpectedDateTime() }}</p>
               </div>
             </div>
@@ -226,8 +226,8 @@
                 <ion-icon name="person-outline"></ion-icon>
               </div>
               <div class="review-details">
-                <p class="review-label">Preferred Doctor</p>
-                <p class="review-value">{{ selectedDoctor() ? getDoctorFullName(selectedDoctor()!) : 'Any available' }}</p>
+                <p class="review-label">{{ 'newRequest.preferredDoctor' | translate }}</p>
+                <p class="review-value">{{ selectedDoctor() ? getDoctorFullName(selectedDoctor()!) : ('newRequest.anyAvailable' | translate) }}</p>
               </div>
             </div>
           </div>
@@ -235,11 +235,11 @@
           <div class="comment-section">
             <div class="comment-label">
               <ion-icon name="chatbubble-outline"></ion-icon>
-              <span>Describe your symptoms or concerns</span>
+              <span>{{ 'newRequest.describeSymptoms' | translate }}</span>
             </div>
             <ion-textarea
               [(ngModel)]="comment"
-              placeholder="Please describe your symptoms or any specific concerns..."
+              [placeholder]="'newRequest.symptomPlaceholder' | translate"
               [rows]="4"
               class="comment-input">
             </ion-textarea>
@@ -252,9 +252,9 @@
               (click)="submitRequest()">
               @if (isSubmitting()) {
                 <ion-spinner name="crescent"></ion-spinner>
-                Submitting...
+                {{ 'newRequest.submitting' | translate }}
               } @else {
-                Submit Request
+                {{ 'newRequest.submitRequest' | translate }}
               }
             </button>
           </div>

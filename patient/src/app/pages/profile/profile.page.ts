@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonSpinner } from '@ionic/angular/standalone';
@@ -25,7 +25,9 @@ import {
   AlertController,
   ToastController
 } from '@ionic/angular/standalone';
+import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../core/services/auth.service';
+import { TranslationService } from '../../core/services/translation.service';
 import { User } from '../../core/models/user.model';
 import { TIMEZONES } from '../../core/constants/timezone';
 import { AppHeaderComponent } from '../../shared/app-header/app-header.component';
@@ -67,11 +69,13 @@ interface ProfileMenuItem {
     IonSelect,
     IonSelectOption,
     IonSpinner,
+    TranslatePipe,
     AppHeaderComponent,
     AppFooterComponent,
   ]
 })
 export class ProfilePage implements OnInit {
+  private t = inject(TranslationService);
   @ViewChild('avatarFileInput') avatarFileInput!: ElementRef<HTMLInputElement>;
 
   currentUser: User | null = null;
@@ -82,24 +86,13 @@ export class ProfilePage implements OnInit {
 
   timezones: string[] = TIMEZONES;
 
-  profileMenuItems: ProfileMenuItem[] = [
-    {
-      title: 'Personal Information',
-      icon: 'person-outline',
-      action: 'edit'
-    },
-    {
-      title: 'Notifications',
-      icon: 'notifications-outline',
-      route: '/notifications'
-    },
-    {
-      title: 'Logout',
-      icon: 'log-out-outline',
-      action: 'logout',
-      color: 'danger'
-    }
-  ];
+  get profileMenuItems(): ProfileMenuItem[] {
+    return [
+      { title: this.t.instant('profile.personalInformation'), icon: 'person-outline', action: 'edit' },
+      { title: this.t.instant('profile.notifications'), icon: 'notifications-outline', route: '/notifications' },
+      { title: this.t.instant('profile.logout'), icon: 'log-out-outline', action: 'logout', color: 'danger' }
+    ];
+  }
 
   constructor(
     private navCtrl: NavController,
@@ -168,26 +161,29 @@ export class ProfilePage implements OnInit {
         this.currentUser = updatedUser;
         this.isSaving = false;
         this.showEditModal = false;
-        this.showToast('Profile updated successfully', 'success');
+        if (updatedUser.preferred_language) {
+          this.t.setLanguage(updatedUser.preferred_language);
+        }
+        this.showToast(this.t.instant('profile.profileUpdated'), 'success');
       },
       error: () => {
         this.isSaving = false;
-        this.showToast('Failed to update profile', 'danger');
+        this.showToast(this.t.instant('profile.profileUpdateFailed'), 'danger');
       }
     });
   }
 
   async confirmLogout() {
     const alert = await this.alertCtrl.create({
-      header: 'Confirm Logout',
-      message: 'Are you sure you want to logout?',
+      header: this.t.instant('profile.confirmLogout'),
+      message: this.t.instant('profile.confirmLogoutMessage'),
       buttons: [
         {
-          text: 'Cancel',
+          text: this.t.instant('common.cancel'),
           role: 'cancel'
         },
         {
-          text: 'Logout',
+          text: this.t.instant('profile.logout'),
           handler: () => {
             this.logout();
           }
@@ -227,7 +223,7 @@ export class ProfilePage implements OnInit {
       if (file.type.startsWith('image/')) {
         this.uploadAvatar(file);
       } else {
-        this.showToast('Please select an image file', 'warning');
+        this.showToast(this.t.instant('profile.selectImageFile'), 'warning');
       }
     }
     input.value = '';
@@ -239,11 +235,11 @@ export class ProfilePage implements OnInit {
       next: (updatedUser) => {
         this.currentUser = updatedUser;
         this.isUploadingAvatar = false;
-        this.showToast('Profile picture updated', 'success');
+        this.showToast(this.t.instant('profile.pictureUpdated'), 'success');
       },
       error: () => {
         this.isUploadingAvatar = false;
-        this.showToast('Failed to upload profile picture', 'danger');
+        this.showToast(this.t.instant('profile.pictureUploadFailed'), 'danger');
       }
     });
   }

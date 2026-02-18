@@ -1,0 +1,18 @@
+.language-selector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+
+  .globe-icon {
+    font-size: 18px;
+    color: var(--ion-color-medium, #92949c);
+  }
+
+  ion-select {
+    --padding-start: 0;
+    --padding-end: 0;
+    min-width: auto;
+    max-width: 120px;
+  }
+}

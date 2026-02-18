@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import {
   IonIcon,
@@ -9,6 +9,7 @@ import {
   NavController,
   ToastController
 } from '@ionic/angular/standalone';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { ConsultationService } from '../../core/services/consultation.service';
@@ -16,6 +17,7 @@ import { User } from '../../core/models/user.model';
 import { AppHeaderComponent } from '../../shared/app-header/app-header.component';
 import { AppFooterComponent } from '../../shared/app-footer/app-footer.component';
 import { ConsultationRequest, Consultation, Speciality, Appointment } from '../../core/models/consultation.model';
+import { TranslationService } from '../../core/services/translation.service';
 
 interface RequestStatus {
   label: string;
@@ -37,10 +39,12 @@ interface RequestStatus {
     IonSpinner,
     AppHeaderComponent,
     AppFooterComponent,
+    TranslatePipe,
   ]
 })
 export class HomePage implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  private t = inject(TranslationService);
 
   currentUser = signal<User | null>(null);
   nextAppointment = signal<Appointment | null>(null);
@@ -106,7 +110,7 @@ export class HomePage implements OnInit, OnDestroy {
           this.isLoading.set(false);
         },
         error: (error) => {
-          this.showError(error?.error?.detail || 'Failed to load dashboard');
+          this.showError(error?.error?.detail || this.t.instant('home.failedToLoad'));
           this.isLoading.set(false);
         }
       });
@@ -124,7 +128,7 @@ export class HomePage implements OnInit, OnDestroy {
           event.target.complete();
         },
         error: (error) => {
-          this.showError(error?.error?.detail || 'Failed to load dashboard');
+          this.showError(error?.error?.detail || this.t.instant('home.failedToLoad'));
           event.target.complete();
         }
       });
@@ -141,11 +145,11 @@ export class HomePage implements OnInit, OnDestroy {
   getStatusConfig(status: string | undefined): RequestStatus {
     const normalizedStatus = (status || 'Requested').toLowerCase();
     const statusMap: Record<string, RequestStatus> = {
-      'requested': { label: 'Pending', color: 'warning' },
-      'accepted': { label: 'Accepted', color: 'info' },
-      'scheduled': { label: 'Scheduled', color: 'primary' },
-      'cancelled': { label: 'Cancelled', color: 'muted' },
-      'refused': { label: 'Refused', color: 'muted' }
+      'requested': { label: this.t.instant('home.statusPending'), color: 'warning' },
+      'accepted': { label: this.t.instant('home.statusAccepted'), color: 'info' },
+      'scheduled': { label: this.t.instant('home.statusScheduled'), color: 'primary' },
+      'cancelled': { label: this.t.instant('home.statusCancelled'), color: 'muted' },
+      'refused': { label: this.t.instant('home.statusRefused'), color: 'muted' }
     };
     return statusMap[normalizedStatus] || statusMap['requested'];
   }
@@ -162,7 +166,7 @@ export class HomePage implements OnInit, OnDestroy {
     if (typeof request.reason === 'object' && request.reason) {
       return request.reason.name;
     }
-    return 'Consultation';
+    return this.t.instant('home.consultation');
   }
 
   getSpecialityName(request: ConsultationRequest): string {
@@ -194,7 +198,7 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   getAppointmentTypeLabel(request: ConsultationRequest): string {
-    return request.appointment?.type === 'online' ? 'Video' : 'In-person';
+    return request.appointment?.type === 'online' ? this.t.instant('common.video') : this.t.instant('common.inPerson');
   }
 
   isStatusRequested(request: ConsultationRequest): boolean {
@@ -220,7 +224,7 @@ export class HomePage implements OnInit, OnDestroy {
     if (consultation.title) {
       return consultation.title;
     }
-    return 'Consultation';
+    return this.t.instant('home.consultation');
   }
 
   viewConsultationDetails(consultation: Consultation): void {
@@ -230,10 +234,10 @@ export class HomePage implements OnInit, OnDestroy {
   getConsultationStatusConfig(status: string): { label: string; color: 'warning' | 'info' | 'primary' | 'success' | 'muted' } {
     const normalizedStatus = (status || 'REQUESTED').toLowerCase();
     const statusMap: Record<string, { label: string; color: 'warning' | 'info' | 'primary' | 'success' | 'muted' }> = {
-      'requested': { label: 'Requested', color: 'warning' },
-      'active': { label: 'Active', color: 'success' },
-      'closed': { label: 'Closed', color: 'muted' },
-      'cancelled': { label: 'Cancelled', color: 'muted' }
+      'requested': { label: this.t.instant('home.statusRequested'), color: 'warning' },
+      'active': { label: this.t.instant('home.statusActive'), color: 'success' },
+      'closed': { label: this.t.instant('home.statusClosed'), color: 'muted' },
+      'cancelled': { label: this.t.instant('home.statusCancelled'), color: 'muted' }
     };
     return statusMap[normalizedStatus] || statusMap['requested'];
   }
@@ -241,9 +245,9 @@ export class HomePage implements OnInit, OnDestroy {
   getAppointmentStatusConfig(status: string): { label: string; color: 'warning' | 'info' | 'primary' | 'success' | 'muted' } {
     const normalizedStatus = (status || 'draft').toLowerCase();
     const statusMap: Record<string, { label: string; color: 'warning' | 'info' | 'primary' | 'success' | 'muted' }> = {
-      'draft': { label: 'Draft', color: 'warning' },
-      'scheduled': { label: 'Scheduled', color: 'primary' },
-      'cancelled': { label: 'Cancelled', color: 'muted' }
+      'draft': { label: this.t.instant('home.statusDraft'), color: 'warning' },
+      'scheduled': { label: this.t.instant('home.statusScheduled'), color: 'primary' },
+      'cancelled': { label: this.t.instant('home.statusCancelled'), color: 'muted' }
     };
     return statusMap[normalizedStatus] || statusMap['draft'];
   }
@@ -264,7 +268,7 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   getAppointmentTypeText(appointment: Appointment): string {
-    return appointment.type === 'online' ? 'Video' : 'In-person';
+    return appointment.type === 'online' ? this.t.instant('common.video') : this.t.instant('common.inPerson');
   }
 
   viewAppointmentDetails(appointment: Appointment): void {

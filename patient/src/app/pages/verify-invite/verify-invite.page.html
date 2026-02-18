@@ -15,31 +15,31 @@
         <ion-spinner name="crescent"></ion-spinner>
         <ion-text class="loading-text" color="medium">
           @if (requiresVerification) {
-            Verifying your code...
+            {{ 'verifyInvite.verifyingCode' | translate }}
           } @else {
-            Authenticating...
+            {{ 'verifyInvite.authenticating' | translate }}
           }
         </ion-text>
       </div>
     } @else if (errorMessage) {
       <div class="error-state">
         <ion-icon name="alert-circle-outline" class="error-icon"></ion-icon>
-        <ion-text class="error-title" color="danger">Authentication Failed</ion-text>
+        <ion-text class="error-title" color="danger">{{ 'verifyInvite.authFailed' | translate }}</ion-text>
         <ion-text class="error-message" color="medium">{{ errorMessage }}</ion-text>
         <ion-button
           expand="block"
           shape="round"
           (click)="goToLogin()"
           class="action-button">
-          Go to Login
+          {{ 'verifyInvite.goToLogin' | translate }}
         </ion-button>
       </div>
     } @else if (requiresVerification) {
       <div class="verification-state">
         <ion-icon name="shield-checkmark-outline" class="verification-icon"></ion-icon>
-        <ion-text class="verification-title">Verification Required</ion-text>
+        <ion-text class="verification-title">{{ 'verifyInvite.verificationRequired' | translate }}</ion-text>
         <ion-text class="verification-message" color="medium">
-          A verification code has been sent to your email or phone. Please enter it below.
+          {{ 'verifyInvite.codeSentMessage' | translate }}
         </ion-text>
 
         <form [formGroup]="verificationForm" (ngSubmit)="submitVerificationCode()" class="verification-form">
@@ -47,7 +47,7 @@
             <ion-icon name="keypad-outline" slot="start"></ion-icon>
             <ion-input
               type="text"
-              placeholder="Enter 6-digit code"
+              [placeholder]="'verifyInvite.enterCode' | translate"
               formControlName="verification_code"
               maxlength="6"
               inputmode="numeric">
@@ -55,7 +55,7 @@
           </ion-item>
           @if (verificationForm.get('verification_code')?.invalid && verificationForm.get('verification_code')?.touched) {
             <ion-text color="danger" class="error-text">
-              Please enter a valid 6-digit code
+              {{ 'verifyInvite.invalidCode' | translate }}
             </ion-text>
           }
 
@@ -65,13 +65,13 @@
             type="submit"
             [disabled]="verificationForm.invalid || isLoading"
             class="action-button">
-            Verify Code
+            {{ 'verifyInvite.verifyCode' | translate }}
           </ion-button>
         </form>
 
         <div class="resend-code">
           <ion-text class="resend-text" color="medium">
-            Didn't receive the code?
+            {{ 'verifyInvite.didntReceive' | translate }}
           </ion-text>
           <ion-text
             color="primary"
@@ -79,19 +79,19 @@
             [class.disabled]="isResending"
             class="resend-action">
             @if (isResending) {
-              Sending...
+              {{ 'verifyInvite.sending' | translate }}
             } @else {
-              Resend Code
+              {{ 'verifyInvite.resendCode' | translate }}
             }
           </ion-text>
         </div>
 
         <div class="login-link">
           <ion-text class="link-text" color="medium">
-            Having trouble?
+            {{ 'verifyInvite.havingTrouble' | translate }}
           </ion-text>
           <ion-text color="primary" (click)="goToLogin()" class="link-action">
-            Sign in manually
+            {{ 'verifyInvite.signInManually' | translate }}
           </ion-text>
         </div>
       </div>

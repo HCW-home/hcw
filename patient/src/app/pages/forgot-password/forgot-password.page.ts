@@ -1,4 +1,4 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -13,8 +13,10 @@ import {
   NavController,
   ToastController
 } from '@ionic/angular/standalone';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
+import { TranslationService } from '../../core/services/translation.service';
 
 @Component({
   selector: 'app-forgot-password',
@@ -31,10 +33,12 @@ import { AuthService } from '../../core/services/auth.service';
     IonButton,
     IonIcon,
     IonText,
-    IonSpinner
+    IonSpinner,
+    TranslatePipe
   ]
 })
 export class ForgotPasswordPage implements OnDestroy {
+  private t = inject(TranslationService);
   private destroy$ = new Subject<void>();
   forgotPasswordForm: FormGroup;
   isLoading = false;
@@ -66,7 +70,7 @@ export class ForgotPasswordPage implements OnDestroy {
           next: async () => {
             this.isLoading = false;
             const toast = await this.toastCtrl.create({
-              message: 'If an account exists with this email, you will receive a password reset link.',
+              message: this.t.instant('forgotPassword.resetEmailSent'),
               duration: 4000,
               position: 'top',
               color: 'success'
@@ -77,7 +81,7 @@ export class ForgotPasswordPage implements OnDestroy {
           error: async () => {
             this.isLoading = false;
             const toast = await this.toastCtrl.create({
-              message: 'Failed to send reset email. Please try again.',
+              message: this.t.instant('forgotPassword.resetEmailFailed'),
               duration: 3000,
               position: 'top',
               color: 'danger'

@@ -2,14 +2,14 @@
   @if (isLoading()) {
     <div class="lobby-loading">
       <ion-spinner name="crescent" color="light"></ion-spinner>
-      <ion-text color="light">Setting up your devices...</ion-text>
+      <ion-text color="light">{{ 'preJoinLobby.settingUp' | translate }}</ion-text>
     </div>
   } @else {
     <div class="lobby-card">
       <ion-button fill="clear" color="light" class="lobby-close-btn" (click)="onClose()">
         <ion-icon name="close" slot="icon-only"></ion-icon>
       </ion-button>
-      <ion-text class="lobby-title">Ready to join?</ion-text>
+      <ion-text class="lobby-title">{{ 'preJoinLobby.readyToJoin' | translate }}</ion-text>
 
       <div class="video-preview-area">
         @if (cameraEnabled() && !permissionDenied()) {
@@ -20,7 +20,7 @@
             @if (permissionDenied()) {
               <ion-text class="permission-text">{{ permissionError() }}</ion-text>
             } @else {
-              <ion-text color="medium">Camera off</ion-text>
+              <ion-text color="medium">{{ 'preJoinLobby.cameraOff' | translate }}</ion-text>
             }
           </div>
         }
@@ -52,12 +52,12 @@
       <div class="device-selectors">
         @if (cameraOptions.length > 0) {
           <div class="device-row">
-            <ion-text class="device-label">Camera</ion-text>
+            <ion-text class="device-label">{{ 'preJoinLobby.camera' | translate }}</ion-text>
             <ion-select
               [value]="selectedCameraId"
               (ionChange)="onCameraChange($event)"
               interface="action-sheet"
-              placeholder="Select camera">
+              [placeholder]="'preJoinLobby.selectCamera' | translate">
               @for (option of cameraOptions; track option.value) {
                 <ion-select-option [value]="option.value">{{ option.label }}</ion-select-option>
               }
@@ -67,12 +67,12 @@
 
         @if (microphoneOptions.length > 0) {
           <div class="device-row">
-            <ion-text class="device-label">Microphone</ion-text>
+            <ion-text class="device-label">{{ 'preJoinLobby.microphone' | translate }}</ion-text>
             <ion-select
               [value]="selectedMicrophoneId"
               (ionChange)="onMicrophoneChange($event)"
               interface="action-sheet"
-              placeholder="Select microphone">
+              [placeholder]="'preJoinLobby.selectMicrophone' | translate">
               @for (option of microphoneOptions; track option.value) {
                 <ion-select-option [value]="option.value">{{ option.label }}</ion-select-option>
               }
@@ -82,12 +82,12 @@
 
         @if (speakerSupported && speakerOptions.length > 0) {
           <div class="device-row">
-            <ion-text class="device-label">Speaker</ion-text>
+            <ion-text class="device-label">{{ 'preJoinLobby.speaker' | translate }}</ion-text>
             <ion-select
               [value]="selectedSpeakerId"
               (ionChange)="onSpeakerChange($event)"
               interface="action-sheet"
-              placeholder="Select speaker">
+              [placeholder]="'preJoinLobby.selectSpeaker' | translate">
               @for (option of speakerOptions; track option.value) {
                 <ion-select-option [value]="option.value">{{ option.label }}</ion-select-option>
               }
@@ -97,7 +97,7 @@
       </div>
 
       <ion-button expand="block" class="join-button" (click)="onJoin()">
-        Join Now
+        {{ 'preJoinLobby.joinNow' | translate }}
       </ion-button>
     </div>
   }

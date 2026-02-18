@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import {
@@ -12,8 +12,10 @@ import {
   NavController,
   ToastController
 } from '@ionic/angular/standalone';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 import { ConsultationService } from '../../core/services/consultation.service';
+import { TranslationService } from '../../core/services/translation.service';
 import { IParticipantDetail } from '../../core/models/consultation.model';
 import { formatDateFromISO, formatTimeFromISO } from '../../core/utils/date-helper';
 import { AppHeaderComponent } from '../../shared/app-header/app-header.component';
@@ -43,12 +45,14 @@ interface PendingAppointment {
     IonText,
     IonButton,
     IonSpinner,
+    TranslatePipe,
     AppHeaderComponent,
     AppFooterComponent
   ]
 })
 export class ConfirmPresencePage implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  private t = inject(TranslationService);
 
   isLoading = true;
   pendingAppointments: PendingAppointment[] = [];
@@ -69,7 +73,7 @@ export class ConfirmPresencePage implements OnInit, OnDestroy {
       this.loadParticipant(participantId);
     } else {
       this.isLoading = false;
-      this.errorMessage = 'Invalid confirmation link';
+      this.errorMessage = this.t.instant('confirmPresence.invalidLink');
     }
   }
 
@@ -92,12 +96,12 @@ export class ConfirmPresencePage implements OnInit, OnDestroy {
             this.pendingAppointments = [this.mapParticipant(participant, participantId)];
           } else {
             this.pendingAppointments = [];
-            this.errorMessage = 'This appointment is no longer pending confirmation';
+            this.errorMessage = this.t.instant('confirmPresence.noLongerPending');
           }
         },
         error: () => {
           this.isLoading = false;
-          this.errorMessage = 'Failed to load appointment';
+          this.errorMessage = this.t.instant('confirmPresence.failedLoad');
         }
       });
   }
@@ -106,8 +110,8 @@ export class ConfirmPresencePage implements OnInit, OnDestroy {
     const apt = participant.appointment;
     const createdBy = apt.created_by;
     const doctorName = createdBy
-      ? `${createdBy.first_name || ''} ${createdBy.last_name || ''}`.trim() || 'Healthcare Provider'
-      : 'Healthcare Provider';
+      ? `${createdBy.first_name || ''} ${createdBy.last_name || ''}`.trim() || this.t.instant('confirmPresence.healthcareProvider')
+      : this.t.instant('confirmPresence.healthcareProvider');
 
     return {
       id: apt.id,
@@ -130,7 +134,7 @@ export class ConfirmPresencePage implements OnInit, OnDestroy {
           appointment.isConfirming = false;
           this.pendingAppointments = this.pendingAppointments.filter(a => a.id !== appointment.id);
           const toast = await this.toastCtrl.create({
-            message: 'Presence confirmed successfully',
+            message: this.t.instant('confirmPresence.confirmSuccess'),
             duration: 2000,
             position: 'top',
             color: 'success'
@@ -141,7 +145,7 @@ export class ConfirmPresencePage implements OnInit, OnDestroy {
         error: async () => {
           appointment.isConfirming = false;
           const toast = await this.toastCtrl.create({
-            message: 'Failed to confirm presence',
+            message: this.t.instant('confirmPresence.failedConfirm'),
             duration: 2000,
             position: 'top',
             color: 'danger'
@@ -161,7 +165,7 @@ export class ConfirmPresencePage implements OnInit, OnDestroy {
           appointment.isDeclining = false;
           this.pendingAppointments = this.pendingAppointments.filter(a => a.id !== appointment.id);
           const toast = await this.toastCtrl.create({
-            message: 'You have declined the appointment',
+            message: this.t.instant('confirmPresence.declined'),
             duration: 2000,
             position: 'top',
             color: 'warning'
@@ -172,7 +176,7 @@ export class ConfirmPresencePage implements OnInit, OnDestroy {
         error: async () => {
           appointment.isDeclining = false;
           const toast = await this.toastCtrl.create({
-            message: 'Failed to decline',
+            message: this.t.instant('confirmPresence.failedDecline'),
             duration: 2000,
             position: 'top',
             color: 'danger'

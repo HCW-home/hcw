@@ -8,27 +8,24 @@
         <img src="assets/images/logo.svg" alt="Logo" class="logo-img" />
         }
         <h1>{{ branding }}</h1>
-        <p>
-          Your secure telemedicine platform for remote consultations with your
-          healthcare provider.
-        </p>
+        <p>{{ 'login.platformDescription' | translate }}</p>
       </div>
     </div>
     <div class="right-side">
       <div class="right-content">
-        <h2>Sign In</h2>
-        <p class="subtitle">Sign in to your account</p>
+        <h2>{{ 'login.title' | translate }}</h2>
+        <p class="subtitle">{{ 'login.subtitle' | translate }}</p>
 
         <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="login-form">
           <ion-item lines="full" class="input-item">
             <ion-icon name="mail-outline" slot="start"></ion-icon>
-            <ion-input type="email" placeholder="Email" formControlName="email">
+            <ion-input type="email" [placeholder]="'login.emailPlaceholder' | translate" formControlName="email">
             </ion-input>
           </ion-item>
           @if (loginForm.get('email')?.invalid &&
           loginForm.get('email')?.touched) {
           <ion-text color="danger" class="error-message">
-            <span class="error-text">Valid email is required</span>
+            <span class="error-text">{{ 'login.emailRequired' | translate }}</span>
           </ion-text>
           }
 
@@ -36,7 +33,7 @@
             <ion-icon name="lock-closed-outline" slot="start"></ion-icon>
             <ion-input
               [type]="showPassword ? 'text' : 'password'"
-              placeholder="Password"
+              [placeholder]="'login.passwordPlaceholder' | translate"
               formControlName="password"
             >
             </ion-input>
@@ -51,9 +48,7 @@
           @if (loginForm.get('password')?.invalid &&
           loginForm.get('password')?.touched) {
           <ion-text color="danger" class="error-message">
-            <span class="error-text"
-              >Password must be at least 6 characters</span
-            >
+            <span class="error-text">{{ 'login.passwordMinLength' | translate }}</span>
           </ion-text>
           }
 
@@ -63,7 +58,7 @@
               (click)="forgotPassword()"
               class="link-text"
             >
-              Forgot Password?
+              {{ 'login.forgotPassword' | translate }}
             </ion-text>
           </div>
 
@@ -74,20 +69,22 @@
             [disabled]="loginForm.invalid"
             class="login-button"
           >
-            Sign In
+            {{ 'login.title' | translate }}
           </ion-button>
         </form>
 
         @if (registrationEnabled) {
         <div class="register-link">
           <ion-text class="register-text" color="medium">
-            Don't have an account?
+            {{ 'login.noAccount' | translate }}
           </ion-text>
           <ion-text color="primary" (click)="goToRegister()" class="link-text">
-            Sign Up
+            {{ 'login.signUp' | translate }}
           </ion-text>
         </div>
         }
+
+        <app-language-selector></app-language-selector>
       </div>
     </div>
   </div>

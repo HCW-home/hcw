@@ -4,6 +4,8 @@ import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalo
 import { register } from 'swiper/element/bundle';
 import { provideHttpClient, withInterceptorsFromDi, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { importProvidersFrom } from '@angular/core';
+import { provideTranslateService } from '@ngx-translate/core';
+import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 import { AuthInterceptor } from './app/core/interceptors/auth.interceptor';
 import { IonicStorageModule } from '@ionic/storage-angular';
 import { addIcons } from 'ionicons';
@@ -59,7 +61,8 @@ import {
   cameraReverseOutline, ellipse, alertCircle, alertCircleOutline, arrowBackOutline, clipboardOutline, addOutline,
   hourglassOutline, ellipsisVerticalOutline, chatbubbleEllipsesOutline, closeCircleOutline,
   sendOutline, attachOutline, imageOutline, wifiOutline, cloudOfflineOutline, closeOutline,
-  atOutline, createOutline, close, shieldCheckmarkOutline, keypadOutline, checkmarkOutline
+  atOutline, createOutline, close, shieldCheckmarkOutline, keypadOutline, checkmarkOutline,
+  globeOutline, chevronDownOutline
 } from 'ionicons/icons';
 
 import { routes } from './app/app.routes';
@@ -174,6 +177,8 @@ addIcons({
   'shield-checkmark-outline': shieldCheckmarkOutline,
   'keypad-outline': keypadOutline,
   'checkmark-outline': checkmarkOutline,
+  'globe-outline': globeOutline,
+  'chevron-down-outline': chevronDownOutline,
 });
 
 bootstrapApplication(AppComponent, {
@@ -186,6 +191,15 @@ bootstrapApplication(AppComponent, {
     ),
     provideHttpClient(withInterceptorsFromDi()),
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
-    importProvidersFrom(IonicStorageModule.forRoot())
+    importProvidersFrom(IonicStorageModule.forRoot()),
+    provideTranslateService({
+      loader: provideTranslateHttpLoader({
+        prefix: './assets/i18n/',
+        suffix: '.json',
+        useHttpBackend: true,
+      }),
+      fallbackLang: 'en',
+      lang: 'en',
+    })
   ]
 }).catch(err => console.log(err));

@@ -4,26 +4,26 @@
       <div class="logo">
         <img src="assets/images/logo.svg" alt="HCW Logo" class="logo-img">
       </div>
-      <h1 class="title">Email Verification</h1>
+      <h1 class="title">{{ 'verifyEmail.title' | translate }}</h1>
     </div>
 
     @if (isLoading) {
       <div class="status-container">
         <ion-spinner name="crescent" color="primary"></ion-spinner>
-        <ion-text color="medium">Verifying your email address...</ion-text>
+        <ion-text color="medium">{{ 'verifyEmail.verifying' | translate }}</ion-text>
       </div>
     } @else if (success) {
       <div class="status-container success">
         <ion-icon name="checkmark-circle-outline" color="success"></ion-icon>
         <ion-text>
-          <p>Your email address has been verified successfully.</p>
+          <p>{{ 'verifyEmail.success' | translate }}</p>
         </ion-text>
         <ion-button
           expand="block"
           shape="round"
           (click)="goToLogin()"
           class="action-button">
-          Sign In
+          {{ 'common.signIn' | translate }}
         </ion-button>
       </div>
     } @else {
@@ -35,7 +35,7 @@
           shape="round"
           (click)="goToLogin()"
           class="action-button">
-          Go to Login
+          {{ 'verifyEmail.goToLogin' | translate }}
         </ion-button>
       </div>
     }

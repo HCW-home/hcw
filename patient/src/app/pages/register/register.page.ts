@@ -1,4 +1,4 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, inject } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import {
   FormBuilder,
@@ -17,7 +17,9 @@ import {
   LoadingController,
   ToastController,
 } from "@ionic/angular/standalone";
+import { TranslatePipe } from "@ngx-translate/core";
 import { AuthService } from "../../core/services/auth.service";
+import { TranslationService } from "../../core/services/translation.service";
 
 @Component({
   selector: "app-register",
@@ -33,9 +35,11 @@ import { AuthService } from "../../core/services/auth.service";
     IonButton,
     IonIcon,
     IonText,
+    TranslatePipe,
   ],
 })
 export class RegisterPage implements OnInit {
+  private t = inject(TranslationService);
   registerForm: FormGroup;
   showPassword = false;
   showConfirmPassword = false;
@@ -106,7 +110,7 @@ export class RegisterPage implements OnInit {
   async onRegister() {
     if (this.registerForm.valid) {
       const loading = await this.loadingCtrl.create({
-        message: "Creating account...",
+        message: this.t.instant('register.creatingAccount'),
         spinner: "crescent",
       });
       await loading.present();
@@ -116,11 +120,11 @@ export class RegisterPage implements OnInit {
           await loading.dismiss();
           this.successMessage =
             response.detail ||
-            "A verification email has been sent to your email address.";
+            this.t.instant('register.verificationEmailSent');
         },
         error: async (error) => {
           await loading.dismiss();
-          let errorMessage = "Registration failed. Please try again.";
+          let errorMessage = this.t.instant('register.registrationFailed');
           if (error.error) {
             if (error.error.email) {
               errorMessage = error.error.email[0];

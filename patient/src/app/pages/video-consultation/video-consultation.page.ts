@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, ChangeDetectorRef, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, ChangeDetectorRef, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import {
@@ -16,8 +16,10 @@ import {
 import { Subject, interval, Subscription } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { LocalVideoTrack, LocalTrack } from 'livekit-client';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { LiveKitService, ParticipantInfo, ConnectionStatus } from '../../core/services/livekit.service';
+import { TranslationService } from '../../core/services/translation.service';
 import { ConsultationService } from '../../core/services/consultation.service';
 import { ConsultationWebSocketService } from '../../core/services/consultation-websocket.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -43,10 +45,13 @@ import { IPreJoinSettings } from '../../core/models/media-device.model';
     IonAvatar,
     IonChip,
     MessageListComponent,
-    PreJoinLobbyComponent
+    PreJoinLobbyComponent,
+    TranslatePipe
   ]
 })
 export class VideoConsultationPage implements OnInit, OnDestroy {
+  private t = inject(TranslationService);
+
   @ViewChild('localVideo') localVideoRef!: ElementRef<HTMLVideoElement>;
   @ViewChild('localScreenShare') localScreenShareRef!: ElementRef<HTMLVideoElement>;
   @ViewChild('participantsContainer') participantsContainerRef!: ElementRef<HTMLDivElement>;
@@ -194,7 +199,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
             const isCurrentUser = msg.created_by.id === currentUserId;
             return {
               id: msg.id,
-              username: isCurrentUser ? 'You' : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim(),
+              username: isCurrentUser ? this.t.instant('videoConsultation.you') : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim(),
               message: msg.content || '',
               timestamp: msg.created_at,
               isCurrentUser,
@@ -210,7 +215,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
           if (err?.status === 404) {
             this.chatAvailable.set(false);
           } else {
-            this.showToast('Failed to load messages');
+            this.showToast(this.t.instant('videoConsultation.failedLoadMessages'));
           }
         }
       });
@@ -323,14 +328,14 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
       if (this.appointmentId) {
         this.incomingCallService.setActiveCall(this.appointmentId);
       }
-      this.showToast('Connected to consultation');
+      this.showToast(this.t.instant('videoConsultation.connectedToConsultation'));
 
       if (this.consultationId) {
         this.loadMessages();
         this.wsService.connect(this.consultationId);
       }
     } catch (error) {
-      this.errorMessage = error instanceof Error ? error.message : 'Failed to join video call';
+      this.errorMessage = error instanceof Error ? error.message : this.t.instant('videoConsultation.failedJoin');
       this.showToast(this.errorMessage);
     } finally {
       this.isLoading = false;
@@ -392,14 +397,14 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
         this.attachLocalVideo();
         this.attachRemoteMedia();
       });
-      this.showToast('Connected to consultation');
+      this.showToast(this.t.instant('videoConsultation.connectedToConsultation'));
 
       if (this.consultationId) {
         this.loadMessages();
         this.wsService.connect(this.consultationId);
       }
     } catch (error) {
-      this.errorMessage = error instanceof Error ? error.message : 'Failed to join video call';
+      this.errorMessage = error instanceof Error ? error.message : this.t.instant('videoConsultation.failedJoin');
       this.showToast(this.errorMessage);
       this.phase.set('lobby');
     } finally {
@@ -552,7 +557,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     try {
       await this.livekitService.toggleCamera();
     } catch (error) {
-      this.showToast('Failed to toggle camera');
+      this.showToast(this.t.instant('videoConsultation.failedToggleCamera'));
     }
   }
 
@@ -560,7 +565,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     try {
       await this.livekitService.toggleMicrophone();
     } catch (error) {
-      this.showToast('Failed to toggle microphone');
+      this.showToast(this.t.instant('videoConsultation.failedToggleMic'));
     }
   }
 
@@ -575,25 +580,25 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     try {
       await this.livekitService.toggleScreenShare();
     } catch (error) {
-      this.showToast('Failed to toggle screen share');
+      this.showToast(this.t.instant('videoConsultation.failedToggleScreen'));
     }
   }
 
   switchCamera(): void {
-    this.showToast('Switching camera...');
+    this.showToast(this.t.instant('videoConsultation.switchingCamera'));
   }
 
   async endCall(): Promise<void> {
     const alert = await this.alertCtrl.create({
-      header: 'End call',
-      message: 'Are you sure you want to end this call?',
+      header: this.t.instant('videoConsultation.endCallHeader'),
+      message: this.t.instant('videoConsultation.endCallMessage'),
       buttons: [
         {
-          text: 'Cancel',
+          text: this.t.instant('common.cancel'),
           role: 'cancel'
         },
         {
-          text: 'End Call',
+          text: this.t.instant('videoConsultation.endCallButton'),
           role: 'destructive',
           handler: () => {
             this.performEndCall();
@@ -625,7 +630,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     const tempId = Date.now();
     const newMessage: Message = {
       id: tempId,
-      username: 'You',
+      username: this.t.instant('videoConsultation.you'),
       message: data.content || '',
       timestamp: new Date().toISOString(),
       isCurrentUser: true,
@@ -647,7 +652,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
         },
         error: () => {
           this.messages.update(msgs => msgs.filter(m => m.id !== tempId));
-          this.showToast('Failed to send message');
+          this.showToast(this.t.instant('videoConsultation.failedSend'));
         }
       });
   }
@@ -667,10 +672,10 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
               updatedAt: updatedMessage.updated_at,
             } : m)
           );
-          this.showToast('Message updated');
+          this.showToast(this.t.instant('videoConsultation.messageUpdated'));
         },
         error: () => {
-          this.showToast('Failed to update message');
+          this.showToast(this.t.instant('videoConsultation.failedUpdate'));
         }
       });
   }
@@ -688,10 +693,10 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
               deletedAt: deletedMessage.deleted_at,
             } : m)
           );
-          this.showToast('Message deleted');
+          this.showToast(this.t.instant('videoConsultation.messageDeleted'));
         },
         error: () => {
-          this.showToast('Failed to delete message');
+          this.showToast(this.t.instant('videoConsultation.failedDelete'));
         }
       });
   }
@@ -712,7 +717,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
             const isCurrentUser = msg.created_by.id === currentUserId;
             return {
               id: msg.id,
-              username: isCurrentUser ? 'You' : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim(),
+              username: isCurrentUser ? this.t.instant('videoConsultation.you') : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim(),
               message: msg.content || '',
               timestamp: msg.created_at,
               isCurrentUser,
@@ -728,7 +733,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
         error: () => {
           this.currentPage--;
           this.isLoadingMore.set(false);
-          this.showToast('Failed to load more messages');
+          this.showToast(this.t.instant('videoConsultation.failedLoadMore'));
         }
       });
   }
@@ -744,10 +749,10 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
 
   getCallStateMessage(): string {
     switch (this.connectionStatus) {
-      case 'connecting': return 'Connecting to consultation...';
-      case 'reconnecting': return 'Reconnecting...';
-      case 'disconnected': return 'Disconnected';
-      case 'failed': return 'Connection failed';
+      case 'connecting': return this.t.instant('videoConsultation.connecting');
+      case 'reconnecting': return this.t.instant('videoConsultation.reconnecting');
+      case 'disconnected': return this.t.instant('videoConsultation.disconnected');
+      case 'failed': return this.t.instant('videoConsultation.connectionFailedStatus');
       default: return '';
     }
   }
