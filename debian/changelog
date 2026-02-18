@@ -1,3 +1,17 @@
+hcw (0.9.36) bookworm; urgency=medium
+
+  [ Gor Grigoryan ]
+  * update backend Todo
+  * add sysytem message in chat
+
+  [ Olivier Bitsch ]
+  * Created by optional for system message
+  * Adding language override
+  * Add translation overrides
+  * Fix upload
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Wed, 18 Feb 2026 16:48:33 +0100
+
 hcw (0.9.35) bookworm; urgency=medium
 
   [ Gor Grigoryan ]
