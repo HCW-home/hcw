@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { RoutePaths } from '../constants/routes';
 import { ToasterService } from './toaster.service';
+import { TranslationService } from './translation.service';
 
 export interface IncomingCallData {
   callerName: string;
@@ -23,7 +24,8 @@ export class IncomingCallService {
 
   constructor(
     private router: Router,
-    private toasterService: ToasterService
+    private toasterService: ToasterService,
+    private t: TranslationService
   ) {}
 
   showIncomingCall(data: IncomingCallData): void {
@@ -39,14 +41,14 @@ export class IncomingCallService {
     this.playRingtone();
     this.startTimeout();
 
-    this.toasterService.show('neutral', `${data.callerName}`, 'is calling...', {
+    this.toasterService.show('neutral', `${data.callerName}`, this.t.instant('incomingCall.isCalling'), {
       id: INCOMING_CALL_TOAST_ID,
       delay: -1,
       closable: false,
       icon: 'phone',
       actions: [
-        { label: 'Accept', callback: () => this.acceptCall() },
-        { label: 'Decline', callback: () => this.dismissIncomingCall() },
+        { label: this.t.instant('incomingCall.accept'), callback: () => this.acceptCall() },
+        { label: this.t.instant('incomingCall.decline'), callback: () => this.dismissIncomingCall() },
       ],
     });
   }

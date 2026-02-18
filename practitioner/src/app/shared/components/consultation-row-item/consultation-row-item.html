@@ -1,50 +1,50 @@
 <div class="consultation-row" (click)="onClick()">
   <div class="row-header">
     <app-typography [variant]="TypographyTypeEnum['body-l-semibold']" color="var(--slate-800)">
-      {{ consultation().title || 'Untitled Consultation' }}
+      {{ consultation().title || ('consultationRowItem.untitledConsultation' | translate) }}
     </app-typography>
   </div>
 
   <div class="row-details">
     <app-label-value
-      label="Patient"
+      [label]="'consultationRowItem.patient' | translate"
       [value]="getBeneficiaryName()"
       [image]="consultation().beneficiary?.picture || ''"
       icon="svg/user.svg">
     </app-label-value>
     <app-label-value
-      label="Created by"
+      [label]="'consultationRowItem.createdBy' | translate"
       [value]="getCreatedByName()"
       [image]="consultation().created_by.picture || ''"
       icon="svg/user.svg">
     </app-label-value>
     <app-label-value
-      label="Practitioner"
+      [label]="'consultationRowItem.practitioner' | translate"
       [value]="getOwnerName()"
       [image]="consultation().owned_by?.picture || ''"
       icon="svg/user.svg">
     </app-label-value>
     <app-label-value
-      label="Queue"
+      [label]="'consultationRowItem.queue' | translate"
       [value]="consultation().group?.name || '-'">
     </app-label-value>
     <app-label-value
-      label="Created"
+      [label]="'consultationRowItem.created' | translate"
       [value]="(consultation().created_at | date:'MMM d, y, h:mm a') || '-'">
     </app-label-value>
     @if (showClosedDate()) {
       <app-label-value
-        label="Closed"
+        [label]="'consultationRowItem.closed' | translate"
         [value]="(consultation().closed_at | date:'MMM d, y, h:mm a') || '-'">
       </app-label-value>
     }
     <app-label-value
-      label="Description"
+      [label]="'consultationRowItem.description' | translate"
       [value]="consultation().description || '-'">
     </app-label-value>
     <div class="detail-item-status">
       <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--slate-400)">
-        Status
+        {{ 'consultationRowItem.status' | translate }}
       </app-typography>
       <app-badge [type]="statusBadgeType()">{{ statusLabel() }}</app-badge>
     </div>

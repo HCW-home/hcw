@@ -38,7 +38,7 @@
   @if (toast.trace) {
     <div class="toast-trace-wrapper">
       <app-button
-        [text]="traceExpanded ? 'Hide details' : 'Show details'"
+        [text]="traceExpanded ? ('common.hideDetails' | translate) : ('common.showDetails' | translate)"
         [size]="ButtonSizeEnum.small"
         [style]="ButtonStyleEnum.text"
         (buttonClick)="traceExpanded = !traceExpanded"

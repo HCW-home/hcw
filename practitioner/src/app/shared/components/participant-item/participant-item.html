@@ -37,7 +37,7 @@
   </div>
   <ng-content></ng-content>
   @if (isPending) {
-    <app-badge [type]="BadgeTypeEnum.gray">Pending</app-badge>
+    <app-badge [type]="BadgeTypeEnum.gray">{{ 'participantItem.pending' | translate }}</app-badge>
   } @else if (participant?.status) {
     <app-badge [type]="getParticipantBadgeType(participant!.status)">
       {{ participant!.status }}

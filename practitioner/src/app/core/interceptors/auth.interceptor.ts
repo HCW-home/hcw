@@ -45,12 +45,12 @@ export const authInterceptor: HttpInterceptorFn = (
       } else if (error.status === 0) {
         toasterService.show(
           'error',
-          'Network error',
-          'Unable to reach the server. Please check your connection.'
+          translationService.instant('common.networkError'),
+          translationService.instant('common.networkErrorMessage')
         );
       } else if (error.status >= 400) {
         const message = getErrorMessage(error);
-        toasterService.show('error', `Error ${error.status}`, message);
+        toasterService.show('error', translationService.instant('common.errorStatus', { status: String(error.status) }), message);
       }
       return throwError(() => error);
     })

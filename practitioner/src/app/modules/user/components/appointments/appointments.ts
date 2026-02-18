@@ -48,6 +48,8 @@ import { RoutePaths } from '../../../../core/constants/routes';
 import { getAppointmentBadgeType } from '../../../../shared/tools/helper';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
 import { LocalDatePipe } from '../../../../shared/pipes/local-date.pipe';
+import { TranslatePipe } from '@ngx-translate/core';
+import { TranslationService } from '../../../../core/services/translation.service';
 
 type CalendarView = 'dayGridMonth' | 'timeGridWeek' | 'timeGridDay' | 'list';
 
@@ -63,6 +65,7 @@ type CalendarView = 'dayGridMonth' | 'timeGridWeek' | 'timeGridDay' | 'list';
     Button,
     FullCalendarModule,
     LocalDatePipe,
+    TranslatePipe,
   ],
   templateUrl: './appointments.html',
   styleUrl: './appointments.scss',
@@ -73,6 +76,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   private consultationService = inject(ConsultationService);
   private toasterService = inject(ToasterService);
   private el = inject(ElementRef);
+  private t = inject(TranslationService);
 
   protected readonly getAppointmentBadgeType = getAppointmentBadgeType;
   protected readonly AppointmentType = AppointmentType;
@@ -202,7 +206,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
         error: err => {
           this.toasterService.show(
             'error',
-            'Error Loading Appointments',
+            this.t.instant('appointments.errorLoadingAppointments'),
             getErrorMessage(err)
           );
           this.loading.set(false);
@@ -229,7 +233,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
         error: err => {
           this.toasterService.show(
             'error',
-            'Error Loading Appointments',
+            this.t.instant('appointments.errorLoadingAppointments'),
             getErrorMessage(err)
           );
           this.loading.set(false);
@@ -262,7 +266,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
         error: err => {
           this.toasterService.show(
             'error',
-            'Error Loading Appointments',
+            this.t.instant('appointments.errorLoadingAppointments'),
             getErrorMessage(err)
           );
           this.loadingMore.set(false);
@@ -292,11 +296,11 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     switch (t) {
       case 'online':
       case AppointmentType.ONLINE:
-        return 'Video Call';
+        return this.t.instant('appointments.videoCall');
       case 'inperson':
       case 'in_person':
       case AppointmentType.INPERSON:
-        return 'In Person';
+        return this.t.instant('appointments.inPerson');
       default:
         return String(type);
     }
@@ -439,9 +443,9 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
       const firstName = participant.user.first_name || '';
       const lastName = participant.user.last_name || '';
       const fullName = `${firstName} ${lastName}`.trim();
-      return fullName || participant.user.email || 'Unknown';
+      return fullName || participant.user.email || this.t.instant('appointments.participantUnknown');
     }
-    return 'Unknown';
+    return this.t.instant('appointments.participantUnknown');
   }
 
   getParticipantStatusColor(status: ParticipantStatus | undefined): string {
@@ -464,17 +468,17 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   getParticipantStatusLabel(status: ParticipantStatus | undefined): string {
     switch (status) {
       case 'confirmed':
-        return 'Confirmed';
+        return this.t.instant('appointments.participantConfirmed');
       case 'invited':
-        return 'Pending';
+        return this.t.instant('appointments.participantPending');
       case 'unavailable':
-        return 'Declined';
+        return this.t.instant('appointments.participantDeclined');
       case 'cancelled':
-        return 'Cancelled';
+        return this.t.instant('appointments.participantCancelled');
       case 'draft':
-        return 'Draft';
+        return this.t.instant('appointments.participantDraft');
       default:
-        return 'Unknown';
+        return this.t.instant('appointments.participantUnknown');
     }
   }
 
@@ -483,17 +487,17 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     switch (s) {
       case 'scheduled':
       case AppointmentStatus.SCHEDULED:
-        return 'Scheduled';
+        return this.t.instant('appointments.statusScheduled');
       case 'cancelled':
       case AppointmentStatus.CANCELLED:
-        return 'Cancelled';
+        return this.t.instant('appointments.statusCancelled');
       case 'completed':
-        return 'Completed';
+        return this.t.instant('appointments.statusCompleted');
       case 'in_progress':
-        return 'In Progress';
+        return this.t.instant('appointments.statusInProgress');
       case 'draft':
       case AppointmentStatus.DRAFT:
-        return 'Draft';
+        return this.t.instant('appointments.statusDraft');
       default:
         return String(status);
     }

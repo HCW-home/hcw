@@ -20,7 +20,7 @@ import { UserService } from '../../../../core/services/user.service';
 import { Auth } from '../../../../core/services/auth';
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { IUser, IUserUpdateRequest, ILanguage } from '../../models/user';
-import { CommunicationMethodOptions } from '../../constants/user';
+import { CommunicationMethodEnum } from '../../constants/user';
 
 import { Page } from '../../../../core/components/page/page';
 import { Loader } from '../../../../shared/components/loader/loader';
@@ -31,8 +31,10 @@ import { Svg } from '../../../../shared/ui-components/svg/svg';
 import { BadgeTypeEnum } from '../../../../shared/constants/badge';
 import { SelectOption } from '../../../../shared/models/select';
 import { ValidationService } from '../../../../core/services/validation.service';
+import { TranslationService } from '../../../../core/services/translation.service';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
 import { TIMEZONE_OPTIONS } from '../../../../shared/constants/timezone';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-user-profile',
@@ -46,6 +48,7 @@ import { TIMEZONE_OPTIONS } from '../../../../shared/constants/timezone';
     Select,
     CommonModule,
     ReactiveFormsModule,
+    TranslatePipe,
   ],
 })
 export class UserProfile implements OnInit, OnDestroy {
@@ -53,6 +56,7 @@ export class UserProfile implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
   public validationService = inject(ValidationService);
+  private t = inject(TranslationService);
 
   protected readonly BadgeTypeEnum = BadgeTypeEnum;
 
@@ -64,7 +68,15 @@ export class UserProfile implements OnInit, OnDestroy {
 
   profileForm: FormGroup;
 
-  communicationMethods: SelectOption[] = CommunicationMethodOptions;
+  get communicationMethods(): SelectOption[] {
+    return [
+      { label: this.t.instant('userProfile.commSms'), value: CommunicationMethodEnum.SMS },
+      { label: this.t.instant('userProfile.commEmail'), value: CommunicationMethodEnum.EMAIL },
+      { label: this.t.instant('userProfile.commWhatsApp'), value: CommunicationMethodEnum.WHATSAPP },
+      { label: this.t.instant('userProfile.commPush'), value: CommunicationMethodEnum.PUSH },
+      { label: this.t.instant('userProfile.commManual'), value: CommunicationMethodEnum.MANUAL },
+    ];
+  }
   timezoneOptions: SelectOption[] = TIMEZONE_OPTIONS;
   languageOptions = signal<SelectOption[]>([]);
   preferredLanguageOptions = signal<SelectOption[]>([]);
@@ -112,7 +124,7 @@ export class UserProfile implements OnInit, OnDestroy {
           this.isLoadingUser.set(false);
           this.toasterService.show(
             'error',
-            'Error Loading Profile',
+            this.t.instant('userProfile.errorLoadingProfile'),
             getErrorMessage(error)
           );
         },
@@ -156,15 +168,15 @@ export class UserProfile implements OnInit, OnDestroy {
             this.isSaving.set(false);
             this.toasterService.show(
               'success',
-              'Profile Updated',
-              'Profile updated successfully'
+              this.t.instant('userProfile.profileUpdated'),
+              this.t.instant('userProfile.profileUpdatedMessage')
             );
           },
           error: error => {
             this.isSaving.set(false);
             this.toasterService.show(
               'error',
-              'Error Updating Profile',
+              this.t.instant('userProfile.errorUpdatingProfile'),
               getErrorMessage(error)
             );
           },
@@ -205,7 +217,7 @@ export class UserProfile implements OnInit, OnDestroy {
         error: error => {
           this.toasterService.show(
             'error',
-            'Error Loading Languages',
+            this.t.instant('userProfile.errorLoadingLanguages'),
             getErrorMessage(error)
           );
         },
@@ -237,8 +249,8 @@ export class UserProfile implements OnInit, OnDestroy {
       } else {
         this.toasterService.show(
           'error',
-          'Invalid File',
-          'Please select an image file'
+          this.t.instant('userProfile.invalidFile'),
+          this.t.instant('userProfile.invalidFileMessage')
         );
       }
     }
@@ -256,15 +268,15 @@ export class UserProfile implements OnInit, OnDestroy {
           this.isUploadingAvatar.set(false);
           this.toasterService.show(
             'success',
-            'Picture Updated',
-            'Profile picture updated'
+            this.t.instant('userProfile.pictureUpdated'),
+            this.t.instant('userProfile.pictureUpdatedMessage')
           );
         },
         error: error => {
           this.isUploadingAvatar.set(false);
           this.toasterService.show(
             'error',
-            'Error Uploading Picture',
+            this.t.instant('userProfile.errorUploadingPicture'),
             getErrorMessage(error)
           );
         },

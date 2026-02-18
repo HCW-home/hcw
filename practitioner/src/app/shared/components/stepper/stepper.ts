@@ -2,10 +2,11 @@ import { Component, input, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IStep } from './stepper-models';
 import { Svg } from '../../ui-components/svg/svg';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-stepper',
-  imports: [CommonModule, Svg],
+  imports: [CommonModule, Svg, TranslatePipe],
   templateUrl: './stepper.html',
   styleUrl: './stepper.scss',
 })

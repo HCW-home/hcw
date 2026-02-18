@@ -1,7 +1,9 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { Participant, CreateParticipantRequest } from '../../../core/models/consultation';
+import { TranslationService } from '../../../core/services/translation.service';
 
 import { Svg } from '../../ui-components/svg/svg';
 import { Button } from '../../ui-components/button/button';
@@ -19,9 +21,12 @@ import { getParticipantBadgeType } from '../../tools/helper';
     Svg,
     Button,
     Badge,
+    TranslatePipe,
   ],
 })
 export class ParticipantItem {
+  private t = inject(TranslationService);
+
   @Input() participant: Participant | null = null;
   @Input() pendingParticipant: CreateParticipantRequest | null = null;
   @Input() showRemoveAction = false;
@@ -64,15 +69,15 @@ export class ParticipantItem {
   getDisplayName(): string {
     if (this.participant?.user) {
       const fullName = `${this.participant.user.first_name || ''} ${this.participant.user.last_name || ''}`.trim();
-      return fullName || this.participant.user.email || 'Unknown';
+      return fullName || this.participant.user.email || this.t.instant('participantItem.unknown');
     }
 
     if (this.pendingParticipant) {
       const name = `${this.pendingParticipant.first_name || ''} ${this.pendingParticipant.last_name || ''}`.trim();
-      return name || this.pendingParticipant.email || 'Participant';
+      return name || this.pendingParticipant.email || this.t.instant('participantItem.participant');
     }
 
-    return 'Unknown';
+    return this.t.instant('participantItem.unknown');
   }
 
   getContact(): string {

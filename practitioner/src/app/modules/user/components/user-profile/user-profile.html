@@ -3,7 +3,7 @@
     @if (isLoadingUser()) {
     <div class="loading-container">
       <app-loader></app-loader>
-      <span class="loading-text">Loading profile...</span>
+      <span class="loading-text">{{ 'userProfile.loadingProfile' | translate }}</span>
     </div>
     } @else if (user()) {
     <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
@@ -43,42 +43,42 @@
         </div>
 
         <div class="profile-section">
-          <h3 class="section-title">Personal Information</h3>
+          <h3 class="section-title">{{ 'userProfile.personalInformation' | translate }}</h3>
           <div class="form-grid">
             <div class="form-group">
-              <label class="form-label">First Name</label>
+              <label class="form-label">{{ 'userProfile.firstName' | translate }}</label>
               <input
                 type="text"
                 class="form-input readonly"
                 formControlName="first_name"
-                placeholder="First name cannot be changed" />
+                [placeholder]="'userProfile.firstNamePlaceholder' | translate" />
             </div>
 
             <div class="form-group">
-              <label class="form-label">Last Name</label>
+              <label class="form-label">{{ 'userProfile.lastName' | translate }}</label>
               <input
                 type="text"
                 class="form-input readonly"
                 formControlName="last_name"
-                placeholder="Last name cannot be changed" />
+                [placeholder]="'userProfile.lastNamePlaceholder' | translate" />
             </div>
 
             <div class="form-group">
-              <label class="form-label">Email Address</label>
+              <label class="form-label">{{ 'userProfile.emailAddress' | translate }}</label>
               <input
                 type="email"
                 class="form-input readonly"
                 formControlName="email"
-                placeholder="Email cannot be changed" />
+                [placeholder]="'userProfile.emailPlaceholder' | translate" />
             </div>
           </div>
         </div>
 
         <div class="profile-section">
-          <h3 class="section-title">Contact Information</h3>
+          <h3 class="section-title">{{ 'userProfile.contactInformation' | translate }}</h3>
           <div class="form-grid">
             <div class="form-group">
-              <label class="form-label">Mobile Phone</label>
+              <label class="form-label">{{ 'userProfile.mobilePhone' | translate }}</label>
               <input
                 type="tel"
                 class="form-input"
@@ -88,48 +88,48 @@
 
             <div class="form-group">
               <label class="form-label"
-                >Preferred Communication <span class="required">*</span></label
+                >{{ 'userProfile.preferredCommunication' | translate }} <span class="required">*</span></label
               >
               <app-select
                 formControlName="communication_method"
                 [options]="communicationMethods"
                 [invalid]="(profileForm.get('communication_method')?.invalid && profileForm.get('communication_method')?.touched) || false"
-                invalidMessage="Communication method is required">
+                [invalidMessage]="'userProfile.communicationMethodRequired' | translate">
               </app-select>
             </div>
           </div>
         </div>
 
         <div class="profile-section">
-          <h3 class="section-title">Preferences</h3>
+          <h3 class="section-title">{{ 'userProfile.preferences' | translate }}</h3>
           <div class="form-grid">
             <div class="form-group">
               <label class="form-label"
-                >Timezone <span class="required">*</span></label
+                >{{ 'userProfile.timezone' | translate }} <span class="required">*</span></label
               >
               <app-select
                 formControlName="timezone"
                 [options]="timezoneOptions"
                 [invalid]="(profileForm.get('timezone')?.invalid && profileForm.get('timezone')?.touched) || false"
-                invalidMessage="Timezone is required">
+                [invalidMessage]="'userProfile.timezoneRequired' | translate">
               </app-select>
             </div>
 
             <div class="form-group">
-              <label class="form-label">Preferred Language</label>
+              <label class="form-label">{{ 'userProfile.preferredLanguage' | translate }}</label>
               <app-select
                 formControlName="preferred_language"
                 [options]="preferredLanguageOptions()"
-                placeholder="Select your preferred language">
+                [placeholder]="'userProfile.selectPreferredLanguage' | translate">
               </app-select>
             </div>
 
             <div class="form-group full-width">
-              <label class="form-label">Available Languages</label>
+              <label class="form-label">{{ 'userProfile.availableLanguages' | translate }}</label>
               <app-select
                 formControlName="language_ids"
                 [options]="languageOptions()"
-                placeholder="Select languages you can communicate in"
+                [placeholder]="'userProfile.selectLanguages' | translate"
                 [multiSelect]="true">
               </app-select>
             </div>
@@ -138,10 +138,10 @@
 
         @if (user()!.specialities?.length) {
         <div class="profile-section">
-          <h3 class="section-title">Professional Information</h3>
+          <h3 class="section-title">{{ 'userProfile.professionalInformation' | translate }}</h3>
           <div class="form-grid">
             <div class="form-group full-width">
-              <label class="form-label">Specialities</label>
+              <label class="form-label">{{ 'userProfile.specialities' | translate }}</label>
               <div class="badges-list">
                 @for (speciality of user()!.specialities; track speciality.id) {
                 <app-badge [type]="BadgeTypeEnum.green"
@@ -158,7 +158,7 @@
           <button class="btn-save" type="submit" [disabled]="isSaving()">
             @if (isSaving()) {
             <span class="btn-loader"></span>
-            } Save Changes
+            } {{ 'userProfile.saveChanges' | translate }}
           </button>
         </div>
       </div>

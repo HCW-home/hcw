@@ -1,13 +1,13 @@
 <app-page>
   <div class="appointments-container">
     <div class="calendar-header">
-      <span class="total-count">{{ appointments().length }} appointments</span>
+      <span class="total-count">{{ 'appointments.appointmentsCount' | translate:{ count: appointments().length } }}</span>
       <div class="header-controls">
         <div class="nav-controls">
           <button class="nav-btn" (click)="navigatePrev()">
             <span class="nav-icon">&lt;</span>
           </button>
-          <button class="today-btn" (click)="goToToday()">Today</button>
+          <button class="today-btn" (click)="goToToday()">{{ 'appointments.today' | translate }}</button>
           <button class="nav-btn" (click)="navigateNext()">
             <span class="nav-icon">&gt;</span>
           </button>
@@ -19,25 +19,25 @@
             class="view-btn"
             [class.active]="isActiveView('list')"
             (click)="setView('list')">
-            List
+            {{ 'appointments.list' | translate }}
           </button>
           <button
             class="view-btn"
             [class.active]="isActiveView('timeGridDay')"
             (click)="setView('timeGridDay')">
-            Day
+            {{ 'appointments.day' | translate }}
           </button>
           <button
             class="view-btn"
             [class.active]="isActiveView('timeGridWeek')"
             (click)="setView('timeGridWeek')">
-            Week
+            {{ 'appointments.week' | translate }}
           </button>
           <button
             class="view-btn"
             [class.active]="isActiveView('dayGridMonth')"
             (click)="setView('dayGridMonth')">
-            Month
+            {{ 'appointments.month' | translate }}
           </button>
         </div>
       </div>
@@ -54,7 +54,7 @@
         <app-svg
           src="calendar"
           [svgStyle]="{'width.px': 48, 'height.px': 48}"></app-svg>
-        <span>No appointments found</span>
+        <span>{{ 'appointments.noAppointmentsFound' | translate }}</span>
       </div>
       } @else { @for (appointment of appointments(); track appointment.id) {
       <div class="appointment-item" (click)="viewAppointment(appointment)">
@@ -95,7 +95,7 @@
       } } @if (hasMore()) {
       <div class="load-more-container">
         <app-button
-          text="View More"
+          [text]="'appointments.viewMore' | translate"
           [style]="ButtonStyleEnum.text"
           [size]="ButtonSizeEnum.medium"
           [loading]="loadingMore()"
@@ -160,7 +160,7 @@
       hoveredAppointment()!.participants.length > 0) {
       <div class="tooltip-participants">
         <span class="participants-title"
-          >Participants ({{ hoveredAppointment()!.participants.length }})</span
+          >{{ 'appointments.participantsCount' | translate:{ count: hoveredAppointment()!.participants.length } }}</span
         >
         <div class="participants-list">
           @for (participant of hoveredAppointment()!.participants; track
@@ -180,7 +180,7 @@
       </div>
       } @else {
       <div class="tooltip-no-participants">
-        <span>No participants added</span>
+        <span>{{ 'appointments.noParticipantsAdded' | translate }}</span>
       </div>
       }
     </div>

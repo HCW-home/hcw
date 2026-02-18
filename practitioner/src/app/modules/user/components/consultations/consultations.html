@@ -14,7 +14,7 @@
           <app-svg
             src="settings"
             [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
-          <span>{{ showFilters() ? 'Hide filters' : 'Advanced filters' }}</span>
+          <span>{{ showFilters() ? ('consultations.hideFilters' | translate) : ('consultations.advancedFilters' | translate) }}</span>
           @if (activeFilterCount() > 0) {
           <span class="filter-count">{{ activeFilterCount() }}</span>
           }
@@ -24,33 +24,33 @@
       <div class="filters-wrapper">
         <div class="filter-item">
           <app-user-search-select
-            [label]="'Beneficiary'"
-            [placeholder]="'Search beneficiary...'"
+            [label]="'consultations.beneficiary' | translate"
+            [placeholder]="'consultations.searchBeneficiary' | translate"
             (userSelected)="onBeneficiaryChange($event)">
           </app-user-search-select>
         </div>
         <div class="filter-item">
           <app-user-search-select
-            [label]="'Created by'"
-            [placeholder]="'Search creator...'"
+            [label]="'consultations.createdBy' | translate"
+            [placeholder]="'consultations.searchCreator' | translate"
             [meUser]="currentUser()"
             (userSelected)="onCreatedByChange($event)">
           </app-user-search-select>
         </div>
         <div class="filter-item">
           <app-user-search-select
-            [label]="'Owned by'"
-            [placeholder]="'Search practitioner...'"
+            [label]="'consultations.ownedBy' | translate"
+            [placeholder]="'consultations.searchPractitioner' | translate"
             [hasGroupPermissions]="true"
             [meUser]="currentUser()"
             (userSelected)="onOwnedByChange($event)">
           </app-user-search-select>
         </div>
         <div class="filter-item">
-          <label class="filter-label">Group</label>
+          <label class="filter-label">{{ 'consultations.group' | translate }}</label>
           <div class="filter-select-wrapper">
             <select class="filter-select" (change)="onGroupChange($event)">
-              <option value="">All groups</option>
+              <option value="">{{ 'consultations.allGroups' | translate }}</option>
               @for (queue of queues(); track queue.id) {
               <option [value]="queue.id">{{ queue.name }}</option>
               }

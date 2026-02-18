@@ -24,6 +24,8 @@ import { ModalComponent } from '../modal/modal.component';
 import { TypographyTypeEnum } from '../../constants/typography';
 import { ButtonSizeEnum, ButtonStyleEnum } from '../../constants/button';
 import { ConsultationService } from '../../../core/services/consultation.service';
+import { TranslatePipe } from '@ngx-translate/core';
+import { TranslationService } from '../../../core/services/translation.service';
 
 export interface MessageAttachment {
   file_name: string;
@@ -67,6 +69,7 @@ export interface DeleteMessageData {
     InputComponent,
     Svg,
     ModalComponent,
+    TranslatePipe,
   ],
   templateUrl: './message-list.html',
   styleUrl: './message-list.scss',
@@ -94,6 +97,7 @@ export class MessageList
 
   private destroy$ = new Subject<void>();
   private consultationService = inject(ConsultationService);
+  private t = inject(TranslationService);
   private imageUrlCache = new Map<number, string>();
   private shouldScrollToBottom = false;
   private isInitialLoad = true;

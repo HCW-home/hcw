@@ -12,6 +12,7 @@ import {
   effect,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslatePipe } from '@ngx-translate/core';
 import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, takeUntil } from 'rxjs/operators';
@@ -26,7 +27,7 @@ import { TypographyTypeEnum } from '../../constants/typography';
   selector: 'app-user-search-select',
   templateUrl: './user-search-select.html',
   styleUrl: './user-search-select.scss',
-  imports: [CommonModule, Typography, Svg, Loader],
+  imports: [CommonModule, Typography, Svg, Loader, TranslatePipe],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

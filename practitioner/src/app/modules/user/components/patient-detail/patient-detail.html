@@ -7,7 +7,7 @@
     } @else if (patient()) {
       <div class="back-link" (click)="goBack()">
         <app-svg src="arrow-left" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
-        <span>Back to patients</span>
+        <span>{{ 'patientDetail.backToPatients' | translate }}</span>
       </div>
 
       <div class="patient-header">
@@ -61,7 +61,7 @@
                 </div>
                 <div class="stat-content">
                   <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-700)">
-                    Total Consultations
+                    {{ 'patientDetail.totalConsultations' | translate }}
                   </app-typography>
                   <app-typography [variant]="TypographyTypeEnum['h2-bold']" color="var(--slate-800)">
                     {{ consultations().length }}
@@ -74,10 +74,10 @@
                 </div>
                 <div class="stat-content">
                   <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-700)">
-                    Last Login
+                    {{ 'patientDetail.lastLogin' | translate }}
                   </app-typography>
                   <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
-                    {{ patient()!.last_login ? (patient()!.last_login! | date:'MMM d, y') : 'Never' }}
+                    {{ patient()!.last_login ? (patient()!.last_login! | date:'MMM d, y') : ('patientDetail.never' | translate) }}
                   </app-typography>
                 </div>
               </div>
@@ -85,11 +85,11 @@
 
             <div class="section-header">
               <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
-                Recent Consultations
+                {{ 'patientDetail.recentConsultations' | translate }}
               </app-typography>
               @if (consultations().length > 3) {
                 <app-button
-                  text="View all"
+                  [text]="'patientDetail.viewAll' | translate"
                   [style]="ButtonStyleEnum.text"
                   [size]="ButtonSizeEnum.small"
                   (buttonClick)="setActiveTab('consultations')">
@@ -104,7 +104,7 @@
               } @else if (consultations().length === 0) {
                 <div class="no-consultations">
                   <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
-                    No consultations found
+                    {{ 'patientDetail.noConsultationsFound' | translate }}
                   </app-typography>
                 </div>
               } @else {
@@ -113,7 +113,7 @@
                     [consultation]="consultation"
                     [showClosedDate]="!!consultation.closed_at"
                     [statusBadgeType]="getConsultationBadgeType(!!consultation.closed_at)"
-                    [statusLabel]="consultation.closed_at ? 'Closed' : 'Active'"
+                    [statusLabel]="consultation.closed_at ? ('patientDetail.closed' | translate) : ('patientDetail.active' | translate)"
                     (rowClick)="viewConsultation($event)">
                   </app-consultation-row-item>
                 }
@@ -128,10 +128,10 @@
               <div class="card-header">
                 <div>
                   <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
-                    Consultation History
+                    {{ 'patientDetail.consultationHistory' | translate }}
                   </app-typography>
                   <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
-                    {{ consultations().length }} total consultations
+                    {{ 'patientDetail.totalConsultationsCount' | translate:{ count: consultations().length } }}
                   </app-typography>
                 </div>
               </div>
@@ -144,7 +144,7 @@
                   <div class="no-consultations">
                     <app-svg src="video" [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
                     <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
-                      No consultations found for this patient
+                      {{ 'patientDetail.noConsultationsForPatient' | translate }}
                     </app-typography>
                   </div>
                 } @else {
@@ -153,7 +153,7 @@
                       [consultation]="consultation"
                       [showClosedDate]="!!consultation.closed_at"
                       [statusBadgeType]="getConsultationBadgeType(!!consultation.closed_at)"
-                      [statusLabel]="consultation.closed_at ? 'Closed' : 'Active'"
+                      [statusLabel]="consultation.closed_at ? ('patientDetail.closed' | translate) : ('patientDetail.active' | translate)"
                       (rowClick)="viewConsultation($event)">
                     </app-consultation-row-item>
                   }
@@ -169,10 +169,10 @@
               <div class="card-header">
                 <div>
                   <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
-                    Upcoming Appointments
+                    {{ 'patientDetail.upcomingAppointments' | translate }}
                   </app-typography>
                   <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
-                    {{ appointments().length }} scheduled
+                    {{ 'patientDetail.scheduledCount' | translate:{ count: appointments().length } }}
                   </app-typography>
                 </div>
               </div>
@@ -185,7 +185,7 @@
                   <div class="no-consultations">
                     <app-svg src="calendar" [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
                     <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-500)">
-                      No appointments found for this patient
+                      {{ 'patientDetail.noAppointmentsForPatient' | translate }}
                     </app-typography>
                   </div>
                 } @else {
@@ -210,13 +210,13 @@
                             {{ appointment.scheduled_at | date:'h:mm a' }}
                           </span>
                           @if (appointment.created_by) {
-                            <span>with {{ appointment.created_by.first_name }} {{ appointment.created_by.last_name }}</span>
+                            <span>{{ 'patientDetail.with' | translate }} {{ appointment.created_by.first_name }} {{ appointment.created_by.last_name }}</span>
                           }
                         </div>
                         @if (appointment.participants && appointment.participants.length > 0) {
                           <div class="participants-info">
                             <app-typography [variant]="TypographyTypeEnum['body-s-semibold']" color="var(--slate-700)">
-                              Participants ({{ appointment.participants.length }})
+                              {{ 'patientDetail.participantsCount' | translate:{ count: appointment.participants.length } }}
                             </app-typography>
                             <div class="participants-list">
                               @for (participant of appointment.participants; track participant.id) {
@@ -224,10 +224,10 @@
                                   @if (participant.user) {
                                     {{ participant.user.first_name || '' }} {{ participant.user.last_name || '' }}
                                     @if (!participant.user.first_name && !participant.user.last_name) {
-                                      {{ participant.user.email || 'Unknown' }}
+                                      {{ participant.user.email || ('patientDetail.unknown' | translate) }}
                                     }
                                   } @else {
-                                    Unknown
+                                    {{ 'patientDetail.unknown' | translate }}
                                   }
                                 </span>
                               }
@@ -248,10 +248,10 @@
       <div class="not-found">
         <app-svg src="user" [svgStyle]="{'width.px': 48, 'height.px': 48, 'color': 'var(--slate-300)'}"></app-svg>
         <app-typography [variant]="TypographyTypeEnum['body-l-medium']" color="var(--slate-600)">
-          Patient not found
+          {{ 'patientDetail.patientNotFound' | translate }}
         </app-typography>
         <app-button
-          text="Back to Patients"
+          [text]="'patientDetail.backToPatientsList' | translate"
           [style]="ButtonStyleEnum.primary"
           [size]="ButtonSizeEnum.medium"
           (buttonClick)="goBack()">

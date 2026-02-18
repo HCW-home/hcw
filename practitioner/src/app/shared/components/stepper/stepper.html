@@ -14,7 +14,7 @@
       <span class="step-title" [ngClass]="getStepState(i)">
         {{ step.title }}
         @if (step.isOptional) {
-          <span class="optional-label">(Optional)</span>
+          <span class="optional-label">{{ 'common.optional' | translate }}</span>
         }
       </span>
     </div>

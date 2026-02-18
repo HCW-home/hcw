@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Subject, takeUntil, forkJoin } from 'rxjs';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Page } from '../../../../core/components/page/page';
 import { Svg } from '../../../../shared/ui-components/svg/svg';
 import { Typography } from '../../../../shared/ui-components/typography/typography';
@@ -19,6 +20,7 @@ import { PatientService } from '../../../../core/services/patient.service';
 import { ConsultationService } from '../../../../core/services/consultation.service';
 import { Consultation, Appointment } from '../../../../core/models/consultation';
 import { ToasterService } from '../../../../core/services/toaster.service';
+import { TranslationService } from '../../../../core/services/translation.service';
 import { Badge } from '../../../../shared/components/badge/badge';
 import { ConsultationRowItem } from '../../../../shared/components/consultation-row-item/consultation-row-item';
 import { getConsultationBadgeType, getAppointmentBadgeType } from '../../../../shared/tools/helper';
@@ -26,7 +28,7 @@ import { getErrorMessage } from '../../../../core/utils/error-helper';
 
 @Component({
   selector: 'app-patient-detail',
-  imports: [CommonModule, DatePipe, Page, Svg, Typography, Button, Loader, Tabs, ModalComponent, AddEditPatient, Badge, ConsultationRowItem],
+  imports: [CommonModule, DatePipe, TranslatePipe, Page, Svg, Typography, Button, Loader, Tabs, ModalComponent, AddEditPatient, Badge, ConsultationRowItem],
   templateUrl: './patient-detail.html',
   styleUrl: './patient-detail.scss',
 })
@@ -37,6 +39,7 @@ export class PatientDetail implements OnInit, OnDestroy {
   private patientService = inject(PatientService);
   private consultationService = inject(ConsultationService);
   private toasterService = inject(ToasterService);
+  private t = inject(TranslationService);
 
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
@@ -56,11 +59,13 @@ export class PatientDetail implements OnInit, OnDestroy {
   consultations = signal<Consultation[]>([]);
   appointments = signal<Appointment[]>([]);
 
-  tabItems: TabItem[] = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'consultations', label: 'Consultations' },
-    { id: 'appointments', label: 'Appointments' }
-  ];
+  get tabItems(): TabItem[] {
+    return [
+      { id: 'overview', label: this.t.instant('patientDetail.tabOverview') },
+      { id: 'consultations', label: this.t.instant('patientDetail.tabConsultations') },
+      { id: 'appointments', label: this.t.instant('patientDetail.tabAppointments') }
+    ];
+  }
 
   ngOnInit(): void {
     this.route.fragment.pipe(takeUntil(this.destroy$)).subscribe(fragment => {
@@ -99,7 +104,7 @@ export class PatientDetail implements OnInit, OnDestroy {
         this.loading.set(false);
       },
       error: (err) => {
-        this.toasterService.show('error', 'Error Loading Patient', getErrorMessage(err));
+        this.toasterService.show('error', this.t.instant('patientDetail.errorLoadingPatient'), getErrorMessage(err));
         this.loading.set(false);
       }
     });
@@ -118,7 +123,7 @@ export class PatientDetail implements OnInit, OnDestroy {
           this.loadingConsultations.set(false);
         },
         error: (err) => {
-          this.toasterService.show('error', 'Error Loading Consultations', getErrorMessage(err));
+          this.toasterService.show('error', this.t.instant('patientDetail.errorLoadingConsultations'), getErrorMessage(err));
           this.loadingConsultations.set(false);
         }
       });
@@ -137,97 +142,10 @@ export class PatientDetail implements OnInit, OnDestroy {
           this.loadingAppointments.set(false);
         },
         error: (err) => {
-          this.toasterService.show('error', 'Error Loading Appointments', getErrorMessage(err));
+          this.toasterService.show('error', this.t.instant('patientDetail.errorLoadingAppointments'), getErrorMessage(err));
           this.loadingAppointments.set(false);
         }
       });
-  }
-
-  private transformHealthMetrics(metrics: IHealthMetricResponse[]): IHealthMetric[] {
-    if (!metrics.length) return [];
-
-    const latestMetric = metrics[0];
-    const displayMetrics: IHealthMetric[] = [];
-
-    if (latestMetric.heart_rate_bpm !== null) {
-      displayMetrics.push({
-        id: 1,
-        name: 'Heart Rate',
-        value: latestMetric.heart_rate_bpm.toString(),
-        unit: 'bpm',
-        icon: 'heart',
-        color: 'rose',
-        trend: 'stable',
-        lastUpdated: latestMetric.measured_at
-      });
-    }
-
-    if (latestMetric.systolic_bp !== null && latestMetric.diastolic_bp !== null) {
-      displayMetrics.push({
-        id: 2,
-        name: 'Blood Pressure',
-        value: `${latestMetric.systolic_bp}/${latestMetric.diastolic_bp}`,
-        unit: 'mmHg',
-        icon: 'activity',
-        color: 'purple',
-        trend: 'stable',
-        lastUpdated: latestMetric.measured_at
-      });
-    }
-
-    if (latestMetric.temperature_c !== null) {
-      displayMetrics.push({
-        id: 3,
-        name: 'Temperature',
-        value: latestMetric.temperature_c.toString(),
-        unit: 'C',
-        icon: 'thermometer',
-        color: 'amber',
-        trend: 'stable',
-        lastUpdated: latestMetric.measured_at
-      });
-    }
-
-    if (latestMetric.weight_kg !== null) {
-      displayMetrics.push({
-        id: 4,
-        name: 'Weight',
-        value: latestMetric.weight_kg.toString(),
-        unit: 'kg',
-        icon: 'weight',
-        color: 'blue',
-        trend: 'stable',
-        lastUpdated: latestMetric.measured_at
-      });
-    }
-
-    if (latestMetric.spo2_pct !== null) {
-      displayMetrics.push({
-        id: 5,
-        name: 'SpO2',
-        value: latestMetric.spo2_pct.toString(),
-        unit: '%',
-        icon: 'activity',
-        color: 'emerald',
-        trend: 'stable',
-        lastUpdated: latestMetric.measured_at
-      });
-    }
-
-    if (latestMetric.glucose_fasting_mgdl !== null) {
-      displayMetrics.push({
-        id: 6,
-        name: 'Glucose',
-        value: latestMetric.glucose_fasting_mgdl.toString(),
-        unit: 'mg/dL',
-        icon: 'activity',
-        color: 'cyan',
-        trend: 'stable',
-        lastUpdated: latestMetric.measured_at
-      });
-    }
-
-    return displayMetrics;
   }
 
   getInitials(patient: IUser): string {
@@ -258,12 +176,12 @@ export class PatientDetail implements OnInit, OnDestroy {
   }
 
   getAppointmentType(type: string): string {
-    const t = type?.toLowerCase();
-    switch (t) {
-      case 'online': return 'Video Call';
-      case 'inperson': return 'In Person';
-      case 'in_person': return 'In Person';
-      case 'phone': return 'Phone Call';
+    const appointmentType = type?.toLowerCase();
+    switch (appointmentType) {
+      case 'online': return this.t.instant('patientDetail.videoCall');
+      case 'inperson': return this.t.instant('patientDetail.inPerson');
+      case 'in_person': return this.t.instant('patientDetail.inPerson');
+      case 'phone': return this.t.instant('patientDetail.phoneCall');
       default: return type;
     }
   }

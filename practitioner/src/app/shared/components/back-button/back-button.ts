@@ -2,12 +2,13 @@ import { Component, Inject, input, PLATFORM_ID } from '@angular/core';
 import { Router } from '@angular/router';
 import { isPlatformBrowser, Location } from '@angular/common';
 
+import { TranslatePipe } from '@ngx-translate/core';
 import { Button } from '../../ui-components/button/button';
 import { ButtonSizeEnum, ButtonStateEnum, ButtonStyleEnum } from '../../constants/button';
 
 @Component({
   selector: 'app-back-button',
-  imports: [Button],
+  imports: [Button, TranslatePipe],
   templateUrl: './back-button.html',
   styleUrl: './back-button.scss',
 })

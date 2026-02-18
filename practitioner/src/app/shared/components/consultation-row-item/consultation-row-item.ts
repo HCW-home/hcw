@@ -1,5 +1,6 @@
 import { Component, input, output } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Typography } from '../../ui-components/typography/typography';
 import { LabelValue } from '../../ui-components/label-value/label-value';
 import { Badge } from '../badge/badge';
@@ -10,7 +11,7 @@ import { Consultation } from '../../../core/models/consultation';
 
 @Component({
   selector: 'app-consultation-row-item',
-  imports: [DatePipe, Typography, LabelValue, Badge],
+  imports: [DatePipe, Typography, LabelValue, Badge, TranslatePipe],
   templateUrl: './consultation-row-item.html',
   styleUrl: './consultation-row-item.scss',
 })

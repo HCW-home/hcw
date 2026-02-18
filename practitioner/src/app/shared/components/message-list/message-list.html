@@ -1,13 +1,13 @@
 <div class="message-list-container">
   <div class="message-list-header">
     <app-typography [variant]="TypographyTypeEnum['h6-semibold']"
-      >Messages</app-typography
+      >{{ 'messageList.messages' | translate }}</app-typography
     >
     <span
       class="connection-status"
       [class.connected]="isConnected"
       [class.disconnected]="!isConnected">
-      {{ isConnected ? 'Connected' : 'Disconnected' }}
+      {{ isConnected ? ('messageList.connected' | translate) : ('messageList.disconnected' | translate) }}
     </span>
   </div>
 
@@ -16,13 +16,13 @@
     <div class="loading-more">
       <div class="loading-spinner"></div>
       <app-typography [variant]="TypographyTypeEnum['body-xs-regular']"
-        >Loading older messages...</app-typography
+        >{{ 'messageList.loadingOlderMessages' | translate }}</app-typography
       >
     </div>
     } @if (messages.length === 0 && !isLoadingMore) {
     <div class="no-messages">
       <app-typography [variant]="TypographyTypeEnum['body-regular']"
-        >No messages yet</app-typography
+        >{{ 'messageList.noMessagesYet' | translate }}</app-typography
       >
     </div>
     } @else { @for (message of messages; track message.id) {
@@ -34,7 +34,7 @@
       <div class="edit-message-container">
         <app-input
           [(ngModel)]="editContent"
-          [placeholder]="'Edit message...'"
+          [placeholder]="'messageList.editMessage' | translate"
           (keyup.enter)="saveEdit()"></app-input>
         <div class="edit-actions">
           <app-button
@@ -67,7 +67,7 @@
           <app-typography
             [variant]="TypographyTypeEnum['body-xs-regular']"
             class="message-edited">
-            (edited)
+            {{ 'messageList.edited' | translate }}
           </app-typography>
           } @if (canEditMessage(message)) {
           <button class="edit-button" (click)="startEdit(message)">
@@ -87,8 +87,7 @@
       <div class="message-content">
         @if (isMessageDeleted(message)) {
         <span class="message-deleted-text"
-          >{{ message.isCurrentUser ? 'You deleted this message' : 'Message
-          deleted' }}</span
+          >{{ message.isCurrentUser ? ('messageList.youDeletedThisMessage' | translate) : ('messageList.messageDeleted' | translate) }}</span
         >
         } @else if (message.message) {
         <app-typography [variant]="TypographyTypeEnum['body-s-regular']"
@@ -110,7 +109,7 @@
           <app-svg
             src="image"
             [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
-          <span class="attachment-name">Loading image...</span>
+          <span class="attachment-name">{{ 'messageList.loadingImage' | translate }}</span>
         </div>
         } } @else {
         <div
@@ -193,11 +192,11 @@
     </app-button>
     <app-input
       [(ngModel)]="newMessage"
-      [placeholder]="'Type a message...'"
+      [placeholder]="'messageList.typeAMessage' | translate"
       [disabled]="!isConnected"
       (keyup.enter)="onSendMessage()"></app-input>
     <app-button
-      text="Send"
+      [text]="'messageList.send' | translate"
       leftIcon="send"
       [size]="ButtonSizeEnum.medium"
       [style]="ButtonStyleEnum.primary"
