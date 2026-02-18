@@ -1,0 +1,155 @@
+{% extends "admin/base_site.html" %}
+{% load i18n unfold %}
+
+{% block title %}Translation Overrides{% endblock %}
+
+{% block content %}
+    {% include "unfold/helpers/messages.html" %}
+
+    {% component "unfold/components/container.html" %}
+        <div class="flex flex-col" style="height: calc(100vh - 200px);">
+
+            <div class="shrink-0 mb-4">
+                {% component "unfold/components/card.html" with title="Translation Overrides" %}
+                    <form method="post" id="override-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="component" value="{{ component }}">
+                        <input type="hidden" name="language" value="{{ language }}">
+
+                        <div class="flex flex-wrap items-center gap-4">
+                            <div class="flex items-center gap-2">
+                                <label for="component-select" class="font-semibold text-sm text-font-important-light dark:text-font-important-dark">Component:</label>
+                                <div class="relative">
+                                    <select id="component-select" onchange="updateFilters()" class="border border-base-200 bg-white font-medium min-w-20 rounded-default shadow-xs text-font-default-light text-sm focus:outline-2 focus:-outline-offset-2 focus:outline-primary-600 dark:bg-base-900 dark:border-base-700 dark:text-font-default-dark dark:scheme-dark px-3 py-2 appearance-none pr-10">
+                                        {% for c in components %}
+                                            <option value="{{ c }}" {% if c == component %}selected{% endif %}>{{ c|title }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="material-symbols-outlined absolute pointer-events-none right-0 top-1/2 -translate-y-1/2 mr-3 text-base-400">expand_more</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <label for="language-select" class="font-semibold text-sm text-font-important-light dark:text-font-important-dark">Language:</label>
+                                <div class="relative">
+                                    <select id="language-select" onchange="updateFilters()" class="border border-base-200 bg-white font-medium min-w-20 rounded-default shadow-xs text-font-default-light text-sm focus:outline-2 focus:-outline-offset-2 focus:outline-primary-600 dark:bg-base-900 dark:border-base-700 dark:text-font-default-dark dark:scheme-dark px-3 py-2 appearance-none pr-10">
+                                        {% for l in languages %}
+                                            <option value="{{ l }}" {% if l == language %}selected{% endif %}>{{ l }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="material-symbols-outlined absolute pointer-events-none right-0 top-1/2 -translate-y-1/2 mr-3 text-base-400">expand_more</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-base-400">search</span>
+                                <input type="text" id="search-input" placeholder="Filter keys..." oninput="filterRows()" class="border border-base-200 bg-white font-medium min-w-20 placeholder-base-400 rounded-default shadow-xs text-font-default-light text-sm focus:outline-2 focus:-outline-offset-2 focus:outline-primary-600 dark:bg-base-900 dark:border-base-700 dark:text-font-default-dark dark:scheme-dark px-3 py-2 w-64">
+                            </div>
+
+                            <span class="ml-auto text-xs text-base-500 dark:text-base-400">
+                                <span id="visible-count">{{ rows|length }}</span> / {{ rows|length }} keys,
+                                <span id="override-count" class="font-semibold text-primary-600 dark:text-primary-400">0</span> overrides
+                            </span>
+                        </div>
+                    </form>
+                {% endcomponent %}
+            </div>
+
+            <div class="flex-1 min-h-0 bg-white border border-base-200 rounded-default shadow-xs overflow-y-auto dark:bg-base-900 dark:border-base-800">
+                <table class="w-full">
+                    <thead>
+                        <tr class="bg-base-50 dark:bg-base-900">
+                            <th class="align-middle font-semibold py-2 text-left text-font-important-light dark:text-font-important-dark whitespace-nowrap px-3 lg:table-cell sticky top-0 bg-base-50 dark:bg-base-900 z-10">
+                                Key
+                            </th>
+                            {% if show_en_column %}
+                                <th class="align-middle font-semibold py-2 text-left text-font-important-light dark:text-font-important-dark whitespace-nowrap px-3 lg:table-cell sticky top-0 bg-base-50 dark:bg-base-900 z-10">
+                                    EN (reference)
+                                </th>
+                            {% endif %}
+                            <th class="align-middle font-semibold py-2 text-left text-font-important-light dark:text-font-important-dark whitespace-nowrap px-3 lg:table-cell sticky top-0 bg-base-50 dark:bg-base-900 z-10">
+                                Current value
+                            </th>
+                            <th class="align-middle font-semibold py-2 text-left text-font-important-light dark:text-font-important-dark whitespace-nowrap px-3 lg:table-cell sticky top-0 bg-base-50 dark:bg-base-900 z-10">
+                                Override
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        {% for row in rows %}
+                            <tr class="border-b border-base-200 last:border-0 dark:border-base-800 hover:bg-base-50 dark:hover:bg-white/[.02] {% if row.override %}bg-primary-50 dark:bg-primary-500/10{% endif %}" data-key="{{ row.key }}">
+                                <td class="px-3 py-2 text-xs font-mono text-base-500 dark:text-base-400 whitespace-nowrap align-top">
+                                    {{ row.key }}
+                                </td>
+                                {% if show_en_column %}
+                                    <td class="px-3 py-2 text-sm text-font-default-light dark:text-font-default-dark max-w-xs break-words align-top">
+                                        {{ row.en_value }}
+                                    </td>
+                                {% endif %}
+                                <td class="px-3 py-2 text-sm text-font-default-light dark:text-font-default-dark max-w-xs break-words align-top">
+                                    {{ row.current_value }}
+                                </td>
+                                <td class="px-3 py-2 align-top">
+                                    <input type="hidden" name="key" form="override-form" value="{{ row.key }}">
+                                    <input type="text" name="override" form="override-form" value="{{ row.override }}" class="border border-base-200 bg-white font-medium placeholder-base-400 rounded-default shadow-xs text-font-default-light text-sm focus:outline-2 focus:-outline-offset-2 focus:outline-primary-600 dark:bg-base-900 dark:border-base-700 dark:text-font-default-dark dark:scheme-dark px-3 py-2 w-full min-w-[250px]">
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="shrink-0 flex justify-end mt-4">
+                <button type="submit" form="override-form" class="bg-primary-600 border border-transparent cursor-pointer font-medium flex items-center gap-2 px-3 py-2 rounded-default text-sm text-white hover:bg-primary-700">
+                    <span class="material-symbols-outlined text-[18px]">save</span>
+                    Save overrides
+                </button>
+            </div>
+
+        </div>
+    {% endcomponent %}
+
+<script>
+    function updateFilters() {
+        const component = document.getElementById('component-select').value;
+        const language = document.getElementById('language-select').value;
+        window.location.href = '?component=' + component + '&language=' + language;
+    }
+
+    function filterRows() {
+        const search = document.getElementById('search-input').value.toLowerCase();
+        const rows = document.querySelectorAll('#table-body tr');
+        let visible = 0;
+        rows.forEach(function(row) {
+            const key = row.getAttribute('data-key').toLowerCase();
+            const match = key.includes(search);
+            row.classList.toggle('hidden', !match);
+            if (match) visible++;
+        });
+        document.getElementById('visible-count').textContent = visible;
+    }
+
+    function countOverrides() {
+        const inputs = document.querySelectorAll('input[name="override"]');
+        let count = 0;
+        inputs.forEach(function(input) {
+            if (input.value.trim()) count++;
+        });
+        document.getElementById('override-count').textContent = count;
+    }
+
+    document.querySelectorAll('input[name="override"]').forEach(function(input) {
+        input.addEventListener('input', function() {
+            const row = this.closest('tr');
+            if (this.value.trim()) {
+                row.classList.add('bg-primary-50', 'dark:bg-primary-500/10');
+            } else {
+                row.classList.remove('bg-primary-50', 'dark:bg-primary-500/10');
+            }
+            countOverrides();
+        });
+    });
+
+    countOverrides();
+</script>
+{% endblock %}

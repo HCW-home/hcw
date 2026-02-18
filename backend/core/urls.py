@@ -23,6 +23,7 @@ from django.conf.urls.i18n import i18n_patterns
 urlpatterns = [
     path("i18n/", include("django.conf.urls.i18n")),
     path('api/', include('api.urls')),
+    path('api/', include('translations.urls')),
     path('', include('django.contrib.auth.urls')),
     path('', include('users.urls')),
     path('', include('consultations.urls')),

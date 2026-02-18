@@ -115,6 +115,7 @@ INSTALLED_APPS = [
     "messaging",
     "mediaserver",
     "api",
+    "translations",
     "constance",
 ]
 
@@ -647,6 +648,11 @@ UNFOLD = {
                 "separator": True,
                 "collapsible": True,
                 "items": [
+                    {
+                        "title": _("Translation Overrides"),
+                        "icon": "translate",
+                        "link": reverse_lazy("admin:translations_override_editor"),
+                    },
                     {
                         "title": _("Configuration"),
                         "icon": "settings",
