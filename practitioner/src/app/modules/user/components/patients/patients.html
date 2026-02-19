@@ -70,6 +70,7 @@
                   }
                   @if (patient.temporary) {
                     <div class="contact-item temporary-tag">
+                      <app-svg src="clock" [svgStyle]="{'width.px': 14, 'height.px': 14, 'color': 'var(--amber-500)'}"></app-svg>
                       <span class="contact-text">{{ 'patients.temporary' | translate }}</span>
                     </div>
                   }
