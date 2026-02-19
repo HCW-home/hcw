@@ -102,7 +102,19 @@
       "addParticipant": "Ajouter un participant",
       "online": "En ligne",
       "inPerson": "En personne"
-    }
+    },
+    "tabActive": "Planifié",
+    "tabClosed": "Terminées",
+    "tabOverdue": "À traiter",
+    "statusActive": "Active",
+    "statusClosed": "Terminée",
+    "statusOverdue": "À traiter",
+    "noOverdue": "Aucune consultation à traiter",
+    "overdueWillAppear": "Les consultations à traiter apparaîtront ici",
+    "searchPlaceholder": "Rechercher des consultations...",
+    "loading": "Chargement des consultations...",
+    "retry": "Réessayer",
+    "viewMore": "Voir plus"
   },
   "availability": {
     "title": "Gestion de la disponibilite",
@@ -379,6 +391,30 @@
     "dayFriday": "Vendredi",
     "daySaturday": "Samedi",
     "daySunday": "Dimanche"
+  },
+  "dashboard": {
+    "loading": "Chargement du tableau de bord...",
+    "retry": "Réessayer",
+    "failedToLoad": "Impossible de charger les données du tableau de bord",
+    "errorLoading": "Erreur de chargement du tableau de bord",
+    "nextAppointment": "Prochain rendez-vous",
+    "appointment": "Rendez-vous",
+    "joinNow": "Rejoindre",
+    "tomorrow": "Demain",
+    "inDays": "Dans {{count}} jours",
+    "inHours": "Dans {{count}} heures",
+    "soon": "Bientôt",
+    "upcomingAppointments": "Rendez-vous à venir",
+    "scheduledAppointments": "Vos rendez-vous planifiés",
+    "viewAll": "Voir tout",
+    "noUpcoming": "Aucun rendez-vous à venir",
+    "videoCall": "Appel vidéo",
+    "inPerson": "En personne",
+    "overdueConsultations": "Consultations à traiter",
+    "patientsAwaiting": "Consultations sans rendez-vous à venir",
+    "pending": "{{count}} en attente",
+    "noOverdue": "Aucune consultation à traiter",
+    "overdue": "À traiter"
   },
   "slotModal": {
     "timeSettings": "Horaires",

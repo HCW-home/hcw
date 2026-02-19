@@ -98,7 +98,7 @@ export class Consultations implements OnInit, OnDestroy {
 
   private pageSize = 20;
 
-  activeTab = signal<ConsultationTabType>('active');
+  activeTab = signal<ConsultationTabType>('overdue');
   consultations = signal<Consultation[]>([]);
   activeCount = signal(0);
   pastCount = signal(0);
@@ -173,6 +173,11 @@ export class Consultations implements OnInit, OnDestroy {
   get tabItems(): TabItem[] {
     return [
       {
+        id: 'overdue',
+        label: this.t.instant('consultations.tabOverdue'),
+        count: this.overdueCount(),
+      },
+      {
         id: 'active',
         label: this.t.instant('consultations.tabActive'),
         count: this.activeCount(),
@@ -181,11 +186,6 @@ export class Consultations implements OnInit, OnDestroy {
         id: 'past',
         label: this.t.instant('consultations.tabClosed'),
         count: this.pastCount(),
-      },
-      {
-        id: 'overdue',
-        label: this.t.instant('consultations.tabOverdue'),
-        count: this.overdueCount(),
       },
     ];
   }
