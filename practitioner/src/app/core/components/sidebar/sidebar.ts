@@ -80,18 +80,6 @@ export class Sidebar implements OnInit, OnDestroy {
     this.collapsedChange.emit(this.isCollapsed);
   }
 
-  onLogOut(): void {
-    localStorage.clear();
-    this.router.navigate([`${RoutePaths.AUTH}`]);
-  }
-
-  getUserDisplayName(): string {
-    if (!this.currentUser) return '';
-    const fullName =
-      `${this.currentUser.first_name} ${this.currentUser.last_name}`.trim();
-    return fullName || this.currentUser.email;
-  }
-
   ngOnDestroy(): void {
     this.currentUserSubscription?.unsubscribe();
   }

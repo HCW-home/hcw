@@ -21,6 +21,7 @@ import { Auth } from '../../../../core/services/auth';
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { ValidationService } from '../../../../core/services/validation.service';
 import { TranslationService } from '../../../../core/services/translation.service';
+import { LanguageSelector } from '../../../../shared/components/language-selector/language-selector';
 
 interface ForgotPasswordForm {
   email: FormControl<string>;
@@ -28,7 +29,7 @@ interface ForgotPasswordForm {
 
 @Component({
   selector: 'app-forgot-password',
-  imports: [Button, Input, Typography, RouterLink, ReactiveFormsModule, TranslatePipe],
+  imports: [Button, Input, Typography, RouterLink, ReactiveFormsModule, TranslatePipe, LanguageSelector],
   templateUrl: './forgot-password.html',
   styleUrl: './forgot-password.scss',
 })

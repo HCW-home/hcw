@@ -24,7 +24,9 @@ import {
 import { ValidationService } from '../../../../core/services/validation.service';
 import { Auth } from '../../../../core/services/auth';
 import { ErrorMessage } from '../../../../shared/components/error-message/error-message';
+import { LanguageSelector } from '../../../../shared/components/language-selector/language-selector';
 import { getErrorMessage as getHttpErrorMessage } from '../../../../core/utils/error-helper';
+import { UserService } from '../../../../core/services/user.service';
 
 interface LoginForm {
   email: FormControl<string>;
@@ -41,6 +43,7 @@ interface LoginForm {
     ErrorMessage,
     TranslatePipe,
     ReactiveFormsModule,
+    LanguageSelector,
   ],
   templateUrl: './login.html',
   styleUrl: './login.scss',
@@ -61,6 +64,7 @@ export class Login implements OnInit {
   private consultationService = inject(ConsultationService);
   public validationService = inject(ValidationService);
   private t = inject(TranslationService);
+  private userService = inject(UserService);
   form: FormGroup<LoginForm> = this.formBuilder.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     // email: ['info@iabsis.com', [Validators.required, Validators.email]],
@@ -112,42 +116,17 @@ export class Login implements OnInit {
           localStorage.setItem('token', res.access);
           this.loadingButton = false;
 
-          const action = this.route.snapshot.queryParamMap.get('action');
-          const id = this.route.snapshot.queryParamMap.get('id');
-
-          if (action === 'join' && id) {
-            this.consultationService.getParticipantById(id).subscribe({
-              next: participant => {
-                const consultation = participant.appointment.consultation;
-                const consultationId =
-                  typeof consultation === 'object'
-                    ? (consultation as { id: number }).id
-                    : consultation;
-                this.router.navigate(
-                  [
-                    '/',
-                    RoutePaths.USER,
-                    RoutePaths.CONSULTATIONS,
-                    consultationId,
-                  ],
-                  {
-                    queryParams: {
-                      join: 'true',
-                      appointmentId: participant.appointment.id,
-                    },
-                  }
-                );
-              },
-              error: () => {
-                this.router.navigate(['/', RoutePaths.CONFIRM_PRESENCE, id]);
-              },
-            });
-          } else if (action) {
-            const route = this.actionHandler.getRouteForAction(action, id);
-            this.router.navigateByUrl(route);
-          } else {
-            this.router.navigate([`/${RoutePaths.USER}`, RoutePaths.DASHBOARD]);
-          }
+          this.userService.getCurrentUser().subscribe({
+            next: user => {
+              if (user.preferred_language) {
+                this.t.setLanguage(String(user.preferred_language));
+              }
+              this.navigateAfterLogin();
+            },
+            error: () => {
+              this.navigateAfterLogin();
+            },
+          });
         },
         error: err => {
           this.loadingButton = false;
@@ -169,6 +148,40 @@ export class Login implements OnInit {
         }
       default:
         return this.t.instant('login.fieldRequired');
+    }
+  }
+
+  private navigateAfterLogin(): void {
+    const action = this.route.snapshot.queryParamMap.get('action');
+    const id = this.route.snapshot.queryParamMap.get('id');
+
+    if (action === 'join' && id) {
+      this.consultationService.getParticipantById(id).subscribe({
+        next: participant => {
+          const consultation = participant.appointment.consultation;
+          const consultationId =
+            typeof consultation === 'object'
+              ? (consultation as { id: number }).id
+              : consultation;
+          this.router.navigate(
+            ['/', RoutePaths.USER, RoutePaths.CONSULTATIONS, consultationId],
+            {
+              queryParams: {
+                join: 'true',
+                appointmentId: participant.appointment.id,
+              },
+            }
+          );
+        },
+        error: () => {
+          this.router.navigate(['/', RoutePaths.CONFIRM_PRESENCE, id]);
+        },
+      });
+    } else if (action) {
+      const route = this.actionHandler.getRouteForAction(action, id);
+      this.router.navigateByUrl(route);
+    } else {
+      this.router.navigate([`/${RoutePaths.USER}`, RoutePaths.DASHBOARD]);
     }
   }
 

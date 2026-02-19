@@ -24,6 +24,7 @@ import { TranslationService } from '../../../../core/services/translation.servic
 import { regexpPasswordSpec } from '../../../../shared/tools/regular-expressions';
 import { ErrorMessage } from '../../../../shared/components/error-message/error-message';
 import { ToasterService } from '../../../../core/services/toaster.service';
+import { LanguageSelector } from '../../../../shared/components/language-selector/language-selector';
 import { RoutePaths } from '../../../../core/constants/routes';
 
 interface SetPasswordForm {
@@ -33,7 +34,7 @@ interface SetPasswordForm {
 
 @Component({
   selector: 'app-reset-password',
-  imports: [Button, Input, Typography, ReactiveFormsModule, ErrorMessage, TranslatePipe],
+  imports: [Button, Input, Typography, ReactiveFormsModule, ErrorMessage, TranslatePipe, LanguageSelector],
   templateUrl: './reset-password.html',
   styleUrl: './reset-password.scss',
 })

@@ -42,8 +42,9 @@
 
 .dropdown-menu {
   position: absolute;
-  top: calc(100% + 4px);
-  right: 0;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
   min-width: 140px;
   background: var(--White);
   border: 1px solid var(--slate-200);

@@ -3,7 +3,6 @@ import {Router, NavigationEnd, RouterLink, RouterLinkActive} from '@angular/rout
 import {Location} from '@angular/common';
 import {RoutePaths} from '../../constants/routes';
 import {MenuItems} from '../../constants/sidebar';
-import {LanguageSelector} from '../../../shared/components/language-selector/language-selector';
 import {Typography} from '../../../shared/ui-components/typography/typography';
 import {TypographyTypeEnum} from '../../../shared/constants/typography';
 import {Svg} from '../../../shared/ui-components/svg/svg';
@@ -28,7 +27,7 @@ import { TranslationService } from '../../services/translation.service';
 
 @Component({
   selector: 'app-header',
-  imports: [LanguageSelector, Typography, Svg, NgClass, Button, RouterLink, RouterLinkActive, TranslatePipe],
+  imports: [Typography, Svg, NgClass, Button, RouterLink, RouterLinkActive, TranslatePipe],
   templateUrl: './header.html',
   styleUrl: './header.scss',
 })
@@ -236,7 +235,11 @@ export class Header implements OnInit, OnDestroy {
   onLogout() {
     this.closeProfileMenu();
     this.closeMobileMenu();
+    const savedLanguage = localStorage.getItem('app_language');
     localStorage.clear();
+    if (savedLanguage) {
+      localStorage.setItem('app_language', savedLanguage);
+    }
     this.router.navigate([RoutePaths.AUTH]);
   }
 

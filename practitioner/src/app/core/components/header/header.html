@@ -112,8 +112,6 @@
       </app-button>
     }
 
-    <app-language-selector></app-language-selector>
-
     <div class="notification-section">
       <button class="notification-btn" (click)="toggleNotifications()">
         <app-svg src="bell" [svgStyle]="{'width.px': 22, 'height.px': 22, 'color': 'var(--slate-600)'}"></app-svg>
@@ -297,12 +295,6 @@
       </div>
 
       <div class="mobile-menu-divider"></div>
-
-      <div class="mobile-menu-item language-item">
-        <app-svg src="svg/globe.svg" [svgStyle]="{'width.px': 20, 'height.px': 20, 'color': 'var(--slate-600)'}"></app-svg>
-        <span>{{ 'header.language' | translate }}</span>
-        <app-language-selector></app-language-selector>
-      </div>
 
       <button class="mobile-menu-item" (click)="openProfile()">
         <app-svg src="svg/profile.svg" [svgStyle]="{'width.px': 20, 'height.px': 20, 'color': 'var(--slate-600)'}"></app-svg>

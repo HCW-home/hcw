@@ -166,6 +166,9 @@ export class UserProfile implements OnInit, OnDestroy {
           next: updatedUser => {
             this.user.set(updatedUser);
             this.isSaving.set(false);
+            if (formValue.preferred_language) {
+              this.t.setLanguage(formValue.preferred_language);
+            }
             this.toasterService.show(
               'success',
               this.t.instant('userProfile.profileUpdated'),
