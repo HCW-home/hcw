@@ -10,6 +10,8 @@ import { TypographyTypeEnum } from '../../../../shared/constants/typography';
 import { ButtonSizeEnum, ButtonStyleEnum } from '../../../../shared/constants/button';
 import { PatientService, IPatientCreateRequest, IPatientUpdateRequest } from '../../../../core/services/patient.service';
 import { UserService } from '../../../../core/services/user.service';
+import { Auth } from '../../../../core/services/auth';
+import { IOpenIDConfig } from '../../../../core/models/admin-auth';
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { IUser, ILanguage } from '../../models/user';
 import { SelectOption } from '../../../../shared/models/select';
@@ -28,6 +30,7 @@ export class AddEditPatient implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private patientService = inject(PatientService);
   private userService = inject(UserService);
+  private authService = inject(Auth);
   private toasterService = inject(ToasterService);
   private t = inject(TranslationService);
 
@@ -63,11 +66,11 @@ export class AddEditPatient implements OnInit, OnDestroy {
   }
 
   private loadLanguages(): void {
-    this.userService.getLanguages().pipe(
+    this.authService.getOpenIDConfig().pipe(
       takeUntil(this.destroy$)
     ).subscribe({
-      next: (languages) => {
-        this.languageOptions = languages.map(lang => ({
+      next: (config: IOpenIDConfig) => {
+        this.languageOptions = (config.languages || []).map((lang: { code: string; name: string }) => ({
           value: lang.code,
           label: lang.name
         }));
@@ -83,12 +86,12 @@ export class AddEditPatient implements OnInit, OnDestroy {
   private initForm(): void {
     const p = this.patient();
     this.form = this.fb.group({
-      first_name: [p?.first_name || '', Validators.required],
-      last_name: [p?.last_name || '', Validators.required],
+      first_name: [p?.first_name || ''],
+      last_name: [p?.last_name || ''],
       email: [p?.email || '', [Validators.email]],
       mobile_phone_number: [p?.mobile_phone_number || ''],
       timezone: [p?.timezone || 'UTC'],
-      preferred_language: [p?.preferred_language || null, Validators.required]
+      preferred_language: [p?.preferred_language || null]
     });
 
     if (this.isEditMode) {
@@ -137,7 +140,8 @@ export class AddEditPatient implements OnInit, OnDestroy {
         first_name: formValue.first_name,
         last_name: formValue.last_name,
         mobile_phone_number: formValue.mobile_phone_number,
-        timezone: formValue.timezone
+        timezone: formValue.timezone,
+        preferred_language: formValue.preferred_language
       };
 
       this.patientService.updatePatient(this.patient()!.pk, updateData).pipe(

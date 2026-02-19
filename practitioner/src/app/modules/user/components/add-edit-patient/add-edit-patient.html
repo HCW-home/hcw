@@ -66,6 +66,8 @@
           [placeholder]="'addEditPatient.selectLanguage' | translate"
           [options]="languageOptions"
           [formControl]="$any(form.get('preferred_language'))"
+          [clearable]="true"
+          [openUp]="true"
           [invalid]="isFieldInvalid('preferred_language')"
           [invalidMessage]="getFieldError('preferred_language')">
         </app-select>

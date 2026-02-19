@@ -50,7 +50,7 @@
           multiSelect() && selectedValues.length ? '' : placeholder()
         "
         (input)="onSearchInput($event)"
-        (click)="$event.stopPropagation(); open = true" />
+        (click)="$event.stopPropagation(); openDropdown()" />
     </div>
 
     @if (clearable() && display && !disabled) {
