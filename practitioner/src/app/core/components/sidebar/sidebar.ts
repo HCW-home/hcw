@@ -19,6 +19,7 @@ import { Auth } from '../../services/auth';
 import { TranslatePipe } from '@ngx-translate/core';
 import { CommonModule } from '@angular/common';
 import { Title } from '@angular/platform-browser';
+import { TranslationService } from '../../services/translation.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -38,6 +39,7 @@ export class Sidebar implements OnInit, OnDestroy {
   private userService = inject(UserService);
   private authService = inject(Auth);
   private titleService = inject(Title);
+  private t = inject(TranslationService);
 
   menuItems = MenuItems;
   currentUserSubscription!: Subscription;
@@ -69,6 +71,9 @@ export class Sidebar implements OnInit, OnDestroy {
         }
         if (config.site_favicon) {
           this.updateFavicon(config.site_favicon);
+        }
+        if (config.languages?.length) {
+          this.t.loadLanguages(config.languages);
         }
       },
     });

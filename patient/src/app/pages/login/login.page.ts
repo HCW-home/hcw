@@ -83,6 +83,9 @@ export class LoginPage implements OnInit {
         if (config.branding) {
           this.branding = config.branding;
         }
+        if (config.languages?.length) {
+          this.t.loadLanguages(config.languages);
+        }
       },
     });
   }

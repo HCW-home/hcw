@@ -90,6 +90,9 @@ export class Login implements OnInit {
         if (config.site_favicon) {
           this.updateFavicon(config.site_favicon);
         }
+        if (config.languages?.length) {
+          this.t.loadLanguages(config.languages);
+        }
       },
       error: err => {
         console.error('Failed to get OpenID config:', err);

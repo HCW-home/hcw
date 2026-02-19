@@ -13,6 +13,7 @@ import { IncomingCallService } from "./core/services/incoming-call.service";
 import { ActionHandlerService } from "./core/services/action-handler.service";
 import { ConsultationService } from "./core/services/consultation.service";
 import { IncomingCallComponent } from "./shared/components/incoming-call/incoming-call.component";
+import { TranslationService } from "./core/services/translation.service";
 
 @Component({
   selector: "app-root",
@@ -23,6 +24,7 @@ import { IncomingCallComponent } from "./shared/components/incoming-call/incomin
 export class AppComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   private titleService = inject(Title);
+  private translationService = inject(TranslationService);
 
   constructor(
     private authService: AuthService,
@@ -128,6 +130,9 @@ export class AppComponent implements OnInit, OnDestroy {
         next: (config: any) => {
           if (config?.branding) {
             this.titleService.setTitle(config.branding);
+          }
+          if (config?.languages?.length) {
+            this.translationService.loadLanguages(config.languages);
           }
           if (config?.site_favicon) {
             const link: HTMLLinkElement =

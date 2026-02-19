@@ -10,9 +10,8 @@ export interface AppLanguage {
   nativeName: string;
 }
 
-const AVAILABLE_LANGUAGES: AppLanguage[] = [
+const DEFAULT_FALLBACK: AppLanguage[] = [
   { code: 'en', name: 'English', nativeName: 'English' },
-  { code: 'fr', name: 'French', nativeName: 'Francais' },
 ];
 
 const STORAGE_KEY = 'app_language';
@@ -23,34 +22,44 @@ const DEFAULT_LANGUAGE = 'en';
 })
 export class TranslationService {
   private currentLanguageSignal = signal<string>(DEFAULT_LANGUAGE);
+  private availableLanguagesSignal = signal<AppLanguage[]>(DEFAULT_FALLBACK);
   private http = new HttpClient(inject(HttpBackend));
 
   readonly currentLanguage = this.currentLanguageSignal.asReadonly();
-  readonly availableLanguages = AVAILABLE_LANGUAGES;
+  readonly availableLanguages = this.availableLanguagesSignal.asReadonly();
 
   constructor(private translate: TranslateService) {
     this.initializeLanguage();
   }
 
   private initializeLanguage(): void {
-    this.translate.addLangs(AVAILABLE_LANGUAGES.map(lang => lang.code));
+    this.translate.addLangs(this.availableLanguagesSignal().map(lang => lang.code));
     this.translate.setDefaultLang(DEFAULT_LANGUAGE);
 
     const savedLanguage = localStorage.getItem(STORAGE_KEY);
     const browserLang = this.translate.getBrowserLang();
+    const langs = this.availableLanguagesSignal();
     const langToUse = savedLanguage ||
-      (browserLang && AVAILABLE_LANGUAGES.some(l => l.code === browserLang)
+      (browserLang && langs.some(l => l.code === browserLang)
         ? browserLang
         : DEFAULT_LANGUAGE);
 
     this.setLanguage(langToUse);
   }
 
-  setLanguage(langCode: string): void {
-    if (!AVAILABLE_LANGUAGES.some(l => l.code === langCode)) {
-      langCode = DEFAULT_LANGUAGE;
+  loadLanguages(languages: { code: string; name: string }[]): void {
+    if (languages && languages.length > 0) {
+      const mapped = languages.map(l => ({
+        code: l.code,
+        name: l.name,
+        nativeName: l.name,
+      }));
+      this.availableLanguagesSignal.set(mapped);
+      this.translate.addLangs(mapped.map(l => l.code));
     }
+  }
 
+  setLanguage(langCode: string): void {
     this.translate.use(langCode);
     this.fetchAndApplyOverrides(langCode);
     this.currentLanguageSignal.set(langCode);
@@ -59,7 +68,7 @@ export class TranslationService {
   }
 
   getCurrentLanguage(): AppLanguage | undefined {
-    return AVAILABLE_LANGUAGES.find(l => l.code === this.currentLanguageSignal());
+    return this.availableLanguagesSignal().find(l => l.code === this.currentLanguageSignal());
   }
 
   instant(key: string, params?: Record<string, string>): string {
