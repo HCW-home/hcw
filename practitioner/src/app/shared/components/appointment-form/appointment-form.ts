@@ -306,12 +306,15 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   }
 
   onParticipantUserSelected(user: IUser | null): void {
-    this.selectedParticipantUser.set(user);
-    if (user) {
-      this.participantForm.patchValue({ user_id: user.pk });
-    } else {
-      this.participantForm.patchValue({ user_id: null });
-    }
+    if (!user) return;
+    const data: CreateParticipantRequest = {
+      user_id: user.pk,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      email: user.email,
+    };
+    this.pendingParticipants.update(list => [...list, data]);
+    this.resetParticipantForm();
   }
 
   toggleAddParticipantForm(): void {
@@ -323,16 +326,6 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
 
   addParticipant(): void {
     const formValue = this.participantForm.value;
-
-    if (this.isExistingUser() && formValue.user_id) {
-      const data: CreateParticipantRequest = {
-        user_id: formValue.user_id,
-      };
-      this.pendingParticipants.update(list => [...list, data]);
-      this.resetParticipantForm();
-      return;
-    }
-
     const data: CreateParticipantRequest = {};
 
     if (formValue.timezone) {

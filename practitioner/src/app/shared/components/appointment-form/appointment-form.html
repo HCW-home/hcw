@@ -208,15 +208,17 @@
             </div>
           }
 
-          <app-button
-            [text]="'appointmentForm.addParticipant' | translate"
-            leftIcon="plus"
-            [style]="ButtonStyleEnum.primary"
-            [size]="ButtonSizeEnum.small"
-            [disabled]="isAddingParticipant() || (isExistingUser() && !selectedParticipantUser())"
-            [loading]="isAddingParticipant()"
-            (buttonClick)="addParticipant()">
-          </app-button>
+          @if (!isExistingUser()) {
+            <app-button
+              [text]="'appointmentForm.addParticipant' | translate"
+              leftIcon="plus"
+              [style]="ButtonStyleEnum.primary"
+              [size]="ButtonSizeEnum.small"
+              [disabled]="isAddingParticipant()"
+              [loading]="isAddingParticipant()"
+              (buttonClick)="addParticipant()">
+            </app-button>
+          }
         </form>
       </div>
     }
