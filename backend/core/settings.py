@@ -284,7 +284,6 @@ SPECTACULAR_SETTINGS = {
             }
         }
     },
-    "SECURITY": [{"bearerAuth": []}],  # apply globally
     "SWAGGER_UI_SETTINGS": {
         "persistAuthorization": True,  # <-- keep JWT after refresh
         # "tryItOutEnabled": True,     # optional

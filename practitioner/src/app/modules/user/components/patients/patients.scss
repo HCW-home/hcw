@@ -54,6 +54,10 @@
     }
   }
 
+  .temporary-tag .contact-text {
+    color: var(--amber-600);
+  }
+
   .contact-text.no-contact {
     font-size: 13px;
     color: var(--slate-400);
