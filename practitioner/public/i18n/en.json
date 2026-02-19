@@ -400,7 +400,8 @@
     "online": "Online",
     "offline": "Offline",
     "viewMore": "View More",
-    "errorLoading": "Error Loading Patients"
+    "errorLoading": "Error Loading Patients",
+    "temporary": "temporary"
   },
   "videoConsultation": {
     "connecting": "Connecting to video call...",
