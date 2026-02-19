@@ -24,6 +24,7 @@ export interface IPatientUpdateRequest {
   timezone?: string;
   communication_method?: string;
   preferred_language?: number | null;
+  temporary?: boolean;
 }
 
 @Injectable({

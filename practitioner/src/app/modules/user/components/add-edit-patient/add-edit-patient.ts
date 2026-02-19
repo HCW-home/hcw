@@ -6,6 +6,8 @@ import { Typography } from '../../../../shared/ui-components/typography/typograp
 import { Button } from '../../../../shared/ui-components/button/button';
 import { Input } from '../../../../shared/ui-components/input/input';
 import { Select } from '../../../../shared/ui-components/select/select';
+import { Switch } from '../../../../shared/ui-components/switch/switch';
+import { Svg } from '../../../../shared/ui-components/svg/svg';
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
 import { ButtonSizeEnum, ButtonStyleEnum } from '../../../../shared/constants/button';
 import { PatientService, IPatientCreateRequest, IPatientUpdateRequest } from '../../../../core/services/patient.service';
@@ -21,7 +23,7 @@ import { TranslationService } from '../../../../core/services/translation.servic
 
 @Component({
   selector: 'app-add-edit-patient',
-  imports: [CommonModule, ReactiveFormsModule, Typography, Button, Input, Select, TranslatePipe],
+  imports: [CommonModule, ReactiveFormsModule, Typography, Button, Input, Select, Switch, Svg, TranslatePipe],
   templateUrl: './add-edit-patient.html',
   styleUrl: './add-edit-patient.scss',
 })
@@ -96,6 +98,9 @@ export class AddEditPatient implements OnInit, OnDestroy {
 
     if (this.isEditMode) {
       this.form.get('email')?.disable();
+      if (p?.temporary) {
+        this.form.addControl('temporary', this.fb.control(true));
+      }
     }
   }
 
@@ -111,8 +116,14 @@ export class AddEditPatient implements OnInit, OnDestroy {
 
     if (p) {
       this.form.get('email')?.disable();
+      if (p.temporary && !this.form.get('temporary')) {
+        this.form.addControl('temporary', this.fb.control(true));
+      }
     } else {
       this.form.get('email')?.enable();
+      if (this.form.get('temporary')) {
+        this.form.removeControl('temporary');
+      }
     }
   }
 
@@ -143,6 +154,10 @@ export class AddEditPatient implements OnInit, OnDestroy {
         timezone: formValue.timezone,
         preferred_language: formValue.preferred_language
       };
+
+      if (this.form.get('temporary')) {
+        updateData.temporary = formValue.temporary;
+      }
 
       this.patientService.updatePatient(this.patient()!.pk, updateData).pipe(
         takeUntil(this.destroy$)

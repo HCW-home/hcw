@@ -73,6 +73,21 @@
         </app-select>
       </div>
     </div>
+
+    @if (isEditMode && patient()?.temporary) {
+      <div class="form-group">
+        <app-switch
+          [label]="'addEditPatient.temporary' | translate"
+          [formControl]="$any(form.get('temporary'))">
+        </app-switch>
+        @if (!form.get('temporary')?.value) {
+          <div class="temporary-notice">
+            <app-svg src="info" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
+            <span>{{ 'addEditPatient.temporaryNotice' | translate }}</span>
+          </div>
+        }
+      </div>
+    }
   </form>
 
   <div class="form-footer">

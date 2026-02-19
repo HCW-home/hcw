@@ -383,7 +383,9 @@
     "errorUpdating": "Error Updating Patient",
     "patientCreated": "Patient Created",
     "patientCreatedMessage": "Patient created successfully",
-    "errorCreating": "Error Creating Patient"
+    "errorCreating": "Error Creating Patient",
+    "temporary": "Temporary patient",
+    "temporaryNotice": "Once saved, this patient can no longer be set as temporary."
   },
   "patients": {
     "searchPlaceholder": "Search patients...",
