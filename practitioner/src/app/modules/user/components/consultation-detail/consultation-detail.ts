@@ -41,7 +41,7 @@ import { UserSearchSelect } from '../../../../shared/components/user-search-sele
 import { ButtonStyleEnum, ButtonSizeEnum, ButtonStateEnum } from '../../../../shared/constants/button';
 import { BadgeTypeEnum } from '../../../../shared/constants/badge';
 import { SelectOption } from '../../../../shared/models/select';
-import { getParticipantBadgeType, getAppointmentBadgeType } from '../../../../shared/tools/helper';
+import { getParticipantBadgeType, getAppointmentBadgeType, parseDateWithoutTimezone } from '../../../../shared/tools/helper';
 import { LocalDatePipe } from '../../../../shared/pipes/local-date.pipe';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
 import { AppointmentFormModal } from './appointment-form-modal/appointment-form-modal';
@@ -124,8 +124,8 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     return this.appointments().map(appointment => ({
       id: appointment.id.toString(),
       title: this.getCalendarEventTitle(appointment),
-      start: appointment.scheduled_at,
-      end: appointment.end_expected_at || undefined,
+      start: parseDateWithoutTimezone(appointment.scheduled_at) || appointment.scheduled_at,
+      end: appointment.end_expected_at ? parseDateWithoutTimezone(appointment.end_expected_at) || undefined : undefined,
       backgroundColor: this.getStatusColor(appointment.status),
       borderColor: this.getStatusColor(appointment.status),
       textColor: '#ffffff',

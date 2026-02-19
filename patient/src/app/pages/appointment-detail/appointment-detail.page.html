@@ -26,15 +26,15 @@
       <div class="header-date">
         <ion-icon name="calendar-outline"></ion-icon>
         <span
-          >{{ appointment()?.scheduled_at | date:'EEEE, MMM d, yyyy' }}</span
+          >{{ appointment()?.scheduled_at | localDate:'EEEE, MMM d, yyyy' }}</span
         >
       </div>
       <div class="header-time">
         <ion-icon name="time-outline"></ion-icon>
         <span>
-          {{ appointment()?.scheduled_at | date:'HH:mm' }} @if
+          {{ appointment()?.scheduled_at | localDate:'HH:mm' }} @if
           (appointment()?.end_expected_at) { — {{ appointment()?.end_expected_at
-          | date:'HH:mm' }} }
+          | localDate:'HH:mm' }} }
         </span>
       </div>
     </div>

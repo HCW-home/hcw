@@ -19,6 +19,7 @@ import { getErrorMessage } from '../../../../core/utils/error-helper';
 import { getAppointmentBadgeType } from '../../../../shared/tools/helper';
 import { TranslatePipe } from '@ngx-translate/core';
 import { TranslationService } from '../../../../core/services/translation.service';
+import { LocalDatePipe } from '../../../../shared/pipes/local-date.pipe';
 
 @Component({
   selector: 'app-dashboard',
@@ -32,6 +33,7 @@ import { TranslationService } from '../../../../core/services/translation.servic
     Badge,
     ConsultationRowItem,
     TranslatePipe,
+    LocalDatePipe,
   ],
   providers: [DatePipe],
   templateUrl: './dashboard.html',

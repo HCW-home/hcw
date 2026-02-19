@@ -59,8 +59,8 @@
       } @else { @for (appointment of appointments(); track appointment.id) {
       <div class="appointment-item" (click)="viewAppointment(appointment)">
         <div class="appointment-date">
-          <span class="day">{{ appointment.scheduled_at | date:'dd' }}</span>
-          <span class="month">{{ appointment.scheduled_at | date:'MMM' }}</span>
+          <span class="day">{{ appointment.scheduled_at | localDate:'dd' }}</span>
+          <span class="month">{{ appointment.scheduled_at | localDate:'MMM' }}</span>
         </div>
         <div class="appointment-info">
           <div class="appointment-title">
@@ -71,9 +71,9 @@
               <app-svg
                 src="clock"
                 [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
-              {{ appointment.scheduled_at | date:'HH:mm' }} @if
+              {{ appointment.scheduled_at | localDate:'HH:mm' }} @if
               (appointment.end_expected_at) { - {{ appointment.end_expected_at |
-              date:'HH:mm' }} }
+              localDate:'HH:mm' }} }
             </span>
             @if (appointment.created_by) {
             <span>

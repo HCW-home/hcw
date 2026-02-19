@@ -10,7 +10,7 @@ import {
   HostListener,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
 import {
   FullCalendarModule,
@@ -45,7 +45,7 @@ import {
   ParticipantStatus,
 } from '../../../../core/models/consultation';
 import { RoutePaths } from '../../../../core/constants/routes';
-import { getAppointmentBadgeType } from '../../../../shared/tools/helper';
+import { getAppointmentBadgeType, parseDateWithoutTimezone } from '../../../../shared/tools/helper';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
 import { LocalDatePipe } from '../../../../shared/pipes/local-date.pipe';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -57,7 +57,6 @@ type CalendarView = 'dayGridMonth' | 'timeGridWeek' | 'timeGridDay' | 'list';
   selector: 'app-appointments',
   imports: [
     CommonModule,
-    DatePipe,
     Page,
     Loader,
     Svg,
@@ -299,8 +298,8 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     return appointments.map(appointment => ({
       id: appointment.id.toString(),
       title: this.getEventTitle(appointment),
-      start: appointment.scheduled_at,
-      end: appointment.end_expected_at || undefined,
+      start: parseDateWithoutTimezone(appointment.scheduled_at) || appointment.scheduled_at,
+      end: appointment.end_expected_at ? parseDateWithoutTimezone(appointment.end_expected_at) || undefined : undefined,
       backgroundColor: this.getStatusColor(appointment.status),
       borderColor: this.getStatusColor(appointment.status),
       textColor: '#ffffff',

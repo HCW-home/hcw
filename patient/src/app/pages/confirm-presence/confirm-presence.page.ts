@@ -18,6 +18,7 @@ import { ConsultationService } from '../../core/services/consultation.service';
 import { TranslationService } from '../../core/services/translation.service';
 import { IParticipantDetail } from '../../core/models/consultation.model';
 import { formatDateFromISO, formatTimeFromISO } from '../../core/utils/date-helper';
+import { LocalDatePipe } from '../../shared/pipes/local-date.pipe';
 import { AppHeaderComponent } from '../../shared/app-header/app-header.component';
 import { AppFooterComponent } from '../../shared/app-footer/app-footer.component';
 
@@ -38,6 +39,7 @@ interface PendingAppointment {
   standalone: true,
   imports: [
     CommonModule,
+    LocalDatePipe,
     IonContent,
     IonCard,
     IonCardContent,

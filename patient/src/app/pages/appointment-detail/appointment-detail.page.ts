@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, signal, computed, inject } from "@angular/core";
-import { CommonModule, DatePipe } from "@angular/common";
+import { CommonModule } from "@angular/common";
 import { ActivatedRoute } from "@angular/router";
 import {
   IonIcon,
@@ -16,6 +16,7 @@ import { AppHeaderComponent } from "../../shared/app-header/app-header.component
 import { AppFooterComponent } from "../../shared/app-footer/app-footer.component";
 import { TranslatePipe } from "@ngx-translate/core";
 import { TranslationService } from "../../core/services/translation.service";
+import { LocalDatePipe } from "../../shared/pipes/local-date.pipe";
 
 interface StatusConfig {
   label: string;
@@ -28,7 +29,7 @@ interface StatusConfig {
   styleUrls: ["./appointment-detail.page.scss"],
   imports: [
     CommonModule,
-    DatePipe,
+    LocalDatePipe,
     IonIcon,
     IonContent,
     IonSpinner,

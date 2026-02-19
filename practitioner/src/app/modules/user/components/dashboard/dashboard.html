@@ -61,7 +61,7 @@
                     {{ getRelativeTime(nextAppointment()!.scheduled_at!) }}
                   </app-typography>
                   <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
-                    {{ formatDateTime(nextAppointment()!.scheduled_at!) }}
+                    {{ nextAppointment()!.scheduled_at  | localDate : 'MMM d, HH:mm' }}
                   </app-typography>
                 </div>
                 <div class="appointment-action">

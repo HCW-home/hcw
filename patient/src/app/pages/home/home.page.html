@@ -18,7 +18,7 @@
             {{ nextAppointment()!.type === 'online' ? ('common.online' | translate) : ('common.inPerson' | translate) }}
           </span>
           <span class="next-appointment-date">
-            {{ nextAppointment()!.scheduled_at | date:'EEEE, MMM d' }} at {{ nextAppointment()!.scheduled_at | date:'HH:mm' }}
+            {{ nextAppointment()!.scheduled_at | localDate:'EEEE, MMM d' }} at {{ nextAppointment()!.scheduled_at | localDate:'HH:mm' }}
           </span>
           @if (getNextAppointmentDoctorName()) {
             <span class="next-appointment-doctor">{{ getNextAppointmentDoctorName() }}</span>
@@ -90,7 +90,7 @@
               @if (hasAppointment(request)) {
                 <div class="card-info-row">
                   <ion-icon name="calendar-outline"></ion-icon>
-                  <span>{{ request.appointment?.scheduled_at | date:'EEE, MMM d' }} at {{ request.appointment?.scheduled_at | date:'HH:mm' }}</span>
+                  <span>{{ request.appointment?.scheduled_at | localDate:'EEE, MMM d' }} at {{ request.appointment?.scheduled_at | localDate:'HH:mm' }}</span>
                   <span class="type-tag">
                     <ion-icon [name]="getAppointmentTypeIcon(request)"></ion-icon>
                     {{ getAppointmentTypeLabel(request) }}
@@ -165,7 +165,7 @@
                     <span>{{ 'home.nextAppointmentLabel' | translate }}</span>
                   </div>
                   <div class="card-info-value">
-                    <span>{{ consultation.next_appointment.scheduled_at | date:'EEE, MMM d' }} at {{ consultation.next_appointment.scheduled_at | date:'HH:mm' }}</span>
+                    <span>{{ consultation.next_appointment.scheduled_at | localDate:'EEE, MMM d' }} at {{ consultation.next_appointment.scheduled_at | localDate:'HH:mm' }}</span>
                     <span class="type-tag">
                       <ion-icon [name]="consultation.next_appointment.type === 'online' ? 'videocam-outline' : 'location-outline'"></ion-icon>
                       {{ consultation.next_appointment.type === 'online' ? ('common.video' | translate) : ('common.inPerson' | translate) }}
@@ -210,7 +210,7 @@
 
               <div class="card-info-row appointment-datetime">
                 <ion-icon name="calendar-outline"></ion-icon>
-                <span class="appointment-date-text">{{ appointment.scheduled_at | date:'EEEE, MMM d, yyyy' }} at {{ appointment.scheduled_at | date:'HH:mm' }}</span>
+                <span class="appointment-date-text">{{ appointment.scheduled_at | localDate:'EEEE, MMM d, yyyy' }} at {{ appointment.scheduled_at | localDate:'HH:mm' }}</span>
               </div>
 
               @if (getAppointmentDoctorName(appointment)) {

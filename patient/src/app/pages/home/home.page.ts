@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import {
   IonIcon,
   IonContent,
@@ -18,6 +18,7 @@ import { AppHeaderComponent } from '../../shared/app-header/app-header.component
 import { AppFooterComponent } from '../../shared/app-footer/app-footer.component';
 import { ConsultationRequest, Consultation, Speciality, Appointment } from '../../core/models/consultation.model';
 import { TranslationService } from '../../core/services/translation.service';
+import { LocalDatePipe } from '../../shared/pipes/local-date.pipe';
 
 interface RequestStatus {
   label: string;
@@ -31,7 +32,7 @@ interface RequestStatus {
   standalone: true,
   imports: [
     CommonModule,
-    DatePipe,
+    LocalDatePipe,
     IonIcon,
     IonContent,
     IonRefresher,

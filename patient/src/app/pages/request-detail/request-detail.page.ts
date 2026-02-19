@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import {
   IonHeader,
@@ -22,6 +22,7 @@ import { WebSocketState } from '../../core/models/websocket.model';
 import { MessageListComponent, Message, SendMessageData, EditMessageData, DeleteMessageData } from '../../shared/components/message-list/message-list';
 import { TranslatePipe } from '@ngx-translate/core';
 import { TranslationService } from '../../core/services/translation.service';
+import { LocalDatePipe } from '../../shared/pipes/local-date.pipe';
 
 interface RequestStatus {
   label: string;
@@ -35,7 +36,7 @@ interface RequestStatus {
   standalone: true,
   imports: [
     CommonModule,
-    DatePipe,
+    LocalDatePipe,
     IonHeader,
     IonToolbar,
     IonButtons,

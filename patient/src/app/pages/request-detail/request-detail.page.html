@@ -65,11 +65,11 @@
             <div class="appointment-meta">
               <div class="meta-item">
                 <ion-icon name="calendar-outline"></ion-icon>
-                <span>{{ request()?.appointment?.scheduled_at | date:'EEEE, MMM d, yyyy' }}</span>
+                <span>{{ request()?.appointment?.scheduled_at | localDate:'EEEE, MMM d, yyyy' }}</span>
               </div>
               <div class="meta-item">
                 <ion-icon name="time-outline"></ion-icon>
-                <span>{{ request()?.appointment?.scheduled_at | date:'HH:mm' }}</span>
+                <span>{{ request()?.appointment?.scheduled_at | localDate:'HH:mm' }}</span>
               </div>
               <div class="meta-item type-item">
                 <ion-icon [name]="getAppointmentTypeIcon()"></ion-icon>
