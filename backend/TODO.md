@@ -125,5 +125,4 @@ No permission (=patient) but : can still go own appointment or group appointment
 - test sms and preferred communication method
 - dashboard is returning no appointment for patient, but you can join practitioner, and patient is receiving call 
 - add a way to send link again, get link for temporary participant
-- api/appointments/ status 'scheduled' filter is not working when using scheduled_at__date__gte and scheduled_at__date__lte
 
