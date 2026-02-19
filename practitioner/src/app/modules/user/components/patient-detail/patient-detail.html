@@ -5,11 +5,6 @@
         <app-loader></app-loader>
       </div>
     } @else if (patient()) {
-      <div class="back-link" (click)="goBack()">
-        <app-svg src="arrow-left" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
-        <span>{{ 'patientDetail.backToPatients' | translate }}</span>
-      </div>
-
       <div class="patient-header">
         <div class="header-left">
           <div class="patient-avatar-large">

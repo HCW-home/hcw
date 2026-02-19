@@ -149,6 +149,10 @@ export class Header implements OnInit, OnDestroy {
       this.pageTitle.set(this.t.instant('header.consultationsTitle'));
       this.pageSubtitle.set(this.t.instant('header.consultationsSubtitle'));
       this.showNewConsultationButton.set(true);
+    } else if (url.match(/\/patients\/\d/)) {
+      this.pageTitle.set(this.t.instant('header.patientDetailTitle'));
+      this.pageSubtitle.set('');
+      this.showBackButton.set(true);
     } else if (url.includes('/patients')) {
       this.pageTitle.set(this.t.instant('header.patientsTitle'));
       this.pageSubtitle.set(this.t.instant('header.patientsSubtitle'));

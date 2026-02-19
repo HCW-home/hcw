@@ -88,8 +88,7 @@
                                     {{ row.current_value }}
                                 </td>
                                 <td class="align-middle font-normal px-3 py-2 lg:border-t lg:border-base-200 lg:table-cell dark:lg:border-base-800">
-                                    <input type="hidden" name="key" form="override-form" value="{{ row.key }}">
-                                    <input type="text" name="override" form="override-form" value="{{ row.override }}" class="border border-base-200 bg-white font-medium placeholder-base-400 rounded-default shadow-xs text-font-default-light text-sm focus:outline-2 focus:-outline-offset-2 focus:outline-primary-600 dark:bg-base-900 dark:border-base-700 dark:text-font-default-dark dark:scheme-dark px-3 py-2 w-full min-w-[250px]">
+                                    <input type="text" data-key="{{ row.key }}" value="{{ row.override }}" class="override-input border border-base-200 bg-white font-medium placeholder-base-400 rounded-default shadow-xs text-font-default-light text-sm focus:outline-2 focus:-outline-offset-2 focus:outline-primary-600 dark:bg-base-900 dark:border-base-700 dark:text-font-default-dark dark:scheme-dark px-3 py-2 w-full min-w-[250px]">
                                 </td>
                             </tr>
                         {% endfor %}
@@ -99,23 +98,6 @@
 
         </div>
     {% endcomponent %}
-{% endblock %}
-
-{% block footer %}
-    <div class="px-4 lg:backdrop-blur-xs lg:bg-white/80 lg:flex lg:items-center lg:dark:bg-base-900/80 lg:left-0 lg:right-0 lg:bottom-0 lg:sticky relative z-40 lg:border-t lg:border-base-200 lg:dark:border-base-800">
-        <div class="flex flex-row grow items-center lg:h-[64px] container mx-auto">
-            <span class="text-sm text-base-500 dark:text-base-400">
-                <span id="footer-override-count">0</span> overrides
-            </span>
-            <div class="ml-auto">
-                <button type="submit" form="override-form" class="bg-primary-600 border border-transparent cursor-pointer font-medium flex items-center gap-2 px-3 py-2 rounded-default text-sm text-white hover:bg-primary-700">
-                    <span class="material-symbols-outlined text-[18px]">save</span>
-                    Save overrides
-                </button>
-            </div>
-        </div>
-    </div>
-{% endblock %}
 
 <script>
     function updateFilters() {
@@ -138,7 +120,7 @@
     }
 
     function countOverrides() {
-        const inputs = document.querySelectorAll('input[name="override"]');
+        const inputs = document.querySelectorAll('.override-input');
         let count = 0;
         inputs.forEach(function(input) {
             if (input.value.trim()) count++;
@@ -148,9 +130,41 @@
         if (footerCount) footerCount.textContent = count;
     }
 
-    document.querySelectorAll('input[name="override"]').forEach(function(input) {
+    // Before submit, populate the form with only non-empty overrides
+    document.getElementById('override-form').addEventListener('submit', function(e) {
+        // Remove any previously added dynamic fields
+        this.querySelectorAll('.dynamic-field').forEach(function(el) { el.remove(); });
+
+        document.querySelectorAll('.override-input').forEach(function(input) {
+            var val = input.value.trim();
+            var key = input.getAttribute('data-key');
+            if (val || input.getAttribute('data-had-override')) {
+                var keyInput = document.createElement('input');
+                keyInput.type = 'hidden';
+                keyInput.name = 'key';
+                keyInput.value = key;
+                keyInput.className = 'dynamic-field';
+
+                var overrideInput = document.createElement('input');
+                overrideInput.type = 'hidden';
+                overrideInput.name = 'override';
+                overrideInput.value = val;
+                overrideInput.className = 'dynamic-field';
+
+                document.getElementById('override-form').appendChild(keyInput);
+                document.getElementById('override-form').appendChild(overrideInput);
+            }
+        });
+    });
+
+    document.querySelectorAll('.override-input').forEach(function(input) {
+        // Mark inputs that had an override initially
+        if (input.value.trim()) {
+            input.setAttribute('data-had-override', '1');
+        }
+
         input.addEventListener('input', function() {
-            const row = this.closest('tr');
+            var row = this.closest('tr');
             if (this.value.trim()) {
                 row.classList.add('bg-primary-50', 'dark:bg-primary-500/10');
             } else {
@@ -162,3 +176,20 @@
 
     countOverrides();
 </script>
+{% endblock %}
+
+{% block footer %}
+    <div class="px-4 lg:backdrop-blur-xs lg:bg-white/80 lg:flex lg:items-center lg:dark:bg-base-900/80 lg:left-0 lg:right-0 lg:bottom-0 lg:sticky relative z-40 lg:border-t lg:border-base-200 lg:dark:border-base-800">
+        <div class="flex flex-row grow items-center lg:h-[64px] container mx-auto">
+            <span class="text-sm text-base-500 dark:text-base-400">
+                <span id="footer-override-count">0</span> overrides
+            </span>
+            <div class="ml-auto">
+                <button type="submit" form="override-form" class="bg-primary-600 border border-transparent cursor-pointer font-medium flex items-center gap-2 px-3 py-2 rounded-default text-sm text-white hover:bg-primary-700">
+                    <span class="material-symbols-outlined text-[18px]">save</span>
+                    Save overrides
+                </button>
+            </div>
+        </div>
+    </div>
+{% endblock %}
