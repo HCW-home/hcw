@@ -42,6 +42,7 @@ export class Select implements ControlValueAccessor, OnChanges {
   creatable = input(false);
   createOptionLabel = input<string>('');
   clearable = input(false);
+  openUp = input(false);
   createItem = output<boolean>();
 
   value: string | number | null = null;
@@ -52,6 +53,7 @@ export class Select implements ControlValueAccessor, OnChanges {
 
   @HostBinding('class.open') open = false;
   @HostBinding('class.disabled') disabled = false;
+  @HostBinding('class.drop-up') dropUp = false;
 
   constructor(private elementRef: ElementRef<HTMLElement>) {}
 
@@ -89,10 +91,30 @@ export class Select implements ControlValueAccessor, OnChanges {
 
   toggleDropdown(): void {
     if (this.disabled) return;
-    this.open = !this.open;
     if (this.open) {
-      this.onTouched();
+      this.open = false;
+      this.dropUp = false;
+    } else {
+      this.openDropdown();
     }
+  }
+
+  openDropdown(): void {
+    if (this.disabled || this.open) return;
+    this.open = true;
+    this.onTouched();
+    this.updateDropDirection();
+  }
+
+  private updateDropDirection(): void {
+    if (this.openUp()) {
+      this.dropUp = true;
+      return;
+    }
+    const el = this.elementRef.nativeElement;
+    const rect = el.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    this.dropUp = spaceBelow < 220;
   }
 
   onSearchInput(event: Event): void {

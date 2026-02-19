@@ -23,6 +23,7 @@ export interface IPatientUpdateRequest {
   mobile_phone_number?: string;
   timezone?: string;
   communication_method?: string;
+  preferred_language?: number | null;
 }
 
 @Injectable({
