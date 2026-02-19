@@ -68,6 +68,11 @@
                       <span class="contact-text">{{ patient.mobile_phone_number }}</span>
                     </div>
                   }
+                  @if (patient.temporary) {
+                    <div class="contact-item temporary-tag">
+                      <span class="contact-text">{{ 'patients.temporary' | translate }}</span>
+                    </div>
+                  }
                   @if (!patient.email && !patient.mobile_phone_number) {
                     <span class="contact-text no-contact">{{ 'patients.noContactInfo' | translate }}</span>
                   }

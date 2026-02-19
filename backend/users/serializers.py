@@ -84,8 +84,16 @@ class UserDetailsSerializer(serializers.ModelSerializer):
             "languages",
             "is_online",
             "accepted_term",
+            "temporary",
         ]
         read_only_fields = ["is_online", UserModel.EMAIL_FIELD]
+
+    def validate_temporary(self, value):
+        if self.instance and not self.instance.temporary and value:
+            raise serializers.ValidationError(
+                "A permanent patient cannot be made temporary."
+            )
+        return value
 
 
 class RegisterSerializer(serializers.Serializer):
