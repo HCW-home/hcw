@@ -5,6 +5,8 @@ import { Typography } from '../../ui-components/typography/typography';
 import { LabelValue } from '../../ui-components/label-value/label-value';
 import { TypographyTypeEnum } from '../../constants/typography';
 import { Consultation } from '../../../core/models/consultation';
+import { BadgeType } from '../../models/badge';
+import { BadgeTypeEnum } from '../../constants/badge';
 
 @Component({
   selector: 'app-consultation-row-item',
@@ -16,7 +18,8 @@ export class ConsultationRowItem {
   consultation = input.required<Consultation>();
   showClosedDate = input<boolean>(false);
   rowClick = output<Consultation>();
-
+  statusBadgeType = input<BadgeType>(BadgeTypeEnum.green);
+  statusLabel = input<string>('Active');
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
 
   onClick(): void {
