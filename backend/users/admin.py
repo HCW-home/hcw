@@ -132,7 +132,6 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
             {
                 "fields": (
                     "one_time_auth_token",
-                    "is_auth_token_used",
                     "verification_code",
                 )
             },

@@ -107,7 +107,8 @@
     "invalidVerificationCode": "Invalid verification code",
     "authSuccess": "Successfully authenticated",
     "codeSent": "Verification code sent to your email",
-    "resendFailed": "Failed to resend code. Please try again."
+    "resendFailed": "Failed to resend code. Please try again.",
+    "tooManyAttempts": "Too many verification attempts. Please request a new code."
   },
   "home": {
     "nextAppointment": "Next Appointment",

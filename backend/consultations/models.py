@@ -228,11 +228,6 @@ class Participant(models.Model):
         return self.user.one_time_auth_token if self.user else None
 
     @property
-    def is_auth_token_used(self):
-        """Get is_auth_token_used from associated User"""
-        return self.user.is_auth_token_used if self.user else False
-
-    @property
     def name(self) -> str:
         """Get display name of the participant"""
         return self.user.name or self.user.email

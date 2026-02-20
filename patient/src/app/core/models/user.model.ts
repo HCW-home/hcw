@@ -42,7 +42,6 @@ export interface User {
   main_organisation?: IOrganisation | null;
   accepted_term?: number | null;
   one_time_auth_token?: string;
-  is_auth_token_used?: boolean;
   verification_code?: number | null;
 }
 

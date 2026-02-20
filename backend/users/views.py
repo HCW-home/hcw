@@ -1089,9 +1089,8 @@ class SendVerificationCodeView(APIView):
         user_instance.verification_code_created_at = timezone.now()
 
         user_instance.one_time_auth_token = str(uuid.uuid4())
-        user_instance.is_auth_token_used = True
         user_instance.verification_attempts = 0
-        user_instance.save(update_fields=["verification_code", "verification_code_created_at", "verification_attempts", "is_auth_token_used", "one_time_auth_token"])
+        user_instance.save(update_fields=["verification_code", "verification_code_created_at", "verification_attempts", "one_time_auth_token"])
 
         # Render HTML template
         with translation.override(user_instance.preferred_language):

@@ -1,8 +1,10 @@
 import secrets
+from datetime import timedelta
 
 from consultations.models import Participant
 from django.conf import settings as django_settings
 from django.shortcuts import render
+from django.utils import timezone
 from drf_spectacular.utils import extend_schema
 from messaging.models import Message
 from rest_framework import status
@@ -13,19 +15,21 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from users.models import User
 
 MAX_VERIFICATION_ATTEMPTS = getattr(django_settings, "MAX_VERIFICATION_ATTEMPTS", 3)
+TOKEN_GRACE_PERIOD = timedelta(minutes=getattr(django_settings, "TOKEN_GRACE_PERIOD_MINUTES", 5))
 
 
 class AnonymousTokenAuthView(APIView):
     """
     Authenticate using auth_token and return JWT token.
-    verification_code is optional but required if is_auth_token_used is true.
+    Within 5 minutes of token creation, no verification code is needed.
+    After 5 minutes, a verification code is sent by email and must be provided.
     """
 
     permission_classes = [AllowAny]
 
     @extend_schema(
         summary="Anonymous Token Authentication",
-        description="Authenticate using auth_token and return JWT token. If token has been used before, verification_code is required.",
+        description="Authenticate using auth_token and return JWT token. Within 5 minutes of token creation, direct access is granted. After that, a verification code is required.",
         request={
             "application/json": {
                 "type": "object",
@@ -37,7 +41,7 @@ class AnonymousTokenAuthView(APIView):
                     },
                     "verification_code": {
                         "type": "string",
-                        "description": "6-digit verification code (required if token has been used)",
+                        "description": "6-digit verification code (required if token grace period has expired)",
                         "example": "123456",
                         "minLength": 6,
                         "maxLength": 6,
@@ -79,12 +83,6 @@ class AnonymousTokenAuthView(APIView):
                                 "summary": "Missing auth token",
                                 "value": {"error": "auth_token is required"},
                             },
-                            "missing_code": {
-                                "summary": "Missing verification code",
-                                "value": {
-                                    "error": "verification_code is required when token has been used"
-                                },
-                            },
                         }
                     }
                 },
@@ -106,6 +104,16 @@ class AnonymousTokenAuthView(APIView):
                     }
                 },
             },
+            429: {
+                "description": "Too many attempts",
+                "content": {
+                    "application/json": {
+                        "example": {
+                            "error": "Too many verification attempts. Please request a new code."
+                        }
+                    }
+                },
+            },
         },
     )
     def post(self, request):
@@ -118,13 +126,21 @@ class AnonymousTokenAuthView(APIView):
             )
 
         try:
-            # Look up user by auth_token
             user = User.objects.get(one_time_auth_token=auth_token)
 
-            if user.is_auth_token_used:
-                # Token has been used, verification code is required
+            now = timezone.now()
+            token_within_grace = (
+                user.verification_code_created_at
+                and (now - user.verification_code_created_at) < TOKEN_GRACE_PERIOD
+            )
+
+            if token_within_grace:
+                # Within grace period: direct authentication
+                user.verification_code_created_at = now
+                user.save(update_fields=["verification_code_created_at"])
+            else:
+                # Grace period expired: verification code required
                 if not verification_code:
-                    # Generate and save verification code on user
                     user.verification_code = secrets.randbelow(1000000)
                     user.verification_attempts = 0
                     user.save(update_fields=["verification_code", "verification_attempts"])
@@ -144,7 +160,6 @@ class AnonymousTokenAuthView(APIView):
                         status=status.HTTP_202_ACCEPTED,
                     )
 
-                # Check if max attempts exceeded
                 if user.verification_attempts >= MAX_VERIFICATION_ATTEMPTS:
                     user.verification_code = None
                     user.verification_attempts = 0
@@ -154,7 +169,6 @@ class AnonymousTokenAuthView(APIView):
                         status=status.HTTP_429_TOO_MANY_REQUESTS,
                     )
 
-                # Verify the provided code (pad both to 6 digits for comparison)
                 if str(user.verification_code).zfill(6) != str(verification_code).zfill(6):
                     user.verification_attempts += 1
                     user.save(update_fields=["verification_attempts"])
@@ -163,17 +177,12 @@ class AnonymousTokenAuthView(APIView):
                         status=status.HTTP_401_UNAUTHORIZED,
                     )
 
-                # Clear the verification code after successful verification
+                # Successful verification: reset and start new grace period
                 user.verification_code = None
                 user.verification_attempts = 0
-                user.save(update_fields=["verification_code", "verification_attempts"])
+                user.verification_code_created_at = now
+                user.save(update_fields=["verification_code", "verification_attempts", "verification_code_created_at"])
 
-            else:
-                # First time using the token
-                user.is_auth_token_used = True
-                user.save()
-
-            # Generate JWT token for the real user
             refresh = RefreshToken.for_user(user)
 
             return Response(

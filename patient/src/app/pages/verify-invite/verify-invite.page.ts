@@ -138,7 +138,10 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
         },
         error: async (error) => {
           this.isLoading = false;
-          if (error.status === 401) {
+          if (error.status === 429) {
+            this.errorMessage = error.error?.error || this.t.instant('verifyInvite.tooManyAttempts');
+            this.requiresVerification = false;
+          } else if (error.status === 401) {
             this.errorMessage = error.error?.error || this.t.instant('verifyInvite.invalidVerificationCode');
           } else {
             this.errorMessage = this.t.instant('verifyInvite.genericError');

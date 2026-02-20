@@ -23,5 +23,29 @@
     "signUp": "S'inscrire",
     "loggingIn": "Connexion en cours...",
     "invalidCredentials": "Identifiants invalides. Veuillez reessayer."
+  },
+  "verifyInvite": {
+    "verifyingCode": "Verification du code...",
+    "authenticating": "Authentification...",
+    "authFailed": "Echec de l'authentification",
+    "goToLogin": "Aller a la connexion",
+    "verificationRequired": "Verification requise",
+    "codeSentMessage": "Un code de verification a ete envoye a votre adresse e-mail ou telephone. Veuillez le saisir ci-dessous.",
+    "enterCode": "Entrez le code a 6 chiffres",
+    "invalidCode": "Veuillez entrer un code valide a 6 chiffres",
+    "verifyCode": "Verifier le code",
+    "didntReceive": "Vous n'avez pas recu le code ?",
+    "sending": "Envoi...",
+    "resendCode": "Renvoyer le code",
+    "havingTrouble": "Un probleme ?",
+    "signInManually": "Se connecter manuellement",
+    "noAuthToken": "Aucun jeton d'authentification fourni",
+    "invalidToken": "Jeton d'authentification invalide ou expire",
+    "genericError": "Une erreur est survenue. Veuillez reessayer.",
+    "invalidVerificationCode": "Code de verification invalide",
+    "authSuccess": "Authentification reussie",
+    "codeSent": "Code de verification envoye a votre adresse e-mail",
+    "resendFailed": "Echec du renvoi du code. Veuillez reessayer.",
+    "tooManyAttempts": "Trop de tentatives de verification. Veuillez demander un nouveau code."
   }
 }

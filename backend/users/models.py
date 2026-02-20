@@ -172,10 +172,6 @@ class User(AbstractUser):
         blank=True,
         help_text="Authentication token for appointment access",
     )
-    is_auth_token_used = models.BooleanField(
-        default=False,
-        help_text="Whether the appointment auth token has been used before",
-    )
     verification_code = models.IntegerField(null=True, blank=True)
     verification_code_created_at = models.DateTimeField(null=True, blank=True)
     verification_attempts = models.IntegerField(default=0)
@@ -226,6 +222,7 @@ class User(AbstractUser):
     def save(self, *args, **kwargs):
         if self.temporary and not self.one_time_auth_token:
             self.one_time_auth_token = str(uuid.uuid4())
+            self.verification_code_created_at = timezone.now()
         super().save(*args, **kwargs)
 
     class Meta:
