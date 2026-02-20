@@ -90,6 +90,12 @@
       margin-bottom: 8px;
       border-radius: 12px;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      cursor: pointer;
+      transition: background 0.2s ease;
+
+      &:hover {
+        --background: rgba(0, 0, 0, 0.03);
+      }
 
       ion-icon[slot="start"] {
         font-size: 24px;
