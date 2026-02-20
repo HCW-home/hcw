@@ -2,6 +2,7 @@ import logging
 import mimetypes
 import os
 import uuid
+import random
 
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from allauth.socialaccount.providers.openid_connect.views import (
@@ -25,8 +26,7 @@ from dj_rest_auth.registration.views import RegisterView as DjRestAuthRegisterVi
 from dj_rest_auth.registration.views import SocialLoginView
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.mail import send_mail
-from django.db.models import Q
+from django.utils import translation
 from django.http import FileResponse
 from django.shortcuts import render
 from django.utils import timezone
@@ -46,14 +46,13 @@ from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import (
-    BasePermission,
     DjangoModelPermissions,
     IsAuthenticated,
+    AllowAny
 )
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework_simplejwt.tokens import RefreshToken
 
 from .filters import UserFilter
 from .models import HealthMetric, Language, Organisation, Speciality, Term, User
@@ -1015,4 +1014,99 @@ class UserDashboardView(APIView):
                 "consultations": ConsultationSerializer(consultations, many=True).data,
                 "appointments": AppointmentSerializer(appointments, many=True).data,
             }
+        )
+
+
+class SendVerificationCodeView(APIView):
+    """
+    Generate and send a verification code to a contact's email for passwordless authentication.
+    """
+
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        summary="Send Verification Code",
+        description="Generate and send a verification code for passwordless authentication. Automatically detects if the email belongs to a contact or user.",
+        request={
+            "application/json": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "description": "Email address to send the verification code to",
+                        "example": "user@example.com",
+                    },
+                },
+                "required": ["email"],
+            }
+        },
+        responses={
+            200: {
+                "description": "Verification code sent successfully",
+                "content": {
+                    "application/json": {
+                        "example": {
+                            "detail": "Verification code sent successfully"
+                        }
+                    }
+                },
+            },
+            400: {
+                "description": "Bad request",
+                "content": {
+                    "application/json": {
+                        "example": {"error": "email is required"}
+                    }
+                },
+            },
+        },
+    )
+    def post(self, request):
+        email = request.data.get("email")
+
+        if not email:
+            return Response(
+                {"error": "email is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Try to find contact first, then user
+        user_instance = None
+
+        try:
+            # Try to get User
+            user_instance = User.objects.get(email__iexact=email.strip())
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "Verification code sent successfully"},
+                status=status.HTTP_200_OK,
+            )
+
+        # Generate a verification code (6 digits)
+        verification_code = random.randint(0, 999999)
+
+        user_instance.verification_code = verification_code
+        user_instance.verification_code_created_at = timezone.now()
+
+        user_instance.one_time_auth_token = str(uuid.uuid4())
+        user_instance.is_auth_token_used = True
+        user_instance.verification_attempts = 0
+        user_instance.save(update_fields=["verification_code", "verification_code_created_at", "verification_attempts", "is_auth_token_used", "one_time_auth_token"])
+
+        # Render HTML template
+        with translation.override(user_instance.preferred_language):
+
+            Message.objects.create(
+                sent_to=user_instance,
+                template_system_name="your_authentication_code",
+                object_pk=user_instance.pk,
+                object_model="users.User",
+            )
+
+        return Response(
+            {
+                "detail": "Verification code sent successfully",
+                "auth_token": user_instance.one_time_auth_token
+            },
+            status=status.HTTP_200_OK,
         )

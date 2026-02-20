@@ -177,6 +177,8 @@ class User(AbstractUser):
         help_text="Whether the appointment auth token has been used before",
     )
     verification_code = models.IntegerField(null=True, blank=True)
+    verification_code_created_at = models.DateTimeField(null=True, blank=True)
+    verification_attempts = models.IntegerField(default=0)
 
     email_verified = models.BooleanField(
         default=False,

@@ -1,6 +1,7 @@
 import secrets
 
 from consultations.models import Participant
+from django.conf import settings as django_settings
 from django.shortcuts import render
 from drf_spectacular.utils import extend_schema
 from messaging.models import Message
@@ -10,6 +11,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from users.models import User
+
+MAX_VERIFICATION_ATTEMPTS = getattr(django_settings, "MAX_VERIFICATION_ATTEMPTS", 3)
 
 
 class AnonymousTokenAuthView(APIView):
@@ -123,7 +126,8 @@ class AnonymousTokenAuthView(APIView):
                 if not verification_code:
                     # Generate and save verification code on user
                     user.verification_code = secrets.randbelow(1000000)
-                    user.save()
+                    user.verification_attempts = 0
+                    user.save(update_fields=["verification_code", "verification_attempts"])
 
                     Message.objects.create(
                         sent_to=user,
@@ -140,8 +144,20 @@ class AnonymousTokenAuthView(APIView):
                         status=status.HTTP_202_ACCEPTED,
                     )
 
+                # Check if max attempts exceeded
+                if user.verification_attempts >= MAX_VERIFICATION_ATTEMPTS:
+                    user.verification_code = None
+                    user.verification_attempts = 0
+                    user.save(update_fields=["verification_code", "verification_attempts"])
+                    return Response(
+                        {"error": "Too many verification attempts. Please request a new code."},
+                        status=status.HTTP_429_TOO_MANY_REQUESTS,
+                    )
+
                 # Verify the provided code (pad both to 6 digits for comparison)
                 if str(user.verification_code).zfill(6) != str(verification_code).zfill(6):
+                    user.verification_attempts += 1
+                    user.save(update_fields=["verification_attempts"])
                     return Response(
                         {"error": "Invalid verification_code"},
                         status=status.HTTP_401_UNAUTHORIZED,
@@ -149,7 +165,8 @@ class AnonymousTokenAuthView(APIView):
 
                 # Clear the verification code after successful verification
                 user.verification_code = None
-                user.save()
+                user.verification_attempts = 0
+                user.save(update_fields=["verification_code", "verification_attempts"])
 
             else:
                 # First time using the token
