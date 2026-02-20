@@ -86,6 +86,19 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, ConsultationAssigneePermission]
     pagination_class = ConsultationPagination
     filterset_class = ConsultationFilter
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
+    search_fields = [
+        "title",
+        "description",
+        "beneficiary__first_name",
+        "beneficiary__last_name",
+        "beneficiary__email",
+        "created_by__first_name",
+        "created_by__last_name",
+        "owned_by__first_name",
+        "owned_by__last_name",
+        "group__name",
+    ]
     ordering = ["-created_at"]
     ordering_fields = ["created_at", "updated_at", "closed_at"]
 

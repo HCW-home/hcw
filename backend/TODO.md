@@ -116,8 +116,8 @@ No permission (=patient) but : can still go own appointment or group appointment
 
 
 - online status is not properly updated in consultations detail for participant
-- think about patient terms
-- consultations list search is not working
+<!--- think about patient terms-->
+<!--- consultations list search is not working-->
 - dashboard overdue consultations is missing profile picture full path
 - after openid login everything is 403 except for dashboard end-point
 - getting 403 on consultation messages in patient app
@@ -125,4 +125,3 @@ No permission (=patient) but : can still go own appointment or group appointment
 - test sms and preferred communication method
 - dashboard is returning no appointment for patient, but you can join practitioner, and patient is receiving call 
 - add a way to send link again, get link for temporary participant
-
