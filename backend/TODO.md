@@ -98,8 +98,8 @@ No permission (=patient) but : can still go own appointment or group appointment
 <!--- Add register endpoint, but can be disable from .env file (Olivier)-->
 <!--- Add openid authentication (Olivier)-->
 <!--- Patient dashboard : having next appointment on top-->
-- Remove Review button on Dashboard (click on line is enough)
-- Remove resume button on consultation list (click on line is enough)
+<!--- Remove Review button on Dashboard (click on line is enough)-->
+<!--- Remove resume button on consultation list (click on line is enough)-->
 - Remove arrow on Patient page list (click on line is enough)
 <!--- Websocket, add event when somebody join appointment, have ring page (Accept or later)-->
 - Implement system message in backend in consultation, to log system event, created_by will be empty
@@ -112,7 +112,6 @@ No permission (=patient) but : can still go own appointment or group appointment
 - User messages for patient is giving 404 not found
 - picture on reason is not correct, fix for debug mode
 - patient will be redirected to patient app if login in doctor app
-
 
 
 - online status is not properly updated in consultations detail for participant

@@ -107,8 +107,6 @@
                   <app-consultation-row-item
                     [consultation]="consultation"
                     [showClosedDate]="!!consultation.closed_at"
-                    [statusBadgeType]="getConsultationBadgeType(!!consultation.closed_at)"
-                    [statusLabel]="consultation.closed_at ? ('patientDetail.closed' | translate) : ('patientDetail.active' | translate)"
                     (rowClick)="viewConsultation($event)">
                   </app-consultation-row-item>
                 }
@@ -147,8 +145,6 @@
                     <app-consultation-row-item
                       [consultation]="consultation"
                       [showClosedDate]="!!consultation.closed_at"
-                      [statusBadgeType]="getConsultationBadgeType(!!consultation.closed_at)"
-                      [statusLabel]="consultation.closed_at ? ('patientDetail.closed' | translate) : ('patientDetail.active' | translate)"
                       (rowClick)="viewConsultation($event)">
                     </app-consultation-row-item>
                   }

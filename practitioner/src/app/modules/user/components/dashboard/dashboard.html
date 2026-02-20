@@ -171,8 +171,6 @@
                 @for (consultation of overdueConsultations(); track consultation.id) {
                   <app-consultation-row-item
                     [consultation]="consultation"
-                    [statusBadgeType]="BadgeTypeEnum.orange"
-                    [statusLabel]="'dashboard.overdue' | translate"
                     (rowClick)="viewConsultation($event)">
                   </app-consultation-row-item>
                 }

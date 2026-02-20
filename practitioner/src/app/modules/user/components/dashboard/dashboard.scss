@@ -1,6 +1,7 @@
 .dashboard-container {
   padding: 32px;
   min-height: calc(100vh - 140px);
+  animation: fadeIn 0.3s ease-out;
 
   .next-appointment-section {
     margin-bottom: 24px;
@@ -486,6 +487,17 @@
     border-radius: 16px;
     border: 1px solid var(--rose-200);
     background-color: var(--rose-50);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 

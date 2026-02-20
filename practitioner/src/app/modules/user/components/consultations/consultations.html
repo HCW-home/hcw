@@ -141,8 +141,6 @@
         <app-consultation-row-item
           [consultation]="consultation"
           [showClosedDate]="activeTab() !== 'active'"
-          [statusBadgeType]="getStatusBadgeType()"
-          [statusLabel]="getStatusLabel()"
           (rowClick)="viewConsultationDetails($event)">
         </app-consultation-row-item>
         } @if (hasMore()) {

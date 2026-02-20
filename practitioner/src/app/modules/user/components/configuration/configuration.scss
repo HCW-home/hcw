@@ -1,6 +1,7 @@
 .configuration-page {
   padding: 24px 32px;
   width: 100%;
+  animation: fadeIn 0.3s ease-out;
 
   .page-toolbar {
     display: flex;

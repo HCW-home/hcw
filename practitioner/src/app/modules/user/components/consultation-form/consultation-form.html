@@ -1,14 +1,5 @@
 <app-page>
   <div class="consultation-form-container">
-    <app-button
-      [text]="'consultationForm.backToConsultations' | translate"
-      leftIcon="arrow-left"
-      [style]="ButtonStyleEnum.text"
-      [size]="ButtonSizeEnum.small"
-      buttonClass="back-button"
-      (buttonClick)="cancel()">
-    </app-button>
-
     @if (isLoading()) {
       <div class="loading-container">
         <app-loader></app-loader>
