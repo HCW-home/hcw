@@ -209,11 +209,12 @@
     gap: 4px;
 
     .login-text {
-      font-size: 0.85rem;
+      font-size: 0.9rem;
+      color: var(--app-text-secondary);
     }
 
     .link-text {
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       font-weight: 600;
       cursor: pointer;
     }
