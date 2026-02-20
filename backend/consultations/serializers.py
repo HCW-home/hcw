@@ -14,14 +14,85 @@ from .models import (
     AppointmentStatus,
     BookingSlot,
     Consultation,
+    CustomField,
+    CustomFieldValue,
     Message,
     Participant,
     Queue,
     Reason,
     Request,
 )
+from django.contrib.contenttypes.models import ContentType
 
 User = get_user_model()
+
+
+class CustomFieldValueReadSerializer(serializers.Serializer):
+    field = serializers.IntegerField(source="custom_field_id")
+    field_name = serializers.CharField(source="custom_field.name", read_only=True)
+    field_type = serializers.CharField(source="custom_field.field_type", read_only=True)
+    value = serializers.CharField(allow_null=True, allow_blank=True)
+    options = serializers.JSONField(source="custom_field.options", read_only=True)
+
+
+class CustomFieldValueWriteSerializer(serializers.Serializer):
+    field = serializers.IntegerField()
+    value = serializers.CharField(allow_null=True, allow_blank=True)
+
+
+class CustomFieldSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomField
+        fields = ["id", "name", "field_type", "target_model", "required", "options", "ordering"]
+
+
+class CustomFieldsMixin(serializers.Serializer):
+    """Mixin to add custom_fields read/write support to any model serializer."""
+    custom_fields = CustomFieldValueReadSerializer(many=True, read_only=True, source="custom_field_values")
+
+    def _get_content_type(self, model_class):
+        return ContentType.objects.get_for_model(model_class)
+
+    def _save_custom_fields(self, instance, custom_fields_data):
+        if custom_fields_data is None:
+            return
+        ct = self._get_content_type(instance.__class__)
+        for item in custom_fields_data:
+            CustomFieldValue.objects.update_or_create(
+                custom_field_id=item["field"],
+                content_type=ct,
+                object_id=instance.pk,
+                defaults={"value": item.get("value")},
+            )
+
+    def to_internal_value(self, data):
+        ret = super().to_internal_value(data)
+        if "custom_fields" in data:
+            write_serializer = CustomFieldValueWriteSerializer(data=data["custom_fields"], many=True)
+            write_serializer.is_valid(raise_exception=True)
+            ret["_custom_fields_data"] = write_serializer.validated_data
+        return ret
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        ct = self._get_content_type(instance.__class__)
+        values = CustomFieldValue.objects.filter(
+            content_type=ct, object_id=instance.pk
+        ).select_related("custom_field")
+        ret["custom_fields"] = CustomFieldValueReadSerializer(values, many=True).data
+        return ret
+
+    def create(self, validated_data):
+        custom_fields_data = validated_data.pop("_custom_fields_data", None)
+        instance = super().create(validated_data)
+        self._save_custom_fields(instance, custom_fields_data)
+        return instance
+
+    def update(self, instance, validated_data):
+        custom_fields_data = validated_data.pop("_custom_fields_data", None)
+        instance = super().update(instance, validated_data)
+        self._save_custom_fields(instance, custom_fields_data)
+        return instance
 
 
 class ConsultationUserSerializer(serializers.ModelSerializer):
@@ -94,7 +165,7 @@ class ParticipantSerializer(serializers.Serializer):
 
 
 
-class ConsultationSerializer(serializers.ModelSerializer):
+class ConsultationSerializer(CustomFieldsMixin, serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(read_only=True)
     owned_by = ConsultationUserSerializer(read_only=True)
     owned_by_id = serializers.PrimaryKeyRelatedField(
@@ -562,7 +633,7 @@ class AppointmentDetailSerializer(serializers.ModelSerializer):
         ]
 
 
-class RequestSerializer(serializers.ModelSerializer):
+class RequestSerializer(CustomFieldsMixin, serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(read_only=True)
     expected_with = ConsultationUserSerializer(read_only=True)
     consultation = ConsultationSerializer(read_only=True)

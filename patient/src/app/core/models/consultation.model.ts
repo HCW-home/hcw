@@ -1,3 +1,21 @@
+export interface CustomField {
+  id: number;
+  name: string;
+  field_type: 'short_text' | 'long_text' | 'date' | 'number' | 'list';
+  target_model: string;
+  required: boolean;
+  options: string[] | null;
+  ordering: number;
+}
+
+export interface CustomFieldValue {
+  field: number;
+  field_name: string;
+  field_type: string;
+  value: string | null;
+  options: string[] | null;
+}
+
 export interface Consultation {
   id: number;
   title?: string;
@@ -123,6 +141,7 @@ export interface ConsultationRequest {
   appointment?: Appointment;
   consultation?: Consultation;
   created_at?: string;
+  custom_fields?: CustomFieldValue[];
 }
 
 export interface User {
@@ -151,6 +170,7 @@ export interface CreateRequestPayload {
   expected_at: string;
   expected_with_id?: number;
   comment?: string;
+  custom_fields?: { field: number; value: string | null }[];
 }
 
 export interface IDashboardResponse {

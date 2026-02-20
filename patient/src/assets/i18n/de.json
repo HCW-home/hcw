@@ -182,6 +182,7 @@
     "symptomPlaceholder": "Bitte beschreiben Sie Ihre Symptome oder spezifischen Anliegen...",
     "submitting": "Wird gesendet...",
     "submitRequest": "Anfrage absenden",
+    "additionalInfo": "Zusaetzliche Informationen",
     "failedSpecialties": "Laden der Fachgebiete fehlgeschlagen",
     "failedReasons": "Laden der Gruende fehlgeschlagen",
     "failedSlots": "Laden der verfuegbaren Zeitfenster fehlgeschlagen",

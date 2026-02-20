@@ -23,7 +23,7 @@ import { SpecialityService } from '../../core/services/speciality.service';
 import { DoctorService } from '../../core/services/doctor.service';
 import { ConsultationService, ConsultationRequestData } from '../../core/services/consultation.service';
 import { Speciality, Doctor } from '../../core/models/doctor.model';
-import { Reason, Slot } from '../../core/models/consultation.model';
+import { Reason, Slot, CustomField } from '../../core/models/consultation.model';
 
 @Component({
   selector: 'app-new-request',
@@ -68,6 +68,9 @@ export class NewRequestPage implements OnInit, OnDestroy {
 
   doctors = signal<Doctor[]>([]);
   selectedDoctor = signal<Doctor | null>(null);
+
+  customFields = signal<CustomField[]>([]);
+  customFieldValues: Record<number, string> = {};
 
   comment = '';
 
@@ -252,12 +255,23 @@ export class NewRequestPage implements OnInit, OnDestroy {
   }
 
   proceedToReview(): void {
+    this.loadCustomFields();
     this.currentStep.set(5);
   }
 
   skipDoctorSelection(): void {
     this.selectedDoctor.set(null);
+    this.loadCustomFields();
     this.currentStep.set(5);
+  }
+
+  loadCustomFields(): void {
+    if (this.customFields().length > 0) return;
+    this.consultationService.getCustomFields('consultations.Request')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (fields) => this.customFields.set(fields),
+      });
   }
 
   goBack(): void {
@@ -298,6 +312,13 @@ export class NewRequestPage implements OnInit, OnDestroy {
 
     if (doctor) {
       requestData.expected_with_id = doctor.id;
+    }
+
+    const cfPayload = Object.entries(this.customFieldValues)
+      .filter(([_, value]) => value !== '' && value !== null && value !== undefined)
+      .map(([fieldId, value]) => ({ field: parseInt(fieldId, 10), value }));
+    if (cfPayload.length > 0) {
+      requestData.custom_fields = cfPayload;
     }
 
     this.isSubmitting.set(true);

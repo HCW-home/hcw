@@ -182,6 +182,7 @@
     "symptomPlaceholder": "Veuillez decrire vos symptomes ou preoccupations specifiques...",
     "submitting": "Envoi en cours...",
     "submitRequest": "Envoyer la demande",
+    "additionalInfo": "Informations complementaires",
     "failedSpecialties": "Echec du chargement des specialites",
     "failedReasons": "Echec du chargement des motifs",
     "failedSlots": "Echec du chargement des creneaux disponibles",

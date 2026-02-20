@@ -34,6 +34,7 @@ from .models import (
     AppointmentStatus,
     BookingSlot,
     Consultation,
+    CustomField,
     Message,
     Participant,
     Queue,
@@ -52,6 +53,7 @@ from .serializers import (
     ConsultationMessageCreateSerializer,
     ConsultationMessageSerializer,
     ConsultationSerializer,
+    CustomFieldSerializer,
     ParticipantDetailSerializer,
     QueueSerializer,
     RequestSerializer,
@@ -1078,6 +1080,16 @@ class MessageViewSet(viewsets.ModelViewSet):
                 {"error": f"Failed to download recording: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+class CustomFieldViewSet(viewsets.ReadOnlyModelViewSet):
+    """Read-only endpoint to list available custom fields, filterable by target_model."""
+    serializer_class = CustomFieldSerializer
+    permission_classes = [IsAuthenticated]
+    filterset_fields = ["target_model"]
+
+    def get_queryset(self):
+        return CustomField.objects.all()
 
 
 class DashboardPractitionerView(APIView):

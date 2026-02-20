@@ -385,7 +385,8 @@
     "patientCreatedMessage": "Patient created successfully",
     "errorCreating": "Error Creating Patient",
     "temporary": "Temporary patient",
-    "temporaryNotice": "Once saved, this patient can no longer be set as temporary."
+    "temporaryNotice": "Once saved, this patient can no longer be set as temporary.",
+    "customFields": "Additional Information"
   },
   "patients": {
     "searchPlaceholder": "Search patients...",
@@ -518,6 +519,7 @@
     "fieldTooShort": "{{field}} is too short",
     "fieldTooLong": "{{field}} is too long",
     "invalidEmail": "Invalid email format",
+    "customFields": "Custom Fields",
     "consultationCreated": "Consultation Created",
     "consultationCreatedMessage": "Consultation created successfully",
     "errorCreating": "Error Creating Consultation",
@@ -735,7 +737,8 @@
     "backToPatientsList": "Back to Patients",
     "errorLoadingPatient": "Error Loading Patient",
     "errorLoadingConsultations": "Error Loading Consultations",
-    "errorLoadingAppointments": "Error Loading Appointments"
+    "errorLoadingAppointments": "Error Loading Appointments",
+    "customFields": "Additional Information"
   },
   "appointments": {
     "appointmentsCount": "{{count}} appointments",

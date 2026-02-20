@@ -537,6 +537,16 @@ UNFOLD = {
                             "consultations.view_bookingslot"
                         ),
                     },
+                    {
+                        "title": _("Custom Fields"),
+                        "icon": "tune",
+                        "link": reverse_lazy(
+                            "admin:consultations_customfield_changelist"
+                        ),
+                        "permission": lambda request: request.user.has_perm(
+                            "consultations.view_customfield"
+                        ),
+                    },
                 ],
             },
             {

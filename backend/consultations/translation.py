@@ -1,6 +1,6 @@
 from modeltranslation.translator import register, TranslationOptions
 
-from .models import Queue, Reason
+from .models import CustomField, Queue, Reason
 
 
 @register(Queue)
@@ -9,4 +9,8 @@ class QueueTranslation(TranslationOptions):
 
 @register(Reason)
 class ReasonTranslation(TranslationOptions):
+    fields = ["name"]
+
+@register(CustomField)
+class CustomFieldTranslation(TranslationOptions):
     fields = ["name"]

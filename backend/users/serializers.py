@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from dj_rest_auth.serializers import PasswordResetSerializer
 from .models import HealthMetric, Language, Organisation, Speciality, Term
 from .forms import CustomAllAuthPasswordResetForm
-from consultations.serializers import AppointmentDetailSerializer
+from consultations.serializers import AppointmentDetailSerializer, CustomFieldsMixin
 from consultations.models import Participant
 UserModel = get_user_model()
 
@@ -46,7 +46,7 @@ class OrganisationSerializer(serializers.ModelSerializer):
         ]
 
 
-class UserDetailsSerializer(serializers.ModelSerializer):
+class UserDetailsSerializer(CustomFieldsMixin, serializers.ModelSerializer):
     """
     User model w/o password
     """
@@ -191,7 +191,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ["id", "email", "first_name", "last_name"]
 
 
-class HealthMetricSerializer(serializers.ModelSerializer):
+class HealthMetricSerializer(CustomFieldsMixin, serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     created_by = UserSerializer(read_only=True)
     measured_by = UserSerializer(read_only=True)

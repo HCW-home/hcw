@@ -18,7 +18,7 @@ import { IUser } from '../../models/user';
 import { RoutePaths } from '../../../../core/constants/routes';
 import { PatientService } from '../../../../core/services/patient.service';
 import { ConsultationService } from '../../../../core/services/consultation.service';
-import { Consultation, Appointment } from '../../../../core/models/consultation';
+import { Consultation, Appointment, CustomFieldValue } from '../../../../core/models/consultation';
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { TranslationService } from '../../../../core/services/translation.service';
 import { Badge } from '../../../../shared/components/badge/badge';

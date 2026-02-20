@@ -21,6 +21,7 @@ import {
   Participant,
   AppointmentStatus,
   AppointmentType,
+  CustomField,
   Queue,
   CreateConsultationRequest,
 } from '../../../../core/models/consultation';
@@ -154,6 +155,8 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     }
   };
 
+  customFields = signal<CustomField[]>([]);
+
   isEditMode = signal(false);
   isSavingConsultation = signal(false);
   queues = signal<Queue[]>([]);
@@ -192,6 +195,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   ngOnInit(): void {
     this.initEditForm();
     this.loadQueues();
+    this.loadCustomFields();
 
     this.userService.currentUser$.pipe(takeUntil(this.destroy$)).subscribe(user => {
       this.currentUser.set(user);
@@ -231,6 +235,21 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
           this.toasterService.show('error', this.t.instant('consultationDetail.errorLoadingQueues'), getErrorMessage(error));
         },
       });
+  }
+
+  private loadCustomFields(): void {
+    this.consultationService
+      .getCustomFields('consultations.Consultation')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: fields => {
+          this.customFields.set(fields);
+        },
+      });
+  }
+
+  getCustomFieldOptions(field: CustomField): SelectOption[] {
+    return (field.options || []).map(o => ({ value: o, label: o }));
   }
 
   private checkJoinQueryParam(): void {
@@ -690,6 +709,22 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       group_id: currentConsultation.group?.id?.toString() || '',
     });
 
+    // Build custom fields form controls
+    if (!this.editForm.get('custom_fields')) {
+      const group: Record<string, any> = {};
+      this.customFields().forEach(field => {
+        group[field.id.toString()] = [''];
+      });
+      this.editForm.addControl('custom_fields', this.fb.group(group));
+    }
+    if (currentConsultation.custom_fields?.length) {
+      const cfValues: Record<string, string> = {};
+      currentConsultation.custom_fields.forEach(cf => {
+        cfValues[cf.field.toString()] = cf.value || '';
+      });
+      this.editForm.get('custom_fields')?.patchValue(cfValues);
+    }
+
     this.selectedBeneficiary.set(currentConsultation.beneficiary ? {
       pk: currentConsultation.beneficiary.id,
       email: currentConsultation.beneficiary.email,
@@ -729,12 +764,20 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     this.isSavingConsultation.set(true);
     const formValue = this.editForm.value;
 
+    const cfGroup = this.editForm.get('custom_fields');
+    const customFieldsPayload = cfGroup
+      ? Object.entries(cfGroup.value)
+          .filter(([_, value]) => value !== '' && value !== null && value !== undefined)
+          .map(([fieldId, value]) => ({ field: parseInt(fieldId, 10), value: value as string | null }))
+      : [];
+
     const updateData: Partial<CreateConsultationRequest> = {
       title: formValue.title || null,
       description: formValue.description || null,
       beneficiary_id: formValue.beneficiary_id ? Number(formValue.beneficiary_id) : null,
       owned_by_id: formValue.owned_by_id ? Number(formValue.owned_by_id) : null,
       group_id: formValue.group_id ? Number(formValue.group_id) : null,
+      custom_fields: customFieldsPayload,
     };
 
     this.consultationService

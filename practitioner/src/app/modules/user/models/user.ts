@@ -63,6 +63,7 @@ export interface IUser {
   accepted_term?: number | null;
   is_online?: boolean;
   temporary?: boolean;
+  custom_fields?: import('../../../core/models/consultation').CustomFieldValue[];
 }
 
 export interface IUserUpdateRequest {

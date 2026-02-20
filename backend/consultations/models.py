@@ -5,6 +5,7 @@ from enum import Enum
 from zoneinfo import available_timezones
 
 from django.conf import settings
+from django.contrib.contenttypes.fields import GenericForeignKey
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -461,3 +462,61 @@ class Prescription(models.Model):
 
     def __str__(self):
         return f"Prescription #{self.pk} - {self.medication_name} for {self.patient}"
+
+
+class CustomFieldType(models.TextChoices):
+    short_text = "short_text", _("Short text")
+    long_text = "long_text", _("Long text")
+    date = "date", _("Date")
+    number = "number", _("Number")
+    list = "list", _("List")
+
+
+class CustomFieldModel(models.TextChoices):
+    health_metric = "users.HealthMetric", _("Health Metric")
+    request = "consultations.Request", _("Request")
+    consultation = "consultations.Consultation", _("Consultation")
+    patient = "users.User", _("Patient")
+
+
+class CustomField(models.Model):
+    name = models.CharField(_("name"), max_length=255)
+    field_type = models.CharField(
+        _("type"), max_length=20, choices=CustomFieldType.choices
+    )
+    target_model = models.CharField(
+        _("target model"), max_length=50, choices=CustomFieldModel.choices
+    )
+    options = models.JSONField(
+        _("options"),
+        null=True,
+        blank=True,
+        help_text=_("List of options for 'list' type"),
+    )
+    required = models.BooleanField(_("required"), default=False)
+    ordering = models.IntegerField(_("ordering"), default=0)
+
+    class Meta:
+        verbose_name = _("custom field")
+        verbose_name_plural = _("custom fields")
+        ordering = ["ordering", "name"]
+
+    def __str__(self):
+        return f"{self.name} ({self.get_target_model_display()})"
+
+
+class CustomFieldValue(models.Model):
+    custom_field = models.ForeignKey(
+        CustomField, on_delete=models.CASCADE, related_name="values"
+    )
+    content_type = models.ForeignKey(
+        "contenttypes.ContentType", on_delete=models.CASCADE
+    )
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey("content_type", "object_id")
+    value = models.TextField(_("value"), null=True, blank=True)
+
+    class Meta:
+        verbose_name = _("custom field value")
+        verbose_name_plural = _("custom field values")
+        unique_together = ("custom_field", "content_type", "object_id")

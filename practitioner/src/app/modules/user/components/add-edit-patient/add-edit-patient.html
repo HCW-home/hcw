@@ -74,6 +74,68 @@
       </div>
     </div>
 
+    @if (customFields().length > 0 && customFieldsForm) {
+      <div class="custom-fields-section">
+        <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-700)">
+          {{ 'addEditPatient.customFields' | translate }}
+        </app-typography>
+        <div class="custom-fields-list">
+          @for (field of customFields(); track field.id) {
+            @switch (field.field_type) {
+              @case ('short_text') {
+                <div class="form-group">
+                  <app-input
+                    [label]="field.name"
+                    [placeholder]="field.name"
+                    [formControl]="$any(customFieldsForm.get('cf_' + field.id))">
+                  </app-input>
+                </div>
+              }
+              @case ('long_text') {
+                <div class="form-group">
+                  <app-textarea
+                    [label]="field.name"
+                    [placeholder]="field.name"
+                    [formControl]="$any(customFieldsForm.get('cf_' + field.id))">
+                  </app-textarea>
+                </div>
+              }
+              @case ('date') {
+                <div class="form-group">
+                  <app-input
+                    [label]="field.name"
+                    type="date"
+                    [formControl]="$any(customFieldsForm.get('cf_' + field.id))">
+                  </app-input>
+                </div>
+              }
+              @case ('number') {
+                <div class="form-group">
+                  <app-input
+                    [label]="field.name"
+                    type="number"
+                    [placeholder]="field.name"
+                    [formControl]="$any(customFieldsForm.get('cf_' + field.id))">
+                  </app-input>
+                </div>
+              }
+              @case ('list') {
+                <div class="form-group">
+                  <app-select
+                    [label]="field.name"
+                    [placeholder]="field.name"
+                    [options]="getCustomFieldOptions(field)"
+                    [formControl]="$any(customFieldsForm.get('cf_' + field.id))"
+                    [clearable]="!field.required">
+                  </app-select>
+                </div>
+              }
+            }
+          }
+        </div>
+      </div>
+    }
+
     @if (isEditMode && patient()?.temporary) {
       <div class="form-group">
         <app-switch

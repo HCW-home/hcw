@@ -294,6 +294,27 @@
   }
 }
 
+.custom-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 8px;
+
+  .custom-field-item {
+    background: var(--slate-50);
+    border-radius: 12px;
+    padding: 16px;
+
+    app-typography {
+      display: block;
+
+      &:first-child {
+        margin-bottom: 4px;
+      }
+    }
+  }
+}
+
 .consultations-preview {
   background: var(--White);
   border-radius: 20px;
@@ -560,6 +581,10 @@
       width: 100%;
       justify-content: center;
     }
+  }
+
+  .custom-fields-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .metrics-grid {

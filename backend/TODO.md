@@ -124,3 +124,6 @@ No permission (=patient) but : can still go own appointment or group appointment
 - test sms and preferred communication method
 - dashboard is returning no appointment for patient, but you can join practitioner, and patient is receiving call 
 - add a way to send link again, get link for temporary participant
+
+
+- Use GenericForeignKey for message foreign relation

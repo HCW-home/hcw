@@ -232,6 +232,59 @@
             </div>
           </div>
 
+          @if (customFields().length > 0) {
+            <div class="custom-fields-section">
+              <h3 class="review-title">{{ 'newRequest.additionalInfo' | translate }}</h3>
+              @for (field of customFields(); track field.id) {
+                <div class="custom-field-item">
+                  <label class="custom-field-label">
+                    {{ field.name }}
+                    @if (field.required) {
+                      <span class="required-mark">*</span>
+                    }
+                  </label>
+                  @switch (field.field_type) {
+                    @case ('short_text') {
+                      <input type="text" class="custom-field-input"
+                        [placeholder]="field.name"
+                        [required]="field.required"
+                        [(ngModel)]="customFieldValues[field.id]">
+                    }
+                    @case ('long_text') {
+                      <ion-textarea
+                        [placeholder]="field.name"
+                        [rows]="3"
+                        [(ngModel)]="customFieldValues[field.id]"
+                        class="custom-field-textarea">
+                      </ion-textarea>
+                    }
+                    @case ('date') {
+                      <input type="date" class="custom-field-input"
+                        [required]="field.required"
+                        [(ngModel)]="customFieldValues[field.id]">
+                    }
+                    @case ('number') {
+                      <input type="number" class="custom-field-input"
+                        [placeholder]="field.name"
+                        [required]="field.required"
+                        [(ngModel)]="customFieldValues[field.id]">
+                    }
+                    @case ('list') {
+                      <select class="custom-field-input"
+                        [required]="field.required"
+                        [(ngModel)]="customFieldValues[field.id]">
+                        <option value="">--</option>
+                        @for (option of field.options || []; track option) {
+                          <option [value]="option">{{ option }}</option>
+                        }
+                      </select>
+                    }
+                  }
+                </div>
+              }
+            </div>
+          }
+
           <div class="comment-section">
             <div class="comment-label">
               <ion-icon name="chatbubble-outline"></ion-icon>

@@ -17,6 +17,7 @@ import {
   CreateParticipantRequest,
   CreateConsultationRequest,
   CreateConsultationRequestPayload,
+  CustomField,
   DashboardResponse,
   IParticipantDetail,
 } from '../models/consultation';
@@ -386,6 +387,13 @@ export class ConsultationService {
       `${this.apiUrl}/messages/${messageId}/download_recording/`,
       {},
       { responseType: 'blob' }
+    );
+  }
+
+  getCustomFields(targetModel: string): Observable<CustomField[]> {
+    return this.http.get<CustomField[]>(
+      `${this.apiUrl}/custom-fields/`,
+      { params: new HttpParams().set('target_model', targetModel) }
     );
   }
 }

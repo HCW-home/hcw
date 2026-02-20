@@ -182,6 +182,7 @@
     "symptomPlaceholder": "Please describe your symptoms or any specific concerns...",
     "submitting": "Submitting...",
     "submitRequest": "Submit Request",
+    "additionalInfo": "Additional Information",
     "failedSpecialties": "Failed to load specialties",
     "failedReasons": "Failed to load reasons",
     "failedSlots": "Failed to load available slots",

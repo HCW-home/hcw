@@ -199,7 +199,8 @@
     "backToPatientsList": "Retour aux patients",
     "errorLoadingPatient": "Erreur de chargement du patient",
     "errorLoadingConsultations": "Erreur de chargement des consultations",
-    "errorLoadingAppointments": "Erreur de chargement des rendez-vous"
+    "errorLoadingAppointments": "Erreur de chargement des rendez-vous",
+    "customFields": "Informations complementaires"
   },
   "appointments": {
     "appointmentsCount": "{{count}} rendez-vous",
@@ -417,7 +418,8 @@
     "patientCreatedMessage": "Le patient a été créé avec succès",
     "errorCreating": "Erreur lors de la création",
     "temporary": "Patient temporaire",
-    "temporaryNotice": "Une fois enregistré, ce patient ne pourra plus être remis en temporaire."
+    "temporaryNotice": "Une fois enregistré, ce patient ne pourra plus être remis en temporaire.",
+    "customFields": "Informations complementaires"
   },
   "dashboard": {
     "loading": "Chargement du tableau de bord...",

@@ -1,3 +1,21 @@
+export interface CustomField {
+  id: number;
+  name: string;
+  field_type: 'short_text' | 'long_text' | 'date' | 'number' | 'list';
+  target_model: string;
+  required: boolean;
+  options: string[] | null;
+  ordering: number;
+}
+
+export interface CustomFieldValue {
+  field: number;
+  field_name: string;
+  field_type: string;
+  value: string | null;
+  options: string[] | null;
+}
+
 export interface User {
   id: number;
   email: string;
@@ -85,6 +103,7 @@ export interface Consultation {
   owned_by?: User | null;
   group: Queue | null;
   group_id?: number;
+  custom_fields?: CustomFieldValue[];
 }
 
 export interface CreateConsultationRequest {
@@ -93,6 +112,7 @@ export interface CreateConsultationRequest {
   group_id?: number | null;
   beneficiary_id?: number | null;
   owned_by_id?: number | null;
+  custom_fields?: { field: number; value: string | null }[];
 }
 
 export interface Reason {

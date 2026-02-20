@@ -78,6 +78,26 @@
               </div>
             </div>
 
+            @if (patient()!.custom_fields && patient()!.custom_fields!.length > 0) {
+              <div class="section-header">
+                <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
+                  {{ 'patientDetail.customFields' | translate }}
+                </app-typography>
+              </div>
+              <div class="custom-fields-grid">
+                @for (cf of patient()!.custom_fields!; track cf.field) {
+                  <div class="custom-field-item">
+                    <app-typography [variant]="TypographyTypeEnum['body-s-semibold']" color="var(--slate-500)">
+                      {{ cf.field_name }}
+                    </app-typography>
+                    <app-typography [variant]="TypographyTypeEnum['body-regular']" color="var(--slate-800)">
+                      {{ cf.value || '-' }}
+                    </app-typography>
+                  </div>
+                }
+              </div>
+            }
+
             <div class="section-header">
               <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
                 {{ 'patientDetail.recentConsultations' | translate }}

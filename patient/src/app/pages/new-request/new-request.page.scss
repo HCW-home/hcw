@@ -520,6 +520,47 @@ ion-header {
   }
 }
 
+.custom-fields-section {
+  margin-bottom: var(--app-spacing-xl);
+
+  .custom-field-item {
+    margin-bottom: var(--app-spacing-md);
+  }
+
+  .custom-field-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--app-text-primary);
+    margin-bottom: var(--app-spacing-xs);
+
+    .required-mark {
+      color: var(--ion-color-danger);
+    }
+  }
+
+  .custom-field-input,
+  .custom-field-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--app-border-color);
+    border-radius: 8px;
+    font-size: 0.9375rem;
+    color: var(--app-text-primary);
+    background: var(--app-card-background);
+    outline: none;
+    box-sizing: border-box;
+
+    &:focus {
+      border-color: var(--ion-color-primary);
+    }
+  }
+
+  select.custom-field-input {
+    appearance: auto;
+  }
+}
+
 .comment-section {
   margin-bottom: var(--app-spacing-xl);
 

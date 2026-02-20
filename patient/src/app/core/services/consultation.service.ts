@@ -8,6 +8,7 @@ import {
   Participant,
   ConsultationRequest,
   ConsultationMessage,
+  CustomField,
   IDashboardResponse,
   IParticipantDetail
 } from '../models/consultation.model';
@@ -31,6 +32,7 @@ export interface ConsultationRequestData {
   reason_id: number | undefined;
   type: 'online' | 'inPerson';
   comment?: string;
+  custom_fields?: { field: number; value: string | null }[];
 }
 
 @Injectable({
@@ -140,5 +142,9 @@ export class ConsultationService {
       `/user/participants/${participantId}/`,
       { is_confirmed: isConfirmed }
     );
+  }
+
+  getCustomFields(targetModel: string): Observable<CustomField[]> {
+    return this.api.get<CustomField[]>('/custom-fields/', { target_model: targetModel });
   }
 }

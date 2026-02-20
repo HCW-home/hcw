@@ -75,6 +75,22 @@
   }
 }
 
+.custom-fields-section {
+  border-top: 1px solid var(--slate-100);
+  padding-top: 20px;
+
+  > app-typography {
+    display: block;
+    margin-bottom: 16px;
+  }
+
+  .custom-fields-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+}
+
 .temporary-notice {
   display: flex;
   align-items: center;

@@ -1,6 +1,6 @@
-import { Component, input, output, inject, OnInit, OnDestroy, effect } from '@angular/core';
+import { Component, input, output, inject, OnInit, OnDestroy, effect, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormControl } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { Typography } from '../../../../shared/ui-components/typography/typography';
 import { Button } from '../../../../shared/ui-components/button/button';
@@ -8,14 +8,17 @@ import { Input } from '../../../../shared/ui-components/input/input';
 import { Select } from '../../../../shared/ui-components/select/select';
 import { Switch } from '../../../../shared/ui-components/switch/switch';
 import { Svg } from '../../../../shared/ui-components/svg/svg';
+import { Textarea } from '../../../../shared/ui-components/textarea/textarea';
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
 import { ButtonSizeEnum, ButtonStyleEnum } from '../../../../shared/constants/button';
 import { PatientService, IPatientCreateRequest, IPatientUpdateRequest } from '../../../../core/services/patient.service';
+import { ConsultationService } from '../../../../core/services/consultation.service';
 import { UserService } from '../../../../core/services/user.service';
 import { Auth } from '../../../../core/services/auth';
 import { IOpenIDConfig } from '../../../../core/models/admin-auth';
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { IUser, ILanguage } from '../../models/user';
+import { CustomField } from '../../../../core/models/consultation';
 import { SelectOption } from '../../../../shared/models/select';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -23,7 +26,7 @@ import { TranslationService } from '../../../../core/services/translation.servic
 
 @Component({
   selector: 'app-add-edit-patient',
-  imports: [CommonModule, ReactiveFormsModule, Typography, Button, Input, Select, Switch, Svg, TranslatePipe],
+  imports: [CommonModule, ReactiveFormsModule, Typography, Button, Input, Select, Switch, Svg, Textarea, TranslatePipe],
   templateUrl: './add-edit-patient.html',
   styleUrl: './add-edit-patient.scss',
 })
@@ -31,6 +34,7 @@ export class AddEditPatient implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   private fb = inject(FormBuilder);
   private patientService = inject(PatientService);
+  private consultationService = inject(ConsultationService);
   private userService = inject(UserService);
   private authService = inject(Auth);
   private toasterService = inject(ToasterService);
@@ -55,8 +59,10 @@ export class AddEditPatient implements OnInit, OnDestroy {
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
 
   form!: FormGroup;
+  customFieldsForm!: FormGroup;
   loading = false;
   languageOptions: SelectOption[] = [];
+  customFields = signal<CustomField[]>([]);
 
   get isEditMode(): boolean {
     return !!this.patient();
@@ -65,6 +71,7 @@ export class AddEditPatient implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.initForm();
     this.loadLanguages();
+    this.loadCustomFields();
   }
 
   private loadLanguages(): void {
@@ -78,6 +85,37 @@ export class AddEditPatient implements OnInit, OnDestroy {
         }));
       }
     });
+  }
+
+  private loadCustomFields(): void {
+    this.consultationService.getCustomFields('users.User').pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (fields) => {
+        this.customFields.set(fields);
+        this.customFieldsForm = this.fb.group({});
+        const patient = this.patient();
+        for (const field of fields) {
+          const existingValue = patient?.custom_fields?.find(cf => cf.field === field.id);
+          this.customFieldsForm.addControl(
+            `cf_${field.id}`,
+            new FormControl(existingValue?.value || '', field.required ? Validators.required : [])
+          );
+        }
+      }
+    });
+  }
+
+  getCustomFieldOptions(field: CustomField): SelectOption[] {
+    return (field.options || []).map(o => ({ value: o, label: o }));
+  }
+
+  private buildCustomFieldsPayload(): { field: number; value: string | null }[] {
+    if (!this.customFields().length) return [];
+    return this.customFields().map(field => ({
+      field: field.id,
+      value: this.customFieldsForm.get(`cf_${field.id}`)?.value || null
+    }));
   }
 
   ngOnDestroy(): void {
@@ -125,6 +163,16 @@ export class AddEditPatient implements OnInit, OnDestroy {
         this.form.removeControl('temporary');
       }
     }
+
+    // Repopulate custom field values
+    if (this.customFieldsForm && p?.custom_fields) {
+      for (const cf of p.custom_fields) {
+        const control = this.customFieldsForm.get(`cf_${cf.field}`);
+        if (control) {
+          control.setValue(cf.value || '');
+        }
+      }
+    }
   }
 
   getInitials(): string {
@@ -152,7 +200,8 @@ export class AddEditPatient implements OnInit, OnDestroy {
         last_name: formValue.last_name,
         mobile_phone_number: formValue.mobile_phone_number,
         timezone: formValue.timezone,
-        preferred_language: formValue.preferred_language
+        preferred_language: formValue.preferred_language,
+        custom_fields: this.buildCustomFieldsPayload()
       };
 
       if (this.form.get('temporary')) {
@@ -180,7 +229,8 @@ export class AddEditPatient implements OnInit, OnDestroy {
         mobile_phone_number: formValue.mobile_phone_number,
         timezone: formValue.timezone,
         preferred_language: formValue.preferred_language,
-        language_ids: []
+        language_ids: [],
+        custom_fields: this.buildCustomFieldsPayload()
       };
 
       this.patientService.createPatient(createData).pipe(

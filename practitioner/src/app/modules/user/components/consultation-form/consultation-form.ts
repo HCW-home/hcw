@@ -29,6 +29,7 @@ import {
   Consultation,
   CreateConsultationRequest,
   CreateAppointmentRequest,
+  CustomField,
   ITemporaryParticipant,
   Queue,
 } from '../../../../core/models/consultation';
@@ -123,6 +124,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
 
   consultation = signal<Consultation | null>(null);
   queues = signal<Queue[]>([]);
+  customFields = signal<CustomField[]>([]);
   isLoading = signal(false);
   isSaving = signal(false);
   isAutoSaving = signal(false);
@@ -231,6 +233,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadQueues();
     this.loadCurrentUser();
+    this.loadCustomFields();
 
     this.route.params.pipe(takeUntil(this.destroy$)).subscribe(params => {
       if (params['id']) {
@@ -284,6 +287,25 @@ export class ConsultationForm implements OnInit, OnDestroy {
       });
   }
 
+  loadCustomFields(): void {
+    this.consultationService
+      .getCustomFields('consultations.Consultation')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: fields => {
+          this.customFields.set(fields);
+          const customFieldsGroup = this.consultationForm.get('custom_fields') as FormGroup;
+          if (!customFieldsGroup) {
+            const group: Record<string, any> = {};
+            fields.forEach(field => {
+              group[field.id.toString()] = ['', field.required ? Validators.required : []];
+            });
+            this.consultationForm.addControl('custom_fields', this.fb.group(group));
+          }
+        },
+      });
+  }
+
   loadConsultation(): void {
     if (!this.consultationId) return;
 
@@ -315,6 +337,14 @@ export class ConsultationForm implements OnInit, OnDestroy {
       group_id: consultation.group?.id?.toString() || '',
       beneficiary_id: consultation.beneficiary?.id?.toString() || '',
     });
+
+    if (consultation.custom_fields?.length) {
+      const cfValues: Record<string, string> = {};
+      consultation.custom_fields.forEach(cf => {
+        cfValues[cf.field.toString()] = cf.value || '';
+      });
+      this.consultationForm.get('custom_fields')?.patchValue(cfValues);
+    }
   }
 
   loadAppointments(): void {
@@ -397,6 +427,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
       description: formValue.description || undefined,
       group_id: formValue.group_id ? parseInt(formValue.group_id) : undefined,
       beneficiary_id: formValue.beneficiary_id ? parseInt(formValue.beneficiary_id) : undefined,
+      custom_fields: this.buildCustomFieldsPayload(),
     };
 
     this.isAutoSaving.set(true);
@@ -450,6 +481,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
       group_id: formValue.group_id ? parseInt(formValue.group_id) : undefined,
       beneficiary_id: beneficiaryId,
       owned_by_id: ownedById,
+      custom_fields: this.buildCustomFieldsPayload(),
     };
 
     this.consultationService
@@ -542,6 +574,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
       beneficiary_id: formValue.beneficiary_id
         ? parseInt(formValue.beneficiary_id)
         : undefined,
+      custom_fields: this.buildCustomFieldsPayload(),
     };
 
     this.consultationService
@@ -1008,6 +1041,22 @@ export class ConsultationForm implements OnInit, OnDestroy {
     }
 
     return { participants_ids, temporary_participants };
+  }
+
+  getCustomFieldOptions(field: CustomField): SelectOption[] {
+    return (field.options || []).map(o => ({ value: o, label: o }));
+  }
+
+  private buildCustomFieldsPayload(): { field: number; value: string | null }[] {
+    const cfGroup = this.consultationForm.get('custom_fields');
+    if (!cfGroup) return [];
+    const values = cfGroup.value;
+    return Object.entries(values)
+      .filter(([_, value]) => value !== '' && value !== null && value !== undefined)
+      .map(([fieldId, value]) => ({
+        field: parseInt(fieldId, 10),
+        value: value as string | null,
+      }));
   }
 
   private combineDateTime(date: string, time: string): string {
