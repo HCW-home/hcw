@@ -104,6 +104,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
                     "is_staff",
                     "is_superuser",
                     "is_practitioner",
+                    "temporary",
                     "groups",
                     # "user_permissions",
                 ),
