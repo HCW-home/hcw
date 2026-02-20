@@ -19,7 +19,7 @@
         <p class="subtitle">{{ 'register.subtitle' | translate }}</p>
 
         @if (loading) { } @else if (successMessage) {
-        <div class="success-container">
+        <div class="success-container step-animate">
           <ion-icon
             name="mail-outline"
             color="success"
@@ -48,7 +48,7 @@
         <form
           [formGroup]="registerForm"
           (ngSubmit)="onRegister()"
-          class="register-form"
+          class="register-form step-animate"
         >
           <div class="name-row">
             <ion-item lines="full" class="input-item">

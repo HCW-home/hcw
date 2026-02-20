@@ -18,7 +18,7 @@
 
         <!-- Step 1: Email -->
         @if (step === 'email') {
-        <form [formGroup]="emailForm" (ngSubmit)="onContinue()" class="login-form">
+        <form [formGroup]="emailForm" (ngSubmit)="onContinue()" class="login-form step-animate">
           <ion-item lines="full" class="input-item">
             <ion-icon name="mail-outline" slot="start"></ion-icon>
             <ion-input type="email" [placeholder]="'login.emailPlaceholder' | translate" formControlName="email">
@@ -43,6 +43,7 @@
 
         <!-- Step 2: Credentials (password or send code) -->
         @if (step === 'credentials') {
+        <div class="step-animate">
         <div class="email-display">
           <ion-text color="medium">{{ email }}</ion-text>
           <ion-text color="primary" (click)="goBack()" class="link-text change-link">
@@ -106,10 +107,12 @@
             {{ 'login.sendCode' | translate }}
           }
         </ion-button>
+        </div>
         }
 
         <!-- Step 3: Verification code -->
         @if (step === 'verification') {
+        <div class="step-animate">
         <div class="email-display">
           <ion-text color="medium">{{ email }}</ion-text>
           <ion-text color="primary" (click)="goBack()" class="link-text change-link">
@@ -172,6 +175,7 @@
               {{ 'login.resendCode' | translate }}
             }
           </ion-text>
+        </div>
         </div>
         }
 

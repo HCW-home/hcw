@@ -82,6 +82,21 @@
     }
   }
 
+  @keyframes fadeSlideIn {
+    from {
+      opacity: 0;
+      transform: translateX(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .step-animate {
+    animation: fadeSlideIn 0.3s ease-out;
+  }
+
   .login-form {
     .input-item {
       margin-bottom: 16px;
