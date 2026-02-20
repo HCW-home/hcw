@@ -1094,7 +1094,7 @@ class DashboardPractitionerView(APIView):
             consultation__in=consultations_qs,
             status=AppointmentStatus.scheduled,
             scheduled_at__gte=now,
-            scheduled_at__lt=tomorrow,
+            # scheduled_at__lt=tomorrow,
         )
 
         next_appointment = upcoming_appointments.first()

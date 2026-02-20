@@ -4,7 +4,6 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import {
   IonContent,
   IonItem,
-  IonLabel,
   IonInput,
   IonButton,
   IonIcon,
@@ -29,7 +28,6 @@ import { LanguageSelectorComponent } from '../../shared/components/language-sele
     ReactiveFormsModule,
     IonContent,
     IonItem,
-    IonLabel,
     IonInput,
     IonButton,
     IonIcon,

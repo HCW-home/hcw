@@ -966,7 +966,6 @@ class UserDashboardView(APIView):
         user = request.user
 
         user_requests = Request.objects.filter(
-            status="Requested",
             created_by=user,
         ).order_by("-id")
 
@@ -1005,14 +1004,16 @@ class UserDashboardView(APIView):
             .order_by("-scheduled_at")
         )
 
+        serializer_context = {"request": request}
+
         return Response(
             {
-                "next_appointment": AppointmentSerializer(next_appointment).data
+                "next_appointment": AppointmentSerializer(next_appointment, context=serializer_context).data
                 if next_appointment
                 else None,
-                "requests": RequestSerializer(user_requests, many=True).data,
-                "consultations": ConsultationSerializer(consultations, many=True).data,
-                "appointments": AppointmentSerializer(appointments, many=True).data,
+                "requests": RequestSerializer(user_requests, many=True, context=serializer_context).data,
+                "consultations": ConsultationSerializer(consultations, many=True, context=serializer_context).data,
+                "appointments": AppointmentSerializer(appointments, many=True, context=serializer_context).data,
             }
         )
 

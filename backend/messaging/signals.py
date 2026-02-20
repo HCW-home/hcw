@@ -19,11 +19,11 @@ def notify_message_recipient(sender, instance: Message, created, **kwargs):
             {
                 "type": "notification",
                 "id": instance.id,
-                "render_content_html": instance.render_content_html,
-                "render_subject": instance.render_subject,
-                "access_link": instance.access_link,
-                "action_label": instance.action_label,
-                "action": instance.action_label,
+                "render_content_html": str(instance.render_content_html or ""),
+                "render_subject": str(instance.render_subject or ""),
+                "access_link": str(instance.access_link or ""),
+                "action_label": str(instance.action_label or ""),
+                "action": str(instance.action_label or ""),
                 "created_at": instance.created_at.isoformat() if instance.created_at else None,
             }
         )

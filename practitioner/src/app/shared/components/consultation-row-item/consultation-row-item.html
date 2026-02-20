@@ -42,11 +42,5 @@
       [label]="'consultationRowItem.description' | translate"
       [value]="consultation().description || '-'">
     </app-label-value>
-    <div class="detail-item-status">
-      <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--slate-400)">
-        {{ 'consultationRowItem.status' | translate }}
-      </app-typography>
-      <app-badge [type]="statusBadgeType()">{{ statusLabel() }}</app-badge>
-    </div>
   </div>
 </div>

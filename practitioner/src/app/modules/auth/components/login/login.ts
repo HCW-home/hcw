@@ -67,8 +67,7 @@ export class Login implements OnInit {
   private userService = inject(UserService);
   form: FormGroup<LoginForm> = this.formBuilder.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
-    // email: ['info@iabsis.com', [Validators.required, Validators.email]],
-    password: ['nHVih82Umdv@Qtk', [Validators.required]],
+    password: ['', [Validators.required]],
   });
 
   constructor() {

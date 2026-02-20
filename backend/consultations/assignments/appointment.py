@@ -36,6 +36,8 @@ class AssignmentHandler(BaseAssignmentHandler):
             self.request.consultation, doctor
         )
 
+        self.request.save(update_fields=["consultation", "appointment"])
+
         # Create participants (requester + doctor)
         self._create_participants(self.request.appointment, doctor)
 
