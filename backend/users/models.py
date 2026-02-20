@@ -188,9 +188,14 @@ class User(AbstractUser):
         help_text="Token used for email verification",
     )
 
+    is_practitioner = models.BooleanField(
+        default=False,
+        help_text="Whether this user is a practitioner",
+    )
+
     @property
     def is_patient(self):
-        return not self.groups.exists()
+        return not self.is_practitioner
 
     @property
     def name(self) -> str:

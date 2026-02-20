@@ -46,10 +46,10 @@ from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import (
-    DjangoModelPermissions,
     IsAuthenticated,
     AllowAny
 )
+from consultations.permissions import IsPractitioner
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -65,25 +65,6 @@ from .serializers import (
     UserDetailsSerializer,
     UserParticipantDetailSerializer,
 )
-
-
-class DjangoModelPermissionsWithView(DjangoModelPermissions):
-    """
-    Custom permission class that includes view permissions.
-    """
-
-    perms_map = {
-        "GET": ["%(app_label)s.view_%(model_name)s"],
-        "OPTIONS": [],
-        "HEAD": [],
-        "POST": ["%(app_label)s.add_%(model_name)s"],
-        "PUT": ["%(app_label)s.change_%(model_name)s"],
-        "PATCH": ["%(app_label)s.change_%(model_name)s"],
-        "DELETE": ["%(app_label)s.delete_%(model_name)s"],
-    }
-
-
-# Create your views here.
 
 
 class UniversalPagination(PageNumberPagination):
@@ -616,7 +597,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     queryset = User.objects.filter()
     serializer_class = UserDetailsSerializer
-    permission_classes = [IsAuthenticated, DjangoModelPermissionsWithView]
+    permission_classes = [IsAuthenticated, IsPractitioner]
     pagination_class = UniversalPagination
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     search_fields = ["first_name", "last_name", "email"]

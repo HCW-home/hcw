@@ -1,7 +1,10 @@
+import logging
 from abc import ABC, abstractmethod
 from importlib import import_module
 from pkgutil import iter_modules
 from typing import TYPE_CHECKING, Dict, List, Tuple, Type
+
+logger = logging.getLogger(__name__)
 
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
@@ -125,7 +128,7 @@ class AssignmentManager:
             else:
                 self.request.refused_reason = f"An unexpected error occured: {exc_val}"
             self.request.save()
-            print(f"Une exception s'est produite : {exc_val}")
+            logger.error("Assignment exception: %s", exc_val)
             return
 
         self.request.status = RequestStatus.accepted

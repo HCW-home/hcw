@@ -3,24 +3,18 @@ import { DatePipe } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
 import { Typography } from '../../ui-components/typography/typography';
 import { LabelValue } from '../../ui-components/label-value/label-value';
-import { Badge } from '../badge/badge';
 import { TypographyTypeEnum } from '../../constants/typography';
-import { BadgeTypeEnum } from '../../constants/badge';
-import { BadgeType } from '../../models/badge';
 import { Consultation } from '../../../core/models/consultation';
 
 @Component({
   selector: 'app-consultation-row-item',
-  imports: [DatePipe, Typography, LabelValue, Badge, TranslatePipe],
+  imports: [DatePipe, Typography, LabelValue, TranslatePipe],
   templateUrl: './consultation-row-item.html',
   styleUrl: './consultation-row-item.scss',
 })
 export class ConsultationRowItem {
   consultation = input.required<Consultation>();
   showClosedDate = input<boolean>(false);
-  statusBadgeType = input<BadgeType>(BadgeTypeEnum.green);
-  statusLabel = input<string>('Active');
-
   rowClick = output<Consultation>();
 
   protected readonly TypographyTypeEnum = TypographyTypeEnum;

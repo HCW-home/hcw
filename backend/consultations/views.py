@@ -1,8 +1,5 @@
-import asyncio
-import io
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
-from typing import List
 
 import boto3
 from asgiref.sync import async_to_sync
@@ -12,7 +9,6 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.http import HttpResponse, StreamingHttpResponse
-from django.shortcuts import render
 from django.utils import timezone
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
@@ -26,9 +22,8 @@ from drf_spectacular.utils import (
 from mediaserver.models import Server
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -48,7 +43,7 @@ from .models import (
     Type,
 )
 from .paginations import ConsultationPagination
-from .permissions import ConsultationAssigneePermission, DjangoModelPermissionsWithView
+from .permissions import IsPractitioner
 from .renderers import FHIRRenderer
 from .serializers import (
     AppointmentCreateSerializer,
@@ -58,7 +53,6 @@ from .serializers import (
     ConsultationMessageSerializer,
     ConsultationSerializer,
     ParticipantDetailSerializer,
-    ParticipantSerializer,
     QueueSerializer,
     RequestSerializer,
 )
@@ -83,7 +77,7 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
 
     queryset = Consultation.objects.all()
     serializer_class = ConsultationSerializer
-    permission_classes = [IsAuthenticated, ConsultationAssigneePermission]
+    permission_classes = [IsAuthenticated, IsPractitioner]
     pagination_class = ConsultationPagination
     filterset_class = ConsultationFilter
     filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
@@ -315,7 +309,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 
     queryset = Appointment.objects.all()
     fhir_class = AppointmentFhir
-    permission_classes = [IsAuthenticated, ConsultationAssigneePermission]
+    permission_classes = [IsAuthenticated, IsPractitioner]
     pagination_class = ConsultationPagination
     ordering_fields = ["created_at", "updated_at", "scheduled_at"]
     # filterset_fields = ["consultation", "status"]
@@ -555,7 +549,7 @@ class ParticipantViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = ParticipantDetailSerializer
-    permission_classes = [IsAuthenticated, ConsultationAssigneePermission]
+    permission_classes = [IsAuthenticated, IsPractitioner]
     pagination_class = ConsultationPagination
     ordering = ["-id"]
     http_method_names = ["get", "post", "patch", "put", "head", "options"]
@@ -922,7 +916,7 @@ class ReasonSlotsView(APIView):
 
 class BookingSlotViewSet(CreatedByMixin, viewsets.ModelViewSet):
     serializer_class = BookingSlotSerializer
-    permission_classes = [IsAuthenticated, DjangoModelPermissionsWithView]
+    permission_classes = [IsAuthenticated, IsPractitioner]
     pagination_class = ConsultationPagination
     filterset_fields = [
         "user",
@@ -1091,7 +1085,7 @@ class DashboardPractitionerView(APIView):
     Vue personnalisée pour afficher les statistiques du tableau de bord du praticien
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsPractitioner]
 
     def get(self, request):
         """Récupère les statistiques personnalisées du praticien"""

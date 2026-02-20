@@ -1,4 +1,6 @@
-import traceback
+import logging
+
+logger = logging.getLogger(__name__)
 from typing import DefaultDict
 
 from django.conf import settings
@@ -272,7 +274,7 @@ class TemplateAdmin(ModelAdmin, TabbedTranslationAdmin, ImportExportModelAdmin):
                 return rendered_subject, rendered_text
             return rendered_text
         except Exception:
-            print(traceback.format_exc())
+            logger.exception("Failed to render message preview")
             return "-"
 
     @display(description="Recipient")

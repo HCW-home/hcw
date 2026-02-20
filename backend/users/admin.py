@@ -75,7 +75,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
         "last_name",
         "is_active",
         "is_online",
-        "is_patient",
+        "is_practitioner",
         "temporary",
         "timezone",
         "languages_display",
@@ -103,6 +103,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
                     "is_active",
                     "is_staff",
                     "is_superuser",
+                    "is_practitioner",
                     "groups",
                     # "user_permissions",
                 ),
@@ -154,10 +155,6 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
         if obj.groups.exists():
             return ", ".join([g.name for g in obj.groups.all()])
         return "-"
-
-    @admin.display(description="Is patient", boolean=True)
-    def is_patient(self, obj):
-        return obj.is_patient
 
     def languages_display(self, obj):
         return ", ".join([lang.name for lang in obj.languages.all()[:3]]) + (

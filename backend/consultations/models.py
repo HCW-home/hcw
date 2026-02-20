@@ -82,18 +82,6 @@ class Consultation(models.Model):
         verbose_name = _("consultation")
         verbose_name_plural = _("consultations")
         ordering = ["-created_at"]
-        permissions = [
-            ("assignee_view_consultation", _("Can view own assigned consultations")),
-            (
-                "assignee_change_consultation",
-                _("Can change own assigned consultations"),
-            ),
-            (
-                "assignee_delete_consultation",
-                _("Can delete own assigned consultations"),
-            ),
-            ("assignee_close_consultation", _("Can close own assigned consultations")),
-        ]
 
     def __str__(self):
         return f"Consultation #{self.pk}"
