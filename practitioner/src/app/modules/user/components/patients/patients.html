@@ -74,6 +74,12 @@
                       <span class="contact-text">{{ 'patients.temporary' | translate }}</span>
                     </div>
                   }
+                  @if (patient.is_practitioner) {
+                    <div class="contact-item practitioner-tag">
+                      <app-svg src="stethoscope" [svgStyle]="{'width.px': 14, 'height.px': 14, 'color': 'var(--primary-500)'}"></app-svg>
+                      <span class="contact-text">{{ 'patients.practitioner' | translate }}</span>
+                    </div>
+                  }
                   @if (!patient.email && !patient.mobile_phone_number) {
                     <span class="contact-text no-contact">{{ 'patients.noContactInfo' | translate }}</span>
                   }

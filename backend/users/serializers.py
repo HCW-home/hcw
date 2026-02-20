@@ -85,8 +85,9 @@ class UserDetailsSerializer(CustomFieldsMixin, serializers.ModelSerializer):
             "is_online",
             "accepted_term",
             "temporary",
+            "is_practitioner",
         ]
-        read_only_fields = ["is_online", UserModel.EMAIL_FIELD]
+        read_only_fields = ["is_online", "is_practitioner", UserModel.EMAIL_FIELD]
 
     def validate_temporary(self, value):
         if self.instance and not self.instance.temporary and value:

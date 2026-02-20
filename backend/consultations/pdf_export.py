@@ -2,6 +2,7 @@ import io
 import os
 
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 
 from reportlab.lib import colors
@@ -212,6 +213,7 @@ def generate_consultation_pdf(consultation, appointments, messages, organisation
 
     _add_header(elements, styles, organisation, consultation)
     _add_consultation_details(elements, styles, consultation)
+    _add_custom_fields(elements, styles, consultation)
     _add_people(elements, styles, consultation)
     _add_appointments(elements, styles, appointments)
     _add_messages(elements, styles, messages)
@@ -294,6 +296,32 @@ def _add_consultation_details(elements, styles, consultation):
 
     col_widths = [35 * mm, 140 * mm]
     table = Table(info_data, colWidths=col_widths)
+    table.setStyle(TABLE_STYLE)
+    elements.append(table)
+
+
+def _add_custom_fields(elements, styles, obj):
+    from .models import CustomFieldValue
+
+    ct = ContentType.objects.get_for_model(obj)
+    values = CustomFieldValue.objects.filter(
+        content_type=ct, object_id=obj.pk
+    ).select_related("custom_field").order_by("custom_field__ordering")
+
+    if not values.exists():
+        return
+
+    elements.append(Paragraph("Additional Information", styles["SectionHeading"]))
+
+    data = [["Field", "Value"]]
+    for cfv in values:
+        data.append([
+            cfv.custom_field.name,
+            Paragraph(cfv.value or "-", styles["CellText"]),
+        ])
+
+    col_widths = [35 * mm, 140 * mm]
+    table = Table(data, colWidths=col_widths)
     table.setStyle(TABLE_STYLE)
     elements.append(table)
 

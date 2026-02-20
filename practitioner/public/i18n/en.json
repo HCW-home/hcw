@@ -402,7 +402,8 @@
     "offline": "Offline",
     "viewMore": "View More",
     "errorLoading": "Error Loading Patients",
-    "temporary": "temporary"
+    "temporary": "temporary",
+    "practitioner": "practitioner"
   },
   "videoConsultation": {
     "connecting": "Connecting to video call...",
