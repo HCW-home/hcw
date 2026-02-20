@@ -17,6 +17,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { TranslationService } from '../../core/services/translation.service';
+import { LanguageSelectorComponent } from '../../shared/components/language-selector/language-selector.component';
 
 @Component({
   selector: 'app-forgot-password',
@@ -34,7 +35,8 @@ import { TranslationService } from '../../core/services/translation.service';
     IonIcon,
     IonText,
     IonSpinner,
-    TranslatePipe
+    TranslatePipe,
+    LanguageSelectorComponent
   ]
 })
 export class ForgotPasswordPage implements OnInit, OnDestroy {

@@ -20,6 +20,7 @@ import {
 import { TranslatePipe } from "@ngx-translate/core";
 import { AuthService } from "../../core/services/auth.service";
 import { TranslationService } from "../../core/services/translation.service";
+import { LanguageSelectorComponent } from "../../shared/components/language-selector/language-selector.component";
 
 @Component({
   selector: "app-register",
@@ -36,6 +37,7 @@ import { TranslationService } from "../../core/services/translation.service";
     IonIcon,
     IonText,
     TranslatePipe,
+    LanguageSelectorComponent,
   ],
 })
 export class RegisterPage implements OnInit {

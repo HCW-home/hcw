@@ -1,8 +1,15 @@
+:host {
+  display: block;
+  margin-top: 24px;
+}
+
 .language-selector {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
+  width: fit-content;
+  margin: 0 auto;
 
   .globe-icon {
     font-size: 18px;
@@ -12,7 +19,14 @@
   ion-select {
     --padding-start: 0;
     --padding-end: 0;
+    --border-width: 0;
+    --highlight-height: 0;
+    --border-color: transparent;
     min-width: auto;
     max-width: 120px;
+  }
+
+  ion-select::part(container) {
+    border: none;
   }
 }
