@@ -10,7 +10,7 @@ from allauth.socialaccount.providers.openid_connect.views import (
 )
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from consultations.models import Appointment, Consultation, Participant, Request
+from consultations.models import Appointment, Consultation, Participant, Request, RequestStatus
 from consultations.models import Message as ConsultationMessage
 from consultations.serializers import (
     AppointmentDetailSerializer,
@@ -25,6 +25,7 @@ from dj_rest_auth.registration.serializers import SocialLoginSerializer
 from dj_rest_auth.registration.views import RegisterView as DjRestAuthRegisterView
 from dj_rest_auth.registration.views import SocialLoginView
 from django.conf import settings
+from django.db.models import Q
 from django.contrib.auth import get_user_model
 from django.utils import translation
 from django.http import FileResponse
@@ -945,9 +946,21 @@ class UserDashboardView(APIView):
     def get(self, request):
         """Get dashboard data for the authenticated user."""
         user = request.user
+        now = timezone.now()
 
         user_requests = Request.objects.filter(
             created_by=user,
+        ).filter(
+            Q(status__in=[RequestStatus.requested, RequestStatus.refused])
+            | Q(
+                status=RequestStatus.accepted,
+                consultation__closed_at__isnull=True,
+            )
+            | Q(
+                status=RequestStatus.accepted,
+                appointment__scheduled_at__gte=now,
+                appointment__status="scheduled",
+            )
         ).order_by("-id")
 
         consultations = (
@@ -955,8 +968,6 @@ class UserDashboardView(APIView):
             .filter(beneficiary=user, closed_at__isnull=True)
             .order_by("-created_at")
         )
-
-        now = timezone.now()
 
         # Next upcoming appointment (with 1 hour grace period)
         next_appointment = (
@@ -980,6 +991,7 @@ class UserDashboardView(APIView):
                 participant__user=user,
                 participant__is_active=True,
                 scheduled_at__gte=now,
+                status="scheduled",
             )
             .distinct()
             .order_by("-scheduled_at")
