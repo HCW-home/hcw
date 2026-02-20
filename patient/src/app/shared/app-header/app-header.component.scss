@@ -86,9 +86,15 @@ ion-header {
       gap: 8px;
       background: none;
       border: none;
-      padding: 0;
+      padding: 6px 10px;
+      border-radius: 10px;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
+      transition: background 0.2s ease;
+
+      &:hover {
+        background: rgba(0, 0, 0, 0.03);
+      }
 
       .user-name {
         font-size: 13px;

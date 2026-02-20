@@ -32,7 +32,7 @@
   },
   "auth": {
     "login": "Connexion",
-    "logout": "Deconnexion",
+    "logout": "Déconnexion",
     "email": "Email",
     "password": "Mot de passe",
     "forgotPassword": "Mot de passe oublie?",
