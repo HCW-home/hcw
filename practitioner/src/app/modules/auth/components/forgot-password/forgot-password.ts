@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { Input } from '../../../../shared/ui-components/input/input';
 import { Button } from '../../../../shared/ui-components/button/button';
@@ -33,8 +33,10 @@ interface ForgotPasswordForm {
   templateUrl: './forgot-password.html',
   styleUrl: './forgot-password.scss',
 })
-export class ForgotPassword {
+export class ForgotPassword implements OnInit {
   loadingButton = false;
+  siteLogoWhite: string | null = null;
+  branding = 'HCW@Home';
   private router = inject(Router);
   private formBuilder = inject(FormBuilder);
   private toaster = inject(ToasterService);
@@ -45,6 +47,17 @@ export class ForgotPassword {
   form: FormGroup<ForgotPasswordForm> = this.formBuilder.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
   });
+
+  ngOnInit() {
+    this.adminAuthService.getOpenIDConfig().subscribe({
+      next: (config: any) => {
+        this.siteLogoWhite = config.site_logo_white;
+        if (config.branding) {
+          this.branding = config.branding;
+        }
+      },
+    });
+  }
 
   onSubmit() {
     if (this.form.valid) {
