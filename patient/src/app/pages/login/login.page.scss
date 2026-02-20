@@ -136,7 +136,102 @@
       font-weight: 600;
       font-size: 1rem;
       margin-top: 4px;
+      height: var(--login-button-height, 50px);
     }
+  }
+
+  .email-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 10px 16px;
+    background: var(--app-input-background, #f7f8fa);
+    border-radius: 10px;
+
+    .change-link {
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+  }
+
+  .separator {
+    display: flex;
+    align-items: center;
+    margin: 24px 0;
+
+    &::before,
+    &::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--ion-color-light-shade, #d7d8da);
+    }
+
+    span {
+      padding: 0 16px;
+      font-size: 0.85rem;
+      color: var(--app-text-secondary);
+      text-transform: lowercase;
+    }
+  }
+
+  .code-button {
+    --padding-top: 14px;
+    --padding-bottom: 14px;
+    font-weight: 600;
+    font-size: 1rem;
+    margin-top: 0;
+    height: var(--login-button-height, 50px);
+
+    .button-spinner {
+      margin-right: 8px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  .code-sent-message {
+    display: block;
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+  }
+
+  .error-message {
+    display: block;
+    margin-bottom: 12px;
+
+    .error-text {
+      font-size: 0.75rem;
+    }
+  }
+
+  .resend-code {
+    text-align: center;
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+
+    .resend-text {
+      font-size: 0.85rem;
+    }
+
+    .link-text {
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+
+      &.disabled {
+        opacity: 0.5;
+        pointer-events: none;
+      }
+    }
+  }
+
+  .link-text {
+    cursor: pointer;
   }
 
   .register-link {

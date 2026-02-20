@@ -79,6 +79,12 @@ export class AuthService {
     return this.http.post<{ detail: string }>(`${this.apiUrl}/auth/password/reset/confirm/`, data);
   }
 
+  sendVerificationCode(email: string): Observable<{ detail: string; auth_token: string }> {
+    return this.http.post<{ detail: string; auth_token: string }>(
+      `${this.apiUrl}/auth/send-verification-code/`, { email }
+    );
+  }
+
   loginWithToken(data: TokenAuthRequest): Observable<TokenAuthResponse> {
     return this.http.post<TokenAuthResponse>(`${this.apiUrl}/auth/token/`, data)
       .pipe(

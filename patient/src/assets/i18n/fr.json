@@ -22,7 +22,22 @@
     "noAccount": "Vous n'avez pas de compte ?",
     "signUp": "S'inscrire",
     "loggingIn": "Connexion en cours...",
-    "invalidCredentials": "Identifiants invalides. Veuillez reessayer."
+    "invalidCredentials": "Identifiants invalides. Veuillez reessayer.",
+    "continue": "Continuer",
+    "or": "ou",
+    "sendCode": "Envoyer un code",
+    "sendingCode": "Envoi...",
+    "enterVerificationCode": "Entrez le code a 6 chiffres",
+    "invalidCode": "Veuillez entrer un code valide a 6 chiffres",
+    "verifyCode": "Verifier le code",
+    "codeSentTo": "Un code de verification a ete envoye a votre adresse e-mail.",
+    "resendCode": "Renvoyer le code",
+    "didntReceiveCode": "Vous n'avez pas recu le code ?",
+    "backToEmail": "Modifier",
+    "tooManyAttempts": "Trop de tentatives. Veuillez demander un nouveau code.",
+    "invalidVerificationCode": "Code de verification invalide.",
+    "codeSent": "Code de verification envoye.",
+    "genericError": "Une erreur est survenue. Veuillez reessayer."
   },
   "verifyInvite": {
     "verifyingCode": "Verification du code...",
@@ -47,5 +62,33 @@
     "codeSent": "Code de verification envoye a votre adresse e-mail",
     "resendFailed": "Echec du renvoi du code. Veuillez reessayer.",
     "tooManyAttempts": "Trop de tentatives de verification. Veuillez demander un nouveau code."
+  },
+  "forgotPassword": {
+    "title": "Mot de passe oublie ?",
+    "subtitle": "Entrez votre adresse e-mail et nous vous enverrons un lien pour reinitialiser votre mot de passe.",
+    "emailPlaceholder": "E-mail",
+    "emailRequired": "Un e-mail valide est requis",
+    "sending": "Envoi...",
+    "resetPassword": "Reinitialiser le mot de passe",
+    "rememberPassword": "Vous vous souvenez de votre mot de passe ?",
+    "resetEmailSent": "Si un compte existe avec cet e-mail, vous recevrez un lien de reinitialisation.",
+    "resetEmailFailed": "Echec de l'envoi de l'e-mail de reinitialisation. Veuillez reessayer."
+  },
+  "resetPassword": {
+    "title": "Reinitialiser le mot de passe",
+    "subtitle": "Entrez votre nouveau mot de passe ci-dessous.",
+    "requestNewLink": "Demander un nouveau lien",
+    "newPassword": "Nouveau mot de passe",
+    "passwordMinLength": "Le mot de passe doit contenir au moins 8 caracteres",
+    "confirmNewPassword": "Confirmer le nouveau mot de passe",
+    "confirmRequired": "La confirmation du mot de passe est requise",
+    "resetting": "Reinitialisation...",
+    "rememberPassword": "Vous vous souvenez de votre mot de passe ?",
+    "invalidLink": "Lien de reinitialisation invalide ou manquant",
+    "passwordsMismatch": "Les mots de passe ne correspondent pas",
+    "resetSuccess": "Le mot de passe a ete reinitialise avec succes",
+    "resetFailed": "Echec de la reinitialisation du mot de passe. Veuillez reessayer.",
+    "linkExpired": "Le lien de reinitialisation a expire ou est invalide",
+    "invalidResetLink": "Lien de reinitialisation invalide"
   }
 }

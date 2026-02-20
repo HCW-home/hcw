@@ -29,7 +29,22 @@
     "noAccount": "Don't have an account?",
     "signUp": "Sign Up",
     "loggingIn": "Logging in...",
-    "invalidCredentials": "Invalid credentials. Please try again."
+    "invalidCredentials": "Invalid credentials. Please try again.",
+    "continue": "Continue",
+    "or": "or",
+    "sendCode": "Sign in with a verification code",
+    "sendingCode": "Sending...",
+    "enterVerificationCode": "Enter 6-digit code",
+    "invalidCode": "Please enter a valid 6-digit code",
+    "verifyCode": "Verify Code",
+    "codeSentTo": "A verification code has been sent to your email.",
+    "resendCode": "Resend Code",
+    "didntReceiveCode": "Didn't receive the code?",
+    "backToEmail": "Change",
+    "tooManyAttempts": "Too many attempts. Please request a new code.",
+    "invalidVerificationCode": "Invalid verification code.",
+    "codeSent": "Verification code sent.",
+    "genericError": "An error occurred. Please try again."
   },
   "register": {
     "platformDescription": "Create your account and start your telemedicine consultations today.",

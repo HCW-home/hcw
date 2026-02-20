@@ -1,4 +1,4 @@
-import { Component, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -37,11 +37,13 @@ import { TranslationService } from '../../core/services/translation.service';
     TranslatePipe
   ]
 })
-export class ForgotPasswordPage implements OnDestroy {
+export class ForgotPasswordPage implements OnInit, OnDestroy {
   private t = inject(TranslationService);
   private destroy$ = new Subject<void>();
   forgotPasswordForm: FormGroup;
   isLoading = false;
+  siteLogoWhite: string | null = null;
+  branding = 'HCW@Home';
 
   constructor(
     private fb: FormBuilder,
@@ -51,6 +53,17 @@ export class ForgotPasswordPage implements OnDestroy {
   ) {
     this.forgotPasswordForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]]
+    });
+  }
+
+  ngOnInit(): void {
+    this.authService.getConfig().subscribe({
+      next: (config: any) => {
+        this.siteLogoWhite = config.site_logo_white;
+        if (config.branding) {
+          this.branding = config.branding;
+        }
+      },
     });
   }
 

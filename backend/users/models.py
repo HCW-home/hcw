@@ -170,6 +170,7 @@ class User(AbstractUser):
     one_time_auth_token = models.CharField(
         max_length=256,
         blank=True,
+        null=True,
         help_text="Authentication token for appointment access",
     )
     verification_code = models.IntegerField(null=True, blank=True)

@@ -28,4 +28,5 @@ def notify_message_recipient(sender, instance: Message, created, **kwargs):
             }
         )
 
+    if created and instance.sent_to:
         transaction.on_commit(lambda: send_message.delay(instance.pk))

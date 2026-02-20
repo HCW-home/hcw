@@ -16,48 +16,63 @@
         <h2>{{ 'login.title' | translate }}</h2>
         <p class="subtitle">{{ 'login.subtitle' | translate }}</p>
 
-        <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="login-form">
+        <!-- Step 1: Email -->
+        @if (step === 'email') {
+        <form [formGroup]="emailForm" (ngSubmit)="onContinue()" class="login-form">
           <ion-item lines="full" class="input-item">
             <ion-icon name="mail-outline" slot="start"></ion-icon>
             <ion-input type="email" [placeholder]="'login.emailPlaceholder' | translate" formControlName="email">
             </ion-input>
           </ion-item>
-          @if (loginForm.get('email')?.invalid &&
-          loginForm.get('email')?.touched) {
+          @if (emailForm.get('email')?.invalid && emailForm.get('email')?.touched) {
           <ion-text color="danger" class="error-message">
             <span class="error-text">{{ 'login.emailRequired' | translate }}</span>
           </ion-text>
           }
 
+          <ion-button
+            expand="block"
+            shape="round"
+            type="submit"
+            [disabled]="emailForm.invalid"
+            class="login-button">
+            {{ 'login.continue' | translate }}
+          </ion-button>
+        </form>
+        }
+
+        <!-- Step 2: Credentials (password or send code) -->
+        @if (step === 'credentials') {
+        <div class="email-display">
+          <ion-text color="medium">{{ email }}</ion-text>
+          <ion-text color="primary" (click)="goBack()" class="link-text change-link">
+            {{ 'login.backToEmail' | translate }}
+          </ion-text>
+        </div>
+
+        <form [formGroup]="passwordForm" (ngSubmit)="onLogin()" class="login-form">
           <ion-item lines="full" class="input-item">
             <ion-icon name="lock-closed-outline" slot="start"></ion-icon>
             <ion-input
               [type]="showPassword ? 'text' : 'password'"
               [placeholder]="'login.passwordPlaceholder' | translate"
-              formControlName="password"
-            >
+              formControlName="password">
             </ion-input>
             <ion-icon
               [name]="showPassword ? 'eye-off-outline' : 'eye-outline'"
               slot="end"
               (click)="togglePassword()"
-              class="password-toggle"
-            >
+              class="password-toggle">
             </ion-icon>
           </ion-item>
-          @if (loginForm.get('password')?.invalid &&
-          loginForm.get('password')?.touched) {
+          @if (passwordForm.get('password')?.invalid && passwordForm.get('password')?.touched) {
           <ion-text color="danger" class="error-message">
             <span class="error-text">{{ 'login.passwordMinLength' | translate }}</span>
           </ion-text>
           }
 
           <div class="forgot-password">
-            <ion-text
-              color="primary"
-              (click)="forgotPassword()"
-              class="link-text"
-            >
+            <ion-text color="primary" (click)="forgotPassword()" class="link-text">
               {{ 'login.forgotPassword' | translate }}
             </ion-text>
           </div>
@@ -66,14 +81,101 @@
             expand="block"
             shape="round"
             type="submit"
-            [disabled]="loginForm.invalid"
-            class="login-button"
-          >
+            [disabled]="passwordForm.invalid"
+            class="login-button">
             {{ 'login.title' | translate }}
           </ion-button>
         </form>
 
-        @if (registrationEnabled) {
+        <div class="separator">
+          <span>{{ 'login.or' | translate }}</span>
+        </div>
+
+        <ion-button
+          expand="block"
+          shape="round"
+          fill="outline"
+          (click)="sendCode()"
+          [disabled]="isLoading"
+          class="code-button">
+          @if (isLoading) {
+            <ion-spinner name="crescent" class="button-spinner"></ion-spinner>
+            {{ 'login.sendingCode' | translate }}
+          } @else {
+            <ion-icon name="mail-outline" slot="start"></ion-icon>
+            {{ 'login.sendCode' | translate }}
+          }
+        </ion-button>
+        }
+
+        <!-- Step 3: Verification code -->
+        @if (step === 'verification') {
+        <div class="email-display">
+          <ion-text color="medium">{{ email }}</ion-text>
+          <ion-text color="primary" (click)="goBack()" class="link-text change-link">
+            {{ 'login.backToEmail' | translate }}
+          </ion-text>
+        </div>
+
+        <ion-text class="code-sent-message" color="medium">
+          {{ 'login.codeSentTo' | translate }}
+        </ion-text>
+
+        @if (errorMessage) {
+        <ion-text color="danger" class="error-message">
+          <span class="error-text">{{ errorMessage }}</span>
+        </ion-text>
+        }
+
+        <form [formGroup]="verificationForm" (ngSubmit)="submitVerificationCode()" class="login-form">
+          <ion-item lines="full" class="input-item">
+            <ion-icon name="keypad-outline" slot="start"></ion-icon>
+            <ion-input
+              type="text"
+              [placeholder]="'login.enterVerificationCode' | translate"
+              formControlName="verification_code"
+              maxlength="6"
+              inputmode="numeric">
+            </ion-input>
+          </ion-item>
+          @if (verificationForm.get('verification_code')?.invalid && verificationForm.get('verification_code')?.touched) {
+          <ion-text color="danger" class="error-message">
+            <span class="error-text">{{ 'login.invalidCode' | translate }}</span>
+          </ion-text>
+          }
+
+          <ion-button
+            expand="block"
+            shape="round"
+            type="submit"
+            [disabled]="verificationForm.invalid || isLoading"
+            class="login-button">
+            @if (isLoading) {
+              <ion-spinner name="crescent" class="button-spinner"></ion-spinner>
+            }
+            {{ 'login.verifyCode' | translate }}
+          </ion-button>
+        </form>
+
+        <div class="resend-code">
+          <ion-text class="resend-text" color="medium">
+            {{ 'login.didntReceiveCode' | translate }}
+          </ion-text>
+          <ion-text
+            color="primary"
+            (click)="resendCode()"
+            [class.disabled]="isResending"
+            class="link-text">
+            @if (isResending) {
+              {{ 'login.sendingCode' | translate }}
+            } @else {
+              {{ 'login.resendCode' | translate }}
+            }
+          </ion-text>
+        </div>
+        }
+
+        @if (registrationEnabled && step !== 'verification') {
         <div class="register-link">
           <ion-text class="register-text" color="medium">
             {{ 'login.noAccount' | translate }}

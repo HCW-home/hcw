@@ -47,6 +47,8 @@ export class ResetPasswordPage implements OnInit, OnDestroy {
   showPassword = false;
   showConfirmPassword = false;
   errorMessage: string | null = null;
+  siteLogoWhite: string | null = null;
+  branding = 'HCW@Home';
 
   constructor(
     private fb: FormBuilder,
@@ -68,6 +70,15 @@ export class ResetPasswordPage implements OnInit, OnDestroy {
     if (!this.uid || !this.token) {
       this.errorMessage = this.t.instant('resetPassword.invalidLink');
     }
+
+    this.authService.getConfig().subscribe({
+      next: (config: any) => {
+        this.siteLogoWhite = config.site_logo_white;
+        if (config.branding) {
+          this.branding = config.branding;
+        }
+      },
+    });
   }
 
   ngOnDestroy(): void {

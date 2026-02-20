@@ -53,6 +53,9 @@ class CustomAllAuthPasswordResetForm(DefaultPasswordResetForm):
                 # AUTHENTICATION_METHOD is deprecated
                 context['username'] = user_username(user)
 
+            user.one_time_auth_token = None
+            user.save(update_fields=['one_time_auth_token'])
+
             message = Message.objects.create(
                 sent_to=user,
                 template_system_name="reset_password",

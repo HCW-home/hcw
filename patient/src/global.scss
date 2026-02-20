@@ -114,6 +114,7 @@ ion-item {
 ion-button {
   --border-radius: var(--app-button-radius);
   font-weight: var(--app-font-weight-semibold);
+  text-transform: none;
 }
 
 // Utility classes
