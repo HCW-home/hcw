@@ -460,11 +460,13 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             )
 
         room_name = f"appointment_{appointment.pk}"
+        mode = request.data.get("mode", "screen_recording")
+        options = request.data.get("options", {})
 
         try:
             server = Server.get_server()
             egress_id, filepath = async_to_sync(server.instance.start_room_recording)(
-                room_name, appointment.pk
+                room_name, appointment.pk, mode=mode, options=options
             )
 
             AppointmentRecording.objects.create(

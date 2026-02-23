@@ -366,11 +366,12 @@ export class ConsultationService {
   }
 
   startRecording(
-    appointmentId: number
+    appointmentId: number,
+    body: Record<string, unknown> = {}
   ): Observable<{ status: string; egress_id: string }> {
     return this.http.post<{ status: string; egress_id: string }>(
       `${this.apiUrl}/appointments/${appointmentId}/start_recording/`,
-      {}
+      body
     );
   }
 

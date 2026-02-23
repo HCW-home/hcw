@@ -426,7 +426,17 @@
     "failedStartRecording": "Failed to start recording",
     "recordingStopped": "Recording Stopped",
     "recordingStoppedMessage": "Recording will be available in chat shortly",
-    "failedStopRecording": "Failed to stop recording"
+    "failedStopRecording": "Failed to stop recording",
+    "transcriptError": "Transcript Error",
+    "transcriptStarted": "Transcript Started",
+    "transcriptStartedMessage": "Appointment transcript has begun",
+    "failedStartTranscript": "Failed to start transcript",
+    "transcriptStopped": "Transcript Stopped",
+    "transcriptStoppedMessage": "Transcript will be available in chat shortly",
+    "failedStopTranscript": "Failed to stop transcript",
+    "captionsError": "Captions Error",
+    "failedStartCaptions": "Failed to connect to transcription server",
+    "participant": "Participant"
   },
   "preJoinLobby": {
     "settingUpDevices": "Setting up your devices...",

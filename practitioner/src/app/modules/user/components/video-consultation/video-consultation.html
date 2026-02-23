@@ -147,6 +147,24 @@
             }
           </button>
 
+          <button
+            class="control-button transcript-button"
+            [class.active]="isTranscribing"
+            (click)="toggleTranscript()">
+            @if (isTranscribing) {
+              <app-svg src="transcript-off" [svgStyle]="{'width.px': 24, 'height.px': 24}"></app-svg>
+            } @else {
+              <app-svg src="transcript" [svgStyle]="{'width.px': 24, 'height.px': 24}"></app-svg>
+            }
+          </button>
+
+          <button
+            class="control-button captions-button"
+            [class.active]="showCaptions()"
+            (click)="toggleCaptions()">
+            <app-svg src="captions" [svgStyle]="{'width.px': 24, 'height.px': 24}"></app-svg>
+          </button>
+
           @if (!isMinimized) {
             <button
               class="control-button"
@@ -190,6 +208,17 @@
             (deleteMessage)="onDeleteMessage($event)"
             (loadMore)="onLoadMore()">
           </app-message-list>
+        </div>
+      }
+
+      @if (showCaptions() && captionLines().length > 0) {
+        <div class="captions-container" #captionsContainer>
+          @for (line of captionLines(); track line.id) {
+            <div class="caption-line">
+              <span class="caption-speaker" [class.is-me]="line.isMe">{{ line.speakerLabel }}:</span>
+              <span class="caption-text">{{ line.text }}</span>
+            </div>
+          }
         </div>
       }
 

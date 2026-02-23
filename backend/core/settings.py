@@ -816,3 +816,6 @@ RECORDING_CHECK_MAX_RETRIES = int(
 RECORDING_CHECK_RETRY_DELAY = int(
     os.getenv("RECORDING_CHECK_RETRY_DELAY", 30)
 )  # seconds between retries
+
+# Whisper-live transcription server
+WHISPER_LIVE_URL = os.getenv("WHISPER_LIVE_URL", "ws://localhost:9090")

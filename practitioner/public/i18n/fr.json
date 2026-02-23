@@ -294,5 +294,17 @@
     "isCalling": "appelle...",
     "accept": "Accepter",
     "decline": "Refuser"
+  },
+  "videoConsultation": {
+    "transcriptError": "Erreur de transcription",
+    "transcriptStarted": "Transcription demarree",
+    "transcriptStartedMessage": "La transcription du rendez-vous a commence",
+    "failedStartTranscript": "Impossible de demarrer la transcription",
+    "transcriptStopped": "Transcription arretee",
+    "transcriptStoppedMessage": "La transcription sera disponible dans le chat prochainement",
+    "failedStopTranscript": "Impossible d'arreter la transcription",
+    "captionsError": "Erreur de sous-titres",
+    "failedStartCaptions": "Impossible de se connecter au serveur de transcription",
+    "participant": "Participant"
   }
 }

@@ -236,6 +236,15 @@ const ICON_MAP: Record<string, string> = {
   'record-stop': 'lucideSquare',
   'record-stop.svg': 'lucideSquare',
   'svg/record-stop.svg': 'lucideSquare',
+  'transcript': 'lucideCaptions',
+  'transcript.svg': 'lucideCaptions',
+  'svg/transcript.svg': 'lucideCaptions',
+  'transcript-off': 'lucideCaptionsOff',
+  'transcript-off.svg': 'lucideCaptionsOff',
+  'svg/transcript-off.svg': 'lucideCaptionsOff',
+  'captions': 'lucideClosedCaption',
+  'captions.svg': 'lucideClosedCaption',
+  'svg/captions.svg': 'lucideClosedCaption',
 };
 
 @Component({

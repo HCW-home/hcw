@@ -40,6 +40,23 @@ class Type(models.TextChoices):
     inperson = "inPerson", _("In person")
 
 
+class RecordingModeChoices(models.TextChoices):
+    SCREEN_RECORDING = "screen_recording", _("Screen Recording")
+    TRANSCRIPT = "transcript", _("Transcript")
+
+    @property
+    def extension(self):
+        extensions = {
+            RecordingModeChoices.TRANSCRIPT: "ogg",
+            RecordingModeChoices.SCREEN_RECORDING: "mp4",
+        }
+        return extensions.get(self, "mp4")
+
+    @property
+    def audio_only(self):
+        return self == RecordingModeChoices.TRANSCRIPT
+
+
 class Consultation(models.Model):
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
     updated_at = models.DateTimeField(_("updated at"), auto_now=True)

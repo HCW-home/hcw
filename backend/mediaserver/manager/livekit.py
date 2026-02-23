@@ -17,6 +17,8 @@ from livekit.api import (
     RoomCompositeEgressRequest,
 )
 
+from consultations.models import RecordingModeChoices
+
 from . import BaseMediaserver
 
 
@@ -152,8 +154,11 @@ class Main(BaseMediaserver):
                 return rooms_response.rooms[0]
             return None
 
-    async def start_room_recording(self, room_name: str, appointment_id: int) -> str:
+    async def start_room_recording(self, room_name: str, appointment_id: int, mode: str = RecordingModeChoices.SCREEN_RECORDING, options: dict = None) -> str:
         """Start recording a room using room composite egress"""
+        if options is None:
+            options = {}
+
         async with LiveKitAPI(
             url=self.server.url,
             api_key=self.server.api_token,
@@ -178,8 +183,9 @@ class Main(BaseMediaserver):
                 force_path_style=True,  # Required for MinIO/S3-compatible services
             )
 
-            # File output configuration
-            filepath = f"recordings/appointment_{appointment_id}_{int(time.time())}.mp4"
+            # File output configuration — extension and audio_only depend on mode
+            recording_mode = RecordingModeChoices(mode)
+            filepath = f"recordings/appointment_{appointment_id}_{int(time.time())}.{recording_mode.extension}"
             file_output = EncodedFileOutput(
                 filepath=filepath,
                 s3=s3_upload,
@@ -189,6 +195,7 @@ class Main(BaseMediaserver):
             request = RoomCompositeEgressRequest(
                 room_name=room_name,
                 file_outputs=[file_output],
+                audio_only=recording_mode.audio_only,
             )
 
             egress_info = await client.egress.start_room_composite_egress(request)

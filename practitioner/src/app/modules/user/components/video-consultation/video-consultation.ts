@@ -19,6 +19,9 @@ import { LocalVideoTrack, LocalTrack } from 'livekit-client';
 
 import { LiveKitService, ParticipantInfo, ConnectionStatus } from '../../../../core/services/livekit.service';
 import { ConsultationService } from '../../../../core/services/consultation.service';
+import { TranscriptionService } from '../../../../core/services/transcription.service';
+import { UserWebSocketService } from '../../../../core/services/user-websocket.service';
+import { UserService } from '../../../../core/services/user.service';
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { IncomingCallService } from '../../../../core/services/incoming-call.service';
 import { IPreJoinSettings } from '../../../../core/models/media-device';
@@ -33,6 +36,15 @@ import { ButtonStyleEnum } from '../../../../shared/constants/button';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
 import { TranslatePipe } from '@ngx-translate/core';
 import { TranslationService } from '../../../../core/services/translation.service';
+
+interface CaptionEntry {
+  id: number;
+  /** Unique key used for same-speaker deduplication (not necessarily numeric). */
+  speakerKey: string;
+  speakerLabel: string;
+  isMe: boolean;
+  text: string;
+}
 
 @Component({
   selector: 'app-video-consultation',
@@ -67,6 +79,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   @ViewChild('localVideo') localVideoRef!: ElementRef<HTMLVideoElement>;
   @ViewChild('localScreenShare') localScreenShareRef!: ElementRef<HTMLVideoElement>;
   @ViewChild('participantsContainer') participantsContainerRef!: ElementRef<HTMLDivElement>;
+  @ViewChild('captionsContainer') captionsContainerRef?: ElementRef<HTMLDivElement>;
 
   connectionStatus: ConnectionStatus = 'disconnected';
   participants: Map<string, ParticipantInfo> = new Map();
@@ -76,10 +89,19 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   isMicrophoneEnabled = false;
   isScreenShareEnabled = false;
   isRecording = false;
+  isTranscribing = false;
   isLoading = false;
   errorMessage = '';
   showChat = signal(false);
+  showCaptions = signal(false);
+  captionLines = signal<CaptionEntry[]>([]);
   phase = signal<'lobby' | 'connecting' | 'in-call'>('lobby');
+
+  private captionEntryId = 0;
+  /** Keep up to this many caption entries — enough for a full session. */
+  private readonly MAX_CAPTION_LINES = 200;
+  private activeRemoteTranscriptions = new Set<string>();
+  private currentUserId: number | null = null;
 
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
@@ -96,6 +118,9 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     private consultationService: ConsultationService,
     private toasterService: ToasterService,
     private incomingCallService: IncomingCallService,
+    private transcriptionService: TranscriptionService,
+    private userWsService: UserWebSocketService,
+    private userService: UserService,
     private cdr: ChangeDetectorRef,
     translationService: TranslationService
   ) {
@@ -103,6 +128,15 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   }
 
   ngOnInit(): void {
+    // Keep currentUserId in sync — used for "You" caption label.
+    // The auth guard always populates currentUserValue before the route loads,
+    // but subscribing ensures we pick it up even if populated after ngOnInit.
+    this.userService.currentUser$.pipe(takeUntil(this.destroy$)).subscribe(user => {
+      this.currentUserId = user?.pk ?? null;
+    });
+    if (!this.userService.currentUserValue) {
+      this.userService.getCurrentUser().pipe(takeUntil(this.destroy$)).subscribe();
+    }
     this.setupSubscriptions();
   }
 
@@ -113,6 +147,8 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     this.destroy$.next();
     this.destroy$.complete();
     this.livekitService.disconnect();
+    this.transcriptionService.stop();
+    this.activeRemoteTranscriptions.clear();
     this.cleanupMediaElements();
   }
 
@@ -137,7 +173,13 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       .subscribe(participants => {
         this.participants = participants;
         this.cdr.markForCheck();
-        setTimeout(() => this.attachRemoteMedia(), 0);
+        // Run after DOM tick so audio elements are attached before sync.
+        setTimeout(() => {
+          this.attachRemoteMedia();
+          if (this.showCaptions()) {
+            this.syncRemoteTranscriptions(participants);
+          }
+        }, 0);
       });
 
     this.livekitService.isCameraEnabled$
@@ -152,6 +194,18 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       .subscribe(enabled => {
         this.isMicrophoneEnabled = enabled;
         this.cdr.markForCheck();
+
+        if (!this.showCaptions() || !this.appointmentId) return;
+
+        if (enabled) {
+          // Mic was unmuted while CC is on — start local transcription.
+          this.transcriptionService
+            .start(this.appointmentId, this.t.currentLanguage())
+            .catch(() => {});
+        } else {
+          // Mic was muted while CC is on — stop local transcription.
+          this.transcriptionService.stopLocal();
+        }
       });
 
     this.livekitService.isScreenShareEnabled$
@@ -175,6 +229,63 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
         this.errorMessage = error;
         this.toasterService.show('error', this.t.instant('videoConsultation.error'), error);
         this.cdr.markForCheck();
+      });
+
+    this.userWsService.transcription$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(event => {
+        if (event.appointment_id !== this.appointmentId) return;
+        if (!this.showCaptions()) return;
+
+        let isMe: boolean;
+        let speakerLabel: string;
+        let speakerKey: string;
+
+        if (event.speaker_label) {
+          // speaker_label is the LiveKit identity (= str(user.pk)) of the audio source.
+          if (event.speaker_label === String(this.currentUserId)) {
+            // Another participant captured OUR voice — merge with the local "You" bubble
+            // so the same speech doesn't appear twice with different labels.
+            isMe = true;
+            speakerLabel = this.t.instant('videoConsultation.you');
+            speakerKey = '__local__';
+          } else {
+            isMe = false;
+            // Resolve the participant's display name from the current participants map.
+            const participant = this.participants.get(event.speaker_label);
+            const rawName = participant?.name || event.speaker_label;
+            speakerLabel = rawName.replace(/\s*\([^)]*@[^)]*\)\s*$/, '').trim() || rawName;
+            speakerKey = `remote_label_${event.speaker_label}`;
+          }
+        } else {
+          isMe = event.speaker_id !== null && event.speaker_id === this.currentUserId;
+          speakerLabel = isMe
+            ? this.t.instant('videoConsultation.you')
+            : this.t.instant('videoConsultation.participant');
+          speakerKey = isMe ? '__local__' : `unknown_${event.speaker_id}`;
+        }
+
+        const current = this.captionLines();
+        const last = current[current.length - 1];
+
+        let updated: CaptionEntry[];
+        if (last && last.speakerKey === speakerKey) {
+          // Same speaker still talking — update the last line in place
+          updated = [...current.slice(0, -1), { ...last, text: event.text }];
+        } else {
+          // New speaker — append a new line, keep only last N
+          const entry: CaptionEntry = {
+            id: ++this.captionEntryId,
+            speakerKey,
+            speakerLabel,
+            isMe,
+            text: event.text,
+          };
+          updated = [...current, entry].slice(-this.MAX_CAPTION_LINES);
+        }
+        this.captionLines.set(updated);
+        this.cdr.markForCheck();
+        this.scrollCaptionsToBottom();
       });
   }
 
@@ -436,6 +547,123 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       this.toasterService.show('success', this.t.instant('videoConsultation.recordingStopped'), this.t.instant('videoConsultation.recordingStoppedMessage'));
     } catch (error) {
       this.toasterService.show('error', this.t.instant('videoConsultation.recordingError'), this.t.instant('videoConsultation.failedStopRecording'));
+    }
+  }
+
+  async toggleTranscript(): Promise<void> {
+    if (this.isTranscribing) {
+      await this.stopTranscript();
+    } else {
+      await this.startTranscript();
+    }
+  }
+
+  private async startTranscript(): Promise<void> {
+    if (!this.appointmentId) {
+      this.toasterService.show('error', this.t.instant('videoConsultation.transcriptError'), this.t.instant('videoConsultation.noAppointmentId'));
+      return;
+    }
+
+    try {
+      await this.consultationService.startRecording(this.appointmentId, { mode: 'transcript', options: { language: 'en' } }).toPromise();
+      this.isTranscribing = true;
+      this.cdr.markForCheck();
+      this.toasterService.show('success', this.t.instant('videoConsultation.transcriptStarted'), this.t.instant('videoConsultation.transcriptStartedMessage'));
+    } catch (error) {
+      this.toasterService.show('error', this.t.instant('videoConsultation.transcriptError'), this.t.instant('videoConsultation.failedStartTranscript'));
+    }
+  }
+
+  private async stopTranscript(): Promise<void> {
+    if (!this.appointmentId) {
+      this.toasterService.show('error', this.t.instant('videoConsultation.transcriptError'), this.t.instant('videoConsultation.noAppointmentId'));
+      return;
+    }
+
+    try {
+      await this.consultationService.stopRecording(this.appointmentId).toPromise();
+      this.isTranscribing = false;
+      this.cdr.markForCheck();
+      this.toasterService.show('success', this.t.instant('videoConsultation.transcriptStopped'), this.t.instant('videoConsultation.transcriptStoppedMessage'));
+    } catch (error) {
+      this.toasterService.show('error', this.t.instant('videoConsultation.transcriptError'), this.t.instant('videoConsultation.failedStopTranscript'));
+    }
+  }
+
+  async toggleCaptions(): Promise<void> {
+    if (this.showCaptions()) {
+      this.transcriptionService.stop();
+      this.activeRemoteTranscriptions.clear();
+      this.showCaptions.set(false);
+      this.captionLines.set([]);
+    } else {
+      if (!this.appointmentId) return;
+      // Enable captions first — remote transcriptions can still show even if local mic is off.
+      this.showCaptions.set(true);
+      // Start local transcription only when the microphone is active.
+      if (this.isMicrophoneEnabled) {
+        try {
+          await this.transcriptionService.start(this.appointmentId, this.t.currentLanguage());
+        } catch (error) {
+          this.toasterService.show('error', this.t.instant('videoConsultation.captionsError'), this.t.instant('videoConsultation.failedStartCaptions'));
+        }
+      }
+      // Start transcription for any remote participants already in the call.
+      this.syncRemoteTranscriptions(this.participants);
+    }
+    this.cdr.markForCheck();
+  }
+
+  private scrollCaptionsToBottom(): void {
+    // Run after the DOM update so scrollHeight is current.
+    setTimeout(() => {
+      const el = this.captionsContainerRef?.nativeElement;
+      if (el) {
+        el.scrollTop = el.scrollHeight;
+      }
+    }, 0);
+  }
+
+  private syncRemoteTranscriptions(participants: Map<string, ParticipantInfo>): void {
+    if (!this.appointmentId) return;
+    const language = this.t.currentLanguage();
+
+    // Start transcription for participants whose mic is on and session isn't active yet.
+    for (const [identity, participant] of participants) {
+      if (this.activeRemoteTranscriptions.has(identity)) continue;
+      // Only transcribe when the participant's microphone is actually publishing audio.
+      if (!participant.isMicrophoneEnabled) continue;
+
+      // Prefer audio element srcObject — most reliable after attachRemoteMedia has run.
+      // Fall back to the RemoteTrack's mediaStreamTrack.
+      let track: MediaStreamTrack | null = null;
+      const audioEl = this.audioElements.get(identity);
+      if (audioEl?.srcObject instanceof MediaStream) {
+        track = (audioEl.srcObject as MediaStream).getAudioTracks()[0] ?? null;
+      }
+      if (!track && participant.audioTrack?.mediaStreamTrack) {
+        track = participant.audioTrack.mediaStreamTrack;
+      }
+      if (!track) continue;
+
+      // Use the LiveKit identity (= str(user.pk)) as speaker_label so the backend
+      // echoes back a stable, numeric-string key we can compare against currentUserId.
+      // The display name is resolved on the receiving side from the participants map.
+      this.activeRemoteTranscriptions.add(identity);
+      this.transcriptionService
+        .startRemote(identity, track, this.appointmentId!, language, identity)
+        .catch(() => {
+          this.activeRemoteTranscriptions.delete(identity);
+        });
+    }
+
+    // Stop transcription for participants who left or muted their microphone.
+    for (const identity of Array.from(this.activeRemoteTranscriptions)) {
+      const participant = participants.get(identity);
+      if (!participant || !participant.isMicrophoneEnabled) {
+        this.transcriptionService.stopRemote(identity);
+        this.activeRemoteTranscriptions.delete(identity);
+      }
     }
   }
 

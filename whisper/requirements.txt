@@ -1,0 +1,1 @@
+whisper-live==0.7.1

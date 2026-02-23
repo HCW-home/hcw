@@ -8,6 +8,7 @@ import {
   UserMessageEvent,
   NotificationEvent,
   StatusChangedEvent,
+  TranscriptionEvent,
   AppointmentJoinedEvent,
 } from '../models/websocket';
 
@@ -20,6 +21,7 @@ export class UserWebSocketService implements OnDestroy {
   private messagesSubject = new Subject<UserMessageEvent>();
   private notificationsSubject = new Subject<NotificationEvent>();
   private appointmentJoinedSubject = new Subject<AppointmentJoinedEvent>();
+  private transcriptionSubject = new Subject<TranscriptionEvent>();
 
   public isOnline$: Observable<boolean> = this.isOnlineSubject.asObservable();
   public connectionCount$: Observable<number> =
@@ -30,6 +32,8 @@ export class UserWebSocketService implements OnDestroy {
     this.notificationsSubject.asObservable();
   public appointmentJoined$: Observable<AppointmentJoinedEvent> =
     this.appointmentJoinedSubject.asObservable();
+  public transcription$: Observable<TranscriptionEvent> =
+    this.transcriptionSubject.asObservable();
 
   constructor(
     private wsService: WebSocketService,
@@ -113,6 +117,10 @@ export class UserWebSocketService implements OnDestroy {
         console.log('[UserWS] participant_joined - showing incoming call');
         this.appointmentJoinedSubject.next(event);
       }
+    });
+
+    this.wsService.on('transcription').subscribe((event: TranscriptionEvent) => {
+      this.transcriptionSubject.next(event);
     });
 
     this.wsService.on('error').subscribe((event) => {

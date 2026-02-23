@@ -247,6 +247,17 @@ class WebsocketConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
             }
         )
 
+    async def transcription(self, event):
+        payload = {
+            "event": "transcription",
+            "appointment_id": event["appointment_id"],
+            "text": event["text"],
+            "speaker_id": event.get("speaker_id"),
+        }
+        if "speaker_label" in event:
+            payload["speaker_label"] = event["speaker_label"]
+        await self.send_json(payload)
+
     # Utility methods
     async def _send_error(self, message):
         await self.send_json({"type": "error", "message": message})

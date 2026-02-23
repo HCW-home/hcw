@@ -142,6 +142,15 @@ export interface AppointmentJoinedEvent {
   };
 }
 
+export interface TranscriptionEvent {
+  type: 'transcription';
+  event?: 'transcription';
+  appointment_id: number;
+  text: string;
+  speaker_id: number | null;
+  speaker_label?: string;
+}
+
 export type UserIncomingEvent =
   | StatusChangedEvent
   | StatusResponseEvent
@@ -152,7 +161,8 @@ export type UserIncomingEvent =
   | GroupJoinedEvent
   | GroupLeftEvent
   | ErrorEvent
-  | AppointmentJoinedEvent;
+  | AppointmentJoinedEvent
+  | TranscriptionEvent;
 
 export interface ConsultationParticipant {
   id: number;
