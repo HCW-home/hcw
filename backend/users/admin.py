@@ -109,7 +109,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
         "specialities",
         "groups",
     )
-    filter_horizontal = BaseUserAdmin.filter_horizontal + ("languages", "specialities")
+    filter_horizontal = BaseUserAdmin.filter_horizontal + ("languages", "specialities", "organisations")
 
     fieldsets = (
         (
