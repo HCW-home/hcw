@@ -156,6 +156,7 @@ export class ConsultationService {
     scheduled_at__date__gte?: string;
     scheduled_at__date__lte?: string;
     future?: boolean;
+    participant_user?: number;
   }): Observable<PaginatedResponse<Appointment>> {
     let httpParams = new HttpParams();
     if (params) {

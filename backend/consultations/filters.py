@@ -42,6 +42,10 @@ class ConsultationFilter(django_filters.FilterSet):
 
 class AppointmentFilter(django_filters.FilterSet):
     future = django_filters.BooleanFilter(method='filter_future')
+    participant_user = django_filters.NumberFilter(
+        field_name='participant__user',
+        lookup_expr='exact',
+    )
 
     class Meta:
         model = Appointment

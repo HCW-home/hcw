@@ -11,7 +11,8 @@ import {
 } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, forkJoin, takeUntil } from 'rxjs';
+import { FormsModule } from '@angular/forms';
 import {
   FullCalendarModule,
   FullCalendarComponent,
@@ -63,6 +64,18 @@ import { Auth } from '../../../../core/services/auth';
 import { ConfirmPresenceModal } from './confirm-presence-modal/confirm-presence-modal';
 import { AppointmentFormModal } from '../consultation-detail/appointment-form-modal/appointment-form-modal';
 import { VideoConsultationComponent } from '../video-consultation/video-consultation';
+import { IUser } from '../../../user/models/user';
+
+interface PractitionerOption {
+  user: IUser;
+  color: string;
+  selected: boolean;
+}
+
+const PRACTITIONER_COLORS = [
+  '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+  '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1',
+];
 
 type CalendarView = 'dayGridMonth' | 'timeGridWeek' | 'timeGridDay' | 'list';
 type AppointmentTimeFilter = 'all' | 'upcoming' | 'past';
@@ -71,6 +84,7 @@ type AppointmentTimeFilter = 'all' | 'upcoming' | 'past';
   selector: 'app-appointments',
   imports: [
     CommonModule,
+    FormsModule,
     Page,
     Loader,
     Svg,
@@ -134,6 +148,9 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   tooEarlyError = signal<{ appointmentId: number; time: string; minutes: number } | null>(null);
   appointmentEarlyJoinMinutes = 5; // Default value
 
+  practitioners = signal<PractitionerOption[]>([]);
+  practitionerDropdownOpen = signal(false);
+
   private readonly pageSize = 20;
   private listCurrentPage = 1;
   private currentDateRange: { start: string; end: string } | null = null;
@@ -191,10 +208,15 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     if (menuElement && !menuElement.contains(target)) {
       this.closeContextMenu();
     }
+    const dropdownEl = this.el.nativeElement.querySelector('.practitioner-selector');
+    if (dropdownEl && !dropdownEl.contains(target)) {
+      this.practitionerDropdownOpen.set(false);
+    }
   }
 
   ngOnInit(): void {
     this.loadConfig();
+    this.loadPractitioners();
 
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
       const participantId = params['participantId'];
@@ -241,6 +263,52 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
           // Use default value on error
         }
       });
+  }
+
+  private loadPractitioners(): void {
+    this.userService.searchUsers('', 1, 100, undefined, undefined, true)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: response => {
+          const currentUser = this.userService.currentUserValue;
+          this.practitioners.set(
+            response.results.map((user, index) => ({
+              user,
+              color: PRACTITIONER_COLORS[index % PRACTITIONER_COLORS.length],
+              selected: user.pk === currentUser?.pk,
+            }))
+          );
+          this.loadAppointments();
+        },
+      });
+  }
+
+  togglePractitionerDropdown(event: MouseEvent): void {
+    event.stopPropagation();
+    this.practitionerDropdownOpen.update(v => !v);
+  }
+
+  togglePractitioner(practitioner: PractitionerOption): void {
+    this.practitioners.update(list =>
+      list.map(p =>
+        p.user.pk === practitioner.user.pk
+          ? { ...p, selected: !p.selected }
+          : p
+      )
+    );
+    this.loadAppointments();
+  }
+
+  getSelectedPractitionerCount(): number {
+    return this.practitioners().filter(p => p.selected).length;
+  }
+
+  getPractitionerColor(appointment: Appointment): string {
+    const practitioner = this.practitioners().find(p =>
+      appointment.participants?.some(part => part.user?.id === p.user.pk)
+      || appointment.created_by?.id === p.user.pk
+    );
+    return practitioner?.color || '#3b82f6';
   }
 
   ngAfterViewInit(): void {
@@ -323,20 +391,46 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
 
     this.loading.set(true);
 
-    this.consultationService
-      .getAppointments({
+    const selected = this.practitioners().filter(p => p.selected);
+
+    if (selected.length === 0) {
+      this.appointments.set([]);
+      this.calendarEvents.set([]);
+      this.loading.set(false);
+      return;
+    }
+
+    const requests = selected.map(p =>
+      this.consultationService.getAppointments({
         page_size: 100,
         status: AppointmentStatus.SCHEDULED,
-        scheduled_at__date__gte: this.currentDateRange.start,
-        scheduled_at__date__lte: this.currentDateRange.end,
+        scheduled_at__date__gte: this.currentDateRange!.start,
+        scheduled_at__date__lte: this.currentDateRange!.end,
+        participant_user: p.user.pk,
       })
+    );
+
+    forkJoin(requests)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: response => {
-          this.appointments.set(response.results);
-          this.calendarEvents.set(
-            this.transformToCalendarEvents(response.results)
-          );
+        next: responses => {
+          const allAppointments: Appointment[] = [];
+          const allEvents: EventInput[] = [];
+          const seenIds = new Set<number>();
+
+          responses.forEach((response, index) => {
+            const color = selected[index].color;
+            response.results.forEach(appointment => {
+              if (!seenIds.has(appointment.id)) {
+                seenIds.add(appointment.id);
+                allAppointments.push(appointment);
+              }
+              allEvents.push(...this.transformToCalendarEvents([appointment], color));
+            });
+          });
+
+          this.appointments.set(allAppointments);
+          this.calendarEvents.set(allEvents);
           this.loading.set(false);
         },
         error: err => {
@@ -451,21 +545,24 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
       });
   }
 
-  private transformToCalendarEvents(appointments: Appointment[]): EventInput[] {
-    return appointments.map(appointment => ({
-      id: appointment.id.toString(),
-      title: this.getEventTitle(appointment),
-      start:
-        parseDateWithoutTimezone(appointment.scheduled_at) ||
-        appointment.scheduled_at,
-      end: appointment.end_expected_at
-        ? parseDateWithoutTimezone(appointment.end_expected_at) || undefined
-        : undefined,
-      backgroundColor: this.getStatusColor(appointment.status),
-      borderColor: this.getStatusColor(appointment.status),
-      textColor: '#ffffff',
-      extendedProps: { appointment },
-    }));
+  private transformToCalendarEvents(appointments: Appointment[], color?: string): EventInput[] {
+    return appointments.map(appointment => {
+      const eventColor = color || this.getPractitionerColor(appointment);
+      return {
+        id: color ? `${appointment.id}-${color}` : appointment.id.toString(),
+        title: this.getEventTitle(appointment),
+        start:
+          parseDateWithoutTimezone(appointment.scheduled_at) ||
+          appointment.scheduled_at,
+        end: appointment.end_expected_at
+          ? parseDateWithoutTimezone(appointment.end_expected_at) || undefined
+          : undefined,
+        backgroundColor: eventColor,
+        borderColor: eventColor,
+        textColor: '#ffffff',
+        extendedProps: { appointment },
+      };
+    });
   }
 
   private getEventTitle(appointment: Appointment): string {

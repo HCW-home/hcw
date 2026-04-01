@@ -15,6 +15,33 @@
         </app-button>
       </div>
       <div class="header-controls">
+        @if (practitioners().length > 1) {
+          <div class="practitioner-selector">
+            <button class="practitioner-toggle" (click)="togglePractitionerDropdown($event)">
+              <div class="practitioner-dots">
+                @for (p of practitioners(); track p.user.pk) {
+                  @if (p.selected) {
+                    <span class="dot" [style.background]="p.color"></span>
+                  }
+                }
+              </div>
+              <span>{{ 'appointments.practitioners' | translate }} ({{ getSelectedPractitionerCount() }})</span>
+              <app-svg src="chevron-down" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
+            </button>
+            @if (practitionerDropdownOpen()) {
+              <div class="practitioner-dropdown">
+                @for (p of practitioners(); track p.user.pk) {
+                  <label class="practitioner-option" (click)="$event.stopPropagation()">
+                    <input type="checkbox" [checked]="p.selected" (change)="togglePractitioner(p)">
+                    <span class="color-dot" [style.background]="p.color"></span>
+                    <span class="practitioner-name">{{ p.user.first_name }} {{ p.user.last_name }}</span>
+                  </label>
+                }
+              </div>
+            }
+          </div>
+        }
+
         <div class="nav-controls">
           <button class="nav-btn" (click)="navigatePrev()">
             <span class="nav-icon">&lt;</span>
