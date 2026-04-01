@@ -1242,8 +1242,7 @@ class RegisterView(DjRestAuthRegisterView):
 
         return Response(
             {
-                "detail": "Your account has been created and is pending approval by an administrator. "
-                "A verification email has been sent to your email address."
+                "detail": _("A verification email has been sent to your email address.")
             },
             status=status.HTTP_201_CREATED,
         )
