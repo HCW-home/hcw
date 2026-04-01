@@ -554,10 +554,21 @@
     padding: 4px 8px;
   }
 
+  .fc-daygrid-day-frame.fc-scrollgrid-sync-inner {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .fc-daygrid-day-top {
+    display: block;
+    text-align: right;
+  }
+
   .fc-daygrid-day-number {
     color: var(--slate-700);
     font-weight: 500;
     padding: 8px;
+    display: inline-block;
   }
 
   .fc-daygrid-day.fc-day-today {

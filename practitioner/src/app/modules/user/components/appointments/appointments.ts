@@ -165,6 +165,12 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
       weekday: 'short',
       day: 'numeric',
     },
+    views: {
+      dayGridMonth: {
+        eventDisplay: 'list-item',
+        dayMaxEvents: 4,
+      },
+    },
   };
 
   @HostListener('window:resize')
