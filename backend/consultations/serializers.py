@@ -461,7 +461,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
             )
         return value
 
-    def end_expected_at_at(self, value):
+    def validate_end_expected_at(self, value):
         user = self.context["request"].user
 
         # Convert naive datetime from user timezone to UTC
