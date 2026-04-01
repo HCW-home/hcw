@@ -238,6 +238,14 @@ class User(AbstractUser):
         help_text="Token used for email verification",
     )
 
+    created_by = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_users",
+        help_text="The practitioner who created this user",
+    )
     is_practitioner = models.BooleanField(
         default=False,
         help_text="Whether this user is a practitioner",

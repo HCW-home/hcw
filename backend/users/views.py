@@ -822,64 +822,75 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """
-        Filter users based on USERS_VISIBILITY setting:
-        - "" (empty): All users (default behavior)
-        - "alone": Only patients and self
-        - "organization": Only patients and practitioners from same organization
+        Filter users based on visibility settings:
+        - USERS_VISIBILITY controls practitioner visibility
+        - PATIENT_VISIBILITY controls patient visibility
         """
         base_queryset = self.queryset.filter(is_active=True)
-
-        visibility = config.users_visibility
         current_user = self.request.user
 
+        practitioners_qs = self._filter_practitioners(base_queryset, current_user)
+        patients_qs = self._filter_patients(base_queryset, current_user)
+
+        return (practitioners_qs | patients_qs).distinct()
+
+    def _filter_practitioners(self, base_queryset, current_user):
+        """Filter practitioners based on USERS_VISIBILITY setting."""
+        qs = base_queryset.filter(is_practitioner=True)
+        visibility = config.users_visibility
+
         if not visibility or visibility == "all":
-            # All users (default behavior)
-            return base_queryset
+            return qs
 
         elif visibility == "alone":
-            # Only patients and self
-            return base_queryset.filter(
-                Q(is_practitioner=False) | Q(id=current_user.id)
-            )
+            return qs.filter(id=current_user.id)
 
         elif visibility == "organization":
-            # All patients and practitioners from same organization(s)
-            user_orgs = list(current_user.organisations.values_list('id', flat=True))
-            has_main_org = current_user.main_organisation is not None
-            has_orgs = len(user_orgs) > 0
+            org_filter = self._get_organization_filter(current_user)
+            if org_filter:
+                return qs.filter(org_filter | Q(id=current_user.id))
+            return qs.filter(id=current_user.id)
 
-            if has_main_org or has_orgs:
-                practitioner_filters = []
+        return qs
 
-                # Include practitioners with same main_organisation
-                if has_main_org:
-                    practitioner_filters.append(
-                        Q(main_organisation=current_user.main_organisation)
-                    )
+    def _filter_patients(self, base_queryset, current_user):
+        """Filter patients based on PATIENT_VISIBILITY setting."""
+        qs = base_queryset.filter(is_practitioner=False)
+        visibility = config.patient_visibility
 
-                # Include practitioners who share at least one organisation
-                if has_orgs:
-                    practitioner_filters.append(
-                        Q(organisations__id__in=user_orgs)
-                    )
+        if not visibility or visibility == "all":
+            return qs
 
-                # Combine filters with OR
-                combined_practitioner_filter = practitioner_filters[0]
-                for f in practitioner_filters[1:]:
-                    combined_practitioner_filter |= f
+        elif visibility == "alone":
+            return qs.filter(created_by=current_user)
 
-                return base_queryset.filter(
-                    Q(is_practitioner=False) |
-                    (Q(is_practitioner=True) & combined_practitioner_filter)
-                ).distinct()
-            else:
-                # If user has no organization, fallback to "alone" behavior
-                return base_queryset.filter(
-                    Q(is_practitioner=False) | Q(id=current_user.id)
-                )
+        elif visibility == "organization":
+            org_filter = self._get_organization_filter(current_user)
+            if org_filter:
+                return qs.filter(org_filter)
+            return qs.filter(created_by=current_user)
 
-        # Fallback to default if invalid value
-        return base_queryset
+        return qs
+
+    def _get_organization_filter(self, current_user):
+        """Build a Q filter for matching organizations."""
+        user_orgs = list(current_user.organisations.values_list("id", flat=True))
+        has_main_org = current_user.main_organisation is not None
+        has_orgs = len(user_orgs) > 0
+
+        if not has_main_org and not has_orgs:
+            return None
+
+        filters = []
+        if has_main_org:
+            filters.append(Q(main_organisation=current_user.main_organisation))
+        if has_orgs:
+            filters.append(Q(organisations__id__in=user_orgs))
+
+        combined = filters[0]
+        for f in filters[1:]:
+            combined |= f
+        return combined
 
     def create(self, request, *args, **kwargs):
         """
@@ -897,11 +908,11 @@ class UserViewSet(viewsets.ModelViewSet):
                 serializer = self.get_serializer(existing_user, data=request.data, partial=True)
                 serializer.is_valid(raise_exception=True)
 
-                # Remove temporary flag
+                # Remove temporary flag and set created_by
                 serializer.validated_data['temporary'] = False
 
                 # Save the updated user
-                serializer.save()
+                serializer.save(created_by=request.user)
 
                 headers = self.get_success_headers(serializer.data)
                 return Response(serializer.data, status=status.HTTP_200_OK, headers=headers)
@@ -912,6 +923,9 @@ class UserViewSet(viewsets.ModelViewSet):
 
         # Normal user creation
         return super().create(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
 
     def update(self, request, *args, **kwargs):
         """Prevent updating users with superuser, staff access, or users in groups."""

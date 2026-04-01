@@ -765,8 +765,13 @@ CONSTANCE_CONFIG = {
     ),
     "users_visibility": (
         "all",
-        "Controls which users practitioners can see: all = all users, alone = only patients + self, organization = patients + same organization practitioners",
+        "Controls which users practitioners can see: all = all users, alone = no sharing, alone, organization = same organization practitioners",
         "users_visibility_select",
+    ),
+    "patient_visibility": (
+        "all",
+        "Controls which patients practitioners can see: all = all patients, alone = only patients they created, organization = patients from same organization",
+        "patient_visibility_select",
     ),
 }
 
@@ -779,7 +784,7 @@ CONSTANCE_CONFIG_FIELDSETS = {
     "Security": ("temporary_participant_token_expiry_hours",),
     "Uploads": ("max_upload_size_mb",),
     "Authentication": ("disable_password_login", "enable_registration"),
-    "Visibility": ("users_visibility",),
+    "Visibility": ("users_visibility", "patient_visibility"),
 }
 
 # CORS Configuration
@@ -827,6 +832,17 @@ CONSTANCE_ADDITIONAL_FIELDS = {
                 ("all", "All users"),
                 ("alone", "Only patients and self"),
                 ("organization", "Patients and same organization"),
+            ),
+        },
+    ],
+    "patient_visibility_select": [
+        "django.forms.fields.ChoiceField",
+        {
+            "widget": "django.forms.Select",
+            "choices": (
+                ("all", "All patients"),
+                ("alone", "Only patients created by me"),
+                ("organization", "Patients from same organization"),
             ),
         },
     ],
