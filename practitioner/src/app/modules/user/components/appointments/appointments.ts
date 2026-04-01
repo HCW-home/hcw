@@ -23,7 +23,9 @@ import {
   EventHoveringArg,
   DatesSetArg,
   DateSelectArg,
+  EventDropArg,
 } from '@fullcalendar/core';
+import { EventResizeDoneArg } from '@fullcalendar/interaction';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -142,7 +144,8 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     headerToolbar: false,
     height: 'auto',
     weekends: true,
-    editable: false,
+    editable: true,
+    eventDurationEditable: true,
     selectable: true,
     selectMirror: true,
     dayMaxEvents: true,
@@ -151,6 +154,8 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     eventMouseEnter: this.handleEventMouseEnter.bind(this),
     eventMouseLeave: this.handleEventMouseLeave.bind(this),
     select: this.handleDateSelect.bind(this),
+    eventDrop: this.handleEventDrop.bind(this),
+    eventResize: this.handleEventResize.bind(this),
     slotMinTime: '00:00:00',
     slotMaxTime: '24:00:00',
     allDaySlot: false,
@@ -169,6 +174,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
       dayGridMonth: {
         eventDisplay: 'list-item',
         dayMaxEvents: 4,
+        editable: false,
       },
     },
   };
@@ -566,6 +572,70 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     this.openCreateAppointmentModal();
     const calendarApi = selectInfo.view.calendar;
     calendarApi.unselect();
+  }
+
+  handleEventDrop(info: EventDropArg): void {
+    const appointment = info.event.extendedProps['appointment'] as Appointment;
+    const newStart = info.event.start;
+    const newEnd = info.event.end;
+    if (!newStart) {
+      info.revert();
+      return;
+    }
+
+    this.updateAppointmentTime(appointment.id, newStart, newEnd, info.revert);
+  }
+
+  handleEventResize(info: EventResizeDoneArg): void {
+    const appointment = info.event.extendedProps['appointment'] as Appointment;
+    const newStart = info.event.start;
+    const newEnd = info.event.end;
+    if (!newStart) {
+      info.revert();
+      return;
+    }
+
+    this.updateAppointmentTime(appointment.id, newStart, newEnd, info.revert);
+  }
+
+  private updateAppointmentTime(
+    appointmentId: number,
+    start: Date,
+    end: Date | null,
+    revert: () => void,
+  ): void {
+    const formatLocal = (d: Date): string => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
+
+    const data: { scheduled_at: string; end_expected_at?: string } = {
+      scheduled_at: formatLocal(start),
+    };
+    if (end) {
+      data.end_expected_at = formatLocal(end);
+    }
+
+    this.consultationService
+      .updateAppointment(appointmentId, data)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.loadAppointments();
+        },
+        error: err => {
+          revert();
+          this.toasterService.show(
+            'error',
+            this.t.instant('appointments.errorUpdatingAppointment'),
+            getErrorMessage(err)
+          );
+        },
+      });
   }
 
   private updateTitle(): void {
