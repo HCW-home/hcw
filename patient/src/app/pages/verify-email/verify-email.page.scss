@@ -1,63 +1,112 @@
 .verify-email-content {
+  --background: linear-gradient(135deg, var(--app-background-secondary) 0%, var(--ion-color-primary-bg) 50%, var(--app-background-secondary) 100%);
 
-
-  .verify-email-container {
-    height: 100%;
+  &::part(scroll) {
     display: flex;
-    flex-direction: column;
-    padding: var(--app-spacing-xl);
+    align-items: center;
     justify-content: center;
+    min-height: 100%;
+  }
 
-    .verify-email-header {
-      text-align: center;
-      margin-bottom: 40px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+  .auth-card {
+    display: flex;
+    width: 90%;
+    max-width: 900px;
+    min-height: 520px;
+    margin: 0 auto;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+    background: #fff;
+  }
 
-      .logo {
-        margin-bottom: var(--app-spacing-xl);
+  .right-side {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
 
-        .logo-img {
-          width: 64px;
-          height: 64px;
-        }
-      }
+    .right-content {
+      width: 100%;
+      max-width: 360px;
 
-      .title {
-        font-size: 1.75rem;
+      h2 {
+        font-size: 1.5rem;
         font-weight: 700;
         color: var(--app-text-primary);
-        margin: 0;
+        margin: 0 0 24px;
+        text-align: center;
       }
     }
+  }
 
-    .status-container {
-      text-align: center;
-      padding: var(--app-spacing-xl);
-      display: flex;
+  @keyframes fadeSlideIn {
+    from {
+      opacity: 0;
+      transform: translateX(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .step-animate {
+    animation: fadeSlideIn 0.3s ease-out;
+  }
+
+  .status-container {
+    text-align: center;
+    padding: 20px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+
+    .status-icon {
+      font-size: 48px;
+    }
+
+    ion-spinner {
+      width: 48px;
+      height: 48px;
+    }
+
+    p {
+      font-size: 0.95rem;
+      color: var(--app-text-primary);
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .action-button {
+      width: 100%;
+      margin-top: 12px;
+      --background: var(--ion-color-primary);
+      --padding-top: 14px;
+      --padding-bottom: 14px;
+      font-weight: 600;
+    }
+  }
+}
+
+@media (max-width: 700px) {
+  .verify-email-content {
+    .auth-card {
       flex-direction: column;
-      align-items: center;
-      gap: var(--app-spacing-md);
+      width: 100%;
+      margin: 0;
+      border-radius: 0;
+      box-shadow: none;
+      min-height: 100%;
+    }
 
-      ion-icon {
-        font-size: 48px;
-      }
+    .right-side {
+      padding: 24px;
 
-      ion-spinner {
-        width: 48px;
-        height: 48px;
-        margin-bottom: var(--app-spacing-md);
-      }
-
-      .action-button {
-        margin-top: var(--app-spacing-lg);
-        --background: var(--ion-color-primary);
-        --padding-top: var(--app-button-padding-vertical);
-        --padding-bottom: var(--app-button-padding-vertical);
-        font-weight: var(--app-font-weight-semibold);
-        width: 100%;
-        max-width: 300px;
+      .right-content {
+        max-width: 100%;
       }
     }
   }

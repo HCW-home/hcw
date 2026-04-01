@@ -827,7 +827,7 @@ class UserViewSet(viewsets.ModelViewSet):
         - "alone": Only patients and self
         - "organization": Only patients and practitioners from same organization
         """
-        base_queryset = self.queryset
+        base_queryset = self.queryset.filter(is_active=True)
 
         visibility = config.users_visibility
         current_user = self.request.user
@@ -1227,7 +1227,10 @@ class RegisterView(DjRestAuthRegisterView):
                 )
 
         return Response(
-            {"detail": "A verification email has been sent to your email address."},
+            {
+                "detail": "Your account has been created and is pending approval by an administrator. "
+                "A verification email has been sent to your email address."
+            },
             status=status.HTTP_201_CREATED,
         )
 
@@ -1255,7 +1258,8 @@ class EmailVerifyView(APIView):
 
         user.email_verified = True
         user.email_verification_token = None
-        user.save(update_fields=["email_verified", "email_verification_token"])
+        user.is_active = True
+        user.save(update_fields=["email_verified", "email_verification_token", "is_active"])
 
         return Response({"detail": "Email verified successfully."})
 
