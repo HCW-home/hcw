@@ -88,6 +88,8 @@ export class UserProfile implements OnInit, OnDestroy {
   isLoadingUser = signal(false);
   isSaving = signal(false);
   isUploadingAvatar = signal(false);
+  caldavUrlCopied = signal(false);
+  caldavUrl = `${window.location.origin}/caldav/calendar/`;
 
   profileForm: FormGroup;
 
@@ -309,6 +311,12 @@ export class UserProfile implements OnInit, OnDestroy {
 
   private getLanguageIds(languageIds: number[]): number[] {
     return languageIds || [];
+  }
+
+  copyCaldavUrl(): void {
+    navigator.clipboard.writeText(this.caldavUrl);
+    this.caldavUrlCopied.set(true);
+    setTimeout(() => this.caldavUrlCopied.set(false), 2000);
   }
 
   getInitials(): string {

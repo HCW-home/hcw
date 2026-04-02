@@ -392,7 +392,11 @@
     "commManual": "Contacto manual",
     "commNone": "Ninguno",
     "tabProfile": "Perfil",
-    "tabSystemTest": "Prueba del sistema"
+    "tabSystemTest": "Prueba del sistema",
+    "calendarSync": "Sincronizacion de calendario",
+    "calendarSyncDescription": "Agregue esta URL CalDAV en su aplicacion de calendario (Google Calendar, Apple Calendar, Thunderbird, Outlook) para sincronizar sus citas.",
+    "caldavUrl": "URL CalDAV",
+    "caldavAuthHint": "Use su correo electronico y contrasena para autenticarse."
   },
   "openIdCallback": {
     "authenticating": "Autenticando...",

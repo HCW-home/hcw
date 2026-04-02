@@ -398,7 +398,11 @@
     "commEmail": "E-Mail",
     "commWhatsApp": "WhatsApp",
     "commPush": "Push-Benachrichtigung",
-    "commManual": "Manueller Kontakt"
+    "commManual": "Manueller Kontakt",
+    "calendarSync": "Kalender-Synchronisation",
+    "calendarSyncDescription": "Fuegen Sie diese CalDAV-URL in Ihrer Kalender-App hinzu (Google Calendar, Apple Calendar, Thunderbird, Outlook), um Ihre Termine zu synchronisieren.",
+    "caldavUrl": "CalDAV-URL",
+    "caldavAuthHint": "Verwenden Sie Ihre E-Mail und Ihr Passwort zur Authentifizierung."
   },
   "consultationRowItem": {
     "untitledConsultation": "Unbetitelte Fortsetzung",

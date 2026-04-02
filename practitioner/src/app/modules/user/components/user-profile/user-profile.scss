@@ -8,6 +8,66 @@
   width: 100%;
 }
 
+.section-description {
+  font-size: 13px;
+  color: var(--slate-500);
+  margin: -8px 0 16px;
+}
+
+.calendar-feed-container {
+  .feed-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--slate-600);
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .feed-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .feed-url-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--slate-200);
+    border-radius: 8px;
+    background: var(--slate-50);
+    font-size: 13px;
+    color: var(--slate-600);
+    font-family: monospace;
+    outline: none;
+  }
+
+  .copy-btn {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--slate-200);
+    background: var(--White);
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--slate-600);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+
+    &:hover {
+      background: var(--slate-50);
+      border-color: var(--slate-300);
+    }
+  }
+
+  .calendar-hint {
+    font-size: 12px;
+    color: var(--slate-400);
+    margin-top: 8px;
+  }
+}
+
 .form-actions {
   display: flex;
   justify-content: flex-end;

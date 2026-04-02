@@ -56,6 +56,7 @@ EMAIL_HOST = os.getenv("EMAIL_HOST")
 EMAIL_PORT = os.getenv("EMAIL_PORT", 25)
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
 EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", False)
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", False)
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 
@@ -123,6 +124,7 @@ TENANT_APPS = (
     "mediaserver",
     "api",
     "translations",
+    "caldav",
 )
 
 INSTALLED_APPS = list(SHARED_APPS) + \

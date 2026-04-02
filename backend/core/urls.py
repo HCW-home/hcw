@@ -31,6 +31,7 @@ urlpatterns = [
     path('', include('django.contrib.auth.urls')),
     path('', include('users.urls')),
     path('', include('consultations.urls')),
+    path('caldav/', include('caldav.urls')),
 ] + i18n_patterns(path('admin/', admin.site.urls))
 
 if settings.DEBUG:

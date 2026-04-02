@@ -190,6 +190,25 @@
         </div>
         }
 
+        <!-- <div class="profile-section">
+          <h3 class="section-title">
+            {{ 'userProfile.calendarSync' | translate }}
+          </h3>
+          <p class="section-description">{{ 'userProfile.calendarSyncDescription' | translate }}</p>
+          <div class="calendar-feed-container">
+            <div class="calendar-feed-url">
+              <span class="feed-label">{{ 'userProfile.caldavUrl' | translate }}</span>
+              <div class="feed-input-row">
+                <input type="text" [value]="caldavUrl" readonly class="feed-url-input" />
+                <button type="button" class="copy-btn" (click)="copyCaldavUrl()">
+                  <app-svg [src]="caldavUrlCopied() ? 'check' : 'copy'" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                </button>
+              </div>
+            </div>
+            <p class="calendar-hint">{{ 'userProfile.caldavAuthHint' | translate }}</p>
+          </div>
+        </div> -->
+
         <div class="form-actions">
           <button class="btn-save" type="submit" [disabled]="isSaving()">
             @if (isSaving()) {
