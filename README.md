@@ -38,18 +38,16 @@ HCW@Home is a scalable, institution-level secure teleconsultation system for typ
 - **OpenID Connect** - External authentication support (SSO)
 - **JWT Authentication** - Secure token-based authentication
 - **Multi-factor Authentication** - Enhanced security for user accounts
-- **Role-based Access Control** - Fine-grained permissions system
-- **Data Encryption** - Encrypted storage for sensitive information
+- **Role-based Access Control** - Simple-grained permissions system
 
 #### Customization & Configuration
 
-- **Multi-language Support** - Available in English, French, and German
+- **Multi-language Support** - Available in English, French, Spanish, Italien and German
 - **Custom Fields** - Define custom fields for consultations
 - **Message Templates** - Pre-defined templates with validation
 - **Organizations & Groups** - Multi-organization support with queue management
-- **Specialties Management** - Configure medical specialties
+- **Specialities Management** - Configure medical specialities
 - **Dynamic Configuration** - Real-time configuration updates without restart
-- **Multi-language Support** - All interfaces fully translated in English, French, and German, more coming soon
 
 #### Administration
 
@@ -57,12 +55,10 @@ HCW@Home is a scalable, institution-level secure teleconsultation system for typ
 - **User Management** - Manage users, temporary users, and permissions
 - **Translation Overrides** - Customize translations directly from admin
 - **Analytics Dashboard** - Monitor system usage and statistics
-- **Import/Export** - Bulk data import and export capabilities
 
 #### API & Integration
 
 - **RESTful API** - Complete API with OpenAPI/Swagger documentation
-- **Webhooks** - Integration with external systems
 - **S3 Storage** - Compatible with AWS S3 and S3-compatible storage
 
 #### Performance & Scalability
@@ -71,6 +67,28 @@ HCW@Home is a scalable, institution-level secure teleconsultation system for typ
 - **Celery Tasks** - Asynchronous task processing
 - **WebSocket Support** - Real-time updates via Django Channels
 - **Auto-cleanup** - Automatic deletion of old consultations and temporary users
+
+### Tech Stack
+
+| Category | Technology |
+|----------|-----------|
+| **Backend** | Django 5.2 + Django REST Framework |
+| **ASGI Server** | Daphne + Django Channels |
+| **Practitioner Frontend** | Angular 20, FullCalendar |
+| **Patient Frontend** | Ionic Angular + Capacitor (iOS/Android) |
+| **Video / WebRTC** | LiveKit |
+| **Real-time** | Django Channels + WebSockets |
+| **Database** | PostgreSQL 15 (multi-tenant via django-tenants) |
+| **Cache & Broker** | Redis 7 |
+| **Task Queue** | Celery + Celery Beat |
+| **Storage** | AWS S3 compatible (django-storages) |
+| **Healthcare Interop** | FHIR, CalDAV |
+| **Admin Panel** | Django Unfold |
+| **PDF Generation** | ReportLab |
+| **SMS** | Twilio, OVH, Swisscom, Clickatell |
+| **Antivirus** | ClamAV (django-clamd) |
+| **Authentication** | JWT, OpenID Connect, MFA |
+| **Containerization** | Docker + docker-compose |
 
 ### Links
 
