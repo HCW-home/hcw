@@ -1517,6 +1517,11 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     }
     this.appointments.set([...currentAppointments, appointment]);
     this.markAppointmentAsLocallyModified(appointment.id);
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { appointmentId: appointment.id },
+      queryParamsHandling: 'merge',
+    });
   }
 
   onAppointmentUpdated(updatedAppointment: Appointment): void {
@@ -1526,6 +1531,11 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     );
     this.appointments.set(updatedAppointments);
     this.markAppointmentAsLocallyModified(updatedAppointment.id);
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { appointmentId: updatedAppointment.id },
+      queryParamsHandling: 'merge',
+    });
   }
 
   getParticipantInitials(participant: Participant): string {
