@@ -5,8 +5,10 @@ import {
   EventEmitter,
   inject,
   signal,
+  computed,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ModalComponent } from '../../../../../shared/components/modal/modal.component';
@@ -15,6 +17,7 @@ import { Svg } from '../../../../../shared/ui-components/svg/svg';
 import { Loader } from '../../../../../shared/components/loader/loader';
 import { Typography } from '../../../../../shared/ui-components/typography/typography';
 import { ConsultationService } from '../../../../../core/services/consultation.service';
+import { Auth } from '../../../../../core/services/auth';
 import { ToasterService } from '../../../../../core/services/toaster.service';
 import { TranslationService } from '../../../../../core/services/translation.service';
 import {
@@ -30,6 +33,7 @@ import {
 } from '../../../../../shared/constants/button';
 import { TypographyTypeEnum } from '../../../../../shared/constants/typography';
 import { LocalDatePipe } from '../../../../../shared/pipes/local-date.pipe';
+import { RoutePaths } from '../../../../../core/constants/routes';
 
 @Component({
   selector: 'app-confirm-presence-modal',
@@ -49,8 +53,11 @@ import { LocalDatePipe } from '../../../../../shared/pipes/local-date.pipe';
 export class ConfirmPresenceModal {
   private destroy$ = new Subject<void>();
   private consultationService = inject(ConsultationService);
+  private authService = inject(Auth);
   private toasterService = inject(ToasterService);
+  private router = inject(Router);
   private t = inject(TranslationService);
+  private appointmentEarlyJoinMinutes = 10;
 
   @Input() isOpen = false;
   @Input() set participantId(value: number | null) {
@@ -62,6 +69,7 @@ export class ConfirmPresenceModal {
 
   @Output() closed = new EventEmitter<void>();
   @Output() presenceConfirmed = new EventEmitter<void>();
+  @Output() editRequested = new EventEmitter<number>();
 
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
   protected readonly ButtonStateEnum = ButtonStateEnum;
@@ -75,9 +83,29 @@ export class ConfirmPresenceModal {
   errorMessage = signal<string | null>(null);
   isConfirming = signal(false);
   isDeclining = signal(false);
+  isJoining = signal(false);
+  tooEarlyError = signal<{ time: string; minutes: number } | null>(null);
+
+  isOnlineAppointment = computed(() => {
+    const p = this.participant();
+    return p?.appointment?.type === AppointmentType.ONLINE;
+  });
+
+  hasConsultation = computed(() => {
+    const p = this.participant();
+    return !!(p?.appointment?.consultation_id || p?.appointment?.consultation);
+  });
 
   get modalTitle(): string {
     return this.t.instant('confirmPresenceModal.title');
+  }
+
+  constructor() {
+    this.authService.getOpenIDConfig().pipe(takeUntil(this.destroy$)).subscribe(cfg => {
+      if (cfg?.appointment_early_join_minutes) {
+        this.appointmentEarlyJoinMinutes = cfg.appointment_early_join_minutes;
+      }
+    });
   }
 
   ngOnChanges(): void {
@@ -168,7 +196,56 @@ export class ConfirmPresenceModal {
       });
   }
 
+  joinCall(): void {
+    const p = this.participant();
+    if (!p?.appointment) return;
+
+    const now = new Date();
+    const scheduledTime = new Date(p.appointment.scheduled_at);
+    const earliestJoin = new Date(scheduledTime.getTime() - this.appointmentEarlyJoinMinutes * 60 * 1000);
+
+    if (now < earliestJoin) {
+      const time = scheduledTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      this.tooEarlyError.set({ time, minutes: this.appointmentEarlyJoinMinutes });
+      setTimeout(() => this.tooEarlyError.set(null), 5000);
+      return;
+    }
+
+    const consultation = p.appointment.consultation;
+    const consultationId = typeof consultation === 'object' ? (consultation as { id: number }).id : consultation;
+
+    if (consultationId) {
+      this.onClose();
+      this.router.navigate(
+        ['/', RoutePaths.USER, RoutePaths.CONSULTATIONS, consultationId],
+        { queryParams: { join: 'true', appointmentId: p.appointment.id } }
+      );
+    }
+  }
+
+  viewInConsultation(): void {
+    const p = this.participant();
+    if (!p?.appointment) return;
+    const consultationId = p.appointment.consultation_id || p.appointment.consultation;
+    if (consultationId) {
+      this.onClose();
+      this.router.navigate(
+        ['/', RoutePaths.USER, RoutePaths.CONSULTATIONS, consultationId],
+        { queryParams: { appointmentId: p.appointment.id } }
+      );
+    }
+  }
+
+  editAppointment(): void {
+    const p = this.participant();
+    if (p?.appointment) {
+      this.onClose();
+      this.editRequested.emit(p.appointment.id);
+    }
+  }
+
   onClose(): void {
+    this.tooEarlyError.set(null);
     this.closed.emit();
   }
 

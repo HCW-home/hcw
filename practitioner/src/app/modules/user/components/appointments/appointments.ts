@@ -793,12 +793,20 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   }
 
   viewAppointment(appointment: Appointment): void {
-    const consultationId =
-      appointment.consultation_id || appointment.consultation;
-    if (consultationId) {
-      this.router.navigate([RoutePaths.USER, 'consultations', consultationId], {
-        queryParams: { appointmentId: appointment.id },
-      });
+    const myParticipant = this.getMyParticipant(appointment);
+    if (myParticipant) {
+      this.openConfirmPresenceModal(myParticipant.id);
+    } else if (appointment.participants?.length > 0) {
+      // User is not a participant (e.g. creator) — open modal with first participant
+      this.openConfirmPresenceModal(appointment.participants[0].id);
+    } else {
+      // No participants — navigate to consultation if available
+      const consultationId = appointment.consultation_id || appointment.consultation;
+      if (consultationId) {
+        this.router.navigate([RoutePaths.USER, 'consultations', consultationId], {
+          queryParams: { appointmentId: appointment.id },
+        });
+      }
     }
   }
 
@@ -921,6 +929,14 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
 
   onPresenceConfirmed(): void {
     this.loadAppointments();
+  }
+
+  onEditFromModal(appointmentId: number): void {
+    const appointment = this.appointments().find(a => a.id === appointmentId);
+    if (appointment) {
+      this.editingAppointment.set(appointment);
+      this.createAppointmentModalOpen.set(true);
+    }
   }
 
   openCreateAppointmentModal(): void {

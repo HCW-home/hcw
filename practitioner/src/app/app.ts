@@ -95,32 +95,20 @@ export class App implements OnInit, OnDestroy {
     }
 
     if (authToken) {
-      this.router.navigate([`/${RoutePaths.VERIFY_INVITE}`], {
-        queryParams: { auth: authToken, action, id }
-      });
+      if (this.authService.isLoggedIn()) {
+        // Already authenticated — handle the action directly without re-login
+        this.navigateToAction(action, id);
+      } else {
+        this.router.navigate([`/${RoutePaths.VERIFY_INVITE}`], {
+          queryParams: { auth: authToken, action, id }
+        });
+      }
     } else if (email) {
       this.router.navigate([`/${RoutePaths.AUTH}`], {
         queryParams: { email, action, id }
       });
     } else if (action && id) {
-      if (action === 'join') {
-        this.consultationService.getParticipantById(id).subscribe({
-          next: (participant) => {
-            const consultation = participant.appointment.consultation;
-            const consultationId = typeof consultation === 'object' ? (consultation as {id: number}).id : consultation;
-            this.router.navigate(
-              ['/', RoutePaths.USER, RoutePaths.CONSULTATIONS, consultationId],
-              { queryParams: { join: 'true', appointmentId: participant.appointment.id } }
-            );
-          },
-          error: () => {
-            this.router.navigate(['/', RoutePaths.CONFIRM_PRESENCE, id]);
-          }
-        });
-      } else {
-        const route = this.actionHandler.getRouteForAction(action, id);
-        this.router.navigateByUrl(route);
-      }
+      this.navigateToAction(action, id);
     }
   }
 
@@ -128,5 +116,33 @@ export class App implements OnInit, OnDestroy {
     this.destroy$.next();
     this.destroy$.complete();
     this.userWsService.disconnect();
+  }
+
+  private navigateToAction(action: string | null, id: string | null): void {
+    if (action === 'join' && id) {
+      this.consultationService.getParticipantById(id).subscribe({
+        next: (participant) => {
+          const consultation = participant.appointment.consultation;
+          const consultationId = typeof consultation === 'object' ? (consultation as {id: number}).id : consultation;
+          if (consultationId) {
+            this.router.navigate(
+              ['/', RoutePaths.USER, RoutePaths.CONSULTATIONS, consultationId],
+              { queryParams: { join: 'true', appointmentId: participant.appointment.id } }
+            );
+          } else {
+            this.router.navigate(
+              ['/', RoutePaths.USER, RoutePaths.APPOINTMENTS, participant.appointment.id],
+              { queryParams: { join: 'true' } }
+            );
+          }
+        },
+        error: () => {
+          this.router.navigate(['/', RoutePaths.CONFIRM_PRESENCE, id]);
+        }
+      });
+    } else {
+      const route = this.actionHandler.getRouteForAction(action, id);
+      this.router.navigateByUrl(route);
+    }
   }
 }

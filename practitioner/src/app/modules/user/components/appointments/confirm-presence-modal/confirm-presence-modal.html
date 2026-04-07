@@ -21,6 +21,34 @@
   </div>
   } @else if (participant()) {
   <div class="modal-content">
+    <div class="top-actions">
+      <app-button
+        [size]="ButtonSizeEnum.small"
+        [style]="ButtonStyleEnum.stroke"
+        [text]="'confirmPresenceModal.edit' | translate"
+        leftIcon="edit"
+        (buttonClick)="editAppointment()">
+      </app-button>
+      @if (isOnlineAppointment()) {
+        <app-button
+          [size]="ButtonSizeEnum.small"
+          [style]="ButtonStyleEnum.primary"
+          [text]="'confirmPresenceModal.join' | translate"
+          leftIcon="video"
+          [disabled]="isJoining()"
+          [loading]="isJoining()"
+          (buttonClick)="joinCall()">
+        </app-button>
+      }
+    </div>
+
+    @if (tooEarlyError()) {
+      <div class="too-early-inline">
+        <app-svg src="clock" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--amber-600)'}"></app-svg>
+        <span>{{ 'confirmPresenceModal.tooEarlyToJoin' | translate: { time: tooEarlyError()!.time, minutes: tooEarlyError()!.minutes } }}</span>
+      </div>
+    }
+
     <div class="appointment-details">
       <div class="info-row">
         <app-svg
@@ -53,13 +81,19 @@
           participant()!.appointment.end_expected_at | localDate : 'HH:mm' }} }
         </span>
       </div>
-      @if (getDoctorName()) {
+      @if (hasConsultation()) {
       <div class="info-row">
         <app-svg
-          src="user"
+          src="consultation"
           [svgStyle]="{ 'width.px': 18, 'height.px': 18, color: 'var(--slate-500)' }">
         </app-svg>
-        <span class="info-text">{{ getDoctorName() }}</span>
+        <span class="info-text">
+          {{ 'confirmPresenceModal.consultation' | translate }}
+          #{{ participant()!.appointment.consultation_id || participant()!.appointment.consultation }}
+          @if (participant()!.appointment.consultation_title) {
+            — {{ participant()!.appointment.consultation_title }}
+          }
+        </span>
       </div>
       }
     </div>
@@ -75,14 +109,37 @@
         @for (p of participant()!.appointment.participants; track p.id) {
         <div class="participant-row">
           <span class="participant-name">{{ getParticipantName(p) }}</span>
+          @if (p.id === _participantId) {
+            <span class="participant-actions">
+              <a class="action-link confirm-link"
+                [class.disabled]="isConfirming() || isDeclining()"
+                (click)="confirmPresence()">
+                {{ 'confirmPresenceModal.confirm' | translate }}
+              </a>
+              <span class="action-separator">|</span>
+              <a class="action-link decline-link"
+                [class.disabled]="isConfirming() || isDeclining()"
+                (click)="declinePresence()">
+                {{ 'confirmPresenceModal.decline' | translate }}
+              </a>
+            </span>
+          }
           <span
-            class="participant-status"
-            [style.color]="getParticipantStatusColor(p.status)">
+            class="participant-badge"
+            [style.background-color]="getParticipantStatusColor(p.status)">
             {{ getParticipantStatusLabel(p.status) }}
           </span>
         </div>
         }
       </div>
+    </div>
+    }
+
+    @if (hasConsultation()) {
+    <div class="consultation-link-section">
+      <a class="consultation-link" (click)="viewInConsultation()">
+        {{ 'confirmPresenceModal.viewInConsultation' | translate }}
+      </a>
     </div>
     }
   </div>
@@ -93,22 +150,8 @@
       [block]="true"
       [size]="ButtonSizeEnum.medium"
       [style]="ButtonStyleEnum.stroke"
-      [state]="ButtonStateEnum.error"
-      [text]="'confirmPresenceModal.decline' | translate"
-      leftIcon="close"
-      [disabled]="isConfirming() || isDeclining() || loading()"
-      [loading]="isDeclining()"
-      (buttonClick)="declinePresence()">
-    </app-button>
-    <app-button
-      [block]="true"
-      [size]="ButtonSizeEnum.medium"
-      [style]="ButtonStyleEnum.primary"
-      [text]="'confirmPresenceModal.confirm' | translate"
-      leftIcon="check"
-      [disabled]="isConfirming() || isDeclining() || loading()"
-      [loading]="isConfirming()"
-      (buttonClick)="confirmPresence()">
+      [text]="'confirmPresenceModal.close' | translate"
+      (buttonClick)="onClose()">
     </app-button>
   </div>
 </app-modal>

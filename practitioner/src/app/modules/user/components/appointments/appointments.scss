@@ -522,6 +522,21 @@
       gap: 6px;
     }
   }
+
+  .appointment-participants {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 4px;
+    font-size: 13px;
+    color: var(--slate-500);
+
+    span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+  }
 }
 
 .appointment-actions-row {

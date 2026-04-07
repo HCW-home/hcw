@@ -161,16 +161,27 @@
               (appointment.end_expected_at) { - {{ appointment.end_expected_at |
               localDate:'HH:mm' }} }
             </span>
-            @if (appointment.created_by) {
+            @if (appointment.consultation_id || appointment.consultation) {
+            <span class="consultation-link">
+              <app-svg
+                src="consultation"
+                [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
+              {{ 'appointments.consultation' | translate }} #{{ appointment.consultation_id || appointment.consultation }}
+            </span>
+            }
+          </div>
+          @if (appointment.participants && appointment.participants.length > 0) {
+          <div class="appointment-participants">
+            @for (p of appointment.participants; track p.id; let last = $last) {
             <span>
               <app-svg
                 src="user"
                 [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
-              {{ appointment.created_by.first_name }} {{
-              appointment.created_by.last_name }}
+              {{ getParticipantName(p) }}{{ last ? '' : ',' }}
             </span>
             }
           </div>
+          }
         </div>
         <div class="appointment-actions-row">
           @if (canJoinVideoCall(appointment)) {
@@ -342,7 +353,8 @@
       [isOpen]="confirmPresenceModalOpen()"
       [participantId]="confirmPresenceParticipantId()"
       (closed)="onConfirmPresenceModalClosed()"
-      (presenceConfirmed)="onPresenceConfirmed()">
+      (presenceConfirmed)="onPresenceConfirmed()"
+      (editRequested)="onEditFromModal($event)">
     </app-confirm-presence-modal>
 
     <app-appointment-form-modal
