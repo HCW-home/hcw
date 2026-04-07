@@ -94,7 +94,6 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   isMicrophoneEnabled = false;
   isScreenShareEnabled = false;
   isRecording = false;
-  isTranscribing = false;
   isLoading = false;
   errorMessage = '';
   showChat = signal(false);
@@ -109,8 +108,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   private currentUserId: number | null = null;
 
   enableVideoRecording = false;
-  enableTranscription = false;
-  enableSubtitles = false;
+  enableLiveTranscription = false;
 
   devices: IMediaDevices = { cameras: [], microphones: [], speakers: [] };
   showMicMenu = false;
@@ -158,8 +156,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     this.authService.getOpenIDConfig().pipe(takeUntil(this.destroy$)).subscribe(cfg => {
       if (cfg) {
         this.enableVideoRecording = cfg.enable_video_recording;
-        this.enableTranscription = cfg.enable_transcription;
-        this.enableSubtitles = cfg.enable_subtitles;
+        this.enableLiveTranscription = cfg.enable_live_transcription;
         this.cdr.markForCheck();
       }
     });
@@ -654,46 +651,6 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     }
   }
 
-  async toggleTranscript(): Promise<void> {
-    if (this.isTranscribing) {
-      await this.stopTranscript();
-    } else {
-      await this.startTranscript();
-    }
-  }
-
-  private async startTranscript(): Promise<void> {
-    if (!this.appointmentId) {
-      this.toasterService.show('error', this.t.instant('videoConsultation.transcriptError'), this.t.instant('videoConsultation.noAppointmentId'));
-      return;
-    }
-
-    try {
-      await this.consultationService.startRecording(this.appointmentId, { mode: 'transcript', options: { language: 'en' } }).toPromise();
-      this.isTranscribing = true;
-      this.cdr.markForCheck();
-      this.toasterService.show('success', this.t.instant('videoConsultation.transcriptStarted'), this.t.instant('videoConsultation.transcriptStartedMessage'));
-    } catch (error) {
-      this.toasterService.show('error', this.t.instant('videoConsultation.transcriptError'), this.t.instant('videoConsultation.failedStartTranscript'));
-    }
-  }
-
-  private async stopTranscript(): Promise<void> {
-    if (!this.appointmentId) {
-      this.toasterService.show('error', this.t.instant('videoConsultation.transcriptError'), this.t.instant('videoConsultation.noAppointmentId'));
-      return;
-    }
-
-    try {
-      await this.consultationService.stopRecording(this.appointmentId).toPromise();
-      this.isTranscribing = false;
-      this.cdr.markForCheck();
-      this.toasterService.show('success', this.t.instant('videoConsultation.transcriptStopped'), this.t.instant('videoConsultation.transcriptStoppedMessage'));
-    } catch (error) {
-      this.toasterService.show('error', this.t.instant('videoConsultation.transcriptError'), this.t.instant('videoConsultation.failedStopTranscript'));
-    }
-  }
-
   async toggleCaptions(): Promise<void> {
     if (this.showCaptions()) {
       this.transcriptionService.stop();
@@ -792,6 +749,9 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
         }
       }
 
+      this.showCaptions.set(false);
+      this.transcriptionService.stop();
+      this.activeRemoteTranscriptions.clear();
       await this.livekitService.disconnect();
       this.leave.emit();
     }

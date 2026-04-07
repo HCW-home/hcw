@@ -158,6 +158,12 @@ class Appointment(models.Model):
         through="Participant",
         related_name="appointments_participating",
     )
+    transcript = models.TextField(
+        _("transcript"),
+        null=True,
+        blank=True,
+        help_text=_("JSON array of transcript lines with timestamps and speakers"),
+    )
 
     @property
     def active_participants(self):
@@ -180,8 +186,15 @@ class AppointmentRecording(models.Model):
     filepath = models.CharField(
         _("S3 filepath"), max_length=500, help_text=_("S3 key set at recording start")
     )
+    mode = models.CharField(
+        _("recording mode"),
+        max_length=20,
+        choices=RecordingModeChoices.choices,
+        default=RecordingModeChoices.SCREEN_RECORDING,
+    )
     started_at = models.DateTimeField(_("started at"), auto_now_add=True)
     stopped_at = models.DateTimeField(_("stopped at"), null=True, blank=True)
+    transcript_text = models.TextField(_("transcript text"), null=True, blank=True)
     message = models.OneToOneField(
         "Message",
         null=True,

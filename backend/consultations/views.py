@@ -625,13 +625,8 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 
         mode = request.data.get("mode", "screen_recording")
 
-        # Check feature flags
-        if mode == "transcript" and not config.enable_transcription:
-            return Response(
-                {"error": _("Transcription is disabled")},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-        if mode != "transcript" and not config.enable_video_recording:
+        # Check feature flag
+        if not config.enable_video_recording:
             return Response(
                 {"error": _("Video recording is disabled")},
                 status=status.HTTP_403_FORBIDDEN,
@@ -671,6 +666,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                 appointment=appointment,
                 egress_id=egress_id,
                 filepath=filepath,
+                mode=mode,
             )
 
             return Response({"status": "recording_started"})

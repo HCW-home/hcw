@@ -197,20 +197,7 @@
             </button>
           }
 
-          @if (enableTranscription) {
-            <button
-              class="control-button transcript-button"
-              [class.active]="isTranscribing"
-              (click)="toggleTranscript()">
-              @if (isTranscribing) {
-                <app-svg src="transcript-off" [svgStyle]="{'width.px': 24, 'height.px': 24}"></app-svg>
-              } @else {
-                <app-svg src="transcript" [svgStyle]="{'width.px': 24, 'height.px': 24}"></app-svg>
-              }
-            </button>
-          }
-
-          @if (enableSubtitles) {
+          @if (enableLiveTranscription) {
             <button
               class="control-button captions-button"
               [class.active]="showCaptions()"

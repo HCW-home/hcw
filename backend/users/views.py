@@ -1147,8 +1147,7 @@ class AppConfigView(APIView):
                 "consultation_auto_delete_hours": int(constance_config.consultation_auto_delete_hours),
                 "appointment_early_join_minutes": int(constance_config.appointment_early_join_minutes),
                 "enable_video_recording": constance_config.enable_video_recording,
-                "enable_transcription": constance_config.enable_transcription,
-                "enable_subtitles": constance_config.enable_subtitles,
+                "enable_live_transcription": constance_config.enable_live_transcription,
             }
         )
 

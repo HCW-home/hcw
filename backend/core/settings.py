@@ -779,13 +779,9 @@ CONSTANCE_CONFIG = {
         False,
         "Enable video recording during appointments",
     ),
-    "enable_transcription": (
+    "enable_live_transcription": (
         False,
-        "Enable transcription during appointments",
-    ),
-    "enable_subtitles": (
-        False,
-        "Enable real-time subtitles (captions) during appointments",
+        "Enable live transcription and subtitles during appointments (requires whisper-live server)",
     ),
     "whisper_model": (
         "small",
@@ -804,7 +800,7 @@ CONSTANCE_CONFIG_FIELDSETS = {
     "Uploads": ("max_upload_size_mb",),
     "Authentication": ("disable_password_login", "enable_registration"),
     "Visibility": ("users_visibility", "patient_visibility"),
-    "Video Features": ("enable_video_recording", "enable_transcription", "enable_subtitles", "whisper_model"),
+    "Video Features": ("enable_video_recording", "enable_live_transcription", "whisper_model"),
 }
 
 # CORS Configuration
@@ -970,4 +966,4 @@ RECORDING_CHECK_RETRY_DELAY = int(
 )  # seconds between retries
 
 # Whisper-live transcription server
-WHISPER_LIVE_URL = os.getenv("WHISPER_LIVE_URL", "ws://localhost:9090")
+WHISPER_LIVE_URL = os.getenv("WHISPER_LIVE_URL", "ws://127.0.0.1:9090")

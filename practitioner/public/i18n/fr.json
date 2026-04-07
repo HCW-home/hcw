@@ -668,12 +668,12 @@
   },
   "videoConsultation": {
     "transcriptError": "Erreur de transcription",
-    "transcriptStarted": "Transcription demarree",
-    "transcriptStartedMessage": "La transcription du rendez-vous a commence",
-    "failedStartTranscript": "Impossible de demarrer la transcription",
-    "transcriptStopped": "Transcription arretee",
+    "transcriptStarted": "Transcription démarrée",
+    "transcriptStartedMessage": "La transcription du rendez-vous a commencé",
+    "failedStartTranscript": "Impossible de démarrer la transcription",
+    "transcriptStopped": "Transcription arrêtée",
     "transcriptStoppedMessage": "La transcription sera disponible dans le chat prochainement",
-    "failedStopTranscript": "Impossible d'arreter la transcription",
+    "failedStopTranscript": "Impossible d'arrêter la transcription",
     "captionsError": "Erreur de sous-titres",
     "failedStartCaptions": "Impossible de se connecter au serveur de transcription",
     "participant": "Participant"

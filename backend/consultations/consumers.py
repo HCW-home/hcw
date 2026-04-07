@@ -25,7 +25,7 @@ class AppointmentTranscriptionConsumer(AsyncWebsocketConsumer):
             await self.close(code=4001)
             return
 
-        if not await sync_to_async(lambda: constance_config.enable_subtitles)():
+        if not await sync_to_async(lambda: constance_config.enable_live_transcription)():
             await self.close(code=4003)
             return
 
@@ -33,8 +33,10 @@ class AppointmentTranscriptionConsumer(AsyncWebsocketConsumer):
         self.whisper_ws = None
         self.whisper_session = None
         self.whisper_task = None
+        self.save_task = None
         self.consultation = None
         self.speaker_label = None
+        self.transcript_lines = []
 
         await self.accept()
         logger.info(
@@ -73,11 +75,11 @@ class AppointmentTranscriptionConsumer(AsyncWebsocketConsumer):
 
         self.speaker_label = speaker_label
 
-        whisper_url = getattr(settings, "WHISPER_LIVE_URL", "ws://localhost:9090")
+        whisper_url = getattr(settings, "WHISPER_LIVE_URL", "ws://127.0.0.1:9090")
 
         try:
             self.whisper_session = aiohttp.ClientSession()
-            self.whisper_ws = await self.whisper_session.ws_connect(whisper_url)
+            self.whisper_ws = await self.whisper_session.ws_connect(whisper_url, compress=0)
         except Exception as e:
             logger.error(f"Failed to connect to whisper-live at {whisper_url}: {e}")
             await self._cleanup_whisper_session()
@@ -102,6 +104,7 @@ class AppointmentTranscriptionConsumer(AsyncWebsocketConsumer):
 
         self.consultation = await self._get_consultation()
         self.whisper_task = asyncio.create_task(self._receive_transcription())
+        self.save_task = asyncio.create_task(self._periodic_save())
 
         logger.info(
             f"Transcription started: appointment={self.appointment_pk} language={language}"
@@ -109,6 +112,7 @@ class AppointmentTranscriptionConsumer(AsyncWebsocketConsumer):
 
     async def _receive_transcription(self):
         """Continuously read transcription segments from whisper-live and broadcast them."""
+        processed_count = 0
         try:
             async for msg in self.whisper_ws:
                 if msg.type == aiohttp.WSMsgType.TEXT:
@@ -117,11 +121,14 @@ class AppointmentTranscriptionConsumer(AsyncWebsocketConsumer):
                         segments = data.get("segments", [])
                         if not segments:
                             continue
-                        # whisper-live returns all segments accumulated since session
-                        # start — only the last one is the newly transcribed text.
-                        text = segments[-1].get("text", "").strip()
-                        if text and self.consultation:
-                            await self._broadcast_transcription(text)
+                        # whisper-live returns ALL segments accumulated since session start.
+                        # Only process segments we haven't seen yet.
+                        new_segments = segments[processed_count:]
+                        for seg in new_segments:
+                            text = seg.get("text", "").strip()
+                            if text and self.consultation:
+                                await self._broadcast_transcription(text)
+                        processed_count = len(segments)
                     except (json.JSONDecodeError, KeyError):
                         pass
                 elif msg.type in (aiohttp.WSMsgType.CLOSED, aiohttp.WSMsgType.ERROR):
@@ -129,8 +136,30 @@ class AppointmentTranscriptionConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             logger.debug(f"Transcription receive loop ended: {e}")
 
+    async def _periodic_save(self):
+        """Save transcript to database every 30 seconds."""
+        try:
+            while True:
+                await asyncio.sleep(30)
+                if self.transcript_lines:
+                    await self._save_transcript()
+        except asyncio.CancelledError:
+            pass
+
     async def _broadcast_transcription(self, text: str):
         """Send the transcript to all consultation participants via their user WS."""
+        from django.utils import timezone
+
+        # Store transcript line with timestamp and speaker
+        speaker_name = await self._get_speaker_name()
+        timestamp = timezone.now().isoformat()
+        self.transcript_lines.append({
+            "timestamp": timestamp,
+            "speaker": speaker_name,
+            "speaker_id": self.user.pk,
+            "text": text,
+        })
+
         user_pks = await self._get_user_pks()
         event = {
             "type": "transcription",
@@ -168,9 +197,51 @@ class AppointmentTranscriptionConsumer(AsyncWebsocketConsumer):
                 pass
             self.whisper_task = None
 
+        if hasattr(self, 'save_task') and self.save_task:
+            self.save_task.cancel()
+            try:
+                await self.save_task
+            except asyncio.CancelledError:
+                pass
+            self.save_task = None
+
         await self._cleanup_whisper_session()
 
+        # Save accumulated transcript to the database
+        if self.transcript_lines:
+            await self._save_transcript()
+
         logger.info(f"Transcription stopped: appointment={self.appointment_pk}")
+
+    @sync_to_async
+    def _save_transcript(self):
+        """Save accumulated transcript lines to the appointment."""
+        from consultations.models import Appointment
+        import json as json_module
+
+        try:
+            appointment = Appointment.objects.get(pk=self.appointment_pk)
+        except Appointment.DoesNotExist:
+            return
+
+        # Merge with existing transcript data if any
+        existing = []
+        if appointment.transcript:
+            try:
+                existing = json_module.loads(appointment.transcript)
+            except (json_module.JSONDecodeError, TypeError):
+                existing = []
+
+        existing.extend(self.transcript_lines)
+        appointment.transcript = json_module.dumps(existing, ensure_ascii=False)
+        appointment.save(update_fields=["transcript"])
+        self.transcript_lines = []
+        logger.info(f"Transcript saved for appointment {self.appointment_pk}: {len(existing)} lines")
+
+    @sync_to_async
+    def _get_speaker_name(self):
+        """Get the display name of the current user."""
+        return self.user.name or self.user.email or str(self.user.pk)
 
     @sync_to_async
     def _get_consultation(self):
