@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { RoutePaths } from '../constants/routes';
+import { ActiveCallService } from './active-call.service';
 import { ToasterService } from './toaster.service';
 import { TranslationService } from './translation.service';
 
@@ -25,6 +26,7 @@ export class IncomingCallService {
 
   constructor(
     private router: Router,
+    private activeCallService: ActiveCallService,
     private toasterService: ToasterService,
     private t: TranslationService
   ) {
@@ -113,14 +115,11 @@ export class IncomingCallService {
     this.toasterService.dismiss(INCOMING_CALL_TOAST_ID);
     this.closeSystemNotification();
 
-    this.router.navigate([
-      '/',
-      RoutePaths.USER,
-      RoutePaths.CONSULTATIONS,
-      callData.consultationId,
-    ], {
-      queryParams: { appointmentId: callData.appointmentId, join: true }
+    this.activeCallService.startCall({
+      appointmentId: callData.appointmentId,
+      consultationId: callData.consultationId,
     });
+    this.setActiveCall(callData.appointmentId);
   }
 
   setActiveCall(appointmentId: number): void {
