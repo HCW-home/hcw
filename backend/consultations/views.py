@@ -251,7 +251,7 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
         except Exception as e:
             return Response(
                 {"detail": "No media server available."},
-                status=status.HTTP_404_NOT_FOUND,
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
 
     @extend_schema(
@@ -430,7 +430,6 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-
         # For list, retrieve, and join actions: filter by participants, creator, or consultation access
         if self.action in ["list", "retrieve", "join"]:
             return Appointment.objects.filter(
@@ -551,7 +550,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return Response(
                 {"detail": "No media server available."},
-                status=status.HTTP_404_NOT_FOUND,
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
 
     @action(detail=True, methods=["post"])
@@ -735,12 +734,16 @@ class ParticipantViewSet(viewsets.ModelViewSet):
         if not user.is_authenticated:
             return Participant.objects.none()
 
-        # Return active participants from appointments in consultations the user has access to
+        # Return active participants from appointments the user has access to
         return Participant.objects.filter(
+            Q(
+                appointment__consultation__in=Consultation.objects.filter(
+                    Q(created_by=user) | Q(owned_by=user) | Q(group__users=user)
+                )
+            )
+            | Q(appointment__created_by=user)
+            | Q(appointment__participant__user=user, appointment__participant__is_active=True),
             is_active=True,
-            appointment__consultation__in=Consultation.objects.filter(
-                Q(created_by=user) | Q(owned_by=user) | Q(group__users=user)
-            ),
         ).distinct()
 
     def perform_create(self, serializer):
