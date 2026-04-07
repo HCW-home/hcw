@@ -133,7 +133,8 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   currentTitle = signal<string>('');
 
   confirmPresenceModalOpen = signal(false);
-  confirmPresenceParticipantId = signal<number | null>(null);
+  confirmPresenceAppointment = signal<Appointment | null>(null);
+  confirmPresenceMyParticipantId = signal<number | null>(null);
   createAppointmentModalOpen = signal(false);
   editingAppointment = signal<Appointment | null>(null);
   selectedStartDate = signal<Date | null>(null);
@@ -168,8 +169,6 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     dayMaxEvents: true,
     eventClick: this.handleEventClick.bind(this),
     datesSet: this.handleDatesSet.bind(this),
-    eventMouseEnter: this.handleEventMouseEnter.bind(this),
-    eventMouseLeave: this.handleEventMouseLeave.bind(this),
     select: this.handleDateSelect.bind(this),
     eventDrop: this.handleEventDrop.bind(this),
     eventResize: this.handleEventResize.bind(this),
@@ -223,7 +222,11 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
       const appointmentId = params['appointmentId'];
 
       if (participantId) {
-        this.openConfirmPresenceModal(Number(participantId));
+        this.consultationService.getParticipantById(participantId).pipe(takeUntil(this.destroy$)).subscribe({
+          next: (participant) => {
+            this.openAppointmentModal(participant.appointment);
+          },
+        });
         this.router.navigate([], {
           relativeTo: this.route,
           queryParams: {},
@@ -615,13 +618,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
       'appointment'
     ] as Appointment;
 
-    const rect = clickInfo.el.getBoundingClientRect();
-    this.menuPosition.set({
-      top: rect.bottom + window.scrollY,
-      left: rect.left + window.scrollX,
-    });
-
-    this.selectedAppointmentForMenu.set(appointment);
+    this.viewAppointment(appointment);
   }
 
   handleDatesSet(arg: DatesSetArg): void {
@@ -793,21 +790,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   }
 
   viewAppointment(appointment: Appointment): void {
-    const myParticipant = this.getMyParticipant(appointment);
-    if (myParticipant) {
-      this.openConfirmPresenceModal(myParticipant.id);
-    } else if (appointment.participants?.length > 0) {
-      // User is not a participant (e.g. creator) — open modal with first participant
-      this.openConfirmPresenceModal(appointment.participants[0].id);
-    } else {
-      // No participants — navigate to consultation if available
-      const consultationId = appointment.consultation_id || appointment.consultation;
-      if (consultationId) {
-        this.router.navigate([RoutePaths.USER, 'consultations', consultationId], {
-          queryParams: { appointmentId: appointment.id },
-        });
-      }
-    }
+    this.openAppointmentModal(appointment);
   }
 
   getParticipantName(participant: Participant): string {
@@ -906,8 +889,10 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     return !!myParticipant && myParticipant.status === 'invited';
   }
 
-  openConfirmPresenceModal(participantId: number): void {
-    this.confirmPresenceParticipantId.set(participantId);
+  openAppointmentModal(appointment: Appointment): void {
+    const myParticipant = this.getMyParticipant(appointment);
+    this.confirmPresenceAppointment.set(appointment);
+    this.confirmPresenceMyParticipantId.set(myParticipant?.id ?? null);
     this.confirmPresenceModalOpen.set(true);
   }
 
@@ -916,15 +901,13 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     event: MouseEvent
   ): void {
     event.stopPropagation();
-    const myParticipant = this.getMyParticipant(appointment);
-    if (myParticipant) {
-      this.openConfirmPresenceModal(myParticipant.id);
-    }
+    this.openAppointmentModal(appointment);
   }
 
   onConfirmPresenceModalClosed(): void {
     this.confirmPresenceModalOpen.set(false);
-    this.confirmPresenceParticipantId.set(null);
+    this.confirmPresenceAppointment.set(null);
+    this.confirmPresenceMyParticipantId.set(null);
   }
 
   onPresenceConfirmed(): void {

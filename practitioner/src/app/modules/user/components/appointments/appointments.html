@@ -164,7 +164,7 @@
             @if (appointment.consultation_id || appointment.consultation) {
             <span class="consultation-link">
               <app-svg
-                src="consultation"
+                src="stethoscope"
                 [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
               {{ 'appointments.consultation' | translate }} #{{ appointment.consultation_id || appointment.consultation }}
             </span>
@@ -240,121 +240,14 @@
       </full-calendar>
     </div>
 
-    @if (selectedAppointmentForMenu()) {
-    <div
-      class="appointment-context-menu"
-      [style.top.px]="menuPosition().top"
-      [style.left.px]="menuPosition().left">
-      @if (canJoinVideoCall(selectedAppointmentForMenu()!)) {
-        <button class="context-menu-item" (click)="joinVideoCallFromMenu(selectedAppointmentForMenu()!, $event)">
-          <app-svg
-            src="video"
-            [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
-          <span>{{ 'consultationDetail.join' | translate }}</span>
-        </button>
-      }
-      @if (hasConsultation(selectedAppointmentForMenu()!)) {
-        <button class="context-menu-item" (click)="viewConsultationFromMenu(selectedAppointmentForMenu()!, $event)">
-          <app-svg
-            src="eye"
-            [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
-          <span>{{ 'appointments.viewConsultation' | translate }}</span>
-        </button>
-      }
-      <button class="context-menu-item" (click)="editAppointment(selectedAppointmentForMenu()!, $event)">
-        <app-svg
-          src="edit"
-          [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
-        <span>{{ 'appointments.edit' | translate }}</span>
-      </button>
-      <button class="context-menu-item cancel" (click)="cancelAppointment(selectedAppointmentForMenu()!, $event)">
-        <app-svg
-          src="x-circle"
-          [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
-        <span>{{ 'appointments.cancel' | translate }}</span>
-      </button>
-    </div>
-    }
-
-    @if (hoveredAppointment()) {
-    <div
-      class="calendar-tooltip"
-      [style.top.px]="tooltipPosition().top"
-      [style.left.px]="tooltipPosition().left">
-      <div class="tooltip-header">
-        <div class="tooltip-title-row">
-          <span class="tooltip-title">
-            {{ hoveredAppointment()!.title || ('appointments.defaultTitle' | translate) }}
-          </span>
-          <app-badge [type]="hoveredAppointment()!.type === AppointmentType.ONLINE ? BadgeTypeEnum.blue : BadgeTypeEnum.purple">
-            {{ getAppointmentTypeLabel(hoveredAppointment()!.type) }}
-          </app-badge>
-        </div>
-        <span
-          class="tooltip-status"
-          [style.color]="getStatusColor(hoveredAppointment()!.status)">
-          {{ getAppointmentStatusLabel(hoveredAppointment()!.status) }}
-        </span>
-      </div>
-
-      <div class="tooltip-datetime">
-        <app-svg
-          src="calendar"
-          [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
-        <span
-          >{{ hoveredAppointment()!.scheduled_at | localDate : 'fullDate'
-          }}</span
-        >
-      </div>
-
-      <div class="tooltip-time">
-        <app-svg
-          src="clock"
-          [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
-        <span>
-          {{ hoveredAppointment()!.scheduled_at | localDate : 'HH:mm' }} @if
-          (hoveredAppointment()!.end_expected_at) { - {{
-          hoveredAppointment()!.end_expected_at | localDate : 'HH:mm' }} }
-        </span>
-      </div>
-
-      @if (hoveredAppointment()!.participants &&
-      hoveredAppointment()!.participants.length > 0) {
-      <div class="tooltip-participants">
-        <span class="participants-title"
-          >{{ 'appointments.participantsCount' | translate:{ count:
-          hoveredAppointment()!.participants.length } }}</span
-        >
-        <div class="participants-list">
-          @for (participant of hoveredAppointment()!.participants; track
-          participant.id) {
-          <div class="participant-row">
-            <span class="participant-name"
-              >{{ getParticipantName(participant) }}</span
-            >
-            <span
-              class="participant-status"
-              [style.color]="getParticipantStatusColor(participant.status)">
-              {{ getParticipantStatusLabel(participant.status) }}
-            </span>
-          </div>
-          }
-        </div>
-      </div>
-      } @else {
-      <div class="tooltip-no-participants">
-        <span>{{ 'appointments.noParticipantsAdded' | translate }}</span>
-      </div>
-      }
-    </div>
-    }
-
     <app-confirm-presence-modal
       [isOpen]="confirmPresenceModalOpen()"
-      [participantId]="confirmPresenceParticipantId()"
+      [appointment]="confirmPresenceAppointment()"
+      [myParticipantId]="confirmPresenceMyParticipantId()"
       (closed)="onConfirmPresenceModalClosed()"
       (presenceConfirmed)="onPresenceConfirmed()"
-      (editRequested)="onEditFromModal($event)">
+      (editRequested)="onEditFromModal($event)"
+      (appointmentCancelled)="onPresenceConfirmed()">
     </app-confirm-presence-modal>
 
     <app-appointment-form-modal

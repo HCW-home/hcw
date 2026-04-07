@@ -3,25 +3,16 @@
   [title]="modalTitle"
   size="small"
   (closed)="onClose()">
-  @if (loading()) {
-  <div class="modal-loading">
-    <app-loader></app-loader>
-  </div>
-  } @else if (errorMessage()) {
-  <div class="modal-error">
-    <app-svg
-      src="error"
-      [svgStyle]="{ 'width.px': 40, 'height.px': 40, color: 'var(--error-500)' }">
-    </app-svg>
-    <app-typography
-      [variant]="TypographyTypeEnum['body-regular']"
-      color="var(--slate-500)">
-      {{ errorMessage() }}
-    </app-typography>
-  </div>
-  } @else if (participant()) {
+  @if (appointment) {
   <div class="modal-content">
     <div class="top-actions">
+      <app-button
+        [size]="ButtonSizeEnum.small"
+        [style]="ButtonStyleEnum.stroke"
+        [state]="ButtonStateEnum.error"
+        [text]="'confirmPresenceModal.cancel' | translate"
+        (buttonClick)="cancelAppointment()">
+      </app-button>
       <app-button
         [size]="ButtonSizeEnum.small"
         [style]="ButtonStyleEnum.stroke"
@@ -29,7 +20,7 @@
         leftIcon="edit"
         (buttonClick)="editAppointment()">
       </app-button>
-      @if (isOnlineAppointment()) {
+      @if (isOnlineAppointment) {
         <app-button
           [size]="ButtonSizeEnum.small"
           [style]="ButtonStyleEnum.primary"
@@ -50,13 +41,16 @@
     }
 
     <div class="appointment-details">
+      @if (appointment.title) {
+      <div class="appointment-title">{{ appointment.title }}</div>
+      }
       <div class="info-row">
         <app-svg
-          [src]="participant()!.appointment.type === AppointmentType.ONLINE ? 'video' : 'calendar'"
+          [src]="appointment.type === AppointmentType.ONLINE ? 'video' : 'calendar'"
           [svgStyle]="{ 'width.px': 18, 'height.px': 18, color: 'var(--slate-500)' }">
         </app-svg>
         <span class="info-text">
-          {{ participant()!.appointment.type === AppointmentType.ONLINE ?
+          {{ appointment.type === AppointmentType.ONLINE ?
           ('confirmPresenceModal.videoConsultation' | translate) :
           ('confirmPresenceModal.inPersonVisit' | translate) }}
         </span>
@@ -67,7 +61,7 @@
           [svgStyle]="{ 'width.px': 18, 'height.px': 18, color: 'var(--slate-500)' }">
         </app-svg>
         <span class="info-text">
-          {{ participant()!.appointment.scheduled_at | localDate : 'fullDate' }}
+          {{ appointment.scheduled_at | localDate : 'fullDate' }}
         </span>
       </div>
       <div class="info-row">
@@ -76,40 +70,42 @@
           [svgStyle]="{ 'width.px': 18, 'height.px': 18, color: 'var(--slate-500)' }">
         </app-svg>
         <span class="info-text">
-          {{ participant()!.appointment.scheduled_at | localDate : 'HH:mm' }}
-          @if (participant()!.appointment.end_expected_at) { - {{
-          participant()!.appointment.end_expected_at | localDate : 'HH:mm' }} }
+          {{ appointment.scheduled_at | localDate : 'HH:mm' }}
+          @if (appointment.end_expected_at) { - {{
+          appointment.end_expected_at | localDate : 'HH:mm' }} }
         </span>
       </div>
-      @if (hasConsultation()) {
+      @if (hasConsultation) {
       <div class="info-row">
         <app-svg
-          src="consultation"
+          src="stethoscope"
           [svgStyle]="{ 'width.px': 18, 'height.px': 18, color: 'var(--slate-500)' }">
         </app-svg>
         <span class="info-text">
           {{ 'confirmPresenceModal.consultation' | translate }}
-          #{{ participant()!.appointment.consultation_id || participant()!.appointment.consultation }}
-          @if (participant()!.appointment.consultation_title) {
-            — {{ participant()!.appointment.consultation_title }}
+          #{{ appointment.consultation_id || appointment.consultation }}
+          @if (appointment.consultation_title) {
+            — {{ appointment.consultation_title }}
           }
         </span>
+        <a class="consultation-link" (click)="viewInConsultation()">
+          {{ 'confirmPresenceModal.viewInConsultation' | translate }}
+        </a>
       </div>
       }
     </div>
 
-    @if (participant()!.appointment.participants &&
-    participant()!.appointment.participants.length > 0) {
+    @if (appointment.participants && appointment.participants.length > 0) {
     <div class="participants-section">
       <span class="participants-title">
         {{ 'confirmPresenceModal.participants' | translate }} ({{
-        participant()!.appointment.participants.length }})
+        appointment.participants.length }})
       </span>
       <div class="participants-list">
-        @for (p of participant()!.appointment.participants; track p.id) {
+        @for (p of appointment.participants; track p.id) {
         <div class="participant-row">
           <span class="participant-name">{{ getParticipantName(p) }}</span>
-          @if (p.id === _participantId) {
+          @if (p.id === myParticipantId) {
             <span class="participant-actions">
               <a class="action-link confirm-link"
                 [class.disabled]="isConfirming() || isDeclining()"
@@ -135,13 +131,6 @@
     </div>
     }
 
-    @if (hasConsultation()) {
-    <div class="consultation-link-section">
-      <a class="consultation-link" (click)="viewInConsultation()">
-        {{ 'confirmPresenceModal.viewInConsultation' | translate }}
-      </a>
-    </div>
-    }
   </div>
   }
 

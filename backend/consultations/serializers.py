@@ -813,6 +813,7 @@ class AppointmentDetailSerializer(serializers.ModelSerializer):
         model = Appointment
         fields = [
             "id",
+            "title",
             "scheduled_at",
             "end_expected_at",
             "type",

@@ -20,9 +20,17 @@
 
 .top-actions {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: 8px;
   margin-bottom: 16px;
+}
+
+.appointment-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--slate-800);
+  margin-bottom: 4px;
 }
 
 .appointment-details {
@@ -39,6 +47,21 @@
       font-size: 14px;
       color: var(--slate-700);
       font-weight: 500;
+    }
+
+    .consultation-link {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--blue-600);
+      cursor: pointer;
+      text-decoration: none;
+      margin-left: auto;
+      flex-shrink: 0;
+
+      &:hover {
+        color: var(--blue-700);
+        text-decoration: underline;
+      }
     }
   }
 }
@@ -135,24 +158,6 @@
   }
 }
 
-.consultation-link-section {
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid var(--slate-100);
-
-  .consultation-link {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--blue-600);
-    cursor: pointer;
-    text-decoration: none;
-
-    &:hover {
-      color: var(--blue-700);
-      text-decoration: underline;
-    }
-  }
-}
 
 .modal-actions {
   display: flex;

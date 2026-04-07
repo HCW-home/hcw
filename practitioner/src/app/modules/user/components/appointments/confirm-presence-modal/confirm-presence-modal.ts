@@ -5,7 +5,6 @@ import {
   EventEmitter,
   inject,
   signal,
-  computed,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
@@ -14,15 +13,14 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { ModalComponent } from '../../../../../shared/components/modal/modal.component';
 import { Button } from '../../../../../shared/ui-components/button/button';
 import { Svg } from '../../../../../shared/ui-components/svg/svg';
-import { Loader } from '../../../../../shared/components/loader/loader';
-import { Typography } from '../../../../../shared/ui-components/typography/typography';
 import { ConsultationService } from '../../../../../core/services/consultation.service';
 import { Auth } from '../../../../../core/services/auth';
 import { ToasterService } from '../../../../../core/services/toaster.service';
 import { TranslationService } from '../../../../../core/services/translation.service';
 import {
+  Appointment,
+  AppointmentStatus,
   AppointmentType,
-  IParticipantDetail,
   Participant,
   ParticipantStatus,
 } from '../../../../../core/models/consultation';
@@ -31,8 +29,8 @@ import {
   ButtonStateEnum,
   ButtonSizeEnum,
 } from '../../../../../shared/constants/button';
-import { TypographyTypeEnum } from '../../../../../shared/constants/typography';
 import { LocalDatePipe } from '../../../../../shared/pipes/local-date.pipe';
+import { ConfirmationService } from '../../../../../core/services/confirmation.service';
 import { RoutePaths } from '../../../../../core/constants/routes';
 
 @Component({
@@ -44,8 +42,6 @@ import { RoutePaths } from '../../../../../core/constants/routes';
     ModalComponent,
     Button,
     Svg,
-    Loader,
-    Typography,
     LocalDatePipe,
     TranslatePipe,
   ],
@@ -54,47 +50,38 @@ export class ConfirmPresenceModal {
   private destroy$ = new Subject<void>();
   private consultationService = inject(ConsultationService);
   private authService = inject(Auth);
+  private confirmationService = inject(ConfirmationService);
   private toasterService = inject(ToasterService);
   private router = inject(Router);
   private t = inject(TranslationService);
   private appointmentEarlyJoinMinutes = 10;
 
   @Input() isOpen = false;
-  @Input() set participantId(value: number | null) {
-    this._participantId = value;
-    if (value && this.isOpen) {
-      this.loadParticipant();
-    }
-  }
+  @Input() appointment: Appointment | null = null;
+  @Input() myParticipantId: number | null = null;
 
   @Output() closed = new EventEmitter<void>();
   @Output() presenceConfirmed = new EventEmitter<void>();
   @Output() editRequested = new EventEmitter<number>();
+  @Output() appointmentCancelled = new EventEmitter<void>();
 
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
   protected readonly ButtonStateEnum = ButtonStateEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
-  protected readonly TypographyTypeEnum = TypographyTypeEnum;
   protected readonly AppointmentType = AppointmentType;
 
-  _participantId: number | null = null;
-  loading = signal(true);
-  participant = signal<IParticipantDetail | null>(null);
-  errorMessage = signal<string | null>(null);
   isConfirming = signal(false);
   isDeclining = signal(false);
   isJoining = signal(false);
   tooEarlyError = signal<{ time: string; minutes: number } | null>(null);
 
-  isOnlineAppointment = computed(() => {
-    const p = this.participant();
-    return p?.appointment?.type === AppointmentType.ONLINE;
-  });
+  get isOnlineAppointment(): boolean {
+    return this.appointment?.type === AppointmentType.ONLINE;
+  }
 
-  hasConsultation = computed(() => {
-    const p = this.participant();
-    return !!(p?.appointment?.consultation_id || p?.appointment?.consultation);
-  });
+  get hasConsultation(): boolean {
+    return !!(this.appointment?.consultation_id || this.appointment?.consultation);
+  }
 
   get modalTitle(): string {
     return this.t.instant('confirmPresenceModal.title');
@@ -108,42 +95,12 @@ export class ConfirmPresenceModal {
     });
   }
 
-  ngOnChanges(): void {
-    if (this.isOpen && this._participantId) {
-      this.loadParticipant();
-    }
-  }
-
-  private loadParticipant(): void {
-    if (!this._participantId) return;
-
-    this.loading.set(true);
-    this.errorMessage.set(null);
-    this.participant.set(null);
-
-    this.consultationService
-      .getParticipantById(String(this._participantId))
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: participant => {
-          this.participant.set(participant);
-          this.loading.set(false);
-        },
-        error: () => {
-          this.errorMessage.set(
-            this.t.instant('confirmPresenceModal.loadError')
-          );
-          this.loading.set(false);
-        },
-      });
-  }
-
   confirmPresence(): void {
-    if (!this._participantId) return;
+    if (!this.myParticipantId) return;
     this.isConfirming.set(true);
 
     this.consultationService
-      .confirmParticipantPresence(String(this._participantId), true)
+      .confirmParticipantPresence(String(this.myParticipantId), true)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
@@ -168,11 +125,11 @@ export class ConfirmPresenceModal {
   }
 
   declinePresence(): void {
-    if (!this._participantId) return;
+    if (!this.myParticipantId) return;
     this.isDeclining.set(true);
 
     this.consultationService
-      .confirmParticipantPresence(String(this._participantId), false)
+      .confirmParticipantPresence(String(this.myParticipantId), false)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
@@ -197,11 +154,10 @@ export class ConfirmPresenceModal {
   }
 
   joinCall(): void {
-    const p = this.participant();
-    if (!p?.appointment) return;
+    if (!this.appointment) return;
 
     const now = new Date();
-    const scheduledTime = new Date(p.appointment.scheduled_at);
+    const scheduledTime = new Date(this.appointment.scheduled_at);
     const earliestJoin = new Date(scheduledTime.getTime() - this.appointmentEarlyJoinMinutes * 60 * 1000);
 
     if (now < earliestJoin) {
@@ -211,49 +167,75 @@ export class ConfirmPresenceModal {
       return;
     }
 
-    const consultation = p.appointment.consultation;
-    const consultationId = typeof consultation === 'object' ? (consultation as { id: number }).id : consultation;
+    const consultationId = this.appointment.consultation_id || this.appointment.consultation;
 
     if (consultationId) {
       this.onClose();
       this.router.navigate(
         ['/', RoutePaths.USER, RoutePaths.CONSULTATIONS, consultationId],
-        { queryParams: { join: 'true', appointmentId: p.appointment.id } }
+        { queryParams: { join: 'true', appointmentId: this.appointment.id } }
       );
     }
   }
 
   viewInConsultation(): void {
-    const p = this.participant();
-    if (!p?.appointment) return;
-    const consultationId = p.appointment.consultation_id || p.appointment.consultation;
+    if (!this.appointment) return;
+    const consultationId = this.appointment.consultation_id || this.appointment.consultation;
     if (consultationId) {
       this.onClose();
       this.router.navigate(
         ['/', RoutePaths.USER, RoutePaths.CONSULTATIONS, consultationId],
-        { queryParams: { appointmentId: p.appointment.id } }
+        { queryParams: { appointmentId: this.appointment.id } }
       );
     }
   }
 
   editAppointment(): void {
-    const p = this.participant();
-    if (p?.appointment) {
+    if (this.appointment) {
       this.onClose();
-      this.editRequested.emit(p.appointment.id);
+      this.editRequested.emit(this.appointment.id);
     }
+  }
+
+  async cancelAppointment(): Promise<void> {
+    if (!this.appointment) return;
+
+    const confirmed = await this.confirmationService.confirm({
+      title: this.t.instant('confirmPresenceModal.cancelTitle'),
+      message: this.t.instant('confirmPresenceModal.cancelMessage'),
+      confirmText: this.t.instant('confirmPresenceModal.cancelConfirm'),
+      cancelText: this.t.instant('confirmPresenceModal.close'),
+      confirmStyle: 'danger',
+    });
+
+    if (!confirmed) return;
+
+    this.consultationService
+      .updateAppointment(this.appointment.id, { status: AppointmentStatus.CANCELLED })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.toasterService.show(
+            'success',
+            this.t.instant('confirmPresenceModal.cancelSuccess'),
+            this.t.instant('confirmPresenceModal.cancelSuccessMessage')
+          );
+          this.appointmentCancelled.emit();
+          this.onClose();
+        },
+        error: () => {
+          this.toasterService.show(
+            'error',
+            this.t.instant('confirmPresenceModal.cancelError'),
+            this.t.instant('confirmPresenceModal.cancelErrorMessage')
+          );
+        },
+      });
   }
 
   onClose(): void {
     this.tooEarlyError.set(null);
     this.closed.emit();
-  }
-
-  getDoctorName(): string {
-    const p = this.participant();
-    if (!p?.appointment?.created_by) return '';
-    const cb = p.appointment.created_by;
-    return `${cb.first_name || ''} ${cb.last_name || ''}`.trim();
   }
 
   getParticipantName(participant: Participant): string {
