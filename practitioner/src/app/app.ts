@@ -131,8 +131,8 @@ export class App implements OnInit, OnDestroy {
             );
           } else {
             this.router.navigate(
-              ['/', RoutePaths.USER, RoutePaths.APPOINTMENTS, participant.appointment.id],
-              { queryParams: { join: 'true' } }
+              ['/', RoutePaths.USER, RoutePaths.APPOINTMENTS],
+              { queryParams: { participantId: id } }
             );
           }
         },
