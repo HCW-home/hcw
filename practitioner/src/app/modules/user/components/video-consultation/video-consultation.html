@@ -183,35 +183,41 @@
           </button>
 
           <!-- Record -->
-          <button
-            class="control-button record-button"
-            [class.active]="isRecording"
-            (click)="toggleRecording()">
-            @if (isRecording) {
-              <app-svg src="record-stop" [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
-            } @else {
-              <app-svg src="record" [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
-            }
-            <span class="control-label">{{ 'videoConsultation.record' | translate }}</span>
-          </button>
+          @if (enableVideoRecording) {
+            <button
+              class="control-button record-button"
+              [class.active]="isRecording"
+              (click)="toggleRecording()">
+              @if (isRecording) {
+                <app-svg src="record-stop" [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
+              } @else {
+                <app-svg src="record" [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
+              }
+              <span class="control-label">{{ 'videoConsultation.record' | translate }}</span>
+            </button>
+          }
 
-          <button
-            class="control-button transcript-button"
-            [class.active]="isTranscribing"
-            (click)="toggleTranscript()">
-            @if (isTranscribing) {
-              <app-svg src="transcript-off" [svgStyle]="{'width.px': 24, 'height.px': 24}"></app-svg>
-            } @else {
-              <app-svg src="transcript" [svgStyle]="{'width.px': 24, 'height.px': 24}"></app-svg>
-            }
-          </button>
+          @if (enableTranscription) {
+            <button
+              class="control-button transcript-button"
+              [class.active]="isTranscribing"
+              (click)="toggleTranscript()">
+              @if (isTranscribing) {
+                <app-svg src="transcript-off" [svgStyle]="{'width.px': 24, 'height.px': 24}"></app-svg>
+              } @else {
+                <app-svg src="transcript" [svgStyle]="{'width.px': 24, 'height.px': 24}"></app-svg>
+              }
+            </button>
+          }
 
-          <button
-            class="control-button captions-button"
-            [class.active]="showCaptions()"
-            (click)="toggleCaptions()">
-            <app-svg src="captions" [svgStyle]="{'width.px': 24, 'height.px': 24}"></app-svg>
-          </button>
+          @if (enableSubtitles) {
+            <button
+              class="control-button captions-button"
+              [class.active]="showCaptions()"
+              (click)="toggleCaptions()">
+              <app-svg src="captions" [svgStyle]="{'width.px': 24, 'height.px': 24}"></app-svg>
+            </button>
+          }
 
           @if (!isMinimized) {
             <!-- Chat -->

@@ -1146,6 +1146,9 @@ class AppConfigView(APIView):
                 "vapid_public_key": settings.WEBPUSH_VAPID_PUBLIC_KEY,
                 "consultation_auto_delete_hours": int(constance_config.consultation_auto_delete_hours),
                 "appointment_early_join_minutes": int(constance_config.appointment_early_join_minutes),
+                "enable_video_recording": constance_config.enable_video_recording,
+                "enable_transcription": constance_config.enable_transcription,
+                "enable_subtitles": constance_config.enable_subtitles,
             }
         )
 

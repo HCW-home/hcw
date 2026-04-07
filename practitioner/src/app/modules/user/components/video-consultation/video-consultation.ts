@@ -26,6 +26,7 @@ import { UserService } from '../../../../core/services/user.service';
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { IncomingCallService } from '../../../../core/services/incoming-call.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
+import { Auth } from '../../../../core/services/auth';
 import { IPreJoinSettings, IMediaDevices } from '../../../../core/models/media-device';
 import { Button } from '../../../../shared/ui-components/button/button';
 import { Svg } from '../../../../shared/ui-components/svg/svg';
@@ -107,6 +108,10 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   private activeRemoteTranscriptions = new Set<string>();
   private currentUserId: number | null = null;
 
+  enableVideoRecording = false;
+  enableTranscription = false;
+  enableSubtitles = false;
+
   devices: IMediaDevices = { cameras: [], microphones: [], speakers: [] };
   showMicMenu = false;
   showCameraMenu = false;
@@ -133,6 +138,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     private userWsService: UserWebSocketService,
     private userService: UserService,
     private confirmationService: ConfirmationService,
+    private authService: Auth,
     private cdr: ChangeDetectorRef,
     translationService: TranslationService
   ) {
@@ -149,6 +155,14 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     if (!this.userService.currentUserValue) {
       this.userService.getCurrentUser().pipe(takeUntil(this.destroy$)).subscribe();
     }
+    this.authService.getOpenIDConfig().pipe(takeUntil(this.destroy$)).subscribe(cfg => {
+      if (cfg) {
+        this.enableVideoRecording = cfg.enable_video_recording;
+        this.enableTranscription = cfg.enable_transcription;
+        this.enableSubtitles = cfg.enable_subtitles;
+        this.cdr.markForCheck();
+      }
+    });
     this.setupSubscriptions();
   }
 

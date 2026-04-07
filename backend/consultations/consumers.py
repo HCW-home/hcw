@@ -5,6 +5,7 @@ import logging
 import websockets
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
+from constance import config as constance_config
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
@@ -22,6 +23,10 @@ class AppointmentTranscriptionConsumer(AsyncWebsocketConsumer):
         self.user = self.scope.get("user")
         if not self.user or not self.user.is_authenticated:
             await self.close(code=4001)
+            return
+
+        if not await sync_to_async(lambda: constance_config.enable_subtitles)():
+            await self.close(code=4003)
             return
 
         self.appointment_pk = self.scope["url_route"]["kwargs"]["appointment_pk"]
@@ -81,12 +86,13 @@ class AppointmentTranscriptionConsumer(AsyncWebsocketConsumer):
 
         # Use speaker_label in uid so each remote participant gets its own whisper session
         uid_suffix = speaker_label or "self"
+        whisper_model = await sync_to_async(lambda: constance_config.whisper_model)()
         # Send initial config — whisper-live expects this as the first message
         config = {
             "uid": f"appointment_{self.appointment_pk}_{self.user.pk}_{uid_suffix}",
             "language": language,
             "task": "transcribe",
-            "model": "small",
+            "model": whisper_model,
             "use_vad": True,
         }
         await self.whisper_ws.send(json.dumps(config))

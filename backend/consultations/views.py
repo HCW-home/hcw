@@ -623,6 +623,20 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         """Start recording the appointment (doctors only)"""
         from .models import AppointmentRecording
 
+        mode = request.data.get("mode", "screen_recording")
+
+        # Check feature flags
+        if mode == "transcript" and not config.enable_transcription:
+            return Response(
+                {"error": _("Transcription is disabled")},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        if mode != "transcript" and not config.enable_video_recording:
+            return Response(
+                {"error": _("Video recording is disabled")},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         appointment = self.get_object()
         consultation = appointment.consultation
 

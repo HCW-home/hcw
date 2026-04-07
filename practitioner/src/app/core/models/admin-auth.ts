@@ -71,6 +71,9 @@ export interface IOpenIDConfig {
   communication_methods: string[];
   consultation_auto_delete_hours: number;
   appointment_early_join_minutes: number;
+  enable_video_recording: boolean;
+  enable_transcription: boolean;
+  enable_subtitles: boolean;
 }
 
 export interface IOpenIDLoginBody {

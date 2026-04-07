@@ -775,6 +775,23 @@ CONSTANCE_CONFIG = {
         "Controls which patients practitioners can see: all = all patients, alone = only patients they created, organization = patients from same organization",
         "patient_visibility_select",
     ),
+    "enable_video_recording": (
+        False,
+        "Enable video recording during appointments",
+    ),
+    "enable_transcription": (
+        False,
+        "Enable transcription during appointments",
+    ),
+    "enable_subtitles": (
+        False,
+        "Enable real-time subtitles (captions) during appointments",
+    ),
+    "whisper_model": (
+        "small",
+        "Whisper model to use for transcription (tiny, base, small, medium, large-v3)",
+        "whisper_model_select",
+    ),
 }
 
 
@@ -787,6 +804,7 @@ CONSTANCE_CONFIG_FIELDSETS = {
     "Uploads": ("max_upload_size_mb",),
     "Authentication": ("disable_password_login", "enable_registration"),
     "Visibility": ("users_visibility", "patient_visibility"),
+    "Video Features": ("enable_video_recording", "enable_transcription", "enable_subtitles", "whisper_model"),
 }
 
 # CORS Configuration
@@ -845,6 +863,19 @@ CONSTANCE_ADDITIONAL_FIELDS = {
                 ("all", "All patients"),
                 ("alone", "Only patients created by me"),
                 ("organization", "Patients from same organization"),
+            ),
+        },
+    ],
+    "whisper_model_select": [
+        "django.forms.fields.ChoiceField",
+        {
+            "widget": "django.forms.Select",
+            "choices": (
+                ("tiny", "Tiny (~1 GB, very fast, low accuracy)"),
+                ("base", "Base (~1 GB, fast, acceptable accuracy)"),
+                ("small", "Small (~2 GB, good balance)"),
+                ("medium", "Medium (~5 GB, slower, great accuracy)"),
+                ("large-v3", "Large v3 (~10 GB, best accuracy, GPU recommended)"),
             ),
         },
     ],
