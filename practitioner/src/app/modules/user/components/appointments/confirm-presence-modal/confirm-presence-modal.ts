@@ -31,6 +31,8 @@ import {
 } from '../../../../../shared/constants/button';
 import { LocalDatePipe } from '../../../../../shared/pipes/local-date.pipe';
 import { ConfirmationService } from '../../../../../core/services/confirmation.service';
+import { ActiveCallService } from '../../../../../core/services/active-call.service';
+import { IncomingCallService } from '../../../../../core/services/incoming-call.service';
 import { RoutePaths } from '../../../../../core/constants/routes';
 
 @Component({
@@ -51,6 +53,8 @@ export class ConfirmPresenceModal {
   private consultationService = inject(ConsultationService);
   private authService = inject(Auth);
   private confirmationService = inject(ConfirmationService);
+  private activeCallService = inject(ActiveCallService);
+  private incomingCallService = inject(IncomingCallService);
   private toasterService = inject(ToasterService);
   private router = inject(Router);
   private t = inject(TranslationService);
@@ -167,15 +171,9 @@ export class ConfirmPresenceModal {
       return;
     }
 
-    const consultationId = this.appointment.consultation_id || this.appointment.consultation;
-
-    if (consultationId) {
-      this.onClose();
-      this.router.navigate(
-        ['/', RoutePaths.USER, RoutePaths.CONSULTATIONS, consultationId],
-        { queryParams: { join: 'true', appointmentId: this.appointment.id } }
-      );
-    }
+    this.onClose();
+    this.activeCallService.startCall({ appointmentId: this.appointment.id });
+    this.incomingCallService.setActiveCall(this.appointment.id);
   }
 
   viewInConsultation(): void {

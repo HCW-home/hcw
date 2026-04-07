@@ -1,0 +1,43 @@
+@if (activeCallService.activeCall(); as call) {
+  <div
+    class="pip-container"
+    [class.fullscreen]="activeCallService.isFullscreen()"
+    [class.pip]="!activeCallService.isFullscreen()"
+    [style.left.px]="activeCallService.isFullscreen() ? 0 : posX()"
+    [style.top.px]="activeCallService.isFullscreen() ? 0 : posY()"
+    [style.width.px]="activeCallService.isFullscreen() ? null : width()"
+    [style.height.px]="activeCallService.isFullscreen() ? null : height()">
+
+    @if (!activeCallService.isFullscreen()) {
+      <div class="pip-drag-handle"
+        (mousedown)="onDragStart($event)"
+        (touchstart)="onDragStart($event)">
+      </div>
+      <div class="pip-resize-handle top-left"
+        (mousedown)="onResizeStart($event, 'top-left')"
+        (touchstart)="onResizeStart($event, 'top-left')">
+      </div>
+      <div class="pip-resize-handle top-right"
+        (mousedown)="onResizeStart($event, 'top-right')"
+        (touchstart)="onResizeStart($event, 'top-right')">
+      </div>
+      <div class="pip-resize-handle bottom-left"
+        (mousedown)="onResizeStart($event, 'bottom-left')"
+        (touchstart)="onResizeStart($event, 'bottom-left')">
+      </div>
+      <div class="pip-resize-handle bottom-right"
+        (mousedown)="onResizeStart($event, 'bottom-right')"
+        (touchstart)="onResizeStart($event, 'bottom-right')">
+      </div>
+    }
+
+    <app-video-consultation
+      [appointmentId]="call.appointmentId"
+      [consultationId]="call.consultationId"
+      [livekitConfig]="call.livekitConfig"
+      [isMinimized]="!activeCallService.isFullscreen()"
+      (leave)="onCallEnded()"
+      (toggleSize)="onToggleSize()">
+    </app-video-consultation>
+  </div>
+}

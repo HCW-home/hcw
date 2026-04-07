@@ -32,6 +32,7 @@ import { ConsultationWebSocketService } from '../../../../core/services/consulta
 import { UserWebSocketService } from '../../../../core/services/user-websocket.service';
 import { UserService } from '../../../../core/services/user.service';
 import { IncomingCallService } from '../../../../core/services/incoming-call.service';
+import { ActiveCallService } from '../../../../core/services/active-call.service';
 import { Auth } from '../../../../core/services/auth';
 import {
   Consultation,
@@ -54,7 +55,6 @@ import {
   EditMessageData,
   DeleteMessageData,
 } from '../../../../shared/components/message-list/message-list';
-import { VideoConsultationComponent } from '../video-consultation/video-consultation';
 
 import { Svg } from '../../../../shared/ui-components/svg/svg';
 import { Button } from '../../../../shared/ui-components/button/button';
@@ -98,7 +98,6 @@ type AppointmentTimeFilter = 'all' | 'upcoming' | 'past';
     Page,
     Loader,
     MessageList,
-    VideoConsultationComponent,
     CommonModule,
     ReactiveFormsModule,
     Button,
@@ -158,11 +157,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   hasMore = signal(true);
   private currentPage = 1;
 
-  inCall = signal(false);
-  activeAppointmentId = signal<number | null>(null);
-  isVideoMinimized = signal(false);
 
-  inConsultationCall = signal(false);
   isCallingBeneficiary = signal(false);
   consultationCallConfig = signal<{ url: string; token: string; room: string } | undefined>(undefined);
 
@@ -332,6 +327,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   private userWsService = inject(UserWebSocketService);
   private userService = inject(UserService);
   private incomingCallService = inject(IncomingCallService);
+  activeCallService = inject(ActiveCallService);
   private authService = inject(Auth);
   private t = inject(TranslationService);
 
@@ -519,7 +515,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private handleBeforeUnload = (event: BeforeUnloadEvent): string | undefined => {
-    if (this.inCall()) {
+    if (this.activeCallService.hasActiveCall) {
       console.log('[ConsultationDetail] beforeunload - User is in call, showing confirmation dialog');
       // Prevent the page from closing without confirmation
       event.preventDefault();
@@ -694,7 +690,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
             this.t.instant('consultationDetail.callDeclined'),
             this.t.instant('consultationDetail.callDeclinedMessage', { name: event.responder_name })
           );
-          this.onConsultationCallEnded();
+          this.activeCallService.endCall();
         }
       });
   }
@@ -1411,26 +1407,12 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
-    this.activeAppointmentId.set(appointmentId);
-    this.inCall.set(true);
+    this.activeCallService.startCall({ appointmentId, consultationId: this.consultationId });
     this.incomingCallService.setActiveCall(appointmentId);
   }
 
-  onCallEnded(): void {
-    this.inCall.set(false);
-    this.activeAppointmentId.set(null);
-    this.isVideoMinimized.set(false);
-    this.incomingCallService.clearActiveCall();
-
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: {},
-      replaceUrl: true,
-    });
-  }
-
   callBeneficiary(): void {
-    if (this.isCallingBeneficiary() || this.inConsultationCall()) {
+    if (this.isCallingBeneficiary() || this.activeCallService.hasActiveCall) {
       return;
     }
 
@@ -1463,8 +1445,10 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     this.isCallingBeneficiary.set(true);
     this.consultationService.callBeneficiary(this.consultationId).subscribe({
       next: (config) => {
-        this.consultationCallConfig.set(config);
-        this.inConsultationCall.set(true);
+        this.activeCallService.startCall({
+          consultationId: this.consultationId,
+          livekitConfig: config,
+        });
         this.isCallingBeneficiary.set(false);
       },
       error: () => {
@@ -1474,15 +1458,6 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
-  onConsultationCallEnded(): void {
-    this.inConsultationCall.set(false);
-    this.consultationCallConfig.set(undefined);
-    this.isVideoMinimized.set(false);
-  }
-
-  toggleVideoSize(): void {
-    this.isVideoMinimized.update(v => !v);
-  }
 
   goBack(): void {
     this.location.back();

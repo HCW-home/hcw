@@ -1,0 +1,134 @@
+.pip-container {
+  &.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+  }
+
+  &.pip {
+    position: fixed;
+    z-index: 1001;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    transition: box-shadow 0.2s;
+
+    &:hover {
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    }
+  }
+}
+
+.pip-drag-handle {
+  position: absolute;
+  top: 2px;
+  left: 24px;
+  right: 24px;
+  height: 16px;
+  z-index: 10;
+  cursor: grab;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  &::after {
+    content: '';
+    width: 32px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 2px;
+  }
+
+  &:hover::after {
+    background: rgba(255, 255, 255, 0.6);
+  }
+
+  &:active {
+    cursor: grabbing;
+
+    &::after {
+      background: rgba(255, 255, 255, 0.8);
+    }
+  }
+}
+
+.pip-resize-handle {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  z-index: 10;
+
+  &::after {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-color: rgba(255, 255, 255, 0.6);
+    border-style: solid;
+    border-width: 0;
+  }
+
+  &:hover::after {
+    border-color: rgba(255, 255, 255, 0.9);
+  }
+
+  &.top-left {
+    top: 4px;
+    left: 4px;
+    cursor: nw-resize;
+
+    &::after {
+      top: 2px;
+      left: 2px;
+      border-top-width: 3px;
+      border-left-width: 3px;
+      border-top-left-radius: 6px;
+    }
+  }
+
+  &.top-right {
+    top: 4px;
+    right: 4px;
+    cursor: ne-resize;
+
+    &::after {
+      top: 2px;
+      right: 2px;
+      border-top-width: 3px;
+      border-right-width: 3px;
+      border-top-right-radius: 6px;
+    }
+  }
+
+  &.bottom-left {
+    bottom: 4px;
+    left: 4px;
+    cursor: sw-resize;
+
+    &::after {
+      bottom: 2px;
+      left: 2px;
+      border-bottom-width: 3px;
+      border-left-width: 3px;
+      border-bottom-left-radius: 6px;
+    }
+  }
+
+  &.bottom-right {
+    bottom: 4px;
+    right: 4px;
+    cursor: se-resize;
+
+    &::after {
+      bottom: 2px;
+      right: 2px;
+      border-bottom-width: 3px;
+      border-right-width: 3px;
+      border-bottom-right-radius: 6px;
+    }
+  }
+}

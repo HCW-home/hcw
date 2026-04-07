@@ -113,19 +113,6 @@
     </div>
     }
 
-    @if (inCall() && activeAppointmentId()) {
-    <div class="video-call-section" [class.minimized]="isVideoMinimized()">
-      <div class="video-container">
-        <app-video-consultation
-          [appointmentId]="activeAppointmentId()!"
-          [isMinimized]="isVideoMinimized()"
-          (leave)="onCallEnded()"
-          (toggleSize)="toggleVideoSize()">
-        </app-video-consultation>
-      </div>
-    </div>
-    }
-
     @if (!loading() && currentView() === 'list') {
     <div class="list-view">
       @if (appointments().length === 0) {

@@ -42,6 +42,7 @@ import {
 } from '../../../../shared/constants/button';
 import { ConsultationService } from '../../../../core/services/consultation.service';
 import { IncomingCallService } from '../../../../core/services/incoming-call.service';
+import { ActiveCallService } from '../../../../core/services/active-call.service';
 import { ToasterService } from '../../../../core/services/toaster.service';
 import {
   Appointment,
@@ -63,7 +64,6 @@ import { UserService } from '../../../../core/services/user.service';
 import { Auth } from '../../../../core/services/auth';
 import { ConfirmPresenceModal } from './confirm-presence-modal/confirm-presence-modal';
 import { AppointmentFormModal } from '../consultation-detail/appointment-form-modal/appointment-form-modal';
-import { VideoConsultationComponent } from '../video-consultation/video-consultation';
 import { IUser } from '../../../user/models/user';
 
 interface PractitionerOption {
@@ -95,7 +95,6 @@ type AppointmentTimeFilter = 'all' | 'upcoming' | 'past';
     TranslatePipe,
     ConfirmPresenceModal,
     AppointmentFormModal,
-    VideoConsultationComponent,
   ],
   templateUrl: './appointments.html',
   styleUrl: './appointments.scss',
@@ -110,6 +109,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   private authService = inject(Auth);
   private el = inject(ElementRef);
   private incomingCallService = inject(IncomingCallService);
+  private activeCallService = inject(ActiveCallService);
   private t = inject(TranslationService);
 
   protected readonly getAppointmentBadgeType = getAppointmentBadgeType;
@@ -141,9 +141,6 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   selectedEndDate = signal<Date | null>(null);
 
   highlightedAppointmentId = signal<number | null>(null);
-  inCall = signal(false);
-  activeAppointmentId = signal<number | null>(null);
-  isVideoMinimized = signal(false);
 
   appointmentTimeFilter = signal<AppointmentTimeFilter>('upcoming');
   tooEarlyError = signal<{ appointmentId: number; time: string; minutes: number } | null>(null);
@@ -239,8 +236,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
         const id = Number(appointmentId);
         this.highlightedAppointmentId.set(id);
         if (join) {
-          this.activeAppointmentId.set(id);
-          this.inCall.set(true);
+          this.activeCallService.startCall({ appointmentId: id });
           this.incomingCallService.setActiveCall(id);
         }
         this.setView('list');
@@ -968,20 +964,8 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
-    this.activeAppointmentId.set(appointment.id);
-    this.inCall.set(true);
+    this.activeCallService.startCall({ appointmentId: appointment.id });
     this.incomingCallService.setActiveCall(appointment.id);
-  }
-
-  onCallEnded(): void {
-    this.inCall.set(false);
-    this.activeAppointmentId.set(null);
-    this.isVideoMinimized.set(false);
-    this.incomingCallService.clearActiveCall();
-  }
-
-  toggleVideoSize(): void {
-    this.isVideoMinimized.update(v => !v);
   }
 
   canJoinVideoCall(appointment: Appointment): boolean {
@@ -1051,8 +1035,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
-    this.activeAppointmentId.set(appointment.id);
-    this.inCall.set(true);
+    this.activeCallService.startCall({ appointmentId: appointment.id });
     this.incomingCallService.setActiveCall(appointment.id);
   }
 

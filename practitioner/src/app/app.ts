@@ -13,11 +13,12 @@ import { BrowserNotificationService } from './core/services/browser-notification
 import { PushNotificationService } from './core/services/push-notification.service';
 import { ConsultationService } from './core/services/consultation.service';
 import { AppUpdateService } from './core/services/app-update.service';
+import { PipWrapper } from './shared/components/pip-wrapper/pip-wrapper';
 import { RoutePaths } from './core/constants/routes';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, ToasterContainerComponent, OfflineIndicatorComponent, Confirmation],
+  imports: [RouterOutlet, ToasterContainerComponent, OfflineIndicatorComponent, Confirmation, PipWrapper],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
