@@ -431,7 +431,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         # For list, retrieve, and join actions: filter by participants, creator, or consultation access
-        if self.action in ["list", "retrieve", "join"]:
+        if self.action in ["list", "retrieve", "join", "leave"]:
             return Appointment.objects.filter(
                 Q(participant__user=user, participant__is_active=True)
                 | Q(created_by=user)
@@ -519,7 +519,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                     f"user_{participant.user.pk}",
                     {
                         "type": "appointment",
-                        "consultation_id": appointment.consultation.pk,
+                        "consultation_id": appointment.consultation.pk if appointment.consultation else None,
                         "appointment_id": appointment.pk,
                         "state": "participant_joined",
                         "data": {
