@@ -8,6 +8,7 @@ import { Auth } from './core/services/auth';
 import { TranslationService } from './core/services/translation.service';
 import { UserWebSocketService } from './core/services/user-websocket.service';
 import { ActionHandlerService } from './core/services/action-handler.service';
+import { ActiveCallService } from './core/services/active-call.service';
 import { IncomingCallService } from './core/services/incoming-call.service';
 import { BrowserNotificationService } from './core/services/browser-notification.service';
 import { PushNotificationService } from './core/services/push-notification.service';
@@ -31,6 +32,7 @@ export class App implements OnInit, OnDestroy {
     private translationService: TranslationService,
     private userWsService: UserWebSocketService,
     private actionHandler: ActionHandlerService,
+    private activeCallService: ActiveCallService,
     private incomingCallService: IncomingCallService,
     private browserNotificationService: BrowserNotificationService,
     private pushNotificationService: PushNotificationService,
@@ -123,19 +125,10 @@ export class App implements OnInit, OnDestroy {
     if (action === 'join' && id) {
       this.consultationService.getParticipantById(id).subscribe({
         next: (participant) => {
-          const consultation = participant.appointment.consultation;
-          const consultationId = typeof consultation === 'object' ? (consultation as {id: number}).id : consultation;
-          if (consultationId) {
-            this.router.navigate(
-              ['/', RoutePaths.USER, RoutePaths.CONSULTATIONS, consultationId],
-              { queryParams: { join: 'true', appointmentId: participant.appointment.id } }
-            );
-          } else {
-            this.router.navigate(
-              ['/', RoutePaths.USER, RoutePaths.APPOINTMENTS],
-              { queryParams: { participantId: id } }
-            );
-          }
+          this.activeCallService.startCall({
+            appointmentId: participant.appointment.id,
+          });
+          this.incomingCallService.setActiveCall(participant.appointment.id);
         },
         error: () => {
           this.router.navigate(['/', RoutePaths.CONFIRM_PRESENCE, id]);
