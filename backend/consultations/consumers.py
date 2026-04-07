@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 
-import websockets
+import aiohttp
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from constance import config as constance_config
@@ -31,6 +31,7 @@ class AppointmentTranscriptionConsumer(AsyncWebsocketConsumer):
 
         self.appointment_pk = self.scope["url_route"]["kwargs"]["appointment_pk"]
         self.whisper_ws = None
+        self.whisper_session = None
         self.whisper_task = None
         self.consultation = None
         self.speaker_label = None
@@ -51,7 +52,7 @@ class AppointmentTranscriptionConsumer(AsyncWebsocketConsumer):
             # Forward raw audio chunks to whisper-live
             if self.whisper_ws is not None:
                 try:
-                    await self.whisper_ws.send(bytes_data)
+                    await self.whisper_ws.send_bytes(bytes_data)
                 except Exception:
                     pass
         elif text_data:
@@ -75,9 +76,11 @@ class AppointmentTranscriptionConsumer(AsyncWebsocketConsumer):
         whisper_url = getattr(settings, "WHISPER_LIVE_URL", "ws://localhost:9090")
 
         try:
-            self.whisper_ws = await websockets.connect(whisper_url)
+            self.whisper_session = aiohttp.ClientSession()
+            self.whisper_ws = await self.whisper_session.ws_connect(whisper_url)
         except Exception as e:
             logger.error(f"Failed to connect to whisper-live at {whisper_url}: {e}")
+            await self._cleanup_whisper_session()
             await self.send(text_data=json.dumps({
                 "event": "transcription_error",
                 "message": "Failed to connect to transcription server",
@@ -95,7 +98,7 @@ class AppointmentTranscriptionConsumer(AsyncWebsocketConsumer):
             "model": whisper_model,
             "use_vad": True,
         }
-        await self.whisper_ws.send(json.dumps(config))
+        await self.whisper_ws.send_str(json.dumps(config))
 
         self.consultation = await self._get_consultation()
         self.whisper_task = asyncio.create_task(self._receive_transcription())
@@ -107,19 +110,22 @@ class AppointmentTranscriptionConsumer(AsyncWebsocketConsumer):
     async def _receive_transcription(self):
         """Continuously read transcription segments from whisper-live and broadcast them."""
         try:
-            async for raw in self.whisper_ws:
-                try:
-                    data = json.loads(raw)
-                    segments = data.get("segments", [])
-                    if not segments:
-                        continue
-                    # whisper-live returns all segments accumulated since session
-                    # start — only the last one is the newly transcribed text.
-                    text = segments[-1].get("text", "").strip()
-                    if text and self.consultation:
-                        await self._broadcast_transcription(text)
-                except (json.JSONDecodeError, KeyError):
-                    pass
+            async for msg in self.whisper_ws:
+                if msg.type == aiohttp.WSMsgType.TEXT:
+                    try:
+                        data = json.loads(msg.data)
+                        segments = data.get("segments", [])
+                        if not segments:
+                            continue
+                        # whisper-live returns all segments accumulated since session
+                        # start — only the last one is the newly transcribed text.
+                        text = segments[-1].get("text", "").strip()
+                        if text and self.consultation:
+                            await self._broadcast_transcription(text)
+                    except (json.JSONDecodeError, KeyError):
+                        pass
+                elif msg.type in (aiohttp.WSMsgType.CLOSED, aiohttp.WSMsgType.ERROR):
+                    break
         except Exception as e:
             logger.debug(f"Transcription receive loop ended: {e}")
 
@@ -137,6 +143,22 @@ class AppointmentTranscriptionConsumer(AsyncWebsocketConsumer):
         for user_pk in user_pks:
             await self.channel_layer.group_send(f"user_{user_pk}", event)
 
+    async def _cleanup_whisper_session(self):
+        """Close whisper WebSocket and aiohttp session."""
+        if self.whisper_ws is not None:
+            try:
+                await self.whisper_ws.close()
+            except Exception:
+                pass
+            self.whisper_ws = None
+
+        if self.whisper_session is not None:
+            try:
+                await self.whisper_session.close()
+            except Exception:
+                pass
+            self.whisper_session = None
+
     async def _stop_transcription(self):
         if self.whisper_task:
             self.whisper_task.cancel()
@@ -146,12 +168,7 @@ class AppointmentTranscriptionConsumer(AsyncWebsocketConsumer):
                 pass
             self.whisper_task = None
 
-        if self.whisper_ws is not None:
-            try:
-                await self.whisper_ws.close()
-            except Exception:
-                pass
-            self.whisper_ws = None
+        await self._cleanup_whisper_session()
 
         logger.info(f"Transcription stopped: appointment={self.appointment_pk}")
 
