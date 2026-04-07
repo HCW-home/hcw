@@ -112,6 +112,24 @@ export class TranscriptionService implements OnDestroy {
       ws.binaryType = 'arraybuffer';
       session.ws = ws;
 
+      ws.onmessage = (event: MessageEvent) => {
+        if (typeof event.data === 'string') {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.event === 'transcription_error') {
+              const errorMsg = data.message || 'Transcription server unavailable';
+              if (key === LOCAL_KEY) {
+                this.error$.next(errorMsg);
+                this.isConnected$.next(false);
+              }
+              this.stopSession(key);
+            }
+          } catch {
+            // ignore non-JSON messages
+          }
+        }
+      };
+
       ws.onopen = async () => {
         const msg: Record<string, unknown> = { type: 'start_transcription', language };
         if (speakerLabel) {

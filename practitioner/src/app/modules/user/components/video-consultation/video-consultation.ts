@@ -244,6 +244,18 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
         this.cdr.markForCheck();
       });
 
+    this.transcriptionService.error$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(error => {
+        if (error && this.showCaptions()) {
+          this.showCaptions.set(false);
+          this.captionLines.set([]);
+          this.activeRemoteTranscriptions.clear();
+          this.toasterService.show('error', this.t.instant('videoConsultation.captionsError'), this.t.instant('videoConsultation.failedStartCaptions'));
+          this.cdr.markForCheck();
+        }
+      });
+
     this.userWsService.transcription$
       .pipe(takeUntil(this.destroy$))
       .subscribe(event => {
