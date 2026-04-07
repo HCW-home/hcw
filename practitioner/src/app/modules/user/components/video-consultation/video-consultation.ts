@@ -13,18 +13,20 @@ import {
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Subject } from 'rxjs';
+import { Subject, firstValueFrom } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { LocalVideoTrack, LocalTrack } from 'livekit-client';
 
 import { LiveKitService, ParticipantInfo, ConnectionStatus } from '../../../../core/services/livekit.service';
+import { MediaDeviceService } from '../../../../core/services/media-device.service';
 import { ConsultationService } from '../../../../core/services/consultation.service';
 import { TranscriptionService } from '../../../../core/services/transcription.service';
 import { UserWebSocketService } from '../../../../core/services/user-websocket.service';
 import { UserService } from '../../../../core/services/user.service';
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { IncomingCallService } from '../../../../core/services/incoming-call.service';
-import { IPreJoinSettings } from '../../../../core/models/media-device';
+import { ConfirmationService } from '../../../../core/services/confirmation.service';
+import { IPreJoinSettings, IMediaDevices } from '../../../../core/models/media-device';
 import { Button } from '../../../../shared/ui-components/button/button';
 import { Svg } from '../../../../shared/ui-components/svg/svg';
 import { Typography } from '../../../../shared/ui-components/typography/typography';
@@ -65,6 +67,8 @@ interface CaptionEntry {
 })
 export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewInit {
   @Input() appointmentId?: number;
+  @Input() consultationId?: number;
+  @Input() livekitConfig?: { url: string; token: string; room: string };
   @Input() isMinimized = false;
   @Input() messages: Message[] = [];
   @Input() isLoadingMore = false;
@@ -103,6 +107,12 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   private activeRemoteTranscriptions = new Set<string>();
   private currentUserId: number | null = null;
 
+  devices: IMediaDevices = { cameras: [], microphones: [], speakers: [] };
+  showMicMenu = false;
+  showCameraMenu = false;
+  activeMicId = '';
+  activeCameraId = '';
+
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
 
@@ -115,12 +125,14 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
 
   constructor(
     private livekitService: LiveKitService,
+    private mediaDeviceService: MediaDeviceService,
     private consultationService: ConsultationService,
     private toasterService: ToasterService,
     private incomingCallService: IncomingCallService,
     private transcriptionService: TranscriptionService,
     private userWsService: UserWebSocketService,
     private userService: UserService,
+    private confirmationService: ConfirmationService,
     private cdr: ChangeDetectorRef,
     translationService: TranslationService
   ) {
@@ -144,6 +156,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   }
 
   ngOnDestroy(): void {
+    console.log('[VideoConsultation] ngOnDestroy called - cleaning up and disconnecting');
     this.destroy$.next();
     this.destroy$.complete();
     this.livekitService.disconnect();
@@ -295,21 +308,25 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     this.cdr.markForCheck();
 
     try {
-      if (!this.appointmentId) {
-        throw new Error(this.t.instant('videoConsultation.appointmentRequired'));
-      }
-
-      const config = await this.consultationService
-        .joinAppointment(this.appointmentId)
-        .toPromise();
+      const config = await this.getCallConfig();
 
       if (!config) {
         throw new Error(this.t.instant('videoConsultation.failedLivekitConfig'));
       }
 
       await this.livekitService.connect(config);
-      await this.livekitService.enableCamera(true);
-      await this.livekitService.enableMicrophone(true);
+
+      // Enable camera/microphone separately - don't fail the whole join if camera is unavailable
+      try {
+        await this.livekitService.enableCamera(true);
+      } catch {
+        // Camera not available, continue without it
+      }
+      try {
+        await this.livekitService.enableMicrophone(true);
+      } catch {
+        // Microphone not available, continue without it
+      }
     } catch (error: any) {
       this.errorMessage = getErrorMessage(error)
       this.toasterService.show('error', this.t.instant('videoConsultation.connectionError'), this.errorMessage);
@@ -317,6 +334,19 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       this.isLoading = false;
       this.cdr.markForCheck();
     }
+  }
+
+  private async getCallConfig(): Promise<{ url: string; token: string; room: string } | undefined> {
+    if (this.livekitConfig) {
+      return this.livekitConfig;
+    }
+    if (this.appointmentId) {
+      return this.consultationService.joinAppointment(this.appointmentId).toPromise();
+    }
+    if (this.consultationId) {
+      return this.consultationService.joinConsultation(this.consultationId).toPromise();
+    }
+    throw new Error(this.t.instant('videoConsultation.appointmentRequired'));
   }
 
   onLobbyClose(): void {
@@ -330,13 +360,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     this.cdr.markForCheck();
 
     try {
-      if (!this.appointmentId) {
-        throw new Error(this.t.instant('videoConsultation.appointmentRequired'));
-      }
-
-      const config = await this.consultationService
-        .joinAppointment(this.appointmentId)
-        .toPromise();
+      const config = await this.getCallConfig();
 
       if (!config) {
         throw new Error(this.t.instant('videoConsultation.failedLivekitConfig'));
@@ -351,14 +375,27 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       }
 
       await this.livekitService.connect(config, undefined, deviceIds);
-      await this.livekitService.enableCamera(settings.cameraEnabled);
-      await this.livekitService.enableMicrophone(settings.microphoneEnabled);
+
+      // Enable camera/microphone separately - don't fail the whole join if camera is unavailable
+      try {
+        await this.livekitService.enableCamera(settings.cameraEnabled);
+      } catch {
+        // Camera not available, continue without it
+      }
+      try {
+        await this.livekitService.enableMicrophone(settings.microphoneEnabled);
+      } catch {
+        // Microphone not available, continue without it
+      }
 
       if (settings.speakerDeviceId) {
         await this.livekitService.switchSpeaker(settings.speakerDeviceId);
       }
 
       this.phase.set('in-call');
+      this.activeCameraId = settings.cameraDeviceId || '';
+      this.activeMicId = settings.microphoneDeviceId || '';
+      await this.loadDevices();
       this.cdr.markForCheck();
       setTimeout(() => {
         this.attachLocalVideo();
@@ -499,6 +536,47 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       await this.livekitService.toggleMicrophone();
     } catch (error) {
       this.toasterService.show('error', this.t.instant('videoConsultation.microphoneError'), this.t.instant('videoConsultation.failedToggleMicrophone'));
+    }
+  }
+
+  async loadDevices(): Promise<void> {
+    this.devices = await this.mediaDeviceService.enumerateDevices();
+  }
+
+  toggleMicMenu(): void {
+    this.showMicMenu = !this.showMicMenu;
+    this.showCameraMenu = false;
+  }
+
+  toggleCameraMenu(): void {
+    this.showCameraMenu = !this.showCameraMenu;
+    this.showMicMenu = false;
+  }
+
+  closeDeviceMenus(): void {
+    this.showMicMenu = false;
+    this.showCameraMenu = false;
+  }
+
+  async switchMicrophone(deviceId: string): Promise<void> {
+    try {
+      await this.livekitService.switchMicrophone(deviceId);
+      this.activeMicId = deviceId;
+      this.showMicMenu = false;
+      this.cdr.markForCheck();
+    } catch (error) {
+      this.toasterService.show('error', this.t.instant('videoConsultation.microphoneError'), this.t.instant('videoConsultation.failedToggleMicrophone'));
+    }
+  }
+
+  async switchCamera(deviceId: string): Promise<void> {
+    try {
+      await this.livekitService.switchCamera(deviceId);
+      this.activeCameraId = deviceId;
+      this.showCameraMenu = false;
+      this.cdr.markForCheck();
+    } catch (error) {
+      this.toasterService.show('error', this.t.instant('videoConsultation.cameraError'), this.t.instant('videoConsultation.failedToggleCamera'));
     }
   }
 
@@ -668,8 +746,29 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   }
 
   async leaveCall(): Promise<void> {
-    await this.livekitService.disconnect();
-    this.leave.emit();
+    const confirmed = await this.confirmationService.confirm({
+      title: this.t.instant('videoCall.leaveCallTitle'),
+      message: this.t.instant('videoCall.leaveCallMessage'),
+      confirmText: this.t.instant('videoCall.leaveCallConfirm'),
+      cancelText: this.t.instant('videoCall.leaveCallCancel'),
+      confirmStyle: 'danger',
+    });
+
+    if (confirmed) {
+      // Notifier le backend du départ
+      if (this.appointmentId) {
+        try {
+          await firstValueFrom(
+            this.consultationService.leaveAppointment(this.appointmentId)
+          );
+        } catch (error) {
+          console.error('Failed to notify leave:', error);
+        }
+      }
+
+      await this.livekitService.disconnect();
+      this.leave.emit();
+    }
   }
 
   onToggleSize(): void {

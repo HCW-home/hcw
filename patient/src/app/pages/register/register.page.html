@@ -1,25 +1,13 @@
 <ion-content class="register-content" [scrollY]="false">
   <div class="auth-card">
-    <div class="left-side">
-      <div class="left-content">
-        @if (siteLogoWhite) {
-        <img [src]="siteLogoWhite" alt="Logo" class="logo-img" />
-        } @else {
-        <img src="assets/images/logo.svg" alt="Logo" class="logo-img" />
-        }
-        <h1>{{ branding }}</h1>
-        <p>
-          {{ 'register.platformDescription' | translate }}
-        </p>
-      </div>
-    </div>
+    <app-auth-branding />
     <div class="right-side">
       <div class="right-content">
         <h2>{{ 'register.title' | translate }}</h2>
         <p class="subtitle">{{ 'register.subtitle' | translate }}</p>
 
         @if (loading) { } @else if (successMessage) {
-        <div class="success-container">
+        <div class="success-container step-animate">
           <ion-icon
             name="mail-outline"
             color="success"
@@ -48,7 +36,7 @@
         <form
           [formGroup]="registerForm"
           (ngSubmit)="onRegister()"
-          class="register-form"
+          class="register-form step-animate"
         >
           <div class="name-row">
             <ion-item lines="full" class="input-item">
@@ -155,6 +143,8 @@
             {{ 'common.signIn' | translate }}
           </ion-text>
         </div>
+
+        <app-language-selector></app-language-selector>
       </div>
     </div>
   </div>

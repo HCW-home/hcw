@@ -1,8 +1,13 @@
-import traceback
+import logging
+
+logger = logging.getLogger(__name__)
+import json
 from typing import DefaultDict
 
 from django.conf import settings
 from django.contrib import admin, messages
+from django.shortcuts import redirect
+from django.urls import reverse_lazy
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
@@ -25,9 +30,8 @@ from .models import (
     TemplateValidation,
     TemplateValidationStatus,
 )
-import json
+from .tasks import send_message, template_messaging_provider_task
 from .template import DEFAULT_NOTIFICATION_MESSAGES, NOTIFICATION_CHOICES
-from .tasks import send_message
 
 # admin.site.register(MessagingProvider, ModelAdmin)
 
@@ -105,10 +109,10 @@ class MessageAdmin(ModelAdmin):
     list_display = [
         "recipient",
         "display_status",
+        "communication_method",
         "sent_by",
         "created_at",
         "display_template_is_valid",
-        "error_message",
     ]
     list_filter = ["communication_method", "status", "created_at", "provider_name"]
     search_fields = [
@@ -119,24 +123,99 @@ class MessageAdmin(ModelAdmin):
         "celery_task_id",
     ]
     readonly_fields = [
+        "display_render_subject",
+        "display_render_content",
+        "display_render_content_html",
+        "display_render_content_sms",
+        "display_template_is_valid",
+        "status",
         "sent_at",
         "delivered_at",
         "read_at",
         "failed_at",
-        "status",
         "error_message",
+        "provider_name",
         "external_message_id",
         "celery_task_id",
+        "task_logs",
         "created_at",
         "updated_at",
-        "provider_name",
-        "display_template_is_valid",
-        "display_render_content",
-        "display_render_subject",
-        "display_render_content_html",
         "action",
         "action_label",
         "access_link",
+    ]
+
+    fieldsets = [
+        (
+            _("Sender & Recipient"),
+            {
+                "fields": [
+                    "sent_by",
+                    "sent_to",
+                    "recipient_email",
+                    "recipient_phone",
+                    "communication_method",
+                ],
+            },
+        ),
+        (
+            _("Content"),
+            {
+                "fields": [
+                    "template_system_name",
+                    "display_render_subject",
+                    "display_render_content",
+                    "display_render_content_html",
+                    "display_render_content_sms",
+                    "display_template_is_valid",
+                    "subject",
+                    "content",
+                    "content_html",
+                ],
+            },
+        ),
+        (
+            _("Delivery status"),
+            {
+                "fields": [
+                    "status",
+                    "sent_at",
+                    "delivered_at",
+                    "read_at",
+                    "failed_at",
+                    "error_message",
+                ],
+            },
+        ),
+        (
+            _("Link & Action"),
+            {
+                "fields": [
+                    "action",
+                    "action_label",
+                    "access_link",
+                    "content_type",
+                    "object_id",
+                    "additionnal_link_args",
+                    "in_notification",
+                ],
+                "classes": ["collapse"],
+            },
+        ),
+        (
+            _("Technical"),
+            {
+                "fields": [
+                    "provider_name",
+                    "external_message_id",
+                    "celery_task_id",
+                    "task_logs",
+                    "created_at",
+                    "updated_at",
+                ],
+                "classes": ["collapse"],
+            },
+        ),
     ]
 
     actions = ["send_message"]
@@ -170,24 +249,33 @@ class MessageAdmin(ModelAdmin):
         for message in queryset.all():
             send_message.delay(message.pk)
 
-    def display_render_content(self, instance):
-        try:
-            return instance.render_content
-        except Exception as e:
-            return f"Unable to render the message content: {e}"
-
-    @display(description=_("Rendered HTML Content"))
-    def display_render_content_html(self, instance):
-        try:
-            return format_html(instance.render_content_html)
-        except Exception as e:
-            return f"Unable to render the message content: {e}"
-
+    @display(description=_("Rendered subject"))
     def display_render_subject(self, instance):
         try:
             return instance.render_subject
         except Exception as e:
-            return f"Unable to render the message content: {e}"
+            return f"Unable to render: {e}"
+
+    @display(description=_("Rendered text content"))
+    def display_render_content(self, instance):
+        try:
+            return instance.render_content
+        except Exception as e:
+            return f"Unable to render: {e}"
+
+    @display(description=_("Rendered text content SMS"))
+    def display_render_content_sms(self, instance):
+        try:
+            return instance.render_content_sms
+        except Exception as e:
+            return f"Unable to render: {e}"
+
+    @display(description=_("Rendered HTML content"))
+    def display_render_content_html(self, instance):
+        try:
+            return format_html(instance.render_content_html)
+        except Exception as e:
+            return f"Unable to render: {e}"
 
     send_message.short_description = "Send or resend message"
 
@@ -214,8 +302,8 @@ class TemplateAdmin(ModelAdmin, TabbedTranslationAdmin, ImportExportModelAdmin):
         js = ("messaging/js/template_prefill.js",)
 
     def get_urls(self):
-        from django.urls import path
         from django.http import JsonResponse
+        from django.urls import path
 
         def template_defaults_view(request):
             from django.utils import translation
@@ -229,9 +317,15 @@ class TemplateAdmin(ModelAdmin, TabbedTranslationAdmin, ImportExportModelAdmin):
                 # Translated fields: render in each language
                 for lang in languages:
                     with translation.override(lang):
-                        entry[f"template_subject_{lang}"] = str(v.get("template_subject", ""))
-                        entry[f"template_content_{lang}"] = str(v.get("template_content", ""))
-                        entry[f"template_content_html_{lang}"] = str(v.get("template_content_html", ""))
+                        entry[f"template_subject_{lang}"] = str(
+                            v.get("template_subject", "")
+                        )
+                        entry[f"template_content_{lang}"] = str(
+                            v.get("template_content", "")
+                        )
+                        entry[f"template_content_html_{lang}"] = str(
+                            v.get("template_content_html", "")
+                        )
                 defaults[key] = entry
             return JsonResponse(defaults)
 
@@ -252,7 +346,11 @@ class TemplateAdmin(ModelAdmin, TabbedTranslationAdmin, ImportExportModelAdmin):
         (
             "Template Content",
             {
-                "fields": ["template_subject", "template_content", "template_content_html"],
+                "fields": [
+                    "template_subject",
+                    "template_content",
+                    "template_content_html",
+                ],
                 "description": "Use Jinja2 template syntax. Example: Hello {{ user.name }}!",
             },
         ),
@@ -265,14 +363,17 @@ class TemplateAdmin(ModelAdmin, TabbedTranslationAdmin, ImportExportModelAdmin):
     @display(description="Render example")
     def example(self, obj):
         try:
+            factory = obj.factory_instance
+            if not factory:
+                return "-"
             rendered_subject, rendered_text = obj.render_from_template(
-                obj=obj.factory_instance.build()
+                obj=factory.build()
             )
             if rendered_subject:
                 return rendered_subject, rendered_text
             return rendered_text
-        except Exception:
-            print(traceback.format_exc())
+        except Exception as e:
+            logger.exception(f"Failed to render message preview: {e}")
             return "-"
 
     @display(description="Recipient")
@@ -303,10 +404,11 @@ class TemplateAdmin(ModelAdmin, TabbedTranslationAdmin, ImportExportModelAdmin):
 @admin.register(TemplateValidation)
 class TemplateValidationAdmin(ModelAdmin):
     list_display = [
-        "template",
+        "event_type",
         "language_code",
         "messaging_provider",
         "display_status",
+        "display_is_outdated",
         "external_template_id",
         "created_at",
         "validated_at",
@@ -315,14 +417,14 @@ class TemplateValidationAdmin(ModelAdmin):
         "status",
         "language_code",
         "messaging_provider",
-        "template__communication_method",
+        "event_type",
         "created_at",
         "validated_at",
     ]
     search_fields = [
-        "template__system_name",
+        "event_type",
         "external_template_id",
-        "messaging_provider",
+        "messaging_provider__name",
         "language_code",
     ]
     readonly_fields = [
@@ -333,31 +435,35 @@ class TemplateValidationAdmin(ModelAdmin):
         "status",
         "validation_response",
         "external_template_id",
+        "content_hash",
+        "display_is_outdated",
     ]
 
     fieldsets = [
         (
-            "Template Information",
-            {"fields": ["template", "messaging_provider", "language_code"]},
+            _("Template Information"),
+            {"fields": ["event_type", "messaging_provider", "language_code"]},
         ),
         (
-            "Validation Details",
+            _("Validation Details"),
             {
-                "fields": ["external_template_id"],
-                "description": "This field is automatically populated when the template is submitted for validation",
+                "fields": [
+                    "external_template_id",
+                    "content_hash",
+                    "display_is_outdated",
+                ],
             },
         ),
-        ("Status", {"fields": ["status", "task_logs"]}),
+        (_("Status"), {"fields": ["status", "task_logs"]}),
         (
-            "Validation Response",
+            _("Validation Response"),
             {
                 "fields": ["validation_response"],
                 "classes": ["collapse"],
-                "description": "Raw response data from the messaging provider",
             },
         ),
         (
-            "Timestamps",
+            _("Timestamps"),
             {
                 "fields": ["created_at", "updated_at", "validated_at"],
                 "classes": ["collapse"],
@@ -366,6 +472,7 @@ class TemplateValidationAdmin(ModelAdmin):
     ]
 
     actions = ["validate_templates", "check_validation_status"]
+    actions_list = ["generate_whatsapp_validations"]
 
     @display(
         description=_("Status"),
@@ -374,19 +481,28 @@ class TemplateValidationAdmin(ModelAdmin):
             TemplateValidationStatus.pending: "warning",
             TemplateValidationStatus.validated: "success",
             TemplateValidationStatus.rejected: "danger",
+            TemplateValidationStatus.outdated: "warning",
         },
     )
     def display_status(self, instance):
         return instance.get_status_display()
 
+    @display(
+        description=_("Content changed"),
+        label={
+            "True": "warning",
+            "False": "success",
+        },
+    )
+    def display_is_outdated(self, instance):
+        return str(instance.is_outdated)
+
     def get_queryset(self, request):
         """Filter templates based on communication method and provider capabilities"""
         qs = super().get_queryset(request)
 
-        # Only show validations for providers that support template validation
         provider_names = []
         for provider_name, provider_class in providers.MAIN_CLASSES.items():
-            # Check if provider has validation methods
             if hasattr(provider_class, "validate_template") and hasattr(
                 provider_class, "check_template_validation"
             ):
@@ -395,14 +511,72 @@ class TemplateValidationAdmin(ModelAdmin):
         if provider_names:
             qs = qs.filter(messaging_provider__name__in=provider_names)
 
-        return qs.select_related("template", "messaging_provider")
+        return qs.select_related("messaging_provider")
 
+    @action(description=_("Submit templates for validation"))
+    def validate_templates(self, request, queryset):
+        """Submit selected templates for validation with their messaging provider."""
+        for template_validation in queryset:
+            template_messaging_provider_task.delay(
+                template_validation.pk, "validate_template"
+            )
+        messages.success(
+            request,
+            _("%(count)d template(s) submitted for validation.")
+            % {"count": queryset.count()},
+        )
+
+    @action(description=_("Check validation status"))
     def check_validation_status(self, request, queryset):
-        """Check validation status for pending templates"""
-
+        """Check validation status for pending templates."""
         for template_validation in queryset:
             template_messaging_provider_task.delay(
                 template_validation.pk, "check_template_validation"
             )
+        messages.success(
+            request,
+            _("Checking status for %(count)d template(s).")
+            % {"count": queryset.count()},
+        )
 
-    check_validation_status.short_description = "Check validation status"
+    @action(
+        description=_("Generate WhatsApp validations"),
+        url_path="generate-whatsapp-validations",
+        permissions=["generate_whatsapp_validations"],
+    )
+    def generate_whatsapp_validations(self, request):
+        """Create a TemplateValidation for each event type, language and WhatsApp provider."""
+        whatsapp_providers = MessagingProvider.objects.filter(
+            communication_method=CommunicationMethod.whatsapp,
+            is_active=True,
+        )
+        if not whatsapp_providers.exists():
+            messages.warning(request, _("No active WhatsApp provider found."))
+            return redirect(
+                reverse_lazy("admin:messaging_templatevalidation_changelist")
+            )
+
+        created = 0
+        languages = [code for code, _name in settings.LANGUAGES]
+        for provider in whatsapp_providers:
+            for event_type in DEFAULT_NOTIFICATION_MESSAGES:
+                for lang in languages:
+                    _obj, was_created = TemplateValidation.objects.get_or_create(
+                        messaging_provider=provider,
+                        event_type=event_type,
+                        language_code=lang,
+                    )
+                    if was_created:
+                        created += 1
+
+        messages.success(
+            request,
+            _(
+                "%(created)d validation(s) created for %(providers)d WhatsApp provider(s)."
+            )
+            % {"created": created, "providers": whatsapp_providers.count()},
+        )
+        return redirect(reverse_lazy("admin:messaging_templatevalidation_changelist"))
+
+    def has_generate_whatsapp_validations_permission(self, request):
+        return request.user.has_perm("messaging.add_templatevalidation")

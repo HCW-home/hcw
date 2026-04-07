@@ -24,7 +24,10 @@ import {
 import { ValidationService } from '../../../../core/services/validation.service';
 import { Auth } from '../../../../core/services/auth';
 import { ErrorMessage } from '../../../../shared/components/error-message/error-message';
-import { getErrorMessage as getHttpErrorMessage } from '../../../../core/utils/error-helper';
+import { LanguageSelector } from '../../../../shared/components/language-selector/language-selector';
+import { AuthBranding } from '../../../../shared/components/auth-branding/auth-branding';
+import { UserService } from '../../../../core/services/user.service';
+import { ThemeService } from '../../../../core/services/theme.service';
 
 interface LoginForm {
   email: FormControl<string>;
@@ -41,6 +44,8 @@ interface LoginForm {
     ErrorMessage,
     TranslatePipe,
     ReactiveFormsModule,
+    LanguageSelector,
+    AuthBranding,
   ],
   templateUrl: './login.html',
   styleUrl: './login.scss',
@@ -50,8 +55,7 @@ export class Login implements OnInit {
   loadingButton = false;
   openIdEnabled = false;
   openIdProviderName = '';
-  siteLogoWhite: string | null = null;
-  branding = 'HCW@Home';
+  disablePasswordLogin = false;
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private titleService = inject(Title);
@@ -61,10 +65,11 @@ export class Login implements OnInit {
   private consultationService = inject(ConsultationService);
   public validationService = inject(ValidationService);
   private t = inject(TranslationService);
+  private userService = inject(UserService);
+  private themeService = inject(ThemeService);
   form: FormGroup<LoginForm> = this.formBuilder.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
-    // email: ['info@iabsis.com', [Validators.required, Validators.email]],
-    password: ['nHVih82Umdv@Qtk', [Validators.required]],
+    password: ['', [Validators.required]],
   });
 
   constructor() {
@@ -74,17 +79,30 @@ export class Login implements OnInit {
   }
 
   ngOnInit() {
+    // Clean up JWT tokens to prevent websocket reconnection attempts
+    this.adminAuthService.removeToken();
+
     this.adminAuthService.getOpenIDConfig().subscribe({
       next: config => {
         this.openIdEnabled = config.enabled;
         this.openIdProviderName = config.provider_name || 'OpenID';
-        this.siteLogoWhite = config.site_logo_white;
+        this.disablePasswordLogin = config.disable_password_login || false;
         if (config.branding) {
-          this.branding = config.branding;
           this.titleService.setTitle(config.branding);
         }
         if (config.site_favicon) {
           this.updateFavicon(config.site_favicon);
+        }
+        if (config.languages?.length) {
+          this.t.loadLanguages(config.languages);
+        }
+        if (config.primary_color_practitioner) {
+          this.themeService.applyPrimaryColor(config.primary_color_practitioner);
+        }
+
+        // If password login is disabled and OpenID is enabled, redirect to SSO
+        if (this.disablePasswordLogin && this.openIdEnabled) {
+          this.onOpenIDLogin();
         }
       },
       error: err => {
@@ -109,49 +127,24 @@ export class Login implements OnInit {
       };
       this.adminAuthService.login(body).subscribe({
         next: res => {
-          localStorage.setItem('token', res.access);
-          this.loadingButton = false;
-
-          const action = this.route.snapshot.queryParamMap.get('action');
-          const id = this.route.snapshot.queryParamMap.get('id');
-
-          if (action === 'join' && id) {
-            this.consultationService.getParticipantById(id).subscribe({
-              next: participant => {
-                const consultation = participant.appointment.consultation;
-                const consultationId =
-                  typeof consultation === 'object'
-                    ? (consultation as { id: number }).id
-                    : consultation;
-                this.router.navigate(
-                  [
-                    '/',
-                    RoutePaths.USER,
-                    RoutePaths.CONSULTATIONS,
-                    consultationId,
-                  ],
-                  {
-                    queryParams: {
-                      join: 'true',
-                      appointmentId: participant.appointment.id,
-                    },
-                  }
-                );
-              },
-              error: () => {
-                this.router.navigate(['/', RoutePaths.CONFIRM_PRESENCE, id]);
-              },
-            });
-          } else if (action) {
-            const route = this.actionHandler.getRouteForAction(action, id);
-            this.router.navigateByUrl(route);
-          } else {
-            this.router.navigate([`/${RoutePaths.USER}`, RoutePaths.DASHBOARD]);
+          this.adminAuthService.setToken(res.access);
+          if (res.refresh) {
+            this.adminAuthService.setRefreshToken(res.refresh);
           }
-        },
-        error: err => {
           this.loadingButton = false;
-          this.errorMessage = getHttpErrorMessage(err);
+
+          this.userService.getCurrentUser().subscribe({
+            next: () => {
+              this.navigateAfterLogin();
+            },
+            error: () => {
+              this.navigateAfterLogin();
+            },
+          });
+        },
+        error: () => {
+          this.loadingButton = false;
+          this.errorMessage = this.t.instant('login.authenticationFailed');
         },
       });
     } else {
@@ -169,6 +162,40 @@ export class Login implements OnInit {
         }
       default:
         return this.t.instant('login.fieldRequired');
+    }
+  }
+
+  private navigateAfterLogin(): void {
+    const action = this.route.snapshot.queryParamMap.get('action');
+    const id = this.route.snapshot.queryParamMap.get('id');
+
+    if (action === 'join' && id) {
+      this.consultationService.getParticipantById(id).subscribe({
+        next: participant => {
+          const consultation = participant.appointment.consultation;
+          const consultationId =
+            typeof consultation === 'object'
+              ? (consultation as { id: number }).id
+              : consultation;
+          this.router.navigate(
+            ['/', RoutePaths.USER, RoutePaths.CONSULTATIONS, consultationId],
+            {
+              queryParams: {
+                join: 'true',
+                appointmentId: participant.appointment.id,
+              },
+            }
+          );
+        },
+        error: () => {
+          this.router.navigate(['/', RoutePaths.CONFIRM_PRESENCE, id]);
+        },
+      });
+    } else if (action) {
+      const route = this.actionHandler.getRouteForAction(action, id);
+      this.router.navigateByUrl(route);
+    } else {
+      this.router.navigate([`/${RoutePaths.USER}`, RoutePaths.DASHBOARD]);
     }
   }
 

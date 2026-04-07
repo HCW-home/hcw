@@ -1,9 +1,22 @@
+import { registerLocaleData } from '@angular/common';
+import localeFr from '@angular/common/locales/fr';
+import localeDe from '@angular/common/locales/de';
+import localeEs from '@angular/common/locales/es';
+import localeIt from '@angular/common/locales/it';
 import { bootstrapApplication } from '@angular/platform-browser';
+
+registerLocaleData(localeFr);
+registerLocaleData(localeDe);
+registerLocaleData(localeEs);
+registerLocaleData(localeIt);
 import { RouteReuseStrategy, provideRouter, withPreloading, PreloadAllModules, withComponentInputBinding } from '@angular/router';
 import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalone';
 import { register } from 'swiper/element/bundle';
 import { provideHttpClient, withInterceptorsFromDi, HTTP_INTERCEPTORS } from '@angular/common/http';
-import { importProvidersFrom } from '@angular/core';
+import { APP_INITIALIZER } from '@angular/core';
+import { AuthService } from './app/core/services/auth.service';
+import { importProvidersFrom, isDevMode } from '@angular/core';
+import { provideServiceWorker } from '@angular/service-worker';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 import { AuthInterceptor } from './app/core/interceptors/auth.interceptor';
@@ -62,7 +75,7 @@ import {
   hourglassOutline, ellipsisVerticalOutline, chatbubbleEllipsesOutline, closeCircleOutline,
   sendOutline, attachOutline, imageOutline, wifiOutline, cloudOfflineOutline, closeOutline,
   atOutline, createOutline, close, shieldCheckmarkOutline, keypadOutline, checkmarkOutline,
-  globeOutline, chevronDownOutline
+  globeOutline, chevronDownOutline, flashOutline, mailOpenOutline
 } from 'ionicons/icons';
 
 import { routes } from './app/app.routes';
@@ -179,6 +192,8 @@ addIcons({
   'checkmark-outline': checkmarkOutline,
   'globe-outline': globeOutline,
   'chevron-down-outline': chevronDownOutline,
+  'flash-outline': flashOutline,
+  'mail-open-outline': mailOpenOutline,
 });
 
 bootstrapApplication(AppComponent, {
@@ -191,6 +206,12 @@ bootstrapApplication(AppComponent, {
     ),
     provideHttpClient(withInterceptorsFromDi()),
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
+    {
+      provide: APP_INITIALIZER,
+      useFactory: (auth: AuthService) => () => auth.initConfig(),
+      deps: [AuthService],
+      multi: true,
+    },
     importProvidersFrom(IonicStorageModule.forRoot()),
     provideTranslateService({
       loader: provideTranslateHttpLoader({
@@ -200,6 +221,10 @@ bootstrapApplication(AppComponent, {
       }),
       fallbackLang: 'en',
       lang: 'en',
-    })
+    }),
+    provideServiceWorker('custom-sw.js', {
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerWhenStable:30000',
+    }),
   ]
 }).catch(err => console.log(err));

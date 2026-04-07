@@ -8,6 +8,7 @@ import {
   Participant,
   ConsultationRequest,
   ConsultationMessage,
+  CustomField,
   IDashboardResponse,
   IParticipantDetail
 } from '../models/consultation.model';
@@ -31,6 +32,7 @@ export interface ConsultationRequestData {
   reason_id: number | undefined;
   type: 'online' | 'inPerson';
   comment?: string;
+  custom_fields?: { field: number; value: string | null }[];
 }
 
 @Injectable({
@@ -62,6 +64,10 @@ export class ConsultationService {
 
   cancelAppointment(id: number): Observable<Appointment> {
     return this.api.patch<Appointment>(`/appointments/${id}/`, { status: 'cancelled' });
+  }
+
+  markConsultationRead(consultationId: number): Observable<any> {
+    return this.api.post(`/user/consultations/${consultationId}/mark_read/`, {});
   }
 
   getConsultationMessagesPaginated(consultationId: number, page: number = 1): Observable<PaginatedResponse<ConsultationMessage>> {
@@ -103,7 +109,14 @@ export class ConsultationService {
     room: string;
   }> {
     return this.api.get<{ url: string; token: string; room: string }>(
-      `/consultations/${consultationId}/join/`
+      `/user/consultations/${consultationId}/join/`
+    );
+  }
+
+  respondToCall(consultationId: number, accepted: boolean): Observable<{ detail: string }> {
+    return this.api.post<{ detail: string }>(
+      `/user/consultations/${consultationId}/call_response/`,
+      { accepted }
     );
   }
 
@@ -114,6 +127,13 @@ export class ConsultationService {
   }> {
     return this.api.get<{ url: string; token: string; room: string }>(
       `/user/appointments/${appointmentId}/join/`
+    );
+  }
+
+  leaveAppointment(appointmentId: number): Observable<{detail: string}> {
+    return this.api.post<{detail: string}>(
+      `/user/appointments/${appointmentId}/leave/`,
+      {}
     );
   }
 
@@ -140,5 +160,9 @@ export class ConsultationService {
       `/user/participants/${participantId}/`,
       { is_confirmed: isConfirmed }
     );
+  }
+
+  getCustomFields(targetModel: string): Observable<CustomField[]> {
+    return this.api.get<CustomField[]>('/custom-fields/', { target_model: targetModel });
   }
 }

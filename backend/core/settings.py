@@ -20,6 +20,8 @@ from django.utils.translation import gettext_lazy as _
 from dotenv import load_dotenv
 from firebase_admin import initialize_app
 from unfold.contrib.constance.settings import UNFOLD_CONSTANCE_ADDITIONAL_FIELDS
+from boto3.s3.transfer import TransferConfig
+from botocore.config import Config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -54,6 +56,7 @@ EMAIL_HOST = os.getenv("EMAIL_HOST")
 EMAIL_PORT = os.getenv("EMAIL_PORT", 25)
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
 EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", False)
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", False)
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 
@@ -73,10 +76,11 @@ ACCOUNT_MAX_EMAIL_ADDRESSES = 1
 
 # Application definition
 
-INSTALLED_APPS = [
+SHARED_APPS = (
+    'django_tenants',
+    'tenants',
     "daphne",
     "unfold",
-    "modeltranslation",
     "unfold.contrib.filters",
     "unfold.contrib.forms",
     "unfold.contrib.inlines",
@@ -85,7 +89,6 @@ INSTALLED_APPS = [
     "unfold.contrib.simple_history",
     "unfold.contrib.location_field",
     "unfold.contrib.constance",
-    "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -94,32 +97,46 @@ INSTALLED_APPS = [
     "import_export",
     "django_celery_beat",
     "corsheaders",
-    "mfa",
+    "django_filters",
+    "dj_rest_auth.registration",
+    "rest_framework",
+    "dj_rest_auth",
+    "rest_framework_simplejwt",
+    "drf_spectacular",
+    "drf_spectacular_sidecar",
+    "django_celery_results",
+    "location_field",
+)
+
+TENANT_APPS = (
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.openid_connect",
-    "django_filters",
-    "dj_rest_auth.registration",
-    "rest_framework",
     "rest_framework.authtoken",
-    "dj_rest_auth",
-    # 'dj_rest_auth_mfa',
-    "rest_framework_simplejwt",
-    "drf_spectacular",
-    "django_celery_results",
     "fcm_django",
-    "location_field",
+    "modeltranslation",
+    "django.contrib.admin",
+    "constance",
     "consultations",
     "users",
     "messaging",
     "mediaserver",
     "api",
     "translations",
-    "constance",
-]
+    "caldav",
+)
+
+INSTALLED_APPS = list(SHARED_APPS) + \
+    [app for app in TENANT_APPS if app not in SHARED_APPS]
+
+
+TENANT_MODEL = "tenants.Tenant"
+TENANT_DOMAIN_MODEL = "tenants.Domain"
 
 MIDDLEWARE = [
+    "core.healthcheck.HealthCheckMiddleware",
+    "django_tenants.middleware.main.TenantMainMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -148,7 +165,6 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                "django.template.context_processors.request",
             ],
         },
     },
@@ -163,7 +179,7 @@ MEDIA_URL = "/upload/"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
+        "ENGINE": "django_tenants.postgresql_backend",
         "NAME": os.getenv("DATABASE_NAME"),
         "USER": os.getenv("DATABASE_USER"),
         "PASSWORD": os.getenv("DATABASE_PASSWORD"),
@@ -172,13 +188,18 @@ DATABASES = {
     }
 }
 
+DATABASE_ROUTERS = (
+    'django_tenants.routers.TenantSyncRouter',
+)
+
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(
-        minutes=int(os.getenv("ACCESS_TOKEN_LIFETIME", 60))
+        minutes=int(os.getenv("ACCESS_TOKEN_LIFETIME", 3600))
     ),
-    "ROTATE_REFRESH_TOKENS": timedelta(
-        minutes=int(os.getenv("ROTATE_REFRESH_TOKENS", 60))
+    "REFRESH_TOKEN_LIFETIME": timedelta(
+        days=int(os.getenv("REFRESH_TOKEN_LIFETIME_DAYS", 1))
     ),
+    "ROTATE_REFRESH_TOKENS": True,
 }
 
 CONSTANCE_BACKEND = "constance.backends.database.DatabaseBackend"
@@ -214,6 +235,7 @@ LOCALE_PATHS = [
 TIME_ZONE = os.getenv("DEFAULT_TIME_ZONE", "UTC")
 
 USE_I18N = True
+USE_L10N = True
 
 USE_TZ = True
 
@@ -221,7 +243,9 @@ gettext = lambda s: s
 LANGUAGES = (
     ("en", gettext("English")),
     ("de", gettext("German")),
+    ("es", gettext("Spanish")),
     ("fr", gettext("French")),
+    ("it", gettext("Italian")),
 )
 
 # Static files (CSS, JavaScript, Images)
@@ -241,7 +265,7 @@ AUTHENTICATION_BACKENDS = [
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "core.authentication.TenantJWTAuthentication",
     ),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
@@ -250,7 +274,7 @@ REST_FRAMEWORK = {
 
 SITE_ID = 1
 ACCOUNT_EMAIL_VERIFICATION = "none"  # Disable email verification for social auth
-ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 AUTH_USER_MODEL = "users.User"
 
 REST_AUTH = {
@@ -258,6 +282,7 @@ REST_AUTH = {
     "JWT_AUTH_COOKIE": "_auth",
     "JWT_AUTH_REFRESH_COOKIE": "_refresh",
     "JWT_AUTH_HTTPONLY": False,
+    "JWT_TOKEN_CLAIMS_SERIALIZER": "core.authentication.TenantTokenObtainPairSerializer",
     "USER_DETAILS_SERIALIZER": "users.serializers.UserDetailsSerializer",
     "REGISTER_SERIALIZER": "users.serializers.RegisterSerializer",
     "LOGIN_SERIALIZER": "users.serializers.LoginSerializer",
@@ -265,6 +290,8 @@ REST_AUTH = {
 }
 
 LOGIN_REDIRECT_URL = "/home/"
+LOGOUT_REDIRECT_URL = "/"
+ACCOUNT_LOGOUT_REDIRECT_URL = "/"
 
 SWAGGER_SETTINGS = {
     "SECURITY_DEFINITIONS": {"basic": {"type": "oauth2"}},
@@ -275,6 +302,9 @@ SPECTACULAR_SETTINGS = {
     "TITLE": "HCW@Home API",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
+    "SWAGGER_UI_DIST": "SIDECAR",
+    "SWAGGER_UI_FAVICON_HREF": "SIDECAR",
+    "REDOC_DIST": "SIDECAR",
     "COMPONENTS": {
         "securitySchemes": {
             "bearerAuth": {  # OpenAPI 3
@@ -284,29 +314,10 @@ SPECTACULAR_SETTINGS = {
             }
         }
     },
-    "SECURITY": [{"bearerAuth": []}],  # apply globally
     "SWAGGER_UI_SETTINGS": {
         "persistAuthorization": True,  # <-- keep JWT after refresh
         # "tryItOutEnabled": True,     # optional
     },
-}
-
-SOCIALACCOUNT_PROVIDERS = {
-    "openid_connect": {
-        "APPS": [
-            {
-                "provider_id": "openid",
-                "name": os.getenv("OPENID_NAME"),
-                "client_id": os.getenv("OPENID_CLIENT_ID"),
-                "secret": os.getenv("OPENID_SECRET"),
-                "settings": {
-                    "server_url": os.getenv("OPENID_CONFIGURATION_URL"),
-                },
-            }
-        ],
-        "EMAIL_AUTHENTICATION": True,
-        "VERIFIED_EMAIL": True,
-    }
 }
 
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
@@ -314,6 +325,12 @@ SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
 SOCIALACCOUNT_LOGIN_ON_GET = True
 SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
+SOCIALACCOUNT_PROVIDERS = {
+    "openid_connect": {
+        "EMAIL_AUTHENTICATION": True,
+        "VERIFIED_EMAIL": True,
+    }
+}
 
 REDIS_HOST = os.getenv("REDIS_HOST") or "127.0.0.1"
 REDIS_PORT = os.getenv("REDIS_PORT") or "6379"
@@ -335,6 +352,8 @@ CACHES = {
         if not DEBUG
         else "django.core.cache.backends.locmem.LocMemCache",
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}",
+        'KEY_FUNCTION': 'django_tenants.cache.make_key',
+        'REVERSE_KEY_FUNCTION': 'django_tenants.cache.reverse_key',
     }
 }
 STATIC_ROOT = os.getenv("STATIC_ROOT", "statics")
@@ -343,6 +362,14 @@ CELERY_BEAT_SCHEDULE = {
     "handle_reminders": {
         "task": "consultations.tasks.handle_reminders",
         "schedule": crontab(minute="*", hour="*"),
+    },
+    "auto_delete_closed_consultations": {
+        "task": "consultations.tasks.auto_delete_closed_consultations",
+        "schedule": crontab(minute=0),
+    },
+    "auto_delete_temporary_users": {
+        "task": "users.tasks.auto_delete_temporary_users",
+        "schedule": crontab(minute=0),
     },
 }
 
@@ -354,12 +381,14 @@ FCM_DJANGO_SETTINGS = {
     "FCM_DEVICE_MODEL": "users.FCMDeviceOverride",
 }
 
-ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")
+# Web Push (VAPID) Configuration
+WEBPUSH_VAPID_PRIVATE_KEY = os.getenv("WEBPUSH_VAPID_PRIVATE_KEY")
+WEBPUSH_VAPID_PUBLIC_KEY = os.getenv("WEBPUSH_VAPID_PUBLIC_KEY")
+WEBPUSH_VAPID_CLAIMS_EMAIL = os.getenv(
+    "WEBPUSH_VAPID_CLAIMS_EMAIL", "mailto:admin@hcw-at-home.com"
+)
 
-# Janus Media Server Configuration
-JANUS_TURN_SERVER = os.getenv("JANUS_TURN_SERVER", "turn:demo.hcw-at-home.com")
-JANUS_TURN_USERNAME = os.getenv("JANUS_TURN_USERNAME", "iabsis")
-JANUS_TURN_PASSWORD = os.getenv("JANUS_TURN_PASSWORD", "pfcqopfs")
+ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")
 
 CHANNEL_LAYERS = {
     "default": {
@@ -411,22 +440,30 @@ UNFOLD = {
                             "users.view_user"
                         ),
                     },
-                    {
-                        "title": _("Health Metric"),
-                        "icon": "people",
-                        "link": reverse_lazy("admin:users_healthmetric_changelist"),
-                        "permission": lambda request: request.user.has_perm(
-                            "users.view_healthmetric"
-                        ),
-                    },
+                    # {
+                    #     "title": _("Health Metric"),
+                    #     "icon": "people",
+                    #     "link": reverse_lazy("admin:users_healthmetric_changelist"),
+                    #     "permission": lambda request: request.user.has_perm(
+                    #         "users.view_healthmetric"
+                    #     ),
+                    # },
                     {
                         "title": _("Groups"),
-                        "icon": "group",
-                        "link": reverse_lazy("admin:auth_group_changelist"),
+                        "icon": "group_work",
+                        "link": reverse_lazy("admin:consultations_queue_changelist"),
                         "permission": lambda request: request.user.has_perm(
-                            "auth.view_group"
+                            "consultations.view_queue"
                         ),
                     },
+                    # {
+                    #     "title": _("Groups"),
+                    #     "icon": "group",
+                    #     "link": reverse_lazy("admin:auth_group_changelist"),
+                    #     "permission": lambda request: request.user.has_perm(
+                    #         "auth.view_group"
+                    #     ),
+                    # },
                     {
                         "title": _("Organizations"),
                         "icon": "business",
@@ -459,16 +496,16 @@ UNFOLD = {
                             "users.view_speciality"
                         ),
                     },
-                    {
-                        "title": _("FCM Devices"),
-                        "icon": "phone_android",
-                        "link": reverse_lazy(
-                            "admin:users_fcmdeviceoverride_changelist"
-                        ),
-                        "permission": lambda request: request.user.has_perm(
-                            "users.view_fcmdeviceoverride"
-                        ),
-                    },
+                    # {
+                    #     "title": _("FCM Devices"),
+                    #     "icon": "phone_android",
+                    #     "link": reverse_lazy(
+                    #         "admin:users_fcmdeviceoverride_changelist"
+                    #     ),
+                    #     "permission": lambda request: request.user.has_perm(
+                    #         "users.view_fcmdeviceoverride"
+                    #     ),
+                    # },
                 ],
             },
             {
@@ -476,42 +513,34 @@ UNFOLD = {
                 "separator": True,
                 "collapsible": True,
                 "items": [
-                    {
-                        "title": _("Consultations"),
-                        "icon": "medical_services",
-                        "link": reverse_lazy(
-                            "admin:consultations_consultation_changelist"
-                        ),
-                        "permission": lambda request: request.user.has_perm(
-                            "consultations.view_consultation"
-                        ),
-                    },
-                    {
-                        "title": _("Queues"),
-                        "icon": "group_work",
-                        "link": reverse_lazy("admin:consultations_queue_changelist"),
-                        "permission": lambda request: request.user.has_perm(
-                            "consultations.view_queue"
-                        ),
-                    },
-                    {
-                        "title": _("Appointments"),
-                        "icon": "schedule",
-                        "link": reverse_lazy(
-                            "admin:consultations_appointment_changelist"
-                        ),
-                        "permission": lambda request: request.user.has_perm(
-                            "consultations.view_appointment"
-                        ),
-                    },
-                    {
-                        "title": _("Messages"),
-                        "icon": "message",
-                        "link": reverse_lazy("admin:consultations_message_changelist"),
-                        "permission": lambda request: request.user.has_perm(
-                            "consultations.view_message"
-                        ),
-                    },
+                    # {
+                    #     "title": _("Consultations"),
+                    #     "icon": "medical_services",
+                    #     "link": reverse_lazy(
+                    #         "admin:consultations_consultation_changelist"
+                    #     ),
+                    #     "permission": lambda request: request.user.has_perm(
+                    #         "consultations.view_consultation"
+                    #     ),
+                    # },
+                    # {
+                    #     "title": _("Appointments"),
+                    #     "icon": "schedule",
+                    #     "link": reverse_lazy(
+                    #         "admin:consultations_appointment_changelist"
+                    #     ),
+                    #     "permission": lambda request: request.user.has_perm(
+                    #         "consultations.view_appointment"
+                    #     ),
+                    # },
+                    # {
+                    #     "title": _("Messages"),
+                    #     "icon": "message",
+                    #     "link": reverse_lazy("admin:consultations_message_changelist"),
+                    #     "permission": lambda request: request.user.has_perm(
+                    #         "consultations.view_message"
+                    #     ),
+                    # },
                     {
                         "title": _("Reasons"),
                         "icon": "list",
@@ -520,24 +549,24 @@ UNFOLD = {
                             "consultations.view_reason"
                         ),
                     },
-                    {
-                        "title": _("Requests"),
-                        "icon": "inbox",
-                        "link": reverse_lazy("admin:consultations_request_changelist"),
-                        "permission": lambda request: request.user.has_perm(
-                            "consultations.view_request"
-                        ),
-                    },
-                    {
-                        "title": _("Booking slots"),
-                        "icon": "event",
-                        "link": reverse_lazy(
-                            "admin:consultations_bookingslot_changelist"
-                        ),
-                        "permission": lambda request: request.user.has_perm(
-                            "consultations.view_bookingslot"
-                        ),
-                    },
+                    # {
+                    #     "title": _("Requests"),
+                    #     "icon": "inbox",
+                    #     "link": reverse_lazy("admin:consultations_request_changelist"),
+                    #     "permission": lambda request: request.user.has_perm(
+                    #         "consultations.view_request"
+                    #     ),
+                    # },
+                    # {
+                    #     "title": _("Booking slots"),
+                    #     "icon": "event",
+                    #     "link": reverse_lazy(
+                    #         "admin:consultations_bookingslot_changelist"
+                    #     ),
+                    #     "permission": lambda request: request.user.has_perm(
+                    #         "consultations.view_bookingslot"
+                    #     ),
+                    # },
                 ],
             },
             {
@@ -555,14 +584,14 @@ UNFOLD = {
                             "messaging.view_messagingprovider"
                         ),
                     },
-                    {
-                        "title": _("Messages"),
-                        "icon": "message",
-                        "link": reverse_lazy("admin:messaging_message_changelist"),
-                        "permission": lambda request: request.user.has_perm(
-                            "messaging.view_messagingprovider"
-                        ),
-                    },
+                    # {
+                    #     "title": _("Messages"),
+                    #     "icon": "message",
+                    #     "link": reverse_lazy("admin:messaging_message_changelist"),
+                    #     "permission": lambda request: request.user.has_perm(
+                    #         "messaging.view_messagingprovider"
+                    #     ),
+                    # },
                     {
                         "title": _("Templates"),
                         "icon": "description",
@@ -596,72 +625,95 @@ UNFOLD = {
                             "mediaserver.view_server"
                         ),
                     },
-                    {
-                        "title": _("TURN Server"),
-                        "icon": "router",
-                        "link": reverse_lazy("admin:mediaserver_turn_changelist"),
-                        "permission": lambda request: request.user.has_perm(
-                            "mediaserver.view_turn"
-                        ),
-                    },
+                    # {
+                    #     "title": _("TURN Server"),
+                    #     "icon": "router",
+                    #     "link": reverse_lazy("admin:mediaserver_turn_changelist"),
+                    #     "permission": lambda request: request.user.has_perm(
+                    #         "mediaserver.view_turn"
+                    #     ),
+                    # },
                 ],
             },
-            {
-                "title": _("Celery Tasks"),
-                "collapsible": True,
-                "separator": True,
-                "items": [
-                    {
-                        "title": _("Clocked"),
-                        "icon": "hourglass_bottom",
-                        "link": reverse_lazy(
-                            "admin:django_celery_beat_clockedschedule_changelist"
-                        ),
-                    },
-                    {
-                        "title": _("Crontabs"),
-                        "icon": "update",
-                        "link": reverse_lazy(
-                            "admin:django_celery_beat_crontabschedule_changelist"
-                        ),
-                    },
-                    {
-                        "title": _("Intervals"),
-                        "icon": "timer",
-                        "link": reverse_lazy(
-                            "admin:django_celery_beat_intervalschedule_changelist"
-                        ),
-                    },
-                    {
-                        "title": _("Periodic tasks"),
-                        "icon": "task",
-                        "link": reverse_lazy(
-                            "admin:django_celery_beat_periodictask_changelist"
-                        ),
-                    },
-                    {
-                        "title": _("Solar events"),
-                        "icon": "event",
-                        "link": reverse_lazy(
-                            "admin:django_celery_beat_solarschedule_changelist"
-                        ),
-                    },
-                ],
-            },
+            # {
+            #     "title": _("Celery Tasks"),
+            #     "collapsible": True,
+            #     "separator": True,
+            #     "items": [
+            #         {
+            #             "title": _("Clocked"),
+            #             "icon": "hourglass_bottom",
+            #             "link": reverse_lazy(
+            #                 "admin:django_celery_beat_clockedschedule_changelist"
+            #             ),
+            #         },
+            #         {
+            #             "title": _("Crontabs"),
+            #             "icon": "update",
+            #             "link": reverse_lazy(
+            #                 "admin:django_celery_beat_crontabschedule_changelist"
+            #             ),
+            #         },
+            #         {
+            #             "title": _("Intervals"),
+            #             "icon": "timer",
+            #             "link": reverse_lazy(
+            #                 "admin:django_celery_beat_intervalschedule_changelist"
+            #             ),
+            #         },
+            #         {
+            #             "title": _("Periodic tasks"),
+            #             "icon": "task",
+            #             "link": reverse_lazy(
+            #                 "admin:django_celery_beat_periodictask_changelist"
+            #             ),
+            #         },
+            #         {
+            #             "title": _("Solar events"),
+            #             "icon": "event",
+            #             "link": reverse_lazy(
+            #                 "admin:django_celery_beat_solarschedule_changelist"
+            #             ),
+            #         },
+            #         {
+            #             "title": _("Task results"),
+            #             "icon": "checklist",
+            #             "link": reverse_lazy(
+            #                 "admin:django_celery_results_taskresult_changelist"
+            #             ),
+            #         },
+            #     ],
+            # },
             {
                 "title": _("Settings"),
                 "separator": True,
                 "collapsible": True,
                 "items": [
                     {
+                        "title": _("Custom Fields"),
+                        "icon": "tune",
+                        "link": reverse_lazy(
+                            "admin:consultations_customfield_changelist"
+                        ),
+                        "permission": lambda request: request.user.is_superuser,
+                    },
+                    {
                         "title": _("Translation Overrides"),
                         "icon": "translate",
                         "link": reverse_lazy("admin:translations_override_editor"),
+                        "permission": lambda request: request.user.is_superuser,
                     },
                     {
                         "title": _("Configuration"),
                         "icon": "settings",
                         "link": reverse_lazy("admin:constance_config_changelist"),
+                        "permission": lambda request: request.user.is_superuser,
+                    },
+                    {
+                        "title": _("API Tokens"),
+                        "icon": "key",
+                        "link": reverse_lazy("admin:authtoken_tokenproxy_changelist"),
+                        "permission": lambda request: request.user.is_superuser,
                     },
                 ],
             },
@@ -672,16 +724,9 @@ UNFOLD = {
 # Default Configuration Values
 CONSTANCE_CONFIG = {
     "site_name": ("HCW@Home", "The name of the application displayed to users"),
-    "site_logo": ("", "Site logo", "image_field"),
-    "site_logo_white": (
-        "",
-        "White version of the site logo (used on dark backgrounds)",
-        "image_field",
-    ),
-    "site_favicon": ("", "Site favicon", "image_field"),
-    "patient_base_url": ("https://localhost:8000", "Base URL of patient frontend"),
+    "patient_base_url": ("http://localhost:8001", "Base URL of patient frontend"),
     "practitioner_base_url": (
-        "https://localhost:8000",
+        "http://localhost:4200",
         "Base URL of practitioner frontend",
     ),
     "appointment_first_reminder": (
@@ -692,13 +737,56 @@ CONSTANCE_CONFIG = {
         "10",
         "When to send last appointment reminder, in minute before the appointment time",
     ),
+    "appointment_early_join_minutes": (
+        10,
+        "Minutes before appointment scheduled time that participants can join",
+    ),
+    "consultation_auto_delete_hours": (
+        0,
+        "Hours after closure before a follow-up is automatically deleted (0 to disable)",
+    ),
+    "temporary_user_auto_delete": (
+        True,
+        "Automatically delete temporary users with no future appointments",
+    ),
+    "temporary_participant_token_expiry_hours": (
+        1,
+        "Hours before a temporary participant access token expires",
+    ),
+    "disable_password_login": (
+        False,
+        "Disable password login for practitioners (SSO only)",
+    ),
+    "enable_registration": (
+        False,
+        "Enable self-registration for new users",
+    ),
+    "max_upload_size_mb": (
+        10,
+        "Maximum file upload size in MB (0 to disable limit)",
+    ),
+    "users_visibility": (
+        "all",
+        "Controls which users practitioners can see: all = all users, alone = no sharing, alone, organization = same organization practitioners",
+        "users_visibility_select",
+    ),
+    "patient_visibility": (
+        "all",
+        "Controls which patients practitioners can see: all = all patients, alone = only patients they created, organization = patients from same organization",
+        "patient_visibility_select",
+    ),
 }
 
 
 CONSTANCE_CONFIG_FIELDSETS = {
-    "General Options": ("site_name", "site_logo", "site_logo_white", "site_favicon"),
+    "General Options": ("site_name",),
     "URLs": ("patient_base_url", "practitioner_base_url"),
-    "Scheduling": ("appointment_first_reminder", "appointment_last_reminder"),
+    "Scheduling": ("appointment_first_reminder", "appointment_last_reminder", "appointment_early_join_minutes"),
+    "Data Retention": ("consultation_auto_delete_hours", "temporary_user_auto_delete"),
+    "Security": ("temporary_participant_token_expiry_hours",),
+    "Uploads": ("max_upload_size_mb",),
+    "Authentication": ("disable_password_login", "enable_registration"),
+    "Visibility": ("users_visibility", "patient_visibility"),
 }
 
 # CORS Configuration
@@ -719,16 +807,17 @@ CORS_ALLOW_HEADERS = [
     "x-requested-with",
 ]
 
-# PRACTITIONER_URL = os.getenv("PRACTITIONER_URL", "http://localhost:4200")
-# PATIENT_URL = os.getenv("PATIENT_URL", "http://localhost:4201")
-
+# CSRF Configuration
+csrf_origins = os.getenv("CSRF_TRUSTED_ORIGINS", "")
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_origins.split(",") if origin.strip()]
 
 # RECOVERY_ITERATION = 720000
 # MFA_MANDATORY = False
 # MFA_ADAPTER_CLASS = "dj_rest_auth_mfa.adapters.DjangoMFA2Adapter"
 # MFA_GRACE_WINDOW_DAYS = 7
 
-ENABLE_REGISTRATION = os.getenv("ENABLE_REGISTRATION", "False") == "True"
+# ENABLE_REGISTRATION = os.getenv("ENABLE_REGISTRATION", "False") == "True"
+DISABLE_PASSWORD_LOGIN = os.getenv("DISABLE_PASSWORD_LOGIN", "False") == "True"
 
 ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
@@ -737,6 +826,28 @@ ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 
 CONSTANCE_ADDITIONAL_FIELDS = {
     **UNFOLD_CONSTANCE_ADDITIONAL_FIELDS,
+    "users_visibility_select": [
+        "django.forms.fields.ChoiceField",
+        {
+            "widget": "django.forms.Select",
+            "choices": (
+                ("all", "All users"),
+                ("alone", "Only patients and self"),
+                ("organization", "Patients and same organization"),
+            ),
+        },
+    ],
+    "patient_visibility_select": [
+        "django.forms.fields.ChoiceField",
+        {
+            "widget": "django.forms.Select",
+            "choices": (
+                ("all", "All patients"),
+                ("alone", "Only patients created by me"),
+                ("organization", "Patients from same organization"),
+            ),
+        },
+    ],
 }
 
 CONSTANCE_FILE_ROOT = "constance"
@@ -781,8 +892,10 @@ S3_ENDPOINT_URL = os.getenv("S3_ENDPOINT_URL", None)
 S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY", None)
 S3_SECRET_KEY = os.getenv("S3_SECRET_KEY", None)
 S3_VERIFY = os.getenv("S3_VERIFY", None)
+S3_ADDRESSING_STYLE = os.getenv("S3_ADDRESSING_STYLE", "auto")
 
 if S3_BUCKET_NAME and S3_ENDPOINT_URL and S3_ACCESS_KEY and S3_SECRET_KEY:
+
     STORAGES = {
         "default": {
             "BACKEND": "storages.backends.s3.S3Storage",
@@ -792,6 +905,14 @@ if S3_BUCKET_NAME and S3_ENDPOINT_URL and S3_ACCESS_KEY and S3_SECRET_KEY:
                 "access_key": S3_ACCESS_KEY,
                 "secret_key": S3_SECRET_KEY,
                 "verify": False if S3_VERIFY == "false" else True,
+                "client_config": Config(
+                    retries={"max_attempts": 3, "mode": "standard"},
+                    request_checksum_calculation="when_required",
+                    response_checksum_validation="when_required"
+                ),
+                "transfer_config": TransferConfig(
+                    multipart_threshold=5 * 1024 * 1024 * 1024,
+                ),
             },
         },
         "staticfiles": {

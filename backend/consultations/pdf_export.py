@@ -2,6 +2,7 @@ import io
 import os
 
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 
 from reportlab.lib import colors
@@ -19,10 +20,10 @@ from reportlab.platypus import (
 
 
 def _get_logo_path(organisation):
-    if not organisation or not organisation.logo_large:
+    if not organisation or not organisation.logo_color:
         return None
     try:
-        path = organisation.logo_large.path
+        path = organisation.logo_color.path
         if os.path.exists(path):
             return path
     except Exception:
@@ -196,7 +197,7 @@ def _get_attachment_image(attachment):
 
 def generate_consultation_pdf(consultation, appointments, messages, organisation):
     buffer = io.BytesIO()
-    primary_color = organisation.primary_color if organisation else None
+    primary_color = organisation.primary_color_practitioner if organisation else None
     styles = _build_styles(primary_color)
 
     doc = SimpleDocTemplate(
@@ -212,6 +213,7 @@ def generate_consultation_pdf(consultation, appointments, messages, organisation
 
     _add_header(elements, styles, organisation, consultation)
     _add_consultation_details(elements, styles, consultation)
+    _add_custom_fields(elements, styles, consultation)
     _add_people(elements, styles, consultation)
     _add_appointments(elements, styles, appointments)
     _add_messages(elements, styles, messages)
@@ -294,6 +296,32 @@ def _add_consultation_details(elements, styles, consultation):
 
     col_widths = [35 * mm, 140 * mm]
     table = Table(info_data, colWidths=col_widths)
+    table.setStyle(TABLE_STYLE)
+    elements.append(table)
+
+
+def _add_custom_fields(elements, styles, obj):
+    from .models import CustomFieldValue
+
+    ct = ContentType.objects.get_for_model(obj)
+    values = CustomFieldValue.objects.filter(
+        content_type=ct, object_id=obj.pk
+    ).select_related("custom_field").order_by("custom_field__ordering")
+
+    if not values.exists():
+        return
+
+    elements.append(Paragraph("Additional Information", styles["SectionHeading"]))
+
+    data = [["Field", "Value"]]
+    for cfv in values:
+        data.append([
+            cfv.custom_field.name,
+            Paragraph(cfv.value or "-", styles["CellText"]),
+        ])
+
+    col_widths = [35 * mm, 140 * mm]
+    table = Table(data, colWidths=col_widths)
     table.setStyle(TABLE_STYLE)
     elements.append(table)
 
@@ -414,8 +442,8 @@ def _add_messages(elements, styles, messages):
 def _add_footer(elements, styles, organisation):
     elements.append(Spacer(1, 10 * mm))
 
-    if organisation and organisation.footer:
-        elements.append(Paragraph(organisation.footer, styles["FooterText"]))
+    if organisation and organisation.footer_practitioner:
+        elements.append(Paragraph(organisation.footer_practitioner, styles["FooterText"]))
         elements.append(Spacer(1, 2 * mm))
 
     generated_at = timezone.localtime(timezone.now()).strftime("%b %d, %Y %H:%M")

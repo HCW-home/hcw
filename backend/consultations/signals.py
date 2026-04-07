@@ -1,13 +1,13 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.contrib.auth import get_user_model
+from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from django.db.models.signals import post_delete, post_save, pre_delete, pre_save
 from django.dispatch import receiver
 from django.utils import timezone
 from messaging.models import Message as NotificationMessage
 from users.services import user_online_service
-from django.db import transaction
 
 from .models import (
     Appointment,
@@ -76,10 +76,7 @@ def message_saved(sender, instance: Message, created, **kwargs):
 
     # Send notifications to each user
     for user_pk in get_users_to_notification_consultation(instance.consultation):
-        if instance.created_by and instance.created_by.pk == user_pk:
-            continue
-
-        # Send WebSocket notification
+        # Send WebSocket notification (including to the message creator for multi-tab sync)
         async_to_sync(channel_layer.group_send)(
             f"user_{user_pk}",
             {
@@ -91,42 +88,66 @@ def message_saved(sender, instance: Message, created, **kwargs):
             },
         )
 
+        # Skip external notifications for the message creator
+        if instance.created_by and instance.created_by.pk == user_pk:
+            continue
+
         # Send external notification if user is offline and message is newly created
         if created and not user_online_service.is_user_online(user_pk):
             user_to_notify = User.objects.get(pk=user_pk)
 
-            if user_to_notify.last_login and user_to_notify.last_login < user_to_notify.last_notification:
+            # Skip if we already sent a notification since the user's last login
+            # (avoid spamming offline users with repeated notifications)
+            if (
+                user_to_notify.last_login
+                and user_to_notify.last_notification
+                and user_to_notify.last_notification > user_to_notify.last_login
+            ):
                 continue
 
             user_to_notify.last_notification = timezone.now()
             user_to_notify.save(update_fields=["last_notification"])
 
             # Create notification message
-            notification = NotificationMessage.objects.create(
+            NotificationMessage.objects.create(
                 template_system_name="new_message_notification",
                 sent_to=user_to_notify,
                 sent_by=instance.created_by,
-                object_model="consultations.Message",
-                object_pk=instance.pk,
+                content_type=ContentType.objects.get_for_model(instance),
+                object_id=instance.pk,
             )
 
 
 @receiver(post_save, sender=Appointment)
 def appointment_saved(sender, instance: Appointment, created, **kwargs):
     """
-    Whenever an Appointment is created, broadcast it over Channels.
+    Whenever an Appointment is created/updated, broadcast it over Channels
+    to consultation users and appointment participants.
     """
     channel_layer = get_channel_layer()
 
-    # Send notifications to each user
-    if not instance.consultation:
-        return
-    for user_pk in get_users_to_notification_consultation(instance.consultation):
+    users_to_notify = set()
+
+    # Add consultation users
+    if instance.consultation:
+        users_to_notify.update(
+            get_users_to_notification_consultation(instance.consultation)
+        )
+
+    # Add appointment participants
+    for participant in instance.participant_set.filter(
+        is_active=True, user__isnull=False
+    ):
+        users_to_notify.add(participant.user.pk)
+
+    consultation_pk = instance.consultation.pk if instance.consultation else None
+
+    for user_pk in users_to_notify:
         async_to_sync(channel_layer.group_send)(
             f"user_{user_pk}",
             {
                 "type": "appointment",
-                "consultation_id": instance.consultation.pk,
+                "consultation_id": consultation_pk,
                 "appointment_id": instance.pk,
                 "state": "created" if created else "updated",
             },
@@ -212,6 +233,57 @@ def participant_cancelling(sender, instance: Participant, **kwargs):
         NotificationMessage.objects.create(
             template_system_name="appointment_cancelled",
             sent_to=instance.user,
-            object_model="consultations.Participant",
-            object_pk=instance.pk,
+            content_type=ContentType.objects.get_for_model(instance),
+            object_id=instance.pk,
+        )
+
+
+@receiver(pre_save, sender=Consultation)
+def track_beneficiary_change(sender, instance: Consultation, **kwargs):
+    """
+    Track if beneficiary is being added or changed on a consultation.
+    Store the old beneficiary ID for comparison in post_save.
+    """
+    if instance.pk:
+        try:
+            old_consultation = Consultation.objects.get(pk=instance.pk)
+            instance._old_beneficiary_id = old_consultation.beneficiary_id
+        except Consultation.DoesNotExist:
+            instance._old_beneficiary_id = None
+    else:
+        instance._old_beneficiary_id = None
+
+
+@receiver(post_save, sender=Consultation)
+def notify_beneficiary_assigned(sender, instance: Consultation, created, **kwargs):
+    """
+    Send notification to beneficiary when they are assigned to a consultation.
+    Only send if the consultation is visible by the patient.
+    """
+    # Check if beneficiary was added or changed
+    old_beneficiary_id = getattr(instance, '_old_beneficiary_id', None)
+    new_beneficiary_id = instance.beneficiary_id
+
+    # Only notify if:
+    # 1. A beneficiary is set
+    # 2. The beneficiary was just added (created=True and beneficiary exists) OR
+    #    the beneficiary was changed (old_beneficiary_id != new_beneficiary_id)
+    # 3. The consultation is visible by the patient
+    should_notify = (
+        new_beneficiary_id and
+        instance.visible_by_patient and
+        (
+            (created and new_beneficiary_id) or
+            (not created and old_beneficiary_id != new_beneficiary_id)
+        )
+    )
+
+    if should_notify:
+        # Create notification for the beneficiary
+        NotificationMessage.objects.create(
+            template_system_name="consultation_assigned",
+            sent_to=instance.beneficiary,
+            sent_by=instance.created_by,
+            content_type=ContentType.objects.get_for_model(instance),
+            object_id=instance.pk,
         )

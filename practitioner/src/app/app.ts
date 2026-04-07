@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { ToasterContainerComponent } from './core/components/toaster-container/toaster-container.component';
+import { OfflineIndicatorComponent } from './core/components/offline-indicator.component';
 import { Confirmation } from './shared/components/confirmation/confirmation';
 import { Auth } from './core/services/auth';
 import { TranslationService } from './core/services/translation.service';
@@ -9,12 +10,14 @@ import { UserWebSocketService } from './core/services/user-websocket.service';
 import { ActionHandlerService } from './core/services/action-handler.service';
 import { IncomingCallService } from './core/services/incoming-call.service';
 import { BrowserNotificationService } from './core/services/browser-notification.service';
+import { PushNotificationService } from './core/services/push-notification.service';
 import { ConsultationService } from './core/services/consultation.service';
+import { AppUpdateService } from './core/services/app-update.service';
 import { RoutePaths } from './core/constants/routes';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, ToasterContainerComponent, Confirmation],
+  imports: [RouterOutlet, ToasterContainerComponent, OfflineIndicatorComponent, Confirmation],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
@@ -29,13 +32,17 @@ export class App implements OnInit, OnDestroy {
     private actionHandler: ActionHandlerService,
     private incomingCallService: IncomingCallService,
     private browserNotificationService: BrowserNotificationService,
+    private pushNotificationService: PushNotificationService,
     private consultationService: ConsultationService,
+    private appUpdateService: AppUpdateService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
     this.handleDeepLinks();
     this.setupWebSocketSubscriptions();
+    this.loadVapidKey();
+    this.appUpdateService.initialize();
 
     this.authService.isAuthenticated$
       .pipe(takeUntil(this.destroy$))
@@ -43,8 +50,19 @@ export class App implements OnInit, OnDestroy {
         if (isAuthenticated) {
           this.userWsService.connect();
           this.browserNotificationService.requestPermission();
+          this.pushNotificationService.subscribe();
         } else {
           this.userWsService.disconnect();
+        }
+      });
+  }
+
+  private loadVapidKey(): void {
+    this.authService.getOpenIDConfig()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((config: any) => {
+        if (config?.vapid_public_key) {
+          this.pushNotificationService.setVapidPublicKey(config.vapid_public_key);
         }
       });
   }
@@ -68,13 +86,24 @@ export class App implements OnInit, OnDestroy {
     const action = urlParams.get('action');
     const id = urlParams.get('id');
     const email = urlParams.get('email');
+    const uid = urlParams.get('uid');
+    const token = urlParams.get('token');
+
+    if (action === 'reset' && uid && token) {
+      this.router.navigate([`/${RoutePaths.AUTH}`, 'reset', uid, token], { replaceUrl: true });
+      return;
+    }
 
     if (authToken) {
       this.router.navigate([`/${RoutePaths.VERIFY_INVITE}`], {
         queryParams: { auth: authToken, action, id }
       });
-    } else if (action && this.authService.isLoggedIn()) {
-      if (action === 'join' && id) {
+    } else if (email) {
+      this.router.navigate([`/${RoutePaths.AUTH}`], {
+        queryParams: { email, action, id }
+      });
+    } else if (action && id) {
+      if (action === 'join') {
         this.consultationService.getParticipantById(id).subscribe({
           next: (participant) => {
             const consultation = participant.appointment.consultation;
@@ -92,10 +121,6 @@ export class App implements OnInit, OnDestroy {
         const route = this.actionHandler.getRouteForAction(action, id);
         this.router.navigateByUrl(route);
       }
-    } else if (!this.authService.isLoggedIn() && (action || email)) {
-      this.router.navigate([`/${RoutePaths.AUTH}`], {
-        queryParams: { email, action, id }
-      });
     }
   }
 

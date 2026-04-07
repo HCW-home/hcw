@@ -1,11 +1,18 @@
+from datetime import timedelta
+import hashlib
+import logging
 from importlib import import_module
-from typing import Dict, Optional, Sequence
+from typing import Dict, Optional, Sequence, Tuple
 from zoneinfo import ZoneInfo
+from datetime import datetime
+
 
 import jinja2
 from constance import config
 from django.apps import apps
 from django.conf import settings
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -21,6 +28,7 @@ from .abstracts import ModelCeleryAbstract
 from .providers import BaseMessagingProvider
 from .template import DEFAULT_NOTIFICATION_MESSAGES, NOTIFICATION_CHOICES
 
+logger = logging.getLogger(__name__)
 
 class CommunicationMethod(models.TextChoices):
     sms = "sms", ("SMS")
@@ -210,24 +218,15 @@ class MessagingProvider(models.Model):
     class Meta:
         verbose_name = _("messaging provider")
         verbose_name_plural = _("messaging providers")
-        unique_together = ["communication_method", "priority"]
+        # unique_together = ["communication_method", "priority"]
 
 
 def get_model_choices():
-    """Get choices for all Django models in the format (app_label.model_name, verbose_name)"""
-    choices = []
-    for model in apps.get_models():
-        app_label = model._meta.app_label
-        verbose_name = model._meta.verbose_name.title()
-        choice_key = f"{app_label}.{model.__name__}"
-        choice_display = f"{verbose_name} ({app_label})"
-        choices.append((choice_key, choice_display))
-
-    return sorted(choices, key=lambda x: x[1])
+    """Legacy function kept for old migrations compatibility."""
+    return []
 
 
 class Template(models.Model):
-
     _action = None
 
     @property
@@ -256,7 +255,7 @@ class Template(models.Model):
             "Jinja2 template for message content in html, use {{ obj }} to get object attributes"
         ),
         blank=True,
-        null=True
+        null=True,
     )
 
     template_content = models.TextField(
@@ -283,7 +282,8 @@ class Template(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     @staticmethod
-    def get_template(name: str, event_type: str) -> 'Template':
+    def get_template(name: str, event_type: str) -> "Template":
+        # First try: override specific to this communication method
         try:
             return Template.objects.get(
                 communication_method__contains=[name],
@@ -291,16 +291,36 @@ class Template(models.Model):
                 is_active=True,
             )
         except Template.DoesNotExist:
-            return Template(
+            pass
+
+        # Second try: generic override (empty communication_method = all methods)
+        try:
+            return Template.objects.get(
+                communication_method=[],
                 event_type=event_type,
-                template_subject=DEFAULT_NOTIFICATION_MESSAGES[event_type]['template_subject'],
-                template_content=DEFAULT_NOTIFICATION_MESSAGES[event_type]['template_content'],
-                action_label=DEFAULT_NOTIFICATION_MESSAGES[event_type].get('action_label'),
-                template_content_html=DEFAULT_NOTIFICATION_MESSAGES[event_type]['template_content_html'],
+                is_active=True,
             )
+        except Template.DoesNotExist:
+            pass
+
+        # Fallback: defaults from template.py
+        return Template(
+            event_type=event_type,
+            template_subject=DEFAULT_NOTIFICATION_MESSAGES[event_type][
+                "template_subject"
+            ],
+            template_content=DEFAULT_NOTIFICATION_MESSAGES[event_type][
+                "template_content"
+            ],
+            action_label=DEFAULT_NOTIFICATION_MESSAGES[event_type].get("action_label"),
+            template_content_html=DEFAULT_NOTIFICATION_MESSAGES[event_type][
+                "template_content_html"
+            ],
+        )
 
     @staticmethod
     def get_field_template(name: str, event_type: str, field: str) -> str:
+        # First try: override specific to this communication method
         try:
             template = Template.objects.get(
                 communication_method__contains=[name],
@@ -308,17 +328,40 @@ class Template(models.Model):
                 is_active=True,
             )
             content = getattr(template, f"template_{field}")
+            if content:
+                return content
         except Template.DoesNotExist:
-            content = None
+            pass
 
-        return content or DEFAULT_NOTIFICATION_MESSAGES[event_type][field]
+        # Second try: generic override (empty communication_method = all methods)
+        try:
+            template = Template.objects.get(
+                communication_method=[],
+                event_type=event_type,
+                is_active=True,
+            )
+            content = getattr(template, f"template_{field}")
+            if content:
+                return content
+        except Template.DoesNotExist:
+            pass
+
+        # Fallback: defaults from template.py
+        return DEFAULT_NOTIFICATION_MESSAGES[event_type][field]
+
+    @property
+    def model(self) -> Optional[str]:
+        """Get expected model from DEFAULT_NOTIFICATION_MESSAGES based on event_type."""
+        if self.event_type and self.event_type in DEFAULT_NOTIFICATION_MESSAGES:
+            return DEFAULT_NOTIFICATION_MESSAGES[self.event_type].get("model")
+        return None
 
     @property
     def factory_instance(self) -> Optional[DjangoModelFactory]:
         if self.model:
             app_label, model_name = self.model.split(".", 1)
             factory_module = import_module(f"{app_label}.factories")
-            return getattr(factory_module, f"{model_name}Factory")
+            return getattr(factory_module, f"{model_name}Factory", None)
 
     class Meta:
         verbose_name = _("template")
@@ -328,6 +371,7 @@ class Template(models.Model):
         """Validate Jinja2 template syntax"""
         super().clean()
         env = jinja2.Environment()
+        env.filters.update(register.filters)
 
         # Validate template_text
         try:
@@ -384,6 +428,7 @@ class Template(models.Model):
             render_context["obj"] = obj
 
         env = jinja2.Environment()
+        env.filters.update(register.filters)
 
         # Render template text
         text_template = env.from_string(self.template_content)
@@ -484,6 +529,7 @@ class Template(models.Model):
 
         try:
             env = jinja2.Environment()
+            env.filters.update(register.filters)
 
             # Extract variables from template_text
             if self.template_content:
@@ -509,7 +555,7 @@ class TemplateValidationStatus(models.TextChoices):
     rejected = "rejected", _("Rejected")
     failed = "failed", _("Failed")
     outdated = "outdated", _("Outdated")
-    unused = "unsued", _("Unused")
+    unused = "unused", _("Unused")
 
 
 class TemplateValidation(ModelCeleryAbstract):
@@ -527,11 +573,11 @@ class TemplateValidation(ModelCeleryAbstract):
         verbose_name=_("messaging provider"),
         help_text=_("The messaging provider where the template is validated"),
     )
-    template = models.ForeignKey(
-        Template,
-        on_delete=models.CASCADE,
-        verbose_name=_("template"),
-        help_text=_("The local template that needs validation"),
+    event_type = models.CharField(
+        _("event type"),
+        max_length=100,
+        choices=NOTIFICATION_CHOICES,
+        help_text=_("The template event type to validate"),
     )
     language_code = models.CharField(
         _("language code"),
@@ -561,15 +607,46 @@ class TemplateValidation(ModelCeleryAbstract):
         null=True,
         help_text=_("Response from the messaging provider during validation"),
     )
+    content_hash = models.CharField(
+        max_length=32,
+        blank=True,
+        help_text=_("MD5 hash of template content at last validation submission"),
+    )
 
     class Meta:
         verbose_name = _("template validation")
         verbose_name_plural = _("template validations")
-        unique_together = ["messaging_provider", "template", "language_code"]
+        unique_together = ["messaging_provider", "event_type", "language_code"]
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.template} [{self.language_code}] - {self.messaging_provider.name} ({self.get_status_display()})"
+        return f"{self.event_type} [{self.language_code}] - {self.messaging_provider.name} ({self.get_status_display()})"
+
+    @property
+    def template(self) -> Template:
+        """Resolve the template (DB override or default) for this validation's provider."""
+        return Template.get_template(
+            name=self.messaging_provider.communication_method,
+            event_type=self.event_type,
+        )
+
+    def compute_content_hash(self) -> str:
+        """Compute MD5 hash of the resolved template content for the given language."""
+        tpl = self.template
+        parts = [
+            str(getattr(tpl, f"template_subject_{self.language_code}", "") or ""),
+            str(getattr(tpl, f"template_content_{self.language_code}", "") or ""),
+            str(getattr(tpl, f"template_content_html_{self.language_code}", "") or ""),
+            str(tpl.action_label or ""),
+        ]
+        return hashlib.md5("|".join(parts).encode()).hexdigest()
+
+    @property
+    def is_outdated(self) -> bool:
+        """Check if the template content has changed since last validation."""
+        if not self.content_hash:
+            return True
+        return self.content_hash != self.compute_content_hash()
 
 
 class MessageStatus(models.TextChoices):
@@ -590,7 +667,9 @@ class Message(ModelCeleryAbstract):
         choices=NOTIFICATION_CHOICES, blank=True, null=True
     )
 
-    in_notification = models.BooleanField(help_text="Show in notification user ring", default=True)
+    in_notification = models.BooleanField(
+        help_text="Show in notification user ring", default=True
+    )
 
     # Message type and provider
     communication_method = models.CharField(
@@ -645,11 +724,29 @@ class Message(ModelCeleryAbstract):
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    object_model = models.CharField(choices=get_model_choices, blank=True, null=True)
-    object_pk = models.IntegerField(blank=True, null=True)
+    content_type = models.ForeignKey(
+        ContentType, on_delete=models.CASCADE, blank=True, null=True
+    )
+    object_id = models.PositiveIntegerField(blank=True, null=True)
+    content_object = GenericForeignKey("content_type", "object_id")
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["content_type", "object_id"]),
+        ]
+
+    @property
+    def object_model(self):
+        if self.content_type:
+            model_class = self.content_type.model_class()
+            if model_class:
+                return f"{self.content_type.app_label}.{model_class.__name__}"
+        return None
+
+    @property
+    def object_pk(self):
+        return self.object_id
 
     def __str__(self):
         return (
@@ -708,7 +805,7 @@ class Message(ModelCeleryAbstract):
     def action_label(self):
         if self.template:
             return self.template.action_label
-    
+
     additionnal_link_args = models.JSONField(blank=True, null=True)
 
     @property
@@ -716,7 +813,16 @@ class Message(ModelCeleryAbstract):
         if not self.template or not self.template.action:
             return
         """Generate access link if template has an action defined"""
-        base_url = config.patient_base_url if self.sent_to.is_patient else config.practitioner_base_url
+        is_patient = self.sent_to.is_patient
+        base_url = (
+            config.patient_base_url
+            if is_patient
+            else config.practitioner_base_url
+        )
+        logger.debug(
+            "access_link: message_id=%s is_patient=%s base_url=%s",
+            self.pk, is_patient, base_url,
+        )
 
         if self.sent_to.one_time_auth_token:
             full_url = f"{base_url}?auth={self.sent_to.one_time_auth_token}&action={self.action}&id={self.object_pk}&model={self.object_model}"
@@ -724,48 +830,144 @@ class Message(ModelCeleryAbstract):
             full_url = f"{base_url}?email={self.sent_to.email}&action={self.action}&id={self.object_pk}&model={self.object_model}"
 
         if self.additionnal_link_args:
-            full_url += "".join([f"&{key}={value}" for key,
-                                value in self.additionnal_link_args.items()])
-        
-        return full_url
+            full_url += "".join(
+                [f"&{key}={value}" for key, value in self.additionnal_link_args.items()]
+            )
 
+        return full_url
 
     @property
     def render_content(self):
         try:
             return self.render("template_content")
-        except:
+        except Exception as e:
+            logger.exception("render_content failed for message_id=%s: %s", self.pk, e)
+            return ""
+
+    @property
+    def render_content_sms(self):
+        try:
+            message_text = self.render("template_content")
+            if self.action_label:
+                return f"{message_text}\n{self.action_label} {self.access_link}"
+            return message_text
+        except Exception as e:
+            logger.exception("render_content_sms failed for message_id=%s: %s", self.pk, e)
             return ""
 
     @property
     def render_content_html(self):
         try:
             return self.render("template_content_html")
-        except:
+        except Exception as e:
+            logger.exception("render_content_html failed for message_id=%s: %s", self.pk, e)
             return ""
 
     @property
     def render_full_html(self):
         """Render the complete HTML email with base template"""
         try:
+            from constance import config as constance_config
+            from users.models import Organisation
+
             content_html = self.render_content_html
             subject = self.render_subject
+            main_org = Organisation.objects.filter(is_main=True).first()
 
             return render_to_string(
-                'messaging/email_base.html',
+                "messaging/email_base.html",
                 {
-                    'content': content_html,
-                    'subject': subject,
+                    "content": content_html,
+                    "subject": subject,
                     "action_label": self.action_label,
                     "access_link": self.access_link,
-                }
+                    "organisation": main_org,
+                    "branding": constance_config.site_name,
+                    "has_logo": bool(main_org and main_org.logo_white),
+                },
             )
         except Exception as e:
+            logger.exception("render_full_html failed for message_id=%s: %s", self.pk, e)
             return f"Unable to render full HTML: {e}"
 
     @property
     def render_subject(self):
         return self.render("template_subject")
+
+    def _get_appointment(self):
+        """Return the Appointment linked to this message, or None."""
+        if not self.content_object:
+            return None
+
+        from consultations.models import Appointment, Participant
+
+        if isinstance(self.content_object, Appointment):
+            return self.content_object
+        if isinstance(self.content_object, Participant):
+            return self.content_object.appointment
+        return None
+
+    @property
+    def ics_attachment(self) -> Optional[Tuple[str, str, str]]:
+        """
+        Generate ICS calendar file for Appointment objects.
+
+        Returns:
+            Optional tuple of (filename, content, mime_type) for appointments,
+            None otherwise.
+        """
+
+        appointment = self._get_appointment()
+        if not appointment:
+            return None
+
+        def fmt(dt: datetime) -> str:
+            if dt.tzinfo is None:
+                dt = timezone.make_aware(dt)
+            return dt.astimezone(ZoneInfo("UTC")).strftime("%Y%m%dT%H%M%SZ")
+
+        domain = getattr(settings, "SITE_DOMAIN", "hcw.local")
+        end_at = appointment.end_expected_at or (
+            appointment.scheduled_at + timedelta(hours=1)
+        )
+
+        description = ""
+        if appointment.consultation:
+            if appointment.consultation.title:
+                description += f"Consultation: {appointment.consultation.title}"
+            if appointment.consultation.description:
+                if description:
+                    description += "\\n"
+                description += appointment.consultation.description
+
+        organizer_name = ""
+        organizer_email = ""
+        if appointment.created_by and appointment.created_by.email:
+            organizer_name = (
+                f"{appointment.created_by.first_name} "
+                f"{appointment.created_by.last_name}"
+            ).strip()
+            organizer_email = appointment.created_by.email
+
+        ics_content = render_to_string(
+            "messaging/appointment.ics",
+            {
+                "uid": f"appointment-{appointment.pk}@{domain}",
+                "dtstamp": fmt(timezone.now()),
+                "dtstart": fmt(appointment.scheduled_at),
+                "dtend": fmt(end_at),
+                "summary": appointment.title or "Consultation",
+                "description": description,
+                "location": "In Person" if appointment.type == "inPerson" else "",
+                "organizer_name": organizer_name,
+                "organizer_email": organizer_email,
+                "status": appointment.status.upper(),
+            },
+        )
+        # ICS requires CRLF line endings
+        ics_content = ics_content.replace("\r\n", "\n").replace("\n", "\r\n")
+
+        return (f"appointment_{appointment.pk}.ics", ics_content, "text/calendar")
 
     _template = None
 
@@ -784,28 +986,49 @@ class Message(ModelCeleryAbstract):
 
     def render(self, field: str):
         if not self.template_system_name:
-            return getattr(self, field.replace("template_", ''))
+            return getattr(self, field.replace("template_", ""))
 
         try:
-            app_label, model_name = self.object_model.split(".")
-            obj = apps.get_model(app_label, model_name).objects.get(pk=self.object_pk)
+            obj = self.content_object
+            logger.debug(
+                "render: message_id=%s field=%s template=%s language=%s",
+                self.pk, field, self.template_system_name, self.language,
+            )
 
-            with translation.override(self.language), timezone.override(self.sent_to.user_tz):
-
-                env = jinja2.Environment()
+            with (
+                translation.override(self.language),
+                timezone.override(self.sent_to.user_tz),
+            ):
+                env = jinja2.Environment(extensions=['jinja2.ext.i18n'])
+                env.install_gettext_callables(
+                    translation.gettext,
+                    translation.ngettext,
+                    newstyle=True,
+                )
+                env.filters['localtime'] = timezone.localtime
                 env.filters.update(register.filters)
 
                 template_str = str(getattr(self.template, field))
+                logger.debug(
+                    "render: template_str for field=%s length=%d",
+                    field, len(template_str) if template_str else 0,
+                )
 
                 text_template = env.from_string(template_str)
-                return text_template.render({
-                    "obj": obj,
-                    "config": config,
-                    "action": self.action,
-                    "action_label": self.action_label,
-                    "access_link": self.access_link,
-                })
+                result = text_template.render(
+                    {
+                        "obj": obj,
+                        "config": config,
+                        "action": self.action,
+                        "action_label": self.action_label,
+                        "access_link": self.access_link,
+                    }
+                )
+                logger.debug("render: field=%s result length=%d", field, len(result) if result else 0)
+                return result
+
         except Exception as e:
+            logger.exception("render failed: message_id=%s field=%s error=%s", self.pk, field, e)
             raise Exception(f"Unable to render: {e}")
 
     def clean(self):
@@ -853,16 +1076,27 @@ class Message(ModelCeleryAbstract):
                 }
             )
 
-        # if not self.template_system_name or not self.content:
-        #     raise ValidationError(
-        #         {
-        #             "template_system_name": _(
-        #                 "Message content or template_system_name is required"
-        #             )
-        #         }
-        #     )
-
-        # if self.communication_method == CommunicationMethod.EMAIL and not self.subject:
-        #     raise ValidationError(
-        #         {"subject": _("Subject is required for sending email")}
-        #     )
+        if self.template_system_name and self.content_type:
+            expected_model = DEFAULT_NOTIFICATION_MESSAGES.get(
+                self.template_system_name, {}
+            ).get("model")
+            if expected_model:
+                app_label, model_name = expected_model.split(".")
+                if (
+                    self.content_type.app_label != app_label
+                    or self.content_type.model != model_name.lower()
+                ):
+                    raise ValidationError(
+                        {
+                            "content_type": _(
+                                "The linked object type (%(actual)s) does not match "
+                                "the expected model (%(expected)s) for template "
+                                '"%(template)s".'
+                            )
+                            % {
+                                "actual": f"{self.content_type.app_label}.{self.content_type.model}",
+                                "expected": expected_model,
+                                "template": self.template_system_name,
+                            }
+                        }
+                    )

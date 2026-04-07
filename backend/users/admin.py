@@ -1,6 +1,6 @@
 from typing import List, Tuple, Union
 
-from allauth.socialaccount.models import SocialApp
+from allauth.socialaccount.models import SocialApp, SocialToken, SocialAccount
 from constance.admin import Config, ConstanceAdmin
 from django.contrib import admin, messages
 from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
@@ -29,6 +29,7 @@ from unfold.contrib.import_export.forms import (
 )
 from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
 from unfold.widgets import UnfoldAdminColorInputWidget
+from rest_framework.authtoken.models import TokenProxy
 
 from .models import (
     FCMDeviceOverride,
@@ -38,6 +39,7 @@ from .models import (
     Speciality,
     Term,
     User,
+    WebPushSubscription,
 )
 
 admin.site.unregister(Group)
@@ -46,6 +48,26 @@ admin.site.unregister(Group)
 @admin.register(Group)
 class GroupAdmin(BaseGroupAdmin, ModelAdmin):
     pass
+
+admin.site.unregister(SocialApp)
+admin.site.register(SocialApp, ModelAdmin)
+
+
+admin.site.unregister(TokenProxy)
+
+
+@admin.register(TokenProxy)
+class TokenAdmin(ModelAdmin):
+    list_display = ["key", "user", "created"]
+    fields = ["user"]
+    ordering = ["-created"]
+
+admin.site.unregister(SocialToken)
+admin.site.register(SocialToken, ModelAdmin)
+
+admin.site.unregister(SocialAccount)
+admin.site.register(SocialAccount, ModelAdmin)
+
 
 
 @admin.register(Term)
@@ -74,8 +96,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
         "first_name",
         "last_name",
         "is_active",
-        "is_online",
-        "is_patient",
+        "is_practitioner",
         "temporary",
         "timezone",
         "languages_display",
@@ -86,10 +107,9 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
     list_filter = BaseUserAdmin.list_filter + (
         "languages",
         "specialities",
-        "is_online",
         "groups",
     )
-    filter_horizontal = BaseUserAdmin.filter_horizontal + ("languages", "specialities")
+    filter_horizontal = BaseUserAdmin.filter_horizontal + ("languages", "specialities", "organisations")
 
     fieldsets = (
         (
@@ -103,6 +123,8 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
                     "is_active",
                     "is_staff",
                     "is_superuser",
+                    "is_practitioner",
+                    "temporary",
                     "groups",
                     # "user_permissions",
                 ),
@@ -129,13 +151,8 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
         ),
         (
             "Authentication",
-            {
-                "fields": (
-                    "one_time_auth_token",
-                    "is_auth_token_used",
-                    "verification_code",
-                )
-            },
+            {"fields": ("one_time_auth_token", "verification_code",
+                        "is_first_login", "verification_code_created_at", "verification_attempts")},
         ),
         (_("Important dates"), {"fields": ("last_login", "date_joined")}),
     )
@@ -155,10 +172,6 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
         if obj.groups.exists():
             return ", ".join([g.name for g in obj.groups.all()])
         return "-"
-
-    @admin.display(description="Is patient", boolean=True)
-    def is_patient(self, obj):
-        return obj.is_patient
 
     def languages_display(self, obj):
         return ", ".join([lang.name for lang in obj.languages.all()[:3]]) + (
@@ -420,6 +433,19 @@ admin.site.unregister(FCMDevice)
 admin.site.register(FCMDeviceOverride, DeviceAdmin)
 
 
+@admin.register(WebPushSubscription)
+class WebPushSubscriptionAdmin(ModelAdmin):
+    list_display = ["user", "endpoint_short", "browser", "is_active", "created_at"]
+    list_filter = ["is_active", "browser"]
+    search_fields = ["user__email", "endpoint"]
+    readonly_fields = ["created_at", "updated_at"]
+
+    def endpoint_short(self, obj):
+        return obj.endpoint[:60] + "..."
+
+    endpoint_short.short_description = "Endpoint"
+
+
 @admin.register(Language)
 class LanguageAdmin(ModelAdmin):
     list_display = ["name"]
@@ -435,16 +461,17 @@ class SpecialityAdmin(ModelAdmin, TabbedTranslationAdmin):
 
 
 @admin.register(Organisation)
-class OrganisationAdmin(ModelAdmin):
+class OrganisationAdmin(ModelAdmin, TabbedTranslationAdmin):
     formfield_overrides = {
         models.TextField: {
             "widget": WysiwygWidget,
         }
     }
 
-    def get_form(self, request, obj=None, change=False, **kwargs):
-        form = super().get_form(request, obj, change, **kwargs)
-        form.base_fields["primary_color"].widget = UnfoldAdminColorInputWidget()
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        form.base_fields["primary_color_patient"].widget = UnfoldAdminColorInputWidget()
+        form.base_fields["primary_color_practitioner"].widget = UnfoldAdminColorInputWidget()
         return form
 
 
@@ -452,7 +479,6 @@ class OrganisationAdmin(ModelAdmin):
 class HealthMetricAdmin(ModelAdmin):
     date_hierarchy = "measured_at"
     ordering = ["-measured_at"]
-
 
 
 from django.contrib import admin

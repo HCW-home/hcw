@@ -1,3 +1,516 @@
+hcw (0.9.70) bookworm; urgency=medium
+
+  * Change upload path
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Fri, 13 Mar 2026 22:23:45 +0100
+
+hcw (0.9.69) bookworm; urgency=medium
+
+  * Handle multi-tenant instance
+  * Ensure having tenant in JWT
+  * Fix admin
+  * Fix constance default URL for dev
+  * Support for openid
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Fri, 13 Mar 2026 21:54:24 +0100
+
+hcw (0.9.68) bookworm; urgency=medium
+
+  * Update modal outside and menu outside click
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Wed, 11 Mar 2026 17:19:18 +0100
+
+hcw (0.9.67) bookworm; urgency=medium
+
+  * Fix ics logic
+  * Improve call control button
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Wed, 11 Mar 2026 17:18:46 +0100
+
+hcw (0.9.66) bookworm; urgency=medium
+
+  * Improve websocket and token renew
+  * Use communication method from config
+  * Improve profile card
+  * Add websocket notification for patient
+  * Improve and cleanup websocket reconnect
+  * Fix patient websocket reconnect logic
+  * Fix highlight
+  * Fix consultation closed logic
+  * Fix tchat
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Wed, 11 Mar 2026 15:48:47 +0100
+
+hcw (0.9.65) bookworm; urgency=medium
+
+  * Fix routing
+  * Add Dockerfile
+  * Use node 22
+  * Draft offline mode + fix reconnect websocket
+  * Update gitignore
+  * Update docker compose
+  * Fix missing translation
+  * Add ICS file with email
+  * Attempt to fix timezone for requests
+  * Improve request when issue is occuring
+  * Fix slot timezone
+  * Create particiant must not be is_confirmed=False
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Tue, 10 Mar 2026 10:47:56 +0100
+
+hcw (0.9.64) bookworm; urgency=medium
+
+  * Add again missing translation
+  * Cleanup notification when user use verification_code
+  * Add weblate auto notif
+  * Add backend in weblate url
+  * Translated using Weblate (German)
+  * Auto update github
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Fri, 06 Mar 2026 15:46:16 +0100
+
+hcw (0.9.63) bookworm; urgency=medium
+
+  [ Olivier Bitsch ]
+  * Send back to home when hangup
+  * Fix translation
+  * Remove pen on edit practitioner contact
+  * Fix red error on contact method change
+  * Create patient on fly
+  * Add back temporary patient
+  * Improve role of temporary
+  * Add missing translations
+  * Hormonize select list
+  * Add practitioner tag
+  * Fix auto delete temporary user
+  * Fix auto delete temporary user
+  * Add missing translation
+
+  [ Weblate ]
+  * Update translation files
+  * Update translation files
+
+  [ Google Cloud Translation Basic ]
+  * Translated using Weblate (German)
+  * Translated using Weblate (German)
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Fri, 06 Mar 2026 12:12:57 +0100
+
+hcw (0.9.62) bookworm; urgency=medium
+
+  * Fix toast
+  * Fix zindex
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Thu, 05 Mar 2026 18:02:38 +0100
+
+hcw (0.9.61) bookworm; urgency=medium
+
+  * Don't delete temporary user if appointment two scheduled two hour ago
+  * Test with frontend updater
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Thu, 05 Mar 2026 17:49:35 +0100
+
+hcw (0.9.60) bookworm; urgency=medium
+
+  * Fix xx minute ago message
+  * Handle join action
+  * Fix notif buble on appointment
+  * Fix timezone user on present confirmation
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Thu, 05 Mar 2026 16:30:25 +0100
+
+hcw (0.9.59) bookworm; urgency=medium
+
+  * Fix again filtering
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Thu, 05 Mar 2026 15:09:51 +0100
+
+hcw (0.9.58) bookworm; urgency=medium
+
+  * Add validation for the appointment
+  * Improve consultation modal + remove patient field
+  * add back myself
+  * Fix filtering
+  * Fix rendering in user lang for notification
+  * Fix template for localtime
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Thu, 05 Mar 2026 14:46:10 +0100
+
+hcw (0.9.57) bookworm; urgency=medium
+
+  * Fix form communication_method
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Thu, 05 Mar 2026 13:18:30 +0100
+
+hcw (0.9.56) bookworm; urgency=medium
+
+  * missing librairy
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Thu, 05 Mar 2026 12:57:20 +0100
+
+hcw (0.9.55) bookworm; urgency=medium
+
+  * Better handling for temporary user
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Thu, 05 Mar 2026 12:45:48 +0100
+
+hcw (0.9.54) bookworm; urgency=medium
+
+  * Fix sentense
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Thu, 05 Mar 2026 12:34:05 +0100
+
+hcw (0.9.53) bookworm; urgency=medium
+
+  * Fix template text
+  * Generating translation
+  * Generate statics
+  * Translated using Weblate (French)
+  * Added translation using Weblate (German)
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Thu, 05 Mar 2026 12:26:38 +0100
+
+hcw (0.9.52) bookworm; urgency=medium
+
+  * Fix sentense for adding participant
+  * Improve error handling
+  * Fix again modal
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Thu, 05 Mar 2026 11:39:02 +0100
+
+hcw (0.9.51) bookworm; urgency=medium
+
+  * Fix create appointment without consultation
+  * Fix form and task for appointment
+  * Don't send notification to himself
+  * Fix logic of adding temporary participant
+  * Fix contact search field
+  * Improve modal and fix missing message content SMS
+  * Fix SMS messaging
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Thu, 05 Mar 2026 11:26:17 +0100
+
+hcw (0.9.50) bookworm; urgency=medium
+
+  [ Olivier Bitsch ]
+  * Attempt to get timezone from browser
+  * Refactor add appointment during step
+  * Fix button size
+  * Remove hover effect
+
+  [ Gor Grigoryan ]
+  * fix appointment-info row
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Thu, 05 Mar 2026 09:49:43 +0100
+
+hcw (0.9.49) bookworm; urgency=medium
+
+  * Fix onboarding process with first user
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Wed, 04 Mar 2026 16:17:48 +0100
+
+hcw (0.9.48) bookworm; urgency=medium
+
+  * Update nginx sample file
+  * Add licence and readme
+  * Fix terms logic
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Wed, 04 Mar 2026 15:59:01 +0100
+
+hcw (0.9.47) bookworm; urgency=medium
+
+  * Fix npm build error
+  * Use relative URL in environment
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Wed, 04 Mar 2026 14:17:26 +0100
+
+hcw (0.9.46) bookworm; urgency=medium
+
+  * More details message about deleting consultation + fix reconnect websocket
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Wed, 04 Mar 2026 14:07:37 +0100
+
+hcw (0.9.45) bookworm; urgency=medium
+
+  * Fix missing CSRF url
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Wed, 04 Mar 2026 13:59:25 +0100
+
+hcw (0.9.44) bookworm; urgency=medium
+
+  * Add disable password for practitioner
+  * Fix refresh websocket + fix missing refresh endpoint
+  * Return other doctor based on configuration .env
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Wed, 04 Mar 2026 12:40:47 +0100
+
+hcw (0.9.43) bookworm; urgency=medium
+
+  * Update twilio template submittion to use call to action
+  * Default JWT to one hour
+  * Improve messaging system
+  * Working Whatsapp SMS
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Wed, 04 Mar 2026 11:54:37 +0100
+
+hcw (0.9.42) bookworm; urgency=medium
+
+  * Fix tooltip on first startup
+  * Fix tooltip
+  * Improve new followup form
+  * Improve onboarding
+  * Fix new followup card
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Tue, 03 Mar 2026 10:10:36 +0100
+
+hcw (0.9.41) bookworm; urgency=medium
+
+  * Fix small error was leaving call
+  * Auto define is_practitioner on login with openid
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Tue, 03 Mar 2026 08:51:09 +0100
+
+hcw (0.9.40) bookworm; urgency=medium
+
+  * Fix warning
+  * Fix dependancy issue
+  * Fix dependancy issue
+  * Fix google font cdn and build
+  * Fix build
+  * Fix cryptography issue
+  * Fix cryptography issue
+  * New fix for depends
+  * Fix build again
+  * Fix practitioner cannot update practitioner
+  * Prevent duplication error
+  * Update chat
+  * Improve chat
+  * Fix creating appointment during wizard
+  * Fix calendar pagination in patient app
+  * Fix calendar pagination
+  * Appointment can be updated by creator
+  * Only show my appointment in Dashboard
+  * Add button to join from calendar
+  * Send user to appointment
+  * Improve dashboard
+  * Fix dashboard
+  * Fix join when no consultation
+  * Add appointment title
+  * Improve calendar view
+  * Fix missing ID
+  * Fix now appointment
+  * Fix refresh token issue
+  * Add variable for JWT handling
+  * Fix refresh token
+  * Fix interceptor
+  * Avoid race condition on temporary user creating
+  * Fix websocket reconnect on JWT expiry
+  * Simplify sidebar
+  * Add link on text message
+  * Fix language get from API
+  * Fix multiple call for user profile
+  * Fix error 500 in some situation for request slot
+  * Add traceback only on dev
+  * Handle consultation event
+  * Don't show any kind of refresh on consultation update
+  * Add message on consultation join
+  * Fix message when self send
+  * Add notification message on join
+  * Show message when joining is too early
+  * Add filter on appointment
+  * Fix placeholder for patient avatar
+  * Button greyed up when it's not possible to go back
+  * Fix color on slot
+  * today is highlighted
+  * Fix http://localhost:4200/app/consultations/63\?appointmentId\=114\&join\=true
+  * Improve call event
+  * Confirmation to leave page
+  * Fix close tab but stay in call
+  * Confirmation message if patient close tab by mistake
+  * Fix hang up patient
+  * Add confirmation message
+  * Fix NG warning
+  * Don't sent patient back to lobbying
+  * Add message when meeting is leaved
+  * Issue temporary user on demand instead
+  * Handle configurable temporary user
+  * Add helper on slot
+  * Improve digit page
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Mon, 02 Mar 2026 20:43:29 +0100
+
+hcw (0.9.39) bookworm; urgency=medium
+
+  [ Olivier Bitsch ]
+  * Fix participant copy link
+  * Improve temporar participants
+  * Fix shown communication method
+  * Add missing migration
+  * Add more detail about failed preview render
+  * Add back consultation request
+  * Put logo color
+  * Fix logo handling
+  * Fix terms
+  * Fix terms
+  * Put background in white
+  * Default focus on password
+  * Now use primary color for drawing theme
+  * Fix background also on patient app
+  * Update consultation request
+  * Fix style
+  * Improve appointment block
+  * Fix block next appointment
+  * Improve label
+  * Improve dashboard patient
+  * Add consultation component inner the card
+  * Improve card info
+  * Show specility
+  * Make text bigger
+  * Return message if patient try to join sooner
+  * Add live update on appointment update
+  * Update on consultation also
+  * Fix notification-badge
+  * Rename information complement
+  * Add optional reason
+  * Fix language selectioN
+  * Placeholder when no item
+  * Fix styling when not item
+  * Add service worker
+  * Cleanup variables
+  * Fix .env-dist
+  * Fix terms page
+  * fix new consultation wizard with patient visible tickbox
+  * Update dashboard patient
+  * Update dashboard patient
+  * Move request consultation
+  * Adding Followup title
+  * Fix consultation display for patient
+  * Fix hover effect and remove request page
+  * Cleanup consultation detail page
+  * Improve patient interface
+  * Fix slot to show only in future
+  * Fix ordering consultatioN
+  * Update participant and put consultation on top
+  * Simplify again and cleanup
+  * Fix notification style
+  * Fix consultation detail structure
+  * Button on /home more explicit
+  * Never show old appointment in patient app
+  * Improve layout
+  * Adding placeholder when no appointment
+  * Add comment and user request
+  * Add placeholder on appointment
+  * Placeholder with more contrast
+  * Align vertical placeholder
+  * Fix 6 digits code
+  * Fix online status
+  * Fix dashboard and welcome popup
+  * Fix list view for appointment
+  * Fix List view date range
+  * Group clearable
+  * Fix user select
+  * Improve consultation edit
+  * Fix specific 400 error
+  * Fix new followup
+  * Improve text and fix login
+  * Add favicon
+  * Add launch all
+  * Ability to create appointment without consultation
+  * Ability to create appointment without consultation
+  * Avoid double error
+  * Show inline error in form
+  * Translate filtering
+  * Cleanup useless column
+  * Improve consultation with ID displayed
+  * Clean JWT on login to prevent connect on Websocket
+  * Add title on appointment
+  * Fix cancel appointment
+
+  [ Gor Grigoryan ]
+  * update ws connection after token expire
+  * add roboto font
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Sat, 28 Feb 2026 17:17:15 +0100
+
+hcw (0.9.38) bookworm; urgency=medium
+
+  * Add missing translations in package
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Mon, 23 Feb 2026 07:47:48 +0100
+
+hcw (0.9.37) bookworm; urgency=medium
+
+  [ Gor Grigoryan ]
+  * fix appointment page height
+  * implement Translation overrides
+  * improve appointment form
+  * add backend todo
+  * update lanugae selector
+  * remove todo
+  * use available languages from config
+  * update shaduled date value everywhere to use localDate pipe
+  * build fix
+
+  [ Olivier Bitsch ]
+  * Fix issue with openid email mapping when account already exists
+  * Fix patient edit form
+  * Fix slot modal
+  * Fix back button on patient details
+  * Fix active / overdue wording$
+  * Handing temporary patient convert to non-temporary
+  * Add temporary in table
+  * Fix temporary icon
+  * Fix timezone in dashboard
+  * Adding new endpoint to issue one time password
+  * Update auth process
+  * Add one time password auth for patient
+  * Password lost login
+  * Add small animation
+  * Remove the underline effect on language selector
+  * Harmonize texte size
+  * Fix patient Dashboard
+  * Fix search on consultation
+  * Big refactor of permission with role is_practitionner
+  * Fix over effect on various items
+  * Fix some animation and remove useless back on new consultation
+  * Adding custom field in practitioner frontend
+  * Fix in Patient Dashboard
+  * Add practitionner and custom field in pdf
+  * Add temporary
+  * Repository cleanup
+  * Fix OVH SMS (now get 403)
+  * Improve relation in Message system
+  * Adding taks result in sidebar
+  * Fix render
+  * Fix template send
+  * Add bulk template validation adding
+  * Update online fixes and add disconnect message
+  * Fix websocket heartbeat
+  * Fix practitioner select in practitioner
+  * Fix duplicated message on consultation updates, cancel, create...
+  * Show user online status in created_by etc..
+  * Implement live update of online status
+  * Add avatar image in patient list
+  * Fix appointment click to toggle on all tab
+  * Ajout des traductions
+  * Update confimr presence modal
+  * Fix missing accent
+  * Rewrite patient page
+  * Change consultation to Follow-up
+  * Add manual method
+  * Copy link
+  * Refresh token
+  * Adding first login field
+  * First time setup and tips
+  * Adding phone number on first setup screen
+  * Properly disconnect websocket on logout
+  * Remove configuration area
+  * Fix feeding empty phone
+  * Add password lost page
+  * Show language bar in language name
+
+ -- Olivier Bitsch <olivier.b@iabsis.com>  Mon, 23 Feb 2026 07:41:16 +0100
+
 hcw (0.9.36) bookworm; urgency=medium
 
   [ Gor Grigoryan ]

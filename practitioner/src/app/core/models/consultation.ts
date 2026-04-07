@@ -1,3 +1,21 @@
+export interface CustomField {
+  id: number;
+  name: string;
+  field_type: 'short_text' | 'long_text' | 'date' | 'number' | 'list';
+  target_model: string;
+  required: boolean;
+  options: string[] | null;
+  ordering: number;
+}
+
+export interface CustomFieldValue {
+  field: number;
+  field_name: string;
+  field_type: string;
+  value: string | null;
+  options: string[] | null;
+}
+
 export interface User {
   id: number;
   email: string;
@@ -10,6 +28,8 @@ export interface User {
   preferred_language?: string;
   communication_method?: string;
   timezone?: string;
+  temporary?: boolean;
+  is_practitioner?: boolean;
 }
 
 export interface Queue {
@@ -23,24 +43,31 @@ export interface Participant {
   user: User | null;
   is_active: boolean;
   status?: ParticipantStatus;
+  requires_manual_access?: boolean;
 }
 
-export type ParticipantStatus = 'draft' | 'invited' | 'confirmed' | 'unavailable' | 'cancelled';
+export type ParticipantStatus =
+  | 'draft'
+  | 'invited'
+  | 'confirmed'
+  | 'unavailable'
+  | 'cancelled';
 
 export enum AppointmentStatus {
   DRAFT = 'draft',
   SCHEDULED = 'scheduled',
-  CANCELLED = 'cancelled'
+  CANCELLED = 'cancelled',
 }
 
 export enum AppointmentType {
   ONLINE = 'online',
-  INPERSON = 'inPerson'
+  INPERSON = 'inPerson',
 }
 
 export interface Appointment {
   id: number;
   type: AppointmentType;
+  title?: string | null;
   scheduled_at: string;
   end_expected_at: string | null;
   consultation: number;
@@ -49,6 +76,7 @@ export interface Appointment {
   created_at: string;
   participants: Participant[];
   consultation_id: number;
+  consultation_title?: string | null;
   is_recording?: boolean;
   egress_id?: string | null;
   recording_started_at?: string | null;
@@ -85,6 +113,10 @@ export interface Consultation {
   owned_by?: User | null;
   group: Queue | null;
   group_id?: number;
+  visible_by_patient: boolean;
+  custom_fields?: CustomFieldValue[];
+  unread_count?: number;
+  last_read_at?: string;
 }
 
 export interface CreateConsultationRequest {
@@ -93,6 +125,8 @@ export interface CreateConsultationRequest {
   group_id?: number | null;
   beneficiary_id?: number | null;
   owned_by_id?: number | null;
+  visible_by_patient?: boolean;
+  custom_fields?: { field: number; value: string | null }[];
 }
 
 export interface Reason {
@@ -107,12 +141,12 @@ export enum RequestStatus {
   REQUESTED = 'requested',
   ACCEPTED = 'accepted',
   CANCELLED = 'cancelled',
-  REFUSED = 'refused'
+  REFUSED = 'refused',
 }
 
 export enum RequestType {
   ONLINE = 'online',
-  INPERSON = 'inPerson'
+  INPERSON = 'inPerson',
 }
 
 export interface ConsultationRequest {
@@ -191,6 +225,7 @@ export interface ITemporaryParticipant {
 
 export interface CreateAppointmentRequest {
   type?: AppointmentType;
+  title?: string;
   status?: AppointmentStatus;
   scheduled_at?: string;
   end_expected_at?: string;
@@ -203,11 +238,13 @@ export interface CreateAppointmentRequest {
 
 export interface UpdateAppointmentRequest {
   type?: AppointmentType;
+  title?: string;
   status?: AppointmentStatus;
   scheduled_at?: string;
   end_expected_at?: string;
   participants_ids?: number[];
   temporary_participants?: ITemporaryParticipant[];
+  consultation?: number;
 }
 
 export interface CreateParticipantRequest {
@@ -223,10 +260,12 @@ export interface CreateParticipantRequest {
 
 export interface DashboardNextAppointment {
   id: number | null;
+  title: string | null;
   scheduled_at: string | null;
   end_expected_at: string | null;
   type: string | null;
   consultation_id: number | null;
+  consultation_title: string | null;
   status: string | null;
   participants: Participant[];
   dont_invite_beneficiary: boolean;
@@ -238,6 +277,7 @@ export interface DashboardResponse {
   next_appointment: DashboardNextAppointment | null;
   upcoming_appointments: Appointment[];
   overdue_consultations: Consultation[];
+  overdue_total: number;
 }
 
 export interface IParticipantDetail {

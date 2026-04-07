@@ -1,10 +1,10 @@
-import { Component, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import {
   IonContent,
   IonItem,
-  IonLabel,
   IonInput,
   IonButton,
   IonIcon,
@@ -17,6 +17,8 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { TranslationService } from '../../core/services/translation.service';
+import { LanguageSelectorComponent } from '../../shared/components/language-selector/language-selector.component';
+import { AuthBrandingComponent } from '../../shared/components/auth-branding/auth-branding.component';
 
 @Component({
   selector: 'app-forgot-password',
@@ -28,16 +30,15 @@ import { TranslationService } from '../../core/services/translation.service';
     ReactiveFormsModule,
     IonContent,
     IonItem,
-    IonLabel,
     IonInput,
     IonButton,
     IonIcon,
     IonText,
     IonSpinner,
-    TranslatePipe
-  ]
+    TranslatePipe,
+    LanguageSelectorComponent, AuthBrandingComponent]
 })
-export class ForgotPasswordPage implements OnDestroy {
+export class ForgotPasswordPage implements OnInit, OnDestroy {
   private t = inject(TranslationService);
   private destroy$ = new Subject<void>();
   forgotPasswordForm: FormGroup;
@@ -47,11 +48,20 @@ export class ForgotPasswordPage implements OnDestroy {
     private fb: FormBuilder,
     private authService: AuthService,
     private navCtrl: NavController,
-    private toastCtrl: ToastController
+    private toastCtrl: ToastController,
+    private route: ActivatedRoute
   ) {
     this.forgotPasswordForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]]
     });
+  }
+
+  ngOnInit(): void {
+    const email = this.route.snapshot.queryParamMap.get('email');
+    if (email) {
+      this.forgotPasswordForm.patchValue({ email });
+    }
+
   }
 
   ngOnDestroy(): void {

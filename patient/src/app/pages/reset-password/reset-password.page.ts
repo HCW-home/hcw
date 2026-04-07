@@ -17,6 +17,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../core/services/auth.service';
 import { TranslationService } from '../../core/services/translation.service';
+import { AuthBrandingComponent } from '../../shared/components/auth-branding/auth-branding.component';
 
 @Component({
   selector: 'app-reset-password',
@@ -33,8 +34,7 @@ import { TranslationService } from '../../core/services/translation.service';
     IonIcon,
     IonText,
     IonSpinner,
-    TranslatePipe
-  ]
+    TranslatePipe, AuthBrandingComponent]
 })
 export class ResetPasswordPage implements OnInit, OnDestroy {
   private t = inject(TranslationService);
@@ -68,6 +68,7 @@ export class ResetPasswordPage implements OnInit, OnDestroy {
     if (!this.uid || !this.token) {
       this.errorMessage = this.t.instant('resetPassword.invalidLink');
     }
+
   }
 
   ngOnDestroy(): void {

@@ -8,11 +8,14 @@ export interface ITerm {
 export interface IOrganisation {
   id: number;
   name: string;
-  logo_large?: string;
-  logo_small?: string;
-  primary_color?: string;
+  logo_color?: string;
+  logo_white?: string;
+  favicon?: string;
+  primary_color_patient?: string;
+  primary_color_practitioner?: string;
   default_term?: number | null;
-  footer?: string | null;
+  footer_patient?: string | null;
+  footer_practitioner?: string | null;
 }
 
 export interface User {
@@ -39,10 +42,11 @@ export interface User {
   phone: string;
   date_of_birth: string;
   address: string;
+  specialities?: { id: number; name: string }[];
   main_organisation?: IOrganisation | null;
   accepted_term?: number | null;
+  is_first_login?: boolean;
   one_time_auth_token?: string;
-  is_auth_token_used?: boolean;
   verification_code?: number | null;
 }
 

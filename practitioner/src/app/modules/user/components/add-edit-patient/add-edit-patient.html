@@ -57,21 +57,109 @@
           [label]="'addEditPatient.phoneNumber' | translate"
           leftIcon="phone"
           [placeholder]="'addEditPatient.phonePlaceholder' | translate"
-          [formControl]="$any(form.get('mobile_phone_number'))">
+          [formControl]="$any(form.get('mobile_phone_number'))"
+          [invalid]="isFieldInvalid('mobile_phone_number')"
+          [invalidMessage]="getFieldError('mobile_phone_number')">
         </app-input>
       </div>
       <div class="form-group">
         <app-select
-          [label]="'addEditPatient.preferredLanguage' | translate"
-          [placeholder]="'addEditPatient.selectLanguage' | translate"
-          [options]="languageOptions"
-          [formControl]="$any(form.get('preferred_language'))"
-          [clearable]="true"
-          [openUp]="true"
-          [invalid]="isFieldInvalid('preferred_language')"
-          [invalidMessage]="getFieldError('preferred_language')">
+          [label]="'addEditPatient.communicationMethod' | translate"
+          [placeholder]="'addEditPatient.selectCommunicationMethod' | translate"
+          [options]="communicationMethodOptions"
+          [required]="true"
+          [formControl]="$any(form.get('communication_method'))"
+          [invalid]="isFieldInvalid('communication_method')"
+          [invalidMessage]="getFieldError('communication_method')">
         </app-select>
       </div>
+    </div>
+
+    <div class="form-group">
+      <app-select
+        [label]="'addEditPatient.preferredLanguage' | translate"
+        [placeholder]="'addEditPatient.selectLanguage' | translate"
+        [options]="languageOptions"
+        [formControl]="$any(form.get('preferred_language'))"
+        [clearable]="true"
+        [invalid]="isFieldInvalid('preferred_language')"
+        [invalidMessage]="getFieldError('preferred_language')">
+      </app-select>
+    </div>
+
+    @if (customFields().length > 0 && customFieldsForm) {
+      <div class="custom-fields-section">
+        <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-700)">
+          {{ 'addEditPatient.customFields' | translate }}
+        </app-typography>
+        <div class="custom-fields-list">
+          @for (field of customFields(); track field.id) {
+            @switch (field.field_type) {
+              @case ('short_text') {
+                <div class="form-group">
+                  <app-input
+                    [label]="field.name"
+                    [placeholder]="field.name"
+                    [formControl]="$any(customFieldsForm.get('cf_' + field.id))">
+                  </app-input>
+                </div>
+              }
+              @case ('long_text') {
+                <div class="form-group">
+                  <app-textarea
+                    [label]="field.name"
+                    [placeholder]="field.name"
+                    [formControl]="$any(customFieldsForm.get('cf_' + field.id))">
+                  </app-textarea>
+                </div>
+              }
+              @case ('date') {
+                <div class="form-group">
+                  <app-input
+                    [label]="field.name"
+                    type="date"
+                    [formControl]="$any(customFieldsForm.get('cf_' + field.id))">
+                  </app-input>
+                </div>
+              }
+              @case ('number') {
+                <div class="form-group">
+                  <app-input
+                    [label]="field.name"
+                    type="number"
+                    [placeholder]="field.name"
+                    [formControl]="$any(customFieldsForm.get('cf_' + field.id))">
+                  </app-input>
+                </div>
+              }
+              @case ('list') {
+                <div class="form-group">
+                  <app-select
+                    [label]="field.name"
+                    [placeholder]="field.name"
+                    [options]="getCustomFieldOptions(field)"
+                    [formControl]="$any(customFieldsForm.get('cf_' + field.id))"
+                    [clearable]="!field.required">
+                  </app-select>
+                </div>
+              }
+            }
+          }
+        </div>
+      </div>
+    }
+
+    <div class="form-group">
+      <app-switch
+        [label]="'addEditPatient.temporary' | translate"
+        [formControl]="$any(form.get('temporary'))">
+      </app-switch>
+      <app-typography
+        [variant]="TypographyTypeEnum['body-xs-regular']"
+        color="var(--slate-500)"
+        style="margin-top: 4px;">
+        {{ 'addEditPatient.temporaryNotice' | translate }}
+      </app-typography>
     </div>
   </form>
 

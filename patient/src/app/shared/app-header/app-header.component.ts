@@ -60,23 +60,17 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
           if (config?.branding) {
             this.branding.set(config.branding);
           }
-          if (config?.site_logo) {
-            this.siteLogo.set(config.site_logo);
+          if (config?.main_organization?.logo_color) {
+            this.siteLogo.set(config.main_organization.logo_color);
           }
         },
       });
 
-    this.notificationService
-      .getNotifications({ limit: 10 })
+    this.notificationService.unreadCount$
       .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response) => {
-          const unread = response.results.filter(
-            (n) => n.status !== "read",
-          ).length;
-          this.unreadNotificationCount.set(unread);
-        },
-      });
+      .subscribe((count) => this.unreadNotificationCount.set(count));
+
+    this.notificationService.loadInitialUnreadCount();
   }
 
   ngOnDestroy(): void {

@@ -4,13 +4,17 @@ from datetime import time
 from enum import Enum
 from zoneinfo import available_timezones
 
+from constance import config
 from django.conf import settings
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django_clamd.validators import validate_file_infection
 from messaging.models import CommunicationMethod
 from users.models import User
+
+from core.storage import TenantUploadTo
 
 from . import assignments
 from .managers import ConsultationManager
@@ -58,6 +62,9 @@ class RecordingModeChoices(models.TextChoices):
 
 
 class Consultation(models.Model):
+    room_uuid = models.UUIDField(
+        _("room UUID"), default=uuid.uuid4, editable=False, unique=True
+    )
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
     updated_at = models.DateTimeField(_("updated at"), auto_now=True)
     closed_at = models.DateTimeField(_("closed at"), null=True, blank=True)
@@ -93,24 +100,16 @@ class Consultation(models.Model):
         verbose_name=_("owned by"),
     )
 
+    visible_by_patient = models.BooleanField(
+        _("visible by patient"), default=True
+    )
+
     objects = ConsultationManager()
 
     class Meta:
         verbose_name = _("consultation")
         verbose_name_plural = _("consultations")
         ordering = ["-created_at"]
-        permissions = [
-            ("assignee_view_consultation", _("Can view own assigned consultations")),
-            (
-                "assignee_change_consultation",
-                _("Can change own assigned consultations"),
-            ),
-            (
-                "assignee_delete_consultation",
-                _("Can delete own assigned consultations"),
-            ),
-            ("assignee_close_consultation", _("Can close own assigned consultations")),
-        ]
 
     def __str__(self):
         return f"Consultation #{self.pk}"
@@ -123,7 +122,11 @@ class AppointmentStatus(models.TextChoices):
 
 
 class Appointment(models.Model):
+    room_uuid = models.UUIDField(
+        _("room UUID"), default=uuid.uuid4, editable=False, unique=True
+    )
     type = models.CharField(choices=Type.choices, default=Type.online)
+    title = models.CharField(_("title"), max_length=255, null=True, blank=True)
     status = models.CharField(
         _("status"),
         choices=AppointmentStatus.choices,
@@ -146,7 +149,7 @@ class Appointment(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         verbose_name=_("created by"),
-        related_name="appointments_created"
+        related_name="appointments_created",
     )
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
 
@@ -171,17 +174,11 @@ class AppointmentRecording(models.Model):
         Appointment,
         on_delete=models.CASCADE,
         related_name="recordings",
-        verbose_name=_("appointment")
+        verbose_name=_("appointment"),
     )
-    egress_id = models.CharField(
-        _("egress ID"),
-        max_length=255,
-        unique=True
-    )
+    egress_id = models.CharField(_("egress ID"), max_length=255, unique=True)
     filepath = models.CharField(
-        _("S3 filepath"),
-        max_length=500,
-        help_text=_("S3 key set at recording start")
+        _("S3 filepath"), max_length=500, help_text=_("S3 key set at recording start")
     )
     started_at = models.DateTimeField(_("started at"), auto_now_add=True)
     stopped_at = models.DateTimeField(_("stopped at"), null=True, blank=True)
@@ -191,7 +188,7 @@ class AppointmentRecording(models.Model):
         blank=True,
         on_delete=models.SET_NULL,
         related_name="recording",
-        verbose_name=_("message")
+        verbose_name=_("message"),
     )
 
     class Meta:
@@ -201,24 +198,18 @@ class AppointmentRecording(models.Model):
 
 
 class ParticipantStatus(Enum):
-    draft = 'draft'
-    invited = 'invited'
-    confirmed = 'confirmed'
-    unavailable = 'unavailable'
-    cancelled = 'cancelled'
+    draft = "draft"
+    invited = "invited"
+    confirmed = "confirmed"
+    unavailable = "unavailable"
+    cancelled = "cancelled"
 
 
 class Participant(models.Model):
     appointment = models.ForeignKey(
-        Appointment,
-        on_delete=models.CASCADE,
-        verbose_name=_("appointment")
+        Appointment, on_delete=models.CASCADE, verbose_name=_("appointment")
     )
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        verbose_name=_("user")
-    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_("user"))
 
     is_active = models.BooleanField(default=True)
     is_invited = models.BooleanField(default=True)
@@ -245,17 +236,24 @@ class Participant(models.Model):
         return self.user.one_time_auth_token if self.user else None
 
     @property
-    def is_auth_token_used(self):
-        """Get is_auth_token_used from associated User"""
-        return self.user.is_auth_token_used if self.user else False
+    def access_url(self):
+        """Generate patient access URL for participants without email or phone."""
+        if not self.user or not self.user.one_time_auth_token:
+            return None
+        if self.user.email or self.user.mobile_phone_number:
+            return None
+        return f"{config.patient_base_url}/?auth={self.user.one_time_auth_token}"
 
     @property
     def name(self) -> str:
         """Get display name of the participant"""
         return self.user.name or self.user.email
 
+    notification_messages = GenericRelation("messaging.Message")
+
     class Meta:
-        unique_together = ['user', 'appointment']
+        unique_together = ["user", "appointment"]
+
 
 class Message(models.Model):
     consultation = models.ForeignKey(
@@ -265,8 +263,11 @@ class Message(models.Model):
         verbose_name=_("consultation"),
     )
     created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name=_("created by"),
-        blank=True, null=True
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        verbose_name=_("created by"),
+        blank=True,
+        null=True,
     )
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
     updated_at = models.DateTimeField(_("updated at"), auto_now=True)
@@ -278,7 +279,7 @@ class Message(models.Model):
     content = models.TextField(_("content"), null=True, blank=True)
     attachment = models.FileField(
         _("attachment"),
-        upload_to="messages_attachment",
+        upload_to=TenantUploadTo("messages_attachment"),
         null=True,
         blank=True,
         validators=[validate_file_infection],
@@ -288,12 +289,35 @@ class Message(models.Model):
         max_length=500,
         null=True,
         blank=True,
-        help_text=_("S3 key/path for call recordings")
+        help_text=_("S3 key/path for call recordings"),
     )
+
+    notification_messages = GenericRelation("messaging.Message")
 
     class Meta:
         verbose_name = _("message")
         verbose_name_plural = _("messages")
+
+
+class ConsultationReadStatus(models.Model):
+    consultation = models.ForeignKey(
+        Consultation,
+        on_delete=models.CASCADE,
+        related_name="read_statuses",
+        verbose_name=_("consultation"),
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="consultation_read_statuses",
+        verbose_name=_("user"),
+    )
+    last_read_at = models.DateTimeField(_("last read at"))
+
+    class Meta:
+        verbose_name = _("consultation read status")
+        verbose_name_plural = _("consultation read statuses")
+        unique_together = ("consultation", "user")
 
 
 class Reason(models.Model):
@@ -381,6 +405,8 @@ class RequestStatus(models.TextChoices):
 
 
 class Request(models.Model):
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("updated at"), auto_now=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -495,3 +521,61 @@ class Prescription(models.Model):
 
     def __str__(self):
         return f"Prescription #{self.pk} - {self.medication_name} for {self.patient}"
+
+
+class CustomFieldType(models.TextChoices):
+    short_text = "short_text", _("Short text")
+    long_text = "long_text", _("Long text")
+    date = "date", _("Date")
+    number = "number", _("Number")
+    list = "list", _("List")
+
+
+class CustomFieldModel(models.TextChoices):
+    health_metric = "users.HealthMetric", _("Health Metric")
+    request = "consultations.Request", _("Request")
+    consultation = "consultations.Consultation", _("Consultation")
+    patient = "users.User", _("Patient")
+
+
+class CustomField(models.Model):
+    name = models.CharField(_("name"), max_length=255)
+    field_type = models.CharField(
+        _("type"), max_length=20, choices=CustomFieldType.choices
+    )
+    target_model = models.CharField(
+        _("target model"), max_length=50, choices=CustomFieldModel.choices
+    )
+    options = models.JSONField(
+        _("options"),
+        null=True,
+        blank=True,
+        help_text=_("List of options for 'list' type"),
+    )
+    required = models.BooleanField(_("required"), default=False)
+    ordering = models.IntegerField(_("ordering"), default=0)
+
+    class Meta:
+        verbose_name = _("custom field")
+        verbose_name_plural = _("custom fields")
+        ordering = ["ordering", "name"]
+
+    def __str__(self):
+        return f"{self.name} ({self.get_target_model_display()})"
+
+
+class CustomFieldValue(models.Model):
+    custom_field = models.ForeignKey(
+        CustomField, on_delete=models.CASCADE, related_name="values"
+    )
+    content_type = models.ForeignKey(
+        "contenttypes.ContentType", on_delete=models.CASCADE
+    )
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey("content_type", "object_id")
+    value = models.TextField(_("value"), null=True, blank=True)
+
+    class Meta:
+        verbose_name = _("custom field value")
+        verbose_name_plural = _("custom field values")
+        unique_together = ("custom_field", "content_type", "object_id")

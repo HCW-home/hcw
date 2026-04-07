@@ -127,9 +127,17 @@ export class WebSocketService implements OnDestroy {
 
     this.ws.onmessage = (event: MessageEvent) => {
       try {
-        const message: UserIncomingEvent = JSON.parse(event.data) as UserIncomingEvent;
+        const message = JSON.parse(event.data);
+
+        // Respond to server-side heartbeat pings automatically
+        if (message.type === 'ping') {
+          this.send({ type: 'pong' } as unknown as UserOutgoingMessage);
+          return;
+        }
+
+
         console.log('[WS] Received message:', message);
-        this.messageSubject.next(message);
+        this.messageSubject.next(message as UserIncomingEvent);
       } catch (error) {
         console.error('Error parsing WebSocket message:', error);
       }
@@ -164,10 +172,25 @@ export class WebSocketService implements OnDestroy {
     this.reconnectAttempts++;
     const interval = this.config.reconnectInterval ?? this.reconnectInterval;
 
-    this.reconnectTimer = setTimeout(() => {
-      if (this.config) {
-        this.connect(this.config);
+    this.reconnectTimer = setTimeout(async () => {
+      if (!this.config) return;
+
+      if (this.config.urlProvider) {
+        const freshUrl = await this.config.urlProvider();
+        if (freshUrl) {
+          this.config = { ...this.config, url: freshUrl };
+          // Reset reconnect attempts when we get a fresh URL (successful token refresh)
+          // This allows infinite reconnection attempts as long as token refresh works
+          if (freshUrl !== this.config.url) {
+            this.reconnectAttempts = 0;
+          }
+        } else {
+          this.stateSubject.next(WebSocketState.FAILED);
+          return;
+        }
       }
+
+      this.connect(this.config);
     }, interval);
   }
 

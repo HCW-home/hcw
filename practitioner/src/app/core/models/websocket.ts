@@ -151,6 +151,14 @@ export interface TranscriptionEvent {
   speaker_label?: string;
 }
 
+export interface CallResponseEvent {
+  event: 'call_response';
+  consultation_id: number;
+  accepted: boolean;
+  responder_id: number;
+  responder_name: string;
+}
+
 export type UserIncomingEvent =
   | StatusChangedEvent
   | StatusResponseEvent
@@ -162,7 +170,9 @@ export type UserIncomingEvent =
   | GroupLeftEvent
   | ErrorEvent
   | AppointmentJoinedEvent
-  | TranscriptionEvent;
+  | TranscriptionEvent
+  | ConsultationEvent
+  | CallResponseEvent;
 
 export interface ConsultationParticipant {
   id: number;
@@ -269,6 +279,21 @@ export interface AppointmentUpdatedEvent {
   };
 }
 
+export interface UserOnlineStatusEvent {
+  event: 'user';
+  user_id: number;
+  data: {
+    is_online: boolean;
+  };
+}
+
+export interface ConsultationEvent {
+  event: 'consultation';
+  state: string;
+  consultation_id: number;
+  data?: unknown;
+}
+
 export interface JanusEventData {
   type: 'janus_event';
   payload: {
@@ -300,6 +325,8 @@ export type ConsultationIncomingEvent =
   | ParticipantJoinedEvent
   | ParticipantLeftEvent
   | AppointmentUpdatedEvent
+  | UserOnlineStatusEvent
+  | ConsultationEvent
   | JanusEventData
   | GroupJoinedEvent
   | GroupLeftEvent
@@ -307,6 +334,7 @@ export type ConsultationIncomingEvent =
 
 export interface WebSocketConfig {
   url: string;
+  urlProvider?: () => Promise<string | null>;
   reconnect?: boolean;
   reconnectInterval?: number;
   reconnectAttempts?: number;

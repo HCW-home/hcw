@@ -20,13 +20,18 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.conf.urls.i18n import i18n_patterns
 
+from core.views import LoginSelectorView
+
 urlpatterns = [
+    path("", LoginSelectorView.as_view(), name="login_selector"),
     path("i18n/", include("django.conf.urls.i18n")),
+    path("accounts/", include("allauth.urls")),
     path('api/', include('api.urls')),
     path('api/', include('translations.urls')),
     path('', include('django.contrib.auth.urls')),
     path('', include('users.urls')),
     path('', include('consultations.urls')),
+    path('caldav/', include('caldav.urls')),
 ] + i18n_patterns(path('admin/', admin.site.urls))
 
 if settings.DEBUG:

@@ -1,10 +1,11 @@
 import uuid
-from zoneinfo import available_timezones, ZoneInfo
+from zoneinfo import ZoneInfo, available_timezones
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
+from django.contrib.contenttypes.fields import GenericRelation
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models.fields import BLANK_CHOICE_DASH
@@ -15,6 +16,8 @@ from firebase_admin.messaging import Message
 from firebase_admin.messaging import Notification as FireBaseNotification
 from location_field.models.plain import PlainLocationField
 from messaging.models import CommunicationMethod
+
+from core.storage import TenantUploadTo
 
 from .abstracts import ModelOwnerAbstract
 from .managers import UserManager
@@ -48,9 +51,11 @@ class Term(models.Model):
 
 class Organisation(models.Model):
     name = models.CharField(max_length=200)
-    logo_large = models.ImageField(upload_to="organisations/", blank=True, null=True)
-    logo_small = models.ImageField(upload_to="organisations/", blank=True, null=True)
-    primary_color = models.CharField(max_length=7, blank=True, null=True)
+    logo_color = models.ImageField(upload_to=TenantUploadTo("organisations"), blank=True, null=True)
+    logo_white = models.ImageField(upload_to=TenantUploadTo("organisations"), blank=True, null=True)
+    favicon = models.ImageField(upload_to=TenantUploadTo("organisations"), blank=True, null=True)
+    primary_color_patient = models.CharField(max_length=7, default="#0891b2")
+    primary_color_practitioner = models.CharField(max_length=7, default="#0891b2")
     default_term = models.ForeignKey(
         Term, on_delete=models.SET_NULL, null=True, blank=True
     )
@@ -59,19 +64,28 @@ class Organisation(models.Model):
     city = models.CharField(max_length=50, blank=True, null=True)
     postal_code = models.CharField(max_length=10, blank=True, null=True)
     country = models.CharField(max_length=50, blank=True, null=True)
-    footer = models.TextField(blank=True, null=True)
+    login_text_patient = models.TextField(blank=True, null=True)
+    login_text_practitioner = models.TextField(blank=True, null=True)
+    footer_patient = models.TextField(blank=True, null=True)
+    footer_practitioner = models.TextField(blank=True, null=True)
 
-    is_main = models.BooleanField(default=False, help_text="Define is this organisation will be default for patient")
+    is_main = models.BooleanField(
+        default=False,
+        help_text="Define is this organisation will be default for patient",
+    )
 
     def __str__(self):
         return self.name
 
     def save(self, *args, **kwargs):
         if self.is_main:
-            domain_list = self.__class__.objects.filter(is_main=True).exclude(pk=self.pk)
+            domain_list = self.__class__.objects.filter(is_main=True).exclude(
+                pk=self.pk
+            )
             domain_list.update(is_main=False)
 
         return super().save(*args, **kwargs)
+
 
 class Language(models.Model):
     name = models.CharField(max_length=100)
@@ -97,6 +111,44 @@ class FCMDeviceOverride(AbstractFCMDevice):
     updated_at = models.DateTimeField(auto_now=True)
 
 
+class WebPushSubscription(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="webpush_subscriptions",
+    )
+    endpoint = models.URLField(max_length=500, unique=True)
+    p256dh = models.CharField(
+        max_length=200,
+        help_text="Client public key for encryption",
+    )
+    auth = models.CharField(
+        max_length=200,
+        help_text="Client auth secret",
+    )
+    browser = models.CharField(max_length=100, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = _("web push subscription")
+        verbose_name_plural = _("web push subscriptions")
+
+    def __str__(self):
+        return f"WebPush for {self.user} ({self.endpoint[:50]}...)"
+
+    @property
+    def subscription_info(self):
+        return {
+            "endpoint": self.endpoint,
+            "keys": {
+                "p256dh": self.p256dh,
+                "auth": self.auth,
+            },
+        }
+
+
 class User(AbstractUser):
     def __str__(self):
         return self.name
@@ -113,7 +165,7 @@ class User(AbstractUser):
     app_preferences = models.JSONField(null=True, blank=True)
     encrypted = models.BooleanField(default=False)
 
-    picture = models.ImageField(upload_to="users/", blank=True, null=True)
+    picture = models.ImageField(upload_to=TenantUploadTo("users"), blank=True, null=True)
 
     job_title = models.CharField(
         max_length=200,
@@ -132,8 +184,6 @@ class User(AbstractUser):
         blank=True,
     )
 
-    is_online = models.BooleanField(default=False)
-
     last_notification = models.DateTimeField(default=timezone.now)
 
     specialities = models.ManyToManyField(Speciality, blank=True)
@@ -151,7 +201,7 @@ class User(AbstractUser):
     communication_method = models.CharField(
         choices=CommunicationMethod.choices, default=CommunicationMethod.email
     )
-    mobile_phone_number = models.CharField(null=True, blank=True)
+    mobile_phone_number = models.CharField(null=True, blank=True, unique=True)
     timezone = models.CharField(
         max_length=63,
         choices=[(tz, tz) for tz in sorted(available_timezones())],
@@ -170,13 +220,12 @@ class User(AbstractUser):
     one_time_auth_token = models.CharField(
         max_length=256,
         blank=True,
+        null=True,
         help_text="Authentication token for appointment access",
     )
-    is_auth_token_used = models.BooleanField(
-        default=False,
-        help_text="Whether the appointment auth token has been used before",
-    )
     verification_code = models.IntegerField(null=True, blank=True)
+    verification_code_created_at = models.DateTimeField(null=True, blank=True)
+    verification_attempts = models.IntegerField(default=0)
 
     email_verified = models.BooleanField(
         default=False,
@@ -189,9 +238,33 @@ class User(AbstractUser):
         help_text="Token used for email verification",
     )
 
+    created_by = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_users",
+        help_text="The practitioner who created this user",
+    )
+    is_practitioner = models.BooleanField(
+        default=False,
+        help_text="Whether this user is a practitioner",
+    )
+    is_first_login = models.BooleanField(
+        default=True,
+        help_text="Whether this is the user's first login",
+    )
+
+    notification_messages = GenericRelation("messaging.Message")
+
+    @property
+    def is_online(self):
+        from .services import user_online_service
+        return user_online_service.is_user_online(self.pk)
+
     @property
     def is_patient(self):
-        return not self.groups.exists()
+        return not self.is_practitioner
 
     @property
     def name(self) -> str:
@@ -224,10 +297,17 @@ class User(AbstractUser):
     def save(self, *args, **kwargs):
         if self.temporary and not self.one_time_auth_token:
             self.one_time_auth_token = str(uuid.uuid4())
+            self.verification_code_created_at = timezone.now()
+        if not self.email:
+            self.email = None
+        if not self.mobile_phone_number:
+            self.mobile_phone_number = None
+        
         super().save(*args, **kwargs)
 
     class Meta:
-        ordering = ['first_name', 'last_name', 'email']
+        ordering = ["first_name", "last_name", "email"]
+
 
 class HealthMetric(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)

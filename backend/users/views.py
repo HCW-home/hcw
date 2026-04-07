@@ -1,16 +1,29 @@
 import logging
 import mimetypes
 import os
+import random
+import uuid
+import secrets
+
 import uuid
 
+from django.utils.translation import gettext as _
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from allauth.socialaccount.providers.openid_connect.views import (
     OpenIDConnectOAuth2Adapter,
 )
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from consultations.models import Appointment, Consultation, Participant, Request
+from consultations.models import (
+    Appointment,
+    Consultation,
+    Participant,
+    Reason,
+    Request,
+    RequestStatus,
+)
 from consultations.models import Message as ConsultationMessage
+from consultations.permissions import IsPractitioner
 from consultations.serializers import (
     AppointmentDetailSerializer,
     AppointmentSerializer,
@@ -23,13 +36,17 @@ from consultations.serializers import (
 from dj_rest_auth.registration.serializers import SocialLoginSerializer
 from dj_rest_auth.registration.views import RegisterView as DjRestAuthRegisterView
 from dj_rest_auth.registration.views import SocialLoginView
+from dj_rest_auth.views import LoginView as DjRestAuthLoginView
+from dj_rest_auth.views import PasswordChangeView as DjRestAuthPasswordChangeView
+from dj_rest_auth.views import PasswordResetView as DjRestAuthPasswordResetView
+from dj_rest_auth.views import PasswordResetConfirmView as DjRestAuthPasswordResetConfirmView
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.mail import send_mail
+from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 from django.http import FileResponse
 from django.shortcuts import render
-from django.utils import timezone
+from django.utils import timezone, translation
 from django.views.generic import View
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import (
@@ -45,18 +62,15 @@ from messaging.serializers import MessageSerializer
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import (
-    BasePermission,
-    DjangoModelPermissions,
-    IsAuthenticated,
-)
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework_simplejwt.tokens import RefreshToken
+from constance import config as constance_config
+from allauth.socialaccount.models import SocialApp
 
 from .filters import UserFilter
-from .models import HealthMetric, Language, Organisation, Speciality, Term, User
+from .models import HealthMetric, Language, Organisation, Speciality, Term, User, WebPushSubscription
 from .serializers import (
     HealthMetricSerializer,
     LanguageSerializer,
@@ -65,27 +79,9 @@ from .serializers import (
     TermSerializer,
     UserDetailsSerializer,
     UserParticipantDetailSerializer,
+    WebPushSubscriptionSerializer,
 )
-
-
-class DjangoModelPermissionsWithView(DjangoModelPermissions):
-    """
-    Custom permission class that includes view permissions.
-    """
-
-    perms_map = {
-        "GET": ["%(app_label)s.view_%(model_name)s"],
-        "OPTIONS": [],
-        "HEAD": [],
-        "POST": ["%(app_label)s.add_%(model_name)s"],
-        "PUT": ["%(app_label)s.change_%(model_name)s"],
-        "PATCH": ["%(app_label)s.change_%(model_name)s"],
-        "DELETE": ["%(app_label)s.delete_%(model_name)s"],
-    }
-
-
-# Create your views here.
-
+from constance import config
 
 class UniversalPagination(PageNumberPagination):
     page_size = 20
@@ -201,8 +197,11 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         """Get consultations for the authenticated user."""
+        from consultations.views import annotate_unread_count
+
         user = self.request.user
-        return Consultation.objects.filter(beneficiary=user)
+        qs = Consultation.objects.filter(beneficiary=user, visible_by_patient=True)
+        return annotate_unread_count(qs, user)
 
     @extend_schema(
         responses={
@@ -218,6 +217,19 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         """Get a specific consultation by ID."""
         return super().retrieve(request, *args, **kwargs)
+
+    @action(detail=True, methods=["post"])
+    def mark_read(self, request, pk=None):
+        """Mark all messages in a consultation as read for the current user."""
+        from consultations.models import ConsultationReadStatus
+
+        consultation = self.get_object()
+        ConsultationReadStatus.objects.update_or_create(
+            consultation=consultation,
+            user=request.user,
+            defaults={"last_read_at": timezone.now()},
+        )
+        return Response({"status": "ok"})
 
     @extend_schema(
         request=ConsultationMessageCreateSerializer,
@@ -262,6 +274,67 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
                 )
 
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["get"])
+    def join(self, request, pk=None):
+        """Join a consultation call as beneficiary."""
+        consultation = self.get_object()
+
+        if consultation.closed_at:
+            return Response(
+                {"error": _("Cannot join call in a closed consultation.")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            server = Server.get_server()
+            consultation_call_info = server.instance.consultation_user_info(
+                consultation, request.user
+            )
+
+            return Response(
+                {
+                    "url": server.url,
+                    "token": consultation_call_info,
+                    "room": str(consultation.room_uuid),
+                }
+            )
+        except Exception:
+            return Response(
+                {"detail": _("No media server available.")},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+    @action(detail=True, methods=["post"], url_path="call_response")
+    def call_response(self, request, pk=None):
+        """Respond to an incoming call (accept or reject)."""
+        consultation = self.get_object()
+        accepted = request.data.get("accepted", False)
+
+        # Notify the consultation owner/creator via WebSocket
+        channel_layer = get_channel_layer()
+        responder_name = f"{request.user.first_name} {request.user.last_name}".strip() or request.user.email
+
+        # Notify all practitioners associated with the consultation
+        users_to_notify = set()
+        if consultation.owned_by:
+            users_to_notify.add(consultation.owned_by.pk)
+        if consultation.created_by:
+            users_to_notify.add(consultation.created_by.pk)
+
+        for user_pk in users_to_notify:
+            async_to_sync(channel_layer.group_send)(
+                f"user_{user_pk}",
+                {
+                    "type": "call_response",
+                    "consultation_id": consultation.pk,
+                    "accepted": accepted,
+                    "responder_id": request.user.pk,
+                    "responder_name": responder_name,
+                },
+            )
+
+        return Response({"detail": "ok"})
 
 
 class MessageAttachmentView(APIView):
@@ -421,7 +494,7 @@ class UserNotificationsView(APIView):
         # Apply pagination
         paginator = self.pagination_class()
         paginated_notifications = paginator.paginate_queryset(notifications, request)
-        serializer = MessageSerializer(paginated_notifications, many=True)
+        serializer = MessageSerializer(paginated_notifications, many=True, context={'request': request})
         return paginator.get_paginated_response(serializer.data)
 
 
@@ -513,6 +586,41 @@ class UserNotificationsMarkAllReadView(APIView):
         )
 
 
+class WebPushSubscribeView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = WebPushSubscriptionSerializer(
+            data=request.data, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class WebPushUnsubscribeView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        endpoint = request.data.get("endpoint")
+        if not endpoint:
+            return Response(
+                {"detail": "endpoint is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        deleted, _ = WebPushSubscription.objects.filter(
+            user=request.user, endpoint=endpoint
+        ).delete()
+        if deleted:
+            return Response({"detail": "Subscription removed."})
+        return Response(
+            {"detail": "Subscription not found."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+
 class UserAppointmentsViewSet(viewsets.ReadOnlyModelViewSet):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -559,11 +667,36 @@ class UserAppointmentsViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=True, methods=["get"])
     def join(self, request, pk=None):
         """Join consultation call"""
+        from constance import config
+        from datetime import timedelta
+        from consultations.models import Type
+
         appointment = self.get_object()
         if appointment.consultation.closed_at:
             return Response(
                 {"error": "Cannot join call in closed consultation"},
                 status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if appointment.type != Type.online:
+            return Response(
+                {"detail": _("Cannot join consultation if not online")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        now = timezone.now()
+        earliest_join = appointment.scheduled_at - timedelta(minutes=config.appointment_early_join_minutes)
+        if now < earliest_join:
+            return Response(
+                {
+                    "detail": _(
+                        "Too early to join. The meeting starts at %(time)s. You can join %(minutes)d minutes before the scheduled time."
+                    )
+                    % {"time": appointment.scheduled_at.strftime("%H:%M"), "minutes": config.appointment_early_join_minutes},
+                    "scheduled_at": appointment.scheduled_at.isoformat(),
+                    "code": "too_early",
+                },
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         try:
@@ -595,11 +728,22 @@ class UserAppointmentsViewSet(viewsets.ReadOnlyModelViewSet):
                     },
                 )
 
+            # Create a system message for participant joined
+            # The message_saved signal will automatically send WebSocket notifications
+            if appointment.consultation:
+                user_name = request.user.name or request.user.email
+                ConsultationMessage.objects.create(
+                    consultation=appointment.consultation,
+                    created_by=None,  # System message has no author
+                    event="participant_joined",
+                    content=_("%(user_name)s joined the meeting") % {"user_name": user_name},
+                )
+
             return Response(
                 {
                     "url": server.url,
                     "token": consultation_call_info,
-                    "room": f"appointment_{appointment.pk}",
+                    "room": str(appointment.room_uuid),
                 }
             )
         except Exception as e:
@@ -608,20 +752,180 @@ class UserAppointmentsViewSet(viewsets.ReadOnlyModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+    @action(detail=True, methods=["post"])
+    def leave(self, request, pk=None):
+        """Mark user as having left the consultation"""
+        appointment = self.get_object()
+
+        # Vérifications
+        if not appointment.consultation:
+            return Response(
+                {"detail": _("No consultation associated")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if appointment.consultation.closed_at:
+            return Response(
+                {"detail": _("Consultation is already closed")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Créer message système "participant left"
+        user_name = request.user.name or request.user.email
+        consultation_id = str(appointment.consultation.id).zfill(6)
+        ConsultationMessage.objects.create(
+            consultation=appointment.consultation,
+            created_by=None,  # Message système
+            event="participant_left",
+            content=_("%(user_name)s left the meeting #%(consultation_id)s") % {"user_name": user_name, "consultation_id": consultation_id},
+        )
+
+        # Notifier les autres participants via WebSocket
+        channel_layer = get_channel_layer()
+        active_participants = appointment.participant_set.filter(is_active=True)
+
+        for participant in active_participants:
+            if participant.user.pk == request.user.pk:
+                continue
+
+            async_to_sync(channel_layer.group_send)(
+                f"user_{participant.user.pk}",
+                {
+                    "type": "appointment",
+                    "consultation_id": appointment.consultation.pk,
+                    "appointment_id": appointment.pk,
+                    "state": "participant_left",
+                    "data": {
+                        "user_id": request.user.pk,
+                        "user_name": user_name,
+                    },
+                },
+            )
+
+        return Response({"detail": _("Left successfully")})
+
 
 class UserViewSet(viewsets.ModelViewSet):
     """
     ViewSet for users - read only with GET endpoint
     Supports search by first name, last name, and email
+    Visibility controlled by USERS_VISIBILITY setting
     """
 
-    queryset = User.objects.filter()
+    queryset = User.objects.all()
     serializer_class = UserDetailsSerializer
-    permission_classes = [IsAuthenticated, DjangoModelPermissionsWithView]
+    permission_classes = [IsAuthenticated, IsPractitioner]
     pagination_class = UniversalPagination
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     search_fields = ["first_name", "last_name", "email"]
     filterset_class = UserFilter
+
+    def get_queryset(self):
+        """
+        Filter users based on visibility settings:
+        - USERS_VISIBILITY controls practitioner visibility
+        - PATIENT_VISIBILITY controls patient visibility
+        """
+        base_queryset = self.queryset.filter(is_active=True)
+        current_user = self.request.user
+
+        practitioners_qs = self._filter_practitioners(base_queryset, current_user)
+        patients_qs = self._filter_patients(base_queryset, current_user)
+
+        return (practitioners_qs | patients_qs).distinct()
+
+    def _filter_practitioners(self, base_queryset, current_user):
+        """Filter practitioners based on USERS_VISIBILITY setting."""
+        qs = base_queryset.filter(is_practitioner=True)
+        visibility = config.users_visibility
+
+        if not visibility or visibility == "all":
+            return qs
+
+        elif visibility == "alone":
+            return qs.filter(id=current_user.id)
+
+        elif visibility == "organization":
+            org_filter = self._get_organization_filter(current_user)
+            if org_filter:
+                return qs.filter(org_filter | Q(id=current_user.id))
+            return qs.filter(id=current_user.id)
+
+        return qs
+
+    def _filter_patients(self, base_queryset, current_user):
+        """Filter patients based on PATIENT_VISIBILITY setting."""
+        qs = base_queryset.filter(is_practitioner=False)
+        visibility = config.patient_visibility
+
+        if not visibility or visibility == "all":
+            return qs
+
+        elif visibility == "alone":
+            return qs.filter(created_by=current_user)
+
+        elif visibility == "organization":
+            org_filter = self._get_organization_filter(current_user)
+            if org_filter:
+                return qs.filter(org_filter)
+            return qs.filter(created_by=current_user)
+
+        return qs
+
+    def _get_organization_filter(self, current_user):
+        """Build a Q filter for matching organizations."""
+        user_orgs = list(current_user.organisations.values_list("id", flat=True))
+        has_main_org = current_user.main_organisation is not None
+        has_orgs = len(user_orgs) > 0
+
+        if not has_main_org and not has_orgs:
+            return None
+
+        filters = []
+        if has_main_org:
+            filters.append(Q(main_organisation=current_user.main_organisation))
+        if has_orgs:
+            filters.append(Q(organisations__id__in=user_orgs))
+
+        combined = filters[0]
+        for f in filters[1:]:
+            combined |= f
+        return combined
+
+    def create(self, request, *args, **kwargs):
+        """
+        Create a new user or merge with existing temporary user.
+        If a temporary user with the same email exists, update it instead.
+        """
+        email = request.data.get('email')
+
+        if email:
+            try:
+                # Check if a temporary user with this email exists
+                existing_user = User.objects.get(email=email, temporary=True)
+
+                # Update the existing temporary user with new data
+                serializer = self.get_serializer(existing_user, data=request.data, partial=True)
+                serializer.is_valid(raise_exception=True)
+
+                # Remove temporary flag and set created_by
+                serializer.validated_data['temporary'] = False
+
+                # Save the updated user
+                serializer.save(created_by=request.user)
+
+                headers = self.get_success_headers(serializer.data)
+                return Response(serializer.data, status=status.HTTP_200_OK, headers=headers)
+
+            except User.DoesNotExist:
+                # No temporary user exists, proceed with normal creation
+                pass
+
+        # Normal user creation
+        return super().create(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
 
     def update(self, request, *args, **kwargs):
         """Prevent updating users with superuser, staff access, or users in groups."""
@@ -641,6 +945,13 @@ class UserViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
+        # Prevent a practitioner from updating another practitioner
+        if request.user.is_practitioner and user.is_practitioner:
+            return Response(
+                {"detail": "Cannot update another practitioner."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         return super().update(request, *args, **kwargs)
 
     def partial_update(self, request, *args, **kwargs):
@@ -654,10 +965,11 @@ class UserViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        # Prevent updating users who belong to any group
-        if user.groups.exists():
+
+        # Prevent a practitioner from updating another practitioner
+        if request.user.is_practitioner and user.is_practitioner:
             return Response(
-                {"detail": "Cannot update users who belong to a group."},
+                {"detail": "Cannot update another practitioner."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -750,7 +1062,16 @@ class OpenIDView(SocialLoginView):
         if "code" in request.data and "callback_url" not in request.data:
             request.data["callback_url"] = callback_url
 
-        return super().post(request, *args, **kwargs)
+        response = super().post(request, *args, **kwargs)
+
+        # If login successful, set is_practitioner to True
+        if response.status_code == 200 and hasattr(self, 'user'):
+            user = self.user
+            if not user.is_practitioner:
+                user.is_practitioner = True
+                user.save(update_fields=['is_practitioner'])
+
+        return response
 
 
 class AppConfigView(APIView):
@@ -766,10 +1087,8 @@ class AppConfigView(APIView):
         description="Get application configuration for the frontend.",
     )
     def get(self, request):
-        # OpenID Connect configuration
-        openid_config = settings.SOCIALACCOUNT_PROVIDERS.get("openid_connect", {})
-        apps = openid_config.get("APPS", [])
 
+        # OpenID Connect configuration - read from tenant's DB
         openid = {
             "enabled": False,
             "client_id": None,
@@ -777,58 +1096,128 @@ class AppConfigView(APIView):
             "provider_name": None,
         }
 
-        if apps:
-            app = apps[0]
-            client_id = app.get("client_id")
-            provider_name = app.get("name")
-            server_url = app.get("settings", {}).get("server_url")
-
+        social_app = SocialApp.objects.filter(provider="openid_connect").first()
+        if social_app:
+            server_url = social_app.settings.get("server_url", "")
             authorization_url = None
             if server_url:
                 base_url = server_url.replace("/.well-known/openid-configuration", "")
                 authorization_url = f"{base_url}/protocol/openid-connect/auth"
 
             openid = {
-                "enabled": bool(client_id),
-                "client_id": client_id,
+                "enabled": bool(social_app.client_id),
+                "client_id": social_app.client_id,
                 "authorization_url": authorization_url,
-                "provider_name": provider_name,
+                "provider_name": social_app.name,
             }
 
         # Main organization
         main_org = Organisation.objects.filter(is_main=True).first()
-        main_organization = OrganisationSerializer(main_org).data if main_org else None
+        main_organization = OrganisationSerializer(main_org, context={"request": request}).data if main_org else None
 
-        from constance import config as constance_config
-
-        def _file_url(value):
-            if not value:
+        def _image_url(image_field):
+            if not image_field:
                 return None
-            return request.build_absolute_uri(f"{settings.MEDIA_URL}{value}")
+            return request.build_absolute_uri(image_field.url)
 
         languages = [
             {"code": code, "name": str(name)} for code, name in settings.LANGUAGES
         ]
 
+        from messaging.models import MessagingProvider
+
+        communication_methods = list(
+            MessagingProvider.objects.filter(is_active=True)
+            .values_list("communication_method", flat=True)
+            .distinct()
+        )
+
         return Response(
             {
                 **openid,
-                "registration_enabled": settings.ENABLE_REGISTRATION,
+                "registration_enabled": constance_config.enable_registration,
+                "disable_password_login": constance_config.disable_password_login,
                 "main_organization": main_organization,
                 "branding": constance_config.site_name,
-                "site_logo": _file_url(constance_config.site_logo),
-                "site_logo_white": _file_url(constance_config.site_logo_white),
-                "site_favicon": _file_url(constance_config.site_favicon),
+                "primary_color_patient": main_org.primary_color_patient if main_org else None,
+                "primary_color_practitioner": main_org.primary_color_practitioner if main_org else None,
                 "languages": languages,
+                "communication_methods": communication_methods,
+                "vapid_public_key": settings.WEBPUSH_VAPID_PUBLIC_KEY,
+                "consultation_auto_delete_hours": int(constance_config.consultation_auto_delete_hours),
+                "appointment_early_join_minutes": int(constance_config.appointment_early_join_minutes),
             }
         )
+
+
+class LoginView(DjRestAuthLoginView):
+    """Login endpoint controlled by disable_password_login constance setting for practitioners."""
+
+    def post(self, request, *args, **kwargs):
+
+        if constance_config.disable_password_login:
+            # Check if the user trying to log in is a practitioner
+            email = request.data.get("email")
+            if email:
+                try:
+                    user = User.objects.get(email=email)
+                    if user.is_practitioner:
+                        return Response(
+                            {"detail": "Password login is disabled for practitioners. Please use SSO."},
+                            status=status.HTTP_403_FORBIDDEN,
+                        )
+                except User.DoesNotExist:
+                    pass
+        return super().post(request, *args, **kwargs)
+
+
+class PasswordChangeView(DjRestAuthPasswordChangeView):
+    """Password change endpoint controlled by DISABLE_PASSWORD_LOGIN setting for practitioners."""
+
+    def post(self, request, *args, **kwargs):
+        if constance_config.disable_password_login and request.user.is_authenticated and request.user.is_practitioner:
+            return Response(
+                {"detail": "Password management is disabled for practitioners. Please use SSO."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return super().post(request, *args, **kwargs)
+
+
+class PasswordResetView(DjRestAuthPasswordResetView):
+    """Password reset endpoint controlled by DISABLE_PASSWORD_LOGIN setting for practitioners."""
+
+    def post(self, request, *args, **kwargs):
+        if constance_config.disable_password_login:
+            # Check if the user requesting reset is a practitioner
+            email = request.data.get("email")
+            if email:
+                try:
+                    user = User.objects.get(email=email)
+                    if user.is_practitioner:
+                        return Response(
+                            {"detail": "Password reset is disabled for practitioners. Please use SSO."},
+                            status=status.HTTP_403_FORBIDDEN,
+                        )
+                except User.DoesNotExist:
+                    pass
+        return super().post(request, *args, **kwargs)
+
+
+class PasswordResetConfirmView(DjRestAuthPasswordResetConfirmView):
+    """Password reset confirm endpoint controlled by DISABLE_PASSWORD_LOGIN setting for practitioners."""
+
+    def post(self, request, *args, **kwargs):
+        # For password reset confirm, we can't easily check user type before validation
+        # So we allow the reset to proceed - the practitioner shouldn't have received the email anyway
+        # if PasswordResetView blocked them
+        return super().post(request, *args, **kwargs)
 
 
 class RegisterView(DjRestAuthRegisterView):
     """Registration endpoint controlled by ENABLE_REGISTRATION setting."""
 
     def create(self, request, *args, **kwargs):
-        if not settings.ENABLE_REGISTRATION:
+        if not constance_config.enable_registration:
             return Response(
                 {"detail": "Registration is currently disabled."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -845,14 +1234,16 @@ class RegisterView(DjRestAuthRegisterView):
                 Message.objects.create(
                     sent_to=user,
                     template_system_name="email_verification",
-                    object_pk=user.pk,
-                    object_model="users.User",
+                    content_type=ContentType.objects.get_for_model(user),
+                    object_id=user.pk,
                     in_notification=False,
                     additionnal_link_args={"token": user.email_verification_token},
                 )
 
         return Response(
-            {"detail": "A verification email has been sent to your email address."},
+            {
+                "detail": _("A verification email has been sent to your email address.")
+            },
             status=status.HTTP_201_CREATED,
         )
 
@@ -880,7 +1271,8 @@ class EmailVerifyView(APIView):
 
         user.email_verified = True
         user.email_verification_token = None
-        user.save(update_fields=["email_verified", "email_verification_token"])
+        user.is_active = True
+        user.save(update_fields=["email_verified", "email_verification_token", "is_active"])
 
         return Response({"detail": "Email verified successfully."})
 
@@ -920,13 +1312,14 @@ class TestRTCView(APIView):
         try:
             server = Server.get_server()
 
-            test_info = server.instance.user_test_info(request.user)
+            test_room_uuid = uuid.uuid4()
+            test_info = server.instance.user_test_info(request.user, room_uuid=test_room_uuid)
 
             return Response(
                 {
                     "url": server.url,
                     "token": test_info,
-                    "room": f"usertest_{request.user.pk}",
+                    "room": str(test_room_uuid),
                 }
             )
         except Exception as e:
@@ -965,26 +1358,45 @@ class UserDashboardView(APIView):
     def get(self, request):
         """Get dashboard data for the authenticated user."""
         user = request.user
+        now = timezone.now()
+        two_hours_ago = now - timezone.timedelta(hours=2)
 
-        user_requests = Request.objects.filter(
-            status="Requested",
-            created_by=user,
-        ).order_by("-id")
-
-        consultations = (
-            Consultation.objects.exclude(request__in=user_requests)
-            .filter(beneficiary=user, closed_at__isnull=True)
-            .order_by("-created_at")
+        user_requests = (
+            Request.objects.filter(
+                created_by=user,
+            )
+            .filter(
+                Q(status__in=[RequestStatus.requested,
+                  RequestStatus.refused, RequestStatus.cancelled],
+                  created_at__gte=two_hours_ago)
+                | Q(
+                    status=RequestStatus.accepted,
+                    consultation__closed_at__isnull=True,
+                )
+                | Q(
+                    status=RequestStatus.accepted,
+                    appointment__scheduled_at__gte=two_hours_ago,
+                    appointment__status="scheduled",
+                )
+            )
+            .order_by("-id")
         )
 
-        now = timezone.now()
+        from consultations.views import annotate_unread_count
 
-        # Next upcoming appointment (with 1 hour grace period)
+        consultations = annotate_unread_count(
+            Consultation.objects.exclude(request__in=user_requests)
+            .filter(beneficiary=user, closed_at__isnull=True, visible_by_patient=True)
+            .order_by("-created_at"),
+            user,
+        )
+
+        # Next upcoming appointment (with 2 hour grace period)
         next_appointment = (
             Appointment.objects.filter(
                 participant__user=user,
                 participant__is_active=True,
-                scheduled_at__gte=now - timezone.timedelta(hours=1),
+                scheduled_at__gte=two_hours_ago,
                 status="scheduled",
             )
             .distinct()
@@ -996,23 +1408,130 @@ class UserDashboardView(APIView):
             Appointment.objects.exclude(consultation__in=consultations)
             .exclude(
                 consultation__request__in=user_requests,
-            )
-            .filter(
+            ).filter(
                 participant__user=user,
                 participant__is_active=True,
-                scheduled_at__gte=now,
+                scheduled_at__gte=two_hours_ago,
+                status="scheduled",
             )
             .distinct()
-            .order_by("-scheduled_at")
+            .order_by("scheduled_at")
         )
+
+        serializer_context = {"request": request}
+
+        has_reasons = Reason.objects.filter(is_active=True).exists()
 
         return Response(
             {
-                "next_appointment": AppointmentSerializer(next_appointment).data
+                "has_reasons": has_reasons,
+                "next_appointment": AppointmentSerializer(
+                    next_appointment, context=serializer_context
+                ).data
                 if next_appointment
                 else None,
-                "requests": RequestSerializer(user_requests, many=True).data,
-                "consultations": ConsultationSerializer(consultations, many=True).data,
-                "appointments": AppointmentSerializer(appointments, many=True).data,
+                "requests": RequestSerializer(
+                    user_requests, many=True, context=serializer_context
+                ).data,
+                "consultations": ConsultationSerializer(
+                    consultations, many=True, context=serializer_context
+                ).data,
+                "appointments": AppointmentSerializer(
+                    appointments, many=True, context=serializer_context
+                ).data,
             }
+        )
+
+
+class SendVerificationCodeView(APIView):
+    """
+    Generate and send a verification code to a contact's email for passwordless authentication.
+    """
+
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        summary="Send Verification Code",
+        description="Generate and send a verification code for passwordless authentication. Automatically detects if the email belongs to a contact or user.",
+        request={
+            "application/json": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "description": "Email address to send the verification code to",
+                        "example": "user@example.com",
+                    },
+                },
+                "required": ["email"],
+            }
+        },
+        responses={
+            200: {
+                "description": "Verification code sent successfully",
+                "content": {
+                    "application/json": {
+                        "example": {"detail": "Verification code sent successfully"}
+                    }
+                },
+            },
+            400: {
+                "description": "Bad request",
+                "content": {
+                    "application/json": {"example": {"error": "email is required"}}
+                },
+            },
+        },
+    )
+    def post(self, request):
+        email = request.data.get("email")
+
+        if not email:
+            return Response(
+                {"error": "email is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Try to find contact first, then user
+        user_instance = None
+
+        try:
+            # Try to get User
+            user_instance = User.objects.get(email__iexact=email.strip())
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "Verification code sent successfully"},
+                status=status.HTTP_200_OK,
+            )
+
+        # Generate a verification code (6 digits)
+        user_instance.verification_code = 100000 + secrets.randbelow(900000)
+        user_instance.verification_code_created_at = timezone.now()
+
+        user_instance.one_time_auth_token = str(uuid.uuid4())
+        user_instance.verification_attempts = 0
+        user_instance.save(
+            update_fields=[
+                "verification_code",
+                "verification_code_created_at",
+                "verification_attempts",
+                "one_time_auth_token",
+            ]
+        )
+
+        # Render HTML template
+        with translation.override(user_instance.preferred_language):
+            Message.objects.create(
+                sent_to=user_instance,
+                template_system_name="your_authentication_code",
+                content_type=ContentType.objects.get_for_model(user_instance),
+                object_id=user_instance.pk,
+            )
+
+        return Response(
+            {
+                "detail": "Verification code sent successfully",
+                "auth_token": user_instance.one_time_auth_token,
+            },
+            status=status.HTTP_200_OK,
         )

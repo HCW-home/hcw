@@ -1,10 +1,26 @@
-import { Component, OnInit, OnDestroy, signal, inject, computed, viewChild, ViewChildren, QueryList, ElementRef, AfterViewInit } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  signal,
+  inject,
+  computed,
+  viewChild,
+  ViewChildren,
+  QueryList,
+  ElementRef,
+  AfterViewInit,
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule, Location } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { Subject, takeUntil } from 'rxjs';
-import { FullCalendarModule, FullCalendarComponent } from '@fullcalendar/angular';
-import { CalendarOptions, EventInput, EventClickArg } from '@fullcalendar/core';
+import { Observable, Subject, takeUntil, map } from 'rxjs';
+import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
+import {
+  FullCalendarModule,
+  FullCalendarComponent,
+} from '@fullcalendar/angular';
+import { CalendarOptions, EventInput, EventClickArg, DatesSetArg } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -13,14 +29,17 @@ import { ConsultationService } from '../../../../core/services/consultation.serv
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { ConsultationWebSocketService } from '../../../../core/services/consultation-websocket.service';
+import { UserWebSocketService } from '../../../../core/services/user-websocket.service';
 import { UserService } from '../../../../core/services/user.service';
 import { IncomingCallService } from '../../../../core/services/incoming-call.service';
+import { Auth } from '../../../../core/services/auth';
 import {
   Consultation,
   Appointment,
   Participant,
   AppointmentStatus,
   AppointmentType,
+  CustomField,
   Queue,
   CreateConsultationRequest,
 } from '../../../../core/models/consultation';
@@ -28,7 +47,13 @@ import { IUser } from '../../models/user';
 
 import { Page } from '../../../../core/components/page/page';
 import { Loader } from '../../../../shared/components/loader/loader';
-import { MessageList, Message, SendMessageData, EditMessageData, DeleteMessageData } from '../../../../shared/components/message-list/message-list';
+import {
+  MessageList,
+  Message,
+  SendMessageData,
+  EditMessageData,
+  DeleteMessageData,
+} from '../../../../shared/components/message-list/message-list';
 import { VideoConsultationComponent } from '../video-consultation/video-consultation';
 
 import { Svg } from '../../../../shared/ui-components/svg/svg';
@@ -36,17 +61,27 @@ import { Button } from '../../../../shared/ui-components/button/button';
 import { Badge } from '../../../../shared/components/badge/badge';
 import { Input } from '../../../../shared/ui-components/input/input';
 import { Textarea } from '../../../../shared/ui-components/textarea/textarea';
-import { Select } from '../../../../shared/ui-components/select/select';
-import { UserSearchSelect } from '../../../../shared/components/user-search-select/user-search-select';
-import { ButtonStyleEnum, ButtonSizeEnum, ButtonStateEnum } from '../../../../shared/constants/button';
-import { BadgeTypeEnum } from '../../../../shared/constants/badge';
+import { Checkbox } from '../../../../shared/ui-components/checkbox/checkbox';
+import { Select, AsyncSearchFn, AsyncSearchResult } from '../../../../shared/ui-components/select/select';
 import { SelectOption } from '../../../../shared/models/select';
-import { getParticipantBadgeType, getAppointmentBadgeType } from '../../../../shared/tools/helper';
+import {
+  ButtonStyleEnum,
+  ButtonSizeEnum,
+  ButtonStateEnum,
+} from '../../../../shared/constants/button';
+import { BadgeTypeEnum } from '../../../../shared/constants/badge';
+import {
+  getParticipantBadgeType,
+  getAppointmentBadgeType,
+  parseDateWithoutTimezone,
+} from '../../../../shared/tools/helper';
 import { LocalDatePipe } from '../../../../shared/pipes/local-date.pipe';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
+import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { AppointmentFormModal } from './appointment-form-modal/appointment-form-modal';
 import { RoutePaths } from '../../../../core/constants/routes';
 import { ParticipantItem } from '../../../../shared/components/participant-item/participant-item';
+import { UserAvatar } from '../../../../shared/components/user-avatar/user-avatar';
 import { TranslatePipe } from '@ngx-translate/core';
 import { TranslationService } from '../../../../core/services/translation.service';
 
@@ -70,14 +105,34 @@ type AppointmentTimeFilter = 'all' | 'upcoming' | 'past';
     Badge,
     Input,
     Textarea,
+    Checkbox,
     Select,
-    UserSearchSelect,
     AppointmentFormModal,
+    ModalComponent,
     FullCalendarModule,
     LocalDatePipe,
     ParticipantItem,
+    UserAvatar,
     TranslatePipe,
   ],
+  animations: [
+    trigger('listAnimation', [
+      transition('* => *', [
+        query(':enter', [
+          style({ opacity: 0, transform: 'translateY(-10px)' }),
+          stagger(50, [
+            animate('300ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
+          ])
+        ], { optional: true })
+      ])
+    ]),
+    trigger('fadeIn', [
+      transition(':enter', [
+        style({ opacity: 0 }),
+        animate('200ms ease-out', style({ opacity: 1 }))
+      ])
+    ])
+  ]
 })
 export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   private destroy$ = new Subject<void>();
@@ -96,6 +151,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   private appointmentPageSize = 20;
 
   messages = signal<Message[]>([]);
+  unreadSeparatorTimestamp = signal<string | null>(null);
   isWebSocketConnected = signal(false);
   currentUser = signal<IUser | null>(null);
   isLoadingMore = signal(false);
@@ -106,6 +162,27 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   activeAppointmentId = signal<number | null>(null);
   isVideoMinimized = signal(false);
 
+  inConsultationCall = signal(false);
+  isCallingBeneficiary = signal(false);
+  consultationCallConfig = signal<{ url: string; token: string; room: string } | undefined>(undefined);
+
+  tooEarlyError = signal<{ appointmentId: number; time: string; minutes: number } | null>(null);
+  appointmentEarlyJoinMinutes = 5; // Default value
+
+  upcomingAppointment = computed<Appointment | null>(() => {
+    const now = Date.now();
+    const earlyMs = this.appointmentEarlyJoinMinutes * 60 * 1000;
+    return this.appointments().find(a => {
+      if (a.status !== AppointmentStatus.SCHEDULED) return false;
+      const start = new Date(a.scheduled_at).getTime();
+      return (start - now) <= earlyMs;
+    }) ?? null;
+  });
+
+  hasUpcomingAppointment = computed(() => !!this.upcomingAppointment());
+
+  showCallAppointmentModal = signal(false);
+
   isExportingPdf = signal(false);
 
   showCreateAppointmentModal = signal(false);
@@ -115,8 +192,12 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   appointmentStatusFilter = signal<AppointmentStatusFilter>('scheduled');
   appointmentTimeFilter = signal<AppointmentTimeFilter>('upcoming');
   calendarComponent = viewChild<FullCalendarComponent>('appointmentCalendar');
+  calendarTitle = signal<string>('');
   highlightedAppointmentId = signal<number | null>(null);
   private pendingScrollToAppointmentId: number | null = null;
+  private pendingJoinAppointmentId: number | null = null;
+  private recentlyModifiedAppointmentIds = new Set<number>();
+  private calendarDateRange: { start: string; end: string } | null = null;
 
   @ViewChildren('appointmentCard') appointmentCards!: QueryList<ElementRef>;
 
@@ -124,12 +205,16 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     return this.appointments().map(appointment => ({
       id: appointment.id.toString(),
       title: this.getCalendarEventTitle(appointment),
-      start: appointment.scheduled_at,
-      end: appointment.end_expected_at || undefined,
+      start:
+        parseDateWithoutTimezone(appointment.scheduled_at) ||
+        appointment.scheduled_at,
+      end: appointment.end_expected_at
+        ? parseDateWithoutTimezone(appointment.end_expected_at) || undefined
+        : undefined,
       backgroundColor: this.getStatusColor(appointment.status),
       borderColor: this.getStatusColor(appointment.status),
       textColor: '#ffffff',
-      extendedProps: { appointment }
+      extendedProps: { appointment },
     }));
   });
 
@@ -143,6 +228,10 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     selectable: false,
     dayMaxEvents: 3,
     eventClick: this.handleCalendarEventClick.bind(this),
+    datesSet: this.handleDatesSet.bind(this),
+    eventDidMount: (info) => {
+      info.el.setAttribute('title', info.event.title);
+    },
     slotMinTime: '06:00:00',
     slotMaxTime: '22:00:00',
     allDaySlot: false,
@@ -150,9 +239,11 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     eventTimeFormat: {
       hour: '2-digit',
       minute: '2-digit',
-      hour12: false
-    }
+      hour12: false,
+    },
   };
+
+  customFields = signal<CustomField[]>([]);
 
   isEditMode = signal(false);
   isSavingConsultation = signal(false);
@@ -160,6 +251,10 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   editForm!: FormGroup;
   selectedBeneficiary = signal<IUser | null>(null);
   selectedOwner = signal<IUser | null>(null);
+  beneficiaryInitialOption = signal<SelectOption | null>(null);
+  ownerInitialOption = signal<SelectOption | null>(null);
+  private practitionerCache = new Map<number, IUser>();
+  private beneficiaryCache = new Map<number, IUser>();
 
   private fb = inject(FormBuilder);
 
@@ -169,6 +264,55 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       label: queue.name,
     }))
   );
+
+  beneficiarySearchFn: AsyncSearchFn = (query: string, page: number): Observable<AsyncSearchResult> => {
+    return this.userService.searchUsers(query, page, 20, false).pipe(
+      map(response => {
+        const results: SelectOption[] = response.results.map(user => {
+          this.beneficiaryCache.set(user.pk, user);
+          return this.userToSelectOption(user);
+        });
+        return { results, hasMore: response.next !== null };
+      })
+    );
+  };
+
+  practitionerSearchFn: AsyncSearchFn = (query: string, page: number): Observable<AsyncSearchResult> => {
+    return this.userService.searchUsers(query, page, 20, false, undefined, true).pipe(
+      map(response => {
+        const results: SelectOption[] = response.results.map(user => {
+          this.practitionerCache.set(user.pk, user);
+          return this.userToSelectOption(user);
+        });
+        return { results, hasMore: response.next !== null };
+      })
+    );
+  };
+
+  private userToSelectOption(user: IUser): SelectOption {
+    const currentUser = this.currentUser();
+    const isCurrentUser = !!(currentUser && user.pk === currentUser.pk);
+    const name = isCurrentUser
+      ? this.t.instant('userSearchSelect.me')
+      : `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email || user.username || 'User';
+    const firstName = user.first_name || '';
+    const lastName = user.last_name || '';
+    let initials: string;
+    if (firstName && lastName) {
+      initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+    } else {
+      initials = (firstName || lastName || user.email || 'U').charAt(0).toUpperCase();
+    }
+    return {
+      value: user.pk,
+      label: name,
+      secondaryLabel: user.email,
+      image: user.picture || undefined,
+      initials,
+      isCurrentUser,
+      isPractitioner: user.is_practitioner,
+    };
+  }
 
   protected readonly AppointmentStatus = AppointmentStatus;
   protected readonly AppointmentType = AppointmentType;
@@ -185,28 +329,60 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   private confirmationService = inject(ConfirmationService);
   private toasterService = inject(ToasterService);
   private wsService = inject(ConsultationWebSocketService);
+  private userWsService = inject(UserWebSocketService);
   private userService = inject(UserService);
   private incomingCallService = inject(IncomingCallService);
+  private authService = inject(Auth);
   private t = inject(TranslationService);
+
+  consultationAutoDeleteHours = 0;
 
   ngOnInit(): void {
     this.initEditForm();
     this.loadQueues();
+    this.loadCustomFields();
 
-    this.userService.currentUser$.pipe(takeUntil(this.destroy$)).subscribe(user => {
-      this.currentUser.set(user);
+    // Load app config to get consultation_auto_delete_hours and appointment_early_join_minutes
+    this.authService.getOpenIDConfig().subscribe({
+      next: (config) => {
+        this.consultationAutoDeleteHours = config.consultation_auto_delete_hours || 0;
+        this.appointmentEarlyJoinMinutes = config.appointment_early_join_minutes || 5;
+      },
+      error: (err: unknown) => {
+        console.error('Failed to get app config:', err);
+      },
     });
+
+    this.userService.currentUser$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(user => {
+        this.currentUser.set(user);
+      });
 
     this.route.params.pipe(takeUntil(this.destroy$)).subscribe(params => {
       this.consultationId = +params['id'];
+
+      // If an appointmentId is in the URL, switch filters to "all" so the appointment is visible
+      const queryParams = this.route.snapshot.queryParams;
+      if (queryParams['appointmentId']) {
+        this.appointmentStatusFilter.set('all');
+        this.appointmentTimeFilter.set('all');
+      }
+
       this.loadConsultation();
       this.loadAppointments();
       this.loadMessages();
       this.connectWebSocket();
       this.checkJoinQueryParam();
+      this.consultationService.markConsultationRead(this.consultationId)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe();
     });
 
     this.setupWebSocketListeners();
+
+    // Prevent tab/window close during video call
+    window.addEventListener('beforeunload', this.handleBeforeUnload);
   }
 
   private initEditForm(): void {
@@ -216,7 +392,30 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       beneficiary_id: [''],
       owned_by_id: [''],
       group_id: [''],
+      visible_by_patient: [true],
     });
+
+    this.editForm.get('beneficiary_id')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(value => {
+        if (value) {
+          const user = this.beneficiaryCache.get(Number(value));
+          this.selectedBeneficiary.set(user || null);
+        } else {
+          this.selectedBeneficiary.set(null);
+        }
+      });
+
+    this.editForm.get('owned_by_id')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(value => {
+        if (value) {
+          const user = this.practitionerCache.get(Number(value));
+          this.selectedOwner.set(user || null);
+        } else {
+          this.selectedOwner.set(null);
+        }
+      });
   }
 
   private loadQueues(): void {
@@ -226,34 +425,73 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       .subscribe({
         next: queues => {
           this.queues.set(queues);
+          if (queues.length === 0) {
+            this.editForm.get('group_id')?.disable();
+          }
         },
-        error: (error) => {
-          this.toasterService.show('error', this.t.instant('consultationDetail.errorLoadingQueues'), getErrorMessage(error));
+        error: error => {
+          this.toasterService.show(
+            'error',
+            this.t.instant('consultationDetail.errorLoadingQueues'),
+            getErrorMessage(error)
+          );
+          this.editForm.get('group_id')?.disable();
         },
       });
   }
 
-  private checkJoinQueryParam(): void {
-    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(queryParams => {
-      if (queryParams['appointmentId']) {
-        const appointmentId = +queryParams['appointmentId'];
-        this.pendingScrollToAppointmentId = appointmentId;
-        this.highlightAndScrollToAppointment(appointmentId);
+  private loadCustomFields(): void {
+    this.consultationService
+      .getCustomFields('consultations.Consultation')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: fields => {
+          this.customFields.set(fields);
+        },
+      });
+  }
 
-        if (queryParams['join'] === 'true') {
-          this.joinVideoCall(appointmentId);
+  getCustomFieldOptions(field: CustomField): SelectOption[] {
+    return (field.options || []).map(o => ({ value: o, label: o }));
+  }
+
+  private checkJoinQueryParam(): void {
+    this.route.queryParams
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(queryParams => {
+        if (queryParams['appointmentId']) {
+          const appointmentId = +queryParams['appointmentId'];
+          this.pendingScrollToAppointmentId = appointmentId;
+          this.highlightAndScrollToAppointment(appointmentId);
+
+          if (queryParams['join'] === 'true') {
+            this.pendingJoinAppointmentId = appointmentId;
+            this.checkPendingJoin();
+          }
         }
-      }
-    });
+      });
+  }
+
+  private checkPendingJoin(): void {
+    if (!this.pendingJoinAppointmentId) return;
+
+    const appointment = this.appointments().find(a => a.id === this.pendingJoinAppointmentId);
+    if (appointment) {
+      const appointmentId = this.pendingJoinAppointmentId;
+      this.pendingJoinAppointmentId = null;
+      this.joinVideoCall(appointmentId);
+    }
   }
 
   ngAfterViewInit(): void {
     if (this.appointmentCards) {
-      this.appointmentCards.changes.pipe(takeUntil(this.destroy$)).subscribe(() => {
-        if (this.pendingScrollToAppointmentId) {
-          this.scrollToAppointment(this.pendingScrollToAppointmentId);
-        }
-      });
+      this.appointmentCards.changes
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(() => {
+          if (this.pendingScrollToAppointmentId) {
+            this.scrollToAppointment(this.pendingScrollToAppointmentId);
+          }
+        });
     }
   }
 
@@ -268,19 +506,35 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     if (!this.appointmentCards) return;
 
     const cardRef = this.appointmentCards.find(
-      (el) => +el.nativeElement.dataset['appointmentId'] === appointmentId
+      el => +el.nativeElement.dataset['appointmentId'] === appointmentId
     );
 
     if (cardRef) {
-      cardRef.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      cardRef.nativeElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
       this.pendingScrollToAppointmentId = null;
     }
   }
 
+  private handleBeforeUnload = (event: BeforeUnloadEvent): string | undefined => {
+    if (this.inCall()) {
+      console.log('[ConsultationDetail] beforeunload - User is in call, showing confirmation dialog');
+      // Prevent the page from closing without confirmation
+      event.preventDefault();
+      // Modern browsers ignore custom messages, but we still need to return a value
+      return event.returnValue = '';
+    }
+    return undefined;
+  };
+
   ngOnDestroy(): void {
+    console.log('[ConsultationDetail] ngOnDestroy called - cleaning up resources');
     this.destroy$.next();
     this.destroy$.complete();
     this.wsService.disconnect();
+    window.removeEventListener('beforeunload', this.handleBeforeUnload);
   }
 
   private connectWebSocket(): void {
@@ -292,86 +546,176 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       this.isWebSocketConnected.set(state === 'CONNECTED');
     });
 
-    this.wsService.messages$.pipe(takeUntil(this.destroy$)).subscribe(event => {
-      const newMessage: Message = {
-        id: event.data.id,
-        username: event.data.username,
-        message: event.data.message,
-        timestamp: event.data.timestamp,
-        isCurrentUser: false,
-        recording_url: event.data.recording_url,
-        isEdited: event.data.is_edited,
-        updatedAt: event.data.updated_at,
-      };
-      this.messages.update(msgs => [...msgs, newMessage]);
-    });
-
-    this.wsService.messageUpdated$.pipe(takeUntil(this.destroy$)).subscribe(event => {
-      if (event.state === 'created') {
-        const exists = this.messages().some(m => m.id === event.data.id);
-        if (!exists) {
+    this.wsService.messageUpdated$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(event => {
+        if (event.state === 'created') {
           const currentUser = this.currentUser();
           const isSystem = !event.data.created_by;
+
           const newMessage: Message = {
             id: event.data.id,
-            username: isSystem ? '' : `${event.data.created_by.first_name} ${event.data.created_by.last_name}`,
+            username: isSystem
+              ? ''
+              : `${event.data.created_by.first_name} ${event.data.created_by.last_name}`,
             message: event.data.content,
             timestamp: event.data.created_at,
-            isCurrentUser: isSystem ? false : currentUser?.pk === event.data.created_by.id,
+            isCurrentUser: isSystem
+              ? false
+              : currentUser?.pk === event.data.created_by.id,
             isSystem,
             attachment: event.data.attachment,
             recording_url: event.data.recording_url,
             isEdited: event.data.is_edited,
             updatedAt: event.data.updated_at,
           };
-          this.messages.update(msgs => [...msgs, newMessage]);
+
+          // Only add if it doesn't already exist
+          const exists = this.messages().some(m => m.id === event.data.id);
+          if (!exists) {
+            this.messages.update(msgs => {
+              // Double-check to avoid race conditions
+              if (msgs.some(m => m.id === event.data.id)) {
+                return msgs;
+              }
+              return [...msgs, newMessage];
+            });
+            // Chat is open — mark as read and clear separator
+            if (!newMessage.isCurrentUser && !isSystem) {
+              this.unreadSeparatorTimestamp.set(null);
+              this.consultationService.markConsultationRead(this.consultationId)
+                .pipe(takeUntil(this.destroy$))
+                .subscribe();
+            }
+          }
+        } else if (event.state === 'updated' || event.state === 'deleted') {
+          this.loadMessages();
         }
-      } else if (event.state === 'updated' || event.state === 'deleted') {
-        this.loadMessages();
-      }
-    });
+      });
 
-    this.wsService.participantJoined$.pipe(takeUntil(this.destroy$)).subscribe(event => {
-      this.toasterService.show('success', this.t.instant('consultationDetail.participantJoined'), this.t.instant('consultationDetail.participantJoinedMessage', { name: event.data.username }));
-      this.loadAppointments();
-    });
+    this.wsService.participantJoined$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(event => {
+        this.toasterService.show(
+          'success',
+          this.t.instant('consultationDetail.participantJoined'),
+          this.t.instant('consultationDetail.participantJoinedMessage', {
+            name: event.data.username,
+          })
+        );
+        this.loadAppointments();
+      });
 
-    this.wsService.participantLeft$.pipe(takeUntil(this.destroy$)).subscribe(event => {
-      this.toasterService.show('warning', this.t.instant('consultationDetail.participantLeft'), this.t.instant('consultationDetail.participantLeftMessage', { name: event.data.username }));
-      this.loadAppointments();
-    });
+    this.wsService.participantLeft$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(event => {
+        this.toasterService.show(
+          'warning',
+          this.t.instant('consultationDetail.participantLeft'),
+          this.t.instant('consultationDetail.participantLeftMessage', {
+            name: event.data.username,
+          })
+        );
+        this.loadAppointments();
+      });
 
-    this.wsService.appointmentUpdated$.pipe(takeUntil(this.destroy$)).subscribe(() => {
-      this.toasterService.show('success', this.t.instant('consultationDetail.appointmentUpdated'), this.t.instant('consultationDetail.appointmentUpdatedMessage'));
-      this.loadAppointments();
-    });
+    this.wsService.appointmentUpdated$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.loadAppointments();
+      });
+
+    this.wsService.consultationUpdated$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.loadConsultation(true);
+      });
+
+    this.wsService.userOnlineStatus$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(event => {
+        const userId = event.user_id;
+        const isOnline = event.data.is_online;
+        const current = this.consultation();
+        if (!current) return;
+
+        let updated = false;
+        const patch = { ...current };
+
+        if (current.created_by?.id === userId) {
+          patch.created_by = { ...current.created_by, is_online: isOnline };
+          updated = true;
+        }
+        if (current.owned_by?.id === userId) {
+          patch.owned_by = { ...current.owned_by, is_online: isOnline };
+          updated = true;
+        }
+        if (current.beneficiary?.id === userId) {
+          patch.beneficiary = { ...current.beneficiary, is_online: isOnline };
+          updated = true;
+        }
+
+        if (updated) {
+          this.consultation.set(patch);
+        }
+
+        // Update participant online status in appointments
+        const currentAppointments = this.appointments();
+        let appointmentsUpdated = false;
+        const updatedAppointments = currentAppointments.map(appointment => {
+          const hasUser = appointment.participants.some(
+            p => p.user?.id === userId
+          );
+          if (!hasUser) return appointment;
+          appointmentsUpdated = true;
+          return {
+            ...appointment,
+            participants: appointment.participants.map(p =>
+              p.user?.id === userId
+                ? { ...p, user: { ...p.user, is_online: isOnline } }
+                : p
+            ),
+          };
+        });
+        if (appointmentsUpdated) {
+          this.appointments.set(updatedAppointments);
+        }
+      });
+
+    // Listen for call_response events from the beneficiary
+    this.userWsService.callResponse$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(event => {
+        if (event.consultation_id !== this.consultationId) return;
+
+        if (!event.accepted) {
+          this.toasterService.show(
+            'warning',
+            this.t.instant('consultationDetail.callDeclined'),
+            this.t.instant('consultationDetail.callDeclinedMessage', { name: event.responder_name })
+          );
+          this.onConsultationCallEnded();
+        }
+      });
   }
 
   onSendMessage(data: SendMessageData): void {
-    const user = this.currentUser();
-    const tempId = Date.now();
-    const newMessage: Message = {
-      id: tempId,
-      username: user?.first_name || user?.email || 'You',
-      message: data.content || '',
-      timestamp: new Date().toISOString(),
-      isCurrentUser: true,
-      attachment: data.attachment ? { file_name: data.attachment.name, mime_type: data.attachment.type } : null,
-    };
-    this.messages.update(msgs => [...msgs, newMessage]);
-
     this.consultationService
-      .sendConsultationMessage(this.consultationId, { content: data.content, attachment: data.attachment })
+      .sendConsultationMessage(this.consultationId, {
+        content: data.content,
+        attachment: data.attachment,
+      })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (savedMessage) => {
-          this.messages.update(msgs =>
-            msgs.map(m => m.id === tempId ? { ...m, id: savedMessage.id, attachment: savedMessage.attachment } : m)
-          );
+        next: () => {
+          // Message will be added via WebSocket
         },
-        error: (error) => {
-          this.toasterService.show('error', this.t.instant('consultationDetail.errorSendingMessage'), getErrorMessage(error));
-          this.messages.update(msgs => msgs.filter(m => m.id !== tempId));
+        error: error => {
+          this.toasterService.show(
+            'error',
+            this.t.instant('consultationDetail.errorSendingMessage'),
+            getErrorMessage(error)
+          );
         },
       });
   }
@@ -385,32 +729,46 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
         next: response => {
           this.hasMore.set(!!response.next);
           const currentUserId = this.currentUser()?.pk;
-          const loadedMessages: Message[] = response.results.map(msg => {
-            const isSystem = !msg.created_by;
-            const isCurrentUser = isSystem ? false : msg.created_by.id === currentUserId;
-            const username = isSystem
-              ? ''
-              : isCurrentUser
-                ? this.t.instant('consultationDetail.you')
-                : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim() || msg.created_by.email;
-            return {
-              id: msg.id,
-              username,
-              message: msg.content || '',
-              timestamp: msg.created_at,
-              isCurrentUser,
-              isSystem,
-              attachment: msg.attachment,
-              recording_url: msg.recording_url,
-              isEdited: msg.is_edited,
-              updatedAt: msg.updated_at,
-              deletedAt: msg.deleted_at,
-            };
-          }).reverse();
-          this.messages.set(loadedMessages);
+          const loadedMessages: Message[] = response.results
+            .map(msg => {
+              const isSystem = !msg.created_by;
+              const isCurrentUser = isSystem
+                ? false
+                : msg.created_by.id === currentUserId;
+              const username = isSystem
+                ? ''
+                : isCurrentUser
+                  ? this.t.instant('consultationDetail.you')
+                  : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim() ||
+                    msg.created_by.email;
+              return {
+                id: msg.id,
+                username,
+                message: msg.content || '',
+                timestamp: msg.created_at,
+                isCurrentUser,
+                isSystem,
+                attachment: msg.attachment,
+                recording_url: msg.recording_url,
+                isEdited: msg.is_edited,
+                updatedAt: msg.updated_at,
+                deletedAt: msg.deleted_at,
+              };
+            })
+            .reverse();
+
+          // Deduplicate messages by ID
+          const uniqueMessages = Array.from(
+            new Map(loadedMessages.map(msg => [msg.id, msg])).values()
+          );
+          this.messages.set(uniqueMessages);
         },
-        error: (error) => {
-          this.toasterService.show('error', this.t.instant('consultationDetail.errorLoadingMessages'), getErrorMessage(error));
+        error: error => {
+          this.toasterService.show(
+            'error',
+            this.t.instant('consultationDetail.errorLoadingMessages'),
+            getErrorMessage(error)
+          );
         },
       });
   }
@@ -428,52 +786,78 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
         next: response => {
           this.hasMore.set(!!response.next);
           const currentUserId = this.currentUser()?.pk;
-          const olderMessages: Message[] = response.results.map(msg => {
-            const isSystem = !msg.created_by;
-            const isCurrentUser = isSystem ? false : msg.created_by.id === currentUserId;
-            const username = isSystem
-              ? ''
-              : isCurrentUser
-                ? this.t.instant('consultationDetail.you')
-                : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim() || msg.created_by.email;
-            return {
-              id: msg.id,
-              username,
-              message: msg.content || '',
-              timestamp: msg.created_at,
-              isCurrentUser,
-              isSystem,
-              attachment: msg.attachment,
-              recording_url: msg.recording_url,
-              isEdited: msg.is_edited,
-              updatedAt: msg.updated_at,
-              deletedAt: msg.deleted_at,
-            };
-          }).reverse();
-          this.messages.update(msgs => [...olderMessages, ...msgs]);
+          const olderMessages: Message[] = response.results
+            .map(msg => {
+              const isSystem = !msg.created_by;
+              const isCurrentUser = isSystem
+                ? false
+                : msg.created_by.id === currentUserId;
+              const username = isSystem
+                ? ''
+                : isCurrentUser
+                  ? this.t.instant('consultationDetail.you')
+                  : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim() ||
+                    msg.created_by.email;
+              return {
+                id: msg.id,
+                username,
+                message: msg.content || '',
+                timestamp: msg.created_at,
+                isCurrentUser,
+                isSystem,
+                attachment: msg.attachment,
+                recording_url: msg.recording_url,
+                isEdited: msg.is_edited,
+                updatedAt: msg.updated_at,
+                deletedAt: msg.deleted_at,
+              };
+            })
+            .reverse();
+
+          // Merge and deduplicate messages
+          this.messages.update(msgs => {
+            const allMessages = [...olderMessages, ...msgs];
+            const uniqueMessages = Array.from(
+              new Map(allMessages.map(msg => [msg.id, msg])).values()
+            );
+            return uniqueMessages;
+          });
           this.isLoadingMore.set(false);
         },
-        error: (error) => {
+        error: error => {
           this.currentPage--;
           this.isLoadingMore.set(false);
-          this.toasterService.show('error', this.t.instant('consultationDetail.errorLoadingMessages'), getErrorMessage(error));
+          this.toasterService.show(
+            'error',
+            this.t.instant('consultationDetail.errorLoadingMessages'),
+            getErrorMessage(error)
+          );
         },
       });
   }
 
-  loadConsultation(): void {
-    this.isLoadingConsultation.set(true);
+  loadConsultation(silent = false): void {
+    if (!silent) {
+      this.isLoadingConsultation.set(true);
+    }
     this.consultationService
       .getConsultation(this.consultationId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: consultation => {
+          if (!this.unreadSeparatorTimestamp()) {
+            this.unreadSeparatorTimestamp.set(consultation.last_read_at || null);
+          }
           this.consultation.set(consultation);
           this.isLoadingConsultation.set(false);
         },
-        error: (error) => {
+        error: error => {
           this.isLoadingConsultation.set(false);
-          this.toasterService.show('error', this.t.instant('consultationDetail.errorLoadingConsultation'), getErrorMessage(error));
+          this.toasterService.show(
+            'error',
+            this.t.instant('consultationDetail.errorLoadingConsultation'),
+            getErrorMessage(error)
+          );
         },
       });
   }
@@ -483,9 +867,14 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     this.appointmentPage = 1;
     const statusFilter = this.appointmentStatusFilter();
     const timeFilter = this.appointmentTimeFilter();
-    const params: { status?: string; future?: boolean; page?: number; page_size?: number } = {
+    const params: {
+      status?: string;
+      future?: boolean;
+      page?: number;
+      page_size?: number;
+    } = {
       page: 1,
-      page_size: this.appointmentPageSize
+      page_size: this.appointmentPageSize,
     };
     if (statusFilter !== 'all') {
       params.status = statusFilter;
@@ -503,10 +892,15 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
           this.appointments.set(response.results);
           this.hasMoreAppointments.set(response.next !== null);
           this.isLoadingAppointments.set(false);
+          this.checkPendingJoin();
         },
-        error: (error) => {
+        error: error => {
           this.isLoadingAppointments.set(false);
-          this.toasterService.show('error', this.t.instant('consultationDetail.errorLoadingAppointments'), getErrorMessage(error));
+          this.toasterService.show(
+            'error',
+            this.t.instant('consultationDetail.errorLoadingAppointments'),
+            getErrorMessage(error)
+          );
         },
       });
   }
@@ -518,9 +912,14 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     this.appointmentPage++;
     const statusFilter = this.appointmentStatusFilter();
     const timeFilter = this.appointmentTimeFilter();
-    const params: { status?: string; future?: boolean; page?: number; page_size?: number } = {
+    const params: {
+      status?: string;
+      future?: boolean;
+      page?: number;
+      page_size?: number;
+    } = {
       page: this.appointmentPage,
-      page_size: this.appointmentPageSize
+      page_size: this.appointmentPageSize,
     };
     if (statusFilter !== 'all') {
       params.status = statusFilter;
@@ -539,11 +938,58 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
           this.appointments.set([...currentAppointments, ...response.results]);
           this.hasMoreAppointments.set(response.next !== null);
           this.isLoadingMoreAppointments.set(false);
+          this.checkPendingJoin();
         },
-        error: (error) => {
+        error: error => {
           this.appointmentPage--;
           this.isLoadingMoreAppointments.set(false);
-          this.toasterService.show('error', this.t.instant('consultationDetail.errorLoadingAppointments'), getErrorMessage(error));
+          this.toasterService.show(
+            'error',
+            this.t.instant('consultationDetail.errorLoadingAppointments'),
+            getErrorMessage(error)
+          );
+        },
+      });
+  }
+
+  loadAppointmentsForCalendar(): void {
+    if (!this.calendarDateRange) return;
+
+    this.isLoadingAppointments.set(true);
+    const statusFilter = this.appointmentStatusFilter();
+
+    const params: {
+      status?: string;
+      page_size?: number;
+      scheduled_at__date__gte?: string;
+      scheduled_at__date__lte?: string;
+    } = {
+      page_size: 100,
+      scheduled_at__date__gte: this.calendarDateRange.start,
+      scheduled_at__date__lte: this.calendarDateRange.end,
+    };
+
+    if (statusFilter !== 'all') {
+      params.status = statusFilter;
+    }
+
+    this.consultationService
+      .getConsultationAppointments(this.consultationId, params)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: response => {
+          this.appointments.set(response.results);
+          this.hasMoreAppointments.set(false);
+          this.isLoadingAppointments.set(false);
+          this.checkPendingJoin();
+        },
+        error: error => {
+          this.isLoadingAppointments.set(false);
+          this.toasterService.show(
+            'error',
+            this.t.instant('consultationDetail.errorLoadingAppointments'),
+            getErrorMessage(error)
+          );
         },
       });
   }
@@ -559,10 +1005,19 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
             a.id === appointment.id ? updatedAppointment : a
           );
           this.appointments.set(updatedAppointments);
-          this.toasterService.show('success', this.t.instant('consultationDetail.appointmentSent'), this.t.instant('consultationDetail.appointmentSentMessage'));
+          this.markAppointmentAsLocallyModified(appointment.id);
+          this.toasterService.show(
+            'success',
+            this.t.instant('consultationDetail.appointmentSent'),
+            this.t.instant('consultationDetail.appointmentSentMessage')
+          );
         },
-        error: (error) => {
-          this.toasterService.show('error', this.t.instant('consultationDetail.errorSendingAppointment'), getErrorMessage(error));
+        error: error => {
+          this.toasterService.show(
+            'error',
+            this.t.instant('consultationDetail.errorSendingAppointment'),
+            getErrorMessage(error)
+          );
         },
       });
   }
@@ -571,25 +1026,40 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     const confirmed = await this.confirmationService.confirm({
       title: this.t.instant('consultationDetail.cancelAppointmentTitle'),
       message: this.t.instant('consultationDetail.cancelAppointmentMessage'),
-      confirmText: this.t.instant('consultationDetail.cancelAppointmentConfirm'),
+      confirmText: this.t.instant(
+        'consultationDetail.cancelAppointmentConfirm'
+      ),
       cancelText: this.t.instant('consultationDetail.goBack'),
       confirmStyle: 'danger',
     });
 
     if (confirmed) {
       this.consultationService
-        .updateAppointment(appointment.id, { status: AppointmentStatus.CANCELLED })
+        .updateAppointment(appointment.id, {
+          status: AppointmentStatus.CANCELLED,
+        })
         .pipe(takeUntil(this.destroy$))
         .subscribe({
-          next: (updatedAppointment) => {
+          next: updatedAppointment => {
             const currentAppointments = this.appointments();
             this.appointments.set(
-              currentAppointments.map(a => a.id === appointment.id ? updatedAppointment : a)
+              currentAppointments.map(a =>
+                a.id === appointment.id ? updatedAppointment : a
+              )
             );
-            this.toasterService.show('success', this.t.instant('consultationDetail.appointmentCancelled'), this.t.instant('consultationDetail.appointmentCancelledMessage'));
+            this.markAppointmentAsLocallyModified(appointment.id);
+            this.toasterService.show(
+              'success',
+              this.t.instant('consultationDetail.appointmentCancelled'),
+              this.t.instant('consultationDetail.appointmentCancelledMessage')
+            );
           },
-          error: (error) => {
-            this.toasterService.show('error', this.t.instant('consultationDetail.errorCancellingAppointment'), getErrorMessage(error));
+          error: error => {
+            this.toasterService.show(
+              'error',
+              this.t.instant('consultationDetail.errorCancellingAppointment'),
+              getErrorMessage(error)
+            );
           },
         });
     }
@@ -598,9 +1068,16 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   async closeConsultation(): Promise<void> {
     if (!this.consultation()) return;
 
+    let message = this.t.instant('consultationDetail.closeConsultationMessage');
+    if (this.consultationAutoDeleteHours > 0) {
+      message = this.t.instant('consultationDetail.closeConsultationMessageWithDeletion', {
+        hours: this.consultationAutoDeleteHours.toString()
+      });
+    }
+
     const confirmed = await this.confirmationService.confirm({
       title: this.t.instant('consultationDetail.closeConsultationTitle'),
-      message: this.t.instant('consultationDetail.closeConsultationMessage'),
+      message: message,
       confirmText: this.t.instant('consultationDetail.close'),
       cancelText: this.t.instant('consultationDetail.cancel'),
       confirmStyle: 'danger',
@@ -612,11 +1089,21 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {
-            this.toasterService.show('success', this.t.instant('consultationDetail.consultationClosed'), this.t.instant('consultationDetail.consultationClosedMessage'));
-            this.router.navigate([`/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`]);
+            this.toasterService.show(
+              'success',
+              this.t.instant('consultationDetail.consultationClosed'),
+              this.t.instant('consultationDetail.consultationClosedMessage')
+            );
+            this.router.navigate([
+              `/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`,
+            ]);
           },
-          error: (error) => {
-            this.toasterService.show('error', this.t.instant('consultationDetail.errorClosingConsultation'), getErrorMessage(error));
+          error: error => {
+            this.toasterService.show(
+              'error',
+              this.t.instant('consultationDetail.errorClosingConsultation'),
+              getErrorMessage(error)
+            );
           },
         });
     }
@@ -640,10 +1127,18 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
         .subscribe({
           next: updatedConsultation => {
             this.consultation.set(updatedConsultation);
-            this.toasterService.show('success', this.t.instant('consultationDetail.consultationReopened'), this.t.instant('consultationDetail.consultationReopenedMessage'));
+            this.toasterService.show(
+              'success',
+              this.t.instant('consultationDetail.consultationReopened'),
+              this.t.instant('consultationDetail.consultationReopenedMessage')
+            );
           },
-          error: (error) => {
-            this.toasterService.show('error', this.t.instant('consultationDetail.errorReopeningConsultation'), getErrorMessage(error));
+          error: error => {
+            this.toasterService.show(
+              'error',
+              this.t.instant('consultationDetail.errorReopeningConsultation'),
+              getErrorMessage(error)
+            );
           },
         });
     }
@@ -669,11 +1164,19 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
           link.click();
           window.URL.revokeObjectURL(url);
           this.isExportingPdf.set(false);
-          this.toasterService.show('success', this.t.instant('consultationDetail.pdfExported'), this.t.instant('consultationDetail.pdfExportedMessage'));
+          this.toasterService.show(
+            'success',
+            this.t.instant('consultationDetail.pdfExported'),
+            this.t.instant('consultationDetail.pdfExportedMessage')
+          );
         },
-        error: (error) => {
+        error: error => {
           this.isExportingPdf.set(false);
-          this.toasterService.show('error', this.t.instant('consultationDetail.exportFailed'), getErrorMessage(error));
+          this.toasterService.show(
+            'error',
+            this.t.instant('consultationDetail.exportFailed'),
+            getErrorMessage(error)
+          );
         },
       });
   }
@@ -688,21 +1191,54 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       beneficiary_id: currentConsultation.beneficiary?.id || '',
       owned_by_id: currentConsultation.owned_by?.id || '',
       group_id: currentConsultation.group?.id?.toString() || '',
+      visible_by_patient: currentConsultation.visible_by_patient ?? true,
     });
 
-    this.selectedBeneficiary.set(currentConsultation.beneficiary ? {
-      pk: currentConsultation.beneficiary.id,
-      email: currentConsultation.beneficiary.email,
-      first_name: currentConsultation.beneficiary.first_name,
-      last_name: currentConsultation.beneficiary.last_name,
-    } as IUser : null);
+    // Build custom fields form controls
+    if (!this.editForm.get('custom_fields')) {
+      const group: Record<string, any> = {};
+      this.customFields().forEach(field => {
+        group[field.id.toString()] = [''];
+      });
+      this.editForm.addControl('custom_fields', this.fb.group(group));
+    }
+    if (currentConsultation.custom_fields?.length) {
+      const cfValues: Record<string, string> = {};
+      currentConsultation.custom_fields.forEach(cf => {
+        cfValues[cf.field.toString()] = cf.value || '';
+      });
+      this.editForm.get('custom_fields')?.patchValue(cfValues);
+    }
 
-    this.selectedOwner.set(currentConsultation.owned_by ? {
-      pk: currentConsultation.owned_by.id,
-      email: currentConsultation.owned_by.email,
-      first_name: currentConsultation.owned_by.first_name,
-      last_name: currentConsultation.owned_by.last_name,
-    } as IUser : null);
+    if (currentConsultation.beneficiary) {
+      const bUser = {
+        pk: currentConsultation.beneficiary.id,
+        email: currentConsultation.beneficiary.email,
+        first_name: currentConsultation.beneficiary.first_name,
+        last_name: currentConsultation.beneficiary.last_name,
+      } as IUser;
+      this.selectedBeneficiary.set(bUser);
+      this.beneficiaryCache.set(bUser.pk, bUser);
+      this.beneficiaryInitialOption.set(this.userToSelectOption(bUser));
+    } else {
+      this.selectedBeneficiary.set(null);
+      this.beneficiaryInitialOption.set(null);
+    }
+
+    if (currentConsultation.owned_by) {
+      const oUser = {
+        pk: currentConsultation.owned_by.id,
+        email: currentConsultation.owned_by.email,
+        first_name: currentConsultation.owned_by.first_name,
+        last_name: currentConsultation.owned_by.last_name,
+      } as IUser;
+      this.selectedOwner.set(oUser);
+      this.practitionerCache.set(oUser.pk, oUser);
+      this.ownerInitialOption.set(this.userToSelectOption(oUser));
+    } else {
+      this.selectedOwner.set(null);
+      this.ownerInitialOption.set(null);
+    }
 
     this.isEditMode.set(true);
   }
@@ -711,16 +1247,8 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     this.isEditMode.set(false);
     this.selectedBeneficiary.set(null);
     this.selectedOwner.set(null);
-  }
-
-  onBeneficiarySelected(user: IUser | null): void {
-    this.selectedBeneficiary.set(user);
-    this.editForm.patchValue({ beneficiary_id: user?.pk || '' });
-  }
-
-  onOwnerSelected(user: IUser | null): void {
-    this.selectedOwner.set(user);
-    this.editForm.patchValue({ owned_by_id: user?.pk || '' });
+    this.beneficiaryInitialOption.set(null);
+    this.ownerInitialOption.set(null);
   }
 
   saveConsultationChanges(): void {
@@ -729,36 +1257,67 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     this.isSavingConsultation.set(true);
     const formValue = this.editForm.value;
 
+    const cfGroup = this.editForm.get('custom_fields');
+    const customFieldsPayload = cfGroup
+      ? Object.entries(cfGroup.value)
+          .filter(
+            ([_, value]) =>
+              value !== '' && value !== null && value !== undefined
+          )
+          .map(([fieldId, value]) => ({
+            field: parseInt(fieldId, 10),
+            value: value as string | null,
+          }))
+      : [];
+
     const updateData: Partial<CreateConsultationRequest> = {
       title: formValue.title || null,
       description: formValue.description || null,
-      beneficiary_id: formValue.beneficiary_id ? Number(formValue.beneficiary_id) : null,
+      beneficiary_id: formValue.beneficiary_id
+        ? Number(formValue.beneficiary_id)
+        : null,
       owned_by_id: formValue.owned_by_id ? Number(formValue.owned_by_id) : null,
       group_id: formValue.group_id ? Number(formValue.group_id) : null,
+      visible_by_patient: formValue.visible_by_patient,
+      custom_fields: customFieldsPayload,
     };
 
     this.consultationService
       .updateConsultation(this.consultationId, updateData)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (updatedConsultation) => {
+        next: updatedConsultation => {
           this.consultation.set(updatedConsultation);
           this.isSavingConsultation.set(false);
           this.isEditMode.set(false);
-          this.toasterService.show('success', this.t.instant('consultationDetail.consultationUpdated'), this.t.instant('consultationDetail.consultationUpdatedMessage'));
+          this.toasterService.show(
+            'success',
+            this.t.instant('consultationDetail.consultationUpdated'),
+            this.t.instant('consultationDetail.consultationUpdatedMessage')
+          );
         },
-        error: (error) => {
+        error: error => {
           this.isSavingConsultation.set(false);
-          this.toasterService.show('error', this.t.instant('consultationDetail.updateFailed'), getErrorMessage(error), {
-            trace: JSON.stringify(error.error, null, 2),
-          });
+          this.toasterService.show(
+            'error',
+            this.t.instant('consultationDetail.updateFailed'),
+            getErrorMessage(error),
+            {
+              trace: JSON.stringify(error.error, null, 2),
+            }
+          );
         },
       });
   }
   getUserDisplayName(participant: Participant): string {
     if (participant.user) {
-      const fullName = `${participant.user.first_name || ''} ${participant.user.last_name || ''}`.trim();
-      return fullName || participant.user.email || this.t.instant('consultationDetail.unknown');
+      const fullName =
+        `${participant.user.first_name || ''} ${participant.user.last_name || ''}`.trim();
+      return (
+        fullName ||
+        participant.user.email ||
+        this.t.instant('consultationDetail.unknown')
+      );
     }
     return this.t.instant('consultationDetail.unknown');
   }
@@ -767,14 +1326,91 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     const beneficiary = this.consultation()?.beneficiary;
     if (!beneficiary) return this.t.instant('consultationDetail.noBeneficiary');
 
+    const currentUser = this.currentUser();
+    if (currentUser && beneficiary.id === currentUser.pk) {
+      return this.t.instant('userSearchSelect.me');
+    }
+
     const firstName = beneficiary.first_name?.trim() || '';
     const lastName = beneficiary.last_name?.trim() || '';
     const fullName = `${firstName} ${lastName}`.trim();
 
-    return fullName || beneficiary.email || this.t.instant('consultationDetail.unknownPatient');
+    return (
+      fullName ||
+      beneficiary.email ||
+      this.t.instant('consultationDetail.unknownPatient')
+    );
+  }
+
+  getOwnerDisplayName(): string {
+    const owner = this.consultation()?.owned_by;
+    if (!owner) return '';
+
+    const currentUser = this.currentUser();
+    if (currentUser && owner.id === currentUser.pk) {
+      return this.t.instant('userSearchSelect.me');
+    }
+
+    const firstName = owner.first_name?.trim() || '';
+    const lastName = owner.last_name?.trim() || '';
+    return `${firstName} ${lastName}`.trim();
+  }
+
+  isBeneficiaryCurrentUser(): boolean {
+    const beneficiary = this.consultation()?.beneficiary;
+    const currentUser = this.currentUser();
+    return !!(beneficiary && currentUser && beneficiary.id === currentUser.pk);
+  }
+
+  isOwnerCurrentUser(): boolean {
+    const owner = this.consultation()?.owned_by;
+    const currentUser = this.currentUser();
+    return !!(owner && currentUser && owner.id === currentUser.pk);
+  }
+
+  getCreatedByDisplayName(): string {
+    const createdBy = this.consultation()?.created_by;
+    if (!createdBy) return '';
+
+    const currentUser = this.currentUser();
+    if (currentUser && createdBy.id === currentUser.pk) {
+      return this.t.instant('userSearchSelect.me');
+    }
+
+    const firstName = createdBy.first_name?.trim() || '';
+    const lastName = createdBy.last_name?.trim() || '';
+    return `${firstName} ${lastName}`.trim();
+  }
+
+  isCreatedByCurrentUser(): boolean {
+    const createdBy = this.consultation()?.created_by;
+    const currentUser = this.currentUser();
+    return !!(createdBy && currentUser && createdBy.id === currentUser.pk);
   }
 
   joinVideoCall(appointmentId: number): void {
+    const appointment = this.appointments().find(a => a.id === appointmentId);
+    if (!appointment) {
+      this.toasterService.show('error', this.t.instant('consultationDetail.error'), this.t.instant('consultationDetail.appointmentNotFound'));
+      return;
+    }
+
+    // Check if it's at least X minutes before the scheduled time
+    const now = new Date();
+    const scheduledTime = new Date(appointment.scheduled_at);
+    const earliestJoin = new Date(scheduledTime.getTime() - this.appointmentEarlyJoinMinutes * 60 * 1000);
+
+    if (now < earliestJoin) {
+      const scheduledTimeStr = scheduledTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      this.tooEarlyError.set({ appointmentId: appointment.id, time: scheduledTimeStr, minutes: this.appointmentEarlyJoinMinutes });
+      setTimeout(() => {
+        if (this.tooEarlyError()?.appointmentId === appointment.id) {
+          this.tooEarlyError.set(null);
+        }
+      }, 5000);
+      return;
+    }
+
     this.activeAppointmentId.set(appointmentId);
     this.inCall.set(true);
     this.incomingCallService.setActiveCall(appointmentId);
@@ -791,6 +1427,57 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       queryParams: {},
       replaceUrl: true,
     });
+  }
+
+  callBeneficiary(): void {
+    if (this.isCallingBeneficiary() || this.inConsultationCall()) {
+      return;
+    }
+
+    const upcoming = this.upcomingAppointment();
+    if (upcoming) {
+      // If appointment has more than just patient + practitioner, show modal
+      if (upcoming.participants.length > 2) {
+        this.showCallAppointmentModal.set(true);
+        return;
+      }
+    }
+
+    this.doCallBeneficiary();
+  }
+
+  onCallModalJoinAppointment(): void {
+    this.showCallAppointmentModal.set(false);
+    const upcoming = this.upcomingAppointment();
+    if (upcoming) {
+      this.joinVideoCall(upcoming.id);
+    }
+  }
+
+  onCallModalCallOnly(): void {
+    this.showCallAppointmentModal.set(false);
+    this.doCallBeneficiary();
+  }
+
+  private doCallBeneficiary(): void {
+    this.isCallingBeneficiary.set(true);
+    this.consultationService.callBeneficiary(this.consultationId).subscribe({
+      next: (config) => {
+        this.consultationCallConfig.set(config);
+        this.inConsultationCall.set(true);
+        this.isCallingBeneficiary.set(false);
+      },
+      error: () => {
+        this.isCallingBeneficiary.set(false);
+        this.toasterService.show('error', this.t.instant('consultationDetail.error'), this.t.instant('consultationDetail.callFailed'));
+      },
+    });
+  }
+
+  onConsultationCallEnded(): void {
+    this.inConsultationCall.set(false);
+    this.consultationCallConfig.set(undefined);
+    this.isVideoMinimized.set(false);
   }
 
   toggleVideoSize(): void {
@@ -816,10 +1503,25 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     this.editingAppointment.set(null);
   }
 
+  private markAppointmentAsLocallyModified(appointmentId: number): void {
+    this.recentlyModifiedAppointmentIds.add(appointmentId);
+    setTimeout(() => {
+      this.recentlyModifiedAppointmentIds.delete(appointmentId);
+    }, 5000);
+  }
+
   onAppointmentCreated(appointment: Appointment): void {
     const currentAppointments = this.appointments();
+    if (currentAppointments.some(a => a.id === appointment.id)) {
+      return;
+    }
     this.appointments.set([...currentAppointments, appointment]);
-    this.loadAppointments();
+    this.markAppointmentAsLocallyModified(appointment.id);
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { appointmentId: appointment.id },
+      queryParamsHandling: 'merge',
+    });
   }
 
   onAppointmentUpdated(updatedAppointment: Appointment): void {
@@ -828,6 +1530,12 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       a.id === updatedAppointment.id ? updatedAppointment : a
     );
     this.appointments.set(updatedAppointments);
+    this.markAppointmentAsLocallyModified(updatedAppointment.id);
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { appointmentId: updatedAppointment.id },
+      queryParamsHandling: 'merge',
+    });
   }
 
   getParticipantInitials(participant: Participant): string {
@@ -858,19 +1566,31 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       .updateConsultationMessage(data.messageId, data.content)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (updatedMessage) => {
+        next: updatedMessage => {
           this.messages.update(msgs =>
-            msgs.map(m => m.id === data.messageId ? {
-              ...m,
-              message: updatedMessage.content || '',
-              isEdited: updatedMessage.is_edited,
-              updatedAt: updatedMessage.updated_at
-            } : m)
+            msgs.map(m =>
+              m.id === data.messageId
+                ? {
+                    ...m,
+                    message: updatedMessage.content || '',
+                    isEdited: updatedMessage.is_edited,
+                    updatedAt: updatedMessage.updated_at,
+                  }
+                : m
+            )
           );
-          this.toasterService.show('success', this.t.instant('consultationDetail.messageUpdated'), this.t.instant('consultationDetail.messageUpdatedMessage'));
+          this.toasterService.show(
+            'success',
+            this.t.instant('consultationDetail.messageUpdated'),
+            this.t.instant('consultationDetail.messageUpdatedMessage')
+          );
         },
-        error: (error) => {
-          this.toasterService.show('error', this.t.instant('consultationDetail.errorUpdatingMessage'), getErrorMessage(error));
+        error: error => {
+          this.toasterService.show(
+            'error',
+            this.t.instant('consultationDetail.errorUpdatingMessage'),
+            getErrorMessage(error)
+          );
         },
       });
   }
@@ -880,30 +1600,57 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       .deleteConsultationMessage(data.messageId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (deletedMessage) => {
+        next: deletedMessage => {
           this.messages.update(msgs =>
-            msgs.map(m => m.id === data.messageId ? {
-              ...m,
-              message: '',
-              attachment: null,
-              deletedAt: deletedMessage.deleted_at
-            } : m)
+            msgs.map(m =>
+              m.id === data.messageId
+                ? {
+                    ...m,
+                    message: '',
+                    attachment: null,
+                    deletedAt: deletedMessage.deleted_at,
+                  }
+                : m
+            )
           );
-          this.toasterService.show('success', this.t.instant('consultationDetail.messageDeleted'), this.t.instant('consultationDetail.messageDeletedMessage'));
+          this.toasterService.show(
+            'success',
+            this.t.instant('consultationDetail.messageDeleted'),
+            this.t.instant('consultationDetail.messageDeletedMessage')
+          );
         },
-        error: (error) => {
-          this.toasterService.show('error', this.t.instant('consultationDetail.errorDeletingMessage'), getErrorMessage(error));
+        error: error => {
+          this.toasterService.show(
+            'error',
+            this.t.instant('consultationDetail.errorDeletingMessage'),
+            getErrorMessage(error)
+          );
         },
       });
   }
 
   setAppointmentViewMode(mode: AppointmentViewMode): void {
+    const previousMode = this.appointmentViewMode();
     this.appointmentViewMode.set(mode);
+
+    if (mode === 'calendar' && previousMode === 'list') {
+      // En mode calendrier, recharger avec les dates du calendrier
+      if (this.calendarDateRange) {
+        this.loadAppointmentsForCalendar();
+      }
+    } else if (mode === 'list' && previousMode === 'calendar') {
+      // En mode liste, recharger avec les filtres de liste
+      this.loadAppointments();
+    }
   }
 
   setAppointmentStatusFilter(filter: AppointmentStatusFilter): void {
     this.appointmentStatusFilter.set(filter);
-    this.loadAppointments();
+    if (this.appointmentViewMode() === 'calendar') {
+      this.loadAppointmentsForCalendar();
+    } else {
+      this.loadAppointments();
+    }
   }
 
   setAppointmentTimeFilter(tabId: string): void {
@@ -912,8 +1659,11 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private getCalendarEventTitle(appointment: Appointment): string {
-    const typeLabel = appointment.type === AppointmentType.ONLINE ? this.t.instant('consultationDetail.video') : this.t.instant('consultationDetail.inPersonLabel');
-    return typeLabel;
+    const typeLabel =
+      appointment.type === AppointmentType.ONLINE
+        ? this.t.instant('consultationDetail.video')
+        : this.t.instant('consultationDetail.inPersonLabel');
+    return appointment.title ? `${appointment.title} (${typeLabel})` : typeLabel;
   }
 
   private getStatusColor(status: AppointmentStatus): string {
@@ -930,35 +1680,71 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   }
 
   handleCalendarEventClick(clickInfo: EventClickArg): void {
-    const appointment = clickInfo.event.extendedProps['appointment'] as Appointment;
+    const appointment = clickInfo.event.extendedProps[
+      'appointment'
+    ] as Appointment;
     if (appointment) {
       this.openEditAppointmentModal(appointment);
     }
   }
 
-  calendarPrev(): void {
-    const calendarApi = this.calendarComponent()?.getApi();
-    if (calendarApi) {
-      calendarApi.prev();
+  handleDatesSet(arg: DatesSetArg): void {
+    this.calendarTitle.set(arg.view.title);
+
+    const formatDate = (date: Date): string => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    const newStart = formatDate(arg.start);
+    const newEnd = formatDate(arg.end);
+
+    if (
+      !this.calendarDateRange ||
+      this.calendarDateRange.start !== newStart ||
+      this.calendarDateRange.end !== newEnd
+    ) {
+      this.calendarDateRange = { start: newStart, end: newEnd };
+      if (this.appointmentViewMode() === 'calendar') {
+        this.loadAppointmentsForCalendar();
+      }
     }
+  }
+
+  calendarPrev(): void {
+    setTimeout(() => {
+      const calendarApi = this.calendarComponent()?.getApi();
+      if (calendarApi) {
+        calendarApi.prev();
+      }
+    });
   }
 
   calendarNext(): void {
-    const calendarApi = this.calendarComponent()?.getApi();
-    if (calendarApi) {
-      calendarApi.next();
-    }
+    setTimeout(() => {
+      const calendarApi = this.calendarComponent()?.getApi();
+      if (calendarApi) {
+        calendarApi.next();
+      }
+    });
   }
 
   calendarToday(): void {
-    const calendarApi = this.calendarComponent()?.getApi();
-    if (calendarApi) {
-      calendarApi.today();
-    }
+    setTimeout(() => {
+      const calendarApi = this.calendarComponent()?.getApi();
+      if (calendarApi) {
+        calendarApi.today();
+      }
+    });
   }
 
   getCalendarTitle(): string {
-    const calendarApi = this.calendarComponent()?.getApi();
-    return calendarApi?.view.title || '';
+    return this.calendarTitle();
+  }
+
+  formatConsultationId(id: number): string {
+    return `#${String(id).padStart(6, '0')}`;
   }
 }

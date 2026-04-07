@@ -1,4 +1,4 @@
-import { inject, Injectable, signal } from '@angular/core';
+import { inject, Injectable, Injector, signal } from '@angular/core';
 import { HttpClient, HttpBackend } from '@angular/common/http';
 import { TranslateService, TranslationObject } from '@ngx-translate/core';
 import { catchError, EMPTY } from 'rxjs';
@@ -10,56 +10,103 @@ export interface AppLanguage {
   nativeName: string;
 }
 
-const AVAILABLE_LANGUAGES: AppLanguage[] = [
+const DEFAULT_FALLBACK: AppLanguage[] = [
   { code: 'en', name: 'English', nativeName: 'English' },
-  { code: 'fr', name: 'French', nativeName: 'Francais' },
 ];
 
 const STORAGE_KEY = 'app_language';
 const DEFAULT_LANGUAGE = 'en';
+
+const NATIVE_NAMES: Record<string, string> = {
+  en: 'English',
+  fr: 'Français',
+  de: 'Deutsch',
+  es: 'Español',
+  it: 'Italiano',
+  pt: 'Português',
+  nl: 'Nederlands',
+  ar: 'العربية',
+  tr: 'Türkçe',
+  ro: 'Română',
+  pl: 'Polski',
+  ru: 'Русский',
+  uk: 'Українська',
+  zh: '中文',
+  ja: '日本語',
+  ko: '한국어',
+};
 
 @Injectable({
   providedIn: 'root',
 })
 export class TranslationService {
   private currentLanguageSignal = signal<string>(DEFAULT_LANGUAGE);
+  private availableLanguagesSignal = signal<AppLanguage[]>(DEFAULT_FALLBACK);
   private http = new HttpClient(inject(HttpBackend));
+  private injector = inject(Injector);
+  private initialized = false;
 
   readonly currentLanguage = this.currentLanguageSignal.asReadonly();
-  readonly availableLanguages = AVAILABLE_LANGUAGES;
+  readonly availableLanguages = this.availableLanguagesSignal.asReadonly();
 
   constructor(private translate: TranslateService) {
     this.initializeLanguage();
   }
 
   private initializeLanguage(): void {
-    this.translate.addLangs(AVAILABLE_LANGUAGES.map(lang => lang.code));
+    this.translate.addLangs(this.availableLanguagesSignal().map(lang => lang.code));
     this.translate.setDefaultLang(DEFAULT_LANGUAGE);
 
     const savedLanguage = localStorage.getItem(STORAGE_KEY);
     const browserLang = this.translate.getBrowserLang();
+    const langs = this.availableLanguagesSignal();
     const langToUse = savedLanguage ||
-      (browserLang && AVAILABLE_LANGUAGES.some(l => l.code === browserLang)
+      (browserLang && langs.some(l => l.code === browserLang)
         ? browserLang
         : DEFAULT_LANGUAGE);
 
     this.setLanguage(langToUse);
   }
 
-  setLanguage(langCode: string): void {
-    if (!AVAILABLE_LANGUAGES.some(l => l.code === langCode)) {
-      langCode = DEFAULT_LANGUAGE;
-    }
+  loadLanguages(languages: { code: string; name: string }[]): void {
+    if (languages && languages.length > 0) {
+      const mapped = languages.map(l => ({
+        code: l.code,
+        name: l.name,
+        nativeName: NATIVE_NAMES[l.code] || l.name,
+      }));
+      this.availableLanguagesSignal.set(mapped);
+      this.translate.addLangs(mapped.map(l => l.code));
 
+      // Re-initialize language selection with the new available languages
+      const savedLanguage = localStorage.getItem(STORAGE_KEY);
+      if (!savedLanguage) {
+        const browserLang = this.translate.getBrowserLang();
+        const langToUse = browserLang && mapped.some(l => l.code === browserLang)
+          ? browserLang
+          : this.currentLanguageSignal();
+        if (langToUse !== this.currentLanguageSignal()) {
+          this.setLanguage(langToUse);
+        }
+      }
+    }
+  }
+
+  setLanguage(langCode: string): void {
+    const currentLang = this.currentLanguageSignal();
     this.translate.use(langCode);
     this.fetchAndApplyOverrides(langCode);
+    if (this.initialized && langCode !== currentLang) {
+      import('./auth.service').then(m => this.injector.get(m.AuthService).invalidateConfigCache());
+    }
+    this.initialized = true;
     this.currentLanguageSignal.set(langCode);
     localStorage.setItem(STORAGE_KEY, langCode);
     document.documentElement.lang = langCode;
   }
 
   getCurrentLanguage(): AppLanguage | undefined {
-    return AVAILABLE_LANGUAGES.find(l => l.code === this.currentLanguageSignal());
+    return this.availableLanguagesSignal().find(l => l.code === this.currentLanguageSignal());
   }
 
   instant(key: string, params?: Record<string, string>): string {

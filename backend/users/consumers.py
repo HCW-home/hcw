@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
@@ -7,14 +8,20 @@ from .services import async_user_online_service
 
 logger = logging.getLogger(__name__)
 
+# Server-side heartbeat interval (seconds)
+HEARTBEAT_INTERVAL = 30
+# How long to wait for a pong before considering connection dead
+HEARTBEAT_TIMEOUT = 10
+
 
 class UserOnlineStatusMixin(AsyncJsonWebsocketConsumer):
     """Mixin for automatic WebSocket user online status tracking."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.connection_id = None
         self.user_id = None
+        self._heartbeat_task = None
+        self._pong_received = asyncio.Event()
 
     async def connect(self):
         """Handle WebSocket connection and track user online status."""
@@ -26,77 +33,157 @@ class UserOnlineStatusMixin(AsyncJsonWebsocketConsumer):
             return
 
         self.user_id = user.id
-        self.connection_id = async_user_online_service.generate_connection_id()
 
         try:
-            connection_count = await async_user_online_service.add_user_connection(
-                self.user_id, self.connection_id
-            )
-            logger.info(
-                f"User {self.user_id} connected (ID: {self.connection_id}, Total: {connection_count})"
-            )
+            await async_user_online_service.set_user_online(self.user_id)
+            logger.info(f"User {self.user_id} connected")
             await self.accept()
-            await self._on_status_changed(True, connection_count)
+            self._heartbeat_task = asyncio.create_task(self._heartbeat_loop())
+            await self._on_status_changed(True)
         except Exception as e:
             logger.error(f"Error tracking user {self.user_id} connection: {e}")
             await self.close(code=4000)
 
     async def disconnect(self, close_code):
-        """Handle WebSocket disconnection and update user online status."""
-        if self.user_id and self.connection_id:
+        """Handle WebSocket disconnection."""
+        logger.info(
+            f"UserOnlineStatusMixin.disconnect called for user {self.user_id} "
+            f"(close_code={close_code})"
+        )
+        if self._heartbeat_task:
+            self._heartbeat_task.cancel()
+            self._heartbeat_task = None
+
+        if self.user_id:
+            # Delete cache
+            await async_user_online_service.set_user_offline(self.user_id)
+
+            # Ask other consumers to restore cache if they are alive
             try:
-                remaining = await async_user_online_service.remove_user_connection(
-                    self.user_id, self.connection_id
+                await self.channel_layer.group_send(
+                    f"user_{self.user_id}",
+                    {
+                        "type": "alive_check",
+                        "sender_channel": self.channel_name,
+                    },
                 )
-                logger.info(
-                    f"User {self.user_id} disconnected (ID: {self.connection_id}, Remaining: {remaining})"
-                )
-                if remaining == 0:
-                    await self._on_status_changed(False, remaining)
             except Exception as e:
-                logger.error(f"Error removing user {self.user_id} connection: {e}")
+                logger.error(f"Error sending alive_check for user {self.user_id}: {e}")
+
+            # After 1s, check if another consumer restored the cache.
+            # If not, broadcast offline.
+            asyncio.ensure_future(
+                self._delayed_offline_check(self.user_id, self.channel_layer)
+            )
 
         await super().disconnect(close_code)
 
-    async def _on_status_changed(self, is_online, connection_count):
-        """Notify client about online status changes."""
-        await self.channel_layer.group_send(
-            "broadcast",
-            {
-                "type": "user",
-                "user_id": self.user_id,
-                "data": {
-                    "is_online": is_online,
-                },
-            },
+    async def _heartbeat_loop(self):
+        """Server-side heartbeat: periodically ping the client and close if no pong."""
+        try:
+            while True:
+                await asyncio.sleep(HEARTBEAT_INTERVAL)
+                self._pong_received.clear()
+                try:
+                    await self.send_json({"type": "ping"})
+                except Exception:
+                    break
+                try:
+                    await asyncio.wait_for(
+                        self._pong_received.wait(), timeout=HEARTBEAT_TIMEOUT
+                    )
+                    # Pong received: refresh cache TTL
+                    await async_user_online_service.refresh_online(self.user_id)
+                except asyncio.TimeoutError:
+                    logger.warning(
+                        f"User {self.user_id} heartbeat timeout"
+                    )
+                    await self.close(code=4002)
+                    break
+        except asyncio.CancelledError:
+            pass
+
+    @staticmethod
+    async def _delayed_offline_check(user_id, channel_layer):
+        """Wait, then broadcast offline only if no other consumer restored the cache."""
+        await asyncio.sleep(1)
+        is_online = await async_user_online_service.is_user_online(user_id)
+        if not is_online:
+            logger.info(f"User {user_id} confirmed offline after delay")
+            try:
+                await channel_layer.group_send(
+                    "broadcast",
+                    {
+                        "type": "user",
+                        "user_id": user_id,
+                        "data": {"is_online": False},
+                    },
+                )
+            except Exception as e:
+                logger.error(f"Failed to broadcast offline for user {user_id}: {e}")
+
+    async def _on_status_changed(self, is_online):
+        """Notify all connected clients about online status changes."""
+        logger.info(
+            f"Broadcasting status change: user {self.user_id} is_online={is_online}"
         )
+        try:
+            await self.channel_layer.group_send(
+                "broadcast",
+                {
+                    "type": "user",
+                    "user_id": self.user_id,
+                    "data": {
+                        "is_online": is_online,
+                    },
+                },
+            )
+        except Exception as e:
+            logger.error(f"Failed to broadcast status for user {self.user_id}: {e}")
 
 
 class WebsocketConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
     """WebSocket consumer for user communications and online status tracking."""
 
     async def connect(self):
-        """Connect and join user-specific and system broadcast groups."""
-        await super().connect()
+        """Connect: join groups first, then register online status and broadcast."""
+        user = self.scope.get("user")
+        if not user or not user.is_authenticated:
+            await self.close(code=4001)
+            return
 
-        await self.channel_layer.group_add(f"user_{self.user_id}", self.channel_name)
+        # Join groups BEFORE super().connect() so we receive our own status broadcast
+        await self.channel_layer.group_add(f"user_{user.id}", self.channel_name)
         await self.channel_layer.group_add("broadcast", self.channel_name)
 
+        await super().connect()
+
     async def disconnect(self, close_code):
-        """Disconnect and leave all groups."""
-        await self.channel_layer.group_discard(
-            f"user_{self.user_id}", self.channel_name
-        )
+        """Disconnect: remove own channel from broadcast first, then broadcast offline."""
         await self.channel_layer.group_discard("broadcast", self.channel_name)
+
         await super().disconnect(close_code)
+
+        if self.user_id:
+            await self.channel_layer.group_discard(
+                f"user_{self.user_id}", self.channel_name
+            )
 
     async def receive_json(self, content, **kwargs):
         """Handle incoming WebSocket messages."""
         msg_type = content.get("type")
         data = content.get("data", {})
 
+        # Handle pong responses for server-side heartbeat
+        if msg_type == "pong":
+            self._pong_received.set()
+            return
+
         handlers = {
             "ping": self._handle_ping,
+            "get_status": self._handle_get_status,
+            "send_message": self._handle_send_message,
+            "broadcast": self._handle_broadcast,
         }
 
         handler = handlers.get(msg_type)
@@ -107,12 +194,11 @@ class WebsocketConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
 
     # Message handlers
     async def _handle_ping(self, content, _data):
+        # Client-initiated ping: refresh cache and respond
+        await async_user_online_service.refresh_online(self.user_id)
         await self.send_json({"type": "pong", "timestamp": content.get("timestamp")})
 
     async def _handle_get_status(self, _content, _data):
-        connection_count = await async_user_online_service.get_user_connection_count(
-            self.user_id
-        )
         is_online = await async_user_online_service.is_user_online(self.user_id)
 
         await self.send_json(
@@ -121,8 +207,6 @@ class WebsocketConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
                 "data": {
                     "user_id": self.user_id,
                     "is_online": is_online,
-                    "connection_count": connection_count,
-                    "connection_id": self.connection_id,
                 },
             }
         )
@@ -194,6 +278,13 @@ class WebsocketConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
         await self.send_json({"type": "broadcast_sent", "data": {"message": message}})
 
     # Channel layer event handlers
+    async def alive_check(self, event):
+        """Another consumer disconnected. If I'm still alive, restore the cache."""
+        if event.get("sender_channel") == self.channel_name:
+            return
+        # I'm alive: restore cache (the delayed check will see it and skip broadcast)
+        await async_user_online_service.set_user_online(self.user_id)
+
     async def consultation(self, event):
         await self.send_json(
             {
@@ -221,9 +312,9 @@ class WebsocketConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
                 "render_content_html": event["render_content_html"],
                 "access_link": event["access_link"],
                 "render_subject": event["render_subject"],
-                "action_label": event['action_label'],
-                "action": event['action'],
-                "created_at": event['created_at'],
+                "action_label": event["action_label"],
+                "action": event["action"],
+                "created_at": event["created_at"],
             }
         )
 
@@ -239,6 +330,10 @@ class WebsocketConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
         await self.send_json(response)
 
     async def user(self, event):
+        logger.info(
+            f"Sending user event to channel {self.channel_name}: "
+            f"user_id={event['user_id']} is_online={event['data'].get('is_online')}"
+        )
         await self.send_json(
             {
                 "event": "user",
@@ -257,6 +352,27 @@ class WebsocketConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
         if "speaker_label" in event:
             payload["speaker_label"] = event["speaker_label"]
         await self.send_json(payload)
+
+    async def call_request(self, event):
+        await self.send_json(
+            {
+                "event": "call_request",
+                "consultation_id": event["consultation_id"],
+                "caller_id": event["caller_id"],
+                "caller_name": event["caller_name"],
+            }
+        )
+
+    async def call_response(self, event):
+        await self.send_json(
+            {
+                "event": "call_response",
+                "consultation_id": event["consultation_id"],
+                "accepted": event["accepted"],
+                "responder_id": event["responder_id"],
+                "responder_name": event["responder_name"],
+            }
+        )
 
     # Utility methods
     async def _send_error(self, message):

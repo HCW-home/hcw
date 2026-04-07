@@ -12,6 +12,8 @@ import {
 import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../core/services/auth.service';
 import { TranslationService } from '../../core/services/translation.service';
+import { AuthBrandingComponent } from '../../shared/components/auth-branding/auth-branding.component';
+import { LanguageSelectorComponent } from '../../shared/components/language-selector/language-selector.component';
 
 @Component({
   selector: 'app-verify-email',
@@ -26,6 +28,8 @@ import { TranslationService } from '../../core/services/translation.service';
     IonButton,
     IonSpinner,
     TranslatePipe,
+    AuthBrandingComponent,
+    LanguageSelectorComponent,
   ]
 })
 export class VerifyEmailPage implements OnInit {

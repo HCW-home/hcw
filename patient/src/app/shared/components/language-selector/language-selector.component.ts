@@ -18,7 +18,7 @@ export class LanguageSelectorComponent {
   }
 
   get availableLanguages(): AppLanguage[] {
-    return this.translationService.availableLanguages;
+    return this.translationService.availableLanguages();
   }
 
   onLanguageChange(event: CustomEvent): void {

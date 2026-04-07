@@ -19,6 +19,8 @@ import { Auth } from '../../services/auth';
 import { TranslatePipe } from '@ngx-translate/core';
 import { CommonModule } from '@angular/common';
 import { Title } from '@angular/platform-browser';
+import { TranslationService } from '../../services/translation.service';
+import { ThemeService } from '../../services/theme.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -38,6 +40,8 @@ export class Sidebar implements OnInit, OnDestroy {
   private userService = inject(UserService);
   private authService = inject(Auth);
   private titleService = inject(Title);
+  private t = inject(TranslationService);
+  private themeService = inject(ThemeService);
 
   menuItems = MenuItems;
   currentUserSubscription!: Subscription;
@@ -62,13 +66,19 @@ export class Sidebar implements OnInit, OnDestroy {
 
     this.authService.getOpenIDConfig().subscribe({
       next: config => {
-        this.siteLogo = config.site_logo;
+        this.siteLogo = config.main_organization?.logo_color || null;
         if (config.branding) {
           this.branding = config.branding;
           this.titleService.setTitle(config.branding);
         }
         if (config.site_favicon) {
           this.updateFavicon(config.site_favicon);
+        }
+        if (config.languages?.length) {
+          this.t.loadLanguages(config.languages);
+        }
+        if (config.primary_color_practitioner) {
+          this.themeService.applyPrimaryColor(config.primary_color_practitioner);
         }
       },
     });
@@ -78,18 +88,6 @@ export class Sidebar implements OnInit, OnDestroy {
     this.isCollapsed = !this.isCollapsed;
     localStorage.setItem('sidebar-collapsed', JSON.stringify(this.isCollapsed));
     this.collapsedChange.emit(this.isCollapsed);
-  }
-
-  onLogOut(): void {
-    localStorage.clear();
-    this.router.navigate([`${RoutePaths.AUTH}`]);
-  }
-
-  getUserDisplayName(): string {
-    if (!this.currentUser) return '';
-    const fullName =
-      `${this.currentUser.first_name} ${this.currentUser.last_name}`.trim();
-    return fullName || this.currentUser.email;
   }
 
   ngOnDestroy(): void {

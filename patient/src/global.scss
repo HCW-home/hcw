@@ -1,5 +1,37 @@
 @use "theme/variables.scss";
 
+@font-face {
+  font-family: 'Roboto';
+  src: url('assets/fonts/Roboto-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('assets/fonts/Roboto-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('assets/fonts/Roboto-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('assets/fonts/Roboto-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 /*
  * App Global CSS
  * ----------------------------------------------------------------------------
@@ -54,7 +86,7 @@ body {
 /* Desktop/Tablet container - constrain app to mobile-like width */
 @media (min-width: 768px) {
   body {
-    background: linear-gradient(135deg, #f1f5f9 0%, #ecfeff 50%, #f1f5f9 100%);
+    background: linear-gradient(135deg, var(--app-background-secondary) 0%, var(--ion-color-primary-bg) 50%, var(--app-background-secondary) 100%);
   }
 
   ion-app {
@@ -96,10 +128,6 @@ body {
   }
 }
 
-ion-content {
-  --background: var(--app-background);
-}
-
 ion-card {
   --background: var(--app-card-background);
   border-radius: var(--app-card-radius);
@@ -114,6 +142,7 @@ ion-item {
 ion-button {
   --border-radius: var(--app-button-radius);
   font-weight: var(--app-font-weight-semibold);
+  text-transform: none;
 }
 
 // Utility classes

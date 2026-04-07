@@ -26,7 +26,7 @@ ion-header {
 }
 
 .new-request-content {
-  --background: var(--app-background);
+
 }
 
 .loading-container {
@@ -186,10 +186,21 @@ ion-header {
       margin: 0 0 4px 0;
     }
 
-    .reason-duration {
+    .reason-type {
       font-size: 0.8125rem;
       color: var(--app-text-secondary);
       margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+
+      ion-icon {
+        font-size: 14px;
+      }
+
+      .reason-duration {
+        color: var(--app-text-tertiary);
+      }
     }
   }
 
@@ -216,6 +227,11 @@ ion-header {
     ion-icon {
       font-size: 20px;
     }
+
+    &[disabled] {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
   }
 
   .week-label {
@@ -238,6 +254,12 @@ ion-header {
   padding: var(--app-spacing-md);
   border: 1px solid var(--app-border-color);
   min-height: 160px;
+
+  &.today {
+    background: var(--ion-color-primary-bg);
+    border: 2px solid var(--ion-color-primary);
+    box-shadow: 0 2px 8px rgba(8, 145, 178, 0.15);
+  }
 
   .day-header {
     display: flex;
@@ -289,13 +311,15 @@ ion-header {
     }
 
     &.slot-default {
-      --background: var(--app-background);
-      --color: var(--app-text-primary);
-      --border-color: var(--app-border-color);
-      --border-width: 1px;
+      --background: var(--app-card-background);
+      --color: var(--ion-color-primary);
+      --border-color: var(--ion-color-primary);
+      --border-width: 2px;
+      color: var(--ion-color-primary) !important;
+      border-color: var(--ion-color-primary) !important;
 
       &:hover {
-        --border-color: var(--ion-color-primary);
+        --background: var(--ion-color-primary-bg);
       }
     }
   }
@@ -384,13 +408,65 @@ ion-header {
       font-size: 0.8125rem;
       color: var(--app-text-secondary);
     }
+
   }
 
-  .selected-icon {
-    font-size: 24px;
-    color: var(--ion-color-primary);
+  .doctor-next-slot-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
     flex-shrink: 0;
+    padding: 6px 10px;
+    background: var(--ion-color-primary-bg);
+    border-radius: 10px;
+
+    .next-slot-date-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      background: var(--ion-color-primary);
+      border-radius: 8px;
+      flex-shrink: 0;
+
+      .day {
+        font-size: 16px;
+        font-weight: 700;
+        color: white;
+        line-height: 1;
+      }
+
+      .month {
+        font-size: 10px;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.85);
+        text-transform: uppercase;
+      }
+    }
+
+    .next-slot-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .next-slot-label {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: var(--ion-color-primary);
+    }
+
+    .next-slot-datetime {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--app-text-secondary);
+    }
   }
+
 }
 
 .step-actions {
@@ -398,6 +474,15 @@ ion-header {
   display: flex;
   flex-direction: column;
   gap: var(--app-spacing-md);
+
+  &.sticky-bottom {
+    position: sticky;
+    bottom: 0;
+    margin-top: var(--app-spacing-md);
+    padding: var(--app-spacing-md) 0;
+    background: var(--app-card-background);
+    z-index: 10;
+  }
 
   .primary-action {
     width: 100%;
@@ -517,6 +602,47 @@ ion-header {
         }
       }
     }
+  }
+}
+
+.custom-fields-section {
+  margin-bottom: var(--app-spacing-xl);
+
+  .custom-field-item {
+    margin-bottom: var(--app-spacing-md);
+  }
+
+  .custom-field-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--app-text-primary);
+    margin-bottom: var(--app-spacing-xs);
+
+    .required-mark {
+      color: var(--ion-color-danger);
+    }
+  }
+
+  .custom-field-input,
+  .custom-field-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--app-border-color);
+    border-radius: 8px;
+    font-size: 0.9375rem;
+    color: var(--app-text-primary);
+    background: var(--app-card-background);
+    outline: none;
+    box-sizing: border-box;
+
+    &:focus {
+      border-color: var(--ion-color-primary);
+    }
+  }
+
+  select.custom-field-input {
+    appearance: auto;
   }
 }
 

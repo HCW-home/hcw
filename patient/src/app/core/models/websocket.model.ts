@@ -137,6 +137,26 @@ export interface AppointmentJoinedEvent {
   };
 }
 
+export interface CallRequestEvent {
+  event: 'call_request';
+  consultation_id: number;
+  caller_id: number;
+  caller_name: string;
+}
+
+export interface AppointmentChangedEvent {
+  type: 'appointment';
+  consultation_id: number;
+  appointment_id: number;
+  state: 'updated' | 'cancelled' | 'created';
+}
+
+export interface ConsultationChangedEvent {
+  type: 'consultation';
+  consultation_id: number;
+  state: 'created' | 'updated' | 'closed';
+}
+
 export type UserIncomingEvent =
   | StatusChangedEvent
   | StatusResponseEvent
@@ -147,7 +167,10 @@ export type UserIncomingEvent =
   | GroupJoinedEvent
   | GroupLeftEvent
   | ErrorEvent
-  | AppointmentJoinedEvent;
+  | AppointmentJoinedEvent
+  | AppointmentChangedEvent
+  | ConsultationChangedEvent
+  | MessageEvent;
 
 export interface ConsultationMessageEvent {
   type: 'consultation_message';
@@ -239,6 +262,7 @@ export type ConsultationIncomingEvent =
 
 export interface WebSocketConfig {
   url: string;
+  urlProvider?: () => Promise<string | null>;
   reconnect?: boolean;
   reconnectInterval?: number;
   reconnectAttempts?: number;

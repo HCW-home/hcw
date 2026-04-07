@@ -23,7 +23,9 @@ import { SpecialityService } from '../../core/services/speciality.service';
 import { DoctorService } from '../../core/services/doctor.service';
 import { ConsultationService, ConsultationRequestData } from '../../core/services/consultation.service';
 import { Speciality, Doctor } from '../../core/models/doctor.model';
-import { Reason, Slot } from '../../core/models/consultation.model';
+import { Reason, Slot, CustomField } from '../../core/models/consultation.model';
+import { LocalDatePipe } from '../../shared/pipes/local-date.pipe';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-new-request',
@@ -44,7 +46,8 @@ import { Reason, Slot } from '../../core/models/consultation.model';
     IonSpinner,
     IonTextarea,
     IonProgressBar,
-    TranslatePipe
+    TranslatePipe,
+    LocalDatePipe
   ]
 })
 export class NewRequestPage implements OnInit, OnDestroy {
@@ -68,6 +71,10 @@ export class NewRequestPage implements OnInit, OnDestroy {
 
   doctors = signal<Doctor[]>([]);
   selectedDoctor = signal<Doctor | null>(null);
+  doctorNextSlots = signal<Record<number, Slot | null>>({});
+
+  customFields = signal<CustomField[]>([]);
+  customFieldValues: Record<number, string> = {};
 
   comment = '';
 
@@ -75,8 +82,8 @@ export class NewRequestPage implements OnInit, OnDestroy {
     switch (this.currentStep()) {
       case 1: return this.t.instant('newRequest.selectSpecialty');
       case 2: return this.t.instant('newRequest.selectReason');
-      case 3: return this.t.instant('newRequest.chooseTimeSlot');
-      case 4: return this.t.instant('newRequest.selectDoctor');
+      case 3: return this.t.instant('newRequest.selectDoctor');
+      case 4: return this.t.instant('newRequest.chooseTimeSlot');
       case 5: return this.t.instant('newRequest.reviewAndSubmit');
       default: return this.t.instant('newRequest.newRequest');
     }
@@ -99,12 +106,20 @@ export class NewRequestPage implements OnInit, OnDestroy {
   weekDates = computed(() => {
     const start = this.currentWeekStart();
     const dates: Date[] = [];
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 15; i++) {
       const date = new Date(start);
       date.setDate(start.getDate() + i);
       dates.push(date);
     }
     return dates;
+  });
+
+  canGoPreviousWeek = computed(() => {
+    const current = this.currentWeekStart();
+    const prev = new Date(current);
+    prev.setDate(current.getDate() - 15);
+    const today = this.getStartOfWeek(new Date());
+    return prev >= today;
   });
 
   constructor(
@@ -164,14 +179,26 @@ export class NewRequestPage implements OnInit, OnDestroy {
 
   selectReason(reason: Reason): void {
     this.selectedReason.set(reason);
-    this.loadAvailableSlots(reason.id);
-    this.currentStep.set(3);
+    if (reason.assignment_method === 'appointment') {
+      this.loadDoctorsWithNextSlot();
+      this.currentStep.set(3);
+    } else {
+      this.selectedSlot.set(null);
+      this.selectedDoctor.set(null);
+      this.loadCustomFields();
+      this.currentStep.set(5);
+    }
   }
 
   loadAvailableSlots(reasonId: number): void {
     this.isLoading.set(true);
     const fromDate = this.formatDate(this.currentWeekStart());
-    this.doctorService.getAvailableSlots(reasonId, { from_date: fromDate })
+    const params: { from_date: string; user_id?: number } = { from_date: fromDate };
+    const doctor = this.selectedDoctor();
+    if (doctor) {
+      params.user_id = (doctor as any).pk ?? doctor.id;
+    }
+    this.doctorService.getAvailableSlots(reasonId, params)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (slots) => {
@@ -192,7 +219,7 @@ export class NewRequestPage implements OnInit, OnDestroy {
   nextWeek(): void {
     const current = this.currentWeekStart();
     const next = new Date(current);
-    next.setDate(current.getDate() + 7);
+    next.setDate(current.getDate() + 15);
     this.currentWeekStart.set(next);
     const reason = this.selectedReason();
     if (reason) {
@@ -203,7 +230,7 @@ export class NewRequestPage implements OnInit, OnDestroy {
   previousWeek(): void {
     const current = this.currentWeekStart();
     const prev = new Date(current);
-    prev.setDate(current.getDate() - 7);
+    prev.setDate(current.getDate() - 15);
     const today = this.getStartOfWeek(new Date());
     if (prev >= today) {
       this.currentWeekStart.set(prev);
@@ -214,56 +241,100 @@ export class NewRequestPage implements OnInit, OnDestroy {
     }
   }
 
-  proceedToDoctor(): void {
+  private loadDoctorsWithNextSlot(): void {
     const speciality = this.selectedSpeciality();
-    if (speciality) {
-      this.loadDoctors(speciality.id);
-      this.currentStep.set(4);
-    }
-  }
+    const reason = this.selectedReason();
+    if (!speciality || !reason) return;
 
-  skipSlotSelection(): void {
-    this.selectedSlot.set(null);
-    const speciality = this.selectedSpeciality();
-    if (speciality) {
-      this.loadDoctors(speciality.id);
-      this.currentStep.set(4);
-    }
-  }
-
-  loadDoctors(specialityId: number): void {
     this.isLoading.set(true);
-    this.doctorService.getDoctorsBySpeciality(specialityId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (doctors) => {
-          this.doctors.set(doctors);
-          this.isLoading.set(false);
-        },
-        error: () => {
-          this.showToast(this.t.instant('newRequest.failedDoctors'), 'danger');
-          this.isLoading.set(false);
+    const fromDate = this.formatDate(new Date());
+
+    forkJoin({
+      doctors: this.doctorService.getDoctorsBySpeciality(speciality.id),
+      slots: this.doctorService.getAvailableSlots(reason.id, { from_date: fromDate }),
+    }).pipe(takeUntil(this.destroy$)).subscribe({
+      next: ({ doctors, slots }) => {
+        this.doctors.set(doctors);
+
+        // Find the first available slot per doctor
+        const nextSlots: Record<number, Slot | null> = {};
+        for (const doctor of doctors) {
+          const doctorId = (doctor as any).pk ?? doctor.id;
+          const doctorSlot = slots.find(s => s.user_id === doctorId) || null;
+          nextSlots[doctorId] = doctorSlot;
         }
-      });
+        this.doctorNextSlots.set(nextSlots);
+        this.isLoading.set(false);
+      },
+      error: () => {
+        this.showToast(this.t.instant('newRequest.failedDoctors'), 'danger');
+        this.isLoading.set(false);
+      }
+    });
   }
 
   selectDoctor(doctor: Doctor): void {
     this.selectedDoctor.set(doctor);
   }
 
-  proceedToReview(): void {
-    this.currentStep.set(5);
+  proceedToSlots(): void {
+    const reason = this.selectedReason();
+    if (reason) {
+      this.loadAvailableSlots(reason.id);
+      this.currentStep.set(4);
+    }
   }
 
   skipDoctorSelection(): void {
     this.selectedDoctor.set(null);
+    const reason = this.selectedReason();
+    if (reason) {
+      this.loadAvailableSlots(reason.id);
+      this.currentStep.set(4);
+    }
+  }
+
+  proceedToReview(): void {
+    this.loadCustomFields();
     this.currentStep.set(5);
+  }
+
+  skipSlotSelection(): void {
+    this.selectedSlot.set(null);
+    this.loadCustomFields();
+    this.currentStep.set(5);
+  }
+
+  getDoctorNextSlot(doctor: Doctor): Slot | null {
+    const doctorId = (doctor as any).pk ?? doctor.id;
+    return this.doctorNextSlots()[doctorId] || null;
+  }
+
+  formatSlotDate(slot: Slot): string {
+    const date = new Date(`${slot.date}T${slot.start_time}`);
+    return date.toLocaleDateString(this.t.currentLanguage(), { weekday: 'short', day: 'numeric', month: 'short' });
+  }
+
+  loadCustomFields(): void {
+    if (this.customFields().length > 0) return;
+    this.consultationService.getCustomFields('consultations.Request')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (fields) => this.customFields.set(fields),
+      });
   }
 
   goBack(): void {
     const step = this.currentStep();
     if (step > 1) {
-      this.currentStep.set(step - 1);
+      const reason = this.selectedReason();
+      if (step === 5 && reason && reason.assignment_method !== 'appointment') {
+        this.currentStep.set(2);
+      } else if (step === 5) {
+        this.currentStep.set(4);
+      } else {
+        this.currentStep.set(step - 1);
+      }
     } else {
       this.navCtrl.back();
     }
@@ -300,13 +371,23 @@ export class NewRequestPage implements OnInit, OnDestroy {
       requestData.expected_with_id = doctor.id;
     }
 
+    const cfPayload = Object.entries(this.customFieldValues)
+      .filter(([_, value]) => value !== '' && value !== null && value !== undefined)
+      .map(([fieldId, value]) => ({ field: parseInt(fieldId, 10), value }));
+    if (cfPayload.length > 0) {
+      requestData.custom_fields = cfPayload;
+    }
+
     this.isSubmitting.set(true);
     this.consultationService.createConsultationRequest(requestData)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: () => {
+        next: (createdRequest) => {
           this.showToast(this.t.instant('newRequest.submitSuccess'), 'success');
-          this.navCtrl.navigateBack('/home');
+          const requestId = (createdRequest as any).pk ?? (createdRequest as any).id;
+          this.navCtrl.navigateBack('/home', {
+            queryParams: { highlightRequest: requestId }
+          });
         },
         error: () => {
           this.showToast(this.t.instant('newRequest.submitFailed'), 'danger');
@@ -325,19 +406,37 @@ export class NewRequestPage implements OnInit, OnDestroy {
   }
 
   private formatDate(date: Date): string {
-    return date.toISOString().split('T')[0];
+    const y = date.getFullYear();
+    const m = (date.getMonth() + 1).toString().padStart(2, '0');
+    const d = date.getDate().toString().padStart(2, '0');
+    return `${y}-${m}-${d}`;
   }
 
   formatDisplayDate(date: Date): string {
-    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    return date.toLocaleDateString(this.t.currentLanguage(), { weekday: 'short', month: 'short', day: 'numeric' });
   }
 
   formatDayName(date: Date): string {
-    return date.toLocaleDateString('en-US', { weekday: 'short' });
+    return date.toLocaleDateString(this.t.currentLanguage(), { weekday: 'short' });
   }
 
   formatDayNumber(date: Date): string {
     return date.getDate().toString();
+  }
+
+  isToday(date: Date): boolean {
+    const today = new Date();
+    return date.getDate() === today.getDate() &&
+           date.getMonth() === today.getMonth() &&
+           date.getFullYear() === today.getFullYear();
+  }
+
+  isPastDate(date: Date): boolean {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    return d < today;
   }
 
   formatSlotTime(slot: Slot): string {
@@ -359,7 +458,13 @@ export class NewRequestPage implements OnInit, OnDestroy {
 
   isDoctorSelected(doctor: Doctor): boolean {
     const selected = this.selectedDoctor();
-    return selected !== null && selected.id === doctor.id;
+    if (!selected || !doctor) {
+      return false;
+    }
+    // API returns 'pk' instead of 'id'
+    const selectedId = (selected as any).pk ?? selected.id;
+    const doctorId = (doctor as any).pk ?? doctor.id;
+    return selectedId === doctorId;
   }
 
   getDoctorFullName(doctor: Doctor): string {
@@ -370,7 +475,7 @@ export class NewRequestPage implements OnInit, OnDestroy {
     const slot = this.selectedSlot();
     if (slot) {
       const date = new Date(`${slot.date}T${slot.start_time}`);
-      return date.toLocaleString('en-US', {
+      return date.toLocaleString(this.t.currentLanguage(), {
         weekday: 'short',
         month: 'short',
         day: 'numeric',

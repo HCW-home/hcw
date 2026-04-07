@@ -95,6 +95,35 @@
     align-items: center;
     flex: 1;
     min-width: 0;
+    gap: 8px;
+
+    .selected-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--primary-500);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      overflow: hidden;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      span {
+        color: white;
+        font-size: 10px;
+        font-weight: 600;
+      }
+
+      &.current-user {
+        background: var(--slate-500);
+      }
+    }
 
     .select-search {
       flex: 1;
@@ -189,6 +218,12 @@
         color: var(--slate-600);
       }
 
+      &.rich {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
       &.hover:not(.disabled) {
         color: var(--slate-800);
         background: var(--slate-100);
@@ -208,11 +243,30 @@
       }
 
       &.new-option {
-        font-style: italic;
+        padding: 12px 16px;
+        margin-top: 4px;
+        background: var(--blue-50);
+        border: 1px dashed var(--blue-300);
 
-        .select-value {
+        &.hover:not(.disabled) {
+          background: var(--blue-100);
+          border-color: var(--blue-400);
+        }
+      }
 
-        color: var(--primary-500);
+      .create-option-content {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+
+        .create-option-text {
+          display: flex;
+          flex-direction: column;
+
+          .create-option-label {
+            font-weight: 500;
+          }
         }
       }
 
@@ -221,6 +275,79 @@
         cursor: not-allowed;
         background: var(--slate-200);
       }
+    }
+
+    .option-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--primary-500);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      overflow: hidden;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      span {
+        color: white;
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      &.current-user {
+        background: var(--slate-500);
+      }
+    }
+
+    .option-content {
+      flex: 1;
+      min-width: 0;
+
+      .option-secondary-row {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 2px;
+      }
+
+      .select-secondary {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        min-width: 0;
+      }
+
+      .practitioner-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        flex-shrink: 0;
+
+        span {
+          font-size: 12px;
+          font-weight: 400;
+          color: var(--primary-500);
+        }
+      }
+    }
+
+    .option-loading {
+      display: flex;
+      justify-content: center;
+      padding: 12px;
+    }
+
+    .option-empty {
+      display: flex;
+      justify-content: center;
+      padding: 16px;
     }
   }
 

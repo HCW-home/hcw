@@ -7,6 +7,7 @@ from .models import (
     Appointment,
     BookingSlot,
     Consultation,
+    CustomField,
     Message,
     Participant,
     Queue,
@@ -15,6 +16,13 @@ from .models import (
 )
 
 admin.site.register(Participant, ModelAdmin)
+
+
+@admin.register(CustomField)
+class CustomFieldAdmin(ModelAdmin, TabbedTranslationAdmin):
+    list_display = ["name", "field_type", "target_model", "required", "ordering"]
+    list_filter = ["target_model", "field_type", "required"]
+    search_fields = ["name"]
 
 
 @admin.register(Queue)
@@ -63,11 +71,12 @@ class ConsultationAdmin(ModelAdmin):
         "created_by",
         "beneficiary",
         "group",
+        "visible_by_patient",
         "created_at",
         "closed_at",
         "messages_count",
     ]
-    list_filter = ["created_at", "closed_at", "group"]
+    list_filter = ["created_at", "closed_at", "group", "visible_by_patient"]
     search_fields = ["created_by__email", "beneficiary__email", "group__name"]
     readonly_fields = ["created_at", "updated_at"]
 

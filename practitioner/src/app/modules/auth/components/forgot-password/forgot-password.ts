@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { Input } from '../../../../shared/ui-components/input/input';
 import { Button } from '../../../../shared/ui-components/button/button';
@@ -21,6 +21,8 @@ import { Auth } from '../../../../core/services/auth';
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { ValidationService } from '../../../../core/services/validation.service';
 import { TranslationService } from '../../../../core/services/translation.service';
+import { LanguageSelector } from '../../../../shared/components/language-selector/language-selector';
+import { AuthBranding } from '../../../../shared/components/auth-branding/auth-branding';
 
 interface ForgotPasswordForm {
   email: FormControl<string>;
@@ -28,7 +30,7 @@ interface ForgotPasswordForm {
 
 @Component({
   selector: 'app-forgot-password',
-  imports: [Button, Input, Typography, RouterLink, ReactiveFormsModule, TranslatePipe],
+  imports: [Button, Input, Typography, RouterLink, ReactiveFormsModule, TranslatePipe, LanguageSelector, AuthBranding],
   templateUrl: './forgot-password.html',
   styleUrl: './forgot-password.scss',
 })
@@ -40,7 +42,6 @@ export class ForgotPassword {
   private adminAuthService = inject(Auth);
   public validationService = inject(ValidationService);
   private t = inject(TranslationService);
-
   form: FormGroup<ForgotPasswordForm> = this.formBuilder.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
   });

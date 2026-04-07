@@ -80,9 +80,11 @@ export class MessageList
 {
   @Input() messages: Message[] = [];
   @Input() isConnected = false;
+  @Input() hasHeaderAction = false;
   @Input() currentUserId: number | null = null;
   @Input() isLoadingMore = false;
   @Input() hasMore = true;
+  @Input() unreadSeparatorTimestamp: string | null = null;
   @Output() sendMessage = new EventEmitter<SendMessageData>();
   @Output() editMessage = new EventEmitter<EditMessageData>();
   @Output() deleteMessage = new EventEmitter<DeleteMessageData>();
@@ -104,6 +106,7 @@ export class MessageList
   private isInitialLoad = true;
   private previousScrollHeight = 0;
   private previousMessagesLength = 0;
+  private lastMessageId: number | null = null;
 
   viewingImage = signal<{ url: string; fileName: string } | null>(null);
   imageUrls = signal<Map<number, string>>(new Map());
@@ -123,11 +126,21 @@ export class MessageList
     if (changes['messages']) {
       this.loadImageAttachments();
       const currentLength = this.messages.length;
+      const currentLastMessage = this.messages[currentLength - 1];
+      const currentLastMessageId = currentLastMessage?.id ?? null;
+
+      // Check if this is a new message at the bottom (not a load more at the top)
+      const isNewMessageAtBottom =
+        currentLastMessageId !== null &&
+        currentLastMessageId !== this.lastMessageId;
+
+      // Check if messages were loaded at the top (load more)
       const wasLoadingMore =
         this.previousMessagesLength > 0 &&
-        currentLength > this.previousMessagesLength;
+        currentLength > this.previousMessagesLength &&
+        !isNewMessageAtBottom;
 
-      if (this.isInitialLoad || !wasLoadingMore) {
+      if (this.isInitialLoad || isNewMessageAtBottom) {
         this.shouldScrollToBottom = true;
       }
 
@@ -137,6 +150,7 @@ export class MessageList
       }
 
       this.previousMessagesLength = currentLength;
+      this.lastMessageId = currentLastMessageId;
     }
   }
 
@@ -243,6 +257,70 @@ export class MessageList
   formatTime(timestamp: string): string {
     const date = new Date(timestamp);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  private firstUnreadIndex: number | null = null;
+  private lastComputedSeparatorTimestamp: string | null = null;
+  private lastComputedMessagesLength = 0;
+
+  private computeFirstUnreadIndex(): void {
+    if (this.unreadSeparatorTimestamp === this.lastComputedSeparatorTimestamp
+        && this.messages.length === this.lastComputedMessagesLength) {
+      return;
+    }
+    this.lastComputedSeparatorTimestamp = this.unreadSeparatorTimestamp;
+    this.lastComputedMessagesLength = this.messages.length;
+    this.firstUnreadIndex = null;
+
+    if (!this.unreadSeparatorTimestamp) return;
+    const separatorTime = new Date(this.unreadSeparatorTimestamp).getTime();
+    for (let i = 0; i < this.messages.length; i++) {
+      const msg = this.messages[i];
+      if (!msg.isCurrentUser && !msg.isSystem && new Date(msg.timestamp).getTime() > separatorTime) {
+        this.firstUnreadIndex = i;
+        return;
+      }
+    }
+  }
+
+  shouldShowUnreadSeparator(index: number): boolean {
+    this.computeFirstUnreadIndex();
+    return this.firstUnreadIndex === index;
+  }
+
+  shouldShowDateSeparator(index: number): boolean {
+    if (index === 0) return true;
+
+    const currentMessage = this.messages[index];
+    const previousMessage = this.messages[index - 1];
+
+    const currentDate = new Date(currentMessage.timestamp);
+    const previousDate = new Date(previousMessage.timestamp);
+
+    return currentDate.toDateString() !== previousDate.toDateString();
+  }
+
+  formatDateSeparator(timestamp: string): string {
+    const messageDate = new Date(timestamp);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const messageDateStr = messageDate.toDateString();
+    const todayStr = today.toDateString();
+    const yesterdayStr = yesterday.toDateString();
+
+    if (messageDateStr === todayStr) {
+      return this.t.instant('messageList.today');
+    } else if (messageDateStr === yesterdayStr) {
+      return this.t.instant('messageList.yesterday');
+    } else {
+      return messageDate.toLocaleDateString([], {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+    }
   }
 
   isImageAttachment(attachment: MessageAttachment): boolean {

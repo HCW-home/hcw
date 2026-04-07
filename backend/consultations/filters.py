@@ -1,5 +1,6 @@
 import django_filters
 from .models import Consultation, Appointment
+from django.db.models import Exists, OuterRef
 from django.utils import timezone
 from datetime import timedelta
 
@@ -10,6 +11,7 @@ class ConsultationFilter(django_filters.FilterSet):
         lookup_expr="isnull",
         exclude=True  # so is_closed=True means closed_at is NOT null
     )
+    scheduled = django_filters.BooleanFilter(method='filter_scheduled')
 
     class Meta:
         model = Consultation
@@ -21,9 +23,29 @@ class ConsultationFilter(django_filters.FilterSet):
             "closed_at",
         ]
 
+    def filter_scheduled(self, queryset, name, value):
+        from .models import AppointmentStatus
+        cutoff = timezone.now() - timedelta(hours=2)
+        has_future = Exists(
+            Appointment.objects.filter(
+                consultation=OuterRef('pk'),
+                scheduled_at__gte=cutoff,
+                status=AppointmentStatus.scheduled,
+            )
+        )
+        if value is True:
+            return queryset.filter(has_future)
+        elif value is False:
+            return queryset.filter(~has_future)
+        return queryset
+
 
 class AppointmentFilter(django_filters.FilterSet):
     future = django_filters.BooleanFilter(method='filter_future')
+    participant_user = django_filters.NumberFilter(
+        field_name='participant__user',
+        lookup_expr='exact',
+    )
 
     class Meta:
         model = Appointment
@@ -35,7 +57,7 @@ class AppointmentFilter(django_filters.FilterSet):
 
     def filter_future(self, queryset, name, value):
         if value is True:
-            return queryset.filter(scheduled_at__gte=timezone.now() - timedelta(hours=1))
+            return queryset.filter(scheduled_at__gte=timezone.now() - timedelta(hours=2))
         elif value is False:
-            return queryset.filter(scheduled_at__lt=timezone.now() - timedelta(hours=1))
+            return queryset.filter(scheduled_at__lt=timezone.now() - timedelta(hours=2))
         return queryset

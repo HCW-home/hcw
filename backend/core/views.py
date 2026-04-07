@@ -1,13 +1,62 @@
 
 from datetime import datetime, timedelta
 from django.utils import timezone
-from django.contrib.auth import get_user_model
+from django.contrib.auth import authenticate, get_user_model, login
+from django.shortcuts import redirect
+from django.views import View
+from constance import config
 from consultations.models import Consultation, Appointment, Queue, Request
 from users.models import Organisation
 from django.db.models import Count, Q
 from django.utils.translation import gettext_lazy as _
 
 User = get_user_model()
+
+
+class LoginSelectorView(View):
+    """View that lists available identity providers for admin login."""
+
+    def get(self, request):
+        if request.user.is_authenticated and request.user.is_staff:
+            return redirect("admin:index")
+
+        return self._render(request)
+
+    def post(self, request):
+        if request.user.is_authenticated and request.user.is_staff:
+            return redirect("admin:index")
+
+        email = request.POST.get("email", "").strip()
+        password = request.POST.get("password", "")
+        user = authenticate(request, email=email, password=password)
+
+        if user is not None and user.is_staff:
+            login(request, user)
+            return redirect("admin:index")
+
+        return self._render(request, error=_("Invalid email or password."))
+
+    def _render(self, request, error=None):
+        from allauth.socialaccount.models import SocialApp
+        from django.contrib import admin
+        from django.template.response import TemplateResponse
+
+        social_apps = SocialApp.objects.filter(
+            provider="openid_connect"
+        )
+
+        context = admin.site.each_context(request)
+        context.update({
+            "social_apps": social_apps,
+            "next": "/admin/",
+            "site_title": _("HCW@Home Admin"),
+            "title": _("Sign in"),
+            "disable_password_login": config.disable_password_login,
+        })
+        if error:
+            context["login_error"] = error
+
+        return TemplateResponse(request, "login.html", context)
 
 def dashboard_callback(request, context):
     now = timezone.now()
@@ -17,7 +66,7 @@ def dashboard_callback(request, context):
     # User metrics
     total_users = User.objects.count()
     active_users = User.objects.filter(last_login__gte=last_month).count()
-    online_users = User.objects.filter(is_online=True).count()
+    online_users = sum(1 for u in User.objects.only("pk") if u.is_online)
     new_users_this_week = User.objects.filter(date_joined__gte=last_week).count()
     
     # Consultation metrics

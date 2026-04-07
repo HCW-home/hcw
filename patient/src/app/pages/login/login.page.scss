@@ -1,5 +1,5 @@
 .login-content {
-  --background: linear-gradient(135deg, #f1f5f9 0%, #ecfeff 50%, #f1f5f9 100%);
+  --background: linear-gradient(135deg, var(--app-background-secondary) 0%, var(--ion-color-primary-bg) 50%, var(--app-background-secondary) 100%);
 
   &::part(scroll) {
     display: flex;
@@ -20,40 +20,6 @@
     background: #fff;
   }
 
-  .left-side {
-    flex: 1;
-    background: var(--ion-color-primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 40px;
-
-    .left-content {
-      text-align: center;
-      color: #fff;
-
-      .logo-img {
-        max-width: 80px;
-        max-height: 80px;
-        object-fit: contain;
-        margin-bottom: 20px;
-      }
-
-      h1 {
-        font-size: 2rem;
-        font-weight: 700;
-        margin: 0 0 12px;
-      }
-
-      p {
-        font-size: 0.95rem;
-        opacity: 0.9;
-        line-height: 1.5;
-        max-width: 280px;
-        margin: 0 auto;
-      }
-    }
-  }
 
   .right-side {
     flex: 1;
@@ -80,6 +46,21 @@
         display: block;
       }
     }
+  }
+
+  @keyframes fadeSlideIn {
+    from {
+      opacity: 0;
+      transform: translateX(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .step-animate {
+    animation: fadeSlideIn 0.3s ease-out;
   }
 
   .login-form {
@@ -136,7 +117,102 @@
       font-weight: 600;
       font-size: 1rem;
       margin-top: 4px;
+      height: var(--login-button-height, 50px);
     }
+  }
+
+  .email-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 10px 16px;
+    background: var(--app-input-background, #f7f8fa);
+    border-radius: 10px;
+
+    .change-link {
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+  }
+
+  .separator {
+    display: flex;
+    align-items: center;
+    margin: 24px 0;
+
+    &::before,
+    &::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--ion-color-light-shade, #d7d8da);
+    }
+
+    span {
+      padding: 0 16px;
+      font-size: 0.85rem;
+      color: var(--app-text-secondary);
+      text-transform: lowercase;
+    }
+  }
+
+  .code-button {
+    --padding-top: 14px;
+    --padding-bottom: 14px;
+    font-weight: 600;
+    font-size: 1rem;
+    margin-top: 0;
+    height: var(--login-button-height, 50px);
+
+    .button-spinner {
+      margin-right: 8px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  .code-sent-message {
+    display: block;
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+  }
+
+  .error-message {
+    display: block;
+    margin-bottom: 12px;
+
+    .error-text {
+      font-size: 0.75rem;
+    }
+  }
+
+  .resend-code {
+    text-align: center;
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+
+    .resend-text {
+      font-size: 0.85rem;
+    }
+
+    .link-text {
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+
+      &.disabled {
+        opacity: 0.5;
+        pointer-events: none;
+      }
+    }
+  }
+
+  .link-text {
+    cursor: pointer;
   }
 
   .register-link {
@@ -147,11 +223,12 @@
     gap: 4px;
 
     .register-text {
-      font-size: 0.85rem;
+      font-size: 0.9rem;
+      color: var(--app-text-secondary);
     }
 
     .link-text {
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       font-weight: 600;
       cursor: pointer;
     }
@@ -160,7 +237,7 @@
 
 @media (max-width: 700px) {
   .login-content {
-    --background: var(--app-background);
+
 
     .auth-card {
       flex-direction: column;
@@ -171,27 +248,6 @@
       min-height: 100%;
     }
 
-    .left-side {
-      padding: 32px 24px;
-      min-height: auto;
-
-      .left-content {
-        .logo-img {
-          max-width: 56px;
-          max-height: 56px;
-          margin-bottom: 12px;
-        }
-
-        h1 {
-          font-size: 1.5rem;
-          margin-bottom: 8px;
-        }
-
-        p {
-          font-size: 0.85rem;
-        }
-      }
-    }
 
     .right-side {
       padding: 24px;

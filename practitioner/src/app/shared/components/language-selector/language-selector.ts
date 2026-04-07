@@ -21,7 +21,7 @@ export class LanguageSelector {
   }
 
   get availableLanguages(): AppLanguage[] {
-    return this.translationService.availableLanguages;
+    return this.translationService.availableLanguages();
   }
 
   toggleDropdown(): void {

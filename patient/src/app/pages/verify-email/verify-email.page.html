@@ -1,43 +1,43 @@
-<ion-content class="verify-email-content">
-  <div class="verify-email-container">
-    <div class="verify-email-header">
-      <div class="logo">
-        <img src="assets/images/logo.svg" alt="HCW Logo" class="logo-img">
-      </div>
-      <h1 class="title">{{ 'verifyEmail.title' | translate }}</h1>
-    </div>
+<ion-content class="verify-email-content" [scrollY]="false">
+  <div class="auth-card">
+    <app-auth-branding />
+    <div class="right-side">
+      <div class="right-content">
+        <h2>{{ 'verifyEmail.title' | translate }}</h2>
 
-    @if (isLoading) {
-      <div class="status-container">
-        <ion-spinner name="crescent" color="primary"></ion-spinner>
-        <ion-text color="medium">{{ 'verifyEmail.verifying' | translate }}</ion-text>
+        @if (isLoading) {
+          <div class="status-container step-animate">
+            <ion-spinner name="crescent" color="primary"></ion-spinner>
+            <ion-text color="medium">{{ 'verifyEmail.verifying' | translate }}</ion-text>
+          </div>
+        } @else if (success) {
+          <div class="status-container success step-animate">
+            <ion-icon name="checkmark-circle-outline" color="success" class="status-icon"></ion-icon>
+            <p>{{ 'verifyEmail.success' | translate }}</p>
+            <ion-button
+              expand="block"
+              shape="round"
+              (click)="goToLogin()"
+              class="action-button">
+              {{ 'common.signIn' | translate }}
+            </ion-button>
+          </div>
+        } @else {
+          <div class="status-container error step-animate">
+            <ion-icon name="close-circle-outline" color="danger" class="status-icon"></ion-icon>
+            <ion-text color="danger">{{ errorMessage }}</ion-text>
+            <ion-button
+              expand="block"
+              shape="round"
+              (click)="goToLogin()"
+              class="action-button">
+              {{ 'verifyEmail.goToLogin' | translate }}
+            </ion-button>
+          </div>
+        }
+
+        <app-language-selector></app-language-selector>
       </div>
-    } @else if (success) {
-      <div class="status-container success">
-        <ion-icon name="checkmark-circle-outline" color="success"></ion-icon>
-        <ion-text>
-          <p>{{ 'verifyEmail.success' | translate }}</p>
-        </ion-text>
-        <ion-button
-          expand="block"
-          shape="round"
-          (click)="goToLogin()"
-          class="action-button">
-          {{ 'common.signIn' | translate }}
-        </ion-button>
-      </div>
-    } @else {
-      <div class="status-container error">
-        <ion-icon name="alert-circle-outline" color="danger"></ion-icon>
-        <ion-text color="danger">{{ errorMessage }}</ion-text>
-        <ion-button
-          expand="block"
-          shape="round"
-          (click)="goToLogin()"
-          class="action-button">
-          {{ 'verifyEmail.goToLogin' | translate }}
-        </ion-button>
-      </div>
-    }
+    </div>
   </div>
 </ion-content>

@@ -17,7 +17,10 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { ActionHandlerService } from '../../core/services/action-handler.service';
+import { ConsultationService } from '../../core/services/consultation.service';
 import { TranslationService } from '../../core/services/translation.service';
+import { LanguageSelectorComponent } from '../../shared/components/language-selector/language-selector.component';
+import { AuthBrandingComponent } from '../../shared/components/auth-branding/auth-branding.component';
 
 @Component({
   selector: 'app-verify-invite',
@@ -34,8 +37,8 @@ import { TranslationService } from '../../core/services/translation.service';
     IonIcon,
     IonText,
     IonSpinner,
-    TranslatePipe
-  ]
+    TranslatePipe,
+    LanguageSelectorComponent, AuthBrandingComponent]
 })
 export class VerifyInvitePage implements OnInit, OnDestroy {
   private t = inject(TranslationService);
@@ -57,7 +60,8 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
     private authService: AuthService,
     private navCtrl: NavController,
     private toastCtrl: ToastController,
-    private actionHandler: ActionHandlerService
+    private actionHandler: ActionHandlerService,
+    private consultationService: ConsultationService
   ) {
     this.verificationForm = this.fb.group({
       verification_code: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6)]]
@@ -65,6 +69,12 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Load config
+    this.authService.getConfig().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (config: any) => {      },
+      error: (err: any) => console.error('Failed to load config', err)
+    });
+
     this.authToken = this.route.snapshot.queryParamMap.get('auth');
     this.action = this.route.snapshot.queryParamMap.get('action');
     this.actionId = this.route.snapshot.queryParamMap.get('id');
@@ -138,7 +148,10 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
         },
         error: async (error) => {
           this.isLoading = false;
-          if (error.status === 401) {
+          if (error.status === 429) {
+            this.errorMessage = error.error?.error || this.t.instant('verifyInvite.tooManyAttempts');
+            this.requiresVerification = false;
+          } else if (error.status === 401) {
             this.errorMessage = error.error?.error || this.t.instant('verifyInvite.invalidVerificationCode');
           } else {
             this.errorMessage = this.t.instant('verifyInvite.genericError');
@@ -156,8 +169,30 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
     });
     await toast.present();
 
-    const route = this.actionHandler.getRouteForAction(this.action, this.actionId);
-    this.navCtrl.navigateRoot(route);
+    if (this.action === 'join' && this.actionId) {
+      this.consultationService
+        .getParticipantById(Number(this.actionId))
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (participant) => {
+            const consultation = participant.appointment.consultation;
+            const consultationId =
+              typeof consultation === "object"
+                ? (consultation as { id: number }).id
+                : consultation;
+            this.navCtrl.navigateRoot(
+              [`/consultation/${consultationId}/video`],
+              { queryParams: { appointmentId: participant.appointment.id } },
+            );
+          },
+          error: () => {
+            this.navCtrl.navigateRoot([`/confirm-presence/${this.actionId}`]);
+          },
+        });
+    } else {
+      const actionRoute = this.actionHandler.getRouteWithParams(this.action, this.actionId);
+      this.navCtrl.navigateRoot(actionRoute.path, { queryParams: actionRoute.queryParams });
+    }
   }
 
   resendVerificationCode(): void {

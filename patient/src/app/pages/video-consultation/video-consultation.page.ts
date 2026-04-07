@@ -13,7 +13,7 @@ import {
   AlertController,
   ToastController
 } from '@ionic/angular/standalone';
-import { Subject, interval, Subscription } from 'rxjs';
+import { Subject, interval, Subscription, firstValueFrom } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { LocalVideoTrack, LocalTrack } from 'livekit-client';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -128,6 +128,9 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     this.loadCurrentUser();
     this.setupSubscriptions();
     this.setupWebSocketSubscriptions();
+
+    // Prevent tab/window close during video call
+    window.addEventListener('beforeunload', this.handleBeforeUnload);
   }
 
   private loadCurrentUser(): void {
@@ -225,7 +228,19 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
       });
   }
 
+  private handleBeforeUnload = (event: BeforeUnloadEvent): string | undefined => {
+    if (this.phase() === 'in-call') {
+      console.log('[VideoConsultationPage] beforeunload - User is in call, showing confirmation dialog');
+      // Prevent the page from closing without confirmation
+      event.preventDefault();
+      // Modern browsers ignore custom messages, but we still need to return a value
+      return event.returnValue = '';
+    }
+    return undefined;
+  };
+
   ngOnDestroy(): void {
+    console.log('[VideoConsultationPage] ngOnDestroy called - cleaning up and disconnecting');
     this.destroy$.next();
     this.destroy$.complete();
     this.livekitService.disconnect();
@@ -233,6 +248,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     this.cleanupMediaElements();
     this.stopDurationTimer();
     this.incomingCallService.clearActiveCall();
+    window.removeEventListener('beforeunload', this.handleBeforeUnload);
   }
 
   private setupSubscriptions(): void {
@@ -325,8 +341,18 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
       }
 
       await this.livekitService.connect(config);
-      await this.livekitService.enableCamera(true);
-      await this.livekitService.enableMicrophone(true);
+
+      // Enable camera/microphone separately - don't fail the whole join if camera is unavailable
+      try {
+        await this.livekitService.enableCamera(true);
+      } catch {
+        // Camera not available, continue without it
+      }
+      try {
+        await this.livekitService.enableMicrophone(true);
+      } catch {
+        // Microphone not available, continue without it
+      }
 
       this.phase.set('in-call');
       if (this.appointmentId) {
@@ -385,8 +411,18 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
       }
 
       await this.livekitService.connect(config, undefined, deviceIds);
-      await this.livekitService.enableCamera(settings.cameraEnabled);
-      await this.livekitService.enableMicrophone(settings.microphoneEnabled);
+
+      // Enable camera/microphone separately - don't fail the whole join if camera is unavailable
+      try {
+        await this.livekitService.enableCamera(settings.cameraEnabled);
+      } catch {
+        // Camera not available, continue without it
+      }
+      try {
+        await this.livekitService.enableMicrophone(settings.microphoneEnabled);
+      } catch {
+        // Microphone not available, continue without it
+      }
 
       if (settings.speakerDeviceId) {
         await this.livekitService.switchSpeaker(settings.speakerDeviceId);
@@ -615,13 +651,26 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
   }
 
   private async performEndCall(): Promise<void> {
+    this.phase.set('lobby'); // Prevent the guard from triggering on navigation
+
+    // Notifier le backend du départ
+    if (this.appointmentId) {
+      try {
+        await firstValueFrom(
+          this.consultationService.leaveAppointment(this.appointmentId)
+        );
+      } catch (error) {
+        console.error('Failed to notify leave:', error);
+        // Continuer la déconnexion même en cas d'erreur
+      }
+    }
+
     await this.livekitService.disconnect();
     this.stopDurationTimer();
     this.incomingCallService.clearActiveCall();
 
-    setTimeout(() => {
-      this.navCtrl.back();
-    }, 1500);
+    // Navigate to home page
+    this.navCtrl.navigateRoot('/home');
   }
 
   openChat(): void {

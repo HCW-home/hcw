@@ -27,6 +27,7 @@ user_router.register(
 urlpatterns = [
     path("api/", include(router.urls)),
     path("api/auth/openid/", views.OpenIDView.as_view(), name="openid_login"),
+    path('api/auth/send-verification-code/', views.SendVerificationCodeView.as_view()),
     path("api/config/", views.AppConfigView.as_view(), name="app_config"),
     path(
         "api/user/notifications/",
@@ -42,6 +43,16 @@ urlpatterns = [
         "api/user/notifications/<int:notification_id>/read/",
         views.UserNotificationReadView.as_view(),
         name="user_notification_read",
+    ),
+    path(
+        "api/user/webpush/subscribe/",
+        views.WebPushSubscribeView.as_view(),
+        name="webpush_subscribe",
+    ),
+    path(
+        "api/user/webpush/unsubscribe/",
+        views.WebPushUnsubscribeView.as_view(),
+        name="webpush_unsubscribe",
     ),
     path("api/user/testrtc/", views.TestRTCView.as_view(), name="user_testrtc"),
     path(

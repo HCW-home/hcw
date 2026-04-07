@@ -38,6 +38,20 @@
     }
 
     <div class="select-display">
+      @if (display && !multiSelect() && selectedOption && (selectedOption.image || selectedOption.initials)) {
+        <div class="selected-avatar" [class.current-user]="selectedOption.isCurrentUser">
+          @if (selectedOption.image) {
+            <img [src]="selectedOption.image" alt="" />
+          } @else if (selectedOption.isCurrentUser) {
+            <app-svg
+              src="user"
+              [svgStyle]="{'width.px': 14, 'height.px': 14, 'color': 'white'}">
+            </app-svg>
+          } @else {
+            <span>{{ selectedOption.initials }}</span>
+          }
+        </div>
+      }
       <input
         [id]="'select-search' + name()"
         type="text"
@@ -77,26 +91,99 @@
     </div>
 
     @if (open) {
-      <ul class="options">
-        @for (opt of filteredOptions; track opt.value; let i = $index) {
-          <li
-            tabindex="0"
-            role="listitem"
-            class="option"
-            [class.selected]="isSelected(opt)"
-            [class.disabled]="opt.disabled"
-            [class.new-option]="opt.isNew"
-            [class.hover]="hoverIndex === i"
-            (click)="onOptionClick(opt); $event.stopPropagation()"
-            (mouseenter)="hoverIndex = i"
-            (mouseleave)="hoverIndex = null"
-            (keydown.enter)="onOptionClick(opt); $event.stopPropagation()">
-            <app-typography
-              class="select-value"
-              [variant]="TypographyTypeEnum['body-medium']">
-              {{ opt.label }}
-            </app-typography>
+      <ul class="options" (scroll)="onOptionsScroll($event)">
+        @if (asyncSearch() && asyncLoading() && filteredOptions.length === 0) {
+          <li class="option-loading">
+            <app-loader></app-loader>
           </li>
+        } @else {
+          @for (opt of filteredOptions; track opt.value; let i = $index) {
+            <li
+              tabindex="0"
+              role="listitem"
+              class="option"
+              [class.selected]="isSelected(opt)"
+              [class.disabled]="opt.disabled"
+              [class.new-option]="opt.isNew"
+              [class.hover]="hoverIndex === i"
+              [class.rich]="opt.image || opt.initials || opt.secondaryLabel"
+              (click)="onOptionClick(opt); $event.stopPropagation()"
+              (mouseenter)="hoverIndex = i"
+              (mouseleave)="hoverIndex = null"
+              (keydown.enter)="onOptionClick(opt); $event.stopPropagation()">
+              @if (opt.isNew) {
+                <div class="create-option-content">
+                  <app-svg
+                    src="plus"
+                    [svgStyle]="{ 'width.px': 18, 'height.px': 18, 'fill': 'var(--blue-600)' }">
+                  </app-svg>
+                  <div class="create-option-text">
+                    <app-typography
+                      class="create-option-label"
+                      [variant]="TypographyTypeEnum['body-medium']"
+                      color="var(--slate-800)">
+                      {{ opt.label }}
+                    </app-typography>
+                  </div>
+                </div>
+              } @else {
+                @if (opt.image || opt.initials) {
+                  <div class="option-avatar" [class.current-user]="opt.isCurrentUser">
+                    @if (opt.image) {
+                      <img [src]="opt.image" alt="" />
+                    } @else if (opt.isCurrentUser) {
+                      <app-svg
+                        src="user"
+                        [svgStyle]="{'width.px': 14, 'height.px': 14, 'color': 'white'}">
+                      </app-svg>
+                    } @else {
+                      <span>{{ opt.initials }}</span>
+                    }
+                  </div>
+                }
+                <div class="option-content">
+                  <app-typography
+                    class="select-value"
+                    [variant]="TypographyTypeEnum['body-medium']">
+                    {{ opt.label }}
+                  </app-typography>
+                  @if (opt.secondaryLabel) {
+                    <div class="option-secondary-row">
+                      <app-typography
+                        class="select-secondary"
+                        [variant]="TypographyTypeEnum['body-xs-regular']"
+                        color="var(--slate-500)">
+                        {{ opt.secondaryLabel }}
+                      </app-typography>
+                      @if (opt.isPractitioner) {
+                        <span class="practitioner-tag">
+                          <app-svg
+                            src="stethoscope"
+                            [svgStyle]="{'width.px': 12, 'height.px': 12, 'color': 'var(--primary-500)'}">
+                          </app-svg>
+                          <span>praticien</span>
+                        </span>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </li>
+          }
+          @if (asyncSearch() && filteredOptions.length === 0 && !asyncLoading()) {
+            <li class="option-empty">
+              <app-typography
+                [variant]="TypographyTypeEnum['body-s-regular']"
+                color="var(--slate-400)">
+                No results
+              </app-typography>
+            </li>
+          }
+          @if (asyncLoadingMore()) {
+            <li class="option-loading">
+              <app-loader></app-loader>
+            </li>
+          }
         }
       </ul>
     }

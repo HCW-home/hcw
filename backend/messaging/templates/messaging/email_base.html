@@ -42,9 +42,14 @@
         }
 
         .email-header {
-            background: #0891b2;
-            padding: 36px 32px;
+            background: {{ organisation.primary_color_patient|default:"#0891b2" }};
+            padding: {% if has_logo %}16px 32px{% else %}36px 32px{% endif %};
             text-align: center;
+        }
+
+        .email-header img {
+            max-height: 80px;
+            max-width: 280px;
         }
 
         .email-header h1 {
@@ -53,14 +58,6 @@
             font-size: 28px;
             font-weight: 700;
             letter-spacing: 2px;
-        }
-
-        .email-header .header-subtitle {
-            margin: 6px 0 0 0;
-            color: rgba(255, 255, 255, 0.85);
-            font-size: 14px;
-            font-weight: 400;
-            letter-spacing: 0.5px;
         }
 
         .email-body {
@@ -80,14 +77,12 @@
         }
 
         .email-body strong {
-            color: #0e7490;
+            color: {{ organisation.primary_color_patient|default:"#0e7490" }};
             font-weight: 600;
         }
 
         .email-body a {
-            color: #0891b2;
-            text-decoration: underline;
-            text-decoration-color: #a5f3fc;
+            color: {{ organisation.primary_color_patient|default:"#0891b2" }};
         }
 
         .btn-container {
@@ -98,7 +93,7 @@
         .btn {
             display: inline-block;
             padding: 14px 36px;
-            background-color: #0891b2;
+            background-color: {{ organisation.primary_color_patient|default:"#0891b2" }};
             color: #ffffff !important;
             text-decoration: none;
             border-radius: 10px;
@@ -127,12 +122,8 @@
         }
 
         .email-footer a {
-            color: #0891b2;
+            color: {{ organisation.primary_color_patient|default:"#0891b2" }};
             text-decoration: none;
-        }
-
-        .email-footer .footer-links a {
-            margin: 0 8px;
         }
 
         @media only screen and (max-width: 640px) {
@@ -175,7 +166,11 @@
     <div class="email-wrapper">
         <div class="email-container">
             <div class="email-header">
-                <h1>HCW</h1>
+                {% if has_logo %}
+                <img src="cid:logo" alt="{{ branding }}">
+                {% elif branding %}
+                <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;">{{ branding }}</h1>
+                {% endif %}
             </div>
 
             <div class="email-body">
@@ -189,13 +184,15 @@
 
             <div class="email-divider"></div>
 
+            {% if organisation and organisation.footer_patient %}
             <div class="email-footer">
-                <p>&copy; 2026 HCW. All rights reserved.</p>
-                <p class="footer-links">
-                    <a href="#">Privacy Policy</a> &middot;
-                    <a href="#">Contact Us</a>
-                </p>
+                {{ organisation.footer_patient|safe }}
             </div>
+            {% else %}
+            <div class="email-footer">
+                <p>{{ organisation.name }}</p>
+            </div>
+            {% endif %}
         </div>
     </div>
 </body>

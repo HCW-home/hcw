@@ -10,11 +10,14 @@ export interface ITerm {
 export interface IOrganisation {
   id: number;
   name: string;
-  logo_large?: string;
-  logo_small?: string;
-  primary_color?: string;
+  logo_color?: string;
+  logo_white?: string;
+  favicon?: string;
+  primary_color_patient?: string;
+  primary_color_practitioner?: string;
   default_term?: number;
-  footer?: string | null;
+  footer_patient?: string | null;
+  footer_practitioner?: string | null;
   location_latitude?: number;
   location_longitude?: number;
   street?: string;
@@ -63,6 +66,9 @@ export interface IUser {
   accepted_term?: number | null;
   is_online?: boolean;
   temporary?: boolean;
+  is_practitioner?: boolean;
+  is_first_login?: boolean;
+  custom_fields?: import('../../../core/models/consultation').CustomFieldValue[];
 }
 
 export interface IUserUpdateRequest {
@@ -73,4 +79,5 @@ export interface IUserUpdateRequest {
   preferred_language?: number | null;
   timezone?: string;
   language_ids?: number[];
+  is_first_login?: boolean;
 }

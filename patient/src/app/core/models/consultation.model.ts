@@ -1,3 +1,21 @@
+export interface CustomField {
+  id: number;
+  name: string;
+  field_type: 'short_text' | 'long_text' | 'date' | 'number' | 'list';
+  target_model: string;
+  required: boolean;
+  options: string[] | null;
+  ordering: number;
+}
+
+export interface CustomFieldValue {
+  field: number;
+  field_name: string;
+  field_type: string;
+  value: string | null;
+  options: string[] | null;
+}
+
 export interface Consultation {
   id: number;
   title?: string;
@@ -16,7 +34,10 @@ export interface Consultation {
   notes?: string;
   prescriptions?: Prescription[];
   next_appointment?: Appointment;
+  appointments?: Appointment[];
   messages?: ConsultationMessage[];
+  unread_count?: number;
+  last_read_at?: string;
 }
 
 export interface Queue {
@@ -36,6 +57,7 @@ export interface Reason {
   speciality?: Speciality | number;
   duration?: number;
   is_active?: boolean;
+  assignment_method?: string;
 }
 
 export interface Prescription {
@@ -61,6 +83,7 @@ export interface Appointment {
   id: number;
   consultation: number;
   consultation_id?: number;
+  title?: string | null;
   type: AppointmentType;
   status: AppointmentStatus;
   scheduled_at: string;
@@ -123,6 +146,7 @@ export interface ConsultationRequest {
   appointment?: Appointment;
   consultation?: Consultation;
   created_at?: string;
+  custom_fields?: CustomFieldValue[];
 }
 
 export interface User {
@@ -133,6 +157,7 @@ export interface User {
   first_name: string;
   last_name: string;
   picture?: string;
+  specialities?: Speciality[];
 }
 
 export interface Slot {
@@ -151,9 +176,11 @@ export interface CreateRequestPayload {
   expected_at: string;
   expected_with_id?: number;
   comment?: string;
+  custom_fields?: { field: number; value: string | null }[];
 }
 
 export interface IDashboardResponse {
+  has_reasons: boolean;
   next_appointment: Appointment | null;
   requests: ConsultationRequest[];
   consultations: Consultation[];

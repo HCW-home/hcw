@@ -1,0 +1,69 @@
+:host {
+  display: contents;
+}
+
+.left-side {
+  flex: 1;
+  background: linear-gradient(135deg, var(--primary-700), var(--primary-500));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+
+  .left-content {
+    text-align: center;
+    color: var(--White);
+
+    .logo-img {
+      max-height: 120px;
+      max-width: 100%;
+      object-fit: contain;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 0 0 12px;
+    }
+
+    .login-text {
+      font-size: 0.95rem;
+      opacity: 0.85;
+      line-height: 1.5;
+      max-width: 320px;
+      margin: 0 auto;
+    }
+
+    .error-text {
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 600;
+      line-height: 1.5;
+      max-width: 280px;
+      margin: 0 auto;
+      background: rgba(255, 0, 0, 0.5);
+      padding: 8px 16px;
+      border-radius: 8px;
+    }
+  }
+}
+
+@media (max-width: 700px) {
+  .left-side {
+    padding: 32px 24px;
+    min-height: auto;
+
+    .left-content {
+      .logo-img {
+        max-height: 72px;
+        max-width: 100%;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+        margin-bottom: 8px;
+      }
+    }
+  }
+}

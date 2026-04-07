@@ -1,8 +1,9 @@
 import io
 import logging
 import traceback
+from datetime import timedelta
+from core.celery import app
 
-from celery import shared_task
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
@@ -17,13 +18,12 @@ from .models import (
     TemplateValidation,
     TemplateValidationStatus,
 )
-from datetime import timedelta
 
 # Set up logging
 logger = logging.getLogger(__name__)
 
 
-@shared_task(bind=True)
+@app.task(bind=True)
 def send_message(self, message_id):
     """
     Celery task to send message by trying providers in priority order
@@ -67,7 +67,7 @@ def send_message(self, message_id):
             return
 
         except Exception as e:
-            error_msg = f"Exception with provider {messaging_provider.name}: {str(e)}"
+            error_msg = f"Exception with provider {messaging_provider.name}: {str(e)}\n"
             message.task_logs += error_msg
             message.save()
             logger.error(error_msg)
@@ -75,9 +75,7 @@ def send_message(self, message_id):
             continue
 
     # All providers failed
-    message.task_logs = (
-        f"All providers failed for communication method: {message.communication_method}"
-    )
+    message.task_logs += f"All providers failed for communication method: {message.communication_method}\n"
     message.status = MessageStatus.failed
     message.save()
 
@@ -106,7 +104,7 @@ def send_message(self, message_id):
 #         return self.log_capture.getvalue()
 
 
-@shared_task
+@app.task
 def cleanup_old_message_logs(days=30):
     """
     Periodic task to clean up old message logs to prevent database bloat
@@ -124,3 +122,52 @@ def cleanup_old_message_logs(days=30):
 
     logger.info(f"Cleaned up logs from {updated_count} old messages")
     return {"cleaned_count": updated_count}
+
+
+@app.task
+def template_messaging_provider_task(self, template_validation_id, action):
+    """
+    Celery task to submit or check a template validation with the messaging provider.
+
+    Args:
+        template_validation_id: ID of the TemplateValidation record
+        action: Provider method to call ('validate_template' or 'check_template_validation')
+    """
+    try:
+        validation = TemplateValidation.objects.select_related(
+            "messaging_provider"
+        ).get(pk=template_validation_id)
+    except TemplateValidation.DoesNotExist:
+        logger.error(f"TemplateValidation {template_validation_id} not found")
+        return
+
+    validation.celery_task_id = self.request.id
+    validation.save(update_fields=["celery_task_id"])
+
+    provider_instance = validation.messaging_provider.instance
+    method = getattr(provider_instance, action, None)
+
+    if not method:
+        validation.task_logs += f"Provider {validation.messaging_provider.name} does not support '{action}'\n"
+        validation.status = TemplateValidationStatus.failed
+        validation.save(update_fields=["task_logs", "status"])
+        return
+
+    try:
+        method(validation)
+
+        # Store content hash after successful validation submission
+        if action == "validate_template":
+            validation.content_hash = validation.compute_content_hash()
+            validation.save(update_fields=["content_hash"])
+
+        validation.task_logs += f"Action '{action}' completed successfully\n"
+        validation.save(update_fields=["task_logs"])
+
+    except Exception as e:
+        validation.task_logs += f"Action '{action}' failed: {e}\n"
+        validation.status = TemplateValidationStatus.failed
+        validation.save(update_fields=["task_logs", "status"])
+        logger.exception(
+            f"template_messaging_provider_task failed for validation {template_validation_id}"
+        )

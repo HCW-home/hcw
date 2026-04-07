@@ -26,13 +26,15 @@ class OrganisationFactory(DjangoModelFactory):
         model = Organisation
 
     name = factory.Faker('company')
-    primary_color = factory.Faker('hex_color')
+    primary_color_patient = factory.Faker('hex_color')
+    primary_color_practitioner = factory.Faker('hex_color')
     default_term = factory.SubFactory(TermFactory)
     street = factory.Faker('street_address')
     city = factory.Faker('city')
     postal_code = factory.Faker('postcode')
     country = factory.Faker('country')
-    footer = factory.Faker('text', max_nb_chars=200)
+    footer_patient = factory.Faker('text', max_nb_chars=200)
+    footer_practitioner = factory.Faker('text', max_nb_chars=200)
 
 
 class LanguageFactory(DjangoModelFactory):
@@ -72,7 +74,6 @@ class UserFactory(DjangoModelFactory):
     is_staff = False
     is_superuser = False
     encrypted = False
-    is_online = False
     app_preferences = factory.LazyFunction(lambda: {"notifications": True, "theme": "light"})
     preferred_language = 'en'
     communication_method = 'email'

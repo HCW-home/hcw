@@ -31,10 +31,12 @@ export class WebSocketService {
   public messages$: Observable<UserIncomingEvent> =
     this.messageSubject.asObservable();
 
-
   connect(config: WebSocketConfig): void {
-    if (this.ws &&
-        (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
+    if (
+      this.ws &&
+      (this.ws.readyState === WebSocket.OPEN ||
+        this.ws.readyState === WebSocket.CONNECTING)
+    ) {
       return;
     }
 
@@ -79,13 +81,16 @@ export class WebSocketService {
     }
   }
 
-  on<T extends UserIncomingEvent['type']>(
+  on<T extends string>(
     type: T
-  ): Observable<Extract<UserIncomingEvent, { type: T }>> {
+  ): Observable<UserIncomingEvent> {
     return this.messages$.pipe(
       filter(
-        (msg): msg is Extract<UserIncomingEvent, { type: T }> =>
-          msg.type === type || (msg as unknown as { event?: string }).event === type
+        (msg): msg is UserIncomingEvent => {
+          const msgType = (msg as { type?: string }).type;
+          const msgEvent = (msg as { event?: string }).event;
+          return msgType === type || msgEvent === type;
+        }
       )
     );
   }
@@ -136,9 +141,16 @@ export class WebSocketService {
 
     this.ws.onmessage = (event: MessageEvent) => {
       try {
-        const message: UserIncomingEvent = JSON.parse(
-          event.data
-        ) as UserIncomingEvent;
+        const raw = JSON.parse(event.data) as { type: string };
+
+        // Reply to server-side heartbeat pings immediately
+        if (raw.type === 'ping') {
+          this.ws?.send(JSON.stringify({ type: 'pong' }));
+          return;
+        }
+
+
+        const message = raw as UserIncomingEvent;
         console.log('[WS] Received message:', message);
         this.messageSubject.next(message);
       } catch (error) {
@@ -167,7 +179,8 @@ export class WebSocketService {
   private attemptReconnect(): void {
     if (!this.config) return;
 
-    const maxAttempts = this.config.reconnectAttempts ?? this.maxReconnectAttempts;
+    const maxAttempts =
+      this.config.reconnectAttempts ?? this.maxReconnectAttempts;
 
     if (this.reconnectAttempts >= maxAttempts) {
       console.error('Max reconnection attempts reached');
@@ -182,10 +195,25 @@ export class WebSocketService {
       `Reconnecting in ${interval}ms (attempt ${this.reconnectAttempts}/${maxAttempts})`
     );
 
-    this.reconnectTimer = setTimeout(() => {
-      if (this.config) {
-        this.connect(this.config);
+    this.reconnectTimer = setTimeout(async () => {
+      if (!this.config) return;
+
+      if (this.config.urlProvider) {
+        const freshUrl = await this.config.urlProvider();
+        if (freshUrl) {
+          this.config = { ...this.config, url: freshUrl };
+          // Reset reconnect attempts when we get a fresh URL (successful token refresh)
+          // This allows infinite reconnection attempts as long as token refresh works
+          if (freshUrl !== this.config.url) {
+            this.reconnectAttempts = 0;
+          }
+        } else {
+          this.stateSubject.next(WebSocketState.FAILED);
+          return;
+        }
       }
+
+      this.connect(this.config);
     }, interval);
   }
 

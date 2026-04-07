@@ -1,9 +1,10 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, firstValueFrom, from, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, Observable, firstValueFrom, from, switchMap, tap, shareReplay, catchError, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { User, LoginRequest, LoginResponse, RegisterRequest, MagicLinkRequest, MagicLinkVerify, TokenAuthRequest, TokenAuthResponse } from '../models/user.model';
 import { StorageService } from './storage.service';
+import { TranslationService } from './translation.service';
 
 @Injectable({
   providedIn: 'root'
@@ -15,6 +16,7 @@ export class AuthService {
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
   public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
   public authReady: Promise<void>;
+  private translationService = inject(TranslationService);
 
   constructor(
     private http: HttpClient,
@@ -45,9 +47,7 @@ export class AuthService {
             await this.storage.set('access_token', response.access);
             await this.storage.set('refresh_token', response.refresh);
             this.isAuthenticatedSubject.next(true);
-            if (response.user) {
-              this.currentUserSubject.next(response.user);
-            }
+            await firstValueFrom(this.getCurrentUser());
           }
           return response;
         })
@@ -58,8 +58,35 @@ export class AuthService {
     return this.http.post(`${this.apiUrl}/auth/registration/`, data);
   }
 
+  private configCache$: Observable<any> | null = null;
+  private configData: any = null;
+
   getConfig(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/config/`);
+    if (!this.configCache$) {
+      this.configCache$ = this.http.get(`${this.apiUrl}/config/`).pipe(
+        tap(config => this.configData = config),
+        catchError(() => of(null)),
+        shareReplay(1)
+      );
+    }
+    return this.configCache$;
+  }
+
+  getConfigSnapshot(): any {
+    return this.configData;
+  }
+
+  invalidateConfigCache(): void {
+    this.configCache$ = null;
+    this.configData = null;
+  }
+
+  /**
+   * Preload config before app renders.
+   * Called via APP_INITIALIZER.
+   */
+  initConfig(): Promise<any> {
+    return firstValueFrom(this.getConfig());
   }
 
   verifyEmail(token: string): Observable<any> {
@@ -79,6 +106,12 @@ export class AuthService {
     return this.http.post<{ detail: string }>(`${this.apiUrl}/auth/password/reset/confirm/`, data);
   }
 
+  sendVerificationCode(email: string): Observable<{ detail: string; auth_token: string }> {
+    return this.http.post<{ detail: string; auth_token: string }>(
+      `${this.apiUrl}/auth/send-verification-code/`, { email }
+    );
+  }
+
   loginWithToken(data: TokenAuthRequest): Observable<TokenAuthResponse> {
     return this.http.post<TokenAuthResponse>(`${this.apiUrl}/auth/token/`, data)
       .pipe(
@@ -87,6 +120,7 @@ export class AuthService {
             await this.storage.set('access_token', response.access);
             await this.storage.set('refresh_token', response.refresh);
             this.isAuthenticatedSubject.next(true);
+            await firstValueFrom(this.getCurrentUser());
           }
           return response;
         })
@@ -96,7 +130,22 @@ export class AuthService {
   getCurrentUser(): Observable<User> {
     return this.http.get<User>(`${this.apiUrl}/auth/user/`)
       .pipe(
-        tap(user => this.currentUserSubject.next(user))
+        tap(user => {
+          this.currentUserSubject.next(user);
+          if (user.preferred_language) {
+            this.translationService.setLanguage(user.preferred_language);
+          }
+          if (user.is_first_login) {
+            const updates: Partial<User> = { is_first_login: false };
+            if (!user.preferred_language) {
+              updates.preferred_language = this.translationService.currentLanguage();
+            }
+            if (!user.timezone || user.timezone === 'UTC') {
+              updates.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            }
+            this.updateProfile(updates).subscribe();
+          }
+        })
       );
   }
 
@@ -125,8 +174,19 @@ export class AuthService {
   }
 
   async logout() {
-    await this.storage.remove('access_token');
-    await this.storage.remove('refresh_token');
+    // Call backend to blacklist the refresh token
+    const refreshToken = await this.storage.get('refresh_token');
+    if (refreshToken) {
+      try {
+        await firstValueFrom(
+          this.http.post(`${this.apiUrl}/auth/logout/`, { refresh: refreshToken })
+        );
+      } catch {
+        // Ignore errors, we're logging out anyway
+      }
+    }
+
+    await this.storage.clear();
     this.currentUserSubject.next(null);
     this.isAuthenticatedSubject.next(false);
   }
@@ -135,15 +195,24 @@ export class AuthService {
     return await this.storage.get('access_token');
   }
 
-  async refreshToken(): Promise<Observable<any>> {
-    const refresh = await this.storage.get('refresh_token');
-    return this.http.post(`${this.apiUrl}/auth/token/refresh/`, { refresh })
-      .pipe(
-        tap(async (response: any) => {
-          if (response.access) {
-            await this.storage.set('access_token', response.access);
-          }
-        })
-      );
+  async getRefreshToken(): Promise<string | null> {
+    return await this.storage.get('refresh_token');
+  }
+
+  refreshToken(): Observable<{ access: string }> {
+    return from(this.storage.get('refresh_token')).pipe(
+      switchMap(refresh => {
+        if (!refresh) {
+          throw new Error('No refresh token available');
+        }
+        return this.http.post<{ access: string }>(`${this.apiUrl}/auth/token/refresh/`, { refresh });
+      }),
+      switchMap(async (response) => {
+        if (response.access) {
+          await this.storage.set('access_token', response.access);
+        }
+        return response;
+      })
+    );
   }
 }

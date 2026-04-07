@@ -75,9 +75,12 @@ export class MessageListComponent implements OnInit, OnChanges, OnDestroy, After
   private t = inject(TranslationService);
 
   @Input() messages: Message[] = [];
+  @Input() headerTitle = '';
   @Input() isConnected = false;
   @Input() isLoadingMore = false;
   @Input() hasMore = true;
+  @Input() showHeader = true;
+  @Input() unreadSeparatorTimestamp: string | null = null;
   @Output() sendMessage = new EventEmitter<SendMessageData>();
   @Output() editMessage = new EventEmitter<EditMessageData>();
   @Output() deleteMessage = new EventEmitter<DeleteMessageData>();
@@ -113,13 +116,18 @@ export class MessageListComponent implements OnInit, OnChanges, OnDestroy, After
     if (changes['messages']) {
       this.loadImageAttachments();
       const currentLength = this.messages.length;
-      const wasLoadingMore = this.previousMessagesLength > 0 && currentLength > this.previousMessagesLength;
+      const previousLength = this.previousMessagesLength;
 
-      if (this.isInitialLoad || !wasLoadingMore) {
+      // Check if we're loading older messages (they appear at the beginning)
+      // vs new messages (they appear at the end)
+      const isLoadingOlder = this.isLoadingMore && previousLength > 0 && currentLength > previousLength;
+
+      // Always scroll to bottom for initial load or when new messages arrive
+      if (this.isInitialLoad || !isLoadingOlder) {
         this.shouldScrollToBottom = true;
       }
 
-      if (wasLoadingMore && this.messagesContainer?.nativeElement) {
+      if (isLoadingOlder && this.messagesContainer?.nativeElement) {
         this.previousScrollHeight = this.messagesContainer.nativeElement.scrollHeight;
       }
 
@@ -220,17 +228,70 @@ export class MessageListComponent implements OnInit, OnChanges, OnDestroy, After
 
   formatTime(timestamp: string): string {
     const date = new Date(timestamp);
-    const now = new Date();
-    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
 
-    if (diffDays === 0) {
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } else if (diffDays === 1) {
+  private firstUnreadIndex: number | null = null;
+  private lastComputedSeparatorTimestamp: string | null = null;
+  private lastComputedMessagesLength = 0;
+
+  private computeFirstUnreadIndex(): void {
+    if (this.unreadSeparatorTimestamp === this.lastComputedSeparatorTimestamp
+        && this.messages.length === this.lastComputedMessagesLength) {
+      return;
+    }
+    this.lastComputedSeparatorTimestamp = this.unreadSeparatorTimestamp;
+    this.lastComputedMessagesLength = this.messages.length;
+    this.firstUnreadIndex = null;
+
+    if (!this.unreadSeparatorTimestamp) return;
+    const separatorTime = new Date(this.unreadSeparatorTimestamp).getTime();
+    for (let i = 0; i < this.messages.length; i++) {
+      const msg = this.messages[i];
+      if (!msg.isCurrentUser && !msg.isSystem && new Date(msg.timestamp).getTime() > separatorTime) {
+        this.firstUnreadIndex = i;
+        return;
+      }
+    }
+  }
+
+  shouldShowUnreadSeparator(index: number): boolean {
+    this.computeFirstUnreadIndex();
+    return this.firstUnreadIndex === index;
+  }
+
+  shouldShowDateSeparator(index: number): boolean {
+    if (index === 0) return true;
+
+    const currentMessage = this.messages[index];
+    const previousMessage = this.messages[index - 1];
+
+    const currentDate = new Date(currentMessage.timestamp);
+    const previousDate = new Date(previousMessage.timestamp);
+
+    return currentDate.toDateString() !== previousDate.toDateString();
+  }
+
+  formatDateSeparator(timestamp: string): string {
+    const messageDate = new Date(timestamp);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const messageDateStr = messageDate.toDateString();
+    const todayStr = today.toDateString();
+    const yesterdayStr = yesterday.toDateString();
+
+    if (messageDateStr === todayStr) {
+      return this.t.instant('messageList.today');
+    } else if (messageDateStr === yesterdayStr) {
       return this.t.instant('messageList.yesterday');
-    } else if (diffDays < 7) {
-      return date.toLocaleDateString([], { weekday: 'short' });
     } else {
-      return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+      return messageDate.toLocaleDateString([], {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
     }
   }
 

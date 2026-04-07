@@ -1,11 +1,15 @@
 <div class="message-list-container">
-  <div class="message-list-header">
-    <span class="header-title">{{ 'messageList.messages' | translate }}</span>
-    <span class="connection-status" [class.connected]="isConnected" [class.disconnected]="!isConnected">
-      <ion-icon [name]="isConnected ? 'wifi-outline' : 'cloud-offline-outline'"></ion-icon>
-      {{ isConnected ? ('messageList.connected' | translate) : ('messageList.disconnected' | translate) }}
-    </span>
-  </div>
+  @if (showHeader) {
+    <div class="message-list-header">
+      @if (headerTitle) {
+        <span class="header-title">{{ headerTitle }}</span>
+      }
+      <span class="connection-status" [class.connected]="isConnected" [class.disconnected]="!isConnected">
+        <ion-icon [name]="isConnected ? 'wifi-outline' : 'cloud-offline-outline'"></ion-icon>
+        {{ isConnected ? ('messageList.connected' | translate) : ('messageList.disconnected' | translate) }}
+      </span>
+    </div>
+  }
 
   <div class="message-list-body" #messagesContainer (scroll)="onScroll()">
     @if (isLoadingMore) {
@@ -20,36 +24,22 @@
         <span>{{ 'messageList.noMessages' | translate }}</span>
       </div>
     } @else {
-      @for (message of messages; track message.id) {
+      @for (message of messages; track message.id; let i = $index) {
+        @if (shouldShowDateSeparator(i)) {
+          <div class="date-separator">
+            <span class="date-separator-text">{{ formatDateSeparator(message.timestamp) }}</span>
+          </div>
+        }
+        @if (shouldShowUnreadSeparator(i)) {
+          <div class="unread-separator">
+            <span class="unread-separator-text">{{ 'messageList.unreadMessages' | translate }}</span>
+          </div>
+        }
         @if (message.isSystem) {
-          <div class="message-item system-message">
-            <div class="message-meta">
-              <span class="message-time">{{ formatTime(message.timestamp) }}</span>
-            </div>
-            <div class="message-content">
-              @if (message.message) {
-                <p class="message-text">{{ message.message }}</p>
-              }
-              @if (message.attachment) {
-                @if (isImageAttachment(message.attachment)) {
-                  @if (getImageUrl(message.id)) {
-                    <div class="message-image-attachment" (click)="openImageViewer(message)">
-                      <img [src]="getImageUrl(message.id)" [alt]="message.attachment.file_name" class="attachment-image-preview">
-                    </div>
-                  } @else {
-                    <div class="message-attachment loading">
-                      <ion-spinner name="crescent"></ion-spinner>
-                      <span class="attachment-name">{{ 'messageList.loadingImage' | translate }}</span>
-                    </div>
-                  }
-                } @else {
-                  <div class="message-attachment">
-                    <ion-icon [name]="getAttachmentIcon(message.attachment)"></ion-icon>
-                    <span class="attachment-name">{{ message.attachment.file_name }}</span>
-                  </div>
-                }
-              }
-            </div>
+          <div class="system-message">
+            @if (message.message) {
+              <p class="system-message-text">{{ formatTime(message.timestamp) }} - {{ message.message }}</p>
+            }
           </div>
         } @else {
         <div class="message-item" [class.current-user]="message.isCurrentUser" [class.other-user]="!message.isCurrentUser">
@@ -161,7 +151,7 @@
       class="send-btn"
       [disabled]="(!newMessage.trim() && !selectedFile) || !isConnected"
       (click)="onSendMessage()">
-      <ion-icon slot="icon-only" name="send-outline"></ion-icon>
+      <ion-icon slot="icon-only" name="arrow-up"></ion-icon>
     </ion-button>
   </div>
 </div>

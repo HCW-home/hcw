@@ -8,7 +8,6 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
-  FormArray,
   FormBuilder,
   FormGroup,
   FormsModule,
@@ -16,8 +15,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { HttpErrorResponse } from '@angular/common/http';
-import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
+import { Observable, Subject, takeUntil, debounceTime, distinctUntilChanged, map } from 'rxjs';
 
 import { ConsultationService } from '../../../../core/services/consultation.service';
 import { ToasterService } from '../../../../core/services/toaster.service';
@@ -25,53 +23,28 @@ import { ValidationService } from '../../../../core/services/validation.service'
 import {
   Appointment,
   AppointmentType,
-  AppointmentStatus,
   Consultation,
   CreateConsultationRequest,
   CreateAppointmentRequest,
-  ITemporaryParticipant,
+  CustomField,
   Queue,
 } from '../../../../core/models/consultation';
 
-interface IAppointmentFormValue {
-  id: number | null;
-  date: string;
-  time: string;
-  type: AppointmentType;
-  dont_invite_beneficiary: boolean;
-  dont_invite_practitioner: boolean;
-  dont_invite_me: boolean;
-  participants: IParticipantFormValue[];
-}
-
-interface IParticipantFormValue {
-  id: number | null;
-  user_id: number | null;
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone: string;
-  timezone: string;
-  communication_method: string;
-  preferred_language: string;
-  is_existing_user: boolean;
-  contact_type: 'email' | 'phone';
-}
-
 import { Page } from '../../../../core/components/page/page';
 import { Loader } from '../../../../shared/components/loader/loader';
-import { UserSearchSelect } from '../../../../shared/components/user-search-select/user-search-select';
-import { ParticipantItem } from '../../../../shared/components/participant-item/participant-item';
 import { IUser } from '../../models/user';
 import { UserService } from '../../../../core/services/user.service';
 import { CommunicationMethodEnum } from '../../constants/user';
 import { Stepper } from '../../../../shared/components/stepper/stepper';
 import { IStep } from '../../../../shared/components/stepper/stepper-models';
 import { Checkbox } from '../../../../shared/ui-components/checkbox/checkbox';
-import { Switch } from '../../../../shared/ui-components/switch/switch';
+import { AppointmentFormModal } from '../consultation-detail/appointment-form-modal/appointment-form-modal';
+import { ParticipantItem } from '../../../../shared/components/participant-item/participant-item';
+import { ModalComponent } from '../../../../shared/components/modal/modal.component';
+import { AddEditPatient } from '../add-edit-patient/add-edit-patient';
 
 import { Typography } from '../../../../shared/ui-components/typography/typography';
-import { Select } from '../../../../shared/ui-components/select/select';
+import { Select, AsyncSearchFn, AsyncSearchResult } from '../../../../shared/ui-components/select/select';
 import { Svg } from '../../../../shared/ui-components/svg/svg';
 import { Input } from '../../../../shared/ui-components/input/input';
 import { Textarea } from '../../../../shared/ui-components/textarea/textarea';
@@ -83,6 +56,7 @@ import {
   ButtonSizeEnum,
   ButtonStyleEnum,
 } from '../../../../shared/constants/button';
+import { BadgeTypeEnum } from '../../../../shared/constants/badge';
 import { SelectOption } from '../../../../shared/models/select';
 import { IBreadcrumb } from '../../../../shared/models/breadcrumb';
 import { RoutePaths } from '../../../../core/constants/routes';
@@ -100,8 +74,6 @@ import { TranslationService } from '../../../../core/services/translation.servic
     ReactiveFormsModule,
     Page,
     Loader,
-    UserSearchSelect,
-    ParticipantItem,
     Stepper,
     Typography,
     Select,
@@ -110,9 +82,12 @@ import { TranslationService } from '../../../../core/services/translation.servic
     Textarea,
     Button,
     Checkbox,
-    Switch,
     FormsModule,
     TranslatePipe,
+    AppointmentFormModal,
+    ParticipantItem,
+    ModalComponent,
+    AddEditPatient,
   ],
 })
 export class ConsultationForm implements OnInit, OnDestroy {
@@ -123,6 +98,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
 
   consultation = signal<Consultation | null>(null);
   queues = signal<Queue[]>([]);
+  customFields = signal<CustomField[]>([]);
   isLoading = signal(false);
   isSaving = signal(false);
   isAutoSaving = signal(false);
@@ -142,6 +118,36 @@ export class ConsultationForm implements OnInit, OnDestroy {
   selectedOwner = signal<IUser | null>(null);
   selectedBeneficiary = signal<IUser | null>(null);
   currentUser = signal<IUser | null>(null);
+  private practitionerCache = new Map<number, IUser>();
+  private beneficiaryCache = new Map<number, IUser>();
+
+  beneficiaryInitialOption = computed<SelectOption | null>(() => {
+    const beneficiary = this.selectedBeneficiary();
+    if (!beneficiary) return null;
+    const currentUser = this.currentUser();
+    const isCurrentUser = !!(currentUser && beneficiary.pk === currentUser.pk);
+    const name = isCurrentUser
+      ? this.t.instant('userSearchSelect.me')
+      : `${beneficiary.first_name || ''} ${beneficiary.last_name || ''}`.trim() || beneficiary.email || beneficiary.username || 'User';
+    const initials = this.getUserInitials(beneficiary);
+    return {
+      value: beneficiary.pk,
+      label: name,
+      secondaryLabel: beneficiary.email,
+      image: beneficiary.picture || undefined,
+      initials,
+      isCurrentUser,
+      isPractitioner: beneficiary.is_practitioner,
+    };
+  });
+
+  // Modal state
+  isAppointmentModalOpen = signal(false);
+  editingAppointment = signal<Appointment | null>(null);
+  appointments = signal<Appointment[]>([]);
+  pendingAppointmentRequests = signal<CreateAppointmentRequest[]>([]);
+  isAddPatientModalOpen = signal(false);
+  newPatientInitialName = signal<string>('');
 
   consultationForm!: FormGroup;
 
@@ -177,6 +183,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
   protected readonly ButtonStateEnum = ButtonStateEnum;
   protected readonly AppointmentType = AppointmentType;
+  protected readonly BadgeTypeEnum = BadgeTypeEnum;
 
   breadcrumbs = computed<IBreadcrumb[]>(() => [
     { label: this.t.instant('consultations.tabActive'), link: '/user/consultations' },
@@ -192,6 +199,67 @@ export class ConsultationForm implements OnInit, OnDestroy {
     }))
   );
 
+  practitionerSearchFn: AsyncSearchFn = (query: string, page: number): Observable<AsyncSearchResult> => {
+    return this.userService.searchUsers(query, page, 20, false, undefined, true).pipe(
+      map(response => {
+        const currentUser = this.currentUser();
+        const results: SelectOption[] = response.results.map(user => {
+          this.practitionerCache.set(user.pk, user);
+          const isCurrentUser = !!(currentUser && user.pk === currentUser.pk);
+          const name = isCurrentUser
+            ? this.t.instant('userSearchSelect.me')
+            : `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email || user.username || 'User';
+          const initials = this.getUserInitials(user);
+          return {
+            value: user.pk,
+            label: name,
+            secondaryLabel: user.email,
+            image: user.picture || undefined,
+            initials,
+            isCurrentUser,
+            isPractitioner: user.is_practitioner,
+          };
+        });
+        return { results, hasMore: response.next !== null };
+      })
+    );
+  };
+
+  beneficiarySearchFn: AsyncSearchFn = (query: string, page: number): Observable<AsyncSearchResult> => {
+    return this.userService.searchUsers(query, page, 20, false).pipe(
+      map(response => {
+        const currentUser = this.currentUser();
+        const results: SelectOption[] = response.results.map(user => {
+          this.beneficiaryCache.set(user.pk, user);
+          const isCurrentUser = !!(currentUser && user.pk === currentUser.pk);
+          const name = isCurrentUser
+            ? this.t.instant('userSearchSelect.me')
+            : `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email || user.username || 'User';
+          const initials = this.getUserInitials(user);
+          return {
+            value: user.pk,
+            label: name,
+            secondaryLabel: user.email,
+            image: user.picture || undefined,
+            initials,
+            isCurrentUser,
+            isPractitioner: user.is_practitioner,
+          };
+        });
+        return { results, hasMore: response.next !== null };
+      })
+    );
+  };
+
+  private getUserInitials(user: IUser): string {
+    const firstName = user.first_name || '';
+    const lastName = user.last_name || '';
+    if (firstName && lastName) {
+      return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+    }
+    return (firstName || lastName || user.email || 'U').charAt(0).toUpperCase();
+  }
+
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private fb = inject(FormBuilder);
@@ -201,12 +269,56 @@ export class ConsultationForm implements OnInit, OnDestroy {
   private userService = inject(UserService);
   private t = inject(TranslationService);
 
-  get appointmentsFormArray(): FormArray {
-    return this.consultationForm.get('appointments') as FormArray;
-  }
-
   constructor() {
     this.initForm();
+  }
+
+  openAppointmentModal(appointment?: Appointment): void {
+    this.editingAppointment.set(appointment || null);
+    this.isAppointmentModalOpen.set(true);
+  }
+
+  closeAppointmentModal(): void {
+    this.isAppointmentModalOpen.set(false);
+    this.editingAppointment.set(null);
+  }
+
+  onAppointmentCreated(appointment: Appointment): void {
+    this.appointments.update(list => [...list, appointment]);
+    this.closeAppointmentModal();
+  }
+
+  onAppointmentUpdated(appointment: Appointment): void {
+    this.appointments.update(list =>
+      list.map(a => a.id === appointment.id ? appointment : a)
+    );
+    this.closeAppointmentModal();
+  }
+
+  onAppointmentDataReady(data: CreateAppointmentRequest): void {
+    this.pendingAppointmentRequests.update(list => [...list, data]);
+    this.closeAppointmentModal();
+  }
+
+  deleteAppointment(appointment: Appointment): void {
+    if (!appointment.id) return;
+
+    this.consultationService
+      .deleteAppointment(appointment.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.appointments.update(list => list.filter(a => a.id !== appointment.id));
+          this.toasterService.show('success', this.t.instant('consultationForm.appointmentRemoved'), this.t.instant('consultationForm.appointmentRemovedMessage'));
+        },
+        error: (error) => {
+          this.toasterService.show('error', this.t.instant('consultationForm.errorRemovingAppointment'), getErrorMessage(error));
+        },
+      });
+  }
+
+  removePendingAppointment(index: number): void {
+    this.pendingAppointmentRequests.update(list => list.filter((_, i) => i !== index));
   }
 
   private initForm(): void {
@@ -223,7 +335,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
       group_id: [''],
       beneficiary_id: [''],
       owned_by_id: [''],
-      appointments: this.fb.array([]),
+      visible_by_patient: [true],
     });
     this.formReady.set(true);
   }
@@ -231,6 +343,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadQueues();
     this.loadCurrentUser();
+    this.loadCustomFields();
 
     this.route.params.pipe(takeUntil(this.destroy$)).subscribe(params => {
       if (params['id']) {
@@ -253,6 +366,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
     });
 
     this.setupAutoSave();
+    this.setupOwnerSync();
   }
 
   private loadCurrentUser(): void {
@@ -276,10 +390,33 @@ export class ConsultationForm implements OnInit, OnDestroy {
       .subscribe({
         next: queues => {
           this.queues.set(queues);
+          if (queues.length === 0) {
+            this.consultationForm.get('group_id')?.disable();
+          }
         },
         error: (error) => {
           this.toasterService.show('error', this.t.instant('consultationForm.errorLoadingQueues'), getErrorMessage(error));
           this.queues.set([]);
+          this.consultationForm.get('group_id')?.disable();
+        },
+      });
+  }
+
+  loadCustomFields(): void {
+    this.consultationService
+      .getCustomFields('consultations.Consultation')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: fields => {
+          this.customFields.set(fields);
+          const customFieldsGroup = this.consultationForm.get('custom_fields') as FormGroup;
+          if (!customFieldsGroup) {
+            const group: Record<string, any> = {};
+            fields.forEach(field => {
+              group[field.id.toString()] = ['', field.required ? Validators.required : []];
+            });
+            this.consultationForm.addControl('custom_fields', this.fb.group(group));
+          }
         },
       });
   }
@@ -314,7 +451,16 @@ export class ConsultationForm implements OnInit, OnDestroy {
       description: consultation.description || '',
       group_id: consultation.group?.id?.toString() || '',
       beneficiary_id: consultation.beneficiary?.id?.toString() || '',
+      visible_by_patient: consultation.visible_by_patient ?? true,
     });
+
+    if (consultation.custom_fields?.length) {
+      const cfValues: Record<string, string> = {};
+      consultation.custom_fields.forEach(cf => {
+        cfValues[cf.field.toString()] = cf.value || '';
+      });
+      this.consultationForm.get('custom_fields')?.patchValue(cfValues);
+    }
   }
 
   loadAppointments(): void {
@@ -325,10 +471,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: response => {
-          this.appointmentsFormArray.clear();
-          response.results.forEach((appointment: Appointment) => {
-            this.addAppointmentFromData(appointment);
-          });
+          this.appointments.set(response.results);
         },
         error: (error) => {
           this.toasterService.show('error', this.t.instant('consultationForm.errorLoadingAppointments'), getErrorMessage(error));
@@ -336,43 +479,6 @@ export class ConsultationForm implements OnInit, OnDestroy {
       });
   }
 
-  private addAppointmentFromData(appointment: Appointment): void {
-    const scheduledDate = appointment.scheduled_at ? new Date(appointment.scheduled_at) : new Date();
-    const date = scheduledDate.toISOString().split('T')[0];
-    const time = scheduledDate.toTimeString().slice(0, 5);
-
-    const appointmentGroup = this.fb.group({
-      id: [appointment.id],
-      date: [date, Validators.required],
-      time: [time, Validators.required],
-      type: [appointment.type || AppointmentType.ONLINE, Validators.required],
-      dont_invite_beneficiary: [false],
-      dont_invite_practitioner: [false],
-      dont_invite_me: [false],
-      participants: this.fb.array([]),
-    });
-
-    if (appointment.participants) {
-      const participantsArray = appointmentGroup.get('participants') as FormArray;
-      appointment.participants.forEach(p => {
-        participantsArray.push(this.createParticipantGroup({
-          id: p.id,
-          user_id: p.user?.id,
-          first_name: p.user?.first_name || '',
-          last_name: p.user?.last_name || '',
-          email: p.user?.email || '',
-          phone: p.user?.mobile_phone_number || '',
-          timezone: p.user?.timezone || '',
-          communication_method: p.user?.communication_method || '',
-          preferred_language: p.user?.preferred_language || '',
-          is_existing_user: !!p.user,
-          contact_type: p.user?.mobile_phone_number ? 'phone' : 'email',
-        }));
-      });
-    }
-
-    this.appointmentsFormArray.push(appointmentGroup);
-  }
 
   private setupAutoSave(): void {
     this.consultationForm.valueChanges
@@ -397,6 +503,8 @@ export class ConsultationForm implements OnInit, OnDestroy {
       description: formValue.description || undefined,
       group_id: formValue.group_id ? parseInt(formValue.group_id) : undefined,
       beneficiary_id: formValue.beneficiary_id ? parseInt(formValue.beneficiary_id) : undefined,
+      visible_by_patient: formValue.visible_by_patient,
+      custom_fields: this.buildCustomFieldsPayload(),
     };
 
     this.isAutoSaving.set(true);
@@ -418,21 +526,22 @@ export class ConsultationForm implements OnInit, OnDestroy {
 
   onSubmit(): void {
     const titleControl = this.consultationForm.get('title');
-    if (titleControl?.valid) {
-      this.isSaving.set(true);
-
-      if (this.mode === 'create') {
-        this.createConsultation();
-      } else {
-        this.updateConsultation();
-      }
-    } else {
+    if (!titleControl?.valid) {
       this.validationService.validateAllFormFields(this.consultationForm);
       this.toasterService.show(
         'error',
         this.t.instant('consultationForm.validationError'),
         this.t.instant('consultationForm.fillReasonField')
       );
+      return;
+    }
+
+    this.isSaving.set(true);
+
+    if (this.mode === 'create') {
+      this.createConsultation();
+    } else {
+      this.updateConsultation();
     }
   }
 
@@ -450,6 +559,8 @@ export class ConsultationForm implements OnInit, OnDestroy {
       group_id: formValue.group_id ? parseInt(formValue.group_id) : undefined,
       beneficiary_id: beneficiaryId,
       owned_by_id: ownedById,
+      visible_by_patient: formValue.visible_by_patient,
+      custom_fields: this.buildCustomFieldsPayload(),
     };
 
     this.consultationService
@@ -457,8 +568,9 @@ export class ConsultationForm implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: consultation => {
-          if (this.appointmentsFormArray.length > 0) {
-            this.createAppointmentsForConsultation(consultation.id);
+          // Si des appointments en attente, on les crée avec le consultationId
+          if (this.pendingAppointmentRequests().length > 0) {
+            this.createPendingAppointments(consultation.id);
           } else {
             this.toasterService.show(
               'success',
@@ -479,48 +591,40 @@ export class ConsultationForm implements OnInit, OnDestroy {
       });
   }
 
-  private createAppointmentsForConsultation(consultationId: number): void {
-    const appointments = this.appointmentsFormArray.value as IAppointmentFormValue[];
+  private createPendingAppointments(consultationId: number): void {
+    const pendingRequests = this.pendingAppointmentRequests();
     let completed = 0;
+    let errors = 0;
 
-    appointments.forEach((apt: IAppointmentFormValue) => {
-      const scheduledAt = this.combineDateTime(apt.date, apt.time);
-      const { participants_ids, temporary_participants } = this.mapParticipantsForRequest(apt.participants);
-
-      const appointmentData: CreateAppointmentRequest = {
-        scheduled_at: scheduledAt,
-        type: apt.type,
-        dont_invite_beneficiary: apt.dont_invite_beneficiary,
-        dont_invite_practitioner: apt.dont_invite_practitioner,
-        dont_invite_me: apt.dont_invite_me,
-        participants_ids,
-        temporary_participants,
-      };
-
+    pendingRequests.forEach(appointmentData => {
       this.consultationService
         .createConsultationAppointment(consultationId, appointmentData)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {
             completed++;
-            if (completed === appointments.length) {
+            if (completed + errors === pendingRequests.length) {
+              this.isSaving.set(false);
               this.toasterService.show(
                 'success',
-                'Consultation Created',
-                'Consultation created successfully'
+                this.t.instant('consultationForm.consultationCreated'),
+                this.t.instant('consultationForm.consultationCreatedMessage')
               );
-              this.isSaving.set(false);
               this.router.navigate([
                 `/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`,
                 consultationId,
               ]);
             }
           },
-          error: (error: HttpErrorResponse) => {
-            this.toasterService.show('error', this.t.instant('consultationForm.errorCreatingAppointment'), getErrorMessage(error));
-            completed++;
-            if (completed === appointments.length) {
+          error: () => {
+            errors++;
+            if (completed + errors === pendingRequests.length) {
               this.isSaving.set(false);
+              this.toasterService.show(
+                'warning',
+                this.t.instant('consultationForm.consultationCreated'),
+                this.t.instant('consultationForm.someAppointmentsNotCreated')
+              );
               this.router.navigate([
                 `/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`,
                 consultationId,
@@ -530,6 +634,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
         });
     });
   }
+
 
   updateConsultation(): void {
     if (!this.consultationId) return;
@@ -542,6 +647,8 @@ export class ConsultationForm implements OnInit, OnDestroy {
       beneficiary_id: formValue.beneficiary_id
         ? parseInt(formValue.beneficiary_id)
         : undefined,
+      visible_by_patient: formValue.visible_by_patient,
+      custom_fields: this.buildCustomFieldsPayload(),
     };
 
     this.consultationService
@@ -602,7 +709,30 @@ export class ConsultationForm implements OnInit, OnDestroy {
     } else {
       this.consultationForm.patchValue({ owned_by_id: '' });
     }
-    this.updateInviteCheckboxStates();
+  }
+
+  private setupOwnerSync(): void {
+    this.consultationForm.get('owned_by_id')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(value => {
+        if (value) {
+          const user = this.practitionerCache.get(Number(value));
+          this.selectedOwner.set(user || null);
+        } else {
+          this.selectedOwner.set(null);
+        }
+          });
+
+    this.consultationForm.get('beneficiary_id')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(value => {
+        if (value) {
+          const user = this.beneficiaryCache.get(Number(value));
+          this.selectedBeneficiary.set(user || null);
+        } else {
+          this.selectedBeneficiary.set(null);
+        }
+          });
   }
 
   nextStep(): void {
@@ -654,248 +784,10 @@ export class ConsultationForm implements OnInit, OnDestroy {
     }
   }
 
-  addAppointment(): void {
-    const appointmentGroup = this.fb.group({
-      id: [null],
-      date: ['', Validators.required],
-      time: ['', Validators.required],
-      type: [AppointmentType.ONLINE, Validators.required],
-      dont_invite_beneficiary: [{ value: false, disabled: this.isBeneficiaryCheckboxDisabled() }],
-      dont_invite_practitioner: [{ value: false, disabled: this.isPractitionerCheckboxDisabled() }],
-      dont_invite_me: [false],
-      participants: this.fb.array([]),
-    });
-    this.appointmentsFormArray.push(appointmentGroup);
-  }
 
-  updateInviteCheckboxStates(): void {
-    const beneficiaryDisabled = this.isBeneficiaryCheckboxDisabled();
-    const practitionerDisabled = this.isPractitionerCheckboxDisabled();
 
-    for (let i = 0; i < this.appointmentsFormArray.length; i++) {
-      const appointment = this.appointmentsFormArray.at(i);
-      const beneficiaryControl = appointment.get('dont_invite_beneficiary');
-      const practitionerControl = appointment.get('dont_invite_practitioner');
 
-      if (beneficiaryDisabled) {
-        beneficiaryControl?.disable();
-      } else {
-        beneficiaryControl?.enable();
-      }
 
-      if (practitionerDisabled) {
-        practitionerControl?.disable();
-      } else {
-        practitionerControl?.enable();
-      }
-    }
-  }
-
-  removeAppointment(index: number): void {
-    const appointment = this.appointmentsFormArray.at(index);
-    const appointmentId = appointment.get('id')?.value;
-
-    if (appointmentId && this.mode === 'edit') {
-      this.consultationService
-        .deleteAppointment(appointmentId)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: () => {
-            this.appointmentsFormArray.removeAt(index);
-            this.toasterService.show('success', this.t.instant('consultationForm.appointmentRemoved'), this.t.instant('consultationForm.appointmentRemovedMessage'));
-          },
-          error: (error) => {
-            this.toasterService.show('error', this.t.instant('consultationForm.errorRemovingAppointment'), getErrorMessage(error));
-          },
-        });
-    } else {
-      this.appointmentsFormArray.removeAt(index);
-    }
-  }
-
-  saveAppointment(index: number): void {
-    if (!this.consultationId) return;
-
-    const appointment = this.appointmentsFormArray.at(index);
-    const appointmentId = appointment.get('id')?.value;
-    const formValue = appointment.value as IAppointmentFormValue;
-
-    const scheduledAt = this.combineDateTime(formValue.date, formValue.time);
-    const { participants_ids, temporary_participants } = this.mapParticipantsForRequest(formValue.participants);
-
-    const saving = new Set(this.savingAppointments());
-    saving.add(index);
-    this.savingAppointments.set(saving);
-
-    if (appointmentId) {
-      this.consultationService
-        .updateAppointment(appointmentId, {
-          scheduled_at: scheduledAt,
-          type: formValue.type,
-          participants_ids,
-          temporary_participants,
-        })
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: () => {
-            const s = new Set(this.savingAppointments());
-            s.delete(index);
-            this.savingAppointments.set(s);
-            this.toasterService.show('success', this.t.instant('consultationForm.appointmentUpdated'), this.t.instant('consultationForm.appointmentUpdatedMessage'));
-          },
-          error: (error) => {
-            const s = new Set(this.savingAppointments());
-            s.delete(index);
-            this.savingAppointments.set(s);
-            this.toasterService.show('error', this.t.instant('consultationForm.errorUpdatingAppointment'), getErrorMessage(error));
-          },
-        });
-    } else {
-      const appointmentData: CreateAppointmentRequest = {
-        scheduled_at: scheduledAt,
-        type: formValue.type,
-        dont_invite_beneficiary: formValue.dont_invite_beneficiary,
-        dont_invite_practitioner: formValue.dont_invite_practitioner,
-        dont_invite_me: formValue.dont_invite_me,
-        participants_ids,
-        temporary_participants,
-      };
-
-      this.consultationService
-        .createConsultationAppointment(this.consultationId, appointmentData)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: (created: Appointment) => {
-            appointment.patchValue({ id: created.id });
-            const s = new Set(this.savingAppointments());
-            s.delete(index);
-            this.savingAppointments.set(s);
-            this.toasterService.show('success', this.t.instant('consultationForm.appointmentCreated'), this.t.instant('consultationForm.appointmentCreatedMessage'));
-          },
-          error: (error: HttpErrorResponse) => {
-            const s = new Set(this.savingAppointments());
-            s.delete(index);
-            this.savingAppointments.set(s);
-            this.toasterService.show('error', this.t.instant('consultationForm.errorCreatingAppointment'), getErrorMessage(error));
-          },
-        });
-    }
-  }
-
-  isAppointmentSaving(index: number): boolean {
-    return this.savingAppointments().has(index);
-  }
-
-  hasAppointmentId(index: number): boolean {
-    const appointment = this.appointmentsFormArray.at(index);
-    return !!appointment?.get('id')?.value;
-  }
-
-  isAppointmentFieldInvalid(appointmentIndex: number, fieldName: string): boolean {
-    const appointment = this.appointmentsFormArray.at(appointmentIndex);
-    const field = appointment?.get(fieldName);
-    return (field?.invalid && field?.touched) || false;
-  }
-
-  getParticipantsFormArray(appointmentIndex: number): FormArray {
-    const appointment = this.appointmentsFormArray.at(appointmentIndex);
-    return appointment.get('participants') as FormArray;
-  }
-
-  addParticipantToAppointment(appointmentIndex: number): void {
-    const participantsArray = this.getParticipantsFormArray(appointmentIndex);
-    participantsArray.push(this.createParticipantGroup());
-  }
-
-  removeParticipantFromAppointment(appointmentIndex: number, participantIndex: number): void {
-    const participantsArray = this.getParticipantsFormArray(appointmentIndex);
-    participantsArray.removeAt(participantIndex);
-  }
-
-  private createParticipantGroup(data?: Record<string, unknown>): FormGroup {
-    return this.fb.group({
-      id: [data?.['id'] || null],
-      user_id: [data?.['user_id'] || null],
-      first_name: [data?.['first_name'] || ''],
-      last_name: [data?.['last_name'] || ''],
-      email: [data?.['email'] || ''],
-      phone: [data?.['phone'] || ''],
-      timezone: [data?.['timezone'] || ''],
-      communication_method: [data?.['communication_method'] || ''],
-      preferred_language: [data?.['preferred_language'] || ''],
-      is_existing_user: [data?.['is_existing_user'] !== undefined ? data['is_existing_user'] : true],
-      contact_type: [data?.['contact_type'] || 'email'],
-    });
-  }
-
-  isParticipantExistingUser(appointmentIndex: number, participantIndex: number): boolean {
-    const participant = this.getParticipantsFormArray(appointmentIndex).at(participantIndex);
-    return participant?.get('is_existing_user')?.value || false;
-  }
-
-  setParticipantType(appointmentIndex: number, participantIndex: number, isExistingUser: boolean): void {
-    const participant = this.getParticipantsFormArray(appointmentIndex).at(participantIndex);
-    participant.patchValue({ is_existing_user: isExistingUser });
-    if (isExistingUser) {
-      participant.patchValue({
-        first_name: '',
-        last_name: '',
-        email: '',
-        phone: '',
-      });
-    } else {
-      participant.patchValue({ user_id: null });
-    }
-  }
-
-  getParticipantContactType(appointmentIndex: number, participantIndex: number): string {
-    const participant = this.getParticipantsFormArray(appointmentIndex).at(participantIndex);
-    return participant?.get('contact_type')?.value || 'email';
-  }
-
-  setParticipantContactType(appointmentIndex: number, participantIndex: number, contactType: string): void {
-    const participant = this.getParticipantsFormArray(appointmentIndex).at(participantIndex);
-    participant.patchValue({ contact_type: contactType, email: '', phone: '' });
-  }
-
-  onParticipantUserSelected(appointmentIndex: number, participantIndex: number, user: IUser | null): void {
-    const participant = this.getParticipantsFormArray(appointmentIndex).at(participantIndex);
-    if (user) {
-      participant.patchValue({
-        user_id: user.pk,
-        first_name: user.first_name,
-        last_name: user.last_name,
-        email: user.email,
-      });
-    } else {
-      participant.patchValue({
-        user_id: null,
-        first_name: '',
-        last_name: '',
-        email: '',
-      });
-    }
-  }
-
-  setAppointmentType(appointmentIndex: number, type: AppointmentType): void {
-    const appointment = this.appointmentsFormArray.at(appointmentIndex);
-    appointment.patchValue({ type });
-  }
-
-  getAppointmentType(appointmentIndex: number): AppointmentType {
-    const appointment = this.appointmentsFormArray.at(appointmentIndex);
-    return appointment?.get('type')?.value || AppointmentType.ONLINE;
-  }
-
-  getAppointmentControl(appointmentIndex: number, controlName: string): { value: boolean } {
-    const appointment = this.appointmentsFormArray.at(appointmentIndex);
-    return appointment?.get(controlName) || { value: false };
-  }
-
-  toggleInvite(appointmentIndex: number, controlName: string, invited: boolean): void {
-    const appointment = this.appointmentsFormArray.at(appointmentIndex);
-    appointment?.get(controlName)?.setValue(!invited);
-  }
 
   getBeneficiaryUser(): IUser | null {
     const beneficiary = this.selectedBeneficiary();
@@ -947,13 +839,6 @@ export class ConsultationForm implements OnInit, OnDestroy {
     return this.currentUser();
   }
 
-  isBeneficiaryCheckboxDisabled(): boolean {
-    return !this.getBeneficiaryUser();
-  }
-
-  isPractitionerCheckboxDisabled(): boolean {
-    return !this.getOwnerUser();
-  }
 
   onBeneficiarySelected(user: IUser | null): void {
     this.selectedBeneficiary.set(user);
@@ -962,55 +847,87 @@ export class ConsultationForm implements OnInit, OnDestroy {
     } else {
       this.consultationForm.patchValue({ beneficiary_id: '' });
     }
-    this.updateInviteCheckboxStates();
   }
 
-  private mapParticipantsForRequest(participants: IParticipantFormValue[]): {
-    participants_ids: number[];
-    temporary_participants: ITemporaryParticipant[];
-  } {
-    const participants_ids: number[] = [];
-    const temporary_participants: ITemporaryParticipant[] = [];
+  openAddPatientModal(searchTerm: string): void {
+    this.newPatientInitialName.set(searchTerm);
+    this.isAddPatientModalOpen.set(true);
+  }
 
-    if (!participants || participants.length === 0) {
-      return { participants_ids, temporary_participants };
+  closeAddPatientModal(): void {
+    this.isAddPatientModalOpen.set(false);
+    this.newPatientInitialName.set('');
+  }
+
+  onPatientCreated(patient: IUser): void {
+    // Add to cache
+    this.beneficiaryCache.set(patient.pk, patient);
+    // Select the newly created patient
+    this.selectedBeneficiary.set(patient);
+    this.consultationForm.patchValue({ beneficiary_id: patient.pk });
+    // Close modal
+    this.closeAddPatientModal();
+  }
+
+
+  getCustomFieldOptions(field: CustomField): SelectOption[] {
+    return (field.options || []).map(o => ({ value: o, label: o }));
+  }
+
+  private buildCustomFieldsPayload(): { field: number; value: string | null }[] {
+    const cfGroup = this.consultationForm.get('custom_fields');
+    if (!cfGroup) return [];
+    const values = cfGroup.value;
+    return Object.entries(values)
+      .filter(([_, value]) => value !== '' && value !== null && value !== undefined)
+      .map(([fieldId, value]) => ({
+        field: parseInt(fieldId, 10),
+        value: value as string | null,
+      }));
+  }
+
+  getPendingAppointmentParticipants(appointmentRequest: CreateAppointmentRequest): any[] {
+    const participants: any[] = [];
+
+    // Add beneficiary if not excluded
+    if (!appointmentRequest.dont_invite_beneficiary && this.getBeneficiaryUser()) {
+      const beneficiary = this.getBeneficiaryUser()!;
+      participants.push({
+        user_id: beneficiary.pk,
+        first_name: beneficiary.first_name,
+        last_name: beneficiary.last_name,
+        email: beneficiary.email,
+      });
     }
 
-    for (const p of participants) {
-      if (p.is_existing_user && p.user_id) {
-        participants_ids.push(p.user_id);
-      } else {
-        const tempParticipant: ITemporaryParticipant = {};
-
-        if (p.first_name) {
-          tempParticipant.first_name = p.first_name;
-        }
-        if (p.last_name) {
-          tempParticipant.last_name = p.last_name;
-        }
-        if (p.contact_type === 'email' && p.email) {
-          tempParticipant.email = p.email;
-        } else if (p.contact_type === 'phone' && p.phone) {
-          tempParticipant.mobile_phone_number = p.phone;
-        }
-        if (p.timezone) {
-          tempParticipant.timezone = p.timezone;
-        }
-        if (p.communication_method) {
-          tempParticipant.communication_method = p.communication_method;
-        }
-        if (p.preferred_language) {
-          tempParticipant.preferred_language = p.preferred_language;
-        }
-
-        temporary_participants.push(tempParticipant);
-      }
+    // Add owner/practitioner if not excluded
+    if (!appointmentRequest.dont_invite_practitioner && this.getOwnerUser()) {
+      const owner = this.getOwnerUser()!;
+      participants.push({
+        user_id: owner.pk,
+        first_name: owner.first_name,
+        last_name: owner.last_name,
+        email: owner.email,
+      });
     }
 
-    return { participants_ids, temporary_participants };
+    // Add current user if not excluded
+    if (!appointmentRequest.dont_invite_me && this.getCurrentUserForInvite()) {
+      const currentUser = this.getCurrentUserForInvite()!;
+      participants.push({
+        user_id: currentUser.pk,
+        first_name: currentUser.first_name,
+        last_name: currentUser.last_name,
+        email: currentUser.email,
+      });
+    }
+
+    // Add temporary participants
+    if (appointmentRequest.temporary_participants) {
+      participants.push(...appointmentRequest.temporary_participants);
+    }
+
+    return participants;
   }
 
-  private combineDateTime(date: string, time: string): string {
-    return `${date}T${time}:00`;
-  }
 }

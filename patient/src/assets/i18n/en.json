@@ -6,6 +6,7 @@
     "signUp": "Sign Up",
     "loading": "Loading...",
     "cancel": "Cancel",
+    "close": "Close",
     "save": "Save",
     "error": "Error",
     "success": "Success",
@@ -15,7 +16,15 @@
     "online": "Online",
     "inPerson": "In person",
     "video": "Video",
-    "notSelected": "Not selected"
+    "videoCall": "Video Call",
+    "notSelected": "Not selected",
+    "newVersionAvailable": "A new version of the application is available",
+    "update": "Update",
+    "later": "Later",
+    "appNeedsReload": "The application needs to be reloaded to continue",
+    "reload": "Reload",
+    "offline": "Server connection lost",
+    "reconnecting": "Server connection lost. Reconnecting..."
   },
   "login": {
     "title": "Sign In",
@@ -29,7 +38,22 @@
     "noAccount": "Don't have an account?",
     "signUp": "Sign Up",
     "loggingIn": "Logging in...",
-    "invalidCredentials": "Invalid credentials. Please try again."
+    "invalidCredentials": "Invalid credentials. Please try again.",
+    "continue": "Continue",
+    "or": "or",
+    "sendCode": "Sign in with a verification code",
+    "sendingCode": "Sending...",
+    "enterVerificationCode": "Enter 6-digit code",
+    "invalidCode": "Please enter a valid 6-digit code",
+    "verifyCode": "Verify Code",
+    "codeSentTo": "A verification code has been sent to your email.",
+    "resendCode": "Resend Code",
+    "didntReceiveCode": "Didn't receive the code?",
+    "backToEmail": "Change",
+    "tooManyAttempts": "Too many attempts. Please request a new code.",
+    "invalidVerificationCode": "Invalid verification code.",
+    "codeSent": "Verification code sent.",
+    "genericError": "An error occurred. Please try again."
   },
   "register": {
     "platformDescription": "Create your account and start your telemedicine consultations today.",
@@ -90,6 +114,7 @@
     "verifyingCode": "Verifying your code...",
     "authenticating": "Authenticating...",
     "authFailed": "Authentication Failed",
+    "welcomeMessage": "Welcome! Access your consultation with ease",
     "goToLogin": "Go to Login",
     "verificationRequired": "Verification Required",
     "codeSentMessage": "A verification code has been sent to your email or phone. Please enter it below.",
@@ -107,20 +132,29 @@
     "invalidVerificationCode": "Invalid verification code",
     "authSuccess": "Successfully authenticated",
     "codeSent": "Verification code sent to your email",
-    "resendFailed": "Failed to resend code. Please try again."
+    "resendFailed": "Failed to resend code. Please try again.",
+    "tooManyAttempts": "Too many verification attempts. Please request a new code."
   },
   "home": {
     "nextAppointment": "Next Appointment",
     "myRequests": "My Requests",
+    "myRequest": "My request",
     "noPendingRequests": "No pending requests yet",
+    "noInvitations": "You have not received any invitations",
+    "noAppointment": "No appointment yet",
+    "noFollowUp": "No associated follow-up",
     "requestConsultation": "Request a consultation",
     "awaitingAssignment": "Awaiting doctor assignment",
-    "accessConsultation": "Access consultation",
-    "myConsultations": "My Consultations",
+    "accessConsultation": "Chat with practitioner",
+    "unreadMessage": "unread message",
+    "unreadMessages": "unread messages",
+    "myConsultations": "My Follow-ups/Consultations",
     "managedBy": "Managed by {{name}}",
     "nextAppointmentLabel": "Next appointment",
-    "myAppointments": "My Appointments",
+    "myAppointments": "My Other Appointments",
     "consultation": "Consultation",
+    "scheduledAppointment": "Scheduled appointment",
+    "followUp": "Follow-up",
     "failedToLoad": "Failed to load dashboard",
     "statusPending": "Pending",
     "statusAccepted": "Accepted",
@@ -130,7 +164,11 @@
     "statusRequested": "Requested",
     "statusActive": "Active",
     "statusClosed": "Closed",
-    "statusDraft": "Draft"
+    "statusDraft": "Draft",
+    "tooEarlyTitle": "Meeting not yet available",
+    "tooEarlyMessage": "The meeting is scheduled at {{time}}. You can only join {{minutes}} minutes before the scheduled time.",
+    "appointmentNotFound": "Appointment not found",
+    "failedToLoadParticipant": "Failed to load participant information"
   },
   "newRequest": {
     "selectSpecialty": "Select Specialty",
@@ -145,11 +183,14 @@
     "reasonForVisit": "Reason for Visit",
     "selectReasonDesc": "Select the reason for your consultation",
     "duration": "Duration: {{duration}} minutes",
+    "scheduled": "Scheduled",
+    "immediate": "Immediate",
     "noReasons": "No reasons available for this specialty",
     "selectTimeSlotDesc": "Select a preferred time slot (optional)",
     "noSlots": "No slots",
     "continueWithSlot": "Continue with selected slot",
     "skipSlot": "Skip - Let system assign time",
+    "nextSlot": "Next slot",
     "selectDoctorDesc": "Select a preferred doctor (optional)",
     "noDoctors": "No doctors available for this specialty",
     "continueWithDoctor": "Continue with selected doctor",
@@ -162,10 +203,11 @@
     "preferredDoctor": "Preferred Doctor",
     "anyAvailable": "Any available",
     "notSelectedSystemAssign": "Not selected (system will assign)",
-    "describeSymptoms": "Describe your symptoms or concerns",
-    "symptomPlaceholder": "Please describe your symptoms or any specific concerns...",
+    "describeSymptoms": "Additional information",
+    "symptomPlaceholder": "If you wish to add any additional information...",
     "submitting": "Submitting...",
     "submitRequest": "Submit Request",
+    "additionalInfo": "Additional Information",
     "failedSpecialties": "Failed to load specialties",
     "failedReasons": "Failed to load reasons",
     "failedSlots": "Failed to load available slots",
@@ -192,6 +234,8 @@
     "commEmail": "Email",
     "commSms": "SMS",
     "commWhatsApp": "WhatsApp",
+    "commPush": "Push Notification",
+    "commManual": "Manual",
     "preferredLanguage": "Preferred Language",
     "selectLanguage": "Select language",
     "langEnglish": "English",
@@ -200,6 +244,7 @@
     "langSpanish": "Spanish",
     "timezone": "Timezone",
     "selectTimezone": "Select timezone",
+    "searchTimezone": "Search timezone",
     "profileUpdated": "Profile updated successfully",
     "profileUpdateFailed": "Failed to update profile",
     "selectImageFile": "Please select an image file",
@@ -218,7 +263,9 @@
     "messageDeleted": "Message deleted",
     "loadingImage": "Loading image...",
     "typePlaceholder": "Type a message...",
-    "yesterday": "Yesterday"
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "unreadMessages": "Unread messages"
   },
   "preJoinLobby": {
     "settingUp": "Setting up your devices...",
@@ -240,10 +287,13 @@
     "later": "Later"
   },
   "requestDetail": {
+    "title": "Request Details",
     "requestDetails": "Request Details",
     "created": "Created",
     "preferredTime": "Preferred Time",
     "yourComment": "Your Comment",
+    "consultationType": "Type",
+    "specialty": "Specialty",
     "scheduledAppointment": "Scheduled Appointment",
     "joinVideoCall": "Join Video Call",
     "awaitingAssignment": "Awaiting Assignment",
@@ -289,6 +339,9 @@
     "statusCancelled": "Cancelled",
     "failedLoad": "Failed to load appointment details"
   },
+  "appointments": {
+    "defaultTitle": "Appointment"
+  },
   "consultationDetail": {
     "title": "Consultation",
     "created": "Created",
@@ -296,11 +349,12 @@
     "closed": "Closed",
     "handledBy": "Consultation handled by",
     "nextAppointment": "Next Appointment",
+    "otherAppointments": "Other Appointments",
     "joinVideoCall": "Join Video Call",
     "consultationClosed": "Consultation Closed",
     "closedText": "This consultation has been completed. You can view the message history below.",
     "messageHistory": "Message History",
-    "messages": "Messages",
+    "messages": "Chat with your practitioner",
     "notFound": "Consultation not found",
     "consultation": "Consultation",
     "videoConsultation": "Video Consultation",
@@ -361,6 +415,7 @@
   },
   "terms": {
     "accept": "Accept",
+    "acceptCheckbox": "I have read and accept the terms and conditions",
     "failedLoad": "Failed to load terms",
     "failedAccept": "Failed to accept terms"
   },
@@ -396,5 +451,11 @@
     "failedUpdate": "Failed to update message",
     "messageDeleted": "Message deleted",
     "failedDelete": "Failed to delete message"
+  },
+  "videoCall": {
+    "leaveCallTitle": "Leave video call?",
+    "leaveCallMessage": "You are currently in a video call. If you leave this page, the call will be disconnected. Do you really want to leave?",
+    "leaveCallConfirm": "Leave call",
+    "leaveCallCancel": "Stay"
   }
 }

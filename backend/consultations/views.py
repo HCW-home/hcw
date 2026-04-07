@@ -1,21 +1,22 @@
-import asyncio
-import io
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
-from typing import List
+from zoneinfo import ZoneInfo
+import uuid
 
 import boto3
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from core.mixins import CreatedByMixin
 from django.conf import settings
+from constance import config
 from django.contrib.auth import get_user_model
-from django.db.models import Q
+from django.db import models
+from django.db.models import Count, F, Q, Subquery, Value
+from django.db.models.functions import Coalesce
 from django.http import HttpResponse, StreamingHttpResponse
-from django.shortcuts import render
 from django.utils import timezone
 from django.utils.text import slugify
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext as _, gettext_lazy
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import (
     OpenApiExample,
@@ -26,9 +27,8 @@ from drf_spectacular.utils import (
 from mediaserver.models import Server
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -39,6 +39,8 @@ from .models import (
     AppointmentStatus,
     BookingSlot,
     Consultation,
+    CustomField,
+    ConsultationReadStatus,
     Message,
     Participant,
     Queue,
@@ -48,7 +50,7 @@ from .models import (
     Type,
 )
 from .paginations import ConsultationPagination
-from .permissions import ConsultationAssigneePermission, DjangoModelPermissionsWithView
+from .permissions import IsPractitioner
 from .renderers import FHIRRenderer
 from .serializers import (
     AppointmentCreateSerializer,
@@ -57,8 +59,8 @@ from .serializers import (
     ConsultationMessageCreateSerializer,
     ConsultationMessageSerializer,
     ConsultationSerializer,
+    CustomFieldSerializer,
     ParticipantDetailSerializer,
-    ParticipantSerializer,
     QueueSerializer,
     RequestSerializer,
 )
@@ -78,20 +80,74 @@ class Slot:
     user_last_name: str
 
 
+EPOCH = datetime(1970, 1, 1, tzinfo=ZoneInfo("UTC"))
+
+
+def annotate_unread_count(queryset, user):
+    """Annotate a Consultation queryset with _unread_count for the given user."""
+    read_status_sq = ConsultationReadStatus.objects.filter(
+        consultation=models.OuterRef("pk"),
+        user=user,
+    ).values("last_read_at")[:1]
+
+    return queryset.annotate(
+        _last_read_at=Coalesce(
+            Subquery(read_status_sq),
+            Value(EPOCH),
+            output_field=models.DateTimeField(),
+        ),
+        _unread_count=Count(
+            "messages",
+            filter=Q(messages__created_at__gt=F("_last_read_at"))
+            & ~Q(messages__created_by=user)
+            & Q(messages__deleted_at__isnull=True),
+            distinct=True,
+        ),
+    )
+
+
 class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
     """Consultation endpoint"""
 
     queryset = Consultation.objects.all()
     serializer_class = ConsultationSerializer
-    permission_classes = [IsAuthenticated, ConsultationAssigneePermission]
+    permission_classes = [IsAuthenticated, IsPractitioner]
     pagination_class = ConsultationPagination
     filterset_class = ConsultationFilter
+    filter_backends = [
+        filters.SearchFilter,
+        filters.OrderingFilter,
+        DjangoFilterBackend,
+    ]
+    search_fields = [
+        "title",
+        "description",
+        "beneficiary__first_name",
+        "beneficiary__last_name",
+        "beneficiary__email",
+        "created_by__first_name",
+        "created_by__last_name",
+        "owned_by__first_name",
+        "owned_by__last_name",
+        "group__name",
+    ]
     ordering = ["-created_at"]
     ordering_fields = ["created_at", "updated_at", "closed_at"]
 
     def get_queryset(self):
         user = self.request.user
-        return Consultation.objects.accessible_by(user)
+        return annotate_unread_count(Consultation.objects.accessible_by(user), user)
+
+    @action(detail=True, methods=["post"])
+    def mark_read(self, request, pk=None):
+        """Mark all messages in a consultation as read for the current user."""
+        consultation = self.get_object()
+        ConsultationReadStatus.objects.update_or_create(
+            consultation=consultation,
+            user=request.user,
+            defaults={"last_read_at": timezone.now()},
+        )
+        return Response({"status": "ok"})
 
     @extend_schema(responses=ConsultationSerializer)
     @action(detail=True, methods=["post"])
@@ -111,7 +167,9 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
             return Response(
                 {
                     "error": _(
-                        "Unable to close consultation with appointment scheduled in future"
+                        _(
+                            "Unable to close consultation with appointment scheduled in future"
+                        )
                     )
                 },
                 status=status.HTTP_400_BAD_REQUEST,
@@ -187,14 +245,81 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
                 {
                     "url": server.url,
                     "token": consultation_call_info,
-                    "room": f"consultation_{consultation.pk}",
+                    "room": str(consultation.room_uuid),
                 }
             )
         except Exception as e:
             return Response(
                 {"detail": "No media server available."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+    @extend_schema(
+        methods=["POST"],
+        responses={
+            200: {
+                "type": "object",
+                "properties": {
+                    "url": {"type": "string"},
+                    "token": {"type": "string"},
+                    "room": {"type": "string"},
+                },
+            },
+            400: {
+                "type": "object",
+                "properties": {"error": {"type": "string"}},
+            },
+        },
+        description="Initiate a call to the consultation beneficiary. Returns LiveKit connection info and sends a WebSocket call_request event to the beneficiary.",
+    )
+    @action(detail=True, methods=["post"])
+    def call(self, request, pk=None):
+        """Initiate a call to the consultation beneficiary."""
+        consultation = self.get_object()
+
+        if consultation.closed_at:
+            return Response(
+                {"error": _("Cannot call in a closed consultation.")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not consultation.beneficiary:
+            return Response(
+                {"error": _("No beneficiary configured for this consultation.")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        server = Server.get_server()
+        if not server:
+            return Response(
+                {"detail": _("No media server available.")},
                 status=status.HTTP_404_NOT_FOUND,
             )
+
+        consultation_call_info = server.instance.consultation_user_info(
+            consultation, request.user
+        )
+
+        # Send call_request WebSocket event to the beneficiary
+        channel_layer = get_channel_layer()
+        caller_name = f"{request.user.first_name} {request.user.last_name}".strip() or request.user.email
+        async_to_sync(channel_layer.group_send)(
+            f"user_{consultation.beneficiary.pk}",
+            {
+                "type": "call_request",
+                "consultation_id": consultation.pk,
+                "caller_id": request.user.pk,
+                "caller_name": caller_name,
+            },
+        )
+
+        return Response(
+            {
+                "url": server.url,
+                "token": consultation_call_info,
+                "room": str(consultation.room_uuid),
+            }
+        )
 
     @extend_schema(methods=["GET"], responses=ConsultationMessageSerializer(many=True))
     @extend_schema(
@@ -231,22 +356,6 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
                 )
 
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    @extend_schema(
-        responses={200: ConsultationSerializer(many=True)},
-        description="Get overdue consultations where either:\n"
-        "1. All appointments are more than 1 hour in the past, OR\n"
-        "2. The last message was sent by the beneficiary",
-    )
-    @action(detail=False, methods=["get"], url_path="overdue")
-    def overdue(self, request):
-        """Get consultations that need attention (overdue)"""
-
-        # Get consultations the user has access to
-        queryset = self.filter_queryset(self.get_queryset().overdue)
-        page = self.paginate_queryset(queryset)
-        serializer = self.get_serializer(page, many=True)
-        return self.get_paginated_response(serializer.data)
 
     @extend_schema(
         responses={200: {"type": "string", "format": "binary"}},
@@ -302,7 +411,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 
     queryset = Appointment.objects.all()
     fhir_class = AppointmentFhir
-    permission_classes = [IsAuthenticated, ConsultationAssigneePermission]
+    permission_classes = [IsAuthenticated, IsPractitioner]
     pagination_class = ConsultationPagination
     ordering_fields = ["created_at", "updated_at", "scheduled_at"]
     # filterset_fields = ["consultation", "status"]
@@ -322,16 +431,19 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
 
-        # For list, retrieve, and join actions: filter by participants or consultation access
-        if self.action in ["list", "retrieve", "join"]:
+        # For create, update, partial_update: restrict to creator or consultation access
+        if self.action in ["create", "update", "partial_update"]:
             return Appointment.objects.filter(
-                Q(participant__user=user, participant__is_active=True)
+                Q(created_by=user)
                 | Q(consultation__in=Consultation.objects.accessible_by(user))
             ).distinct()
 
-        # For create, update, partial_update, etc.: use consultation access logic
+        # For all other actions (list, retrieve, join, leave, start_recording, etc.):
+        # include appointments where user is an active participant
         return Appointment.objects.filter(
-            consultation__in=Consultation.objects.accessible_by(user)
+            Q(participant__user=user, participant__is_active=True)
+            | Q(created_by=user)
+            | Q(consultation__in=Consultation.objects.accessible_by(user))
         ).distinct()
 
     @extend_schema(
@@ -364,15 +476,30 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     def join(self, request, pk=None):
         """Join consultation call"""
         appointment = self.get_object()
-        if appointment.consultation.closed_at:
+        if appointment.consultation and appointment.consultation.closed_at:
             return Response(
-                {"error": _("Cannot join call in closed consultation")},
+                {"detail": _("Cannot join call in closed consultation")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         if appointment.type != Type.online:
             return Response(
-                {"error": _("Cannot join consultation if not online")},
+                {"detail": _("Cannot join consultation if not online")},
                 status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        now = timezone.now()
+        earliest_join = appointment.scheduled_at - timedelta(minutes=config.appointment_early_join_minutes)
+        if now < earliest_join:
+            return Response(
+                {
+                    "detail": _(
+                        "Too early to join. The meeting starts at %(time)s. You can join %(minutes)d minutes before the scheduled time."
+                    )
+                    % {"time": appointment.scheduled_at.strftime("%H:%M"), "minutes": config.appointment_early_join_minutes},
+                    "scheduled_at": appointment.scheduled_at.isoformat(),
+                    "code": "too_early",
+                },
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         try:
@@ -394,7 +521,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                     f"user_{participant.user.pk}",
                     {
                         "type": "appointment",
-                        "consultation_id": appointment.consultation.pk,
+                        "consultation_id": appointment.consultation.pk if appointment.consultation else None,
                         "appointment_id": appointment.pk,
                         "state": "participant_joined",
                         "data": {
@@ -404,18 +531,75 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                     },
                 )
 
+            # Create a system message for participant joined
+            # The message_saved signal will automatically send WebSocket notifications
+            if appointment.consultation:
+                user_name = request.user.name or request.user.email
+                Message.objects.create(
+                    consultation=appointment.consultation,
+                    created_by=None,  # System message has no author
+                    event="participant_joined",
+                    content=_("%(user_name)s joined the meeting") % {"user_name": user_name},
+                )
+
             return Response(
                 {
                     "url": server.url,
                     "token": consultation_call_info,
-                    "room": f"appointment_{appointment.pk}",
+                    "room": str(appointment.room_uuid),
                 }
             )
         except Exception as e:
             return Response(
                 {"detail": "No media server available."},
-                status=status.HTTP_404_NOT_FOUND,
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
+
+    @action(detail=True, methods=["post"])
+    def leave(self, request, pk=None):
+        """Mark user as having left the consultation"""
+        appointment = self.get_object()
+
+        # Si pas de consultation, retourner succès sans créer de message
+        if not appointment.consultation:
+            return Response({"detail": _("Left successfully")})
+
+        # Si consultation fermée, retourner succès sans créer de message
+        if appointment.consultation.closed_at:
+            return Response({"detail": _("Left successfully")})
+
+        # Créer message système "participant left"
+        user_name = request.user.name or request.user.email
+        Message.objects.create(
+            consultation=appointment.consultation,
+            created_by=None,  # Message système
+            event="participant_left",
+            content=_("%(user_name)s left the meeting") % {"user_name": user_name},
+        )
+
+        # Notifier les autres participants via WebSocket
+        channel_layer = get_channel_layer()
+        active_participants = appointment.participant_set.filter(is_active=True)
+
+        for participant in active_participants:
+            if participant.user.pk == request.user.pk:
+                continue
+
+            async_to_sync(channel_layer.group_send)(
+                f"user_{participant.user.pk}",
+                {
+                    "type": "appointment",
+                    "consultation_id": appointment.consultation.pk,
+                    "appointment_id": appointment.pk,
+                    "state": "participant_left",
+                    "data": {
+                        "user_id": request.user.pk,
+                        "user_name": user_name,
+                    },
+                },
+            )
+
+        return Response({"detail": _("Left successfully")})
 
     @extend_schema(responses=AppointmentSerializer)
     @action(detail=True, methods=["post"])
@@ -443,7 +627,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         consultation = appointment.consultation
 
         # Permission check: only doctors in Queue
-        if not self._is_doctor(request.user, consultation):
+        if not self._is_doctor(request.user, consultation, appointment):
             return Response(
                 {"error": _("Only doctors can start recording")},
                 status=status.HTTP_403_FORBIDDEN,
@@ -459,7 +643,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        room_name = f"appointment_{appointment.pk}"
+        room_name = str(appointment.room_uuid)
         mode = request.data.get("mode", "screen_recording")
         options = request.data.get("options", {})
 
@@ -491,7 +675,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         consultation = appointment.consultation
 
         # Permission check
-        if not self._is_doctor(request.user, consultation):
+        if not self._is_doctor(request.user, consultation, appointment):
             return Response(
                 {"error": _("Only doctors can stop recording")},
                 status=status.HTTP_403_FORBIDDEN,
@@ -524,9 +708,12 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                 {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-    def _is_doctor(self, user, consultation):
+    def _is_doctor(self, user, consultation, appointment=None):
         """Check if user is a doctor (in Queue group)"""
         if not consultation:
+            # Without consultation, allow if user created the appointment
+            if appointment and appointment.created_by == user:
+                return True
             return False
         # Check if user is in consultation's group (Queue)
         if consultation.group and user in consultation.group.users.all():
@@ -544,7 +731,7 @@ class ParticipantViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = ParticipantDetailSerializer
-    permission_classes = [IsAuthenticated, ConsultationAssigneePermission]
+    permission_classes = [IsAuthenticated, IsPractitioner]
     pagination_class = ConsultationPagination
     ordering = ["-id"]
     http_method_names = ["get", "post", "patch", "put", "head", "options"]
@@ -554,17 +741,76 @@ class ParticipantViewSet(viewsets.ModelViewSet):
         if not user.is_authenticated:
             return Participant.objects.none()
 
-        # Return active participants from appointments in consultations the user has access to
+        # Return active participants from appointments the user has access to
         return Participant.objects.filter(
+            Q(
+                appointment__consultation__in=Consultation.objects.filter(
+                    Q(created_by=user) | Q(owned_by=user) | Q(group__users=user)
+                )
+            )
+            | Q(appointment__created_by=user)
+            | Q(appointment__participant__user=user, appointment__participant__is_active=True),
             is_active=True,
-            appointment__consultation__in=Consultation.objects.filter(
-                Q(created_by=user) | Q(owned_by=user) | Q(group__users=user)
-            ),
         ).distinct()
 
     def perform_create(self, serializer):
         # When creating via direct participant endpoint, appointment must be provided
         serializer.save()
+
+    @action(detail=True, methods=["post"])
+    def access_url(self, request, pk=None):
+        """Get or regenerate access URL for temporary participant"""
+        participant = self.get_object()
+        user = participant.user
+
+        # Vérifications
+        if not user:
+            return Response(
+                {"detail": _("No user associated with this participant")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not user.temporary:
+            return Response(
+                {"detail": _("Access URL is only available for temporary users")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if user.email or user.mobile_phone_number:
+            return Response(
+                {"detail": _("Access URL is only available for users without email or phone")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Vérifier si le token existe et s'il est expiré
+        token_expiry = timedelta(hours=config.temporary_participant_token_expiry_hours)
+        now = timezone.now()
+        token_expired = (
+            not user.one_time_auth_token
+            or not user.verification_code_created_at
+            or (now - user.verification_code_created_at) > token_expiry
+        )
+
+        # Renouveler le token si expiré
+        if token_expired:
+            user.one_time_auth_token = str(uuid.uuid4())
+            user.verification_code_created_at = now
+            user.save(update_fields=["one_time_auth_token", "verification_code_created_at"])
+
+        # Générer l'access_url
+        access_url = f"{config.patient_base_url}/?auth={user.one_time_auth_token}"
+
+        # Calculer expires_at et le convertir dans la timezone de l'utilisateur
+        expires_at = user.verification_code_created_at + token_expiry if user.verification_code_created_at else None
+        if expires_at and request.user.is_authenticated:
+            user_tz = request.user.user_tz
+            expires_at = expires_at.astimezone(user_tz).isoformat()
+
+        return Response({
+            "access_url": access_url,
+            "token_created_at": user.verification_code_created_at,
+            "expires_at": expires_at,
+        })
 
 
 class QueueViewSet(viewsets.ReadOnlyModelViewSet):
@@ -760,13 +1006,13 @@ class ReasonSlotsView(APIView):
         if not practitioners:
             return Response([], status=status.HTTP_200_OK)
 
-        dates = [from_date + timedelta(days=i) for i in range(7)]
+        dates = [from_date + timedelta(days=i) for i in range(15)]
 
         booking_slots = BookingSlot.objects.filter(
             user__in=practitioners
         ).select_related("user")
 
-        end_date = from_date + timedelta(days=7)
+        end_date = from_date + timedelta(days=15)
         existing_appointments = Appointment.objects.filter(
             scheduled_at__date__gte=from_date,
             scheduled_at__date__lt=end_date,
@@ -776,7 +1022,7 @@ class ReasonSlotsView(APIView):
         appointment_lookup = {}
         for apt in existing_appointments:
             consultation = apt.consultation
-            if consultation.owned_by:
+            if consultation and consultation.owned_by:
                 practitioner_id = consultation.owned_by.id
                 apt_start = apt.scheduled_at
                 apt_end = apt.end_expected_at or (
@@ -856,8 +1102,16 @@ class ReasonSlotsView(APIView):
                                     break
                                 continue
 
-                        slot_start_aware = timezone.make_aware(current_datetime)
-                        slot_end_aware = timezone.make_aware(slot_end_datetime)
+                        # Use doctor's timezone for slot times
+                        doctor_timezone = practitioner.timezone or settings.TIME_ZONE
+                        doctor_tz = ZoneInfo(doctor_timezone)
+                        slot_start_aware = current_datetime.replace(tzinfo=doctor_tz)
+                        slot_end_aware = slot_end_datetime.replace(tzinfo=doctor_tz)
+
+                        # Skip slots in the past
+                        if slot_start_aware <= timezone.now():
+                            current_time = slot_end_time
+                            continue
 
                         slot_conflicts = False
                         practitioner_appointments = appointment_lookup.get(
@@ -892,26 +1146,42 @@ class ReasonSlotsView(APIView):
 
                         current_time = slot_end_time
 
-        slots_data = [
-            {
-                "date": slot.date.isoformat(),
-                "start_time": slot.start_time.isoformat(),
-                "end_time": slot.end_time.isoformat(),
+        # Convert slots to patient's timezone
+        patient_timezone = request.user.timezone or settings.TIME_ZONE
+        patient_tz = ZoneInfo(patient_timezone)
+
+        slots_data = []
+        for slot in available_slots:
+            # Get the practitioner for this slot to know their timezone
+            practitioner = next(p for p in practitioners if p.id == slot.user_id)
+            doctor_timezone = practitioner.timezone or settings.TIME_ZONE
+            doctor_tz = ZoneInfo(doctor_timezone)
+
+            # Create datetime in doctor's timezone
+            slot_start_dt = datetime.combine(slot.date, slot.start_time).replace(tzinfo=doctor_tz)
+            slot_end_dt = datetime.combine(slot.date, slot.end_time).replace(tzinfo=doctor_tz)
+
+            # Convert to patient's timezone
+            slot_start_patient = slot_start_dt.astimezone(patient_tz)
+            slot_end_patient = slot_end_dt.astimezone(patient_tz)
+
+            slots_data.append({
+                "date": slot_start_patient.date().isoformat(),
+                "start_time": slot_start_patient.time().isoformat(),
+                "end_time": slot_end_patient.time().isoformat(),
                 "duration": slot.duration,
                 "user_id": slot.user_id,
                 "user_email": slot.user_email,
                 "user_first_name": slot.user_first_name,
                 "user_last_name": slot.user_last_name,
-            }
-            for slot in available_slots
-        ]
+            })
 
         return Response(slots_data, status=status.HTTP_200_OK)
 
 
 class BookingSlotViewSet(CreatedByMixin, viewsets.ModelViewSet):
     serializer_class = BookingSlotSerializer
-    permission_classes = [IsAuthenticated, DjangoModelPermissionsWithView]
+    permission_classes = [IsAuthenticated, IsPractitioner]
     pagination_class = ConsultationPagination
     filterset_fields = [
         "user",
@@ -1075,12 +1345,23 @@ class MessageViewSet(viewsets.ModelViewSet):
             )
 
 
+class CustomFieldViewSet(viewsets.ReadOnlyModelViewSet):
+    """Read-only endpoint to list available custom fields, filterable by target_model."""
+
+    serializer_class = CustomFieldSerializer
+    permission_classes = [IsAuthenticated]
+    filterset_fields = ["target_model"]
+
+    def get_queryset(self):
+        return CustomField.objects.all()
+
+
 class DashboardPractitionerView(APIView):
     """
     Vue personnalisée pour afficher les statistiques du tableau de bord du praticien
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsPractitioner]
 
     def get(self, request):
         """Récupère les statistiques personnalisées du praticien"""
@@ -1093,10 +1374,9 @@ class DashboardPractitionerView(APIView):
         consultations_qs = Consultation.objects.accessible_by(user).active
 
         upcoming_appointments = Appointment.objects.filter(
-            consultation__in=consultations_qs,
+            participants=user,
             status=AppointmentStatus.scheduled,
             scheduled_at__gte=now,
-            scheduled_at__lt=tomorrow,
         )
 
         next_appointment = upcoming_appointments.first()
@@ -1104,15 +1384,33 @@ class DashboardPractitionerView(APIView):
             upcoming_appointments[1:] if next_appointment else upcoming_appointments
         )
 
+        ctx = {"request": request}
+
+        overdue_qs = (
+            consultations_qs.active.exclude(
+                appointments__scheduled_at__gte=timezone.now()
+                - timedelta(hours=2),
+                appointments__status=AppointmentStatus.scheduled,
+            )
+            .distinct()
+            .order_by("-created_at")
+        )
+        overdue_total = overdue_qs.count()
+
         return Response(
             {
-                "next_appointment": AppointmentCreateSerializer(next_appointment).data,
+                "next_appointment": AppointmentCreateSerializer(
+                    next_appointment, context=ctx
+                ).data,
                 "upcoming_appointments": AppointmentCreateSerializer(
-                    remaining_appointments, many=True
+                    remaining_appointments, many=True, context=ctx
                 ).data,
                 "overdue_consultations": ConsultationSerializer(
-                    consultations_qs.overdue.order_by("-created_at")[:3], many=True
+                    overdue_qs[:3],
+                    many=True,
+                    context=ctx,
                 ).data,
+                "overdue_total": overdue_total,
             },
             status=status.HTTP_200_OK,
         )

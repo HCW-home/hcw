@@ -9,9 +9,10 @@ import {
   ElementRef,
   HostListener,
 } from '@angular/core';
-import { Router } from '@angular/router';
-import { CommonModule, DatePipe } from '@angular/common';
-import { Subject, takeUntil } from 'rxjs';
+import { Router, ActivatedRoute } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { Subject, forkJoin, takeUntil } from 'rxjs';
+import { FormsModule } from '@angular/forms';
 import {
   FullCalendarModule,
   FullCalendarComponent,
@@ -22,13 +23,17 @@ import {
   EventClickArg,
   EventHoveringArg,
   DatesSetArg,
+  DateSelectArg,
+  EventDropArg,
 } from '@fullcalendar/core';
+import { EventResizeDoneArg } from '@fullcalendar/interaction';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { Page } from '../../../../core/components/page/page';
 import { Loader } from '../../../../shared/components/loader/loader';
 import { Badge } from '../../../../shared/components/badge/badge';
+import { BadgeTypeEnum } from '../../../../shared/constants/badge';
 import { Svg } from '../../../../shared/ui-components/svg/svg';
 import { Button } from '../../../../shared/ui-components/button/button';
 import {
@@ -36,6 +41,7 @@ import {
   ButtonSizeEnum,
 } from '../../../../shared/constants/button';
 import { ConsultationService } from '../../../../core/services/consultation.service';
+import { IncomingCallService } from '../../../../core/services/incoming-call.service';
 import { ToasterService } from '../../../../core/services/toaster.service';
 import {
   Appointment,
@@ -45,19 +51,40 @@ import {
   ParticipantStatus,
 } from '../../../../core/models/consultation';
 import { RoutePaths } from '../../../../core/constants/routes';
-import { getAppointmentBadgeType } from '../../../../shared/tools/helper';
+import {
+  getAppointmentBadgeType,
+  parseDateWithoutTimezone,
+} from '../../../../shared/tools/helper';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
 import { LocalDatePipe } from '../../../../shared/pipes/local-date.pipe';
 import { TranslatePipe } from '@ngx-translate/core';
 import { TranslationService } from '../../../../core/services/translation.service';
+import { UserService } from '../../../../core/services/user.service';
+import { Auth } from '../../../../core/services/auth';
+import { ConfirmPresenceModal } from './confirm-presence-modal/confirm-presence-modal';
+import { AppointmentFormModal } from '../consultation-detail/appointment-form-modal/appointment-form-modal';
+import { VideoConsultationComponent } from '../video-consultation/video-consultation';
+import { IUser } from '../../../user/models/user';
+
+interface PractitionerOption {
+  user: IUser;
+  color: string;
+  selected: boolean;
+}
+
+const PRACTITIONER_COLORS = [
+  '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+  '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1',
+];
 
 type CalendarView = 'dayGridMonth' | 'timeGridWeek' | 'timeGridDay' | 'list';
+type AppointmentTimeFilter = 'all' | 'upcoming' | 'past';
 
 @Component({
   selector: 'app-appointments',
   imports: [
     CommonModule,
-    DatePipe,
+    FormsModule,
     Page,
     Loader,
     Svg,
@@ -66,6 +93,9 @@ type CalendarView = 'dayGridMonth' | 'timeGridWeek' | 'timeGridDay' | 'list';
     FullCalendarModule,
     LocalDatePipe,
     TranslatePipe,
+    ConfirmPresenceModal,
+    AppointmentFormModal,
+    VideoConsultationComponent,
   ],
   templateUrl: './appointments.html',
   styleUrl: './appointments.scss',
@@ -73,19 +103,26 @@ type CalendarView = 'dayGridMonth' | 'timeGridWeek' | 'timeGridDay' | 'list';
 export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   private destroy$ = new Subject<void>();
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private consultationService = inject(ConsultationService);
   private toasterService = inject(ToasterService);
+  private userService = inject(UserService);
+  private authService = inject(Auth);
   private el = inject(ElementRef);
+  private incomingCallService = inject(IncomingCallService);
   private t = inject(TranslationService);
 
   protected readonly getAppointmentBadgeType = getAppointmentBadgeType;
   protected readonly AppointmentType = AppointmentType;
+  protected readonly BadgeTypeEnum = BadgeTypeEnum;
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
 
   calendarComponent = viewChild<FullCalendarComponent>('calendar');
   hoveredAppointment = signal<Appointment | null>(null);
   tooltipPosition = signal<{ top: number; left: number }>({ top: 0, left: 0 });
+  selectedAppointmentForMenu = signal<Appointment | null>(null);
+  menuPosition = signal<{ top: number; left: number }>({ top: 0, left: 0 });
 
   loading = signal(true);
   loadingMore = signal(false);
@@ -94,6 +131,25 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   calendarEvents = signal<EventInput[]>([]);
   currentView = signal<CalendarView>('timeGridWeek');
   currentTitle = signal<string>('');
+
+  confirmPresenceModalOpen = signal(false);
+  confirmPresenceParticipantId = signal<number | null>(null);
+  createAppointmentModalOpen = signal(false);
+  editingAppointment = signal<Appointment | null>(null);
+  selectedStartDate = signal<Date | null>(null);
+  selectedEndDate = signal<Date | null>(null);
+
+  highlightedAppointmentId = signal<number | null>(null);
+  inCall = signal(false);
+  activeAppointmentId = signal<number | null>(null);
+  isVideoMinimized = signal(false);
+
+  appointmentTimeFilter = signal<AppointmentTimeFilter>('upcoming');
+  tooEarlyError = signal<{ appointmentId: number; time: string; minutes: number } | null>(null);
+  appointmentEarlyJoinMinutes = 5; // Default value
+
+  practitioners = signal<PractitionerOption[]>([]);
+  practitionerDropdownOpen = signal(false);
 
   private readonly pageSize = 20;
   private listCurrentPage = 1;
@@ -105,14 +161,18 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     headerToolbar: false,
     height: 'auto',
     weekends: true,
-    editable: false,
-    selectable: false,
-    selectMirror: false,
+    editable: true,
+    eventDurationEditable: true,
+    selectable: true,
+    selectMirror: true,
     dayMaxEvents: true,
     eventClick: this.handleEventClick.bind(this),
     datesSet: this.handleDatesSet.bind(this),
     eventMouseEnter: this.handleEventMouseEnter.bind(this),
     eventMouseLeave: this.handleEventMouseLeave.bind(this),
+    select: this.handleDateSelect.bind(this),
+    eventDrop: this.handleEventDrop.bind(this),
+    eventResize: this.handleEventResize.bind(this),
     slotMinTime: '00:00:00',
     slotMaxTime: '24:00:00',
     allDaySlot: false,
@@ -127,6 +187,13 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
       weekday: 'short',
       day: 'numeric',
     },
+    views: {
+      dayGridMonth: {
+        eventDisplay: 'list-item',
+        dayMaxEvents: 4,
+        editable: false,
+      },
+    },
   };
 
   @HostListener('window:resize')
@@ -134,7 +201,115 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     this.updateCalendarHeight();
   }
 
-  ngOnInit(): void {}
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    const menuElement = this.el.nativeElement.querySelector('.appointment-context-menu');
+    if (menuElement && !menuElement.contains(target)) {
+      this.closeContextMenu();
+    }
+    const dropdownEl = this.el.nativeElement.querySelector('.practitioner-selector');
+    if (dropdownEl && !dropdownEl.contains(target)) {
+      this.practitionerDropdownOpen.set(false);
+    }
+  }
+
+  ngOnInit(): void {
+    this.loadConfig();
+    this.loadPractitioners();
+
+    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
+      const participantId = params['participantId'];
+      const appointmentId = params['appointmentId'];
+
+      if (participantId) {
+        this.openConfirmPresenceModal(Number(participantId));
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: {},
+          replaceUrl: true,
+        });
+      }
+
+      if (appointmentId) {
+        const join = params['join'] === 'true';
+        const id = Number(appointmentId);
+        this.highlightedAppointmentId.set(id);
+        if (join) {
+          this.activeAppointmentId.set(id);
+          this.inCall.set(true);
+          this.incomingCallService.setActiveCall(id);
+        }
+        this.setView('list');
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: {},
+          replaceUrl: true,
+        });
+      }
+    });
+  }
+
+  loadConfig(): void {
+    this.authService.getOpenIDConfig()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (config) => {
+          if (config.appointment_early_join_minutes) {
+            this.appointmentEarlyJoinMinutes = config.appointment_early_join_minutes;
+          }
+        },
+        error: () => {
+          // Use default value on error
+        }
+      });
+  }
+
+  private loadPractitioners(): void {
+    this.userService.searchUsers('', 1, 100, undefined, undefined, true)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: response => {
+          const currentUser = this.userService.currentUserValue;
+          this.practitioners.set(
+            response.results.map((user, index) => ({
+              user,
+              color: PRACTITIONER_COLORS[index % PRACTITIONER_COLORS.length],
+              selected: user.pk === currentUser?.pk,
+            }))
+          );
+          this.loadAppointments();
+        },
+      });
+  }
+
+  togglePractitionerDropdown(event: MouseEvent): void {
+    event.stopPropagation();
+    this.practitionerDropdownOpen.update(v => !v);
+  }
+
+  togglePractitioner(practitioner: PractitionerOption): void {
+    this.practitioners.update(list =>
+      list.map(p =>
+        p.user.pk === practitioner.user.pk
+          ? { ...p, selected: !p.selected }
+          : p
+      )
+    );
+    this.loadAppointments();
+  }
+
+  getSelectedPractitionerCount(): number {
+    return this.practitioners().filter(p => p.selected).length;
+  }
+
+  getPractitionerColor(appointment: Appointment): string {
+    const practitioner = this.practitioners().find(p =>
+      appointment.participants?.some(part => part.user?.id === p.user.pk)
+      || appointment.created_by?.id === p.user.pk
+    );
+    return practitioner?.color || '#3b82f6';
+  }
 
   ngAfterViewInit(): void {
     setTimeout(() => {
@@ -149,12 +324,20 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     const calendarApi = this.calendarComponent()?.getApi();
     if (!calendarApi) return;
 
-    const userContent = this.el.nativeElement.closest('.user-content') as HTMLElement;
+    const userContent = this.el.nativeElement.closest(
+      '.user-content'
+    ) as HTMLElement;
     if (!userContent) return;
 
-    const containerEl = this.el.nativeElement.querySelector('.appointments-container') as HTMLElement;
-    const headerEl = this.el.nativeElement.querySelector('.calendar-header') as HTMLElement;
-    const wrapperEl = this.el.nativeElement.querySelector('.calendar-wrapper') as HTMLElement;
+    const containerEl = this.el.nativeElement.querySelector(
+      '.appointments-container'
+    ) as HTMLElement;
+    const headerEl = this.el.nativeElement.querySelector(
+      '.calendar-header'
+    ) as HTMLElement;
+    const wrapperEl = this.el.nativeElement.querySelector(
+      '.calendar-wrapper'
+    ) as HTMLElement;
     if (!containerEl || !headerEl || !wrapperEl) return;
 
     const contentHeight = userContent.clientHeight;
@@ -208,20 +391,46 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
 
     this.loading.set(true);
 
-    this.consultationService
-      .getAppointments({
+    const selected = this.practitioners().filter(p => p.selected);
+
+    if (selected.length === 0) {
+      this.appointments.set([]);
+      this.calendarEvents.set([]);
+      this.loading.set(false);
+      return;
+    }
+
+    const requests = selected.map(p =>
+      this.consultationService.getAppointments({
         page_size: 100,
         status: AppointmentStatus.SCHEDULED,
-        scheduled_at__date__gte: this.currentDateRange.start,
-        scheduled_at__date__lte: this.currentDateRange.end,
+        scheduled_at__date__gte: this.currentDateRange!.start,
+        scheduled_at__date__lte: this.currentDateRange!.end,
+        participant_user: p.user.pk,
       })
+    );
+
+    forkJoin(requests)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: response => {
-          this.appointments.set(response.results);
-          this.calendarEvents.set(
-            this.transformToCalendarEvents(response.results)
-          );
+        next: responses => {
+          const allAppointments: Appointment[] = [];
+          const allEvents: EventInput[] = [];
+          const seenIds = new Set<number>();
+
+          responses.forEach((response, index) => {
+            const color = selected[index].color;
+            response.results.forEach(appointment => {
+              if (!seenIds.has(appointment.id)) {
+                seenIds.add(appointment.id);
+                allAppointments.push(appointment);
+              }
+              allEvents.push(...this.transformToCalendarEvents([appointment], color));
+            });
+          });
+
+          this.appointments.set(allAppointments);
+          this.calendarEvents.set(allEvents);
           this.loading.set(false);
         },
         error: err => {
@@ -239,17 +448,32 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     this.loading.set(true);
     this.listCurrentPage = 1;
 
+    const timeFilter = this.appointmentTimeFilter();
+    const params: Record<string, unknown> = {
+      page_size: this.pageSize,
+      status: AppointmentStatus.SCHEDULED,
+    };
+
+    if (timeFilter === 'upcoming') {
+      params['future'] = true;
+    } else if (timeFilter === 'past') {
+      params['future'] = false;
+    }
+
+    if (this.currentDateRange && !this.highlightedAppointmentId()) {
+      params['scheduled_at__date__gte'] = this.currentDateRange.start;
+      params['scheduled_at__date__lte'] = this.currentDateRange.end;
+    }
+
     this.consultationService
-      .getAppointments({
-        page_size: this.pageSize,
-        status: AppointmentStatus.SCHEDULED,
-      })
+      .getAppointments(params)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: response => {
           this.appointments.set(response.results);
           this.hasMore.set(!!response.next);
           this.loading.set(false);
+          this.scrollToHighlightedAppointment();
         },
         error: err => {
           this.toasterService.show(
@@ -262,18 +486,44 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
       });
   }
 
+  private scrollToHighlightedAppointment(): void {
+    const id = this.highlightedAppointmentId();
+    if (!id) return;
+
+    setTimeout(() => {
+      const element = this.el.nativeElement.querySelector('.appointment-item.highlighted');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  }
+
   loadMore(): void {
     if (this.loadingMore() || !this.hasMore()) return;
 
     this.loadingMore.set(true);
     this.listCurrentPage++;
 
+    const timeFilter = this.appointmentTimeFilter();
+    const params: Record<string, unknown> = {
+      page_size: this.pageSize,
+      page: this.listCurrentPage,
+      status: AppointmentStatus.SCHEDULED,
+    };
+
+    if (timeFilter === 'upcoming') {
+      params['future'] = true;
+    } else if (timeFilter === 'past') {
+      params['future'] = false;
+    }
+
+    if (this.currentDateRange) {
+      params['scheduled_at__date__gte'] = this.currentDateRange.start;
+      params['scheduled_at__date__lte'] = this.currentDateRange.end;
+    }
+
     this.consultationService
-      .getAppointments({
-        page_size: this.pageSize,
-        page: this.listCurrentPage,
-        status: AppointmentStatus.SCHEDULED,
-      })
+      .getAppointments(params)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: response => {
@@ -295,21 +545,30 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
       });
   }
 
-  private transformToCalendarEvents(appointments: Appointment[]): EventInput[] {
-    return appointments.map(appointment => ({
-      id: appointment.id.toString(),
-      title: this.getEventTitle(appointment),
-      start: appointment.scheduled_at,
-      end: appointment.end_expected_at || undefined,
-      backgroundColor: this.getStatusColor(appointment.status),
-      borderColor: this.getStatusColor(appointment.status),
-      textColor: '#ffffff',
-      extendedProps: { appointment },
-    }));
+  private transformToCalendarEvents(appointments: Appointment[], color?: string): EventInput[] {
+    return appointments.map(appointment => {
+      const eventColor = color || this.getPractitionerColor(appointment);
+      return {
+        id: color ? `${appointment.id}-${color}` : appointment.id.toString(),
+        title: this.getEventTitle(appointment),
+        start:
+          parseDateWithoutTimezone(appointment.scheduled_at) ||
+          appointment.scheduled_at,
+        end: appointment.end_expected_at
+          ? parseDateWithoutTimezone(appointment.end_expected_at) || undefined
+          : undefined,
+        backgroundColor: eventColor,
+        borderColor: eventColor,
+        textColor: '#ffffff',
+        extendedProps: { appointment },
+      };
+    });
   }
 
   private getEventTitle(appointment: Appointment): string {
-    return this.getAppointmentTypeLabel(appointment.type);
+    const title = appointment.title || this.t.instant('appointments.defaultTitle');
+    const type = this.getAppointmentTypeLabel(appointment.type);
+    return `${title} (${type})`;
   }
 
   getAppointmentTypeLabel(type: AppointmentType | string): string {
@@ -349,16 +608,20 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   }
 
   handleEventClick(clickInfo: EventClickArg): void {
+    clickInfo.jsEvent.preventDefault();
+    clickInfo.jsEvent.stopPropagation();
+
     const appointment = clickInfo.event.extendedProps[
       'appointment'
     ] as Appointment;
-    const consultationId =
-      appointment?.consultation_id || appointment?.consultation;
-    if (consultationId) {
-      this.router.navigate([RoutePaths.USER, 'consultations', consultationId], {
-        queryParams: { appointmentId: appointment.id },
-      });
-    }
+
+    const rect = clickInfo.el.getBoundingClientRect();
+    this.menuPosition.set({
+      top: rect.bottom + window.scrollY,
+      left: rect.left + window.scrollX,
+    });
+
+    this.selectedAppointmentForMenu.set(appointment);
   }
 
   handleDatesSet(arg: DatesSetArg): void {
@@ -400,6 +663,78 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     this.hoveredAppointment.set(null);
   }
 
+  handleDateSelect(selectInfo: DateSelectArg): void {
+    this.selectedStartDate.set(selectInfo.start);
+    this.selectedEndDate.set(selectInfo.end);
+    this.openCreateAppointmentModal();
+    const calendarApi = selectInfo.view.calendar;
+    calendarApi.unselect();
+  }
+
+  handleEventDrop(info: EventDropArg): void {
+    const appointment = info.event.extendedProps['appointment'] as Appointment;
+    const newStart = info.event.start;
+    const newEnd = info.event.end;
+    if (!newStart) {
+      info.revert();
+      return;
+    }
+
+    this.updateAppointmentTime(appointment.id, newStart, newEnd, info.revert);
+  }
+
+  handleEventResize(info: EventResizeDoneArg): void {
+    const appointment = info.event.extendedProps['appointment'] as Appointment;
+    const newStart = info.event.start;
+    const newEnd = info.event.end;
+    if (!newStart) {
+      info.revert();
+      return;
+    }
+
+    this.updateAppointmentTime(appointment.id, newStart, newEnd, info.revert);
+  }
+
+  private updateAppointmentTime(
+    appointmentId: number,
+    start: Date,
+    end: Date | null,
+    revert: () => void,
+  ): void {
+    const formatLocal = (d: Date): string => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
+
+    const data: { scheduled_at: string; end_expected_at?: string } = {
+      scheduled_at: formatLocal(start),
+    };
+    if (end) {
+      data.end_expected_at = formatLocal(end);
+    }
+
+    this.consultationService
+      .updateAppointment(appointmentId, data)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.loadAppointments();
+        },
+        error: err => {
+          revert();
+          this.toasterService.show(
+            'error',
+            this.t.instant('appointments.errorUpdatingAppointment'),
+            getErrorMessage(err)
+          );
+        },
+      });
+  }
+
   private updateTitle(): void {
     const calendarApi = this.calendarComponent()?.getApi();
     if (calendarApi) {
@@ -412,7 +747,15 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     this.currentView.set(view);
 
     if (view === 'list') {
-      this.loadAllAppointments();
+      // Force the hidden calendar back to week view so the date range and title
+      // always reflect a week when in list mode
+      const calendarApi = this.calendarComponent()?.getApi();
+      if (calendarApi && calendarApi.view.type !== 'timeGridWeek') {
+        calendarApi.changeView('timeGridWeek');
+        // handleDatesSet will fire and call loadAppointments() -> loadAllAppointments()
+      } else {
+        this.loadAllAppointments();
+      }
     } else {
       const calendarApi = this.calendarComponent()?.getApi();
       if (calendarApi) {
@@ -464,7 +807,11 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
       const firstName = participant.user.first_name || '';
       const lastName = participant.user.last_name || '';
       const fullName = `${firstName} ${lastName}`.trim();
-      return fullName || participant.user.email || this.t.instant('appointments.participantUnknown');
+      return (
+        fullName ||
+        participant.user.email ||
+        this.t.instant('appointments.participantUnknown')
+      );
     }
     return this.t.instant('appointments.participantUnknown');
   }
@@ -538,5 +885,197 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
       default:
         return 'scheduled';
     }
+  }
+
+  getMyParticipant(appointment: Appointment): Participant | undefined {
+    const currentUser = this.userService.currentUserValue;
+    if (!currentUser || !appointment.participants) return undefined;
+    return appointment.participants.find(p => p.user?.id === currentUser.pk);
+  }
+
+  canConfirmPresence(appointment: Appointment): boolean {
+    const myParticipant = this.getMyParticipant(appointment);
+    return !!myParticipant && myParticipant.status === 'invited';
+  }
+
+  openConfirmPresenceModal(participantId: number): void {
+    this.confirmPresenceParticipantId.set(participantId);
+    this.confirmPresenceModalOpen.set(true);
+  }
+
+  openConfirmPresenceForAppointment(
+    appointment: Appointment,
+    event: MouseEvent
+  ): void {
+    event.stopPropagation();
+    const myParticipant = this.getMyParticipant(appointment);
+    if (myParticipant) {
+      this.openConfirmPresenceModal(myParticipant.id);
+    }
+  }
+
+  onConfirmPresenceModalClosed(): void {
+    this.confirmPresenceModalOpen.set(false);
+    this.confirmPresenceParticipantId.set(null);
+  }
+
+  onPresenceConfirmed(): void {
+    this.loadAppointments();
+  }
+
+  openCreateAppointmentModal(): void {
+    this.createAppointmentModalOpen.set(true);
+  }
+
+  onCreateAppointmentModalClosed(): void {
+    this.createAppointmentModalOpen.set(false);
+    this.editingAppointment.set(null);
+    this.selectedStartDate.set(null);
+    this.selectedEndDate.set(null);
+  }
+
+  onAppointmentCreated(): void {
+    this.createAppointmentModalOpen.set(false);
+    this.editingAppointment.set(null);
+    this.selectedStartDate.set(null);
+    this.selectedEndDate.set(null);
+    this.loadAppointments();
+  }
+
+  onAppointmentUpdated(): void {
+    this.createAppointmentModalOpen.set(false);
+    this.editingAppointment.set(null);
+    this.selectedStartDate.set(null);
+    this.selectedEndDate.set(null);
+    this.loadAppointments();
+  }
+
+  joinVideoCall(appointment: Appointment, event: MouseEvent): void {
+    event.stopPropagation();
+
+    // Check if it's at least X minutes before the scheduled time
+    const now = new Date();
+    const scheduledTime = new Date(appointment.scheduled_at);
+    const earliestJoin = new Date(scheduledTime.getTime() - this.appointmentEarlyJoinMinutes * 60 * 1000);
+
+    if (now < earliestJoin) {
+      const scheduledTimeStr = scheduledTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      this.tooEarlyError.set({ appointmentId: appointment.id, time: scheduledTimeStr, minutes: this.appointmentEarlyJoinMinutes });
+      setTimeout(() => {
+        if (this.tooEarlyError()?.appointmentId === appointment.id) {
+          this.tooEarlyError.set(null);
+        }
+      }, 5000);
+      return;
+    }
+
+    this.activeAppointmentId.set(appointment.id);
+    this.inCall.set(true);
+    this.incomingCallService.setActiveCall(appointment.id);
+  }
+
+  onCallEnded(): void {
+    this.inCall.set(false);
+    this.activeAppointmentId.set(null);
+    this.isVideoMinimized.set(false);
+    this.incomingCallService.clearActiveCall();
+  }
+
+  toggleVideoSize(): void {
+    this.isVideoMinimized.update(v => !v);
+  }
+
+  canJoinVideoCall(appointment: Appointment): boolean {
+    return (
+      appointment.status === AppointmentStatus.SCHEDULED &&
+      appointment.type === AppointmentType.ONLINE
+    );
+  }
+
+  closeContextMenu(): void {
+    this.selectedAppointmentForMenu.set(null);
+  }
+
+  editAppointment(appointment: Appointment, event: MouseEvent): void {
+    event.stopPropagation();
+    this.closeContextMenu();
+    this.editingAppointment.set(appointment);
+    this.createAppointmentModalOpen.set(true);
+  }
+
+  cancelAppointment(appointment: Appointment, event: MouseEvent): void {
+    event.stopPropagation();
+    this.closeContextMenu();
+
+    if (!confirm(this.t.instant('appointments.confirmCancel'))) {
+      return;
+    }
+
+    this.consultationService
+      .updateAppointment(appointment.id, { status: AppointmentStatus.CANCELLED })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.toasterService.show(
+            'success',
+            this.t.instant('appointments.cancelSuccess')
+          );
+          this.loadAppointments();
+        },
+        error: err => {
+          this.toasterService.show(
+            'error',
+            this.t.instant('appointments.cancelError'),
+            getErrorMessage(err)
+          );
+        },
+      });
+  }
+
+  joinVideoCallFromMenu(appointment: Appointment, event: MouseEvent): void {
+    event.stopPropagation();
+    this.closeContextMenu();
+
+    // Check if it's at least X minutes before the scheduled time
+    const now = new Date();
+    const scheduledTime = new Date(appointment.scheduled_at);
+    const earliestJoin = new Date(scheduledTime.getTime() - this.appointmentEarlyJoinMinutes * 60 * 1000);
+
+    if (now < earliestJoin) {
+      const scheduledTimeStr = scheduledTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      this.tooEarlyError.set({ appointmentId: appointment.id, time: scheduledTimeStr, minutes: this.appointmentEarlyJoinMinutes });
+      setTimeout(() => {
+        if (this.tooEarlyError()?.appointmentId === appointment.id) {
+          this.tooEarlyError.set(null);
+        }
+      }, 5000);
+      return;
+    }
+
+    this.activeAppointmentId.set(appointment.id);
+    this.inCall.set(true);
+    this.incomingCallService.setActiveCall(appointment.id);
+  }
+
+  viewConsultationFromMenu(appointment: Appointment, event: MouseEvent): void {
+    event.stopPropagation();
+    this.closeContextMenu();
+
+    const consultationId =
+      appointment.consultation_id || appointment.consultation;
+    if (consultationId) {
+      this.router.navigate([RoutePaths.USER, 'consultations', consultationId], {
+        queryParams: { appointmentId: appointment.id },
+      });
+    }
+  }
+
+  hasConsultation(appointment: Appointment): boolean {
+    return !!(appointment.consultation_id || appointment.consultation);
+  }
+
+  setAppointmentTimeFilter(filter: AppointmentTimeFilter): void {
+    this.appointmentTimeFilter.set(filter);
+    this.loadAllAppointments();
   }
 }

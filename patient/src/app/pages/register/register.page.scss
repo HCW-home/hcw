@@ -1,5 +1,5 @@
 .register-content {
-  --background: linear-gradient(135deg, #f1f5f9 0%, #ecfeff 50%, #f1f5f9 100%);
+  --background: linear-gradient(135deg, var(--app-background-secondary) 0%, var(--ion-color-primary-bg) 50%, var(--app-background-secondary) 100%);
 
   &::part(scroll) {
     display: flex;
@@ -82,6 +82,21 @@
     }
   }
 
+  @keyframes fadeSlideIn {
+    from {
+      opacity: 0;
+      transform: translateX(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .step-animate {
+    animation: fadeSlideIn 0.3s ease-out;
+  }
+
   .register-form {
     .name-row {
       display: flex;
@@ -158,7 +173,6 @@
 
     .action-button {
       width: 100%;
-      max-width: 280px;
       margin-top: 12px;
       --background: var(--ion-color-primary);
       --padding-top: 14px;
@@ -194,11 +208,12 @@
     gap: 4px;
 
     .login-text {
-      font-size: 0.85rem;
+      font-size: 0.9rem;
+      color: var(--app-text-secondary);
     }
 
     .link-text {
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       font-weight: 600;
       cursor: pointer;
     }
@@ -207,7 +222,7 @@
 
 @media (max-width: 700px) {
   .register-content {
-    --background: var(--app-background);
+
 
     .auth-card {
       flex-direction: column;

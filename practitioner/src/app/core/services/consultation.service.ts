@@ -1,7 +1,8 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { SKIP_ERROR_TOAST } from '../interceptors/auth.interceptor';
 import {
   Queue,
   Participant,
@@ -17,6 +18,7 @@ import {
   CreateParticipantRequest,
   CreateConsultationRequest,
   CreateConsultationRequestPayload,
+  CustomField,
   DashboardResponse,
   IParticipantDetail,
 } from '../models/consultation';
@@ -37,6 +39,7 @@ export class ConsultationService {
     created_by?: number;
     owned_by?: number;
     is_closed?: boolean;
+    scheduled?: boolean;
     closed_at?: string;
     search?: string;
   }): Observable<PaginatedResponse<Consultation>> {
@@ -81,7 +84,8 @@ export class ConsultationService {
   closeConsultation(id: number): Observable<Consultation> {
     return this.http.post<Consultation>(
       `${this.apiUrl}/consultations/${id}/close/`,
-      {}
+      {},
+      { context: new HttpContext().set(SKIP_ERROR_TOAST, true) }
     );
   }
 
@@ -89,29 +93,6 @@ export class ConsultationService {
     return this.http.post<Consultation>(
       `${this.apiUrl}/consultations/${id}/reopen/`,
       {}
-    );
-  }
-
-  getOverdueConsultations(params?: {
-    page?: number;
-    page_size?: number;
-    group?: number;
-    beneficiary?: number;
-    created_by?: number;
-    owned_by?: number;
-    search?: string;
-  }): Observable<PaginatedResponse<Consultation>> {
-    let httpParams = new HttpParams();
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          httpParams = httpParams.set(key, value.toString());
-        }
-      });
-    }
-    return this.http.get<PaginatedResponse<Consultation>>(
-      `${this.apiUrl}/consultations/overdue/`,
-      { params: httpParams }
     );
   }
 
@@ -143,10 +124,26 @@ export class ConsultationService {
     consultationId: number,
     data: CreateAppointmentRequest
   ): Observable<Appointment> {
-    return this.http.post<Appointment>(`${this.apiUrl}/appointments/`, {
-      ...data,
-      consultation_id: consultationId,
-    });
+    return this.http.post<Appointment>(
+      `${this.apiUrl}/appointments/`,
+      {
+        ...data,
+        consultation_id: consultationId,
+      },
+      {
+        context: new HttpContext().set(SKIP_ERROR_TOAST, true),
+      }
+    );
+  }
+
+  createAppointment(data: CreateAppointmentRequest): Observable<Appointment> {
+    return this.http.post<Appointment>(
+      `${this.apiUrl}/appointments/`,
+      data,
+      {
+        context: new HttpContext().set(SKIP_ERROR_TOAST, true),
+      }
+    );
   }
 
   getAppointments(params?: {
@@ -159,6 +156,7 @@ export class ConsultationService {
     scheduled_at__date__gte?: string;
     scheduled_at__date__lte?: string;
     future?: boolean;
+    participant_user?: number;
   }): Observable<PaginatedResponse<Appointment>> {
     let httpParams = new HttpParams();
     if (params) {
@@ -196,16 +194,16 @@ export class ConsultationService {
     );
   }
 
-  cancelAppointment(appointmentId: number): Observable<Appointment> {
+  sendAppointment(appointmentId: number): Observable<Appointment> {
     return this.http.post<Appointment>(
-      `${this.apiUrl}/appointments/${appointmentId}/cancel/`,
+      `${this.apiUrl}/appointments/${appointmentId}/send/`,
       {}
     );
   }
 
-  sendAppointment(appointmentId: number): Observable<Appointment> {
-    return this.http.post<Appointment>(
-      `${this.apiUrl}/appointments/${appointmentId}/send/`,
+  markConsultationRead(consultationId: number): Observable<{ status: string }> {
+    return this.http.post<{ status: string }>(
+      `${this.apiUrl}/consultations/${consultationId}/mark_read/`,
       {}
     );
   }
@@ -242,7 +240,8 @@ export class ConsultationService {
 
     return this.http.post<ConsultationMessage>(
       `${this.apiUrl}/consultations/${consultationId}/messages/`,
-      formData
+      formData,
+      { context: new HttpContext().set(SKIP_ERROR_TOAST, true) }
     );
   }
 
@@ -330,6 +329,34 @@ export class ConsultationService {
     );
   }
 
+  joinConsultation(consultationId: number): Observable<{
+    url: string;
+    token: string;
+    room: string;
+  }> {
+    return this.http.get<{ url: string; token: string; room: string }>(
+      `${this.apiUrl}/consultations/${consultationId}/join/`
+    );
+  }
+
+  callBeneficiary(consultationId: number): Observable<{
+    url: string;
+    token: string;
+    room: string;
+  }> {
+    return this.http.post<{ url: string; token: string; room: string }>(
+      `${this.apiUrl}/consultations/${consultationId}/call/`,
+      {}
+    );
+  }
+
+  leaveAppointment(appointmentId: number): Observable<{detail: string}> {
+    return this.http.post<{detail: string}>(
+      `${this.apiUrl}/appointments/${appointmentId}/leave/`,
+      {}
+    );
+  }
+
   getMessageAttachment(messageId: number): Observable<Blob> {
     return this.http.get(`${this.apiUrl}/messages/${messageId}/attachment/`, {
       responseType: 'blob',
@@ -388,5 +415,24 @@ export class ConsultationService {
       {},
       { responseType: 'blob' }
     );
+  }
+
+  getCustomFields(targetModel: string): Observable<CustomField[]> {
+    return this.http.get<CustomField[]>(
+      `${this.apiUrl}/custom-fields/`,
+      { params: new HttpParams().set('target_model', targetModel) }
+    );
+  }
+
+  getParticipantAccessUrl(participantId: number): Observable<{
+    access_url: string;
+    token_created_at: string;
+    expires_at: string;
+  }> {
+    return this.http.post<{
+      access_url: string;
+      token_created_at: string;
+      expires_at: string;
+    }>(`${this.apiUrl}/participants/${participantId}/access_url/`, {});
   }
 }

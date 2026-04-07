@@ -21,120 +21,135 @@
         </app-button>
       </div>
     } @else {
-      @if (hasValidNextAppointment()) {
-        <div class="next-appointment-section">
-          <div class="section-card highlight">
-            <div class="section-header">
-              <div class="header-left">
-                <div class="section-icon primary">
-                  <app-svg src="clock" [svgStyle]="{'width.px': 20, 'height.px': 20, 'color': 'var(--primary-600)'}"></app-svg>
-                </div>
-                <div class="section-title">
-                  <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
-                    {{ 'dashboard.nextAppointment' | translate }}
-                  </app-typography>
-                </div>
-              </div>
+      <div class="section-card appointments-section">
+        <div class="section-header">
+          <div class="header-left">
+            <div class="section-icon primary">
+              <app-svg src="calendar" [svgStyle]="{'width.px': 20, 'height.px': 20, 'color': 'var(--primary-600)'}"></app-svg>
             </div>
-            <div class="section-content">
-              <div class="next-appointment-card">
-                <div class="appointment-left"
-                     (click)="viewNextAppointment()"
-                     (keyup.enter)="viewNextAppointment()"
-                     (keyup.space)="viewNextAppointment()"
-                     role="button"
-                     tabindex="0">
-                  <div class="patient-avatar">
-                    <span>--</span>
+            <div class="section-title">
+              <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
+                {{ 'dashboard.upcomingAppointments' | translate }}
+              </app-typography>
+              <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
+                {{ 'dashboard.scheduledAppointments' | translate }}
+              </app-typography>
+            </div>
+          </div>
+          <app-button
+            [text]="'dashboard.viewAll' | translate"
+            [size]="ButtonSizeEnum.small"
+            [style]="ButtonStyleEnum.stroke"
+            (buttonClick)="navigateToAppointments()">
+          </app-button>
+        </div>
+        <div class="section-content">
+          @if (!hasValidNextAppointment() && upcomingAppointments().length === 0) {
+            <div class="empty-state-small">
+              <app-svg src="calendar" [svgStyle]="{'width.px': 32, 'height.px': 32, 'opacity': 0.3}"></app-svg>
+              <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--slate-400)">
+                {{ 'dashboard.noUpcoming' | translate }}
+              </app-typography>
+            </div>
+          } @else {
+            <div class="appointments-list" [@listAnimation]="upcomingAppointments().length">
+              @if (hasValidNextAppointment()) {
+                <div class="next-appointment-card" (click)="viewNextAppointment()" [@fadeIn]>
+                  <div class="appointment-left">
+                    <div class="appointment-date">
+                      <span class="day">{{ nextAppointment()!.scheduled_at | localDate:'dd' }}</span>
+                      <span class="month">{{ nextAppointment()!.scheduled_at | localDate:'MMM' }}</span>
+                    </div>
+                    <div class="appointment-info">
+                      <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-800)">
+                        {{ nextAppointment()!.title || getAppointmentTypeLabel(nextAppointment()!.type!) }}
+                      </app-typography>
+                      @if (nextAppointment()!.consultation_id) {
+                        <app-typography [variant]="TypographyTypeEnum['body-xs-regular']" color="var(--slate-400)">
+                          {{ formatConsultationId(nextAppointment()!.consultation_id!) }} {{ nextAppointment()!.consultation_title ? '- ' + nextAppointment()!.consultation_title : '' }}
+                        </app-typography>
+                      }
+                      <span class="appointment-time-row">
+                        <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
+                          {{ nextAppointment()!.scheduled_at | localDate : 'mediumDate' }} {{ 'dashboard.at' | translate }} {{ nextAppointment()!.scheduled_at | localDate : 'shortTime' }}
+                        </app-typography>
+                        <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--primary-600)">
+                          {{ getRelativeTime(nextAppointment()!.scheduled_at!) }}
+                        </app-typography>
+                      </span>
+                    </div>
+                  </div>
+                  <div class="appointment-right">
+                    <app-badge [type]="BadgeTypeEnum.blue">
+                      {{ 'dashboard.nextAppointment' | translate }}
+                    </app-badge>
+                    @if (isOnlineAppointment(nextAppointment()!.type)) {
+                      <div class="join-button-container">
+                        <app-button
+                          [text]="'dashboard.joinNow' | translate"
+                          leftIcon="video"
+                          [size]="ButtonSizeEnum.small"
+                          [style]="ButtonStyleEnum.primary"
+                          (buttonClick)="joinNextAppointment($event)">
+                        </app-button>
+                        @if (tooEarlyError()?.appointmentId === nextAppointment()!.id) {
+                          <div class="join-error-bubble">
+                            <app-svg src="clock" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--amber-600)'}"></app-svg>
+                            <span>{{ 'consultationDetail.tooEarlyToJoinMessage' | translate: { time: tooEarlyError()!.time, minutes: tooEarlyError()!.minutes } }}</span>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+              @for (appointment of upcomingAppointments(); track appointment.id) {
+                <div class="appointment-item" (click)="viewAppointment(appointment)">
+                  <div class="appointment-date small">
+                    <span class="day">{{ appointment.scheduled_at | localDate:'dd' }}</span>
+                    <span class="month">{{ appointment.scheduled_at | localDate:'MMM' }}</span>
                   </div>
                   <div class="appointment-info">
                     <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-800)">
-                      {{ 'dashboard.appointment' | translate }}
+                      {{ appointment.title || getAppointmentTypeLabel(appointment.type) }}
                     </app-typography>
-                    <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
-                      {{ nextAppointment()!.type || ('dashboard.videoCall' | translate) }}
-                    </app-typography>
+                    @if (appointment.consultation_id) {
+                      <app-typography [variant]="TypographyTypeEnum['body-xs-regular']" color="var(--slate-400)">
+                        {{ formatConsultationId(appointment.consultation_id) }} {{ appointment.consultation_title ? '- ' + appointment.consultation_title : '' }}
+                      </app-typography>
+                    }
+                    <span class="appointment-time-row">
+                      <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
+                        {{ appointment.scheduled_at | localDate : 'mediumDate' }} {{ 'dashboard.at' | translate }} {{ appointment.scheduled_at | localDate : 'shortTime' }}
+                      </app-typography>
+                      <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--slate-400)">
+                        {{ getRelativeTime(appointment.scheduled_at) }}
+                      </app-typography>
+                    </span>
                   </div>
-                </div>
-                <div class="appointment-center">
-                  <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--primary-600)">
-                    {{ getRelativeTime(nextAppointment()!.scheduled_at!) }}
-                  </app-typography>
-                  <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
-                    {{ formatDateTime(nextAppointment()!.scheduled_at!) }}
-                  </app-typography>
-                </div>
-                <div class="appointment-action">
-                  <app-button
-                    [text]="'dashboard.joinNow' | translate"
-                    leftIcon="video"
-                    [size]="ButtonSizeEnum.large"
-                    [style]="ButtonStyleEnum.primary"
-                    (buttonClick)="joinNextAppointment($event)">
-                  </app-button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      }
-
-      <div class="dashboard-grid">
-        <div class="main-content">
-          <div class="section-card">
-            <div class="section-header">
-              <div class="header-left">
-                <div class="section-icon primary">
-                  <app-svg src="calendar" [svgStyle]="{'width.px': 20, 'height.px': 20, 'color': 'var(--primary-600)'}"></app-svg>
-                </div>
-                <div class="section-title">
-                  <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
-                    {{ 'dashboard.upcomingAppointments' | translate }}
-                  </app-typography>
-                  <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
-                    {{ 'dashboard.scheduledAppointments' | translate }}
-                  </app-typography>
-                </div>
-              </div>
-              <app-button
-                [text]="'dashboard.viewAll' | translate"
-                [size]="ButtonSizeEnum.small"
-                [style]="ButtonStyleEnum.stroke"
-                (buttonClick)="navigateToConsultations()">
-              </app-button>
-            </div>
-            <div class="section-content">
-              @if (upcomingAppointments().length === 0) {
-                <div class="empty-state-small">
-                  <app-svg src="calendar" [svgStyle]="{'width.px': 32, 'height.px': 32, 'opacity': 0.3}"></app-svg>
-                  <app-typography [variant]="TypographyTypeEnum['body-s-medium']" color="var(--slate-400)">
-                    {{ 'dashboard.noUpcoming' | translate }}
-                  </app-typography>
-                </div>
-              } @else {
-                <div class="appointments-list">
-                  @for (appointment of upcomingAppointments(); track appointment.id) {
-                    <div class="appointment-item" (click)="viewAppointment(appointment)">
-                      <div class="patient-avatar small">
-                        <span>--</span>
+                  <div class="appointment-right">
+                    @if (isOnlineAppointment(appointment.type)) {
+                      <div class="join-button-container">
+                        <app-button
+                          [text]="'consultationDetail.join' | translate"
+                          leftIcon="video"
+                          [size]="ButtonSizeEnum.small"
+                          [style]="ButtonStyleEnum.stroke"
+                          (buttonClick)="joinAppointment(appointment, $event)">
+                        </app-button>
+                        @if (tooEarlyError()?.appointmentId === appointment.id) {
+                          <div class="join-error-bubble">
+                            <app-svg src="clock" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--amber-600)'}"></app-svg>
+                            <span>{{ 'consultationDetail.tooEarlyToJoinMessage' | translate: { time: tooEarlyError()!.time, minutes: tooEarlyError()!.minutes } }}</span>
+                          </div>
+                        }
                       </div>
-                      <div class="appointment-details">
-                        <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-800)">
-                          {{ getAppointmentTypeLabel(appointment.type) }}
-                        </app-typography>
-                        <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--slate-500)">
-                          {{ formatDateTime(appointment.scheduled_at) }}
-                        </app-typography>
-                      </div>
-                      <div class="appointment-time">
-                        <app-badge [type]="getAppointmentBadgeType(appointment.status)">{{ appointment.status }}</app-badge>
-                      </div>
-                    </div>
-                  }
+                    }
+                  </div>
                 </div>
               }
             </div>
-          </div>
+          }
         </div>
       </div>
 
@@ -154,9 +169,17 @@
                 </app-typography>
               </div>
             </div>
-            @if (overdueConsultations().length > 0) {
-              <span class="overdue-badge">{{ 'dashboard.pending' | translate: { count: overdueConsultations().length } }}</span>
-            }
+            <div class="header-right">
+              @if (overdueTotal() > 0) {
+                <span class="overdue-badge">{{ 'dashboard.pending' | translate: { count: overdueTotal() } }}</span>
+              }
+              <app-button
+                [text]="'dashboard.viewAll' | translate"
+                [size]="ButtonSizeEnum.small"
+                [style]="ButtonStyleEnum.stroke"
+                (buttonClick)="navigateToOverdueConsultations()">
+              </app-button>
+            </div>
           </div>
           <div class="section-content">
             @if (overdueConsultations().length === 0) {
@@ -167,13 +190,12 @@
                 </app-typography>
               </div>
             } @else {
-              <div class="overdue-list">
+              <div class="overdue-list" [@listAnimation]="overdueConsultations().length">
                 @for (consultation of overdueConsultations(); track consultation.id) {
                   <app-consultation-row-item
                     [consultation]="consultation"
-                    [statusBadgeType]="BadgeTypeEnum.orange"
-                    [statusLabel]="'dashboard.overdue' | translate"
-                    (rowClick)="viewConsultation($event)">
+                    (rowClick)="viewConsultation($event)"
+                    [@fadeIn]>
                   </app-consultation-row-item>
                 }
               </div>

@@ -1,7 +1,10 @@
+import logging
 from abc import ABC, abstractmethod
 from importlib import import_module
 from pkgutil import iter_modules
 from typing import TYPE_CHECKING, Dict, List, Tuple, Type
+
+logger = logging.getLogger(__name__)
 
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
@@ -77,12 +80,15 @@ class BaseAssignmentHandler(ABC):
             appointment=appointment,
             user=self.request.created_by,
             is_invited=True,
-            is_confirmed=False,
+            is_confirmed=True,
         )
 
         # Create participant for doctor
         Participant.objects.create(
-            appointment=appointment, user=doctor, is_invited=True, is_confirmed=False
+            appointment=appointment,
+            user=doctor,
+            is_invited=True,
+            is_confirmed=True,
         )
 
 
@@ -119,13 +125,13 @@ class AssignmentManager:
             if self.request.consultation:
                 self.request.consultation.delete()
                 self.request.consultation = None
-            self.request.status = RequestStatus.cancelled
+            self.request.status = RequestStatus.refused
             if exc_type == AssignmentException:
                 self.request.refused_reason = f"{exc_val}"
             else:
                 self.request.refused_reason = f"An unexpected error occured: {exc_val}"
             self.request.save()
-            print(f"Une exception s'est produite : {exc_val}")
+            logger.error("Assignment exception: %s", exc_val)
             return
 
         self.request.status = RequestStatus.accepted

@@ -8,18 +8,18 @@ https://docs.djangoproject.com/en/5.1/howto/deployment/asgi/
 """
 
 import os
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
 
 import django
+
 django.setup()
 
-
-from django.core.asgi import get_asgi_application
+from .channelsmiddleware import CorsMiddleware, JWTAuthMiddleware, TenantMiddleware
 from channels.routing import ProtocolTypeRouter, URLRouter
-from users.routing import websocket_urlpatterns as user_patterns
 from consultations.routing import websocket_urlpatterns as consultation_patterns
-from .channelsmiddleware import JWTAuthMiddleware, CorsMiddleware
-
+from django.core.asgi import get_asgi_application
+from users.routing import websocket_urlpatterns as user_patterns
 
 
 django_asgi_app = get_asgi_application()
@@ -27,10 +27,8 @@ django_asgi_app = get_asgi_application()
 application = ProtocolTypeRouter(
     {
         "http": get_asgi_application(),
-        "websocket": CorsMiddleware(
-            JWTAuthMiddleware(
-                URLRouter(user_patterns + consultation_patterns)
-            )
-        ),
+        "websocket": CorsMiddleware(TenantMiddleware(
+            JWTAuthMiddleware(URLRouter(user_patterns + consultation_patterns))
+        )),
     }
 )

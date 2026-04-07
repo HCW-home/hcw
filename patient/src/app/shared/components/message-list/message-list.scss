@@ -15,7 +15,7 @@
   align-items: center;
   padding: var(--app-spacing-md);
   border-bottom: 1px solid var(--app-border-color);
-  background: var(--app-card-background);
+  background: var(--app-background);
 
   .header-title {
     font-size: 1rem;
@@ -56,7 +56,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--app-spacing-sm);
-  background: var(--app-background);
+  background: var(--app-card-background);
 }
 
 .no-messages {
@@ -128,12 +128,66 @@
       color: var(--app-text-primary);
     }
   }
+}
 
-  &.system-message {
-    align-self: center;
-    background: var(--app-card-background);
-    border: 1px solid var(--app-border-color);
+.date-separator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin: 16px 0 8px;
+}
+
+.date-separator-text {
+  background: var(--app-border-color);
+  color: var(--app-text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.unread-separator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 8px;
+  width: 100%;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--ion-color-primary, #0891b2);
+    opacity: 0.4;
   }
+}
+
+.unread-separator-text {
+  color: var(--ion-color-primary, #0891b2);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.system-message {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 8px 0;
+}
+
+.system-message-text {
+  text-align: center;
+  color: var(--app-text-muted);
+  font-style: italic;
+  font-size: 0.8125rem;
+  margin: 0;
 }
 
 .message-header {
@@ -368,7 +422,7 @@
   padding: var(--app-spacing-sm) var(--app-spacing-md);
   border-top: 1px solid var(--app-border-color);
   flex-shrink: 0;
-  background: var(--app-card-background);
+  background: var(--app-background);
 
   .attach-btn {
     --padding-start: 8px;
@@ -386,7 +440,7 @@
     border: 1px solid var(--app-border-color);
     border-radius: 20px;
     font-size: 0.875rem;
-    background: var(--app-background);
+    background: var(--app-card-background);
     color: var(--app-text-primary);
     outline: none;
     font-family: inherit;

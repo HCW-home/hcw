@@ -2,16 +2,19 @@ from allauth.account import app_settings
 from allauth.account.adapter import get_adapter
 from allauth.account.utils import setup_user_email
 from allauth.socialaccount.models import EmailAddress
+from consultations.models import Participant
+from consultations.serializers import AppointmentDetailSerializer, CustomFieldsMixin
+from dj_rest_auth.serializers import PasswordResetSerializer
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
+from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers, status
 from rest_framework.response import Response
-from dj_rest_auth.serializers import PasswordResetSerializer
-from .models import HealthMetric, Language, Organisation, Speciality, Term
+
 from .forms import CustomAllAuthPasswordResetForm
-from consultations.serializers import AppointmentDetailSerializer
-from consultations.models import Participant
+from .models import HealthMetric, Language, Organisation, Speciality, Term, WebPushSubscription
+
 UserModel = get_user_model()
 
 
@@ -33,10 +36,15 @@ class OrganisationSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "name",
-            "logo_large",
-            "footer",
-            "logo_small",
-            "primary_color",
+            "logo_color",
+            "logo_white",
+            "favicon",
+            "login_text_patient",
+            "login_text_practitioner",
+            "footer_patient",
+            "footer_practitioner",
+            "primary_color_patient",
+            "primary_color_practitioner",
             "default_term",
             "location",
             "street",
@@ -46,7 +54,13 @@ class OrganisationSerializer(serializers.ModelSerializer):
         ]
 
 
-class UserDetailsSerializer(serializers.ModelSerializer):
+class SpecialitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Speciality
+        fields = ["id", "name"]
+
+
+class UserDetailsSerializer(CustomFieldsMixin, serializers.ModelSerializer):
     """
     User model w/o password
     """
@@ -54,6 +68,10 @@ class UserDetailsSerializer(serializers.ModelSerializer):
     main_organisation = OrganisationSerializer(read_only=True)
     organisations = OrganisationSerializer(many=True, read_only=True)
     languages = LanguageSerializer(many=True, read_only=True)
+    specialities = SpecialitySerializer(many=True, read_only=True)
+
+    is_online = serializers.BooleanField(read_only=True)
+    mobile_phone_number = serializers.CharField(allow_null=True, allow_blank=True, required=False)
 
     languages_ids = serializers.PrimaryKeyRelatedField(
         many=True,
@@ -84,8 +102,77 @@ class UserDetailsSerializer(serializers.ModelSerializer):
             "languages",
             "is_online",
             "accepted_term",
+            "temporary",
+            "is_practitioner",
+            "is_first_login",
+            "specialities",
         ]
-        read_only_fields = ["is_online", UserModel.EMAIL_FIELD]
+        read_only_fields = [
+            "is_practitioner",
+        ]
+
+    def validate_mobile_phone_number(self, value):
+        if self.instance and value:
+            if self.instance.mobile_phone_number != value:
+                if UserModel.objects.filter(mobile_phone_number=value).exclude(pk=self.instance.pk).exists():
+                    raise serializers.ValidationError(
+                        "A user with this phone number already exists."
+                    )
+        return value
+
+    def validate_email(self, value):
+        if self.instance and value:
+            # Check if email is being changed and if new email already exists
+            if self.instance.email != value:
+                if UserModel.objects.filter(email=value).exclude(pk=self.instance.pk).exists():
+                    raise serializers.ValidationError(
+                        "A user with this email already exists."
+                    )
+        return value
+
+    # def validate_temporary(self, value):
+    #     if self.instance and not self.instance.temporary and value:
+    #         raise serializers.ValidationError(
+    #             "A permanent patient cannot be made temporary."
+    #         )
+    #     return value
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+
+        communication_method = attrs.get(
+            "communication_method",
+            getattr(self.instance, "communication_method", None),
+        )
+        phone = attrs.get(
+            "mobile_phone_number",
+            getattr(self.instance, "mobile_phone_number", None),
+        )
+
+        if communication_method in ("sms", "whatsapp") and not phone:
+            raise serializers.ValidationError(
+                {
+                    "mobile_phone_number": _(
+                        "A phone number is required when communication method is SMS or WhatsApp."
+                    )
+                }
+            )
+
+        email = attrs.get(
+            "email",
+            getattr(self.instance, "email", None),
+        )
+
+        if communication_method == "email" and not email:
+            raise serializers.ValidationError(
+                {
+                    "email": _(
+                        "An email is required when communication method is Email."
+                    )
+                }
+            )
+
+        return attrs
 
 
 class RegisterSerializer(serializers.Serializer):
@@ -103,9 +190,7 @@ class RegisterSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         if attrs.get("password1") != attrs.get("password2"):
-            raise serializers.ValidationError(
-                {"password2": "Passwords do not match."}
-            )
+            raise serializers.ValidationError({"password2": "Passwords do not match."})
         return attrs
 
     def get_cleaned_data(self):
@@ -138,6 +223,7 @@ class RegisterSerializer(serializers.Serializer):
                 )
         user.first_name = self.cleaned_data.get("first_name", "")
         user.last_name = self.cleaned_data.get("last_name", "")
+        user.is_active = False
         user.save()
         setup_user_email(request, user, [])
         return user
@@ -178,12 +264,14 @@ class SpecialitySerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    specialities = SpecialitySerializer(many=True, read_only=True)
+
     class Meta:
         model = UserModel
-        fields = ["id", "email", "first_name", "last_name"]
+        fields = ["id", "email", "first_name", "last_name", "specialities"]
 
 
-class HealthMetricSerializer(serializers.ModelSerializer):
+class HealthMetricSerializer(CustomFieldsMixin, serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     created_by = UserSerializer(read_only=True)
     measured_by = UserSerializer(read_only=True)
@@ -211,6 +299,26 @@ class HealthMetricSerializer(serializers.ModelSerializer):
         ]
 
 
+class WebPushSubscriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WebPushSubscription
+        fields = ["id", "endpoint", "p256dh", "auth", "browser"]
+
+    def create(self, validated_data):
+        user = self.context["request"].user
+        subscription, _ = WebPushSubscription.objects.update_or_create(
+            user=user,
+            endpoint=validated_data["endpoint"],
+            defaults={
+                "p256dh": validated_data["p256dh"],
+                "auth": validated_data["auth"],
+                "browser": validated_data.get("browser", ""),
+                "is_active": True,
+            },
+        )
+        return subscription
+
+
 class CustomPasswordResetSerializer(PasswordResetSerializer):
     @property
     def password_reset_form_class(self):
@@ -218,17 +326,16 @@ class CustomPasswordResetSerializer(PasswordResetSerializer):
 
 
 class UserParticipantDetailSerializer(serializers.ModelSerializer):
-
     appointment = AppointmentDetailSerializer(read_only=True)
 
     class Meta:
         model = Participant
         fields = [
-            'is_confirmed',
-            'appointment',
-            'status',
+            "is_confirmed",
+            "appointment",
+            "status",
         ]
         read_only_field = [
             "status",
-            'appointment',
+            "appointment",
         ]

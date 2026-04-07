@@ -4,6 +4,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     AppointmentViewSet,
     ConsultationViewSet,
+    CustomFieldViewSet,
     DashboardPractitionerView,
     MessageViewSet,
     ParticipantViewSet,
@@ -20,6 +21,7 @@ router.register(r"participants", ParticipantViewSet, basename="participant")
 router.register(r"queues", QueueViewSet, basename="queue")
 router.register(r"requests", RequestViewSet, basename="request")
 router.register(r"messages", MessageViewSet, basename="message")
+router.register(r"custom-fields", CustomFieldViewSet, basename="custom-field")
 
 urlpatterns = [
     path("api/", include(router.urls)),

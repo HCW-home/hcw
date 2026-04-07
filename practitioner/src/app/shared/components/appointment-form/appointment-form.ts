@@ -20,6 +20,7 @@ import {
 } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 
+import { Auth } from '../../../core/services/auth';
 import { ConsultationService } from '../../../core/services/consultation.service';
 import { ToasterService } from '../../../core/services/toaster.service';
 import { UserService } from '../../../core/services/user.service';
@@ -44,7 +45,11 @@ import { Svg } from '../../ui-components/svg/svg';
 import { Loader } from '../loader/loader';
 import { UserSearchSelect } from '../user-search-select/user-search-select';
 import { ParticipantItem } from '../participant-item/participant-item';
-import { ButtonStyleEnum, ButtonSizeEnum, ButtonStateEnum } from '../../constants/button';
+import {
+  ButtonStyleEnum,
+  ButtonSizeEnum,
+  ButtonStateEnum,
+} from '../../constants/button';
 import { SelectOption } from '../../models/select';
 import { extractDateFromISO, extractTimeFromISO } from '../../tools/helper';
 import { getErrorMessage } from '../../../core/utils/error-helper';
@@ -73,18 +78,23 @@ import { TranslationService } from '../../../core/services/translation.service';
   ],
 })
 export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
-  @Input() consultationId!: number;
+  @Input() consultationId?: number;
   @Input() editingAppointment: Appointment | null = null;
   @Input() showActions = true;
+  @Input() autoSave = true;
   @Input() beneficiary: User | null = null;
   @Input() owner: User | null = null;
+  @Input() initialStartDate: Date | null = null;
+  @Input() initialEndDate: Date | null = null;
 
   @Output() cancelled = new EventEmitter<void>();
   @Output() appointmentCreated = new EventEmitter<Appointment>();
   @Output() appointmentUpdated = new EventEmitter<Appointment>();
+  @Output() appointmentDataReady = new EventEmitter<CreateAppointmentRequest>();
 
   private destroy$ = new Subject<void>();
   private fb = inject(FormBuilder);
+  private authService = inject(Auth);
   private consultationService = inject(ConsultationService);
   private toasterService = inject(ToasterService);
   private userService = inject(UserService);
@@ -92,7 +102,9 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
 
   isSubmitting = signal(false);
   currentUser = signal<IUser | null>(null);
+  availableCommunicationMethods = signal<string[]>([]);
   appointmentForm!: FormGroup;
+  backendErrors = signal<Record<string, string[]>>({});
 
   participants = signal<Participant[]>([]);
   pendingParticipants = signal<CreateParticipantRequest[]>([]);
@@ -105,13 +117,50 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
 
   timezoneOptions: SelectOption[] = TIMEZONE_OPTIONS;
 
+  get hasEmailMethod(): boolean {
+    return this.availableCommunicationMethods().includes('email');
+  }
+
+  get hasPhoneMethod(): boolean {
+    const methods = this.availableCommunicationMethods();
+    return methods.includes('sms') || methods.includes('whatsapp');
+  }
+
   get communicationMethods(): SelectOption[] {
-    return [
-      { value: 'email', label: this.t.instant('appointmentForm.email') },
-      { value: 'sms', label: this.t.instant('appointmentForm.sms') },
-      { value: 'whatsapp', label: this.t.instant('appointmentForm.whatsApp') },
-      { value: 'push', label: this.t.instant('appointmentForm.pushNotification') },
-    ];
+    const methods = this.availableCommunicationMethods();
+    const options: SelectOption[] = [];
+    if (methods.includes('sms')) {
+      options.push({
+        value: 'sms',
+        label: this.t.instant('appointmentForm.sms'),
+      });
+    }
+    if (methods.includes('whatsapp')) {
+      options.push({
+        value: 'whatsapp',
+        label: this.t.instant('appointmentForm.whatsApp'),
+      });
+    }
+    return options;
+  }
+
+  get hasMultipleCommunicationMethods(): boolean {
+    return this.communicationMethods.length > 1;
+  }
+
+  get shouldShowCommunicationMethodField(): boolean {
+    const contactType = this.participantForm?.get('contact_type')?.value;
+    return contactType === 'sms' && this.communicationMethods.length > 0;
+  }
+
+  get defaultContactType(): string {
+    if (this.hasEmailMethod) {
+      return 'email';
+    } else if (this.hasPhoneMethod) {
+      return 'sms';
+    } else {
+      return 'manual';
+    }
   }
 
   get languageOptions(): SelectOption[] {
@@ -132,23 +181,55 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   }
 
   get submitButtonText(): string {
-    return this.isEditMode ? this.t.instant('appointmentForm.saveChanges') : this.t.instant('appointmentForm.createAppointment');
+    return this.isEditMode
+      ? this.t.instant('appointmentForm.saveChanges')
+      : this.t.instant('appointmentForm.createAppointment');
   }
 
   ngOnInit(): void {
     this.initForm();
     this.initParticipantForm();
     this.loadCurrentUser();
+    this.loadConfig();
     this.updateInviteCheckboxStates();
+
+    // Clear backend errors when form values change
+    this.appointmentForm.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        if (Object.keys(this.backendErrors()).length > 0) {
+          this.backendErrors.set({});
+        }
+      });
   }
 
   private loadCurrentUser(): void {
-    this.userService.currentUser$.pipe(takeUntil(this.destroy$)).subscribe(user => {
-      this.currentUser.set(user);
-    });
+    this.userService.currentUser$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(user => {
+        this.currentUser.set(user);
+      });
     if (!this.currentUser()) {
-      this.userService.getCurrentUser().pipe(takeUntil(this.destroy$)).subscribe();
+      this.userService
+        .getCurrentUser()
+        .pipe(takeUntil(this.destroy$))
+        .subscribe();
     }
+  }
+
+  private loadConfig(): void {
+    this.authService
+      .getOpenIDConfig()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: config => {
+          this.availableCommunicationMethods.set(
+            config.communication_methods || []
+          );
+          // Set default contact_type based on available methods
+          this.participantForm.patchValue({ contact_type: this.defaultContactType });
+        },
+      });
   }
 
   isBeneficiaryCheckboxDisabled(): boolean {
@@ -182,11 +263,22 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
     if ((changes['beneficiary'] || changes['owner']) && this.appointmentForm) {
       this.updateInviteCheckboxStates();
     }
+    if (
+      (changes['initialStartDate'] || changes['initialEndDate']) &&
+      this.appointmentForm &&
+      !this.editingAppointment
+    ) {
+      this.populateFormWithInitialDates();
+    }
   }
 
   updateInviteCheckboxStates(): void {
-    const beneficiaryControl = this.appointmentForm.get('dont_invite_beneficiary');
-    const practitionerControl = this.appointmentForm.get('dont_invite_practitioner');
+    const beneficiaryControl = this.appointmentForm.get(
+      'dont_invite_beneficiary'
+    );
+    const practitionerControl = this.appointmentForm.get(
+      'dont_invite_practitioner'
+    );
 
     if (this.isBeneficiaryCheckboxDisabled()) {
       beneficiaryControl?.disable();
@@ -213,6 +305,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   private initForm(): void {
     this.appointmentForm = this.fb.group({
       type: [AppointmentType.ONLINE, [Validators.required]],
+      title: [''],
       date: ['', [Validators.required]],
       time: ['', [Validators.required]],
       end_date: [''],
@@ -224,20 +317,64 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   }
 
   private initParticipantForm(): void {
+    const currentUserData = this.currentUser();
     this.participantForm = this.fb.group({
       user_id: [null],
       first_name: [''],
       last_name: [''],
-      email: ['', [Validators.email]],
+      email: [''],
       phone: [''],
       contact_type: ['email', [Validators.required]],
-      timezone: [''],
-      communication_method: [''],
-      preferred_language: [''],
+      timezone: [currentUserData?.timezone || ''],
+      communication_method: [currentUserData?.communication_method || ''],
+      preferred_language: [currentUserData?.preferred_language || ''],
     });
+
+    // Update validators when contact_type changes
+    this.participantForm.get('contact_type')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(contactType => {
+        this.updateParticipantValidators(contactType);
+      });
+  }
+
+  private updateParticipantValidators(contactType: string): void {
+    const emailControl = this.participantForm.get('email');
+    const phoneControl = this.participantForm.get('phone');
+    const communicationMethodControl = this.participantForm.get('communication_method');
+
+    // Reset validators
+    emailControl?.clearValidators();
+    phoneControl?.clearValidators();
+    communicationMethodControl?.clearValidators();
+
+    // Reset touched state to prevent red flash
+    emailControl?.markAsUntouched();
+    phoneControl?.markAsUntouched();
+    communicationMethodControl?.markAsUntouched();
+
+    // Apply validators based on contact type
+    if (contactType === 'email') {
+      emailControl?.setValidators([Validators.required, Validators.email]);
+    } else if (contactType === 'sms') {
+      phoneControl?.setValidators([Validators.required]);
+      if (this.hasMultipleCommunicationMethods) {
+        communicationMethodControl?.setValidators([Validators.required]);
+        communicationMethodControl?.enable();
+      } else {
+        // Disable if only one method available
+        communicationMethodControl?.disable();
+      }
+    }
+
+    // Update validity without emitting events
+    emailControl?.updateValueAndValidity({ emitEvent: false });
+    phoneControl?.updateValueAndValidity({ emitEvent: false });
+    communicationMethodControl?.updateValueAndValidity({ emitEvent: false });
   }
 
   resetForm(): void {
+    const currentUserData = this.currentUser();
     this.appointmentForm.reset({
       type: AppointmentType.ONLINE,
       dont_invite_beneficiary: false,
@@ -251,10 +388,49 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
     this.selectedParticipantUser.set(null);
     this.participantForm.reset({
       contact_type: 'email',
-      timezone: '',
-      communication_method: '',
-      preferred_language: '',
+      timezone: currentUserData?.timezone || '',
+      communication_method: currentUserData?.communication_method || '',
+      preferred_language: currentUserData?.preferred_language || '',
     });
+    this.backendErrors.set({});
+  }
+
+  getFieldError(fieldName: string): string {
+    const errors = this.backendErrors();
+    if (errors[fieldName] && errors[fieldName].length > 0) {
+      return errors[fieldName][0];
+    }
+    return '';
+  }
+
+  getParticipantFieldError(fieldName: string): string {
+    const control = this.participantForm.get(fieldName);
+    if (control && control.invalid && control.touched) {
+      if (control.hasError('required')) {
+        return this.t.instant('appointmentForm.fieldRequired');
+      }
+      if (control.hasError('email')) {
+        return this.t.instant('appointmentForm.invalidEmail');
+      }
+    }
+    return '';
+  }
+
+  getAppointmentFieldError(fieldName: string): string {
+    // Check backend errors first
+    const backendError = this.getFieldError(fieldName);
+    if (backendError) {
+      return backendError;
+    }
+
+    // Check validation errors
+    const control = this.appointmentForm.get(fieldName);
+    if (control && control.invalid && control.touched) {
+      if (control.hasError('required')) {
+        return this.t.instant('appointmentForm.fieldRequired');
+      }
+    }
+    return '';
   }
 
   private populateFormForEdit(): void {
@@ -272,6 +448,41 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
 
     this.appointmentForm.patchValue({
       type: this.editingAppointment.type || AppointmentType.ONLINE,
+      title: this.editingAppointment.title || '',
+      date: dateStr,
+      time: timeStr,
+      end_date: endDateStr,
+      end_time: endTimeStr,
+    });
+  }
+
+  private populateFormWithInitialDates(): void {
+    if (!this.initialStartDate) return;
+
+    const formatDate = (date: Date): string => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    const formatTime = (date: Date): string => {
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${hours}:${minutes}`;
+    };
+
+    const dateStr = formatDate(this.initialStartDate);
+    const timeStr = formatTime(this.initialStartDate);
+
+    let endDateStr = '';
+    let endTimeStr = '';
+    if (this.initialEndDate) {
+      endDateStr = formatDate(this.initialEndDate);
+      endTimeStr = formatTime(this.initialEndDate);
+    }
+
+    this.appointmentForm.patchValue({
       date: dateStr,
       time: timeStr,
       end_date: endDateStr,
@@ -282,7 +493,9 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   loadParticipants(): void {
     if (!this.editingAppointment) return;
 
-    this.participants.set(this.editingAppointment.participants.filter(p => p.is_active));
+    this.participants.set(
+      this.editingAppointment.participants.filter(p => p.is_active)
+    );
   }
 
   setAppointmentType(type: AppointmentType): void {
@@ -292,17 +505,35 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   setParticipantType(isExisting: boolean): void {
     this.isExistingUser.set(isExisting);
     this.selectedParticipantUser.set(null);
+    const currentUserData = this.currentUser();
     this.participantForm.reset({
-      contact_type: 'email',
-      timezone: '',
-      communication_method: '',
-      preferred_language: '',
+      contact_type: this.defaultContactType,
+      timezone: currentUserData?.timezone || '',
+      communication_method: currentUserData?.communication_method || '',
+      preferred_language: currentUserData?.preferred_language || '',
       user_id: null,
     });
   }
 
   setParticipantMessageType(type: string): void {
-    this.participantForm.patchValue({ contact_type: type });
+    let communicationMethod = '';
+
+    if (type === 'email') {
+      communicationMethod = 'email';
+    } else if (type === 'manual') {
+      communicationMethod = 'manual';
+    } else if (type === 'sms') {
+      // Auto-select communication method if only one is available
+      const methods = this.communicationMethods;
+      if (methods.length === 1) {
+        communicationMethod = String(methods[0].value);
+      }
+    }
+
+    this.participantForm.patchValue({
+      contact_type: type,
+      communication_method: communicationMethod,
+    });
   }
 
   onParticipantUserSelected(user: IUser | null): void {
@@ -325,14 +556,21 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   }
 
   addParticipant(): void {
-    const formValue = this.participantForm.value;
+    // Mark all fields as touched to show validation errors
+    Object.keys(this.participantForm.controls).forEach(key => {
+      this.participantForm.get(key)?.markAsTouched();
+    });
+
+    // Check if form is valid
+    if (this.participantForm.invalid) {
+      return;
+    }
+
+    const formValue = this.participantForm.getRawValue();
     const data: CreateParticipantRequest = {};
 
     if (formValue.timezone) {
       data.timezone = formValue.timezone;
-    }
-    if (formValue.communication_method) {
-      data.communication_method = formValue.communication_method;
     }
     if (formValue.preferred_language) {
       data.preferred_language = formValue.preferred_language;
@@ -344,13 +582,24 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
       data.last_name = formValue.last_name;
     }
 
-    if (formValue.contact_type === 'email' && formValue.email) {
+    // Determine communication_method based on contact_type
+    let communicationMethod = formValue.communication_method;
+    if (formValue.contact_type === 'email') {
+      communicationMethod = 'email';
       data.email = formValue.email;
-    } else if (formValue.contact_type === 'sms' && formValue.phone) {
+    } else if (formValue.contact_type === 'sms') {
       data.mobile_phone_number = formValue.phone;
-    } else {
-      this.toasterService.show('error', this.t.instant('appointmentForm.missingInfo'), this.t.instant('appointmentForm.provideContact'));
-      return;
+      // Use the selected method, or default to the first available if not set
+      if (!communicationMethod) {
+        const methods = this.communicationMethods;
+        communicationMethod = methods.length > 0 ? String(methods[0].value) : 'sms';
+      }
+    } else if (formValue.contact_type === 'manual') {
+      communicationMethod = 'manual';
+    }
+
+    if (communicationMethod) {
+      data.communication_method = communicationMethod;
     }
 
     this.pendingParticipants.update(list => [...list, data]);
@@ -358,11 +607,12 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   }
 
   private resetParticipantForm(): void {
+    const currentUserData = this.currentUser();
     this.participantForm.reset({
-      contact_type: 'email',
-      timezone: '',
-      communication_method: '',
-      preferred_language: '',
+      contact_type: this.defaultContactType,
+      timezone: currentUserData?.timezone || '',
+      communication_method: currentUserData?.communication_method || '',
+      preferred_language: currentUserData?.preferred_language || '',
     });
     this.isExistingUser.set(true);
     this.selectedParticipantUser.set(null);
@@ -392,6 +642,11 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   }
 
   submit(): void {
+    // Mark all fields as touched to show validation errors
+    Object.keys(this.appointmentForm.controls).forEach(key => {
+      this.appointmentForm.get(key)?.markAsTouched();
+    });
+
     if (!this.appointmentForm.valid) return;
 
     this.isSubmitting.set(true);
@@ -399,16 +654,29 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
 
     const scheduledAt = `${formValue.date}T${formValue.time}`;
 
+    // Validate scheduled time is not in the past
+    const scheduledDate = new Date(scheduledAt);
+    if (scheduledDate < new Date()) {
+      this.backendErrors.set({
+        date: [this.t.instant('appointmentForm.scheduledInPast')],
+        time: [this.t.instant('appointmentForm.scheduledInPast')],
+      });
+      this.isSubmitting.set(false);
+      return;
+    }
+
     let endExpectedAt: string | undefined;
     if (formValue.end_date && formValue.end_time) {
       endExpectedAt = `${formValue.end_date}T${formValue.end_time}`;
     }
 
-    const { participants_ids, temporary_participants } = this.getParticipantsForRequest();
+    const { participants_ids, temporary_participants } =
+      this.getParticipantsForRequest();
 
     if (this.isEditMode && this.editingAppointment) {
       const updateData: UpdateAppointmentRequest = {
         type: formValue.type as AppointmentType,
+        title: formValue.title || undefined,
         scheduled_at: scheduledAt,
         end_expected_at: endExpectedAt,
         participants_ids,
@@ -418,6 +686,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
     } else {
       const createData: CreateAppointmentRequest = {
         type: formValue.type as AppointmentType,
+        title: formValue.title || undefined,
         scheduled_at: scheduledAt,
         end_expected_at: endExpectedAt,
         dont_invite_beneficiary: formValue.dont_invite_beneficiary || false,
@@ -426,7 +695,13 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
         participants_ids,
         temporary_participants,
       };
-      this.createAppointment(createData);
+
+      if (!this.autoSave) {
+        this.isSubmitting.set(false);
+        this.appointmentDataReady.emit(createData);
+      } else {
+        this.createAppointment(createData);
+      }
     }
   }
 
@@ -479,35 +754,101 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   private updateAppointment(appointmentData: UpdateAppointmentRequest): void {
     if (!this.editingAppointment) return;
 
+    this.backendErrors.set({});
     this.consultationService
       .updateAppointment(this.editingAppointment.id, appointmentData)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (updatedAppointment) => {
+        next: updatedAppointment => {
           this.isSubmitting.set(false);
           this.appointmentUpdated.emit(updatedAppointment);
         },
-        error: (error) => {
+        error: error => {
           this.isSubmitting.set(false);
-          this.toasterService.show('error', this.t.instant('appointmentForm.errorUpdatingAppointment'), getErrorMessage(error));
+
+          if (error.status === 400 && error.error) {
+            const backendErrors = error.error;
+            const mappedErrors: Record<string, string[]> = {};
+
+            // Map backend field names to form field names
+            if (backendErrors['scheduled_at']) {
+              mappedErrors['date'] = backendErrors['scheduled_at'];
+              mappedErrors['time'] = backendErrors['scheduled_at'];
+            }
+            if (backendErrors['end_expected_at']) {
+              mappedErrors['end_date'] = backendErrors['end_expected_at'];
+              mappedErrors['end_time'] = backendErrors['end_expected_at'];
+            }
+            // Copy other errors as-is
+            Object.keys(backendErrors).forEach(key => {
+              if (key !== 'scheduled_at' && key !== 'end_expected_at') {
+                mappedErrors[key] = backendErrors[key];
+              }
+            });
+
+            this.backendErrors.set(mappedErrors);
+          } else {
+            this.toasterService.show(
+              'error',
+              this.t.instant('appointmentForm.errorUpdatingAppointment'),
+              getErrorMessage(error)
+            );
+          }
         },
       });
   }
 
   private createAppointment(appointmentData: CreateAppointmentRequest): void {
-    this.consultationService
-      .createConsultationAppointment(this.consultationId, appointmentData)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (appointment) => {
-          this.isSubmitting.set(false);
-          this.toasterService.show('success', this.t.instant('appointmentForm.appointmentCreated'), this.t.instant('appointmentForm.appointmentCreatedMessage'));
-          this.appointmentCreated.emit(appointment);
-        },
-        error: (error) => {
-          this.isSubmitting.set(false);
-          this.toasterService.show('error', this.t.instant('appointmentForm.errorCreatingAppointment'), getErrorMessage(error));
-        },
-      });
+    this.backendErrors.set({});
+    const createObservable = this.consultationId
+      ? this.consultationService.createConsultationAppointment(
+          this.consultationId,
+          appointmentData
+        )
+      : this.consultationService.createAppointment(appointmentData);
+
+    createObservable.pipe(takeUntil(this.destroy$)).subscribe({
+      next: appointment => {
+        this.isSubmitting.set(false);
+        this.toasterService.show(
+          'success',
+          this.t.instant('appointmentForm.appointmentCreated'),
+          this.t.instant('appointmentForm.appointmentCreatedMessage')
+        );
+        this.appointmentCreated.emit(appointment);
+      },
+      error: error => {
+        this.isSubmitting.set(false);
+
+        if (error.status === 400 && error.error) {
+          const backendErrors = error.error;
+          const mappedErrors: Record<string, string[]> = {};
+
+          // Map backend field names to form field names
+          if (backendErrors['scheduled_at']) {
+            mappedErrors['date'] = backendErrors['scheduled_at'];
+            mappedErrors['time'] = backendErrors['scheduled_at'];
+          }
+          if (backendErrors['end_expected_at']) {
+            mappedErrors['end_date'] = backendErrors['end_expected_at'];
+            mappedErrors['end_time'] = backendErrors['end_expected_at'];
+          }
+          // Copy other errors as-is
+          Object.keys(backendErrors).forEach(key => {
+            if (key !== 'scheduled_at' && key !== 'end_expected_at') {
+              mappedErrors[key] = backendErrors[key];
+            }
+          });
+
+          this.backendErrors.set(mappedErrors);
+        } else {
+          this.toasterService.show(
+            'error',
+            this.t.instant('appointmentForm.errorCreatingAppointment'),
+            getErrorMessage(error)
+          );
+        }
+      },
+    });
   }
 }

@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { AuthGuard } from './core/guards/auth.guard';
 import { TermsGuard } from './core/guards/terms.guard';
+import { canDeactivateVideoCall } from './core/guards/video-call.guard';
 
 export const routes: Routes = [
   {
@@ -61,28 +62,14 @@ export const routes: Routes = [
     canActivate: [AuthGuard, TermsGuard],
   },
   {
-    path: 'request-detail/:id',
-    loadComponent: () => import('./pages/request-detail/request-detail.page').then(m => m.RequestDetailPage),
-    canActivate: [AuthGuard, TermsGuard],
-  },
-  {
     path: 'new-request',
     loadComponent: () => import('./pages/new-request/new-request.page').then(m => m.NewRequestPage),
-    canActivate: [AuthGuard, TermsGuard],
-  },
-  {
-    path: 'appointment/:id',
-    loadComponent: () => import('./pages/appointment-detail/appointment-detail.page').then(m => m.AppointmentDetailPage),
-    canActivate: [AuthGuard, TermsGuard],
-  },
-  {
-    path: 'consultation/:id',
-    loadComponent: () => import('./pages/consultation-detail/consultation-detail.page').then(m => m.ConsultationDetailPage),
     canActivate: [AuthGuard, TermsGuard],
   },
   {
     path: 'consultation/:id/video',
     loadComponent: () => import('./pages/video-consultation/video-consultation.page').then(m => m.VideoConsultationPage),
     canActivate: [AuthGuard, TermsGuard],
+    canDeactivate: [canDeactivateVideoCall],
   },
 ];

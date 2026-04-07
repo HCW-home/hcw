@@ -1,16 +1,12 @@
+from django import forms
 from django.contrib import admin
 from django.contrib import messages
 from .models import Server, Turn, TurnURL
 from unfold.admin import ModelAdmin, TabularInline
 from unfold.decorators import action
+from unfold.widgets import UnfoldAdminPasswordWidget
 from django.http import HttpRequest
-from django.db.models import QuerySet
-from django.shortcuts import redirect
-from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
-
-# Register your models here.
-from unfold.admin import ModelAdmin
 
 class TurnURLInline(TabularInline):
     model = TurnURL
@@ -26,8 +22,28 @@ class TurnAdmin(ModelAdmin):
         return ', '.join([url.url for url in obj.turnurl_set.all()])
     turn_urls.short_description = 'URLs'
 
+class ServerForm(forms.ModelForm):
+    api_secret = forms.CharField(
+        label=_("API secret"),
+        widget=UnfoldAdminPasswordWidget(),
+        required=False,
+        help_text=_("Leave blank to keep the current value."),
+    )
+
+    class Meta:
+        model = Server
+        fields = "__all__"
+
+    def clean_api_secret(self):
+        value = self.cleaned_data.get("api_secret")
+        if not value and self.instance.pk:
+            return self.instance.api_secret
+        return value
+
+
 @admin.register(Server)
 class ServerAdmin(ModelAdmin):
+    form = ServerForm
     list_display = [
         "url",
         "is_active",

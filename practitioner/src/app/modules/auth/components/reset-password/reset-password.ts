@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   FormGroup,
   Validators,
@@ -24,6 +24,8 @@ import { TranslationService } from '../../../../core/services/translation.servic
 import { regexpPasswordSpec } from '../../../../shared/tools/regular-expressions';
 import { ErrorMessage } from '../../../../shared/components/error-message/error-message';
 import { ToasterService } from '../../../../core/services/toaster.service';
+import { LanguageSelector } from '../../../../shared/components/language-selector/language-selector';
+import { AuthBranding } from '../../../../shared/components/auth-branding/auth-branding';
 import { RoutePaths } from '../../../../core/constants/routes';
 
 interface SetPasswordForm {
@@ -33,7 +35,7 @@ interface SetPasswordForm {
 
 @Component({
   selector: 'app-reset-password',
-  imports: [Button, Input, Typography, ReactiveFormsModule, ErrorMessage, TranslatePipe],
+  imports: [Button, Input, Typography, ReactiveFormsModule, ErrorMessage, TranslatePipe, LanguageSelector, RouterLink, AuthBranding],
   templateUrl: './reset-password.html',
   styleUrl: './reset-password.scss',
 })
@@ -50,6 +52,11 @@ export class ResetPassword implements OnInit {
   private t = inject(TranslationService);
   token = this.route.snapshot.params['token'];
   uid = this.route.snapshot.params['uid'];
+
+  protected readonly TypographyTypeEnum = TypographyTypeEnum;
+  protected readonly ButtonTypeEnum = ButtonTypeEnum;
+  protected readonly ButtonStyleEnum = ButtonStyleEnum;
+  protected readonly RoutePaths = RoutePaths;
 
   form: FormGroup<SetPasswordForm> = this.formBuilder.nonNullable.group({
     password: ['', [Validators.required]],
@@ -69,6 +76,14 @@ export class ResetPassword implements OnInit {
     } else {
       this.mode = 'reset';
     }
+
+    this.adminAuthService.getOpenIDConfig().subscribe({
+      next: config => {
+        if (config.languages?.length) {
+          this.t.loadLanguages(config.languages);
+        }
+      },
+    });
   }
 
   onSubmit() {
@@ -122,8 +137,4 @@ export class ResetPassword implements OnInit {
   getFormErrorMessage(): string {
     return this.t.instant('resetPassword.fieldRequired');
   }
-
-  protected readonly TypographyTypeEnum = TypographyTypeEnum;
-  protected readonly ButtonTypeEnum = ButtonTypeEnum;
-  protected readonly ButtonStyleEnum = ButtonStyleEnum;
 }
