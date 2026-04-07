@@ -9,12 +9,11 @@ services:
         echo 'Migration completed successfully';
       "
     environment:
+      - DJANGOSECRET_KEY=abcd
       - REDIS_HOST=redis
       - DATABASE_HOST=db
       - DATABASE_USER=hcw
       - DATABASE_PASSWORD=hcw
-    env_file:
-      - backend/.env
     depends_on:
       db:
         condition: service_healthy
@@ -29,12 +28,11 @@ services:
     image: docker.io/iabsis/hcw6-backend:${TAG:-latest}
     restart: always
     environment:
+      - DJANGOSECRET_KEY=abcd
       - REDIS_HOST=redis
       - DATABASE_HOST=db
       - DATABASE_USER=hcw
       - DATABASE_PASSWORD=hcw
-    env_file:
-      - backend/.env
     depends_on:
       redis:
         condition: service_healthy
@@ -47,8 +45,8 @@ services:
       target: admin
     image: docker.io/iabsis/hcw6-admin:${TAG:-latest}
     restart: always
-    env_file:
-      - .env
+    environment:
+      - BACKEND_URL=http://api:8000
     depends_on:
       - api
     ports:
@@ -59,12 +57,11 @@ services:
     image: docker.io/iabsis/hcw6-backend:${TAG:-latest}
     restart: always
     environment:
+      - DJANGOSECRET_KEY=abcd
       - REDIS_HOST=redis
       - DATABASE_HOST=db
       - DATABASE_USER=hcw
       - DATABASE_PASSWORD=hcw
-    env_file:
-      - backend/.env
     depends_on:
       redis:
         condition: service_healthy
@@ -76,12 +73,11 @@ services:
     image: docker.io/iabsis/hcw6-backend:${TAG:-latest}
     restart: always
     environment:
+      - DJANGOSECRET_KEY=abcd
       - REDIS_HOST=redis
       - DATABASE_HOST=db
       - DATABASE_USER=hcw
       - DATABASE_PASSWORD=hcw
-    env_file:
-      - backend/.env
     depends_on:
       redis:
         condition: service_healthy
