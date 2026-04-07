@@ -74,6 +74,10 @@ def message_saved(sender, instance: Message, created, **kwargs):
     """
     channel_layer = get_channel_layer()
 
+    # Don't send message if only system message
+    if not instance.created_by:
+        return
+
     # Send notifications to each user
     for user_pk in get_users_to_notification_consultation(instance.consultation):
         # Send WebSocket notification (including to the message creator for multi-tab sync)
