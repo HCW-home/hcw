@@ -70,7 +70,7 @@ wget https://raw.githubusercontent.com/HCW-home/hcw/refs/heads/master/docker-com
 Recuperer les images :
 
 ```bash
-TAG=0.10.0 podman compose pull
+TAG=0.10.0 docker compose pull
 ```
 
 !!! warning "Securite"
@@ -89,7 +89,7 @@ Au premier lancement, le service `migrate` applique automatiquement les migratio
 HCW@Home utilise le multi-tenancy avec isolation par schema PostgreSQL. Chaque tenant possede ses propres donnees, utilisateurs et configuration. Les tenants sont crees via le shell Django.
 
 ```bash
-podman compose exec api python3 manage.py create_tenant
+docker compose exec api python3 manage.py create_tenant
 ```
 
 
@@ -98,7 +98,7 @@ podman compose exec api python3 manage.py create_tenant
 * **domain** : 127.0.0.1
 
 ```bash
-podman compose exec api python3 manage.py tenant_command createsuperuser -s localhost
+docker compose exec api python3 manage.py tenant_command createsuperuser -s localhost
 ```
 
 !!! tip "Plusieurs tenants"
