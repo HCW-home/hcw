@@ -490,7 +490,7 @@
 </code></pre></div>
 <h3 id="2-configure-the-environment">2. Configure the environment</h3>
 <p>Copy the configuration file:</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="nv">TAG</span><span class="o">=</span><span class="m">0</span>.10.0<span class="w"> </span>podman<span class="w"> </span>compose<span class="w"> </span>pull
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="nv">TAG</span><span class="o">=</span><span class="m">0</span>.10.0<span class="w"> </span>docker<span class="w"> </span>compose<span class="w"> </span>pull
 </code></pre></div>
 <div class="admonition warning">
 <p class="admonition-title">Security</p>
@@ -502,14 +502,14 @@
 <p>On first launch, the <code>migrate</code> service automatically applies database migrations.</p>
 <h3 id="4-create-a-tenant">4. Create a tenant</h3>
 <p>HCW@Home uses multi-tenancy with PostgreSQL schema isolation. Each tenant has its own data, users, and configuration. Tenants are created via the Django shell.</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-3-1" id="__codelineno-3-1" name="__codelineno-3-1"></a>podman<span class="w"> </span>compose<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>api<span class="w"> </span>python3<span class="w"> </span>manage.py<span class="w"> </span>create_tenant
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-3-1" id="__codelineno-3-1" name="__codelineno-3-1"></a>docker<span class="w"> </span>compose<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>api<span class="w"> </span>python3<span class="w"> </span>manage.py<span class="w"> </span>create_tenant
 </code></pre></div>
 <ul>
 <li><strong>schema name</strong>: localhost</li>
 <li><strong>name</strong>: localhost</li>
 <li><strong>domain</strong>: 127.0.0.1</li>
 </ul>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-4-1" id="__codelineno-4-1" name="__codelineno-4-1"></a>podman<span class="w"> </span>compose<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>api<span class="w"> </span>python3<span class="w"> </span>manage.py<span class="w"> </span>tenant_command<span class="w"> </span>createsuperuser<span class="w"> </span>-s<span class="w"> </span>localhost
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-4-1" id="__codelineno-4-1" name="__codelineno-4-1"></a>docker<span class="w"> </span>compose<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>api<span class="w"> </span>python3<span class="w"> </span>manage.py<span class="w"> </span>tenant_command<span class="w"> </span>createsuperuser<span class="w"> </span>-s<span class="w"> </span>localhost
 </code></pre></div>
 <div class="admonition tip">
 <p class="admonition-title">Multiple tenants</p>
