@@ -509,56 +509,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#6-collect-static-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6. Collect static files
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#7-start-the-services" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        7. Start the services
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#systemd-services" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Systemd Services
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Systemd Services">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#service-management" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Service Management
-      
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -569,45 +519,6 @@
     <span class="md-ellipsis">
       
         Nginx Configuration
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Nginx Configuration">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#practitioner-interface-main-domain" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Practitioner interface (main domain)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#patient-interface-subdomain" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Patient interface (subdomain)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#file-tree" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        File Tree
       
     </span>
   </a>
@@ -794,56 +705,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#6-collect-static-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6. Collect static files
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#7-start-the-services" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        7. Start the services
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#systemd-services" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Systemd Services
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Systemd Services">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#service-management" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Service Management
-      
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -854,45 +715,6 @@
     <span class="md-ellipsis">
       
         Nginx Configuration
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Nginx Configuration">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#practitioner-interface-main-domain" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Practitioner interface (main domain)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#patient-interface-subdomain" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Patient interface (subdomain)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#file-tree" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        File Tree
       
     </span>
   </a>
@@ -977,10 +799,10 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>apt<span class="w"> </span>install<span class="w"> </span>postgresql<span class="w"> </span>redis-server<span class="w"> </span>nginx
 </code></pre></div>
 <h3 id="2-create-the-database">2. Create the database</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>sudo<span class="w"> </span>-u<span class="w"> </span>postgres<span class="w"> </span>psql<span class="w"> </span><span class="s">&lt;&lt;EOF</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="s">CREATE USER hcw WITH PASSWORD &#39;your-password&#39;;</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="s">CREATE DATABASE hcw OWNER hcw;</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="s">EOF</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>su<span class="w"> </span>postgres
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>createuser<span class="w"> </span>-P<span class="w"> </span>hcw
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># Put hcw as password</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>createdb<span class="w"> </span>-O<span class="w"> </span>hcw<span class="w"> </span>hcw
 </code></pre></div>
 <h3 id="3-install-hcw-packages">3. Install HCW packages</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>apt<span class="w"> </span>install<span class="w"> </span>hcw-backend<span class="w"> </span>hcw-practitioner<span class="w"> </span>hcw-patient
@@ -995,36 +817,6 @@
 <p>Edit the configuration file:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>nano<span class="w"> </span>/etc/hcw/backend.conf
 </code></pre></div>
-<p>Minimal configuration:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Security - REQUIRED: change this key</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="na">DJANGOSECRET_KEY</span><span class="o">=</span><span class="s">your-random-secret-key</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># Allowed domains</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="na">ALLOWED_HOST</span><span class="o">=</span><span class="s">your-domain.com</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="na">CSRF_TRUSTED_ORIGINS</span><span class="o">=</span><span class="s">https://your-domain.com</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="c1"># Disable debug mode</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="na">DEBUG</span><span class="o">=</span><span class="s">False</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="c1"># Database</span>
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="na">DATABASE_NAME</span><span class="o">=</span><span class="s">hcw</span>
-<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="na">DATABASE_USER</span><span class="o">=</span><span class="s">hcw</span>
-<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="na">DATABASE_PASSWORD</span><span class="o">=</span><span class="s">your-password</span>
-<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="na">DATABASE_HOST</span><span class="o">=</span><span class="s">127.0.0.1</span>
-<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="na">DATABASE_PORT</span><span class="o">=</span><span class="s">5432</span>
-<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>
-<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="c1"># Email</span>
-<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="na">EMAIL_HOST</span><span class="o">=</span><span class="s">smtp.example.com</span>
-<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a><span class="na">EMAIL_PORT</span><span class="o">=</span><span class="s">587</span>
-<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a><span class="na">DEFAULT_FROM_EMAIL</span><span class="o">=</span><span class="s">noreply@example.com</span>
-<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>
-<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a><span class="c1"># Storage</span>
-<a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a><span class="na">MEDIA_ROOT</span><span class="o">=</span><span class="s">/var/lib/hcw/uploads</span>
-<a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a><span class="na">STATIC_ROOT</span><span class="o">=</span><span class="s">/usr/share/hcw/backend/statics/</span>
-<a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a>
-<a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a><span class="c1"># Encryption</span>
-<a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a><span class="na">ENCRYPTION_KEY</span><span class="o">=</span><span class="s">your-sha256-key</span>
-</code></pre></div>
 <div class="admonition warning">
 <p class="admonition-title">Security</p>
 <p>Generate an encryption key with: <code>echo -n "your secret phrase" | sha256sum</code></p>
@@ -1032,181 +824,39 @@
 <p>For the full list of variables, see the <a href="../docker-compose/#environment-variables">Docker Compose</a> page.</p>
 <h3 id="5-create-a-tenant">5. Create a tenant</h3>
 <p>HCW@Home uses multi-tenancy with PostgreSQL schema isolation. Each tenant has its own data, users, and configuration. Tenants are created via the Django shell.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nb">cd</span><span class="w"> </span>/usr/share/hcw/backend
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>sudo<span class="w"> </span>-u<span class="w"> </span>hcw<span class="w"> </span>venv/bin/python<span class="w"> </span>manage.py<span class="w"> </span>shell
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nb">cd</span><span class="w"> </span>/usr/share/hcw/backend
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>.<span class="w"> </span>./venv/bin/activate
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nb">set</span><span class="w"> </span>-a<span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nb">source</span><span class="w"> </span>/etc/hcw/backend.conf
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tenants.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tenant</span><span class="p">,</span> <span class="n">Domain</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">users.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">User</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mediaserver.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Server</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">messaging.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">MessagingProvider</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">django_tenants.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">schema_context</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">constance</span><span class="w"> </span><span class="kn">import</span> <span class="n">config</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="c1"># Choose a tenant name (used as PostgreSQL schema name)</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="n">tenant_name</span> <span class="o">=</span> <span class="s1">&#39;mytenant&#39;</span>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="c1"># Create the tenant</span>
-<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="n">tenant</span> <span class="o">=</span> <span class="n">Tenant</span><span class="p">(</span><span class="n">schema_name</span><span class="o">=</span><span class="n">tenant_name</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;My Organization&#39;</span><span class="p">)</span>
-<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="n">tenant</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
-<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>
-<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="c1"># Register the domains (practitioner portal, patient portal, admin)</span>
-<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="n">Domain</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">domain</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">tenant_name</span><span class="si">}</span><span class="s1">.portal.example.com&#39;</span><span class="p">,</span> <span class="n">tenant</span><span class="o">=</span><span class="n">tenant</span><span class="p">)</span>
-<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="n">Domain</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">domain</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">tenant_name</span><span class="si">}</span><span class="s1">.consult.example.com&#39;</span><span class="p">,</span> <span class="n">tenant</span><span class="o">=</span><span class="n">tenant</span><span class="p">)</span>
-<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="n">Domain</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">domain</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">tenant_name</span><span class="si">}</span><span class="s1">.connect.example.com&#39;</span><span class="p">,</span> <span class="n">tenant</span><span class="o">=</span><span class="n">tenant</span><span class="p">)</span>
-<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a>
-<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a><span class="c1"># Create a superuser, media server, and messaging provider inside the tenant</span>
-<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a><span class="k">with</span> <span class="n">schema_context</span><span class="p">(</span><span class="n">tenant_name</span><span class="p">):</span>
-<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a>    <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create_superuser</span><span class="p">(</span><span class="s1">&#39;admin@example.com&#39;</span><span class="p">,</span> <span class="s1">&#39;your-password&#39;</span><span class="p">)</span>
-<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a>    <span class="n">Server</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-<a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a>        <span class="n">url</span><span class="o">=</span><span class="s2">&quot;https://livekit.example.com&quot;</span><span class="p">,</span>
-<a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a>        <span class="n">api_token</span><span class="o">=</span><span class="s2">&quot;your-api-key&quot;</span><span class="p">,</span>
-<a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a>        <span class="n">api_secret</span><span class="o">=</span><span class="s2">&quot;your-api-secret&quot;</span><span class="p">,</span>
-<a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a>    <span class="p">)</span>
-<a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a>    <span class="n">MessagingProvider</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;email&#39;</span><span class="p">,</span> <span class="n">from_email</span><span class="o">=</span><span class="s2">&quot;noreply@example.com&quot;</span><span class="p">)</span>
-<a id="__codelineno-6-29" name="__codelineno-6-29" href="#__codelineno-6-29"></a>
-<a id="__codelineno-6-30" name="__codelineno-6-30" href="#__codelineno-6-30"></a><span class="c1"># Configure frontend URLs for the tenant</span>
-<a id="__codelineno-6-31" name="__codelineno-6-31" href="#__codelineno-6-31"></a><span class="k">with</span> <span class="n">schema_context</span><span class="p">(</span><span class="n">tenant_name</span><span class="p">):</span>
-<a id="__codelineno-6-32" name="__codelineno-6-32" href="#__codelineno-6-32"></a>    <span class="n">config</span><span class="o">.</span><span class="n">patient_base_url</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;https://</span><span class="si">{</span><span class="n">tenant_name</span><span class="si">}</span><span class="s1">.consult.example.com&#39;</span>
-<a id="__codelineno-6-33" name="__codelineno-6-33" href="#__codelineno-6-33"></a>    <span class="n">config</span><span class="o">.</span><span class="n">practitioner_base_url</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;https://</span><span class="si">{</span><span class="n">tenant_name</span><span class="si">}</span><span class="s1">.connect.example.com&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>create_tenant
 </code></pre></div>
-<div class="admonition tip">
-<p class="admonition-title">Multiple tenants</p>
-<p>Repeat this process for each organization. Each tenant is fully isolated: separate users, consultations, configuration, and branding.</p>
-</div>
-<h3 id="6-collect-static-files">6. Collect static files</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nb">cd</span><span class="w"> </span>/usr/share/hcw/backend
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>sudo<span class="w"> </span>-u<span class="w"> </span>hcw<span class="w"> </span>venv/bin/python<span class="w"> </span>manage.py<span class="w"> </span>collectstatic<span class="w"> </span>--noinput
-</code></pre></div>
-<h3 id="7-start-the-services">7. Start the services</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>--now<span class="w"> </span>hcw
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>--now<span class="w"> </span>hcw-celery
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>--now<span class="w"> </span>hcw-scheduler
-</code></pre></div>
-<h2 id="systemd-services">Systemd Services</h2>
-<p>Three services are installed:</p>
-<table>
-<thead>
-<tr>
-<th>Service</th>
-<th>Command</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>hcw</code></td>
-<td><code>daphne -p 8000 core.asgi:application</code></td>
-<td>Django API (HTTP + WebSocket)</td>
-</tr>
-<tr>
-<td><code>hcw-celery</code></td>
-<td><code>celery -A core.celery worker</code></td>
-<td>Asynchronous task worker</td>
-</tr>
-<tr>
-<td><code>hcw-scheduler</code></td>
-<td><code>celery -A core.celery beat</code></td>
-<td>Periodic task scheduler</td>
-</tr>
-</tbody>
-</table>
-<p>The <code>hcw</code> service automatically runs migrations on startup (<code>ExecStartPre</code>).</p>
-<h3 id="service-management">Service Management</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Start / stop / restart</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>systemctl<span class="w"> </span>start<span class="w"> </span>hcw
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>systemctl<span class="w"> </span>stop<span class="w"> </span>hcw
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>systemctl<span class="w"> </span>restart<span class="w"> </span>hcw
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="c1"># View logs</span>
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>journalctl<span class="w"> </span>-u<span class="w"> </span>hcw<span class="w"> </span>-f
-<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>journalctl<span class="w"> </span>-u<span class="w"> </span>hcw-celery<span class="w"> </span>-f
-<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>journalctl<span class="w"> </span>-u<span class="w"> </span>hcw-scheduler<span class="w"> </span>-f
-<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>
-<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="c1"># Status</span>
-<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>systemctl<span class="w"> </span>status<span class="w"> </span>hcw<span class="w"> </span>hcw-celery<span class="w"> </span>hcw-scheduler
+<ul>
+<li><strong>schema name</strong>: localhost</li>
+<li><strong>name</strong>: localhost</li>
+<li><strong>domain</strong>: 127.0.0.1</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>tenant_command<span class="w"> </span>createsuperuser<span class="w"> </span>-s<span class="w"> </span>localhost
 </code></pre></div>
 <h2 id="nginx-configuration">Nginx Configuration</h2>
 <p>The <code>hcw-backend</code> package provides a reference Nginx configuration file. Copy and adapt it:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>cp<span class="w"> </span>/usr/share/hcw/nginx<span class="w"> </span>/etc/nginx/sites-available/hcw
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>ln<span class="w"> </span>-s<span class="w"> </span>/etc/nginx/sites-available/hcw<span class="w"> </span>/etc/nginx/sites-enabled/
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>rm<span class="w"> </span>/etc/nginx/sites-enabled/default
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>nginx<span class="w"> </span>-t<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>systemctl<span class="w"> </span>reload<span class="w"> </span>nginx
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>cp<span class="w"> </span>/usr/share/hcw/nginx<span class="w"> </span>/etc/nginx/sites-available/hcw
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>ln<span class="w"> </span>-s<span class="w"> </span>/etc/nginx/sites-available/hcw<span class="w"> </span>/etc/nginx/sites-enabled/
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>rm<span class="w"> </span>/etc/nginx/sites-enabled/default
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>nginx<span class="w"> </span>-t<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>systemctl<span class="w"> </span>reload<span class="w"> </span>nginx
 </code></pre></div>
 <p>The default configuration defines two server blocks:</p>
-<h3 id="practitioner-interface-main-domain">Practitioner interface (main domain)</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="k">server</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">    </span><span class="kn">listen</span><span class="w"> </span><span class="mi">80</span><span class="w"> </span><span class="s">default_server</span><span class="p">;</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span><span class="kn">root</span><span class="w"> </span><span class="s">/usr/share/hcw/practitioner</span><span class="p">;</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">    </span><span class="c1"># Backend static files (admin)</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">    </span><span class="kn">location</span><span class="w"> </span><span class="s">/static/</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="w">        </span><span class="kn">alias</span><span class="w"> </span><span class="s">/usr/share/hcw/backend/statics/</span><span class="p">;</span>
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="w">        </span><span class="kn">expires</span><span class="w"> </span><span class="s">1y</span><span class="p">;</span>
-<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>
-<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="w">    </span><span class="c1"># API and WebSocket</span>
-<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span class="w">    </span><span class="kn">location</span><span class="w"> </span><span class="p">~</span><span class="sr">*</span><span class="w"> </span><span class="s">^/(api|ws)</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a><span class="w">        </span><span class="kn">proxy_pass</span><span class="w"> </span><span class="s">http://127.0.0.1:8000</span><span class="p">;</span>
-<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a><span class="w">        </span><span class="kn">proxy_http_version</span><span class="w"> </span><span class="mi">1</span><span class="s">.1</span><span class="p">;</span>
-<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a><span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">Upgrade</span><span class="w"> </span><span class="nv">$http_upgrade</span><span class="p">;</span>
-<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a><span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">Connection</span><span class="w"> </span><span class="s">&quot;upgrade&quot;</span><span class="p">;</span>
-<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a><span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">Host</span><span class="w"> </span><span class="nv">$host</span><span class="p">;</span>
-<a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a>
-<a id="__codelineno-11-20" name="__codelineno-11-20" href="#__codelineno-11-20"></a><span class="w">    </span><span class="c1"># SPA fallback</span>
-<a id="__codelineno-11-21" name="__codelineno-11-21" href="#__codelineno-11-21"></a><span class="w">    </span><span class="kn">location</span><span class="w"> </span><span class="s">/</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-11-22" name="__codelineno-11-22" href="#__codelineno-11-22"></a><span class="w">        </span><span class="kn">try_files</span><span class="w"> </span><span class="nv">$uri</span><span class="w"> </span><span class="nv">$uri/</span><span class="w"> </span><span class="s">/index.html</span><span class="p">;</span>
-<a id="__codelineno-11-23" name="__codelineno-11-23" href="#__codelineno-11-23"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-11-24" name="__codelineno-11-24" href="#__codelineno-11-24"></a><span class="p">}</span>
-</code></pre></div>
-<h3 id="patient-interface-subdomain">Patient interface (subdomain)</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="k">server</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">    </span><span class="kn">listen</span><span class="w"> </span><span class="mi">80</span><span class="p">;</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">    </span><span class="kn">root</span><span class="w"> </span><span class="s">/usr/share/hcw/patient</span><span class="p">;</span>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">    </span><span class="kn">server_name</span><span class="w"> </span><span class="s">patient.example.com</span><span class="p">;</span>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">    </span><span class="c1"># Same API/WS and SPA configuration</span>
-<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="w">    </span><span class="kn">location</span><span class="w"> </span><span class="p">~</span><span class="sr">*</span><span class="w"> </span><span class="s">^/(api|ws)</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="w">        </span><span class="kn">proxy_pass</span><span class="w"> </span><span class="s">http://127.0.0.1:8000</span><span class="p">;</span>
-<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="w">        </span><span class="kn">proxy_http_version</span><span class="w"> </span><span class="mi">1</span><span class="s">.1</span><span class="p">;</span>
-<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">Upgrade</span><span class="w"> </span><span class="nv">$http_upgrade</span><span class="p">;</span>
-<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">Connection</span><span class="w"> </span><span class="s">&quot;upgrade&quot;</span><span class="p">;</span>
-<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a><span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">Host</span><span class="w"> </span><span class="nv">$host</span><span class="p">;</span>
-<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a>
-<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a><span class="w">    </span><span class="kn">location</span><span class="w"> </span><span class="s">/</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a><span class="w">        </span><span class="kn">try_files</span><span class="w"> </span><span class="nv">$uri</span><span class="w"> </span><span class="nv">$uri/</span><span class="w"> </span><span class="s">/index.html</span><span class="p">;</span>
-<a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a><span class="p">}</span>
-</code></pre></div>
 <div class="admonition tip">
 <p class="admonition-title">HTTPS</p>
 <p>In production, add a TLS certificate. With Let's Encrypt: <code>certbot --nginx -d your-domain.com -d patient.your-domain.com</code></p>
 </div>
-<h2 id="file-tree">File Tree</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>/usr/share/hcw/
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>├── backend/              # Django code + virtualenv
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>│   ├── venv/             # Python environment
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>│   ├── manage.py
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>│   └── statics/          # Collected static files
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>├── practitioner/         # Angular build (static files)
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>└── patient/              # Ionic build (static files)
-<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>
-<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>/etc/hcw/
-<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>└── backend.conf          # Configuration (environment variables)
-<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>
-<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>/var/lib/hcw/
-<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>└── uploads/              # User-uploaded files
-</code></pre></div>
 <h2 id="upgrading">Upgrading</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>apt<span class="w"> </span>update
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>apt<span class="w"> </span>upgrade<span class="w"> </span>hcw-backend<span class="w"> </span>hcw-practitioner<span class="w"> </span>hcw-patient
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>systemctl<span class="w"> </span>restart<span class="w"> </span>hcw<span class="w"> </span>hcw-celery<span class="w"> </span>hcw-scheduler
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>apt<span class="w"> </span>update
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>apt<span class="w"> </span>install<span class="w"> </span>hcw-backend<span class="w"> </span>hcw-practitioner<span class="w"> </span>hcw-patient
 </code></pre></div>
 <p>Migrations are automatically applied on <code>hcw</code> service restart.</p>
 <h2 id="load-test-data-optional">Load Test Data (optional)</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="nb">cd</span><span class="w"> </span>/usr/share/hcw/backend
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>sudo<span class="w"> </span>-u<span class="w"> </span>hcw<span class="w"> </span>venv/bin/python<span class="w"> </span>manage.py<span class="w"> </span>loaddata<span class="w"> </span>initial/TestData.json
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nb">cd</span><span class="w"> </span>/usr/share/hcw/backend
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>sudo<span class="w"> </span>-u<span class="w"> </span>hcw<span class="w"> </span>venv/bin/python<span class="w"> </span>manage.py<span class="w"> </span>loaddata<span class="w"> </span>initial/TestData.json
 </code></pre></div>
 
 
