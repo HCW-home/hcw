@@ -9,6 +9,7 @@ services:
         echo 'Migration completed successfully';
       "
     environment:
+      - ALLOWED_HOSTS=*
       - DJANGOSECRET_KEY=abcd
       - REDIS_HOST=redis
       - DATABASE_HOST=db
