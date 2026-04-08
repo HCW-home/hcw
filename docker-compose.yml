@@ -28,6 +28,8 @@ services:
     image: docker.io/iabsis/hcw6-backend:${TAG:-latest}
     restart: always
     environment:
+      - DEBUG=True
+      - CSRF_TRUSTED_ORIGINS=http://127.0.0.1:8082
       - DJANGOSECRET_KEY=abcd
       - REDIS_HOST=redis
       - DATABASE_HOST=db
