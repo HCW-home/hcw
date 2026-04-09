@@ -32,7 +32,11 @@ nav:
   - Get Started:
     - Overview: index.md
     - Architecture: architecture.md
-    - Use Cases: use-cases.md
+  - Use Cases:
+    - Appointment Management: use-cases/appointment-management.md
+    - Video Call Scheduling: use-cases/video-call-scheduling.md
+    - Follow-up and Chat: use-cases/followup-chat.md
+    - Slot Booking: use-cases/slot-booking.md
   - Deployment:
     - Docker Compose: deployment/docker-compose.md
     - Debian Packages: deployment/debian.md

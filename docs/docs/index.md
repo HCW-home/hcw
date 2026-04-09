@@ -21,7 +21,7 @@ Two deployment methods are supported:
 
 ## Use Cases
 
-See the [Use Cases](use-cases.md) page to discover the scenarios supported by the solution.
+See the [Use Cases](use-cases/appointment-management.md) section to discover the scenarios supported by the solution.
 
 ## Links
 
