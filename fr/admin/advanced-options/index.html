@@ -1,6 +1,6 @@
 
 <!doctype html>
-<html lang="en" class="no-js">
+<html lang="fr" class="no-js">
   <head>
     
       <meta charset="utf-8">
@@ -10,33 +10,35 @@
       
       
       
-        <link rel="canonical" href="https://hcw-at-home.com/docs/deployment/debian/">
+        <link rel="canonical" href="https://hcw-at-home.com/docs/fr/admin/advanced-options/">
       
       
-        <link rel="prev" href="../docker-compose/">
+        <link rel="prev" href="../reasons/">
       
+      
+        <link rel="next" href="../../deployment/docker-compose/">
       
       
         
-          <link rel="alternate" href="./" hreflang="en">
+          <link rel="alternate" href="../../../admin/advanced-options/" hreflang="en">
         
-          <link rel="alternate" href="../../fr/deployment/debian/" hreflang="fr">
+          <link rel="alternate" href="./" hreflang="fr">
         
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>Debian Packages - HCW@Home Documentation</title>
+        <title>Advanced Options - HCW@Home Documentation</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -55,9 +57,9 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/css/extra.css">
+      <link rel="stylesheet" href="../../../assets/css/extra.css">
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -82,8 +84,8 @@
     <div data-md-component="skip">
       
         
-        <a href="#deployment-with-debian-packages" class="md-skip">
-          Skip to content
+        <a href="#advanced-options" class="md-skip">
+          Aller au contenu
         </a>
       
     </div>
@@ -97,8 +99,8 @@
   
 
 <header class="md-header md-header--shadow" data-md-component="header">
-  <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="HCW@Home Documentation" class="md-header__button md-logo" aria-label="HCW@Home Documentation" data-md-component="logo">
+  <nav class="md-header__inner md-grid" aria-label="En-tête">
+    <a href="../../" title="HCW@Home Documentation" class="md-header__button md-logo" aria-label="HCW@Home Documentation" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -118,7 +120,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Debian Packages
+              Advanced Options
             
           </span>
         </div>
@@ -144,20 +146,20 @@
       <div class="md-header__option">
   <div class="md-select">
     
-    <button class="md-header__button md-icon" aria-label="Select language">
+    <button class="md-header__button md-icon" aria-label="Sélectionner la langue">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m12.87 15.07-2.54-2.51.03-.03A17.5 17.5 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2zm-2.62 7 1.62-4.33L19.12 17z"/></svg>
     </button>
     <div class="md-select__inner">
       <ul class="md-select__list">
         
           <li class="md-select__item">
-            <a href="./" hreflang="en" class="md-select__link">
+            <a href="../../../admin/advanced-options/" hreflang="en" class="md-select__link">
               English
             </a>
           </li>
         
           <li class="md-select__item">
-            <a href="../../fr/deployment/debian/" hreflang="fr" class="md-select__link">
+            <a href="./" hreflang="fr" class="md-select__link">
               Francais
             </a>
           </li>
@@ -178,16 +180,16 @@
   <label class="md-search__overlay" for="__search"></label>
   <div class="md-search__inner" role="search">
     <form class="md-search__form" name="search">
-      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <input type="text" class="md-search__input" name="query" aria-label="Rechercher" placeholder="Rechercher" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
       <label class="md-search__icon md-icon" for="__search">
         
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
         
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
       </label>
-      <nav class="md-search__options" aria-label="Search">
+      <nav class="md-search__options" aria-label="Recherche">
         
-        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+        <button type="reset" class="md-search__icon md-icon" title="Effacer" aria-label="Effacer" tabindex="-1">
           
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
         </button>
@@ -198,7 +200,7 @@
       <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
         <div class="md-search-result" data-md-component="search-result">
           <div class="md-search-result__meta">
-            Initializing search
+            Initialisation de la recherche
           </div>
           <ol class="md-search-result__list" role="presentation"></ol>
         </div>
@@ -234,7 +236,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="HCW@Home Documentation" class="md-nav__button md-logo" aria-label="HCW@Home Documentation" data-md-component="logo">
+    <a href="../../" title="HCW@Home Documentation" class="md-nav__button md-logo" aria-label="HCW@Home Documentation" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -306,7 +308,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href="../../" class="md-nav__link">
         
   
   
@@ -539,8 +541,10 @@
       
   
   
+    
   
   
+  
     
     
     
@@ -551,13 +555,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
           <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
@@ -578,7 +580,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -596,7 +598,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../admin/users/" class="md-nav__link">
+      <a href="../users/" class="md-nav__link">
         
   
   
@@ -624,7 +626,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../admin/terms/" class="md-nav__link">
+      <a href="../terms/" class="md-nav__link">
         
   
   
@@ -652,7 +654,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../admin/organizations/" class="md-nav__link">
+      <a href="../organizations/" class="md-nav__link">
         
   
   
@@ -680,7 +682,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../admin/messaging-providers/" class="md-nav__link">
+      <a href="../messaging-providers/" class="md-nav__link">
         
   
   
@@ -708,7 +710,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../admin/media-servers/" class="md-nav__link">
+      <a href="../media-servers/" class="md-nav__link">
         
   
   
@@ -736,7 +738,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../admin/reasons/" class="md-nav__link">
+      <a href="../reasons/" class="md-nav__link">
         
   
   
@@ -744,123 +746,6 @@
     
   
     Consultation Reasons
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../admin/advanced-options/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Advanced Options
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-    
-  
-  
-  
-    
-    
-    
-    
-      
-        
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
-        
-          
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Deployment
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_4">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Deployment
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../docker-compose/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Docker Compose
   
 
     
@@ -897,7 +782,7 @@
   <span class="md-ellipsis">
     
   
-    Debian Packages
+    Advanced Options
   
 
     
@@ -915,7 +800,7 @@
   <span class="md-ellipsis">
     
   
-    Debian Packages
+    Advanced Options
   
 
     
@@ -927,7 +812,7 @@
       
         
 
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+<nav class="md-nav md-nav--secondary" aria-label="Table des matières">
   
   
   
@@ -936,15 +821,15 @@
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
-      Table of contents
+      Table des matières
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
+  <a href="#authentication" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Prerequisites
+        Authentication
       
     </span>
   </a>
@@ -952,10 +837,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#available-packages" class="md-nav__link">
+  <a href="#data-retention" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Available Packages
+        Data Retention
       
     </span>
   </a>
@@ -963,82 +848,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#installation" class="md-nav__link">
+  <a href="#general-options" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Installation
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Installation">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-install-system-dependencies" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Install system dependencies
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-create-the-database" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Create the database
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-install-hcw-packages" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Install HCW packages
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-configure-the-backend" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Configure the backend
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-create-a-tenant" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Create a tenant
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#nginx-configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Nginx Configuration
+        General Options
       
     </span>
   </a>
@@ -1046,10 +859,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#upgrading" class="md-nav__link">
+  <a href="#scheduling" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Upgrading
+        Scheduling
       
     </span>
   </a>
@@ -1057,10 +870,65 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#load-test-data-optional" class="md-nav__link">
+  <a href="#security" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Load Test Data (optional)
+        Security
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#urls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        URLs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#uploads" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Uploads
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#video-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Video Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#visibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Visibility
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sso-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SSO Configuration
       
     </span>
   </a>
@@ -1071,6 +939,123 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deployment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/docker-compose/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker Compose
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/debian/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Debian Packages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -1096,7 +1081,7 @@
                   <div class="md-sidebar__inner">
                     
 
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+<nav class="md-nav md-nav--secondary" aria-label="Table des matières">
   
   
   
@@ -1105,15 +1090,15 @@
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
-      Table of contents
+      Table des matières
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
+  <a href="#authentication" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Prerequisites
+        Authentication
       
     </span>
   </a>
@@ -1121,10 +1106,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#available-packages" class="md-nav__link">
+  <a href="#data-retention" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Available Packages
+        Data Retention
       
     </span>
   </a>
@@ -1132,82 +1117,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#installation" class="md-nav__link">
+  <a href="#general-options" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Installation
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Installation">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-install-system-dependencies" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Install system dependencies
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-create-the-database" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Create the database
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-install-hcw-packages" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Install HCW packages
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-configure-the-backend" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Configure the backend
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-create-a-tenant" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Create a tenant
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#nginx-configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Nginx Configuration
+        General Options
       
     </span>
   </a>
@@ -1215,10 +1128,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#upgrading" class="md-nav__link">
+  <a href="#scheduling" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Upgrading
+        Scheduling
       
     </span>
   </a>
@@ -1226,10 +1139,65 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#load-test-data-optional" class="md-nav__link">
+  <a href="#security" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Load Test Data (optional)
+        Security
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#urls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        URLs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#uploads" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Uploads
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#video-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Video Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#visibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Visibility
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sso-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SSO Configuration
       
     </span>
   </a>
@@ -1253,105 +1221,231 @@
 
 
 
-<h1 id="deployment-with-debian-packages">Deployment with Debian Packages</h1>
-<p>This method installs HCW@Home directly on a Debian/Ubuntu server via <code>.deb</code> packages. Services are managed by systemd. This is the recommended approach for production deployments on dedicated infrastructure.</p>
-<h2 id="prerequisites">Prerequisites</h2>
-<ul>
-<li>Debian 13 (Trixie) or compatible</li>
-<li>PostgreSQL 15+</li>
-<li>Redis 7+</li>
-<li>Nginx</li>
-<li>Minimum 2 GB RAM</li>
-</ul>
-<h2 id="available-packages">Available Packages</h2>
-<p>The solution is distributed as three independent packages:</p>
+<h1 id="advanced-options">Advanced Options</h1>
+<p>The advanced configuration section provides fine-grained control over platform behavior.</p>
+<blockquote>
+<p><strong>Menu:</strong> Settings &gt; Configuration</p>
+</blockquote>
+<p><img alt="Advanced configuration" src="../../../assets/images/admin-advanced-configuration.png" /></p>
+<h2 id="authentication">Authentication</h2>
 <table>
 <thead>
 <tr>
-<th>Package</th>
-<th>Content</th>
+<th>Option</th>
+<th>Code</th>
+<th>Default</th>
+<th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>hcw-backend</code></td>
-<td>Django API, administration, Celery worker, scheduler</td>
+<td>Disable password login for practitioners (SSO only)</td>
+<td><code>DISABLE_PASSWORD_LOGIN</code></td>
+<td>FALSE</td>
+<td>When enabled, practitioners can only log in through the configured SSO provider. The standard email/password form is hidden.</td>
 </tr>
 <tr>
-<td><code>hcw-practitioner</code></td>
-<td>Practitioner web interface (Angular)</td>
-</tr>
-<tr>
-<td><code>hcw-patient</code></td>
-<td>Patient web/mobile interface (Ionic)</td>
+<td>Enable self-registration for new users</td>
+<td><code>ENABLE_REGISTRATION</code></td>
+<td>FALSE</td>
+<td>When enabled, new users can create an account themselves from the login page without an administrator invitation.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="installation">Installation</h2>
-<h3 id="1-install-system-dependencies">1. Install system dependencies</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>apt<span class="w"> </span>install<span class="w"> </span>postgresql<span class="w"> </span>redis-server<span class="w"> </span>nginx
-</code></pre></div>
-<h3 id="2-create-the-database">2. Create the database</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>su<span class="w"> </span>postgres
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>createuser<span class="w"> </span>-P<span class="w"> </span>hcw
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># Put hcw as password</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>createdb<span class="w"> </span>-O<span class="w"> </span>hcw<span class="w"> </span>hcw
-</code></pre></div>
-<h3 id="3-install-hcw-packages">3. Install HCW packages</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>apt<span class="w"> </span>install<span class="w"> </span>hcw-backend<span class="w"> </span>hcw-practitioner<span class="w"> </span>hcw-patient
-</code></pre></div>
-<p>The installation automatically creates:</p>
-<ul>
-<li>A <code>hcw</code> system user</li>
-<li>The <code>/var/lib/hcw/</code> directory for uploads</li>
-<li>The systemd services</li>
-</ul>
-<h3 id="4-configure-the-backend">4. Configure the backend</h3>
-<p>Edit the configuration file:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>nano<span class="w"> </span>/etc/hcw/backend.conf
-</code></pre></div>
-<div class="admonition warning">
-<p class="admonition-title">Security</p>
-<p>Generate an encryption key with: <code>echo -n "your secret phrase" | sha256sum</code></p>
-</div>
-<p>For the full list of variables, see the <a href="../docker-compose/#environment-variables">Docker Compose</a> page.</p>
-<h3 id="5-create-a-tenant">5. Create a tenant</h3>
-<p>HCW@Home uses multi-tenancy with PostgreSQL schema isolation. Each tenant has its own data, users, and configuration. Tenants are created via the Django shell.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nb">cd</span><span class="w"> </span>/usr/share/hcw/backend
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>.<span class="w"> </span>./venv/bin/activate
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nb">set</span><span class="w"> </span>-a<span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nb">source</span><span class="w"> </span>/etc/hcw/backend.conf
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>create_tenant
-</code></pre></div>
-<ul>
-<li><strong>schema name</strong>: localhost</li>
-<li><strong>name</strong>: localhost</li>
-<li><strong>domain</strong>: 127.0.0.1</li>
-</ul>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>tenant_command<span class="w"> </span>createsuperuser<span class="w"> </span>-s<span class="w"> </span>localhost
-</code></pre></div>
-<h2 id="nginx-configuration">Nginx Configuration</h2>
-<p>The <code>hcw-backend</code> package provides a reference Nginx configuration file. Copy and adapt it:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>cp<span class="w"> </span>/usr/share/hcw/nginx<span class="w"> </span>/etc/nginx/sites-available/hcw
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>ln<span class="w"> </span>-s<span class="w"> </span>/etc/nginx/sites-available/hcw<span class="w"> </span>/etc/nginx/sites-enabled/
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>rm<span class="w"> </span>/etc/nginx/sites-enabled/default
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>nginx<span class="w"> </span>-t<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>systemctl<span class="w"> </span>reload<span class="w"> </span>nginx
-</code></pre></div>
-<p>The default configuration defines two server blocks:</p>
-<div class="admonition tip">
-<p class="admonition-title">HTTPS</p>
-<p>In production, add a TLS certificate. With Let's Encrypt: <code>certbot --nginx -d your-domain.com -d patient.your-domain.com</code></p>
-</div>
-<h2 id="upgrading">Upgrading</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>apt<span class="w"> </span>update
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>apt<span class="w"> </span>install<span class="w"> </span>hcw-backend<span class="w"> </span>hcw-practitioner<span class="w"> </span>hcw-patient
-</code></pre></div>
-<p>Migrations are automatically applied on <code>hcw</code> service restart.</p>
-<h2 id="load-test-data-optional">Load Test Data (optional)</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nb">cd</span><span class="w"> </span>/usr/share/hcw/backend
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>sudo<span class="w"> </span>-u<span class="w"> </span>hcw<span class="w"> </span>venv/bin/python<span class="w"> </span>manage.py<span class="w"> </span>loaddata<span class="w"> </span>initial/TestData.json
-</code></pre></div>
-<p>Test1234</p>
+<h2 id="data-retention">Data Retention</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Code</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hours after closure before a follow-up is automatically deleted (0 to disable)</td>
+<td><code>TEMPORARY_USER_DELETE_HOURS</code></td>
+<td>0</td>
+<td>Defines how long a closed follow-up and its associated temporary user are kept before automatic deletion. Set to 0 to disable automatic deletion.</td>
+</tr>
+<tr>
+<td>Automatically delete temporary users with no future appointments</td>
+<td><code>TEMPORARY_USER_AUTO_DELETE</code></td>
+<td>FALSE</td>
+<td>When enabled, temporary patient accounts that have no upcoming appointments are automatically removed.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="general-options">General Options</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Code</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The name of the application displayed to users</td>
+<td><code>SITE_NAME</code></td>
+<td>HCW@Home</td>
+<td>The application name shown in the interface header, emails, and notifications.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="scheduling">Scheduling</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Code</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>When to send first appointment reminder, in minutes before the appointment time</td>
+<td><code>APPOINTMENT_FIRST_REMINDER</code></td>
+<td>1440</td>
+<td>First reminder sent to participants before the appointment. Default is 1440 minutes (24 hours).</td>
+</tr>
+<tr>
+<td>When to send last appointment reminder, in minutes before the appointment time</td>
+<td><code>APPOINTMENT_LAST_REMINDER</code></td>
+<td>10</td>
+<td>Last reminder sent shortly before the appointment starts. Default is 10 minutes.</td>
+</tr>
+<tr>
+<td>Minutes before appointment scheduled time that participants can join</td>
+<td><code>APPOINTMENT_EARLY_JOIN_MINUTES</code></td>
+<td>10</td>
+<td>How early participants are allowed to join the video room before the scheduled start time.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="security">Security</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Code</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hours before a temporary participant access token expires</td>
+<td><code>TEMPORARY_PARTICIPANT_TOKEN_EXPIRY_HOURS</code></td>
+<td>1</td>
+<td>Defines the lifespan of access tokens for temporary participants (patients invited via link). After expiration, a new link must be generated.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="urls">URLs</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Code</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Base URL of patient frontend</td>
+<td><code>PATIENT_BASE_URL</code></td>
+<td>The public URL where the patient application is hosted (e.g., <code>https://patient.example.com</code>). Used to generate invitation links sent to patients.</td>
+</tr>
+<tr>
+<td>Base URL of practitioner frontend</td>
+<td><code>PRACTITIONER_BASE_URL</code></td>
+<td>The public URL where the practitioner application is hosted (e.g., <code>https://practitioner.example.com</code>). Used in notification emails sent to practitioners.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="uploads">Uploads</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Code</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Maximum file upload size in MB (0 to disable limit)</td>
+<td><code>MAX_UPLOAD_SIZE_MB</code></td>
+<td>10</td>
+<td>Maximum allowed file size for uploads in chat and consultations. Set to 0 to allow unlimited file sizes.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="video-features">Video Features</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Code</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Enable video recording during appointments</td>
+<td><code>ENABLE_VIDEO_RECORDING</code></td>
+<td>FALSE</td>
+<td>When enabled, video consultations can be recorded and stored on the configured S3-compatible storage.</td>
+</tr>
+<tr>
+<td>Enable live transcription and subtitles during appointments</td>
+<td><code>ENABLE_LIVE_TRANSCRIPTION</code></td>
+<td>FALSE</td>
+<td>Enables real-time speech-to-text subtitles during video calls. Requires a Whisper live server to be configured and running.</td>
+</tr>
+<tr>
+<td>Whisper model to use for transcription</td>
+<td><code>WHISPER_MODEL</code></td>
+<td>small</td>
+<td>The Whisper AI model used for live transcription. Available sizes: tiny, base, small, medium, large-v3. Larger models are more accurate but require more resources.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="visibility">Visibility</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Code</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Controls which users practitioners can see</td>
+<td><code>USERS_VISIBILITY</code></td>
+<td>ALL</td>
+<td>Defines practitioner visibility scope. <code>all</code>: all users, <code>alone</code>: no sharing, <code>organization</code>: only practitioners from the same organization.</td>
+</tr>
+<tr>
+<td>Controls which patients practitioners can see</td>
+<td><code>PATIENT_VISIBILITY</code></td>
+<td>All patients</td>
+<td>Defines patient visibility scope. <code>all</code>: all patients, <code>alone</code>: only patients they created, <code>organization</code>: patients from the same organization.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="sso-configuration">SSO Configuration</h2>
+<p>OpenID Connect (SSO) can be configured to delegate authentication to an external identity provider (Keycloak, Azure AD, etc.). Practitioners log in via the "Sign in with..." button, and accounts are automatically created on first login.</p>
+<p><img alt="SSO configuration" src="../../../assets/images/admin-sso-configuration.png" /></p>
 
 
 
@@ -1401,10 +1495,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.sections", "navigation.expand", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copi\u00e9 dans le presse-papier", "clipboard.copy": "Copier dans le presse-papier", "search.result.more.one": "1 de plus sur cette page", "search.result.more.other": "# de plus sur cette page", "search.result.none": "Aucun document trouv\u00e9", "search.result.one": "1 document trouv\u00e9", "search.result.other": "# documents trouv\u00e9s", "search.result.placeholder": "Taper pour d\u00e9marrer la recherche", "search.result.term.missing": "Non trouv\u00e9", "select.version": "S\u00e9lectionner la version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>

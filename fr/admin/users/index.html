@@ -10,15 +10,17 @@
       
       
       
-        <link rel="canonical" href="https://hcw-at-home.com/docs/fr/deployment/debian/">
+        <link rel="canonical" href="https://hcw-at-home.com/docs/fr/admin/users/">
       
       
-        <link rel="prev" href="../docker-compose/">
+        <link rel="prev" href="../../use-cases/slot-booking/">
       
+      
+        <link rel="next" href="../terms/">
       
       
         
-          <link rel="alternate" href="../../../deployment/debian/" hreflang="en">
+          <link rel="alternate" href="../../../admin/users/" hreflang="en">
         
           <link rel="alternate" href="./" hreflang="fr">
         
@@ -29,7 +31,7 @@
     
     
       
-        <title>Debian Packages - HCW@Home Documentation</title>
+        <title>Users - HCW@Home Documentation</title>
       
     
     
@@ -82,7 +84,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#deploiement-avec-paquets-debian" class="md-skip">
+        <a href="#user-management" class="md-skip">
           Aller au contenu
         </a>
       
@@ -118,7 +120,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Debian Packages
+              Users
             
           </span>
         </div>
@@ -151,7 +153,7 @@
       <ul class="md-select__list">
         
           <li class="md-select__item">
-            <a href="../../../deployment/debian/" hreflang="en" class="md-select__link">
+            <a href="../../../admin/users/" hreflang="en" class="md-select__link">
               English
             </a>
           </li>
@@ -539,8 +541,10 @@
       
   
   
+    
   
   
+  
     
     
     
@@ -551,13 +555,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
           <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
@@ -578,7 +580,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -593,10 +595,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../admin/users/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Users
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -612,6 +641,59 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table des matières">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table des matières
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#user-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User List
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#default-organization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default Organization
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Groups
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -624,7 +706,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../admin/terms/" class="md-nav__link">
+      <a href="../terms/" class="md-nav__link">
         
   
   
@@ -652,7 +734,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../admin/organizations/" class="md-nav__link">
+      <a href="../organizations/" class="md-nav__link">
         
   
   
@@ -680,7 +762,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../admin/messaging-providers/" class="md-nav__link">
+      <a href="../messaging-providers/" class="md-nav__link">
         
   
   
@@ -708,7 +790,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../admin/media-servers/" class="md-nav__link">
+      <a href="../media-servers/" class="md-nav__link">
         
   
   
@@ -736,7 +818,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../admin/reasons/" class="md-nav__link">
+      <a href="../reasons/" class="md-nav__link">
         
   
   
@@ -764,7 +846,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../admin/advanced-options/" class="md-nav__link">
+      <a href="../advanced-options/" class="md-nav__link">
         
   
   
@@ -796,8 +878,6 @@
       
   
   
-    
-  
   
   
     
@@ -810,11 +890,13 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
         
           
           <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
@@ -835,7 +917,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -853,7 +935,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../docker-compose/" class="md-nav__link">
+      <a href="../../deployment/docker-compose/" class="md-nav__link">
         
   
   
@@ -878,37 +960,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Debian Packages
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../deployment/debian/" class="md-nav__link">
         
   
   
@@ -924,153 +979,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table des matières">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table des matières
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#prerequis" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Prerequis
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#paquets-disponibles" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Paquets disponibles
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#installation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Installation
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Installation">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-installer-les-dependances-systeme" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Installer les dependances systeme
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-creer-la-base-de-donnees" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Creer la base de donnees
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-installer-les-paquets-hcw" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Installer les paquets HCW
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-configurer-le-backend" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Configurer le backend
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-creer-un-tenant" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Creer un tenant
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuration-nginx" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configuration Nginx
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mise-a-jour" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Mise a jour
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#charger-les-donnees-de-test-optionnel" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Charger les donnees de test (optionnel)
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1110,10 +1018,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#prerequis" class="md-nav__link">
+  <a href="#user-list" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Prerequis
+        User List
       
     </span>
   </a>
@@ -1121,10 +1029,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#paquets-disponibles" class="md-nav__link">
+  <a href="#default-organization" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Paquets disponibles
+        Default Organization
       
     </span>
   </a>
@@ -1132,104 +1040,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#installation" class="md-nav__link">
+  <a href="#groups" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Installation
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Installation">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-installer-les-dependances-systeme" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Installer les dependances systeme
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-creer-la-base-de-donnees" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Creer la base de donnees
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-installer-les-paquets-hcw" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Installer les paquets HCW
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-configurer-le-backend" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Configurer le backend
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-creer-un-tenant" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Creer un tenant
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuration-nginx" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configuration Nginx
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mise-a-jour" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Mise a jour
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#charger-les-donnees-de-test-optionnel" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Charger les donnees de test (optionnel)
+        Groups
       
     </span>
   </a>
@@ -1253,104 +1067,27 @@
 
 
 
-<h1 id="deploiement-avec-paquets-debian">Deploiement avec paquets Debian</h1>
-<p>Cette methode installe HCW@Home directement sur un serveur Debian/Ubuntu via des paquets <code>.deb</code>. Les services sont geres par systemd. C'est l'approche recommandee pour les deployements en production sur infrastructure dediee.</p>
-<h2 id="prerequis">Prerequis</h2>
+<h1 id="user-management">User Management</h1>
+<p>Users are managed from the administration interface. Each user belongs to a default organization, which determines their access scope and configuration.</p>
+<blockquote>
+<p><strong>Menu:</strong> Users &amp; Authentication &gt; Users</p>
+</blockquote>
+<h2 id="user-list">User List</h2>
+<p>The user list provides an overview of all registered users with their role, status, and organization.</p>
+<p><img alt="User list" src="../../../assets/images/admin-users-list.png" /></p>
+<h2 id="default-organization">Default Organization</h2>
+<p>Every user is assigned to a default organization upon creation. This organization defines:</p>
 <ul>
-<li>Debian 13 (Trixie) ou compatible</li>
-<li>PostgreSQL 15+</li>
-<li>Redis 7+</li>
-<li>Nginx</li>
-<li>2 Go de RAM minimum</li>
+<li>The available features and configuration</li>
+<li>The terms of use the user must accept</li>
+<li>The messaging providers used for notifications</li>
 </ul>
-<h2 id="paquets-disponibles">Paquets disponibles</h2>
-<p>La solution est distribuee en trois paquets independants :</p>
-<table>
-<thead>
-<tr>
-<th>Paquet</th>
-<th>Contenu</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>hcw-backend</code></td>
-<td>API Django, administration, worker Celery, scheduler</td>
-</tr>
-<tr>
-<td><code>hcw-practitioner</code></td>
-<td>Interface web praticien (Angular)</td>
-</tr>
-<tr>
-<td><code>hcw-patient</code></td>
-<td>Interface web/mobile patient (Ionic)</td>
-</tr>
-</tbody>
-</table>
-<h2 id="installation">Installation</h2>
-<h3 id="1-installer-les-dependances-systeme">1. Installer les dependances systeme</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>apt<span class="w"> </span>install<span class="w"> </span>postgresql<span class="w"> </span>redis-server<span class="w"> </span>nginx
-</code></pre></div>
-<h3 id="2-creer-la-base-de-donnees">2. Creer la base de donnees</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>su<span class="w"> </span>postgres
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>createuser<span class="w"> </span>-P<span class="w"> </span>hcw
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># Mettre hcw comme mot de passe</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>createdb<span class="w"> </span>-O<span class="w"> </span>hcw<span class="w"> </span>hcw
-</code></pre></div>
-<h3 id="3-installer-les-paquets-hcw">3. Installer les paquets HCW</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>apt<span class="w"> </span>install<span class="w"> </span>hcw-backend<span class="w"> </span>hcw-practitioner<span class="w"> </span>hcw-patient
-</code></pre></div>
-<p>L'installation cree automatiquement :</p>
-<ul>
-<li>Un utilisateur systeme <code>hcw</code></li>
-<li>Le repertoire <code>/var/lib/hcw/</code> pour les uploads</li>
-<li>Les services systemd</li>
-</ul>
-<h3 id="4-configurer-le-backend">4. Configurer le backend</h3>
-<p>Editer le fichier de configuration :</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>nano<span class="w"> </span>/etc/hcw/backend.conf
-</code></pre></div>
-<div class="admonition warning">
-<p class="admonition-title">Securite</p>
-<p>Generez une cle de chiffrement avec : <code>echo -n "votre phrase secrete" | sha256sum</code></p>
-</div>
-<p>Pour la liste complete des variables, consultez la page <a href="../docker-compose/#variables-denvironnement">Docker Compose</a>.</p>
-<h3 id="5-creer-un-tenant">5. Creer un tenant</h3>
-<p>HCW@Home utilise le multi-tenancy avec isolation par schema PostgreSQL. Chaque tenant possede ses propres donnees, utilisateurs et configuration. Les tenants sont crees via le shell Django.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nb">cd</span><span class="w"> </span>/usr/share/hcw/backend
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>.<span class="w"> </span>./venv/bin/activate
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nb">set</span><span class="w"> </span>-a<span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nb">source</span><span class="w"> </span>/etc/hcw/backend.conf
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>create_tenant
-</code></pre></div>
-<ul>
-<li><strong>schema name</strong> : localhost</li>
-<li><strong>name</strong> : localhost</li>
-<li><strong>domain</strong> : 127.0.0.1</li>
-</ul>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>tenant_command<span class="w"> </span>createsuperuser<span class="w"> </span>-s<span class="w"> </span>localhost
-</code></pre></div>
-<h2 id="configuration-nginx">Configuration Nginx</h2>
-<p>Le paquet <code>hcw-backend</code> fournit un fichier de configuration Nginx de reference. Copiez-le et adaptez-le :</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>cp<span class="w"> </span>/usr/share/hcw/nginx<span class="w"> </span>/etc/nginx/sites-available/hcw
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>ln<span class="w"> </span>-s<span class="w"> </span>/etc/nginx/sites-available/hcw<span class="w"> </span>/etc/nginx/sites-enabled/
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>rm<span class="w"> </span>/etc/nginx/sites-enabled/default
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>nginx<span class="w"> </span>-t<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>systemctl<span class="w"> </span>reload<span class="w"> </span>nginx
-</code></pre></div>
-<p>La configuration par defaut definit deux blocs serveur :</p>
-<div class="admonition tip">
-<p class="admonition-title">HTTPS</p>
-<p>En production, ajoutez un certificat TLS. Avec Let's Encrypt : <code>certbot --nginx -d votre-domaine.com -d patient.votre-domaine.com</code></p>
-</div>
-<h2 id="mise-a-jour">Mise a jour</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>apt<span class="w"> </span>update
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>apt<span class="w"> </span>install<span class="w"> </span>hcw-backend<span class="w"> </span>hcw-practitioner<span class="w"> </span>hcw-patient
-</code></pre></div>
-<p>Les migrations sont appliquees automatiquement au redemarrage du service <code>hcw</code>.</p>
-<h2 id="charger-les-donnees-de-test-optionnel">Charger les donnees de test (optionnel)</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nb">cd</span><span class="w"> </span>/usr/share/hcw/backend
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>sudo<span class="w"> </span>-u<span class="w"> </span>hcw<span class="w"> </span>venv/bin/python<span class="w"> </span>manage.py<span class="w"> </span>loaddata<span class="w"> </span>initial/TestData.json
-</code></pre></div>
+<h2 id="groups">Groups</h2>
+<blockquote>
+<p><strong>Menu:</strong> Users &amp; Authentication &gt; Groups</p>
+</blockquote>
+<p>Users can be assigned to one or more groups (e.g., "General Medicine", "Cardiology"). Groups are used to route consultation requests to the appropriate practitioners.</p>
+<p><img alt="Groups list" src="../../../assets/images/admin-groups-list.png" /></p>
 
 
 
