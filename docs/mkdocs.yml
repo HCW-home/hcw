@@ -4,14 +4,18 @@ site_url: https://hcw-at-home.com/docs
 
 theme:
   name: material
+  font:
+    text: Inter
+    code: JetBrains Mono
   palette:
     - scheme: default
-      primary: teal
+      primary: white
       accent: teal
   features:
     - navigation.sections
     - navigation.expand
     - content.code.copy
+  custom_dir: overrides
 
 plugins:
   - search
@@ -25,11 +29,15 @@ plugins:
           name: Francais
 
 nav:
-  - Home: index.md
+  - Get Started:
+    - Overview: index.md
+    - Use Cases: use-cases.md
   - Deployment:
     - Docker Compose: deployment/docker-compose.md
     - Debian Packages: deployment/debian.md
-  - Use Cases: use-cases.md
+
+extra_css:
+  - assets/css/extra.css
 
 markdown_extensions:
   - admonition
