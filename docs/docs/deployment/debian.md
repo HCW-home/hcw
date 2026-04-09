@@ -115,3 +115,5 @@ Migrations are automatically applied on `hcw` service restart.
 cd /usr/share/hcw/backend
 sudo -u hcw venv/bin/python manage.py loaddata initial/TestData.json
 ```
+
+Test1234

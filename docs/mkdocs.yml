@@ -31,6 +31,7 @@ plugins:
 nav:
   - Get Started:
     - Overview: index.md
+    - Architecture: architecture.md
     - Use Cases: use-cases.md
   - Deployment:
     - Docker Compose: deployment/docker-compose.md
