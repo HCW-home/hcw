@@ -47,6 +47,15 @@
       "args": ["-A", "core", "worker", "--beat", "-l", "info"],
       "cwd": "${workspaceFolder}/backend",
     //   "console": "internalConsole"
+    },
+    {
+      "name": "Mkdocs server",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "mkdocs",
+      "args": ["serve", "--livereload"],
+      "python": "${workspaceFolder}/docs/venv/bin/python",
+      "cwd": "${workspaceFolder}/docs"
     }
   ]
 }
