@@ -84,6 +84,7 @@ export class Dashboard implements OnInit, OnDestroy {
 
   nextAppointment = signal<DashboardNextAppointment | null>(null);
   upcomingAppointments = signal<Appointment[]>([]);
+  upcomingTotal = signal(0);
   overdueConsultations = signal<Consultation[]>([]);
   overdueTotal = signal(0);
 
@@ -150,6 +151,7 @@ export class Dashboard implements OnInit, OnDestroy {
         next: data => {
           this.nextAppointment.set(data.next_appointment);
           this.upcomingAppointments.set(data.upcoming_appointments || []);
+          this.upcomingTotal.set(data.upcoming_total || 0);
           this.overdueConsultations.set(data.overdue_consultations || []);
           this.overdueTotal.set(data.overdue_total || 0);
           this.loading.set(false);

@@ -561,6 +561,7 @@
         "overdueConsultations": "Seguiti da gestire",
         "patientsAwaiting": "Visite di controllo senza appuntamenti in programma",
         "pending": "{{count}} in sospeso",
+        "upcomingCount": "{{count}} in arrivo",
         "noOverdue": "Nessun follow-up da gestire",
         "overdue": "Per gestire"
     },

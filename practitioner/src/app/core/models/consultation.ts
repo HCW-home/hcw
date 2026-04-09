@@ -276,6 +276,7 @@ export interface DashboardNextAppointment {
 export interface DashboardResponse {
   next_appointment: DashboardNextAppointment | null;
   upcoming_appointments: Appointment[];
+  upcoming_total: number;
   overdue_consultations: Consultation[];
   overdue_total: number;
 }

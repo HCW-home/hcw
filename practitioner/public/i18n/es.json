@@ -490,6 +490,7 @@
         "overdueConsultations": "Seguimientos para gestionar",
         "patientsAwaiting": "Seguimientos sin citas programadas",
         "pending": "{{count}} pendiente",
+        "upcomingCount": "{{count}} próximas",
         "noOverdue": "No hay seguimientos que gestionar",
         "overdue": "Por gestionar"
     },

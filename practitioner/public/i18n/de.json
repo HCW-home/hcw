@@ -627,6 +627,7 @@
         "overdueConsultations": "Nachbearbeitungen",
         "patientsAwaiting": "Nachfolgetermine ohne anstehende Termine",
         "pending": "{{count}} ausstehend",
+        "upcomingCount": "{{count}} bevorstehend",
         "noOverdue": "Keine Folgeaufgaben zu bearbeiten",
         "overdue": "Geschlossen",
         "loading": "Dashboard wird geladen...",

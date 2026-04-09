@@ -129,6 +129,7 @@
     "overdueConsultations": "Follow-ups to handle",
     "patientsAwaiting": "Follow-ups with no upcoming appointments",
     "pending": "{{count}} pending",
+    "upcomingCount": "{{count}} upcoming",
     "noOverdue": "No follow-ups to handle",
     "overdue": "To handle"
   },

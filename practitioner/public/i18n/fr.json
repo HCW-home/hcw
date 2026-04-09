@@ -482,6 +482,7 @@
     "overdueConsultations": "Suivis à traiter",
     "patientsAwaiting": "Suivis sans rendez-vous à venir",
     "pending": "{{count}} en attente",
+    "upcomingCount": "{{count}} à venir",
     "noOverdue": "Aucun suivi à traiter",
     "overdue": "À traiter"
   },

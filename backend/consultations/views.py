@@ -1406,6 +1406,7 @@ class DashboardPractitionerView(APIView):
             .order_by("-created_at")
         )
         overdue_total = overdue_qs.count()
+        upcoming_total = remaining_appointments.count()
 
         return Response(
             {
@@ -1413,10 +1414,11 @@ class DashboardPractitionerView(APIView):
                     next_appointment, context=ctx
                 ).data,
                 "upcoming_appointments": AppointmentCreateSerializer(
-                    remaining_appointments, many=True, context=ctx
+                    remaining_appointments[:4], many=True, context=ctx
                 ).data,
+                "upcoming_total": upcoming_total,
                 "overdue_consultations": ConsultationSerializer(
-                    overdue_qs[:3],
+                    overdue_qs[:5],
                     many=True,
                     context=ctx,
                 ).data,

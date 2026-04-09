@@ -89,6 +89,12 @@
         flex-direction: column;
         gap: 2px;
       }
+
+      .header-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
     }
 
     .section-content {
@@ -357,6 +363,15 @@
     gap: 12px;
   }
 
+  .upcoming-badge {
+    padding: 6px 12px;
+    background: var(--primary-500);
+    color: var(--White);
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 9999px;
+  }
+
   .overdue-section {
     margin-top: 24px;
 
@@ -367,12 +382,6 @@
         background: linear-gradient(to right, var(--amber-50), var(--White));
         border-bottom-color: var(--amber-100);
       }
-    }
-
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
     }
 
     .overdue-badge {

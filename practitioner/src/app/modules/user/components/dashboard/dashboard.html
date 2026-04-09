@@ -36,12 +36,17 @@
               </app-typography>
             </div>
           </div>
-          <app-button
-            [text]="'dashboard.viewAll' | translate"
-            [size]="ButtonSizeEnum.small"
-            [style]="ButtonStyleEnum.stroke"
-            (buttonClick)="navigateToAppointments()">
-          </app-button>
+          <div class="header-right">
+            @if (upcomingTotal() > 0) {
+              <span class="upcoming-badge">{{ 'dashboard.upcomingCount' | translate: { count: upcomingTotal() } }}</span>
+            }
+            <app-button
+              [text]="'dashboard.viewAll' | translate"
+              [size]="ButtonSizeEnum.small"
+              [style]="ButtonStyleEnum.stroke"
+              (buttonClick)="navigateToAppointments()">
+            </app-button>
+          </div>
         </div>
         <div class="section-content">
           @if (!hasValidNextAppointment() && upcomingAppointments().length === 0) {
