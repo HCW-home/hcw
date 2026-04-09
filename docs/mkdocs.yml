@@ -37,6 +37,14 @@ nav:
     - Video Call Scheduling: use-cases/video-call-scheduling.md
     - Follow-up and Chat: use-cases/followup-chat.md
     - Slot Booking: use-cases/slot-booking.md
+  - Administration:
+    - Users: admin/users.md
+    - Terms of Use: admin/terms.md
+    - Organizations: admin/organizations.md
+    - Messaging Providers: admin/messaging-providers.md
+    - Media Servers: admin/media-servers.md
+    - Consultation Reasons: admin/reasons.md
+    - Advanced Options: admin/advanced-options.md
   - Deployment:
     - Docker Compose: deployment/docker-compose.md
     - Debian Packages: deployment/debian.md
