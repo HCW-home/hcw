@@ -15,7 +15,6 @@ theme:
     - navigation.sections
     - navigation.expand
     - content.code.copy
-  custom_dir: overrides
 
 plugins:
   - search
