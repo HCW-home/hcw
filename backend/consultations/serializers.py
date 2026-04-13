@@ -772,6 +772,28 @@ class ReasonSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "duration", "assignment_method"]
 
 
+class ReasonDetailSerializer(serializers.ModelSerializer):
+    organisation = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Reason
+        fields = ["id", "name", "duration", "assignment_method", "organisation"]
+
+    def get_organisation(self, obj):
+        if obj.user_assignee and obj.user_assignee.main_organisation:
+            org = obj.user_assignee.main_organisation
+            return {
+                "id": org.id,
+                "name": org.name,
+                "location": org.location,
+                "street": org.street,
+                "city": org.city,
+                "postal_code": org.postal_code,
+                "country": org.country,
+            }
+        return None
+
+
 class BookingSlotSerializer(serializers.ModelSerializer):
     user = ConsultationUserSerializer(read_only=True)
 

@@ -28,7 +28,7 @@ from mediaserver.models import Server
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -62,6 +62,7 @@ from .serializers import (
     CustomFieldSerializer,
     ParticipantDetailSerializer,
     QueueSerializer,
+    ReasonDetailSerializer,
     RequestSerializer,
 )
 
@@ -1426,3 +1427,111 @@ class DashboardPractitionerView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+class ReasonViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for consultation reasons - read only.
+    Access follows the same public_organisations setting.
+    """
+
+    queryset = Reason.objects.filter(is_active=True)
+    serializer_class = ReasonDetailSerializer
+    filter_backends = [DjangoFilterBackend]
+
+    def get_permissions(self):
+        if config.public_organisations:
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="user_assignee",
+                description="Filter by assigned user ID",
+                required=False,
+                type=int,
+                location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
+                name="organisation",
+                description="Filter by assigned user's organisation ID",
+                required=False,
+                type=int,
+                location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
+                name="lat_min",
+                description="Bounding box south latitude",
+                required=False,
+                type=float,
+                location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
+                name="lat_max",
+                description="Bounding box north latitude",
+                required=False,
+                type=float,
+                location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
+                name="lng_min",
+                description="Bounding box west longitude",
+                required=False,
+                type=float,
+                location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
+                name="lng_max",
+                description="Bounding box east longitude",
+                required=False,
+                type=float,
+                location=OpenApiParameter.QUERY,
+            ),
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    def get_queryset(self):
+        qs = super().get_queryset().select_related(
+            "user_assignee__main_organisation"
+        )
+
+        user_assignee = self.request.query_params.get("user_assignee")
+        if user_assignee:
+            qs = qs.filter(user_assignee_id=user_assignee)
+
+        organisation = self.request.query_params.get("organisation")
+        if organisation:
+            qs = qs.filter(user_assignee__main_organisation_id=organisation)
+
+        # Bounding box filter: lat_min, lat_max, lng_min, lng_max
+        lat_min = self.request.query_params.get("lat_min")
+        lat_max = self.request.query_params.get("lat_max")
+        lng_min = self.request.query_params.get("lng_min")
+        lng_max = self.request.query_params.get("lng_max")
+        if all(v is not None for v in (lat_min, lat_max, lng_min, lng_max)):
+            try:
+                lat_min_f = float(lat_min)
+                lat_max_f = float(lat_max)
+                lng_min_f = float(lng_min)
+                lng_max_f = float(lng_max)
+            except (ValueError, TypeError):
+                return qs
+
+            # Filter in Python since location is a plain text "lat,lng" field
+            ids = []
+            for reason in qs.filter(
+                user_assignee__main_organisation__location__isnull=False,
+            ).exclude(user_assignee__main_organisation__location=""):
+                loc = reason.user_assignee.main_organisation.location
+                try:
+                    lat, lng = (float(x) for x in loc.split(","))
+                    if lat_min_f <= lat <= lat_max_f and lng_min_f <= lng <= lng_max_f:
+                        ids.append(reason.id)
+                except (ValueError, AttributeError):
+                    continue
+            qs = qs.filter(id__in=ids)
+
+        return qs

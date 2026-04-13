@@ -790,7 +790,7 @@ CONSTANCE_CONFIG = {
     ),
     "public_organisations": (
         False,
-        "Allow unauthenticated access to the organisations endpoint",
+        "Allow unauthenticated access to the organisations and reasons endpoints",
     ),
 }
 

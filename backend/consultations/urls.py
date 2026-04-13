@@ -10,6 +10,7 @@ from .views import (
     ParticipantViewSet,
     QueueViewSet,
     ReasonSlotsView,
+    ReasonViewSet,
     RequestViewSet,
 )
 
@@ -21,6 +22,7 @@ router.register(r"participants", ParticipantViewSet, basename="participant")
 router.register(r"queues", QueueViewSet, basename="queue")
 router.register(r"requests", RequestViewSet, basename="request")
 router.register(r"messages", MessageViewSet, basename="message")
+router.register(r"reasons", ReasonViewSet, basename="reason")
 router.register(r"custom-fields", CustomFieldViewSet, basename="custom-field")
 
 urlpatterns = [
