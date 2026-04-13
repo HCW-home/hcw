@@ -127,6 +127,29 @@ class SpecialityViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Speciality.objects.all()
     serializer_class = SpecialitySerializer
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = []
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="organisation",
+                description="Filter specialities by organisation ID (returns specialities that have at least one practitioner in this organisation)",
+                required=False,
+                type=int,
+                location=OpenApiParameter.QUERY,
+            ),
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        organisation = self.request.query_params.get("organisation")
+        if organisation:
+            qs = qs.filter(user__main_organisation_id=organisation).distinct()
+        return qs
 
     @extend_schema(responses=ReasonSerializer(many=True))
     @action(detail=True, methods=["get"])
