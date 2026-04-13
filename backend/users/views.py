@@ -160,21 +160,65 @@ class SpecialityViewSet(viewsets.ReadOnlyModelViewSet):
         serializer = ReasonSerializer(reasons, many=True)
         return Response(serializer.data)
 
-    @extend_schema(responses=UserDetailsSerializer(many=True))
+    @extend_schema(
+        responses=UserDetailsSerializer(many=True),
+        parameters=[
+            OpenApiParameter(
+                name="lat_min", description="Bounding box south latitude",
+                required=False, type=float, location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
+                name="lat_max", description="Bounding box north latitude",
+                required=False, type=float, location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
+                name="lng_min", description="Bounding box west longitude",
+                required=False, type=float, location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
+                name="lng_max", description="Bounding box east longitude",
+                required=False, type=float, location=OpenApiParameter.QUERY,
+            ),
+        ],
+    )
     @action(detail=True, methods=["get"])
     def doctors(self, request, pk=None):
         """Get doctors for this specialty"""
         specialty = self.get_object()
-        doctors = User.objects.filter(specialities=specialty)
+        doctors = User.objects.filter(
+            specialities=specialty, main_organisation__isnull=False
+        ).select_related("main_organisation")
+        doctors = self._filter_by_bounding_box(
+            doctors, request, location_field="main_organisation__location"
+        )
         serializer = UserDetailsSerializer(doctors, many=True)
         return Response(serializer.data)
 
-    @extend_schema(responses=OrganisationSerializer(many=True))
+    @extend_schema(
+        responses=OrganisationSerializer(many=True),
+        parameters=[
+            OpenApiParameter(
+                name="lat_min", description="Bounding box south latitude",
+                required=False, type=float, location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
+                name="lat_max", description="Bounding box north latitude",
+                required=False, type=float, location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
+                name="lng_min", description="Bounding box west longitude",
+                required=False, type=float, location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
+                name="lng_max", description="Bounding box east longitude",
+                required=False, type=float, location=OpenApiParameter.QUERY,
+            ),
+        ],
+    )
     @action(detail=True, methods=["get"])
     def organisations(self, request, pk=None):
         """Get organisations based on users with this specialty"""
         specialty = self.get_object()
-        # Get users with this specialty who have a main_organisation
         users_with_specialty = User.objects.filter(
             specialities=specialty, main_organisation__isnull=False
         ).select_related("main_organisation")
@@ -187,8 +231,61 @@ class SpecialityViewSet(viewsets.ReadOnlyModelViewSet):
                 organisations.append(user.main_organisation)
                 seen_org_ids.add(user.main_organisation.id)
 
+        # Apply bounding box filter
+        organisations = self._filter_orgs_by_bounding_box(organisations, request)
+
         serializer = OrganisationSerializer(organisations, many=True)
         return Response(serializer.data)
+
+    @staticmethod
+    def _parse_bounding_box(request):
+        lat_min = request.query_params.get("lat_min")
+        lat_max = request.query_params.get("lat_max")
+        lng_min = request.query_params.get("lng_min")
+        lng_max = request.query_params.get("lng_max")
+        if not all(v is not None for v in (lat_min, lat_max, lng_min, lng_max)):
+            return None
+        try:
+            return float(lat_min), float(lat_max), float(lng_min), float(lng_max)
+        except (ValueError, TypeError):
+            return None
+
+    @staticmethod
+    def _location_in_bounds(location, bounds):
+        if not location:
+            return False
+        try:
+            lat, lng = (float(x) for x in location.split(","))
+            return bounds[0] <= lat <= bounds[1] and bounds[2] <= lng <= bounds[3]
+        except (ValueError, AttributeError):
+            return False
+
+    def _filter_by_bounding_box(self, queryset, request, location_field):
+        bounds = self._parse_bounding_box(request)
+        if not bounds:
+            return queryset
+        queryset = queryset.exclude(**{f"{location_field}__isnull": True}).exclude(
+            **{location_field: ""}
+        )
+        ids = []
+        for obj in queryset:
+            loc = obj
+            for attr in location_field.split("__"):
+                loc = getattr(loc, attr, None)
+                if loc is None:
+                    break
+            if self._location_in_bounds(loc, bounds):
+                ids.append(obj.id)
+        return queryset.filter(id__in=ids)
+
+    def _filter_orgs_by_bounding_box(self, organisations, request):
+        bounds = self._parse_bounding_box(request)
+        if not bounds:
+            return organisations
+        return [
+            org for org in organisations
+            if self._location_in_bounds(org.location, bounds)
+        ]
 
 
 class OrganisationViewSet(viewsets.ReadOnlyModelViewSet):
