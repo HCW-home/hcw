@@ -788,6 +788,10 @@ CONSTANCE_CONFIG = {
         "Whisper model to use for transcription (tiny, base, small, medium, large-v3)",
         "whisper_model_select",
     ),
+    "public_organisations": (
+        False,
+        "Allow unauthenticated access to the organisations endpoint",
+    ),
 }
 
 
@@ -799,7 +803,7 @@ CONSTANCE_CONFIG_FIELDSETS = {
     "Security": ("temporary_participant_token_expiry_hours",),
     "Uploads": ("max_upload_size_mb",),
     "Authentication": ("disable_password_login", "enable_registration"),
-    "Visibility": ("users_visibility", "patient_visibility"),
+    "Visibility": ("users_visibility", "patient_visibility", "public_organisations"),
     "Video Features": ("enable_video_recording", "enable_live_transcription", "whisper_model"),
 }
 

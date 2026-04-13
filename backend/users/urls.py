@@ -7,6 +7,7 @@ from . import views
 router = DefaultRouter()
 router.register(r"languages", views.LanguageViewSet)
 router.register(r"specialities", views.SpecialityViewSet)
+router.register(r"organisations", views.OrganisationViewSet)
 router.register(r"terms", views.TermViewSet)
 router.register(r"users", views.UserViewSet)
 

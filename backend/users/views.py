@@ -191,6 +191,22 @@ class SpecialityViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(serializer.data)
 
 
+class OrganisationViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for organisations - read only.
+    Access can be public or authenticated depending on the
+    public_organisations setting.
+    """
+
+    queryset = Organisation.objects.all()
+    serializer_class = OrganisationSerializer
+
+    def get_permissions(self):
+        if constance_config.public_organisations:
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+
 def generate_magic_token(user):
     serializer = URLSafeTimedSerializer(settings.SECRET_KEY)
     return serializer.dumps({"user_id": user.id})
