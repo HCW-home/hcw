@@ -1,0 +1,100 @@
+<app-header [pageTitle]="'map.title' | translate"></app-header>
+
+<ion-content class="map-content">
+  @if (isPublicEnabled() === null) {
+    <div class="loading-container">
+      <ion-spinner name="crescent"></ion-spinner>
+    </div>
+  } @else if (!isPublicEnabled()) {
+    <div class="error-container">
+      <ion-icon name="lock-closed-outline" class="error-icon"></ion-icon>
+      <h2>{{ 'map.disabled' | translate }}</h2>
+      <p>{{ 'map.disabledMessage' | translate }}</p>
+    </div>
+  } @else {
+    <div class="map-layout">
+      <div class="search-toolbar">
+        <div class="search-box">
+          <ion-icon name="search-outline"></ion-icon>
+          <input
+            type="text"
+            [placeholder]="'map.searchPlaceholder' | translate"
+            [value]="searchQuery()"
+            (input)="onSearchInput($event)"
+          />
+          @if (isLoading()) {
+            <ion-spinner name="crescent" class="search-spinner"></ion-spinner>
+          }
+        </div>
+        <select
+          class="speciality-select"
+          (change)="onSpecialityChange($event)"
+        >
+          <option value="">{{ 'map.allSpecialities' | translate }}</option>
+          @for (spec of specialities(); track spec.id) {
+            <option [value]="spec.id">{{ spec.name }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="map-body">
+        <div class="list-panel">
+          @if (items().length === 0 && !isLoading()) {
+            <div class="empty-state">
+              <ion-icon name="business-outline" class="empty-icon"></ion-icon>
+              <p>{{ 'map.noResults' | translate }}</p>
+            </div>
+          } @else {
+            <div class="org-list">
+              @for (item of items(); track item.id) {
+                <div
+                  class="org-card"
+                  [class.selected]="isSelected(item)"
+                  (click)="selectItem(item)"
+                >
+                  <div class="org-card-header">
+                    @if (item.logo) {
+                      <img [src]="item.logo" [alt]="item.name" class="org-logo" [class.doctor-logo]="item.type === 'doctor'" />
+                    } @else {
+                      <div class="org-avatar" [class.doctor-avatar]="item.type === 'doctor'">
+                        {{ item.initials }}
+                      </div>
+                    }
+                    <div class="org-info">
+                      <div class="org-name-row">
+                        <span class="type-badge" [class.type-doctor]="item.type === 'doctor'">
+                          @if (item.type === 'doctor') {
+                            <ion-icon name="person"></ion-icon>
+                          } @else {
+                            <ion-icon name="business"></ion-icon>
+                          }
+                        </span>
+                        <h3 class="org-name">{{ item.name }}</h3>
+                      </div>
+                      @if (item.specialities) {
+                        <p class="org-specialities">
+                          <ion-icon name="medkit-outline"></ion-icon>
+                          {{ item.specialities }}
+                        </p>
+                      }
+                      @if (item.subtitle) {
+                        <p class="org-address">
+                          <ion-icon name="location-outline"></ion-icon>
+                          {{ item.subtitle }}
+                        </p>
+                      }
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="map-panel">
+          <div id="map-container"></div>
+        </div>
+      </div>
+    </div>
+  }
+</ion-content>

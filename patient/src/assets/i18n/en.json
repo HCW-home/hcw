@@ -457,5 +457,14 @@
     "leaveCallMessage": "You are currently in a video call. If you leave this page, the call will be disconnected. Do you really want to leave?",
     "leaveCallConfirm": "Leave call",
     "leaveCallCancel": "Stay"
+  },
+  "map": {
+    "title": "Find a practitioner",
+    "searchPlaceholder": "Search by city, address or name...",
+    "allSpecialities": "All specialities",
+    "disabled": "Feature unavailable",
+    "disabledMessage": "The organisations directory is currently not available. Please contact your administrator.",
+    "noResults": "No organisations found",
+    "noLocation": "Location not available"
   }
 }

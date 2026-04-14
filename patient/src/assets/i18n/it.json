@@ -457,5 +457,14 @@
         "leaveCallMessage": "Attualmente sei impegnato in una videochiamata. Se esci da questa pagina, la chiamata verrà interrotta. Vuoi davvero uscire?",
         "leaveCallConfirm": "Lascia la chiamata",
         "leaveCallCancel": "Rimanere"
+    },
+    "map": {
+        "title": "Trova un medico",
+        "searchPlaceholder": "Cerca per città, indirizzo o nome...",
+        "allSpecialities": "Tutte le specialità",
+        "disabled": "Funzione non disponibile",
+        "disabledMessage": "L'elenco delle organizzazioni non è attualmente disponibile. Contatta il tuo amministratore.",
+        "noResults": "Nessuna organizzazione trovata",
+        "noLocation": "Posizione non disponibile"
     }
 }

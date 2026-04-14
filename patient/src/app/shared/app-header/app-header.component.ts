@@ -50,7 +50,12 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.authService.currentUser$
       .pipe(takeUntil(this.destroy$))
-      .subscribe((user) => this.currentUser.set(user));
+      .subscribe((user) => {
+        this.currentUser.set(user);
+        if (user) {
+          this.notificationService.loadInitialUnreadCount();
+        }
+      });
 
     this.authService
       .getConfig()
@@ -69,8 +74,6 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
     this.notificationService.unreadCount$
       .pipe(takeUntil(this.destroy$))
       .subscribe((count) => this.unreadNotificationCount.set(count));
-
-    this.notificationService.loadInitialUnreadCount();
   }
 
   ngOnDestroy(): void {

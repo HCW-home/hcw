@@ -456,5 +456,14 @@
     },
     "appointments": {
         "defaultTitle": "Termin"
+    },
+    "map": {
+        "title": "Einen Arzt finden",
+        "searchPlaceholder": "Nach Stadt, Adresse oder Name suchen...",
+        "allSpecialities": "Alle Fachgebiete",
+        "disabled": "Funktion nicht verfügbar",
+        "disabledMessage": "Das Organisationsverzeichnis ist derzeit nicht verfügbar. Bitte kontaktieren Sie Ihren Administrator.",
+        "noResults": "Keine Organisationen gefunden",
+        "noLocation": "Standort nicht verfügbar"
     }
 }

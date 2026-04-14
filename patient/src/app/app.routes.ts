@@ -10,6 +10,10 @@ export const routes: Routes = [
     pathMatch: 'full'
   },
   {
+    path: 'map',
+    loadComponent: () => import('./pages/map/map.page').then(m => m.MapPage)
+  },
+  {
     path: 'login',
     loadComponent: () => import('./pages/login/login.page').then(m => m.LoginPage)
   },

@@ -121,14 +121,19 @@ class TermViewSet(viewsets.ReadOnlyModelViewSet):
 
 class SpecialityViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    ViewSet for specialities - read only
+    ViewSet for specialities - read only.
+    Public access when public_organisations is enabled.
     """
 
     queryset = Speciality.objects.all()
     serializer_class = SpecialitySerializer
-    permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = []
+
+    def get_permissions(self):
+        if constance_config.public_organisations:
+            return [AllowAny()]
+        return [IsAuthenticated()]
 
     @extend_schema(
         parameters=[
@@ -293,15 +298,72 @@ class OrganisationViewSet(viewsets.ReadOnlyModelViewSet):
     ViewSet for organisations - read only.
     Access can be public or authenticated depending on the
     public_organisations setting.
+    Supports bounding box filtering (lat_min, lat_max, lng_min, lng_max)
+    and search query parameter.
     """
 
     queryset = Organisation.objects.all()
     serializer_class = OrganisationSerializer
+    pagination_class = UniversalPagination
 
     def get_permissions(self):
         if constance_config.public_organisations:
             return [AllowAny()]
         return [IsAuthenticated()]
+
+    def get_queryset(self):
+        qs = super().get_queryset().exclude(
+            location__isnull=True
+        ).exclude(location="")
+        search = self.request.query_params.get("search")
+        if search:
+            qs = qs.filter(
+                Q(name__icontains=search)
+                | Q(city__icontains=search)
+                | Q(street__icontains=search)
+                | Q(postal_code__icontains=search)
+                | Q(country__icontains=search)
+            )
+        return qs
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        # Apply bounding box filter if provided and no search
+        if not request.query_params.get("search"):
+            queryset = self._filter_by_bounding_box(queryset, request)
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @staticmethod
+    def _filter_by_bounding_box(queryset, request):
+        lat_min = request.query_params.get("lat_min")
+        lat_max = request.query_params.get("lat_max")
+        lng_min = request.query_params.get("lng_min")
+        lng_max = request.query_params.get("lng_max")
+        if not all(v is not None for v in (lat_min, lat_max, lng_min, lng_max)):
+            return queryset
+        try:
+            bounds = float(lat_min), float(lat_max), float(lng_min), float(lng_max)
+        except (ValueError, TypeError):
+            return queryset
+        queryset = queryset.exclude(location__isnull=True).exclude(location="")
+        ids = []
+        for obj in queryset:
+            if not obj.location:
+                continue
+            try:
+                lat, lng = (float(x) for x in obj.location.split(","))
+                if bounds[0] <= lat <= bounds[1] and bounds[2] <= lng <= bounds[3]:
+                    ids.append(obj.id)
+            except (ValueError, AttributeError):
+                continue
+        return queryset.model.objects.filter(id__in=ids)
 
 
 def generate_magic_token(user):
@@ -945,24 +1007,53 @@ class UserViewSet(viewsets.ModelViewSet):
     """
     ViewSet for users - read only with GET endpoint
     Supports search by first name, last name, and email
-    Visibility controlled by USERS_VISIBILITY setting
+    Visibility controlled by USERS_VISIBILITY setting.
+    When public_organisations is enabled, unauthenticated users
+    can list practitioners (with bounding-box filtering).
     """
 
     queryset = User.objects.all()
     serializer_class = UserDetailsSerializer
-    permission_classes = [IsAuthenticated, IsPractitioner]
     pagination_class = UniversalPagination
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     search_fields = ["first_name", "last_name", "email"]
     filterset_class = UserFilter
+
+    def get_permissions(self):
+        if self.action == "list" and constance_config.public_organisations:
+            if not (self.request.user and self.request.user.is_authenticated):
+                return [AllowAny()]
+        return [IsAuthenticated(), IsPractitioner()]
 
     def get_queryset(self):
         """
         Filter users based on visibility settings:
         - USERS_VISIBILITY controls practitioner visibility
         - PATIENT_VISIBILITY controls patient visibility
+        Public (unauthenticated) access returns practitioners only.
         """
         base_queryset = self.queryset.filter(is_active=True)
+
+        # Public access: return only practitioners with a location
+        # (either their own or their main_organisation's)
+        if not (self.request.user and self.request.user.is_authenticated):
+            qs = base_queryset.filter(
+                is_practitioner=True,
+            ).select_related("main_organisation").filter(
+                # User has own location OR main_organisation has location
+                Q(location__isnull=False) & ~Q(location="")
+                | Q(main_organisation__isnull=False)
+                & Q(main_organisation__location__isnull=False)
+                & ~Q(main_organisation__location="")
+            )
+            speciality = self.request.query_params.get("speciality")
+            if speciality:
+                qs = qs.filter(specialities__id=speciality)
+            # Apply bounding box only when there is no search query
+            if not self.request.query_params.get("search"):
+                qs = self._filter_by_bounding_box(qs)
+            return qs
+
         current_user = self.request.user
 
         practitioners_qs = self._filter_practitioners(base_queryset, current_user)
@@ -1027,6 +1118,32 @@ class UserViewSet(viewsets.ModelViewSet):
         for f in filters[1:]:
             combined |= f
         return combined
+
+    def _filter_by_bounding_box(self, queryset):
+        """Filter queryset by geographic bounding box.
+        Uses user.location first, falls back to main_organisation.location."""
+        lat_min = self.request.query_params.get("lat_min")
+        lat_max = self.request.query_params.get("lat_max")
+        lng_min = self.request.query_params.get("lng_min")
+        lng_max = self.request.query_params.get("lng_max")
+        if not all(v is not None for v in (lat_min, lat_max, lng_min, lng_max)):
+            return queryset
+        try:
+            bounds = float(lat_min), float(lat_max), float(lng_min), float(lng_max)
+        except (ValueError, TypeError):
+            return queryset
+        ids = []
+        for obj in queryset.select_related("main_organisation"):
+            loc = obj.location or (obj.main_organisation.location if obj.main_organisation else None)
+            if not loc:
+                continue
+            try:
+                lat, lng = (float(x) for x in loc.split(","))
+                if bounds[0] <= lat <= bounds[1] and bounds[2] <= lng <= bounds[3]:
+                    ids.append(obj.id)
+            except (ValueError, AttributeError):
+                continue
+        return queryset.filter(id__in=ids)
 
     def create(self, request, *args, **kwargs):
         """
@@ -1284,6 +1401,7 @@ class AppConfigView(APIView):
                 "appointment_early_join_minutes": int(constance_config.appointment_early_join_minutes),
                 "enable_video_recording": constance_config.enable_video_recording,
                 "enable_live_transcription": constance_config.enable_live_transcription,
+                "public_organisations": constance_config.public_organisations,
             }
         )
 
