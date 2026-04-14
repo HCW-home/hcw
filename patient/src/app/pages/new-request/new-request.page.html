@@ -138,9 +138,11 @@
                 {{ 'newRequest.continueWithDoctor' | translate }}
               </button>
             }
-            <button class="secondary-action" (click)="skipDoctorSelection()">
-              {{ 'newRequest.skipDoctor' | translate }}
-            </button>
+            @if (doctors().length > 0) {
+              <button class="secondary-action" (click)="skipDoctorSelection()">
+                {{ 'newRequest.skipDoctor' | translate }}
+              </button>
+            }
           </div>
         </div>
       }
