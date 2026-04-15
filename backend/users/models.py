@@ -74,6 +74,7 @@ class Organisation(models.Model):
         default=False,
         help_text="Define is this organisation will be default for patient",
     )
+    imported = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -216,6 +217,7 @@ class User(AbstractUser):
     city = models.CharField(max_length=50, blank=True, null=True)
     postal_code = models.CharField(max_length=10, blank=True, null=True)
     country = models.CharField(max_length=50, blank=True, null=True)
+    imported = models.BooleanField(default=False)
 
     # Authentication fields (moved from Participant)
     temporary = models.BooleanField(

@@ -32,6 +32,7 @@ COL_SAVOIR_FAIRE = 16
 COL_MODE_EXERCICE = 17
 COL_SIRET = 20
 COL_FINESS = 22
+COL_ID_STRUCTURE = 23
 COL_RAISON_SOCIALE = 24
 COL_NUMERO_VOIE = 28
 COL_TYPE_VOIE = 31
@@ -48,6 +49,7 @@ PRACTITIONER_CUSTOM_FIELDS = [
 ]
 
 ORGANISATION_CUSTOM_FIELDS = [
+    ("Identifiant structure", "short_text"),
     ("SIRET", "short_text"),
     ("FINESS", "short_text"),
 ]
@@ -191,19 +193,25 @@ class Command(BaseCommand):
                 ).values_list("value", "object_id")
             )
 
-        # Pre-load existing SIRET -> organisation_pk mapping
-        siret_field = custom_fields.get("SIRET")
+        # Pre-load existing structure ID -> organisation_pk mapping
+        id_struct_field = custom_fields.get("Identifiant structure")
         existing_orgs = {}
-        if siret_field:
+        if id_struct_field:
             org_ct = ContentType.objects.get_for_model(Organisation)
             existing_orgs = dict(
                 CustomFieldValue.objects.filter(
-                    custom_field=siret_field, content_type=org_ct
+                    custom_field=id_struct_field, content_type=org_ct
                 ).values_list("value", "object_id")
             )
 
         # Pre-load specialities
         speciality_cache = {s.name: s for s in Speciality.objects.all()}
+
+        # Pre-load existing emails for deduplication
+        self._existing_emails = set(
+            User.objects.filter(email__isnull=False)
+            .values_list("email", flat=True)
+        )
 
         stats = {"created": 0, "updated": 0, "skipped": 0, "errors": 0}
         seen_rpps = set()
@@ -325,6 +333,7 @@ class Command(BaseCommand):
         postal_code = row[COL_CODE_POSTAL].strip()
         city = self._clean_city(row[COL_COMMUNE].strip())
         country = row[COL_PAYS].strip() if len(row) > COL_PAYS else None
+        id_structure = row[COL_ID_STRUCTURE].strip() if len(row) > COL_ID_STRUCTURE else None
         raison_sociale = row[COL_RAISON_SOCIALE].strip() if len(row) > COL_RAISON_SOCIALE else None
         savoir_faire = row[COL_SAVOIR_FAIRE].strip()
         mode_exercice = row[COL_MODE_EXERCICE].strip()
@@ -333,9 +342,9 @@ class Command(BaseCommand):
 
         # ── Organisation ────────────────────────────────────────────────
         organisation = None
-        if raison_sociale and siret:
-            if siret in existing_orgs:
-                organisation = Organisation.objects.filter(pk=existing_orgs[siret]).first()
+        if raison_sociale and id_structure:
+            if id_structure in existing_orgs:
+                organisation = Organisation.objects.filter(pk=existing_orgs[id_structure]).first()
                 if organisation:
                     Organisation.objects.filter(pk=organisation.pk).update(
                         street=street or None,
@@ -352,11 +361,16 @@ class Command(BaseCommand):
                     postal_code=postal_code or None,
                     country=country or None,
                     phone=phone or None,
+                    imported=True,
                 )
-                existing_orgs[siret] = organisation.pk
+                existing_orgs[id_structure] = organisation.pk
 
-            # Organisation custom fields (SIRET, FINESS)
-            for cf_name, cf_value in [("SIRET", siret), ("FINESS", finess)]:
+            # Organisation custom fields
+            for cf_name, cf_value in [
+                ("Identifiant structure", id_structure),
+                ("SIRET", siret),
+                ("FINESS", finess),
+            ]:
                 cf = custom_fields.get(cf_name)
                 if cf and cf_value and organisation:
                     CustomFieldValue.objects.update_or_create(
@@ -372,19 +386,27 @@ class Command(BaseCommand):
             "last_name": last_name,
             "job_title": job_title,
             "is_practitioner": True,
+            "imported": True,
         }
 
         if rpps in existing_rpps:
             user_pk = existing_rpps[rpps]
-            User.objects.filter(pk=user_pk).update(
-                **user_data,
-                main_organisation=organisation,
-            )
-            user = User.objects.get(pk=user_pk)
-            stats["updated"] += 1
-        else:
+            user = User.objects.filter(pk=user_pk).first()
+            if user:
+                User.objects.filter(pk=user_pk).update(
+                    **user_data,
+                    main_organisation=organisation,
+                )
+                user.refresh_from_db()
+                stats["updated"] += 1
+            else:
+                # User was deleted since last import, remove stale reference
+                del existing_rpps[rpps]
+
+        if rpps not in existing_rpps:
+            unique_email = self._deduplicate_email(email)
             user = User(
-                email=email,
+                email=unique_email,
                 main_organisation=organisation,
                 **user_data,
             )
@@ -407,12 +429,13 @@ class Command(BaseCommand):
                     defaults={"value": cf_value},
                 )
 
-        # Speciality
-        if savoir_faire:
-            if savoir_faire not in speciality_cache:
-                spec, _ = Speciality.objects.get_or_create(name=savoir_faire)
-                speciality_cache[savoir_faire] = spec
-            user.specialities.add(speciality_cache[savoir_faire])
+        # Speciality: use savoir-faire if available, otherwise fall back to profession
+        spec_name = savoir_faire or job_title
+        if spec_name:
+            if spec_name not in speciality_cache:
+                spec, _ = Speciality.objects.get_or_create(name=spec_name)
+                speciality_cache[spec_name] = spec
+            user.specialities.add(speciality_cache[spec_name])
 
     def _build_street(self, row):
         parts = []
@@ -437,3 +460,19 @@ class Command(BaseCommand):
         """Remove postal code prefix from city field (e.g. '97130 CAPESTERRE BELLE EAU' -> 'Capesterre Belle Eau')."""
         city = re.sub(r"^\d{5}\s*", "", city)
         return city.title() if city else None
+
+    def _deduplicate_email(self, email):
+        """Add +N suffix to email local part if it already exists."""
+        if not email:
+            return None
+        if email not in self._existing_emails:
+            self._existing_emails.add(email)
+            return email
+        local, domain = email.rsplit("@", 1)
+        counter = 1
+        while True:
+            candidate = f"{local}+{counter}@{domain}"
+            if candidate not in self._existing_emails:
+                self._existing_emails.add(candidate)
+                return candidate
+            counter += 1

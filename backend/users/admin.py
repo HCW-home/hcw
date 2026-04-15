@@ -113,6 +113,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
     ]
 
     list_filter = BaseUserAdmin.list_filter + (
+        "imported",
         "languages",
         "specialities",
         "groups",
@@ -122,7 +123,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
     fieldsets = (
         (
             _("Personal info"),
-            {"fields": ("email", "first_name", "last_name", "password")},
+            {"fields": ("email", "first_name", "last_name", "job_title", "password")},
         ),
         (
             _("Permissions"),
@@ -479,7 +480,8 @@ class OrganisationAdmin(ModelAdmin, TabbedTranslationAdmin):
             "widget": WysiwygWidget,
         }
     }
-    list_display = ["name", "city", "phone"]
+    list_display = ["name", "city", "phone", "imported"]
+    list_filter = ["imported"]
     search_fields = ["name", "city"]
 
     def get_form(self, request, obj=None, **kwargs):
