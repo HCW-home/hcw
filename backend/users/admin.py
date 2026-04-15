@@ -48,7 +48,7 @@ admin.site.unregister(Group)
 
 @admin.register(Group)
 class GroupAdmin(BaseGroupAdmin, ModelAdmin):
-    pass
+    search_fields = ["name"]
 
 admin.site.unregister(SocialApp)
 admin.site.register(SocialApp, ModelAdmin)
@@ -118,7 +118,8 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
         "specialities",
         "groups",
     )
-    filter_horizontal = BaseUserAdmin.filter_horizontal + ("languages", "specialities", "organisations")
+    filter_horizontal = ()
+    autocomplete_fields = ["main_organisation", "organisations", "specialities", "languages", "groups"]
 
     fieldsets = (
         (
