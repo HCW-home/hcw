@@ -95,7 +95,8 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
     export_form_class = ExportForm
     list_editable = ["is_active"]
     ordering = ["email"]
-    readonly_fields = ("last_login", "date_joined")
+    readonly_fields = ("last_login", "date_joined", "one_time_auth_token", "verification_code",
+                        "verification_code_created_at", "verification_attempts", "accepted_term")
     search_fields = ("first_name", "last_name", "email")
     # export_form_class = SelectableFieldsExportForm
 
@@ -159,14 +160,14 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
                     "main_organisation",
                     "organisations",
                     "picture",
-                    "accepted_term",
                 )
             },
         ),
         (
             "Authentication",
             {"fields": ("one_time_auth_token", "verification_code",
-                        "is_first_login", "verification_code_created_at", "verification_attempts")},
+                        "is_first_login", "verification_code_created_at", "verification_attempts",
+                        "accepted_term")},
         ),
         (_("Important dates"), {"fields": ("last_login", "date_joined")}),
     )

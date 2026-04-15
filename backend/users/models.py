@@ -259,7 +259,7 @@ class User(AbstractUser):
     )
     is_first_login = models.BooleanField(
         default=True,
-        help_text="Whether this is the user's first login",
+        help_text="Whether to show the first login dialog asking for preferred language and communication methods",
     )
 
     notification_messages = GenericRelation("messaging.Message")
