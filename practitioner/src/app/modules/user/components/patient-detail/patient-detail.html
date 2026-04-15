@@ -95,6 +95,14 @@
               >
             </div>
             }
+            @if (patient()!.street || patient()!.city) {
+            <div class="info-item">
+              <span class="info-label">{{ 'patientDetail.address' | translate }}</span>
+              <span class="info-value">
+                {{ patient()!.street }}@if (patient()!.street && patient()!.city) {, }{{ patient()!.postal_code }} {{ patient()!.city }}@if (patient()!.country) { - {{ patient()!.country }} }
+              </span>
+            </div>
+            }
             <div class="info-item">
               <span class="info-label"
                 >{{ 'patientDetail.communicationMethod' | translate }}</span

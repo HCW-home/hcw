@@ -55,6 +55,10 @@ export interface IUser {
   mobile_phone_number?: string;
   preferred_language?: number | null;
   timezone: string;
+  street?: string;
+  city?: string;
+  postal_code?: string;
+  country?: string;
   languages?: ILanguage[];
   language_ids?: number[];
 

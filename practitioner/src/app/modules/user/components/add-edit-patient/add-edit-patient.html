@@ -87,6 +87,39 @@
       </app-select>
     </div>
 
+    <div class="form-group">
+      <app-input
+        [label]="'addEditPatient.street' | translate"
+        [placeholder]="'addEditPatient.streetPlaceholder' | translate"
+        [formControl]="$any(form.get('street'))">
+      </app-input>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <app-input
+          [label]="'addEditPatient.postalCode' | translate"
+          [placeholder]="'addEditPatient.postalCodePlaceholder' | translate"
+          [formControl]="$any(form.get('postal_code'))">
+        </app-input>
+      </div>
+      <div class="form-group">
+        <app-input
+          [label]="'addEditPatient.city' | translate"
+          [placeholder]="'addEditPatient.cityPlaceholder' | translate"
+          [formControl]="$any(form.get('city'))">
+        </app-input>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <app-input
+        [label]="'addEditPatient.country' | translate"
+        [placeholder]="'addEditPatient.countryPlaceholder' | translate"
+        [formControl]="$any(form.get('country'))">
+      </app-input>
+    </div>
+
     @if (customFields().length > 0 && customFieldsForm) {
       <div class="custom-fields-section">
         <app-typography [variant]="TypographyTypeEnum['body-semibold']" color="var(--slate-700)">

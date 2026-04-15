@@ -302,6 +302,10 @@ export class AddEditPatient implements OnInit, OnDestroy {
       communication_method: [p?.communication_method || '', [Validators.required]],
       timezone: [p?.timezone || 'UTC'],
       preferred_language: [p?.preferred_language || null],
+      street: [p?.street || ''],
+      city: [p?.city || ''],
+      postal_code: [p?.postal_code || ''],
+      country: [p?.country || ''],
       temporary: [p?.temporary || false]
     });
   }
@@ -315,6 +319,10 @@ export class AddEditPatient implements OnInit, OnDestroy {
       communication_method: p?.communication_method || '',
       timezone: p?.timezone || 'UTC',
       preferred_language: p?.preferred_language || null,
+      street: p?.street || '',
+      city: p?.city || '',
+      postal_code: p?.postal_code || '',
+      country: p?.country || '',
       temporary: p?.temporary || false
     });
 
@@ -357,6 +365,10 @@ export class AddEditPatient implements OnInit, OnDestroy {
         communication_method: formValue.communication_method,
         timezone: formValue.timezone,
         preferred_language: formValue.preferred_language,
+        street: formValue.street,
+        city: formValue.city,
+        postal_code: formValue.postal_code,
+        country: formValue.country,
         custom_fields: this.buildCustomFieldsPayload(),
         temporary: formValue.temporary
       };
@@ -385,6 +397,10 @@ export class AddEditPatient implements OnInit, OnDestroy {
         timezone: formValue.timezone,
         preferred_language: formValue.preferred_language,
         language_ids: [],
+        street: formValue.street,
+        city: formValue.city,
+        postal_code: formValue.postal_code,
+        country: formValue.country,
         custom_fields: this.buildCustomFieldsPayload(),
         temporary: formValue.temporary
       };

@@ -604,6 +604,8 @@ class CustomFieldModel(models.TextChoices):
     request = "consultations.Request", _("Request")
     consultation = "consultations.Consultation", _("Consultation")
     patient = "users.User", _("Patient")
+    practitioner = "users.Practitioner", _("Practitioner")
+    organisation = "users.Organisation", _("Organisation")
 
 
 class CustomField(models.Model):

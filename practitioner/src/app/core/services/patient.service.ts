@@ -17,6 +17,10 @@ export interface IPatientCreateRequest {
   preferred_language?: number | null;
   language_ids?: number[];
   temporary?: boolean;
+  street?: string;
+  city?: string;
+  postal_code?: string;
+  country?: string;
   custom_fields?: { field: number; value: string | null }[];
 }
 
@@ -29,6 +33,10 @@ export interface IPatientUpdateRequest {
   communication_method?: string;
   preferred_language?: number | null;
   temporary?: boolean;
+  street?: string;
+  city?: string;
+  postal_code?: string;
+  country?: string;
   custom_fields?: { field: number; value: string | null }[];
 }
 

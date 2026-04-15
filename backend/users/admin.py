@@ -28,7 +28,8 @@ from unfold.contrib.import_export.forms import (
     SelectableFieldsExportForm,
 )
 from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
-from unfold.widgets import UnfoldAdminColorInputWidget
+from django import forms
+from unfold.widgets import UnfoldAdminColorInputWidget, UnfoldAdminLocationWidget
 from rest_framework.authtoken.models import TokenProxy
 
 from .models import (
@@ -79,8 +80,15 @@ class TermAdmin(ModelAdmin, TabbedTranslationAdmin):
     }
 
 
+class UserChangeFormWithLocation(UserChangeForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if "location" in self.fields:
+            self.fields["location"].widget = UnfoldAdminLocationWidget()
+
+
 class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
-    form = UserChangeForm
+    form = UserChangeFormWithLocation
     add_form = UserCreationForm
     change_password_form = AdminPasswordChangeForm
     import_form_class = ImportForm
@@ -135,6 +143,10 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
             {
                 "fields": (
                     "location",
+                    "street",
+                    "city",
+                    "postal_code",
+                    "country",
                     "app_preferences",
                     "mobile_phone_number",
                     "communication_method",
@@ -467,11 +479,15 @@ class OrganisationAdmin(ModelAdmin, TabbedTranslationAdmin):
             "widget": WysiwygWidget,
         }
     }
+    list_display = ["name", "city", "phone"]
+    search_fields = ["name", "city"]
 
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
         form.base_fields["primary_color_patient"].widget = UnfoldAdminColorInputWidget()
         form.base_fields["primary_color_practitioner"].widget = UnfoldAdminColorInputWidget()
+        if "location" in form.base_fields:
+            form.base_fields["location"].widget = UnfoldAdminLocationWidget()
         return form
 
 
