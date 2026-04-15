@@ -1019,13 +1019,16 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserDetailsSerializer
     pagination_class = UniversalPagination
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
-    search_fields = ["first_name", "last_name", "email"]
+    search_fields = [
+        "first_name", "last_name", "email",
+        "street", "city", "postal_code", "country",
+        "main_organisation__name", "main_organisation__city",
+    ]
     filterset_class = UserFilter
 
     def get_permissions(self):
         if self.action == "list" and constance_config.public_organisations:
-            if not (self.request.user and self.request.user.is_authenticated):
-                return [AllowAny()]
+            return [AllowAny()]
         return [IsAuthenticated(), IsPractitioner()]
 
     def get_queryset(self):
@@ -1052,8 +1055,19 @@ class UserViewSet(viewsets.ModelViewSet):
             speciality = self.request.query_params.get("speciality")
             if speciality:
                 qs = qs.filter(specialities__id=speciality)
-            # Apply bounding box only when there is no search query
-            if not self.request.query_params.get("search"):
+            search = self.request.query_params.get("search")
+            if search:
+                qs = qs.filter(
+                    Q(first_name__icontains=search)
+                    | Q(last_name__icontains=search)
+                    | Q(street__icontains=search)
+                    | Q(city__icontains=search)
+                    | Q(postal_code__icontains=search)
+                    | Q(country__icontains=search)
+                    | Q(main_organisation__name__icontains=search)
+                    | Q(main_organisation__city__icontains=search)
+                )
+            else:
                 qs = self._filter_by_bounding_box(qs)
             return qs
 

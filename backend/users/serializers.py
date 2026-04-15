@@ -51,6 +51,7 @@ class OrganisationSerializer(serializers.ModelSerializer):
             "city",
             "postal_code",
             "country",
+            "phone",
         ]
 
 
