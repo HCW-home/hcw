@@ -29,7 +29,7 @@ class CustomFieldAdmin(ModelAdmin, TabbedTranslationAdmin):
 class QueueAdmin(ModelAdmin, TabbedTranslationAdmin):
     list_display = ["name", "users_count", "organisations_count"]
     search_fields = ["name"]
-    filter_horizontal = ["users", "organisation"]
+    autocomplete_fields = ["users", "organisation"]
 
     @display(description="Users")
     def users_count(self, obj):
@@ -127,6 +127,7 @@ class ReasonAdmin(ModelAdmin, TabbedTranslationAdmin):
     list_filter = ["is_active", "skip_doctor_selection", "speciality", "queue_assignee"]
     search_fields = ["name", "speciality__name"]
     readonly_fields = ["created_at"]
+    autocomplete_fields = ["speciality", "user_assignee", "queue_assignee"]
 
 
 @admin.register(Message)
