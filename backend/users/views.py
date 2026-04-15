@@ -1,5 +1,7 @@
 import logging
 import mimetypes
+
+logger = logging.getLogger(__name__)
 import os
 import random
 import uuid
@@ -870,7 +872,7 @@ class UserAppointmentsViewSet(viewsets.ReadOnlyModelViewSet):
         from consultations.models import Type
 
         appointment = self.get_object()
-        if appointment.consultation.closed_at:
+        if appointment.consultation and appointment.consultation.closed_at:
             return Response(
                 {"error": "Cannot join call in closed consultation"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -916,7 +918,7 @@ class UserAppointmentsViewSet(viewsets.ReadOnlyModelViewSet):
                     f"user_{participant.user.pk}",
                     {
                         "type": "appointment",
-                        "consultation_id": appointment.consultation.pk,
+                        "consultation_id": appointment.consultation.pk if appointment.consultation else None,
                         "appointment_id": appointment.pk,
                         "state": "participant_joined",
                         "data": {
@@ -945,6 +947,7 @@ class UserAppointmentsViewSet(viewsets.ReadOnlyModelViewSet):
                 }
             )
         except Exception as e:
+            logger.exception("Failed to join appointment %s: %s", pk, e)
             return Response(
                 {"detail": "No media server available."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -962,7 +965,7 @@ class UserAppointmentsViewSet(viewsets.ReadOnlyModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if appointment.consultation.closed_at:
+        if appointment.consultation and appointment.consultation.closed_at:
             return Response(
                 {"detail": _("Consultation is already closed")},
                 status=status.HTTP_400_BAD_REQUEST,
