@@ -176,14 +176,20 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
         .subscribe({
           next: (participant) => {
             const consultation = participant.appointment.consultation;
-            const consultationId =
-              typeof consultation === "object"
-                ? (consultation as { id: number }).id
-                : consultation;
-            this.navCtrl.navigateRoot(
-              [`/consultation/${consultationId}/video`],
-              { queryParams: { appointmentId: participant.appointment.id } },
-            );
+            if (consultation) {
+              const consultationId =
+                typeof consultation === "object"
+                  ? (consultation as { id: number }).id
+                  : consultation;
+              this.navCtrl.navigateRoot(
+                [`/consultation/${consultationId}/video`],
+                { queryParams: { appointmentId: participant.appointment.id } },
+              );
+            } else {
+              this.navCtrl.navigateRoot(
+                [`/consultation/${participant.appointment.id}/video`],
+              );
+            }
           },
           error: () => {
             this.navCtrl.navigateRoot([`/confirm-presence/${this.actionId}`]);
