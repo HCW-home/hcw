@@ -2,6 +2,8 @@ from django.contrib import admin
 from modeltranslation.admin import TabbedTranslationAdmin
 from unfold.admin import ModelAdmin, StackedInline, TabularInline
 from unfold.decorators import display
+from typing import DefaultDict
+from . import assignments
 
 from .models import (
     Appointment,
@@ -129,6 +131,21 @@ class ReasonAdmin(ModelAdmin, TabbedTranslationAdmin):
     readonly_fields = ["created_at"]
     autocomplete_fields = ["speciality", "user_assignee", "queue_assignee"]
 
+    def conditional_fields(self):
+        field_set = DefaultDict(list)
+        for assignment, class_assignment in assignments.MAIN_CLASSES.items():
+            for field in class_assignment.required_fields:
+                field_set[field].append(assignment)
+
+        print({
+            key: "assignment_method == '" + "' || assignment_method == '".join(values) + "'"
+            for key, values in field_set.items()
+        })
+
+        return {
+            key: "assignment_method == '" + "' || assignment_method == '".join(values) + "'"
+            for key, values in field_set.items()
+        }
 
 @admin.register(Message)
 class MessageAdmin(ModelAdmin):

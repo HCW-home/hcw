@@ -335,6 +335,8 @@ class ConsultationReadStatus(models.Model):
 
 class Reason(models.Model):
 
+    name = models.CharField(_("name"), help_text=_("Display name of the reason visible to the patient"))
+
     assignment_method = models.CharField(
         choices=assignments.MAIN_DISPLAY_NAMES)
 
@@ -346,7 +348,6 @@ class Reason(models.Model):
         null=True,
         blank=True,
     )
-    name = models.CharField(_("name"))
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
     queue_assignee = models.ForeignKey(
         Queue,

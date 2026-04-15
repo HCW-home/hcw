@@ -16,6 +16,7 @@ class AssignmentHandler(BaseAssignmentHandler):
     """
 
     display_name = "Lookup doctor from speciality, create follow and appointment based on slot"
+    required_fields = ["speciality"]
 
     def process(self):
         """

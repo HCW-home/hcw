@@ -26,6 +26,7 @@ class BaseAssignmentHandler(ABC):
     """
 
     display_name: str = ""
+    required_fields: List[str] = []
 
     def __init__(self, request: "Request"):
         self.request = request

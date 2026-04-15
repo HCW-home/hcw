@@ -8,6 +8,7 @@ class AssignmentHandler(BaseAssignmentHandler):
     """
 
     display_name = "Create followup and assign to user"
+    required_fields = ["user_assignee"]
 
     def process(self):
         """
