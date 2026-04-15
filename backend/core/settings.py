@@ -332,6 +332,13 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
+LOCATION_FIELD = {
+    "map.provider": "openstreetmap",
+    "map.zoom": 13,
+    "search.provider": "nominatim",
+    "provider.openstreetmap.max_zoom": 18,
+}
+
 REDIS_HOST = os.getenv("REDIS_HOST") or "127.0.0.1"
 REDIS_PORT = os.getenv("REDIS_PORT") or "6379"
 
