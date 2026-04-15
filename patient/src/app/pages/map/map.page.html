@@ -35,6 +35,14 @@
             <option [value]="spec.id">{{ spec.name }}</option>
           }
         </select>
+        <label class="online-booking-filter">
+          <input
+            type="checkbox"
+            [checked]="onlineBookingOnly()"
+            (change)="onOnlineBookingChange($event)"
+          />
+          <span>{{ 'map.onlineBooking' | translate }}</span>
+        </label>
       </div>
 
       <div class="map-body">
@@ -77,10 +85,29 @@
                           {{ item.specialities }}
                         </p>
                       }
+                      @if (item.doctor?.job_title) {
+                        <p class="org-job-title">
+                          {{ item.doctor!.job_title }}
+                        </p>
+                      }
                       @if (item.subtitle) {
                         <p class="org-address">
                           <ion-icon name="location-outline"></ion-icon>
                           {{ item.subtitle }}
+                        </p>
+                      }
+                      @if (item.org?.phone || item.doctor?.main_organisation?.phone) {
+                        <p class="org-phone">
+                          <ion-icon name="call-outline"></ion-icon>
+                          <a [href]="'tel:' + (item.org?.phone || item.doctor?.main_organisation?.phone)">
+                            {{ item.org?.phone || item.doctor?.main_organisation?.phone }}
+                          </a>
+                        </p>
+                      }
+                      @if (item.doctor?.email) {
+                        <p class="org-email">
+                          <ion-icon name="mail-outline"></ion-icon>
+                          <a [href]="'mailto:' + item.doctor!.email!">{{ item.doctor!.email }}</a>
                         </p>
                       }
                     </div>

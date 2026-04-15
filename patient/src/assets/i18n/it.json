@@ -462,6 +462,7 @@
         "title": "Trova un medico",
         "searchPlaceholder": "Cerca per città, indirizzo o nome...",
         "allSpecialities": "Tutte le specialità",
+        "onlineBooking": "Prenotazione online",
         "disabled": "Funzione non disponibile",
         "disabledMessage": "L'elenco delle organizzazioni non è attualmente disponibile. Contatta il tuo amministratore.",
         "noResults": "Nessuna organizzazione trovata",

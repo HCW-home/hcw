@@ -461,6 +461,7 @@
         "title": "Einen Arzt finden",
         "searchPlaceholder": "Nach Stadt, Adresse oder Name suchen...",
         "allSpecialities": "Alle Fachgebiete",
+        "onlineBooking": "Online-Terminbuchung",
         "disabled": "Funktion nicht verfügbar",
         "disabledMessage": "Das Organisationsverzeichnis ist derzeit nicht verfügbar. Bitte kontaktieren Sie Ihren Administrator.",
         "noResults": "Keine Organisationen gefunden",

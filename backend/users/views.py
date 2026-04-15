@@ -1055,6 +1055,13 @@ class UserViewSet(viewsets.ModelViewSet):
             speciality = self.request.query_params.get("speciality")
             if speciality:
                 qs = qs.filter(specialities__id=speciality)
+            has_slots = self.request.query_params.get("has_slots")
+            if has_slots and has_slots.lower() in ("true", "1"):
+                today = timezone.now().date()
+                qs = qs.filter(
+                    Q(slots__isnull=False)
+                    & (Q(slots__valid_until__isnull=True) | Q(slots__valid_until__gte=today))
+                ).distinct()
             search = self.request.query_params.get("search")
             if search:
                 qs = qs.filter(

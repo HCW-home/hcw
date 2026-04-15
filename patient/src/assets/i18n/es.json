@@ -462,6 +462,7 @@
         "title": "Encontrar un médico",
         "searchPlaceholder": "Buscar por ciudad, dirección o nombre...",
         "allSpecialities": "Todas las especialidades",
+        "onlineBooking": "Reserva en línea",
         "disabled": "Función no disponible",
         "disabledMessage": "El directorio de organizaciones no está disponible actualmente. Contacte con su administrador.",
         "noResults": "No se encontraron organizaciones",

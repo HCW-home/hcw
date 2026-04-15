@@ -108,6 +108,23 @@
     outline: none;
     appearance: auto;
   }
+
+  .online-booking-filter {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--app-text-primary, #333);
+    white-space: nowrap;
+
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: #6366f1;
+    }
+  }
 }
 
 .map-body {
@@ -263,7 +280,9 @@
     }
   }
 
-  .org-address {
+  .org-address,
+  .org-phone,
+  .org-email {
     font-size: 0.8rem;
     color: #777;
     margin: 0.2rem 0 0;
@@ -277,6 +296,22 @@
       margin-top: 2px;
       font-size: 0.85rem;
     }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  .org-job-title {
+    font-size: 0.8rem;
+    color: #555;
+    margin: 0.2rem 0 0;
+    font-style: italic;
   }
 }
 

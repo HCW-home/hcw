@@ -462,6 +462,7 @@
     "title": "Find a practitioner",
     "searchPlaceholder": "Search by city, address or name...",
     "allSpecialities": "All specialities",
+    "onlineBooking": "Online booking",
     "disabled": "Feature unavailable",
     "disabledMessage": "The organisations directory is currently not available. Please contact your administrator.",
     "noResults": "No organisations found",

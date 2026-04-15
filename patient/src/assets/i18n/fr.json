@@ -462,6 +462,7 @@
         "title": "Trouver un praticien",
         "searchPlaceholder": "Rechercher par ville, adresse ou nom...",
         "allSpecialities": "Toutes les sp\u00e9cialit\u00e9s",
+        "onlineBooking": "Prise de rendez-vous en ligne",
         "disabled": "Fonctionnalit\u00e9 indisponible",
         "disabledMessage": "Le r\u00e9pertoire des organisations n'est actuellement pas disponible. Veuillez contacter votre administrateur.",
         "noResults": "Aucune organisation trouv\u00e9e",

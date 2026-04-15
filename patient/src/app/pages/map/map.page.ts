@@ -23,6 +23,7 @@ interface Organisation {
   city: string | null;
   postal_code: string | null;
   country: string | null;
+  phone: string | null;
   logo_color: string | null;
 }
 
@@ -30,6 +31,8 @@ interface Doctor {
   pk: number;
   first_name: string;
   last_name: string;
+  email?: string;
+  job_title?: string;
   picture?: string;
   location?: string | null;
   specialities?: { id: number; name: string }[];
@@ -101,6 +104,7 @@ export class MapPage implements OnInit, OnDestroy {
   searchQuery = signal('');
   selectedSpeciality = signal<number | null>(null);
   selectedItemId = signal<string | null>(null);
+  onlineBookingOnly = signal(false);
 
   constructor(
     private apiService: ApiService,
@@ -219,6 +223,11 @@ export class MapPage implements OnInit, OnDestroy {
     this.boundsSubject.next(this.map.getBounds());
   }
 
+  onOnlineBookingChange(event: Event): void {
+    this.onlineBookingOnly.set((event.target as HTMLInputElement).checked);
+    this.reload();
+  }
+
   private loadFromBoundsWithCoords(bounds: L.LatLngBounds): void {
     const params: any = {
       lat_min: bounds.getSouth().toFixed(6),
@@ -230,6 +239,9 @@ export class MapPage implements OnInit, OnDestroy {
     if (this.selectedSpeciality()) {
       params.speciality = this.selectedSpeciality();
     }
+    if (this.onlineBookingOnly()) {
+      params.has_slots = true;
+    }
     this.fetchData(params);
   }
 
@@ -237,6 +249,9 @@ export class MapPage implements OnInit, OnDestroy {
     const params: any = { search: query, limit: 50 };
     if (this.selectedSpeciality()) {
       params.speciality = this.selectedSpeciality();
+    }
+    if (this.onlineBookingOnly()) {
+      params.has_slots = true;
     }
     this.fetchData(params);
   }
@@ -275,13 +290,16 @@ export class MapPage implements OnInit, OnDestroy {
           for (const doc of docs) {
             const docLocation = doc.location || doc.main_organisation?.location || null;
             const specialities = doc.specialities?.map(s => s.name).join(', ') || '';
-            const orgName = doc.main_organisation?.name || '';
+            const org = doc.main_organisation;
+            const subtitle = org
+              ? [org.name, this.formatAddress(org)].filter(Boolean).join(' - ')
+              : '';
 
             items.push({
               type: 'doctor',
               id: `doc-${doc.pk}`,
               name: `${doc.first_name} ${doc.last_name}`,
-              subtitle: orgName,
+              subtitle,
               specialities,
               location: docLocation,
               logo: doc.picture || null,
@@ -317,11 +335,21 @@ export class MapPage implements OnInit, OnDestroy {
       const icon = item.type === 'organisation' ? orgIcon : doctorIcon;
 
       let popupContent = `<strong>${item.name}</strong>`;
+      if (item.doctor?.job_title) {
+        popupContent += `<br>${item.doctor.job_title}`;
+      }
       if (item.specialities) {
         popupContent += `<br><em>${item.specialities}</em>`;
       }
       if (item.subtitle) {
-        popupContent += `<br>${item.subtitle}`;
+        popupContent += `<br><ion-icon name="location-outline" style="font-size:12px"></ion-icon> ${item.subtitle}`;
+      }
+      const phone = item.org?.phone || item.doctor?.main_organisation?.phone;
+      if (phone) {
+        popupContent += `<br><ion-icon name="call-outline" style="font-size:12px"></ion-icon> <a href="tel:${phone}">${phone}</a>`;
+      }
+      if (item.doctor?.email) {
+        popupContent += `<br><ion-icon name="mail-outline" style="font-size:12px"></ion-icon> <a href="mailto:${item.doctor.email}">${item.doctor.email}</a>`;
       }
 
       const marker = L.marker([coords.lat, coords.lng], { icon })
