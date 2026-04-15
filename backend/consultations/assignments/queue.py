@@ -7,7 +7,7 @@ class AssignmentHandler(BaseAssignmentHandler):
     Assigns consultation to a queue for later assignment by queue managers.
     """
 
-    display_name = "Queue"
+    display_name = "Create followup and assign to queue / group"
 
     def process(self):
         """

@@ -7,7 +7,7 @@ class AssignmentHandler(BaseAssignmentHandler):
     Assigns consultation directly to a specific user (doctor) defined in reason.user_assignee.
     """
 
-    display_name = "User"
+    display_name = "Create followup and assign to user"
 
     def process(self):
         """

@@ -15,7 +15,7 @@ class AssignmentHandler(BaseAssignmentHandler):
     Creates consultation and appointment with mandatory doctor assignment.
     """
 
-    display_name = "Appointment"
+    display_name = "Lookup doctor from speciality, create follow and appointment based on slot"
 
     def process(self):
         """
