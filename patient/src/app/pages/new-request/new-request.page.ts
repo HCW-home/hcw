@@ -179,9 +179,13 @@ export class NewRequestPage implements OnInit, OnDestroy {
 
   selectReason(reason: Reason): void {
     this.selectedReason.set(reason);
-    if (reason.assignment_method === 'appointment') {
+    if (reason.assignment_method === 'appointment' && !reason.skip_doctor_selection) {
       this.loadDoctorsWithNextSlot();
       this.currentStep.set(3);
+    } else if (reason.assignment_method === 'appointment' && reason.skip_doctor_selection) {
+      this.selectedDoctor.set(null);
+      this.loadAvailableSlots(reason.id);
+      this.currentStep.set(4);
     } else {
       this.selectedSlot.set(null);
       this.selectedDoctor.set(null);
@@ -332,6 +336,8 @@ export class NewRequestPage implements OnInit, OnDestroy {
         this.currentStep.set(2);
       } else if (step === 5) {
         this.currentStep.set(4);
+      } else if (step === 4 && reason && reason.skip_doctor_selection) {
+        this.currentStep.set(2);
       } else {
         this.currentStep.set(step - 1);
       }

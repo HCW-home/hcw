@@ -58,6 +58,7 @@ export interface Reason {
   duration?: number;
   is_active?: boolean;
   assignment_method?: string;
+  skip_doctor_selection?: boolean;
 }
 
 export interface Prescription {

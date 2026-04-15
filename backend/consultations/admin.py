@@ -120,10 +120,11 @@ class ReasonAdmin(ModelAdmin, TabbedTranslationAdmin):
         "speciality",
         "duration",
         "is_active",
+        "skip_doctor_selection",
         "queue_assignee",
         "user_assignee",
     ]
-    list_filter = ["is_active", "speciality", "queue_assignee"]
+    list_filter = ["is_active", "skip_doctor_selection", "speciality", "queue_assignee"]
     search_fields = ["name", "speciality__name"]
     readonly_fields = ["created_at"]
 

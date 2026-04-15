@@ -769,7 +769,7 @@ class ConsultationCreateSerializer(serializers.ModelSerializer):
 class ReasonSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reason
-        fields = ["id", "name", "duration", "assignment_method"]
+        fields = ["id", "name", "duration", "assignment_method", "skip_doctor_selection"]
 
 
 class ReasonDetailSerializer(serializers.ModelSerializer):
@@ -777,7 +777,7 @@ class ReasonDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Reason
-        fields = ["id", "name", "duration", "assignment_method", "organisation"]
+        fields = ["id", "name", "duration", "assignment_method", "skip_doctor_selection", "organisation"]
 
     def get_organisation(self, obj):
         if obj.user_assignee and obj.user_assignee.main_organisation:

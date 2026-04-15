@@ -334,11 +334,17 @@ class ConsultationReadStatus(models.Model):
 
 
 class Reason(models.Model):
+
+    assignment_method = models.CharField(
+        choices=assignments.MAIN_DISPLAY_NAMES)
+
     speciality = models.ForeignKey(
         "users.Speciality",
         on_delete=models.CASCADE,
         related_name="reasons",
         verbose_name=_("speciality"),
+        null=True,
+        blank=True,
     )
     name = models.CharField(_("name"))
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
@@ -360,8 +366,11 @@ class Reason(models.Model):
         _("duration"), help_text=_("Duration in minutes"), default=30
     )
     is_active = models.BooleanField(_("is active"), default=True)
-
-    assignment_method = models.CharField(choices=assignments.MAIN_DISPLAY_NAMES)
+    skip_doctor_selection = models.BooleanField(
+        _("skip doctor selection"),
+        default=False,
+        help_text=_("Do not allow the patient to select a practitioner"),
+    )
 
     class Meta:
         verbose_name = _("reason")
@@ -370,8 +379,54 @@ class Reason(models.Model):
     def __str__(self):
         return f"{self.name}"
 
-    # def clean(self):
-    #     super().clean()
+    def clean(self):
+        super().clean()
+        errors = {}
+
+        if self.assignment_method == "appointment":
+            if self.queue_assignee_id is not None:
+                errors["queue_assignee"] = _(
+                    "Queue assignee must be empty for appointment assignment."
+                )
+            if self.user_assignee_id is not None:
+                errors["user_assignee"] = _(
+                    "User assignee must be empty for appointment assignment."
+                )
+            if self.speciality_id is None:
+                errors["speciality"] = _(
+                    "Speciality is required for appointment assignment."
+                )
+
+        elif self.assignment_method == "queue":
+            if self.queue_assignee_id is None:
+                errors["queue_assignee"] = _(
+                    "Queue assignee is required for queue assignment."
+                )
+            if self.speciality_id is not None:
+                errors["speciality"] = _(
+                    "Speciality must be empty for queue assignment."
+                )
+            if self.user_assignee_id is not None:
+                errors["user_assignee"] = _(
+                    "User assignee must be empty for queue assignment."
+                )
+
+        elif self.assignment_method == "user":
+            if self.user_assignee_id is None:
+                errors["user_assignee"] = _(
+                    "User assignee is required for user assignment."
+                )
+            if self.speciality_id is not None:
+                errors["speciality"] = _(
+                    "Speciality must be empty for user assignment."
+                )
+            if self.queue_assignee_id is not None:
+                errors["queue_assignee"] = _(
+                    "Queue assignee must be empty for user assignment."
+                )
+
+        if errors:
+            raise ValidationError(errors)
 
     #     if self.assignment_method == ReasonAssignmentMethod.USER:
     #         if self.queue_assignee:
