@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
-from django.test import TestCase
+from django_tenants.test.cases import TenantTestCase
 from django.utils import timezone
 from messaging.models import Message
 from users.models import Organisation, User
@@ -14,7 +14,7 @@ from .tasks import handle_invites
 # Create your tests here.
 
 
-class AppointmentTest(TestCase):
+class AppointmentTest(TenantTestCase):
     def setUp(self):
         """Préparation des données pour chaque test"""
         self.patient = User.objects.create_user(
@@ -67,7 +67,7 @@ class AppointmentTest(TestCase):
             self.assertTrue(message.template_is_valid)
 
 
-class RequestTimezoneTest(TestCase):
+class RequestTimezoneTest(TenantTestCase):
     """Test timezone handling in Request creation"""
 
     def setUp(self):
@@ -175,7 +175,7 @@ class RequestTimezoneTest(TestCase):
         )
 
 
-class AppointmentTimezoneTest(TestCase):
+class AppointmentTimezoneTest(TenantTestCase):
     """Test timezone handling in Appointment assignment"""
 
     def setUp(self):
@@ -278,7 +278,7 @@ class AppointmentTimezoneTest(TestCase):
         self.assertTrue(is_available)
 
 
-class AssignmentManagerTest(TestCase):
+class AssignmentManagerTest(TenantTestCase):
     """Test AssignmentManager exception handling"""
 
     def setUp(self):

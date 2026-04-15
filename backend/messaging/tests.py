@@ -1,5 +1,5 @@
 from datetime import timedelta
-from django.test import TestCase
+from django_tenants.test.cases import TenantTestCase
 from django.utils import timezone
 from django.contrib.contenttypes.models import ContentType
 
@@ -8,7 +8,7 @@ from consultations.models import Consultation, Appointment, Participant
 from messaging.models import Message, CommunicationMethod
 
 
-class MessageICSAttachmentTestCase(TestCase):
+class MessageICSAttachmentTestCase(TenantTestCase):
     """Test ICS file generation for appointment messages"""
 
     def setUp(self):
