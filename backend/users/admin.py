@@ -84,7 +84,9 @@ class UserChangeFormWithLocation(UserChangeForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if "location" in self.fields:
-            self.fields["location"].widget = UnfoldAdminLocationWidget()
+            self.fields["location"].widget = UnfoldAdminLocationWidget(
+                based_fields=["street", "city", "postal_code", "country"],
+            )
 
 
 class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
@@ -145,11 +147,11 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
             "Additional Info",
             {
                 "fields": (
-                    "location",
                     "street",
                     "city",
                     "postal_code",
                     "country",
+                    "location",
                     "app_preferences",
                     "mobile_phone_number",
                     "communication_method",
@@ -491,7 +493,9 @@ class OrganisationAdmin(ModelAdmin, TabbedTranslationAdmin):
         form.base_fields["primary_color_patient"].widget = UnfoldAdminColorInputWidget()
         form.base_fields["primary_color_practitioner"].widget = UnfoldAdminColorInputWidget()
         if "location" in form.base_fields:
-            form.base_fields["location"].widget = UnfoldAdminLocationWidget()
+            form.base_fields["location"].widget = UnfoldAdminLocationWidget(
+                based_fields=["street", "city", "postal_code", "country"],
+            )
         return form
 
 
