@@ -169,6 +169,8 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     select: this.handleDateSelect.bind(this),
     eventDrop: this.handleEventDrop.bind(this),
     eventResize: this.handleEventResize.bind(this),
+    eventMouseEnter: this.handleEventMouseEnter.bind(this),
+    eventMouseLeave: this.handleEventMouseLeave.bind(this),
     slotMinTime: '00:00:00',
     slotMaxTime: '24:00:00',
     allDaySlot: false,
