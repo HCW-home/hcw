@@ -144,6 +144,25 @@ class RefParam(SearchParam):
         return q & (self.extra or Q())
 
 
+@dataclass
+class CallableParam(SearchParam):
+    """Delegate Q construction to a user-provided callable.
+
+    Use when a FHIR search parameter can't be expressed as a simple field
+    lookup (e.g. status derived from nullability of another column).
+
+    The callable receives (raw_value, modifier) and must return a Q object.
+    """
+
+    type: str = "token"
+    build: object = None  # callable(raw_value, modifier) -> Q
+
+    def to_q(self, raw_value: str, modifier: str | None) -> Q:
+        if self.build is None:
+            return Q()
+        return self.build(raw_value, modifier) & (self.extra or Q())
+
+
 def _parse_param_key(key: str) -> tuple[str, str | None]:
     if ":" in key:
         name, modifier = key.split(":", 1)

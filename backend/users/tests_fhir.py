@@ -3,9 +3,9 @@ from datetime import date
 
 from django.urls import reverse
 from django_tenants.test.cases import TenantTestCase
-from fhir.resources.bundle import Bundle
-from fhir.resources.patient import Patient as FhirPatient
-from fhir.resources.practitioner import Practitioner as FhirPractitioner
+from fhir.resources.R4B.bundle import Bundle
+from fhir.resources.R4B.patient import Patient as FhirPatient
+from fhir.resources.R4B.practitioner import Practitioner as FhirPractitioner
 from rest_framework.test import APIClient
 
 from users.fhir import PatientFhirMapper, PractitionerFhirMapper

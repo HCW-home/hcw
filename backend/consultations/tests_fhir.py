@@ -4,10 +4,10 @@ from datetime import timedelta
 from django.urls import reverse
 from django.utils import timezone
 from django_tenants.test.cases import TenantTestCase
-from fhir.resources.appointment import Appointment as FhirAppointment
-from fhir.resources.bundle import Bundle
-from fhir.resources.capabilitystatement import CapabilityStatement
-from fhir.resources.operationoutcome import OperationOutcome
+from fhir.resources.R4B.appointment import Appointment as FhirAppointment
+from fhir.resources.R4B.bundle import Bundle
+from fhir.resources.R4B.capabilitystatement import CapabilityStatement
+from fhir.resources.R4B.operationoutcome import OperationOutcome
 from rest_framework.test import APIClient
 
 from consultations.fhir import AppointmentFhirMapper

@@ -7,8 +7,8 @@ the two resources and forces scope on create/update.
 from __future__ import annotations
 
 from django.db.models import Q
-from fhir.resources.patient import Patient as FhirPatient
-from fhir.resources.practitioner import Practitioner as FhirPractitioner
+from fhir.resources.R4B.patient import Patient as FhirPatient
+from fhir.resources.R4B.practitioner import Practitioner as FhirPractitioner
 
 from fhir_server.exceptions import FhirOperationError
 from fhir_server.mappers import FhirResourceMapper

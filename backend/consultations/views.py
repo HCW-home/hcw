@@ -32,7 +32,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .fhir import AppointmentFhirMapper
+from .fhir import AppointmentFhirMapper, EncounterFhirMapper
 from fhir_server.mixins import FhirViewSetMixin
 from .filters import AppointmentFilter, ConsultationFilter
 from .models import (
@@ -107,14 +107,19 @@ def annotate_unread_count(queryset, user):
     )
 
 
-class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
-    """Consultation endpoint"""
+class ConsultationViewSet(FhirViewSetMixin, CreatedByMixin, viewsets.ModelViewSet):
+    """Consultation endpoint.
+
+    Exposed as FHIR R4 `Encounter` via `?format=fhir` or
+    `Accept: application/fhir+json`.
+    """
 
     queryset = Consultation.objects.all()
     serializer_class = ConsultationSerializer
     permission_classes = [IsAuthenticated, IsPractitioner]
     pagination_class = ConsultationPagination
     filterset_class = ConsultationFilter
+    fhir_class = EncounterFhirMapper
     filter_backends = [
         filters.SearchFilter,
         filters.OrderingFilter,

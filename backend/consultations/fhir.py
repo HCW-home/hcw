@@ -4,7 +4,8 @@ from __future__ import annotations
 import warnings
 
 from django.db.models import Q
-from fhir.resources.appointment import Appointment as FhirAppointment
+from fhir.resources.R4B.appointment import Appointment as FhirAppointment
+from fhir.resources.R4B.encounter import Encounter as FhirEncounter
 
 from fhir_server.exceptions import FhirOperationError
 from fhir_server.mappers import FhirResourceMapper
@@ -13,7 +14,7 @@ from fhir_server.references import (
     build_reference,
     parse_reference,
 )
-from fhir_server.search import DateParam, RefParam, TokenParam
+from fhir_server.search import CallableParam, DateParam, RefParam, TokenParam
 
 from .models import Appointment, AppointmentStatus, Consultation, Participant, Type
 
@@ -276,3 +277,208 @@ class AppointmentFhir:
             except Appointment.DoesNotExist:
                 pass
         return dict(self.data) if isinstance(self.data, dict) else {}
+
+
+# -- Encounter ---------------------------------------------------------------
+
+# HL7 v3 ActCode class codes
+_ENCOUNTER_CLASS_SYSTEM = "http://terminology.hl7.org/CodeSystem/v3-ActCode"
+_ENCOUNTER_CLASS_VIRTUAL = {"system": _ENCOUNTER_CLASS_SYSTEM, "code": "VR", "display": "virtual"}
+_ENCOUNTER_CLASS_AMBULATORY = {"system": _ENCOUNTER_CLASS_SYSTEM, "code": "AMB", "display": "ambulatory"}
+
+
+def _encounter_status_filter(raw_value: str) -> Q:
+    """Map FHIR Encounter.status search values to Consultation.closed_at filters."""
+    values = {v.strip() for v in raw_value.split(",") if v.strip()}
+    q = Q()
+    if "finished" in values:
+        q |= Q(closed_at__isnull=False)
+    if "in-progress" in values or "planned" in values:
+        q |= Q(closed_at__isnull=True)
+    return q
+
+
+class EncounterFhirMapper(FhirResourceMapper):
+    """Map HCW `Consultation` to FHIR R4 `Encounter`."""
+
+    resource_type = "Encounter"
+    model = Consultation
+    profile_urls = ["http://hl7.org/fhir/StructureDefinition/Encounter"]
+
+    search_params = {
+        "patient": RefParam(field="beneficiary"),
+        "subject": RefParam(field="beneficiary"),
+        "practitioner": RefParam(field="created_by"),
+        "participant": RefParam(field="created_by"),
+        "date": DateParam(field="created_at"),
+        "identifier": TokenParam(field="id"),
+        "_lastUpdated": DateParam(field="updated_at"),
+        "status": CallableParam(build=lambda raw, mod: _encounter_status_filter(raw)),
+    }
+
+    @property
+    def include_targets(self):
+        return {
+            "patient": (self._patient_mapper, self._resolve_patient),
+            "subject": (self._patient_mapper, self._resolve_patient),
+            "practitioner": (self._practitioner_mapper, self._resolve_practitioners),
+        }
+
+    def _patient_mapper(self):
+        try:
+            from users.fhir import PatientFhirMapper
+        except ImportError:
+            return None
+        return PatientFhirMapper()
+
+    def _practitioner_mapper(self):
+        try:
+            from users.fhir import PractitionerFhirMapper
+        except ImportError:
+            return None
+        return PractitionerFhirMapper()
+
+    def _resolve_patient(self, instance):
+        return [instance.beneficiary] if instance.beneficiary_id else []
+
+    def _resolve_practitioners(self, instance):
+        out = []
+        if instance.created_by_id:
+            out.append(instance.created_by)
+        if instance.owned_by_id and instance.owned_by_id != instance.created_by_id:
+            out.append(instance.owned_by)
+        return out
+
+    # -- to_fhir ------------------------------------------------------------
+
+    def to_fhir(self, instance, *, context=None) -> dict:
+        status = "finished" if instance.closed_at else "in-progress"
+
+        # Derive Encounter.class from the linked Appointment (latest wins).
+        klass = _ENCOUNTER_CLASS_VIRTUAL
+        last_appt = instance.appointments.order_by("-scheduled_at").first()
+        if last_appt and last_appt.type == Type.inperson.value:
+            klass = _ENCOUNTER_CLASS_AMBULATORY
+
+        participants = []
+        if instance.created_by_id:
+            participants.append({
+                "individual": build_reference("Practitioner", instance.created_by_id),
+                "type": [{
+                    "coding": [{
+                        "system": "http://terminology.hl7.org/CodeSystem/v3-ParticipationType",
+                        "code": "PPRF",
+                        "display": "primary performer",
+                    }],
+                }],
+            })
+        if instance.owned_by_id and instance.owned_by_id != instance.created_by_id:
+            participants.append({
+                "individual": build_reference("Practitioner", instance.owned_by_id),
+                "type": [{
+                    "coding": [{
+                        "system": "http://terminology.hl7.org/CodeSystem/v3-ParticipationType",
+                        "code": "ATND",
+                        "display": "attender",
+                    }],
+                }],
+            })
+
+        period = {"start": instance.created_at}
+        if instance.closed_at:
+            period["end"] = instance.closed_at
+
+        reason_codes = []
+        request = getattr(instance, "request", None)
+        if request and getattr(request, "reason_id", None):
+            reason_codes.append({"text": request.reason.name})
+
+        appointments = [
+            build_reference("Appointment", appt.pk)
+            for appt in instance.appointments.all()
+        ]
+
+        kwargs = dict(
+            resourceType="Encounter",
+            id=str(instance.pk),
+            identifier=[build_identifier("Encounter", instance.pk)],
+            status=status,
+            **{"class": klass},
+            period=period,
+            participant=participants or None,
+            appointment=appointments or None,
+            reasonCode=reason_codes or None,
+        )
+        if instance.beneficiary_id:
+            kwargs["subject"] = build_reference(
+                "Patient", instance.beneficiary_id,
+                display=instance.beneficiary.name if instance.beneficiary else None,
+            )
+        if instance.created_by_id and instance.created_by and instance.created_by.main_organisation_id:
+            kwargs["serviceProvider"] = build_reference(
+                "Organization", instance.created_by.main_organisation_id,
+            )
+        if instance.title or instance.description:
+            kwargs["text"] = {
+                "status": "generated",
+                "div": f"<div xmlns='http://www.w3.org/1999/xhtml'>{instance.title or instance.description}</div>",
+            }
+
+        encounter = FhirEncounter(**{k: v for k, v in kwargs.items() if v is not None})
+        body = encounter.model_dump(by_alias=True, exclude_none=True, mode="json")
+        meta = self.build_meta(instance)
+        if meta:
+            body["meta"] = meta
+        return body
+
+    # -- from_fhir ----------------------------------------------------------
+
+    def from_fhir(self, payload: dict, instance=None, *, context=None):
+        parsed = FhirEncounter(**payload)
+        request = (context or {}).get("request")
+        user = getattr(request, "user", None)
+
+        if instance is None:
+            if user is None or not getattr(user, "is_authenticated", False):
+                raise FhirOperationError(
+                    "Authenticated user required to create an Encounter.",
+                    code="forbidden", status_code=403,
+                )
+            instance = Consultation(created_by=user)
+
+        # status → closed_at (finished → set now, in-progress → clear)
+        if parsed.status == "finished":
+            if instance.closed_at is None:
+                from django.utils import timezone
+                instance.closed_at = timezone.now()
+        elif parsed.status == "in-progress":
+            instance.closed_at = None
+
+        # subject → beneficiary
+        subject_ref = getattr(parsed.subject, "reference", None) if parsed.subject else None
+        rtype, ident = parse_reference(subject_ref or "")
+        if rtype == "Patient" and ident:
+            from users.models import User as UserModel
+            try:
+                instance.beneficiary = UserModel.objects.get(pk=int(ident), is_practitioner=False)
+            except (UserModel.DoesNotExist, ValueError):
+                raise FhirOperationError(
+                    f"Patient/{ident} not found in current tenant.",
+                    code="not-found", status_code=404,
+                )
+
+        # period.end → closed_at when explicitly provided
+        if parsed.period and getattr(parsed.period, "end", None):
+            instance.closed_at = parsed.period.end
+
+        # text → title fallback
+        if not instance.title and payload.get("text", {}).get("div"):
+            instance.title = payload["text"]["div"]
+
+        return instance
+
+    def soft_delete(self, instance, *, context=None):
+        from django.utils import timezone
+        if instance.closed_at is None:
+            instance.closed_at = timezone.now()
+            instance.save(update_fields=["closed_at", "updated_at"])
