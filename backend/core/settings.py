@@ -106,6 +106,7 @@ SHARED_APPS = (
     "drf_spectacular_sidecar",
     "django_celery_results",
     "location_field",
+    "fhir_server",
 )
 
 TENANT_APPS = (
@@ -269,8 +270,28 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
-    "EXCEPTION_HANDLER": "core.exceptions.custom_exception_handler",
+    "EXCEPTION_HANDLER": "fhir_server.exceptions.fhir_exception_handler",
 }
+
+# FHIR R4 server configuration (OzoneHIS / OpenMRS interop)
+FHIR_SYSTEM_BASE_URL = os.getenv(
+    "FHIR_SYSTEM_BASE_URL", "https://hcw.example/fhir"
+)
+FHIR_IDENTIFIER_SYSTEMS = {
+    "Patient": f"{FHIR_SYSTEM_BASE_URL}/ns/patient-id",
+    "Practitioner": f"{FHIR_SYSTEM_BASE_URL}/ns/practitioner-id",
+    "Organization": f"{FHIR_SYSTEM_BASE_URL}/ns/organization-id",
+    "Appointment": f"{FHIR_SYSTEM_BASE_URL}/ns/appointment-id",
+    "Encounter": f"{FHIR_SYSTEM_BASE_URL}/ns/encounter-id",
+    "MedicationRequest": f"{FHIR_SYSTEM_BASE_URL}/ns/medicationrequest-id",
+    "Observation": f"{FHIR_SYSTEM_BASE_URL}/ns/observation-id",
+    "ServiceRequest": f"{FHIR_SYSTEM_BASE_URL}/ns/servicerequest-id",
+}
+FHIR_DEFAULT_COUNT = int(os.getenv("FHIR_DEFAULT_COUNT", 20))
+FHIR_MAX_COUNT = int(os.getenv("FHIR_MAX_COUNT", 100))
+FHIR_STRICT_SEARCH = os.getenv("FHIR_STRICT_SEARCH", "False") == "True"
+FHIR_INCLUDE_NARRATIVE = os.getenv("FHIR_INCLUDE_NARRATIVE", "True") == "True"
+FHIR_BUNDLE_TOTAL_MODE = os.getenv("FHIR_BUNDLE_TOTAL_MODE", "accurate")
 
 SITE_ID = 1
 ACCOUNT_EMAIL_VERIFICATION = "none"  # Disable email verification for social auth

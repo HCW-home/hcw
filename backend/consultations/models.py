@@ -152,6 +152,7 @@ class Appointment(models.Model):
         related_name="appointments_created",
     )
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("updated at"), auto_now=True, null=True)
 
     participants = models.ManyToManyField(
         User,
@@ -173,6 +174,12 @@ class Appointment(models.Model):
         verbose_name = _("appointment")
         verbose_name_plural = _("appointments")
         ordering = ["scheduled_at"]
+        indexes = [
+            models.Index(
+                fields=["updated_at", "scheduled_at"],
+                name="appt_updat_sched_idx",
+            ),
+        ]
 
 
 class AppointmentRecording(models.Model):

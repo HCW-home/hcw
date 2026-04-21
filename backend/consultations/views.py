@@ -32,7 +32,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .fhir import AppointmentFhir
+from .fhir import AppointmentFhirMapper
+from fhir_server.mixins import FhirViewSetMixin
 from .filters import AppointmentFilter, ConsultationFilter
 from .models import (
     Appointment,
@@ -51,7 +52,6 @@ from .models import (
 )
 from .paginations import ConsultationPagination
 from .permissions import IsPractitioner
-from .renderers import FHIRRenderer
 from .serializers import (
     AppointmentCreateSerializer,
     AppointmentSerializer,
@@ -404,30 +404,25 @@ class ConsultationViewSet(CreatedByMixin, viewsets.ModelViewSet):
         return response
 
 
-class AppointmentViewSet(viewsets.ModelViewSet):
+class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
     """
-    ViewSet for appointments - provides CRUD operations (except DELETE)
-    Supports FHIR format by adding ?format=fhir query parameter
+    ViewSet for appointments - provides CRUD operations.
+    Supports FHIR R4 via `?format=fhir` or `Accept: application/fhir+json`.
+    DELETE is soft (status=cancelled) when invoked through the FHIR flow.
     """
 
     queryset = Appointment.objects.all()
-    fhir_class = AppointmentFhir
+    fhir_class = AppointmentFhirMapper
     permission_classes = [IsAuthenticated, IsPractitioner]
     pagination_class = ConsultationPagination
     ordering_fields = ["created_at", "updated_at", "scheduled_at"]
-    # filterset_fields = ["consultation", "status"]
-    http_method_names = ["get", "post", "patch", "put", "head", "options"]
+    http_method_names = ["get", "post", "patch", "put", "delete", "head", "options"]
     filterset_class = AppointmentFilter
 
     def get_serializer_class(self):
         if self.action == "create":
             return AppointmentCreateSerializer
         return AppointmentSerializer
-
-    def get_renderers(self):
-        if self.action in ["list", "retrieve"]:
-            return super().get_renderers() + [FHIRRenderer()]
-        return super().get_renderers()
 
     def get_queryset(self):
         user = self.request.user

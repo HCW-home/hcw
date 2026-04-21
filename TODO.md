@@ -28,3 +28,17 @@ Système de notification browser pour patient
 
 Le patient ne semble pas avoir les notifications browser comme pour les practitioner. Il faut l'ajouter.
 
+Améliorations responsable (à réfléchir)
+=======================================
+
+http://localhost:4200/app/dashboard
+
+Tri en premier les consultations sans responsable, ajoute un label "Pas de responsable" en rouge.
+
+Gestion des disponibilités
+==========================
+
+Dans ce projet, le médecin peut configurer ses disponibilités http://localhost:4200/app/availability
+Néanmoins, je souhaite lui mettre un message en rouge lorsque ses disponibité ne sont pas utilisable (juste un warning)
+> Lorsqu'aucune reason n'a pas été paramétré par l'admin
+> Lorsque seul des raisons de type assignation spécialité sont défini, mais que le médecin n'est pas dans cette spécialité

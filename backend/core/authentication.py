@@ -1,17 +1,20 @@
 """
 Custom JWT authentication with tenant validation.
 """
+from dj_rest_auth.jwt_auth import JWTCookieAuthentication
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import AuthenticationFailed, InvalidToken
 from django.db import connection
 from django.utils.translation import gettext_lazy as _
 
 
-class TenantJWTAuthentication(JWTAuthentication):
+class TenantJWTAuthentication(JWTCookieAuthentication):
     """
     Custom JWT authentication that validates tenant information.
+
+    Reads the token from `Authorization: Bearer <token>` when present, and
+    falls back to the `JWT_AUTH_COOKIE` cookie posted by dj-rest-auth at login.
 
     Returns appropriate HTTP status codes:
     - 403 Forbidden: Token missing tenant_id (old/invalid token)

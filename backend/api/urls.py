@@ -19,6 +19,7 @@ urlpatterns = [
     path('schema/', SpectacularAPIView.as_view(), name='schema'),
     path('docs/',
          SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('', include('fhir_server.urls')),
     # Custom auth endpoints with DISABLE_PASSWORD_LOGIN control
     path('auth/login/', LoginView.as_view(), name='rest_login'),
     path('auth/logout/', LogoutView.as_view(), name='rest_logout'),
