@@ -6,6 +6,7 @@ import warnings
 from django.db.models import Q
 from fhir.resources.R4B.appointment import Appointment as FhirAppointment
 from fhir.resources.R4B.encounter import Encounter as FhirEncounter
+from fhir.resources.R4B.medicationrequest import MedicationRequest as FhirMedicationRequest
 
 from fhir_server.exceptions import FhirOperationError
 from fhir_server.mappers import FhirResourceMapper
@@ -16,7 +17,15 @@ from fhir_server.references import (
 )
 from fhir_server.search import CallableParam, DateParam, RefParam, TokenParam
 
-from .models import Appointment, AppointmentStatus, Consultation, Participant, Type
+from .models import (
+    Appointment,
+    AppointmentStatus,
+    Consultation,
+    Participant,
+    Prescription,
+    PrescriptionStatus,
+    Type,
+)
 
 # HCW status <-> FHIR Appointment.status (using string values, not enum members)
 _STATUS_TO_FHIR = {
@@ -482,3 +491,216 @@ class EncounterFhirMapper(FhirResourceMapper):
         if instance.closed_at is None:
             instance.closed_at = timezone.now()
             instance.save(update_fields=["closed_at", "updated_at"])
+
+
+# -- MedicationRequest -------------------------------------------------------
+
+_PRESCRIPTION_STATUS_TO_FHIR = {
+    PrescriptionStatus.draft.value: "draft",
+    PrescriptionStatus.prescribed.value: "active",
+    PrescriptionStatus.dispensed.value: "completed",
+    PrescriptionStatus.cancelled.value: "cancelled",
+}
+_PRESCRIPTION_STATUS_FROM_FHIR = {
+    "draft": PrescriptionStatus.draft.value,
+    "active": PrescriptionStatus.prescribed.value,
+    "on-hold": PrescriptionStatus.draft.value,
+    "completed": PrescriptionStatus.dispensed.value,
+    "cancelled": PrescriptionStatus.cancelled.value,
+    "stopped": PrescriptionStatus.cancelled.value,
+    "entered-in-error": PrescriptionStatus.cancelled.value,
+}
+
+
+class PrescriptionFhirMapper(FhirResourceMapper):
+    """Map HCW `Prescription` to FHIR R4 `MedicationRequest`."""
+
+    resource_type = "MedicationRequest"
+    model = Prescription
+    profile_urls = ["http://hl7.org/fhir/StructureDefinition/MedicationRequest"]
+
+    search_params = {
+        "patient": RefParam(field="consultation__beneficiary"),
+        "subject": RefParam(field="consultation__beneficiary"),
+        "encounter": RefParam(field="consultation"),
+        "requester": RefParam(field="created_by"),
+        "status": TokenParam(
+            field="status",
+            mapping={v: k for k, v in _PRESCRIPTION_STATUS_TO_FHIR.items()},
+        ),
+        "authored": DateParam(field="created_at"),
+        "identifier": TokenParam(field="id"),
+        "_lastUpdated": DateParam(field="updated_at"),
+    }
+
+    @property
+    def include_targets(self):
+        return {
+            "patient": (self._patient_mapper, self._resolve_patient),
+            "subject": (self._patient_mapper, self._resolve_patient),
+            "requester": (self._practitioner_mapper, self._resolve_requester),
+            "encounter": (EncounterFhirMapper, self._resolve_encounter),
+        }
+
+    def _patient_mapper(self):
+        try:
+            from users.fhir import PatientFhirMapper
+        except ImportError:
+            return None
+        return PatientFhirMapper()
+
+    def _practitioner_mapper(self):
+        try:
+            from users.fhir import PractitionerFhirMapper
+        except ImportError:
+            return None
+        return PractitionerFhirMapper()
+
+    def _resolve_patient(self, instance):
+        consultation = instance.consultation
+        if consultation and consultation.beneficiary_id:
+            return [consultation.beneficiary]
+        return []
+
+    def _resolve_requester(self, instance):
+        return [instance.created_by] if instance.created_by_id else []
+
+    def _resolve_encounter(self, instance):
+        return [instance.consultation] if instance.consultation_id else []
+
+    # -- to_fhir ------------------------------------------------------------
+
+    def to_fhir(self, instance, *, context=None) -> dict:
+        consultation = instance.consultation
+        subject = None
+        if consultation and consultation.beneficiary_id:
+            subject = build_reference(
+                "Patient", consultation.beneficiary_id,
+                display=consultation.beneficiary.name if consultation.beneficiary else None,
+            )
+
+        dosage_parts = [p for p in [
+            instance.dosage,
+            instance.frequency,
+            f"for {instance.duration}" if instance.duration else None,
+        ] if p]
+        dosage_text = " ".join(dosage_parts).strip()
+        if instance.instructions:
+            dosage_text = (dosage_text + "\n" + instance.instructions).strip()
+
+        dosage_instructions = []
+        if dosage_text:
+            dosage_instructions.append({"text": dosage_text})
+
+        kwargs = dict(
+            resourceType="MedicationRequest",
+            id=str(instance.pk),
+            identifier=[build_identifier("MedicationRequest", instance.pk)],
+            status=_PRESCRIPTION_STATUS_TO_FHIR.get(instance.status, "draft"),
+            intent="order",
+            medicationCodeableConcept={"text": instance.medication_name},
+            authoredOn=(instance.prescribed_at or instance.created_at),
+        )
+        if subject:
+            kwargs["subject"] = subject
+        if instance.consultation_id:
+            kwargs["encounter"] = build_reference("Encounter", instance.consultation_id)
+        if instance.created_by_id:
+            kwargs["requester"] = build_reference("Practitioner", instance.created_by_id)
+        if dosage_instructions:
+            kwargs["dosageInstruction"] = dosage_instructions
+        if instance.notes:
+            kwargs["note"] = [{"text": instance.notes}]
+
+        mr = FhirMedicationRequest(**kwargs)
+        body = mr.model_dump(by_alias=True, exclude_none=True, mode="json")
+        meta = self.build_meta(instance)
+        if meta:
+            body["meta"] = meta
+        return body
+
+    # -- from_fhir ----------------------------------------------------------
+
+    def from_fhir(self, payload: dict, instance=None, *, context=None):
+        parsed = FhirMedicationRequest(**payload)
+        request = (context or {}).get("request")
+        user = getattr(request, "user", None)
+
+        if instance is None:
+            if user is None or not getattr(user, "is_authenticated", False):
+                raise FhirOperationError(
+                    "Authenticated user required to create a MedicationRequest.",
+                    code="forbidden", status_code=403,
+                )
+            instance = Prescription(created_by=user)
+
+        # medication
+        med = parsed.medicationCodeableConcept
+        med_name = getattr(med, "text", None) if med else None
+        if not med_name and med and med.coding:
+            med_name = med.coding[0].display or med.coding[0].code
+        if not med_name:
+            raise FhirOperationError(
+                "MedicationRequest.medicationCodeableConcept.text is required.",
+                code="required", status_code=400,
+            )
+        instance.medication_name = med_name
+
+        # status
+        if parsed.status:
+            instance.status = _PRESCRIPTION_STATUS_FROM_FHIR.get(
+                parsed.status, PrescriptionStatus.draft.value,
+            )
+
+        if parsed.authoredOn:
+            instance.prescribed_at = parsed.authoredOn
+
+        # encounter → consultation (required)
+        enc_ref = getattr(parsed.encounter, "reference", None) if parsed.encounter else None
+        rtype, ident = parse_reference(enc_ref or "")
+        if rtype == "Encounter" and ident:
+            try:
+                instance.consultation = Consultation.objects.get(pk=int(ident))
+            except (Consultation.DoesNotExist, ValueError):
+                raise FhirOperationError(
+                    f"Encounter/{ident} not found in current tenant.",
+                    code="not-found", status_code=404,
+                )
+        elif instance.consultation_id is None:
+            raise FhirOperationError(
+                "MedicationRequest.encounter is required.",
+                code="required", status_code=400,
+            )
+
+        # dosageInstruction → dosage free-text (single line, Phase 4 MVP)
+        if parsed.dosageInstruction:
+            text = parsed.dosageInstruction[0].text or ""
+            if text:
+                instance.dosage = text[:100]
+                instance.instructions = text
+
+        # requester override (admin use-case)
+        req_ref = getattr(parsed.requester, "reference", None) if parsed.requester else None
+        rtype, ident = parse_reference(req_ref or "")
+        if rtype == "Practitioner" and ident:
+            from users.models import User as UserModel
+            try:
+                instance.created_by = UserModel.objects.get(
+                    pk=int(ident), is_practitioner=True,
+                )
+            except (UserModel.DoesNotExist, ValueError):
+                raise FhirOperationError(
+                    f"Practitioner/{ident} not found.",
+                    code="not-found", status_code=404,
+                )
+
+        # notes
+        if parsed.note:
+            notes = "\n".join(n.text for n in parsed.note if n.text)
+            instance.notes = notes
+
+        return instance
+
+    def soft_delete(self, instance, *, context=None):
+        instance.status = PrescriptionStatus.cancelled.value
+        instance.save(update_fields=["status", "updated_at"])

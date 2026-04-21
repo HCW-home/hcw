@@ -20,6 +20,8 @@ from .models import (
     CustomFieldValue,
     Message,
     Participant,
+    Prescription,
+    PrescriptionStatus,
     Queue,
     Reason,
     Request,
@@ -1077,3 +1079,24 @@ class ParticipantDetailSerializer(ParticipantSerializer):
     class Meta:
         model = Participant
         fields = ParticipantSerializer.Meta.fields + ["appointment"]
+
+
+class PrescriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Prescription
+        fields = [
+            "id",
+            "consultation",
+            "created_by",
+            "created_at",
+            "updated_at",
+            "prescribed_at",
+            "status",
+            "medication_name",
+            "dosage",
+            "frequency",
+            "duration",
+            "instructions",
+            "notes",
+        ]
+        read_only_fields = ["id", "created_by", "created_at", "updated_at"]

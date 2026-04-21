@@ -32,7 +32,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .fhir import AppointmentFhirMapper, EncounterFhirMapper
+from .fhir import AppointmentFhirMapper, EncounterFhirMapper, PrescriptionFhirMapper
 from fhir_server.mixins import FhirViewSetMixin
 from .filters import AppointmentFilter, ConsultationFilter
 from .models import (
@@ -44,6 +44,7 @@ from .models import (
     ConsultationReadStatus,
     Message,
     Participant,
+    Prescription,
     Queue,
     Reason,
     Request,
@@ -61,6 +62,7 @@ from .serializers import (
     ConsultationSerializer,
     CustomFieldSerializer,
     ParticipantDetailSerializer,
+    PrescriptionSerializer,
     QueueSerializer,
     ReasonDetailSerializer,
     RequestSerializer,
@@ -733,6 +735,30 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
         if consultation.owned_by == user or consultation.created_by == user:
             return True
         return False
+
+
+class PrescriptionViewSet(FhirViewSetMixin, CreatedByMixin, viewsets.ModelViewSet):
+    """
+    Prescription endpoint, exposed as FHIR R4 `MedicationRequest` via
+    `?format=fhir` or `Accept: application/fhir+json`.
+    """
+
+    queryset = Prescription.objects.all()
+    serializer_class = PrescriptionSerializer
+    permission_classes = [IsAuthenticated, IsPractitioner]
+    pagination_class = ConsultationPagination
+    fhir_class = PrescriptionFhirMapper
+    http_method_names = ["get", "post", "put", "patch", "delete", "head", "options"]
+    ordering = ["-created_at"]
+    ordering_fields = ["created_at", "updated_at", "prescribed_at"]
+
+    def get_queryset(self):
+        user = self.request.user
+        return Prescription.objects.filter(
+            Q(consultation__beneficiary=user)
+            | Q(created_by=user)
+            | Q(consultation__in=Consultation.objects.accessible_by(user))
+        ).distinct()
 
 
 class ParticipantViewSet(viewsets.ModelViewSet):

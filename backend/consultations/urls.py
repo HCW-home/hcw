@@ -8,6 +8,7 @@ from .views import (
     DashboardPractitionerView,
     MessageViewSet,
     ParticipantViewSet,
+    # PrescriptionViewSet,
     QueueViewSet,
     ReasonSlotsView,
     ReasonViewSet,
@@ -24,6 +25,7 @@ router.register(r"requests", RequestViewSet, basename="request")
 router.register(r"messages", MessageViewSet, basename="message")
 router.register(r"reasons", ReasonViewSet, basename="reason")
 router.register(r"custom-fields", CustomFieldViewSet, basename="custom-field")
+# router.register(r"prescriptions", PrescriptionViewSet, basename="prescription")
 
 urlpatterns = [
     path("api/", include(router.urls)),
