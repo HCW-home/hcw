@@ -1117,9 +1117,20 @@ class UserViewSet(viewsets.ModelViewSet):
 
         elif visibility == "organization":
             org_filter = self._get_organization_filter(current_user)
-            if org_filter:
-                return qs.filter(org_filter)
-            return qs.filter(created_by=current_user)
+            if org_filter is None:
+                return qs.filter(created_by=current_user)
+            # Patients rarely have a main_organisation/organisations set,
+            # so also match via their creator's organisation (`created_by__*`).
+            user_orgs = list(current_user.organisations.values_list("id", flat=True))
+            creator_filter = Q()
+            if current_user.main_organisation_id:
+                creator_filter |= Q(
+                    created_by__main_organisation=current_user.main_organisation
+                )
+            if user_orgs:
+                creator_filter |= Q(created_by__organisations__id__in=user_orgs)
+            creator_filter |= Q(created_by=current_user)
+            return qs.filter(org_filter | creator_filter).distinct()
 
         return qs
 
