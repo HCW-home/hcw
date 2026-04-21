@@ -113,6 +113,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
         "languages_display",
         "specialities_display",
         "get_groups",
+        "created_by",
     ]
 
     list_filter = BaseUserAdmin.list_filter + (
@@ -122,7 +123,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
         "groups",
     )
     filter_horizontal = ()
-    autocomplete_fields = ["main_organisation", "organisations", "specialities", "languages", "groups"]
+    autocomplete_fields = ["main_organisation", "organisations", "specialities", "languages", "groups", "created_by"]
 
     fieldsets = (
         (
@@ -139,6 +140,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
                     "is_practitioner",
                     "temporary",
                     "groups",
+                    "created_by",
                     # "user_permissions",
                 ),
             },

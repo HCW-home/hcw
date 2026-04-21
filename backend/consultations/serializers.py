@@ -515,6 +515,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
                     participant.save(update_fields=["is_active"])
 
         if temporary_participants_data is not None:
+            request_user = self.context["request"].user
             for temp_participant in temporary_participants_data:
                 user_defaults = {
                     "first_name": temp_participant.get("first_name", ""),
@@ -527,6 +528,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
                     ),
                     "timezone": temp_participant.get("timezone", "UTC"),
                     "temporary": True,
+                    "created_by": request_user,
                 }
 
                 if temp_participant.get("mobile_phone_number"):
@@ -652,6 +654,7 @@ class AppointmentCreateSerializer(AppointmentSerializer):
                 participant_users.add(user)
 
         # Users from temporary_participants
+        request_user = self.context["request"].user
         for temp_participant in temporary_participants_data:
             user_defaults = {
                 "first_name": temp_participant.get("first_name", ""),
@@ -662,6 +665,7 @@ class AppointmentCreateSerializer(AppointmentSerializer):
                 "preferred_language": temp_participant.get("preferred_language"),
                 "timezone": temp_participant.get("timezone", "UTC"),
                 "temporary": True,
+                "created_by": request_user,
             }
 
             if temp_participant.get("mobile_phone_number"):

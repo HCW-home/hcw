@@ -117,6 +117,17 @@ export class AddEditPatient implements OnInit, OnDestroy {
   private availableCommunicationMethods: string[] = [];
   customFields = signal<CustomField[]>([]);
 
+  translatedGenderOptions: SelectOption[] = [];
+
+  private buildGenderOptions(): void {
+    this.translatedGenderOptions = [
+      { value: 'male', label: this.t.instant('addEditPatient.genderMale') },
+      { value: 'female', label: this.t.instant('addEditPatient.genderFemale') },
+      { value: 'other', label: this.t.instant('addEditPatient.genderOther') },
+      { value: 'unknown', label: this.t.instant('addEditPatient.genderUnknown') },
+    ];
+  }
+
   private readonly communicationMethodLabels: Record<string, string> = {
     [CommunicationMethodEnum.SMS]: 'SMS',
     [CommunicationMethodEnum.EMAIL]: 'Email',
@@ -131,6 +142,7 @@ export class AddEditPatient implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.initForm();
+    this.buildGenderOptions();
     this.loadConfig();
     this.loadCustomFields();
     this.setupCommunicationMethodAutoSelect();
@@ -306,6 +318,8 @@ export class AddEditPatient implements OnInit, OnDestroy {
       city: [p?.city || ''],
       postal_code: [p?.postal_code || ''],
       country: [p?.country || ''],
+      date_of_birth: [p?.date_of_birth || null],
+      gender: [p?.gender || 'unknown'],
       temporary: [p?.temporary || false]
     });
   }
@@ -323,6 +337,8 @@ export class AddEditPatient implements OnInit, OnDestroy {
       city: p?.city || '',
       postal_code: p?.postal_code || '',
       country: p?.country || '',
+      date_of_birth: p?.date_of_birth || null,
+      gender: p?.gender || 'unknown',
       temporary: p?.temporary || false
     });
 
@@ -369,6 +385,8 @@ export class AddEditPatient implements OnInit, OnDestroy {
         city: formValue.city,
         postal_code: formValue.postal_code,
         country: formValue.country,
+        date_of_birth: formValue.date_of_birth || null,
+        gender: formValue.gender || 'unknown',
         custom_fields: this.buildCustomFieldsPayload(),
         temporary: formValue.temporary
       };
@@ -401,6 +419,8 @@ export class AddEditPatient implements OnInit, OnDestroy {
         city: formValue.city,
         postal_code: formValue.postal_code,
         country: formValue.country,
+        date_of_birth: formValue.date_of_birth || null,
+        gender: formValue.gender || 'unknown',
         custom_fields: this.buildCustomFieldsPayload(),
         temporary: formValue.temporary
       };

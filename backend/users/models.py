@@ -151,6 +151,13 @@ class WebPushSubscription(models.Model):
         }
 
 
+class Gender(models.TextChoices):
+    male = "male", _("Male")
+    female = "female", _("Female")
+    other = "other", _("Other")
+    unknown = "unknown", _("Unknown")
+
+
 class User(AbstractUser):
     def __str__(self):
         return self.name
@@ -163,6 +170,14 @@ class User(AbstractUser):
     username = None
 
     email = models.EmailField(_("email address"), blank=True, null=True, unique=True)
+    updated_at = models.DateTimeField(_("updated at"), auto_now=True, null=True)
+    date_of_birth = models.DateField(_("date of birth"), null=True, blank=True)
+    gender = models.CharField(
+        _("gender"),
+        max_length=10,
+        choices=Gender.choices,
+        default=Gender.unknown,
+    )
 
     app_preferences = models.JSONField(null=True, blank=True)
     encrypted = models.BooleanField(default=False)

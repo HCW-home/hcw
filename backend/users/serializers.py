@@ -111,6 +111,8 @@ class UserDetailsSerializer(CustomFieldsMixin, serializers.ModelSerializer):
             "is_practitioner",
             "is_first_login",
             "specialities",
+            "date_of_birth",
+            "gender",
         ]
         read_only_fields = [
             "is_practitioner",

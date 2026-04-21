@@ -7,6 +7,8 @@ import { PaginatedResponse } from '../models/global';
 import { IUser } from '../../modules/user/models/user';
 import { IHealthMetricResponse } from '../../modules/user/models/patient';
 
+export type GenderType = 'male' | 'female' | 'other' | 'unknown';
+
 export interface IPatientCreateRequest {
   email?: string;
   first_name: string;
@@ -21,6 +23,8 @@ export interface IPatientCreateRequest {
   city?: string;
   postal_code?: string;
   country?: string;
+  date_of_birth?: string | null;
+  gender?: GenderType;
   custom_fields?: { field: number; value: string | null }[];
 }
 
@@ -37,6 +41,8 @@ export interface IPatientUpdateRequest {
   city?: string;
   postal_code?: string;
   country?: string;
+  date_of_birth?: string | null;
+  gender?: GenderType;
   custom_fields?: { field: number; value: string | null }[];
 }
 
@@ -52,6 +58,7 @@ export class PatientService {
     page?: number;
     page_size?: number;
     temporary?: boolean;
+    is_practitioner?: boolean;
   }): Observable<PaginatedResponse<IUser>> {
     let httpParams = new HttpParams();
     if (params) {

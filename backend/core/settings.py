@@ -878,8 +878,8 @@ CONSTANCE_ADDITIONAL_FIELDS = {
             "widget": "django.forms.Select",
             "choices": (
                 ("all", "All users"),
-                ("alone", "Only patients and self"),
-                ("organization", "Patients and same organization"),
+                ("alone", "Only myself"),
+                ("organization", "Users of same organization"),
             ),
         },
     ],
@@ -889,8 +889,8 @@ CONSTANCE_ADDITIONAL_FIELDS = {
             "widget": "django.forms.Select",
             "choices": (
                 ("all", "All patients"),
-                ("alone", "Only patients created by me"),
-                ("organization", "Patients from same organization"),
+                ("alone", "Only patients created by myself"),
+                ("organization", "Patients of same organization"),
             ),
         },
     ],

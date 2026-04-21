@@ -10,6 +10,8 @@ router.register(r"specialities", views.SpecialityViewSet)
 router.register(r"organisations", views.OrganisationViewSet)
 router.register(r"terms", views.TermViewSet)
 router.register(r"users", views.UserViewSet)
+router.register(r"patients", views.PatientViewSet, basename="patient")
+router.register(r"practitioners", views.PractitionerViewSet, basename="practitioner")
 
 # Create a separate router for user-specific endpoints
 user_router = DefaultRouter()

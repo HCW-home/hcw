@@ -72,6 +72,8 @@ export interface IUser {
   temporary?: boolean;
   is_practitioner?: boolean;
   is_first_login?: boolean;
+  date_of_birth?: string | null;
+  gender?: 'male' | 'female' | 'other' | 'unknown';
   custom_fields?: import('../../../core/models/consultation').CustomFieldValue[];
 }
 

@@ -1815,3 +1815,41 @@ class SendVerificationCodeView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+# -- FHIR Patient / Practitioner -------------------------------------------
+
+from fhir_server.mixins import FhirViewSetMixin  # noqa: E402
+from .fhir import PatientFhirMapper, PractitionerFhirMapper  # noqa: E402
+
+
+class PatientViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
+    """
+    FHIR R4 Patient endpoint. All requests run through the HCW permission
+    model (`IsAuthenticated, IsPractitioner`) and return FHIR responses
+    when the client requests `application/fhir+json`.
+    """
+
+    queryset = User.objects.filter(is_practitioner=False)
+    serializer_class = UserDetailsSerializer
+    permission_classes = [IsAuthenticated, IsPractitioner]
+    pagination_class = UniversalPagination
+    fhir_class = PatientFhirMapper
+    http_method_names = ["get", "post", "put", "patch", "delete", "head", "options"]
+
+    def get_queryset(self):
+        return self.queryset.filter(is_active=True)
+
+
+class PractitionerViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
+    """FHIR R4 Practitioner endpoint (users with `is_practitioner=True`)."""
+
+    queryset = User.objects.filter(is_practitioner=True)
+    serializer_class = UserDetailsSerializer
+    permission_classes = [IsAuthenticated, IsPractitioner]
+    pagination_class = UniversalPagination
+    fhir_class = PractitionerFhirMapper
+    http_method_names = ["get", "post", "put", "patch", "delete", "head", "options"]
+
+    def get_queryset(self):
+        return self.queryset.filter(is_active=True)

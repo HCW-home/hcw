@@ -25,7 +25,7 @@ import { getErrorMessage } from '../../../../core/utils/error-helper';
 import { TranslatePipe } from '@ngx-translate/core';
 import { TranslationService } from '../../../../core/services/translation.service';
 
-type PatientTabType = 'all' | 'registered' | 'temporary';
+type PatientTabType = 'all' | 'patients' | 'practitioners';
 
 interface TabCache {
   data: IUser[];
@@ -51,8 +51,8 @@ export class Patients implements OnInit, OnDestroy {
 
   private tabCache: Record<PatientTabType, TabCache> = {
     all: { data: [], loaded: false, searchQuery: '', hasMore: false, currentPage: 1 },
-    registered: { data: [], loaded: false, searchQuery: '', hasMore: false, currentPage: 1 },
-    temporary: { data: [], loaded: false, searchQuery: '', hasMore: false, currentPage: 1 }
+    patients: { data: [], loaded: false, searchQuery: '', hasMore: false, currentPage: 1 },
+    practitioners: { data: [], loaded: false, searchQuery: '', hasMore: false, currentPage: 1 }
   };
 
   private pageSize = 20;
@@ -67,16 +67,16 @@ export class Patients implements OnInit, OnDestroy {
   hasMore = signal(false);
   patients = signal<IUser[]>([]);
   totalCount = signal(0);
-  permanentCount = signal(0);
-  temporaryCount = signal(0);
+  patientCount = signal(0);
+  practitionerCount = signal(0);
   searchQuery = '';
   showAddModal = signal(false);
-  activeTab = signal<PatientTabType>('registered');
+  activeTab = signal<PatientTabType>('patients');
 
   get tabItems(): TabItem[] {
     return [
-      { id: 'registered', label: this.t.instant('patients.tabPermanent'), count: this.permanentCount() },
-      { id: 'temporary', label: this.t.instant('patients.tabTemporary'), count: this.temporaryCount() },
+      { id: 'patients', label: this.t.instant('patients.tabPatients'), count: this.patientCount() },
+      { id: 'practitioners', label: this.t.instant('patients.tabPractitioners'), count: this.practitionerCount() },
       { id: 'all', label: this.t.instant('patients.tabAll'), count: this.totalCount() }
     ];
   }
@@ -111,15 +111,15 @@ export class Patients implements OnInit, OnDestroy {
     }
 
     this.loading.set(true);
-    const params: { search?: string; page_size?: number; temporary?: boolean } = { page_size: this.pageSize };
+    const params: { search?: string; page_size?: number; is_practitioner?: boolean } = { page_size: this.pageSize };
     if (this.searchQuery) {
       params.search = this.searchQuery;
     }
 
-    if (currentTab === 'registered') {
-      params.temporary = false;
-    } else if (currentTab === 'temporary') {
-      params.temporary = true;
+    if (currentTab === 'patients') {
+      params.is_practitioner = false;
+    } else if (currentTab === 'practitioners') {
+      params.is_practitioner = true;
     }
 
     this.patientService.getPatients(params).pipe(
@@ -153,7 +153,7 @@ export class Patients implements OnInit, OnDestroy {
     const nextPage = cache.currentPage + 1;
 
     this.loadingMore.set(true);
-    const params: { search?: string; page_size?: number; page?: number; temporary?: boolean } = {
+    const params: { search?: string; page_size?: number; page?: number; is_practitioner?: boolean } = {
       page_size: this.pageSize,
       page: nextPage
     };
@@ -161,10 +161,10 @@ export class Patients implements OnInit, OnDestroy {
       params.search = this.searchQuery;
     }
 
-    if (currentTab === 'registered') {
-      params.temporary = false;
-    } else if (currentTab === 'temporary') {
-      params.temporary = true;
+    if (currentTab === 'patients') {
+      params.is_practitioner = false;
+    } else if (currentTab === 'practitioners') {
+      params.is_practitioner = true;
     }
 
     this.patientService.getPatients(params).pipe(
@@ -232,8 +232,8 @@ export class Patients implements OnInit, OnDestroy {
   private invalidateCache(): void {
     this.tabCache = {
       all: { data: [], loaded: false, searchQuery: '', hasMore: false, currentPage: 1 },
-      registered: { data: [], loaded: false, searchQuery: '', hasMore: false, currentPage: 1 },
-      temporary: { data: [], loaded: false, searchQuery: '', hasMore: false, currentPage: 1 }
+      patients: { data: [], loaded: false, searchQuery: '', hasMore: false, currentPage: 1 },
+      practitioners: { data: [], loaded: false, searchQuery: '', hasMore: false, currentPage: 1 }
     };
   }
 
@@ -244,16 +244,16 @@ export class Patients implements OnInit, OnDestroy {
       next: (response) => this.totalCount.set(response.count)
     });
 
-    this.patientService.getPatients({ page_size: 1, temporary: false }).pipe(
+    this.patientService.getPatients({ page_size: 1, is_practitioner: false }).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
-      next: (response) => this.permanentCount.set(response.count)
+      next: (response) => this.patientCount.set(response.count)
     });
 
-    this.patientService.getPatients({ page_size: 1, temporary: true }).pipe(
+    this.patientService.getPatients({ page_size: 1, is_practitioner: true }).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
-      next: (response) => this.temporaryCount.set(response.count)
+      next: (response) => this.practitionerCount.set(response.count)
     });
   }
 }
