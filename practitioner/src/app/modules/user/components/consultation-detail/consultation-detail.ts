@@ -301,7 +301,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     return {
       value: user.pk,
       label: name,
-      secondaryLabel: user.email,
+      secondaryLabel: [user.email, user.mobile_phone_number].filter(Boolean).join(' · '),
       image: user.picture || undefined,
       initials,
       isCurrentUser,

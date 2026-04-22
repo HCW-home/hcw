@@ -162,7 +162,7 @@ export class CreateConsultationModal implements OnInit, OnDestroy {
           return {
             value: user.pk,
             label: name,
-            secondaryLabel: user.email,
+            secondaryLabel: [user.email, user.mobile_phone_number].filter(Boolean).join(' · '),
             image: user.picture || undefined,
             initials: this.getUserInitials(user),
             isCurrentUser,
@@ -187,7 +187,7 @@ export class CreateConsultationModal implements OnInit, OnDestroy {
           return {
             value: user.pk,
             label: name,
-            secondaryLabel: user.email,
+            secondaryLabel: [user.email, user.mobile_phone_number].filter(Boolean).join(' · '),
             image: user.picture || undefined,
             initials: this.getUserInitials(user),
             isCurrentUser,

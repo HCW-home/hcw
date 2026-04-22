@@ -213,7 +213,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
           return {
             value: user.pk,
             label: name,
-            secondaryLabel: user.email,
+            secondaryLabel: [user.email, user.mobile_phone_number].filter(Boolean).join(' · '),
             image: user.picture || undefined,
             initials,
             isCurrentUser,
@@ -239,7 +239,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
           return {
             value: user.pk,
             label: name,
-            secondaryLabel: user.email,
+            secondaryLabel: [user.email, user.mobile_phone_number].filter(Boolean).join(' · '),
             image: user.picture || undefined,
             initials,
             isCurrentUser,

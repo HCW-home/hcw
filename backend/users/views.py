@@ -1020,7 +1020,7 @@ class UserViewSet(viewsets.ModelViewSet):
     pagination_class = UniversalPagination
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     search_fields = [
-        "first_name", "last_name", "email",
+        "first_name", "last_name", "email", "mobile_phone_number",
         "street", "city", "postal_code", "country",
         "main_organisation__name", "main_organisation__city",
     ]
