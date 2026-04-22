@@ -161,6 +161,12 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   isCallingBeneficiary = signal(false);
   consultationCallConfig = signal<{ url: string; token: string; room: string } | undefined>(undefined);
 
+  showBeneficiaryLinkModal = signal(false);
+  beneficiaryAccessUrl = signal<string>('');
+  beneficiaryLinkExpiresAt = signal<string | null>(null);
+  loadingBeneficiaryAccessUrl = signal(false);
+  beneficiaryLinkCopied = signal(false);
+
   tooEarlyError = signal<{ appointmentId: number; time: string; minutes: number } | null>(null);
   appointmentEarlyJoinMinutes = 5; // Default value
 
@@ -1721,5 +1727,46 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
 
   formatConsultationId(id: number): string {
     return `#${String(id).padStart(6, '0')}`;
+  }
+
+  hasBeneficiaryManualLink(): boolean {
+    return this.consultation()?.beneficiary?.communication_method === 'manual';
+  }
+
+  openBeneficiaryLinkModal(): void {
+    const beneficiary = this.consultation()?.beneficiary;
+    if (!beneficiary?.id) return;
+
+    this.beneficiaryLinkCopied.set(false);
+    this.showBeneficiaryLinkModal.set(true);
+
+    if (this.beneficiaryAccessUrl()) return;
+
+    this.loadingBeneficiaryAccessUrl.set(true);
+    this.consultationService.getPatientAccessUrl(beneficiary.id).subscribe({
+      next: response => {
+        this.beneficiaryAccessUrl.set(response.access_url);
+        this.beneficiaryLinkExpiresAt.set(response.expires_at);
+        this.loadingBeneficiaryAccessUrl.set(false);
+      },
+      error: () => {
+        this.loadingBeneficiaryAccessUrl.set(false);
+        this.toasterService.show('error', this.t.instant('participantItem.errorLoadingLink'));
+        this.closeBeneficiaryLinkModal();
+      },
+    });
+  }
+
+  closeBeneficiaryLinkModal(): void {
+    this.showBeneficiaryLinkModal.set(false);
+  }
+
+  copyBeneficiaryLink(): void {
+    const link = this.beneficiaryAccessUrl();
+    if (!link) return;
+    navigator.clipboard.writeText(link).then(() => {
+      this.beneficiaryLinkCopied.set(true);
+      this.toasterService.show('success', this.t.instant('participantItem.linkCopied'));
+    });
   }
 }

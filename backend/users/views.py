@@ -1853,6 +1853,51 @@ class PatientViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
     def get_queryset(self):
         return self.queryset.filter(is_active=True)
 
+    @action(detail=True, methods=["post"])
+    def access_url(self, request, pk=None):
+        """Get or regenerate a magic-link access URL for a patient whose
+        communication method is `manual` (or a temporary user without
+        contact info). The practitioner shares this URL with the patient.
+        """
+        from datetime import timedelta
+
+        user = self.get_object()
+
+        allowed = user.communication_method == "manual" or (
+            user.temporary and not user.email and not user.mobile_phone_number
+        )
+        if not allowed:
+            return Response(
+                {"detail": _("Access URL is only available for manual-communication or contactless temporary patients")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        token_expiry = timedelta(hours=constance_config.temporary_participant_token_expiry_hours)
+        now = timezone.now()
+        token_expired = (
+            not user.one_time_auth_token
+            or not user.verification_code_created_at
+            or (now - user.verification_code_created_at) > token_expiry
+        )
+
+        if token_expired:
+            user.one_time_auth_token = str(uuid.uuid4())
+            user.verification_code_created_at = now
+            user.save(update_fields=["one_time_auth_token", "verification_code_created_at"])
+
+        access_url = f"{constance_config.patient_base_url}/?auth={user.one_time_auth_token}"
+
+        expires_at = user.verification_code_created_at + token_expiry if user.verification_code_created_at else None
+        if expires_at and request.user.is_authenticated:
+            user_tz = request.user.user_tz
+            expires_at = expires_at.astimezone(user_tz).isoformat()
+
+        return Response({
+            "access_url": access_url,
+            "token_created_at": user.verification_code_created_at,
+            "expires_at": expires_at,
+        })
+
 
 class PractitionerViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
     """FHIR R4 Practitioner endpoint (users with `is_practitioner=True`)."""

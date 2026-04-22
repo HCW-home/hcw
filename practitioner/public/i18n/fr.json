@@ -726,6 +726,8 @@
     "practitioner": "Praticien"
   },
   "consultationDetail": {
+    "copyAccessLink": "Copier le lien d'accès",
+    "accessLinkIntro": "Ce lien est nominatif : il permet à {{name}} de se connecter à l'application et ne doit être communiqué qu'à cette personne.",
     "loadingConsultation": "Chargement du suivi...",
     "editConsultation": "Modifier le suivi",
     "cancel": "Annuler",

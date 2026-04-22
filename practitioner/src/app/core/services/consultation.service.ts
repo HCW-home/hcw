@@ -435,4 +435,16 @@ export class ConsultationService {
       expires_at: string;
     }>(`${this.apiUrl}/participants/${participantId}/access_url/`, {});
   }
+
+  getPatientAccessUrl(patientId: number): Observable<{
+    access_url: string;
+    token_created_at: string;
+    expires_at: string;
+  }> {
+    return this.http.post<{
+      access_url: string;
+      token_created_at: string;
+      expires_at: string;
+    }>(`${this.apiUrl}/patients/${patientId}/access_url/`, {});
+  }
 }

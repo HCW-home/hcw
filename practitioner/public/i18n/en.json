@@ -644,6 +644,8 @@
     "disablePatientChat": "Do not allow the patient to interact with the chat"
   },
   "consultationDetail": {
+    "copyAccessLink": "Copy access link",
+    "accessLinkIntro": "This link is personal: it lets {{name}} sign in to the application and must only be shared with this person.",
     "loadingConsultation": "Loading follow-up...",
     "editConsultation": "Edit Follow-up",
     "cancel": "Cancel",

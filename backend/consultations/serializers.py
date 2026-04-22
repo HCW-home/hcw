@@ -172,6 +172,8 @@ class ParticipantReadSerializer(serializers.ModelSerializer):
         """Indique si ce participant nécessite un accès manuel (lien d'invitation)"""
         if not obj.user:
             return False
+        if obj.user.communication_method == "manual":
+            return True
         return obj.user.temporary and not obj.user.email and not obj.user.mobile_phone_number
 
 

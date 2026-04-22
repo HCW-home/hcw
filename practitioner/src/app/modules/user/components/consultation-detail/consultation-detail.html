@@ -239,6 +239,17 @@
                   }
                 </div>
               </div>
+              @if (hasBeneficiaryManualLink()) {
+                <div class="beneficiary-manual-link">
+                  <app-button
+                    leftIcon="link"
+                    [text]="'consultationDetail.copyAccessLink' | translate"
+                    [size]="ButtonSizeEnum.small"
+                    [style]="ButtonStyleEnum.stroke"
+                    (buttonClick)="openBeneficiaryLinkModal()">
+                  </app-button>
+                </div>
+              }
               } @else {
               <span class="info-placeholder">{{ 'consultationDetail.noPatient' | translate }}</span>
               }
@@ -678,4 +689,38 @@
     (appointmentCreated)="onAppointmentCreated($event)"
     (appointmentUpdated)="onAppointmentUpdated($event)">
   </app-appointment-form-modal>
+
+  <app-modal
+    [isOpen]="showBeneficiaryLinkModal()"
+    [title]="'participantItem.inviteLink' | translate"
+    size="small"
+    (closed)="closeBeneficiaryLinkModal()">
+    <div class="link-modal-content">
+      @if (loadingBeneficiaryAccessUrl()) {
+        <div class="loading-container">
+          <span>{{ 'participantItem.loadingLink' | translate }}</span>
+        </div>
+      } @else {
+        <p class="link-intro">
+          {{ 'consultationDetail.accessLinkIntro' | translate:{ name: getBeneficiaryDisplayName() } }}
+        </p>
+        <div class="link-box">
+          <code class="link-text">{{ beneficiaryAccessUrl() }}</code>
+          <app-button
+            [leftIcon]="beneficiaryLinkCopied() ? 'check' : 'copy'"
+            [text]="(beneficiaryLinkCopied() ? 'participantItem.copied' : 'participantItem.copyLink') | translate"
+            [size]="ButtonSizeEnum.small"
+            [style]="beneficiaryLinkCopied() ? ButtonStyleEnum.primary : ButtonStyleEnum.stroke"
+            (buttonClick)="copyBeneficiaryLink()">
+          </app-button>
+        </div>
+        @if (beneficiaryLinkExpiresAt()) {
+          <div class="link-expiry">
+            <app-svg src="clock" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+            <span>{{ 'participantItem.linkExpires' | translate }} {{ beneficiaryLinkExpiresAt() | localDate:'medium' }}</span>
+          </div>
+        }
+      }
+    </div>
+  </app-modal>
 </app-page>
