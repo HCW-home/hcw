@@ -925,6 +925,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#patient-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Patient Management
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#sso-configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1194,6 +1205,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#patient-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Patient Management
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#sso-configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1440,6 +1462,25 @@
 <td><code>PATIENT_VISIBILITY</code></td>
 <td>All patients</td>
 <td>Defines patient visibility scope. <code>all</code>: all patients, <code>alone</code>: only patients they created, <code>organization</code>: patients from the same organization.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="patient-management">Patient Management</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Code</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Force all newly created patients to be temporary users</td>
+<td><code>FORCE_TEMPORARY_PATIENTS</code></td>
+<td>FALSE</td>
+<td>When enabled, every newly created patient is forced to be a temporary user (no permanent patient accounts). The <code>temporary</code> toggle in the patient creation modal is locked on. Existing permanent patients are not converted and can still be edited without changing their status. The "Patients" menu entry is hidden from the practitioner sidebar, and on the patient app the self-registration page and password login are disabled — only magic-link access remains. Sending <code>temporary=false</code> to the API returns HTTP 400.</td>
 </tr>
 </tbody>
 </table>
