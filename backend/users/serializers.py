@@ -2,6 +2,7 @@ from allauth.account import app_settings
 from allauth.account.adapter import get_adapter
 from allauth.account.utils import setup_user_email
 from allauth.socialaccount.models import EmailAddress
+from constance import config as constance_config
 from consultations.models import Participant
 from consultations.serializers import AppointmentDetailSerializer, CustomFieldsMixin
 from dj_rest_auth.serializers import PasswordResetSerializer
@@ -178,6 +179,23 @@ class UserDetailsSerializer(CustomFieldsMixin, serializers.ModelSerializer):
                     )
                 }
             )
+
+        # Force temporary=True on patient creation when the toggle is active.
+        # Only applies to creation (self.instance is None); edits leave the
+        # existing `temporary` value untouched.
+        if self.instance is None and constance_config.force_temporary_patients:
+            explicit_temporary = None
+            if isinstance(getattr(self, "initial_data", None), dict):
+                explicit_temporary = self.initial_data.get("temporary")
+            if explicit_temporary is False:
+                raise serializers.ValidationError(
+                    {
+                        "temporary": _(
+                            "Patient management is in temporary-only mode; temporary=False is not allowed."
+                        )
+                    }
+                )
+            attrs["temporary"] = True
 
         return attrs
 

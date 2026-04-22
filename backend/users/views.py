@@ -1196,8 +1196,9 @@ class UserViewSet(viewsets.ModelViewSet):
                 serializer = self.get_serializer(existing_user, data=request.data, partial=True)
                 serializer.is_valid(raise_exception=True)
 
-                # Remove temporary flag and set created_by
-                serializer.validated_data['temporary'] = False
+                # Promote temporary -> permanent, unless the toggle forces temporary accounts.
+                if not constance_config.force_temporary_patients:
+                    serializer.validated_data['temporary'] = False
 
                 # Save the updated user
                 serializer.save(created_by=request.user)
@@ -1437,6 +1438,7 @@ class AppConfigView(APIView):
                 "enable_video_recording": constance_config.enable_video_recording,
                 "enable_live_transcription": constance_config.enable_live_transcription,
                 "public_organisations": constance_config.public_organisations,
+                "force_temporary_patients": constance_config.force_temporary_patients,
             }
         )
 

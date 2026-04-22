@@ -63,17 +63,19 @@
           </ion-text>
           }
 
+          @if (!passwordLoginDisabled) {
           <div class="forgot-password">
             <ion-text color="primary" (click)="forgotPassword()" class="link-text">
               {{ 'login.forgotPassword' | translate }}
             </ion-text>
           </div>
+          }
 
           <ion-button
             expand="block"
             shape="round"
             type="submit"
-            [disabled]="passwordForm.invalid"
+            [disabled]="passwordForm.invalid || passwordLoginDisabled"
             class="login-button">
             {{ 'login.title' | translate }}
           </ion-button>

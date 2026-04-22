@@ -17,6 +17,7 @@ import {
 import { Location } from '@angular/common';
 import { RoutePaths } from '../../constants/routes';
 import { MenuItems } from '../../constants/sidebar';
+import { Sidebar as SidebarModel } from '../../models/sidebar';
 import { Typography } from '../../../shared/ui-components/typography/typography';
 import { TypographyTypeEnum } from '../../../shared/constants/typography';
 import { Svg } from '../../../shared/ui-components/svg/svg';
@@ -87,7 +88,7 @@ export class Header implements OnInit, OnDestroy {
   pageTitle = signal('Dashboard');
   pageSubtitle = signal('Welcome back');
   currentUser: IUser | null = null;
-  menuItems = MenuItems;
+  menuItems: SidebarModel[] = MenuItems;
   protected readonly RoutePaths = RoutePaths;
 
   protected readonly NotificationStatus = NotificationStatus;
@@ -123,6 +124,16 @@ export class Header implements OnInit, OnDestroy {
     this.updatePageInfo();
     this.checkOnboardingHint();
     this.notificationService.loadNotifications();
+
+    this.authService.getOpenIDConfig().pipe(takeUntil(this.destroy$)).subscribe({
+      next: config => {
+        if (config?.force_temporary_patients) {
+          this.menuItems = MenuItems.filter(
+            item => item.path !== `/${RoutePaths.PATIENTS}`,
+          );
+        }
+      },
+    });
 
     // Close onboarding hint on any click outside
     document.addEventListener('click', this.handleDocumentClick);

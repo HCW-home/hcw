@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { Svg } from '../../../shared/ui-components/svg/svg';
 import { MenuItems } from '../../constants/sidebar';
+import { Sidebar as SidebarModel } from '../../models/sidebar';
 import { Typography } from '../../../shared/ui-components/typography/typography';
 import { TypographyTypeEnum } from '../../../shared/constants/typography';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
@@ -43,7 +44,7 @@ export class Sidebar implements OnInit, OnDestroy {
   private t = inject(TranslationService);
   private themeService = inject(ThemeService);
 
-  menuItems = MenuItems;
+  menuItems: SidebarModel[] = MenuItems;
   currentUserSubscription!: Subscription;
   currentUser: IUser | null = null;
   isCollapsed = false;
@@ -79,6 +80,11 @@ export class Sidebar implements OnInit, OnDestroy {
         }
         if (config.primary_color_practitioner) {
           this.themeService.applyPrimaryColor(config.primary_color_practitioner);
+        }
+        if (config?.force_temporary_patients) {
+          this.menuItems = MenuItems.filter(
+            item => item.path !== `/${RoutePaths.PATIENTS}`,
+          );
         }
       },
     });

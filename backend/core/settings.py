@@ -107,6 +107,7 @@ SHARED_APPS = (
     "django_celery_results",
     "location_field",
     "fhir_server",
+    # "django_npm_dev"
 )
 
 TENANT_APPS = (
@@ -820,6 +821,10 @@ CONSTANCE_CONFIG = {
         False,
         "Allow unauthenticated access to the organisations and reasons endpoints",
     ),
+    "force_temporary_patients": (
+        False,
+        "Force all newly created patients to be temporary users (no permanent patient accounts)",
+    ),
 }
 
 
@@ -833,6 +838,7 @@ CONSTANCE_CONFIG_FIELDSETS = {
     "Authentication": ("disable_password_login", "enable_registration"),
     "Visibility": ("users_visibility", "patient_visibility", "public_organisations"),
     "Video Features": ("enable_video_recording", "enable_live_transcription", "whisper_model"),
+    "Patient Management": ("force_temporary_patients",),
 }
 
 # CORS Configuration

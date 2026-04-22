@@ -12,6 +12,7 @@ import { PatientDetail } from './components/patient-detail/patient-detail';
 import { Appointments } from './components/appointments/appointments';
 import { Availability } from './components/availability/availability';
 import { canDeactivateVideoCall } from './guards/video-call.guard';
+import { redirectIfPatientManagementDisabled } from './guards/patient-management.guard';
 
 const routes: Routes = [
   {
@@ -56,10 +57,12 @@ const routes: Routes = [
         path: RoutePaths.PATIENTS,
         pathMatch: 'full',
         component: Patients,
+        canActivate: [redirectIfPatientManagementDisabled],
       },
       {
         path: RoutePaths.PATIENT_DETAIL,
         component: PatientDetail,
+        canActivate: [redirectIfPatientManagementDisabled],
       },
       {
         path: RoutePaths.APPOINTMENTS,

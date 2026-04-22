@@ -116,6 +116,7 @@ export class AddEditPatient implements OnInit, OnDestroy {
   communicationMethodOptions: SelectOption[] = [];
   private availableCommunicationMethods: string[] = [];
   customFields = signal<CustomField[]>([]);
+  forceTemporaryPatients = false;
 
   translatedGenderOptions: SelectOption[] = [];
 
@@ -167,8 +168,27 @@ export class AddEditPatient implements OnInit, OnDestroy {
         if (!this.isEditMode) {
           this.autoSelectCommunicationMethod();
         }
+
+        this.forceTemporaryPatients = !!config?.force_temporary_patients;
+        this.applyForceTemporaryPatients();
       }
     });
+  }
+
+  private applyForceTemporaryPatients(): void {
+    if (!this.forceTemporaryPatients || !this.form) {
+      return;
+    }
+    const temporaryControl = this.form.get('temporary');
+    if (!temporaryControl) {
+      return;
+    }
+    // On creation: force the value to true. On edition: keep whatever value
+    // the patient already has, but prevent changes either way.
+    if (!this.isEditMode) {
+      temporaryControl.setValue(true, { emitEvent: false });
+    }
+    temporaryControl.disable({ emitEvent: false });
   }
 
   private setupCommunicationMethodAutoSelect(): void {
@@ -341,6 +361,8 @@ export class AddEditPatient implements OnInit, OnDestroy {
       gender: p?.gender || 'unknown',
       temporary: p?.temporary || false
     });
+
+    this.applyForceTemporaryPatients();
 
     // Repopulate custom field values
     if (this.customFieldsForm && p?.custom_fields) {

@@ -9,7 +9,7 @@ all:
 ${STATIC}/${PROJECT}/${COMPONENT}/venv:
 	mkdir -p ${STATIC}/${PROJECT}/${COMPONENT}/venv
 	python3 -m venv ${STATIC}/${PROJECT}/${COMPONENT}/venv
-	. ${STATIC}/${PROJECT}/${COMPONENT}/venv/bin/activate ; pip3 install -r requirements.txt --ignore-requires-python
+	. ${STATIC}/${PROJECT}/${COMPONENT}/venv/bin/activate ; pip3 install -r requirements.txt
 	# ${STATIC}/${PROJECT}/${COMPONENT}/venv/bin/python3 manage.py collectstatic
 	mkdir -p $(DESTDIR)/${STATIC}/${PROJECT}/${COMPONENT}
 	mv ${STATIC}/${PROJECT}/${COMPONENT}/venv $(DESTDIR)/${STATIC}/${PROJECT}/${COMPONENT}

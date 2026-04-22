@@ -449,6 +449,7 @@
     "countryPlaceholder": "Pays",
     "temporary": "Patient temporaire",
     "temporaryNotice": "Le patient sera automatiquement supprimé lorsque tous ses suivis seront supprimés.",
+    "temporaryForced": "La gestion des patients permanents est désactivée : les nouveaux patients sont systématiquement temporaires.",
     "customFields": "Informations complémentaires",
     "dateOfBirth": "Date de naissance",
     "gender": "Genre",

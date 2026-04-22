@@ -73,6 +73,7 @@ export interface IOpenIDConfig {
   appointment_early_join_minutes: number;
   enable_video_recording: boolean;
   enable_live_transcription: boolean;
+  force_temporary_patients: boolean;
 }
 
 export interface IOpenIDLoginBody {

@@ -440,6 +440,7 @@
     "countryPlaceholder": "Country",
     "temporary": "Temporary patient",
     "temporaryNotice": "The patient will be automatically deleted when all their consultations are deleted.",
+    "temporaryForced": "Permanent patient management is disabled: newly created patients are always temporary.",
     "customFields": "Additional Information",
     "dateOfBirth": "Date of birth",
     "gender": "Gender",

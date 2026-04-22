@@ -68,6 +68,12 @@ The advanced configuration section provides fine-grained control over platform b
 | Controls which users practitioners can see | `USERS_VISIBILITY` | ALL | Defines practitioner visibility scope. `all`: all users, `alone`: no sharing, `organization`: only practitioners from the same organization. |
 | Controls which patients practitioners can see | `PATIENT_VISIBILITY` | All patients | Defines patient visibility scope. `all`: all patients, `alone`: only patients they created, `organization`: patients from the same organization. |
 
+## Patient Management
+
+| Option | Code | Default | Description |
+|--------|------|---------|-------------|
+| Force all newly created patients to be temporary users | `FORCE_TEMPORARY_PATIENTS` | FALSE | When enabled, every newly created patient is forced to be a temporary user (no permanent patient accounts). The `temporary` toggle in the patient creation modal is locked on. Existing permanent patients are not converted and can still be edited without changing their status. The "Patients" menu entry is hidden from the practitioner sidebar, and on the patient app the self-registration page and password login are disabled — only magic-link access remains. Sending `temporary=false` to the API returns HTTP 400. |
+
 ## SSO Configuration
 
 OpenID Connect (SSO) can be configured to delegate authentication to an external identity provider (Keycloak, Azure AD, etc.). Practitioners log in via the "Sign in with..." button, and accounts are automatically created on first login.

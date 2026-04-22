@@ -6,6 +6,7 @@ the two resources and forces scope on create/update.
 """
 from __future__ import annotations
 
+from constance import config as constance_config
 from django.db.models import Q
 from fhir.resources.R4B.patient import Patient as FhirPatient
 from fhir.resources.R4B.practitioner import Practitioner as FhirPractitioner
@@ -312,6 +313,13 @@ class PatientFhirMapper(_BaseUserFhirMapper):
     def to_fhir(self, instance, *, context=None) -> dict:
         output = super().to_fhir(instance, context=context)
         return output
+
+    def from_fhir(self, payload: dict, instance=None, *, context=None):
+        instance = super().from_fhir(payload, instance=instance, context=context)
+        # Force temporary=True on patient creation when the toggle is active.
+        if instance.pk is None and constance_config.force_temporary_patients:
+            instance.temporary = True
+        return instance
 
 
 # -- Practitioner ------------------------------------------------------------

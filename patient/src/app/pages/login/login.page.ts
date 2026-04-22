@@ -58,6 +58,7 @@ export class LoginPage implements OnInit {
 
   showPassword = false;
   registrationEnabled = false;
+  passwordLoginDisabled = false;
 
   isLoading = false;
   isResending = false;
@@ -97,7 +98,13 @@ export class LoginPage implements OnInit {
     }
     this.authService.getConfig().subscribe({
       next: (config: any) => {
-        this.registrationEnabled = config.registration_enabled;        if (config.languages?.length) {
+        this.registrationEnabled =
+          !!config.registration_enabled && !config.force_temporary_patients;
+        this.passwordLoginDisabled = !!config.force_temporary_patients;
+        if (this.passwordLoginDisabled) {
+          this.passwordForm.get('password')?.disable({ emitEvent: false });
+        }
+        if (config.languages?.length) {
           this.t.loadLanguages(config.languages);
         }
       },

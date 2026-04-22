@@ -41,3 +41,4 @@ reportlab
 django-tenants
 tenant-schemas-celery
 drf-spectacular-sidecar
+django-npm-dev
