@@ -4,7 +4,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("consultations", "0054_appointment_updated_at"),
+        ("consultations", "0055_alter_reason_assignment_method_alter_reason_name_and_more"),
     ]
 
     operations = [

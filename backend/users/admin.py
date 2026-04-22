@@ -505,6 +505,7 @@ class OrganisationAdmin(ModelAdmin, TabbedTranslationAdmin):
 class HealthMetricAdmin(ModelAdmin):
     date_hierarchy = "measured_at"
     ordering = ["-measured_at"]
+    autocomplete_fields = ["created_by", "user", "measured_by"]
 
 
 from django.contrib import admin
