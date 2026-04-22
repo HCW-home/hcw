@@ -166,3 +166,27 @@ All users share the same password: `Test1234`
 ### Installation
 
 This part will coming soon.
+
+### Running in development
+
+All four processes (Django backend, Celery worker, practitioner frontend, patient frontend) can be launched in a single terminal via [honcho](https://honcho.readthedocs.io) and the `Procfile` at the repo root.
+
+**Prerequisites**
+
+- Python virtualenv at `./venv` with backend dependencies installed (`cd backend && pip install -r requirements.txt`)
+- Node modules installed in both `practitioner/` and `patient/` (`npm install` in each)
+- A Redis instance reachable (Celery broker + Django Channels) — `redis-server` locally or via Docker
+
+**Start everything**
+
+```bash
+make dev
+```
+
+**Default ports**
+
+| Process | URL |
+|---------|-----|
+| Backend (Django/Daphne) | http://127.0.0.1:8000 |
+| Practitioner frontend (`ng serve`) | http://127.0.0.1:4200 |
+| Patient frontend (`ng serve`) | http://127.0.0.1:8100 |

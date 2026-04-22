@@ -107,7 +107,6 @@ SHARED_APPS = (
     "django_celery_results",
     "location_field",
     "fhir_server",
-    # "django_npm_dev"
 )
 
 TENANT_APPS = (

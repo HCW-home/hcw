@@ -1,8 +1,0 @@
-{
-  "name": "backend-dev-proxy",
-  "description": "Tiny proxy so django-npm-dev's `manage.py dev runserver` runs `npm run dev` inside ../frontend.",
-  "private": true,
-  "scripts": {
-    "dev": "npm --prefix ../patient run dev"
-  }
-}
