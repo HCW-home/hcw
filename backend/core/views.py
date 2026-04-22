@@ -66,7 +66,6 @@ def dashboard_callback(request, context):
     # User metrics
     total_users = User.objects.count()
     active_users = User.objects.filter(last_login__gte=last_month).count()
-    online_users = sum(1 for u in User.objects.only("pk") if u.is_online)
     new_users_this_week = User.objects.filter(date_joined__gte=last_week).count()
     
     # Consultation metrics
@@ -115,11 +114,6 @@ def dashboard_callback(request, context):
             'metric': f"{active_users:,}",
             'footer': f"{active_users} of {total_users:,} users active in last 30 days",
             'link': '/admin/users/user/'
-        },
-        {
-            'title': _('Online Now'),
-            'metric': f"{online_users:,}",
-            'footer': "Users currently online"
         },
         {
             'title': _('Consultations'),
@@ -172,29 +166,5 @@ def dashboard_callback(request, context):
             'description': _('Appointments scheduled this week')
         }
     ]
-    
-    # System health metrics
-    consultation_completion_rate = 0
-    if consultations_last_month > 0:
-        completed_consultations = Consultation.objects.filter(
-            created_at__gte=last_month
-        ).count()
-        consultation_completion_rate = (completed_consultations / consultations_last_month) * 100
-    
-    context['system_health'] = {
-        'completion_rate': f"{consultation_completion_rate:.1f}%",
-        'active_rate': f"{(active_users/total_users*100):.1f}%" if total_users > 0 else "0%",
-        'online_rate': f"{(online_users/total_users*100):.1f}%" if total_users > 0 else "0%"
-    }
-    
-    # Recent activity summary
-    context['recent_activity'] = {
-        'total_users': total_users,
-        'active_users': active_users,
-        'online_users': online_users,
-        'consultations_month': consultations_last_month,
-        'appointments_month': appointments_last_month,
-        'last_updated': now.strftime('%Y-%m-%d %H:%M')
-    }
     
     return context

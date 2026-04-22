@@ -73,52 +73,6 @@
                 </div>
             {% endcomponent %}
 
-            <!-- System Health and Recent Activity -->
-            <div class="flex flex-col lg:flex-row gap-6">
-                <!-- System Health -->
-                {% component "unfold/components/card.html" with title=_("System Health") class="lg:w-1/2" %}
-                    <div class="space-y-4">
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600 dark:text-gray-400">{% trans "User Activity Rate" %}</span>
-                            <span class="font-semibold">{{ system_health.active_rate }}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600 dark:text-gray-400">{% trans "Online Users Rate" %}</span>
-                            <span class="font-semibold">{{ system_health.online_rate }}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600 dark:text-gray-400">{% trans "Consultation Completion Rate" %}</span>
-                            <span class="font-semibold">{{ system_health.completion_rate }}</span>
-                        </div>
-                    </div>
-                {% endcomponent %}
-
-                <!-- Recent Activity Summary -->
-                {% component "unfold/components/card.html" with title=_("Platform Overview") class="lg:w-1/2" %}
-                    <div class="space-y-3">
-                        {% component "unfold/components/text.html" with class="text-sm text-gray-600 dark:text-gray-400" %}
-                            {% trans "Platform activity summary for healthcare professionals" %}
-                        {% endcomponent %}
-                        
-                        <div class="grid grid-cols-2 gap-4 mt-4">
-                            <div class="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                                <div class="text-lg font-bold text-blue-600 dark:text-blue-400">{{ recent_activity.total_users }}</div>
-                                <div class="text-xs text-gray-600 dark:text-gray-400">{% trans "Total Users" %}</div>
-                            </div>
-                            <div class="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                                <div class="text-lg font-bold text-green-600 dark:text-green-400">{{ recent_activity.online_users }}</div>
-                                <div class="text-xs text-gray-600 dark:text-gray-400">{% trans "Online Now" %}</div>
-                            </div>
-                        </div>
-                        
-                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-4 text-center">
-                            {% trans "Last updated:" %} {{ recent_activity.last_updated }}
-                        </div>
-                    </div>
-                {% endcomponent %}
-            </div>
-
-            
         </div>
     {% endcomponent %}
 {% endblock %}
