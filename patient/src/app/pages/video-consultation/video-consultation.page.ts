@@ -843,6 +843,9 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
   }
 
   hasActiveScreenShare(): boolean {
-    return this.getScreenSharingParticipant() !== null;
+    return (
+      (this.isScreenShareEnabled && !!this.localScreenShareTrack) ||
+      this.getScreenSharingParticipant() !== null
+    );
   }
 }

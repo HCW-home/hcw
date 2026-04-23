@@ -810,6 +810,9 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   }
 
   hasActiveScreenShare(): boolean {
-    return this.getScreenSharingParticipant() !== null;
+    return (
+      (this.isScreenShareEnabled && !!this.localScreenShareTrack) ||
+      this.getScreenSharingParticipant() !== null
+    );
   }
 }

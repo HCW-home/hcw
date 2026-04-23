@@ -177,6 +177,52 @@
       grid-template-columns: repeat(2, 1fr);
     }
   }
+
+  // Screen-share focus mode: the screen share takes the main area,
+  // camera tiles collapse into a centered thumbnail row along the bottom.
+  &.has-screenshare {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    justify-content: center;
+    gap: 12px;
+    grid-template-columns: none;
+    grid-template-rows: none;
+    grid-auto-rows: auto;
+
+    .screen-share-tile {
+      order: 0;
+      flex: 0 0 100%;
+      width: 100%;
+      // Reserve ~160px at the bottom for the thumbnail strip so nothing gets clipped.
+      height: calc(100% - 160px);
+      max-width: 100%;
+      max-height: none;
+      min-height: 0;
+      aspect-ratio: auto;
+      margin: 0;
+
+      .tile-video {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background: #000;
+      }
+    }
+
+    .video-tile:not(.screen-share-tile) {
+      order: 1;
+      flex: 0 0 auto;
+      width: 200px;
+      height: 140px;
+      max-width: 200px;
+      max-height: 140px;
+      min-height: 0;
+      aspect-ratio: auto;
+      margin: 0;
+    }
+  }
 }
 
 .video-tile {

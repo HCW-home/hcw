@@ -24,7 +24,7 @@
     }
 
     @if (connectionStatus === 'connected' || connectionStatus === 'reconnecting') {
-      <div class="video-grid" #participantsContainer [attr.data-count]="getTotalTileCount()">
+      <div class="video-grid" #participantsContainer [attr.data-count]="getTotalTileCount()" [class.has-screenshare]="hasActiveScreenShare()">
         <div class="video-tile local-tile">
           <video #localVideo autoplay playsinline muted class="tile-video" [class.camera-off]="!isCameraEnabled"></video>
           @if (!isCameraEnabled) {

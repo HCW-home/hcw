@@ -12,7 +12,7 @@
     }
 
     @if (phase() === 'in-call') {
-      <div class="video-grid" #participantsContainer [attr.data-count]="getTotalTileCount()">
+      <div class="video-grid" #participantsContainer [attr.data-count]="getTotalTileCount()" [class.has-screenshare]="hasActiveScreenShare()">
         <div class="video-tile local-tile" [class.camera-off]="!isCameraEnabled">
           <video #localVideo autoplay playsinline muted class="tile-video" [class.hidden]="!isCameraEnabled"></video>
           @if (!isCameraEnabled) {
