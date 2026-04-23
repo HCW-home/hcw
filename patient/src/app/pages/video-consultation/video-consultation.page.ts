@@ -146,19 +146,10 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
   }
 
   private setupWebSocketSubscriptions(): void {
-    this.wsService.messages$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(event => {
-        const newMessage: Message = {
-          id: event.data.id,
-          username: event.data.username,
-          message: event.data.message,
-          timestamp: event.data.timestamp,
-          isCurrentUser: false,
-        };
-        this.messages.update(msgs => [...msgs, newMessage]);
-      });
-
+    // Only listen to `messageUpdated$` (backend event === 'message') — it is
+    // the single source of truth for consultation messages. The legacy
+    // `messages$` path appended without deduplication and caused sent
+    // messages to appear twice.
     this.wsService.messageUpdated$
       .pipe(takeUntil(this.destroy$))
       .subscribe(event => {
@@ -171,12 +162,22 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
           if (!exists) {
             const user = this.currentUser();
             const isSystem = !event.data.created_by;
+            // The /auth/user endpoint returns `pk`, the nested `created_by`
+            // in consultation messages returns `id`. They map to the same
+            // DB primary key, so compare both.
+            const currentUserPk = user?.pk ?? user?.id;
+            const isCurrentUser = !isSystem && currentUserPk !== undefined
+              && currentUserPk === event.data.created_by.id;
             const newMessage: Message = {
               id: event.data.id,
-              username: isSystem ? '' : `${event.data.created_by.first_name} ${event.data.created_by.last_name}`,
+              username: isSystem
+                ? ''
+                : isCurrentUser
+                  ? this.t.instant('videoConsultation.you')
+                  : `${event.data.created_by.first_name} ${event.data.created_by.last_name}`,
               message: event.data.content,
               timestamp: event.data.created_at,
-              isCurrentUser: isSystem ? false : user?.id === event.data.created_by.id,
+              isCurrentUser,
               isSystem,
               attachment: event.data.attachment,
               isEdited: event.data.is_edited,
@@ -680,31 +681,13 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
   onSendMessage(data: SendMessageData): void {
     if (!this.consultationId) return;
 
-    const tempId = Date.now();
-    const newMessage: Message = {
-      id: tempId,
-      username: this.t.instant('videoConsultation.you'),
-      message: data.content || '',
-      timestamp: new Date().toISOString(),
-      isCurrentUser: true,
-      attachment: data.attachment ? { file_name: data.attachment.name, mime_type: data.attachment.type } : null,
-    };
-    this.messages.update(msgs => [...msgs, newMessage]);
-
+    // No optimistic insert: the WebSocket `messageUpdated$` subscription
+    // adds the message once the backend echoes it back, which keeps the
+    // patient and practitioner views in sync without duplicates.
     this.consultationService.sendConsultationMessage(this.consultationId, data.content || '', data.attachment)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (savedMessage) => {
-          this.messages.update(msgs =>
-            msgs.map(m => m.id === tempId ? {
-              ...m,
-              id: savedMessage.id,
-              attachment: savedMessage.attachment
-            } : m)
-          );
-        },
         error: () => {
-          this.messages.update(msgs => msgs.filter(m => m.id !== tempId));
           this.showToast(this.t.instant('videoConsultation.failedSend'));
         }
       });
