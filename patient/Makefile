@@ -10,7 +10,7 @@ www: node_modules
 	npm run build
 
 node_modules:
-	npm i
+  npx yarn install
 
 install: www
 	mkdir -p $(DESTDIR)$(STATIC)/$(PROJECT)/$(COMPONENT)/
