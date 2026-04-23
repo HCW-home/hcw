@@ -97,12 +97,13 @@ body {
     background-color: var(--app-background);
   }
 
-  /* Auth pages get full width */
+  /* Auth pages and video call get full width */
   ion-app:has(app-login),
   ion-app:has(app-register),
   ion-app:has(app-verify-email),
   ion-app:has(app-forgot-password),
-  ion-app:has(app-reset-password) {
+  ion-app:has(app-reset-password),
+  ion-app:has(app-video-consultation) {
     max-width: 100%;
     box-shadow: none;
     background-color: transparent;

@@ -146,6 +146,20 @@ export class LiveKitService implements OnDestroy {
       this.updateParticipants();
     });
 
+    // Covers the case where the remote publisher explicitly unpublishes a track
+    // (e.g. stopping screen share) without the subscriber-side unsubscribe
+    // firing immediately — without this, the stale screen-share tile would
+    // remain on the remote side.
+    this.room.on(RoomEvent.TrackUnpublished, (publication: RemoteTrackPublication, participant: RemoteParticipant) => {
+      this.updateParticipants();
+    });
+
+    this.room.on(RoomEvent.TrackMuted, (publication, participant) => {
+      if (publication.source === Track.Source.ScreenShare) {
+        this.updateParticipants();
+      }
+    });
+
     this.room.on(RoomEvent.ActiveSpeakersChanged, (speakers: Participant[]) => {
       this.updateParticipants();
     });
@@ -173,16 +187,26 @@ export class LiveKitService implements OnDestroy {
       const audioPublication = participant.getTrackPublication(Track.Source.Microphone);
       const screenSharePublication = participant.getTrackPublication(Track.Source.ScreenShare);
 
+      // Only consider a screen-share active when there is a live subscribed
+      // track AND it's not muted. After an unpublish, LiveKit may briefly
+      // return a stale publication whose `.track` has already been cleared —
+      // falling back to `isSubscribed` alone would keep the tile visible.
+      const screenShareTrack = screenSharePublication?.track ?? null;
+      const isScreenShareActive =
+        !!screenShareTrack &&
+        !!screenSharePublication?.isSubscribed &&
+        !screenSharePublication.isMuted;
+
       participants.set(participant.identity, {
         identity: participant.identity,
         name: participant.name || participant.identity,
         isSpeaking: participant.isSpeaking,
         isCameraEnabled: videoPublication?.isSubscribed && !videoPublication.isMuted || false,
         isMicrophoneEnabled: audioPublication?.isSubscribed && !audioPublication.isMuted || false,
-        isScreenShareEnabled: screenSharePublication?.isSubscribed || false,
+        isScreenShareEnabled: isScreenShareActive,
         videoTrack: videoPublication?.track || null,
         audioTrack: audioPublication?.track || null,
-        screenShareTrack: screenSharePublication?.track || null,
+        screenShareTrack: isScreenShareActive ? screenShareTrack : null,
       });
     }
 

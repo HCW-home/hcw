@@ -4,6 +4,7 @@ import uuid
 from typing import Optional
 
 from django.conf import settings
+from django.db import connection
 from livekit import api
 from livekit.api import (
     AccessToken,
@@ -30,6 +31,16 @@ class Main(BaseMediaserver):
     def __init__(self, server):
         super().__init__(server)
         self._client: Optional[LiveKitAPI] = None
+
+    @staticmethod
+    def _build_identity(user) -> str:
+        # Prefix with the tenant schema so identical user PKs across tenants
+        # never collide on the shared LiveKit server, and logs carry tenant
+        # context.
+        schema = getattr(getattr(connection, "tenant", None), "schema_name", None)
+        if schema:
+            return f"{schema}:{user.pk}"
+        return str(user.pk)
 
     @property
     def client(self):
@@ -87,7 +98,7 @@ class Main(BaseMediaserver):
                 api_secret=self.server.api_secret,
             )
             .with_grants(video_grants)
-            .with_identity(str(user.pk))
+            .with_identity(self._build_identity(user))
             .with_name(user.name)
             .to_jwt()
         )
@@ -113,7 +124,7 @@ class Main(BaseMediaserver):
                 api_secret=self.server.api_secret,
             )
             .with_grants(video_grants)
-            .with_identity(str(user.pk))
+            .with_identity(self._build_identity(user))
             .with_name(user.name)
             .to_jwt()
         )
@@ -137,7 +148,7 @@ class Main(BaseMediaserver):
                 api_secret=self.server.api_secret,
             )
             .with_grants(video_grants)
-            .with_identity(str(user.pk))
+            .with_identity(self._build_identity(user))
             .with_name(user.name)
             .to_jwt()
         )
