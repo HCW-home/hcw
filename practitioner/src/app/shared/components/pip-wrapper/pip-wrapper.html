@@ -36,8 +36,15 @@
       [consultationId]="call.consultationId"
       [livekitConfig]="call.livekitConfig"
       [isMinimized]="!activeCallService.isFullscreen()"
+      [messages]="messages()"
+      [isLoadingMore]="isLoadingMore()"
+      [hasMore]="hasMore()"
       (leave)="onCallEnded()"
-      (toggleSize)="onToggleSize()">
+      (toggleSize)="onToggleSize()"
+      (sendMessage)="onSendMessage($event)"
+      (editMessage)="onEditMessage($event)"
+      (deleteMessage)="onDeleteMessage($event)"
+      (loadMore)="onLoadMoreMessages()">
     </app-video-consultation>
   </div>
 }
