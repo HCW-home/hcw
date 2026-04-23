@@ -134,11 +134,17 @@ class AnonymousTokenAuthView(APIView):
 
             now = timezone.now()
 
-            # Check if user is temporary without email or phone
+            # Manual-communication users have no email/SMS channel to receive
+            # a verification code — they authenticate purely with the magic
+            # link token. Temporary users without any contact info fall under
+            # the same "manual" flow for historical reasons.
             is_manual_access = (
-                user.temporary
-                and not user.email
-                and not user.mobile_phone_number
+                user.communication_method == "manual"
+                or (
+                    user.temporary
+                    and not user.email
+                    and not user.mobile_phone_number
+                )
             )
 
             if is_manual_access:

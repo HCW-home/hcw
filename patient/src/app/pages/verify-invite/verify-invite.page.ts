@@ -114,7 +114,13 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
           if (error.status === 202) {
             this.requiresVerification = true;
           } else if (error.status === 401) {
-            this.errorMessage = error.error?.error || this.t.instant('verifyInvite.invalidToken');
+            // Prefer the friendlier "link expired" wording; the backend
+            // returns 401 with "Token expired" for stale magic links.
+            const backendMessage: string | undefined = error.error?.error;
+            const looksExpired = !backendMessage || /expired/i.test(backendMessage);
+            this.errorMessage = looksExpired
+              ? this.t.instant('verifyInvite.linkExpired')
+              : this.t.instant('verifyInvite.invalidToken');
           } else {
             this.errorMessage = this.t.instant('verifyInvite.genericError');
           }
