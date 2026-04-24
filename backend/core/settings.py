@@ -743,6 +743,14 @@ UNFOLD = {
                         "link": reverse_lazy("admin:authtoken_tokenproxy_changelist"),
                         "permission": lambda request: request.user.is_superuser,
                     },
+                    {
+                        "title": _("SSO Providers"),
+                        "icon": "key",
+                        "link": reverse_lazy("admin:socialaccount_socialapp_changelist"),
+                        "permission": lambda request: request.user.has_perm(
+                            "socialaccount.view_socialapp"
+                        ),
+                    },
                 ],
             },
         ],
