@@ -50,6 +50,13 @@
         <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/admin/reasons/"/>
     </url>
     <url>
+        <loc>https://hcw-at-home.com/docs/admin/sso/</loc>
+        <lastmod>2026-04-24</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/admin/sso/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/admin/sso/"/>
+    </url>
+    <url>
         <loc>https://hcw-at-home.com/docs/admin/terms/</loc>
         <lastmod>2026-04-24</lastmod>
         <changefreq>daily</changefreq>
@@ -159,6 +166,13 @@
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/admin/reasons/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/admin/reasons/"/>
+    </url>
+    <url>
+        <loc>https://hcw-at-home.com/docs/fr/admin/sso/</loc>
+        <lastmod>2026-04-24</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/admin/sso/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/admin/sso/"/>
     </url>
     <url>
         <loc>https://hcw-at-home.com/docs/fr/admin/terms/</loc>

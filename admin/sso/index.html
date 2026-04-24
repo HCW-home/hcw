@@ -10,33 +10,35 @@
       
       
       
-        <link rel="canonical" href="https://hcw-at-home.com/docs/">
+        <link rel="canonical" href="https://hcw-at-home.com/docs/admin/sso/">
       
       
+        <link rel="prev" href="../reasons/">
       
-        <link rel="next" href="architecture/">
+      
+        <link rel="next" href="../advanced-options/">
       
       
         
-          <link rel="alternate" href="/docs/" hreflang="en">
+          <link rel="alternate" href="./" hreflang="en">
         
-          <link rel="alternate" href="/docs/fr/" hreflang="fr">
+          <link rel="alternate" href="../../fr/admin/sso/" hreflang="fr">
         
       
       
-      <link rel="icon" href="assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>Overview - HCW@Home Documentation</title>
+        <title>Single Sign-On (SSO) - HCW@Home Documentation</title>
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -55,9 +57,9 @@
       
     
     
-      <link rel="stylesheet" href="assets/css/extra.css">
+      <link rel="stylesheet" href="../../assets/css/extra.css">
     
-    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -82,7 +84,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#hcwhome-v6" class="md-skip">
+        <a href="#single-sign-on-sso" class="md-skip">
           Skip to content
         </a>
       
@@ -98,7 +100,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="." title="HCW@Home Documentation" class="md-header__button md-logo" aria-label="HCW@Home Documentation" data-md-component="logo">
+    <a href="../.." title="HCW@Home Documentation" class="md-header__button md-logo" aria-label="HCW@Home Documentation" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -118,7 +120,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Overview
+              Single Sign-On (SSO)
             
           </span>
         </div>
@@ -151,13 +153,13 @@
       <ul class="md-select__list">
         
           <li class="md-select__item">
-            <a href="/docs/" hreflang="en" class="md-select__link">
+            <a href="./" hreflang="en" class="md-select__link">
               English
             </a>
           </li>
         
           <li class="md-select__item">
-            <a href="/docs/fr/" hreflang="fr" class="md-select__link">
+            <a href="../../fr/admin/sso/" hreflang="fr" class="md-select__link">
               Francais
             </a>
           </li>
@@ -234,7 +236,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="." title="HCW@Home Documentation" class="md-nav__button md-logo" aria-label="HCW@Home Documentation" data-md-component="logo">
+    <a href="../.." title="HCW@Home Documentation" class="md-nav__button md-logo" aria-label="HCW@Home Documentation" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -249,8 +251,6 @@
       
   
   
-    
-  
   
   
     
@@ -263,11 +263,13 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" checked>
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_1" >
         
           
           <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="">
@@ -288,7 +290,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_1">
             <span class="md-nav__icon md-icon"></span>
             
@@ -303,37 +305,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Overview
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="." class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -349,70 +324,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#key-features" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Key Features
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#deployment" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Deployment
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#use-cases" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Use Cases
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#links" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Links
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -425,7 +336,7 @@
   
   
     <li class="md-nav__item">
-      <a href="architecture/" class="md-nav__link">
+      <a href="../../architecture/" class="md-nav__link">
         
   
   
@@ -514,7 +425,7 @@
   
   
     <li class="md-nav__item">
-      <a href="use-cases/appointment-management/" class="md-nav__link">
+      <a href="../../use-cases/appointment-management/" class="md-nav__link">
         
   
   
@@ -542,7 +453,7 @@
   
   
     <li class="md-nav__item">
-      <a href="use-cases/video-call-scheduling/" class="md-nav__link">
+      <a href="../../use-cases/video-call-scheduling/" class="md-nav__link">
         
   
   
@@ -570,7 +481,7 @@
   
   
     <li class="md-nav__item">
-      <a href="use-cases/followup-chat/" class="md-nav__link">
+      <a href="../../use-cases/followup-chat/" class="md-nav__link">
         
   
   
@@ -598,7 +509,7 @@
   
   
     <li class="md-nav__item">
-      <a href="use-cases/slot-booking/" class="md-nav__link">
+      <a href="../../use-cases/slot-booking/" class="md-nav__link">
         
   
   
@@ -630,8 +541,10 @@
       
   
   
+    
   
   
+  
     
     
     
@@ -642,13 +555,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
           <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
@@ -669,7 +580,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -687,7 +598,7 @@
   
   
     <li class="md-nav__item">
-      <a href="admin/users/" class="md-nav__link">
+      <a href="../users/" class="md-nav__link">
         
   
   
@@ -715,7 +626,7 @@
   
   
     <li class="md-nav__item">
-      <a href="admin/terms/" class="md-nav__link">
+      <a href="../terms/" class="md-nav__link">
         
   
   
@@ -743,7 +654,7 @@
   
   
     <li class="md-nav__item">
-      <a href="admin/organizations/" class="md-nav__link">
+      <a href="../organizations/" class="md-nav__link">
         
   
   
@@ -771,7 +682,7 @@
   
   
     <li class="md-nav__item">
-      <a href="admin/messaging-providers/" class="md-nav__link">
+      <a href="../messaging-providers/" class="md-nav__link">
         
   
   
@@ -799,7 +710,7 @@
   
   
     <li class="md-nav__item">
-      <a href="admin/media-servers/" class="md-nav__link">
+      <a href="../media-servers/" class="md-nav__link">
         
   
   
@@ -827,7 +738,7 @@
   
   
     <li class="md-nav__item">
-      <a href="admin/reasons/" class="md-nav__link">
+      <a href="../reasons/" class="md-nav__link">
         
   
   
@@ -852,10 +763,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="admin/sso/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Single Sign-On (SSO)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -871,6 +809,98 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#adding-a-social-application" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a Social Application
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-settings-field" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Settings field
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The Settings field">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#examples-per-idp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples per IdP
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#redirect-uri-on-the-idp-side" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redirect URI on the IdP side
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-the-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing the flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#forcing-sso-only-login" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Forcing SSO-only login
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -883,7 +913,7 @@
   
   
     <li class="md-nav__item">
-      <a href="admin/advanced-options/" class="md-nav__link">
+      <a href="../advanced-options/" class="md-nav__link">
         
   
   
@@ -972,7 +1002,7 @@
   
   
     <li class="md-nav__item">
-      <a href="deployment/docker-compose/" class="md-nav__link">
+      <a href="../../deployment/docker-compose/" class="md-nav__link">
         
   
   
@@ -1000,7 +1030,7 @@
   
   
     <li class="md-nav__item">
-      <a href="deployment/debian/" class="md-nav__link">
+      <a href="../../deployment/debian/" class="md-nav__link">
         
   
   
@@ -1055,10 +1085,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#key-features" class="md-nav__link">
+  <a href="#adding-a-social-application" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Key Features
+        Adding a Social Application
       
     </span>
   </a>
@@ -1066,10 +1096,38 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#deployment" class="md-nav__link">
+  <a href="#the-settings-field" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Deployment
+        The Settings field
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The Settings field">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#examples-per-idp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples per IdP
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#redirect-uri-on-the-idp-side" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redirect URI on the IdP side
       
     </span>
   </a>
@@ -1077,10 +1135,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#use-cases" class="md-nav__link">
+  <a href="#testing-the-flow" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Use Cases
+        Testing the flow
       
     </span>
   </a>
@@ -1088,10 +1146,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#links" class="md-nav__link">
+  <a href="#forcing-sso-only-login" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Links
+        Forcing SSO-only login
       
     </span>
   </a>
@@ -1115,32 +1173,115 @@
 
 
 
-<h1 id="hcwhome-v6">HCW@Home V6</h1>
-<p>HCW@Home is a scalable, institution-level secure teleconsultation system designed for typical telemedicine scenarios. Fully open-source (GPLv3), it provides integrated features for chat, audio, and video calls via WebRTC/LiveKit.</p>
-<h2 id="key-features">Key Features</h2>
-<ul>
-<li><strong>Communication</strong>: audio/video calls (LiveKit), real-time chat, screen sharing, multi-participant consultations</li>
-<li><strong>Scheduling</strong>: calendar with FullCalendar, automated reminders, booking slots</li>
-<li><strong>Files</strong>: file sharing, ClamAV antivirus, session recording (S3), PDF reports</li>
-<li><strong>Security</strong>: JWT, OpenID Connect (SSO), patient authentication codes, role-based access control</li>
-<li><strong>Multi-tenant</strong>: isolation by PostgreSQL schema, independent configuration per tenant</li>
-<li><strong>Multi-language</strong>: English, French, German (extensible)</li>
-<li><strong>Administration</strong>: modern interface (Unfold), user management, import/export, dashboards</li>
-</ul>
-<h2 id="deployment">Deployment</h2>
-<p>Two deployment methods are supported:</p>
-<ul>
-<li><a href="deployment/docker-compose/"><strong>Docker Compose</strong></a>: containerized deployment, ideal for development and cloud environments</li>
-<li><a href="deployment/debian/"><strong>Debian Packages</strong></a>: native deployment on Debian/Ubuntu with systemd</li>
-</ul>
-<h2 id="use-cases">Use Cases</h2>
-<p>See the <a href="use-cases/appointment-management/">Use Cases</a> section to discover the scenarios supported by the solution.</p>
-<h2 id="links">Links</h2>
-<ul>
-<li><a href="https://hcw-at-home.com/">Official Website</a></li>
-<li><a href="https://github.com/HCW-home/hcw-home">Source Code</a></li>
-<li><a href="https://translate.iabsis.com/">Translations</a></li>
-</ul>
+<h1 id="single-sign-on-sso">Single Sign-On (SSO)</h1>
+<p>HCW@Home delegates authentication to an external OpenID Connect identity provider (Keycloak, Azure AD / Entra ID, Google, Okta, …). When a Social Application is configured, a <strong>"Sign in with …"</strong> button appears on the practitioner login page. Accounts are created on first login; roles (<code>staff</code>, <code>practitioner</code>) can be assigned afterwards in the admin.</p>
+<p><img alt="SSO configuration" src="../../assets/images/admin-sso-configuration.png" /></p>
+<blockquote>
+<p><strong>Menu:</strong> Users &amp; Authentication &gt; SSO Providers</p>
+</blockquote>
+<p>Only <strong>one</strong> active <code>openid_connect</code> application is expected per tenant. The login page picks it up automatically via <code>/api/config/</code>.</p>
+<h2 id="adding-a-social-application">Adding a Social Application</h2>
+<p>From the sidebar, go to <strong>Users &amp; Authentication &gt; SSO Providers &gt; Add</strong> and fill the form.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Provider</td>
+<td><code>openid_connect</code></td>
+<td>Must be exactly this string. Other provider types are not used by HCW@Home.</td>
+</tr>
+<tr>
+<td>Provider ID</td>
+<td><code>openid</code></td>
+<td>Free internal identifier used by django-allauth. <code>openid</code> works for all cases.</td>
+</tr>
+<tr>
+<td>Name</td>
+<td>e.g. <code>Keycloak</code>, <code>Azure AD</code>, your tenant name</td>
+<td>Displayed on the "Sign in with …" button.</td>
+</tr>
+<tr>
+<td>Client ID</td>
+<td>e.g. <code>hcw-local</code></td>
+<td>Client ID from the IdP (Keycloak client name, Azure app ID, etc.).</td>
+</tr>
+<tr>
+<td>Secret key</td>
+<td>the client secret</td>
+<td>Required unless the IdP is configured as a public client.</td>
+</tr>
+<tr>
+<td>Key</td>
+<td><em>(leave blank)</em></td>
+<td>Unused for <code>openid_connect</code>.</td>
+</tr>
+<tr>
+<td>Settings</td>
+<td><strong>JSON dict — see below</strong></td>
+<td>Non-obvious. This is where the OIDC discovery URL is declared.</td>
+</tr>
+<tr>
+<td>Sites</td>
+<td>pick the site matching the tenant domain</td>
+<td>Django <em>Sites</em> entry — create one first if none matches.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="the-settings-field">The <code>Settings</code> field</h2>
+<p>The <code>openid_connect</code> provider reads the IdP's metadata from a <strong>JSON dict</strong> stored in the <code>Settings</code> field. The only required key is <code>server_url</code>, which must point to the IdP's <strong>OpenID Connect discovery document</strong> (<code>.well-known/openid-configuration</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span><span class="nt">&quot;server_url&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://auth.example.com/realms/&lt;realm&gt;/.well-known/openid-configuration&quot;</span><span class="p">}</span>
+</code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Valid JSON</p>
+<p>Use double quotes, no trailing comma. A malformed <code>Settings</code> value breaks the login page for every practitioner of the tenant.</p>
+</div>
+<h3 id="examples-per-idp">Examples per IdP</h3>
+<table>
+<thead>
+<tr>
+<th>Provider</th>
+<th><code>server_url</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Keycloak</td>
+<td><code>https://auth.example.com/realms/&lt;realm&gt;/.well-known/openid-configuration</code></td>
+</tr>
+<tr>
+<td>Azure AD / Entra ID</td>
+<td><code>https://login.microsoftonline.com/&lt;tenant-id&gt;/v2.0/.well-known/openid-configuration</code></td>
+</tr>
+<tr>
+<td>Google</td>
+<td><code>https://accounts.google.com/.well-known/openid-configuration</code></td>
+</tr>
+<tr>
+<td>Okta</td>
+<td><code>https://&lt;your-domain&gt;.okta.com/.well-known/openid-configuration</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="redirect-uri-on-the-idp-side">Redirect URI on the IdP side</h2>
+<p>When registering HCW@Home as a client on the identity provider, the redirect URI to allow is:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>https://&lt;practitioner-domain&gt;/auth/callback
+</code></pre></div>
+<h2 id="testing-the-flow">Testing the flow</h2>
+<ol>
+<li>Save the Social Application.</li>
+<li>Open the practitioner login page in a private / incognito window.</li>
+<li>The "Sign in with <code>&lt;Name&gt;</code>" button appears next to (or instead of) the password form.</li>
+<li>Click it: you are redirected to the IdP, authenticate, and come back logged in.</li>
+<li>The new user shows up in <strong>Users &amp; Authentication &gt; Users</strong>. Assign <code>is_practitioner</code> / <code>is_staff</code> as needed.</li>
+</ol>
+<h2 id="forcing-sso-only-login">Forcing SSO-only login</h2>
+<p>To hide the email/password form entirely and allow only SSO for practitioners, enable the <code>DISABLE_PASSWORD_LOGIN</code> option in the <a href="../advanced-options/#authentication">advanced configuration</a>.</p>
 
 
 
@@ -1190,10 +1331,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["navigation.sections", "navigation.expand", "content.code.copy"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
