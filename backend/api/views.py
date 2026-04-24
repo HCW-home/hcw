@@ -134,17 +134,13 @@ class AnonymousTokenAuthView(APIView):
 
             now = timezone.now()
 
-            # Manual-communication users have no email/SMS channel to receive
-            # a verification code — they authenticate purely with the magic
-            # link token. Temporary users without any contact info fall under
-            # the same "manual" flow for historical reasons.
+            # Users without an email cannot receive a verification code (the
+            # code flow is email-only on the patient side), so they always
+            # authenticate via the magic-link token alone. Same for users
+            # explicitly configured with `manual` communication.
             is_manual_access = (
-                user.communication_method == "manual"
-                or (
-                    user.temporary
-                    and not user.email
-                    and not user.mobile_phone_number
-                )
+                not user.email
+                or user.communication_method == "manual"
             )
 
             if is_manual_access:

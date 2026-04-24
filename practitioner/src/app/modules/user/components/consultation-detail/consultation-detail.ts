@@ -1730,7 +1730,9 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   }
 
   hasBeneficiaryManualLink(): boolean {
-    return this.consultation()?.beneficiary?.communication_method === 'manual';
+    const beneficiary = this.consultation()?.beneficiary;
+    if (!beneficiary) return false;
+    return !beneficiary.email || beneficiary.communication_method === 'manual';
   }
 
   openBeneficiaryLinkModal(): void {

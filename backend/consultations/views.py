@@ -807,12 +807,10 @@ class ParticipantViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        allowed = user.communication_method == "manual" or (
-            user.temporary and not user.email and not user.mobile_phone_number
-        )
+        allowed = not user.email or user.communication_method == "manual"
         if not allowed:
             return Response(
-                {"detail": _("Access URL is only available for manual-communication or contactless temporary users")},
+                {"detail": _("Access URL is only available for users without an email or with manual communication")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 

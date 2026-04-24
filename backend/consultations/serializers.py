@@ -169,12 +169,13 @@ class ParticipantReadSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_requires_manual_access(self, obj):
-        """Indique si ce participant nécessite un accès manuel (lien d'invitation)"""
+        """Indique si ce participant nécessite un accès manuel (lien d'invitation).
+        Vrai dès que l'utilisateur n'a pas d'email (le code de vérification ne
+        peut donc pas lui être envoyé) ou qu'il est en communication manuelle.
+        """
         if not obj.user:
             return False
-        if obj.user.communication_method == "manual":
-            return True
-        return obj.user.temporary and not obj.user.email and not obj.user.mobile_phone_number
+        return not obj.user.email or obj.user.communication_method == "manual"
 
 
 class ParticipantSerializer(serializers.Serializer):
