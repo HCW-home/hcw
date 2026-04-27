@@ -1439,6 +1439,7 @@ class AppConfigView(APIView):
                 "enable_live_transcription": constance_config.enable_live_transcription,
                 "public_organisations": constance_config.public_organisations,
                 "force_temporary_patients": constance_config.force_temporary_patients,
+                "has_reasons": Reason.objects.filter(is_active=True).exists(),
             }
         )
 

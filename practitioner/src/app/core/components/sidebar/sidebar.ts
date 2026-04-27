@@ -81,11 +81,21 @@ export class Sidebar implements OnInit, OnDestroy {
         if (config.primary_color_practitioner) {
           this.themeService.applyPrimaryColor(config.primary_color_practitioner);
         }
-        if (config?.force_temporary_patients) {
-          this.menuItems = MenuItems.filter(
-            item => item.path !== `/${RoutePaths.PATIENTS}`,
-          );
-        }
+        this.menuItems = MenuItems.filter(item => {
+          if (
+            config?.force_temporary_patients &&
+            item.path === `/${RoutePaths.PATIENTS}`
+          ) {
+            return false;
+          }
+          if (
+            !config?.has_reasons &&
+            item.path === `/${RoutePaths.AVAILABILITY}`
+          ) {
+            return false;
+          }
+          return true;
+        });
       },
     });
   }

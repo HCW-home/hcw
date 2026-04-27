@@ -74,6 +74,7 @@ export interface IOpenIDConfig {
   enable_video_recording: boolean;
   enable_live_transcription: boolean;
   force_temporary_patients: boolean;
+  has_reasons: boolean;
 }
 
 export interface IOpenIDLoginBody {
