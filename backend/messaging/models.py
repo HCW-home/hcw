@@ -364,8 +364,8 @@ class Template(models.Model):
             return getattr(factory_module, f"{model_name}Factory", None)
 
     class Meta:
-        verbose_name = _("template")
-        verbose_name_plural = _("templates")
+        verbose_name = _("template override")
+        verbose_name_plural = _("template overrides")
 
     def clean(self):
         """Validate Jinja2 template syntax"""

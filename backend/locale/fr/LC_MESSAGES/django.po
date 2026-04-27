@@ -583,8 +583,8 @@ msgid "Messaging providers"
 msgstr "Fournisseurs de messagerie"
 
 #: core/settings.py:586
-msgid "Templates"
-msgstr "Modèles"
+msgid "Template overrides"
+msgstr "Modèles personnalisés"
 
 #: core/settings.py:594
 msgid "Template Validations"
@@ -1067,12 +1067,12 @@ msgid "Jinja2 template for message subject"
 msgstr "Modèle Jinja2 pour le sujet du message"
 
 #: messaging/models.py:367
-msgid "template"
-msgstr "modèle"
+msgid "template override"
+msgstr "modèle personnalisé"
 
 #: messaging/models.py:368
-msgid "templates"
-msgstr "modèles"
+msgid "template overrides"
+msgstr "modèles personnalisés"
 
 #: messaging/models.py:382 messaging/models.py:391
 msgid "Invalid Jinja2 template syntax: {}"

@@ -621,7 +621,7 @@ UNFOLD = {
                     #     ),
                     # },
                     {
-                        "title": _("Templates"),
+                        "title": _("Template overrides"),
                         "icon": "description",
                         "link": reverse_lazy("admin:messaging_template_changelist"),
                         "permission": lambda request: request.user.has_perm(
