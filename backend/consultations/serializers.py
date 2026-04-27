@@ -776,17 +776,20 @@ class ConsultationCreateSerializer(serializers.ModelSerializer):
 
 
 class ReasonSerializer(serializers.ModelSerializer):
+    custom_fields = CustomFieldSerializer(many=True, read_only=True)
+
     class Meta:
         model = Reason
-        fields = ["id", "name", "duration", "assignment_method", "skip_doctor_selection"]
+        fields = ["id", "name", "duration", "assignment_method", "skip_doctor_selection", "custom_fields"]
 
 
 class ReasonDetailSerializer(serializers.ModelSerializer):
     organisation = serializers.SerializerMethodField()
+    custom_fields = CustomFieldSerializer(many=True, read_only=True)
 
     class Meta:
         model = Reason
-        fields = ["id", "name", "duration", "assignment_method", "skip_doctor_selection", "organisation"]
+        fields = ["id", "name", "duration", "assignment_method", "skip_doctor_selection", "organisation", "custom_fields"]
 
     def get_organisation(self, obj):
         if obj.user_assignee and obj.user_assignee.main_organisation:

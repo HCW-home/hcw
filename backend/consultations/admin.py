@@ -1,6 +1,7 @@
 from django.contrib import admin
+from django.forms.models import BaseInlineFormSet
 from modeltranslation.admin import TabbedTranslationAdmin
-from unfold.admin import ModelAdmin, StackedInline, TabularInline
+from unfold.admin import ModelAdmin, StackedInline, TabularInline, StackedInline
 from unfold.decorators import display
 from typing import DefaultDict
 from . import assignments
@@ -17,6 +18,27 @@ from .models import (
     Reason,
     Request,
 )
+
+
+class ReasonCustomFieldInlineFormSet(BaseInlineFormSet):
+    def save_new(self, form, commit=True):
+        instance = form.save(commit=False)
+        instance.target_model = "consultations.Request"
+        if commit:
+            instance.save()
+            form.save_m2m()
+        return instance
+
+
+class ReasonCustomFieldInline(StackedInline):
+    model = CustomField
+    formset = ReasonCustomFieldInlineFormSet
+    extra = 0
+    fields = ("name", "field_type", "options", "required", "ordering")
+    ordering_field = "ordering"
+    hide_ordering_field = True
+    verbose_name = "Custom field"
+    verbose_name_plural = "Custom fields asked at booking"
 
 admin.site.register(Participant, ModelAdmin)
 
@@ -132,10 +154,11 @@ class ReasonAdmin(ModelAdmin, TabbedTranslationAdmin):
     search_fields = ["name", "speciality__name"]
     readonly_fields = ["created_at"]
     autocomplete_fields = ["speciality", "user_assignee", "queue_assignee"]
+    inlines = [ReasonCustomFieldInline]
 
     fieldsets = (
-        (None, {"fields": ("name", "duration", "is_active")}),
-        ("Assignment", {"fields": ("assignment_method", "speciality", "queue_assignee", "user_assignee", "skip_doctor_selection")}),
+        (None, {"fields": ("name", "speciality", "duration", "is_active")}),
+        ("Assignment", {"fields": ("assignment_method", "queue_assignee", "user_assignee", "skip_doctor_selection")}),
     )
 
     def conditional_fields(self):

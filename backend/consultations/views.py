@@ -1517,7 +1517,7 @@ class ReasonViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         qs = super().get_queryset().select_related(
             "user_assignee__main_organisation"
-        )
+        ).prefetch_related("custom_fields")
 
         user_assignee = self.request.query_params.get("user_assignee")
         if user_assignee:

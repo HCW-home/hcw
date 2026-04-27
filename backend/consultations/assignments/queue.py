@@ -8,7 +8,7 @@ class AssignmentHandler(BaseAssignmentHandler):
     """
 
     display_name = "Create followup and assign to queue / group"
-    required_fields = ["queue_assignee"]
+    required_fields = ["queue_assignee", "speciality"]
 
     def process(self):
         """

@@ -59,6 +59,7 @@ export interface Reason {
   is_active?: boolean;
   assignment_method?: string;
   skip_doctor_selection?: boolean;
+  custom_fields?: CustomField[];
 }
 
 export interface Prescription {

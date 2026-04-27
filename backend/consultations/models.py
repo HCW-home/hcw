@@ -411,10 +411,7 @@ class Reason(models.Model):
                 errors["queue_assignee"] = _(
                     "Queue assignee is required for queue assignment."
                 )
-            if self.speciality_id is not None:
-                errors["speciality"] = _(
-                    "Speciality must be empty for queue assignment."
-                )
+
             if self.user_assignee_id is not None:
                 errors["user_assignee"] = _(
                     "User assignee must be empty for queue assignment."
@@ -425,10 +422,7 @@ class Reason(models.Model):
                 errors["user_assignee"] = _(
                     "User assignee is required for user assignment."
                 )
-            if self.speciality_id is not None:
-                errors["speciality"] = _(
-                    "Speciality must be empty for user assignment."
-                )
+
             if self.queue_assignee_id is not None:
                 errors["queue_assignee"] = _(
                     "Queue assignee must be empty for user assignment."
@@ -624,6 +618,15 @@ class CustomField(models.Model):
     )
     target_model = models.CharField(
         _("target model"), max_length=50, choices=CustomFieldModel.choices
+    )
+    reason = models.ForeignKey(
+        "Reason",
+        on_delete=models.CASCADE,
+        related_name="custom_fields",
+        null=True,
+        blank=True,
+        verbose_name=_("reason"),
+        help_text=_("Reason this field is attached to (asked at booking validation)"),
     )
     options = models.JSONField(
         _("options"),

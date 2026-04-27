@@ -320,12 +320,8 @@ export class NewRequestPage implements OnInit, OnDestroy {
   }
 
   loadCustomFields(): void {
-    if (this.customFields().length > 0) return;
-    this.consultationService.getCustomFields('consultations.Request')
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (fields) => this.customFields.set(fields),
-      });
+    const fields = this.selectedReason()?.custom_fields ?? [];
+    this.customFields.set(fields);
   }
 
   goBack(): void {

@@ -8,7 +8,6 @@ import {
   Participant,
   ConsultationRequest,
   ConsultationMessage,
-  CustomField,
   IDashboardResponse,
   IParticipantDetail
 } from '../models/consultation.model';
@@ -162,7 +161,4 @@ export class ConsultationService {
     );
   }
 
-  getCustomFields(targetModel: string): Observable<CustomField[]> {
-    return this.api.get<CustomField[]>('/custom-fields/', { target_model: targetModel });
-  }
 }
