@@ -133,6 +133,11 @@ class ReasonAdmin(ModelAdmin, TabbedTranslationAdmin):
     readonly_fields = ["created_at"]
     autocomplete_fields = ["speciality", "user_assignee", "queue_assignee"]
 
+    fieldsets = (
+        (None, {"fields": ("name", "duration", "is_active")}),
+        ("Assignment", {"fields": ("assignment_method", "speciality", "queue_assignee", "user_assignee", "skip_doctor_selection")}),
+    )
+
     def conditional_fields(self):
         field_set = DefaultDict(list)
         for assignment, class_assignment in assignments.MAIN_CLASSES.items():
