@@ -343,6 +343,9 @@ class ConsultationReadStatus(models.Model):
 class Reason(models.Model):
 
     name = models.CharField(_("name"), help_text=_("Display name of the reason visible to the patient"))
+    duration = models.IntegerField(
+        _("duration"), help_text=_("Duration in minutes"), default=30
+    )
 
     assignment_method = models.CharField(
         choices=assignments.MAIN_DISPLAY_NAMES)
@@ -370,15 +373,13 @@ class Reason(models.Model):
         blank=True,
         verbose_name=_("user assignee"),
     )
-    duration = models.IntegerField(
-        _("duration"), help_text=_("Duration in minutes"), default=30
-    )
-    is_active = models.BooleanField(_("is active"), default=True)
     skip_doctor_selection = models.BooleanField(
         _("skip doctor selection"),
         default=False,
         help_text=_("Do not allow the patient to select a practitioner"),
     )
+
+    is_active = models.BooleanField(_("is active"), default=True)
 
     class Meta:
         verbose_name = _("reason")
