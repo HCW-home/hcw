@@ -3,11 +3,13 @@
 import logging
 from typing import Iterable
 
+import jinja2
 from constance import config
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.mail import send_mail
-from django.utils import translation
+from django.template.defaultfilters import register
+from django.utils import timezone, translation
 from django_tenants.utils import get_tenant_model, tenant_context
 
 from consultations.models import Queue, QueueMembership
@@ -20,33 +22,108 @@ from core.encryption import (
     rsa_encrypt,
     rsa_envelope_encrypt,
 )
+from messaging.template import DEFAULT_NOTIFICATION_MESSAGES
 from users.models import User
 
 logger = logging.getLogger(__name__)
 
 
+def _render_messaging_template(
+    template_key: str, language: str, context: dict
+) -> tuple[str, str, str]:
+    """Render a DEFAULT_NOTIFICATION_MESSAGES template in-memory (no Message
+    row persisted). Mirrors messaging.models.Message.render so the same Jinja
+    helpers and i18n behavior apply, but we skip the DB persistence since
+    we never want the passphrase stored anywhere on the server.
+    """
+    template_data = DEFAULT_NOTIFICATION_MESSAGES[template_key]
+    with translation.override(language):
+        env = jinja2.Environment(extensions=["jinja2.ext.i18n"])
+        env.install_gettext_callables(
+            translation.gettext, translation.ngettext, newstyle=True
+        )
+        env.filters["localtime"] = timezone.localtime
+        env.filters.update(register.filters)
+        full_context = {"config": config, **context}
+        subject = env.from_string(str(template_data["template_subject"])).render(
+            full_context
+        )
+        content = env.from_string(str(template_data["template_content"])).render(
+            full_context
+        )
+        content_html = env.from_string(
+            str(template_data["template_content_html"])
+        ).render(full_context)
+    return subject, content, content_html
+
+
+def _send_email(recipient_email: str, subject: str, body: str, body_html: str) -> None:
+    send_mail(
+        subject=subject,
+        message=body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[recipient_email],
+        html_message=body_html,
+        fail_silently=False,
+    )
+
+
 def _email_passphrase(user: User, passphrase: str) -> None:
-    """Send the one-time passphrase to a user. Never persisted server-side."""
-    if not user.email:
-        logger.warning("User %s has no email; skipping passphrase delivery", user.pk)
+    """Send the one-time passphrase, never persisted server-side.
+
+    Routing rules:
+      - Direct user with email + non-manual communication → user.email,
+        template `encryption_passphrase`.
+      - Manual-contact user (or user without email) but with a created_by
+        practitioner who has an email → practitioner.email, template
+        `encryption_passphrase_for_practitioner` carrying the patient
+        identification.
+      - Otherwise → log a warning, no delivery is possible.
+    """
+    is_manual = (
+        getattr(user, "communication_method", None) == "manual" or not user.email
+    )
+    creator = getattr(user, "created_by", None)
+
+    if not is_manual and user.email:
+        language = user.preferred_language or settings.LANGUAGE_CODE
+        subject, body, body_html = _render_messaging_template(
+            "encryption_passphrase",
+            language,
+            {"user": user, "passphrase": passphrase, "obj": user},
+        )
+        _send_email(user.email, subject, body, body_html)
         return
 
-    with translation.override(user.preferred_language or settings.LANGUAGE_CODE):
-        subject = "Your encryption passphrase"
-        body = (
-            "End-to-end encryption has been enabled for your account.\n"
-            f"Your personal passphrase is: {passphrase}\n\n"
-            "Keep it safe — you will need it the next time you log in to "
-            "decrypt your messages. Nobody at HCW can recover this passphrase "
-            "for you if you lose it."
+    if creator and creator.email:
+        language = creator.preferred_language or settings.LANGUAGE_CODE
+        subject, body, body_html = _render_messaging_template(
+            "encryption_passphrase_for_practitioner",
+            language,
+            {
+                "passphrase": passphrase,
+                "patient_id": user.pk,
+                "patient_first_name": user.first_name or "",
+                "patient_last_name": user.last_name or "",
+                "patient_email": user.email or "",
+                "obj": user,
+            },
         )
-        send_mail(
-            subject=subject,
-            message=body,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
-            fail_silently=False,
+        _send_email(creator.email, subject, body, body_html)
+        logger.info(
+            "Passphrase for user %s routed to its creator %s (manual contact)",
+            user.pk, creator.pk,
         )
+        return
+
+    logger.warning(
+        "Cannot deliver passphrase for user %s: no usable email "
+        "(communication_method=%s, has_email=%s, has_creator_email=%s)",
+        user.pk,
+        getattr(user, "communication_method", None),
+        bool(user.email),
+        bool(creator and creator.email),
+    )
 
 
 def _provision_user_keypair(user: User) -> None:

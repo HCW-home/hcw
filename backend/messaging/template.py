@@ -136,6 +136,50 @@ DEFAULT_NOTIFICATION_MESSAGES = {
         "model": "consultations.Consultation",
         "helper_text": "Notification sent to patient when a consultation is assigned to them",
     },
+    "encryption_passphrase": {
+        "template_subject": _("Your encryption passphrase"),
+        "template_content": _(
+            "End-to-end encryption has been enabled for your account.\n"
+            "Your personal passphrase is: {{ passphrase }}\n\n"
+            "Keep it safe — you will need it the next time you log in to "
+            "decrypt your messages. Nobody at HCW can recover this passphrase "
+            "for you if you lose it."
+        ),
+        "template_content_html": _(
+            "<p>End-to-end encryption has been enabled for your account.</p>"
+            "<p>Your personal passphrase is: <strong>{{ passphrase }}</strong></p>"
+            "<p>Keep it safe — you will need it the next time you log in to "
+            "decrypt your messages. Nobody at HCW can recover this passphrase "
+            "for you if you lose it.</p>"
+        ),
+        "model": "users.User",
+        "helper_text": "Sent once to a user when their encryption keypair is provisioned",
+    },
+    "encryption_passphrase_for_practitioner": {
+        "template_subject": _(
+            "Encryption passphrase for {{ patient_first_name }} {{ patient_last_name }}"
+        ),
+        "template_content": _(
+            "An encryption passphrase has been generated for a patient you "
+            "created who has no direct contact method (manual contact).\n\n"
+            "Patient: {{ patient_first_name }} {{ patient_last_name }} "
+            "(id #{{ patient_id }}, {{ patient_email|default('no email') }})\n"
+            "Passphrase: {{ passphrase }}\n\n"
+            "Pass it to the patient through your usual secure channel. "
+            "It is required for them to read their encrypted messages."
+        ),
+        "template_content_html": _(
+            "<p>An encryption passphrase has been generated for a patient you "
+            "created who has no direct contact method (manual contact).</p>"
+            "<p><strong>Patient:</strong> {{ patient_first_name }} {{ patient_last_name }} "
+            "(id #{{ patient_id }}, {{ patient_email|default('no email') }})</p>"
+            "<p><strong>Passphrase:</strong> {{ passphrase }}</p>"
+            "<p>Pass it to the patient through your usual secure channel. "
+            "It is required for them to read their encrypted messages.</p>"
+        ),
+        "model": "users.User",
+        "helper_text": "Sent to the practitioner who created a manual-contact patient, carrying the patient's encryption passphrase",
+    },
 }
 
 
