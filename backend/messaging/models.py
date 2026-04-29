@@ -1100,3 +1100,22 @@ class Message(ModelCeleryAbstract):
                             }
                         }
                     )
+
+
+class EphemeralMessage(Message):
+    """A Message that never persists.
+
+    Dispatches transient content (e.g. encryption passphrases) through the
+    regular MessagingProvider pipeline without leaving any row in
+    messaging.Message — which would otherwise re-fire send_message via the
+    post_save signal and cause a duplicate send.
+    """
+
+    class Meta:
+        proxy = True
+
+    def save(self, *args, **kwargs):
+        return
+
+    def delete(self, *args, **kwargs):
+        return

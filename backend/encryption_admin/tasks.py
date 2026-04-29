@@ -7,9 +7,7 @@ import jinja2
 from constance import config
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from django.core.mail import send_mail
 from django.template.defaultfilters import register
-from django.template.loader import render_to_string
 from django.utils import timezone, translation
 from django_tenants.utils import get_tenant_model, tenant_context
 
@@ -33,15 +31,13 @@ def _render_messaging_template(
     template_key: str, language: str, context: dict
 ) -> tuple[str, str, str]:
     """Render a DEFAULT_NOTIFICATION_MESSAGES template in-memory (no Message
-    row persisted). Mirrors messaging.models.Message.render and
-    render_full_html so the same Jinja helpers, i18n behavior, and the
-    organisation-branded email_base.html wrapper apply, but we skip DB
-    persistence since the passphrase must never be stored.
+    row persisted). Mirrors messaging.models.Message.render so the same
+    Jinja helpers and i18n behavior apply.
 
-    Returns (subject, plain_text_body, full_branded_html).
+    Returns (subject, plain_text_body, content_html_body). The HTML body is
+    NOT wrapped in email_base.html — that is done downstream by
+    Message.render_full_html when the email provider sends the message.
     """
-    from users.models import Organisation
-
     template_data = DEFAULT_NOTIFICATION_MESSAGES[template_key]
     with translation.override(language):
         env = jinja2.Environment(extensions=["jinja2.ext.i18n"])
@@ -60,66 +56,115 @@ def _render_messaging_template(
         content_html = env.from_string(
             str(template_data["template_content_html"])
         ).render(full_context)
-
-        main_org = Organisation.objects.filter(is_main=True).first()
-        full_html = render_to_string(
-            "messaging/email_base.html",
-            {
-                "content": content_html,
-                "subject": subject,
-                "action_label": None,
-                "access_link": None,
-                "organisation": main_org,
-                "branding": config.site_name,
-                "has_logo": bool(main_org and main_org.logo_white),
-            },
-        )
-    return subject, content, full_html
+    return subject, content, content_html
 
 
-def _send_email(recipient_email: str, subject: str, body: str, body_html: str) -> None:
-    send_mail(
-        subject=subject,
-        message=body,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[recipient_email],
-        html_message=body_html,
-        fail_silently=False,
+def _send_passphrase_via_messaging(
+    recipient: User, template_key: str, context: dict
+) -> None:
+    """Build an EphemeralMessage carrying the rendered passphrase content
+    and dispatch it through the platform's existing messaging providers
+    based on recipient.communication_method.
+
+    EphemeralMessage.save() is a no-op, so the passphrase never lands in
+    the messaging.Message table and the post_save signal never fires
+    (which would otherwise queue send_message and duplicate the dispatch).
+    """
+    from messaging.models import EphemeralMessage, MessagingProvider
+
+    language = recipient.preferred_language or settings.LANGUAGE_CODE
+    subject, content, content_html = _render_messaging_template(
+        template_key, language, context,
     )
+
+    msg = EphemeralMessage(
+        sent_to=recipient,
+        subject=subject,
+        content=content,
+        content_html=content_html,
+        in_notification=False,
+    )
+
+    method = recipient.communication_method
+    if not method:
+        logger.warning(
+            "Recipient %s has no communication_method; passphrase undelivered",
+            recipient.pk,
+        )
+        return
+
+    providers_qs = MessagingProvider.objects.filter(
+        communication_method=method, is_active=True,
+    ).order_by("priority", "id")
+
+    if not providers_qs.exists():
+        logger.error(
+            "No active provider for communication_method=%s; cannot deliver "
+            "passphrase to user %s",
+            method, recipient.pk,
+        )
+        return
+
+    last_error: Exception | None = None
+    for mp in providers_qs:
+        try:
+            mp.instance.send(msg)
+            logger.info(
+                "Passphrase delivered to user %s via %s (%s)",
+                recipient.pk, mp.name, method,
+            )
+            return
+        except Exception as exc:
+            last_error = exc
+            logger.warning(
+                "Provider %s failed for passphrase to user %s: %s",
+                mp.name, recipient.pk, exc,
+            )
+
+    logger.error(
+        "All providers failed for passphrase to user %s; last error: %s",
+        recipient.pk, last_error,
+    )
+
+
+def _has_usable_channel(user: User) -> bool:
+    """Whether the user can be reached on their declared channel right now."""
+    method = user.communication_method
+    if method == "email":
+        return bool(user.email)
+    if method in ("sms", "whatsapp"):
+        return bool(user.mobile_phone_number)
+    if method == "push":
+        # Push registration check is done by the provider itself; assume yes.
+        return True
+    return False
 
 
 def _email_passphrase(user: User, passphrase: str) -> None:
-    """Send the one-time passphrase, never persisted server-side.
+    """Send the one-time passphrase via the existing Message + provider
+    pipeline, in-memory only (no row persisted).
 
-    Routing rules:
-      - Direct user with email + non-manual communication → user.email,
-        template `encryption_passphrase`.
-      - Manual-contact user (or user without email) but with a created_by
-        practitioner who has an email → practitioner.email, template
-        `encryption_passphrase_for_practitioner` carrying the patient
-        identification.
-      - Otherwise → log a warning, no delivery is possible.
+    Routing:
+      - User reachable on their declared channel (email/sms/whatsapp/push) →
+        sent directly to them with the `encryption_passphrase` template.
+      - User in "manual" mode or unreachable on declared channel → routed to
+        their `created_by` practitioner with the
+        `encryption_passphrase_for_practitioner` template, carrying the
+        patient identification so the practitioner can hand it over.
     """
-    is_manual = (
-        getattr(user, "communication_method", None) == "manual" or not user.email
-    )
-    creator = getattr(user, "created_by", None)
-
-    if not is_manual and user.email:
-        language = user.preferred_language or settings.LANGUAGE_CODE
-        subject, body, body_html = _render_messaging_template(
+    if user.communication_method != "manual" and _has_usable_channel(user):
+        _send_passphrase_via_messaging(
+            user,
             "encryption_passphrase",
-            language,
-            {"user": user, "passphrase": passphrase, "obj": user},
+            {"passphrase": passphrase, "user": user, "obj": user},
         )
-        _send_email(user.email, subject, body, body_html)
         return
 
-    if creator and creator.email:
-        language = creator.preferred_language or settings.LANGUAGE_CODE
-        subject, body, body_html = _render_messaging_template(
+    creator = user.created_by
+    if creator and creator.communication_method and _has_usable_channel(creator):
+        _send_passphrase_via_messaging(
+            creator,
             "encryption_passphrase_for_practitioner",
-            language,
             {
                 "passphrase": passphrase,
                 "patient_id": user.pk,
@@ -129,20 +174,11 @@ def _email_passphrase(user: User, passphrase: str) -> None:
                 "obj": user,
             },
         )
-        _send_email(creator.email, subject, body, body_html)
-        logger.info(
-            "Passphrase for user %s routed to its creator %s (manual contact)",
-            user.pk, creator.pk,
-        )
         return
 
     logger.warning(
-        "Cannot deliver passphrase for user %s: no usable email "
-        "(communication_method=%s, has_email=%s, has_creator_email=%s)",
+        "Cannot deliver passphrase for user %s: not reachable directly nor via creator",
         user.pk,
-        getattr(user, "communication_method", None),
-        bool(user.email),
-        bool(creator and creator.email),
     )
 
 
