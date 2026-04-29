@@ -333,7 +333,25 @@
     "welcomeMessage": "Start by creating a new follow-up to begin a consultation or an appointment.",
     "mobilePhone": "Mobile phone number",
     "errorTitle": "Error",
-    "errorMessage": "Failed to save your preferences. Please try again."
+    "errorMessage": "Failed to save your preferences. Please try again.",
+    "encryptionPassphrase": "Encryption passphrase",
+    "encryptionPassphraseHelp": "Enter the passphrase you received by email when encryption was enabled.",
+    "encryptionNewPassphrase": "New passphrase",
+    "encryptionForgotPassphrase": "I forgot my passphrase",
+    "encryptionInvalidPassphrase": "Invalid passphrase. Please try again."
+  },
+  "activateEncryption": {
+    "title": "Activate encryption",
+    "subtitle": "Unlock your encrypted messages",
+    "description": "Enter your encryption passphrase to load your private key in this browser. Your messages will be readable only after this step.",
+    "passphrase": "Passphrase",
+    "confirm": "Activate",
+    "forgotLink": "I forgot my passphrase",
+    "forgotConfirm": "Generate a brand-new passphrase? You will lose access to messages encrypted under your previous key until a colleague resyncs your access.",
+    "forgotFailed": "Failed to generate a new passphrase.",
+    "invalidPassphrase": "Invalid passphrase. Please try again.",
+    "errorTitle": "Encryption error",
+    "newPassphrase": "Your new passphrase (save it now)"
   },
   "header": {
     "notifications": "Notifications",
@@ -634,7 +652,9 @@
     "pending": "Pending",
     "createAppointment": "Create Appointment",
     "noAppointments": "No scheduled appointments",
-    "someAppointmentsNotCreated": "Some appointments could not be created"
+    "someAppointmentsNotCreated": "Some appointments could not be created",
+    "encryptionWarningTitle": "Encryption warning",
+    "encryptionWarningMessage": "The follow-up was created but could not be encrypted. Check your encryption setup."
   },
   "createConsultationModal": {
     "title": "New Follow-up",
@@ -766,7 +786,10 @@
     "callAppointmentModalMessage": "You have a scheduled appointment. Would you like to join the appointment instead?",
     "joinAppointment": "Join appointment",
     "callPatientOnly": "Call patient only",
-    "error": "Error"
+    "error": "Error",
+    "encryptionKeyMissingTitle": "Encryption key missing",
+    "encryptionKeyMissingMessage": "Your encryption key is not loaded in this browser. Open your profile to load it.",
+    "encryptionRequiredTitle": "Encryption required"
   },
   "appointmentFormModal": {
     "editAppointment": "Edit Appointment",
@@ -1009,7 +1032,31 @@
     "commManual": "Manual Contact",
     "commNone": "None",
     "tabProfile": "Profile",
-    "tabSystemTest": "System Test"
+    "tabSystemTest": "System Test",
+    "cancel": "Cancel",
+    "encryption": "Encryption",
+    "encryptionKeyLoaded": "Key loaded in this browser",
+    "encryptionKeyNotLoaded": "Key not loaded in this browser",
+    "encryptionLoadKey": "Load my key",
+    "encryptionPassphrase": "Passphrase",
+    "encryptionConfirm": "Confirm",
+    "encryptionPurgeKey": "Purge my local key",
+    "encryptionChangePassphrase": "Change passphrase",
+    "encryptionOldPassphrase": "Current passphrase",
+    "encryptionNewPassphrase": "New passphrase",
+    "encryptionConfirmPassphrase": "Confirm new passphrase",
+    "encryptionKeyLoadedTitle": "Key loaded",
+    "encryptionKeyLoadedMessage": "Your encryption key is now available in this browser.",
+    "encryptionErrorTitle": "Encryption error",
+    "encryptionInvalidPassphrase": "Invalid passphrase.",
+    "encryptionStorageError": "Failed to store the key locally. Try again or restart the browser.",
+    "encryptionPurgeConfirm": "Remove the encryption key from this browser? You will need your passphrase to load it again.",
+    "encryptionPurgedTitle": "Key purged",
+    "encryptionPurgedMessage": "The encryption key has been removed from this browser.",
+    "encryptionPassphraseMismatch": "The new passphrase and the confirmation do not match.",
+    "encryptionPassphraseChangedTitle": "Passphrase changed",
+    "encryptionPassphraseChangedMessage": "Your passphrase has been updated.",
+    "encryptionInvalidOldPassphrase": "The current passphrase is incorrect."
   },
   "consultationRowItem": {
     "untitledConsultation": "Untitled Follow-up",

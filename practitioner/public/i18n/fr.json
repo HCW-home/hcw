@@ -266,7 +266,31 @@
     "commManual": "Contact manuel",
     "commNone": "Aucun",
     "tabProfile": "Profil",
-    "tabSystemTest": "Test système"
+    "tabSystemTest": "Test système",
+    "cancel": "Annuler",
+    "encryption": "Chiffrement",
+    "encryptionKeyLoaded": "Clé chargée dans ce navigateur",
+    "encryptionKeyNotLoaded": "Clé non chargée dans ce navigateur",
+    "encryptionLoadKey": "Charger ma clé",
+    "encryptionPassphrase": "Phrase de passe",
+    "encryptionConfirm": "Confirmer",
+    "encryptionPurgeKey": "Purger ma clé locale",
+    "encryptionChangePassphrase": "Changer ma phrase de passe",
+    "encryptionOldPassphrase": "Phrase de passe actuelle",
+    "encryptionNewPassphrase": "Nouvelle phrase de passe",
+    "encryptionConfirmPassphrase": "Confirmer la nouvelle phrase de passe",
+    "encryptionKeyLoadedTitle": "Clé chargée",
+    "encryptionKeyLoadedMessage": "Votre clé de chiffrement est désormais disponible dans ce navigateur.",
+    "encryptionErrorTitle": "Erreur de chiffrement",
+    "encryptionInvalidPassphrase": "Phrase de passe invalide.",
+    "encryptionStorageError": "Impossible de stocker la clé localement. Réessayez ou redémarrez le navigateur.",
+    "encryptionPurgeConfirm": "Supprimer la clé de chiffrement de ce navigateur ? Vous devrez ressaisir votre phrase de passe pour la recharger.",
+    "encryptionPurgedTitle": "Clé purgée",
+    "encryptionPurgedMessage": "La clé de chiffrement a été supprimée de ce navigateur.",
+    "encryptionPassphraseMismatch": "La nouvelle phrase de passe et la confirmation ne correspondent pas.",
+    "encryptionPassphraseChangedTitle": "Phrase de passe modifiée",
+    "encryptionPassphraseChangedMessage": "Votre phrase de passe a été mise à jour.",
+    "encryptionInvalidOldPassphrase": "La phrase de passe actuelle est incorrecte."
   },
   "consultationRowItem": {
     "untitledConsultation": "Suivi sans titre",
@@ -635,7 +659,9 @@
     "pending": "En attente",
     "createAppointment": "Créer le rendez-vous",
     "noAppointments": "Aucun rendez-vous planifié",
-    "someAppointmentsNotCreated": "Certains rendez-vous n'ont pas pu être créés"
+    "someAppointmentsNotCreated": "Certains rendez-vous n'ont pas pu être créés",
+    "encryptionWarningTitle": "Avertissement de chiffrement",
+    "encryptionWarningMessage": "Le suivi a été créé mais n'a pas pu être chiffré. Vérifiez la configuration du chiffrement."
   },
   "createConsultationModal": {
     "title": "Nouveau suivi",
@@ -658,7 +684,25 @@
     "welcomeMessage": "Commencez par créer un nouveau suivi pour démarrer une consultation ou un rendez-vous.",
     "mobilePhone": "Numéro de téléphone mobile",
     "errorTitle": "Erreur",
-    "errorMessage": "Impossible de sauvegarder vos préférences. Veuillez réessayer."
+    "errorMessage": "Impossible de sauvegarder vos préférences. Veuillez réessayer.",
+    "encryptionPassphrase": "Phrase de passe de chiffrement",
+    "encryptionPassphraseHelp": "Saisissez la phrase de passe reçue par email lors de l'activation du chiffrement.",
+    "encryptionNewPassphrase": "Nouvelle phrase de passe",
+    "encryptionForgotPassphrase": "J'ai oublié ma phrase de passe",
+    "encryptionInvalidPassphrase": "Phrase de passe invalide. Veuillez réessayer."
+  },
+  "activateEncryption": {
+    "title": "Activer le chiffrement",
+    "subtitle": "Déverrouiller vos messages chiffrés",
+    "description": "Saisissez votre phrase de passe pour charger votre clé privée dans ce navigateur. Vos messages ne seront lisibles qu'après cette étape.",
+    "passphrase": "Phrase de passe",
+    "confirm": "Activer",
+    "forgotLink": "J'ai oublié ma phrase de passe",
+    "forgotConfirm": "Générer une nouvelle phrase de passe ? Vous perdrez l'accès aux messages chiffrés avec votre ancienne clé tant qu'un collègue ne resyncronise pas votre accès.",
+    "forgotFailed": "Impossible de générer une nouvelle phrase de passe.",
+    "invalidPassphrase": "Phrase de passe invalide. Veuillez réessayer.",
+    "errorTitle": "Erreur de chiffrement",
+    "newPassphrase": "Votre nouvelle phrase de passe (à enregistrer maintenant)"
   },
   "header": {
     "notifications": "Notifications",
@@ -848,7 +892,10 @@
     "callAppointmentModalMessage": "Vous avez un rendez-vous planifié. Souhaitez-vous plutôt rejoindre le rendez-vous ?",
     "joinAppointment": "Rejoindre le rendez-vous",
     "callPatientOnly": "Appeler le patient uniquement",
-    "error": "Erreur"
+    "error": "Erreur",
+    "encryptionKeyMissingTitle": "Clé de chiffrement manquante",
+    "encryptionKeyMissingMessage": "Votre clé de chiffrement n'est pas chargée dans ce navigateur. Ouvrez votre profil pour la charger.",
+    "encryptionRequiredTitle": "Chiffrement requis"
   },
   "appointmentFormModal": {
     "editAppointment": "Modifier le rendez-vous",

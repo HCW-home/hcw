@@ -241,12 +241,21 @@
           }
 
           @if (encryptionKeyLoaded()) {
-            <button type="button" class="btn-save" (click)="onEncryptionPurgeKey()">
-              {{ 'userProfile.encryptionPurgeKey' | translate }}
-            </button>
-            <button type="button" class="btn-save" (click)="encryptionShowChangeForm.set(!encryptionShowChangeForm())" style="margin-left: 8px">
-              {{ 'userProfile.encryptionChangePassphrase' | translate }}
-            </button>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <app-button
+                [style]="ButtonStyleEnum.stroke"
+                [state]="ButtonStateEnum.error"
+                [size]="ButtonSizeEnum.small"
+                [text]="'userProfile.encryptionPurgeKey' | translate"
+                (click)="onEncryptionPurgeKey()">
+              </app-button>
+              <app-button
+                [style]="ButtonStyleEnum.stroke"
+                [size]="ButtonSizeEnum.small"
+                [text]="'userProfile.encryptionChangePassphrase' | translate"
+                (click)="encryptionShowChangeForm.set(!encryptionShowChangeForm())">
+              </app-button>
+            </div>
           }
 
           @if (encryptionShowChangeForm()) {

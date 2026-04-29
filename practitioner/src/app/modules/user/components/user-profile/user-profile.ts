@@ -42,6 +42,7 @@ import { Button } from '../../../../shared/ui-components/button/button';
 import { BadgeTypeEnum } from '../../../../shared/constants/badge';
 import {
   ButtonSizeEnum,
+  ButtonStateEnum,
   ButtonStyleEnum,
 } from '../../../../shared/constants/button';
 import { SelectOption } from '../../../../shared/models/select';
@@ -85,6 +86,7 @@ export class UserProfile implements OnInit, OnDestroy {
   protected readonly BadgeTypeEnum = BadgeTypeEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
+  protected readonly ButtonStateEnum = ButtonStateEnum;
 
   user = signal<IUser | null>(null);
   languages = signal<ILanguage[]>([]);
