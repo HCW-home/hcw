@@ -10,17 +10,16 @@ import { firstValueFrom } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { UserService } from '../../core/services/user.service';
-import { Auth } from '../../core/services/auth';
 import { EncryptionService } from '../../core/services/encryption.service';
 import { ToasterService } from '../../core/services/toaster.service';
 import { TranslationService } from '../../core/services/translation.service';
-import { ThemeService } from '../../core/services/theme.service';
 import { RoutePaths } from '../../core/constants/routes';
 import { IUser } from '../../modules/user/models/user';
 
 import { Typography } from '../../shared/ui-components/typography/typography';
 import { Button } from '../../shared/ui-components/button/button';
 import { Loader } from '../../shared/components/loader/loader';
+import { AuthBranding } from '../../shared/components/auth-branding/auth-branding';
 import { TypographyTypeEnum } from '../../shared/constants/typography';
 import { ButtonTypeEnum, ButtonStyleEnum } from '../../shared/constants/button';
 
@@ -33,6 +32,7 @@ import { ButtonTypeEnum, ButtonStyleEnum } from '../../shared/constants/button';
     Typography,
     Button,
     Loader,
+    AuthBranding,
   ],
   templateUrl: './activate-encryption.html',
   styleUrl: './activate-encryption.scss',
@@ -41,11 +41,9 @@ export class ActivateEncryptionPage implements OnInit {
   private router = inject(Router);
   private fb = inject(FormBuilder);
   private userService = inject(UserService);
-  private authService = inject(Auth);
   private encryptionService = inject(EncryptionService);
   private toasterService = inject(ToasterService);
   private t = inject(TranslationService);
-  private themeService = inject(ThemeService);
 
   TypographyTypeEnum = TypographyTypeEnum;
   ButtonTypeEnum = ButtonTypeEnum;
@@ -57,26 +55,15 @@ export class ActivateEncryptionPage implements OnInit {
   user: IUser | null = null;
   newPassphraseShown = signal<string | null>(null);
 
-  siteLogoWhite: string | null = null;
-  branding = 'HCW@Home';
-
   async ngOnInit(): Promise<void> {
     this.form = this.fb.group({
       passphrase: ['', [Validators.required]],
     });
 
     try {
-      const config = await firstValueFrom(this.authService.getOpenIDConfig());
-      this.siteLogoWhite = config?.main_organization?.logo_white || null;
-      if (config?.branding) {
-        this.branding = config.branding;
-      }
-      if (config?.primary_color_practitioner) {
-        this.themeService.applyPrimaryColor(config.primary_color_practitioner);
-      }
       this.user = await firstValueFrom(this.userService.getCurrentUser());
     } catch {
-      // ignore, page still usable
+      // ignore — page is still usable, submit will fail gracefully
     }
     this.loading = false;
   }

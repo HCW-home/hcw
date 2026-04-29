@@ -1,31 +1,21 @@
-<div class="onboarding-page">
+<div class="login-page">
   @if (loading) {
     <app-loader></app-loader>
   } @else {
-    <div class="onboarding-card">
-      <div class="left-side">
-        <div class="left-content">
-          @if (siteLogoWhite) {
-            <img [src]="siteLogoWhite" alt="Logo" class="logo-img" />
-          } @else {
-            <img src="/images/logo.svg" alt="Logo" class="logo-img" />
-          }
-          <h1>{{ branding }}</h1>
-          <p>{{ 'activateEncryption.subtitle' | translate }}</p>
-        </div>
-      </div>
+    <div class="auth-card">
+      <app-auth-branding />
       <div class="right-side">
         <div class="right-content">
-          <app-typography
-            color="var(--slate-800)"
-            [variant]="TypographyTypeEnum['h6-semibold']">
-            {{ 'activateEncryption.title' | translate }}
-          </app-typography>
-          <p class="onboarding-description">
-            {{ 'activateEncryption.description' | translate }}
-          </p>
+          <form [formGroup]="form" (ngSubmit)="submit()" class="login-form">
+            <app-typography
+              color="var(--slate-800)"
+              [variant]="TypographyTypeEnum['h6-semibold']">
+              {{ 'activateEncryption.title' | translate }}
+            </app-typography>
+            <p class="onboarding-description">
+              {{ 'activateEncryption.description' | translate }}
+            </p>
 
-          <form [formGroup]="form" (ngSubmit)="submit()" class="onboarding-form">
             <div class="form-group">
               <label class="form-label">
                 {{ 'activateEncryption.passphrase' | translate }}
