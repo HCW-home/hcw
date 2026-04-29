@@ -11,6 +11,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import { UserService } from '../../core/services/user.service';
 import { Auth } from '../../core/services/auth';
+import { EncryptionService } from '../../core/services/encryption.service';
 import { ToasterService } from '../../core/services/toaster.service';
 import { TranslationService } from '../../core/services/translation.service';
 import { ThemeService } from '../../core/services/theme.service';
@@ -46,6 +47,7 @@ export class OnboardingPage implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private userService = inject(UserService);
   private authService = inject(Auth);
+  private encryptionService = inject(EncryptionService);
   private toasterService = inject(ToasterService);
   private t = inject(TranslationService);
   private themeService = inject(ThemeService);
@@ -61,6 +63,10 @@ export class OnboardingPage implements OnInit, OnDestroy {
 
   siteLogoWhite: string | null = null;
   branding = 'HCW@Home';
+
+  requiresPassphrase = signal(false);
+  newPassphraseForUser = signal<string | null>(null);
+  currentUserId: number | null = null;
 
   timezoneOptions: SelectOption[] = TIMEZONE_OPTIONS;
   preferredLanguageOptions = signal<SelectOption[]>([]);
@@ -99,6 +105,7 @@ export class OnboardingPage implements OnInit, OnDestroy {
       ],
       preferred_language: [null],
       mobile_phone_number: [''],
+      encryption_passphrase: [''],
     });
 
     this.onboardingForm
@@ -156,6 +163,16 @@ export class OnboardingPage implements OnInit, OnDestroy {
             preferred_language: currentLang?.code || null,
             mobile_phone_number: user.mobile_phone_number || '',
           });
+          this.currentUserId = user.pk;
+          if (user.encryption_passphrase_pending) {
+            this.requiresPassphrase.set(true);
+            this.onboardingForm
+              .get('encryption_passphrase')!
+              .addValidators([Validators.required]);
+            this.onboardingForm
+              .get('encryption_passphrase')!
+              .updateValueAndValidity();
+          }
           this.loading = false;
         },
         error: () => {
@@ -164,13 +181,30 @@ export class OnboardingPage implements OnInit, OnDestroy {
       });
   }
 
-  save(): void {
+  async save(): Promise<void> {
     if (this.onboardingForm.invalid || this.saving()) {
       return;
     }
 
     this.saving.set(true);
     const formValue = this.onboardingForm.value;
+
+    if (this.requiresPassphrase() && this.currentUserId !== null) {
+      try {
+        await this.encryptionService.activatePassphrase(
+          this.currentUserId,
+          formValue.encryption_passphrase,
+        );
+      } catch {
+        this.saving.set(false);
+        this.toasterService.show(
+          'error',
+          this.t.instant('onboarding.errorTitle'),
+          this.t.instant('onboarding.encryptionInvalidPassphrase'),
+        );
+        return;
+      }
+    }
 
     const updateData: IUserUpdateRequest = {
       communication_method: formValue.communication_method,
@@ -197,9 +231,23 @@ export class OnboardingPage implements OnInit, OnDestroy {
           this.toasterService.show(
             'error',
             this.t.instant('onboarding.errorTitle'),
-            this.t.instant('onboarding.errorMessage')
+            this.t.instant('onboarding.errorMessage'),
           );
         },
       });
+  }
+
+  async forgotPassphrase(): Promise<void> {
+    try {
+      const response = await this.encryptionService.forgotPassphrase();
+      this.newPassphraseForUser.set(response.passphrase);
+      this.onboardingForm.patchValue({ encryption_passphrase: response.passphrase });
+    } catch {
+      this.toasterService.show(
+        'error',
+        this.t.instant('onboarding.errorTitle'),
+        this.t.instant('onboarding.errorMessage'),
+      );
+    }
   }
 }

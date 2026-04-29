@@ -30,12 +30,16 @@ export interface User {
   timezone?: string;
   temporary?: boolean;
   is_practitioner?: boolean;
+  public_key?: string | null;
+  public_key_fingerprint?: string | null;
 }
 
 export interface Queue {
   id: number;
   name: string;
   users: User[];
+  public_key?: string | null;
+  public_key_fingerprint?: string | null;
 }
 
 export interface Participant {
@@ -98,6 +102,8 @@ export interface ConsultationMessage {
   is_edited: boolean;
   deleted_at?: string | null;
   created_by: User;
+  is_encrypted?: boolean;
+  encrypted_attachment_metadata?: string | null;
 }
 
 export interface Consultation {
@@ -117,6 +123,29 @@ export interface Consultation {
   custom_fields?: CustomFieldValue[];
   unread_count?: number;
   last_read_at?: string;
+  is_encrypted?: boolean;
+  encrypted_key_for_queue?: string | null;
+  queue_pubkey_fingerprint?: string | null;
+  encrypted_key_for_owned_by?: string | null;
+  owned_by_pubkey_fingerprint?: string | null;
+  encrypted_key_for_created_by?: string | null;
+  created_by_pubkey_fingerprint?: string | null;
+  encrypted_key_for_beneficiary?: string | null;
+  beneficiary_pubkey_fingerprint?: string | null;
+  encrypted_key_for_master?: string | null;
+}
+
+export interface ConsultationEncryptionEnvelopes {
+  is_encrypted: true;
+  encrypted_key_for_queue: string | null;
+  queue_pubkey_fingerprint: string | null;
+  encrypted_key_for_owned_by: string | null;
+  owned_by_pubkey_fingerprint: string | null;
+  encrypted_key_for_created_by: string | null;
+  created_by_pubkey_fingerprint: string | null;
+  encrypted_key_for_beneficiary: string | null;
+  beneficiary_pubkey_fingerprint: string | null;
+  encrypted_key_for_master: string | null;
 }
 
 export interface CreateConsultationRequest {
@@ -127,6 +156,16 @@ export interface CreateConsultationRequest {
   owned_by_id?: number | null;
   visible_by_patient?: boolean;
   custom_fields?: { field: number; value: string | null }[];
+  is_encrypted?: boolean;
+  encrypted_key_for_queue?: string | null;
+  queue_pubkey_fingerprint?: string | null;
+  encrypted_key_for_owned_by?: string | null;
+  owned_by_pubkey_fingerprint?: string | null;
+  encrypted_key_for_created_by?: string | null;
+  created_by_pubkey_fingerprint?: string | null;
+  encrypted_key_for_beneficiary?: string | null;
+  beneficiary_pubkey_fingerprint?: string | null;
+  encrypted_key_for_master?: string | null;
 }
 
 export interface Reason {

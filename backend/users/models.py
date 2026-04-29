@@ -182,6 +182,12 @@ class User(AbstractUser):
     app_preferences = models.JSONField(null=True, blank=True)
     encrypted = models.BooleanField(default=False)
 
+    public_key = models.TextField(blank=True, null=True)
+    public_key_fingerprint = models.CharField(max_length=64, blank=True, null=True)
+    encrypted_private_key = models.TextField(blank=True, null=True)
+    encryption_passphrase_pending = models.BooleanField(default=False)
+    encryption_key_lost = models.BooleanField(default=False)
+
     picture = models.ImageField(upload_to=TenantUploadTo("users"), blank=True, null=True)
 
     job_title = models.CharField(

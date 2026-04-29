@@ -38,6 +38,16 @@ export interface Consultation {
   messages?: ConsultationMessage[];
   unread_count?: number;
   last_read_at?: string;
+  is_encrypted?: boolean;
+  encrypted_key_for_queue?: string | null;
+  queue_pubkey_fingerprint?: string | null;
+  encrypted_key_for_owned_by?: string | null;
+  owned_by_pubkey_fingerprint?: string | null;
+  encrypted_key_for_created_by?: string | null;
+  created_by_pubkey_fingerprint?: string | null;
+  encrypted_key_for_beneficiary?: string | null;
+  beneficiary_pubkey_fingerprint?: string | null;
+  encrypted_key_for_master?: string | null;
 }
 
 export interface Queue {
@@ -132,6 +142,8 @@ export interface ConsultationMessage {
   event?: string;
   content: string;
   attachment?: MessageAttachment | null;
+  is_encrypted?: boolean;
+  encrypted_attachment_metadata?: string | null;
 }
 
 export interface ConsultationRequest {

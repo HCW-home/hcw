@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { RoutePaths } from '../constants/routes';
 import { UserService } from './user.service';
 import { Auth } from './auth';
+import { EncryptionService } from './encryption.service';
 
 export const redirectIfAuthenticated: CanMatchFn = () => {
   const token = localStorage.getItem('token');
@@ -46,6 +47,47 @@ export const redirectIfFirstLogin: CanActivateFn = async () => {
 
     if (user?.is_first_login) {
       return router.createUrlTree([`/${RoutePaths.ONBOARDING}`]);
+    }
+  } catch {
+    return true;
+  }
+
+  return true;
+};
+
+export const redirectIfEncryptionNotActivated: CanActivateFn = async () => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    return true;
+  }
+
+  const userService = inject(UserService);
+  const authService = inject(Auth);
+  const encryptionService = inject(EncryptionService);
+  const router = inject(Router);
+
+  try {
+    let user = userService.currentUserValue;
+    if (!user) {
+      user = await firstValueFrom(userService.getCurrentUser());
+    }
+    if (!user) {
+      return true;
+    }
+
+    authService.invalidateConfigCache();
+    const config = await firstValueFrom(authService.getOpenIDConfig());
+    if (!config?.encryption_enabled) {
+      return true;
+    }
+    // User has not been provisioned yet (no pubkey on the server). Nothing to
+    // unlock locally; let them through so the admin can re-run provisioning.
+    if (!user.public_key) {
+      return true;
+    }
+    const hasLocalKey = await encryptionService.hasLocalKey(user.pk);
+    if (!hasLocalKey) {
+      return router.createUrlTree([`/${RoutePaths.ACTIVATE_ENCRYPTION}`]);
     }
   } catch {
     return true;

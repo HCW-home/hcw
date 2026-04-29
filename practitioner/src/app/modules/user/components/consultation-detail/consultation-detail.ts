@@ -34,6 +34,7 @@ import { UserService } from '../../../../core/services/user.service';
 import { IncomingCallService } from '../../../../core/services/incoming-call.service';
 import { ActiveCallService } from '../../../../core/services/active-call.service';
 import { Auth } from '../../../../core/services/auth';
+import { EncryptionService } from '../../../../core/services/encryption.service';
 import {
   Consultation,
   Appointment,
@@ -335,7 +336,10 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   private incomingCallService = inject(IncomingCallService);
   activeCallService = inject(ActiveCallService);
   private authService = inject(Auth);
+  private encryptionService = inject(EncryptionService);
   private t = inject(TranslationService);
+
+  private consultationSymKey: CryptoKey | null = null;
 
   consultationAutoDeleteHours = 0;
 
@@ -550,17 +554,21 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
 
     this.wsService.messageUpdated$
       .pipe(takeUntil(this.destroy$))
-      .subscribe(event => {
+      .subscribe(async event => {
         if (event.state === 'created') {
           const currentUser = this.currentUser();
           const isSystem = !event.data.created_by;
+          const decryptedContent = await this.decryptMessageContent(
+            event.data.content,
+            event.data.is_encrypted,
+          );
 
           const newMessage: Message = {
             id: event.data.id,
             username: isSystem
               ? ''
               : `${event.data.created_by.first_name} ${event.data.created_by.last_name}`,
-            message: event.data.content,
+            message: decryptedContent,
             timestamp: event.data.created_at,
             isCurrentUser: isSystem
               ? false
@@ -701,11 +709,59 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       });
   }
 
-  onSendMessage(data: SendMessageData): void {
+  async onSendMessage(data: SendMessageData): Promise<void> {
+    let content: string | undefined = data.content;
+    let attachment: File | undefined = data.attachment;
+    let isEncrypted = false;
+    let encryptedAttachmentMetadata: string | null = null;
+
+    const consultation = this.consultation();
+    if (consultation?.is_encrypted && !this.consultationSymKey) {
+      // Refuse to send anything while we cannot encrypt — otherwise we would
+      // store plaintext on a consultation marked as encrypted, which violates
+      // the security contract.
+      console.error(
+        '[encryption] consultation is_encrypted=true but no sym_key in memory; refusing to send',
+      );
+      this.toasterService.show(
+        'error',
+        this.t.instant('consultationDetail.encryptionRequiredTitle'),
+        this.t.instant('consultationDetail.encryptionKeyMissingMessage'),
+      );
+      return;
+    }
+    if (consultation?.is_encrypted && this.consultationSymKey) {
+      isEncrypted = true;
+      if (data.content) {
+        content = await this.encryptionService.encryptString(
+          data.content,
+          this.consultationSymKey,
+        );
+      }
+      if (data.attachment) {
+        const encryptedBlob = await this.encryptionService.encryptBlob(
+          data.attachment,
+          this.consultationSymKey,
+        );
+        attachment = new File(
+          [encryptedBlob],
+          data.attachment.name,
+          { type: 'application/octet-stream' },
+        );
+        encryptedAttachmentMetadata =
+          await this.encryptionService.encryptAttachmentMetadata(
+            { file_name: data.attachment.name, mime_type: data.attachment.type },
+            this.consultationSymKey,
+          );
+      }
+    }
+
     this.consultationService
       .sendConsultationMessage(this.consultationId, {
-        content: data.content,
-        attachment: data.attachment,
+        content,
+        attachment,
+        is_encrypted: isEncrypted || undefined,
+        encrypted_attachment_metadata: encryptedAttachmentMetadata,
       })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
@@ -728,11 +784,11 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       .getConsultationMessages(this.consultationId, { page: 1 })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: response => {
+        next: async response => {
           this.hasMore.set(!!response.next);
           const currentUserId = this.currentUser()?.pk;
-          const loadedMessages: Message[] = response.results
-            .map(msg => {
+          const loadedMessages: Message[] = await Promise.all(
+            response.results.map(async msg => {
               const isSystem = !msg.created_by;
               const isCurrentUser = isSystem
                 ? false
@@ -743,10 +799,14 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
                   ? this.t.instant('consultationDetail.you')
                   : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim() ||
                     msg.created_by.email;
+              const decryptedContent = await this.decryptMessageContent(
+                msg.content,
+                msg.is_encrypted,
+              );
               return {
                 id: msg.id,
                 username,
-                message: msg.content || '',
+                message: decryptedContent,
                 timestamp: msg.created_at,
                 isCurrentUser,
                 isSystem,
@@ -756,8 +816,9 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
                 updatedAt: msg.updated_at,
                 deletedAt: msg.deleted_at,
               };
-            })
-            .reverse();
+            }),
+          );
+          loadedMessages.reverse();
 
           // Deduplicate messages by ID
           const uniqueMessages = Array.from(
@@ -852,6 +913,9 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
           }
           this.consultation.set(consultation);
           this.isLoadingConsultation.set(false);
+          if (consultation.is_encrypted) {
+            this.loadConsultationSymKey(consultation);
+          }
         },
         error: error => {
           this.isLoadingConsultation.set(false);
@@ -862,6 +926,140 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
           );
         },
       });
+  }
+
+  private async loadConsultationSymKey(consultation: Consultation): Promise<void> {
+    // Try every envelope readable by the current user, in order:
+    // created_by (always present for the author) > owned_by > beneficiary.
+    // The queue envelope path is not implemented client-side in v1.
+    const userId = this.currentUser()?.pk;
+    if (!userId) {
+      return;
+    }
+    const privateKey = await this.encryptionService.getLocalPrivateKey(userId);
+    if (!privateKey) {
+      this.toasterService.show(
+        'warning',
+        this.t.instant('consultationDetail.encryptionKeyMissingTitle'),
+        this.t.instant('consultationDetail.encryptionKeyMissingMessage'),
+      );
+      return;
+    }
+
+    const candidates: (string | null | undefined)[] = [
+      consultation.created_by?.id === userId
+        ? consultation.encrypted_key_for_created_by
+        : null,
+      consultation.owned_by?.id === userId
+        ? consultation.encrypted_key_for_owned_by
+        : null,
+      consultation.beneficiary?.id === userId
+        ? consultation.encrypted_key_for_beneficiary
+        : null,
+    ];
+
+    for (const candidate of candidates) {
+      if (!candidate) {
+        continue;
+      }
+      try {
+        this.consultationSymKey =
+          await this.encryptionService.unwrapSymKeyWithPrivateKey(
+            candidate,
+            privateKey,
+          );
+        // Re-render messages now that we can decrypt.
+        this.loadMessages();
+        return;
+      } catch (err) {
+        console.warn('Envelope unwrap attempt failed', err);
+      }
+    }
+  }
+
+  private async buildRewrappedEnvelopes(
+    updateData: Partial<CreateConsultationRequest>,
+  ): Promise<Partial<CreateConsultationRequest>> {
+    // When the user changes beneficiary/owned_by/group on an encrypted
+    // consultation, the server requires the rewrapped envelope for each
+    // changed recipient. We rewrap with the sym_key already in memory
+    // (loaded at consultation open via loadConsultationSymKey).
+    const consultation = this.consultation();
+    if (!consultation?.is_encrypted) {
+      return {};
+    }
+    const symKey = this.consultationSymKey;
+    if (!symKey) {
+      throw new Error(
+        'Cannot rewrap envelopes — encryption key not loaded for this consultation',
+      );
+    }
+
+    const out: Partial<CreateConsultationRequest> = {};
+    const newBeneficiaryId = updateData.beneficiary_id ?? null;
+    const newOwnerId = updateData.owned_by_id ?? null;
+    const newGroupId = updateData.group_id ?? null;
+    const oldBeneficiaryId = consultation.beneficiary?.id ?? null;
+    const oldOwnerId = consultation.owned_by?.id ?? null;
+    const oldGroupId = consultation.group?.id ?? null;
+
+    if (newBeneficiaryId !== oldBeneficiaryId && newBeneficiaryId) {
+      const ben = this.beneficiaryCache.get(newBeneficiaryId)
+        ?? this.selectedBeneficiary();
+      if (!ben?.public_key) {
+        throw new Error(
+          'New beneficiary has no public key (not provisioned yet)',
+        );
+      }
+      out.encrypted_key_for_beneficiary =
+        await this.encryptionService.wrapSymKeyForPublicKey(symKey, ben.public_key);
+      out.beneficiary_pubkey_fingerprint = ben.public_key_fingerprint ?? null;
+    }
+
+    if (newOwnerId !== oldOwnerId && newOwnerId) {
+      const owner = this.practitionerCache.get(newOwnerId) ?? this.selectedOwner();
+      if (!owner?.public_key) {
+        throw new Error('New owner has no public key (not provisioned yet)');
+      }
+      out.encrypted_key_for_owned_by =
+        await this.encryptionService.wrapSymKeyForPublicKey(
+          symKey,
+          owner.public_key,
+        );
+      out.owned_by_pubkey_fingerprint = owner.public_key_fingerprint ?? null;
+    }
+
+    if (newGroupId !== oldGroupId && newGroupId) {
+      const queue = this.queues().find(q => q.id === newGroupId);
+      if (!queue?.public_key) {
+        throw new Error('New queue has no public key (not provisioned yet)');
+      }
+      out.encrypted_key_for_queue =
+        await this.encryptionService.wrapSymKeyForPublicKey(
+          symKey,
+          queue.public_key,
+        );
+      out.queue_pubkey_fingerprint = queue.public_key_fingerprint ?? null;
+    }
+
+    return out;
+  }
+
+  private async decryptMessageContent(
+    rawContent: string | null,
+    isEncrypted: boolean | undefined,
+  ): Promise<string> {
+    if (!isEncrypted || !rawContent || !this.consultationSymKey) {
+      return rawContent || '';
+    }
+    try {
+      return await this.encryptionService.decryptString(
+        rawContent,
+        this.consultationSymKey,
+      );
+    } catch {
+      return '[decryption failed]';
+    }
   }
 
   loadAppointments(): void {
@@ -1253,7 +1451,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     this.ownerInitialOption.set(null);
   }
 
-  saveConsultationChanges(): void {
+  async saveConsultationChanges(): Promise<void> {
     if (!this.consultationId) return;
 
     this.isSavingConsultation.set(true);
@@ -1283,6 +1481,19 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       visible_by_patient: formValue.visible_by_patient,
       custom_fields: customFieldsPayload,
     };
+
+    try {
+      const rewrap = await this.buildRewrappedEnvelopes(updateData);
+      Object.assign(updateData, rewrap);
+    } catch (err) {
+      this.isSavingConsultation.set(false);
+      this.toasterService.show(
+        'error',
+        this.t.instant('consultationDetail.updateFailed'),
+        (err as Error).message,
+      );
+      return;
+    }
 
     this.consultationService
       .updateConsultation(this.consultationId, updateData)

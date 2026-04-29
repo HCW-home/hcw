@@ -9,6 +9,7 @@ from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_clamd.validators import validate_file_infection
 from messaging.models import CommunicationMethod
@@ -28,8 +29,15 @@ class Queue(models.Model):
         "users.Organisation", blank=True, verbose_name=_("organisation")
     )
     users = models.ManyToManyField(
-        settings.AUTH_USER_MODEL, verbose_name=_("users"), blank=True
+        settings.AUTH_USER_MODEL,
+        verbose_name=_("users"),
+        blank=True,
+        through="QueueMembership",
     )
+
+    public_key = models.TextField(blank=True, null=True)
+    public_key_fingerprint = models.CharField(max_length=64, blank=True, null=True)
+    encrypted_queue_private_key_master = models.TextField(blank=True, null=True)
 
     class Meta:
         verbose_name = _("queue")
@@ -37,6 +45,18 @@ class Queue(models.Model):
 
     def __str__(self):
         return f"{self.name}"
+
+
+class QueueMembership(models.Model):
+    queue = models.ForeignKey(Queue, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    encrypted_queue_private_key = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        verbose_name = _("queue membership")
+        verbose_name_plural = _("queue memberships")
+        unique_together = ("queue", "user")
 
 
 class Type(models.TextChoices):
@@ -103,6 +123,18 @@ class Consultation(models.Model):
     visible_by_patient = models.BooleanField(
         _("visible by patient"), default=True
     )
+
+    is_encrypted = models.BooleanField(default=False)
+
+    encrypted_key_for_queue = models.TextField(blank=True, null=True)
+    queue_pubkey_fingerprint = models.CharField(max_length=64, blank=True, null=True)
+    encrypted_key_for_owned_by = models.TextField(blank=True, null=True)
+    owned_by_pubkey_fingerprint = models.CharField(max_length=64, blank=True, null=True)
+    encrypted_key_for_created_by = models.TextField(blank=True, null=True)
+    created_by_pubkey_fingerprint = models.CharField(max_length=64, blank=True, null=True)
+    encrypted_key_for_beneficiary = models.TextField(blank=True, null=True)
+    beneficiary_pubkey_fingerprint = models.CharField(max_length=64, blank=True, null=True)
+    encrypted_key_for_master = models.TextField(blank=True, null=True)
 
     objects = ConsultationManager()
 
@@ -311,6 +343,9 @@ class Message(models.Model):
         blank=True,
         help_text=_("S3 key/path for call recordings"),
     )
+
+    is_encrypted = models.BooleanField(default=False)
+    encrypted_attachment_metadata = models.TextField(blank=True, null=True)
 
     notification_messages = GenericRelation("messaging.Message")
 

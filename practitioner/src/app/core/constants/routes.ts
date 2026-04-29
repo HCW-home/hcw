@@ -13,4 +13,5 @@ export enum RoutePaths {
   CONFIRM_PRESENCE = 'confirm-presence',
   CGU = 'terms',
   ONBOARDING = 'onboarding',
+  ACTIVATE_ENCRYPTION = 'activate-encryption',
 }

@@ -75,6 +75,9 @@ export interface IOpenIDConfig {
   enable_live_transcription: boolean;
   force_temporary_patients: boolean;
   has_reasons: boolean;
+  encryption_enabled: boolean;
+  master_public_key: string;
+  master_public_key_fingerprint: string;
 }
 
 export interface IOpenIDLoginBody {

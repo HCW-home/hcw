@@ -78,6 +78,32 @@
             </app-select>
           </div>
 
+          @if (requiresPassphrase()) {
+          <div class="form-group">
+            <label class="form-label">
+              {{ 'onboarding.encryptionPassphrase' | translate }}
+              <span class="required">*</span>
+            </label>
+            <input
+              type="password"
+              class="form-input"
+              formControlName="encryption_passphrase"
+              autocomplete="off" />
+            <span class="field-helper-text">
+              {{ 'onboarding.encryptionPassphraseHelp' | translate }}
+            </span>
+            @if (newPassphraseForUser()) {
+            <p class="field-helper-text" style="color: var(--red-600); word-break: break-all">
+              {{ 'onboarding.encryptionNewPassphrase' | translate }}: {{ newPassphraseForUser() }}
+            </p>
+            } @else {
+            <a href="javascript:void(0)" (click)="forgotPassphrase()" class="field-helper-text">
+              {{ 'onboarding.encryptionForgotPassphrase' | translate }}
+            </a>
+            }
+          </div>
+          }
+
           <app-button
             [type]="ButtonTypeEnum.submit"
             [block]="true"

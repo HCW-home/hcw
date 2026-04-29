@@ -22,6 +22,7 @@ import {
 } from '@ionic/angular/standalone';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../core/services/auth.service';
+import { EncryptionService } from '../../core/services/encryption.service';
 import { UserWebSocketService } from '../../core/services/user-websocket.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { TranslationService } from '../../core/services/translation.service';
@@ -81,15 +82,44 @@ export class ProfilePage implements OnInit {
   availableLanguages = this.t.availableLanguages;
   communicationMethods: string[] = [];
 
+  encryptionEnabled = false;
+  encryptionKeyLoaded = false;
+
   get profileMenuItems(): ProfileMenuItem[] {
-    return [
-      { title: this.t.instant('profile.logout'), icon: 'log-out-outline', action: 'logout', color: 'danger' }
-    ];
+    const items: ProfileMenuItem[] = [];
+    if (this.encryptionEnabled) {
+      if (this.encryptionKeyLoaded) {
+        items.push({
+          title: this.t.instant('profile.encryptionPurgeKey'),
+          icon: 'key-outline',
+          action: 'encryption-purge',
+        });
+        items.push({
+          title: this.t.instant('profile.encryptionChangePassphrase'),
+          icon: 'key-outline',
+          action: 'encryption-change',
+        });
+      } else {
+        items.push({
+          title: this.t.instant('profile.encryptionLoadKey'),
+          icon: 'key-outline',
+          action: 'encryption-load',
+        });
+      }
+    }
+    items.push({
+      title: this.t.instant('profile.logout'),
+      icon: 'log-out-outline',
+      action: 'logout',
+      color: 'danger',
+    });
+    return items;
   }
 
   constructor(
     private navCtrl: NavController,
     private authService: AuthService,
+    private encryptionService: EncryptionService,
     private alertCtrl: AlertController,
     private toastCtrl: ToastController
   ) {}
@@ -113,6 +143,7 @@ export class ProfilePage implements OnInit {
           preferred_language: user.preferred_language,
           timezone: user.timezone
         };
+        this.refreshEncryptionStatus();
       }
     });
   }
@@ -123,12 +154,23 @@ export class ProfilePage implements OnInit {
         if (config.communication_methods) {
           this.communicationMethods = config.communication_methods;
         }
+        this.encryptionEnabled = !!config.encryption_enabled;
+        this.refreshEncryptionStatus();
       },
       error: () => {
         // Fallback to default methods if config fails
         this.communicationMethods = ['email', 'sms', 'whatsapp'];
       }
     });
+  }
+
+  async refreshEncryptionStatus() {
+    if (!this.currentUser) {
+      return;
+    }
+    this.encryptionKeyLoaded = await this.encryptionService.hasLocalKey(
+      this.currentUser.pk,
+    );
   }
 
   handleMenuItemClick(item: ProfileMenuItem) {
@@ -139,8 +181,143 @@ export class ProfilePage implements OnInit {
         case 'logout':
           this.confirmLogout();
           break;
+        case 'encryption-load':
+          this.promptEncryptionLoad();
+          break;
+        case 'encryption-purge':
+          this.confirmEncryptionPurge();
+          break;
+        case 'encryption-change':
+          this.promptEncryptionChange();
+          break;
       }
     }
+  }
+
+  async promptEncryptionLoad() {
+    const alert = await this.alertCtrl.create({
+      header: this.t.instant('profile.encryptionLoadKey'),
+      message: this.t.instant('profile.encryptionLoadKeyMessage'),
+      inputs: [
+        {
+          name: 'passphrase',
+          type: 'password',
+          placeholder: this.t.instant('profile.encryptionPassphrase'),
+        },
+      ],
+      buttons: [
+        { text: this.t.instant('common.cancel'), role: 'cancel' },
+        {
+          text: this.t.instant('profile.encryptionConfirm'),
+          handler: async (data: { passphrase: string }) => {
+            if (!this.currentUser || !data.passphrase) return;
+            try {
+              await this.encryptionService.activatePassphrase(
+                this.currentUser.pk,
+                data.passphrase,
+              );
+              this.encryptionKeyLoaded = true;
+              this.showToast(
+                this.t.instant('profile.encryptionKeyLoaded'),
+                'success',
+              );
+            } catch {
+              this.showToast(
+                this.t.instant('profile.encryptionInvalidPassphrase'),
+                'danger',
+              );
+            }
+          },
+        },
+        {
+          text: this.t.instant('profile.encryptionForgotPassphrase'),
+          handler: () => {
+            this.handleForgotPassphrase();
+            return false;
+          },
+        },
+      ],
+    });
+    await alert.present();
+  }
+
+  async handleForgotPassphrase() {
+    try {
+      const response = await this.encryptionService.forgotPassphrase();
+      const alert = await this.alertCtrl.create({
+        header: this.t.instant('profile.encryptionNewPassphraseTitle'),
+        message: `${this.t.instant('profile.encryptionNewPassphraseMessage')}\n\n${response.passphrase}`,
+        buttons: [{ text: this.t.instant('common.ok') }],
+      });
+      await alert.present();
+    } catch {
+      this.showToast(this.t.instant('common.error'), 'danger');
+    }
+  }
+
+  async confirmEncryptionPurge() {
+    const alert = await this.alertCtrl.create({
+      header: this.t.instant('profile.encryptionPurgeKey'),
+      message: this.t.instant('profile.encryptionPurgeConfirm'),
+      buttons: [
+        { text: this.t.instant('common.cancel'), role: 'cancel' },
+        {
+          text: this.t.instant('profile.encryptionConfirm'),
+          handler: async () => {
+            await this.encryptionService.purgeLocalKey();
+            this.encryptionKeyLoaded = false;
+            this.showToast(
+              this.t.instant('profile.encryptionPurged'),
+              'success',
+            );
+          },
+        },
+      ],
+    });
+    await alert.present();
+  }
+
+  async promptEncryptionChange() {
+    const alert = await this.alertCtrl.create({
+      header: this.t.instant('profile.encryptionChangePassphrase'),
+      inputs: [
+        {
+          name: 'oldPassphrase',
+          type: 'password',
+          placeholder: this.t.instant('profile.encryptionOldPassphrase'),
+        },
+        {
+          name: 'newPassphrase',
+          type: 'password',
+          placeholder: this.t.instant('profile.encryptionNewPassphrase'),
+        },
+      ],
+      buttons: [
+        { text: this.t.instant('common.cancel'), role: 'cancel' },
+        {
+          text: this.t.instant('profile.encryptionConfirm'),
+          handler: async (data: { oldPassphrase: string; newPassphrase: string }) => {
+            if (!data.oldPassphrase || !data.newPassphrase) return;
+            try {
+              await this.encryptionService.changePassphrase(
+                data.oldPassphrase,
+                data.newPassphrase,
+              );
+              this.showToast(
+                this.t.instant('profile.encryptionPassphraseChanged'),
+                'success',
+              );
+            } catch {
+              this.showToast(
+                this.t.instant('profile.encryptionInvalidOldPassphrase'),
+                'danger',
+              );
+            }
+          },
+        },
+      ],
+    });
+    await alert.present();
   }
 
   saveProfile() {

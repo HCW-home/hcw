@@ -48,6 +48,10 @@ export interface User {
   is_first_login?: boolean;
   one_time_auth_token?: string;
   verification_code?: number | null;
+  public_key?: string | null;
+  public_key_fingerprint?: string | null;
+  encryption_passphrase_pending?: boolean;
+  encryption_key_lost?: boolean;
 }
 
 export interface LoginRequest {

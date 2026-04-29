@@ -16,6 +16,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { ConsultationService } from '../../core/services/consultation.service';
 import { ConsultationWebSocketService } from '../../core/services/consultation-websocket.service';
+import { EncryptionService } from '../../core/services/encryption.service';
 import { UserWebSocketService } from '../../core/services/user-websocket.service';
 import { WebSocketState } from '../../core/models/websocket.model';
 import { User } from '../../core/models/user.model';
@@ -57,6 +58,9 @@ interface RequestStatus {
 export class HomePage implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   private t = inject(TranslationService);
+  private encryptionService = inject(EncryptionService);
+
+  private chatSymKey: CryptoKey | null = null;
 
   currentUser = signal<User | null>(null);
   hasReasons = signal(false);
@@ -496,7 +500,7 @@ export class HomePage implements OnInit, OnDestroy {
 
     this.chatWsService.messageUpdated$
       .pipe(takeUntil(this.destroy$))
-      .subscribe(event => {
+      .subscribe(async event => {
         if (!this.expandedConsultationId() || event.consultation_id !== this.expandedConsultationId()) return;
 
         if (event.state === 'created') {
@@ -505,10 +509,14 @@ export class HomePage implements OnInit, OnDestroy {
             const user = this.currentUser();
             const isSystem = !event.data.created_by;
             const isCurrentUser = isSystem ? false : (user?.pk === event.data.created_by?.id || user?.id === event.data.created_by?.id);
+            const decryptedContent = await this.decryptIfNeeded(
+              event.data.content,
+              event.data.is_encrypted,
+            );
             const newMessage: Message = {
               id: event.data.id,
               username: isSystem ? '' : `${event.data.created_by.first_name} ${event.data.created_by.last_name}`,
-              message: event.data.content,
+              message: decryptedContent,
               timestamp: event.data.created_at,
               isCurrentUser,
               isSystem,
@@ -601,35 +609,74 @@ export class HomePage implements OnInit, OnDestroy {
     return this.expandedConsultationId() === consultationId;
   }
 
-  private loadChatMessages(): void {
+  private async ensureChatSymKey(consultation: Consultation | undefined): Promise<void> {
+    // Decrypt the per-consultation sym_key from the beneficiary envelope, the
+    // only envelope a patient ever holds. Sets this.chatSymKey on success.
+    this.chatSymKey = null;
+    if (!consultation?.is_encrypted || !consultation.encrypted_key_for_beneficiary) {
+      return;
+    }
+    const userId = this.currentUser()?.pk;
+    if (!userId) return;
+    const privateKey = await this.encryptionService.getLocalPrivateKey(userId);
+    if (!privateKey) return;
+    try {
+      this.chatSymKey = await this.encryptionService.unwrapSymKeyWithPrivateKey(
+        consultation.encrypted_key_for_beneficiary,
+        privateKey,
+      );
+    } catch (err) {
+      console.warn('Failed to unwrap consultation sym_key', err);
+    }
+  }
+
+  private async decryptIfNeeded(content: string | null, isEncrypted?: boolean): Promise<string> {
+    if (!isEncrypted || !content || !this.chatSymKey) {
+      return content || '';
+    }
+    try {
+      return await this.encryptionService.decryptString(content, this.chatSymKey);
+    } catch {
+      return '[decryption failed]';
+    }
+  }
+
+  private async loadChatMessages(): Promise<void> {
     const id = this.expandedConsultationId();
     if (!id) return;
+
+    const consultation = this.consultations().find(c => c.id === id);
+    await this.ensureChatSymKey(consultation);
 
     this.chatCurrentPage = 1;
     this.consultationService.getConsultationMessagesPaginated(id, 1)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: response => {
+        next: async response => {
           this.chatHasMore.set(!!response.next);
           const currentUserId = this.currentUser()?.pk;
-          const msgs: Message[] = response.results.map(msg => {
-            const isSystem = !msg.created_by;
-            const isCurrentUser = isSystem ? false : msg.created_by.id === currentUserId;
-            return {
-              id: msg.id,
-              username: isSystem ? '' : isCurrentUser
-                ? this.t.instant('consultationDetail.you')
-                : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim(),
-              message: msg.content || '',
-              timestamp: msg.created_at,
-              isCurrentUser,
-              isSystem,
-              attachment: msg.attachment,
-              isEdited: msg.is_edited,
-              updatedAt: msg.updated_at,
-              deletedAt: msg.deleted_at,
-            };
-          }).reverse();
+          const msgs: Message[] = await Promise.all(
+            response.results.map(async msg => {
+              const isSystem = !msg.created_by;
+              const isCurrentUser = isSystem ? false : msg.created_by.id === currentUserId;
+              const decryptedMessage = await this.decryptIfNeeded(msg.content, msg.is_encrypted);
+              return {
+                id: msg.id,
+                username: isSystem ? '' : isCurrentUser
+                  ? this.t.instant('consultationDetail.you')
+                  : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim(),
+                message: decryptedMessage,
+                timestamp: msg.created_at,
+                isCurrentUser,
+                isSystem,
+                attachment: msg.attachment,
+                isEdited: msg.is_edited,
+                updatedAt: msg.updated_at,
+                deletedAt: msg.deleted_at,
+              };
+            }),
+          );
+          msgs.reverse();
           this.chatMessages.set(msgs);
         }
       });
@@ -676,11 +723,43 @@ export class HomePage implements OnInit, OnDestroy {
       });
   }
 
-  onChatSendMessage(data: SendMessageData): void {
+  async onChatSendMessage(data: SendMessageData): Promise<void> {
     const id = this.expandedConsultationId();
     if (!id) return;
 
-    this.consultationService.sendConsultationMessage(id, data.content || '', data.attachment)
+    let content = data.content || '';
+    let attachment = data.attachment;
+    let isEncrypted = false;
+    let encryptedAttachmentMetadata: string | null = null;
+
+    const consultation = this.consultations().find(c => c.id === id);
+    if (consultation?.is_encrypted && this.chatSymKey) {
+      isEncrypted = true;
+      if (data.content) {
+        content = await this.encryptionService.encryptString(data.content, this.chatSymKey);
+      }
+      if (data.attachment) {
+        const encryptedBlob = await this.encryptionService.encryptBlob(
+          data.attachment,
+          this.chatSymKey,
+        );
+        attachment = new File(
+          [encryptedBlob],
+          data.attachment.name,
+          { type: 'application/octet-stream' },
+        );
+        encryptedAttachmentMetadata =
+          await this.encryptionService.encryptAttachmentMetadata(
+            { file_name: data.attachment.name, mime_type: data.attachment.type },
+            this.chatSymKey,
+          );
+      }
+    }
+
+    this.consultationService.sendConsultationMessage(id, content, attachment, {
+      is_encrypted: isEncrypted || undefined,
+      encrypted_attachment_metadata: encryptedAttachmentMetadata,
+    })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {

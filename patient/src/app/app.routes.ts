@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { AuthGuard } from './core/guards/auth.guard';
 import { TermsGuard } from './core/guards/terms.guard';
+import { EncryptionGuard } from './core/guards/encryption.guard';
 import { canDeactivateVideoCall } from './core/guards/video-call.guard';
 
 export const routes: Routes = [
@@ -51,14 +52,22 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
   },
   {
+    path: 'activate-encryption',
+    loadComponent: () =>
+      import('./pages/activate-encryption/activate-encryption.page').then(
+        m => m.ActivateEncryptionPage,
+      ),
+    canActivate: [AuthGuard],
+  },
+  {
     path: 'home',
     loadComponent: () => import('./pages/home/home.page').then(m => m.HomePage),
-    canActivate: [AuthGuard, TermsGuard],
+    canActivate: [AuthGuard, TermsGuard, EncryptionGuard],
   },
   {
     path: 'notifications',
     loadComponent: () => import('./pages/notifications/notifications.page').then(m => m.NotificationsPage),
-    canActivate: [AuthGuard, TermsGuard],
+    canActivate: [AuthGuard, TermsGuard, EncryptionGuard],
   },
   {
     path: 'profile',
@@ -68,12 +77,12 @@ export const routes: Routes = [
   {
     path: 'new-request',
     loadComponent: () => import('./pages/new-request/new-request.page').then(m => m.NewRequestPage),
-    canActivate: [AuthGuard, TermsGuard],
+    canActivate: [AuthGuard, TermsGuard, EncryptionGuard],
   },
   {
     path: 'consultation/:id/video',
     loadComponent: () => import('./pages/video-consultation/video-consultation.page').then(m => m.VideoConsultationPage),
-    canActivate: [AuthGuard, TermsGuard],
+    canActivate: [AuthGuard, TermsGuard, EncryptionGuard],
     canDeactivate: [canDeactivateVideoCall],
   },
 ];

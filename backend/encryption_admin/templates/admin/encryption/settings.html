@@ -1,0 +1,105 @@
+{% extends "admin/base_site.html" %}
+{% load i18n unfold %}
+
+{% block title %}Encryption{% endblock %}
+
+{% block content %}
+    {% include "unfold/helpers/messages.html" %}
+
+    {% component "unfold/components/container.html" %}
+        <div class="flex flex-col gap-6 mb-4">
+
+            {% component "unfold/components/card.html" with title="Master key" %}
+                {% if master_public_key %}
+                    <p class="text-sm text-font-default-light dark:text-font-default-dark mb-2">
+                        <strong>Status:</strong>
+                        <span class="text-green-600 dark:text-green-400">Configured</span>
+                    </p>
+                    <p class="text-xs font-mono text-base-500 dark:text-base-400 break-all">
+                        Fingerprint: {{ master_public_key_fingerprint }}
+                    </p>
+                {% else %}
+                    <p class="text-sm text-font-default-light dark:text-font-default-dark mb-4">
+                        <strong>Status:</strong>
+                        <span class="text-red-600 dark:text-red-400">Not configured</span>
+                    </p>
+                    <p class="text-xs text-base-500 dark:text-base-400 mb-4">
+                        Generate a master keypair before enabling encryption. The
+                        private key is generated in your browser and downloaded
+                        as a .pem file. The server only stores the public key.
+                    </p>
+                {% endif %}
+
+                <div class="mt-4">
+                    <a href="{% url 'admin:encryption_generate_master' %}"
+                       class="inline-flex items-center px-4 py-2 rounded-default bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold shadow-xs">
+                        {% if master_public_key %}Replace master key{% else %}Generate master key{% endif %}
+                    </a>
+                </div>
+            {% endcomponent %}
+
+            {% component "unfold/components/card.html" with title="Encryption toggle" %}
+                <p class="text-sm text-font-default-light dark:text-font-default-dark mb-2">
+                    <strong>Status:</strong>
+                    {% if encryption_enabled %}
+                        <span class="text-green-600 dark:text-green-400">Enabled</span>
+                    {% else %}
+                        <span class="text-base-500 dark:text-base-400">Disabled</span>
+                    {% endif %}
+                </p>
+                <p class="text-xs text-base-500 dark:text-base-400 mb-4">
+                    {{ encrypted_consultations_count }} encrypted consultation(s) on record.
+                </p>
+
+                {% if encryption_enabled %}
+                    <div class="flex flex-wrap gap-2">
+                        <form method="post" action="{% url 'admin:encryption_disable' %}">
+                            {% csrf_token %}
+                            <button type="submit"
+                                    class="inline-flex items-center px-4 py-2 rounded-default bg-base-600 hover:bg-base-700 text-white text-sm font-semibold shadow-xs">
+                                Disable encryption
+                            </button>
+                        </form>
+                        <form method="post" action="{% url 'admin:encryption_reprovision' %}">
+                            {% csrf_token %}
+                            <button type="submit"
+                                    class="inline-flex items-center px-4 py-2 rounded-default bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold shadow-xs">
+                                Re-provision missing keypairs
+                            </button>
+                        </form>
+                    </div>
+                    <p class="mt-2 text-xs text-base-500 dark:text-base-400">
+                        Disabling will not decrypt anything. Existing encrypted
+                        consultations stay encrypted; only new consultations will
+                        be created in clear.
+                    </p>
+                    <p class="mt-1 text-xs text-base-500 dark:text-base-400">
+                        Re-provisioning runs the same job as initial activation: it
+                        skips users and queues that already have a keypair, only
+                        filling in the gaps.
+                    </p>
+                {% else %}
+                    <form method="post" action="{% url 'admin:encryption_enable' %}">
+                        {% csrf_token %}
+                        <button type="submit"
+                                {% if not master_public_key %}disabled class="inline-flex items-center px-4 py-2 rounded-default bg-base-300 text-base-500 text-sm font-semibold cursor-not-allowed"{% else %}class="inline-flex items-center px-4 py-2 rounded-default bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold shadow-xs"{% endif %}>
+                            Enable encryption
+                        </button>
+                    </form>
+                    {% if not master_public_key %}
+                        <p class="mt-2 text-xs text-red-500 dark:text-red-400">
+                            A master key must be configured first.
+                        </p>
+                    {% else %}
+                        <p class="mt-2 text-xs text-base-500 dark:text-base-400">
+                            Enabling will trigger a background job that
+                            provisions a keypair for every active user (with a
+                            passphrase emailed to them) and every queue.
+                        </p>
+                    {% endif %}
+                {% endif %}
+            {% endcomponent %}
+
+        </div>
+    {% endcomponent %}
+{% endblock %}

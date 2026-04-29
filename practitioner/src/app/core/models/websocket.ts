@@ -240,6 +240,8 @@ export interface MessageEventData {
   };
   is_edited: boolean;
   deleted_at: string | null;
+  is_encrypted?: boolean;
+  encrypted_attachment_metadata?: string | null;
 }
 
 export interface MessageEvent {

@@ -2,7 +2,7 @@ from consultations.views import BookingSlotViewSet
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from . import views
+from . import encryption_views, views
 
 router = DefaultRouter()
 router.register(r"languages", views.LanguageViewSet)
@@ -31,6 +31,26 @@ urlpatterns = [
     path("api/", include(router.urls)),
     path("api/auth/openid/", views.OpenIDView.as_view(), name="openid_login"),
     path('api/auth/send-verification-code/', views.SendVerificationCodeView.as_view()),
+    path(
+        "api/auth/encryption/activate-passphrase/",
+        encryption_views.EncryptionActivatePassphraseView.as_view(),
+        name="encryption_activate_passphrase",
+    ),
+    path(
+        "api/auth/encryption/change-passphrase/",
+        encryption_views.EncryptionChangePassphraseView.as_view(),
+        name="encryption_change_passphrase",
+    ),
+    path(
+        "api/auth/encryption/forgot-passphrase/",
+        encryption_views.EncryptionForgotPassphraseView.as_view(),
+        name="encryption_forgot_passphrase",
+    ),
+    path(
+        "api/users/<int:user_id>/regenerate-encryption-key/",
+        encryption_views.RegenerateUserKeyView.as_view(),
+        name="encryption_regenerate_user_key",
+    ),
     path("api/config/", views.AppConfigView.as_view(), name="app_config"),
     path(
         "api/user/notifications/",

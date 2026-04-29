@@ -77,6 +77,27 @@ export class ConsultationService {
     );
   }
 
+  updateConsultationEncryption(
+    id: number,
+    envelopes: {
+      is_encrypted: boolean;
+      encrypted_key_for_queue?: string | null;
+      queue_pubkey_fingerprint?: string | null;
+      encrypted_key_for_owned_by?: string | null;
+      owned_by_pubkey_fingerprint?: string | null;
+      encrypted_key_for_created_by?: string | null;
+      created_by_pubkey_fingerprint?: string | null;
+      encrypted_key_for_beneficiary?: string | null;
+      beneficiary_pubkey_fingerprint?: string | null;
+      encrypted_key_for_master?: string | null;
+    },
+  ): Observable<Consultation> {
+    return this.http.patch<Consultation>(
+      `${this.apiUrl}/consultations/${id}/`,
+      envelopes,
+    );
+  }
+
   deleteConsultation(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/consultations/${id}/`);
   }
@@ -228,7 +249,12 @@ export class ConsultationService {
 
   sendConsultationMessage(
     consultationId: number,
-    data: { content?: string; attachment?: File }
+    data: {
+      content?: string;
+      attachment?: File;
+      is_encrypted?: boolean;
+      encrypted_attachment_metadata?: string | null;
+    }
   ): Observable<ConsultationMessage> {
     const formData = new FormData();
     if (data.content) {
@@ -236,6 +262,15 @@ export class ConsultationService {
     }
     if (data.attachment) {
       formData.append('attachment', data.attachment);
+    }
+    if (data.is_encrypted) {
+      formData.append('is_encrypted', 'true');
+    }
+    if (data.encrypted_attachment_metadata) {
+      formData.append(
+        'encrypted_attachment_metadata',
+        data.encrypted_attachment_metadata,
+      );
     }
 
     return this.http.post<ConsultationMessage>(

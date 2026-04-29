@@ -75,6 +75,10 @@ export interface IUser {
   date_of_birth?: string | null;
   gender?: 'male' | 'female' | 'other' | 'unknown';
   custom_fields?: import('../../../core/models/consultation').CustomFieldValue[];
+  public_key?: string | null;
+  public_key_fingerprint?: string | null;
+  encryption_passphrase_pending?: boolean;
+  encryption_key_lost?: boolean;
 }
 
 export interface IUserUpdateRequest {

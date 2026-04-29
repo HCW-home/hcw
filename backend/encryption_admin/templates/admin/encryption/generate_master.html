@@ -1,0 +1,135 @@
+{% extends "admin/base_site.html" %}
+{% load i18n unfold %}
+
+{% block title %}Generate master key{% endblock %}
+
+{% block content %}
+    {% include "unfold/helpers/messages.html" %}
+
+    {% component "unfold/components/container.html" %}
+        <div class="flex flex-col gap-6 mb-4">
+
+            {% component "unfold/components/card.html" with title="Generate master keypair" %}
+                <p class="text-sm text-font-default-light dark:text-font-default-dark mb-2">
+                    Click <strong>Generate &amp; download</strong> below. Your browser
+                    will create an RSA-4096 keypair using WebCrypto, automatically
+                    download the private key as <code>master-private-key.pem</code>,
+                    and POST the public key back to the server.
+                </p>
+                <p class="text-sm text-red-600 dark:text-red-400 mb-4">
+                    <strong>Important:</strong> the private key is the master recovery
+                    key for the entire platform. Store it somewhere safe (password
+                    manager, sealed envelope). The server <em>never sees</em> the
+                    private key.
+                </p>
+
+                {% if existing_fingerprint %}
+                    <p class="text-xs font-mono text-base-500 dark:text-base-400 break-all mb-4">
+                        Current fingerprint: {{ existing_fingerprint }}
+                    </p>
+                    <label class="text-xs text-red-600 dark:text-red-400 mb-4 block">
+                        <input type="checkbox" id="override-checkbox"> I understand this
+                        will replace the current master key. Existing encrypted
+                        consultations will lose their master recovery envelope.
+                    </label>
+                {% endif %}
+
+                <button type="button" id="generate-button"
+                        class="inline-flex items-center px-4 py-2 rounded-default bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold shadow-xs">
+                    Generate &amp; download
+                </button>
+                <p id="status" class="mt-4 text-sm"></p>
+                <p id="fingerprint-display" class="mt-2 text-xs font-mono text-base-500 dark:text-base-400 break-all"></p>
+            {% endcomponent %}
+
+        </div>
+    {% endcomponent %}
+
+    <script>
+    (function () {
+        const button = document.getElementById('generate-button');
+        const statusEl = document.getElementById('status');
+        const fpEl = document.getElementById('fingerprint-display');
+        const overrideEl = document.getElementById('override-checkbox');
+
+        function arrayBufferToPem(buffer, label) {
+            const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+            const lines = base64.match(/.{1,64}/g).join('\n');
+            return `-----BEGIN ${label}-----\n${lines}\n-----END ${label}-----\n`;
+        }
+
+        async function fingerprint(pem) {
+            const data = new TextEncoder().encode(pem.trim());
+            const digest = await crypto.subtle.digest('SHA-256', data);
+            return Array.from(new Uint8Array(digest))
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
+        }
+
+        function downloadFile(name, content) {
+            const blob = new Blob([content], { type: 'application/x-pem-file' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = name;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        function getCookie(name) {
+            const m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+            return m ? decodeURIComponent(m[1]) : null;
+        }
+
+        button.addEventListener('click', async () => {
+            button.disabled = true;
+            statusEl.textContent = 'Generating RSA-4096 keypair…';
+            try {
+                const keypair = await crypto.subtle.generateKey(
+                    {
+                        name: 'RSA-OAEP',
+                        modulusLength: 4096,
+                        publicExponent: new Uint8Array([1, 0, 1]),
+                        hash: 'SHA-256',
+                    },
+                    true,
+                    ['encrypt', 'decrypt']
+                );
+                const privateBuf = await crypto.subtle.exportKey('pkcs8', keypair.privateKey);
+                const publicBuf = await crypto.subtle.exportKey('spki', keypair.publicKey);
+                const privatePem = arrayBufferToPem(privateBuf, 'PRIVATE KEY');
+                const publicPem = arrayBufferToPem(publicBuf, 'PUBLIC KEY');
+                const fp = await fingerprint(publicPem);
+
+                downloadFile('master-private-key.pem', privatePem);
+                fpEl.textContent = 'Public key fingerprint: ' + fp;
+
+                statusEl.textContent = 'Uploading public key to server…';
+                const formData = new FormData();
+                formData.append('public_key', publicPem);
+                if (overrideEl && overrideEl.checked) {
+                    formData.append('override', '1');
+                }
+                formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+
+                const resp = await fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin',
+                });
+                if (!resp.ok) {
+                    const text = await resp.text();
+                    throw new Error(text || ('HTTP ' + resp.status));
+                }
+                statusEl.textContent = 'Done. Redirecting…';
+                window.location.href = resp.url;
+            } catch (err) {
+                statusEl.textContent = 'Error: ' + err.message;
+                button.disabled = false;
+            }
+        });
+    })();
+    </script>
+{% endblock %}

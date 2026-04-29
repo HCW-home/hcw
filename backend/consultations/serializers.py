@@ -137,6 +137,8 @@ class ConsultationUserSerializer(serializers.ModelSerializer):
             "timezone",
             "temporary",
             "specialities",
+            "public_key",
+            "public_key_fingerprint",
         ]
         read_only_field = fields
 
@@ -146,7 +148,14 @@ class QueueSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Queue
-        fields = ["id", "name", "users"]
+        fields = [
+            "id",
+            "name",
+            "users",
+            "public_key",
+            "public_key_fingerprint",
+        ]
+        read_only_fields = ["public_key", "public_key_fingerprint"]
 
 
 class ParticipantReadSerializer(serializers.ModelSerializer):
@@ -314,6 +323,16 @@ class ConsultationSerializer(CustomFieldsMixin, serializers.ModelSerializer):
             "appointments",
             "unread_count",
             "last_read_at",
+            "is_encrypted",
+            "encrypted_key_for_queue",
+            "queue_pubkey_fingerprint",
+            "encrypted_key_for_owned_by",
+            "owned_by_pubkey_fingerprint",
+            "encrypted_key_for_created_by",
+            "created_by_pubkey_fingerprint",
+            "encrypted_key_for_beneficiary",
+            "beneficiary_pubkey_fingerprint",
+            "encrypted_key_for_master",
         ]
         read_only_fields = [
             "id",
@@ -326,6 +345,77 @@ class ConsultationSerializer(CustomFieldsMixin, serializers.ModelSerializer):
             "unread_count",
             "last_read_at",
         ]
+
+    def validate(self, attrs):
+        from constance import config as constance_config
+
+        attrs = super().validate(attrs)
+        instance = self.instance
+
+        # On creation: if platform-wide encryption is on, the consultation
+        # must be created encrypted with at least the master recovery
+        # envelope. This is the server-side guarantee that nothing slips
+        # through in clear once the admin has flipped the toggle.
+        if instance is None and constance_config.encryption_enabled:
+            is_encrypted = attrs.get("is_encrypted", False)
+            master_envelope = attrs.get("encrypted_key_for_master")
+            if not is_encrypted or not master_envelope:
+                raise serializers.ValidationError(
+                    {
+                        "is_encrypted": _(
+                            "Encryption is enabled platform-wide; new "
+                            "consultations must be created with is_encrypted=true "
+                            "and at least encrypted_key_for_master."
+                        )
+                    }
+                )
+
+        if instance and instance.is_encrypted:
+            if (
+                "beneficiary" in attrs
+                and attrs["beneficiary"] != instance.beneficiary
+                and "encrypted_key_for_beneficiary" not in attrs
+            ):
+                raise serializers.ValidationError(
+                    {
+                        "encrypted_key_for_beneficiary": _(
+                            "When changing beneficiary on an encrypted "
+                            "consultation, encrypted_key_for_beneficiary "
+                            "(rewrapped for the new beneficiary's pubkey) "
+                            "must be provided."
+                        )
+                    }
+                )
+            if (
+                "owned_by" in attrs
+                and attrs["owned_by"] != instance.owned_by
+                and "encrypted_key_for_owned_by" not in attrs
+            ):
+                raise serializers.ValidationError(
+                    {
+                        "encrypted_key_for_owned_by": _(
+                            "When changing owned_by on an encrypted "
+                            "consultation, encrypted_key_for_owned_by must "
+                            "be provided."
+                        )
+                    }
+                )
+            if (
+                "group" in attrs
+                and attrs["group"] != instance.group
+                and attrs["group"] is not None
+                and "encrypted_key_for_queue" not in attrs
+            ):
+                raise serializers.ValidationError(
+                    {
+                        "encrypted_key_for_queue": _(
+                            "When changing group on an encrypted "
+                            "consultation, encrypted_key_for_queue (wrapped "
+                            "with the new queue's pubkey) must be provided."
+                        )
+                    }
+                )
+        return attrs
 
     def get_next_appointment(self, obj):
         """Get the next non-cancelled appointment for this consultation."""
@@ -719,6 +809,8 @@ class ConsultationMessageSerializer(serializers.ModelSerializer):
             "created_by",
             "is_edited",
             "deleted_at",
+            "is_encrypted",
+            "encrypted_attachment_metadata",
         ]
 
     @extend_schema_field(AttachmentMetadataSerializer(allow_null=True))
@@ -752,6 +844,8 @@ class ConsultationMessageCreateSerializer(ConsultationMessageSerializer):
             "created_by",
             "is_edited",
             "deleted_at",
+            "is_encrypted",
+            "encrypted_attachment_metadata",
         ]
 
     def validate_attachment(self, value):

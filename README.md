@@ -183,6 +183,17 @@ All four processes (Django backend, Celery worker, practitioner frontend, patien
 make dev
 ```
 
+**Tenant creation**
+
+```python
+tenant_name = 'dev'
+tenant = Tenant(schema_name=tenant_name)
+tenant.save()
+
+Domain.objects.create(domain=f'127.0.0.1',tenant=tenant)
+Domain.objects.create(domain=f'localhost',tenant=tenant)
+```
+
 **Default ports**
 
 | Process | URL |

@@ -15,9 +15,11 @@ import {
   Validators,
 } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Observable, Subject, takeUntil, debounceTime, distinctUntilChanged, map } from 'rxjs';
+import { Observable, Subject, takeUntil, debounceTime, distinctUntilChanged, firstValueFrom, map } from 'rxjs';
 
 import { ConsultationService } from '../../../../core/services/consultation.service';
+import { EncryptionService } from '../../../../core/services/encryption.service';
+import { Auth } from '../../../../core/services/auth';
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { ValidationService } from '../../../../core/services/validation.service';
 import {
@@ -264,6 +266,8 @@ export class ConsultationForm implements OnInit, OnDestroy {
   private router = inject(Router);
   private fb = inject(FormBuilder);
   private consultationService = inject(ConsultationService);
+  private encryptionService = inject(EncryptionService);
+  private authService = inject(Auth);
   private toasterService = inject(ToasterService);
   private validationService = inject(ValidationService);
   private userService = inject(UserService);
@@ -545,7 +549,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
     }
   }
 
-  createConsultation(): void {
+  async createConsultation(): Promise<void> {
     const formValue = this.consultationForm.value;
     const beneficiaryId = typeof formValue.beneficiary_id === 'number'
       ? formValue.beneficiary_id
@@ -553,15 +557,39 @@ export class ConsultationForm implements OnInit, OnDestroy {
     const ownedById = typeof formValue.owned_by_id === 'number'
       ? formValue.owned_by_id
       : (formValue.owned_by_id ? parseInt(formValue.owned_by_id) : undefined);
+    const groupId = formValue.group_id ? parseInt(formValue.group_id) : undefined;
     const consultationData: CreateConsultationRequest = {
       title: formValue.title,
       description: formValue.description || undefined,
-      group_id: formValue.group_id ? parseInt(formValue.group_id) : undefined,
+      group_id: groupId,
       beneficiary_id: beneficiaryId,
       owned_by_id: ownedById,
       visible_by_patient: formValue.visible_by_patient,
       custom_fields: this.buildCustomFieldsPayload(),
     };
+
+    // If platform-wide encryption is on, generate the sym_key, wrap it for
+    // every recipient and the master, and ship the envelopes inline with the
+    // POST. The server rejects creation in clear when encryption_enabled.
+    try {
+      const envelopes = await this.buildEncryptionEnvelopes(
+        groupId,
+        beneficiaryId,
+        ownedById,
+      );
+      if (envelopes) {
+        Object.assign(consultationData, envelopes);
+      }
+    } catch (err) {
+      console.error('[encryption] failed to prepare envelopes', err);
+      this.isSaving.set(false);
+      this.toasterService.show(
+        'error',
+        this.t.instant('consultationForm.encryptionWarningTitle'),
+        this.t.instant('consultationForm.encryptionWarningMessage'),
+      );
+      return;
+    }
 
     this.consultationService
       .createConsultation(consultationData)
@@ -589,6 +617,98 @@ export class ConsultationForm implements OnInit, OnDestroy {
           this.toasterService.show('error', this.t.instant('consultationForm.errorCreating'), getErrorMessage(error));
         },
       });
+  }
+
+  private async buildEncryptionEnvelopes(
+    groupId: number | undefined,
+    beneficiaryId: number | undefined,
+    ownedById: number | undefined,
+  ): Promise<Partial<CreateConsultationRequest> | null> {
+    // Returns null when encryption is disabled platform-wide. Otherwise,
+    // generates a fresh sym_key, wraps it for every recipient whose pubkey
+    // is known + the master, and returns the envelopes ready to be merged
+    // into the create payload. Throws if encryption is enabled but a
+    // mandatory pubkey (master) is missing.
+    this.authService.invalidateConfigCache();
+    const config = await firstValueFrom(this.authService.getOpenIDConfig());
+    console.info(
+      '[encryption] /config snapshot — encryption_enabled=%s, master_public_key set=%s',
+      !!config?.encryption_enabled,
+      !!config?.master_public_key,
+    );
+    if (!config?.encryption_enabled) {
+      return null;
+    }
+    if (!config.master_public_key) {
+      throw new Error('encryption_enabled but master_public_key missing in /config');
+    }
+
+    const currentUser = this.currentUser();
+    const symKey = await this.encryptionService.generateSymKey();
+    const envelopes: Partial<CreateConsultationRequest> = {
+      is_encrypted: true,
+    };
+
+    envelopes.encrypted_key_for_master =
+      await this.encryptionService.wrapSymKeyForPublicKey(
+        symKey,
+        config.master_public_key,
+      );
+
+    if (currentUser?.public_key) {
+      envelopes.encrypted_key_for_created_by =
+        await this.encryptionService.wrapSymKeyForPublicKey(
+          symKey,
+          currentUser.public_key,
+        );
+      envelopes.created_by_pubkey_fingerprint =
+        currentUser.public_key_fingerprint ?? null;
+    }
+
+    if (groupId) {
+      const queue = this.queues().find(q => q.id === groupId);
+      if (queue?.public_key) {
+        envelopes.encrypted_key_for_queue =
+          await this.encryptionService.wrapSymKeyForPublicKey(
+            symKey,
+            queue.public_key,
+          );
+        envelopes.queue_pubkey_fingerprint =
+          queue.public_key_fingerprint ?? null;
+      }
+    }
+
+    if (beneficiaryId) {
+      const beneficiary = this.beneficiaryCache.get(beneficiaryId);
+      if (beneficiary?.public_key) {
+        envelopes.encrypted_key_for_beneficiary =
+          await this.encryptionService.wrapSymKeyForPublicKey(
+            symKey,
+            beneficiary.public_key,
+          );
+        envelopes.beneficiary_pubkey_fingerprint =
+          beneficiary.public_key_fingerprint ?? null;
+      }
+    }
+
+    if (ownedById) {
+      const owner = this.practitionerCache.get(ownedById);
+      if (owner?.public_key) {
+        envelopes.encrypted_key_for_owned_by =
+          await this.encryptionService.wrapSymKeyForPublicKey(
+            symKey,
+            owner.public_key,
+          );
+        envelopes.owned_by_pubkey_fingerprint =
+          owner.public_key_fingerprint ?? null;
+      }
+    }
+
+    console.info(
+      '[encryption] envelopes prepared:',
+      Object.keys(envelopes).filter(k => k !== 'is_encrypted'),
+    );
+    return envelopes;
   }
 
   private createPendingAppointments(consultationId: number): void {

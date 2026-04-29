@@ -209,6 +209,66 @@
           </div>
         </div>
 
+        @if (encryptionEnabled()) {
+        <div class="profile-section">
+          <h3 class="section-title">
+            {{ 'userProfile.encryption' | translate }}
+          </h3>
+          <p class="section-description">
+            @if (encryptionKeyLoaded()) {
+              <span style="color: var(--green-600)">{{ 'userProfile.encryptionKeyLoaded' | translate }}</span>
+            } @else {
+              <span style="color: var(--red-600)">{{ 'userProfile.encryptionKeyNotLoaded' | translate }}</span>
+            }
+          </p>
+
+          @if (!encryptionKeyLoaded() && !encryptionShowLoadForm()) {
+            <button type="button" class="btn-save" (click)="encryptionShowLoadForm.set(true)">
+              {{ 'userProfile.encryptionLoadKey' | translate }}
+            </button>
+          }
+          @if (encryptionShowLoadForm()) {
+            <div class="form-group">
+              <label class="form-label">{{ 'userProfile.encryptionPassphrase' | translate }}</label>
+              <input type="password" class="form-input" [(ngModel)]="encryptionLoadPassphrase" [ngModelOptions]="{standalone: true}" autocomplete="off" />
+            </div>
+            <button type="button" class="btn-save" (click)="onEncryptionLoadKey()">
+              {{ 'userProfile.encryptionConfirm' | translate }}
+            </button>
+            <button type="button" class="btn-save" (click)="encryptionShowLoadForm.set(false)" style="margin-left: 8px">
+              {{ 'userProfile.cancel' | translate }}
+            </button>
+          }
+
+          @if (encryptionKeyLoaded()) {
+            <button type="button" class="btn-save" (click)="onEncryptionPurgeKey()">
+              {{ 'userProfile.encryptionPurgeKey' | translate }}
+            </button>
+            <button type="button" class="btn-save" (click)="encryptionShowChangeForm.set(!encryptionShowChangeForm())" style="margin-left: 8px">
+              {{ 'userProfile.encryptionChangePassphrase' | translate }}
+            </button>
+          }
+
+          @if (encryptionShowChangeForm()) {
+            <div class="form-group">
+              <label class="form-label">{{ 'userProfile.encryptionOldPassphrase' | translate }}</label>
+              <input type="password" class="form-input" [(ngModel)]="encryptionOldPassphrase" [ngModelOptions]="{standalone: true}" autocomplete="off" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">{{ 'userProfile.encryptionNewPassphrase' | translate }}</label>
+              <input type="password" class="form-input" [(ngModel)]="encryptionNewPassphrase" [ngModelOptions]="{standalone: true}" autocomplete="off" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">{{ 'userProfile.encryptionConfirmPassphrase' | translate }}</label>
+              <input type="password" class="form-input" [(ngModel)]="encryptionConfirmPassphrase" [ngModelOptions]="{standalone: true}" autocomplete="off" />
+            </div>
+            <button type="button" class="btn-save" (click)="onEncryptionChangePassphrase()">
+              {{ 'userProfile.encryptionConfirm' | translate }}
+            </button>
+          }
+        </div>
+        }
+
         <div class="form-actions">
           <button class="btn-save" type="submit" [disabled]="isSaving()">
             @if (isSaving()) {

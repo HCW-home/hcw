@@ -7,6 +7,7 @@ import {
   redirectIfUnauthenticated,
   redirectIfTermsNotAccepted,
   redirectIfFirstLogin,
+  redirectIfEncryptionNotActivated,
 } from './core/services/auth.guard';
 
 export const routes: Routes = [
@@ -58,6 +59,14 @@ export const routes: Routes = [
     canMatch: [redirectIfUnauthenticated],
   },
   {
+    path: RoutePaths.ACTIVATE_ENCRYPTION,
+    loadComponent: () =>
+      import('./pages/activate-encryption/activate-encryption').then(
+        c => c.ActivateEncryptionPage,
+      ),
+    canMatch: [redirectIfUnauthenticated],
+  },
+  {
     path: RoutePaths.AUTH,
     loadChildren: () =>
       import('./modules/auth/auth-module').then(c => c.AuthModule),
@@ -68,7 +77,11 @@ export const routes: Routes = [
     loadChildren: () =>
       import('./modules/user/user-module').then(c => c.UserModule),
     canMatch: [redirectIfUnauthenticated],
-    canActivate: [redirectIfTermsNotAccepted, redirectIfFirstLogin],
+    canActivate: [
+      redirectIfTermsNotAccepted,
+      redirectIfFirstLogin,
+      redirectIfEncryptionNotActivated,
+    ],
   },
   {
     path: '',

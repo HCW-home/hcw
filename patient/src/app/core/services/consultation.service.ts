@@ -73,11 +73,25 @@ export class ConsultationService {
     return this.api.get<PaginatedResponse<ConsultationMessage>>(`/user/consultations/${consultationId}/messages/`, { page });
   }
 
-  sendConsultationMessage(consultationId: number, content: string, attachment?: File): Observable<ConsultationMessage> {
+  sendConsultationMessage(
+    consultationId: number,
+    content: string,
+    attachment?: File,
+    options?: { is_encrypted?: boolean; encrypted_attachment_metadata?: string | null },
+  ): Observable<ConsultationMessage> {
     const formData = new FormData();
     formData.append('content', content);
     if (attachment) {
       formData.append('attachment', attachment);
+    }
+    if (options?.is_encrypted) {
+      formData.append('is_encrypted', 'true');
+    }
+    if (options?.encrypted_attachment_metadata) {
+      formData.append(
+        'encrypted_attachment_metadata',
+        options.encrypted_attachment_metadata,
+      );
     }
     return this.api.post<ConsultationMessage>(`/user/consultations/${consultationId}/messages/`, formData);
   }

@@ -13,6 +13,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FormBuilder,
   FormGroup,
+  FormsModule,
   Validators,
   ReactiveFormsModule,
 } from '@angular/forms';
@@ -21,6 +22,7 @@ import { Subject, takeUntil } from 'rxjs';
 
 import { UserService } from '../../../../core/services/user.service';
 import { Auth } from '../../../../core/services/auth';
+import { EncryptionService } from '../../../../core/services/encryption.service';
 import { ToasterService } from '../../../../core/services/toaster.service';
 import {
   LiveKitService,
@@ -65,6 +67,7 @@ type TestStatus = 'idle' | 'testing' | 'working' | 'error' | 'playing';
     Select,
     Button,
     CommonModule,
+    FormsModule,
     ReactiveFormsModule,
     TranslatePipe,
   ],
@@ -90,6 +93,15 @@ export class UserProfile implements OnInit, OnDestroy {
   isUploadingAvatar = signal(false);
   caldavUrlCopied = signal(false);
   caldavUrl = `${window.location.origin}/caldav/calendar/`;
+
+  encryptionEnabled = signal(false);
+  encryptionKeyLoaded = signal(false);
+  encryptionShowLoadForm = signal(false);
+  encryptionShowChangeForm = signal(false);
+  encryptionLoadPassphrase = '';
+  encryptionOldPassphrase = '';
+  encryptionNewPassphrase = '';
+  encryptionConfirmPassphrase = '';
 
   profileForm: FormGroup;
 
@@ -152,6 +164,7 @@ export class UserProfile implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private userService: UserService,
     private authService: Auth,
+    private encryptionService: EncryptionService,
     private toasterService: ToasterService
   ) {
     this.profileForm = this.fb.group({
@@ -170,6 +183,102 @@ export class UserProfile implements OnInit, OnDestroy {
     this.loadUserProfile();
     this.loadDropdownData();
     this.setupLivekitSubscriptions();
+    this.refreshEncryptionStatus();
+  }
+
+  private async refreshEncryptionStatus(): Promise<void> {
+    try {
+      const config = await this.authService.getOpenIDConfig().toPromise();
+      this.encryptionEnabled.set(!!config?.encryption_enabled);
+    } catch {
+      this.encryptionEnabled.set(false);
+    }
+    const user = this.user();
+    if (user) {
+      this.encryptionKeyLoaded.set(
+        await this.encryptionService.hasLocalKey(user.pk),
+      );
+    }
+  }
+
+  async onEncryptionLoadKey(): Promise<void> {
+    const user = this.user();
+    if (!user || !this.encryptionLoadPassphrase) {
+      return;
+    }
+    try {
+      await this.encryptionService.activatePassphrase(
+        user.pk,
+        this.encryptionLoadPassphrase,
+      );
+      this.encryptionLoadPassphrase = '';
+      this.encryptionShowLoadForm.set(false);
+      this.encryptionKeyLoaded.set(true);
+      this.toasterService.show(
+        'success',
+        this.t.instant('userProfile.encryptionKeyLoadedTitle'),
+        this.t.instant('userProfile.encryptionKeyLoadedMessage'),
+      );
+    } catch (err) {
+      console.error('encryption activatePassphrase failed', err);
+      const isHttpError =
+        typeof err === 'object' && err !== null && 'status' in err;
+      this.toasterService.show(
+        'error',
+        this.t.instant('userProfile.encryptionErrorTitle'),
+        isHttpError
+          ? this.t.instant('userProfile.encryptionInvalidPassphrase')
+          : this.t.instant('userProfile.encryptionStorageError'),
+      );
+    }
+  }
+
+  async onEncryptionPurgeKey(): Promise<void> {
+    if (!confirm(this.t.instant('userProfile.encryptionPurgeConfirm'))) {
+      return;
+    }
+    await this.encryptionService.purgeLocalKey();
+    this.encryptionKeyLoaded.set(false);
+    this.toasterService.show(
+      'success',
+      this.t.instant('userProfile.encryptionPurgedTitle'),
+      this.t.instant('userProfile.encryptionPurgedMessage'),
+    );
+  }
+
+  async onEncryptionChangePassphrase(): Promise<void> {
+    if (!this.encryptionOldPassphrase || !this.encryptionNewPassphrase) {
+      return;
+    }
+    if (this.encryptionNewPassphrase !== this.encryptionConfirmPassphrase) {
+      this.toasterService.show(
+        'error',
+        this.t.instant('userProfile.encryptionErrorTitle'),
+        this.t.instant('userProfile.encryptionPassphraseMismatch'),
+      );
+      return;
+    }
+    try {
+      await this.encryptionService.changePassphrase(
+        this.encryptionOldPassphrase,
+        this.encryptionNewPassphrase,
+      );
+      this.encryptionOldPassphrase = '';
+      this.encryptionNewPassphrase = '';
+      this.encryptionConfirmPassphrase = '';
+      this.encryptionShowChangeForm.set(false);
+      this.toasterService.show(
+        'success',
+        this.t.instant('userProfile.encryptionPassphraseChangedTitle'),
+        this.t.instant('userProfile.encryptionPassphraseChangedMessage'),
+      );
+    } catch {
+      this.toasterService.show(
+        'error',
+        this.t.instant('userProfile.encryptionErrorTitle'),
+        this.t.instant('userProfile.encryptionInvalidOldPassphrase'),
+      );
+    }
   }
 
   ngOnDestroy(): void {
@@ -188,6 +297,7 @@ export class UserProfile implements OnInit, OnDestroy {
           this.user.set(user);
           this.populateForm(user);
           this.isLoadingUser.set(false);
+          this.refreshEncryptionStatus();
         },
         error: error => {
           this.isLoadingUser.set(false);

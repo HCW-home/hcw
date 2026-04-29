@@ -114,9 +114,17 @@ class UserDetailsSerializer(CustomFieldsMixin, serializers.ModelSerializer):
             "specialities",
             "date_of_birth",
             "gender",
+            "public_key",
+            "public_key_fingerprint",
+            "encryption_passphrase_pending",
+            "encryption_key_lost",
         ]
         read_only_fields = [
             "is_practitioner",
+            "public_key",
+            "public_key_fingerprint",
+            "encryption_passphrase_pending",
+            "encryption_key_lost",
         ]
 
     def validate_mobile_phone_number(self, value):

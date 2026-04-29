@@ -126,6 +126,7 @@ TENANT_APPS = (
     "api",
     "translations",
     "caldav",
+    "encryption_admin",
 )
 
 INSTALLED_APPS = list(SHARED_APPS) + \
@@ -732,6 +733,12 @@ UNFOLD = {
                         "permission": lambda request: request.user.is_superuser,
                     },
                     {
+                        "title": _("Encryption"),
+                        "icon": "lock",
+                        "link": reverse_lazy("admin:encryption_settings"),
+                        "permission": lambda request: request.user.is_superuser,
+                    },
+                    {
                         "title": _("Configuration"),
                         "icon": "settings",
                         "link": reverse_lazy("admin:constance_config_changelist"),
@@ -832,6 +839,18 @@ CONSTANCE_CONFIG = {
         False,
         "Force all newly created patients to be temporary users (no permanent patient accounts)",
     ),
+    "encryption_enabled": (
+        False,
+        "Global toggle for end-to-end encryption of consultations and messages",
+    ),
+    "master_public_key": (
+        "",
+        "PEM-encoded SPKI master public key (recovery). Set via the Encryption admin page.",
+    ),
+    "master_public_key_fingerprint": (
+        "",
+        "SHA-256 hex fingerprint of the master public key (display only)",
+    ),
 }
 
 
@@ -846,6 +865,7 @@ CONSTANCE_CONFIG_FIELDSETS = {
     "Visibility": ("users_visibility", "patient_visibility", "public_organisations"),
     "Video Features": ("enable_video_recording", "enable_live_transcription", "whisper_model"),
     "Patient Management": ("force_temporary_patients",),
+    "Encryption": ("encryption_enabled", "master_public_key", "master_public_key_fingerprint"),
 }
 
 # CORS Configuration

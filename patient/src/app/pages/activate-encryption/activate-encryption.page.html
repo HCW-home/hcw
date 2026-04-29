@@ -1,0 +1,36 @@
+<ion-content class="ion-padding">
+  <ion-card>
+    <ion-card-content>
+      <h2>{{ 'activateEncryption.title' | translate }}</h2>
+      <p>{{ 'activateEncryption.description' | translate }}</p>
+
+      <ion-input
+        type="password"
+        [(ngModel)]="passphrase"
+        [label]="'activateEncryption.passphrase' | translate"
+        labelPlacement="floating"
+        autocomplete="off"
+        [disabled]="saving()">
+      </ion-input>
+
+      @if (newPassphraseShown()) {
+        <ion-text color="danger">
+          <p style="word-break: break-all">
+            {{ 'activateEncryption.newPassphrase' | translate }}: {{ newPassphraseShown() }}
+          </p>
+        </ion-text>
+      } @else {
+        <ion-button fill="clear" size="small" (click)="forgotPassphrase()">
+          {{ 'activateEncryption.forgotLink' | translate }}
+        </ion-button>
+      }
+
+      <ion-button
+        expand="block"
+        (click)="submit()"
+        [disabled]="!passphrase || saving()">
+        {{ 'activateEncryption.confirm' | translate }}
+      </ion-button>
+    </ion-card-content>
+  </ion-card>
+</ion-content>
