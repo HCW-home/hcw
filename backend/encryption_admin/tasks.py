@@ -9,6 +9,7 @@ from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.mail import send_mail
 from django.template.defaultfilters import register
+from django.template.loader import render_to_string
 from django.utils import timezone, translation
 from django_tenants.utils import get_tenant_model, tenant_context
 
@@ -32,10 +33,15 @@ def _render_messaging_template(
     template_key: str, language: str, context: dict
 ) -> tuple[str, str, str]:
     """Render a DEFAULT_NOTIFICATION_MESSAGES template in-memory (no Message
-    row persisted). Mirrors messaging.models.Message.render so the same Jinja
-    helpers and i18n behavior apply, but we skip the DB persistence since
-    we never want the passphrase stored anywhere on the server.
+    row persisted). Mirrors messaging.models.Message.render and
+    render_full_html so the same Jinja helpers, i18n behavior, and the
+    organisation-branded email_base.html wrapper apply, but we skip DB
+    persistence since the passphrase must never be stored.
+
+    Returns (subject, plain_text_body, full_branded_html).
     """
+    from users.models import Organisation
+
     template_data = DEFAULT_NOTIFICATION_MESSAGES[template_key]
     with translation.override(language):
         env = jinja2.Environment(extensions=["jinja2.ext.i18n"])
@@ -54,7 +60,21 @@ def _render_messaging_template(
         content_html = env.from_string(
             str(template_data["template_content_html"])
         ).render(full_context)
-    return subject, content, content_html
+
+        main_org = Organisation.objects.filter(is_main=True).first()
+        full_html = render_to_string(
+            "messaging/email_base.html",
+            {
+                "content": content_html,
+                "subject": subject,
+                "action_label": None,
+                "access_link": None,
+                "organisation": main_org,
+                "branding": config.site_name,
+                "has_logo": bool(main_org and main_org.logo_white),
+            },
+        )
+    return subject, content, full_html
 
 
 def _send_email(recipient_email: str, subject: str, body: str, body_html: str) -> None:
