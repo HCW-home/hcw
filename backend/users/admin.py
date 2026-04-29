@@ -112,7 +112,6 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
         "timezone",
         "languages_display",
         "specialities_display",
-        "get_groups",
         "created_by",
     ]
 
@@ -120,10 +119,9 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
         "imported",
         "languages",
         "specialities",
-        "groups",
     )
     filter_horizontal = ()
-    autocomplete_fields = ["main_organisation", "organisations", "specialities", "languages", "groups", "created_by"]
+    autocomplete_fields = ["main_organisation", "organisations", "specialities", "languages", "created_by"]
 
     fieldsets = (
         (
@@ -139,7 +137,6 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
                     "is_superuser",
                     "is_practitioner",
                     "temporary",
-                    "groups",
                     "created_by",
                     # "user_permissions",
                 ),
@@ -185,12 +182,6 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
             },
         ),
     )
-
-    @admin.display(description="Groups")
-    def get_groups(self, obj):
-        if obj.groups.exists():
-            return ", ".join([g.name for g in obj.groups.all()])
-        return "-"
 
     def languages_display(self, obj):
         return ", ".join([lang.name for lang in obj.languages.all()[:3]]) + (

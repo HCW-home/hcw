@@ -18,6 +18,7 @@ from core.encryption import (
     generate_passphrase,
     generate_rsa_keypair,
     rsa_encrypt,
+    rsa_envelope_encrypt,
 )
 from users.models import User
 
@@ -81,13 +82,17 @@ def _provision_user_keypair(user: User) -> None:
 
 
 def _provision_queue_keypair(queue: Queue, master_public_key: str) -> None:
-    """Generate a queue keypair, wrap private for master + each member."""
+    """Generate a queue keypair, wrap private for master + each member.
+
+    The queue's PEM private key is too large to fit in a single RSA-OAEP
+    block, so we use envelope encryption (AES-GCM + RSA-wrapped CEK).
+    """
     private_pem, public_pem = generate_rsa_keypair()
     public_pem_str = public_pem.decode("utf-8")
 
     queue.public_key = public_pem_str
     queue.public_key_fingerprint = fingerprint_public_key(public_pem_str)
-    queue.encrypted_queue_private_key_master = rsa_encrypt(
+    queue.encrypted_queue_private_key_master = rsa_envelope_encrypt(
         private_pem, master_public_key
     )
     queue.save(
@@ -106,7 +111,7 @@ def _provision_queue_keypair(queue: Queue, master_public_key: str) -> None:
                 queue.pk, membership.user.pk,
             )
             continue
-        membership.encrypted_queue_private_key = rsa_encrypt(
+        membership.encrypted_queue_private_key = rsa_envelope_encrypt(
             private_pem, membership.user.public_key
         )
         membership.save(update_fields=["encrypted_queue_private_key"])

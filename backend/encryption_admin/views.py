@@ -4,15 +4,21 @@ import logging
 
 from constance import config
 from django.contrib import messages
-from django.http import HttpResponseBadRequest, HttpResponseNotAllowed
+from django.contrib.auth import get_user_model
+from django.http import (
+    HttpResponseBadRequest,
+    HttpResponseNotAllowed,
+    JsonResponse,
+)
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import reverse
 
 from consultations.models import Consultation
-from core.encryption import fingerprint_public_key
+from core.encryption import fingerprint_public_key, normalize_pem
 
 logger = logging.getLogger(__name__)
+User = get_user_model()
 
 
 def _admin_context(request, admin_site, **extra):
@@ -64,9 +70,13 @@ def generate_master_view_factory(admin_site):
                     "unreadable."
                 )
 
-            config.master_public_key = public_key_pem
+            # Store the canonical PEM (LF-only newlines, stripped) so the
+            # server, the admin browser, and any other client all hash the
+            # exact same bytes when computing fingerprints.
+            canonical_pem = normalize_pem(public_key_pem).decode("utf-8")
+            config.master_public_key = canonical_pem
             config.master_public_key_fingerprint = fingerprint_public_key(
-                public_key_pem
+                canonical_pem
             )
             messages.success(
                 request,
@@ -126,6 +136,50 @@ def disable_view_factory(admin_site):
         return redirect(reverse("admin:encryption_settings"))
 
     return disable_view
+
+
+def user_pubkey_view_factory(admin_site):
+    def user_pubkey_view(request, user_id: int):
+        if request.method != "GET":
+            return HttpResponseNotAllowed(["GET"])
+        try:
+            user = User.objects.only(
+                "pk", "public_key", "public_key_fingerprint"
+            ).get(pk=user_id)
+        except User.DoesNotExist:
+            return JsonResponse({"detail": "Not found"}, status=404)
+        return JsonResponse(
+            {
+                "pk": user.pk,
+                "public_key": user.public_key or None,
+                "public_key_fingerprint": user.public_key_fingerprint or None,
+            }
+        )
+
+    return user_pubkey_view
+
+
+def queue_master_envelope_view_factory(admin_site):
+    def queue_master_envelope_view(request, queue_id: int):
+        if request.method != "GET":
+            return HttpResponseNotAllowed(["GET"])
+        from consultations.models import Queue
+        try:
+            queue = Queue.objects.only(
+                "pk", "encrypted_queue_private_key_master", "public_key"
+            ).get(pk=queue_id)
+        except Queue.DoesNotExist:
+            return JsonResponse({"detail": "Not found"}, status=404)
+        return JsonResponse(
+            {
+                "pk": queue.pk,
+                "encrypted_queue_private_key_master":
+                    queue.encrypted_queue_private_key_master or None,
+                "public_key": queue.public_key or None,
+            }
+        )
+
+    return queue_master_envelope_view
 
 
 def reprovision_view_factory(admin_site):

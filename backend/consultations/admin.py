@@ -1,7 +1,8 @@
 from django.contrib import admin
 from django.forms.models import BaseInlineFormSet
+from django.utils.translation import gettext_lazy as _
 from modeltranslation.admin import TabbedTranslationAdmin
-from unfold.admin import ModelAdmin, StackedInline, TabularInline, StackedInline
+from unfold.admin import ModelAdmin, StackedInline, TabularInline
 from unfold.decorators import display
 from typing import DefaultDict
 from . import assignments
@@ -15,6 +16,7 @@ from .models import (
     Message,
     Participant,
     Queue,
+    QueueMembership,
     Reason,
     Request,
 )
@@ -50,11 +52,39 @@ class CustomFieldAdmin(ModelAdmin, TabbedTranslationAdmin):
     search_fields = ["name"]
 
 
+class QueueMembershipInline(TabularInline):
+    model = QueueMembership
+    extra = 0
+    fields = ["user", "encrypted_queue_private_key", "created_at"]
+    readonly_fields = ["created_at"]
+    autocomplete_fields = ["user"]
+
+    class Media:
+        js = ("admin/encryption/queue_membership_wrap.js",)
+
+
 @admin.register(Queue)
 class QueueAdmin(ModelAdmin, TabbedTranslationAdmin):
     list_display = ["name", "users_count", "organisations_count"]
     search_fields = ["name"]
-    autocomplete_fields = ["users", "organisation"]
+    autocomplete_fields = ["organisation"]
+    inlines = [QueueMembershipInline]
+    readonly_fields = ["public_key_fingerprint", "encrypted_queue_private_key_master"]
+
+    fieldsets = (
+        (None, {"fields": ("name", "organisation")}),
+        (
+            _("Encryption"),
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "public_key",
+                    "public_key_fingerprint",
+                    "encrypted_queue_private_key_master",
+                ),
+            },
+        ),
+    )
 
     @display(description="Users")
     def users_count(self, obj):

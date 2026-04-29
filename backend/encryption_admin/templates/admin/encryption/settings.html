@@ -12,12 +12,17 @@
             {% component "unfold/components/card.html" with title="Master key" %}
                 {% if master_public_key %}
                     <p class="text-sm text-font-default-light dark:text-font-default-dark mb-2">
-                        <strong>Status:</strong>
+                        <strong>Server status:</strong>
                         <span class="text-green-600 dark:text-green-400">Configured</span>
                     </p>
-                    <p class="text-xs font-mono text-base-500 dark:text-base-400 break-all">
-                        Fingerprint: {{ master_public_key_fingerprint }}
+                    <p class="text-xs font-mono text-base-500 dark:text-base-400 break-all mb-2">
+                        Fingerprint: <span id="server-fingerprint">{{ master_public_key_fingerprint }}</span>
                     </p>
+                    <p class="text-sm text-font-default-light dark:text-font-default-dark mb-2">
+                        <strong>Browser status:</strong>
+                        <span id="browser-master-status" class="text-base-500 dark:text-base-400">Checking…</span>
+                    </p>
+                    <p id="browser-master-fingerprint" class="text-xs font-mono text-base-500 dark:text-base-400 break-all mb-4"></p>
                 {% else %}
                     <p class="text-sm text-font-default-light dark:text-font-default-dark mb-4">
                         <strong>Status:</strong>
@@ -30,12 +35,24 @@
                     </p>
                 {% endif %}
 
-                <div class="mt-4">
+                <div class="mt-4 flex flex-wrap gap-2">
                     <a href="{% url 'admin:encryption_generate_master' %}"
                        class="inline-flex items-center px-4 py-2 rounded-default bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold shadow-xs">
                         {% if master_public_key %}Replace master key{% else %}Generate master key{% endif %}
                     </a>
+                    {% if master_public_key %}
+                    <button type="button" id="import-master-button"
+                            class="inline-flex items-center px-4 py-2 rounded-default bg-base-600 hover:bg-base-700 text-white text-sm font-semibold shadow-xs">
+                        Import master key (.pem) into this browser
+                    </button>
+                    <button type="button" id="purge-master-button"
+                            class="inline-flex items-center px-4 py-2 rounded-default bg-base-300 hover:bg-base-400 text-base-800 text-sm font-semibold shadow-xs">
+                        Purge from this browser
+                    </button>
+                    <input type="file" id="import-master-file" accept=".pem,application/x-pem-file" style="display:none">
+                    {% endif %}
                 </div>
+                <p id="import-status" class="mt-3 text-sm"></p>
             {% endcomponent %}
 
             {% component "unfold/components/card.html" with title="Encryption toggle" %}
@@ -102,4 +119,209 @@
 
         </div>
     {% endcomponent %}
+
+    {% if master_public_key %}
+    <script id="server-master-pubkey-pem" type="text/plain">{{ master_public_key }}</script>
+    <script>
+    (function () {
+      const DB_NAME = 'hcw-master-key';
+      const STORE = 'keys';
+      const PRIVATE_KEY = 'master-private';
+      const PUBLIC_KEY = 'master-public';
+      const FINGERPRINT_KEY = 'master-fingerprint';
+
+      const serverFingerprint = document.getElementById('server-fingerprint').textContent.trim();
+      const serverPubkeyPem = document.getElementById('server-master-pubkey-pem').textContent.trim();
+      const statusEl = document.getElementById('browser-master-status');
+      const fpEl = document.getElementById('browser-master-fingerprint');
+      const importBtn = document.getElementById('import-master-button');
+      const fileInput = document.getElementById('import-master-file');
+      const purgeBtn = document.getElementById('purge-master-button');
+      const importStatus = document.getElementById('import-status');
+
+      function bufferToBase64(buf) {
+        const bytes = new Uint8Array(buf);
+        let bin = '';
+        for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+        return btoa(bin);
+      }
+      function base64ToBuffer(b64) {
+        const bin = atob(b64);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        return bytes.buffer;
+      }
+      function pemToDer(pem, label) {
+        const stripped = pem
+          .replace('-----BEGIN ' + label + '-----', '')
+          .replace('-----END ' + label + '-----', '')
+          .replace(/\s+/g, '');
+        return base64ToBuffer(stripped);
+      }
+      function arrayBufferToPem(buf, label) {
+        const b64 = bufferToBase64(buf);
+        const lines = b64.match(/.{1,64}/g).join('\n');
+        return '-----BEGIN ' + label + '-----\n' + lines + '\n-----END ' + label + '-----\n';
+      }
+      async function fingerprint(pem) {
+        const data = new TextEncoder().encode(pem.trim());
+        const digest = await crypto.subtle.digest('SHA-256', data);
+        return Array.from(new Uint8Array(digest))
+          .map(b => b.toString(16).padStart(2, '0')).join('');
+      }
+
+      function openDb() {
+        return new Promise((resolve, reject) => {
+          const req = indexedDB.open(DB_NAME, 1);
+          req.onupgradeneeded = () => {
+            const d = req.result;
+            if (!d.objectStoreNames.contains(STORE)) {
+              d.createObjectStore(STORE, { keyPath: 'key' });
+            }
+          };
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+      }
+
+      async function readBrowserFingerprint() {
+        try {
+          const db = await openDb();
+          return new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE, 'readonly');
+            const req = tx.objectStore(STORE).get(FINGERPRINT_KEY);
+            req.onsuccess = () => resolve(req.result ? req.result.value : null);
+            req.onerror = () => reject(req.error);
+          });
+        } catch {
+          return null;
+        }
+      }
+
+      async function refreshBrowserStatus() {
+        const fp = await readBrowserFingerprint();
+        const matches = fp && fp === serverFingerprint;
+        if (!fp) {
+          statusEl.textContent = 'Not loaded in this browser';
+          statusEl.className = 'text-red-600 dark:text-red-400';
+          fpEl.textContent = '';
+        } else if (matches) {
+          statusEl.textContent = 'Loaded';
+          statusEl.className = 'text-green-600 dark:text-green-400';
+          fpEl.textContent = 'Fingerprint: ' + fp;
+        } else {
+          statusEl.textContent = 'Loaded but fingerprint MISMATCH with server';
+          statusEl.className = 'text-orange-600 dark:text-orange-400';
+          fpEl.textContent = 'Browser fingerprint: ' + fp;
+        }
+        // Hide the import button when the key is already loaded and matches.
+        // Hide the purge button when there's nothing to purge.
+        if (importBtn) importBtn.style.display = matches ? 'none' : '';
+        if (purgeBtn) purgeBtn.style.display = fp ? '' : 'none';
+      }
+
+      async function verifyKeypair(privateKey, publicPem) {
+        // Functional check: encrypt a random challenge with the server's
+        // pubkey and decrypt it with the imported private key. WebCrypto and
+        // Python's cryptography lib don't always agree on SPKI bytes, so we
+        // can't compare fingerprints reliably across the two — but the math
+        // doesn't lie.
+        const der = pemToDer(publicPem, 'PUBLIC KEY');
+        const pub = await crypto.subtle.importKey(
+          'spki', der, { name: 'RSA-OAEP', hash: 'SHA-256' }, false, ['encrypt'],
+        );
+        const challenge = crypto.getRandomValues(new Uint8Array(32));
+        const ciphertext = await crypto.subtle.encrypt({ name: 'RSA-OAEP' }, pub, challenge);
+        const decrypted = new Uint8Array(
+          await crypto.subtle.decrypt({ name: 'RSA-OAEP' }, privateKey, ciphertext),
+        );
+        if (decrypted.length !== challenge.length) return false;
+        for (let i = 0; i < challenge.length; i++) {
+          if (decrypted[i] !== challenge[i]) return false;
+        }
+        return true;
+      }
+
+      async function importPemFile(file) {
+        importStatus.textContent = 'Reading file…';
+        importStatus.className = 'mt-3 text-sm text-base-600 dark:text-base-400';
+        const text = await file.text();
+        if (!text.includes('-----BEGIN PRIVATE KEY-----')) {
+          throw new Error('File is not a PKCS8 PEM private key');
+        }
+        const der = pemToDer(text, 'PRIVATE KEY');
+        // Import non-extractable up-front; we never need to export the bytes
+        // again. The keypair check below proves the pair is correct without
+        // ever exposing the private key material.
+        const nonExtractable = await crypto.subtle.importKey(
+          'pkcs8', der,
+          { name: 'RSA-OAEP', hash: 'SHA-256' },
+          false, ['decrypt']
+        );
+        const ok = await verifyKeypair(nonExtractable, serverPubkeyPem);
+        if (!ok) {
+          throw new Error(
+            'This PEM does not match the server master public key. ' +
+            'Use the .pem file generated when you created the current master key.',
+          );
+        }
+        const db = await openDb();
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE, 'readwrite');
+          const store = tx.objectStore(STORE);
+          store.put({ key: PRIVATE_KEY, value: nonExtractable });
+          store.put({ key: PUBLIC_KEY, value: serverPubkeyPem });
+          store.put({ key: FINGERPRINT_KEY, value: serverFingerprint });
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+        });
+        importStatus.textContent = 'Imported successfully.';
+        importStatus.className = 'mt-3 text-sm text-green-600 dark:text-green-400';
+      }
+
+      async function purge() {
+        if (!confirm('Remove the master private key from this browser? You will need the .pem file to re-import it later.')) return;
+        try {
+          const db = await openDb();
+          await new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE, 'readwrite');
+            const store = tx.objectStore(STORE);
+            store.delete(PRIVATE_KEY);
+            store.delete(PUBLIC_KEY);
+            store.delete(FINGERPRINT_KEY);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+          });
+          importStatus.textContent = 'Master key purged from this browser.';
+          importStatus.className = 'mt-3 text-sm text-base-600 dark:text-base-400';
+        } catch (err) {
+          importStatus.textContent = 'Purge failed: ' + err.message;
+          importStatus.className = 'mt-3 text-sm text-red-600 dark:text-red-400';
+        }
+        await refreshBrowserStatus();
+      }
+
+      if (importBtn) importBtn.addEventListener('click', () => fileInput.click());
+      if (fileInput) {
+        fileInput.addEventListener('change', async () => {
+          const file = fileInput.files && fileInput.files[0];
+          if (!file) return;
+          try {
+            await importPemFile(file);
+          } catch (err) {
+            console.error('master import failed', err);
+            importStatus.textContent = 'Import failed: ' + err.message;
+            importStatus.className = 'mt-3 text-sm text-red-600 dark:text-red-400';
+          } finally {
+            fileInput.value = '';
+            await refreshBrowserStatus();
+          }
+        });
+      }
+      if (purgeBtn) purgeBtn.addEventListener('click', purge);
+
+      refreshBrowserStatus();
+    })();
+    </script>
+    {% endif %}
 {% endblock %}

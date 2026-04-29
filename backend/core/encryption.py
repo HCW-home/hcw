@@ -82,12 +82,18 @@ def decrypt_private_key_with_passphrase(blob: str, passphrase: str) -> bytes:
     return AESGCM(kek).decrypt(nonce, ciphertext, None)
 
 
-def fingerprint_public_key(public_pem: str | bytes) -> str:
-    """SHA-256 hex digest of the PEM bytes (canonical form for the trust check)."""
+def normalize_pem(public_pem: str | bytes) -> bytes:
+    """Strip + canonicalize newlines (LF only) so server and browser
+    fingerprints always agree regardless of HTTP transport mangling."""
     if isinstance(public_pem, str):
         public_pem = public_pem.encode("utf-8")
+    return public_pem.replace(b"\r\n", b"\n").replace(b"\r", b"\n").strip()
+
+
+def fingerprint_public_key(public_pem: str | bytes) -> str:
+    """SHA-256 hex digest of the canonical PEM bytes."""
     digest = hashes.Hash(hashes.SHA256())
-    digest.update(public_pem.strip())
+    digest.update(normalize_pem(public_pem))
     return digest.finalize().hex()
 
 
@@ -119,6 +125,39 @@ def rsa_decrypt(ciphertext_b64: str, private_pem: bytes) -> bytes:
             label=None,
         ),
     )
+
+
+def rsa_envelope_encrypt(plaintext: bytes, public_pem: str | bytes) -> str:
+    """Hybrid encryption for arbitrary-size payloads.
+
+    RSA-OAEP can only encrypt small payloads (~446 bytes for RSA-4096), so
+    when we need to wrap a Queue's PEM private key (a few KB) under a
+    pubkey, we instead:
+      1. Generate a random AES-256 key (CEK)
+      2. AES-GCM encrypt the plaintext under the CEK
+      3. RSA-OAEP wrap the CEK under the pubkey
+    Returns a JSON string {wrapped_key, iv, ciphertext} base64-encoded.
+    """
+    cek = os.urandom(AES_KEY_BYTES)
+    nonce = os.urandom(AES_NONCE_BYTES)
+    ciphertext = AESGCM(cek).encrypt(nonce, plaintext, None)
+    wrapped_cek = rsa_encrypt(cek, public_pem)
+    return json.dumps(
+        {
+            "wrapped_key": wrapped_cek,
+            "iv": base64.b64encode(nonce).decode("ascii"),
+            "ciphertext": base64.b64encode(ciphertext).decode("ascii"),
+        }
+    )
+
+
+def rsa_envelope_decrypt(blob: str, private_pem: bytes) -> bytes:
+    """Reverses rsa_envelope_encrypt."""
+    data = json.loads(blob)
+    cek = rsa_decrypt(data["wrapped_key"], private_pem)
+    nonce = base64.b64decode(data["iv"])
+    ciphertext = base64.b64decode(data["ciphertext"])
+    return AESGCM(cek).decrypt(nonce, ciphertext, None)
 
 
 _PASSPHRASE_ALPHABET = string.ascii_letters + string.digits

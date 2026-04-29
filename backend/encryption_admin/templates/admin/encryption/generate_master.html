@@ -58,8 +58,12 @@
             return `-----BEGIN ${label}-----\n${lines}\n-----END ${label}-----\n`;
         }
 
+        function normalizePem(pem) {
+            return pem.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+        }
+
         async function fingerprint(pem) {
-            const data = new TextEncoder().encode(pem.trim());
+            const data = new TextEncoder().encode(normalizePem(pem));
             const digest = await crypto.subtle.digest('SHA-256', data);
             return Array.from(new Uint8Array(digest))
                 .map(b => b.toString(16).padStart(2, '0'))
@@ -81,6 +85,40 @@
         function getCookie(name) {
             const m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
             return m ? decodeURIComponent(m[1]) : null;
+        }
+
+        async function storeMasterKeyInIndexedDb(privateBuf, publicPem, fingerprintHex) {
+            // Re-import the private key as non-extractable for ongoing use in
+            // the admin browser (decrypting queue private keys when adding
+            // members). The PEM downloaded above is the offline backup; the
+            // browser-resident copy is opaque from now on.
+            const nonExtractablePrivate = await crypto.subtle.importKey(
+                'pkcs8',
+                privateBuf,
+                { name: 'RSA-OAEP', hash: 'SHA-256' },
+                false,
+                ['decrypt']
+            );
+            const db = await new Promise((resolve, reject) => {
+                const req = indexedDB.open('hcw-master-key', 1);
+                req.onupgradeneeded = () => {
+                    const d = req.result;
+                    if (!d.objectStoreNames.contains('keys')) {
+                        d.createObjectStore('keys', { keyPath: 'key' });
+                    }
+                };
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+            await new Promise((resolve, reject) => {
+                const tx = db.transaction('keys', 'readwrite');
+                const store = tx.objectStore('keys');
+                store.put({ key: 'master-private', value: nonExtractablePrivate });
+                store.put({ key: 'master-public', value: publicPem });
+                store.put({ key: 'master-fingerprint', value: fingerprintHex });
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error);
+            });
         }
 
         button.addEventListener('click', async () => {
@@ -105,6 +143,9 @@
 
                 downloadFile('master-private-key.pem', privatePem);
                 fpEl.textContent = 'Public key fingerprint: ' + fp;
+
+                statusEl.textContent = 'Storing in browser IndexedDB…';
+                await storeMasterKeyInIndexedDb(privateBuf, publicPem, fp);
 
                 statusEl.textContent = 'Uploading public key to server…';
                 const formData = new FormData();

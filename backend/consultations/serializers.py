@@ -301,6 +301,7 @@ class ConsultationSerializer(CustomFieldsMixin, serializers.ModelSerializer):
     appointments = serializers.SerializerMethodField()
     unread_count = serializers.SerializerMethodField()
     last_read_at = serializers.SerializerMethodField()
+    current_user_queue_envelope = serializers.SerializerMethodField()
 
     class Meta:
         model = Consultation
@@ -333,6 +334,7 @@ class ConsultationSerializer(CustomFieldsMixin, serializers.ModelSerializer):
             "encrypted_key_for_beneficiary",
             "beneficiary_pubkey_fingerprint",
             "encrypted_key_for_master",
+            "current_user_queue_envelope",
         ]
         read_only_fields = [
             "id",
@@ -344,7 +346,32 @@ class ConsultationSerializer(CustomFieldsMixin, serializers.ModelSerializer):
             "appointments",
             "unread_count",
             "last_read_at",
+            "current_user_queue_envelope",
         ]
+
+    def get_current_user_queue_envelope(self, obj):
+        """Returns the current user's QueueMembership.encrypted_queue_private_key
+        for this consultation's queue, when both the user is a member and the
+        consultation is encrypted with a queue envelope. Lets the frontend
+        unwrap the queue private key (envelope-encrypted) and then unwrap the
+        consultation sym_key from encrypted_key_for_queue.
+        """
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return None
+        if not obj.is_encrypted or not obj.group_id or not obj.encrypted_key_for_queue:
+            return None
+        from .models import QueueMembership
+        membership = (
+            QueueMembership.objects.filter(queue_id=obj.group_id, user=request.user)
+            .only("encrypted_queue_private_key")
+            .first()
+        )
+        if not membership or not membership.encrypted_queue_private_key:
+            return None
+        return {
+            "encrypted_queue_private_key": membership.encrypted_queue_private_key,
+        }
 
     def validate(self, attrs):
         from constance import config as constance_config
