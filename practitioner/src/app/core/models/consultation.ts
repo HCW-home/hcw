@@ -133,6 +133,9 @@ export interface Consultation {
   encrypted_key_for_beneficiary?: string | null;
   beneficiary_pubkey_fingerprint?: string | null;
   encrypted_key_for_master?: string | null;
+  current_user_queue_envelope?: {
+    encrypted_queue_private_key: string;
+  } | null;
 }
 
 export interface ConsultationEncryptionEnvelopes {

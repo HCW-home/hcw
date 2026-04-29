@@ -930,8 +930,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
 
   private async loadConsultationSymKey(consultation: Consultation): Promise<void> {
     // Try every envelope readable by the current user, in order:
-    // created_by (always present for the author) > owned_by > beneficiary.
-    // The queue envelope path is not implemented client-side in v1.
+    // created_by > owned_by > beneficiary > queue (membership-based).
     const userId = this.currentUser()?.pk;
     if (!userId) {
       return;
@@ -946,7 +945,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
-    const candidates: (string | null | undefined)[] = [
+    const directCandidates: (string | null | undefined)[] = [
       consultation.created_by?.id === userId
         ? consultation.encrypted_key_for_created_by
         : null,
@@ -958,23 +957,51 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
         : null,
     ];
 
-    for (const candidate of candidates) {
-      if (!candidate) {
-        continue;
-      }
+    for (const candidate of directCandidates) {
+      if (!candidate) continue;
       try {
         this.consultationSymKey =
           await this.encryptionService.unwrapSymKeyWithPrivateKey(
             candidate,
             privateKey,
           );
-        // Re-render messages now that we can decrypt.
         this.loadMessages();
         return;
       } catch (err) {
-        console.warn('Envelope unwrap attempt failed', err);
+        console.warn('Direct envelope unwrap failed', err);
       }
     }
+
+    // Fall back to the queue path: unwrap the queue's private RSA key from
+    // the user's QueueMembership envelope, then use it to unwrap the
+    // consultation's encrypted_key_for_queue.
+    const membership = consultation.current_user_queue_envelope;
+    const queueWrap = consultation.encrypted_key_for_queue;
+    if (membership?.encrypted_queue_private_key && queueWrap) {
+      try {
+        const queuePemBuffer = await this.encryptionService.rsaEnvelopeDecrypt(
+          membership.encrypted_queue_private_key,
+          privateKey,
+        );
+        const queuePem = new TextDecoder().decode(queuePemBuffer);
+        const queuePrivateKey =
+          await this.encryptionService.importPrivateKey(queuePem);
+        this.consultationSymKey =
+          await this.encryptionService.unwrapSymKeyWithPrivateKey(
+            queueWrap,
+            queuePrivateKey,
+          );
+        this.loadMessages();
+        return;
+      } catch (err) {
+        console.warn('Queue envelope unwrap failed', err);
+      }
+    }
+
+    console.warn(
+      '[encryption] no readable envelope for consultation %s',
+      consultation.id,
+    );
   }
 
   private async buildRewrappedEnvelopes(

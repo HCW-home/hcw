@@ -18,22 +18,36 @@
     const form = document.querySelector('#queue_form');
     if (!form) return;
 
-    // Extract the queue ID from the URL (e.g. /admin/consultations/queue/2/change/).
-    const queueIdMatch = window.location.pathname.match(/\/queue\/(\d+)\/change\//);
-    const queueId = queueIdMatch ? queueIdMatch[1] : null;
-
-    async function fetchMasterEnvelope() {
-      if (!queueId) return null;
-      const url = '/admin/encryption/queue-master-envelope/' + queueId + '/';
-      try {
-        const resp = await fetch(url, { credentials: 'same-origin' });
-        if (!resp.ok) return null;
-        const data = await resp.json();
-        return data.encrypted_queue_private_key_master || null;
-      } catch (err) {
-        console.error('[encryption] master envelope fetch failed', err);
-        return null;
+    function readMasterEnvelope() {
+      // The field is in readonly_fields so Django/Unfold may render it as
+      // a textarea, an input, a <div class="readonly">, a <pre>, or wrap
+      // it in their own component. We search by name, id, class, and as a
+      // last resort scan textContent for the JSON envelope shape.
+      const fieldName = 'encrypted_queue_private_key_master';
+      const candidates = [
+        ...form.querySelectorAll('[name="' + fieldName + '"]'),
+        ...form.querySelectorAll('[id$="' + fieldName + '"]'),
+        ...form.querySelectorAll('.field-' + fieldName + ' .readonly'),
+        ...form.querySelectorAll('.field-' + fieldName + ' textarea'),
+        ...form.querySelectorAll('.field-' + fieldName + ' input'),
+        ...form.querySelectorAll('.field-' + fieldName),
+      ];
+      for (const el of candidates) {
+        const value = ('value' in el && el.value) ? el.value : el.textContent;
+        if (value && value.trim().startsWith('{')) {
+          return value.trim();
+        }
       }
+      // Last-resort fallback: scan the form for any element whose text
+      // matches the envelope JSON shape ({"wrapped_key":"..."}).
+      const all = form.querySelectorAll('textarea, pre, code, div, span, input');
+      for (const el of all) {
+        const value = ('value' in el && el.value) ? el.value : el.textContent;
+        if (value && /^\s*\{\s*"wrapped_key"\s*:/.test(value)) {
+          return value.trim();
+        }
+      }
+      return null;
     }
 
     function bufferToBase64(buf) {
@@ -108,7 +122,11 @@
     }
 
     async function fetchUserPubkey(userId) {
-      const url = '/admin/encryption/user-pubkey/' + userId + '/';
+      // Preserve the i18n language prefix (e.g. /fr/) from the current URL
+      // so we hit the same locale's admin and don't get redirected.
+      const m = window.location.pathname.match(/^(\/[a-z]{2}(?:-[a-z]{2})?)?\/admin\//i);
+      const prefix = m ? (m[1] || '') : '';
+      const url = prefix + '/admin/encryption_admin/encryptionsettings/user-pubkey/' + userId + '/';
       const resp = await fetch(url, { credentials: 'same-origin' });
       if (!resp.ok) throw new Error('User pubkey fetch failed: HTTP ' + resp.status);
       const data = await resp.json();
@@ -142,11 +160,11 @@
 
       e.preventDefault();
       try {
-        const masterEnvelope = await fetchMasterEnvelope();
+        const masterEnvelope = readMasterEnvelope();
         if (!masterEnvelope) {
           alert(
-            'This queue has no master envelope yet. Save the queue first ' +
-            'and wait a few seconds for the background provisioning to finish.',
+            'Could not read the queue master envelope from the page. ' +
+            'Make sure the queue has been saved and provisioning has run.',
           );
           return;
         }

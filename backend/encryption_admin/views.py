@@ -159,29 +159,6 @@ def user_pubkey_view_factory(admin_site):
     return user_pubkey_view
 
 
-def queue_master_envelope_view_factory(admin_site):
-    def queue_master_envelope_view(request, queue_id: int):
-        if request.method != "GET":
-            return HttpResponseNotAllowed(["GET"])
-        from consultations.models import Queue
-        try:
-            queue = Queue.objects.only(
-                "pk", "encrypted_queue_private_key_master", "public_key"
-            ).get(pk=queue_id)
-        except Queue.DoesNotExist:
-            return JsonResponse({"detail": "Not found"}, status=404)
-        return JsonResponse(
-            {
-                "pk": queue.pk,
-                "encrypted_queue_private_key_master":
-                    queue.encrypted_queue_private_key_master or None,
-                "public_key": queue.public_key or None,
-            }
-        )
-
-    return queue_master_envelope_view
-
-
 def reprovision_view_factory(admin_site):
     def reprovision_view(request):
         if request.method != "POST":

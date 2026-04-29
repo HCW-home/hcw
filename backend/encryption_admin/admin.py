@@ -48,11 +48,6 @@ class EncryptionSettingsAdmin(ModelAdmin):
                 site.admin_view(views.user_pubkey_view_factory(site)),
                 name="encryption_user_pubkey",
             ),
-            path(
-                "queue-master-envelope/<int:queue_id>/",
-                site.admin_view(views.queue_master_envelope_view_factory(site)),
-                name="encryption_queue_master_envelope",
-            ),
         ]
         return custom_urls + super().get_urls()
 

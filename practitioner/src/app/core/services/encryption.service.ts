@@ -144,6 +144,37 @@ export class EncryptionService {
     return this.importSymKeyRaw(raw);
   }
 
+  async rsaEnvelopeDecrypt(
+    blob: string,
+    privateKey: CryptoKey,
+  ): Promise<ArrayBuffer> {
+    // Reverses backend's core.encryption.rsa_envelope_encrypt:
+    // {wrapped_key (base64), iv (base64), ciphertext (base64)}
+    // 1. RSA-OAEP-decrypt wrapped_key with privateKey -> CEK (32 bytes)
+    // 2. AES-GCM-decrypt ciphertext with CEK + iv -> plaintext
+    const data = JSON.parse(blob) as {
+      wrapped_key: string;
+      iv: string;
+      ciphertext: string;
+    };
+    const wrappedKey = this.base64ToBuffer(data.wrapped_key);
+    const iv = this.base64ToBuffer(data.iv);
+    const ciphertext = this.base64ToBuffer(data.ciphertext);
+    const cekRaw = await crypto.subtle.decrypt(
+      { name: 'RSA-OAEP' },
+      privateKey,
+      wrappedKey,
+    );
+    const cek = await crypto.subtle.importKey(
+      'raw',
+      cekRaw,
+      { name: 'AES-GCM' },
+      false,
+      ['decrypt'],
+    );
+    return crypto.subtle.decrypt({ name: 'AES-GCM', iv }, cek, ciphertext);
+  }
+
   // -- Message encryption (AES-GCM, IV prefixed) --------------------------
 
   async encryptString(plaintext: string, symKey: CryptoKey): Promise<string> {
