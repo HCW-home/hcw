@@ -53,10 +53,10 @@
                 (keyup.enter)="saveEdit()"
               />
               <div class="edit-actions">
-                <ion-button fill="clear" size="small" (click)="cancelEdit()">
+                <ion-button fill="clear" size="small" (click)="cancelEdit(); $event.stopPropagation()">
                   <ion-icon slot="icon-only" name="close-outline"></ion-icon>
                 </ion-button>
-                <ion-button fill="clear" size="small" (click)="saveEdit()" [disabled]="!editContent.trim() || isEditing">
+                <ion-button fill="clear" size="small" (click)="saveEdit(); $event.stopPropagation()" [disabled]="!editContent.trim() || isEditing">
                   @if (isEditing) {
                     <ion-spinner name="dots"></ion-spinner>
                   } @else {
@@ -74,12 +74,12 @@
                   <span class="message-edited">{{ 'messageList.edited' | translate }}</span>
                 }
                 @if (canEditMessage(message)) {
-                  <button class="edit-button" (click)="startEdit(message)">
+                  <button class="edit-button" (click)="startEdit(message); $event.stopPropagation()">
                     <ion-icon name="create-outline"></ion-icon>
                   </button>
                 }
                 @if (canDeleteMessage(message)) {
-                  <button class="delete-button" (click)="onDeleteClick(message)">
+                  <button class="delete-button" (click)="onDeleteClick(message); $event.stopPropagation()">
                     <ion-icon name="trash-outline"></ion-icon>
                   </button>
                 }
