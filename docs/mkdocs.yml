@@ -44,6 +44,7 @@ nav:
     - Media Servers: admin/media-servers.md
     - Consultation Reasons: admin/reasons.md
     - Single Sign-On (SSO): admin/sso.md
+    - End-to-End Encryption: admin/encryption.md
     - Advanced Options: admin/advanced-options.md
   - Deployment:
     - Docker Compose: deployment/docker-compose.md
