@@ -10,17 +10,17 @@
       
       
       
-        <link rel="canonical" href="https://hcw-at-home.com/docs/fr/admin/terms/">
+        <link rel="canonical" href="https://hcw-at-home.com/docs/fr/admin/encryption/">
       
       
-        <link rel="prev" href="../users/">
+        <link rel="prev" href="../sso/">
       
       
-        <link rel="next" href="../organizations/">
+        <link rel="next" href="../advanced-options/">
       
       
         
-          <link rel="alternate" href="../../../admin/terms/" hreflang="en">
+          <link rel="alternate" href="../../../admin/encryption/" hreflang="en">
         
           <link rel="alternate" href="./" hreflang="fr">
         
@@ -31,7 +31,7 @@
     
     
       
-        <title>Terms of Use - HCW@Home Documentation</title>
+        <title>End-to-End Encryption - HCW@Home Documentation</title>
       
     
     
@@ -84,7 +84,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#terms-of-use" class="md-skip">
+        <a href="#end-to-end-encryption" class="md-skip">
           Aller au contenu
         </a>
       
@@ -120,7 +120,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Terms of Use
+              End-to-End Encryption
             
           </span>
         </div>
@@ -153,7 +153,7 @@
       <ul class="md-select__list">
         
           <li class="md-select__item">
-            <a href="../../../admin/terms/" hreflang="en" class="md-select__link">
+            <a href="../../../admin/encryption/" hreflang="en" class="md-select__link">
               English
             </a>
           </li>
@@ -623,37 +623,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Terms of Use
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../terms/" class="md-nav__link">
         
   
   
@@ -669,48 +642,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table des matières">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table des matières
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#creating-terms" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Creating Terms
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#assigning-terms-to-an-organization" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Assigning Terms to an Organization
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -860,10 +791,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../encryption/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    End-to-End Encryption
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -879,6 +837,175 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table des matières">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table des matières
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-encrypted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is encrypted
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-encryption-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How encryption works
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How encryption works">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#each-follow-up-has-its-own-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Each follow-up has its own key
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#personal-keys-encrypted-with-a-passphrase" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Personal keys, encrypted with a passphrase
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#queue-keys-shared-by-every-member" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Queue keys, shared by every member
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-the-server-can-and-cannot-see" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the server can and cannot see
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enabling-encryption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabling encryption
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#browser-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Browser status
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-users-to-a-queue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding users to a queue
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recovering-from-a-lost-passphrase" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recovering from a lost passphrase
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#disabling-encryption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Disabling encryption
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#re-provisioning-missing-keypairs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Re-provisioning missing keypairs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#limitations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limitations
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1063,10 +1190,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#creating-terms" class="md-nav__link">
+  <a href="#what-is-encrypted" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Creating Terms
+        What is encrypted
       
     </span>
   </a>
@@ -1074,10 +1201,137 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#assigning-terms-to-an-organization" class="md-nav__link">
+  <a href="#how-encryption-works" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Assigning Terms to an Organization
+        How encryption works
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How encryption works">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#each-follow-up-has-its-own-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Each follow-up has its own key
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#personal-keys-encrypted-with-a-passphrase" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Personal keys, encrypted with a passphrase
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#queue-keys-shared-by-every-member" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Queue keys, shared by every member
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-the-server-can-and-cannot-see" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the server can and cannot see
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enabling-encryption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabling encryption
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#browser-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Browser status
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-users-to-a-queue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding users to a queue
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recovering-from-a-lost-passphrase" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recovering from a lost passphrase
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#disabling-encryption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Disabling encryption
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#re-provisioning-missing-keypairs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Re-provisioning missing keypairs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#limitations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limitations
       
     </span>
   </a>
@@ -1101,16 +1355,131 @@
 
 
 
-<h1 id="terms-of-use">Terms of Use</h1>
-<p>Terms of use must be created and then assigned to an organization. Users will be required to accept these terms before using the platform.</p>
+<h1 id="end-to-end-encryption">End-to-End Encryption</h1>
+<p>HCW@Home can encrypt the <strong>content of follow-ups</strong> (chat messages and attachments) so that the server only ever stores ciphertext. Decryption keys live in the participants' browsers.</p>
 <blockquote>
-<p><strong>Menu:</strong> Users &amp; Authentication &gt; Terms</p>
+<p><strong>Menu:</strong> Settings &gt; Encryption</p>
 </blockquote>
-<h2 id="creating-terms">Creating Terms</h2>
-<p>Terms are created from the administration interface. Each term entry includes a title, content, and language. Multiple versions can be maintained for different languages.</p>
-<p><img alt="Terms creation" src="../../../assets/images/admin-terms-create.png" /></p>
-<h2 id="assigning-terms-to-an-organization">Assigning Terms to an Organization</h2>
-<p>Once created, terms must be configured in the organization settings to become active. Users belonging to that organization will then be prompted to accept the terms on their next login.</p>
+<p><img alt="Encryption settings" src="../../../assets/images/admin-encryption.png" /></p>
+<p>The toggle is platform-wide: once enabled, every new follow-up is created encrypted and the server rejects any attempt to create one in clear.</p>
+<h2 id="what-is-encrypted">What is encrypted</h2>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>State when encryption is on</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Message text content</td>
+<td><strong>Encrypted</strong> (AES-GCM, base64 in DB)</td>
+</tr>
+<tr>
+<td>Message attachments</td>
+<td><strong>Encrypted</strong> (AES-GCM blob on disk)</td>
+</tr>
+<tr>
+<td>Attachment file name and MIME type</td>
+<td><strong>Encrypted</strong> in <code>encrypted_attachment_metadata</code></td>
+</tr>
+<tr>
+<td>Follow-up title, description, custom fields</td>
+<td>In clear</td>
+</tr>
+<tr>
+<td>Participants (beneficiary, owner, queue)</td>
+<td>In clear (relations only)</td>
+</tr>
+<tr>
+<td>Appointments, reasons, profiles</td>
+<td>In clear</td>
+</tr>
+<tr>
+<td>Video recordings, transcripts</td>
+<td>In clear</td>
+</tr>
+</tbody>
+</table>
+<p>This is content-level encryption, not metadata encryption. An operator with database access can see who talked to whom and when, but cannot read the messages.</p>
+<h2 id="how-encryption-works">How encryption works</h2>
+<h3 id="each-follow-up-has-its-own-key">Each follow-up has its own key</h3>
+<p>Every follow-up is encrypted with a <strong>unique random key</strong> generated in the practitioner's browser the moment the follow-up is created. That key is what actually encrypts every message and every attachment of that follow-up. Two follow-ups never share the same key.</p>
+<p>That same key is then <strong>encrypted once for each participant</strong> so that they can decrypt it later. There are five participants per encrypted follow-up:</p>
+<ul>
+<li>the <strong>patient</strong> (<code>beneficiary</code>)</li>
+<li>the <strong>assigned practitioner</strong> (<code>owned_by</code>)</li>
+<li>the <strong>creator</strong> (<code>created_by</code>)</li>
+<li>the <strong>queue</strong> the follow-up belongs to</li>
+<li>the <strong>master key</strong> (platform recovery)</li>
+</ul>
+<p>When the follow-up is saved, the server receives only the encrypted versions of the key — one per participant — and stores them alongside the follow-up. The clear key never leaves the browser. The server therefore holds the encrypted messages, the encrypted copies of the follow-up key, but nothing it can decrypt by itself.</p>
+<h3 id="personal-keys-encrypted-with-a-passphrase">Personal keys, encrypted with a passphrase</h3>
+<p>To decrypt their copy of the follow-up key, every user needs a <strong>personal private key</strong>. This key is generated server-side the first time encryption is enabled (or when a new user is created afterwards). Before being stored on the server, it is itself encrypted with a passphrase that only the user knows.</p>
+<p>The passphrase is generated once at provisioning time and sent to the user through their declared communication channel (email, SMS, WhatsApp, or to their creating practitioner when the patient is in <em>manual</em> contact mode). It is <strong>never stored</strong> on the server.</p>
+<p>When a user logs in for the first time after encryption is enabled, they enter their passphrase once. The server returns their encrypted private key, the browser unlocks it locally and keeps the unlocked key in the browser's secure storage (IndexedDB, marked non-extractable). On subsequent logins from the same browser, no passphrase is needed.</p>
+<h3 id="queue-keys-shared-by-every-member">Queue keys, shared by every member</h3>
+<p>A queue has a single private key, generated server-side at provisioning. That key is <strong>encrypted once for every member</strong> of the queue, and once more for the master key. When a member is added or removed later, only their encrypted copy is added or deleted — the queue key itself does not change, so existing follow-ups remain readable by all current members.</p>
+<p>Because the queue key is itself a few kilobytes large, it cannot be encrypted directly with a single asymmetric operation. The platform uses <strong>envelope encryption</strong> internally: a fresh symmetric key encrypts the queue key, and that small symmetric key is encrypted for each recipient. This is invisible to the admin — the only consequence is that wrapping the queue key for a new member requires the master key (held only in the admin's browser).</p>
+<h3 id="what-the-server-can-and-cannot-see">What the server can and cannot see</h3>
+<p>The server can see who participates in which follow-up, when messages are exchanged, and the size of each message — that's the metadata. The actual content of messages, attachment file names, and attachment bodies are <strong>encrypted blobs</strong> the server cannot read.</p>
+<p>There is no backdoor. If every personal passphrase, every browser copy, and the master key are all lost simultaneously, the data is permanently unreadable.</p>
+<h2 id="enabling-encryption">Enabling encryption</h2>
+<ol>
+<li>
+<p><strong>Generate the master key</strong> — Click <em>Generate master key</em> on the Encryption settings page. Your browser:</p>
+<ul>
+<li>Generates an RSA-4096 keypair locally.</li>
+<li>Downloads <code>master-private-key.pem</code> automatically (your offline backup).</li>
+<li>Stores the same key non-extractable in this browser's IndexedDB (<code>hcw-master-key</code>).</li>
+<li>Uploads only the public key to the server.</li>
+</ul>
+<p>Keep the <code>.pem</code> file safe (password manager, sealed envelope). The server never sees the private master key, and no one can decrypt the recovery envelope without it.</p>
+</li>
+<li>
+<p><strong>Enable encryption</strong> — Click <em>Enable encryption</em>. A background job is dispatched that:</p>
+<ul>
+<li>Generates a keypair for every active user (with a random passphrase emailed/SMSed/handed to the practitioner of manual-contact patients).</li>
+<li>Generates a keypair for every queue, wrapped for the master and for each member.</li>
+</ul>
+</li>
+<li>
+<p><strong>Users activate their key</strong> — At their next login, every user is forced through <code>/activate-encryption</code> and must enter the passphrase they received. The browser pulls the encrypted private key from the server, decrypts it, and stores it non-extractable in IndexedDB.</p>
+</li>
+</ol>
+<p>After this, all new follow-ups are encrypted automatically and existing users can read their messages.</p>
+<h2 id="browser-status">Browser status</h2>
+<p>The Encryption settings page shows two statuses:</p>
+<ul>
+<li><strong>Server status</strong> — Whether the master public key is configured server-side, with its fingerprint.</li>
+<li><strong>Browser status</strong> — Whether the master private key is loaded in <em>this</em> browser's IndexedDB, with verification that the fingerprint matches the server's.</li>
+</ul>
+<p>If a different admin needs to manage queue memberships from another machine, they can click <em>Import master key (.pem) into this browser</em> and select the backup <code>.pem</code> file. The browser does a functional encrypt/decrypt round-trip with the server's public key to verify the keypair before storing it non-extractable.</p>
+<h2 id="adding-users-to-a-queue">Adding users to a queue</h2>
+<p>When you add a user to a queue from the queue admin page, the page contains JavaScript that:</p>
+<ol>
+<li>Reads the queue's <code>encrypted_queue_private_key_master</code> from the form.</li>
+<li>Reads the master private key from this browser's IndexedDB.</li>
+<li>Decrypts the queue private key (envelope decryption, in memory).</li>
+<li>Fetches the new member's public key from the server.</li>
+<li>Re-wraps the queue private key for that member's pubkey.</li>
+<li>Fills the hidden <code>encrypted_queue_private_key</code> field on the membership row.</li>
+<li>Submits the form normally.</li>
+</ol>
+<p>The server never sees the queue private key in clear during this operation. <strong>The admin must have imported the master key in this browser</strong> (see the Encryption settings page).</p>
+<h2 id="recovering-from-a-lost-passphrase">Recovering from a lost passphrase</h2>
+<p>A user who has forgotten their passphrase can click <em>I forgot my passphrase</em> on the activation screen. The server generates a brand-new keypair and returns the new passphrase one time. The user keeps access to all messages going forward, but loses access to messages encrypted under the previous public key until a colleague (or the admin via the master key) rewraps each follow-up's symmetric key for the new public key. A "Resync key" banner is shown to colleagues on affected follow-ups.</p>
+<p>The master recovery envelope is the safety net: even if every user keypair is lost, the admin who holds the master <code>.pem</code> can decrypt every follow-up by importing the master key in their browser and using a recovery flow (out of scope of v1, mechanism documented for the future).</p>
+<h2 id="disabling-encryption">Disabling encryption</h2>
+<p>Disabling the platform toggle does <strong>not</strong> decrypt anything. Existing encrypted follow-ups remain encrypted and readable by users who hold their key; new follow-ups are created in clear. To bring older follow-ups back online for a new device, the user simply re-imports their key (same passphrase).</p>
+<h2 id="re-provisioning-missing-keypairs">Re-provisioning missing keypairs</h2>
+<p>If a user or queue was created before encryption was enabled — or if a worker error skipped one — click <strong>Re-provision missing keypairs</strong> on the Encryption settings page. The job is idempotent: it only fills in the gaps for users and queues whose <code>public_key</code> is null.</p>
+<h2 id="limitations">Limitations</h2>
+<ul>
+<li><strong>History migration</strong> is out of scope. Messages sent before activation stay in clear in their (unencrypted) follow-ups.</li>
+<li><strong>Queue key rotation</strong> is manual: there is no automatic rotation if a member leaves. They keep access to past follow-ups until the queue is regenerated.</li>
+<li><strong>Server fingerprint validation</strong> of envelopes is not enforced — a malicious client could store fake fingerprints. This does not break confidentiality, only the desync banner UX.</li>
+</ul>
 
 
 

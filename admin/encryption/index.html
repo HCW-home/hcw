@@ -1,6 +1,6 @@
 
 <!doctype html>
-<html lang="fr" class="no-js">
+<html lang="en" class="no-js">
   <head>
     
       <meta charset="utf-8">
@@ -10,35 +10,35 @@
       
       
       
-        <link rel="canonical" href="https://hcw-at-home.com/docs/fr/admin/advanced-options/">
+        <link rel="canonical" href="https://hcw-at-home.com/docs/admin/encryption/">
       
       
-        <link rel="prev" href="../encryption/">
+        <link rel="prev" href="../sso/">
       
       
-        <link rel="next" href="../../deployment/docker-compose/">
+        <link rel="next" href="../advanced-options/">
       
       
         
-          <link rel="alternate" href="../../../admin/advanced-options/" hreflang="en">
+          <link rel="alternate" href="./" hreflang="en">
         
-          <link rel="alternate" href="./" hreflang="fr">
+          <link rel="alternate" href="../../fr/admin/encryption/" hreflang="fr">
         
       
       
-      <link rel="icon" href="../../../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>Advanced Options - HCW@Home Documentation</title>
+        <title>End-to-End Encryption - HCW@Home Documentation</title>
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -57,9 +57,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/css/extra.css">
+      <link rel="stylesheet" href="../../assets/css/extra.css">
     
-    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -84,8 +84,8 @@
     <div data-md-component="skip">
       
         
-        <a href="#advanced-options" class="md-skip">
-          Aller au contenu
+        <a href="#end-to-end-encryption" class="md-skip">
+          Skip to content
         </a>
       
     </div>
@@ -99,8 +99,8 @@
   
 
 <header class="md-header md-header--shadow" data-md-component="header">
-  <nav class="md-header__inner md-grid" aria-label="En-tête">
-    <a href="../../" title="HCW@Home Documentation" class="md-header__button md-logo" aria-label="HCW@Home Documentation" data-md-component="logo">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="HCW@Home Documentation" class="md-header__button md-logo" aria-label="HCW@Home Documentation" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -120,7 +120,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Advanced Options
+              End-to-End Encryption
             
           </span>
         </div>
@@ -146,20 +146,20 @@
       <div class="md-header__option">
   <div class="md-select">
     
-    <button class="md-header__button md-icon" aria-label="Sélectionner la langue">
+    <button class="md-header__button md-icon" aria-label="Select language">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m12.87 15.07-2.54-2.51.03-.03A17.5 17.5 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2zm-2.62 7 1.62-4.33L19.12 17z"/></svg>
     </button>
     <div class="md-select__inner">
       <ul class="md-select__list">
         
           <li class="md-select__item">
-            <a href="../../../admin/advanced-options/" hreflang="en" class="md-select__link">
+            <a href="./" hreflang="en" class="md-select__link">
               English
             </a>
           </li>
         
           <li class="md-select__item">
-            <a href="./" hreflang="fr" class="md-select__link">
+            <a href="../../fr/admin/encryption/" hreflang="fr" class="md-select__link">
               Francais
             </a>
           </li>
@@ -180,16 +180,16 @@
   <label class="md-search__overlay" for="__search"></label>
   <div class="md-search__inner" role="search">
     <form class="md-search__form" name="search">
-      <input type="text" class="md-search__input" name="query" aria-label="Rechercher" placeholder="Rechercher" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
       <label class="md-search__icon md-icon" for="__search">
         
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
         
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
       </label>
-      <nav class="md-search__options" aria-label="Recherche">
+      <nav class="md-search__options" aria-label="Search">
         
-        <button type="reset" class="md-search__icon md-icon" title="Effacer" aria-label="Effacer" tabindex="-1">
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
           
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
         </button>
@@ -200,7 +200,7 @@
       <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
         <div class="md-search-result" data-md-component="search-result">
           <div class="md-search-result__meta">
-            Initialisation de la recherche
+            Initializing search
           </div>
           <ol class="md-search-result__list" role="presentation"></ol>
         </div>
@@ -236,7 +236,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../../" title="HCW@Home Documentation" class="md-nav__button md-logo" aria-label="HCW@Home Documentation" data-md-component="logo">
+    <a href="../.." title="HCW@Home Documentation" class="md-nav__button md-logo" aria-label="HCW@Home Documentation" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -308,7 +308,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../" class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -791,34 +791,6 @@
                 
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../encryption/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    End-to-End Encryption
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
     
   
   
@@ -838,7 +810,7 @@
   <span class="md-ellipsis">
     
   
-    Advanced Options
+    End-to-End Encryption
   
 
     
@@ -856,7 +828,7 @@
   <span class="md-ellipsis">
     
   
-    Advanced Options
+    End-to-End Encryption
   
 
     
@@ -868,7 +840,7 @@
       
         
 
-<nav class="md-nav md-nav--secondary" aria-label="Table des matières">
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
   
   
@@ -877,15 +849,15 @@
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
-      Table des matières
+      Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#authentication" class="md-nav__link">
+  <a href="#what-is-encrypted" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Authentication
+        What is encrypted
       
     </span>
   </a>
@@ -893,10 +865,71 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#data-retention" class="md-nav__link">
+  <a href="#how-encryption-works" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Data Retention
+        How encryption works
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How encryption works">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#each-follow-up-has-its-own-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Each follow-up has its own key
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#personal-keys-encrypted-with-a-passphrase" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Personal keys, encrypted with a passphrase
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#queue-keys-shared-by-every-member" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Queue keys, shared by every member
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-the-server-can-and-cannot-see" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the server can and cannot see
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enabling-encryption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabling encryption
       
     </span>
   </a>
@@ -904,10 +937,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#general-options" class="md-nav__link">
+  <a href="#browser-status" class="md-nav__link">
     <span class="md-ellipsis">
       
-        General Options
+        Browser status
       
     </span>
   </a>
@@ -915,10 +948,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#scheduling" class="md-nav__link">
+  <a href="#adding-users-to-a-queue" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Scheduling
+        Adding users to a queue
       
     </span>
   </a>
@@ -926,10 +959,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#security" class="md-nav__link">
+  <a href="#recovering-from-a-lost-passphrase" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Security
+        Recovering from a lost passphrase
       
     </span>
   </a>
@@ -937,10 +970,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#urls" class="md-nav__link">
+  <a href="#disabling-encryption" class="md-nav__link">
     <span class="md-ellipsis">
       
-        URLs
+        Disabling encryption
       
     </span>
   </a>
@@ -948,10 +981,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#uploads" class="md-nav__link">
+  <a href="#re-provisioning-missing-keypairs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Uploads
+        Re-provisioning missing keypairs
       
     </span>
   </a>
@@ -959,32 +992,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#video-features" class="md-nav__link">
+  <a href="#limitations" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Video Features
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#visibility" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Visibility
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#patient-management" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Patient Management
+        Limitations
       
     </span>
   </a>
@@ -995,6 +1006,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../advanced-options/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Advanced Options
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -1137,7 +1176,7 @@
                   <div class="md-sidebar__inner">
                     
 
-<nav class="md-nav md-nav--secondary" aria-label="Table des matières">
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
   
   
@@ -1146,15 +1185,15 @@
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
-      Table des matières
+      Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#authentication" class="md-nav__link">
+  <a href="#what-is-encrypted" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Authentication
+        What is encrypted
       
     </span>
   </a>
@@ -1162,10 +1201,71 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#data-retention" class="md-nav__link">
+  <a href="#how-encryption-works" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Data Retention
+        How encryption works
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How encryption works">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#each-follow-up-has-its-own-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Each follow-up has its own key
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#personal-keys-encrypted-with-a-passphrase" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Personal keys, encrypted with a passphrase
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#queue-keys-shared-by-every-member" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Queue keys, shared by every member
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-the-server-can-and-cannot-see" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the server can and cannot see
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enabling-encryption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabling encryption
       
     </span>
   </a>
@@ -1173,10 +1273,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#general-options" class="md-nav__link">
+  <a href="#browser-status" class="md-nav__link">
     <span class="md-ellipsis">
       
-        General Options
+        Browser status
       
     </span>
   </a>
@@ -1184,10 +1284,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#scheduling" class="md-nav__link">
+  <a href="#adding-users-to-a-queue" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Scheduling
+        Adding users to a queue
       
     </span>
   </a>
@@ -1195,10 +1295,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#security" class="md-nav__link">
+  <a href="#recovering-from-a-lost-passphrase" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Security
+        Recovering from a lost passphrase
       
     </span>
   </a>
@@ -1206,10 +1306,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#urls" class="md-nav__link">
+  <a href="#disabling-encryption" class="md-nav__link">
     <span class="md-ellipsis">
       
-        URLs
+        Disabling encryption
       
     </span>
   </a>
@@ -1217,10 +1317,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#uploads" class="md-nav__link">
+  <a href="#re-provisioning-missing-keypairs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Uploads
+        Re-provisioning missing keypairs
       
     </span>
   </a>
@@ -1228,32 +1328,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#video-features" class="md-nav__link">
+  <a href="#limitations" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Video Features
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#visibility" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Visibility
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#patient-management" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Patient Management
+        Limitations
       
     </span>
   </a>
@@ -1277,247 +1355,131 @@
 
 
 
-<h1 id="advanced-options">Advanced Options</h1>
-<p>The advanced configuration section provides fine-grained control over platform behavior.</p>
+<h1 id="end-to-end-encryption">End-to-End Encryption</h1>
+<p>HCW@Home can encrypt the <strong>content of follow-ups</strong> (chat messages and attachments) so that the server only ever stores ciphertext. Decryption keys live in the participants' browsers.</p>
 <blockquote>
-<p><strong>Menu:</strong> Settings &gt; Configuration</p>
+<p><strong>Menu:</strong> Settings &gt; Encryption</p>
 </blockquote>
-<p><img alt="Advanced configuration" src="../../../assets/images/admin-advanced-configuration.png" /></p>
-<h2 id="authentication">Authentication</h2>
+<p><img alt="Encryption settings" src="../../assets/images/admin-encryption.png" /></p>
+<p>The toggle is platform-wide: once enabled, every new follow-up is created encrypted and the server rejects any attempt to create one in clear.</p>
+<h2 id="what-is-encrypted">What is encrypted</h2>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th>Code</th>
-<th>Default</th>
-<th>Description</th>
+<th>Item</th>
+<th>State when encryption is on</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Disable password login for practitioners (SSO only)</td>
-<td><code>DISABLE_PASSWORD_LOGIN</code></td>
-<td>FALSE</td>
-<td>When enabled, practitioners can only log in through the configured SSO provider. The standard email/password form is hidden.</td>
+<td>Message text content</td>
+<td><strong>Encrypted</strong> (AES-GCM, base64 in DB)</td>
 </tr>
 <tr>
-<td>Enable self-registration for new users</td>
-<td><code>ENABLE_REGISTRATION</code></td>
-<td>FALSE</td>
-<td>When enabled, new users can create an account themselves from the login page without an administrator invitation.</td>
+<td>Message attachments</td>
+<td><strong>Encrypted</strong> (AES-GCM blob on disk)</td>
+</tr>
+<tr>
+<td>Attachment file name and MIME type</td>
+<td><strong>Encrypted</strong> in <code>encrypted_attachment_metadata</code></td>
+</tr>
+<tr>
+<td>Follow-up title, description, custom fields</td>
+<td>In clear</td>
+</tr>
+<tr>
+<td>Participants (beneficiary, owner, queue)</td>
+<td>In clear (relations only)</td>
+</tr>
+<tr>
+<td>Appointments, reasons, profiles</td>
+<td>In clear</td>
+</tr>
+<tr>
+<td>Video recordings, transcripts</td>
+<td>In clear</td>
 </tr>
 </tbody>
 </table>
-<h2 id="data-retention">Data Retention</h2>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Code</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Hours after closure before a follow-up is automatically deleted (0 to disable)</td>
-<td><code>TEMPORARY_USER_DELETE_HOURS</code></td>
-<td>0</td>
-<td>Defines how long a closed follow-up and its associated temporary user are kept before automatic deletion. Set to 0 to disable automatic deletion.</td>
-</tr>
-<tr>
-<td>Automatically delete temporary users with no future appointments</td>
-<td><code>TEMPORARY_USER_AUTO_DELETE</code></td>
-<td>FALSE</td>
-<td>When enabled, temporary patient accounts that have no upcoming appointments are automatically removed.</td>
-</tr>
-</tbody>
-</table>
-<h2 id="general-options">General Options</h2>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Code</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>The name of the application displayed to users</td>
-<td><code>SITE_NAME</code></td>
-<td>HCW@Home</td>
-<td>The application name shown in the interface header, emails, and notifications.</td>
-</tr>
-</tbody>
-</table>
-<h2 id="scheduling">Scheduling</h2>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Code</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>When to send first appointment reminder, in minutes before the appointment time</td>
-<td><code>APPOINTMENT_FIRST_REMINDER</code></td>
-<td>1440</td>
-<td>First reminder sent to participants before the appointment. Default is 1440 minutes (24 hours).</td>
-</tr>
-<tr>
-<td>When to send last appointment reminder, in minutes before the appointment time</td>
-<td><code>APPOINTMENT_LAST_REMINDER</code></td>
-<td>10</td>
-<td>Last reminder sent shortly before the appointment starts. Default is 10 minutes.</td>
-</tr>
-<tr>
-<td>Minutes before appointment scheduled time that participants can join</td>
-<td><code>APPOINTMENT_EARLY_JOIN_MINUTES</code></td>
-<td>10</td>
-<td>How early participants are allowed to join the video room before the scheduled start time.</td>
-</tr>
-</tbody>
-</table>
-<h2 id="security">Security</h2>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Code</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Hours before a temporary participant access token expires</td>
-<td><code>TEMPORARY_PARTICIPANT_TOKEN_EXPIRY_HOURS</code></td>
-<td>1</td>
-<td>Defines the lifespan of access tokens for temporary participants (patients invited via link). After expiration, a new link must be generated.</td>
-</tr>
-</tbody>
-</table>
-<h2 id="urls">URLs</h2>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Code</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Base URL of patient frontend</td>
-<td><code>PATIENT_BASE_URL</code></td>
-<td>The public URL where the patient application is hosted (e.g., <code>https://patient.example.com</code>). Used to generate invitation links sent to patients.</td>
-</tr>
-<tr>
-<td>Base URL of practitioner frontend</td>
-<td><code>PRACTITIONER_BASE_URL</code></td>
-<td>The public URL where the practitioner application is hosted (e.g., <code>https://practitioner.example.com</code>). Used in notification emails sent to practitioners.</td>
-</tr>
-</tbody>
-</table>
-<h2 id="uploads">Uploads</h2>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Code</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Maximum file upload size in MB (0 to disable limit)</td>
-<td><code>MAX_UPLOAD_SIZE_MB</code></td>
-<td>10</td>
-<td>Maximum allowed file size for uploads in chat and consultations. Set to 0 to allow unlimited file sizes.</td>
-</tr>
-</tbody>
-</table>
-<h2 id="video-features">Video Features</h2>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Code</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Enable video recording during appointments</td>
-<td><code>ENABLE_VIDEO_RECORDING</code></td>
-<td>FALSE</td>
-<td>When enabled, video consultations can be recorded and stored on the configured S3-compatible storage.</td>
-</tr>
-<tr>
-<td>Enable live transcription and subtitles during appointments</td>
-<td><code>ENABLE_LIVE_TRANSCRIPTION</code></td>
-<td>FALSE</td>
-<td>Enables real-time speech-to-text subtitles during video calls. Requires a Whisper live server to be configured and running.</td>
-</tr>
-<tr>
-<td>Whisper model to use for transcription</td>
-<td><code>WHISPER_MODEL</code></td>
-<td>small</td>
-<td>The Whisper AI model used for live transcription. Available sizes: tiny, base, small, medium, large-v3. Larger models are more accurate but require more resources.</td>
-</tr>
-</tbody>
-</table>
-<h2 id="visibility">Visibility</h2>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Code</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Controls which users practitioners can see</td>
-<td><code>USERS_VISIBILITY</code></td>
-<td>ALL</td>
-<td>Defines practitioner visibility scope. <code>all</code>: all users, <code>alone</code>: no sharing, <code>organization</code>: only practitioners from the same organization.</td>
-</tr>
-<tr>
-<td>Controls which patients practitioners can see</td>
-<td><code>PATIENT_VISIBILITY</code></td>
-<td>All patients</td>
-<td>Defines patient visibility scope. <code>all</code>: all patients, <code>alone</code>: only patients they created, <code>organization</code>: patients from the same organization.</td>
-</tr>
-</tbody>
-</table>
-<h2 id="patient-management">Patient Management</h2>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Code</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Force all newly created patients to be temporary users</td>
-<td><code>FORCE_TEMPORARY_PATIENTS</code></td>
-<td>FALSE</td>
-<td>When enabled, every newly created patient is forced to be a temporary user (no permanent patient accounts). The <code>temporary</code> toggle in the patient creation modal is locked on. Existing permanent patients are not converted and can still be edited without changing their status. The "Patients" menu entry is hidden from the practitioner sidebar, and on the patient app the self-registration page and password login are disabled — only magic-link access remains. Sending <code>temporary=false</code> to the API returns HTTP 400.</td>
-</tr>
-</tbody>
-</table>
+<p>This is content-level encryption, not metadata encryption. An operator with database access can see who talked to whom and when, but cannot read the messages.</p>
+<h2 id="how-encryption-works">How encryption works</h2>
+<h3 id="each-follow-up-has-its-own-key">Each follow-up has its own key</h3>
+<p>Every follow-up is encrypted with a <strong>unique random key</strong> generated in the practitioner's browser the moment the follow-up is created. That key is what actually encrypts every message and every attachment of that follow-up. Two follow-ups never share the same key.</p>
+<p>That same key is then <strong>encrypted once for each participant</strong> so that they can decrypt it later. There are five participants per encrypted follow-up:</p>
+<ul>
+<li>the <strong>patient</strong> (<code>beneficiary</code>)</li>
+<li>the <strong>assigned practitioner</strong> (<code>owned_by</code>)</li>
+<li>the <strong>creator</strong> (<code>created_by</code>)</li>
+<li>the <strong>queue</strong> the follow-up belongs to</li>
+<li>the <strong>master key</strong> (platform recovery)</li>
+</ul>
+<p>When the follow-up is saved, the server receives only the encrypted versions of the key — one per participant — and stores them alongside the follow-up. The clear key never leaves the browser. The server therefore holds the encrypted messages, the encrypted copies of the follow-up key, but nothing it can decrypt by itself.</p>
+<h3 id="personal-keys-encrypted-with-a-passphrase">Personal keys, encrypted with a passphrase</h3>
+<p>To decrypt their copy of the follow-up key, every user needs a <strong>personal private key</strong>. This key is generated server-side the first time encryption is enabled (or when a new user is created afterwards). Before being stored on the server, it is itself encrypted with a passphrase that only the user knows.</p>
+<p>The passphrase is generated once at provisioning time and sent to the user through their declared communication channel (email, SMS, WhatsApp, or to their creating practitioner when the patient is in <em>manual</em> contact mode). It is <strong>never stored</strong> on the server.</p>
+<p>When a user logs in for the first time after encryption is enabled, they enter their passphrase once. The server returns their encrypted private key, the browser unlocks it locally and keeps the unlocked key in the browser's secure storage (IndexedDB, marked non-extractable). On subsequent logins from the same browser, no passphrase is needed.</p>
+<h3 id="queue-keys-shared-by-every-member">Queue keys, shared by every member</h3>
+<p>A queue has a single private key, generated server-side at provisioning. That key is <strong>encrypted once for every member</strong> of the queue, and once more for the master key. When a member is added or removed later, only their encrypted copy is added or deleted — the queue key itself does not change, so existing follow-ups remain readable by all current members.</p>
+<p>Because the queue key is itself a few kilobytes large, it cannot be encrypted directly with a single asymmetric operation. The platform uses <strong>envelope encryption</strong> internally: a fresh symmetric key encrypts the queue key, and that small symmetric key is encrypted for each recipient. This is invisible to the admin — the only consequence is that wrapping the queue key for a new member requires the master key (held only in the admin's browser).</p>
+<h3 id="what-the-server-can-and-cannot-see">What the server can and cannot see</h3>
+<p>The server can see who participates in which follow-up, when messages are exchanged, and the size of each message — that's the metadata. The actual content of messages, attachment file names, and attachment bodies are <strong>encrypted blobs</strong> the server cannot read.</p>
+<p>There is no backdoor. If every personal passphrase, every browser copy, and the master key are all lost simultaneously, the data is permanently unreadable.</p>
+<h2 id="enabling-encryption">Enabling encryption</h2>
+<ol>
+<li>
+<p><strong>Generate the master key</strong> — Click <em>Generate master key</em> on the Encryption settings page. Your browser:</p>
+<ul>
+<li>Generates an RSA-4096 keypair locally.</li>
+<li>Downloads <code>master-private-key.pem</code> automatically (your offline backup).</li>
+<li>Stores the same key non-extractable in this browser's IndexedDB (<code>hcw-master-key</code>).</li>
+<li>Uploads only the public key to the server.</li>
+</ul>
+<p>Keep the <code>.pem</code> file safe (password manager, sealed envelope). The server never sees the private master key, and no one can decrypt the recovery envelope without it.</p>
+</li>
+<li>
+<p><strong>Enable encryption</strong> — Click <em>Enable encryption</em>. A background job is dispatched that:</p>
+<ul>
+<li>Generates a keypair for every active user (with a random passphrase emailed/SMSed/handed to the practitioner of manual-contact patients).</li>
+<li>Generates a keypair for every queue, wrapped for the master and for each member.</li>
+</ul>
+</li>
+<li>
+<p><strong>Users activate their key</strong> — At their next login, every user is forced through <code>/activate-encryption</code> and must enter the passphrase they received. The browser pulls the encrypted private key from the server, decrypts it, and stores it non-extractable in IndexedDB.</p>
+</li>
+</ol>
+<p>After this, all new follow-ups are encrypted automatically and existing users can read their messages.</p>
+<h2 id="browser-status">Browser status</h2>
+<p>The Encryption settings page shows two statuses:</p>
+<ul>
+<li><strong>Server status</strong> — Whether the master public key is configured server-side, with its fingerprint.</li>
+<li><strong>Browser status</strong> — Whether the master private key is loaded in <em>this</em> browser's IndexedDB, with verification that the fingerprint matches the server's.</li>
+</ul>
+<p>If a different admin needs to manage queue memberships from another machine, they can click <em>Import master key (.pem) into this browser</em> and select the backup <code>.pem</code> file. The browser does a functional encrypt/decrypt round-trip with the server's public key to verify the keypair before storing it non-extractable.</p>
+<h2 id="adding-users-to-a-queue">Adding users to a queue</h2>
+<p>When you add a user to a queue from the queue admin page, the page contains JavaScript that:</p>
+<ol>
+<li>Reads the queue's <code>encrypted_queue_private_key_master</code> from the form.</li>
+<li>Reads the master private key from this browser's IndexedDB.</li>
+<li>Decrypts the queue private key (envelope decryption, in memory).</li>
+<li>Fetches the new member's public key from the server.</li>
+<li>Re-wraps the queue private key for that member's pubkey.</li>
+<li>Fills the hidden <code>encrypted_queue_private_key</code> field on the membership row.</li>
+<li>Submits the form normally.</li>
+</ol>
+<p>The server never sees the queue private key in clear during this operation. <strong>The admin must have imported the master key in this browser</strong> (see the Encryption settings page).</p>
+<h2 id="recovering-from-a-lost-passphrase">Recovering from a lost passphrase</h2>
+<p>A user who has forgotten their passphrase can click <em>I forgot my passphrase</em> on the activation screen. The server generates a brand-new keypair and returns the new passphrase one time. The user keeps access to all messages going forward, but loses access to messages encrypted under the previous public key until a colleague (or the admin via the master key) rewraps each follow-up's symmetric key for the new public key. A "Resync key" banner is shown to colleagues on affected follow-ups.</p>
+<p>The master recovery envelope is the safety net: even if every user keypair is lost, the admin who holds the master <code>.pem</code> can decrypt every follow-up by importing the master key in their browser and using a recovery flow (out of scope of v1, mechanism documented for the future).</p>
+<h2 id="disabling-encryption">Disabling encryption</h2>
+<p>Disabling the platform toggle does <strong>not</strong> decrypt anything. Existing encrypted follow-ups remain encrypted and readable by users who hold their key; new follow-ups are created in clear. To bring older follow-ups back online for a new device, the user simply re-imports their key (same passphrase).</p>
+<h2 id="re-provisioning-missing-keypairs">Re-provisioning missing keypairs</h2>
+<p>If a user or queue was created before encryption was enabled — or if a worker error skipped one — click <strong>Re-provision missing keypairs</strong> on the Encryption settings page. The job is idempotent: it only fills in the gaps for users and queues whose <code>public_key</code> is null.</p>
+<h2 id="limitations">Limitations</h2>
+<ul>
+<li><strong>History migration</strong> is out of scope. Messages sent before activation stay in clear in their (unencrypted) follow-ups.</li>
+<li><strong>Queue key rotation</strong> is manual: there is no automatic rotation if a member leaves. They keep access to past follow-ups until the queue is regenerated.</li>
+<li><strong>Server fingerprint validation</strong> of envelopes is not enforced — a malicious client could store fake fingerprints. This does not break confidentiality, only the desync banner UX.</li>
+</ul>
 
 
 
@@ -1567,10 +1529,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.sections", "navigation.expand", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copi\u00e9 dans le presse-papier", "clipboard.copy": "Copier dans le presse-papier", "search.result.more.one": "1 de plus sur cette page", "search.result.more.other": "# de plus sur cette page", "search.result.none": "Aucun document trouv\u00e9", "search.result.one": "1 document trouv\u00e9", "search.result.other": "# documents trouv\u00e9s", "search.result.placeholder": "Taper pour d\u00e9marrer la recherche", "search.result.term.missing": "Non trouv\u00e9", "select.version": "S\u00e9lectionner la version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
