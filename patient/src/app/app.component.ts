@@ -17,6 +17,7 @@ import { IncomingCallComponent } from "./shared/components/incoming-call/incomin
 import { OfflineIndicatorComponent } from "./shared/components/offline-indicator/offline-indicator.component";
 import { TranslationService } from "./core/services/translation.service";
 import { PushNotificationService } from "./core/services/push-notification.service";
+import { BrowserNotificationService } from "./core/services/browser-notification.service";
 import { AppUpdateService } from "./core/services/app-update.service";
 
 @Component({
@@ -30,6 +31,7 @@ export class AppComponent implements OnInit, OnDestroy {
   private titleService = inject(Title);
   private translationService = inject(TranslationService);
   private pushNotificationService = inject(PushNotificationService);
+  private browserNotificationService = inject(BrowserNotificationService);
   private appUpdateService = inject(AppUpdateService);
 
   private notificationService = inject(NotificationService);
@@ -55,6 +57,7 @@ export class AppComponent implements OnInit, OnDestroy {
       .subscribe((isAuthenticated: boolean) => {
         if (isAuthenticated) {
           this.userWsService.connect();
+          this.browserNotificationService.requestPermission();
           this.pushNotificationService.subscribe();
         } else {
           this.userWsService.disconnect();
