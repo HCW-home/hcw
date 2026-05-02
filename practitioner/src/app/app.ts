@@ -81,6 +81,16 @@ export class App implements OnInit, OnDestroy {
         });
       });
 
+    this.userWsService.requestAssigned$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(event => {
+        this.incomingCallService.showRequestAssigned({
+          requesterName: event.data.user_name,
+          consultationId: event.consultation_id,
+          queueName: event.data.queue_name,
+          reasonName: event.data.reason_name,
+        });
+      });
   }
 
   private handleDeepLinks(): void {

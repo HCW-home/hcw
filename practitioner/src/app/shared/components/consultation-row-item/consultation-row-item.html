@@ -11,6 +11,11 @@
           {{ consultation().unread_count }} {{ (consultation().unread_count === 1 ? 'consultationRowItem.unreadMessage' : 'consultationRowItem.unreadMessages') | translate }}
         </span>
       }
+      @if (!consultation().owned_by) {
+        <span class="no-owner-badge">
+          {{ 'consultationRowItem.noOwner' | translate }}
+        </span>
+      }
     </div>
   </div>
 

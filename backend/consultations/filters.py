@@ -1,5 +1,5 @@
 import django_filters
-from .models import Consultation, Appointment
+from .models import Consultation, Appointment, Request
 from django.db.models import Exists, OuterRef
 from django.utils import timezone
 from datetime import timedelta
@@ -12,6 +12,7 @@ class ConsultationFilter(django_filters.FilterSet):
         exclude=True  # so is_closed=True means closed_at is NOT null
     )
     scheduled = django_filters.BooleanFilter(method='filter_scheduled')
+    unassigned_request = django_filters.BooleanFilter(method='filter_unassigned_request')
 
     class Meta:
         model = Consultation
@@ -37,6 +38,16 @@ class ConsultationFilter(django_filters.FilterSet):
             return queryset.filter(has_future)
         elif value is False:
             return queryset.filter(~has_future)
+        return queryset
+
+    def filter_unassigned_request(self, queryset, name, value):
+        # Consultations without an owner that originate from a Request,
+        # i.e. queue-assigned and waiting for a practitioner to take over.
+        has_request = Exists(Request.objects.filter(consultation=OuterRef('pk')))
+        if value is True:
+            return queryset.filter(owned_by__isnull=True).filter(has_request)
+        elif value is False:
+            return queryset.exclude(owned_by__isnull=True, pk__in=Request.objects.values('consultation_id'))
         return queryset
 
 

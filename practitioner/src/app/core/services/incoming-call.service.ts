@@ -4,6 +4,9 @@ import { RoutePaths } from '../constants/routes';
 import { ActiveCallService } from './active-call.service';
 import { ToasterService } from './toaster.service';
 import { TranslationService } from './translation.service';
+import { UserService } from './user.service';
+import { ConsultationService } from './consultation.service';
+import { getErrorMessage } from '../utils/error-helper';
 
 export interface IncomingCallData {
   callerName: string;
@@ -12,7 +15,15 @@ export interface IncomingCallData {
   consultationId: number;
 }
 
+export interface RequestAssignedData {
+  requesterName: string;
+  consultationId: number;
+  queueName: string;
+  reasonName: string;
+}
+
 const INCOMING_CALL_TOAST_ID = 'incoming-call';
+const REQUEST_ASSIGNED_TOAST_ID = 'request-assigned';
 
 @Injectable({
   providedIn: 'root',
@@ -28,7 +39,9 @@ export class IncomingCallService {
     private router: Router,
     private activeCallService: ActiveCallService,
     private toasterService: ToasterService,
-    private t: TranslationService
+    private t: TranslationService,
+    private userService: UserService,
+    private consultationService: ConsultationService,
   ) {
     this.requestNotificationPermission();
   }
@@ -159,5 +172,98 @@ export class IncomingCallService {
       clearTimeout(this.timeoutId);
       this.timeoutId = null;
     }
+  }
+
+  showRequestAssigned(data: RequestAssignedData): void {
+    this.playRingtone();
+    this.showRequestSystemNotification(data);
+
+    const subtitle = data.reasonName
+      ? `${data.queueName} — ${data.reasonName}`
+      : data.queueName;
+
+    this.toasterService.show(
+      'neutral',
+      this.t.instant('incomingCall.requestAssigned', { name: data.requesterName }),
+      subtitle,
+      {
+        id: `${REQUEST_ASSIGNED_TOAST_ID}-${data.consultationId}`,
+        delay: -1,
+        closable: true,
+        icon: 'phone',
+        actions: [
+          {
+            label: this.t.instant('incomingCall.takeOver'),
+            callback: () => this.takeOverConsultation(data.consultationId),
+          },
+          {
+            label: this.t.instant('incomingCall.later'),
+            callback: () => this.dismissRequest(data.consultationId),
+          },
+        ],
+      },
+    );
+  }
+
+  private dismissRequest(consultationId: number): void {
+    this.stopRingtone();
+    this.toasterService.dismiss(`${REQUEST_ASSIGNED_TOAST_ID}-${consultationId}`);
+  }
+
+  private takeOverConsultation(consultationId: number): void {
+    this.stopRingtone();
+    this.toasterService.dismiss(`${REQUEST_ASSIGNED_TOAST_ID}-${consultationId}`);
+
+    const currentUser = this.userService.currentUserValue;
+    if (!currentUser) {
+      this.router.navigate([
+        `/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`,
+        consultationId,
+      ]);
+      return;
+    }
+
+    this.consultationService
+      .updateConsultation(consultationId, { owned_by_id: currentUser.pk })
+      .subscribe({
+        next: () => {
+          this.router.navigate([
+            `/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`,
+            consultationId,
+          ]);
+        },
+        error: err => {
+          this.toasterService.show(
+            'error',
+            this.t.instant('incomingCall.takeOverErrorTitle'),
+            getErrorMessage(err),
+          );
+        },
+      });
+  }
+
+  private showRequestSystemNotification(data: RequestAssignedData): void {
+    if (!('Notification' in window) || Notification.permission !== 'granted') {
+      return;
+    }
+
+    const title = this.t.instant('incomingCall.requestAssigned', { name: data.requesterName });
+    const body = data.reasonName
+      ? `${data.queueName} — ${data.reasonName}`
+      : data.queueName;
+
+    const notification = new Notification(title, {
+      body,
+      icon: '/images/logo.svg',
+      badge: '/images/logo.svg',
+      tag: `request-assigned-${data.consultationId}`,
+      requireInteraction: false,
+      silent: false,
+    });
+
+    notification.onclick = () => {
+      window.focus();
+      notification.close();
+    };
   }
 }

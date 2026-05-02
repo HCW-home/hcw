@@ -993,7 +993,8 @@
         "description": "Descrizione",
         "status": "Stato",
         "unreadMessage": "messaggio non letto",
-        "unreadMessages": "messaggi non letti"
+        "unreadMessages": "messaggi non letti",
+        "noOwner": "Senza responsabile"
     },
     "messageList": {
         "messages": "Messaggi",
@@ -1021,7 +1022,11 @@
     "incomingCall": {
         "isCalling": "vuole partecipare alla videochiamata",
         "accept": "Accettare",
-        "decline": "Declino"
+        "decline": "Declino",
+        "requestAssigned": "Nuova richiesta da {{name}}",
+        "takeOver": "Prendi in carico",
+        "later": "Più tardi",
+        "takeOverErrorTitle": "Impossibile prendere in carico"
     },
     "videoCall": {
         "leaveCallTitle": "Uscire dalla videochiamata?",

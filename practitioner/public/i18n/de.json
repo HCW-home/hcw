@@ -413,7 +413,8 @@
         "created": "Erstellt",
         "closed": "Geschlossen",
         "description": "Beschreibung",
-        "status": "Status"
+        "status": "Status",
+        "noOwner": "Kein Verantwortlicher"
     },
     "addEditPatient": {
         "editTitle": "Patienteninformationen bearbeiten",
@@ -993,7 +994,11 @@
     "incomingCall": {
         "isCalling": "möchte am Videoanruf teilnehmen",
         "accept": "Akzeptieren",
-        "decline": "Abfall"
+        "decline": "Abfall",
+        "requestAssigned": "Neue Anfrage von {{name}}",
+        "takeOver": "Übernehmen",
+        "later": "Später",
+        "takeOverErrorTitle": "Übernahme fehlgeschlagen"
     },
     "videoCall": {
         "leaveCallTitle": "Videoanruf verlassen?",

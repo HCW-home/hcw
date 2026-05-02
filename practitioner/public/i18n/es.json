@@ -975,7 +975,8 @@
         "description": "Descripción",
         "status": "Estado",
         "unreadMessage": "mensaje no leído",
-        "unreadMessages": "mensajes no leídos"
+        "unreadMessages": "mensajes no leídos",
+        "noOwner": "Sin responsable"
     },
     "participantItem": {
         "pending": "Pendiente",
@@ -1021,7 +1022,11 @@
     "incomingCall": {
         "isCalling": "quiere unirse a la videollamada",
         "accept": "Aceptar",
-        "decline": "Rechazar"
+        "decline": "Rechazar",
+        "requestAssigned": "Nueva solicitud de {{name}}",
+        "takeOver": "Hacerme cargo",
+        "later": "Más tarde",
+        "takeOverErrorTitle": "No se pudo asignar"
     },
     "videoCall": {
         "leaveCallTitle": "¿Abandonar la videollamada?",

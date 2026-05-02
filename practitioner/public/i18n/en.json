@@ -1069,7 +1069,8 @@
     "description": "Description",
     "status": "Status",
     "unreadMessage": "unread message",
-    "unreadMessages": "unread messages"
+    "unreadMessages": "unread messages",
+    "noOwner": "No owner"
   },
   "participantItem": {
     "pending": "Pending",
@@ -1115,7 +1116,11 @@
   "incomingCall": {
     "isCalling": "wants to join the video call",
     "accept": "Accept",
-    "decline": "Decline"
+    "decline": "Decline",
+    "requestAssigned": "New request from {{name}}",
+    "takeOver": "Take over",
+    "later": "Later",
+    "takeOverErrorTitle": "Could not take over"
   },
   "videoCall": {
     "leaveCallTitle": "Leave video call?",

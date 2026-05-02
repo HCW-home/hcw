@@ -303,7 +303,8 @@
     "description": "Description",
     "status": "Statut",
     "unreadMessage": "message non lu",
-    "unreadMessages": "messages non lus"
+    "unreadMessages": "messages non lus",
+    "noOwner": "Pas de responsable"
   },
   "participantItem": {
     "pending": "En attente",
@@ -742,7 +743,11 @@
   "incomingCall": {
     "isCalling": "a rejoint l'appel vidéo",
     "accept": "Accepter",
-    "decline": "Refuser"
+    "decline": "Refuser",
+    "requestAssigned": "Nouvelle demande de {{name}}",
+    "takeOver": "Prendre en charge",
+    "later": "Plus tard",
+    "takeOverErrorTitle": "Impossible de prendre en charge"
   },
   "videoConsultation": {
     "transcriptError": "Erreur de transcription",

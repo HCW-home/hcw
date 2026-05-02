@@ -25,6 +25,7 @@ import {
   ConsultationEvent,
   CallResponseEvent,
   MessageEvent as WsMessageEvent,
+  RequestAssignedEvent,
 } from '../models/websocket';
 
 const WS_CONNECTION_TOAST_ID = 'ws-connection-status';
@@ -42,6 +43,7 @@ export class UserWebSocketService implements OnDestroy {
   private consultationEventSubject = new Subject<ConsultationEvent>();
   private callResponseSubject = new Subject<CallResponseEvent>();
   private consultationMessageSubject = new Subject<WsMessageEvent>();
+  private requestAssignedSubject = new Subject<RequestAssignedEvent>();
   private stateSubscription: Subscription | null = null;
   private onlineSubscription: Subscription | null = null;
   private hadConnectionIssue = false;
@@ -68,6 +70,8 @@ export class UserWebSocketService implements OnDestroy {
     this.callResponseSubject.asObservable();
   public consultationMessage$: Observable<WsMessageEvent> =
     this.consultationMessageSubject.asObservable();
+  public requestAssigned$: Observable<RequestAssignedEvent> =
+    this.requestAssignedSubject.asObservable();
 
   constructor(
     private wsService: WebSocketService,
@@ -269,6 +273,9 @@ export class UserWebSocketService implements OnDestroy {
         const consultationEvent = event as ConsultationEvent;
         console.log('[UserWS] Consultation event received:', consultationEvent);
         this.consultationEventSubject.next(consultationEvent);
+        if (consultationEvent.state === 'request_assigned') {
+          this.requestAssignedSubject.next(event as unknown as RequestAssignedEvent);
+        }
       });
 
     this.wsService.on('call_response').subscribe(event => {

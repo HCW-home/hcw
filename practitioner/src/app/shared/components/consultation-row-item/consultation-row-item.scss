@@ -47,6 +47,18 @@
         flex-shrink: 0;
       }
     }
+
+    .no-owner-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 10px;
+      border-radius: 6px;
+      background: rgba(225, 29, 72, 0.1);
+      color: var(--rose-600, #e11d48);
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1;
+    }
   }
 
   .row-details {

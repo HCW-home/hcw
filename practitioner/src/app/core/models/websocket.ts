@@ -296,6 +296,18 @@ export interface ConsultationEvent {
   data?: unknown;
 }
 
+export interface RequestAssignedEvent {
+  event: 'consultation';
+  state: 'request_assigned';
+  consultation_id: number;
+  data: {
+    user_id: number | null;
+    user_name: string;
+    queue_name: string;
+    reason_name: string;
+  };
+}
+
 export interface JanusEventData {
   type: 'janus_event';
   payload: {

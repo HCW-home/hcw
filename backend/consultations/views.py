@@ -11,7 +11,18 @@ from django.conf import settings
 from constance import config
 from django.contrib.auth import get_user_model
 from django.db import models
-from django.db.models import Count, F, Q, Subquery, Value
+from django.db.models import (
+    BooleanField,
+    Case,
+    Count,
+    Exists,
+    F,
+    OuterRef,
+    Q,
+    Subquery,
+    Value,
+    When,
+)
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse, StreamingHttpResponse
 from django.utils import timezone
@@ -109,6 +120,22 @@ def annotate_unread_count(queryset, user):
     )
 
 
+def annotate_unassigned_request(queryset):
+    """Annotate Consultations as priority when they originate from a Request
+    and have no owner yet. Used to surface unclaimed queue-assigned
+    consultations at the top of dashboard / list endpoints.
+    """
+    has_request = Exists(Request.objects.filter(consultation=OuterRef("pk")))
+    return queryset.annotate(
+        _has_request=has_request,
+        _unassigned_request=Case(
+            When(Q(owned_by__isnull=True) & has_request, then=Value(True)),
+            default=Value(False),
+            output_field=BooleanField(),
+        ),
+    )
+
+
 class ConsultationViewSet(FhirViewSetMixin, CreatedByMixin, viewsets.ModelViewSet):
     """Consultation endpoint.
 
@@ -139,12 +166,15 @@ class ConsultationViewSet(FhirViewSetMixin, CreatedByMixin, viewsets.ModelViewSe
         "owned_by__last_name",
         "group__name",
     ]
-    ordering = ["-created_at"]
+    ordering = ["-_unassigned_request", "-created_at"]
     ordering_fields = ["created_at", "updated_at", "closed_at"]
 
     def get_queryset(self):
         user = self.request.user
-        return annotate_unread_count(Consultation.objects.accessible_by(user), user)
+        qs = Consultation.objects.accessible_by(user)
+        qs = annotate_unread_count(qs, user)
+        qs = annotate_unassigned_request(qs)
+        return qs
 
     @action(detail=True, methods=["post"])
     def mark_read(self, request, pk=None):
@@ -1418,15 +1448,13 @@ class DashboardPractitionerView(APIView):
 
         ctx = {"request": request}
 
-        overdue_qs = (
+        overdue_qs = annotate_unassigned_request(
             consultations_qs.active.exclude(
                 appointments__scheduled_at__gte=timezone.now()
                 - timedelta(hours=2),
                 appointments__status=AppointmentStatus.scheduled,
-            )
-            .distinct()
-            .order_by("-created_at")
-        )
+            ).distinct()
+        ).order_by("-_unassigned_request", "-created_at")
         overdue_total = overdue_qs.count()
         upcoming_total = remaining_appointments.count()
 
