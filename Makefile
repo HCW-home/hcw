@@ -5,6 +5,7 @@ subdirs = backend practitioner patient
 install: $(subdirs)
 clean: $(subdirs)
 build: $(subdirs)
+test: $(subdirs)
 
 $(subdirs):
 	make -C $@ $(MAKECMDGOALS)

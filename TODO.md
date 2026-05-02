@@ -13,11 +13,6 @@ Feedback Gilles
 
 - Tableau on comprend pas cliquable
 
-Controle pendant l'appel pas clair
-==================================
-
-Il faudrait ajouter des petits labels à droite des boutons.
-
 Ajouter icone spécialisé
 ========================
 
@@ -26,7 +21,7 @@ Ajoute une icone personnalisé pour la spécialité (paramétrable dans l'admin)
 Système de notification browser pour patient
 ============================================
 
-Le patient ne semble pas avoir les notifications browser comme pour les practitioner. Il faut l'ajouter.
+Le patient ne semble pas avoir les notifications browser comme pour les practitioner. Il faut l'ajouter. (test)
 
 Améliorations responsable (à réfléchir)
 =======================================
