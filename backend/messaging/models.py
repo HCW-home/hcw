@@ -1,6 +1,7 @@
 from datetime import timedelta
 import hashlib
 import logging
+import uuid
 from importlib import import_module
 from typing import Dict, Optional, Sequence, Tuple
 from zoneinfo import ZoneInfo
@@ -824,10 +825,25 @@ class Message(ModelCeleryAbstract):
             self.pk, is_patient, base_url,
         )
 
-        if self.sent_to.one_time_auth_token:
-            full_url = f"{base_url}?auth={self.sent_to.one_time_auth_token}&action={self.action}&id={self.object_pk}&model={self.object_model}"
-        else:
+        # The communication method drives how the recipient identifies on the
+        # link: only the `email` channel can use ?email=..., every other
+        # channel (sms, whatsapp, push, manual) must use the auth token.
+        use_email = (
+            self.validated_communication_method == CommunicationMethod.email
+            and self.sent_to.email
+        )
+
+        if not use_email and not self.sent_to.one_time_auth_token:
+            self.sent_to.one_time_auth_token = str(uuid.uuid4())
+            self.sent_to.verification_code_created_at = timezone.now()
+            self.sent_to.save(
+                update_fields=["one_time_auth_token", "verification_code_created_at"]
+            )
+
+        if use_email:
             full_url = f"{base_url}?email={self.sent_to.email}&action={self.action}&id={self.object_pk}&model={self.object_model}"
+        else:
+            full_url = f"{base_url}?auth={self.sent_to.one_time_auth_token}&action={self.action}&id={self.object_pk}&model={self.object_model}"
 
         if self.additionnal_link_args:
             full_url += "".join(

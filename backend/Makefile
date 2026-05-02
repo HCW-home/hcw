@@ -23,3 +23,6 @@ install: ${STATIC}/${PROJECT}/${COMPONENT}/venv
 
 clean:
 	echo "Nothing to clean"
+
+test:
+	python3 manage.py test
