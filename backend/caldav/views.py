@@ -186,7 +186,10 @@ def _get_user_appointments(user):
 
 
 def _appointment_etag(appointment):
-    return f'"{appointment.pk}-{int(appointment.scheduled_at.timestamp())}"'
+    # Use updated_at so any change (title rename, status, participants, ...)
+    # invalidates the etag and triggers a re-fetch by CalDAV clients.
+    ref = appointment.updated_at or appointment.scheduled_at
+    return f'"{appointment.pk}-{int(ref.timestamp())}"'
 
 
 def _href_for_appointment(appointment):
