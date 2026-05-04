@@ -1387,11 +1387,11 @@ class AppConfigView(APIView):
 
         social_app = SocialApp.objects.filter(provider="openid_connect").first()
         if social_app:
-            server_url = social_app.settings.get("server_url", "")
             authorization_url = None
-            if server_url:
-                base_url = server_url.replace("/.well-known/openid-configuration", "")
-                authorization_url = f"{base_url}/protocol/openid-connect/auth"
+            try:
+                authorization_url = OpenIDAdapter(request).authorize_url
+            except Exception as e:
+                logger.warning(f"Failed to fetch OIDC discovery: {e}")
 
             openid = {
                 "enabled": bool(social_app.client_id),
