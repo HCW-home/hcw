@@ -1,3 +1,4 @@
+from django import forms
 from django.contrib import admin
 from django.forms.models import BaseInlineFormSet
 from django.utils.translation import gettext_lazy as _
@@ -52,8 +53,18 @@ class CustomFieldAdmin(ModelAdmin, TabbedTranslationAdmin):
     search_fields = ["name"]
 
 
+class QueueMembershipInlineForm(forms.ModelForm):
+    class Meta:
+        model = QueueMembership
+        fields = ["user", "encrypted_queue_private_key"]
+        widgets = {
+            "encrypted_queue_private_key": forms.HiddenInput(),
+        }
+
+
 class QueueMembershipInline(TabularInline):
     model = QueueMembership
+    form = QueueMembershipInlineForm
     extra = 0
     fields = ["user", "encrypted_queue_private_key", "created_at"]
     readonly_fields = ["created_at"]

@@ -9,7 +9,6 @@ from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_clamd.validators import validate_file_infection
 from messaging.models import CommunicationMethod
@@ -51,7 +50,7 @@ class QueueMembership(models.Model):
     queue = models.ForeignKey(Queue, on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     encrypted_queue_private_key = models.TextField(blank=True, null=True)
-    created_at = models.DateTimeField(default=timezone.now)
+    created_at = models.DateTimeField(_("Added at"), auto_now_add=True)
 
     class Meta:
         verbose_name = _("queue membership")
