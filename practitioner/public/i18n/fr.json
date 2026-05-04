@@ -440,7 +440,7 @@
   },
   "addEditPatient": {
     "editTitle": "Modifier les informations du patient",
-    "addTitle": "Ajouter un nouveau patient",
+    "addTitle": "Ajouter un nouveau contact",
     "firstName": "Prénom",
     "firstNamePlaceholder": "Entrez le prénom",
     "lastName": "Nom",
@@ -767,7 +767,7 @@
     "consultations": "Suivis / Consultations",
     "consultationsSubtitle": "Gérer les suivis",
     "patients": "Contacts",
-    "patientsSubtitle": "Patients & collaborateurs",
+    "patientsSubtitle": "Bénéficiaires & collaborateurs",
     "appointments": "Rendez-vous",
     "appointmentsSubtitle": "Planifier et gérer",
     "availability": "Disponibilités",

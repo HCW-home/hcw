@@ -394,7 +394,7 @@
     "consultations": "Follow-ups / Consultations",
     "consultationsSubtitle": "Manage follow-ups",
     "patients": "Contacts",
-    "patientsSubtitle": "Patients & collaborators",
+    "patientsSubtitle": "Beneficiaries & collaborators",
     "appointments": "Appointments",
     "appointmentsSubtitle": "Schedule & manage",
     "availability": "Availability",
@@ -424,7 +424,7 @@
   },
   "addEditPatient": {
     "editTitle": "Edit Patient Information",
-    "addTitle": "Add New Patient",
+    "addTitle": "Add New Contact",
     "firstName": "First Name",
     "firstNamePlaceholder": "Enter first name",
     "lastName": "Last Name",

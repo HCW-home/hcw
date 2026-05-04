@@ -791,7 +791,7 @@
         "consultations": "Visite di controllo / Consulenze",
         "consultationsSubtitle": "Gestire i follow-up",
         "patients": "Contatti",
-        "patientsSubtitle": "Pazienti e collaboratori",
+        "patientsSubtitle": "Beneficiari e collaboratori",
         "appointments": "Appuntamenti",
         "appointmentsSubtitle": "Pianifica e gestisci",
         "availability": "Disponibilità",
@@ -821,7 +821,7 @@
     },
     "addEditPatient": {
         "editTitle": "Modifica le informazioni del paziente",
-        "addTitle": "Aggiungi un nuovo paziente",
+        "addTitle": "Aggiungi un nuovo contatto",
         "firstName": "Nome",
         "firstNamePlaceholder": "Inserisci il nome",
         "lastName": "Cognome",

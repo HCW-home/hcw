@@ -334,7 +334,7 @@
         "availability": "Verfügbarkeit",
         "availabilitySubtitle": "Verwalten Sie Ihren Zeitplan",
         "practitioner": "Praktiker",
-        "patientsSubtitle": "Patienten und Kooperationspartner",
+        "patientsSubtitle": "Begünstigte und Kooperationspartner",
         "dashboard": "Armaturenbrett",
         "dashboardSubtitle": "Überblick & Aktivität",
         "consultations": "Nachuntersuchungen / Beratungen",
@@ -418,7 +418,7 @@
     },
     "addEditPatient": {
         "editTitle": "Patienteninformationen bearbeiten",
-        "addTitle": "Neuen Patienten hinzufügen",
+        "addTitle": "Neuen Kontakt hinzufügen",
         "firstName": "Vorname",
         "firstNamePlaceholder": "Vornamen eingeben",
         "lastName": "Nachname",

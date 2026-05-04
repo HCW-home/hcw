@@ -617,7 +617,7 @@
         "consultations": "Seguimientos / Consultas",
         "consultationsSubtitle": "Gestionar el seguimiento",
         "patients": "Contactos",
-        "patientsSubtitle": "Pacientes y colaboradores",
+        "patientsSubtitle": "Beneficiarios y colaboradores",
         "appointments": "Citas",
         "appointmentsSubtitle": "Programar y gestionar",
         "availability": "Disponibilidad",
@@ -647,7 +647,7 @@
     },
     "addEditPatient": {
         "editTitle": "Editar información del paciente",
-        "addTitle": "Agregar nuevo paciente",
+        "addTitle": "Agregar nuevo contacto",
         "firstName": "Nombre",
         "firstNamePlaceholder": "Ingrese su nombre",
         "lastName": "Apellido",
