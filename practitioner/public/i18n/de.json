@@ -481,6 +481,7 @@
         "consultationNumber": "Folge-Update #{{id}}",
         "closed": "Geschlossen",
         "active": "Aktiv",
+        "temporary": "Temporär",
         "edit": "Bearbeiten",
         "exportPdf": "PDF exportieren",
         "closeConsultation": "Enge Nachverfolgung",

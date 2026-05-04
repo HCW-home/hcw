@@ -120,6 +120,7 @@ export interface Consultation {
   group: Queue | null;
   group_id?: number;
   visible_by_patient: boolean;
+  temporary?: boolean;
   custom_fields?: CustomFieldValue[];
   unread_count?: number;
   last_read_at?: string;

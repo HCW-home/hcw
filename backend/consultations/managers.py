@@ -16,7 +16,10 @@ class ConsultationManager(models.Manager):
     def get_queryset(self):
         return ConsultationQuerySet(self.model, using=self._db)
 
-    def accessible_by(self, user):
-        return self.filter(
+    def accessible_by(self, user, include_temporary=False):
+        qs = self.filter(
             Q(owned_by=user) | Q(created_by=user) | Q(group__users=user),
         ).distinct()
+        if not include_temporary:
+            qs = qs.filter(temporary=False)
+        return qs

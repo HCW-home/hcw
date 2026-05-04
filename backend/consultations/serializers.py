@@ -25,6 +25,7 @@ from .models import (
     Queue,
     Reason,
     Request,
+    Type,
 )
 
 User = get_user_model()
@@ -320,6 +321,7 @@ class ConsultationSerializer(CustomFieldsMixin, serializers.ModelSerializer):
             "title",
             "closed_at",
             "visible_by_patient",
+            "temporary",
             "next_appointment",
             "appointments",
             "unread_count",
@@ -342,6 +344,7 @@ class ConsultationSerializer(CustomFieldsMixin, serializers.ModelSerializer):
             "updated_at",
             "created_by",
             "closed_at",
+            "temporary",
             "next_appointment",
             "appointments",
             "unread_count",
@@ -458,11 +461,12 @@ class ConsultationSerializer(CustomFieldsMixin, serializers.ModelSerializer):
         return None
 
     def get_appointments(self, obj):
-        """Get all non-cancelled appointments scheduled after two hours ago."""
-        two_hours_ago = timezone.now() - timedelta(hours=2)
+        """Get all non-cancelled appointments still within the active window."""
+        from .utils import appointment_active_cutoff
+
         appts = (
             obj.appointments.exclude(status=AppointmentStatus.cancelled)
-            .filter(scheduled_at__gte=two_hours_ago)
+            .filter(scheduled_at__gte=appointment_active_cutoff())
             .order_by("scheduled_at")
         )
         return AppointmentSerializer(appts, many=True, context=self.context).data
@@ -744,8 +748,27 @@ class AppointmentCreateSerializer(AppointmentSerializer):
         dont_invite_practitioner = validated_data.pop("dont_invite_practitioner", False)
         dont_invite_me = validated_data.pop("dont_invite_me", False)
 
-        validated_data["created_by"] = self.context["request"].user
+        request_user = self.context["request"].user
+        validated_data["created_by"] = request_user
         validated_data["status"] = AppointmentStatus.draft
+
+        # When an online appointment is created without an explicit consultation,
+        # spin up a temporary one so the chat/messaging stack still works. These
+        # follow-ups are hidden from both practitioner and patient lists and are
+        # auto-closed once the appointment join window has elapsed.
+        if (
+            validated_data.get("type", Type.online) == Type.online
+            and not validated_data.get("consultation_id")
+        ):
+            temp_consultation = Consultation.objects.create(
+                created_by=request_user,
+                owned_by=request_user,
+                title=validated_data.get("title") or _("Appointment chat"),
+                temporary=True,
+                visible_by_patient=False,
+            )
+            validated_data["consultation_id"] = temp_consultation.pk
+            self._consultation = temp_consultation
 
         appointment = Appointment.objects.create(**validated_data)
 
@@ -1116,10 +1139,11 @@ class RequestSerializer(CustomFieldsMixin, serializers.ModelSerializer):
         return super().create(validated_data)
 
     def get_appointment(self, obj):
-        """Only return appointment if scheduled within the last 2 hours."""
+        """Only return appointment if still within the active window."""
         if obj.appointment:
-            two_hours_ago = timezone.now() - timedelta(hours=2)
-            if obj.appointment.scheduled_at >= two_hours_ago:
+            from .utils import appointment_active_cutoff
+
+            if obj.appointment.scheduled_at >= appointment_active_cutoff():
                 return AppointmentSerializer(obj.appointment, context=self.context).data
         return None
 

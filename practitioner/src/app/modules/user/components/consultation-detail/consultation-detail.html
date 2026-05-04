@@ -36,6 +36,11 @@
                   {{ consultation()?.closed_at ? ('consultationDetail.closed' |
                   translate) : ('consultationDetail.active' | translate) }}
                 </app-badge>
+                @if (consultation()?.temporary) {
+                <app-badge [type]="BadgeTypeEnum.orange">
+                  {{ 'consultationDetail.temporary' | translate }}
+                </app-badge>
+                }
               </div>
               <div class="card-actions">
                 @if (isEditMode()) {
@@ -341,7 +346,7 @@
                 {{ 'consultationDetail.appointmentsCount' | translate: { count:
                 appointments().length } }}
               </h3>
-              @if (!consultation()?.closed_at) {
+              @if (!consultation()?.closed_at && !consultation()?.temporary) {
               <app-button
                 [text]="'consultationDetail.newAppointment' | translate"
                 leftIcon="plus"

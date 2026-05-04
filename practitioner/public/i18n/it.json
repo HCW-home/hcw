@@ -202,6 +202,7 @@
         "consultationNumber": "Seguito n. {{id}}",
         "closed": "Chiuso",
         "active": "Attivo",
+        "temporary": "Temporaneo",
         "edit": "Modificare",
         "exportPdf": "Esporta in PDF",
         "closeConsultation": "Stretto follow-up",

@@ -123,6 +123,16 @@ class Consultation(models.Model):
         _("visible by patient"), default=True
     )
 
+    temporary = models.BooleanField(
+        _("temporary"),
+        default=False,
+        help_text=_(
+            "Auto-created for an online Appointment without explicit consultation; "
+            "hidden from practitioner and patient lists, auto-closed once the "
+            "appointment join window has elapsed."
+        ),
+    )
+
     is_encrypted = models.BooleanField(default=False)
 
     encrypted_key_for_queue = models.TextField(blank=True, null=True)

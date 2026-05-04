@@ -396,11 +396,27 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ConsultationSerializer
 
     def get_queryset(self):
-        """Get consultations for the authenticated user."""
+        """Get consultations for the authenticated user.
+
+        Listing only surfaces "real" follow-ups (patient-visible, non-temporary).
+        Detail/messages access additionally allows temporary consultations the
+        user is an active participant of, so the appointment chat works without
+        exposing the temp follow-up in the patient's main list.
+        """
         from consultations.views import annotate_unread_count
 
         user = self.request.user
-        qs = Consultation.objects.filter(beneficiary=user, visible_by_patient=True)
+        if self.action == "list":
+            qs = Consultation.objects.filter(beneficiary=user, visible_by_patient=True)
+        else:
+            qs = Consultation.objects.filter(
+                Q(beneficiary=user, visible_by_patient=True)
+                | Q(
+                    temporary=True,
+                    appointments__participant__user=user,
+                    appointments__participant__is_active=True,
+                )
+            ).distinct()
         return annotate_unread_count(qs, user)
 
     @extend_schema(
@@ -1654,9 +1670,10 @@ class UserDashboardView(APIView):
     )
     def get(self, request):
         """Get dashboard data for the authenticated user."""
+        from consultations.utils import appointment_active_cutoff
+
         user = request.user
-        now = timezone.now()
-        two_hours_ago = now - timezone.timedelta(hours=2)
+        active_cutoff = appointment_active_cutoff()
 
         user_requests = (
             Request.objects.filter(
@@ -1665,14 +1682,14 @@ class UserDashboardView(APIView):
             .filter(
                 Q(status__in=[RequestStatus.requested,
                   RequestStatus.refused, RequestStatus.cancelled],
-                  created_at__gte=two_hours_ago)
+                  created_at__gte=active_cutoff)
                 | Q(
                     status=RequestStatus.accepted,
                     consultation__closed_at__isnull=True,
                 )
                 | Q(
                     status=RequestStatus.accepted,
-                    appointment__scheduled_at__gte=two_hours_ago,
+                    appointment__scheduled_at__gte=active_cutoff,
                     appointment__status="scheduled",
                 )
             )
@@ -1688,12 +1705,12 @@ class UserDashboardView(APIView):
             user,
         )
 
-        # Next upcoming appointment (with 2 hour grace period)
+        # Next upcoming appointment within the active join window
         next_appointment = (
             Appointment.objects.filter(
                 participant__user=user,
                 participant__is_active=True,
-                scheduled_at__gte=two_hours_ago,
+                scheduled_at__gte=active_cutoff,
                 status="scheduled",
             )
             .distinct()
@@ -1708,7 +1725,7 @@ class UserDashboardView(APIView):
             ).filter(
                 participant__user=user,
                 participant__is_active=True,
-                scheduled_at__gte=two_hours_ago,
+                scheduled_at__gte=active_cutoff,
                 status="scheduled",
             )
             .distinct()

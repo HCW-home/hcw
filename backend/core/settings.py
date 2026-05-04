@@ -400,6 +400,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "users.tasks.auto_delete_temporary_users",
         "schedule": crontab(minute=0),
     },
+    "auto_close_temporary_consultations": {
+        "task": "consultations.tasks.auto_close_temporary_consultations",
+        "schedule": crontab(minute="*", hour="*"),
+    },
 }
 
 FIREBASE_APP = initialize_app()
@@ -784,6 +788,14 @@ CONSTANCE_CONFIG = {
         10,
         "Minutes before appointment scheduled time that participants can join",
     ),
+    "call_limit_join_minutes": (
+        15,
+        "Minutes after the expected end of the appointment during which participants can still rejoin the call",
+    ),
+    "default_appointment_duration_in_minutes": (
+        30,
+        "Default duration in minutes for an appointment without an explicit end time",
+    ),
     "consultation_auto_delete_hours": (
         0,
         "Hours after closure before a follow-up is automatically deleted (0 to disable)",
@@ -857,7 +869,13 @@ CONSTANCE_CONFIG = {
 CONSTANCE_CONFIG_FIELDSETS = {
     "General Options": ("site_name",),
     "URLs": ("patient_base_url", "practitioner_base_url"),
-    "Scheduling": ("appointment_first_reminder", "appointment_last_reminder", "appointment_early_join_minutes"),
+    "Scheduling": (
+        "appointment_first_reminder",
+        "appointment_last_reminder",
+        "appointment_early_join_minutes",
+        "call_limit_join_minutes",
+        "default_appointment_duration_in_minutes",
+    ),
     "Data Retention": ("consultation_auto_delete_hours", "temporary_user_auto_delete"),
     "Security": ("temporary_participant_token_expiry_hours",),
     "Uploads": ("max_upload_size_mb",),

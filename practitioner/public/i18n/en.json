@@ -683,6 +683,7 @@
     "consultationNumber": "Follow-up #{{id}}",
     "closed": "Closed",
     "active": "Active",
+    "temporary": "Temporary",
     "edit": "Edit",
     "exportPdf": "Export PDF",
     "closeConsultation": "Close Follow-up",

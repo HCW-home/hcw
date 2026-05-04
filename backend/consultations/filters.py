@@ -1,8 +1,7 @@
 import django_filters
 from .models import Consultation, Appointment, Request
+from .utils import appointment_active_cutoff
 from django.db.models import Exists, OuterRef
-from django.utils import timezone
-from datetime import timedelta
 
 class ConsultationFilter(django_filters.FilterSet):
     # Custom boolean filter to check if closed_at is set
@@ -26,11 +25,10 @@ class ConsultationFilter(django_filters.FilterSet):
 
     def filter_scheduled(self, queryset, name, value):
         from .models import AppointmentStatus
-        cutoff = timezone.now() - timedelta(hours=2)
         has_future = Exists(
             Appointment.objects.filter(
                 consultation=OuterRef('pk'),
-                scheduled_at__gte=cutoff,
+                scheduled_at__gte=appointment_active_cutoff(),
                 status=AppointmentStatus.scheduled,
             )
         )
@@ -67,8 +65,9 @@ class AppointmentFilter(django_filters.FilterSet):
         }
 
     def filter_future(self, queryset, name, value):
+        cutoff = appointment_active_cutoff()
         if value is True:
-            return queryset.filter(scheduled_at__gte=timezone.now() - timedelta(hours=2))
+            return queryset.filter(scheduled_at__gte=cutoff)
         elif value is False:
-            return queryset.filter(scheduled_at__lt=timezone.now() - timedelta(hours=2))
+            return queryset.filter(scheduled_at__lt=cutoff)
         return queryset

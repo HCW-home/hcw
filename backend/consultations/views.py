@@ -171,7 +171,23 @@ class ConsultationViewSet(FhirViewSetMixin, CreatedByMixin, viewsets.ModelViewSe
 
     def get_queryset(self):
         user = self.request.user
-        qs = Consultation.objects.accessible_by(user)
+        # Listing only surfaces real follow-ups. Detail/messages access also
+        # allows temporary consultations attached to an appointment the user
+        # owns or participates in, so the chat keeps working without polluting
+        # the practitioner's main list.
+        if self.action == "list":
+            qs = Consultation.objects.accessible_by(user)
+        else:
+            qs = Consultation.objects.filter(
+                Q(owned_by=user)
+                | Q(created_by=user)
+                | Q(group__users=user)
+                | Q(
+                    temporary=True,
+                    appointments__participant__user=user,
+                    appointments__participant__is_active=True,
+                )
+            ).distinct()
         qs = annotate_unread_count(qs, user)
         qs = annotate_unassigned_request(qs)
         return qs
@@ -1448,10 +1464,11 @@ class DashboardPractitionerView(APIView):
 
         ctx = {"request": request}
 
+        from .utils import appointment_active_cutoff
+
         overdue_qs = annotate_unassigned_request(
             consultations_qs.active.exclude(
-                appointments__scheduled_at__gte=timezone.now()
-                - timedelta(hours=2),
+                appointments__scheduled_at__gte=appointment_active_cutoff(),
                 appointments__status=AppointmentStatus.scheduled,
             ).distinct()
         ).order_by("-_unassigned_request", "-created_at")

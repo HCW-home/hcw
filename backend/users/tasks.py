@@ -73,14 +73,15 @@ def auto_delete_temporary_users():
                 logger.info("Auto-delete of temporary users is disabled")
                 return
 
-            two_hours_ago = timezone.now() - timedelta(hours=2)
+            from consultations.utils import appointment_active_cutoff
+
             one_hour_ago = timezone.now() - timedelta(hours=1)
             users = User.objects.filter(
                 temporary=True,
                 date_joined__lt=one_hour_ago
             ).exclude(
                 appointments_participating__status="scheduled",
-                appointments_participating__scheduled_at__gt=two_hours_ago,
+                appointments_participating__scheduled_at__gt=appointment_active_cutoff(),
             ).exclude(
                 Q(consultation__isnull=False) |
                 Q(consultation_created__isnull=False) |

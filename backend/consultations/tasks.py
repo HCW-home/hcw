@@ -202,3 +202,51 @@ def auto_delete_closed_consultations():
             qs = Consultation.objects.filter(closed_at__isnull=False, closed_at__lte=cutoff)
             count, _ = qs.delete()
             logger.info(f"Auto-deleted {count} closed consultation(s) older than {hours}h")
+
+
+@app.task
+def auto_close_temporary_consultations():
+    """Close temporary consultations whose appointment join window has elapsed.
+
+    For each temp consultation we look at its latest non-cancelled appointment.
+    Effective end is `appointment.end_expected_at` when set, otherwise
+    `scheduled_at + default_appointment_duration_in_minutes`. The consultation
+    is closed once `now >= effective_end + call_limit_join_minutes`.
+    """
+    TenantModel = get_tenant_model()
+    for tenant in TenantModel.objects.exclude(schema_name="public"):
+        with tenant_context(tenant):
+            now = timezone.now()
+            join_limit = int(config.call_limit_join_minutes)
+            default_duration = int(config.default_appointment_duration_in_minutes)
+
+            qs = Consultation.objects.filter(
+                temporary=True, closed_at__isnull=True
+            )
+            closed = 0
+            for consultation in qs:
+                appt = (
+                    consultation.appointments.exclude(
+                        status=AppointmentStatus.cancelled
+                    )
+                    .order_by("-scheduled_at")
+                    .first()
+                )
+                if not appt:
+                    consultation.closed_at = now
+                    consultation.save(update_fields=["closed_at"])
+                    closed += 1
+                    continue
+
+                end = appt.end_expected_at or (
+                    appt.scheduled_at + timedelta(minutes=default_duration)
+                )
+                if now >= end + timedelta(minutes=join_limit):
+                    consultation.closed_at = now
+                    consultation.save(update_fields=["closed_at"])
+                    closed += 1
+
+            if closed:
+                logger.info(
+                    f"Auto-closed {closed} temporary consultation(s) past join window"
+                )

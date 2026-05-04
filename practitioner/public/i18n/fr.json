@@ -794,6 +794,7 @@
     "consultationNumber": "Suivi #{{id}}",
     "closed": "Fermée",
     "active": "Active",
+    "temporary": "Temporaire",
     "edit": "Modifier",
     "exportPdf": "Exporter PDF",
     "closeConsultation": "Fermer le suivi",
