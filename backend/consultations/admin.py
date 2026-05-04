@@ -59,8 +59,15 @@ class QueueMembershipInline(TabularInline):
     readonly_fields = ["created_at"]
     autocomplete_fields = ["user"]
 
-    class Media:
-        js = ("admin/encryption/queue_membership_wrap.js",)
+    @property
+    def media(self):
+        from constance import config as constance_config
+        from django.forms import Media
+
+        base = super().media
+        if constance_config.encryption_enabled:
+            return base + Media(js=("admin/encryption/queue_membership_wrap.js",))
+        return base
 
 
 @admin.register(Queue)

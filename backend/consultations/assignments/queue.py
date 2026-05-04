@@ -1,3 +1,6 @@
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+
 from . import BaseAssignmentHandler
 
 
@@ -29,3 +32,36 @@ class AssignmentHandler(BaseAssignmentHandler):
 
         self.request.consultation = consultation
         self.request.save()
+
+        self._notify_queue_members(consultation)
+
+    def _notify_queue_members(self, consultation):
+        """Push an `incoming request` WebSocket event to every member of the
+        queue so practitioners get a ringtone + toast and can pick it up.
+        """
+        if not consultation.group:
+            return
+
+        channel_layer = get_channel_layer()
+        if not channel_layer:
+            return
+
+        requester = self.request.created_by
+        requester_name = ""
+        if requester:
+            requester_name = requester.name or requester.email or ""
+
+        payload = {
+            "type": "consultation",
+            "consultation_id": consultation.pk,
+            "state": "request_assigned",
+            "data": {
+                "user_id": requester.pk if requester else None,
+                "user_name": requester_name,
+                "queue_name": consultation.group.name,
+                "reason_name": self.request.reason.name if self.request.reason else "",
+            },
+        }
+
+        for user in consultation.group.users.all():
+            async_to_sync(channel_layer.group_send)(f"user_{user.pk}", payload)
