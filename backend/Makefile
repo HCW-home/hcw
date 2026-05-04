@@ -25,4 +25,4 @@ clean:
 	echo "Nothing to clean"
 
 test:
-	python3 manage.py test
+	../venv/bin/python manage.py test
