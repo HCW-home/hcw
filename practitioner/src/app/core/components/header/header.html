@@ -406,7 +406,9 @@
 </div>
 }
 
+@if (showCreateConsultationModal()) {
 <app-create-consultation-modal
   [isOpen]="showCreateConsultationModal()"
   (closed)="closeCreateConsultationModal()">
 </app-create-consultation-modal>
+}
