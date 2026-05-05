@@ -109,6 +109,10 @@
   gap: 12px;
   padding: 16px 24px;
   border-top: 1px solid var(--slate-100);
+  background: var(--White);
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
 
   app-button {
     flex: 1;

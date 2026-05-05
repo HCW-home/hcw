@@ -103,178 +103,195 @@
           getTotalParticipantsCount() } }}</span
         >
         <app-button
-          [text]="showAddParticipantForm() ? ('appointmentForm.cancelLabel' | translate) : ('appointmentForm.addParticipant' | translate)"
-          [leftIcon]="showAddParticipantForm() ? 'close' : 'plus'"
+          [text]="'appointmentForm.addParticipant' | translate"
+          leftIcon="plus"
           [size]="ButtonSizeEnum.small"
           [style]="ButtonStyleEnum.text"
-          (buttonClick)="toggleAddParticipantForm()">
+          (buttonClick)="openAddParticipantModal()">
         </app-button>
       </div>
 
-      @if (showAddParticipantForm()) {
-      <div class="add-participant-form">
-        <div class="form-group">
-          <label class="form-label"
-            >{{ 'appointmentForm.participantType' | translate }}</label
-          >
-          <div class="type-toggle compact">
-            <button
-              type="button"
-              class="type-btn"
-              [class.active]="isExistingUser()"
-              (click)="setParticipantType(true)">
-              {{ 'appointmentForm.existingUser' | translate }}
-            </button>
-            <button
-              type="button"
-              class="type-btn"
-              [class.active]="!isExistingUser()"
-              (click)="setParticipantType(false)">
-              {{ 'appointmentForm.externalGuest' | translate }}
-            </button>
-          </div>
-        </div>
-
-        <form [formGroup]="participantForm">
-          @if (isExistingUser()) {
-          <div class="form-group">
-            <app-user-search-select
-              [label]="'appointmentForm.selectContact' | translate"
-              [placeholder]="'appointmentForm.selectContact' | translate"
-              [meUser]="currentUser()"
-              (userSelected)="onParticipantUserSelected($event)">
-            </app-user-search-select>
-          </div>
-          } @else {
+      <app-modal
+        [isOpen]="showAddParticipantForm()"
+        [title]="'appointmentForm.addParticipant' | translate"
+        size="medium"
+        (closed)="closeAddParticipantModal()">
+        @if (showAddParticipantForm()) {
+        <div class="add-participant-form">
           <div class="form-group">
             <label class="form-label"
-              >{{ 'appointmentForm.contactMethod' | translate }}</label
+              >{{ 'appointmentForm.participantType' | translate }}</label
             >
             <div class="type-toggle compact">
-              @if (hasEmailMethod) {
               <button
                 type="button"
                 class="type-btn"
-                [class.active]="participantForm.get('contact_type')?.value === 'email'"
-                (click)="setParticipantMessageType('email')">
-                <app-svg
-                  src="email"
-                  [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
-                {{ 'appointmentForm.email' | translate }}
+                [class.active]="isExistingUser()"
+                (click)="setParticipantType(true)">
+                {{ 'appointmentForm.existingUser' | translate }}
               </button>
-              }
-              @if (hasPhoneMethod) {
               <button
                 type="button"
                 class="type-btn"
-                [class.active]="participantForm.get('contact_type')?.value === 'sms'"
-                (click)="setParticipantMessageType('sms')">
-                <app-svg
-                  src="phone"
-                  [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
-                {{ 'appointmentForm.phone' | translate }}
-              </button>
-              }
-              <button
-                type="button"
-                class="type-btn"
-                [class.active]="participantForm.get('contact_type')?.value === 'manual'"
-                (click)="setParticipantMessageType('manual')">
-                <app-svg
-                  src="link"
-                  [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
-                {{ 'appointmentForm.manual' | translate }}
+                [class.active]="!isExistingUser()"
+                (click)="setParticipantType(false)">
+                {{ 'appointmentForm.externalGuest' | translate }}
               </button>
             </div>
           </div>
 
-          @if (participantForm.get('contact_type')?.value === 'email') {
-          <div class="form-group">
-            <app-input
-              type="email"
-              [label]="'appointmentForm.emailAddress' | translate"
-              [required]="true"
-              [invalid]="!!getParticipantFieldError('email')"
-              [invalidMessage]="getParticipantFieldError('email')"
-              leftIcon="email"
-              [placeholder]="'appointmentForm.emailPlaceholder' | translate"
-              formControlName="email">
-            </app-input>
-          </div>
-          } @else if (participantForm.get('contact_type')?.value === 'sms') {
-          <div class="form-group">
-            <app-input
-              type="tel"
-              [label]="'appointmentForm.phoneNumber' | translate"
-              [required]="true"
-              [invalid]="!!getParticipantFieldError('phone')"
-              [invalidMessage]="getParticipantFieldError('phone')"
-              leftIcon="phone"
-              [placeholder]="'appointmentForm.phonePlaceholder' | translate"
-              formControlName="phone">
-            </app-input>
-          </div>
-          } @else if (participantForm.get('contact_type')?.value === 'manual') {
-          <div class="manual-notice">
-            <app-svg
-              src="info"
-              [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
-            <span>{{ 'appointmentForm.manualNotice' | translate }}</span>
-          </div>
-          }
+          <form [formGroup]="participantForm">
+            @if (isExistingUser()) {
+            <div class="form-group">
+              <app-user-search-select
+                [label]="'appointmentForm.selectContact' | translate"
+                [placeholder]="'appointmentForm.selectContact' | translate"
+                [meUser]="currentUser()"
+                (userSelected)="onParticipantUserSelected($event)">
+              </app-user-search-select>
+            </div>
+            } @else {
+            <div class="form-group">
+              <label class="form-label"
+                >{{ 'appointmentForm.contactMethod' | translate }}</label
+              >
+              <div class="type-toggle compact">
+                @if (hasEmailMethod) {
+                <button
+                  type="button"
+                  class="type-btn"
+                  [class.active]="participantForm.get('contact_type')?.value === 'email'"
+                  (click)="setParticipantMessageType('email')">
+                  <app-svg
+                    src="email"
+                    [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
+                  {{ 'appointmentForm.email' | translate }}
+                </button>
+                }
+                @if (hasPhoneMethod) {
+                <button
+                  type="button"
+                  class="type-btn"
+                  [class.active]="participantForm.get('contact_type')?.value === 'sms'"
+                  (click)="setParticipantMessageType('sms')">
+                  <app-svg
+                    src="phone"
+                    [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
+                  {{ 'appointmentForm.phone' | translate }}
+                </button>
+                }
+                <button
+                  type="button"
+                  class="type-btn"
+                  [class.active]="participantForm.get('contact_type')?.value === 'manual'"
+                  (click)="setParticipantMessageType('manual')">
+                  <app-svg
+                    src="link"
+                    [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
+                  {{ 'appointmentForm.manual' | translate }}
+                </button>
+              </div>
+            </div>
 
-          <div class="name-row">
+            @if (participantForm.get('contact_type')?.value === 'email') {
             <div class="form-group">
               <app-input
-                type="text"
-                [label]="'appointmentForm.firstName' | translate"
-                leftIcon="user"
-                [placeholder]="'appointmentForm.firstNamePlaceholder' | translate"
-                formControlName="first_name">
+                type="email"
+                [label]="'appointmentForm.emailAddress' | translate"
+                [required]="true"
+                [invalid]="!!getParticipantFieldError('email')"
+                [invalidMessage]="getParticipantFieldError('email')"
+                leftIcon="email"
+                [placeholder]="'appointmentForm.emailPlaceholder' | translate"
+                formControlName="email">
               </app-input>
             </div>
+            } @else if (participantForm.get('contact_type')?.value === 'sms') {
             <div class="form-group">
               <app-input
-                type="text"
-                [label]="'appointmentForm.lastName' | translate"
-                [placeholder]="'appointmentForm.lastNamePlaceholder' | translate"
-                formControlName="last_name">
+                type="tel"
+                [label]="'appointmentForm.phoneNumber' | translate"
+                [required]="true"
+                [invalid]="!!getParticipantFieldError('phone')"
+                [invalidMessage]="getParticipantFieldError('phone')"
+                leftIcon="phone"
+                [placeholder]="'appointmentForm.phonePlaceholder' | translate"
+                formControlName="phone">
               </app-input>
             </div>
-          </div>
-
-          <div class="participant-settings">
-            <div class="form-group">
-              <app-select
-                [label]="'appointmentForm.timezone' | translate"
-                formControlName="timezone"
-                [options]="timezoneOptions"
-                [placeholder]="'appointmentForm.selectTimezone' | translate">
-              </app-select>
-            </div>
-            @if (shouldShowCommunicationMethodField) {
-            <div class="form-group">
-              <app-select
-                [label]="'appointmentForm.communicationMethod' | translate"
-                [required]="hasMultipleCommunicationMethods"
-                [invalid]="!!getParticipantFieldError('communication_method')"
-                [invalidMessage]="getParticipantFieldError('communication_method')"
-                formControlName="communication_method"
-                [options]="communicationMethods"
-                [placeholder]="'appointmentForm.selectMethod' | translate">
-              </app-select>
+            } @else if (participantForm.get('contact_type')?.value === 'manual') {
+            <div class="manual-notice">
+              <app-svg
+                src="info"
+                [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+              <span>{{ 'appointmentForm.manualNotice' | translate }}</span>
             </div>
             }
-            <div class="form-group">
-              <app-select
-                [label]="'appointmentForm.preferredLanguage' | translate"
-                formControlName="preferred_language"
-                [options]="languageOptions"
-                [placeholder]="'appointmentForm.selectLanguage' | translate">
-              </app-select>
+
+            <div class="name-row">
+              <div class="form-group">
+                <app-input
+                  type="text"
+                  [label]="'appointmentForm.firstName' | translate"
+                  leftIcon="user"
+                  [placeholder]="'appointmentForm.firstNamePlaceholder' | translate"
+                  formControlName="first_name">
+                </app-input>
+              </div>
+              <div class="form-group">
+                <app-input
+                  type="text"
+                  [label]="'appointmentForm.lastName' | translate"
+                  [placeholder]="'appointmentForm.lastNamePlaceholder' | translate"
+                  formControlName="last_name">
+                </app-input>
+              </div>
             </div>
-          </div>
-          } @if (!isExistingUser()) {
+
+            <div class="participant-settings">
+              <div class="form-group">
+                <app-select
+                  [label]="'appointmentForm.timezone' | translate"
+                  formControlName="timezone"
+                  [options]="timezoneOptions"
+                  [placeholder]="'appointmentForm.selectTimezone' | translate">
+                </app-select>
+              </div>
+              @if (shouldShowCommunicationMethodField) {
+              <div class="form-group">
+                <app-select
+                  [label]="'appointmentForm.communicationMethod' | translate"
+                  [required]="hasMultipleCommunicationMethods"
+                  [invalid]="!!getParticipantFieldError('communication_method')"
+                  [invalidMessage]="getParticipantFieldError('communication_method')"
+                  formControlName="communication_method"
+                  [options]="communicationMethods"
+                  [placeholder]="'appointmentForm.selectMethod' | translate">
+                </app-select>
+              </div>
+              }
+              <div class="form-group">
+                <app-select
+                  [label]="'appointmentForm.preferredLanguage' | translate"
+                  formControlName="preferred_language"
+                  [options]="languageOptions"
+                  [placeholder]="'appointmentForm.selectLanguage' | translate">
+                </app-select>
+              </div>
+            </div>
+            }
+          </form>
+        </div>
+        }
+
+        <div modal-footer class="add-participant-modal-footer">
+          <app-button
+            [text]="'appointmentForm.cancelLabel' | translate"
+            [style]="ButtonStyleEnum.stroke"
+            [size]="ButtonSizeEnum.medium"
+            (buttonClick)="closeAddParticipantModal()">
+          </app-button>
+          @if (!isExistingUser()) {
           <app-button
             [text]="'appointmentForm.addTheParticipant' | translate"
             leftIcon="plus"
@@ -285,9 +302,10 @@
             (buttonClick)="addParticipant()">
           </app-button>
           }
-        </form>
-      </div>
-      } @if (isEditMode && isLoadingParticipants()) {
+        </div>
+      </app-modal>
+
+      @if (isEditMode && isLoadingParticipants()) {
       <div class="loading-container">
         <app-loader></app-loader>
       </div>
@@ -367,7 +385,7 @@
     <app-button
       [text]="submitButtonText"
       [size]="ButtonSizeEnum.medium"
-      [style]="showAddParticipantForm() ? ButtonStyleEnum.stroke : ButtonStyleEnum.primary"
+      [style]="ButtonStyleEnum.primary"
       [disabled]="isSubmitting()"
       [loading]="isSubmitting()"
       (buttonClick)="submit()">

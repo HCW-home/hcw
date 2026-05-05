@@ -3,8 +3,6 @@
   max-width: 600px;
   min-width: 460px;
   width: 100%;
-  max-height: 90vh;
-  overflow: auto;
 
   .modal-header {
     display: flex;
@@ -56,7 +54,13 @@
       display: flex;
       justify-content: flex-end;
       gap: 12px;
-      margin-top: 8px;
+      padding: 16px 24px;
+      margin: 0 -24px -24px;
+      border-top: 1px solid var(--slate-100);
+      background: var(--White);
+      position: sticky;
+      bottom: 0;
+      z-index: 1;
     }
   }
 }

@@ -25,8 +25,12 @@
   display: flex;
   justify-content: center;
   gap: 12px;
-  padding: 24px;
+  padding: 16px 24px;
   border-top: 1px solid var(--slate-100);
+  background: var(--White);
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
 }
 
 .form-group {
@@ -173,11 +177,16 @@
   }
 }
 
+.add-participant-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
 .add-participant-form {
   padding: 16px;
   background: var(--slate-50);
   border-radius: 12px;
-  margin-bottom: 16px;
 
   .form-group {
     margin-bottom: 20px;

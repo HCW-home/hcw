@@ -42,7 +42,12 @@
 
     @if (showDropdown()) {
     <div class="dropdown-backdrop" (click)="closeDropdown()"></div>
-    <div class="users-dropdown" (scroll)="onDropdownScroll($event)">
+    <div
+      class="users-dropdown"
+      [style.top]="dropdownStyle().top"
+      [style.left]="dropdownStyle().left"
+      [style.width]="dropdownStyle().width"
+      (scroll)="onDropdownScroll($event)">
       @if (isLoading() && users().length === 0) {
       <div class="loading-container">
         <app-loader></app-loader>

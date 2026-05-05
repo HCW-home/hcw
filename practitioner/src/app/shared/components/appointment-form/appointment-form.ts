@@ -43,6 +43,7 @@ import { Checkbox } from '../../ui-components/checkbox/checkbox';
 import { Switch } from '../../ui-components/switch/switch';
 import { Svg } from '../../ui-components/svg/svg';
 import { Loader } from '../loader/loader';
+import { ModalComponent } from '../modal/modal.component';
 import { UserSearchSelect } from '../user-search-select/user-search-select';
 import { ParticipantItem } from '../participant-item/participant-item';
 import {
@@ -70,6 +71,7 @@ import { TranslationService } from '../../../core/services/translation.service';
     Checkbox,
     CommonModule,
     InputComponent,
+    ModalComponent,
     ParticipantItem,
     UserSearchSelect,
     ReactiveFormsModule,
@@ -548,11 +550,12 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
     this.resetParticipantForm();
   }
 
-  toggleAddParticipantForm(): void {
-    this.showAddParticipantForm.update(v => !v);
-    if (!this.showAddParticipantForm()) {
-      this.resetParticipantForm();
-    }
+  openAddParticipantModal(): void {
+    this.showAddParticipantForm.set(true);
+  }
+
+  closeAddParticipantModal(): void {
+    this.resetParticipantForm();
   }
 
   addParticipant(): void {
