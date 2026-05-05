@@ -70,6 +70,12 @@ export class Select implements ControlValueAccessor, OnChanges, OnInit, OnDestro
   hoverIndex: number | null = null;
   searchTerm = '';
 
+  // Dropdown position for fixed positioning (escape modal/scroll clipping)
+  dropdownStyle = signal<{ top?: string; bottom?: string; left: string; width: string }>({
+    left: '0',
+    width: '0',
+  });
+
   // Async search state
   asyncOptions = signal<SelectOption[]>([]);
   asyncLoading = signal(false);
@@ -169,6 +175,7 @@ export class Select implements ControlValueAccessor, OnChanges, OnInit, OnDestro
     this.open = true;
     this.onTouched();
     this.updateDropDirection();
+    this.updateDropdownPosition();
 
     // Load initial results for async mode
     if (this.asyncSearch() && this.asyncOptions().length === 0) {
@@ -186,6 +193,25 @@ export class Select implements ControlValueAccessor, OnChanges, OnInit, OnDestro
     const rect = el.getBoundingClientRect();
     const spaceBelow = window.innerHeight - rect.bottom;
     this.dropUp = spaceBelow < 220;
+  }
+
+  private updateDropdownPosition(): void {
+    const rect = this.elementRef.nativeElement.getBoundingClientRect();
+    const left = `${rect.left - 2}px`;
+    const width = `${rect.width + 4}px`;
+    if (this.dropUp) {
+      this.dropdownStyle.set({
+        bottom: `${window.innerHeight - rect.top}px`,
+        left,
+        width,
+      });
+    } else {
+      this.dropdownStyle.set({
+        top: `${rect.bottom}px`,
+        left,
+        width,
+      });
+    }
   }
 
   onSearchInput(event: Event): void {

@@ -91,7 +91,13 @@
     </div>
 
     @if (open) {
-      <ul class="options" (scroll)="onOptionsScroll($event)">
+      <ul
+        class="options"
+        [style.top]="dropdownStyle().top"
+        [style.bottom]="dropdownStyle().bottom"
+        [style.left]="dropdownStyle().left"
+        [style.width]="dropdownStyle().width"
+        (scroll)="onOptionsScroll($event)">
         @if (asyncSearch() && asyncLoading() && filteredOptions.length === 0) {
           <li class="option-loading">
             <app-loader></app-loader>

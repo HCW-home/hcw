@@ -169,15 +169,12 @@
 
   .options {
     margin: 0;
-    top: 46px;
-    left: -2px;
-    right: -2px;
-    z-index: 10;
+    z-index: 1060;
     padding: 4px;
     list-style: none;
     overflow-y: auto;
     max-height: 200px;
-    position: absolute;
+    position: fixed;
     background: var(--White);
     border: 2px solid var(--slate-100);
     border-top: none;
@@ -185,8 +182,6 @@
     box-shadow: 0px 2px 20px 0 rgba(43, 43, 43, 0.10);
 
     :host(.drop-up) & {
-      top: auto;
-      bottom: 46px;
       border-top: 2px solid var(--slate-100);
       border-bottom: none;
       border-radius: 12px 12px 0 0;
