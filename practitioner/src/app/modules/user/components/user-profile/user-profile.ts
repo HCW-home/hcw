@@ -134,8 +134,10 @@ export class UserProfile implements OnInit, OnDestroy {
 
   volumeBars = signal<number[]>(Array(20).fill(0));
 
+  availableCommunicationMethods = signal<string[]>([]);
+
   get communicationMethods(): SelectOption[] {
-    return [
+    const allOptions: SelectOption[] = [
       {
         label: this.t.instant('userProfile.commSms'),
         value: CommunicationMethodEnum.SMS,
@@ -157,6 +159,11 @@ export class UserProfile implements OnInit, OnDestroy {
         value: CommunicationMethodEnum.MANUAL,
       },
     ];
+    const allowed = this.availableCommunicationMethods();
+    if (!allowed.length) {
+      return allOptions;
+    }
+    return allOptions.filter(opt => allowed.includes(opt.value as string));
   }
   timezoneOptions: SelectOption[] = TIMEZONE_OPTIONS;
   languageOptions = signal<SelectOption[]>([]);
@@ -394,6 +401,9 @@ export class UserProfile implements OnInit, OnDestroy {
               label: lang.name,
               value: lang.code,
             }))
+          );
+          this.availableCommunicationMethods.set(
+            config.communication_methods || []
           );
         },
       });

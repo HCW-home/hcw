@@ -158,8 +158,7 @@ export class ProfilePage implements OnInit {
         this.refreshEncryptionStatus();
       },
       error: () => {
-        // Fallback to default methods if config fails
-        this.communicationMethods = ['email', 'sms', 'whatsapp'];
+        this.communicationMethods = [];
       }
     });
   }
