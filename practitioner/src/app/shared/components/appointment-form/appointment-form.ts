@@ -330,6 +330,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
       timezone: [currentUserData?.timezone || ''],
       communication_method: [currentUserData?.communication_method || ''],
       preferred_language: [currentUserData?.preferred_language || ''],
+      is_consultation_visible: [false],
     });
 
     // Update validators when contact_type changes
@@ -393,6 +394,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
       timezone: currentUserData?.timezone || '',
       communication_method: currentUserData?.communication_method || '',
       preferred_language: currentUserData?.preferred_language || '',
+      is_consultation_visible: false,
     });
     this.backendErrors.set({});
   }
@@ -539,12 +541,22 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   }
 
   onParticipantUserSelected(user: IUser | null): void {
+    this.selectedParticipantUser.set(user);
+    if (user) {
+      this.participantForm.patchValue({ is_consultation_visible: false });
+    }
+  }
+
+  confirmExistingParticipant(): void {
+    const user = this.selectedParticipantUser();
     if (!user) return;
     const data: CreateParticipantRequest = {
       user_id: user.pk,
       first_name: user.first_name,
       last_name: user.last_name,
       email: user.email,
+      is_consultation_visible:
+        !!this.participantForm.get('is_consultation_visible')?.value,
     };
     this.pendingParticipants.update(list => [...list, data]);
     this.resetParticipantForm();
@@ -605,6 +617,8 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
       data.communication_method = communicationMethod;
     }
 
+    data.is_consultation_visible = !!formValue.is_consultation_visible;
+
     this.pendingParticipants.update(list => [...list, data]);
     this.resetParticipantForm();
   }
@@ -616,6 +630,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
       timezone: currentUserData?.timezone || '',
       communication_method: currentUserData?.communication_method || '',
       preferred_language: currentUserData?.preferred_language || '',
+      is_consultation_visible: false,
     });
     this.isExistingUser.set(true);
     this.selectedParticipantUser.set(null);
@@ -673,7 +688,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
       endExpectedAt = `${formValue.end_date}T${formValue.end_time}`;
     }
 
-    const { participants_ids, temporary_participants } =
+    const { participants_ids, temporary_participants, participants_visibility } =
       this.getParticipantsForRequest();
 
     if (this.isEditMode && this.editingAppointment) {
@@ -684,6 +699,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
         end_expected_at: endExpectedAt,
         participants_ids,
         temporary_participants,
+        participants_visibility,
       };
       this.updateAppointment(updateData);
     } else {
@@ -697,6 +713,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
         dont_invite_me: formValue.dont_invite_me || false,
         participants_ids,
         temporary_participants,
+        participants_visibility,
       };
 
       if (!this.autoSave) {
@@ -711,9 +728,11 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   private getParticipantsForRequest(): {
     participants_ids: number[];
     temporary_participants: ITemporaryParticipant[];
+    participants_visibility: { user_id: number; is_consultation_visible: boolean }[];
   } {
     const participants_ids: number[] = [];
     const temporary_participants: ITemporaryParticipant[] = [];
+    const participants_visibility: { user_id: number; is_consultation_visible: boolean }[] = [];
 
     for (const p of this.participants()) {
       if (p.user?.id) {
@@ -724,6 +743,12 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
     for (const pending of this.pendingParticipants()) {
       if (pending.user_id) {
         participants_ids.push(pending.user_id);
+        if (pending.is_consultation_visible) {
+          participants_visibility.push({
+            user_id: pending.user_id,
+            is_consultation_visible: true,
+          });
+        }
       } else {
         const tempParticipant: ITemporaryParticipant = {};
         if (pending.first_name) {
@@ -747,11 +772,14 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
         if (pending.preferred_language) {
           tempParticipant.preferred_language = pending.preferred_language;
         }
+        if (pending.is_consultation_visible) {
+          tempParticipant.is_consultation_visible = true;
+        }
         temporary_participants.push(tempParticipant);
       }
     }
 
-    return { participants_ids, temporary_participants };
+    return { participants_ids, temporary_participants, participants_visibility };
   }
 
   private updateAppointment(appointmentData: UpdateAppointmentRequest): void {

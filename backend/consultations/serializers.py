@@ -163,6 +163,7 @@ class ParticipantReadSerializer(serializers.ModelSerializer):
     user = ConsultationUserSerializer(read_only=True)
     status = serializers.CharField(read_only=True)
     requires_manual_access = serializers.SerializerMethodField()
+    has_consultation_key = serializers.SerializerMethodField()
 
     class Meta:
         model = Participant
@@ -174,7 +175,9 @@ class ParticipantReadSerializer(serializers.ModelSerializer):
             "is_confirmed",
             "is_invited",
             "is_notified",
+            "is_consultation_visible",
             "requires_manual_access",
+            "has_consultation_key",
         ]
         read_only_fields = fields
 
@@ -186,6 +189,20 @@ class ParticipantReadSerializer(serializers.ModelSerializer):
         if not obj.user:
             return False
         return not obj.user.email or obj.user.communication_method == "manual"
+
+    def get_has_consultation_key(self, obj):
+        """True if a direct ConsultationKey row exists for this participant's
+        user on this consultation. Used by the practitioner UI to know which
+        visible participants still need an envelope provisioned.
+        """
+        if not obj.user_id or not obj.appointment.consultation_id:
+            return False
+        from .models import ConsultationKey
+
+        return ConsultationKey.objects.filter(
+            consultation_id=obj.appointment.consultation_id,
+            user_id=obj.user_id,
+        ).exists()
 
 
 class ParticipantSerializer(serializers.Serializer):
@@ -220,6 +237,10 @@ class ParticipantSerializer(serializers.Serializer):
         write_only=True,
         required=False,
     )
+    is_consultation_visible = serializers.BooleanField(
+        required=False,
+        default=False,
+    )
 
     class Meta:
         fields = [
@@ -232,6 +253,7 @@ class ParticipantSerializer(serializers.Serializer):
             "last_name",
             "communication_method",
             "preferred_language",
+            "is_consultation_visible",
         ]
 
         read_only_fields = ["status", "is_active"]
@@ -302,7 +324,13 @@ class ConsultationSerializer(CustomFieldsMixin, serializers.ModelSerializer):
     appointments = serializers.SerializerMethodField()
     unread_count = serializers.SerializerMethodField()
     last_read_at = serializers.SerializerMethodField()
-    current_user_queue_envelope = serializers.SerializerMethodField()
+    keys = serializers.SerializerMethodField()
+    initial_keys = serializers.ListField(
+        child=serializers.DictField(),
+        required=False,
+        write_only=True,
+        help_text="Initial ConsultationKey rows on create: [{user_id?, queue_id?, encrypted_private_key, pubkey_fingerprint}, ...]",
+    )
 
     class Meta:
         model = Consultation
@@ -327,16 +355,12 @@ class ConsultationSerializer(CustomFieldsMixin, serializers.ModelSerializer):
             "unread_count",
             "last_read_at",
             "is_encrypted",
-            "encrypted_key_for_queue",
-            "queue_pubkey_fingerprint",
-            "encrypted_key_for_owned_by",
-            "owned_by_pubkey_fingerprint",
-            "encrypted_key_for_created_by",
-            "created_by_pubkey_fingerprint",
-            "encrypted_key_for_beneficiary",
-            "beneficiary_pubkey_fingerprint",
-            "encrypted_key_for_master",
-            "current_user_queue_envelope",
+            "public_key",
+            "public_key_fingerprint",
+            "encrypted_sym_key",
+            "encrypted_private_key_master",
+            "keys",
+            "initial_keys",
         ]
         read_only_fields = [
             "id",
@@ -349,32 +373,52 @@ class ConsultationSerializer(CustomFieldsMixin, serializers.ModelSerializer):
             "appointments",
             "unread_count",
             "last_read_at",
-            "current_user_queue_envelope",
+            "keys",
         ]
 
-    def get_current_user_queue_envelope(self, obj):
-        """Returns the current user's QueueMembership.encrypted_queue_private_key
-        for this consultation's queue, when both the user is a member and the
-        consultation is encrypted with a queue envelope. Lets the frontend
-        unwrap the queue private key (envelope-encrypted) and then unwrap the
-        consultation sym_key from encrypted_key_for_queue.
+    def get_keys(self, obj):
+        """Return the ConsultationKey rows the current user can use to
+        decrypt the consultation: their own direct envelope, plus any
+        envelope wrapping for a queue they are a member of.
         """
         request = self.context.get("request")
         if not request or not request.user.is_authenticated:
-            return None
-        if not obj.is_encrypted or not obj.group_id or not obj.encrypted_key_for_queue:
-            return None
+            return []
         from .models import QueueMembership
-        membership = (
-            QueueMembership.objects.filter(queue_id=obj.group_id, user=request.user)
-            .only("encrypted_queue_private_key")
-            .first()
+
+        user_pk = request.user.pk
+        member_queue_ids = list(
+            QueueMembership.objects.filter(user=request.user).values_list(
+                "queue_id", flat=True
+            )
         )
-        if not membership or not membership.encrypted_queue_private_key:
-            return None
-        return {
-            "encrypted_queue_private_key": membership.encrypted_queue_private_key,
-        }
+        keys_qs = obj.keys.filter(
+            Q(user_id=user_pk)
+            | Q(queue_id__in=member_queue_ids)
+        )
+        result = []
+        for key in keys_qs:
+            entry = {
+                "encrypted_private_key": key.encrypted_private_key,
+                "pubkey_fingerprint": key.pubkey_fingerprint,
+            }
+            if key.user_id:
+                entry["user_id"] = key.user_id
+            if key.queue_id:
+                entry["queue_id"] = key.queue_id
+                membership = (
+                    QueueMembership.objects.filter(
+                        queue_id=key.queue_id, user=request.user
+                    )
+                    .only("encrypted_queue_private_key")
+                    .first()
+                )
+                if membership and membership.encrypted_queue_private_key:
+                    entry["queue_membership_envelope"] = (
+                        membership.encrypted_queue_private_key
+                    )
+            result.append(entry)
+        return result
 
     def validate(self, attrs):
         from constance import config as constance_config
@@ -383,69 +427,71 @@ class ConsultationSerializer(CustomFieldsMixin, serializers.ModelSerializer):
         instance = self.instance
 
         # On creation: if platform-wide encryption is on, the consultation
-        # must be created encrypted with at least the master recovery
-        # envelope. This is the server-side guarantee that nothing slips
-        # through in clear once the admin has flipped the toggle.
+        # must be created encrypted with the keypair, sym_key envelope and
+        # master recovery filled in. The server-side guarantee that nothing
+        # slips through in clear once the admin has flipped the toggle.
         if instance is None and constance_config.encryption_enabled:
             is_encrypted = attrs.get("is_encrypted", False)
-            master_envelope = attrs.get("encrypted_key_for_master")
-            if not is_encrypted or not master_envelope:
+            missing = [
+                f
+                for f in (
+                    "public_key",
+                    "encrypted_sym_key",
+                    "encrypted_private_key_master",
+                )
+                if not attrs.get(f)
+            ]
+            if not is_encrypted or missing:
                 raise serializers.ValidationError(
                     {
                         "is_encrypted": _(
                             "Encryption is enabled platform-wide; new "
                             "consultations must be created with is_encrypted=true "
-                            "and at least encrypted_key_for_master."
+                            "and the consultation public_key, encrypted_sym_key "
+                            "and encrypted_private_key_master fields filled in."
                         )
                     }
                 )
 
-        if instance and instance.is_encrypted:
-            if (
-                "beneficiary" in attrs
-                and attrs["beneficiary"] != instance.beneficiary
-                and "encrypted_key_for_beneficiary" not in attrs
-            ):
-                raise serializers.ValidationError(
-                    {
-                        "encrypted_key_for_beneficiary": _(
-                            "When changing beneficiary on an encrypted "
-                            "consultation, encrypted_key_for_beneficiary "
-                            "(rewrapped for the new beneficiary's pubkey) "
-                            "must be provided."
-                        )
-                    }
-                )
-            if (
-                "owned_by" in attrs
-                and attrs["owned_by"] != instance.owned_by
-                and "encrypted_key_for_owned_by" not in attrs
-            ):
-                raise serializers.ValidationError(
-                    {
-                        "encrypted_key_for_owned_by": _(
-                            "When changing owned_by on an encrypted "
-                            "consultation, encrypted_key_for_owned_by must "
-                            "be provided."
-                        )
-                    }
-                )
-            if (
-                "group" in attrs
-                and attrs["group"] != instance.group
-                and attrs["group"] is not None
-                and "encrypted_key_for_queue" not in attrs
-            ):
-                raise serializers.ValidationError(
-                    {
-                        "encrypted_key_for_queue": _(
-                            "When changing group on an encrypted "
-                            "consultation, encrypted_key_for_queue (wrapped "
-                            "with the new queue's pubkey) must be provided."
-                        )
-                    }
-                )
         return attrs
+
+    def create(self, validated_data):
+        initial_keys = validated_data.pop("initial_keys", [])
+        consultation = super().create(validated_data)
+        if consultation.is_encrypted and initial_keys:
+            self._persist_initial_keys(consultation, initial_keys)
+        return consultation
+
+    def update(self, instance, validated_data):
+        initial_keys = validated_data.pop("initial_keys", [])
+        consultation = super().update(instance, validated_data)
+        if consultation.is_encrypted and initial_keys:
+            self._persist_initial_keys(consultation, initial_keys)
+        return consultation
+
+    @staticmethod
+    def _persist_initial_keys(consultation, raw_keys):
+        from .models import ConsultationKey
+
+        for raw in raw_keys:
+            user_id = raw.get("user_id")
+            queue_id = raw.get("queue_id")
+            encrypted = (raw.get("encrypted_private_key") or "").strip()
+            fingerprint = (raw.get("pubkey_fingerprint") or "").strip()
+            if not encrypted or not fingerprint:
+                continue
+            if bool(user_id) == bool(queue_id):
+                # Must specify exactly one of user_id / queue_id
+                continue
+            ConsultationKey.objects.update_or_create(
+                consultation=consultation,
+                user_id=user_id,
+                queue_id=queue_id,
+                defaults={
+                    "encrypted_private_key": encrypted,
+                    "pubkey_fingerprint": fingerprint,
+                },
+            )
 
     def get_next_appointment(self, obj):
         """Get the next non-cancelled appointment for this consultation."""
@@ -525,6 +571,15 @@ class AppointmentSerializer(serializers.ModelSerializer):
     temporary_participants = ParticipantSerializer(
         many=True, allow_null=True, write_only=True, required=False
     )
+    participants_visibility = serializers.ListField(
+        child=serializers.DictField(),
+        required=False,
+        write_only=True,
+        help_text=(
+            "Visibility flag for participants picked from existing users via "
+            "participants_ids: [{user_id, is_consultation_visible}]."
+        ),
+    )
 
     class Meta:
         model = Appointment
@@ -542,6 +597,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
             "participants",
             "participants_ids",
             "temporary_participants",
+            "participants_visibility",
         ]
         read_only_fields = ["id", "created_by", "created_at"]
 
@@ -604,6 +660,9 @@ class AppointmentSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         temporary_participants_data = validated_data.pop("temporary_participants", None)
         participants_ids = validated_data.pop("participants_ids", None)
+        visibility_map = self._extract_visibility_map(
+            validated_data.pop("participants_visibility", None)
+        )
 
         appointment = super().update(instance, validated_data)
 
@@ -619,16 +678,26 @@ class AppointmentSerializer(serializers.ModelSerializer):
 
             # Add new participants or reactivate existing ones
             for user_id in new_users - existing_users:
+                visible = visibility_map.get(user_id, False)
                 participant, created = Participant.objects.get_or_create(
                     appointment=appointment,
                     user_id=user_id,
-                    defaults={"is_active": True},
+                    defaults={
+                        "is_active": True,
+                        "is_consultation_visible": visible,
+                    },
                 )
 
+                update_fields = []
                 if not created and not participant.is_active:
                     participant.is_active = True
                     participant.is_notified = False
-                    participant.save(update_fields=["is_active", "is_notified"])
+                    update_fields += ["is_active", "is_notified"]
+                if not created and visible and not participant.is_consultation_visible:
+                    participant.is_consultation_visible = True
+                    update_fields += ["is_consultation_visible"]
+                if update_fields:
+                    participant.save(update_fields=update_fields)
 
             # Deactivate removed participants
             removed_users = existing_users - new_users
@@ -639,6 +708,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
                 for participant in participants_to_deactivate:
                     participant.is_active = False
                     participant.save(update_fields=["is_active"])
+                    AppointmentSerializer._revoke_consultation_key(participant)
 
         if temporary_participants_data is not None:
             request_user = self.context["request"].user
@@ -671,16 +741,57 @@ class AppointmentSerializer(serializers.ModelSerializer):
                     # Manual contact: create user directly (no lookup key)
                     user = User.objects.create(**user_defaults)
 
+                visible = temp_participant.get("is_consultation_visible", False)
                 participant, created = Participant.objects.get_or_create(
-                    appointment=appointment, user=user, defaults={"is_active": True}
+                    appointment=appointment,
+                    user=user,
+                    defaults={
+                        "is_active": True,
+                        "is_consultation_visible": visible,
+                    },
                 )
 
+                update_fields = []
                 if not created and not participant.is_active:
                     participant.is_active = True
                     participant.is_notified = False
-                    participant.save(update_fields=["is_active", "is_notified"])
+                    update_fields += ["is_active", "is_notified"]
+                if not created and participant.is_consultation_visible != visible:
+                    participant.is_consultation_visible = visible
+                    update_fields += ["is_consultation_visible"]
+                if update_fields:
+                    participant.save(update_fields=update_fields)
+
+                if (
+                    not visible or not participant.is_active
+                ) and participant.appointment.consultation_id:
+                    AppointmentSerializer._revoke_consultation_key(participant)
 
         return appointment
+
+    @staticmethod
+    def _extract_visibility_map(payload):
+        """Build {user_id: bool} from a participants_visibility payload."""
+        result: dict[int, bool] = {}
+        if not payload:
+            return result
+        for entry in payload:
+            try:
+                uid = int(entry.get("user_id"))
+            except (TypeError, ValueError):
+                continue
+            result[uid] = bool(entry.get("is_consultation_visible"))
+        return result
+
+    @staticmethod
+    def _revoke_consultation_key(participant):
+        """Drop the user's ConsultationKey row when access is revoked."""
+        from .models import ConsultationKey
+
+        ConsultationKey.objects.filter(
+            consultation_id=participant.appointment.consultation_id,
+            user_id=participant.user_id,
+        ).delete()
 
 
 class AppointmentCreateSerializer(AppointmentSerializer):
@@ -747,6 +858,9 @@ class AppointmentCreateSerializer(AppointmentSerializer):
         dont_invite_beneficiary = validated_data.pop("dont_invite_beneficiary", False)
         dont_invite_practitioner = validated_data.pop("dont_invite_practitioner", False)
         dont_invite_me = validated_data.pop("dont_invite_me", False)
+        visibility_map = AppointmentSerializer._extract_visibility_map(
+            validated_data.pop("participants_visibility", None)
+        )
 
         request_user = self.context["request"].user
         validated_data["created_by"] = request_user
@@ -795,7 +909,11 @@ class AppointmentCreateSerializer(AppointmentSerializer):
         # Users from participants_ids
         for user in participants_ids:
             if user not in participant_users:
-                Participant.objects.create(appointment=appointment, user=user)
+                Participant.objects.create(
+                    appointment=appointment,
+                    user=user,
+                    is_consultation_visible=visibility_map.get(user.id, False),
+                )
                 participant_users.add(user)
 
         # Users from temporary_participants
@@ -828,7 +946,13 @@ class AppointmentCreateSerializer(AppointmentSerializer):
                 user = User.objects.create(**user_defaults)
 
             if user not in participant_users:
-                Participant.objects.create(appointment=appointment, user=user)
+                Participant.objects.create(
+                    appointment=appointment,
+                    user=user,
+                    is_consultation_visible=temp_participant.get(
+                        "is_consultation_visible", False
+                    ),
+                )
                 participant_users.add(user)
 
         appointment.status = AppointmentStatus.scheduled

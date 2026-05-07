@@ -18,7 +18,14 @@ class ConsultationManager(models.Manager):
 
     def accessible_by(self, user, include_temporary=False):
         qs = self.filter(
-            Q(owned_by=user) | Q(created_by=user) | Q(group__users=user),
+            Q(owned_by=user)
+            | Q(created_by=user)
+            | Q(group__users=user)
+            | Q(
+                appointments__participant__user=user,
+                appointments__participant__is_active=True,
+                appointments__participant__is_consultation_visible=True,
+            ),
         ).distinct()
         if not include_temporary:
             qs = qs.filter(temporary=False)

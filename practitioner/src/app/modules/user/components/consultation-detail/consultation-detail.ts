@@ -44,6 +44,7 @@ import {
   CustomField,
   Queue,
   CreateConsultationRequest,
+  ConsultationKeyInput,
 } from '../../../../core/models/consultation';
 import { IUser } from '../../models/user';
 
@@ -340,6 +341,10 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   private t = inject(TranslationService);
 
   private consultationSymKey: CryptoKey | null = null;
+  // Cached PEM of the consultation's RSA private key. Held in memory only
+  // (not persisted) — used to wrap the consultation key for newly added
+  // participants/queues without having to round-trip through the user.
+  private consultationPrivateKeyPem: string | null = null;
 
   consultationAutoDeleteHours = 0;
 
@@ -929,10 +934,22 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private async loadConsultationSymKey(consultation: Consultation): Promise<void> {
-    // Try every envelope readable by the current user, in order:
-    // created_by > owned_by > beneficiary > queue (membership-based).
+    // Tree navigation:
+    //   1. Try every ConsultationKey row available to the current user
+    //      (direct user envelope, then queue envelopes for queues they
+    //      belong to). Each row holds the consultation's private key,
+    //      envelope-encrypted under either the user's or the queue's pubkey.
+    //   2. Decrypt the consultation private key (PEM) and cache it.
+    //   3. Use crypto.subtle.unwrapKey to derive a non-extractable AES
+    //      sym_key from `encrypted_sym_key`.
+    this.consultationSymKey = null;
+    this.consultationPrivateKeyPem = null;
+
     const userId = this.currentUser()?.pk;
     if (!userId) {
+      return;
+    }
+    if (!consultation.is_encrypted || !consultation.encrypted_sym_key) {
       return;
     }
     const privateKey = await this.encryptionService.getLocalPrivateKey(userId);
@@ -945,84 +962,150 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
-    const directCandidates: (string | null | undefined)[] = [
-      consultation.created_by?.id === userId
-        ? consultation.encrypted_key_for_created_by
-        : null,
-      consultation.owned_by?.id === userId
-        ? consultation.encrypted_key_for_owned_by
-        : null,
-      consultation.beneficiary?.id === userId
-        ? consultation.encrypted_key_for_beneficiary
-        : null,
-    ];
-
-    for (const candidate of directCandidates) {
-      if (!candidate) continue;
+    for (const key of consultation.keys || []) {
       try {
-        this.consultationSymKey =
-          await this.encryptionService.unwrapSymKeyWithPrivateKey(
-            candidate,
+        let consultPrivPem: string | null = null;
+        if (key.user_id === userId) {
+          // Direct envelope for me: my user privkey unwraps the consultation privkey
+          const buf = await this.encryptionService.rsaEnvelopeDecrypt(
+            key.encrypted_private_key,
             privateKey,
           );
-        this.loadMessages();
-        return;
-      } catch (err) {
-        console.warn('Direct envelope unwrap failed', err);
-      }
-    }
-
-    // Fall back to the queue path: unwrap the queue's private RSA key from
-    // the user's QueueMembership envelope, then use it to unwrap the
-    // consultation's encrypted_key_for_queue.
-    const membership = consultation.current_user_queue_envelope;
-    const queueWrap = consultation.encrypted_key_for_queue;
-    if (membership?.encrypted_queue_private_key && queueWrap) {
-      try {
-        const queuePemBuffer = await this.encryptionService.rsaEnvelopeDecrypt(
-          membership.encrypted_queue_private_key,
-          privateKey,
-        );
-        const queuePem = new TextDecoder().decode(queuePemBuffer);
-        const queuePrivateKey =
-          await this.encryptionService.importPrivateKey(queuePem);
-        this.consultationSymKey =
-          await this.encryptionService.unwrapSymKeyWithPrivateKey(
-            queueWrap,
+          consultPrivPem = new TextDecoder().decode(buf);
+        } else if (key.queue_id && key.queue_membership_envelope) {
+          // Queue envelope: my user privkey unwraps the queue privkey,
+          // which then unwraps the consultation privkey
+          const queuePemBuf = await this.encryptionService.rsaEnvelopeDecrypt(
+            key.queue_membership_envelope,
+            privateKey,
+          );
+          const queuePem = new TextDecoder().decode(queuePemBuf);
+          const queuePrivateKey =
+            await this.encryptionService.importPrivateKey(queuePem);
+          const consultPrivBuf = await this.encryptionService.rsaEnvelopeDecrypt(
+            key.encrypted_private_key,
             queuePrivateKey,
           );
+          consultPrivPem = new TextDecoder().decode(consultPrivBuf);
+        }
+        if (!consultPrivPem) continue;
+
+        const consultPrivKey =
+          await this.encryptionService.importPrivateKey(consultPrivPem);
+        this.consultationSymKey =
+          await this.encryptionService.unwrapSymKeyWithConsultationKey(
+            consultation.encrypted_sym_key,
+            consultPrivKey,
+          );
+        this.consultationPrivateKeyPem = consultPrivPem;
         this.loadMessages();
+        this.syncParticipantEnvelopes();
         return;
       } catch (err) {
-        console.warn('Queue envelope unwrap failed', err);
+        console.warn('Consultation key unwrap failed for entry', err);
       }
     }
 
     console.warn(
-      '[encryption] no readable envelope for consultation %s',
+      '[encryption] no readable consultation key for consultation %s',
       consultation.id,
     );
+  }
+
+  /**
+   * Provision missing ConsultationKey envelopes for the consultation.
+   * Wraps the in-memory consultation private key (PEM) with the public key
+   * of each visible+active participant whose ConsultationKey row is still
+   * missing on the server, then POSTs them to the catch-up endpoint. The
+   * server only stores the wrapped envelopes; the consultation private
+   * key never leaves the client in clear.
+   */
+  private async syncParticipantEnvelopes(): Promise<void> {
+    const consultation = this.consultation();
+    if (
+      !consultation?.is_encrypted
+      || !this.consultationPrivateKeyPem
+    ) {
+      return;
+    }
+    const seenUserIds = new Set<number>();
+    const privateKeyBytes = new TextEncoder().encode(
+      this.consultationPrivateKeyPem,
+    );
+    const toProvision: ConsultationKeyInput[] = [];
+
+    for (const appointment of this.appointments()) {
+      for (const participant of appointment.participants || []) {
+        const userId = participant.user?.id;
+        if (
+          !userId
+          || !participant.is_active
+          || !participant.is_consultation_visible
+          || participant.has_consultation_key
+          || seenUserIds.has(userId)
+        ) {
+          continue;
+        }
+        const pubkey = participant.user?.public_key;
+        if (!pubkey) {
+          continue;
+        }
+        seenUserIds.add(userId);
+        try {
+          const encryptedPrivate =
+            await this.encryptionService.rsaEnvelopeEncrypt(
+              privateKeyBytes,
+              pubkey,
+            );
+          const fingerprint = participant.user?.public_key_fingerprint
+            ?? await this.encryptionService.fingerprintPublicKey(pubkey);
+          toProvision.push({
+            user_id: userId,
+            encrypted_private_key: encryptedPrivate,
+            pubkey_fingerprint: fingerprint,
+          });
+        } catch (err) {
+          console.warn(
+            '[encryption] failed to wrap consultation key for participant',
+            participant.id,
+            err,
+          );
+        }
+      }
+    }
+
+    if (!toProvision.length) {
+      return;
+    }
+    this.consultationService
+      .syncConsultationKeys(consultation.id, toProvision)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        error: err => {
+          console.warn('[encryption] sync-consultation-keys failed', err);
+        },
+      });
   }
 
   private async buildRewrappedEnvelopes(
     updateData: Partial<CreateConsultationRequest>,
   ): Promise<Partial<CreateConsultationRequest>> {
     // When the user changes beneficiary/owned_by/group on an encrypted
-    // consultation, the server requires the rewrapped envelope for each
-    // changed recipient. We rewrap with the sym_key already in memory
-    // (loaded at consultation open via loadConsultationSymKey).
+    // consultation, we wrap the consultation private key (in-memory PEM)
+    // for each new recipient and surface them via initial_keys so the
+    // server upserts the matching ConsultationKey rows.
     const consultation = this.consultation();
     if (!consultation?.is_encrypted) {
       return {};
     }
-    const symKey = this.consultationSymKey;
-    if (!symKey) {
+    const privPem = this.consultationPrivateKeyPem;
+    if (!privPem) {
       throw new Error(
-        'Cannot rewrap envelopes — encryption key not loaded for this consultation',
+        'Cannot rewrap envelopes — consultation private key not loaded',
       );
     }
+    const privBytes = new TextEncoder().encode(privPem);
 
-    const out: Partial<CreateConsultationRequest> = {};
     const newBeneficiaryId = updateData.beneficiary_id ?? null;
     const newOwnerId = updateData.owned_by_id ?? null;
     const newGroupId = updateData.group_id ?? null;
@@ -1030,17 +1113,28 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     const oldOwnerId = consultation.owned_by?.id ?? null;
     const oldGroupId = consultation.group?.id ?? null;
 
+    const initial_keys: ConsultationKeyInput[] = [];
+
+    const wrapForUser = async (id: number, pubkey: string, fingerprint: string | null | undefined) => {
+      const wrapped = await this.encryptionService.rsaEnvelopeEncrypt(
+        privBytes,
+        pubkey,
+      );
+      initial_keys.push({
+        user_id: id,
+        encrypted_private_key: wrapped,
+        pubkey_fingerprint: fingerprint
+          ?? await this.encryptionService.fingerprintPublicKey(pubkey),
+      });
+    };
+
     if (newBeneficiaryId !== oldBeneficiaryId && newBeneficiaryId) {
       const ben = this.beneficiaryCache.get(newBeneficiaryId)
         ?? this.selectedBeneficiary();
       if (!ben?.public_key) {
-        throw new Error(
-          'New beneficiary has no public key (not provisioned yet)',
-        );
+        throw new Error('New beneficiary has no public key (not provisioned yet)');
       }
-      out.encrypted_key_for_beneficiary =
-        await this.encryptionService.wrapSymKeyForPublicKey(symKey, ben.public_key);
-      out.beneficiary_pubkey_fingerprint = ben.public_key_fingerprint ?? null;
+      await wrapForUser(newBeneficiaryId, ben.public_key, ben.public_key_fingerprint);
     }
 
     if (newOwnerId !== oldOwnerId && newOwnerId) {
@@ -1048,12 +1142,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       if (!owner?.public_key) {
         throw new Error('New owner has no public key (not provisioned yet)');
       }
-      out.encrypted_key_for_owned_by =
-        await this.encryptionService.wrapSymKeyForPublicKey(
-          symKey,
-          owner.public_key,
-        );
-      out.owned_by_pubkey_fingerprint = owner.public_key_fingerprint ?? null;
+      await wrapForUser(newOwnerId, owner.public_key, owner.public_key_fingerprint);
     }
 
     if (newGroupId !== oldGroupId && newGroupId) {
@@ -1061,15 +1150,19 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       if (!queue?.public_key) {
         throw new Error('New queue has no public key (not provisioned yet)');
       }
-      out.encrypted_key_for_queue =
-        await this.encryptionService.wrapSymKeyForPublicKey(
-          symKey,
-          queue.public_key,
-        );
-      out.queue_pubkey_fingerprint = queue.public_key_fingerprint ?? null;
+      const wrapped = await this.encryptionService.rsaEnvelopeEncrypt(
+        privBytes,
+        queue.public_key,
+      );
+      initial_keys.push({
+        queue_id: newGroupId,
+        encrypted_private_key: wrapped,
+        pubkey_fingerprint: queue.public_key_fingerprint
+          ?? await this.encryptionService.fingerprintPublicKey(queue.public_key),
+      });
     }
 
-    return out;
+    return initial_keys.length ? { initial_keys } : {};
   }
 
   private async decryptMessageContent(
@@ -1741,6 +1834,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       queryParams: { appointmentId: appointment.id },
       queryParamsHandling: 'merge',
     });
+    this.syncParticipantEnvelopes();
   }
 
   onAppointmentUpdated(updatedAppointment: Appointment): void {
@@ -1755,6 +1849,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       queryParams: { appointmentId: updatedAppointment.id },
       queryParamsHandling: 'merge',
     });
+    this.syncParticipantEnvelopes();
   }
 
   getParticipantInitials(participant: Participant): string {

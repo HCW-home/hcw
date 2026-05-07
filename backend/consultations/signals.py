@@ -45,6 +45,19 @@ def get_users_to_notification_consultation(consultation: Consultation):
         for user in consultation.group.users.all():
             users_to_notify_pks.add(user.pk)
 
+    # Add visible participants who have explicit consultation access
+    from .models import Participant
+
+    visible_user_pks = (
+        Participant.objects.filter(
+            appointment__consultation=consultation,
+            is_active=True,
+            is_consultation_visible=True,
+        )
+        .values_list("user_id", flat=True)
+    )
+    users_to_notify_pks.update(visible_user_pks)
+
     return users_to_notify_pks
 
 

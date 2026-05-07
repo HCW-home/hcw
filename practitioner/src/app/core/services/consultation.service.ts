@@ -18,6 +18,7 @@ import {
   CreateParticipantRequest,
   CreateConsultationRequest,
   CreateConsultationRequestPayload,
+  ConsultationKeyInput,
   CustomField,
   DashboardResponse,
   IParticipantDetail,
@@ -79,18 +80,7 @@ export class ConsultationService {
 
   updateConsultationEncryption(
     id: number,
-    envelopes: {
-      is_encrypted: boolean;
-      encrypted_key_for_queue?: string | null;
-      queue_pubkey_fingerprint?: string | null;
-      encrypted_key_for_owned_by?: string | null;
-      owned_by_pubkey_fingerprint?: string | null;
-      encrypted_key_for_created_by?: string | null;
-      created_by_pubkey_fingerprint?: string | null;
-      encrypted_key_for_beneficiary?: string | null;
-      beneficiary_pubkey_fingerprint?: string | null;
-      encrypted_key_for_master?: string | null;
-    },
+    envelopes: Partial<CreateConsultationRequest>,
   ): Observable<Consultation> {
     return this.http.patch<Consultation>(
       `${this.apiUrl}/consultations/${id}/`,
@@ -244,6 +234,16 @@ export class ConsultationService {
     return this.http.get<PaginatedResponse<ConsultationMessage>>(
       `${this.apiUrl}/consultations/${consultationId}/messages/`,
       { params: httpParams }
+    );
+  }
+
+  syncConsultationKeys(
+    consultationId: number,
+    keys: ConsultationKeyInput[],
+  ): Observable<{ provisioned: number }> {
+    return this.http.post<{ provisioned: number }>(
+      `${this.apiUrl}/consultations/${consultationId}/sync-consultation-keys/`,
+      { keys },
     );
   }
 

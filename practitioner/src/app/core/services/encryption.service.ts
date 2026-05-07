@@ -93,6 +93,10 @@ export class EncryptionService {
   }
 
   async generateSymKey(): Promise<CryptoKey> {
+    // extractable=true is required by crypto.subtle.wrapKey at creation
+    // time. Once wrapped and stored on the server, recipients receive the
+    // sym_key via crypto.subtle.unwrapKey with extractable=false (see
+    // unwrapSymKeyWithConsultationKey) so the raw bytes never reach JS.
     return crypto.subtle.generateKey(
       { name: 'AES-GCM', length: 256 },
       true,
@@ -100,48 +104,107 @@ export class EncryptionService {
     );
   }
 
-  async exportSymKeyRaw(key: CryptoKey): Promise<ArrayBuffer> {
-    return crypto.subtle.exportKey('raw', key);
+  async generateConsultationKeypair(): Promise<{
+    publicKeyPem: string;
+    privateKeyPem: string;
+    publicKeyFingerprint: string;
+  }> {
+    const pair = await crypto.subtle.generateKey(
+      {
+        name: 'RSA-OAEP',
+        modulusLength: 2048,
+        publicExponent: new Uint8Array([1, 0, 1]),
+        hash: 'SHA-256',
+      },
+      true,
+      ['encrypt', 'decrypt'],
+    );
+    const pubDer = await crypto.subtle.exportKey('spki', pair.publicKey);
+    const privDer = await crypto.subtle.exportKey('pkcs8', pair.privateKey);
+    const publicKeyPem = this.derToPem(pubDer, 'PUBLIC KEY');
+    const privateKeyPem = this.derToPem(privDer, 'PRIVATE KEY');
+    const publicKeyFingerprint = await this.fingerprintPublicKey(publicKeyPem);
+    return { publicKeyPem, privateKeyPem, publicKeyFingerprint };
   }
 
-  async importSymKeyRaw(raw: ArrayBuffer): Promise<CryptoKey> {
-    // extractable=true so we can re-wrap this sym_key for new recipients
-    // when the practitioner changes beneficiary/owned_by/group on an
-    // already-encrypted consultation. The underlying RSA private key (used
-    // to unwrap) stays extractable=false.
-    return crypto.subtle.importKey('raw', raw, { name: 'AES-GCM' }, true, [
-      'encrypt',
-      'decrypt',
-    ]);
+  private derToPem(der: ArrayBuffer, label: string): string {
+    const b64 = this.bufferToBase64(der);
+    const lines = b64.match(/.{1,64}/g) || [b64];
+    return `-----BEGIN ${label}-----\n${lines.join('\n')}\n-----END ${label}-----`;
   }
 
   // -- High-level wrap/unwrap ---------------------------------------------
 
-  async wrapSymKeyForPublicKey(
+  async wrapSymKeyWithPublicKey(
     symKey: CryptoKey,
     publicKeyPem: string,
   ): Promise<string> {
+    // Uses crypto.subtle.wrapKey so the raw sym_key bytes never leave the
+    // WebCrypto sandbox in JS memory.
     const pubKey = await this.importPublicKey(publicKeyPem);
-    const raw = await this.exportSymKeyRaw(symKey);
-    const wrapped = await crypto.subtle.encrypt(
-      { name: 'RSA-OAEP' },
+    const wrapped = await crypto.subtle.wrapKey(
+      'raw',
+      symKey,
       pubKey,
-      raw,
+      { name: 'RSA-OAEP' },
     );
     return this.bufferToBase64(wrapped);
   }
 
-  async unwrapSymKeyWithPrivateKey(
+  async unwrapSymKeyWithConsultationKey(
     wrappedB64: string,
-    privateKey: CryptoKey,
+    consultationPrivateKey: CryptoKey,
   ): Promise<CryptoKey> {
+    // Returns a non-extractable AES-GCM key. The raw bytes never appear in
+    // JS — once unwrapped the key can only be used via crypto.subtle.encrypt
+    // / decrypt within the WebCrypto sandbox.
     const wrapped = this.base64ToBuffer(wrappedB64);
-    const raw = await crypto.subtle.decrypt(
-      { name: 'RSA-OAEP' },
-      privateKey,
+    return crypto.subtle.unwrapKey(
+      'raw',
       wrapped,
+      consultationPrivateKey,
+      { name: 'RSA-OAEP' },
+      { name: 'AES-GCM' },
+      false,
+      ['encrypt', 'decrypt'],
     );
-    return this.importSymKeyRaw(raw);
+  }
+
+  async rsaEnvelopeEncrypt(
+    plaintext: ArrayBuffer | Uint8Array,
+    publicKeyPem: string,
+  ): Promise<string> {
+    // Mirrors backend's core.encryption.rsa_envelope_encrypt:
+    // {wrapped_key (base64), iv (base64), ciphertext (base64)}
+    // Used to wrap payloads (e.g. RSA private keys) too large to fit in a
+    // single RSA-OAEP block: encrypt with a fresh AES-GCM CEK, then RSA-wrap
+    // the CEK for the recipient.
+    const pubKey = await this.importPublicKey(publicKeyPem);
+    const cekRaw = crypto.getRandomValues(new Uint8Array(32));
+    const cek = await crypto.subtle.importKey(
+      'raw',
+      cekRaw,
+      { name: 'AES-GCM' },
+      false,
+      ['encrypt'],
+    );
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const data = plaintext instanceof Uint8Array ? plaintext : new Uint8Array(plaintext);
+    const ciphertext = await crypto.subtle.encrypt(
+      { name: 'AES-GCM', iv },
+      cek,
+      data,
+    );
+    const wrappedKey = await crypto.subtle.encrypt(
+      { name: 'RSA-OAEP' },
+      pubKey,
+      cekRaw,
+    );
+    return JSON.stringify({
+      wrapped_key: this.bufferToBase64(wrappedKey),
+      iv: this.bufferToBase64(iv.buffer),
+      ciphertext: this.bufferToBase64(ciphertext),
+    });
   }
 
   async rsaEnvelopeDecrypt(

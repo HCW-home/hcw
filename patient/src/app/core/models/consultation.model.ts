@@ -39,15 +39,18 @@ export interface Consultation {
   unread_count?: number;
   last_read_at?: string;
   is_encrypted?: boolean;
-  encrypted_key_for_queue?: string | null;
-  queue_pubkey_fingerprint?: string | null;
-  encrypted_key_for_owned_by?: string | null;
-  owned_by_pubkey_fingerprint?: string | null;
-  encrypted_key_for_created_by?: string | null;
-  created_by_pubkey_fingerprint?: string | null;
-  encrypted_key_for_beneficiary?: string | null;
-  beneficiary_pubkey_fingerprint?: string | null;
-  encrypted_key_for_master?: string | null;
+  public_key?: string | null;
+  public_key_fingerprint?: string | null;
+  encrypted_sym_key?: string | null;
+  keys?: ConsultationKeyEnvelope[];
+}
+
+export interface ConsultationKeyEnvelope {
+  encrypted_private_key: string;
+  pubkey_fingerprint: string;
+  user_id?: number;
+  queue_id?: number;
+  queue_membership_envelope?: string;
 }
 
 export interface Queue {
@@ -121,6 +124,8 @@ export interface Participant {
   is_invited: boolean;
   is_confirmed: boolean;
   is_active: boolean;
+  is_consultation_visible?: boolean;
+  has_consultation_key?: boolean;
   feedback_rate?: number;
   feedback_message?: string;
   status?: string;

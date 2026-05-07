@@ -610,23 +610,56 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   private async ensureChatSymKey(consultation: Consultation | undefined): Promise<void> {
-    // Decrypt the per-consultation sym_key from the beneficiary envelope, the
-    // only envelope a patient ever holds. Sets this.chatSymKey on success.
+    // Tree navigation: the consultation has its own RSA keypair. Each
+    // authorized recipient (user or queue) holds the consultation private
+    // key wrapped in a ConsultationKey row. Find any row I can unwrap
+    // (direct or via a queue I belong to), then use the consultation
+    // private key to unwrap encrypted_sym_key.
     this.chatSymKey = null;
-    if (!consultation?.is_encrypted || !consultation.encrypted_key_for_beneficiary) {
+    if (!consultation?.is_encrypted || !consultation.encrypted_sym_key) {
       return;
     }
     const userId = this.currentUser()?.pk;
     if (!userId) return;
     const privateKey = await this.encryptionService.getLocalPrivateKey(userId);
     if (!privateKey) return;
-    try {
-      this.chatSymKey = await this.encryptionService.unwrapSymKeyWithPrivateKey(
-        consultation.encrypted_key_for_beneficiary,
-        privateKey,
-      );
-    } catch (err) {
-      console.warn('Failed to unwrap consultation sym_key', err);
+
+    for (const key of consultation.keys || []) {
+      try {
+        let consultPrivPem: string | null = null;
+        if (key.user_id === userId) {
+          const buf = await this.encryptionService.rsaEnvelopeDecrypt(
+            key.encrypted_private_key,
+            privateKey,
+          );
+          consultPrivPem = new TextDecoder().decode(buf);
+        } else if (key.queue_id && key.queue_membership_envelope) {
+          const queuePemBuf = await this.encryptionService.rsaEnvelopeDecrypt(
+            key.queue_membership_envelope,
+            privateKey,
+          );
+          const queuePem = new TextDecoder().decode(queuePemBuf);
+          const queuePrivateKey =
+            await this.encryptionService.importPrivateKey(queuePem);
+          const consultPrivBuf = await this.encryptionService.rsaEnvelopeDecrypt(
+            key.encrypted_private_key,
+            queuePrivateKey,
+          );
+          consultPrivPem = new TextDecoder().decode(consultPrivBuf);
+        }
+        if (!consultPrivPem) continue;
+
+        const consultPrivKey =
+          await this.encryptionService.importPrivateKey(consultPrivPem);
+        this.chatSymKey =
+          await this.encryptionService.unwrapSymKeyWithConsultationKey(
+            consultation.encrypted_sym_key,
+            consultPrivKey,
+          );
+        return;
+      } catch (err) {
+        console.warn('Consultation key unwrap failed for entry', err);
+      }
     }
   }
 

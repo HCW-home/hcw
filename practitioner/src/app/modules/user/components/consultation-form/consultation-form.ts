@@ -624,18 +624,20 @@ export class ConsultationForm implements OnInit, OnDestroy {
     beneficiaryId: number | undefined,
     ownedById: number | undefined,
   ): Promise<Partial<CreateConsultationRequest> | null> {
-    // Returns null when encryption is disabled platform-wide. Otherwise,
-    // generates a fresh sym_key, wraps it for every recipient whose pubkey
-    // is known + the master, and returns the envelopes ready to be merged
-    // into the create payload. Throws if encryption is enabled but a
-    // mandatory pubkey (master) is missing.
+    // Returns null when encryption is disabled platform-wide. Otherwise:
+    //   1. Generates a per-consultation RSA keypair (the consultation's own
+    //      identity in the encryption tree).
+    //   2. Generates a fresh AES sym_key and wraps it ONCE with the
+    //      consultation public key (encrypted_sym_key).
+    //   3. Wraps the consultation private key (envelope-encrypted, AES-GCM
+    //      under an RSA-OAEP-wrapped CEK) for the master + each recipient
+    //      whose pubkey is known.
+    // Recipients whose pubkey is missing are left unprovisioned; they are
+    // caught up later via the sync-consultation-keys endpoint when an
+    // authorized client (who holds the consultation private key) opens the
+    // consultation.
     this.authService.invalidateConfigCache();
     const config = await firstValueFrom(this.authService.getOpenIDConfig());
-    console.info(
-      '[encryption] /config snapshot — encryption_enabled=%s, master_public_key set=%s',
-      !!config?.encryption_enabled,
-      !!config?.master_public_key,
-    );
     if (!config?.encryption_enabled) {
       return null;
     }
@@ -644,70 +646,72 @@ export class ConsultationForm implements OnInit, OnDestroy {
     }
 
     const currentUser = this.currentUser();
+    const { publicKeyPem, privateKeyPem, publicKeyFingerprint } =
+      await this.encryptionService.generateConsultationKeypair();
     const symKey = await this.encryptionService.generateSymKey();
-    const envelopes: Partial<CreateConsultationRequest> = {
-      is_encrypted: true,
-    };
-
-    envelopes.encrypted_key_for_master =
-      await this.encryptionService.wrapSymKeyForPublicKey(
-        symKey,
+    const encryptedSymKey =
+      await this.encryptionService.wrapSymKeyWithPublicKey(symKey, publicKeyPem);
+    const privateKeyBytes = new TextEncoder().encode(privateKeyPem);
+    const encryptedPrivateKeyMaster =
+      await this.encryptionService.rsaEnvelopeEncrypt(
+        privateKeyBytes,
         config.master_public_key,
       );
 
-    if (currentUser?.public_key) {
-      envelopes.encrypted_key_for_created_by =
-        await this.encryptionService.wrapSymKeyForPublicKey(
-          symKey,
-          currentUser.public_key,
-        );
-      envelopes.created_by_pubkey_fingerprint =
-        currentUser.public_key_fingerprint ?? null;
-    }
+    const envelopes: Partial<CreateConsultationRequest> = {
+      is_encrypted: true,
+      public_key: publicKeyPem,
+      public_key_fingerprint: publicKeyFingerprint,
+      encrypted_sym_key: encryptedSymKey,
+      encrypted_private_key_master: encryptedPrivateKeyMaster,
+      initial_keys: [],
+    };
 
+    const initialKeys = envelopes.initial_keys!;
+    const wrapFor = async (
+      target: { public_key?: string | null; public_key_fingerprint?: string | null },
+      ref: { user_id?: number; queue_id?: number },
+    ) => {
+      if (!target?.public_key) return;
+      const wrapped = await this.encryptionService.rsaEnvelopeEncrypt(
+        privateKeyBytes,
+        target.public_key,
+      );
+      const fingerprint = target.public_key_fingerprint
+        ?? await this.encryptionService.fingerprintPublicKey(target.public_key);
+      initialKeys.push({
+        ...ref,
+        encrypted_private_key: wrapped,
+        pubkey_fingerprint: fingerprint,
+      });
+    };
+
+    if (currentUser?.public_key && currentUser.pk) {
+      await wrapFor(currentUser, { user_id: currentUser.pk });
+    }
     if (groupId) {
       const queue = this.queues().find(q => q.id === groupId);
       if (queue?.public_key) {
-        envelopes.encrypted_key_for_queue =
-          await this.encryptionService.wrapSymKeyForPublicKey(
-            symKey,
-            queue.public_key,
-          );
-        envelopes.queue_pubkey_fingerprint =
-          queue.public_key_fingerprint ?? null;
+        await wrapFor(queue, { queue_id: groupId });
       }
     }
-
     if (beneficiaryId) {
       const beneficiary = this.beneficiaryCache.get(beneficiaryId);
-      if (beneficiary?.public_key) {
-        envelopes.encrypted_key_for_beneficiary =
-          await this.encryptionService.wrapSymKeyForPublicKey(
-            symKey,
-            beneficiary.public_key,
-          );
-        envelopes.beneficiary_pubkey_fingerprint =
-          beneficiary.public_key_fingerprint ?? null;
+      if (beneficiary?.public_key && beneficiaryId !== currentUser?.pk) {
+        await wrapFor(beneficiary, { user_id: beneficiaryId });
       }
     }
-
     if (ownedById) {
       const owner = this.practitionerCache.get(ownedById);
-      if (owner?.public_key) {
-        envelopes.encrypted_key_for_owned_by =
-          await this.encryptionService.wrapSymKeyForPublicKey(
-            symKey,
-            owner.public_key,
-          );
-        envelopes.owned_by_pubkey_fingerprint =
-          owner.public_key_fingerprint ?? null;
+      if (
+        owner?.public_key
+        && ownedById !== currentUser?.pk
+        && ownedById !== beneficiaryId
+      ) {
+        await wrapFor(owner, { user_id: ownedById });
       }
     }
 
-    console.info(
-      '[encryption] envelopes prepared:',
-      Object.keys(envelopes).filter(k => k !== 'is_encrypted'),
-    );
     return envelopes;
   }
 

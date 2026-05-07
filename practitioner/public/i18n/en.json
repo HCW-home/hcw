@@ -813,6 +813,8 @@
     "cancelLabel": "Cancel",
     "addParticipant": "Add participant",
     "addTheParticipant": "Add this participant",
+    "consultationVisible": "Visible in consultation",
+    "consultationVisibleHelp": "Grants access to the chat and shared consultation features.",
     "participantType": "Participant Type",
     "existingUser": "Existing User",
     "externalGuest": "External Guest",

@@ -187,6 +187,11 @@ class ConsultationViewSet(FhirViewSetMixin, CreatedByMixin, viewsets.ModelViewSe
                     appointments__participant__user=user,
                     appointments__participant__is_active=True,
                 )
+                | Q(
+                    appointments__participant__user=user,
+                    appointments__participant__is_active=True,
+                    appointments__participant__is_consultation_visible=True,
+                )
             ).distinct()
         qs = annotate_unread_count(qs, user)
         qs = annotate_unassigned_request(qs)
@@ -202,6 +207,81 @@ class ConsultationViewSet(FhirViewSetMixin, CreatedByMixin, viewsets.ModelViewSe
             defaults={"last_read_at": timezone.now()},
         )
         return Response({"status": "ok"})
+
+    @action(detail=True, methods=["post"], url_path="sync-consultation-keys")
+    def sync_consultation_keys(self, request, pk=None):
+        """Provision missing ConsultationKey envelopes.
+
+        Body: ``{"keys": [{"user_id"?: int, "queue_id"?: int,
+        "encrypted_private_key": str, "pubkey_fingerprint": str}, ...]}``
+
+        Called by an authorized client (someone who already holds the
+        decrypted consultation private key) to wrap it for each missing
+        recipient — typically newly added visible participants whose user
+        only just received their pubkey. The server never sees the private
+        key in clear.
+
+        Recipients are validated against the consultation membership: a user
+        must be the beneficiary, owned_by, created_by, or an active visible
+        participant; a queue must be the consultation's group.
+        """
+        from .models import ConsultationKey, Participant, Queue
+
+        consultation = self.get_object()
+        keys = request.data.get("keys") or []
+        if not isinstance(keys, list):
+            return Response(
+                {"error": "keys must be a list"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Allowed user IDs: owner, creator, beneficiary, visible+active
+        # participants of any appointment in the consultation.
+        allowed_user_ids = {
+            consultation.owned_by_id,
+            consultation.created_by_id,
+            consultation.beneficiary_id,
+        }
+        allowed_user_ids.discard(None)
+        allowed_user_ids.update(
+            Participant.objects.filter(
+                appointment__consultation=consultation,
+                is_active=True,
+                is_consultation_visible=True,
+            ).values_list("user_id", flat=True)
+        )
+
+        # Allowed queue IDs: the consultation's own group.
+        allowed_queue_ids = (
+            {consultation.group_id} if consultation.group_id else set()
+        )
+
+        created = 0
+        for key in keys:
+            user_id = key.get("user_id")
+            queue_id = key.get("queue_id")
+            encrypted = (key.get("encrypted_private_key") or "").strip()
+            fingerprint = (key.get("pubkey_fingerprint") or "").strip()
+            if not encrypted or not fingerprint:
+                continue
+            if bool(user_id) == bool(queue_id):
+                # Must be exactly one of user_id / queue_id
+                continue
+            if user_id and user_id not in allowed_user_ids:
+                continue
+            if queue_id and queue_id not in allowed_queue_ids:
+                continue
+            ConsultationKey.objects.update_or_create(
+                consultation=consultation,
+                user_id=user_id,
+                queue_id=queue_id,
+                defaults={
+                    "encrypted_private_key": encrypted,
+                    "pubkey_fingerprint": fingerprint,
+                },
+            )
+            created += 1
+        return Response({"provisioned": created})
 
     @extend_schema(responses=ConsultationSerializer)
     @action(detail=True, methods=["post"])
@@ -1325,6 +1405,11 @@ class MessageViewSet(viewsets.ModelViewSet):
                 | Q(owned_by=user)
                 | Q(group__users=user)
                 | Q(beneficiary=user)
+                | Q(
+                    appointments__participant__user=user,
+                    appointments__participant__is_active=True,
+                    appointments__participant__is_consultation_visible=True,
+                )
             )
         ).distinct()
 

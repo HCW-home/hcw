@@ -46,8 +46,10 @@ export interface Participant {
   id: number;
   user: User | null;
   is_active: boolean;
+  is_consultation_visible?: boolean;
   status?: ParticipantStatus;
   requires_manual_access?: boolean;
+  has_consultation_key?: boolean;
 }
 
 export type ParticipantStatus =
@@ -125,31 +127,26 @@ export interface Consultation {
   unread_count?: number;
   last_read_at?: string;
   is_encrypted?: boolean;
-  encrypted_key_for_queue?: string | null;
-  queue_pubkey_fingerprint?: string | null;
-  encrypted_key_for_owned_by?: string | null;
-  owned_by_pubkey_fingerprint?: string | null;
-  encrypted_key_for_created_by?: string | null;
-  created_by_pubkey_fingerprint?: string | null;
-  encrypted_key_for_beneficiary?: string | null;
-  beneficiary_pubkey_fingerprint?: string | null;
-  encrypted_key_for_master?: string | null;
-  current_user_queue_envelope?: {
-    encrypted_queue_private_key: string;
-  } | null;
+  public_key?: string | null;
+  public_key_fingerprint?: string | null;
+  encrypted_sym_key?: string | null;
+  encrypted_private_key_master?: string | null;
+  keys?: ConsultationKeyEnvelope[];
 }
 
-export interface ConsultationEncryptionEnvelopes {
-  is_encrypted: true;
-  encrypted_key_for_queue: string | null;
-  queue_pubkey_fingerprint: string | null;
-  encrypted_key_for_owned_by: string | null;
-  owned_by_pubkey_fingerprint: string | null;
-  encrypted_key_for_created_by: string | null;
-  created_by_pubkey_fingerprint: string | null;
-  encrypted_key_for_beneficiary: string | null;
-  beneficiary_pubkey_fingerprint: string | null;
-  encrypted_key_for_master: string | null;
+export interface ConsultationKeyEnvelope {
+  encrypted_private_key: string;
+  pubkey_fingerprint: string;
+  user_id?: number;
+  queue_id?: number;
+  queue_membership_envelope?: string;
+}
+
+export interface ConsultationKeyInput {
+  encrypted_private_key: string;
+  pubkey_fingerprint: string;
+  user_id?: number;
+  queue_id?: number;
 }
 
 export interface CreateConsultationRequest {
@@ -161,15 +158,11 @@ export interface CreateConsultationRequest {
   visible_by_patient?: boolean;
   custom_fields?: { field: number; value: string | null }[];
   is_encrypted?: boolean;
-  encrypted_key_for_queue?: string | null;
-  queue_pubkey_fingerprint?: string | null;
-  encrypted_key_for_owned_by?: string | null;
-  owned_by_pubkey_fingerprint?: string | null;
-  encrypted_key_for_created_by?: string | null;
-  created_by_pubkey_fingerprint?: string | null;
-  encrypted_key_for_beneficiary?: string | null;
-  beneficiary_pubkey_fingerprint?: string | null;
-  encrypted_key_for_master?: string | null;
+  public_key?: string | null;
+  public_key_fingerprint?: string | null;
+  encrypted_sym_key?: string | null;
+  encrypted_private_key_master?: string | null;
+  initial_keys?: ConsultationKeyInput[];
 }
 
 export interface Reason {
@@ -264,6 +257,12 @@ export interface ITemporaryParticipant {
   communication_method?: string;
   preferred_language?: string;
   timezone?: string;
+  is_consultation_visible?: boolean;
+}
+
+export interface ParticipantVisibilityInput {
+  user_id: number;
+  is_consultation_visible: boolean;
 }
 
 export interface CreateAppointmentRequest {
@@ -274,6 +273,7 @@ export interface CreateAppointmentRequest {
   end_expected_at?: string;
   participants_ids?: number[];
   temporary_participants?: ITemporaryParticipant[];
+  participants_visibility?: ParticipantVisibilityInput[];
   dont_invite_beneficiary?: boolean;
   dont_invite_practitioner?: boolean;
   dont_invite_me?: boolean;
@@ -287,6 +287,7 @@ export interface UpdateAppointmentRequest {
   end_expected_at?: string;
   participants_ids?: number[];
   temporary_participants?: ITemporaryParticipant[];
+  participants_visibility?: ParticipantVisibilityInput[];
   consultation?: number;
 }
 
@@ -299,6 +300,7 @@ export interface CreateParticipantRequest {
   timezone?: string;
   communication_method?: string;
   preferred_language?: string;
+  is_consultation_visible?: boolean;
 }
 
 export interface DashboardNextAppointment {

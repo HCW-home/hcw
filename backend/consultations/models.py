@@ -135,15 +135,20 @@ class Consultation(models.Model):
 
     is_encrypted = models.BooleanField(default=False)
 
-    encrypted_key_for_queue = models.TextField(blank=True, null=True)
-    queue_pubkey_fingerprint = models.CharField(max_length=64, blank=True, null=True)
-    encrypted_key_for_owned_by = models.TextField(blank=True, null=True)
-    owned_by_pubkey_fingerprint = models.CharField(max_length=64, blank=True, null=True)
-    encrypted_key_for_created_by = models.TextField(blank=True, null=True)
-    created_by_pubkey_fingerprint = models.CharField(max_length=64, blank=True, null=True)
-    encrypted_key_for_beneficiary = models.TextField(blank=True, null=True)
-    beneficiary_pubkey_fingerprint = models.CharField(max_length=64, blank=True, null=True)
-    encrypted_key_for_master = models.TextField(blank=True, null=True)
+    # Per-consultation RSA keypair. The public key is in clear so any holder
+    # can wrap the sym_key (or rotate it). The private key is wrapped per
+    # recipient via ConsultationKey rows (one per user OR queue) and via the
+    # dedicated master recovery slot below.
+    public_key = models.TextField(blank=True, null=True)
+    public_key_fingerprint = models.CharField(max_length=64, blank=True, null=True)
+    encrypted_sym_key = models.TextField(
+        blank=True, null=True,
+        help_text=_("AES sym_key wrapped with the consultation public key."),
+    )
+    encrypted_private_key_master = models.TextField(
+        blank=True, null=True,
+        help_text=_("Consultation private key wrapped (envelope) with the platform master pubkey for admin recovery."),
+    )
 
     objects = ConsultationManager()
 
@@ -276,6 +281,13 @@ class Participant(models.Model):
     is_invited = models.BooleanField(default=True)
     is_confirmed = models.BooleanField(null=True, blank=True)
     is_notified = models.BooleanField(default=False)
+    is_consultation_visible = models.BooleanField(
+        _("visible in consultation"),
+        default=False,
+        help_text=_(
+            "Grants access to the chat and shared consultation features."
+        ),
+    )
     feedback_rate = models.IntegerField(null=True, blank=True)
     feedback_message = models.TextField(null=True, blank=True)
 
@@ -314,6 +326,67 @@ class Participant(models.Model):
 
     class Meta:
         unique_together = ["user", "appointment"]
+
+
+class ConsultationKey(models.Model):
+    """Per-recipient envelope wrapping the consultation private key.
+
+    Each row stores the consultation's RSA private key (envelope-encrypted)
+    for one recipient — either a User (direct access) or a Queue (any
+    member of the queue can navigate via their QueueMembership envelope).
+    The wrapping is performed by a client that already holds the decrypted
+    consultation private key; the server never sees it in clear.
+    """
+
+    consultation = models.ForeignKey(
+        Consultation,
+        on_delete=models.CASCADE,
+        related_name="keys",
+        verbose_name=_("consultation"),
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="consultation_keys",
+        verbose_name=_("user"),
+    )
+    queue = models.ForeignKey(
+        Queue,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="consultation_keys",
+        verbose_name=_("queue"),
+    )
+    encrypted_private_key = models.TextField(_("encrypted private key"))
+    pubkey_fingerprint = models.CharField(_("pubkey fingerprint"), max_length=64)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("consultation key")
+        verbose_name_plural = _("consultation keys")
+        constraints = [
+            models.CheckConstraint(
+                check=(
+                    models.Q(user__isnull=False, queue__isnull=True)
+                    | models.Q(user__isnull=True, queue__isnull=False)
+                ),
+                name="consultation_key_user_xor_queue",
+            ),
+            models.UniqueConstraint(
+                fields=["consultation", "user"],
+                condition=models.Q(user__isnull=False),
+                name="consultation_key_unique_user",
+            ),
+            models.UniqueConstraint(
+                fields=["consultation", "queue"],
+                condition=models.Q(queue__isnull=False),
+                name="consultation_key_unique_queue",
+            ),
+        ]
 
 
 class Message(models.Model):

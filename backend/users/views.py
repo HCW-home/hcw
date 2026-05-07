@@ -407,7 +407,14 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
 
         user = self.request.user
         if self.action == "list":
-            qs = Consultation.objects.filter(beneficiary=user, visible_by_patient=True)
+            qs = Consultation.objects.filter(
+                Q(beneficiary=user, visible_by_patient=True)
+                | Q(
+                    appointments__participant__user=user,
+                    appointments__participant__is_active=True,
+                    appointments__participant__is_consultation_visible=True,
+                )
+            ).distinct()
         else:
             qs = Consultation.objects.filter(
                 Q(beneficiary=user, visible_by_patient=True)
@@ -415,6 +422,11 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
                     temporary=True,
                     appointments__participant__user=user,
                     appointments__participant__is_active=True,
+                )
+                | Q(
+                    appointments__participant__user=user,
+                    appointments__participant__is_active=True,
+                    appointments__participant__is_consultation_visible=True,
                 )
             ).distinct()
         return annotate_unread_count(qs, user)
@@ -1700,7 +1712,16 @@ class UserDashboardView(APIView):
 
         consultations = annotate_unread_count(
             Consultation.objects.exclude(request__in=user_requests)
-            .filter(beneficiary=user, closed_at__isnull=True, visible_by_patient=True)
+            .filter(closed_at__isnull=True)
+            .filter(
+                Q(beneficiary=user, visible_by_patient=True)
+                | Q(
+                    appointments__participant__user=user,
+                    appointments__participant__is_active=True,
+                    appointments__participant__is_consultation_visible=True,
+                )
+            )
+            .distinct()
             .order_by("-created_at"),
             user,
         )

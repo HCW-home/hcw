@@ -82,24 +82,52 @@ export class EncryptionService {
     );
   }
 
-  async importSymKeyRaw(raw: ArrayBuffer): Promise<CryptoKey> {
-    return crypto.subtle.importKey('raw', raw, { name: 'AES-GCM' }, true, [
-      'encrypt',
-      'decrypt',
-    ]);
+  async unwrapSymKeyWithConsultationKey(
+    wrappedB64: string,
+    consultationPrivateKey: CryptoKey,
+  ): Promise<CryptoKey> {
+    // Returns a non-extractable AES-GCM key. The raw bytes never appear in
+    // JS — once unwrapped the key can only be used via crypto.subtle.encrypt
+    // / decrypt within the WebCrypto sandbox.
+    const wrapped = this.base64ToBuffer(wrappedB64);
+    return crypto.subtle.unwrapKey(
+      'raw',
+      wrapped,
+      consultationPrivateKey,
+      { name: 'RSA-OAEP' },
+      { name: 'AES-GCM' },
+      false,
+      ['encrypt', 'decrypt'],
+    );
   }
 
-  async unwrapSymKeyWithPrivateKey(
-    wrappedB64: string,
+  async rsaEnvelopeDecrypt(
+    blob: string,
     privateKey: CryptoKey,
-  ): Promise<CryptoKey> {
-    const wrapped = this.base64ToBuffer(wrappedB64);
-    const raw = await crypto.subtle.decrypt(
+  ): Promise<ArrayBuffer> {
+    // Mirrors backend's core.encryption.rsa_envelope_encrypt:
+    // {wrapped_key (base64), iv (base64), ciphertext (base64)}.
+    const data = JSON.parse(blob) as {
+      wrapped_key: string;
+      iv: string;
+      ciphertext: string;
+    };
+    const wrappedKey = this.base64ToBuffer(data.wrapped_key);
+    const iv = this.base64ToBuffer(data.iv);
+    const ciphertext = this.base64ToBuffer(data.ciphertext);
+    const cekRaw = await crypto.subtle.decrypt(
       { name: 'RSA-OAEP' },
       privateKey,
-      wrapped,
+      wrappedKey,
     );
-    return this.importSymKeyRaw(raw);
+    const cek = await crypto.subtle.importKey(
+      'raw',
+      cekRaw,
+      { name: 'AES-GCM' },
+      false,
+      ['decrypt'],
+    );
+    return crypto.subtle.decrypt({ name: 'AES-GCM', iv }, cek, ciphertext);
   }
 
   async encryptString(plaintext: string, symKey: CryptoKey): Promise<string> {

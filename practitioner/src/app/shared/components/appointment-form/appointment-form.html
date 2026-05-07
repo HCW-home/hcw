@@ -150,6 +150,17 @@
                 (userSelected)="onParticipantUserSelected($event)">
               </app-user-search-select>
             </div>
+            @if (selectedParticipantUser(); as selected) {
+            <div class="form-group">
+              <app-checkbox
+                [label]="'appointmentForm.consultationVisible' | translate"
+                formControlName="is_consultation_visible">
+              </app-checkbox>
+              <span class="field-helper-text">
+                {{ 'appointmentForm.consultationVisibleHelp' | translate }}
+              </span>
+            </div>
+            }
             } @else {
             <div class="form-group">
               <label class="form-label"
@@ -278,6 +289,15 @@
                   [placeholder]="'appointmentForm.selectLanguage' | translate">
                 </app-select>
               </div>
+              <div class="form-group">
+                <app-checkbox
+                  [label]="'appointmentForm.consultationVisible' | translate"
+                  formControlName="is_consultation_visible">
+                </app-checkbox>
+                <span class="field-helper-text">
+                  {{ 'appointmentForm.consultationVisibleHelp' | translate }}
+                </span>
+              </div>
             </div>
             }
           </form>
@@ -300,6 +320,14 @@
             [disabled]="isAddingParticipant()"
             [loading]="isAddingParticipant()"
             (buttonClick)="addParticipant()">
+          </app-button>
+          } @else if (selectedParticipantUser()) {
+          <app-button
+            [text]="'appointmentForm.addTheParticipant' | translate"
+            leftIcon="plus"
+            [style]="ButtonStyleEnum.primary"
+            [size]="ButtonSizeEnum.medium"
+            (buttonClick)="confirmExistingParticipant()">
           </app-button>
           }
         </div>
