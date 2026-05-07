@@ -1,0 +1,122 @@
+.onboarding-content {
+  --background: linear-gradient(135deg, var(--app-background-secondary) 0%, var(--ion-color-primary-bg) 50%, var(--app-background-secondary) 100%);
+
+  &::part(scroll) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100%;
+    padding: 24px 0;
+  }
+
+  .auth-card {
+    display: flex;
+    width: 90%;
+    max-width: 900px;
+    min-height: 520px;
+    margin: 0 auto;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+    background: #fff;
+  }
+
+  .right-side {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+
+    .right-content {
+      width: 100%;
+      max-width: 360px;
+
+      h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--app-text-primary);
+        margin: 0 0 4px;
+      }
+
+      .subtitle {
+        font-size: 0.9rem;
+        color: var(--app-text-secondary);
+        margin: 0 0 24px;
+        display: block;
+      }
+    }
+  }
+
+  .loading-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+  }
+
+  .onboarding-form {
+    display: flex;
+    flex-direction: column;
+
+    .input-item {
+      margin-bottom: 16px;
+      --background: var(--app-input-background, #f7f8fa);
+      --border-radius: 10px;
+      --padding-start: 16px;
+      --padding-end: 16px;
+      --inner-padding-end: 16px;
+      border-radius: 10px;
+
+      ion-input,
+      ion-select {
+        --padding-top: 10px;
+        --padding-bottom: 10px;
+        color: var(--app-input-text);
+        --placeholder-color: var(--app-input-placeholder);
+      }
+    }
+
+    .helper-text {
+      display: block;
+      margin: -8px 4px 16px;
+    }
+
+    .save-button {
+      --background: var(--ion-color-primary);
+      --padding-top: 14px;
+      --padding-bottom: 14px;
+      font-weight: 600;
+      font-size: 1rem;
+      margin-top: 8px;
+      height: var(--login-button-height, 50px);
+
+      .button-spinner {
+        margin-right: 8px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+  }
+}
+
+@media (max-width: 700px) {
+  .onboarding-content {
+    .auth-card {
+      flex-direction: column;
+      width: 100%;
+      margin: 0;
+      border-radius: 0;
+      box-shadow: none;
+      min-height: 100%;
+    }
+
+    .right-side {
+      padding: 24px;
+
+      .right-content {
+        max-width: 100%;
+      }
+    }
+  }
+}

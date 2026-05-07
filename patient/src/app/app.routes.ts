@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { AuthGuard } from './core/guards/auth.guard';
 import { TermsGuard } from './core/guards/terms.guard';
 import { EncryptionGuard } from './core/guards/encryption.guard';
+import { FirstLoginGuard } from './core/guards/first-login.guard';
 import { canDeactivateVideoCall } from './core/guards/video-call.guard';
 
 export const routes: Routes = [
@@ -52,6 +53,12 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
   },
   {
+    path: 'onboarding',
+    loadComponent: () =>
+      import('./pages/onboarding/onboarding.page').then(m => m.OnboardingPage),
+    canActivate: [AuthGuard],
+  },
+  {
     path: 'activate-encryption',
     loadComponent: () =>
       import('./pages/activate-encryption/activate-encryption.page').then(
@@ -62,27 +69,27 @@ export const routes: Routes = [
   {
     path: 'home',
     loadComponent: () => import('./pages/home/home.page').then(m => m.HomePage),
-    canActivate: [AuthGuard, TermsGuard, EncryptionGuard],
+    canActivate: [AuthGuard, FirstLoginGuard, TermsGuard, EncryptionGuard],
   },
   {
     path: 'notifications',
     loadComponent: () => import('./pages/notifications/notifications.page').then(m => m.NotificationsPage),
-    canActivate: [AuthGuard, TermsGuard, EncryptionGuard],
+    canActivate: [AuthGuard, FirstLoginGuard, TermsGuard, EncryptionGuard],
   },
   {
     path: 'profile',
     loadComponent: () => import('./pages/profile/profile.page').then(m => m.ProfilePage),
-    canActivate: [AuthGuard, TermsGuard],
+    canActivate: [AuthGuard, FirstLoginGuard, TermsGuard],
   },
   {
     path: 'new-request',
     loadComponent: () => import('./pages/new-request/new-request.page').then(m => m.NewRequestPage),
-    canActivate: [AuthGuard, TermsGuard, EncryptionGuard],
+    canActivate: [AuthGuard, FirstLoginGuard, TermsGuard, EncryptionGuard],
   },
   {
     path: 'consultation/:id/video',
     loadComponent: () => import('./pages/video-consultation/video-consultation.page').then(m => m.VideoConsultationPage),
-    canActivate: [AuthGuard, TermsGuard, EncryptionGuard],
+    canActivate: [AuthGuard, FirstLoginGuard, TermsGuard, EncryptionGuard],
     canDeactivate: [canDeactivateVideoCall],
   },
 ];

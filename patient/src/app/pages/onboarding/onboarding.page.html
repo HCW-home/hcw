@@ -1,0 +1,129 @@
+<ion-content class="onboarding-content" [scrollY]="true">
+  <div class="auth-card">
+    <app-auth-branding />
+    <div class="right-side">
+      <div class="right-content">
+        @if (loading()) {
+          <div class="loading-wrapper">
+            <ion-spinner name="crescent"></ion-spinner>
+          </div>
+        } @else {
+          <h2>{{ 'onboarding.title' | translate }}</h2>
+          <p class="subtitle">{{ 'onboarding.description' | translate }}</p>
+
+          <div class="onboarding-form">
+            <ion-item lines="full" class="input-item">
+              <ion-label position="stacked">
+                {{ 'onboarding.preferredLanguage' | translate }}
+              </ion-label>
+              <ion-select
+                [(ngModel)]="preferredLanguage"
+                (ngModelChange)="onLanguageChange($event)"
+                [interface]="'popover'">
+                @for (lang of availableLanguages(); track lang.code) {
+                  <ion-select-option [value]="lang.code">
+                    {{ lang.nativeName }}
+                  </ion-select-option>
+                }
+              </ion-select>
+            </ion-item>
+
+            <ion-item lines="full" class="input-item">
+              <ion-label position="stacked">
+                {{ 'onboarding.communicationMethod' | translate }}
+                <ion-text color="danger">*</ion-text>
+              </ion-label>
+              <ion-select
+                [(ngModel)]="communicationMethod"
+                [interface]="'popover'"
+                [placeholder]="'profile.selectMethod' | translate">
+                @for (method of displayedCommunicationMethods; track method) {
+                  <ion-select-option [value]="method">
+                    @switch (method) {
+                      @case ('email') { {{ 'profile.commEmail' | translate }} }
+                      @case ('sms') { {{ 'profile.commSms' | translate }} }
+                      @case ('manual') { {{ 'profile.commManual' | translate }} }
+                      @default { {{ method }} }
+                    }
+                  </ion-select-option>
+                }
+              </ion-select>
+            </ion-item>
+            <ion-text color="medium" class="helper-text">
+              <small>{{ 'onboarding.communicationHelperText' | translate }}</small>
+            </ion-text>
+
+            @if (showMobilePhone) {
+              <ion-item lines="full" class="input-item">
+                <ion-label position="stacked">
+                  {{ 'onboarding.mobilePhone' | translate }}
+                  <ion-text color="danger">*</ion-text>
+                </ion-label>
+                <ion-input
+                  type="tel"
+                  [(ngModel)]="mobilePhoneNumber"
+                  placeholder="+1 234 567 8900">
+                </ion-input>
+              </ion-item>
+            }
+
+            <ion-item lines="full" class="input-item">
+              <ion-label position="stacked">
+                {{ 'onboarding.timezone' | translate }}
+                <ion-text color="danger">*</ion-text>
+              </ion-label>
+              <ion-select
+                [(ngModel)]="timezone"
+                [interface]="'popover'">
+                @for (tz of timezones; track tz) {
+                  <ion-select-option [value]="tz">{{ tz }}</ion-select-option>
+                }
+              </ion-select>
+            </ion-item>
+
+            @if (requiresPassphrase()) {
+              <ion-item lines="full" class="input-item">
+                <ion-label position="stacked">
+                  {{ 'onboarding.encryptionPassphrase' | translate }}
+                  <ion-text color="danger">*</ion-text>
+                </ion-label>
+                <ion-input
+                  type="password"
+                  [(ngModel)]="encryptionPassphrase"
+                  autocomplete="off">
+                </ion-input>
+              </ion-item>
+              <ion-text color="medium" class="helper-text">
+                <small>{{ 'onboarding.encryptionPassphraseHelp' | translate }}</small>
+              </ion-text>
+
+              @if (newPassphraseShown()) {
+                <ion-text color="danger">
+                  <p style="word-break: break-all">
+                    {{ 'onboarding.encryptionNewPassphrase' | translate }}: {{ newPassphraseShown() }}
+                  </p>
+                </ion-text>
+              } @else {
+                <ion-button fill="clear" size="small" (click)="forgotPassphrase()">
+                  {{ 'onboarding.encryptionForgotPassphrase' | translate }}
+                </ion-button>
+              }
+            }
+
+            <ion-button
+              expand="block"
+              shape="round"
+              class="save-button"
+              (click)="save()"
+              [disabled]="!isFormValid() || saving()">
+              @if (saving()) {
+                <ion-spinner name="crescent" class="button-spinner"></ion-spinner>
+              }
+              {{ 'onboarding.save' | translate }}
+            </ion-button>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</ion-content>

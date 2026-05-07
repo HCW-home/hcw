@@ -70,9 +70,10 @@ export class OnboardingPage implements OnInit, OnDestroy {
 
   timezoneOptions: SelectOption[] = TIMEZONE_OPTIONS;
   preferredLanguageOptions = signal<SelectOption[]>([]);
+  availableCommunicationMethods = signal<string[]>([]);
 
   get communicationMethods(): SelectOption[] {
-    return [
+    const allOptions: SelectOption[] = [
       {
         label: this.t.instant('userProfile.commSms'),
         value: CommunicationMethodEnum.SMS,
@@ -81,19 +82,20 @@ export class OnboardingPage implements OnInit, OnDestroy {
         label: this.t.instant('userProfile.commEmail'),
         value: CommunicationMethodEnum.EMAIL,
       },
-      // {
-      //   label: this.t.instant('userProfile.commWhatsApp'),
-      //   value: CommunicationMethodEnum.WHATSAPP,
-      // },
-      // {
-      //   label: this.t.instant('userProfile.commPush'),
-      //   value: CommunicationMethodEnum.PUSH,
-      // },
-      {
-        label: this.t.instant('userProfile.commNone'),
-        value: CommunicationMethodEnum.MANUAL,
-      },
     ];
+    const allowed = this.availableCommunicationMethods();
+    if (!allowed.length) {
+      return allOptions;
+    }
+    return allOptions.filter(opt => allowed.includes(opt.value as string));
+  }
+
+  get showMobilePhone(): boolean {
+    const method = this.onboardingForm?.get('communication_method')?.value;
+    return (
+      method === CommunicationMethodEnum.SMS ||
+      method === CommunicationMethodEnum.WHATSAPP
+    );
   }
 
   ngOnInit(): void {
@@ -117,7 +119,25 @@ export class OnboardingPage implements OnInit, OnDestroy {
         }
       });
 
+    this.onboardingForm
+      .get('communication_method')!
+      .valueChanges.pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.updateMobilePhoneValidator());
+
     this.loadData();
+  }
+
+  private updateMobilePhoneValidator(): void {
+    const control = this.onboardingForm.get('mobile_phone_number');
+    if (!control) {
+      return;
+    }
+    if (this.showMobilePhone) {
+      control.addValidators(Validators.required);
+    } else {
+      control.removeValidators(Validators.required);
+    }
+    control.updateValueAndValidity({ emitEvent: false });
   }
 
   ngOnDestroy(): void {
@@ -151,6 +171,9 @@ export class OnboardingPage implements OnInit, OnDestroy {
               return { label, value: lang.code };
             })
           );
+          this.availableCommunicationMethods.set(
+            config.communication_methods || []
+          );
           // Get current language from TranslationService (might have been changed in CGU page)
           const currentLang = this.t.getCurrentLanguage();
 
@@ -163,6 +186,7 @@ export class OnboardingPage implements OnInit, OnDestroy {
             preferred_language: currentLang?.code || null,
             mobile_phone_number: user.mobile_phone_number || '',
           });
+          this.updateMobilePhoneValidator();
           this.currentUserId = user.pk;
           if (user.encryption_passphrase_pending) {
             this.requiresPassphrase.set(true);

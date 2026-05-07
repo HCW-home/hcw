@@ -269,6 +269,22 @@
         "encryptionNewPassphraseTitle": "Nouvelle phrase de passe générée",
         "encryptionNewPassphraseMessage": "Enregistrez cette phrase de passe maintenant — elle ne sera affichée qu'une seule fois."
     },
+    "onboarding": {
+        "title": "Bienvenue !",
+        "description": "Avant de commencer, veuillez configurer vos préférences.",
+        "preferredLanguage": "Langue préférée",
+        "communicationMethod": "Méthode de communication préférée",
+        "communicationHelperText": "Ce moyen de communication sera utilisé pour vous notifier d'événements importants lorsque vous n'êtes pas connecté à la plateforme.",
+        "mobilePhone": "Numéro de téléphone mobile",
+        "timezone": "Fuseau horaire",
+        "encryptionPassphrase": "Phrase de passe de chiffrement",
+        "encryptionPassphraseHelp": "Saisissez la phrase de passe reçue lors de l'activation du chiffrement.",
+        "encryptionForgotPassphrase": "J'ai oublié ma phrase de passe",
+        "encryptionNewPassphrase": "Nouvelle phrase de passe",
+        "encryptionInvalidPassphrase": "Phrase de passe invalide. Veuillez réessayer.",
+        "save": "Enregistrer et continuer",
+        "errorMessage": "Impossible de sauvegarder vos préférences. Veuillez réessayer."
+    },
     "activateEncryption": {
         "title": "Activer le chiffrement",
         "description": "Saisissez votre phrase de passe pour charger votre clé privée sur cet appareil.",

@@ -269,6 +269,22 @@
     "encryptionNewPassphraseTitle": "New passphrase generated",
     "encryptionNewPassphraseMessage": "Save this passphrase now — it is shown only once."
   },
+  "onboarding": {
+    "title": "Welcome!",
+    "description": "Before you start, please configure your preferences.",
+    "preferredLanguage": "Preferred language",
+    "communicationMethod": "Preferred communication method",
+    "communicationHelperText": "This communication channel will be used to notify you of important events when you are not connected to the platform.",
+    "mobilePhone": "Mobile phone number",
+    "timezone": "Time zone",
+    "encryptionPassphrase": "Encryption passphrase",
+    "encryptionPassphraseHelp": "Enter the passphrase received when encryption was activated.",
+    "encryptionForgotPassphrase": "I forgot my passphrase",
+    "encryptionNewPassphrase": "New passphrase",
+    "encryptionInvalidPassphrase": "Invalid passphrase. Please try again.",
+    "save": "Save and continue",
+    "errorMessage": "Unable to save your preferences. Please try again."
+  },
   "activateEncryption": {
     "title": "Activate encryption",
     "description": "Enter your encryption passphrase to load your private key on this device.",
