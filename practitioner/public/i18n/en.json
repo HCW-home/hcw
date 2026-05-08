@@ -813,7 +813,7 @@
     "cancelLabel": "Cancel",
     "addParticipant": "Add participant",
     "addTheParticipant": "Add this participant",
-    "consultationVisible": "Visible in consultation",
+    "consultationVisible": "Can see the consultation messages",
     "consultationVisibleHelp": "Grants access to the chat and shared consultation features.",
     "participantType": "Participant Type",
     "existingUser": "Existing User",

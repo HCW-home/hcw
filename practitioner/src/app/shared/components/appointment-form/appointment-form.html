@@ -150,7 +150,6 @@
                 (userSelected)="onParticipantUserSelected($event)">
               </app-user-search-select>
             </div>
-            @if (selectedParticipantUser(); as selected) {
             <div class="form-group">
               <app-checkbox
                 [label]="'appointmentForm.consultationVisible' | translate"
@@ -160,7 +159,6 @@
                 {{ 'appointmentForm.consultationVisibleHelp' | translate }}
               </span>
             </div>
-            }
             } @else {
             <div class="form-group">
               <label class="form-label"
