@@ -386,7 +386,11 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
 
       this.loadConsultation();
       this.loadAppointments();
-      this.loadMessages();
+      // loadMessages is triggered from inside loadConsultation once we know
+      // whether the consultation is encrypted (and, if so, after the
+      // consultation private key has been unwrapped). Calling it eagerly
+      // here would download attachments without their decryptor and pin
+      // broken URLs in the message-list image cache.
       this.connectWebSocket();
       this.checkJoinQueryParam();
       this.consultationService.markConsultationRead(this.consultationId)
@@ -939,6 +943,8 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
           this.isLoadingConsultation.set(false);
           if (consultation.is_encrypted) {
             this.loadConsultationKey(consultation);
+          } else {
+            this.loadMessages();
           }
         },
         error: error => {

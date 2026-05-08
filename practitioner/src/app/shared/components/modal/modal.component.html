@@ -1,5 +1,5 @@
 @if (isOpen()) {
-  <div class="modal-backdrop" (click)="onBackdropClick($event)">
+  <div #backdropRef class="modal-backdrop" (click)="onBackdropClick($event)">
     <div class="modal" [class]="'modal-' + size()">
       @if (title() || showCloseButton()) {
         <div class="modal-header">

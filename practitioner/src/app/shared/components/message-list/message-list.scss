@@ -386,3 +386,22 @@
   }
 }
 
+
+
+.image-viewer-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  // 90vh modal cap minus the header (~64px) leaves room for the image.
+  max-height: calc(90vh - 80px);
+  background: var(--slate-900);
+
+  .image-viewer-img {
+    display: block;
+    max-width: 100%;
+    max-height: calc(90vh - 80px);
+    width: auto;
+    height: auto;
+    object-fit: contain;
+  }
+}

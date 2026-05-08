@@ -225,10 +225,12 @@
 <app-modal
   [isOpen]="!!viewingImage()"
   [title]="viewingImage()?.fileName || ''"
-  size="large"
+  size="xlarge"
   (closed)="closeImageViewer()">
-  <img
-    [src]="viewingImage()?.url"
-    [alt]="viewingImage()?.fileName"
-    style="max-width: 100%; max-height: 70vh; display: block; margin: 0 auto" />
+  <div class="image-viewer-body">
+    <img
+      [src]="viewingImage()?.url"
+      [alt]="viewingImage()?.fileName"
+      class="image-viewer-img" />
+  </div>
 </app-modal>
