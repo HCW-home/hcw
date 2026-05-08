@@ -48,6 +48,11 @@ class EncryptionSettingsAdmin(ModelAdmin):
                 site.admin_view(views.user_pubkey_view_factory(site)),
                 name="encryption_user_pubkey",
             ),
+            path(
+                "master-fingerprint/",
+                site.admin_view(views.master_fingerprint_view_factory(site)),
+                name="encryption_master_fingerprint",
+            ),
         ]
         return custom_urls + super().get_urls()
 

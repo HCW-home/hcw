@@ -138,6 +138,20 @@ def disable_view_factory(admin_site):
     return disable_view
 
 
+def master_fingerprint_view_factory(admin_site):
+    def master_fingerprint_view(request):
+        if request.method != "GET":
+            return HttpResponseNotAllowed(["GET"])
+        return JsonResponse(
+            {
+                "fingerprint": config.master_public_key_fingerprint or None,
+                "encryption_enabled": bool(config.encryption_enabled),
+            }
+        )
+
+    return master_fingerprint_view
+
+
 def user_pubkey_view_factory(admin_site):
     def user_pubkey_view(request, user_id: int):
         if request.method != "GET":

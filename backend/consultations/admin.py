@@ -88,6 +88,7 @@ class QueueAdmin(ModelAdmin, TabbedTranslationAdmin):
     autocomplete_fields = ["organisation"]
     inlines = [QueueMembershipInline]
     readonly_fields = ["public_key_fingerprint", "encrypted_queue_private_key_master"]
+    actions = ["reset_encryption"]
 
     fieldsets = (
         (None, {"fields": ("name", "organisation")}),
@@ -111,6 +112,64 @@ class QueueAdmin(ModelAdmin, TabbedTranslationAdmin):
     @display(description="Organisations")
     def organisations_count(self, obj):
         return obj.organisation.count()
+
+    @admin.action(description=_("Reset encryption keypair (irreversible)"))
+    def reset_encryption(self, request, queryset):
+        """Drop the queue keypair + all per-membership wrapped keys, then
+        provision a fresh keypair under the current master pubkey
+        synchronously (does not require a running Celery worker).
+
+        Use case: the platform master was regenerated after this queue was
+        first provisioned, so its `encrypted_queue_private_key_master` is
+        wrapped under a stale master pubkey and can no longer be unwrapped.
+        Resetting generates a fresh queue keypair under the current master.
+        Existing consultations that relied on this queue's pubkey for chat
+        access will need their queue envelope rewrapped (or be created
+        again).
+        """
+        from constance import config as constance_config
+        from encryption_admin.tasks import _provision_queue_keypair
+
+        if not constance_config.encryption_enabled:
+            self.message_user(
+                request,
+                _("Encryption is disabled platform-wide; nothing to reset."),
+                level="warning",
+            )
+            return
+        if not constance_config.master_public_key:
+            self.message_user(
+                request,
+                _("Master public key is not configured."),
+                level="error",
+            )
+            return
+
+        count = 0
+        for queue in queryset:
+            queue.public_key = None
+            queue.public_key_fingerprint = None
+            queue.encrypted_queue_private_key_master = None
+            queue.save(
+                update_fields=[
+                    "public_key",
+                    "public_key_fingerprint",
+                    "encrypted_queue_private_key_master",
+                ]
+            )
+            QueueMembership.objects.filter(queue=queue).update(
+                encrypted_queue_private_key=None
+            )
+            _provision_queue_keypair(queue, constance_config.master_public_key)
+            count += 1
+
+        self.message_user(
+            request,
+            _(
+                "Encryption keypair regenerated for %(count)d queue(s) "
+                "under the current master."
+            ) % {"count": count},
+        )
 
 
 class MessageInline(TabularInline):

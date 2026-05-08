@@ -70,18 +70,54 @@
       return base64ToBuffer(stripped);
     }
 
-    async function getMasterPrivateKey() {
-      const db = await new Promise((resolve, reject) => {
+    async function openMasterDb() {
+      return new Promise((resolve, reject) => {
         const req = indexedDB.open('hcw-master-key', 1);
         req.onsuccess = () => resolve(req.result);
         req.onerror = () => reject(req.error);
       });
+    }
+
+    async function getMasterEntry(key) {
+      const db = await openMasterDb();
       return new Promise((resolve, reject) => {
         const tx = db.transaction('keys', 'readonly');
-        const req = tx.objectStore('keys').get('master-private');
+        const req = tx.objectStore('keys').get(key);
         req.onsuccess = () => resolve(req.result ? req.result.value : null);
         req.onerror = () => reject(req.error);
       });
+    }
+
+    async function getMasterPrivateKey() {
+      return getMasterEntry('master-private');
+    }
+
+    async function getMasterFingerprint() {
+      return getMasterEntry('master-fingerprint');
+    }
+
+    function adminUrlPrefix() {
+      const m = window.location.pathname.match(/^(\/[a-z]{2}(?:-[a-z]{2})?)?\/admin\//i);
+      return m ? (m[1] || '') : '';
+    }
+
+    async function fetchServerMasterFingerprint() {
+      const url = adminUrlPrefix() + '/admin/encryption_admin/encryptionsettings/master-fingerprint/';
+      const resp = await fetch(url, { credentials: 'same-origin' });
+      if (!resp.ok) throw new Error('Master fingerprint fetch failed: HTTP ' + resp.status);
+      const data = await resp.json();
+      return data;
+    }
+
+    async function step(label, fn) {
+      try {
+        return await fn();
+      } catch (err) {
+        const msg = err && err.message ? err.message : String(err);
+        const wrapped = new Error('[' + label + '] ' + msg);
+        wrapped.cause = err;
+        throw wrapped;
+      }
     }
 
     async function rsaEnvelopeDecrypt(blob, privateKey) {
@@ -89,30 +125,32 @@
       const wrappedKey = base64ToBuffer(data.wrapped_key);
       const iv = base64ToBuffer(data.iv);
       const ciphertext = base64ToBuffer(data.ciphertext);
-      const cekRaw = await crypto.subtle.decrypt(
-        { name: 'RSA-OAEP' }, privateKey, wrappedKey,
+      const cekRaw = await step('decrypt master envelope CEK (RSA-OAEP)', () =>
+        crypto.subtle.decrypt({ name: 'RSA-OAEP' }, privateKey, wrappedKey),
       );
-      const cek = await crypto.subtle.importKey(
-        'raw', cekRaw, { name: 'AES-GCM' }, false, ['decrypt'],
+      const cek = await step('import master envelope CEK (AES-GCM)', () =>
+        crypto.subtle.importKey('raw', cekRaw, { name: 'AES-GCM' }, false, ['decrypt']),
       );
-      return crypto.subtle.decrypt({ name: 'AES-GCM', iv }, cek, ciphertext);
+      return step('decrypt master envelope payload (AES-GCM)', () =>
+        crypto.subtle.decrypt({ name: 'AES-GCM', iv }, cek, ciphertext),
+      );
     }
 
     async function rsaEnvelopeEncryptForPubkey(plaintext, publicPem) {
       const der = pemToDer(publicPem, 'PUBLIC KEY');
-      const pub = await crypto.subtle.importKey(
-        'spki', der, { name: 'RSA-OAEP', hash: 'SHA-256' }, false, ['encrypt'],
+      const pub = await step('import user pubkey (RSA-OAEP)', () =>
+        crypto.subtle.importKey('spki', der, { name: 'RSA-OAEP', hash: 'SHA-256' }, false, ['encrypt']),
       );
       const cekRaw = crypto.getRandomValues(new Uint8Array(32));
       const iv = crypto.getRandomValues(new Uint8Array(12));
-      const cek = await crypto.subtle.importKey(
-        'raw', cekRaw, { name: 'AES-GCM' }, false, ['encrypt'],
+      const cek = await step('import per-membership CEK (AES-GCM)', () =>
+        crypto.subtle.importKey('raw', cekRaw, { name: 'AES-GCM' }, false, ['encrypt']),
       );
-      const ciphertext = await crypto.subtle.encrypt(
-        { name: 'AES-GCM', iv }, cek, plaintext,
+      const ciphertext = await step('encrypt queue PEM (AES-GCM)', () =>
+        crypto.subtle.encrypt({ name: 'AES-GCM', iv }, cek, plaintext),
       );
-      const wrappedKey = await crypto.subtle.encrypt(
-        { name: 'RSA-OAEP' }, pub, cekRaw,
+      const wrappedKey = await step('wrap CEK for user pubkey (RSA-OAEP)', () =>
+        crypto.subtle.encrypt({ name: 'RSA-OAEP' }, pub, cekRaw),
       );
       return JSON.stringify({
         wrapped_key: bufferToBase64(wrappedKey),
@@ -122,11 +160,7 @@
     }
 
     async function fetchUserPubkey(userId) {
-      // Preserve the i18n language prefix (e.g. /fr/) from the current URL
-      // so we hit the same locale's admin and don't get redirected.
-      const m = window.location.pathname.match(/^(\/[a-z]{2}(?:-[a-z]{2})?)?\/admin\//i);
-      const prefix = m ? (m[1] || '') : '';
-      const url = prefix + '/admin/encryption_admin/encryptionsettings/user-pubkey/' + userId + '/';
+      const url = adminUrlPrefix() + '/admin/encryption_admin/encryptionsettings/user-pubkey/' + userId + '/';
       const resp = await fetch(url, { credentials: 'same-origin' });
       if (!resp.ok) throw new Error('User pubkey fetch failed: HTTP ' + resp.status);
       const data = await resp.json();
@@ -160,6 +194,7 @@
 
       e.preventDefault();
       try {
+        console.info('[encryption] queue_membership_wrap.js v2 starting');
         const masterEnvelope = readMasterEnvelope();
         if (!masterEnvelope) {
           alert(
@@ -176,6 +211,45 @@
           );
           return;
         }
+
+        // Fingerprint sanity check: the master pubkey on the server must
+        // match the master we have in IndexedDB. Mismatch == this queue
+        // was provisioned under a different master key, and decrypting
+        // its master envelope is mathematically impossible from here.
+        let serverFp = '';
+        let browserFp = '';
+        try {
+          const server = await fetchServerMasterFingerprint();
+          serverFp = (server && server.fingerprint) || '';
+        } catch (fpErr) {
+          console.warn('[encryption] could not fetch server master fingerprint', fpErr);
+        }
+        try {
+          browserFp = (await getMasterFingerprint()) || '';
+        } catch (fpErr) {
+          console.warn('[encryption] could not read browser master fingerprint', fpErr);
+        }
+        console.info(
+          '[encryption] master fingerprints — server=%s browser=%s match=%s',
+          serverFp || '(unknown)',
+          browserFp || '(unknown)',
+          serverFp && browserFp ? serverFp === browserFp : '(cannot compare)',
+        );
+        if (serverFp && browserFp && serverFp !== browserFp) {
+          alert(
+            'Master key mismatch.\n\n' +
+            'Server master fingerprint: ' + serverFp + '\n' +
+            'This browser master fingerprint: ' + browserFp + '\n\n' +
+            'The master keypair was regenerated since this queue was ' +
+            'provisioned (or you are on a different browser/profile). ' +
+            'Either restore the matching master private key in this ' +
+            'browser, or re-run provisioning so the queue master ' +
+            'envelope is rewrapped under the current master.',
+          );
+          return;
+        }
+        console.info('[encryption] master envelope (first 80 chars):', masterEnvelope.slice(0, 80));
+
         const queuePemBuffer = await rsaEnvelopeDecrypt(masterEnvelope, privateKey);
         for (const { userId, envelopeInput } of rows) {
           const userPubkey = await fetchUserPubkey(userId);
@@ -188,8 +262,22 @@
         isResubmitting = true;
         form.submit();
       } catch (err) {
-        console.error('[encryption] wrap failed', err);
-        alert('Wrap failed: ' + err.message);
+        console.error('[encryption] wrap failed', err, err && err.cause);
+        const msg = err && err.message ? err.message : String(err);
+        const cause = err && err.cause ? '\n\nUnderlying error: ' + (err.cause.name || '') + ' — ' + (err.cause.message || err.cause) : '';
+        const isMasterDecrypt = /decrypt master envelope CEK/.test(msg);
+        const hint = isMasterDecrypt
+          ? '\n\nLikely cause: this queue was provisioned with an OLDER ' +
+            'master keypair than the one currently in use. The browser ' +
+            'and server fingerprints match each other, but the queue\'s ' +
+            'master envelope was wrapped with a previous master pubkey ' +
+            '(no longer recoverable).\n\n' +
+            'Fix: regenerate this queue\'s encryption keypair from the ' +
+            'queue admin (Reset queue encryption action). Note that any ' +
+            'consultations that were encrypted via this queue will lose ' +
+            'their queue-based access path.'
+          : '';
+        alert('Wrap failed: ' + msg + cause + hint);
       }
     }, true);
   });
