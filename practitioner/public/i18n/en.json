@@ -790,6 +790,12 @@
     "error": "Error",
     "encryptionKeyMissingTitle": "Encryption key missing",
     "encryptionKeyMissingMessage": "Your encryption key is not loaded in this browser. Open your profile to load it.",
+    "chatLockedTitle": "Chat unavailable",
+    "chatLockedNoLocalKey": "Your encryption key is not loaded in this browser — no message can be decrypted until you activate it from your profile.",
+    "chatLockedQueue": "Your group envelope for this consultation can no longer be decrypted (the group key was probably regenerated after the consultation was created).",
+    "chatLockedUser": "Your personal envelope for this consultation can no longer be decrypted (your key was probably regenerated after the consultation was created).",
+    "chatLockedMixed": "None of the envelopes (personal or via group) can decrypt this consultation's key — they were wrapped with keys that no longer match.",
+    "chatLockedAdminHint": "Please contact an administrator to resync your access.",
     "encryptionRequiredTitle": "Encryption required"
   },
   "appointmentFormModal": {

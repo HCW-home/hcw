@@ -901,6 +901,12 @@
     "error": "Erreur",
     "encryptionKeyMissingTitle": "Clé de chiffrement manquante",
     "encryptionKeyMissingMessage": "Votre clé de chiffrement n'est pas chargée dans ce navigateur. Ouvrez votre profil pour la charger.",
+    "chatLockedTitle": "Chat inaccessible",
+    "chatLockedNoLocalKey": "Votre clé de chiffrement n'est pas chargée dans ce navigateur — vous ne pouvez déchiffrer aucun message tant qu'elle n'est pas activée depuis votre profil.",
+    "chatLockedQueue": "L'enveloppe de votre groupe pour ce suivi n'est plus déchiffrable (la clé du groupe a probablement été régénérée après la création du suivi).",
+    "chatLockedUser": "Votre enveloppe personnelle pour ce suivi n'est plus déchiffrable (votre clé a probablement été régénérée depuis la création du suivi).",
+    "chatLockedMixed": "Aucune des enveloppes (personnelle ou via groupe) ne peut déchiffrer la clé de ce suivi — elles ont été chiffrées avec des clés qui ne correspondent plus.",
+    "chatLockedAdminHint": "Contactez un administrateur pour qu'il resynchronise vos accès.",
     "encryptionRequiredTitle": "Chiffrement requis"
   },
   "appointmentFormModal": {

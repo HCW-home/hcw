@@ -651,6 +651,33 @@
           </app-button>
           }
         </app-message-list>
+        @if (chatKeyError(); as reason) {
+          <div class="chat-locked-overlay">
+            <app-svg src="lock" [svgStyle]="{'width.px': 28, 'height.px': 28}"></app-svg>
+            <h3 class="chat-locked-title">
+              {{ 'consultationDetail.chatLockedTitle' | translate }}
+            </h3>
+            <p class="chat-locked-text">
+              @switch (reason) {
+                @case ('no-local-key') {
+                  {{ 'consultationDetail.chatLockedNoLocalKey' | translate }}
+                }
+                @case ('queue-only') {
+                  {{ 'consultationDetail.chatLockedQueue' | translate }}
+                }
+                @case ('user-only') {
+                  {{ 'consultationDetail.chatLockedUser' | translate }}
+                }
+                @default {
+                  {{ 'consultationDetail.chatLockedMixed' | translate }}
+                }
+              }
+            </p>
+            <p class="chat-locked-text">
+              {{ 'consultationDetail.chatLockedAdminHint' | translate }}
+            </p>
+          </div>
+        }
       </div>
     </div>
     }

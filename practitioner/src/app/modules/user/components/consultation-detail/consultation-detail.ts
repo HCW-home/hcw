@@ -349,6 +349,17 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   // (not persisted) — used to wrap the consultation key for newly added
   // participants/queues without having to round-trip through the user.
   private consultationPrivateKeyPem: string | null = null;
+  // Set when the user has access to the encrypted consultation but none
+  // of their envelopes (direct or queue-based) successfully unwrapped the
+  // consultation private key — the chat is unreadable from this browser.
+  // The reason narrows the root cause shown to the user.
+  chatKeyError = signal<
+    | null
+    | 'no-local-key'
+    | 'queue-only'
+    | 'user-only'
+    | 'mixed'
+  >(null);
 
   consultationAutoDeleteHours = 0;
 
@@ -968,6 +979,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     //      non-extractable CryptoKey for use in message decrypt.
     this.consultationPrivateKey = null;
     this.consultationPrivateKeyPem = null;
+    this.chatKeyError.set(null);
 
     const userId = this.currentUser()?.pk;
     if (!userId) {
@@ -983,19 +995,26 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
         this.t.instant('consultationDetail.encryptionKeyMissingTitle'),
         this.t.instant('consultationDetail.encryptionKeyMissingMessage'),
       );
+      this.chatKeyError.set('no-local-key');
       return;
     }
 
-    for (const key of consultation.keys || []) {
+    const candidateKeys = consultation.keys || [];
+    let triedUserDirect = false;
+    let triedQueue = false;
+
+    for (const key of candidateKeys) {
       try {
         let consultPrivPem: string | null = null;
         if (key.user_id === userId) {
+          triedUserDirect = true;
           const buf = await this.encryptionService.rsaEnvelopeDecrypt(
             key.encrypted_private_key,
             privateKey,
           );
           consultPrivPem = new TextDecoder().decode(buf);
         } else if (key.queue_id && key.queue_membership_envelope) {
+          triedQueue = true;
           const queuePemBuf = await this.encryptionService.rsaEnvelopeDecrypt(
             key.queue_membership_envelope,
             privateKey,
@@ -1022,6 +1041,19 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       }
     }
 
+    // We had at least one candidate envelope but none worked — narrow the
+    // diagnosis based on which paths were attempted.
+    if (candidateKeys.length > 0) {
+      if (triedUserDirect && triedQueue) {
+        this.chatKeyError.set('mixed');
+      } else if (triedQueue) {
+        this.chatKeyError.set('queue-only');
+      } else if (triedUserDirect) {
+        this.chatKeyError.set('user-only');
+      } else {
+        this.chatKeyError.set('mixed');
+      }
+    }
     console.warn(
       '[encryption] no readable consultation key for consultation %s',
       consultation.id,

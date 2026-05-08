@@ -792,6 +792,41 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   border: 1px solid var(--slate-100);
 
+  .chat-locked-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(3px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 32px;
+    text-align: center;
+    z-index: 5;
+    color: #fff;
+
+    app-svg {
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .chat-locked-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .chat-locked-text {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.5;
+      color: rgba(255, 255, 255, 0.8);
+      max-width: 360px;
+    }
+  }
+
   @media (max-width: 968px) {
     position: static;
     height: 500px;
