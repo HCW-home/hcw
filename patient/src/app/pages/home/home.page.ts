@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, computed, inject, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import {
@@ -111,15 +111,6 @@ export class HomePage implements OnInit, OnDestroy {
       color: 'danger'
     });
     await toast.present();
-  }
-
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
-    if (!this.expandedConsultationId()) return;
-    const target = event.target as HTMLElement;
-    if (!target.closest('.timeline-item.expanded')) {
-      this.closeChat();
-    }
   }
 
   ngOnInit(): void {
