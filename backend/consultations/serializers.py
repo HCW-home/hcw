@@ -357,7 +357,6 @@ class ConsultationSerializer(CustomFieldsMixin, serializers.ModelSerializer):
             "is_encrypted",
             "public_key",
             "public_key_fingerprint",
-            "encrypted_sym_key",
             "encrypted_private_key_master",
             "keys",
             "initial_keys",
@@ -436,7 +435,6 @@ class ConsultationSerializer(CustomFieldsMixin, serializers.ModelSerializer):
                 f
                 for f in (
                     "public_key",
-                    "encrypted_sym_key",
                     "encrypted_private_key_master",
                 )
                 if not attrs.get(f)
@@ -447,8 +445,8 @@ class ConsultationSerializer(CustomFieldsMixin, serializers.ModelSerializer):
                         "is_encrypted": _(
                             "Encryption is enabled platform-wide; new "
                             "consultations must be created with is_encrypted=true "
-                            "and the consultation public_key, encrypted_sym_key "
-                            "and encrypted_private_key_master fields filled in."
+                            "and the consultation public_key + "
+                            "encrypted_private_key_master fields filled in."
                         )
                     }
                 )

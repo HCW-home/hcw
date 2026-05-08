@@ -72,16 +72,6 @@ def encrypt_private_key_with_passphrase(private_pem: bytes, passphrase: str) -> 
     )
 
 
-def decrypt_private_key_with_passphrase(blob: str, passphrase: str) -> bytes:
-    """Reverses encrypt_private_key_with_passphrase. Raises on bad passphrase."""
-    data = json.loads(blob)
-    salt = base64.b64decode(data["salt"])
-    nonce = base64.b64decode(data["iv"])
-    ciphertext = base64.b64decode(data["ciphertext"])
-    kek = derive_kek(passphrase, salt)
-    return AESGCM(kek).decrypt(nonce, ciphertext, None)
-
-
 def normalize_pem(public_pem: str | bytes) -> bytes:
     """Strip + canonicalize newlines (LF only) so server and browser
     fingerprints always agree regardless of HTTP transport mangling."""

@@ -136,15 +136,12 @@ class Consultation(models.Model):
     is_encrypted = models.BooleanField(default=False)
 
     # Per-consultation RSA keypair. The public key is in clear so any holder
-    # can wrap the sym_key (or rotate it). The private key is wrapped per
-    # recipient via ConsultationKey rows (one per user OR queue) and via the
-    # dedicated master recovery slot below.
+    # can wrap content for the consultation (envelope encryption per
+    # message). The private key is wrapped per recipient via ConsultationKey
+    # rows (one per user OR queue) and via the dedicated master recovery
+    # slot below.
     public_key = models.TextField(blank=True, null=True)
     public_key_fingerprint = models.CharField(max_length=64, blank=True, null=True)
-    encrypted_sym_key = models.TextField(
-        blank=True, null=True,
-        help_text=_("AES sym_key wrapped with the consultation public key."),
-    )
     encrypted_private_key_master = models.TextField(
         blank=True, null=True,
         help_text=_("Consultation private key wrapped (envelope) with the platform master pubkey for admin recovery."),

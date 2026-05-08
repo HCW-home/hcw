@@ -32,14 +32,14 @@ urlpatterns = [
     path("api/auth/openid/", views.OpenIDView.as_view(), name="openid_login"),
     path('api/auth/send-verification-code/', views.SendVerificationCodeView.as_view()),
     path(
-        "api/auth/encryption/activate-passphrase/",
-        encryption_views.EncryptionActivatePassphraseView.as_view(),
-        name="encryption_activate_passphrase",
+        "api/auth/encryption/mark-activated/",
+        encryption_views.EncryptionMarkActivatedView.as_view(),
+        name="encryption_mark_activated",
     ),
     path(
-        "api/auth/encryption/change-passphrase/",
-        encryption_views.EncryptionChangePassphraseView.as_view(),
-        name="encryption_change_passphrase",
+        "api/auth/encryption/update-encrypted-private-key/",
+        encryption_views.EncryptionUpdateEncryptedPrivateKeyView.as_view(),
+        name="encryption_update_encrypted_private_key",
     ),
     path(
         "api/auth/encryption/forgot-passphrase/",

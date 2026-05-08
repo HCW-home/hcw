@@ -1,18 +1,35 @@
-"""DRF endpoints for the E2E encryption activation/recovery flow."""
+"""DRF endpoints for the E2E encryption activation/recovery flow.
+
+Design note — passphrase handling
+=================================
+The passphrase NEVER reaches the server. The user's encrypted private key
+blob is exposed via ``GET /api/auth/user/`` (only to the user themselves)
+and the browser derives the KEK + decrypts locally via WebCrypto. The
+endpoints below are limited to:
+
+* ``POST /api/auth/encryption/mark-activated/`` — clears the
+  ``encryption_passphrase_pending`` flag once the client has successfully
+  decrypted the blob in-browser. No payload.
+* ``POST /api/auth/encryption/update-encrypted-private-key/`` — accepts a
+  brand-new encrypted blob (the result of re-wrapping client-side under a
+  new passphrase). No passphrase ever transits the wire.
+
+``EncryptionForgotPassphraseView`` / ``RegenerateUserKeyView`` keep the
+admin-assisted recovery path: when a user genuinely lost their passphrase
+the only way back is for the server to mint a fresh keypair. That path is
+explicit and documented.
+"""
 
 import logging
 
 from constance import config
 from django.contrib.auth import get_user_model
-from django.utils import translation
 from rest_framework import status
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from consultations.permissions import IsPractitioner
 from core.encryption import (
-    decrypt_private_key_with_passphrase,
     encrypt_private_key_with_passphrase,
     fingerprint_public_key,
     generate_passphrase,
@@ -32,10 +49,12 @@ def _require_encryption_enabled():
     return None
 
 
-class EncryptionActivatePassphraseView(APIView):
-    """POST {passphrase} -> returns the user's private PEM (decrypted server-side).
+class EncryptionMarkActivatedView(APIView):
+    """POST -> clears encryption_passphrase_pending.
 
-    Used during onboarding/first login. The browser stores the PEM in IndexedDB.
+    Called by the browser once it has successfully decrypted the user's
+    private key client-side from the encrypted_private_key blob exposed on
+    /auth/user/. No payload — possessing a valid JWT is enough.
     """
 
     permission_classes = [IsAuthenticated]
@@ -45,45 +64,21 @@ class EncryptionActivatePassphraseView(APIView):
         if guard:
             return guard
 
-        passphrase = request.data.get("passphrase")
-        if not passphrase:
-            return Response(
-                {"detail": "passphrase is required"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
         user = request.user
-        if not user.encrypted_private_key:
-            return Response(
-                {"detail": "No encryption keypair provisioned for this user."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        try:
-            private_pem = decrypt_private_key_with_passphrase(
-                user.encrypted_private_key, passphrase
-            )
-        except Exception:
-            return Response(
-                {"detail": "Invalid passphrase."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
         if user.encryption_passphrase_pending:
             user.encryption_passphrase_pending = False
             user.save(update_fields=["encryption_passphrase_pending"])
-
-        return Response(
-            {
-                "private_key_pem": private_pem.decode("utf-8"),
-                "public_key_pem": user.public_key,
-                "public_key_fingerprint": user.public_key_fingerprint,
-            }
-        )
+        return Response({"detail": "Activated."})
 
 
-class EncryptionChangePassphraseView(APIView):
-    """POST {old_passphrase, new_passphrase} -> rewraps the private key."""
+class EncryptionUpdateEncryptedPrivateKeyView(APIView):
+    """POST {encrypted_private_key} -> persists a re-wrapped blob.
+
+    The new blob has been produced client-side by re-encrypting the user's
+    private key under a new passphrase (PBKDF2 + AES-GCM, same format as
+    the existing User.encrypted_private_key field). The server only stores
+    it; it never sees the old or new passphrase.
+    """
 
     permission_classes = [IsAuthenticated]
 
@@ -92,36 +87,30 @@ class EncryptionChangePassphraseView(APIView):
         if guard:
             return guard
 
-        old_passphrase = request.data.get("old_passphrase")
-        new_passphrase = request.data.get("new_passphrase")
-        if not old_passphrase or not new_passphrase:
+        blob = request.data.get("encrypted_private_key")
+        if not isinstance(blob, str) or not blob.strip():
             return Response(
-                {"detail": "old_passphrase and new_passphrase are required"},
+                {"detail": "encrypted_private_key is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Light shape check — must be valid JSON with the expected keys.
+        try:
+            import json
+            data = json.loads(blob)
+            for field in ("salt", "iv", "ciphertext"):
+                if not isinstance(data.get(field), str) or not data[field]:
+                    raise ValueError(f"missing field {field}")
+        except (ValueError, TypeError):
+            return Response(
+                {"detail": "encrypted_private_key is malformed"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         user = request.user
-        if not user.encrypted_private_key:
-            return Response(
-                {"detail": "No encryption keypair provisioned for this user."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        try:
-            private_pem = decrypt_private_key_with_passphrase(
-                user.encrypted_private_key, old_passphrase
-            )
-        except Exception:
-            return Response(
-                {"detail": "Invalid current passphrase."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        user.encrypted_private_key = encrypt_private_key_with_passphrase(
-            private_pem, new_passphrase
-        )
+        user.encrypted_private_key = blob
         user.save(update_fields=["encrypted_private_key"])
-        return Response({"detail": "Passphrase updated."})
+        return Response({"detail": "Encrypted private key updated."})
 
 
 class EncryptionForgotPassphraseView(APIView):

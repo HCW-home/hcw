@@ -82,6 +82,10 @@ class UserDetailsSerializer(CustomFieldsMixin, serializers.ModelSerializer):
         source="languages",
         required=False,
     )
+    # encrypted_private_key blob is exposed ONLY to the user themselves so
+    # they can decrypt it client-side with their passphrase. Other readers
+    # (admins, search results) never see it.
+    encrypted_private_key = serializers.SerializerMethodField()
 
     class Meta:
         model = UserModel
@@ -116,6 +120,7 @@ class UserDetailsSerializer(CustomFieldsMixin, serializers.ModelSerializer):
             "gender",
             "public_key",
             "public_key_fingerprint",
+            "encrypted_private_key",
             "encryption_passphrase_pending",
             "encryption_key_lost",
         ]
@@ -123,9 +128,20 @@ class UserDetailsSerializer(CustomFieldsMixin, serializers.ModelSerializer):
             "is_practitioner",
             "public_key",
             "public_key_fingerprint",
+            "encrypted_private_key",
             "encryption_passphrase_pending",
             "encryption_key_lost",
         ]
+
+    def get_encrypted_private_key(self, obj):
+        request = self.context.get("request")
+        if (
+            not request
+            or not request.user.is_authenticated
+            or request.user.pk != obj.pk
+        ):
+            return None
+        return obj.encrypted_private_key or None
 
     def validate_mobile_phone_number(self, value):
         if self.instance and value:
