@@ -22,9 +22,11 @@ import { LiveKitService, ParticipantInfo, ConnectionStatus } from '../../core/se
 import { TranslationService } from '../../core/services/translation.service';
 import { ConsultationService } from '../../core/services/consultation.service';
 import { ConsultationWebSocketService } from '../../core/services/consultation-websocket.service';
+import { ConsultationCryptoService } from '../../core/services/consultation-crypto.service';
+import { EncryptionService } from '../../core/services/encryption.service';
 import { AuthService } from '../../core/services/auth.service';
 import { IncomingCallService } from '../../core/services/incoming-call.service';
-import { User } from '../../core/models/consultation.model';
+import { ConsultationMessage, User } from '../../core/models/consultation.model';
 import { WebSocketState } from '../../core/models/websocket.model';
 import { MessageListComponent, Message, SendMessageData, EditMessageData, DeleteMessageData } from '../../shared/components/message-list/message-list';
 import { PreJoinLobbyComponent } from '../../shared/components/pre-join-lobby/pre-join-lobby.component';
@@ -89,6 +91,11 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
 
   private currentUser = signal<User | null>(null);
   private currentPage = 1;
+  private consultationPrivateKey: CryptoKey | null = null;
+  private consultationPublicKeyPem: string | null = null;
+  private consultationIsEncrypted = false;
+  private cryptoService = inject(ConsultationCryptoService);
+  private encryptionService = inject(EncryptionService);
 
   constructor(
     private route: ActivatedRoute,
@@ -152,7 +159,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     // messages to appear twice.
     this.wsService.messageUpdated$
       .pipe(takeUntil(this.destroy$))
-      .subscribe(event => {
+      .subscribe(async event => {
         if (!this.consultationId || event.consultation_id !== this.consultationId) {
           return;
         }
@@ -160,29 +167,9 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
         if (event.state === 'created') {
           const exists = this.messages().some(m => m.id === event.data.id);
           if (!exists) {
-            const user = this.currentUser();
-            const isSystem = !event.data.created_by;
-            // The /auth/user endpoint returns `pk`, the nested `created_by`
-            // in consultation messages returns `id`. They map to the same
-            // DB primary key, so compare both.
-            const currentUserPk = user?.pk ?? user?.id;
-            const isCurrentUser = !isSystem && currentUserPk !== undefined
-              && currentUserPk === event.data.created_by.id;
-            const newMessage: Message = {
-              id: event.data.id,
-              username: isSystem
-                ? ''
-                : isCurrentUser
-                  ? this.t.instant('videoConsultation.you')
-                  : `${event.data.created_by.first_name} ${event.data.created_by.last_name}`,
-              message: event.data.content,
-              timestamp: event.data.created_at,
-              isCurrentUser,
-              isSystem,
-              attachment: event.data.attachment,
-              isEdited: event.data.is_edited,
-              updatedAt: event.data.updated_at,
-            };
+            const newMessage = await this.mapMessage(
+              event.data as ConsultationMessage,
+            );
             this.messages.update(msgs => [...msgs, newMessage]);
           }
         } else if (event.state === 'updated' || event.state === 'deleted') {
@@ -191,32 +178,74 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
       });
   }
 
-  private loadMessages(): void {
+  private async ensureConsultationKey(): Promise<void> {
+    if (!this.consultationId) return;
+    // Already resolved on a previous call: skip the network round-trip.
+    if (this.consultationPrivateKey) return;
+    try {
+      const consultation = await firstValueFrom(
+        this.consultationService.getConsultationById(this.consultationId),
+      );
+      this.consultationIsEncrypted = !!consultation?.is_encrypted;
+      this.consultationPublicKeyPem = consultation?.public_key || null;
+      const userId = this.currentUser()?.pk;
+      if (consultation?.is_encrypted && userId) {
+        this.consultationPrivateKey =
+          await this.cryptoService.loadConsultationKey(consultation, userId);
+      }
+    } catch {
+      // Best effort: if the consultation can't be loaded, messages will
+      // simply remain encrypted. We don't block message loading.
+    }
+  }
+
+  private async mapMessage(msg: ConsultationMessage): Promise<Message> {
+    const currentUserId = this.currentUser()?.pk;
+    const isSystem = !msg.created_by;
+    const isCurrentUser = !isSystem && msg.created_by.id === currentUserId;
+    const username = isSystem
+      ? ''
+      : isCurrentUser
+        ? this.t.instant('videoConsultation.you')
+        : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim();
+    const decryptedContent = await this.cryptoService.decryptMessageContent(
+      msg.content,
+      msg.is_encrypted,
+      this.consultationPrivateKey,
+    );
+    const { attachment, attachmentDecrypt } =
+      await this.cryptoService.buildAttachmentDecryptor(
+        msg,
+        this.consultationPrivateKey,
+      );
+    return {
+      id: msg.id,
+      username,
+      message: decryptedContent,
+      timestamp: msg.created_at,
+      isCurrentUser,
+      isSystem,
+      attachment,
+      attachmentDecrypt,
+      isEdited: msg.is_edited,
+      updatedAt: msg.updated_at,
+      deletedAt: msg.deleted_at,
+    };
+  }
+
+  private async loadMessages(): Promise<void> {
     if (!this.consultationId) return;
 
+    await this.ensureConsultationKey();
     this.currentPage = 1;
     this.consultationService.getConsultationMessagesPaginated(this.consultationId, 1)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response) => {
+        next: async (response) => {
           this.hasMore.set(!!response.next);
-          const currentUserId = this.currentUser()?.pk;
-          const loadedMessages: Message[] = response.results.map(msg => {
-            const isSystem = !msg.created_by;
-            const isCurrentUser = isSystem ? false : msg.created_by.id === currentUserId;
-            return {
-              id: msg.id,
-              username: isSystem ? '' : isCurrentUser ? this.t.instant('videoConsultation.you') : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim(),
-              message: msg.content || '',
-              timestamp: msg.created_at,
-              isCurrentUser,
-              isSystem,
-              attachment: msg.attachment,
-              isEdited: msg.is_edited,
-              updatedAt: msg.updated_at,
-              deletedAt: msg.deleted_at,
-            };
-          }).reverse();
+          const loadedMessages: Message[] = (
+            await Promise.all(response.results.map(m => this.mapMessage(m)))
+          ).reverse();
           this.messages.set(loadedMessages);
         },
         error: (err) => {
@@ -678,13 +707,55 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     this.showChat.update(v => !v);
   }
 
-  onSendMessage(data: SendMessageData): void {
+  async onSendMessage(data: SendMessageData): Promise<void> {
     if (!this.consultationId) return;
+
+    let content = data.content || '';
+    let attachment = data.attachment;
+    let isEncrypted = false;
+    let encryptedAttachmentMetadata: string | null = null;
+
+    if (this.consultationIsEncrypted && this.consultationPublicKeyPem) {
+      const consultPub = this.consultationPublicKeyPem;
+      isEncrypted = true;
+      if (data.content) {
+        content = await this.encryptionService.encryptString(
+          data.content,
+          consultPub,
+        );
+      }
+      if (data.attachment) {
+        const { blob: encryptedBlob, wrappedKey } =
+          await this.encryptionService.encryptBlob(data.attachment, consultPub);
+        attachment = new File(
+          [encryptedBlob],
+          data.attachment.name,
+          { type: 'application/octet-stream' },
+        );
+        encryptedAttachmentMetadata =
+          await this.encryptionService.encryptAttachmentMetadata(
+            {
+              file_name: data.attachment.name,
+              mime_type: data.attachment.type,
+              wrapped_key: wrappedKey,
+            },
+            consultPub,
+          );
+      }
+    }
 
     // No optimistic insert: the WebSocket `messageUpdated$` subscription
     // adds the message once the backend echoes it back, which keeps the
     // patient and practitioner views in sync without duplicates.
-    this.consultationService.sendConsultationMessage(this.consultationId, data.content || '', data.attachment)
+    this.consultationService.sendConsultationMessage(
+      this.consultationId,
+      content,
+      attachment,
+      {
+        is_encrypted: isEncrypted || undefined,
+        encrypted_attachment_metadata: encryptedAttachmentMetadata,
+      },
+    )
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         error: () => {
@@ -746,25 +817,11 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     this.consultationService.getConsultationMessagesPaginated(this.consultationId, this.currentPage)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response) => {
+        next: async (response) => {
           this.hasMore.set(!!response.next);
-          const currentUserId = this.currentUser()?.pk;
-          const olderMessages: Message[] = response.results.map(msg => {
-            const isSystem = !msg.created_by;
-            const isCurrentUser = isSystem ? false : msg.created_by.id === currentUserId;
-            return {
-              id: msg.id,
-              username: isSystem ? '' : isCurrentUser ? this.t.instant('videoConsultation.you') : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim(),
-              message: msg.content || '',
-              timestamp: msg.created_at,
-              isCurrentUser,
-              isSystem,
-              attachment: msg.attachment,
-              isEdited: msg.is_edited,
-              updatedAt: msg.updated_at,
-              deletedAt: msg.deleted_at,
-            };
-          }).reverse();
+          const olderMessages: Message[] = (
+            await Promise.all(response.results.map(m => this.mapMessage(m)))
+          ).reverse();
           this.messages.update(msgs => [...olderMessages, ...msgs]);
           this.isLoadingMore.set(false);
         },

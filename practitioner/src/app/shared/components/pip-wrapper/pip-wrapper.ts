@@ -11,6 +11,8 @@ import { CommonModule } from '@angular/common';
 import { ActiveCallService } from '../../../core/services/active-call.service';
 import { ConsultationService } from '../../../core/services/consultation.service';
 import { ConsultationWebSocketService } from '../../../core/services/consultation-websocket.service';
+import { ConsultationCryptoService } from '../../../core/services/consultation-crypto.service';
+import { EncryptionService } from '../../../core/services/encryption.service';
 import { IncomingCallService } from '../../../core/services/incoming-call.service';
 import { ToasterService } from '../../../core/services/toaster.service';
 import { TranslationService } from '../../../core/services/translation.service';
@@ -45,6 +47,8 @@ export class PipWrapper {
   private toasterService = inject(ToasterService);
   private t = inject(TranslationService);
   private destroyRef = inject(DestroyRef);
+  private cryptoService = inject(ConsultationCryptoService);
+  private encryptionService = inject(EncryptionService);
 
   private mode: InteractionMode = 'none';
   private startClientX = 0;
@@ -67,6 +71,9 @@ export class PipWrapper {
   private readonly messagesPageSize = 20;
   private boundConsultationId: number | null = null;
   private currentUser: IUser | null = null;
+  private consultationPrivateKey: CryptoKey | null = null;
+  private consultationPublicKeyPem: string | null = null;
+  private consultationIsEncrypted = false;
 
   constructor() {
     this.userService.currentUser$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(user => {
@@ -77,10 +84,10 @@ export class PipWrapper {
     // backend (event === 'message'); `messages$` is a different path used
     // for legacy `consultation_message` payloads and never fires in
     // practice, which is why the chat stayed empty.
-    this.wsService.messageUpdated$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(event => {
+    this.wsService.messageUpdated$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async event => {
       if (!this.boundConsultationId) return;
       if (event.state === 'created') {
-        const newMessage = this.mapMessage(event.data);
+        const newMessage = await this.mapMessage(event.data);
         this.messages.update(msgs => {
           if (msgs.some(m => m.id === newMessage.id)) return msgs;
           return [...msgs, newMessage];
@@ -96,6 +103,9 @@ export class PipWrapper {
       if (consultationId === this.boundConsultationId) return;
 
       this.boundConsultationId = consultationId;
+      this.consultationPrivateKey = null;
+      this.consultationPublicKeyPem = null;
+      this.consultationIsEncrypted = false;
       this.messages.set([]);
       this.messagesPage = 1;
       this.hasMore.set(true);
@@ -106,12 +116,40 @@ export class PipWrapper {
       // tearing down the socket consultation-detail still needs.
       if (consultationId !== null) {
         this.wsService.connect(consultationId);
-        this.reloadMessages();
+        this.bootstrapConsultation(consultationId);
       }
     });
   }
 
-  private mapMessage(msg: ConsultationMessage): Message {
+  private bootstrapConsultation(consultationId: number): void {
+    // Fetch the consultation to grab its keys[] + public_key, unwrap the
+    // private key (memoised by ConsultationCryptoService), then load the
+    // first page of (decrypted) messages.
+    this.consultationService
+      .getConsultation(consultationId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: async consultation => {
+          this.consultationIsEncrypted = !!consultation.is_encrypted;
+          this.consultationPublicKeyPem = consultation.public_key || null;
+          if (consultation.is_encrypted && this.currentUser?.pk) {
+            this.consultationPrivateKey =
+              await this.cryptoService.loadConsultationKey(
+                consultation,
+                this.currentUser.pk,
+              );
+          }
+          this.reloadMessages();
+        },
+        error: () => {
+          // Even if loading the consultation fails, still attempt to load
+          // messages — they will simply not decrypt.
+          this.reloadMessages();
+        },
+      });
+  }
+
+  private async mapMessage(msg: ConsultationMessage): Promise<Message> {
     const isSystem = !msg.created_by;
     const isCurrentUser = !isSystem && msg.created_by.id === this.currentUser?.pk;
     const username = isSystem
@@ -120,14 +158,25 @@ export class PipWrapper {
         ? this.t.instant('consultationDetail.you')
         : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim() ||
           msg.created_by.email;
+    const decryptedContent = await this.cryptoService.decryptMessageContent(
+      msg.content,
+      msg.is_encrypted,
+      this.consultationPrivateKey,
+    );
+    const { attachment, attachmentDecrypt } =
+      await this.cryptoService.buildAttachmentDecryptor(
+        msg,
+        this.consultationPrivateKey,
+      );
     return {
       id: msg.id,
       username,
-      message: msg.content || '',
+      message: decryptedContent,
       timestamp: msg.created_at,
       isCurrentUser,
       isSystem,
-      attachment: msg.attachment,
+      attachment,
+      attachmentDecrypt,
       recording_url: msg.recording_url,
       isEdited: msg.is_edited,
       updatedAt: msg.updated_at,
@@ -143,9 +192,11 @@ export class PipWrapper {
       .getConsultationMessages(consultationId, { page: 1, page_size: this.messagesPageSize })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: response => {
+        next: async response => {
           this.hasMore.set(!!response.next);
-          const loaded = response.results.map(m => this.mapMessage(m)).reverse();
+          const loaded = (
+            await Promise.all(response.results.map(m => this.mapMessage(m)))
+          ).reverse();
           const unique = Array.from(new Map(loaded.map(m => [m.id, m])).values());
           this.messages.set(unique);
         },
@@ -164,9 +215,11 @@ export class PipWrapper {
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: response => {
+        next: async response => {
           this.hasMore.set(!!response.next);
-          const loaded = response.results.map(m => this.mapMessage(m)).reverse();
+          const loaded = (
+            await Promise.all(response.results.map(m => this.mapMessage(m)))
+          ).reverse();
           this.messages.update(current => {
             const merged = [...loaded, ...current];
             return Array.from(new Map(merged.map(m => [m.id, m])).values());
@@ -179,13 +232,60 @@ export class PipWrapper {
       });
   }
 
-  onSendMessage(data: SendMessageData): void {
+  async onSendMessage(data: SendMessageData): Promise<void> {
     const consultationId = this.boundConsultationId;
     if (consultationId === null) return;
+
+    let content = data.content;
+    let attachment = data.attachment;
+    let isEncrypted = false;
+    let encryptedAttachmentMetadata: string | null = null;
+
+    if (this.consultationIsEncrypted && !this.consultationPublicKeyPem) {
+      this.toasterService.show(
+        'error',
+        this.t.instant('consultationDetail.encryptionRequiredTitle') ||
+          'Encryption required',
+        this.t.instant('consultationDetail.encryptionKeyMissingMessage') ||
+          'No public key available for the consultation.',
+      );
+      return;
+    }
+    if (this.consultationIsEncrypted && this.consultationPublicKeyPem) {
+      const consultPub = this.consultationPublicKeyPem;
+      isEncrypted = true;
+      if (data.content) {
+        content = await this.encryptionService.encryptString(
+          data.content,
+          consultPub,
+        );
+      }
+      if (data.attachment) {
+        const { blob: encryptedBlob, wrappedKey } =
+          await this.encryptionService.encryptBlob(data.attachment, consultPub);
+        attachment = new File(
+          [encryptedBlob],
+          data.attachment.name,
+          { type: 'application/octet-stream' },
+        );
+        encryptedAttachmentMetadata =
+          await this.encryptionService.encryptAttachmentMetadata(
+            {
+              file_name: data.attachment.name,
+              mime_type: data.attachment.type,
+              wrapped_key: wrappedKey,
+            },
+            consultPub,
+          );
+      }
+    }
+
     this.consultationService
       .sendConsultationMessage(consultationId, {
-        content: data.content,
-        attachment: data.attachment,
+        content,
+        attachment,
+        is_encrypted: isEncrypted || undefined,
+        encrypted_attachment_metadata: encryptedAttachmentMetadata,
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
