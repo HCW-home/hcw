@@ -351,6 +351,23 @@
     font-size: 0.8125rem;
     color: var(--ion-color-primary);
     word-break: break-all;
+    flex: 1;
+  }
+
+  .attachment-action-icon {
+    font-size: 18px;
+    color: var(--ion-color-primary);
+    opacity: 0.7;
+  }
+
+  &.downloadable {
+    cursor: pointer;
+    transition: background 0.15s ease;
+
+    &:hover,
+    &:active {
+      background: var(--app-card-background-hover, var(--ion-color-light));
+    }
   }
 
   &.loading {

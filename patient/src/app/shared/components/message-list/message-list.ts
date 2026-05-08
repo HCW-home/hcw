@@ -211,6 +211,35 @@ export class MessageListComponent implements OnInit, OnChanges, OnDestroy, After
     return this.imageUrls().get(messageId);
   }
 
+  downloadAttachment(message: Message): void {
+    if (!message.attachment) return;
+    const filename = message.attachment.file_name;
+    this.consultationService.getMessageAttachment(message.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: async (blob) => {
+          try {
+            const finalBlob = message.attachmentDecrypt
+              ? await message.attachmentDecrypt(blob)
+              : blob;
+            const url = URL.createObjectURL(finalBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+          } catch (err) {
+            console.error('Failed to decrypt attachment:', err);
+          }
+        },
+        error: (err) => {
+          console.error('Failed to download attachment:', err);
+        },
+      });
+  }
+
   onSendMessage(): void {
     if ((this.newMessage.trim() || this.selectedFile) && this.isConnected) {
       this.sendMessage.emit({
