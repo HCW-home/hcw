@@ -41,7 +41,6 @@ export interface Consultation {
   is_encrypted?: boolean;
   public_key?: string | null;
   public_key_fingerprint?: string | null;
-  encrypted_sym_key?: string | null;
   keys?: ConsultationKeyEnvelope[];
 }
 

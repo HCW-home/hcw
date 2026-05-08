@@ -22,7 +22,7 @@ import { WebSocketState } from '../../core/models/websocket.model';
 import { User } from '../../core/models/user.model';
 import { AppHeaderComponent } from '../../shared/app-header/app-header.component';
 import { AppFooterComponent } from '../../shared/app-footer/app-footer.component';
-import { ConsultationRequest, Consultation, Speciality, Appointment } from '../../core/models/consultation.model';
+import { ConsultationRequest, Consultation, ConsultationMessage, Speciality, Appointment } from '../../core/models/consultation.model';
 import { TranslationService } from '../../core/services/translation.service';
 import { LocalDatePipe } from '../../shared/pipes/local-date.pipe';
 import { AppointmentInfoComponent } from '../../shared/components/appointment-info/appointment-info';
@@ -60,7 +60,8 @@ export class HomePage implements OnInit, OnDestroy {
   private t = inject(TranslationService);
   private encryptionService = inject(EncryptionService);
 
-  private chatSymKey: CryptoKey | null = null;
+  private chatConsultationPrivateKey: CryptoKey | null = null;
+  private chatConsultationPublicKey: string | null = null;
 
   currentUser = signal<User | null>(null);
   hasReasons = signal(false);
@@ -513,6 +514,10 @@ export class HomePage implements OnInit, OnDestroy {
               event.data.content,
               event.data.is_encrypted,
             );
+            const { attachment, attachmentDecrypt } =
+              await this.buildAttachmentDecryptor(
+                event.data as ConsultationMessage,
+              );
             const newMessage: Message = {
               id: event.data.id,
               username: isSystem ? '' : `${event.data.created_by.first_name} ${event.data.created_by.last_name}`,
@@ -520,7 +525,8 @@ export class HomePage implements OnInit, OnDestroy {
               timestamp: event.data.created_at,
               isCurrentUser,
               isSystem,
-              attachment: event.data.attachment,
+              attachment,
+              attachmentDecrypt,
               isEdited: event.data.is_edited,
               updatedAt: event.data.updated_at,
             };
@@ -609,14 +615,16 @@ export class HomePage implements OnInit, OnDestroy {
     return this.expandedConsultationId() === consultationId;
   }
 
-  private async ensureChatSymKey(consultation: Consultation | undefined): Promise<void> {
+  private async ensureChatConsultationKey(consultation: Consultation | undefined): Promise<void> {
     // Tree navigation: the consultation has its own RSA keypair. Each
     // authorized recipient (user or queue) holds the consultation private
     // key wrapped in a ConsultationKey row. Find any row I can unwrap
-    // (direct or via a queue I belong to), then use the consultation
-    // private key to unwrap encrypted_sym_key.
-    this.chatSymKey = null;
-    if (!consultation?.is_encrypted || !consultation.encrypted_sym_key) {
+    // (direct or via a queue I belong to), import as non-extractable, and
+    // cache it for message decrypt + store the consultation pubkey for
+    // outgoing message encrypt.
+    this.chatConsultationPrivateKey = null;
+    this.chatConsultationPublicKey = consultation?.public_key || null;
+    if (!consultation?.is_encrypted) {
       return;
     }
     const userId = this.currentUser()?.pk;
@@ -649,13 +657,8 @@ export class HomePage implements OnInit, OnDestroy {
         }
         if (!consultPrivPem) continue;
 
-        const consultPrivKey =
+        this.chatConsultationPrivateKey =
           await this.encryptionService.importPrivateKey(consultPrivPem);
-        this.chatSymKey =
-          await this.encryptionService.unwrapSymKeyWithConsultationKey(
-            consultation.encrypted_sym_key,
-            consultPrivKey,
-          );
         return;
       } catch (err) {
         console.warn('Consultation key unwrap failed for entry', err);
@@ -664,13 +667,55 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   private async decryptIfNeeded(content: string | null, isEncrypted?: boolean): Promise<string> {
-    if (!isEncrypted || !content || !this.chatSymKey) {
+    if (!isEncrypted || !content || !this.chatConsultationPrivateKey) {
       return content || '';
     }
     try {
-      return await this.encryptionService.decryptString(content, this.chatSymKey);
+      return await this.encryptionService.decryptString(
+        content,
+        this.chatConsultationPrivateKey,
+      );
     } catch {
       return '[decryption failed]';
+    }
+  }
+
+  private async buildAttachmentDecryptor(msg: ConsultationMessage): Promise<{
+    attachment: ConsultationMessage['attachment'];
+    attachmentDecrypt?: (encryptedBlob: Blob) => Promise<Blob>;
+  }> {
+    if (
+      !msg.is_encrypted
+      || !msg.attachment
+      || !msg.encrypted_attachment_metadata
+      || !this.chatConsultationPrivateKey
+    ) {
+      return { attachment: msg.attachment };
+    }
+    try {
+      const metadata = await this.encryptionService.decryptAttachmentMetadata(
+        msg.encrypted_attachment_metadata,
+        this.chatConsultationPrivateKey,
+      );
+      const privateKey = this.chatConsultationPrivateKey;
+      const encryptionService = this.encryptionService;
+      return {
+        attachment: {
+          file_name: metadata.file_name,
+          mime_type: metadata.mime_type,
+        } as ConsultationMessage['attachment'],
+        attachmentDecrypt: async (encryptedBlob: Blob): Promise<Blob> => {
+          const decrypted = await encryptionService.decryptBlob(
+            encryptedBlob,
+            privateKey,
+            metadata,
+          );
+          return decrypted.blob;
+        },
+      };
+    } catch (err) {
+      console.warn('Failed to decrypt attachment metadata', err);
+      return { attachment: msg.attachment };
     }
   }
 
@@ -679,7 +724,7 @@ export class HomePage implements OnInit, OnDestroy {
     if (!id) return;
 
     const consultation = this.consultations().find(c => c.id === id);
-    await this.ensureChatSymKey(consultation);
+    await this.ensureChatConsultationKey(consultation);
 
     this.chatCurrentPage = 1;
     this.consultationService.getConsultationMessagesPaginated(id, 1)
@@ -693,6 +738,8 @@ export class HomePage implements OnInit, OnDestroy {
               const isSystem = !msg.created_by;
               const isCurrentUser = isSystem ? false : msg.created_by.id === currentUserId;
               const decryptedMessage = await this.decryptIfNeeded(msg.content, msg.is_encrypted);
+              const { attachment, attachmentDecrypt } =
+                await this.buildAttachmentDecryptor(msg);
               return {
                 id: msg.id,
                 username: isSystem ? '' : isCurrentUser
@@ -702,7 +749,8 @@ export class HomePage implements OnInit, OnDestroy {
                 timestamp: msg.created_at,
                 isCurrentUser,
                 isSystem,
-                attachment: msg.attachment,
+                attachment,
+                attachmentDecrypt,
                 isEdited: msg.is_edited,
                 updatedAt: msg.updated_at,
                 deletedAt: msg.deleted_at,
@@ -725,27 +773,38 @@ export class HomePage implements OnInit, OnDestroy {
     this.consultationService.getConsultationMessagesPaginated(id, this.chatCurrentPage)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: response => {
+        next: async response => {
           this.chatHasMore.set(!!response.next);
           const currentUserId = this.currentUser()?.pk;
-          const olderMsgs: Message[] = response.results.map(msg => {
-            const isSystem = !msg.created_by;
-            const isCurrentUser = isSystem ? false : msg.created_by.id === currentUserId;
-            return {
-              id: msg.id,
-              username: isSystem ? '' : isCurrentUser
-                ? this.t.instant('consultationDetail.you')
-                : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim(),
-              message: msg.content || '',
-              timestamp: msg.created_at,
-              isCurrentUser,
-              isSystem,
-              attachment: msg.attachment,
-              isEdited: msg.is_edited,
-              updatedAt: msg.updated_at,
-              deletedAt: msg.deleted_at,
-            };
-          }).reverse();
+          const olderMsgs: Message[] = (
+            await Promise.all(
+              response.results.map(async msg => {
+                const isSystem = !msg.created_by;
+                const isCurrentUser = isSystem ? false : msg.created_by.id === currentUserId;
+                const decryptedMessage = await this.decryptIfNeeded(
+                  msg.content,
+                  msg.is_encrypted,
+                );
+                const { attachment, attachmentDecrypt } =
+                  await this.buildAttachmentDecryptor(msg);
+                return {
+                  id: msg.id,
+                  username: isSystem ? '' : isCurrentUser
+                    ? this.t.instant('consultationDetail.you')
+                    : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim(),
+                  message: decryptedMessage,
+                  timestamp: msg.created_at,
+                  isCurrentUser,
+                  isSystem,
+                  attachment,
+                  attachmentDecrypt,
+                  isEdited: msg.is_edited,
+                  updatedAt: msg.updated_at,
+                  deletedAt: msg.deleted_at,
+                };
+              }),
+            )
+          ).reverse();
           this.chatMessages.update(msgs => [...olderMsgs, ...msgs]);
           this.isChatLoadingMore.set(false);
         },
@@ -766,16 +825,17 @@ export class HomePage implements OnInit, OnDestroy {
     let encryptedAttachmentMetadata: string | null = null;
 
     const consultation = this.consultations().find(c => c.id === id);
-    if (consultation?.is_encrypted && this.chatSymKey) {
+    const consultPub = consultation?.public_key
+      || this.chatConsultationPublicKey
+      || null;
+    if (consultation?.is_encrypted && consultPub) {
       isEncrypted = true;
       if (data.content) {
-        content = await this.encryptionService.encryptString(data.content, this.chatSymKey);
+        content = await this.encryptionService.encryptString(data.content, consultPub);
       }
       if (data.attachment) {
-        const encryptedBlob = await this.encryptionService.encryptBlob(
-          data.attachment,
-          this.chatSymKey,
-        );
+        const { blob: encryptedBlob, wrappedKey } =
+          await this.encryptionService.encryptBlob(data.attachment, consultPub);
         attachment = new File(
           [encryptedBlob],
           data.attachment.name,
@@ -783,8 +843,12 @@ export class HomePage implements OnInit, OnDestroy {
         );
         encryptedAttachmentMetadata =
           await this.encryptionService.encryptAttachmentMetadata(
-            { file_name: data.attachment.name, mime_type: data.attachment.type },
-            this.chatSymKey,
+            {
+              file_name: data.attachment.name,
+              mime_type: data.attachment.type,
+              wrapped_key: wrappedKey,
+            },
+            consultPub,
           );
       }
     }

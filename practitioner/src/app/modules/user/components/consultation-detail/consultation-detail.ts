@@ -37,6 +37,7 @@ import { Auth } from '../../../../core/services/auth';
 import { EncryptionService } from '../../../../core/services/encryption.service';
 import {
   Consultation,
+  ConsultationMessage,
   Appointment,
   Participant,
   AppointmentStatus,
@@ -340,7 +341,10 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   private encryptionService = inject(EncryptionService);
   private t = inject(TranslationService);
 
-  private consultationSymKey: CryptoKey | null = null;
+  // Decrypted consultation private RSA key, imported non-extractable so its
+  // raw bytes never reach JS again. Used to decrypt every incoming message
+  // envelope (envelope-per-message under consultation pubkey).
+  private consultationPrivateKey: CryptoKey | null = null;
   // Cached PEM of the consultation's RSA private key. Held in memory only
   // (not persisted) — used to wrap the consultation key for newly added
   // participants/queues without having to round-trip through the user.
@@ -567,6 +571,8 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
             event.data.content,
             event.data.is_encrypted,
           );
+          const { attachment, attachmentDecrypt } =
+            await this.buildAttachmentDecryptor(event.data as ConsultationMessage);
 
           const newMessage: Message = {
             id: event.data.id,
@@ -579,7 +585,8 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
               ? false
               : currentUser?.pk === event.data.created_by.id,
             isSystem,
-            attachment: event.data.attachment,
+            attachment,
+            attachmentDecrypt,
             recording_url: event.data.recording_url,
             isEdited: event.data.is_edited,
             updatedAt: event.data.updated_at,
@@ -721,12 +728,9 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     let encryptedAttachmentMetadata: string | null = null;
 
     const consultation = this.consultation();
-    if (consultation?.is_encrypted && !this.consultationSymKey) {
-      // Refuse to send anything while we cannot encrypt — otherwise we would
-      // store plaintext on a consultation marked as encrypted, which violates
-      // the security contract.
+    if (consultation?.is_encrypted && !consultation.public_key) {
       console.error(
-        '[encryption] consultation is_encrypted=true but no sym_key in memory; refusing to send',
+        '[encryption] consultation is_encrypted=true but no public_key on payload; refusing to send',
       );
       this.toasterService.show(
         'error',
@@ -735,19 +739,18 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       );
       return;
     }
-    if (consultation?.is_encrypted && this.consultationSymKey) {
+    if (consultation?.is_encrypted && consultation.public_key) {
       isEncrypted = true;
+      const consultPub = consultation.public_key;
       if (data.content) {
         content = await this.encryptionService.encryptString(
           data.content,
-          this.consultationSymKey,
+          consultPub,
         );
       }
       if (data.attachment) {
-        const encryptedBlob = await this.encryptionService.encryptBlob(
-          data.attachment,
-          this.consultationSymKey,
-        );
+        const { blob: encryptedBlob, wrappedKey } =
+          await this.encryptionService.encryptBlob(data.attachment, consultPub);
         attachment = new File(
           [encryptedBlob],
           data.attachment.name,
@@ -755,8 +758,12 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
         );
         encryptedAttachmentMetadata =
           await this.encryptionService.encryptAttachmentMetadata(
-            { file_name: data.attachment.name, mime_type: data.attachment.type },
-            this.consultationSymKey,
+            {
+              file_name: data.attachment.name,
+              mime_type: data.attachment.type,
+              wrapped_key: wrappedKey,
+            },
+            consultPub,
           );
       }
     }
@@ -808,6 +815,8 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
                 msg.content,
                 msg.is_encrypted,
               );
+              const { attachment, attachmentDecrypt } =
+                await this.buildAttachmentDecryptor(msg);
               return {
                 id: msg.id,
                 username,
@@ -815,7 +824,8 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
                 timestamp: msg.created_at,
                 isCurrentUser,
                 isSystem,
-                attachment: msg.attachment,
+                attachment,
+                attachmentDecrypt,
                 recording_url: msg.recording_url,
                 isEdited: msg.is_edited,
                 updatedAt: msg.updated_at,
@@ -851,36 +861,45 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       .getConsultationMessages(this.consultationId, { page: this.currentPage })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: response => {
+        next: async response => {
           this.hasMore.set(!!response.next);
           const currentUserId = this.currentUser()?.pk;
-          const olderMessages: Message[] = response.results
-            .map(msg => {
-              const isSystem = !msg.created_by;
-              const isCurrentUser = isSystem
-                ? false
-                : msg.created_by.id === currentUserId;
-              const username = isSystem
-                ? ''
-                : isCurrentUser
-                  ? this.t.instant('consultationDetail.you')
-                  : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim() ||
-                    msg.created_by.email;
-              return {
-                id: msg.id,
-                username,
-                message: msg.content || '',
-                timestamp: msg.created_at,
-                isCurrentUser,
-                isSystem,
-                attachment: msg.attachment,
-                recording_url: msg.recording_url,
-                isEdited: msg.is_edited,
-                updatedAt: msg.updated_at,
-                deletedAt: msg.deleted_at,
-              };
-            })
-            .reverse();
+          const olderMessages: Message[] = (
+            await Promise.all(
+              response.results.map(async msg => {
+                const isSystem = !msg.created_by;
+                const isCurrentUser = isSystem
+                  ? false
+                  : msg.created_by.id === currentUserId;
+                const username = isSystem
+                  ? ''
+                  : isCurrentUser
+                    ? this.t.instant('consultationDetail.you')
+                    : `${msg.created_by.first_name} ${msg.created_by.last_name}`.trim() ||
+                      msg.created_by.email;
+                const decryptedContent = await this.decryptMessageContent(
+                  msg.content,
+                  msg.is_encrypted,
+                );
+                const { attachment, attachmentDecrypt } =
+                  await this.buildAttachmentDecryptor(msg);
+                return {
+                  id: msg.id,
+                  username,
+                  message: decryptedContent,
+                  timestamp: msg.created_at,
+                  isCurrentUser,
+                  isSystem,
+                  attachment,
+                  attachmentDecrypt,
+                  recording_url: msg.recording_url,
+                  isEdited: msg.is_edited,
+                  updatedAt: msg.updated_at,
+                  deletedAt: msg.deleted_at,
+                };
+              }),
+            )
+          ).reverse();
 
           // Merge and deduplicate messages
           this.messages.update(msgs => {
@@ -919,7 +938,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
           this.consultation.set(consultation);
           this.isLoadingConsultation.set(false);
           if (consultation.is_encrypted) {
-            this.loadConsultationSymKey(consultation);
+            this.loadConsultationKey(consultation);
           }
         },
         error: error => {
@@ -933,23 +952,22 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       });
   }
 
-  private async loadConsultationSymKey(consultation: Consultation): Promise<void> {
+  private async loadConsultationKey(consultation: Consultation): Promise<void> {
     // Tree navigation:
     //   1. Try every ConsultationKey row available to the current user
     //      (direct user envelope, then queue envelopes for queues they
     //      belong to). Each row holds the consultation's private key,
     //      envelope-encrypted under either the user's or the queue's pubkey.
-    //   2. Decrypt the consultation private key (PEM) and cache it.
-    //   3. Use crypto.subtle.unwrapKey to derive a non-extractable AES
-    //      sym_key from `encrypted_sym_key`.
-    this.consultationSymKey = null;
+    //   2. Decrypt the consultation private key (PEM), cache it, import as
+    //      non-extractable CryptoKey for use in message decrypt.
+    this.consultationPrivateKey = null;
     this.consultationPrivateKeyPem = null;
 
     const userId = this.currentUser()?.pk;
     if (!userId) {
       return;
     }
-    if (!consultation.is_encrypted || !consultation.encrypted_sym_key) {
+    if (!consultation.is_encrypted) {
       return;
     }
     const privateKey = await this.encryptionService.getLocalPrivateKey(userId);
@@ -966,15 +984,12 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       try {
         let consultPrivPem: string | null = null;
         if (key.user_id === userId) {
-          // Direct envelope for me: my user privkey unwraps the consultation privkey
           const buf = await this.encryptionService.rsaEnvelopeDecrypt(
             key.encrypted_private_key,
             privateKey,
           );
           consultPrivPem = new TextDecoder().decode(buf);
         } else if (key.queue_id && key.queue_membership_envelope) {
-          // Queue envelope: my user privkey unwraps the queue privkey,
-          // which then unwraps the consultation privkey
           const queuePemBuf = await this.encryptionService.rsaEnvelopeDecrypt(
             key.queue_membership_envelope,
             privateKey,
@@ -990,13 +1005,8 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
         }
         if (!consultPrivPem) continue;
 
-        const consultPrivKey =
+        this.consultationPrivateKey =
           await this.encryptionService.importPrivateKey(consultPrivPem);
-        this.consultationSymKey =
-          await this.encryptionService.unwrapSymKeyWithConsultationKey(
-            consultation.encrypted_sym_key,
-            consultPrivKey,
-          );
         this.consultationPrivateKeyPem = consultPrivPem;
         this.loadMessages();
         this.syncParticipantEnvelopes();
@@ -1169,16 +1179,61 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     rawContent: string | null,
     isEncrypted: boolean | undefined,
   ): Promise<string> {
-    if (!isEncrypted || !rawContent || !this.consultationSymKey) {
+    if (!isEncrypted || !rawContent || !this.consultationPrivateKey) {
       return rawContent || '';
     }
     try {
       return await this.encryptionService.decryptString(
         rawContent,
-        this.consultationSymKey,
+        this.consultationPrivateKey,
       );
     } catch {
       return '[decryption failed]';
+    }
+  }
+
+  /**
+   * For an encrypted attachment, decrypt the metadata (file_name, mime_type
+   * + wrapped CEK) and produce a decryptor closure that the message-list
+   * can call on the encrypted blob downloaded from the server. Falls back to
+   * the raw attachment when the consultation isn't encrypted.
+   */
+  private async buildAttachmentDecryptor(msg: ConsultationMessage): Promise<{
+    attachment: ConsultationMessage['attachment'];
+    attachmentDecrypt?: (encryptedBlob: Blob) => Promise<Blob>;
+  }> {
+    if (
+      !msg.is_encrypted
+      || !msg.attachment
+      || !msg.encrypted_attachment_metadata
+      || !this.consultationPrivateKey
+    ) {
+      return { attachment: msg.attachment };
+    }
+    try {
+      const metadata = await this.encryptionService.decryptAttachmentMetadata(
+        msg.encrypted_attachment_metadata,
+        this.consultationPrivateKey,
+      );
+      const privateKey = this.consultationPrivateKey;
+      const encryptionService = this.encryptionService;
+      return {
+        attachment: {
+          file_name: metadata.file_name,
+          mime_type: metadata.mime_type,
+        },
+        attachmentDecrypt: async (encryptedBlob: Blob): Promise<Blob> => {
+          const decrypted = await encryptionService.decryptBlob(
+            encryptedBlob,
+            privateKey,
+            metadata,
+          );
+          return decrypted.blob;
+        },
+      };
+    } catch (err) {
+      console.warn('Failed to decrypt attachment metadata', err);
+      return { attachment: msg.attachment };
     }
   }
 

@@ -568,9 +568,10 @@ export class ConsultationForm implements OnInit, OnDestroy {
       custom_fields: this.buildCustomFieldsPayload(),
     };
 
-    // If platform-wide encryption is on, generate the sym_key, wrap it for
-    // every recipient and the master, and ship the envelopes inline with the
-    // POST. The server rejects creation in clear when encryption_enabled.
+    // If platform-wide encryption is on, generate the consultation keypair,
+    // wrap the private key for each recipient and the master, and ship the
+    // envelopes inline with the POST. The server rejects creation in clear
+    // when encryption_enabled.
     try {
       const envelopes = await this.buildEncryptionEnvelopes(
         groupId,
@@ -627,15 +628,15 @@ export class ConsultationForm implements OnInit, OnDestroy {
     // Returns null when encryption is disabled platform-wide. Otherwise:
     //   1. Generates a per-consultation RSA keypair (the consultation's own
     //      identity in the encryption tree).
-    //   2. Generates a fresh AES sym_key and wraps it ONCE with the
-    //      consultation public key (encrypted_sym_key).
-    //   3. Wraps the consultation private key (envelope-encrypted, AES-GCM
+    //   2. Wraps the consultation private key (envelope-encrypted, AES-GCM
     //      under an RSA-OAEP-wrapped CEK) for the master + each recipient
     //      whose pubkey is known.
-    // Recipients whose pubkey is missing are left unprovisioned; they are
-    // caught up later via the sync-consultation-keys endpoint when an
-    // authorized client (who holds the consultation private key) opens the
-    // consultation.
+    // Messages are encrypted per-message under the consultation pubkey
+    // (envelope-per-message), so no long-lived sym_key is stored on the
+    // consultation. Recipients whose pubkey is missing are left
+    // unprovisioned; they are caught up later via the
+    // sync-consultation-keys endpoint when an authorized client (who holds
+    // the consultation private key) opens the consultation.
     this.authService.invalidateConfigCache();
     const config = await firstValueFrom(this.authService.getOpenIDConfig());
     if (!config?.encryption_enabled) {
@@ -648,9 +649,6 @@ export class ConsultationForm implements OnInit, OnDestroy {
     const currentUser = this.currentUser();
     const { publicKeyPem, privateKeyPem, publicKeyFingerprint } =
       await this.encryptionService.generateConsultationKeypair();
-    const symKey = await this.encryptionService.generateSymKey();
-    const encryptedSymKey =
-      await this.encryptionService.wrapSymKeyWithPublicKey(symKey, publicKeyPem);
     const privateKeyBytes = new TextEncoder().encode(privateKeyPem);
     const encryptedPrivateKeyMaster =
       await this.encryptionService.rsaEnvelopeEncrypt(
@@ -662,7 +660,6 @@ export class ConsultationForm implements OnInit, OnDestroy {
       is_encrypted: true,
       public_key: publicKeyPem,
       public_key_fingerprint: publicKeyFingerprint,
-      encrypted_sym_key: encryptedSymKey,
       encrypted_private_key_master: encryptedPrivateKeyMaster,
       initial_keys: [],
     };

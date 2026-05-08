@@ -38,6 +38,13 @@ export interface Message {
   isCurrentUser: boolean;
   isSystem?: boolean;
   attachment?: MessageAttachment | null;
+  /**
+   * Optional client-side decryptor for the attachment blob. Provided by the
+   * parent when the consultation is encrypted; the encrypted blob is
+   * downloaded as-is from the server and run through this function before
+   * being shown / saved.
+   */
+  attachmentDecrypt?: (encryptedBlob: Blob) => Promise<Blob>;
   isEdited?: boolean;
   updatedAt?: string;
   deletedAt?: string | null;
@@ -183,10 +190,17 @@ export class MessageListComponent implements OnInit, OnChanges, OnDestroy, After
         this.consultationService.getMessageAttachment(message.id)
           .pipe(takeUntil(this.destroy$))
           .subscribe({
-            next: (blob) => {
-              const url = URL.createObjectURL(blob);
-              this.imageUrlCache.set(message.id, url);
-              this.imageUrls.set(new Map(this.imageUrlCache));
+            next: async (blob) => {
+              try {
+                const finalBlob = message.attachmentDecrypt
+                  ? await message.attachmentDecrypt(blob)
+                  : blob;
+                const url = URL.createObjectURL(finalBlob);
+                this.imageUrlCache.set(message.id, url);
+                this.imageUrls.set(new Map(this.imageUrlCache));
+              } catch (err) {
+                console.warn('Failed to decrypt image attachment', err);
+              }
             }
           });
       }

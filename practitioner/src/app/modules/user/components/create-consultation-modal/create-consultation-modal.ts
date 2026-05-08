@@ -424,9 +424,6 @@ export class CreateConsultationModal implements OnInit, OnDestroy {
     const currentUser = this.currentUser();
     const { publicKeyPem, privateKeyPem, publicKeyFingerprint } =
       await this.encryptionService.generateConsultationKeypair();
-    const symKey = await this.encryptionService.generateSymKey();
-    const encryptedSymKey =
-      await this.encryptionService.wrapSymKeyWithPublicKey(symKey, publicKeyPem);
     const privateKeyBytes = new TextEncoder().encode(privateKeyPem);
     const encryptedPrivateKeyMaster =
       await this.encryptionService.rsaEnvelopeEncrypt(
@@ -483,7 +480,6 @@ export class CreateConsultationModal implements OnInit, OnDestroy {
       is_encrypted: true,
       public_key: publicKeyPem,
       public_key_fingerprint: publicKeyFingerprint,
-      encrypted_sym_key: encryptedSymKey,
       encrypted_private_key_master: encryptedPrivateKeyMaster,
       initial_keys: initialKeys,
     };

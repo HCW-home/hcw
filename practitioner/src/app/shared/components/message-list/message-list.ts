@@ -40,6 +40,13 @@ export interface Message {
   isCurrentUser: boolean;
   isSystem?: boolean;
   attachment?: MessageAttachment | null;
+  /**
+   * Optional client-side decryptor for the attachment blob. Provided by the
+   * parent component when the consultation is encrypted; the encrypted blob
+   * is downloaded as-is from the server and run through this function before
+   * being shown / saved to disk.
+   */
+  attachmentDecrypt?: (encryptedBlob: Blob) => Promise<Blob>;
   recording_url?: string | null;
   isEdited?: boolean;
   updatedAt?: string;
@@ -211,10 +218,17 @@ export class MessageList
           .getMessageAttachment(message.id)
           .pipe(takeUntil(this.destroy$))
           .subscribe({
-            next: blob => {
-              const url = URL.createObjectURL(blob);
-              this.imageUrlCache.set(message.id, url);
-              this.imageUrls.set(new Map(this.imageUrlCache));
+            next: async blob => {
+              try {
+                const finalBlob = message.attachmentDecrypt
+                  ? await message.attachmentDecrypt(blob)
+                  : blob;
+                const url = URL.createObjectURL(finalBlob);
+                this.imageUrlCache.set(message.id, url);
+                this.imageUrls.set(new Map(this.imageUrlCache));
+              } catch (err) {
+                console.warn('Failed to decrypt image attachment', err);
+              }
             },
           });
       }
@@ -414,15 +428,22 @@ export class MessageList
         .getMessageAttachment(message.id)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
-          next: blob => {
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
+          next: async blob => {
+            try {
+              const finalBlob = message.attachmentDecrypt
+                ? await message.attachmentDecrypt(blob)
+                : blob;
+              const url = window.URL.createObjectURL(finalBlob);
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = filename;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              window.URL.revokeObjectURL(url);
+            } catch (err) {
+              console.error('Failed to decrypt attachment:', err);
+            }
           },
           error: error => {
             console.error('Failed to download attachment:', error);

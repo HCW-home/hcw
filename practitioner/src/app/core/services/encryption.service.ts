@@ -4,10 +4,11 @@ import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { EncryptionStorageService } from './encryption-storage.service';
 
-interface ActivatePassphraseResponse {
-  private_key_pem: string;
-  public_key_pem: string;
-  public_key_fingerprint: string;
+interface UserKeyMaterialResponse {
+  pk: number;
+  encrypted_private_key: string | null;
+  public_key: string | null;
+  public_key_fingerprint: string | null;
 }
 
 interface ForgotPassphraseResponse {
@@ -19,6 +20,7 @@ interface ForgotPassphraseResponse {
 interface EncryptedAttachmentMetadata {
   file_name: string;
   mime_type: string;
+  wrapped_key?: string;
 }
 
 interface DecryptedAttachment {
@@ -92,18 +94,6 @@ export class EncryptionService {
     );
   }
 
-  async generateSymKey(): Promise<CryptoKey> {
-    // extractable=true is required by crypto.subtle.wrapKey at creation
-    // time. Once wrapped and stored on the server, recipients receive the
-    // sym_key via crypto.subtle.unwrapKey with extractable=false (see
-    // unwrapSymKeyWithConsultationKey) so the raw bytes never reach JS.
-    return crypto.subtle.generateKey(
-      { name: 'AES-GCM', length: 256 },
-      true,
-      ['encrypt', 'decrypt'],
-    );
-  }
-
   async generateConsultationKeypair(): Promise<{
     publicKeyPem: string;
     privateKeyPem: string;
@@ -133,42 +123,7 @@ export class EncryptionService {
     return `-----BEGIN ${label}-----\n${lines.join('\n')}\n-----END ${label}-----`;
   }
 
-  // -- High-level wrap/unwrap ---------------------------------------------
-
-  async wrapSymKeyWithPublicKey(
-    symKey: CryptoKey,
-    publicKeyPem: string,
-  ): Promise<string> {
-    // Uses crypto.subtle.wrapKey so the raw sym_key bytes never leave the
-    // WebCrypto sandbox in JS memory.
-    const pubKey = await this.importPublicKey(publicKeyPem);
-    const wrapped = await crypto.subtle.wrapKey(
-      'raw',
-      symKey,
-      pubKey,
-      { name: 'RSA-OAEP' },
-    );
-    return this.bufferToBase64(wrapped);
-  }
-
-  async unwrapSymKeyWithConsultationKey(
-    wrappedB64: string,
-    consultationPrivateKey: CryptoKey,
-  ): Promise<CryptoKey> {
-    // Returns a non-extractable AES-GCM key. The raw bytes never appear in
-    // JS — once unwrapped the key can only be used via crypto.subtle.encrypt
-    // / decrypt within the WebCrypto sandbox.
-    const wrapped = this.base64ToBuffer(wrappedB64);
-    return crypto.subtle.unwrapKey(
-      'raw',
-      wrapped,
-      consultationPrivateKey,
-      { name: 'RSA-OAEP' },
-      { name: 'AES-GCM' },
-      false,
-      ['encrypt', 'decrypt'],
-    );
-  }
+  // -- High-level envelope encryption ------------------------------------
 
   async rsaEnvelopeEncrypt(
     plaintext: ArrayBuffer | Uint8Array,
@@ -238,59 +193,87 @@ export class EncryptionService {
     return crypto.subtle.decrypt({ name: 'AES-GCM', iv }, cek, ciphertext);
   }
 
-  // -- Message encryption (AES-GCM, IV prefixed) --------------------------
+  // -- Message encryption (envelope per message under consultation pubkey)
 
-  async encryptString(plaintext: string, symKey: CryptoKey): Promise<string> {
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    const ciphertext = await crypto.subtle.encrypt(
-      { name: 'AES-GCM', iv },
-      symKey,
+  async encryptString(plaintext: string, publicKeyPem: string): Promise<string> {
+    return this.rsaEnvelopeEncrypt(
       new TextEncoder().encode(plaintext),
+      publicKeyPem,
     );
-    const combined = new Uint8Array(iv.length + ciphertext.byteLength);
-    combined.set(iv, 0);
-    combined.set(new Uint8Array(ciphertext), iv.length);
-    return this.bufferToBase64(combined.buffer);
   }
 
-  async decryptString(ciphertextB64: string, symKey: CryptoKey): Promise<string> {
-    const combined = new Uint8Array(this.base64ToBuffer(ciphertextB64));
-    const iv = combined.slice(0, 12);
-    const ciphertext = combined.slice(12);
-    const plaintext = await crypto.subtle.decrypt(
-      { name: 'AES-GCM', iv },
-      symKey,
-      ciphertext,
-    );
-    return new TextDecoder().decode(plaintext);
+  async decryptString(blob: string, privateKey: CryptoKey): Promise<string> {
+    const buffer = await this.rsaEnvelopeDecrypt(blob, privateKey);
+    return new TextDecoder().decode(buffer);
   }
 
-  async encryptBlob(blob: Blob, symKey: CryptoKey): Promise<Blob> {
+  async encryptBlob(
+    blob: Blob,
+    publicKeyPem: string,
+  ): Promise<{ blob: Blob; wrappedKey: string }> {
+    // Hybrid encryption for arbitrary-size attachments: fresh CEK +
+    // AES-GCM(blob, CEK, iv) with iv prefixed in the encrypted blob, then
+    // RSA-OAEP-wrap the CEK under the consultation pubkey. The wrapped CEK
+    // is returned separately so callers can stash it in the (encrypted)
+    // attachment metadata.
+    const pubKey = await this.importPublicKey(publicKeyPem);
+    const cekRaw = crypto.getRandomValues(new Uint8Array(32));
+    const cek = await crypto.subtle.importKey(
+      'raw',
+      cekRaw,
+      { name: 'AES-GCM' },
+      false,
+      ['encrypt'],
+    );
     const buffer = await blob.arrayBuffer();
     const iv = crypto.getRandomValues(new Uint8Array(12));
     const ciphertext = await crypto.subtle.encrypt(
       { name: 'AES-GCM', iv },
-      symKey,
+      cek,
       buffer,
     );
     const combined = new Uint8Array(iv.length + ciphertext.byteLength);
     combined.set(iv, 0);
     combined.set(new Uint8Array(ciphertext), iv.length);
-    return new Blob([combined], { type: 'application/octet-stream' });
+    const wrappedKey = await crypto.subtle.encrypt(
+      { name: 'RSA-OAEP' },
+      pubKey,
+      cekRaw,
+    );
+    return {
+      blob: new Blob([combined], { type: 'application/octet-stream' }),
+      wrappedKey: this.bufferToBase64(wrappedKey),
+    };
   }
 
   async decryptBlob(
     encryptedBlob: Blob,
-    symKey: CryptoKey,
+    privateKey: CryptoKey,
     metadata: EncryptedAttachmentMetadata,
   ): Promise<DecryptedAttachment> {
+    if (!metadata.wrapped_key) {
+      throw new Error('Attachment metadata is missing wrapped_key');
+    }
+    const wrappedKey = this.base64ToBuffer(metadata.wrapped_key);
+    const cekRaw = await crypto.subtle.decrypt(
+      { name: 'RSA-OAEP' },
+      privateKey,
+      wrappedKey,
+    );
+    const cek = await crypto.subtle.importKey(
+      'raw',
+      cekRaw,
+      { name: 'AES-GCM' },
+      false,
+      ['decrypt'],
+    );
     const buffer = await encryptedBlob.arrayBuffer();
     const combined = new Uint8Array(buffer);
     const iv = combined.slice(0, 12);
     const ciphertext = combined.slice(12);
     const plain = await crypto.subtle.decrypt(
       { name: 'AES-GCM', iv },
-      symKey,
+      cek,
       ciphertext,
     );
     return {
@@ -302,40 +285,135 @@ export class EncryptionService {
 
   async encryptAttachmentMetadata(
     metadata: EncryptedAttachmentMetadata,
-    symKey: CryptoKey,
+    publicKeyPem: string,
   ): Promise<string> {
-    return this.encryptString(JSON.stringify(metadata), symKey);
+    return this.encryptString(JSON.stringify(metadata), publicKeyPem);
   }
 
   async decryptAttachmentMetadata(
     encrypted: string,
-    symKey: CryptoKey,
+    privateKey: CryptoKey,
   ): Promise<EncryptedAttachmentMetadata> {
-    const json = await this.decryptString(encrypted, symKey);
+    const json = await this.decryptString(encrypted, privateKey);
     return JSON.parse(json) as EncryptedAttachmentMetadata;
   }
 
+  // -- Passphrase-protected private key (PBKDF2 + AES-GCM, client-side) ---
+  // Format on the wire (in User.encrypted_private_key, JSON string):
+  //   { salt: <base64>, iv: <base64>, ciphertext: <base64> }
+  // Derivation: PBKDF2-SHA256 with PBKDF2_ITERATIONS rounds, 32-byte key.
+  // Cipher: AES-GCM with the 12-byte iv. The plaintext is the user's RSA
+  // private key in PKCS8 PEM form. The passphrase is NEVER sent to the
+  // server — the server only stores and serves the encrypted blob.
+  private static readonly PBKDF2_ITERATIONS = 600_000;
+  private static readonly PBKDF2_SALT_BYTES = 16;
+  private static readonly AES_NONCE_BYTES = 12;
+
+  private async deriveKekFromPassphrase(
+    passphrase: string,
+    salt: ArrayBuffer,
+  ): Promise<CryptoKey> {
+    const passphraseKey = await crypto.subtle.importKey(
+      'raw',
+      new TextEncoder().encode(passphrase),
+      { name: 'PBKDF2' },
+      false,
+      ['deriveKey'],
+    );
+    return crypto.subtle.deriveKey(
+      {
+        name: 'PBKDF2',
+        salt,
+        iterations: EncryptionService.PBKDF2_ITERATIONS,
+        hash: 'SHA-256',
+      },
+      passphraseKey,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      ['encrypt', 'decrypt'],
+    );
+  }
+
+  async decryptPrivateKeyBlob(
+    blob: string,
+    passphrase: string,
+  ): Promise<ArrayBuffer> {
+    const data = JSON.parse(blob) as {
+      salt: string;
+      iv: string;
+      ciphertext: string;
+    };
+    const salt = this.base64ToBuffer(data.salt);
+    const iv = this.base64ToBuffer(data.iv);
+    const ciphertext = this.base64ToBuffer(data.ciphertext);
+    const kek = await this.deriveKekFromPassphrase(passphrase, salt);
+    return crypto.subtle.decrypt({ name: 'AES-GCM', iv }, kek, ciphertext);
+  }
+
+  async encryptPrivateKeyBlob(
+    privatePem: ArrayBuffer | Uint8Array,
+    passphrase: string,
+  ): Promise<string> {
+    const salt = crypto.getRandomValues(
+      new Uint8Array(EncryptionService.PBKDF2_SALT_BYTES),
+    );
+    const iv = crypto.getRandomValues(
+      new Uint8Array(EncryptionService.AES_NONCE_BYTES),
+    );
+    const kek = await this.deriveKekFromPassphrase(passphrase, salt.buffer);
+    const data = privatePem instanceof Uint8Array
+      ? privatePem
+      : new Uint8Array(privatePem);
+    const ciphertext = await crypto.subtle.encrypt(
+      { name: 'AES-GCM', iv },
+      kek,
+      data,
+    );
+    return JSON.stringify({
+      salt: this.bufferToBase64(salt.buffer),
+      iv: this.bufferToBase64(iv.buffer),
+      ciphertext: this.bufferToBase64(ciphertext),
+    });
+  }
+
   // -- Server interactions -------------------------------------------------
+
+  private async fetchOwnKeyMaterial(): Promise<UserKeyMaterialResponse> {
+    return firstValueFrom(
+      this.http.get<UserKeyMaterialResponse>(`${environment.apiUrl}/auth/user/`),
+    );
+  }
 
   async activatePassphrase(
     userId: number,
     passphrase: string,
   ): Promise<void> {
-    const response = await firstValueFrom(
-      this.http.post<ActivatePassphraseResponse>(
-        `${environment.apiUrl}/auth/encryption/activate-passphrase/`,
-        { passphrase },
-      ),
+    const user = await this.fetchOwnKeyMaterial();
+    if (!user.encrypted_private_key || !user.public_key) {
+      throw new Error('No encryption keypair provisioned for this user.');
+    }
+    const privatePemBytes = await this.decryptPrivateKeyBlob(
+      user.encrypted_private_key,
+      passphrase,
     );
+    const privatePem = new TextDecoder().decode(privatePemBytes);
     // Import as non-extractable CryptoKey objects before persisting. Once
     // they hit IndexedDB we will never have access to the raw bytes again.
-    const privateKey = await this.importPrivateKey(response.private_key_pem);
-    const publicKey = await this.importPublicKey(response.public_key_pem);
+    const privateKey = await this.importPrivateKey(privatePem);
+    const publicKey = await this.importPublicKey(user.public_key);
     await this.storage.setUserKeys(
       userId,
       privateKey,
       publicKey,
-      response.public_key_fingerprint,
+      user.public_key_fingerprint || '',
+    );
+    // Tell the server the user has successfully unlocked their keypair so
+    // the "passphrase pending" UX flag can be cleared. No sensitive data.
+    await firstValueFrom(
+      this.http.post(
+        `${environment.apiUrl}/auth/encryption/mark-activated/`,
+        {},
+      ),
     );
   }
 
@@ -343,11 +421,23 @@ export class EncryptionService {
     oldPassphrase: string,
     newPassphrase: string,
   ): Promise<void> {
+    const user = await this.fetchOwnKeyMaterial();
+    if (!user.encrypted_private_key) {
+      throw new Error('No encryption keypair provisioned for this user.');
+    }
+    const privatePemBytes = await this.decryptPrivateKeyBlob(
+      user.encrypted_private_key,
+      oldPassphrase,
+    );
+    const newBlob = await this.encryptPrivateKeyBlob(
+      privatePemBytes,
+      newPassphrase,
+    );
     await firstValueFrom(
-      this.http.post(`${environment.apiUrl}/auth/encryption/change-passphrase/`, {
-        old_passphrase: oldPassphrase,
-        new_passphrase: newPassphrase,
-      }),
+      this.http.post(
+        `${environment.apiUrl}/auth/encryption/update-encrypted-private-key/`,
+        { encrypted_private_key: newBlob },
+      ),
     );
   }
 
