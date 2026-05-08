@@ -69,6 +69,10 @@ class QueueMembershipInline(TabularInline):
     fields = ["user", "encrypted_queue_private_key", "created_at"]
     readonly_fields = ["created_at"]
     autocomplete_fields = ["user"]
+    # The user dropdown filtering to practitioners is enforced via
+    # `limit_choices_to` on the QueueMembership.user FK — Django's
+    # AutocompleteJsonView calls qs.complex_filter(limit_choices_to) so the
+    # restriction applies to the autocomplete results too.
 
     @property
     def media(self):

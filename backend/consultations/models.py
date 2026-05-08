@@ -48,7 +48,14 @@ class Queue(models.Model):
 
 class QueueMembership(models.Model):
     queue = models.ForeignKey(Queue, on_delete=models.CASCADE)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    # limit_choices_to is honoured by Django's admin autocomplete view, so
+    # the dropdown only proposes practitioners — queues never assign work
+    # to patients or temporary users.
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        limit_choices_to={"is_practitioner": True, "is_active": True},
+    )
     encrypted_queue_private_key = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(_("Added at"), auto_now_add=True)
 

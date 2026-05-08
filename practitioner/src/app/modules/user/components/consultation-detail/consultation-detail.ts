@@ -1050,6 +1050,36 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     );
     const toProvision: ConsultationKeyInput[] = [];
 
+    // Re-wrap the consultation private key with the consultation's queue
+    // pubkey if a queue is assigned. This handles the case where the queue
+    // keypair was regenerated after the consultation was created (the old
+    // queue ConsultationKey row would now be undecryptable). The backend's
+    // sync-consultation-keys action upserts, so resending this is
+    // idempotent — stale envelopes are silently overwritten with fresh ones.
+    const queue = consultation.group;
+    if (queue?.id && queue.public_key) {
+      try {
+        const encryptedPrivate =
+          await this.encryptionService.rsaEnvelopeEncrypt(
+            privateKeyBytes,
+            queue.public_key,
+          );
+        const fingerprint = queue.public_key_fingerprint
+          ?? await this.encryptionService.fingerprintPublicKey(queue.public_key);
+        toProvision.push({
+          queue_id: queue.id,
+          encrypted_private_key: encryptedPrivate,
+          pubkey_fingerprint: fingerprint,
+        });
+      } catch (err) {
+        console.warn(
+          '[encryption] failed to wrap consultation key for queue',
+          queue.id,
+          err,
+        );
+      }
+    }
+
     for (const appointment of this.appointments()) {
       for (const participant of appointment.participants || []) {
         const userId = participant.user?.id;
