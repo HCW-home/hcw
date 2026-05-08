@@ -1,4 +1,5 @@
 import {
+  AfterViewChecked,
   Component,
   ElementRef,
   OnDestroy,
@@ -20,7 +21,7 @@ import { TypographyTypeEnum } from '../../constants/typography';
   templateUrl: './modal.component.html',
   styleUrl: './modal.component.scss'
 })
-export class ModalComponent implements OnDestroy {
+export class ModalComponent implements AfterViewChecked, OnDestroy {
   isOpen = input<boolean>(false);
   title = input<string>('');
   size = input<'small' | 'medium' | 'large' | 'xlarge'>('medium');
@@ -31,25 +32,35 @@ export class ModalComponent implements OnDestroy {
 
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
 
-  // Teleport target — the DOM node housing the backdrop is moved to
-  // <body> while the modal is open so its `position: fixed` is anchored to
-  // the viewport, not to a transformed ancestor (e.g. an Angular animation
-  // creates a containing block on the route component).
+  // Teleport target — the backdrop DOM node is moved to <body> while the
+  // modal is open so its `position: fixed` is anchored to the viewport,
+  // not to a transformed ancestor (e.g. another modal that itself runs
+  // a CSS animation with `transform`, which creates a new containing
+  // block; any nested modal would otherwise render inline inside it).
   @ViewChild('backdropRef')
   private backdropRef?: ElementRef<HTMLElement>;
-  private hostElement: HTMLElement = inject(ElementRef).nativeElement;
   private document = inject(DOCUMENT);
   private teleportedNode: HTMLElement | null = null;
+  private wantsAttach = false;
 
   constructor() {
     effect(() => {
       if (this.isOpen()) {
-        // Defer to the next microtask so the @if branch is rendered.
-        queueMicrotask(() => this.attachToBody());
+        this.wantsAttach = true;
       } else {
+        this.wantsAttach = false;
         this.detachFromBody();
       }
     });
+  }
+
+  ngAfterViewChecked(): void {
+    // After Angular has rendered/refreshed the view, the @ViewChild has its
+    // backdrop element ready. If the modal wants to be attached, do it now.
+    if (this.wantsAttach && !this.teleportedNode && this.backdropRef) {
+      this.teleportedNode = this.backdropRef.nativeElement;
+      this.document.body.appendChild(this.teleportedNode);
+    }
   }
 
   ngOnDestroy(): void {
@@ -64,19 +75,6 @@ export class ModalComponent implements OnDestroy {
     if (this.closeOnBackdropClick() && (event.target as HTMLElement).classList.contains('modal-backdrop')) {
       this.close();
     }
-  }
-
-  private attachToBody(): void {
-    if (this.teleportedNode) {
-      return;
-    }
-    const node = this.backdropRef?.nativeElement
-      ?? this.hostElement.querySelector<HTMLElement>('.modal-backdrop');
-    if (!node) {
-      return;
-    }
-    this.teleportedNode = node;
-    this.document.body.appendChild(node);
   }
 
   private detachFromBody(): void {
