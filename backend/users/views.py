@@ -604,16 +604,28 @@ class MessageAttachmentView(APIView):
 
         user = request.user
 
-        # Check if user has permission to access this consultation
-        # Same logic as Consultation queryset: created_by, owned_by, or group member
+        # Check if user has permission to access this consultation. Mirrors
+        # ConsultationViewSet / MessageViewSet: owner, creator, beneficiary,
+        # queue member, or an active visible participant of any of the
+        # consultation's appointments.
+        from consultations.models import Participant
+
         consultation = message.consultation
 
         has_access = (
-            consultation.created_by == user
-            or consultation.owned_by == user
-            or consultation.group
-            and consultation.group.users.filter(id=user.id).exists()
-            or consultation.beneficiary == user
+            consultation.created_by_id == user.id
+            or consultation.owned_by_id == user.id
+            or consultation.beneficiary_id == user.id
+            or (
+                consultation.group_id
+                and consultation.group.users.filter(id=user.id).exists()
+            )
+            or Participant.objects.filter(
+                appointment__consultation=consultation,
+                user=user,
+                is_active=True,
+                is_consultation_visible=True,
+            ).exists()
         )
 
         if not has_access:
