@@ -150,6 +150,99 @@ def rsa_envelope_decrypt(blob: str, private_pem: bytes) -> bytes:
     return AESGCM(cek).decrypt(nonce, ciphertext, None)
 
 
+def provision_consultation_keypair(
+    consultation,
+    *,
+    master_public_pem: str,
+    user_recipients=(),
+    queue_recipients=(),
+) -> None:
+    """Generate a fresh RSA keypair for an encrypted consultation, wrap the
+    private key for the platform master + each authorised recipient, then
+    persist everything.
+
+    Used when the server creates a consultation outside the
+    `ConsultationSerializer` flow (e.g. Celery assignment handlers) and
+    must establish encryption itself — the only moment the backend ever
+    holds a consultation's private key in clear, immediately after
+    generation.
+
+    The private key is wrapped per recipient via envelope encryption
+    (AES-GCM payload + RSA-OAEP wrapped CEK) and the in-memory PEM is
+    discarded once all envelopes are persisted.
+
+    Args:
+      consultation: Consultation model instance (already saved).
+      master_public_pem: platform master public key (constance).
+      user_recipients: iterable of User instances. Each user with a
+        public_key gets a ConsultationKey(user=...) row.
+      queue_recipients: iterable of Queue instances. Each queue with a
+        public_key gets a ConsultationKey(queue=...) row; its members
+        unwrap via their existing QueueMembership envelope.
+    """
+    from consultations.models import ConsultationKey
+
+    private_pem, public_pem = generate_rsa_keypair()
+    public_pem_str = public_pem.decode("utf-8")
+
+    consultation.is_encrypted = True
+    consultation.public_key = public_pem_str
+    consultation.public_key_fingerprint = fingerprint_public_key(public_pem_str)
+    consultation.encrypted_private_key_master = rsa_envelope_encrypt(
+        private_pem, master_public_pem
+    )
+    consultation.save(
+        update_fields=[
+            "is_encrypted",
+            "public_key",
+            "public_key_fingerprint",
+            "encrypted_private_key_master",
+        ]
+    )
+
+    seen_user_ids = set()
+    for user in user_recipients:
+        if not user or not user.pk or user.pk in seen_user_ids:
+            continue
+        if not user.public_key:
+            continue
+        seen_user_ids.add(user.pk)
+        ConsultationKey.objects.update_or_create(
+            consultation=consultation,
+            user_id=user.pk,
+            queue=None,
+            defaults={
+                "encrypted_private_key": rsa_envelope_encrypt(
+                    private_pem, user.public_key
+                ),
+                "pubkey_fingerprint": user.public_key_fingerprint
+                or fingerprint_public_key(user.public_key),
+            },
+        )
+
+    seen_queue_ids = set()
+    for queue in queue_recipients:
+        if not queue or not queue.pk or queue.pk in seen_queue_ids:
+            continue
+        if not queue.public_key:
+            continue
+        seen_queue_ids.add(queue.pk)
+        ConsultationKey.objects.update_or_create(
+            consultation=consultation,
+            user=None,
+            queue_id=queue.pk,
+            defaults={
+                "encrypted_private_key": rsa_envelope_encrypt(
+                    private_pem, queue.public_key
+                ),
+                "pubkey_fingerprint": queue.public_key_fingerprint
+                or fingerprint_public_key(queue.public_key),
+            },
+        )
+
+    del private_pem
+
+
 _PASSPHRASE_ALPHABET = string.ascii_letters + string.digits
 
 

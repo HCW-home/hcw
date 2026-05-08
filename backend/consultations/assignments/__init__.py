@@ -135,8 +135,74 @@ class AssignmentManager:
             logger.error("Assignment exception: %s", exc_val)
             return
 
+        # Provision encryption now that the consultation's recipients
+        # (owned_by, group, beneficiary, ...) are finalised. The server
+        # generates the consultation keypair, wraps it for the master and
+        # for each recipient, then drops the in-memory private key.
+        try:
+            self._provision_consultation_encryption()
+        except Exception:
+            logger.exception(
+                "Failed to provision consultation encryption for request %s",
+                self.request.pk,
+            )
+
         self.request.status = RequestStatus.accepted
         self.request.save()
+
+    def _provision_consultation_encryption(self) -> None:
+        """If platform encryption is enabled and the consultation was just
+        created in clear by an assignment handler, generate a keypair and
+        wrap it for the recipients (owned_by, beneficiary, queue,
+        appointment participants).
+        """
+        from constance import config as constance_config
+        from core.encryption import provision_consultation_keypair
+        from ..models import Participant
+
+        consultation = self.request.consultation
+        if not consultation or consultation.is_encrypted:
+            return
+        if not constance_config.encryption_enabled:
+            return
+        if not constance_config.master_public_key:
+            logger.warning(
+                "Cannot provision consultation %s encryption: "
+                "encryption_enabled but master_public_key empty",
+                consultation.pk,
+            )
+            return
+
+        # Collect recipients: owner, creator, beneficiary, plus every
+        # active participant of the appointment (which the assignment
+        # handler may have just created).
+        user_recipients = []
+        for u in (
+            consultation.owned_by,
+            consultation.created_by,
+            consultation.beneficiary,
+        ):
+            if u and getattr(u, "pk", None):
+                user_recipients.append(u)
+        if self.request.appointment_id:
+            user_recipients.extend(
+                p.user
+                for p in Participant.objects.filter(
+                    appointment_id=self.request.appointment_id, is_active=True
+                ).select_related("user")
+                if p.user_id
+            )
+
+        queue_recipients = []
+        if consultation.group_id and consultation.group:
+            queue_recipients.append(consultation.group)
+
+        provision_consultation_keypair(
+            consultation,
+            master_public_pem=constance_config.master_public_key,
+            user_recipients=user_recipients,
+            queue_recipients=queue_recipients,
+        )
 
 
 MAIN_CLASSES: Dict[str, Type[BaseAssignmentHandler]] = {}

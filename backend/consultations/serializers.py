@@ -1,5 +1,8 @@
+import logging
 from datetime import timedelta
 from zoneinfo import available_timezones, ZoneInfo
+
+logger = logging.getLogger(__name__)
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -956,7 +959,49 @@ class AppointmentCreateSerializer(AppointmentSerializer):
         appointment.status = AppointmentStatus.scheduled
         appointment.save(update_fields=["status"])
 
+        # If we just spun up a temp consultation (online appointment without
+        # an explicit consultation) and platform encryption is enabled, the
+        # consultation was created in clear by the ORM call above. We
+        # generate its keypair now that we know the full participant set,
+        # so messages can be encrypted/decrypted.
+        if self._consultation and self._consultation.temporary:
+            try:
+                self._provision_temp_consultation_encryption(
+                    self._consultation, appointment, participant_users
+                )
+            except Exception:
+                logger.exception(
+                    "Failed to provision encryption for temp consultation %s",
+                    self._consultation.pk,
+                )
+
         return appointment
+
+    @staticmethod
+    def _provision_temp_consultation_encryption(consultation, appointment, participant_users):
+        from constance import config as constance_config
+        from core.encryption import provision_consultation_keypair
+
+        if consultation.is_encrypted:
+            return
+        if not constance_config.encryption_enabled:
+            return
+        if not constance_config.master_public_key:
+            return
+
+        user_recipients = list(participant_users)
+        for u in (consultation.owned_by, consultation.created_by, consultation.beneficiary):
+            if u and u not in user_recipients:
+                user_recipients.append(u)
+        queue_recipients = (
+            [consultation.group] if consultation.group_id else []
+        )
+        provision_consultation_keypair(
+            consultation,
+            master_public_pem=constance_config.master_public_key,
+            user_recipients=user_recipients,
+            queue_recipients=queue_recipients,
+        )
 
 
 class AttachmentMetadataSerializer(serializers.Serializer):
