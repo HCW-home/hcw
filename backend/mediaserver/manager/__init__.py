@@ -12,6 +12,7 @@ __all__: List[str] = []
 
 
 class BaseMediaserver(ABC):
+    name: str = ""
     display_name: str = ""
 
     def __init__(self, server: "Server"):
@@ -20,31 +21,37 @@ class BaseMediaserver(ABC):
     @abstractmethod
     def test_connection(self) -> Tuple[bool, Any]:
         """
-        Test connection to the provider's API
-        Default implementation just validates configuration
+        Test connection to the provider's API.
 
         Returns:
-            - True, True if connection test passed
-            - error (str): Error message if failed
+            - (True, payload) if reachable
+            - raises Exception otherwise (callers catch broadly)
         """
 
     @abstractmethod
-    def appointment_participant_info(self, appointment: Appointment, user: User) -> str:
-        """
-        Return room and token info for Participant into JWT format
+    def appointment_participant_info(self, appointment: Appointment, user: User) -> dict:
+        """Return join info for an appointment participant.
+
+        Returns a dict with at least: provider, url, token, room.
         """
 
     @abstractmethod
-    def consultation_user_info(self, consultation: Consultation, user: User) -> str:
-        """
-        Return room and token info for User for specific consultation into JWT format
+    def consultation_user_info(self, consultation: Consultation, user: User) -> dict:
+        """Return join info for a consultation participant.
+
+        Returns a dict with at least: provider, url, token, room.
         """
 
     @abstractmethod
-    def user_test_info(self, user: User) -> str:
+    def user_test_info(self, user: User, room_uuid=None) -> dict:
+        """Return join info for a user-driven self test.
+
+        Returns a dict with at least: provider, url, token, room.
         """
-        Return room and token info for User self test into JWT format
-        """
+
+    def supports_recording(self) -> bool:
+        """Whether this provider supports server-side recording (egress)."""
+        return True
 
 
 MAIN_CLASSES: Dict[str, Type[BaseMediaserver]] = {}

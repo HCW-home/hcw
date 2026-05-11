@@ -31,6 +31,8 @@
     "@ngx-translate/http-loader": "^17.0.0",
     "google-libphonenumber": "^3.2.42",
     "livekit-client": "^2.16.0",
+    "mediasoup-client": "^3.7.16",
+    "socket.io-client": "^4.8.1",
     "ngx-mask": "^20.0.3",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",

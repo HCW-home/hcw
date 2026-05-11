@@ -116,8 +116,8 @@ export class UserService {
     return this.http.get<ILanguage[]>(`${this.apiUrl}/languages/`);
   }
 
-  getTestRtcInfo(): Observable<{ url: string; token: string; room: string }> {
-    return this.http.get<{ url: string; token: string; room: string }>(
+  getTestRtcInfo(): Observable<{ url: string; token: string; room: string; provider?: string }> {
+    return this.http.get<{ url: string; token: string; room: string; provider?: string }>(
       `${this.apiUrl}/user/testrtc/`
     );
   }

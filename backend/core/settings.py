@@ -845,6 +845,11 @@ CONSTANCE_CONFIG = {
         False,
         "Force all newly created patients to be temporary users (no permanent patient accounts)",
     ),
+    "primary_video_provider": (
+        "livekit",
+        "Default media server provider for video calls; used by frontends to lazy-prefetch the matching SDK",
+        "primary_video_provider_select",
+    ),
     "encryption_enabled": (
         False,
         "Global toggle for end-to-end encryption of consultations and messages",
@@ -875,7 +880,7 @@ CONSTANCE_CONFIG_FIELDSETS = {
     "Uploads": ("max_upload_size_mb",),
     "Authentication": ("disable_password_login", "enable_registration"),
     "Visibility": ("users_visibility", "patient_visibility", "public_organisations"),
-    "Video Features": ("enable_video_recording", "enable_live_transcription", "whisper_model"),
+    "Video Features": ("primary_video_provider", "enable_video_recording", "enable_live_transcription", "whisper_model"),
     "Patient Management": ("force_temporary_patients",),
     "Encryption": ("encryption_enabled", "master_public_key", "master_public_key_fingerprint"),
 }
@@ -949,6 +954,16 @@ CONSTANCE_ADDITIONAL_FIELDS = {
                 ("small", "Small (~2 GB, good balance)"),
                 ("medium", "Medium (~5 GB, slower, great accuracy)"),
                 ("large-v3", "Large v3 (~10 GB, best accuracy, GPU recommended)"),
+            ),
+        },
+    ],
+    "primary_video_provider_select": [
+        "django.forms.fields.ChoiceField",
+        {
+            "widget": "django.forms.Select",
+            "choices": (
+                ("livekit", "LiveKit"),
+                ("mediasoup", "MediaSoup"),
             ),
         },
     ],
@@ -1041,6 +1056,10 @@ RECORDING_CHECK_MAX_RETRIES = int(
 RECORDING_CHECK_RETRY_DELAY = int(
     os.getenv("RECORDING_CHECK_RETRY_DELAY", 30)
 )  # seconds between retries
+
+# Media server room pinning: how long to keep the room -> server mapping in cache.
+# Must outlast the longest possible call (including recording).
+ROOM_SERVER_PIN_TTL = int(os.getenv("ROOM_SERVER_PIN_TTL", 24 * 3600))
 
 # Whisper-live transcription server
 WHISPER_LIVE_URL = os.getenv("WHISPER_LIVE_URL", "ws://127.0.0.1:9090")

@@ -79,19 +79,13 @@ class Main(BaseMediaserver):
                 )
             )
 
-    def appointment_participant_info(self, appointment, user):
-        room_name = str(appointment.room_uuid)
-
+    def _build_jwt(self, room_name: str, user) -> str:
         video_grants = VideoGrants(
             room=room_name,
             room_join=True,
-            # room_admin=is_admin_or_owner,
-            # can_update_own_metadata=True,
             can_publish=True,
-            # can_publish_sources=sources,
             can_subscribe=True,
         )
-
         return (
             AccessToken(
                 api_key=self.server.api_token,
@@ -102,56 +96,26 @@ class Main(BaseMediaserver):
             .with_name(user.name)
             .to_jwt()
         )
+
+    def _build_response(self, room_uuid, user) -> dict:
+        room_name = str(room_uuid)
+        return {
+            "provider": self.name,
+            "url": self.server.url,
+            "token": self._build_jwt(room_name, user),
+            "room": room_name,
+        }
+
+    def appointment_participant_info(self, appointment, user):
+        return self._build_response(appointment.room_uuid, user)
 
     def user_test_info(self, user, room_uuid=None):
         if room_uuid is None:
             room_uuid = uuid.uuid4()
-        room_name = str(room_uuid)
-
-        video_grants = VideoGrants(
-            room=room_name,
-            room_join=True,
-            # room_admin=is_admin_or_owner,
-            # can_update_own_metadata=True,
-            can_publish=True,
-            # can_publish_sources=sources,
-            can_subscribe=True,
-        )
-
-        return (
-            AccessToken(
-                api_key=self.server.api_token,
-                api_secret=self.server.api_secret,
-            )
-            .with_grants(video_grants)
-            .with_identity(self._build_identity(user))
-            .with_name(user.name)
-            .to_jwt()
-        )
+        return self._build_response(room_uuid, user)
 
     def consultation_user_info(self, consultation, user):
-        room_name = str(consultation.room_uuid)
-
-        video_grants = VideoGrants(
-            room=room_name,
-            room_join=True,
-            # room_admin=is_admin_or_owner,
-            # can_update_own_metadata=True,
-            can_publish=True,
-            # can_publish_sources=sources,
-            can_subscribe=True,
-        )
-
-        return (
-            AccessToken(
-                api_key=self.server.api_token,
-                api_secret=self.server.api_secret,
-            )
-            .with_grants(video_grants)
-            .with_identity(self._build_identity(user))
-            .with_name(user.name)
-            .to_jwt()
-        )
+        return self._build_response(consultation.room_uuid, user)
 
     async def get_room_info(self, room_name: str):
         """Get information about a specific room"""

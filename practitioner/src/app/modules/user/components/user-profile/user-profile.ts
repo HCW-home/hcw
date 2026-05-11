@@ -24,10 +24,8 @@ import { UserService } from '../../../../core/services/user.service';
 import { Auth } from '../../../../core/services/auth';
 import { EncryptionService } from '../../../../core/services/encryption.service';
 import { ToasterService } from '../../../../core/services/toaster.service';
-import {
-  LiveKitService,
-  ConnectionStatus,
-} from '../../../../core/services/livekit.service';
+import { VideoCallService } from '../../../../core/services/video-call.service';
+import { ConnectionStatus, VideoProvider } from '../../../../core/services/video-call.types';
 import { IUser, IUserUpdateRequest, ILanguage } from '../../models/user';
 import { CommunicationMethodEnum } from '../../constants/user';
 
@@ -51,7 +49,6 @@ import { TranslationService } from '../../../../core/services/translation.servic
 import { getErrorMessage } from '../../../../core/utils/error-helper';
 import { TIMEZONE_OPTIONS } from '../../../../shared/constants/timezone';
 import { TranslatePipe } from '@ngx-translate/core';
-import { LocalVideoTrack, LocalAudioTrack } from 'livekit-client';
 
 type TestStatus = 'idle' | 'testing' | 'working' | 'error' | 'playing';
 
@@ -81,7 +78,7 @@ export class UserProfile implements OnInit, OnDestroy {
   private destroyRef = inject(DestroyRef);
   public validationService = inject(ValidationService);
   private t = inject(TranslationService);
-  private livekitService = inject(LiveKitService);
+  private videoCallService = inject(VideoCallService);
 
   protected readonly BadgeTypeEnum = BadgeTypeEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
@@ -124,8 +121,8 @@ export class UserProfile implements OnInit, OnDestroy {
   microphoneStatus = signal<TestStatus>('idle');
   speakerStatus = signal<TestStatus>('idle');
 
-  private localVideoTrack: LocalVideoTrack | null = null;
-  private localAudioTrack: LocalAudioTrack | null = null;
+  private localVideoTrack: MediaStreamTrack | null = null;
+  private localAudioTrack: MediaStreamTrack | null = null;
   private audioContext: AudioContext | null = null;
   private analyserNode: AnalyserNode | null = null;
   private animationFrame: number | null = null;
@@ -499,17 +496,17 @@ export class UserProfile implements OnInit, OnDestroy {
   // ===== System Test Methods =====
 
   private setupLivekitSubscriptions(): void {
-    this.livekitService.connectionStatus$
+    this.videoCallService.connectionStatus$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(status => {
         this.connectionStatus.set(status);
       });
 
-    this.livekitService.localVideoTrack$
+    this.videoCallService.localVideoTrack$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(track => {
-        if (this.localVideoTrack && this.videoElement?.nativeElement) {
-          this.localVideoTrack.detach(this.videoElement.nativeElement);
+        if (this.videoElement?.nativeElement) {
+          this.videoElement.nativeElement.srcObject = null;
         }
         this.localVideoTrack = track;
         if (track) {
@@ -520,7 +517,7 @@ export class UserProfile implements OnInit, OnDestroy {
         }
       });
 
-    this.livekitService.localAudioTrack$
+    this.videoCallService.localAudioTrack$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(track => {
         this.localAudioTrack = track;
@@ -534,7 +531,7 @@ export class UserProfile implements OnInit, OnDestroy {
         }
       });
 
-    this.livekitService.error$
+    this.videoCallService.error$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(error => {
         this.toasterService.show(
@@ -546,7 +543,7 @@ export class UserProfile implements OnInit, OnDestroy {
   }
 
   private async ensureConnected(): Promise<boolean> {
-    if (this.livekitService.isConnected()) {
+    if (this.videoCallService.isConnected()) {
       return true;
     }
 
@@ -566,7 +563,8 @@ export class UserProfile implements OnInit, OnDestroy {
         throw new Error(this.t.instant('configuration.failedToGetTestInfo'));
       }
 
-      await this.livekitService.connect({
+      await this.videoCallService.connect({
+        provider: (config.provider ?? 'livekit') as VideoProvider,
         url: config.url,
         token: config.token,
         room: config.room,
@@ -661,7 +659,7 @@ export class UserProfile implements OnInit, OnDestroy {
         return;
       }
 
-      await this.livekitService.enableCamera(true);
+      await this.videoCallService.enableCamera(true);
     } catch (error) {
       const message =
         error instanceof Error
@@ -680,15 +678,16 @@ export class UserProfile implements OnInit, OnDestroy {
     if (!this.videoElement?.nativeElement || !this.localVideoTrack) {
       return;
     }
-    this.localVideoTrack.attach(this.videoElement.nativeElement);
+    this.videoElement.nativeElement.srcObject = new MediaStream([this.localVideoTrack]);
+    this.videoElement.nativeElement.play().catch(() => undefined);
   }
 
   async stopCamera(): Promise<void> {
     try {
-      if (this.localVideoTrack && this.videoElement?.nativeElement) {
-        this.localVideoTrack.detach(this.videoElement.nativeElement);
+      if (this.videoElement?.nativeElement) {
+        this.videoElement.nativeElement.srcObject = null;
       }
-      await this.livekitService.enableCamera(false);
+      await this.videoCallService.enableCamera(false);
     } catch (error) {
       const message =
         error instanceof Error
@@ -728,7 +727,7 @@ export class UserProfile implements OnInit, OnDestroy {
         return;
       }
 
-      await this.livekitService.enableMicrophone(true);
+      await this.videoCallService.enableMicrophone(true);
     } catch (error) {
       const message =
         error instanceof Error
@@ -746,7 +745,7 @@ export class UserProfile implements OnInit, OnDestroy {
   async stopMicrophone(): Promise<void> {
     this.stopAudioVisualization();
     try {
-      await this.livekitService.enableMicrophone(false);
+      await this.videoCallService.enableMicrophone(false);
     } catch (error) {
       const message =
         error instanceof Error
@@ -761,10 +760,10 @@ export class UserProfile implements OnInit, OnDestroy {
     this.microphoneStatus.set('idle');
   }
 
-  private setupAudioVisualization(track: LocalAudioTrack): void {
+  private setupAudioVisualization(track: MediaStreamTrack): void {
     this.stopAudioVisualization();
     try {
-      const mediaStream = new MediaStream([track.mediaStreamTrack]);
+      const mediaStream = new MediaStream([track]);
       this.audioContext = new (window.AudioContext ||
         (window as unknown as { webkitAudioContext: typeof AudioContext })
           .webkitAudioContext)();
@@ -945,8 +944,8 @@ export class UserProfile implements OnInit, OnDestroy {
   }
 
   private cleanup(): void {
-    if (this.localVideoTrack && this.videoElement?.nativeElement) {
-      this.localVideoTrack.detach(this.videoElement.nativeElement);
+    if (this.videoElement?.nativeElement) {
+      this.videoElement.nativeElement.srcObject = null;
     }
 
     this.stopAudioVisualization();
@@ -956,6 +955,6 @@ export class UserProfile implements OnInit, OnDestroy {
       this.testAudio = null;
     }
 
-    this.livekitService.disconnect();
+    this.videoCallService.disconnect();
   }
 }

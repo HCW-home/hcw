@@ -35,6 +35,7 @@ from drf_spectacular.utils import (
     OpenApiTypes,
     extend_schema,
 )
+from mediaserver.exceptions import NoMediaServerAvailable
 from mediaserver.models import Server
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
@@ -369,24 +370,16 @@ class ConsultationViewSet(FhirViewSetMixin, CreatedByMixin, viewsets.ModelViewSe
             )
 
         try:
-            server = Server.get_server()
-
-            consultation_call_info = server.instance.consultation_user_info(
-                consultation, request.user
-            )
-
+            server = Server.get_or_pin_for_room(consultation.room_uuid)
+        except NoMediaServerAvailable:
             return Response(
-                {
-                    "url": server.url,
-                    "token": consultation_call_info,
-                    "room": str(consultation.room_uuid),
-                }
-            )
-        except Exception as e:
-            return Response(
-                {"detail": "No media server available."},
+                {"detail": _("No media server available.")},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
+
+        return Response(
+            server.instance.consultation_user_info(consultation, request.user)
+        )
 
     @extend_schema(
         methods=["POST"],
@@ -423,16 +416,15 @@ class ConsultationViewSet(FhirViewSetMixin, CreatedByMixin, viewsets.ModelViewSe
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        server = Server.get_server()
-        if not server:
+        try:
+            server = Server.get_or_pin_for_room(consultation.room_uuid)
+        except NoMediaServerAvailable:
             return Response(
                 {"detail": _("No media server available.")},
-                status=status.HTTP_404_NOT_FOUND,
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
 
-        consultation_call_info = server.instance.consultation_user_info(
-            consultation, request.user
-        )
+        call_info = server.instance.consultation_user_info(consultation, request.user)
 
         # Send call_request WebSocket event to the beneficiary
         channel_layer = get_channel_layer()
@@ -447,13 +439,7 @@ class ConsultationViewSet(FhirViewSetMixin, CreatedByMixin, viewsets.ModelViewSe
             },
         )
 
-        return Response(
-            {
-                "url": server.url,
-                "token": consultation_call_info,
-                "room": str(consultation.room_uuid),
-            }
-        )
+        return Response(call_info)
 
     @extend_schema(methods=["GET"], responses=ConsultationMessageSerializer(many=True))
     @extend_schema(
@@ -632,57 +618,49 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
             )
 
         try:
-            server = Server.get_server()
-
-            consultation_call_info = server.instance.appointment_participant_info(
-                appointment, request.user
-            )
-
-            # Send websocket notification to all active participants except the user who joined
-            channel_layer = get_channel_layer()
-            active_participants = appointment.participant_set.filter(is_active=True)
-
-            for participant in active_participants:
-                if participant.user.pk == request.user.pk:
-                    continue
-
-                async_to_sync(channel_layer.group_send)(
-                    f"user_{participant.user.pk}",
-                    {
-                        "type": "appointment",
-                        "consultation_id": appointment.consultation.pk if appointment.consultation else None,
-                        "appointment_id": appointment.pk,
-                        "state": "participant_joined",
-                        "data": {
-                            "user_id": request.user.pk,
-                            "user_name": request.user.name or request.user.email,
-                        },
-                    },
-                )
-
-            # Create a system message for participant joined
-            # The message_saved signal will automatically send WebSocket notifications
-            if appointment.consultation:
-                user_name = request.user.name or request.user.email
-                Message.objects.create(
-                    consultation=appointment.consultation,
-                    created_by=None,  # System message has no author
-                    event="participant_joined",
-                    content=_("%(user_name)s joined the meeting") % {"user_name": user_name},
-                )
-
+            server = Server.get_or_pin_for_room(appointment.room_uuid)
+        except NoMediaServerAvailable:
             return Response(
-                {
-                    "url": server.url,
-                    "token": consultation_call_info,
-                    "room": str(appointment.room_uuid),
-                }
-            )
-        except Exception as e:
-            return Response(
-                {"detail": "No media server available."},
+                {"detail": _("No media server available.")},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
+
+        call_info = server.instance.appointment_participant_info(appointment, request.user)
+
+        # Send websocket notification to all active participants except the user who joined
+        channel_layer = get_channel_layer()
+        active_participants = appointment.participant_set.filter(is_active=True)
+
+        for participant in active_participants:
+            if participant.user.pk == request.user.pk:
+                continue
+
+            async_to_sync(channel_layer.group_send)(
+                f"user_{participant.user.pk}",
+                {
+                    "type": "appointment",
+                    "consultation_id": appointment.consultation.pk if appointment.consultation else None,
+                    "appointment_id": appointment.pk,
+                    "state": "participant_joined",
+                    "data": {
+                        "user_id": request.user.pk,
+                        "user_name": request.user.name or request.user.email,
+                    },
+                },
+            )
+
+        # Create a system message for participant joined
+        # The message_saved signal will automatically send WebSocket notifications
+        if appointment.consultation:
+            user_name = request.user.name or request.user.email
+            Message.objects.create(
+                consultation=appointment.consultation,
+                created_by=None,  # System message has no author
+                event="participant_joined",
+                content=_("%(user_name)s joined the meeting") % {"user_name": user_name},
+            )
+
+        return Response(call_info)
 
     @action(detail=True, methods=["post"])
     def leave(self, request, pk=None):
@@ -786,7 +764,20 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
         options = request.data.get("options", {})
 
         try:
-            server = Server.get_server()
+            server = Server.get_or_pin_for_room(appointment.room_uuid)
+        except NoMediaServerAvailable:
+            return Response(
+                {"detail": _("No media server available.")},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        if not server.instance.supports_recording():
+            return Response(
+                {"detail": _("Recording is not supported by the configured media server.")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
             egress_id, filepath = async_to_sync(server.instance.start_room_recording)(
                 room_name, appointment.pk, mode=mode, options=options
             )
@@ -831,7 +822,20 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
             )
 
         try:
-            server = Server.get_server()
+            server = Server.get_or_pin_for_room(appointment.room_uuid)
+        except NoMediaServerAvailable:
+            return Response(
+                {"detail": _("No media server available.")},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        if not server.instance.supports_recording():
+            return Response(
+                {"detail": _("Recording is not supported by the configured media server.")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
             async_to_sync(server.instance.stop_room_recording)(recording.egress_id)
 
             recording.stopped_at = timezone.now()

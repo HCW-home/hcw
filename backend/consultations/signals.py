@@ -260,15 +260,33 @@ def track_beneficiary_change(sender, instance: Consultation, **kwargs):
     """
     Track if beneficiary is being added or changed on a consultation.
     Store the old beneficiary ID for comparison in post_save.
+    Also track closed_at transition to release the media server pin.
     """
     if instance.pk:
         try:
             old_consultation = Consultation.objects.get(pk=instance.pk)
             instance._old_beneficiary_id = old_consultation.beneficiary_id
+            instance._was_closed = old_consultation.closed_at is not None
         except Consultation.DoesNotExist:
             instance._old_beneficiary_id = None
+            instance._was_closed = False
     else:
         instance._old_beneficiary_id = None
+        instance._was_closed = False
+
+
+@receiver(post_save, sender=Consultation)
+def release_room_pin_on_close(sender, instance: Consultation, created, **kwargs):
+    """Release the media server pin when a consultation is closed."""
+    if created or instance.closed_at is None:
+        return
+    if getattr(instance, "_was_closed", False):
+        return
+    from mediaserver.models import Server
+
+    Server.clear_room_pin(instance.room_uuid)
+    for appointment in instance.appointment_set.all():
+        Server.clear_room_pin(appointment.room_uuid)
 
 
 @receiver(post_save, sender=Consultation)

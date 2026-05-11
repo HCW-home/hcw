@@ -37,6 +37,8 @@
     "ionicons": "^7.0.0",
     "leaflet": "^1.9.4",
     "livekit-client": "^2.16.0",
+    "mediasoup-client": "^3.7.16",
+    "socket.io-client": "^4.8.1",
     "rxjs": "~7.8.0",
     "swiper": "^12.0.1",
     "tslib": "^2.3.0",

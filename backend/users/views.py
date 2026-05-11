@@ -58,6 +58,7 @@ from drf_spectacular.utils import (
     extend_schema,
 )
 from itsdangerous import URLSafeTimedSerializer
+from mediaserver.exceptions import NoMediaServerAvailable
 from mediaserver.models import Server
 from messaging.models import Message
 from messaging.serializers import MessageSerializer
@@ -515,23 +516,16 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
             )
 
         try:
-            server = Server.get_server()
-            consultation_call_info = server.instance.consultation_user_info(
-                consultation, request.user
-            )
-
-            return Response(
-                {
-                    "url": server.url,
-                    "token": consultation_call_info,
-                    "room": str(consultation.room_uuid),
-                }
-            )
-        except Exception:
+            server = Server.get_or_pin_for_room(consultation.room_uuid)
+        except NoMediaServerAvailable:
             return Response(
                 {"detail": _("No media server available.")},
-                status=status.HTTP_404_NOT_FOUND,
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
+
+        return Response(
+            server.instance.consultation_user_info(consultation, request.user)
+        )
 
     @action(detail=True, methods=["post"], url_path="call_response")
     def call_response(self, request, pk=None):
@@ -940,58 +934,56 @@ class UserAppointmentsViewSet(viewsets.ReadOnlyModelViewSet):
             )
 
         try:
-            server = Server.get_server()
-
-            consultation_call_info = server.instance.appointment_participant_info(
-                appointment, request.user
-            )
-
-            # Send websocket notification to all active participants except the user who joined
-            channel_layer = get_channel_layer()
-            active_participants = appointment.participant_set.filter(is_active=True)
-
-            for participant in active_participants:
-                if participant.user.pk == request.user.pk:
-                    continue
-
-                async_to_sync(channel_layer.group_send)(
-                    f"user_{participant.user.pk}",
-                    {
-                        "type": "appointment",
-                        "consultation_id": appointment.consultation.pk if appointment.consultation else None,
-                        "appointment_id": appointment.pk,
-                        "state": "participant_joined",
-                        "data": {
-                            "user_id": request.user.pk,
-                            "user_name": request.user.name or request.user.email,
-                        },
-                    },
-                )
-
-            # Create a system message for participant joined
-            # The message_saved signal will automatically send WebSocket notifications
-            if appointment.consultation:
-                user_name = request.user.name or request.user.email
-                ConsultationMessage.objects.create(
-                    consultation=appointment.consultation,
-                    created_by=None,  # System message has no author
-                    event="participant_joined",
-                    content=_("%(user_name)s joined the meeting") % {"user_name": user_name},
-                )
-
+            server = Server.get_or_pin_for_room(appointment.room_uuid)
+        except NoMediaServerAvailable:
             return Response(
-                {
-                    "url": server.url,
-                    "token": consultation_call_info,
-                    "room": str(appointment.room_uuid),
-                }
+                {"detail": _("No media server available.")},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
+
+        try:
+            call_info = server.instance.appointment_participant_info(appointment, request.user)
         except Exception as e:
             logger.exception("Failed to join appointment %s: %s", pk, e)
             return Response(
-                {"detail": "No media server available."},
+                {"detail": _("No media server available.")},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+        # Send websocket notification to all active participants except the user who joined
+        channel_layer = get_channel_layer()
+        active_participants = appointment.participant_set.filter(is_active=True)
+
+        for participant in active_participants:
+            if participant.user.pk == request.user.pk:
+                continue
+
+            async_to_sync(channel_layer.group_send)(
+                f"user_{participant.user.pk}",
+                {
+                    "type": "appointment",
+                    "consultation_id": appointment.consultation.pk if appointment.consultation else None,
+                    "appointment_id": appointment.pk,
+                    "state": "participant_joined",
+                    "data": {
+                        "user_id": request.user.pk,
+                        "user_name": request.user.name or request.user.email,
+                    },
+                },
+            )
+
+        # Create a system message for participant joined
+        # The message_saved signal will automatically send WebSocket notifications
+        if appointment.consultation:
+            user_name = request.user.name or request.user.email
+            ConsultationMessage.objects.create(
+                consultation=appointment.consultation,
+                created_by=None,  # System message has no author
+                event="participant_joined",
+                content=_("%(user_name)s joined the meeting") % {"user_name": user_name},
+            )
+
+        return Response(call_info)
 
     @action(detail=True, methods=["post"])
     def leave(self, request, pk=None):
@@ -1477,6 +1469,7 @@ class AppConfigView(APIView):
                 "appointment_early_join_minutes": int(constance_config.appointment_early_join_minutes),
                 "enable_video_recording": constance_config.enable_video_recording,
                 "enable_live_transcription": constance_config.enable_live_transcription,
+                "primary_video_provider": constance_config.primary_video_provider,
                 "public_organisations": constance_config.public_organisations,
                 "force_temporary_patients": constance_config.force_temporary_patients,
                 "has_reasons": Reason.objects.filter(is_active=True).exists(),
@@ -1648,22 +1641,16 @@ class TestRTCView(APIView):
         """Get RTC test information for the authenticated user."""
         try:
             server = Server.get_server()
-
-            test_room_uuid = uuid.uuid4()
-            test_info = server.instance.user_test_info(request.user, room_uuid=test_room_uuid)
-
+        except NoMediaServerAvailable:
             return Response(
-                {
-                    "url": server.url,
-                    "token": test_info,
-                    "room": str(test_room_uuid),
-                }
+                {"detail": _("No media server available.")},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
-        except Exception as e:
-            return Response(
-                {"detail": "No media server available."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+
+        test_room_uuid = uuid.uuid4()
+        return Response(
+            server.instance.user_test_info(request.user, room_uuid=test_room_uuid)
+        )
 
 
 class UserDashboardView(APIView):
