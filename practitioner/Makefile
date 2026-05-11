@@ -10,7 +10,7 @@ dist/practitioner/browser: node_modules
 	npm run build
 
 node_modules:
-	npx yarn
+	npx yarn install --cache-folder .yarn-cache
 
 install: dist/practitioner/browser
 	mkdir -p $(DESTDIR)$(STATIC)/$(PROJECT)/$(COMPONENT)/
@@ -19,4 +19,4 @@ install: dist/practitioner/browser
 build: dist/practitioner/browser
 
 clean:
-	rm -rf dist node_modules
+	rm -rf dist node_modules .yarn-cache

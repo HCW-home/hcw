@@ -10,7 +10,7 @@ www: node_modules
 	npm run build
 
 node_modules:
-	npx yarn install
+	npx yarn install --cache-folder .yarn-cache
 
 install: www
 	mkdir -p $(DESTDIR)$(STATIC)/$(PROJECT)/$(COMPONENT)/
@@ -19,4 +19,4 @@ install: www
 build: www
 
 clean:
-	rm -rf www node_modules
+	rm -rf www node_modules .yarn-cache

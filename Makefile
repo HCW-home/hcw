@@ -20,7 +20,7 @@ venv:
 	python3 -m venv venv
 
 patient/node_modules:
-	cd patient ; npx yarn install
+	cd patient ; npx yarn install --cache-folder .yarn-cache
 
 practitioner/node_modules:
-	cd practitioner ; npx yarn install
+	cd practitioner ; npx yarn install --cache-folder .yarn-cache
