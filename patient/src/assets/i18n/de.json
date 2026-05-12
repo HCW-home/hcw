@@ -466,5 +466,11 @@
         "disabledMessage": "Das Organisationsverzeichnis ist derzeit nicht verfügbar. Bitte kontaktieren Sie Ihren Administrator.",
         "noResults": "Keine Organisationen gefunden",
         "noLocation": "Standort nicht verfügbar"
+    },
+    "maintenance": {
+        "title": "Wartung im Gange",
+        "defaultMessage": "Der Dienst ist vorübergehend wegen Wartungsarbeiten nicht verfügbar. Bitte versuchen Sie es später erneut.",
+        "autoRefresh": "Diese Seite wird in {{seconds}} Sekunden automatisch aktualisiert.",
+        "retry": "Jetzt aktualisieren"
     }
 }

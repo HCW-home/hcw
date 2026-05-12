@@ -467,5 +467,11 @@
         "disabledMessage": "L'elenco delle organizzazioni non è attualmente disponibile. Contatta il tuo amministratore.",
         "noResults": "Nessuna organizzazione trovata",
         "noLocation": "Posizione non disponibile"
+    },
+    "maintenance": {
+        "title": "Manutenzione in corso",
+        "defaultMessage": "Il servizio è temporaneamente non disponibile per manutenzione. Riprova più tardi.",
+        "autoRefresh": "Questa pagina si aggiornerà automaticamente tra {{seconds}} secondi.",
+        "retry": "Aggiorna ora"
     }
 }

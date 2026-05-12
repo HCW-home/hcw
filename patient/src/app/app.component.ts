@@ -15,6 +15,7 @@ import { ActionHandlerService } from "./core/services/action-handler.service";
 import { ConsultationService } from "./core/services/consultation.service";
 import { IncomingCallComponent } from "./shared/components/incoming-call/incoming-call.component";
 import { OfflineIndicatorComponent } from "./shared/components/offline-indicator/offline-indicator.component";
+import { MaintenanceOverlayComponent } from "./shared/components/maintenance-overlay/maintenance-overlay.component";
 import { TranslationService } from "./core/services/translation.service";
 import { PushNotificationService } from "./core/services/push-notification.service";
 import { BrowserNotificationService } from "./core/services/browser-notification.service";
@@ -24,7 +25,7 @@ import { AppUpdateService } from "./core/services/app-update.service";
   selector: "app-root",
   templateUrl: "app.component.html",
   styleUrls: ["app.component.scss"],
-  imports: [IonApp, IonRouterOutlet, IncomingCallComponent, OfflineIndicatorComponent],
+  imports: [IonApp, IonRouterOutlet, IncomingCallComponent, OfflineIndicatorComponent, MaintenanceOverlayComponent],
 })
 export class AppComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();

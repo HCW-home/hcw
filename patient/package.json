@@ -22,6 +22,7 @@
     "@angular/platform-browser-dynamic": "^20.3.17",
     "@angular/router": "^20.3.17",
     "@angular/service-worker": "^20.3.17",
+    "@capacitor/android": "^8.3.3",
     "@capacitor/app": "^7.1.0",
     "@capacitor/core": "^7.4.4",
     "@capacitor/haptics": "^7.0.2",
@@ -38,8 +39,8 @@
     "leaflet": "^1.9.4",
     "livekit-client": "^2.16.0",
     "mediasoup-client": "^3.7.16",
-    "socket.io-client": "^4.8.1",
     "rxjs": "~7.8.0",
+    "socket.io-client": "^4.8.1",
     "swiper": "^12.0.1",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"

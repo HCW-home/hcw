@@ -993,5 +993,11 @@
     "reconnectedMessage": "La connexion au serveur a été rétablie.",
     "failed": "Échec de connexion",
     "failedMessage": "Impossible de se connecter au serveur. Veuillez vérifier votre connexion et rafraîchir la page."
+  },
+  "maintenance": {
+    "title": "Maintenance en cours",
+    "defaultMessage": "Le service est temporairement indisponible pour maintenance. Veuillez réessayer plus tard.",
+    "autoRefresh": "Cette page se rafraîchira automatiquement dans {{seconds}} secondes.",
+    "retry": "Rafraîchir maintenant"
   }
 }

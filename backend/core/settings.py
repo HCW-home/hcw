@@ -42,6 +42,15 @@ SECRET_KEY = os.getenv("DJANGOSECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True if os.getenv("DEBUG") == "True" else False
 
+# Maintenance mode: when True, the backend short-circuits every request with
+# a 503 response. Read from env so it can be toggled without DB or Redis.
+MAINTENANCE = os.getenv("MAINTENANCE", "False") == "True"
+MAINTENANCE_MESSAGE = os.getenv(
+    "MAINTENANCE_MESSAGE",
+    "The service is temporarily unavailable for maintenance. Please try again later.",
+)
+MAINTENANCE_RETRY_AFTER = int(os.getenv("MAINTENANCE_RETRY_AFTER", 300))
+
 ALLOWED_HOSTS = [os.getenv("ALLOWED_HOST")]
 if os.getenv("ALLOWED_HOSTS"):
     ALLOWED_HOSTS += os.getenv("ALLOWED_HOSTS").replace(" ", "").split(",")
@@ -131,9 +140,10 @@ TENANT_MODEL = "tenants.Tenant"
 TENANT_DOMAIN_MODEL = "tenants.Domain"
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
+    "core.middleware.MaintenanceMiddleware",
     "core.healthcheck.HealthCheckMiddleware",
     "django_tenants.middleware.main.TenantMainMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",

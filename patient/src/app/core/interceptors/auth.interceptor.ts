@@ -5,6 +5,7 @@ import { catchError, switchMap, filter, take } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 import { UserWebSocketService } from '../services/user-websocket.service';
 import { TranslationService } from '../services/translation.service';
+import { MaintenanceService } from '../services/maintenance.service';
 import { NavController } from '@ionic/angular';
 
 let isRefreshing = false;
@@ -16,6 +17,7 @@ export class AuthInterceptor implements HttpInterceptor {
     private authService: AuthService,
     private userWsService: UserWebSocketService,
     private translationService: TranslationService,
+    private maintenanceService: MaintenanceService,
     private navCtrl: NavController
   ) {}
 
@@ -34,6 +36,17 @@ export class AuthInterceptor implements HttpInterceptor {
         }
         return next.handle(request).pipe(
           catchError(error => {
+            if (
+              error instanceof HttpErrorResponse &&
+              error.status === 503 &&
+              error.error?.status === 'maintenance'
+            ) {
+              const retryAfterHeader = error.headers?.get('Retry-After');
+              const retryAfter = retryAfterHeader ? parseInt(retryAfterHeader, 10) : 0;
+              this.maintenanceService.setMaintenance(error.error?.detail, retryAfter);
+              return throwError(() => error);
+            }
+
             if (
               error instanceof HttpErrorResponse &&
               error.status === 401 &&

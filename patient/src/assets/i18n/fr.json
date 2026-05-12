@@ -513,5 +513,11 @@
         "disabledMessage": "Le r\u00e9pertoire des organisations n'est actuellement pas disponible. Veuillez contacter votre administrateur.",
         "noResults": "Aucune organisation trouv\u00e9e",
         "noLocation": "Localisation non disponible"
+    },
+    "maintenance": {
+        "title": "Maintenance en cours",
+        "defaultMessage": "Le service est temporairement indisponible pour maintenance. Veuillez r\u00e9essayer plus tard.",
+        "autoRefresh": "Cette page se rafra\u00eechira automatiquement dans {{seconds}} secondes.",
+        "retry": "Rafra\u00eechir maintenant"
     }
 }

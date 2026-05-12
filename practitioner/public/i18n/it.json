@@ -1044,5 +1044,11 @@
         "reconnectedMessage": "La connessione al server è stata ripristinata.",
         "failed": "Connessione fallita",
         "failedMessage": "Impossibile connettersi al server. Si prega di verificare la connessione e provare ad aggiornare la pagina."
+    },
+    "maintenance": {
+        "title": "Manutenzione in corso",
+        "defaultMessage": "Il servizio è temporaneamente non disponibile per manutenzione. Riprova più tardi.",
+        "autoRefresh": "Questa pagina si aggiornerà automaticamente tra {{seconds}} secondi.",
+        "retry": "Aggiorna ora"
     }
 }

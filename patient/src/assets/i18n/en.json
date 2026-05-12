@@ -513,5 +513,11 @@
     "disabledMessage": "The organisations directory is currently not available. Please contact your administrator.",
     "noResults": "No organisations found",
     "noLocation": "Location not available"
+  },
+  "maintenance": {
+    "title": "Maintenance in progress",
+    "defaultMessage": "The service is temporarily unavailable for maintenance. Please try again later.",
+    "autoRefresh": "This page will refresh automatically in {{seconds}} seconds.",
+    "retry": "Refresh now"
   }
 }

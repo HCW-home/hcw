@@ -37,3 +37,26 @@ Dans ce projet, le médecin peut configurer ses disponibilités http://localhost
 Néanmoins, je souhaite lui mettre un message en rouge lorsque ses disponibité ne sont pas utilisable (juste un warning)
 > Lorsqu'aucune reason n'a pas été paramétré par l'admin
 > Lorsque seul des raisons de type assignation spécialité sont défini, mais que le médecin n'est pas dans cette spécialité
+
+
+# MSF
+
+- email delivery issue (old version), probably change to reply@hcw-at-home.com
+- Minutes before appointment scheduled time that participants can join
+
+
+- chat shouldn't be here if there is not followup > check if chat feature work even without followup
+- accept is not working without followup accept
+
+- Adding participant without clicking on add 
+- Queue / Groups of users 
+
+# Encryption
+
+Si pas possible de décrypter, indiquer sur le chat
+
+http://localhost:8001/home
+
+# Désassignation de consultation
+
+ne disparait pas

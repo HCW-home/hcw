@@ -1259,6 +1259,11 @@
   resolved "https://registry.npmjs.org/@bufbuild/protobuf/-/protobuf-1.10.1.tgz"
   integrity sha512-wJ8ReQbHxsAfXhrf9ixl0aYbZorRuOWpBNzm8pL8ftmSxQx/wnJD5Eg861NwJU/czy2VXFIebCeZnZrI9rktIQ==
 
+"@capacitor/android@^8.3.3":
+  version "8.3.3"
+  resolved "https://registry.yarnpkg.com/@capacitor/android/-/android-8.3.3.tgz#454341f68e6cb9d333097340eb212954e9eb4d56"
+  integrity sha512-Km7/voqtWVrN+qDHktoYb7DIliW+eakglH4jyT7C0dxODW/gDrMi19yC0ATNM2+rtaj3e2i46pgZ3A5UCa+44Q==
+
 "@capacitor/app@^7.1.0":
   version "7.1.2"
   resolved "https://registry.npmjs.org/@capacitor/app/-/app-7.1.2.tgz"

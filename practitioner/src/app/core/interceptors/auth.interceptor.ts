@@ -14,6 +14,7 @@ import { Auth } from '../services/auth';
 import { TranslationService } from '../services/translation.service';
 import { ToasterService } from '../services/toaster.service';
 import { OfflineService } from '../services/offline.service';
+import { MaintenanceService } from '../services/maintenance.service';
 import { getErrorMessage } from '../utils/error-helper';
 
 export const SKIP_ERROR_TOAST = new HttpContextToken<boolean>(() => false);
@@ -46,6 +47,7 @@ export const authInterceptor: HttpInterceptorFn = (
   const translationService = inject(TranslationService);
   const toasterService = inject(ToasterService);
   const offlineService = inject(OfflineService);
+  const maintenanceService = inject(MaintenanceService);
 
   if (!req.url.startsWith(environment.apiUrl)) {
     return next(req);
@@ -63,6 +65,13 @@ export const authInterceptor: HttpInterceptorFn = (
       }
     }),
     catchError((error: HttpErrorResponse) => {
+      if (error.status === 503 && error.error?.status === 'maintenance') {
+        const retryAfterHeader = error.headers?.get('Retry-After');
+        const retryAfter = retryAfterHeader ? parseInt(retryAfterHeader, 10) : 0;
+        maintenanceService.setMaintenance(error.error?.detail, retryAfter);
+        return throwError(() => error);
+      }
+
       if (
         error.status === 401 &&
         error.error?.code === 'token_not_valid' &&
