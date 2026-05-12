@@ -1,62 +1,92 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
-   version="1.2"
-   viewBox="0 0 280.117 416.64999"
-   width="280.117"
-   height="416.64999"
-   id="svg1"
-   sodipodi:docname="logo-full.svg"
-   inkscape:version="1.4.2 (ebf0e940d0, 2025-05-08)"
+   viewBox="762 0 649.99998 650"
+   xml:space="preserve"
+   version="1.1"
+   id="svg4"
+   sodipodi:docname="logo.svg"
+   width="650"
+   height="650"
+   inkscape:version="1.4 (e7c3feb100, 2024-10-09)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns="http://www.w3.org/2000/svg"
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-   xmlns:cc="http://creativecommons.org/ns#"
-   xmlns:dc="http://purl.org/dc/elements/1.1/">
-  <sodipodi:namedview
-     id="namedview1"
+   xmlns:svg="http://www.w3.org/2000/svg"><defs
+     id="defs4"><linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient68"
+       id="linearGradient69"
+       x1="139.12762"
+       y1="227.06584"
+       x2="421.2977"
+       y2="430.17099"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(1732.8,749.25691)" /><linearGradient
+       id="linearGradient68"
+       inkscape:collect="always"><stop
+         style="stop-color:#2b7a9e;stop-opacity:1;"
+         offset="0"
+         id="stop68" /><stop
+         style="stop-color:#246583;stop-opacity:1;"
+         offset="1"
+         id="stop69" /></linearGradient></defs><sodipodi:namedview
+     id="namedview4"
      pagecolor="#ffffff"
-     bordercolor="#000000"
-     borderopacity="0.25"
+     bordercolor="#666666"
+     borderopacity="1.0"
      inkscape:showpageshadow="2"
      inkscape:pageopacity="0.0"
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
-     inkscape:zoom="0.7296875"
-     inkscape:cx="616.70236"
-     inkscape:cy="209.6788"
-     inkscape:window-width="3840"
-     inkscape:window-height="2091"
-     inkscape:window-x="0"
-     inkscape:window-y="32"
-     inkscape:window-maximized="1"
-     inkscape:current-layer="svg1" />
-  <title
-     id="title1">hcw</title>
-  <defs
-     id="defs1">
-    <image
-       width="437"
-       height="650"
-       id="img1"
-       href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxOS4wLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjxzdmcgdmVyc2lvbj0iMS4xIiBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeD0iMHB4IiB5PSIwcHgiDQoJIHZpZXdCb3g9Ijc2MiAwIDQzNi43IDY1MCIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyA3NjIgMCA0MzYuNyA2NTA7IiB4bWw6c3BhY2U9InByZXNlcnZlIj4NCjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+DQoJLnN0MHtmaWxsOnVybCgjU1ZHSURfMV8pO30NCgkuc3Qxe2ZpbGw6dXJsKCNYTUxJRF8zXyk7fQ0KPC9zdHlsZT4NCjxnPg0KCQ0KCQk8bGluZWFyR3JhZGllbnQgaWQ9IlNWR0lEXzFfIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjYyNi42OTUxIiB5MT0iNzA3LjQ5NjIiIHgyPSIxNjQxLjk0MiIgeTI9Ii01NzguNDgxNCIgZ3JhZGllbnRUcmFuc2Zvcm09Im1hdHJpeCgxIDAgMCAtMSAwIDY1MCkiPg0KCQk8c3RvcCAgb2Zmc2V0PSIwIiBzdHlsZT0ic3RvcC1jb2xvcjojMDBDNkZGIi8+DQoJCTxzdG9wICBvZmZzZXQ9IjEiIHN0eWxlPSJzdG9wLWNvbG9yOiMwMDcyRkYiLz4NCgk8L2xpbmVhckdyYWRpZW50Pg0KCTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik0xMTQ3LjEsNTI2LjRWMTUwLjFjMC0xNy45LTguOS0zNC42LTIzLjgtNDQuN0w5ODQuNywxMS45Yy0xOC4zLTEyLjMtNDEuOS0xMi4zLTYwLjIsMGwtMTM4LjcsOTMuNg0KCQljLTE0LjksMTAtMjMuOCwyNi43LTIzLjgsNDQuNnYzOTkuMWMwLDU1LjYsNDUuMiwxMDAuOCwxMDAuOCwxMDAuOGM1NS42LDAsMTAwLjgtNDUuMiwxMDAuOC0xMDAuOFY0MzYuNQ0KCQljNjEuMy00LjYsMTA5LjctNTUuOSwxMDkuNy0xMTguM1YxOTIuNGMwLTQuOS00LTguOS04LjktOC45di0xLjJIMTA0OGMtNi42LDAtMTEuOSw1LjMtMTEuOSwxMS45djI0LjVjMCw2LjYsNS4zLDExLjksMTEuOSwxMS45DQoJCWg3LjR2ODcuNmMwLDU1LjYtNDUuMiwxMDAuOC0xMDAuOCwxMDAuOGMtNTUuNiwwLTEwMC44LTQ1LjItMTAwLjgtMTAwLjh2LTg3LjZoNy40YzYuNiwwLDExLjktNS4zLDExLjktMTEuOXYtMjQuNQ0KCQljMC02LjYtNS4zLTExLjktMTEuOS0xMS45aC0xNi40djEuMmMtNC45LDAtOC45LDQtOC45LDguOXYxMjUuOGMwLDYyLjQsNDguNSwxMTMuNywxMDkuNywxMTguM3YxMTIuOGMwLDQ1LjctMzcuMiw4Mi45LTgyLjksODIuOQ0KCQlzLTgyLjktMzcuMi04Mi45LTgyLjlWMTUwLjFjMC0xMiw1LjktMjMuMSwxNS45LTI5LjhsMTM4LjctOTMuNWMxMi4yLTguMiwyOC04LjIsNDAuMiwwbDEzOC43LDkzLjVjOS45LDYuNywxNS45LDE3LjksMTUuOSwyOS44DQoJCXYzNzYuMmMtMjkuNyw0LjEtNTIuNywyOS43LTUyLjcsNjAuNWMwLDMzLjcsMjcuNCw2MS4xLDYxLjEsNjEuMXM2MS4xLTI3LjQsNjEuMS02MS4xQzExOTguNyw1NTYuMywxMTc2LjMsNTMxLDExNDcuMSw1MjYuNHoNCgkJIE0xMTM3LjYsNjMwYy0yMy44LDAtNDMuMi0xOS40LTQzLjItNDMuMnMxOS40LTQzLjIsNDMuMi00My4yYzIzLjgsMCw0My4yLDE5LjQsNDMuMiw0My4yQzExODAuOSw2MTAuNiwxMTYxLjUsNjMwLDExMzcuNiw2MzB6Ii8+DQoJDQoJCTxsaW5lYXJHcmFkaWVudCBpZD0iWE1MSURfM18iIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiB4MT0iNjI4LjA4MDYiIHkxPSI3MDguNTkwNCIgeDI9IjE2NDMuMzMwNyIgeTI9Ii01NzcuMzkxNCIgZ3JhZGllbnRUcmFuc2Zvcm09Im1hdHJpeCgxIDAgMCAtMSAwIDY1MCkiPg0KCQk8c3RvcCAgb2Zmc2V0PSIwIiBzdHlsZT0ic3RvcC1jb2xvcjojMDBDNkZGIi8+DQoJCTxzdG9wICBvZmZzZXQ9IjEiIHN0eWxlPSJzdG9wLWNvbG9yOiMwMDcyRkYiLz4NCgk8L2xpbmVhckdyYWRpZW50Pg0KCTxjaXJjbGUgaWQ9IlhNTElEXzFfIiBjbGFzcz0ic3QxIiBjeD0iMTEzNy42IiBjeT0iNTg2LjgiIHI9IjI1Ii8+DQo8L2c+DQo8L3N2Zz4NCg==" />
-  </defs>
-  <style
-     id="style1">
-		.s0 { fill: #009fff } 
-	</style>
-  <use
-     id="hcw-at-home-icon"
-     href="#img1"
-     transform="scale(0.641)" />
-  <metadata
-     id="metadata1">
-    <rdf:RDF>
-      <cc:Work
-         rdf:about="">
-        <dc:title>hcw</dc:title>
-      </cc:Work>
-    </rdf:RDF>
-  </metadata>
-</svg>
+     inkscape:zoom="0.38692308"
+     inkscape:cx="-316.6004"
+     inkscape:cy="188.66799"
+     inkscape:window-width="2447"
+     inkscape:window-height="1437"
+     inkscape:window-x="26"
+     inkscape:window-y="23"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg4" /><linearGradient
+     id="a"
+     gradientUnits="userSpaceOnUse"
+     x1="626.69501"
+     y1="707.49597"
+     x2="1641.942"
+     y2="-578.48102"
+     gradientTransform="matrix(1,0,0,-1,0,650)"><stop
+       offset="0"
+       style="stop-color:#00c6ff"
+       id="stop1" /><stop
+       offset="1"
+       style="stop-color:#0072ff"
+       id="stop2" /></linearGradient><linearGradient
+     id="b"
+     gradientUnits="userSpaceOnUse"
+     x1="628.08099"
+     y1="708.59003"
+     x2="1643.3311"
+     y2="-577.39099"
+     gradientTransform="matrix(1,0,0,-1,0,650)"><stop
+       offset="0"
+       style="stop-color:#00c6ff"
+       id="stop3" /><stop
+       offset="1"
+       style="stop-color:#0072ff"
+       id="stop4" /></linearGradient><g
+     id="g1"
+     transform="matrix(2.5587251,0,0,2.5587251,-4096.0824,-2385.6011)"><path
+       class="st0"
+       d="M 2111.8,1120.0122 V 1011.025 c 0,-9.2 -4.6,-17.9 -12.3,-23.1 l -71.5,-48.2 c -9.4,-6.3 -21.6,-6.3 -31.1,0 l -71.6,48.3 c -7.7,5.2 -12.3,13.8 -12.3,23 v 120.6872 c 0,28.7 23.3,52 52,52 28.7,0 52,-23.3 52,-52 v -7.4553 c 31.6,-2.4 56.6,-28.8 56.6,-61 v -43.517 c 0,-2.5 -2.1,-4.6 -4.6,-4.6 v -0.6 h -8.5 c -3.4,0 -6.1,2.7 -6.1,6.1 v 12.6 c 0,3.4 2.7,6.1 6.1,6.1 h 3.8 v 23.817 c 0,28.7 -23.3,52 -52,52 -28.7,0 -52,-23.3 -52,-52 v -23.817 h 3.8 c 3.4,0 6.1,-2.7 6.1,-6.1 v -12.6 c 0,-3.4 -2.7,-6.1 -6.1,-6.1 h -8.3 v 0.6 c -2.5,0 -4.6,2.1 -4.6,4.6 v 43.517 c 0,32.2 25,58.7 56.6,61 v 7.4553 c 0,23.6 -19.2,42.8 -42.8,42.8 -23.6,0 -42.8,-19.2 -42.8,-42.8 V 1010.925 c 0,-6.2 3,-11.9 8.2,-15.4 l 71.6,-48.2 c 6.3,-4.2 14.4,-4.2 20.7,0 l 71.6,48.2 c 5.1,3.5 8.2,9.2 8.2,15.4 v 108.8872 c -15.3,2.1 -27.2,15.3 -27.2,31.2 0,17.4 14.1,31.5 31.5,31.5 17.4,0 31.5,-14.1 31.5,-31.5 0.1,-15.6 -11.5,-28.7 -26.5,-31 z m -4.9,53.4 c -12.3,0 -22.3,-10 -22.3,-22.3 0,-12.3 10,-22.3 22.3,-22.3 12.3,0 22.3,10 22.3,22.3 0,12.3 -10,22.3 -22.3,22.3 z"
+       id="path2"
+       style="fill:url(#linearGradient69)"
+       sodipodi:nodetypes="csccccsssscssccsssscssscssssccsscssssccccscssccsssss" /><circle
+       id="XMLID_1_"
+       class="st1"
+       cx="2106.8999"
+       cy="1151.1991"
+       r="12.9"
+       style="fill:#246583;fill-opacity:1"
+       inkscape:export-filename="XMLID_1_.png"
+       inkscape:export-xdpi="300"
+       inkscape:export-ydpi="300" /></g></svg>
