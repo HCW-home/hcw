@@ -285,7 +285,7 @@ def release_room_pin_on_close(sender, instance: Consultation, created, **kwargs)
     from mediaserver.models import Server
 
     Server.clear_room_pin(instance.room_uuid)
-    for appointment in instance.appointment_set.all():
+    for appointment in instance.appointments.all():
         Server.clear_room_pin(appointment.room_uuid)
 
 
