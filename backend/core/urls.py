@@ -32,6 +32,7 @@ urlpatterns = [
     path('', include('users.urls')),
     path('', include('consultations.urls')),
     path('caldav/', include('caldav.urls')),
+    path('carddav/', include('carddav.urls')),
 ] + i18n_patterns(path('admin/', admin.site.urls))
 
 if settings.DEBUG:

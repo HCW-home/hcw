@@ -129,6 +129,7 @@ TENANT_APPS = (
     "api",
     "translations",
     "caldav",
+    "carddav",
     "encryption_admin",
 )
 
