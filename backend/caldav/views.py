@@ -12,7 +12,7 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
 from consultations.models import Appointment, AppointmentStatus, Participant
-from users.models import User
+from users.models import User, DAVAppPassword
 
 DAV = "DAV:"
 CALDAV = "urn:ietf:params:xml:ns:caldav"
@@ -146,7 +146,7 @@ def _parse_ics_datetime(value):
 
 
 def _get_user_from_request(request):
-    """Authenticate user via Basic Auth with email:password."""
+    """Authenticate via Basic Auth — mot de passe Django ou app password DAV."""
     from django.contrib.auth import authenticate
 
     auth_header = request.META.get("HTTP_AUTHORIZATION", "")
@@ -157,9 +157,13 @@ def _get_user_from_request(request):
         username, _, password = decoded.partition(":")
         if not password:
             return None
-        return authenticate(request, username=username, password=password)
     except Exception:
         return None
+    
+    user = authenticate(request, username=username, password=password)
+    if user:
+        return user
+    return DAVAppPassword.authenticate(username, password)
 
 
 def _require_auth(request):
