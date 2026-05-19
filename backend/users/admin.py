@@ -33,6 +33,7 @@ from unfold.widgets import UnfoldAdminColorInputWidget, UnfoldAdminLocationWidge
 from rest_framework.authtoken.models import TokenProxy
 
 from .models import (
+    DAVAppPassword,
     FCMDeviceOverride,
     HealthMetric,
     Language,
@@ -498,6 +499,13 @@ class HealthMetricAdmin(ModelAdmin):
     ordering = ["-measured_at"]
     autocomplete_fields = ["created_by", "user", "measured_by"]
 
+@admin.register(DAVAppPassword)
+class DAVAppPasswordAdmin(ModelAdmin):
+    list_display = ["user", "label", "is_active", "created_at", "last_used_at"]
+    list_filter = ["is_active"]
+    search_fields = ["user__email", "label"]
+    readonly_fields = ["token", "created_at", "last_used_at"]
+    fields = ["user", "label", "is_active", "token", "created_at", "last_used_at"]
 
 from django.contrib import admin
 from django_celery_beat.admin import ClockedScheduleAdmin as BaseClockedScheduleAdmin
