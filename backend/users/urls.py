@@ -28,7 +28,7 @@ user_router.register(
 )
 
 user_router.register(
-    r"dav-password", views.DAVAppPasswordViewSet, basename="user-dav-password"
+    r"dav-passwords", views.DAVAppPasswordViewSet, basename="user-dav-passwords"
 )
 
 urlpatterns = [
