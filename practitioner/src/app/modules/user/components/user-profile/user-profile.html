@@ -473,6 +473,83 @@
         </div>
       </div>
     </div>
+    } @if (activeTab() === 'dav') {
+    <div class="profile-card">
+
+      <div class="profile-section">
+        <h3 class="section-title">{{ 'userProfile.davUrls' | translate }}</h3>
+        <div class="calendar-feed-container">
+          <div class="calendar-feed-url">
+            <span class="feed-label">CalDAV</span>
+            <div class="feed-input-row">
+              <input type="text" [value]="caldavUrl" readonly class="feed-url-input" />
+              <button type="button" class="copy-btn" (click)="copyCaldavUrl()">
+                <app-svg [src]="caldavUrlCopied() ? 'check' : 'copy'" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+              </button>
+            </div>
+          </div>
+          <div class="calendar-feed-url" style="margin-top: 8px">
+            <span class="feed-label">CardDAV</span>
+            <div class="feed-input-row">
+              <input type="text" [value]="carddavUrl" readonly class="feed-url-input" />
+              <button type="button" class="copy-btn" (click)="copyCarddavUrl()">
+                <app-svg [src]="carddavUrlCopied() ? 'check' : 'copy'" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <h3 class="section-title">{{ 'userProfile.davNewPassword' | translate }}</h3>
+        <div class="feed-input-row">
+          <input type="text" class="form-input" [(ngModel)]="newDavPasswordLabel"
+            [placeholder]="'userProfile.davPasswordLabelPlaceholder' | translate" />
+          <app-button
+            [text]="'userProfile.davCreate' | translate"
+            [style]="ButtonStyleEnum.primary"
+            [size]="ButtonSizeEnum.small"
+            (buttonClick)="createDavPassword()">
+          </app-button>
+        </div>
+
+        @if (newlyCreatedToken()) {
+        <div class="calendar-hint" style="color: var(--green-600); margin-top: 8px">
+          <strong>{{ 'userProfile.davTokenOnce' | translate }}</strong><br/>
+          <code>{{ newlyCreatedToken() }}</code>
+          <button type="button" class="copy-btn" (click)="copyToken()">
+            <app-svg src="copy" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+          </button>
+        </div>
+        }
+      </div>
+
+      <div class="profile-section">
+        <h3 class="section-title">{{ 'userProfile.davPasswords' | translate }}</h3>
+        @if (isLoadingDavPasswords()) {
+          <app-loader></app-loader>
+        } @else if (davPasswords().length === 0) {
+          <p class="calendar-hint">{{ 'userProfile.davNoPasswords' | translate }}</p>
+        } @else {
+          @for (pw of davPasswords(); track pw.id) {
+          <div class="feed-input-row" style="margin-bottom: 8px">
+            <span class="feed-label" style="flex: 1">{{ pw.label }}</span>
+            <span class="calendar-hint" style="margin-right: 8px">
+              {{ pw.last_used_at ? (pw.last_used_at | date:'short') : ('userProfile.davNeverUsed' | translate) }}
+            </span>
+            <app-button
+              [text]="'userProfile.davRevoke' | translate"
+              [style]="ButtonStyleEnum.stroke"
+              [state]="ButtonStateEnum.error"
+              [size]="ButtonSizeEnum.small"
+              (buttonClick)="deleteDavPassword(pw.id)">
+            </app-button>
+          </div>
+          }
+        }
+      </div>
+
+    </div>
     }
   </div>
 </app-page>
