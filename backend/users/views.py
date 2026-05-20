@@ -73,7 +73,7 @@ from constance import config as constance_config
 from allauth.socialaccount.models import SocialApp
 
 from .filters import UserFilter
-from .models import HealthMetric, Language, Organisation, Speciality, Term, User, WebPushSubscription
+from .models import HealthMetric, Language, Organisation, Speciality, Term, User, WebPushSubscription, DAVAppPassword
 from .serializers import (
     HealthMetricSerializer,
     LanguageSerializer,
@@ -83,6 +83,7 @@ from .serializers import (
     UserDetailsSerializer,
     UserParticipantDetailSerializer,
     WebPushSubscriptionSerializer,
+    DAVAppPasswordSerializer,
 )
 from constance import config
 
@@ -1951,3 +1952,14 @@ class PractitionerViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         return self.queryset.filter(is_active=True)
+
+class DAVAppPasswordViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = DAVAppPasswordSerializer
+    http_method_names = ["get", "post", "delete", "head", "options"]
+
+    def get_queryset(self):
+        return DAVAppPassword.objects.filter(user=self.request.user)
+    
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

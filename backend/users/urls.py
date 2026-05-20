@@ -27,6 +27,10 @@ user_router.register(
     r"participants", views.UserParticipantViewSet, basename="user-participants"
 )
 
+user_router.register(
+    r"dav-password", views.DAVAppPasswordViewSet, basename="user-dav-password"
+)
+
 urlpatterns = [
     path("api/", include(router.urls)),
     path("api/auth/openid/", views.OpenIDView.as_view(), name="openid_login"),
