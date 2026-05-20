@@ -290,7 +290,17 @@
     "encryptionPassphraseMismatch": "La nouvelle phrase de passe et la confirmation ne correspondent pas.",
     "encryptionPassphraseChangedTitle": "Phrase de passe modifiée",
     "encryptionPassphraseChangedMessage": "Votre phrase de passe a été mise à jour.",
-    "encryptionInvalidOldPassphrase": "La phrase de passe actuelle est incorrecte."
+    "encryptionInvalidOldPassphrase": "La phrase de passe actuelle est incorrecte.",
+    "tabDav": "Synchronisation",
+    "davUrls": "URLs DAV",
+    "davNewPassword": "Nouveau mot de passe d'application",
+    "davPasswordLabelPlaceholder": "ex. iPhone, Thunderbird...",
+    "davCreate": "Créer",
+    "davTokenOnce": "Sauvegardez ce token maintenant, il ne sera plus affiché :",
+    "davPasswords": "Mots de passe d'application",
+    "davNoPasswords": "Aucun mot de passe d'application créé pour l'instant.",
+    "davNeverUsed": "Jamais utilisé",
+    "davRevoke": "Révoquer"
   },
   "consultationRowItem": {
     "untitledConsultation": "Suivi sans titre",

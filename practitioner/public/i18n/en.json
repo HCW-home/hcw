@@ -1065,7 +1065,17 @@
     "encryptionPassphraseMismatch": "The new passphrase and the confirmation do not match.",
     "encryptionPassphraseChangedTitle": "Passphrase changed",
     "encryptionPassphraseChangedMessage": "Your passphrase has been updated.",
-    "encryptionInvalidOldPassphrase": "The current passphrase is incorrect."
+    "encryptionInvalidOldPassphrase": "The current passphrase is incorrect.",
+    "tabDav": "Synchronization",
+    "davUrls": "DAV URLs",
+    "davNewPassword": "New Application Password",
+    "davPasswordLabelPlaceholder": "e.g. iPhone, Thunderbird...",
+    "davCreate": "Create",
+    "davTokenOnce": "Save this token now, it will not be shown again:",
+    "davPasswords": "Application Passwords",
+    "davNoPasswords": "No application passwords created yet.",
+    "davNeverUsed": "Never used",
+    "davRevoke": "Revoke"
   },
   "consultationRowItem": {
     "untitledConsultation": "Untitled Follow-up",
