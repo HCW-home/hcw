@@ -1,0 +1,49 @@
+<ion-content class="ion-padding">
+  <div class="picker-wrapper">
+    <h1>{{ 'instancePicker.title' | translate }}</h1>
+
+    <ng-container *ngIf="instances.length > 0; else emptyTpl">
+      <p class="subtitle">{{ 'instancePicker.knownSubtitle' | translate }}</p>
+      <ion-list>
+        <ion-item-sliding *ngFor="let instance of instances">
+          <ion-item button (click)="select(instance.host)">
+            <ion-icon name="business-outline" slot="start"></ion-icon>
+            <ion-label>
+              <h2>{{ instance.name || instance.host }}</h2>
+              <p *ngIf="instance.name">{{ instance.host }}</p>
+            </ion-label>
+          </ion-item>
+          <ion-item-options side="end">
+            <ion-item-option color="danger" (click)="remove(instance.host)">
+              {{ 'common.remove' | translate }}
+            </ion-item-option>
+          </ion-item-options>
+        </ion-item-sliding>
+      </ion-list>
+    </ng-container>
+
+    <ng-template #emptyTpl>
+      <p class="subtitle">{{ 'instancePicker.emptyHint' | translate }}</p>
+    </ng-template>
+
+    <div class="add-section">
+      <h3>{{ 'instancePicker.addTitle' | translate }}</h3>
+      <ion-item>
+        <ion-input
+          [(ngModel)]="newHost"
+          [placeholder]="'instancePicker.hostPlaceholder' | translate"
+          autocomplete="url"
+          autocapitalize="off"
+          inputmode="url"
+        ></ion-input>
+      </ion-item>
+      <ion-button
+        expand="block"
+        [disabled]="!newHost.trim() || adding"
+        (click)="addInstance()"
+      >
+        {{ (adding ? 'common.loading' : 'instancePicker.addButton') | translate }}
+      </ion-button>
+    </div>
+  </div>
+</ion-content>

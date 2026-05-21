@@ -201,3 +201,120 @@ Domain.objects.create(domain=f'localhost',tenant=tenant)
 | Backend (Django/Daphne) | http://127.0.0.1:8000 |
 | Practitioner frontend (`ng serve`) | http://127.0.0.1:4200 |
 | Patient frontend (`ng serve`) | http://127.0.0.1:8100 |
+
+### Building the Android app
+
+The patient frontend can be packaged as a native Android app via Capacitor.
+The native build expects **Java 21** and Android **compileSdk 35**.
+
+#### One-time prerequisites (Debian/Ubuntu)
+
+Enable the `contrib` component in your apt sources, then:
+
+```bash
+sudo apt install \
+  openjdk-21-jdk \
+  google-android-cmdline-tools-19.0-installer \
+  google-android-platform-tools-installer \
+  google-android-platform-35-installer \
+  google-android-build-tools-34.0.0-installer \
+  google-android-licenses
+```
+
+This installs the SDK to `/usr/lib/android-sdk/`.
+
+#### One-time project setup
+
+```bash
+cd patient/
+
+# Install JS dependencies
+yarn install
+
+# Tell Gradle where the SDK lives
+echo "sdk.dir=/usr/lib/android-sdk" > android/local.properties
+
+# Force Gradle to use Java 21 (independent of system default)
+echo "org.gradle.java.home=/usr/lib/jvm/java-21-openjdk-amd64" >> android/gradle.properties
+```
+
+#### Iabsis signing key (required for deeplinks to work)
+
+The native app verifies an Ed25519 signature served by each instance's
+`/api/identity/` before trusting it. You must embed the Iabsis CA public key
+in the app:
+
+```bash
+# On the Iabsis-controlled machine, generate the keypair once
+cd backend
+python manage.py hcw_keypair
+# Keep PRIVATE_KEY offline (e.g. ~/.hcw/iabsis_private_key.b64)
+# Copy PUBLIC_KEY into patient/src/app/core/security/iabsis-keys.ts
+```
+
+Each tenant must then receive a signature blob in its `instance_signature`
+Constance variable, generated with:
+
+```bash
+python manage.py hcw_sign \
+  --private-key-file ~/.hcw/iabsis_private_key.b64 \
+  --host <tenant-fqdn> \
+  --validity-days 365
+```
+
+#### Full rebuild (Angular + native)
+
+```bash
+cd patient/
+
+# 1. Build the Angular bundle
+npm run build
+
+# 2. Push the new web assets and plugin updates into the Android project
+npx cap sync android
+
+# 3. Stop any stale Gradle daemon (important after JVM changes)
+cd android
+./gradlew --stop
+
+# 4. Build the APK
+./gradlew clean
+./gradlew assembleDebug
+# Output: patient/android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+For a release build (signed):
+
+```bash
+./gradlew assembleRelease   # APK
+./gradlew bundleRelease     # AAB for Play Store
+```
+
+Requires a release keystore configured in `android/app/build.gradle`.
+
+#### Install on a connected device
+
+```bash
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+```
+
+#### Test a deeplink
+
+```bash
+adb shell am start -a android.intent.action.VIEW \
+  -d "hcw://<tenant-fqdn>/login?email=test@example.com" \
+  com.healthcare.patient
+
+# Watch Capacitor logs
+adb logcat -s Capacitor:V chromium:I
+```
+
+#### Common build issues
+
+| Error | Cause / Fix |
+|---|---|
+| `error: invalid source release: 21` | Gradle is using a JDK older than 21. Check `org.gradle.java.home` in `android/gradle.properties`, then `./gradlew --stop`. |
+| `SDK location not found` | `android/local.properties` is missing. Recreate with `sdk.dir=/usr/lib/android-sdk`. |
+| `cannot find symbol adjustMarginsForEdgeToEdge` | Capacitor packages are misaligned. Run `npm list @capacitor/android @capacitor/core` — every Capacitor package must share the same major (currently 7.6.x). |
+| `Failed to find target with hash string 'android-35'` | Install the platform: `sudo apt install google-android-platform-35-installer`. |
+| App opens but every deeplink shows "untrusted-instance" | Either `IABSIS_PUBLIC_KEY_B64` is empty in `iabsis-keys.ts`, or the tenant has no valid `instance_signature` in Constance. |

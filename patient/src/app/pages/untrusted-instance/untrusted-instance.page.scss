@@ -1,0 +1,39 @@
+.untrusted-wrapper {
+  max-width: 480px;
+  margin: 0 auto;
+  padding-top: 15vh;
+  text-align: center;
+
+  .shield-icon {
+    font-size: 64px;
+    color: var(--ion-color-danger, #c0392b);
+    margin-bottom: 16px;
+  }
+
+  h1 {
+    font-size: 1.4rem;
+    margin: 0 0 16px;
+  }
+
+  .host-line {
+    font-family: monospace;
+    background: var(--ion-color-light, #f4f4f4);
+    padding: 8px 12px;
+    border-radius: 6px;
+    word-break: break-all;
+    margin: 16px 0;
+  }
+
+  .reason {
+    color: var(--ion-color-medium, #6e6e6e);
+    margin-bottom: 24px;
+  }
+
+  .hint {
+    font-size: 0.9rem;
+    a {
+      color: var(--ion-color-primary);
+      text-decoration: underline;
+    }
+  }
+}

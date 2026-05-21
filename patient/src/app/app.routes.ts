@@ -16,6 +16,20 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/map/map.page').then(m => m.MapPage)
   },
   {
+    path: 'untrusted-instance',
+    loadComponent: () =>
+      import('./pages/untrusted-instance/untrusted-instance.page').then(
+        m => m.UntrustedInstancePage,
+      ),
+  },
+  {
+    path: 'instance-picker',
+    loadComponent: () =>
+      import('./pages/instance-picker/instance-picker.page').then(
+        m => m.InstancePickerPage,
+      ),
+  },
+  {
     path: 'login',
     loadComponent: () => import('./pages/login/login.page').then(m => m.LoginPage)
   },

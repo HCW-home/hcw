@@ -6,6 +6,7 @@
     "signUp": "Sign Up",
     "loading": "Loading...",
     "cancel": "Cancel",
+    "remove": "Remove",
     "close": "Close",
     "save": "Save",
     "error": "Error",
@@ -519,5 +520,28 @@
     "defaultMessage": "The service is temporarily unavailable for maintenance. Please try again later.",
     "autoRefresh": "This page will refresh automatically in {{seconds}} seconds.",
     "retry": "Refresh now"
+  },
+  "instancePicker": {
+    "title": "Choose your instance",
+    "knownSubtitle": "Recently connected instances",
+    "emptyHint": "No instance is set up yet. Add one below.",
+    "addTitle": "Add an instance",
+    "hostPlaceholder": "example.consult.hcw-at-home.com",
+    "addButton": "Add and connect",
+    "confirmRemoveTitle": "Remove instance?",
+    "confirmRemoveMessage": "Remove {{host}} from your saved instances?"
+  },
+  "untrustedInstance": {
+    "title": "Untrusted instance",
+    "hint": "If you are the operator of this instance, request a signature at",
+    "reason": {
+      "no-signature": "This instance has not been signed by the certification authority.",
+      "malformed-signature": "The signature returned by this instance is malformed.",
+      "host-mismatch": "The signature does not match this instance's domain.",
+      "expired": "The signature for this instance has expired.",
+      "invalid-signature": "The signature for this instance is invalid.",
+      "identity-probe-failed": "Could not reach this instance to verify its identity.",
+      "not-hcw-backend": "This server does not appear to be a HCW instance."
+    }
   }
 }

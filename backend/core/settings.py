@@ -872,6 +872,11 @@ CONSTANCE_CONFIG = {
         "",
         "SHA-256 hex fingerprint of the master public key (display only)",
     ),
+    "instance_signature": (
+        "",
+        "Platform certification blob (JSON) authorizing this host for the native app. "
+        "Get certificated on https://hcw-at-home.com/get-certificate/.",
+    ),
 }
 
 
@@ -886,7 +891,7 @@ CONSTANCE_CONFIG_FIELDSETS = {
         "default_appointment_duration_in_minutes",
     ),
     "Data Retention": ("consultation_auto_delete_hours", "temporary_user_auto_delete"),
-    "Security": ("temporary_participant_token_expiry_hours",),
+    "Security": ("temporary_participant_token_expiry_hours", "instance_signature"),
     "Uploads": ("max_upload_size_mb",),
     "Authentication": ("disable_password_login", "enable_registration"),
     "Visibility": ("users_visibility", "patient_visibility", "public_organisations"),

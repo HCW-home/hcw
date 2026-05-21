@@ -6,6 +6,7 @@
         "signUp": "S'inscrire",
         "loading": "Chargement...",
         "cancel": "Annuler",
+        "remove": "Retirer",
         "close": "Fermer",
         "save": "Enregistrer",
         "error": "Erreur",
@@ -519,5 +520,28 @@
         "defaultMessage": "Le service est temporairement indisponible pour maintenance. Veuillez r\u00e9essayer plus tard.",
         "autoRefresh": "Cette page se rafra\u00eechira automatiquement dans {{seconds}} secondes.",
         "retry": "Rafra\u00eechir maintenant"
+    },
+    "instancePicker": {
+        "title": "Choisissez votre instance",
+        "knownSubtitle": "Instances récemment utilisées",
+        "emptyHint": "Aucune instance configurée. Ajoutez-en une ci-dessous.",
+        "addTitle": "Ajouter une instance",
+        "hostPlaceholder": "exemple.consult.hcw-at-home.com",
+        "addButton": "Ajouter et se connecter",
+        "confirmRemoveTitle": "Retirer l’instance ?",
+        "confirmRemoveMessage": "Retirer {{host}} de vos instances enregistrées ?"
+    },
+    "untrustedInstance": {
+        "title": "Instance non v\u00e9rifi\u00e9e",
+        "hint": "Si vous \u00eates l\u2019op\u00e9rateur de cette instance, demandez une signature sur",
+        "reason": {
+            "no-signature": "Cette instance n\u2019a pas \u00e9t\u00e9 sign\u00e9e par l\u2019autorit\u00e9 de certification.",
+            "malformed-signature": "La signature renvoy\u00e9e par cette instance est invalide.",
+            "host-mismatch": "La signature ne correspond pas au domaine de cette instance.",
+            "expired": "La signature de cette instance a expir\u00e9.",
+            "invalid-signature": "La signature de cette instance est invalide.",
+            "identity-probe-failed": "Impossible de joindre cette instance pour v\u00e9rifier son identit\u00e9.",
+            "not-hcw-backend": "Ce serveur ne semble pas \u00eatre une instance HCW."
+        }
     }
 }

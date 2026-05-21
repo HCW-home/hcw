@@ -22,6 +22,48 @@ TOKEN_GRACE_PERIOD = timedelta(
 )
 
 
+class IdentityView(APIView):
+    """
+    Public, unauthenticated endpoint that identifies the backend as a genuine
+    HCW instance. Used by native apps to validate a deeplink host before
+    trusting it (and before sending any credentials).
+    """
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    @extend_schema(
+        summary="Backend identity probe",
+        description="Returns a known marker proving the host is a HCW backend.",
+        responses={
+            200: {
+                "description": "Identity payload",
+                "content": {
+                    "application/json": {
+                        "example": {
+                            "product": "hcw",
+                            "product_name": "HCW At Home",
+                        }
+                    }
+                },
+            },
+        },
+    )
+    def get(self, request):
+        from users.models import Organisation  # local import to avoid cycles
+
+        main_org = Organisation.objects.filter(is_main=True).first()
+        return Response(
+            {
+                "product": "hcw",
+                "product_name": "HCW At Home",
+                "instance_name": main_org.name if main_org else None,
+                # JSON blob signed by Iabsis: {"host","exp","sig"}. Empty if not set.
+                "signature": config.instance_signature or None,
+            }
+        )
+
+
 class AnonymousTokenAuthView(APIView):
     """
     Authenticate using auth_token and return JWT token.
