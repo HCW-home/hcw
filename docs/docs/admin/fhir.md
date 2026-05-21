@@ -22,7 +22,7 @@ Every model above carries a hidden `external_id` column. It stores the identifie
 
 This lets the external system **own its identifier namespace**: it never has to store HCW's primary keys to address a resource later.
 
-The `system` URL that distinguishes the external namespace from HCW's canonical one is configurable per resource via environment variables (see [Configuration](#configuration) below).
+The `system` URL that distinguishes the external namespace from HCW's canonical one is configured **per tenant** through the Constance admin (one entry per resource type — see [External system](#external-system) below).
 
 ## Creating a resource with an external identifier
 
