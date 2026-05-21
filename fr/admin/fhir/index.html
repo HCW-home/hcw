@@ -1461,7 +1461,7 @@
 <h2 id="the-external_id-field">The <code>external_id</code> field</h2>
 <p>Every model above carries a hidden <code>external_id</code> column. It stores the identifier used by the external system to refer to that resource. The column is invisible to the native JSON API — it never appears in nor accepts values from the standard DRF serializers — but it is read and written through the FHIR <code>identifier</code> array.</p>
 <p>This lets the external system <strong>own its identifier namespace</strong>: it never has to store HCW's primary keys to address a resource later.</p>
-<p>The <code>system</code> URL that distinguishes the external namespace from HCW's canonical one is configurable per resource via environment variables (see <a href="#configuration">Configuration</a> below).</p>
+<p>The <code>system</code> URL that distinguishes the external namespace from HCW's canonical one is configured <strong>per tenant</strong> through the Constance admin (one entry per resource type — see <a href="#external-system">External system</a> below).</p>
 <h2 id="creating-a-resource-with-an-external-identifier">Creating a resource with an external identifier</h2>
 <p>The external client posts a regular FHIR resource and lists its own identifier in the <code>identifier</code> array, tagged with the external <code>system</code> URL:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="err">POST /api/appointments/?format=fhir</span>
