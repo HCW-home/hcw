@@ -953,6 +953,57 @@ CONSTANCE_CONFIG_FIELDSETS = {
     ),
 }
 
+# Short HTML-safe description rendered at the top of each Constance tab in
+# the admin to give the operator a quick explanation of what the section
+# controls. Keys must match `CONSTANCE_CONFIG_FIELDSETS` titles.
+CONSTANCE_FIELDSET_DESCRIPTIONS = {
+    "General Options": (
+        "Site-wide branding and labels displayed throughout the platform."
+    ),
+    "URLs": (
+        "Public base URLs of the patient and practitioner frontends. Used by "
+        "reminders, e-mails and SMS — make sure they are reachable by your users."
+    ),
+    "Scheduling": (
+        "Reminders, default appointment duration, and the windows during "
+        "which participants are allowed to join or rejoin a call."
+    ),
+    "Data Retention": (
+        "Automatic clean-up policies for closed follow-ups and unused "
+        "temporary accounts."
+    ),
+    "Security": (
+        "Lifetime of one-time access tokens issued to temporary participants."
+    ),
+    "Uploads": "Maximum file size accepted for message attachments.",
+    "Authentication": (
+        "Toggles for password-based login and self-service registration. "
+        "Disable password login to force SSO."
+    ),
+    "Visibility": (
+        "Controls which users and patients each practitioner can see across "
+        "the platform."
+    ),
+    "Video Features": (
+        "Default media-server provider used by the frontends, plus optional "
+        "recording and live transcription."
+    ),
+    "Patient Management": (
+        "Defaults applied when creating new patient accounts."
+    ),
+    "Encryption": (
+        "Global toggle for end-to-end encryption of follow-ups and messages, "
+        "and the recovery master public key. See the Encryption admin page "
+        "for full details."
+    ),
+    "FHIR external identifiers": (
+        "<strong>OzoneHIS / OpenMRS integration.</strong> Identifier.system "
+        "URLs used by your external partner when posting FHIR resources. "
+        "Set each one to match the URL your partner emits — leave blank to "
+        "disable external-identifier handling for that resource type."
+    ),
+}
+
 # CORS Configuration
 CORS_ALLOW_ALL_ORIGINS = DEBUG  # Only allow all origins in DEBUG mode
 CORS_ALLOW_CREDENTIALS = True
