@@ -283,6 +283,19 @@ class User(AbstractUser):
         help_text="Whether to show the first login dialog asking for preferred language and communication methods",
     )
 
+    # Hidden from native API; only exposed via FHIR Patient/Practitioner.identifier.
+    external_id = models.CharField(
+        _("external id"),
+        max_length=255,
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text=_(
+            "Identifier from an external system (e.g. OpenMRS). "
+            "Hidden from native API; exposed only via FHIR identifier array."
+        ),
+    )
+
     notification_messages = GenericRelation("messaging.Message")
 
     @property
@@ -335,6 +348,13 @@ class User(AbstractUser):
 
     class Meta:
         ordering = ["first_name", "last_name", "email"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["external_id"],
+                condition=models.Q(external_id__isnull=False),
+                name="user_external_id_unique",
+            ),
+        ]
 
 
 class HealthMetric(models.Model):

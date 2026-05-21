@@ -28,6 +28,27 @@ user_router.register(
 )
 
 urlpatterns = [
+    # FHIR conditional operations on the collection URL — see consultations/urls.py.
+    path(
+        "api/patients/",
+        views.PatientViewSet.as_view({
+            "get": "list",
+            "post": "create",
+            "put": "update",
+            "delete": "destroy",
+        }),
+        name="patient-conditional",
+    ),
+    path(
+        "api/practitioners/",
+        views.PractitionerViewSet.as_view({
+            "get": "list",
+            "post": "create",
+            "put": "update",
+            "delete": "destroy",
+        }),
+        name="practitioner-conditional",
+    ),
     path("api/", include(router.urls)),
     path("api/auth/openid/", views.OpenIDView.as_view(), name="openid_login"),
     path('api/auth/send-verification-code/', views.SendVerificationCodeView.as_view()),

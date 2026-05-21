@@ -13,8 +13,13 @@ from fhir.resources.R4B.practitioner import Practitioner as FhirPractitioner
 
 from fhir_server.exceptions import FhirOperationError
 from fhir_server.mappers import FhirResourceMapper
-from fhir_server.references import build_identifier, build_reference, parse_reference
-from fhir_server.search import DateParam, RefParam, StringParam, TokenParam
+from fhir_server.references import (
+    build_identifier,
+    build_reference,
+    get_external_identifier_system,
+    parse_reference,
+)
+from fhir_server.search import DateParam, IdentifierParam, RefParam, StringParam, TokenParam
 
 from .models import Gender, Language, Organisation, Speciality, User
 
@@ -164,6 +169,13 @@ class _BaseUserFhirMapper(FhirResourceMapper):
 
     def build_identifiers(self, instance) -> list[dict]:
         identifiers = [build_identifier(self.resource_type, instance.pk)]
+        ext_sys = get_external_identifier_system(self.resource_type)
+        if ext_sys and instance.external_id:
+            identifiers.append({
+                "system": ext_sys,
+                "value": instance.external_id,
+                "use": "secondary",
+            })
         if instance.email:
             identifiers.append({
                 "system": "mailto",
@@ -237,6 +249,16 @@ class _BaseUserFhirMapper(FhirResourceMapper):
         if main_org is not None:
             instance.main_organisation = main_org
 
+        ext_sys = get_external_identifier_system(self.resource_type)
+        if ext_sys:
+            for ident in (parsed.identifier or []):
+                if (
+                    getattr(ident, "system", None) == ext_sys
+                    and getattr(ident, "value", None)
+                ):
+                    instance.external_id = ident.value
+                    break
+
         # Anonymous patients without contact info need the temporary flow.
         if instance.pk is None and not self.is_practitioner_value:
             if not instance.email and not instance.mobile_phone_number:
@@ -248,17 +270,33 @@ class _BaseUserFhirMapper(FhirResourceMapper):
         return instance
 
     def _resolve_upsert_target(self, parsed):
-        """Look up an existing User from the identifier list (FHIR upsert)."""
+        """Look up an existing User from the identifier list (FHIR upsert).
+
+        Resolves either the canonical HCW system (by pk) or the configured
+        external system (by external_id).
+        """
         identifiers = parsed.identifier or []
+        canonical_system = build_identifier(self.resource_type, 0)["system"]
+        external_system = get_external_identifier_system(self.resource_type)
         for ident in identifiers:
             system = getattr(ident, "system", None)
             value = getattr(ident, "value", None)
             if not value:
                 continue
-            if system == build_identifier(self.resource_type, 0)["system"]:
+            if system == canonical_system:
                 try:
-                    return User.objects.get(pk=int(value), is_practitioner=self.is_practitioner_value)
+                    return User.objects.get(
+                        pk=int(value), is_practitioner=self.is_practitioner_value,
+                    )
                 except (User.DoesNotExist, ValueError):
+                    return None
+            if external_system and system == external_system:
+                try:
+                    return User.objects.get(
+                        external_id=value,
+                        is_practitioner=self.is_practitioner_value,
+                    )
+                except User.DoesNotExist:
                     return None
         return None
 
@@ -300,7 +338,11 @@ class PatientFhirMapper(_BaseUserFhirMapper):
         "name": StringParam(fields=["first_name", "last_name"]),
         "family": StringParam(field="last_name"),
         "given": StringParam(field="first_name"),
-        "identifier": TokenParam(field="pk"),
+        "identifier": IdentifierParam(
+            canonical_field="pk",
+            external_field="external_id",
+            resource_type="Patient",
+        ),
         "email": TokenParam(field="email"),
         "phone": TokenParam(field="mobile_phone_number"),
         "birthdate": DateParam(field="date_of_birth"),
@@ -335,7 +377,11 @@ class PractitionerFhirMapper(_BaseUserFhirMapper):
         "name": StringParam(fields=["first_name", "last_name"]),
         "family": StringParam(field="last_name"),
         "given": StringParam(field="first_name"),
-        "identifier": TokenParam(field="pk"),
+        "identifier": IdentifierParam(
+            canonical_field="pk",
+            external_field="external_id",
+            resource_type="Practitioner",
+        ),
         "email": TokenParam(field="email"),
         "phone": TokenParam(field="mobile_phone_number"),
         "active": TokenParam(field="is_active"),

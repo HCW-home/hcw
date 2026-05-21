@@ -272,25 +272,36 @@ AUTHENTICATION_BACKENDS = [
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "core.authentication.TenantJWTAuthentication",
+        "rest_framework.authentication.TokenAuthentication",
     ),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
     "EXCEPTION_HANDLER": "fhir_server.exceptions.fhir_exception_handler",
 }
 
-# FHIR R4 server configuration (OzoneHIS / OpenMRS interop)
-FHIR_SYSTEM_BASE_URL = os.getenv(
-    "FHIR_SYSTEM_BASE_URL", "https://hcw.example/fhir"
-)
-FHIR_IDENTIFIER_SYSTEMS = {
-    "Patient": f"{FHIR_SYSTEM_BASE_URL}/ns/patient-id",
-    "Practitioner": f"{FHIR_SYSTEM_BASE_URL}/ns/practitioner-id",
-    "Organization": f"{FHIR_SYSTEM_BASE_URL}/ns/organization-id",
-    "Appointment": f"{FHIR_SYSTEM_BASE_URL}/ns/appointment-id",
-    "Encounter": f"{FHIR_SYSTEM_BASE_URL}/ns/encounter-id",
-    "MedicationRequest": f"{FHIR_SYSTEM_BASE_URL}/ns/medicationrequest-id",
-    "Observation": f"{FHIR_SYSTEM_BASE_URL}/ns/observation-id",
-    "ServiceRequest": f"{FHIR_SYSTEM_BASE_URL}/ns/servicerequest-id",
+# FHIR R4 server configuration (OzoneHIS / OpenMRS interop).
+#
+# The canonical Identifier.system URL is auto-derived from the current
+# tenant's primary Domain row as `<scheme>://<tenant-domain><path>/ns/<resource>-id`.
+# Set FHIR_SYSTEM_SCHEME / FHIR_SYSTEM_PATH to tune the scheme or the trailing
+# path. Set FHIR_SYSTEM_BASE_URL to a non-empty value to bypass derivation
+# entirely (single-tenant, or when every tenant must share one canonical URL).
+FHIR_SYSTEM_SCHEME = os.getenv("FHIR_SYSTEM_SCHEME", "https")
+FHIR_SYSTEM_PATH = os.getenv("FHIR_SYSTEM_PATH", "")
+FHIR_SYSTEM_BASE_URL = os.getenv("FHIR_SYSTEM_BASE_URL") or None
+# Per-resource overrides for the canonical system URL. Left empty so
+# `get_identifier_system()` derives from the dynamic base URL; populate this
+# dict only when you need a system URL that doesn't follow the default scheme.
+FHIR_IDENTIFIER_SYSTEMS = {}
+# Mapping of FHIR resource type -> Constance key holding the external system
+# URL for that resource. The actual URLs live in each tenant's Constance
+# config so they can be set per-tenant from the admin UI without redeploying.
+FHIR_EXTERNAL_IDENTIFIER_CONSTANCE_KEYS = {
+    "Appointment": "fhir_external_appointment_system",
+    "Encounter": "fhir_external_encounter_system",
+    "Patient": "fhir_external_patient_system",
+    "Practitioner": "fhir_external_practitioner_system",
+    "MedicationRequest": "fhir_external_medicationrequest_system",
 }
 FHIR_DEFAULT_COUNT = int(os.getenv("FHIR_DEFAULT_COUNT", 20))
 FHIR_MAX_COUNT = int(os.getenv("FHIR_MAX_COUNT", 100))
@@ -337,9 +348,22 @@ SPECTACULAR_SETTINGS = {
                 "type": "http",
                 "scheme": "bearer",
                 "bearerFormat": "JWT",
-            }
+            },
+            "tokenAuth": {  # DRF authtoken (admin -> Tokens)
+                "type": "apiKey",
+                "in": "header",
+                "name": "Authorization",
+                "description": (
+                    "DRF token generated from /admin/authtoken/tokenproxy/. "
+                    "Prefix the value with 'Token ' (e.g. 'Token abcdef123...')."
+                ),
+            },
         }
     },
+    "SECURITY": [
+        {"bearerAuth": []},
+        {"tokenAuth": []},
+    ],
     "SWAGGER_UI_SETTINGS": {
         "persistAuthorization": True,  # <-- keep JWT after refresh
         # "tryItOutEnabled": True,     # optional
@@ -872,6 +896,33 @@ CONSTANCE_CONFIG = {
         "",
         "SHA-256 hex fingerprint of the master public key (display only)",
     ),
+    "fhir_external_appointment_system": (
+        "https://ozonehis.example/ns/appointment-id",
+        "FHIR Identifier.system URL of the external partner for Appointment "
+        "resources. Identifiers under this system populate Appointment.external_id. "
+        "Replace the example value with the actual URL of your integration partner. "
+        "Leave blank to disable external-identifier handling for Appointment.",
+    ),
+    "fhir_external_encounter_system": (
+        "https://ozonehis.example/ns/encounter-id",
+        "FHIR Identifier.system URL of the external partner for Encounter "
+        "resources (Consultation in HCW). Leave blank to disable.",
+    ),
+    "fhir_external_patient_system": (
+        "https://ozonehis.example/ns/patient-id",
+        "FHIR Identifier.system URL of the external partner for Patient resources. "
+        "Leave blank to disable.",
+    ),
+    "fhir_external_practitioner_system": (
+        "https://ozonehis.example/ns/practitioner-id",
+        "FHIR Identifier.system URL of the external partner for Practitioner resources. "
+        "Leave blank to disable.",
+    ),
+    "fhir_external_medicationrequest_system": (
+        "https://ozonehis.example/ns/medicationrequest-id",
+        "FHIR Identifier.system URL of the external partner for MedicationRequest "
+        "resources (Prescription in HCW). Leave blank to disable.",
+    ),
 }
 
 
@@ -893,6 +944,13 @@ CONSTANCE_CONFIG_FIELDSETS = {
     "Video Features": ("primary_video_provider", "enable_video_recording", "enable_live_transcription", "whisper_model"),
     "Patient Management": ("force_temporary_patients",),
     "Encryption": ("encryption_enabled", "master_public_key", "master_public_key_fingerprint"),
+    "FHIR external identifiers": (
+        "fhir_external_appointment_system",
+        "fhir_external_encounter_system",
+        "fhir_external_patient_system",
+        "fhir_external_practitioner_system",
+        "fhir_external_medicationrequest_system",
+    ),
 }
 
 # CORS Configuration

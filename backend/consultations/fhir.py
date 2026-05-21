@@ -13,9 +13,16 @@ from fhir_server.mappers import FhirResourceMapper
 from fhir_server.references import (
     build_identifier,
     build_reference,
+    get_external_identifier_system,
     parse_reference,
 )
-from fhir_server.search import CallableParam, DateParam, RefParam, TokenParam
+from fhir_server.search import (
+    CallableParam,
+    DateParam,
+    IdentifierParam,
+    RefParam,
+    TokenParam,
+)
 
 from .models import (
     Appointment,
@@ -59,7 +66,11 @@ class AppointmentFhirMapper(FhirResourceMapper):
         "practitioner": RefParam(field="created_by"),
         "date": DateParam(field="scheduled_at"),
         "status": TokenParam(field="status", mapping={v: k for k, v in _STATUS_TO_FHIR.items()}),
-        "identifier": TokenParam(field="id"),
+        "identifier": IdentifierParam(
+            canonical_field="pk",
+            external_field="external_id",
+            resource_type="Appointment",
+        ),
         "_lastUpdated": DateParam(field="updated_at"),
     }
 
@@ -106,10 +117,19 @@ class AppointmentFhirMapper(FhirResourceMapper):
             if enc_ref:
                 supporting_info.append(enc_ref)
 
+        identifiers = [build_identifier("Appointment", instance.pk)]
+        ext_sys = get_external_identifier_system("Appointment")
+        if ext_sys and instance.external_id:
+            identifiers.append({
+                "use": "secondary",
+                "system": ext_sys,
+                "value": instance.external_id,
+            })
+
         kwargs = dict(
             resourceType="Appointment",
             id=str(instance.pk),
-            identifier=[build_identifier("Appointment", instance.pk)],
+            identifier=identifiers,
             status=_STATUS_TO_FHIR.get(instance.status, "pending"),
             start=instance.scheduled_at,
             end=instance.end_expected_at,
@@ -178,6 +198,16 @@ class AppointmentFhirMapper(FhirResourceMapper):
             instance.type = _CODE_TO_TYPE.get(code, instance.type or Type.online)
 
         instance.consultation = self._resolve_encounter_reference(parsed)
+
+        ext_sys = get_external_identifier_system("Appointment")
+        if ext_sys:
+            for ident in (parsed.identifier or []):
+                if (
+                    getattr(ident, "system", None) == ext_sys
+                    and getattr(ident, "value", None)
+                ):
+                    instance.external_id = ident.value
+                    break
 
         instance._fhir_participants_pending = list(parsed.participant or [])
         return instance
@@ -320,7 +350,17 @@ class EncounterFhirMapper(FhirResourceMapper):
         "practitioner": RefParam(field="created_by"),
         "participant": RefParam(field="created_by"),
         "date": DateParam(field="created_at"),
-        "identifier": TokenParam(field="id"),
+        "identifier": IdentifierParam(
+            canonical_field="pk",
+            external_field="external_id",
+            resource_type="Encounter",
+        ),
+        # Find Encounters by the linked Appointment id or external_id.
+        "appointment": IdentifierParam(
+            canonical_field="appointments__pk",
+            external_field="appointments__external_id",
+            resource_type="Appointment",
+        ),
         "_lastUpdated": DateParam(field="updated_at"),
         "status": CallableParam(build=lambda raw, mod: _encounter_status_filter(raw)),
     }
@@ -407,10 +447,19 @@ class EncounterFhirMapper(FhirResourceMapper):
             for appt in instance.appointments.all()
         ]
 
+        identifiers = [build_identifier("Encounter", instance.pk)]
+        ext_sys = get_external_identifier_system("Encounter")
+        if ext_sys and instance.external_id:
+            identifiers.append({
+                "use": "secondary",
+                "system": ext_sys,
+                "value": instance.external_id,
+            })
+
         kwargs = dict(
             resourceType="Encounter",
             id=str(instance.pk),
-            identifier=[build_identifier("Encounter", instance.pk)],
+            identifier=identifiers,
             status=status,
             **{"class": klass},
             period=period,
@@ -484,6 +533,16 @@ class EncounterFhirMapper(FhirResourceMapper):
         if not instance.title and payload.get("text", {}).get("div"):
             instance.title = payload["text"]["div"]
 
+        ext_sys = get_external_identifier_system("Encounter")
+        if ext_sys:
+            for ident in (parsed.identifier or []):
+                if (
+                    getattr(ident, "system", None) == ext_sys
+                    and getattr(ident, "value", None)
+                ):
+                    instance.external_id = ident.value
+                    break
+
         return instance
 
     def soft_delete(self, instance, *, context=None):
@@ -529,7 +588,11 @@ class PrescriptionFhirMapper(FhirResourceMapper):
             mapping={v: k for k, v in _PRESCRIPTION_STATUS_TO_FHIR.items()},
         ),
         "authored": DateParam(field="created_at"),
-        "identifier": TokenParam(field="id"),
+        "identifier": IdentifierParam(
+            canonical_field="pk",
+            external_field="external_id",
+            resource_type="MedicationRequest",
+        ),
         "_lastUpdated": DateParam(field="updated_at"),
     }
 
@@ -592,10 +655,19 @@ class PrescriptionFhirMapper(FhirResourceMapper):
         if dosage_text:
             dosage_instructions.append({"text": dosage_text})
 
+        identifiers = [build_identifier("MedicationRequest", instance.pk)]
+        ext_sys = get_external_identifier_system("MedicationRequest")
+        if ext_sys and instance.external_id:
+            identifiers.append({
+                "use": "secondary",
+                "system": ext_sys,
+                "value": instance.external_id,
+            })
+
         kwargs = dict(
             resourceType="MedicationRequest",
             id=str(instance.pk),
-            identifier=[build_identifier("MedicationRequest", instance.pk)],
+            identifier=identifiers,
             status=_PRESCRIPTION_STATUS_TO_FHIR.get(instance.status, "draft"),
             intent="order",
             medicationCodeableConcept={"text": instance.medication_name},
@@ -698,6 +770,16 @@ class PrescriptionFhirMapper(FhirResourceMapper):
         if parsed.note:
             notes = "\n".join(n.text for n in parsed.note if n.text)
             instance.notes = notes
+
+        ext_sys = get_external_identifier_system("MedicationRequest")
+        if ext_sys:
+            for ident in (parsed.identifier or []):
+                if (
+                    getattr(ident, "system", None) == ext_sys
+                    and getattr(ident, "value", None)
+                ):
+                    instance.external_id = ident.value
+                    break
 
         return instance
 

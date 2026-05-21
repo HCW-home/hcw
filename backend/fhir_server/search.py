@@ -66,6 +66,88 @@ class TokenParam(SearchParam):
 
 
 @dataclass
+class IdentifierParam(SearchParam):
+    """FHIR Identifier token search supporting `system|value` syntax.
+
+    Routes lookups based on which system the caller specifies:
+    - `<canonical-system>|value` → match `canonical_field` (HCW pk)
+    - `<external-system>|value`  → match `external_field` (e.g. external_id)
+    - `|value` (empty system)    → canonical only
+    - bare `value` (no pipe):
+        * numeric → match canonical OR external (backward-compat)
+        * non-numeric → match external only
+    The system URLs are resolved lazily from settings via `resource_type`,
+    so per-tenant overrides via `FHIR_SYSTEM_BASE_URL_BY_TENANT` remain honoured.
+    """
+
+    type: str = "token"
+    canonical_field: str = "pk"
+    external_field: str | None = None
+    resource_type: str = ""
+
+    def to_q(self, raw_value: str, modifier: str | None) -> Q:
+        from .references import (
+            get_external_identifier_system,
+            get_identifier_system,
+            split_token,
+        )
+
+        canonical_sys = (
+            get_identifier_system(self.resource_type) if self.resource_type else None
+        )
+        external_sys = (
+            get_external_identifier_system(self.resource_type)
+            if self.resource_type and self.external_field
+            else None
+        )
+
+        q = Q()
+        empty = True
+        for chunk in raw_value.split(","):
+            chunk = chunk.strip()
+            if not chunk:
+                continue
+            system, value = split_token(chunk)
+            piece = self._chunk_q(system, value, canonical_sys, external_sys)
+            q |= piece
+            empty = False
+        if empty:
+            return Q()
+        if modifier == "not":
+            q = ~q
+        return q & (self.extra or Q())
+
+    def _chunk_q(self, system, value, canonical_sys, external_sys) -> Q:
+        if system == canonical_sys and canonical_sys is not None:
+            return self._canonical_q(value)
+        if (
+            external_sys is not None
+            and self.external_field
+            and system == external_sys
+        ):
+            return Q(**{f"{self.external_field}__iexact": value})
+        if system == "":
+            return self._canonical_q(value)
+        if system is None:
+            if self.external_field and not value.isdigit():
+                return Q(**{f"{self.external_field}__iexact": value})
+            if self.external_field and value.isdigit():
+                return self._canonical_q(value) | Q(
+                    **{f"{self.external_field}__iexact": value}
+                )
+            return self._canonical_q(value)
+        # Unknown system → no match.
+        return Q(pk__in=[])
+
+    def _canonical_q(self, value) -> Q:
+        try:
+            int(value)
+        except (TypeError, ValueError):
+            return Q(pk__in=[])
+        return Q(**{self.canonical_field: value})
+
+
+@dataclass
 class StringParam(SearchParam):
     type: str = "string"
     fields: list[str] | None = None  # if set, overrides `field`
@@ -181,6 +263,7 @@ def apply_fhir_search(queryset, query_params, mapper) -> tuple:
     control: dict = {"_count": None, "_sort": [], "_include": [], "_revinclude": []}
 
     filter_q = Q()
+    needs_distinct = False
     for raw_key, raw_values in query_params.lists():
         if raw_key in ("format", "_format", "page", "page_size"):
             continue
@@ -220,9 +303,19 @@ def apply_fhir_search(queryset, query_params, mapper) -> tuple:
 
         for value in raw_values:
             filter_q &= spec[name].to_q(value, modifier)
+        param = spec[name]
+        # When the param crosses a reverse relation we may produce duplicate
+        # rows after the join — apply distinct() once at the end.
+        for attr in ("field", "canonical_field", "external_field"):
+            field_value = getattr(param, attr, None)
+            if isinstance(field_value, str) and "__" in field_value:
+                needs_distinct = True
+                break
 
     if filter_q:
         queryset = queryset.filter(filter_q)
+    if needs_distinct:
+        queryset = queryset.distinct()
 
     if control["_sort"]:
         ordering = []

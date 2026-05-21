@@ -154,12 +154,32 @@ class Consultation(models.Model):
         help_text=_("Consultation private key wrapped (envelope) with the platform master pubkey for admin recovery."),
     )
 
+    # Hidden from native API; only exposed via FHIR Encounter.identifier.
+    external_id = models.CharField(
+        _("external id"),
+        max_length=255,
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text=_(
+            "Identifier from an external system (e.g. OpenMRS). "
+            "Hidden from native API; exposed only via FHIR identifier array."
+        ),
+    )
+
     objects = ConsultationManager()
 
     class Meta:
         verbose_name = _("consultation")
         verbose_name_plural = _("consultations")
         ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["external_id"],
+                condition=models.Q(external_id__isnull=False),
+                name="consultation_external_id_unique",
+            ),
+        ]
 
     def __str__(self):
         return f"Consultation #{self.pk}"
@@ -216,6 +236,19 @@ class Appointment(models.Model):
         help_text=_("JSON array of transcript lines with timestamps and speakers"),
     )
 
+    # Hidden from native API; only exposed via FHIR Appointment.identifier.
+    external_id = models.CharField(
+        _("external id"),
+        max_length=255,
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text=_(
+            "Identifier from an external system (e.g. OpenMRS). "
+            "Hidden from native API; exposed only via FHIR identifier array."
+        ),
+    )
+
     @property
     def active_participants(self):
         return self.participants.filter(is_active=True)
@@ -228,6 +261,13 @@ class Appointment(models.Model):
             models.Index(
                 fields=["updated_at", "scheduled_at"],
                 name="appt_updat_sched_idx",
+            ),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["external_id"],
+                condition=models.Q(external_id__isnull=False),
+                name="appointment_external_id_unique",
             ),
         ]
 
@@ -706,10 +746,30 @@ class Prescription(models.Model):
     instructions = models.TextField(_("instructions"), null=True, blank=True)
     notes = models.TextField(_("notes"), null=True, blank=True)
 
+    # Hidden from native API; only exposed via FHIR MedicationRequest.identifier.
+    external_id = models.CharField(
+        _("external id"),
+        max_length=255,
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text=_(
+            "Identifier from an external system (e.g. OpenMRS). "
+            "Hidden from native API; exposed only via FHIR identifier array."
+        ),
+    )
+
     class Meta:
         verbose_name = _("prescription")
         verbose_name_plural = _("prescriptions")
         ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["external_id"],
+                condition=models.Q(external_id__isnull=False),
+                name="prescription_external_id_unique",
+            ),
+        ]
 
     def __str__(self):
         return f"Prescription #{self.pk} - {self.medication_name} for {self.patient}"
