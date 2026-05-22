@@ -146,7 +146,7 @@ def _parse_ics_datetime(value):
 
 
 def _get_user_from_request(request):
-    """Authenticate via Basic Auth — mot de passe Django ou app password DAV."""
+    """Authenticate via Basic Auth with email:password or DAVAppPassword."""
     from django.contrib.auth import authenticate
 
     auth_header = request.META.get("HTTP_AUTHORIZATION", "")
@@ -198,83 +198,7 @@ def _appointment_etag(appointment):
 
 def _href_for_appointment(appointment):
     domain = getattr(settings, "SITE_DOMAIN", "hcw.local")
-    return f"/caldav/calendar/appointment-{appointment.pk}@{domain}.ics"
-
-
-@method_decorator(csrf_exempt, name="dispatch")
-class CalDAVDiscoveryView(View):
-    """Handle well-known CalDAV redirect and principal discovery."""
-
-    def dispatch(self, request, *args, **kwargs):
-        if request.method == "OPTIONS":
-            return self._options_response()
-        if request.method == "PROPFIND":
-            return self._propfind(request)
-        return HttpResponse(status=405)
-
-    def _options_response(self):
-        response = HttpResponse()
-        response["DAV"] = "1, calendar-access"
-        response["Allow"] = "OPTIONS, PROPFIND"
-        return response
-
-    def _propfind(self, request):
-        user, err = _require_auth(request)
-        if err:
-            return err
-
-        multistatus = ET.Element(_tag(DAV, "multistatus"))
-        resp = ET.SubElement(multistatus, _tag(DAV, "response"))
-        ET.SubElement(resp, _tag(DAV, "href")).text = "/caldav/"
-        propstat = ET.SubElement(resp, _tag(DAV, "propstat"))
-        prop = ET.SubElement(propstat, _tag(DAV, "prop"))
-
-        ET.SubElement(prop, _tag(DAV, "current-user-principal")).append(
-            _make_href("/caldav/principal/")
-        )
-        ET.SubElement(prop, _tag(DAV, "resourcetype")).append(
-            ET.Element(_tag(DAV, "collection"))
-        )
-
-        ET.SubElement(propstat, _tag(DAV, "status")).text = "HTTP/1.1 200 OK"
-
-        return _multistatus_response(multistatus)
-
-
-@method_decorator(csrf_exempt, name="dispatch")
-class CalDAVPrincipalView(View):
-    """Handle principal PROPFIND to return calendar-home-set."""
-
-    def dispatch(self, request, *args, **kwargs):
-        if request.method == "PROPFIND":
-            return self._propfind(request)
-        if request.method == "OPTIONS":
-            response = HttpResponse()
-            response["DAV"] = "1, calendar-access"
-            response["Allow"] = "OPTIONS, PROPFIND"
-            return response
-        return HttpResponse(status=405)
-
-    def _propfind(self, request):
-        user, err = _require_auth(request)
-        if err:
-            return err
-
-        multistatus = ET.Element(_tag(DAV, "multistatus"))
-        resp = ET.SubElement(multistatus, _tag(DAV, "response"))
-        ET.SubElement(resp, _tag(DAV, "href")).text = "/caldav/principal/"
-        propstat = ET.SubElement(resp, _tag(DAV, "propstat"))
-        prop = ET.SubElement(propstat, _tag(DAV, "prop"))
-
-        ET.SubElement(prop, _tag(DAV, "displayname")).text = (
-            f"{user.first_name} {user.last_name}".strip() or user.email
-        )
-        home_set = ET.SubElement(prop, _tag(CALDAV, "calendar-home-set"))
-        home_set.append(_make_href("/caldav/calendar/"))
-
-        ET.SubElement(propstat, _tag(DAV, "status")).text = "HTTP/1.1 200 OK"
-
-        return _multistatus_response(multistatus)
+    return f"/dav/calendar/appointment-{appointment.pk}@{domain}.ics"
 
 
 @method_decorator(csrf_exempt, name="dispatch")
@@ -321,7 +245,7 @@ class CalDAVCalendarView(View):
 
         # Collection itself
         resp = ET.SubElement(multistatus, _tag(DAV, "response"))
-        ET.SubElement(resp, _tag(DAV, "href")).text = "/caldav/calendar/"
+        ET.SubElement(resp, _tag(DAV, "href")).text = "/dav/calendar/"
         propstat = ET.SubElement(resp, _tag(DAV, "propstat"))
         prop = ET.SubElement(propstat, _tag(DAV, "prop"))
 
@@ -610,12 +534,6 @@ class CalDAVCalendarView(View):
             .select_related("consultation", "created_by")
             .first()
         )
-
-
-def _make_href(path):
-    el = ET.Element(_tag(DAV, "href"))
-    el.text = path
-    return el
 
 
 def _make_comp(name):

@@ -31,8 +31,9 @@ urlpatterns = [
     path('', include('django.contrib.auth.urls')),
     path('', include('users.urls')),
     path('', include('consultations.urls')),
-    path('caldav/', include('caldav.urls')),
-    path('carddav/', include('carddav.urls')),
+    path('dav/', include('dav.urls')),
+    path('dav/', include('caldav.urls')),
+    path('dav/', include('carddav.urls')),
 ] + i18n_patterns(path('admin/', admin.site.urls))
 
 if settings.DEBUG:

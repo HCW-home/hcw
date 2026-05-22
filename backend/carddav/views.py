@@ -1,8 +1,6 @@
 import base64
 import uuid
-from datetime import timedelta
 from xml.etree import ElementTree as ET
-from zoneinfo import ZoneInfo
 
 from django.conf import settings
 from django.http import HttpResponse
@@ -11,7 +9,6 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
-from consultations.models import Appointment, AppointmentStatus, Participant
 from users.models import User, DAVAppPassword
 
 DAV = "DAV:"
@@ -24,7 +21,7 @@ def _tag(ns, local):
     return f"{{{ns}}}{local}"
 
 def _get_user_from_request(request):
-    """Authenticate via Basic Auth — mot de passe Django ou app password DAV."""
+    """Authenticate via Basic Auth with email:password or DAVAppPassword."""
     from django.contrib.auth import authenticate
 
     auth_header = request.META.get("HTTP_AUTHORIZATION", "")
@@ -100,7 +97,7 @@ def _user_etag(user):
 
 def _href_for_user(user):
     role = "practitioner" if user.is_practitioner else "patient"
-    return f"/carddav/addressbook/{role}-{user.pk}.vcf"
+    return f"/dav/addressbook/{role}-{user.pk}.vcf"
 
 def _get_visible_contacts(user):
     """
@@ -138,81 +135,8 @@ def _multistatus_response(multistatus):
         xml_str, content_type="application/xml; charset=utf-8", status=207
     )
     response["DAV"] = "1, addressbook"
-    return
+    return response
 
-@method_decorator(csrf_exempt, name="dispatch")
-class CardDAVDiscoveryView(View):
-    """Handle CardDAV root discovery."""
-
-    def dispatch(self, request, *args, **kwargs):
-        if request.method == "OPTIONS":
-            return self._options_response()
-        if request.method == "PROPFIND":
-            return self._propfind(request)
-        return HttpResponse(status=405)
-
-    def _options_response(self):
-        response = HttpResponse()
-        response["DAV"] = "1, addressbook"
-        response["Allow"] = "OPTIONS, PROPFIND"
-        return response
-
-    def _propfind(self, request):
-        user, err = _require_auth(request)
-        if err:
-            return err
-
-        multistatus = ET.Element(_tag(DAV, "multistatus"))
-        resp = ET.SubElement(multistatus, _tag(DAV, "response"))
-        ET.SubElement(resp, _tag(DAV, "href")).text = "/carddav/"
-        propstat = ET.SubElement(resp, _tag(DAV, "propstat"))
-        prop = ET.SubElement(propstat, _tag(DAV, "prop"))
-
-        ET.SubElement(prop, _tag(DAV, "current-user-principal")).append(
-            _make_href("/carddav/principal/")
-        )
-        ET.SubElement(prop, _tag(DAV, "resourcetype")).append(
-            ET.Element(_tag(DAV, "collection"))
-        )
-
-        ET.SubElement(propstat, _tag(DAV, "status")).text = "HTTP/1.1 200 OK"
-
-        return _multistatus_response(multistatus)
-
-@method_decorator(csrf_exempt, name="dispatch")
-class CardDAVPrincipalView(View):
-    """Handle principal PROPFIND to return addressbook-home-set."""
-
-    def dispatch(self, request, *args, **kwargs):
-        if request.method == "PROPFIND":
-            return self._propfind(request)
-        if request.method == "OPTIONS":
-            response = HttpResponse()
-            response["DAV"] = "1, addressbook"
-            response["Allow"] = "OPTIONS, PROPFIND"
-            return response
-        return HttpResponse(status=405)
-
-    def _propfind(self, request):
-        user, err = _require_auth(request)
-        if err:
-            return err
-
-        multistatus = ET.Element(_tag(DAV, "multistatus"))
-        resp = ET.SubElement(multistatus, _tag(DAV, "response"))
-        ET.SubElement(resp, _tag(DAV, "href")).text = "/carddav/principal/"
-        propstat = ET.SubElement(resp, _tag(DAV, "propstat"))
-        prop = ET.SubElement(propstat, _tag(DAV, "prop"))
-
-        ET.SubElement(prop, _tag(DAV, "displayname")).text = (
-            f"{user.first_name} {user.last_name}".strip() or user.email
-        )
-        home_set = ET.SubElement(prop, _tag(CARDDAV, "addressbook-home-set"))
-        home_set.append(_make_href("/carddav/addressbook/"))
-
-        ET.SubElement(propstat, _tag(DAV, "status")).text = "HTTP/1.1 200 OK"
-
-        return _multistatus_response(multistatus)
 
 @method_decorator(csrf_exempt, name="dispatch")
 class CardDAVAddressbookView(View):
@@ -253,7 +177,7 @@ class CardDAVAddressbookView(View):
 
         # Collection itself
         resp = ET.SubElement(multistatus, _tag(DAV, "response"))
-        ET.SubElement(resp, _tag(DAV, "href")).text = "/carddav/addressbook/"
+        ET.SubElement(resp, _tag(DAV, "href")).text = "/dav/addressbook/"
         propstat = ET.SubElement(resp, _tag(DAV, "propstat"))
         prop = ET.SubElement(propstat, _tag(DAV, "prop"))
 
