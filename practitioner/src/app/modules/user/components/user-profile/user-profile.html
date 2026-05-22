@@ -501,19 +501,14 @@
       </div>
 
       <div class="profile-section">
-        <h3 class="section-title">{{ 'userProfile.davNewPassword' | translate }}</h3>
-        <div class="dav-create-row">
-          <input type="text" class="form-input" [(ngModel)]="newDavPasswordLabel"
-            [placeholder]="'userProfile.davPasswordLabelPlaceholder' | translate" />
-          <app-button
-            [text]="'userProfile.davCreate' | translate"
-            [style]="ButtonStyleEnum.primary"
-            [size]="ButtonSizeEnum.small"
-            (buttonClick)="createDavPassword()">
-          </app-button>
-        </div>
+        <h3 class="section-title">{{ 'userProfile.davPasswords' | translate }}</h3>
+        <p class="section-description">{{ 'userProfile.davExplanation' | translate }}</p>
 
-        @if (newlyCreatedToken()) {
+        @if (isLoadingDavPasswords()) {
+          <app-loader></app-loader>
+        } @else {
+
+      @if (newlyCreatedToken()) {
         <div class="dav-token-box">
           <div class="dav-token-label">
             <app-svg src="warning" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
@@ -526,21 +521,26 @@
             </button>
           </div>
         </div>
-        }
-      </div>
+      }
 
-      <div class="profile-section">
-        <h3 class="section-title">{{ 'userProfile.davPasswords' | translate }}</h3>
-        @if (isLoadingDavPasswords()) {
-          <app-loader></app-loader>
-        } @else if (davPasswords().length === 0) {
-          <p class="calendar-hint">{{ 'userProfile.davNoPasswords' | translate }}</p>
-        } @else {
-          @for (pw of davPasswords(); track pw.id) {
+      @if (davPasswords().length === 0 && !showCreateDavForm()) {
+        <div class="dav-empty-state">
+          <p class="section-description">{{ 'userProfile.davNoPasswords' | translate }}</p>
+          <app-button
+            [text]="'userProfile.davCreate' | translate"
+            [style]="ButtonStyleEnum.primary"
+            [size]="ButtonSizeEnum.small"
+            (buttonClick)="showCreateDavForm.set(true)">
+          </app-button>
+        </div>
+      }
+
+      @if (davPasswords().length > 0) {
+        @for (pw of davPasswords(); track pw.id) {
           <div class="feed-input-row" style="margin-bottom: 8px">
             <span class="feed-label" style="flex: 1">{{ pw.label }}</span>
-            <span class="calendar-hint" style="margin-right: 8px">
-              {{ pw.last_used_at ? (pw.last_used_at | date:'short') : ('userProfile.davNeverUsed' | translate) }}
+            <span class="section-description" style="margin-right: 8px">
+              · {{ pw.last_used_at ? (pw.last_used_at | date:'short') : ('userProfile.davNeverUsed' | translate) }}
             </span>
             <app-button
               [text]="'userProfile.davRevoke' | translate"
@@ -550,11 +550,42 @@
               (buttonClick)="deleteDavPassword(pw.id)">
             </app-button>
           </div>
-          }
         }
-      </div>
+        @if (!showCreateDavForm()) {
+          <app-button
+            [text]="'userProfile.davCreate' | translate"
+            [style]="ButtonStyleEnum.primary"
+            [size]="ButtonSizeEnum.small"
+            (buttonClick)="showCreateDavForm.set(true)">
+          </app-button>
+        }
+      }
 
-    </div>
+      @if (showCreateDavForm()) {
+        <div class="dav-create-form">
+          <div class="dav-create-row">
+            <input type="text" class="form-input" [(ngModel)]="newDavPasswordLabel"
+              [placeholder]="'userProfile.davPasswordLabelPlaceholder' | translate" />
+            <app-button
+              [text]="'userProfile.davConfirmCreate' | translate"
+              [style]="ButtonStyleEnum.primary"
+              [size]="ButtonSizeEnum.small"
+              (buttonClick)="createDavPassword()">
+            </app-button>
+            <app-button
+              [text]="'userProfile.cancel' | translate"
+              [style]="ButtonStyleEnum.stroke"
+              [size]="ButtonSizeEnum.small"
+              (buttonClick)="showCreateDavForm.set(false)">
+            </app-button>
+          </div>
+        </div>
+      }
+
     }
   </div>
+
+</div>
+}
+</div>
 </app-page>

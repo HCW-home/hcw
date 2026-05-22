@@ -293,14 +293,15 @@
     "encryptionInvalidOldPassphrase": "La phrase de passe actuelle est incorrecte.",
     "tabDav": "Synchronisation",
     "davUrls": "URLs DAV",
-    "davNewPassword": "Nouveau mot de passe d'application",
     "davPasswordLabelPlaceholder": "ex. iPhone, Thunderbird...",
-    "davCreate": "Créer",
+    "davCreate": "Nouveau mot de passe",
+    "davConfirmCreate": "Confirmer",
     "davTokenOnce": "Sauvegardez ce token maintenant, il ne sera plus affiché :",
-    "davPasswords": "Mots de passe d'application",
+    "davPasswords": "Gestion des mots de passe d'application",
     "davNoPasswords": "Aucun mot de passe d'application créé pour l'instant.",
     "davNeverUsed": "Jamais utilisé",
-    "davRevoke": "Révoquer"
+    "davRevoke": "Révoquer",
+    "davExplanation": "Un mot de passe d'application permet à une application externe (agenda, contacts) de se connecter à votre compte via CalDAV/CardDAV sans utiliser votre mot de passe principal."
   },
   "consultationRowItem": {
     "untitledConsultation": "Suivi sans titre",

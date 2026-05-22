@@ -91,8 +91,8 @@ export class UserProfile implements OnInit, OnDestroy {
   isSaving = signal(false);
   isUploadingAvatar = signal(false);
   caldavUrlCopied = signal(false);
-  caldavUrl = `${window.location.origin}/caldav/calendar/`;
-  carddavUrl = `${window.location.origin}/carddav/addressbook/`;
+  caldavUrl = `${window.location.origin}/dav/calendar/`;
+  carddavUrl = `${window.location.origin}/dav/addressbook/`;
   carddavUrlCopied = signal(false);
 
   encryptionEnabled = signal(false);
@@ -108,6 +108,7 @@ export class UserProfile implements OnInit, OnDestroy {
   isLoadingDavPasswords = signal(false);
   newDavPasswordLabel = '';
   newlyCreatedToken = signal<string | null>(null);
+  showCreateDavForm = signal(false);
 
   profileForm: FormGroup;
 
@@ -988,6 +989,7 @@ export class UserProfile implements OnInit, OnDestroy {
         next: password => {
           this.newlyCreatedToken.set(password.token);
           this.newDavPasswordLabel = '';
+          this.showCreateDavForm.set(false);
           this.loadDavPasswords();
         },
       });

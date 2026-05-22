@@ -1068,14 +1068,15 @@
     "encryptionInvalidOldPassphrase": "The current passphrase is incorrect.",
     "tabDav": "Synchronization",
     "davUrls": "DAV URLs",
-    "davNewPassword": "New Application Password",
     "davPasswordLabelPlaceholder": "e.g. iPhone, Thunderbird...",
-    "davCreate": "Create",
+    "davCreate": "New Password",
+    "davConfirmCreate": "Confirm",
     "davTokenOnce": "Save this token now, it will not be shown again:",
-    "davPasswords": "Application Passwords",
+    "davPasswords": "Application Password Management",
     "davNoPasswords": "No application passwords created yet.",
     "davNeverUsed": "Never used",
-    "davRevoke": "Revoke"
+    "davRevoke": "Revoke",
+    "davExplanation": "An application password allows an external app (calendar, contacts) to connect to your account via CalDAV/CardDAV without using your main password."
   },
   "consultationRowItem": {
     "untitledConsultation": "Untitled Follow-up",
