@@ -73,6 +73,8 @@ import {
   heroShieldCheck,
   heroLink,
   heroClipboard,
+  heroSparkles,
+  heroQuestionMarkCircle,
 } from '@ng-icons/heroicons/outline';
 import {
   lucideVideoOff,
@@ -156,6 +158,8 @@ export const appConfig: ApplicationConfig = {
       heroShieldCheck,
       heroLink,
       heroClipboard,
+      heroSparkles,
+      heroQuestionMarkCircle,
       lucideVideoOff,
       lucideMicOff,
       lucidePhoneOff,

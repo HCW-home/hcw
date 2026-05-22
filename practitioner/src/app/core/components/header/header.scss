@@ -112,8 +112,8 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 28px;
-        height: 28px;
+        width: 34px;
+        height: 34px;
         border-radius: 50%;
         border: 1px solid var(--slate-200);
         background: var(--White);
@@ -130,8 +130,11 @@
           color: var(--primary-600);
         }
 
-        app-svg {
-          display: inline-flex;
+        .replay-glyph {
+          font-size: 18px;
+          font-weight: 700;
+          line-height: 1;
+          font-family: inherit;
         }
       }
     }

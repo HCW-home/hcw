@@ -153,9 +153,7 @@
         [title]="'onboarding.replayTooltip' | translate"
         [attr.aria-label]="'onboarding.replayTooltip' | translate"
         (click)="restartOnboardingWizard(); $event.stopPropagation()">
-        <app-svg
-          src="info"
-          [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+        <span class="replay-glyph" aria-hidden="true">?</span>
       </button>
     </div>
     }
