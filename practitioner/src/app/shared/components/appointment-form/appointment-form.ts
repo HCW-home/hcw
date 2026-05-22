@@ -88,11 +88,17 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   @Input() owner: User | null = null;
   @Input() initialStartDate: Date | null = null;
   @Input() initialEndDate: Date | null = null;
+  @Input() highlightAddParticipant = false;
+  @Input() highlightExternalGuest = false;
+  @Input() highlightExternalEmail = false;
+  @Input() highlightVisibleCheckbox = false;
 
   @Output() cancelled = new EventEmitter<void>();
   @Output() appointmentCreated = new EventEmitter<Appointment>();
   @Output() appointmentUpdated = new EventEmitter<Appointment>();
   @Output() appointmentDataReady = new EventEmitter<CreateAppointmentRequest>();
+  @Output() addParticipantClicked = new EventEmitter<void>();
+  @Output() externalGuestSelected = new EventEmitter<void>();
 
   private destroy$ = new Subject<void>();
   private fb = inject(FormBuilder);
@@ -508,6 +514,9 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
 
   setParticipantType(isExisting: boolean): void {
     this.isExistingUser.set(isExisting);
+    if (!isExisting) {
+      this.externalGuestSelected.emit();
+    }
     this.selectedParticipantUser.set(null);
     const currentUserData = this.currentUser();
     this.participantForm.reset({
@@ -564,6 +573,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
 
   openAddParticipantModal(): void {
     this.showAddParticipantForm.set(true);
+    this.addParticipantClicked.emit();
   }
 
   closeAddParticipantModal(): void {

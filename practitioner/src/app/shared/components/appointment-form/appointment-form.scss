@@ -314,3 +314,21 @@
     padding: 20px;
   }
 }
+
+.wizard-highlight-target {
+  position: relative;
+  border-radius: 10px;
+  animation: wizardTargetPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes wizardTargetPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px var(--primary-400);
+  }
+  50% {
+    box-shadow:
+      0 0 0 2px var(--primary-500),
+      0 0 0 8px rgba(6, 182, 212, 0.18);
+  }
+}

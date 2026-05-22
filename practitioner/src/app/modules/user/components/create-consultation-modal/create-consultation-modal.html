@@ -6,7 +6,7 @@
 
   <div class="create-consultation-form">
     <form [formGroup]="consultationForm">
-      <div class="form-group">
+      <div class="form-group" [class.wizard-highlight-target]="highlightTitle()">
         <app-input
           [label]="'consultationForm.reason' | translate"
           [required]="true"
@@ -35,12 +35,12 @@
         </span>
       </div>
 
-      <div class="form-group toggle-group">
+      <div class="form-group toggle-group" [class.wizard-highlight]="highlightSchedule()">
         <app-checkbox
           [label]="'createConsultationModal.scheduleConsultation' | translate"
           [ngModel]="showSchedule()"
           [ngModelOptions]="{standalone: true}"
-          (ngModelChange)="showSchedule.set($event)">
+          (ngModelChange)="showSchedule.set($event); scheduleToggled.emit($event)">
         </app-checkbox>
       </div>
 
@@ -52,7 +52,13 @@
           [autoSave]="false"
           [beneficiary]="beneficiaryAsUser()"
           [owner]="ownerAsUser()"
-          (appointmentDataReady)="onAppointmentDataReady($event)">
+          [highlightAddParticipant]="highlightAddParticipant()"
+          [highlightExternalGuest]="highlightExternalGuest()"
+          [highlightExternalEmail]="highlightExternalEmail()"
+          [highlightVisibleCheckbox]="highlightVisibleCheckbox()"
+          (appointmentDataReady)="onAppointmentDataReady($event)"
+          (addParticipantClicked)="addParticipantClicked.emit()"
+          (externalGuestSelected)="externalGuestSelected.emit()">
         </app-appointment-form>
       </div>
       }
