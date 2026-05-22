@@ -29,13 +29,6 @@
         <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/admin/encryption/"/>
     </url>
     <url>
-        <loc>https://hcw-at-home.com/docs/admin/fhir/</loc>
-        <lastmod>2026-05-22</lastmod>
-        <changefreq>daily</changefreq>
-        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/admin/fhir/"/>
-        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/admin/fhir/"/>
-    </url>
-    <url>
         <loc>https://hcw-at-home.com/docs/admin/media-servers/</loc>
         <lastmod>2026-05-22</lastmod>
         <changefreq>daily</changefreq>
@@ -159,13 +152,6 @@
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/admin/encryption/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/admin/encryption/"/>
-    </url>
-    <url>
-        <loc>https://hcw-at-home.com/docs/fr/admin/fhir/</loc>
-        <lastmod>2026-05-22</lastmod>
-        <changefreq>daily</changefreq>
-        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/admin/fhir/"/>
-        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/admin/fhir/"/>
     </url>
     <url>
         <loc>https://hcw-at-home.com/docs/fr/admin/media-servers/</loc>
