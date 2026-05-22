@@ -502,6 +502,64 @@
     <div class="hint-body">{{ 'onboarding.wizardStep7Message' | translate }}</div>
     <div class="hint-footer">
       <span class="hint-step">{{ 'onboarding.stepIndicator' | translate: { current: 7, total: ONBOARDING_TOTAL_STEPS } }}</span>
+      <button class="hint-next-btn" (click)="nextOnboardingStep()">
+        {{ 'common.next' | translate }}
+        <app-svg src="arrow-right" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
+      </button>
+    </div>
+  </div>
+</div>
+} @if (onboardingStep() === 8) {
+<div class="onboarding-tip" (click)="$event.stopPropagation()">
+  <button class="hint-close" (click)="dismissOnboardingHint()" [attr.aria-label]="'common.close' | translate">&times;</button>
+  <div class="hint-content">
+    <div class="hint-title">{{ 'onboarding.wizardStep8Title' | translate }}</div>
+    <div class="hint-body">{{ 'onboarding.wizardStep8Message' | translate }}</div>
+    <div class="hint-footer">
+      <span class="hint-step">{{ 'onboarding.stepIndicator' | translate: { current: 8, total: ONBOARDING_TOTAL_STEPS } }}</span>
+      <button class="hint-skip-btn" (click)="dismissOnboardingHint()">
+        {{ 'onboarding.skip' | translate }}
+      </button>
+    </div>
+  </div>
+</div>
+} @if (onboardingStep() === 9) {
+<div class="onboarding-tip" (click)="$event.stopPropagation()">
+  <button class="hint-close" (click)="dismissOnboardingHint()" [attr.aria-label]="'common.close' | translate">&times;</button>
+  <div class="hint-content">
+    <div class="hint-title">{{ 'onboarding.wizardStep9Title' | translate }}</div>
+    <div class="hint-body">{{ 'onboarding.wizardStep9Message' | translate }}</div>
+    <div class="hint-footer">
+      <span class="hint-step">{{ 'onboarding.stepIndicator' | translate: { current: 9, total: ONBOARDING_TOTAL_STEPS } }}</span>
+      <button class="hint-next-btn" (click)="nextOnboardingStep()">
+        {{ 'common.next' | translate }}
+        <app-svg src="arrow-right" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
+      </button>
+    </div>
+  </div>
+</div>
+} @if (onboardingStep() === 10) {
+<div class="onboarding-tip" (click)="$event.stopPropagation()">
+  <button class="hint-close" (click)="dismissOnboardingHint()" [attr.aria-label]="'common.close' | translate">&times;</button>
+  <div class="hint-content">
+    <div class="hint-title">{{ 'onboarding.wizardStep10Title' | translate }}</div>
+    <div class="hint-body">{{ 'onboarding.wizardStep10Message' | translate }}</div>
+    <div class="hint-footer">
+      <span class="hint-step">{{ 'onboarding.stepIndicator' | translate: { current: 10, total: ONBOARDING_TOTAL_STEPS } }}</span>
+      <button class="hint-skip-btn" (click)="dismissOnboardingHint()">
+        {{ 'onboarding.skip' | translate }}
+      </button>
+    </div>
+  </div>
+</div>
+} @if (onboardingStep() === 11) {
+<div class="onboarding-tip onboarding-tip--success" (click)="$event.stopPropagation()">
+  <button class="hint-close" (click)="dismissOnboardingHint()" [attr.aria-label]="'common.close' | translate">&times;</button>
+  <div class="hint-content">
+    <div class="hint-title">{{ 'onboarding.wizardStep11Title' | translate }}</div>
+    <div class="hint-body">{{ 'onboarding.wizardStep11Message' | translate }}</div>
+    <div class="hint-footer">
+      <span class="hint-step">{{ 'onboarding.stepIndicator' | translate: { current: 11, total: ONBOARDING_TOTAL_STEPS } }}</span>
       <button class="hint-next-btn" (click)="dismissOnboardingHint()">
         {{ 'onboarding.done' | translate }}
         <app-svg src="check" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
@@ -520,9 +578,16 @@
   [highlightExternalGuest]="onboardingStep() === 5"
   [highlightExternalEmail]="onboardingStep() === 6"
   [highlightVisibleCheckbox]="onboardingStep() === 7"
+  [highlightAddParticipantSubmit]="onboardingStep() === 8"
+  [highlightDateTime]="onboardingStep() === 9"
+  [highlightCreateButton]="onboardingStep() === 10"
+  [disableCreateButton]="onboardingStep() >= 2 && onboardingStep() <= 9"
+  [disableAddParticipantSubmit]="onboardingStep() === 6 || onboardingStep() === 7"
   (scheduleToggled)="onScheduleToggled($event)"
   (addParticipantClicked)="onAddParticipantClicked()"
   (externalGuestSelected)="onExternalGuestSelected()"
+  (participantAdded)="onParticipantAdded()"
+  (consultationCreated)="onConsultationCreated()"
   (closed)="closeCreateConsultationModal()">
 </app-create-consultation-modal>
 }

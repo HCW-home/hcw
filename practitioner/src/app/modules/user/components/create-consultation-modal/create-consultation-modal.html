@@ -56,9 +56,13 @@
           [highlightExternalGuest]="highlightExternalGuest()"
           [highlightExternalEmail]="highlightExternalEmail()"
           [highlightVisibleCheckbox]="highlightVisibleCheckbox()"
+          [highlightAddParticipantSubmit]="highlightAddParticipantSubmit()"
+          [highlightDateTime]="highlightDateTime()"
+          [disableAddParticipantSubmit]="disableAddParticipantSubmit()"
           (appointmentDataReady)="onAppointmentDataReady($event)"
           (addParticipantClicked)="addParticipantClicked.emit()"
-          (externalGuestSelected)="externalGuestSelected.emit()">
+          (externalGuestSelected)="externalGuestSelected.emit()"
+          (participantAdded)="participantAdded.emit()">
         </app-appointment-form>
       </div>
       }
@@ -116,14 +120,16 @@
       [size]="ButtonSizeEnum.medium"
       (buttonClick)="onClose()">
     </app-button>
-    <app-button
-      [text]="'consultationForm.createConsultation' | translate"
-      [style]="ButtonStyleEnum.primary"
-      [size]="ButtonSizeEnum.medium"
-      [disabled]="isSaving()"
-      [loading]="isSaving()"
-      (buttonClick)="onSubmit()">
-    </app-button>
+    <div class="create-btn-wrapper" [class.wizard-highlight-target]="highlightCreateButton()">
+      <app-button
+        [text]="'consultationForm.createConsultation' | translate"
+        [style]="ButtonStyleEnum.primary"
+        [size]="ButtonSizeEnum.medium"
+        [disabled]="isSaving() || disableCreateButton()"
+        [loading]="isSaving()"
+        (buttonClick)="onSubmit()">
+      </app-button>
+    </div>
   </div>
 </app-modal>
 

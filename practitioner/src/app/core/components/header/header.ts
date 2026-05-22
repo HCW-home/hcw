@@ -82,9 +82,11 @@ export class Header implements OnInit, OnDestroy {
   // 0 = hidden, 1 = bubble on "New consultation" button,
   // 2 = highlight the title field, 3 = highlight the "schedule consultation" checkbox,
   // 4 = highlight the "add participant" button, 5 = highlight the "external guest" toggle,
-  // 6 = highlight the email field, 7 = highlight the "can read messages" checkbox.
+  // 6 = highlight the email field, 7 = highlight the "can read messages" checkbox,
+  // 8 = highlight the "add the participant" submit button, 9 = highlight date/time fields,
+  // 10 = highlight the "create consultation" button, 11 = success congratulations bubble.
   onboardingStep = signal(0);
-  protected readonly ONBOARDING_TOTAL_STEPS = 7;
+  protected readonly ONBOARDING_TOTAL_STEPS = 11;
   showCreateConsultationModal = signal(false);
   hintTop = signal(0);
   hintLeft = signal(0);
@@ -274,6 +276,18 @@ export class Header implements OnInit, OnDestroy {
     }
   }
 
+  onParticipantAdded(): void {
+    if (this.onboardingStep() === 8) {
+      this.onboardingStep.set(9);
+    }
+  }
+
+  onConsultationCreated(): void {
+    if (this.onboardingStep() === 10) {
+      this.onboardingStep.set(11);
+    }
+  }
+
   dismissOnboardingHint(): void {
     this.onboardingStep.set(0);
     localStorage.removeItem('show_onboarding_hint');
@@ -354,7 +368,9 @@ export class Header implements OnInit, OnDestroy {
 
   closeCreateConsultationModal() {
     this.showCreateConsultationModal.set(false);
-    if (this.onboardingStep() >= 2) {
+    const step = this.onboardingStep();
+    // Step 11 is shown after the consultation was successfully created — let it stay.
+    if (step >= 2 && step < 11) {
       this.dismissOnboardingHint();
     }
   }

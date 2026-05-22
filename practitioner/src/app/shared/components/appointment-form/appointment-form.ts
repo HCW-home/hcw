@@ -92,6 +92,9 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   @Input() highlightExternalGuest = false;
   @Input() highlightExternalEmail = false;
   @Input() highlightVisibleCheckbox = false;
+  @Input() highlightAddParticipantSubmit = false;
+  @Input() highlightDateTime = false;
+  @Input() disableAddParticipantSubmit = false;
 
   @Output() cancelled = new EventEmitter<void>();
   @Output() appointmentCreated = new EventEmitter<Appointment>();
@@ -99,6 +102,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   @Output() appointmentDataReady = new EventEmitter<CreateAppointmentRequest>();
   @Output() addParticipantClicked = new EventEmitter<void>();
   @Output() externalGuestSelected = new EventEmitter<void>();
+  @Output() participantAdded = new EventEmitter<void>();
 
   private destroy$ = new Subject<void>();
   private fb = inject(FormBuilder);
@@ -278,6 +282,24 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
     ) {
       this.populateFormWithInitialDates();
     }
+    const highlightKeys = [
+      'highlightAddParticipant',
+      'highlightExternalGuest',
+      'highlightExternalEmail',
+      'highlightVisibleCheckbox',
+      'highlightAddParticipantSubmit',
+      'highlightDateTime',
+    ];
+    if (highlightKeys.some(key => changes[key]?.currentValue)) {
+      this.scrollHighlightedIntoView();
+    }
+  }
+
+  private scrollHighlightedIntoView(): void {
+    setTimeout(() => {
+      const el = document.querySelector<HTMLElement>('.wizard-highlight-target');
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 60);
   }
 
   updateInviteCheckboxStates(): void {
@@ -631,6 +653,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
 
     this.pendingParticipants.update(list => [...list, data]);
     this.resetParticipantForm();
+    this.participantAdded.emit();
   }
 
   private resetParticipantForm(): void {

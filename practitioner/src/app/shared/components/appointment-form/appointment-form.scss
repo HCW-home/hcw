@@ -324,11 +324,11 @@
 @keyframes wizardTargetPulse {
   0%,
   100% {
-    box-shadow: 0 0 0 2px var(--primary-400);
+    box-shadow: 0 0 0 2px var(--amber-400);
   }
   50% {
     box-shadow:
-      0 0 0 2px var(--primary-500),
-      0 0 0 8px rgba(6, 182, 212, 0.18);
+      0 0 0 2px var(--amber-500),
+      0 0 0 8px rgba(245, 158, 11, 0.28);
   }
 }

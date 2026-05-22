@@ -40,7 +40,7 @@
           </app-input>
         </div>
 
-        <div class="form-row">
+        <div class="form-row" [class.wizard-highlight-target]="highlightDateTime">
           <app-input
             type="date"
             [label]="'appointmentForm.date' | translate"
@@ -313,15 +313,17 @@
             (buttonClick)="closeAddParticipantModal()">
           </app-button>
           @if (!isExistingUser()) {
-          <app-button
-            [text]="'appointmentForm.addTheParticipant' | translate"
-            leftIcon="plus"
-            [style]="ButtonStyleEnum.primary"
-            [size]="ButtonSizeEnum.medium"
-            [disabled]="isAddingParticipant()"
-            [loading]="isAddingParticipant()"
-            (buttonClick)="addParticipant()">
-          </app-button>
+          <div class="add-participant-submit-wrapper" [class.wizard-highlight-target]="highlightAddParticipantSubmit">
+            <app-button
+              [text]="'appointmentForm.addTheParticipant' | translate"
+              leftIcon="plus"
+              [style]="ButtonStyleEnum.primary"
+              [size]="ButtonSizeEnum.medium"
+              [disabled]="isAddingParticipant() || disableAddParticipantSubmit"
+              [loading]="isAddingParticipant()"
+              (buttonClick)="addParticipant()">
+            </app-button>
+          </div>
           } @else if (selectedParticipantUser()) {
           <app-button
             [text]="'appointmentForm.addTheParticipant' | translate"
