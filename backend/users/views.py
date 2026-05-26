@@ -45,7 +45,7 @@ from dj_rest_auth.views import PasswordResetConfirmView as DjRestAuthPasswordRes
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import Q
+from django.db.models import Exists, OuterRef, Q
 from django.http import FileResponse
 from django.shortcuts import render
 from django.utils import timezone, translation
@@ -404,18 +404,33 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
         user is an active participant of, so the appointment chat works without
         exposing the temp follow-up in the patient's main list.
         """
+        from consultations.utils import appointment_active_cutoff
         from consultations.views import annotate_unread_count
 
         user = self.request.user
         if self.action == "list":
-            qs = Consultation.objects.filter(
-                Q(beneficiary=user, visible_by_patient=True)
-                | Q(
-                    appointments__participant__user=user,
-                    appointments__participant__is_active=True,
-                    appointments__participant__is_consultation_visible=True,
+            active_cutoff = appointment_active_cutoff()
+            has_active_appointment = Exists(
+                Appointment.objects.filter(
+                    consultation=OuterRef("pk"),
+                    scheduled_at__gte=active_cutoff,
                 )
-            ).distinct()
+            )
+            has_no_appointment = ~Exists(
+                Appointment.objects.filter(consultation=OuterRef("pk"))
+            )
+            qs = (
+                Consultation.objects.filter(
+                    Q(beneficiary=user, visible_by_patient=True)
+                    | Q(
+                        appointments__participant__user=user,
+                        appointments__participant__is_active=True,
+                        appointments__participant__is_consultation_visible=True,
+                    )
+                )
+                .filter(has_active_appointment | has_no_appointment)
+                .distinct()
+            )
         else:
             qs = Consultation.objects.filter(
                 Q(beneficiary=user, visible_by_patient=True)
@@ -1709,6 +1724,20 @@ class UserDashboardView(APIView):
 
         from consultations.views import annotate_unread_count
 
+        # A consultation stays visible to the patient as long as it has at
+        # least one appointment still within the active window
+        # (scheduled_at + default duration + join limit). Consultations with
+        # no appointments are unaffected by this rule.
+        has_active_appointment = Exists(
+            Appointment.objects.filter(
+                consultation=OuterRef("pk"),
+                scheduled_at__gte=active_cutoff,
+            )
+        )
+        has_no_appointment = ~Exists(
+            Appointment.objects.filter(consultation=OuterRef("pk"))
+        )
+
         consultations = annotate_unread_count(
             Consultation.objects.exclude(request__in=user_requests)
             .filter(closed_at__isnull=True)
@@ -1720,6 +1749,7 @@ class UserDashboardView(APIView):
                     appointments__participant__is_consultation_visible=True,
                 )
             )
+            .filter(has_active_appointment | has_no_appointment)
             .distinct()
             .order_by("-created_at"),
             user,

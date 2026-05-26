@@ -198,10 +198,47 @@ def auto_delete_closed_consultations():
                 logger.info("Auto-delete of closed consultations is disabled (0 hours)")
                 return
 
-            cutoff = timezone.now() - timedelta(hours=hours)
+            now = timezone.now()
+            cutoff = now - timedelta(hours=hours)
             qs = Consultation.objects.filter(closed_at__isnull=False, closed_at__lte=cutoff)
             count, _ = qs.delete()
             logger.info(f"Auto-deleted {count} closed consultation(s) older than {hours}h")
+
+            # Belt-and-suspenders: temporary consultations that somehow stayed
+            # open past the join window are also dropped once their effective
+            # end + call_limit + auto_delete_hours has elapsed.
+            join_limit = int(config.call_limit_join_minutes)
+            default_duration = int(config.default_appointment_duration_in_minutes)
+            delete_threshold = timedelta(hours=hours)
+
+            temp_qs = Consultation.objects.filter(
+                temporary=True, closed_at__isnull=True
+            )
+            temp_deleted = 0
+            for consultation in temp_qs:
+                appt = (
+                    consultation.appointments.exclude(
+                        status=AppointmentStatus.cancelled
+                    )
+                    .order_by("-scheduled_at")
+                    .first()
+                )
+                if appt:
+                    end = appt.end_expected_at or (
+                        appt.scheduled_at + timedelta(minutes=default_duration)
+                    )
+                    expires_at = end + timedelta(minutes=join_limit)
+                else:
+                    expires_at = consultation.created_at
+
+                if now >= expires_at + delete_threshold:
+                    consultation.delete()
+                    temp_deleted += 1
+
+            if temp_deleted:
+                logger.info(
+                    f"Auto-deleted {temp_deleted} unclosed temporary consultation(s) past auto-delete threshold"
+                )
 
 
 @app.task

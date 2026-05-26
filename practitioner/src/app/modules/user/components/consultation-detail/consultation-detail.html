@@ -79,7 +79,7 @@
                   (buttonClick)="exportPdf()">
                 </app-button>
 
-                @if (!consultation()?.closed_at) {
+                @if (!consultation()?.closed_at && !consultation()?.temporary) {
                 <app-button
                   [text]="'consultationDetail.closeConsultation' | translate"
                   leftIcon="close"
@@ -88,7 +88,7 @@
                   [size]="ButtonSizeEnum.small"
                   (buttonClick)="closeConsultation()">
                 </app-button>
-                } @else {
+                } @else if (consultation()?.closed_at) {
                 <app-button
                   [text]="'consultationDetail.reopenConsultation' | translate"
                   leftIcon="check"
