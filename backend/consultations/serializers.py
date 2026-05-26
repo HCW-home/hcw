@@ -933,12 +933,12 @@ class AppointmentCreateSerializer(AppointmentSerializer):
             }
 
             if temp_participant.get("mobile_phone_number"):
-                user, _ = User.objects.get_or_create(
+                user, __ = User.objects.get_or_create(
                     mobile_phone_number=temp_participant["mobile_phone_number"],
                     defaults=user_defaults,
                 )
             elif temp_participant.get("email"):
-                user, _ = User.objects.get_or_create(
+                user, __ = User.objects.get_or_create(
                     email=temp_participant["email"],
                     defaults=user_defaults,
                 )
