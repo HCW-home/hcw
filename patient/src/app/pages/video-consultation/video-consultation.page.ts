@@ -15,10 +15,10 @@ import {
 } from '@ionic/angular/standalone';
 import { Subject, interval, Subscription, firstValueFrom } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { LocalVideoTrack, LocalTrack } from 'livekit-client';
 import { TranslatePipe } from '@ngx-translate/core';
 
-import { LiveKitService, ParticipantInfo, ConnectionStatus } from '../../core/services/livekit.service';
+import { VideoCallService } from '../../core/services/video-call.service';
+import { ConnectionStatus, ParticipantInfo, VideoCallConfig } from '../../core/services/video-call.types';
 import { TranslationService } from '../../core/services/translation.service';
 import { ConsultationService } from '../../core/services/consultation.service';
 import { ConsultationWebSocketService } from '../../core/services/consultation-websocket.service';
@@ -63,8 +63,8 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
 
   connectionStatus: ConnectionStatus = 'disconnected';
   participants: Map<string, ParticipantInfo> = new Map();
-  localVideoTrack: LocalVideoTrack | null = null;
-  localScreenShareTrack: LocalTrack | null = null;
+  localVideoTrack: MediaStreamTrack | null = null;
+  localScreenShareTrack: MediaStreamTrack | null = null;
 
   isCameraEnabled = false;
   isMicrophoneEnabled = false;
@@ -102,7 +102,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     public navCtrl: NavController,
     private alertCtrl: AlertController,
     private toastCtrl: ToastController,
-    private livekitService: LiveKitService,
+    private videoCallService: VideoCallService,
     private consultationService: ConsultationService,
     private wsService: ConsultationWebSocketService,
     private authService: AuthService,
@@ -273,7 +273,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     console.log('[VideoConsultationPage] ngOnDestroy called - cleaning up and disconnecting');
     this.destroy$.next();
     this.destroy$.complete();
-    this.livekitService.disconnect();
+    this.videoCallService.disconnect();
     this.wsService.disconnect();
     this.cleanupMediaElements();
     this.stopDurationTimer();
@@ -282,7 +282,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
   }
 
   private setupSubscriptions(): void {
-    this.livekitService.connectionStatus$
+    this.videoCallService.connectionStatus$
       .pipe(takeUntil(this.destroy$))
       .subscribe(status => {
         this.connectionStatus = status;
@@ -292,7 +292,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       });
 
-    this.livekitService.localVideoTrack$
+    this.videoCallService.localVideoTrack$
       .pipe(takeUntil(this.destroy$))
       .subscribe(track => {
         this.localVideoTrack = track;
@@ -300,7 +300,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       });
 
-    this.livekitService.participants$
+    this.videoCallService.participants$
       .pipe(takeUntil(this.destroy$))
       .subscribe(participants => {
         this.participants = participants;
@@ -308,28 +308,28 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
         setTimeout(() => this.attachRemoteMedia(), 0);
       });
 
-    this.livekitService.isCameraEnabled$
+    this.videoCallService.isCameraEnabled$
       .pipe(takeUntil(this.destroy$))
       .subscribe(enabled => {
         this.isCameraEnabled = enabled;
         this.cdr.markForCheck();
       });
 
-    this.livekitService.isMicrophoneEnabled$
+    this.videoCallService.isMicrophoneEnabled$
       .pipe(takeUntil(this.destroy$))
       .subscribe(enabled => {
         this.isMicrophoneEnabled = enabled;
         this.cdr.markForCheck();
       });
 
-    this.livekitService.isScreenShareEnabled$
+    this.videoCallService.isScreenShareEnabled$
       .pipe(takeUntil(this.destroy$))
       .subscribe(enabled => {
         this.isScreenShareEnabled = enabled;
         this.cdr.markForCheck();
       });
 
-    this.livekitService.localScreenShareTrack$
+    this.videoCallService.localScreenShareTrack$
       .pipe(takeUntil(this.destroy$))
       .subscribe(track => {
         this.localScreenShareTrack = track;
@@ -337,7 +337,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
         setTimeout(() => this.attachLocalScreenShare(), 0);
       });
 
-    this.livekitService.error$
+    this.videoCallService.error$
       .pipe(takeUntil(this.destroy$))
       .subscribe(error => {
         this.errorMessage = error;
@@ -352,7 +352,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     this.cdr.markForCheck();
 
     try {
-      let config: { url: string; token: string; room: string } | undefined;
+      let config: VideoCallConfig | undefined;
 
       if (this.appointmentId) {
         config = await this.consultationService
@@ -367,19 +367,19 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
       }
 
       if (!config) {
-        throw new Error('Failed to get LiveKit configuration');
+        throw new Error('Failed to get video call configuration');
       }
 
-      await this.livekitService.connect(config);
+      await this.videoCallService.connect(config);
 
       // Enable camera/microphone separately - don't fail the whole join if camera is unavailable
       try {
-        await this.livekitService.enableCamera(true);
+        await this.videoCallService.enableCamera(true);
       } catch {
         // Camera not available, continue without it
       }
       try {
-        await this.livekitService.enableMicrophone(true);
+        await this.videoCallService.enableMicrophone(true);
       } catch {
         // Microphone not available, continue without it
       }
@@ -414,7 +414,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     this.cdr.markForCheck();
 
     try {
-      let config: { url: string; token: string; room: string } | undefined;
+      let config: VideoCallConfig | undefined;
 
       if (this.appointmentId) {
         config = await this.consultationService
@@ -429,7 +429,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
       }
 
       if (!config) {
-        throw new Error('Failed to get LiveKit configuration');
+        throw new Error('Failed to get video call configuration');
       }
 
       const deviceIds: { camera?: string; microphone?: string } = {};
@@ -440,22 +440,22 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
         deviceIds.microphone = settings.microphoneDeviceId;
       }
 
-      await this.livekitService.connect(config, undefined, deviceIds);
+      await this.videoCallService.connect(config, deviceIds);
 
       // Enable camera/microphone separately - don't fail the whole join if camera is unavailable
       try {
-        await this.livekitService.enableCamera(settings.cameraEnabled);
+        await this.videoCallService.enableCamera(settings.cameraEnabled);
       } catch {
         // Camera not available, continue without it
       }
       try {
-        await this.livekitService.enableMicrophone(settings.microphoneEnabled);
+        await this.videoCallService.enableMicrophone(settings.microphoneEnabled);
       } catch {
         // Microphone not available, continue without it
       }
 
       if (settings.speakerDeviceId) {
-        await this.livekitService.switchSpeaker(settings.speakerDeviceId);
+        await this.videoCallService.switchSpeaker(settings.speakerDeviceId);
       }
 
       this.phase.set('in-call');
@@ -485,12 +485,12 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
 
   private attachLocalVideo(): void {
     if (!this.localVideoRef?.nativeElement || !this.localVideoTrack) return;
-    this.localVideoTrack.attach(this.localVideoRef.nativeElement);
+    attachTrack(this.localVideoRef.nativeElement, this.localVideoTrack);
   }
 
   private attachLocalScreenShare(): void {
     if (!this.localScreenShareRef?.nativeElement || !this.localScreenShareTrack) return;
-    this.localScreenShareTrack.attach(this.localScreenShareRef.nativeElement);
+    attachTrack(this.localScreenShareRef.nativeElement, this.localScreenShareTrack);
   }
 
   private attachRemoteMedia(): void {
@@ -521,8 +521,8 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
         }
       }
 
-      if (videoEl && participant.videoTrack.attachedElements.indexOf(videoEl) === -1) {
-        participant.videoTrack.attach(videoEl);
+      if (videoEl) {
+        attachTrack(videoEl, participant.videoTrack);
       }
     }
 
@@ -537,10 +537,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
       }
 
       audioEl.muted = !this.isSpeakerOn;
-
-      if (participant.audioTrack.attachedElements.indexOf(audioEl) === -1) {
-        participant.audioTrack.attach(audioEl);
-      }
+      attachTrack(audioEl, participant.audioTrack);
     }
 
     if (participant.screenShareTrack) {
@@ -553,8 +550,8 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
         }
       }
 
-      if (screenEl && participant.screenShareTrack.attachedElements.indexOf(screenEl) === -1) {
-        participant.screenShareTrack.attach(screenEl);
+      if (screenEl) {
+        attachTrack(screenEl, participant.screenShareTrack);
       }
     } else {
       const screenEl = this.screenShareElements.get(identity);
@@ -625,7 +622,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
 
   async toggleCamera(): Promise<void> {
     try {
-      await this.livekitService.toggleCamera();
+      await this.videoCallService.toggleCamera();
     } catch (error) {
       this.showToast(this.t.instant('videoConsultation.failedToggleCamera'));
     }
@@ -633,7 +630,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
 
   async toggleMicrophone(): Promise<void> {
     try {
-      await this.livekitService.toggleMicrophone();
+      await this.videoCallService.toggleMicrophone();
     } catch (error) {
       this.showToast(this.t.instant('videoConsultation.failedToggleMic'));
     }
@@ -648,7 +645,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
 
   async toggleScreenShare(): Promise<void> {
     try {
-      await this.livekitService.toggleScreenShare();
+      await this.videoCallService.toggleScreenShare();
     } catch (error) {
       this.showToast(this.t.instant('videoConsultation.failedToggleScreen'));
     }
@@ -695,7 +692,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
       }
     }
 
-    await this.livekitService.disconnect();
+    await this.videoCallService.disconnect();
     this.stopDurationTimer();
     this.incomingCallService.clearActiveCall();
 
@@ -888,4 +885,12 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
       this.getScreenSharingParticipant() !== null
     );
   }
+}
+
+function attachTrack(element: HTMLMediaElement, track: MediaStreamTrack): void {
+  const current = element.srcObject;
+  if (current instanceof MediaStream && current.getTracks().includes(track)) {
+    return;
+  }
+  element.srcObject = new MediaStream([track]);
 }

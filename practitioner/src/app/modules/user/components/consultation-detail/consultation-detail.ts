@@ -1907,7 +1907,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       next: (config) => {
         this.activeCallService.startCall({
           consultationId: this.consultationId,
-          livekitConfig: config,
+          videoCallConfig: config,
         });
         this.isCallingBeneficiary.set(false);
       },

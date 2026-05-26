@@ -24,6 +24,7 @@ import {
   IParticipantDetail,
 } from '../models/consultation';
 import { PaginatedResponse } from '../models/global';
+import { VideoCallConfig } from './video-call.types';
 
 @Injectable({
   providedIn: 'root',
@@ -354,32 +355,20 @@ export class ConsultationService {
     return this.http.delete<void>(`${this.apiUrl}/user/bookingslots/${id}/`);
   }
 
-  joinAppointment(appointmentId: number): Observable<{
-    url: string;
-    token: string;
-    room: string;
-  }> {
-    return this.http.get<{ url: string; token: string; room: string }>(
+  joinAppointment(appointmentId: number): Observable<VideoCallConfig> {
+    return this.http.get<VideoCallConfig>(
       `${this.apiUrl}/appointments/${appointmentId}/join/`
     );
   }
 
-  joinConsultation(consultationId: number): Observable<{
-    url: string;
-    token: string;
-    room: string;
-  }> {
-    return this.http.get<{ url: string; token: string; room: string }>(
+  joinConsultation(consultationId: number): Observable<VideoCallConfig> {
+    return this.http.get<VideoCallConfig>(
       `${this.apiUrl}/consultations/${consultationId}/join/`
     );
   }
 
-  callBeneficiary(consultationId: number): Observable<{
-    url: string;
-    token: string;
-    room: string;
-  }> {
-    return this.http.post<{ url: string; token: string; room: string }>(
+  callBeneficiary(consultationId: number): Observable<VideoCallConfig> {
+    return this.http.post<VideoCallConfig>(
       `${this.apiUrl}/consultations/${consultationId}/call/`,
       {}
     );

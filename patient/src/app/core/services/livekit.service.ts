@@ -55,6 +55,7 @@ export class LiveKitService implements OnDestroy {
 
   public connectionStatus$: Observable<ConnectionStatus> = this.connectionStatusSubject.asObservable();
   public localVideoTrack$: Observable<LocalVideoTrack | null> = this.localVideoTrackSubject.asObservable();
+  public localAudioTrack$: Observable<LocalAudioTrack | null> = this.localAudioTrackSubject.asObservable();
   public localScreenShareTrack$: Observable<LocalTrack | null> = this.localScreenShareTrackSubject.asObservable();
   public participants$: Observable<Map<string, ParticipantInfo>> = this.participantsSubject.asObservable();
   public isCameraEnabled$: Observable<boolean> = this.isCameraEnabledSubject.asObservable();
@@ -316,6 +317,16 @@ export class LiveKitService implements OnDestroy {
     } else {
       await this.startScreenShare();
     }
+  }
+
+  async switchCamera(deviceId: string): Promise<void> {
+    if (!this.room) return;
+    await this.room.switchActiveDevice('videoinput', deviceId);
+  }
+
+  async switchMicrophone(deviceId: string): Promise<void> {
+    if (!this.room) return;
+    await this.room.switchActiveDevice('audioinput', deviceId);
   }
 
   async switchSpeaker(deviceId: string): Promise<void> {

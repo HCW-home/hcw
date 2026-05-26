@@ -1,12 +1,15 @@
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 
-import type {
-  Device,
-  Transport,
-  Producer,
-  Consumer,
-  RtpCapabilities,
-} from 'mediasoup-client/types';
+import type { types as MediasoupTypes } from 'mediasoup-client';
+type Device = MediasoupTypes.Device;
+type Transport = MediasoupTypes.Transport;
+type Producer = MediasoupTypes.Producer;
+type Consumer = MediasoupTypes.Consumer;
+type RtpCapabilities = MediasoupTypes.RtpCapabilities;
+type RtpParameters = MediasoupTypes.RtpParameters;
+type DtlsParameters = MediasoupTypes.DtlsParameters;
+type IceParameters = MediasoupTypes.IceParameters;
+type IceCandidate = MediasoupTypes.IceCandidate;
 import type { Socket } from 'socket.io-client';
 
 import {
@@ -365,7 +368,7 @@ export class MediasoupService implements VideoCallImpl {
     )) as RtpCapabilities & { headerExtensions?: { uri: string }[] };
     if (Array.isArray(routerRtpCapabilities.headerExtensions)) {
       routerRtpCapabilities.headerExtensions = routerRtpCapabilities.headerExtensions.filter(
-        (ext) => ext.uri !== 'urn:3gpp:video-orientation',
+        (ext: { uri: string }) => ext.uri !== 'urn:3gpp:video-orientation',
       );
     }
     await this.device.load({ routerRtpCapabilities });
@@ -386,27 +389,45 @@ export class MediasoupService implements VideoCallImpl {
       iceCandidates: sendInfo.iceCandidates,
       dtlsParameters: sendInfo.dtlsParameters,
     });
-    this.sendTransport.on('connect', ({ dtlsParameters }, callback, errback) => {
-      this.sendRequest('connectWebRtcTransport', {
-        transportId: this.sendTransport!.id,
-        dtlsParameters,
-      })
-        .then(() => callback())
-        .catch(errback);
-    });
-    this.sendTransport.on('produce', async ({ kind, rtpParameters, appData }, callback, errback) => {
-      try {
-        const response = (await this.sendRequest('produce', {
+    this.sendTransport.on(
+      'connect',
+      (
+        { dtlsParameters }: { dtlsParameters: DtlsParameters },
+        callback: () => void,
+        errback: (err: Error) => void,
+      ) => {
+        this.sendRequest('connectWebRtcTransport', {
           transportId: this.sendTransport!.id,
+          dtlsParameters,
+        })
+          .then(() => callback())
+          .catch(errback);
+      },
+    );
+    this.sendTransport.on(
+      'produce',
+      async (
+        {
           kind,
           rtpParameters,
           appData,
-        })) as { id: string };
-        callback({ id: response.id });
-      } catch (err) {
-        errback(err as Error);
-      }
-    });
+        }: { kind: 'audio' | 'video'; rtpParameters: RtpParameters; appData: Record<string, unknown> },
+        callback: (arg: { id: string }) => void,
+        errback: (err: Error) => void,
+      ) => {
+        try {
+          const response = (await this.sendRequest('produce', {
+            transportId: this.sendTransport!.id,
+            kind,
+            rtpParameters,
+            appData,
+          })) as { id: string };
+          callback({ id: response.id });
+        } catch (err) {
+          errback(err as Error);
+        }
+      },
+    );
 
     const recvInfo = (await this.sendRequest('createWebRtcTransport', {
       forceTcp: false,
@@ -419,14 +440,21 @@ export class MediasoupService implements VideoCallImpl {
       iceCandidates: recvInfo.iceCandidates,
       dtlsParameters: recvInfo.dtlsParameters,
     });
-    this.recvTransport.on('connect', ({ dtlsParameters }, callback, errback) => {
-      this.sendRequest('connectWebRtcTransport', {
-        transportId: this.recvTransport!.id,
-        dtlsParameters,
-      })
-        .then(() => callback())
-        .catch(errback);
-    });
+    this.recvTransport.on(
+      'connect',
+      (
+        { dtlsParameters }: { dtlsParameters: DtlsParameters },
+        callback: () => void,
+        errback: (err: Error) => void,
+      ) => {
+        this.sendRequest('connectWebRtcTransport', {
+          transportId: this.recvTransport!.id,
+          dtlsParameters,
+        })
+          .then(() => callback())
+          .catch(errback);
+      },
+    );
   }
 
   private async joinRoom(): Promise<void> {
@@ -452,7 +480,7 @@ export class MediasoupService implements VideoCallImpl {
       id: data.id,
       producerId: data.producerId,
       kind: data.kind,
-      rtpParameters: data.rtpParameters as Parameters<Transport['consume']>[0]['rtpParameters'],
+      rtpParameters: data.rtpParameters as RtpParameters,
       appData: { ...(data.appData ?? {}), peerId: data.peerId },
     });
     this.consumers.set(consumer.id, consumer);
@@ -586,7 +614,7 @@ export class MediasoupService implements VideoCallImpl {
 
 interface TransportParams {
   id: string;
-  iceParameters: Parameters<Transport['restartIce']>[0]['iceParameters'];
-  iceCandidates: Parameters<Device['createSendTransport']>[0]['iceCandidates'];
-  dtlsParameters: Parameters<Device['createSendTransport']>[0]['dtlsParameters'];
+  iceParameters: IceParameters;
+  iceCandidates: IceCandidate[];
+  dtlsParameters: DtlsParameters;
 }
