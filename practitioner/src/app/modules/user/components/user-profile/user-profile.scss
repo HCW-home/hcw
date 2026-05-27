@@ -224,7 +224,10 @@
 .profile-section {
   margin-top: 24px;
   padding-top: 24px;
-  border-top: 1px solid var(--slate-100);
+
+  & + & {
+    border-top: 1px solid var(--slate-100);
+  }
 
   .section-title {
     font-size: 16px;
