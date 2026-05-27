@@ -299,21 +299,15 @@ class SpecialityViewSet(viewsets.ReadOnlyModelViewSet):
 
 class OrganisationViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    ViewSet for organisations - read only.
-    Access can be public or authenticated depending on the
-    public_organisations setting.
-    Supports bounding box filtering (lat_min, lat_max, lng_min, lng_max)
-    and search query parameter.
+    ViewSet for organisations - read only, authenticated callers only.
+    Public map browsing now lives at /api/map/.
+    Supports a `search` query parameter.
     """
 
     queryset = Organisation.objects.all()
     serializer_class = OrganisationSerializer
     pagination_class = UniversalPagination
-
-    def get_permissions(self):
-        if constance_config.public_organisations:
-            return [AllowAny()]
-        return [IsAuthenticated()]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         qs = super().get_queryset().exclude(
@@ -330,44 +324,132 @@ class OrganisationViewSet(viewsets.ReadOnlyModelViewSet):
             )
         return qs
 
-    def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
 
-        # Apply bounding box filter if provided and no search
-        if not request.query_params.get("search"):
-            queryset = self._filter_by_bounding_box(queryset, request)
+class MapView(APIView):
+    """
+    Single endpoint backing the public practitioner/organisation map.
 
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+    Returns `{ "organisations": [...], "practitioners": [...] }` in one
+    response (one SQL query per side) so the client doesn't have to fan
+    out into multiple paginated requests.
+
+    Access: `AllowAny` when `constance_config.public_organisations` is
+    enabled, `IsAuthenticated` otherwise. Practitioners are always
+    filtered to `is_practitioner=True` with a usable location (their own
+    or their `main_organisation`'s).
+
+    Supported query params:
+      - `lat_min`, `lat_max`, `lng_min`, `lng_max`: bounding-box filter
+        (all four required; ignored otherwise).
+      - `speciality`: speciality id to restrict practitioners.
+      - `has_slots`: when truthy, restrict practitioners to those with
+        at least one currently-valid booking slot.
+      - `search`: free-text search across practitioner/org name, address
+        and main organisation. When provided the bounding box is
+        ignored, matching the previous per-endpoint behavior.
+    """
+
+    def get_permissions(self):
+        if constance_config.public_organisations:
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+    def get(self, request):
+        bounds = self._parse_bounds(request)
+        search = request.query_params.get("search") or None
+        speciality = request.query_params.get("speciality") or None
+        has_slots_raw = request.query_params.get("has_slots") or ""
+        has_slots = has_slots_raw.lower() in ("true", "1")
+
+        organisations = self._build_organisations(bounds, search)
+        practitioners = self._build_practitioners(
+            bounds, search, speciality, has_slots
+        )
+
+        return Response({
+            "organisations": OrganisationSerializer(organisations, many=True).data,
+            "practitioners": UserDetailsSerializer(practitioners, many=True).data,
+        })
 
     @staticmethod
-    def _filter_by_bounding_box(queryset, request):
+    def _parse_bounds(request):
         lat_min = request.query_params.get("lat_min")
         lat_max = request.query_params.get("lat_max")
         lng_min = request.query_params.get("lng_min")
         lng_max = request.query_params.get("lng_max")
         if not all(v is not None for v in (lat_min, lat_max, lng_min, lng_max)):
-            return queryset
+            return None
         try:
-            bounds = float(lat_min), float(lat_max), float(lng_min), float(lng_max)
+            return float(lat_min), float(lat_max), float(lng_min), float(lng_max)
         except (ValueError, TypeError):
-            return queryset
-        queryset = queryset.exclude(location__isnull=True).exclude(location="")
-        ids = []
-        for obj in queryset:
-            if not obj.location:
-                continue
-            try:
-                lat, lng = (float(x) for x in obj.location.split(","))
-                if bounds[0] <= lat <= bounds[1] and bounds[2] <= lng <= bounds[3]:
-                    ids.append(obj.id)
-            except (ValueError, AttributeError):
-                continue
-        return queryset.model.objects.filter(id__in=ids)
+            return None
+
+    @staticmethod
+    def _location_in_bounds(location: str | None, bounds) -> bool:
+        if not location:
+            return False
+        try:
+            lat, lng = (float(x) for x in location.split(","))
+        except (ValueError, AttributeError):
+            return False
+        return bounds[0] <= lat <= bounds[1] and bounds[2] <= lng <= bounds[3]
+
+    def _build_organisations(self, bounds, search):
+        qs = Organisation.objects.exclude(
+            location__isnull=True
+        ).exclude(location="")
+        if search:
+            qs = qs.filter(
+                Q(name__icontains=search)
+                | Q(city__icontains=search)
+                | Q(street__icontains=search)
+                | Q(postal_code__icontains=search)
+                | Q(country__icontains=search)
+            )
+            return list(qs)
+        if bounds is None:
+            return list(qs)
+        return [org for org in qs if self._location_in_bounds(org.location, bounds)]
+
+    def _build_practitioners(self, bounds, search, speciality, has_slots):
+        qs = User.objects.filter(
+            is_active=True,
+            is_practitioner=True,
+        ).select_related("main_organisation").filter(
+            Q(location__isnull=False) & ~Q(location="")
+            | Q(main_organisation__isnull=False)
+            & Q(main_organisation__location__isnull=False)
+            & ~Q(main_organisation__location="")
+        )
+        if speciality:
+            qs = qs.filter(specialities__id=speciality)
+        if has_slots:
+            today = timezone.now().date()
+            qs = qs.filter(
+                Q(slots__isnull=False)
+                & (Q(slots__valid_until__isnull=True) | Q(slots__valid_until__gte=today))
+            ).distinct()
+        if search:
+            return list(qs.filter(
+                Q(first_name__icontains=search)
+                | Q(last_name__icontains=search)
+                | Q(street__icontains=search)
+                | Q(city__icontains=search)
+                | Q(postal_code__icontains=search)
+                | Q(country__icontains=search)
+                | Q(main_organisation__name__icontains=search)
+                | Q(main_organisation__city__icontains=search)
+            ))
+        if bounds is None:
+            return list(qs)
+        kept = []
+        for user in qs:
+            loc = user.location or (
+                user.main_organisation.location if user.main_organisation else None
+            )
+            if self._location_in_bounds(loc, bounds):
+                kept.append(user)
+        return kept
 
 
 def generate_magic_token(user):
@@ -1058,14 +1140,15 @@ class UserViewSet(viewsets.ModelViewSet):
     """
     ViewSet for users - read only with GET endpoint
     Supports search by first name, last name, and email
-    Visibility controlled by USERS_VISIBILITY setting.
-    When public_organisations is enabled, unauthenticated users
-    can list practitioners (with bounding-box filtering).
+    Visibility controlled by USERS_VISIBILITY / PATIENT_VISIBILITY settings.
+    Authenticated practitioners only; the public map listing now lives at
+    /api/map/.
     """
 
     queryset = User.objects.all()
     serializer_class = UserDetailsSerializer
     pagination_class = UniversalPagination
+    permission_classes = [IsAuthenticated, IsPractitioner]
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     search_fields = [
         "first_name", "last_name", "email", "mobile_phone_number",
@@ -1074,58 +1157,13 @@ class UserViewSet(viewsets.ModelViewSet):
     ]
     filterset_class = UserFilter
 
-    def get_permissions(self):
-        if self.action == "list" and constance_config.public_organisations:
-            return [AllowAny()]
-        return [IsAuthenticated(), IsPractitioner()]
-
     def get_queryset(self):
         """
         Filter users based on visibility settings:
         - USERS_VISIBILITY controls practitioner visibility
         - PATIENT_VISIBILITY controls patient visibility
-        Public (unauthenticated) access returns practitioners only.
         """
         base_queryset = self.queryset.filter(is_active=True)
-
-        # Public access: return only practitioners with a location
-        # (either their own or their main_organisation's)
-        if not (self.request.user and self.request.user.is_authenticated):
-            qs = base_queryset.filter(
-                is_practitioner=True,
-            ).select_related("main_organisation").filter(
-                # User has own location OR main_organisation has location
-                Q(location__isnull=False) & ~Q(location="")
-                | Q(main_organisation__isnull=False)
-                & Q(main_organisation__location__isnull=False)
-                & ~Q(main_organisation__location="")
-            )
-            speciality = self.request.query_params.get("speciality")
-            if speciality:
-                qs = qs.filter(specialities__id=speciality)
-            has_slots = self.request.query_params.get("has_slots")
-            if has_slots and has_slots.lower() in ("true", "1"):
-                today = timezone.now().date()
-                qs = qs.filter(
-                    Q(slots__isnull=False)
-                    & (Q(slots__valid_until__isnull=True) | Q(slots__valid_until__gte=today))
-                ).distinct()
-            search = self.request.query_params.get("search")
-            if search:
-                qs = qs.filter(
-                    Q(first_name__icontains=search)
-                    | Q(last_name__icontains=search)
-                    | Q(street__icontains=search)
-                    | Q(city__icontains=search)
-                    | Q(postal_code__icontains=search)
-                    | Q(country__icontains=search)
-                    | Q(main_organisation__name__icontains=search)
-                    | Q(main_organisation__city__icontains=search)
-                )
-            else:
-                qs = self._filter_by_bounding_box(qs)
-            return qs
-
         current_user = self.request.user
 
         practitioners_qs = self._filter_practitioners(base_queryset, current_user)
@@ -1201,32 +1239,6 @@ class UserViewSet(viewsets.ModelViewSet):
         for f in filters[1:]:
             combined |= f
         return combined
-
-    def _filter_by_bounding_box(self, queryset):
-        """Filter queryset by geographic bounding box.
-        Uses user.location first, falls back to main_organisation.location."""
-        lat_min = self.request.query_params.get("lat_min")
-        lat_max = self.request.query_params.get("lat_max")
-        lng_min = self.request.query_params.get("lng_min")
-        lng_max = self.request.query_params.get("lng_max")
-        if not all(v is not None for v in (lat_min, lat_max, lng_min, lng_max)):
-            return queryset
-        try:
-            bounds = float(lat_min), float(lat_max), float(lng_min), float(lng_max)
-        except (ValueError, TypeError):
-            return queryset
-        ids = []
-        for obj in queryset.select_related("main_organisation"):
-            loc = obj.location or (obj.main_organisation.location if obj.main_organisation else None)
-            if not loc:
-                continue
-            try:
-                lat, lng = (float(x) for x in loc.split(","))
-                if bounds[0] <= lat <= bounds[1] and bounds[2] <= lng <= bounds[3]:
-                    ids.append(obj.id)
-            except (ValueError, AttributeError):
-                continue
-        return queryset.filter(id__in=ids)
 
     def create(self, request, *args, **kwargs):
         """

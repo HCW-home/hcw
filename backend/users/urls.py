@@ -54,6 +54,7 @@ urlpatterns = [
         name="practitioner-conditional",
     ),
     path("api/", include(router.urls)),
+    path("api/map/", views.MapView.as_view(), name="map"),
     path("api/auth/openid/", views.OpenIDView.as_view(), name="openid_login"),
     path('api/auth/send-verification-code/', views.SendVerificationCodeView.as_view()),
     path(

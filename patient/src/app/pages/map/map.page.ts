@@ -7,10 +7,10 @@ import {
   IonSpinner,
 } from '@ionic/angular/standalone';
 import { TranslatePipe } from '@ngx-translate/core';
-import { Subject, takeUntil, debounceTime, distinctUntilChanged, forkJoin } from 'rxjs';
+import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import * as L from 'leaflet';
 
-import { ApiService, PaginatedResponse } from '../../core/services/api.service';
+import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { TranslationService } from '../../core/services/translation.service';
 import { AppHeaderComponent } from '../../shared/app-header/app-header.component';
@@ -259,17 +259,13 @@ export class MapPage implements OnInit, OnDestroy {
   private fetchData(params: any): void {
     this.isLoading.set(true);
 
-    forkJoin({
-      organisations: this.apiService.get<PaginatedResponse<Organisation>>('/organisations/', params),
-      doctors: this.apiService.get<PaginatedResponse<Doctor>>('/users/', params),
-    })
+    this.apiService
+      .get<{ organisations: Organisation[]; practitioners: Doctor[] }>('/map/', params)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: ({ organisations, doctors }) => {
-          const orgs: Organisation[] = Array.isArray(organisations)
-            ? organisations
-            : organisations.results || [];
-          const docs: Doctor[] = doctors.results || [];
+        next: ({ organisations, practitioners }) => {
+          const orgs: Organisation[] = organisations || [];
+          const docs: Doctor[] = practitioners || [];
 
           const items: MapItem[] = [];
 
