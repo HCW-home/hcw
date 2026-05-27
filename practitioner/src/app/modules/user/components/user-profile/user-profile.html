@@ -514,11 +514,21 @@
             <app-svg src="warning" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
             <strong>{{ 'userProfile.davTokenOnce' | translate }}</strong>
           </div>
-          <div class="dav-token-value">
-            <code>{{ newlyCreatedToken() }}</code>
-            <button type="button" class="copy-btn" (click)="copyToken()">
-              <app-svg src="copy" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
-            </button>
+          <div class="dav-credentials">
+            <div class="dav-credential-row">
+              <span class="dav-credential-label">{{ 'userProfile.davLogin' | translate }}</span>
+              <code class="dav-credential-value">{{ user()?.email }}</code>
+              <button type="button" class="copy-btn" (click)="copyDavLogin()">
+                <app-svg [src]="davLoginCopied() ? 'check' : 'copy'" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+              </button>
+            </div>
+            <div class="dav-credential-row">
+              <span class="dav-credential-label">{{ 'userProfile.davPassword' | translate }}</span>
+              <code class="dav-credential-value">{{ newlyCreatedToken() }}</code>
+              <button type="button" class="copy-btn" (click)="copyDavToken()">
+                <app-svg [src]="davTokenCopied() ? 'check' : 'copy'" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+              </button>
+            </div>
           </div>
         </div>
       }
@@ -564,8 +574,11 @@
       @if (showCreateDavForm()) {
         <div class="dav-create-form">
           <div class="dav-create-row">
-            <input type="text" class="form-input" [(ngModel)]="newDavPasswordLabel"
-              [placeholder]="'userProfile.davPasswordLabelPlaceholder' | translate" />
+            <div class="dav-create-input-wrapper">
+              <app-label [label]="'userProfile.davPasswordLabel' | translate"></app-label>
+              <input type="text" class="form-input" [(ngModel)]="newDavPasswordLabel"
+                [placeholder]="'userProfile.davPasswordLabelPlaceholder' | translate" />
+            </div>
             <app-button
               [text]="'userProfile.davConfirmCreate' | translate"
               [style]="ButtonStyleEnum.primary"

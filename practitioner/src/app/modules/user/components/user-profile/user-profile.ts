@@ -36,6 +36,7 @@ import { Badge } from '../../../../shared/components/badge/badge';
 import { Select } from '../../../../shared/ui-components/select/select';
 import { Svg } from '../../../../shared/ui-components/svg/svg';
 import { Button } from '../../../../shared/ui-components/button/button';
+import { Label } from '../../../../shared/ui-components/label/label';
 
 import { BadgeTypeEnum } from '../../../../shared/constants/badge';
 import {
@@ -64,6 +65,7 @@ type TestStatus = 'idle' | 'testing' | 'working' | 'error' | 'playing';
     Badge,
     Select,
     Button,
+    Label,
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
@@ -109,6 +111,8 @@ export class UserProfile implements OnInit, OnDestroy {
   newDavPasswordLabel = '';
   newlyCreatedToken = signal<string | null>(null);
   showCreateDavForm = signal(false);
+  davLoginCopied = signal(false);
+  davTokenCopied = signal(false);
 
   profileForm: FormGroup;
 
@@ -1009,8 +1013,19 @@ export class UserProfile implements OnInit, OnDestroy {
     setTimeout(() => this.carddavUrlCopied.set(false), 2000);
   }
 
-  copyToken(): void {
+  copyDavToken(): void {
     const token = this.newlyCreatedToken();
-    if (token) navigator.clipboard.writeText(token);
+    if (!token) return;
+    navigator.clipboard.writeText(token);
+    this.davTokenCopied.set(true);
+    setTimeout(() => this.davTokenCopied.set(false), 2000);
+  }
+
+  copyDavLogin(): void {
+    const email = this.user()?.email;
+    if (!email) return;
+    navigator.clipboard.writeText(email);
+    this.davLoginCopied.set(true);
+    setTimeout(() => this.davLoginCopied.set(false), 2000);
   }
 }

@@ -93,6 +93,7 @@ import {
   lucideCaptions,
   lucideCaptionsOff,
   lucideClosedCaption,
+  lucideCopy,
 } from '@ng-icons/lucide';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { Auth } from './core/services/auth';
@@ -174,6 +175,7 @@ export const appConfig: ApplicationConfig = {
       lucideCaptions,
       lucideCaptionsOff,
       lucideClosedCaption,
+      lucideCopy,
     }),
     provideServiceWorker('custom-sw.js', {
       enabled: !isDevMode(),

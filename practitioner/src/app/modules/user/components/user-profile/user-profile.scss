@@ -579,7 +579,14 @@
 .dav-create-row {
   display: flex;
   gap: 8px;
-  align-items: center;
+  align-items: flex-end;
+
+  .dav-create-input-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
 
   .form-input {
     flex: 1;
@@ -605,7 +612,13 @@
   font-size: 0.875rem;
 }
 
-.dav-token-value {
+.dav-credentials {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dav-credential-row {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -613,11 +626,39 @@
   border-radius: 6px;
   padding: 8px 12px;
 
-  code {
+  .dav-credential-label {
+    flex-shrink: 0;
+    width: 110px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--emerald-700);
+  }
+
+  .dav-credential-value {
     flex: 1;
     font-family: monospace;
     font-size: 0.8rem;
     word-break: break-all;
     color: var(--green-900);
+  }
+
+  .copy-btn {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--slate-200);
+    background: var(--White);
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--slate-600);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+
+    &:hover {
+      background: var(--slate-50);
+      border-color: var(--slate-300);
+    }
   }
 }
