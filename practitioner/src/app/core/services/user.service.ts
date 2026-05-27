@@ -6,6 +6,7 @@ import {
   ILanguage,
   ISpeciality,
   IUserUpdateRequest,
+  IDavAppPassword,
 } from '../../modules/user/models/user';
 import { environment } from '../../../environments/environment';
 import { PaginatedResponse } from '../models/global';
@@ -120,5 +121,17 @@ export class UserService {
     return this.http.get<{ url: string; token: string; room: string; provider?: string }>(
       `${this.apiUrl}/user/testrtc/`
     );
+  }
+
+  getDavPasswords(): Observable<IDavAppPassword[]> {
+    return this.http.get<IDavAppPassword[]>(`${this.apiUrl}/user/dav-passwords/`);
+  }
+
+  createDavPassword(label: string): Observable<IDavAppPassword> {
+    return this.http.post<IDavAppPassword>(`${this.apiUrl}/user/dav-passwords/`, { label });
+  }
+
+  deleteDavPassword(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/user/dav-passwords/${id}/`);
   }
 }

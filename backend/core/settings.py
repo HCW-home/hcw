@@ -128,7 +128,9 @@ TENANT_APPS = (
     "mediaserver",
     "api",
     "translations",
+    "dav",
     "caldav",
+    "carddav",
     "encryption_admin",
 )
 

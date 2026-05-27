@@ -27,6 +27,10 @@ user_router.register(
     r"participants", views.UserParticipantViewSet, basename="user-participants"
 )
 
+user_router.register(
+    r"dav-passwords", views.DAVAppPasswordViewSet, basename="user-dav-passwords"
+)
+
 urlpatterns = [
     # FHIR conditional operations on the collection URL — see consultations/urls.py.
     path(

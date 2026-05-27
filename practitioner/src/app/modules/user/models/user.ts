@@ -91,3 +91,12 @@ export interface IUserUpdateRequest {
   language_ids?: number[];
   is_first_login?: boolean;
 }
+
+export interface IDavAppPassword {
+  id: number;
+  label: string;
+  token: string;
+  created_at: string;
+  last_used_at: string | null;
+  is_active: boolean;
+}

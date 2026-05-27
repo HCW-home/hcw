@@ -22,6 +22,8 @@ from core.storage import TenantUploadTo
 from .abstracts import ModelOwnerAbstract
 from .managers import UserManager
 
+import secrets
+
 # Create your models here.
 
 
@@ -358,8 +360,6 @@ class User(AbstractUser):
 
 
 class HealthMetric(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -412,3 +412,66 @@ class HealthMetric(models.Model):
         return f"{self.user} @ {self.measured_at:%Y-%m-%d %H:%M}"
 
     acknowledged_at = models.DateTimeField(blank=True, null=True)
+
+
+class DAVAppPassword(models.Model):
+    """
+    App password for CalDAV/CardDAV access.
+    Allows users authenticated via OpenID to use DAV protocols
+    which require HTTP Basic Auth.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="dav_app_passwords",
+    )
+    token = models.CharField(
+        max_length=256,
+        unique=True,
+        editable=False,
+        help_text="Random token used as password in Basic Auth",
+    )
+    label = models.CharField(
+        max_length=100,
+        help_text="Human-readable label, e.g. 'iPhone CardDAV'",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_used_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Last time this token was used to authenticate",
+    )
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = _("DAV app password")
+        verbose_name_plural = _("DAV app passwords")
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user} — {self.label}"
+
+    def save(self, *args, **kwargs):
+        if not self.token:
+            self.token = secrets.token_urlsafe(48)
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def authenticate(cls, username: str, password: str):
+        """
+        Try to authenticate via app password.
+        Returns the User if valid, None otherwise.
+        """
+        try:
+            app_pw = cls.objects.select_related("user").get(
+                user__email__iexact=username,
+                token=password,
+                is_active=True,
+            )
+        except cls.DoesNotExist:
+            return None
+
+        app_pw.last_used_at = timezone.now()
+        app_pw.save(update_fields=["last_used_at"])
+        return app_pw.user

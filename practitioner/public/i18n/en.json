@@ -1090,7 +1090,21 @@
     "encryptionPassphraseMismatch": "The new passphrase and the confirmation do not match.",
     "encryptionPassphraseChangedTitle": "Passphrase changed",
     "encryptionPassphraseChangedMessage": "Your passphrase has been updated.",
-    "encryptionInvalidOldPassphrase": "The current passphrase is incorrect."
+    "encryptionInvalidOldPassphrase": "The current passphrase is incorrect.",
+    "tabDav": "Synchronization",
+    "davUrls": "DAV URLs",
+    "davPasswordLabel": "Application name",
+    "davPasswordLabelPlaceholder": "e.g. iPhone, Thunderbird...",
+    "davCreate": "New Password",
+    "davConfirmCreate": "Confirm",
+    "davTokenOnce": "Copy this password into your application now — it will not be shown again.",
+    "davLogin": "Login",
+    "davPassword": "Password",
+    "davPasswords": "Application Password Management",
+    "davNoPasswords": "No application passwords created yet.",
+    "davNeverUsed": "Never used",
+    "davRevoke": "Revoke",
+    "davExplanation": "An application password allows an external app (calendar, contacts) to connect to your account via CalDAV/CardDAV without using your main password."
   },
   "consultationRowItem": {
     "untitledConsultation": "Untitled Follow-up",

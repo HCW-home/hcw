@@ -26,7 +26,7 @@ import { EncryptionService } from '../../../../core/services/encryption.service'
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { VideoCallService } from '../../../../core/services/video-call.service';
 import { ConnectionStatus, VideoProvider } from '../../../../core/services/video-call.types';
-import { IUser, IUserUpdateRequest, ILanguage } from '../../models/user';
+import { IUser, IUserUpdateRequest, ILanguage, IDavAppPassword } from '../../models/user';
 import { CommunicationMethodEnum } from '../../constants/user';
 
 import { Page } from '../../../../core/components/page/page';
@@ -36,6 +36,7 @@ import { Badge } from '../../../../shared/components/badge/badge';
 import { Select } from '../../../../shared/ui-components/select/select';
 import { Svg } from '../../../../shared/ui-components/svg/svg';
 import { Button } from '../../../../shared/ui-components/button/button';
+import { Label } from '../../../../shared/ui-components/label/label';
 
 import { BadgeTypeEnum } from '../../../../shared/constants/badge';
 import {
@@ -64,6 +65,7 @@ type TestStatus = 'idle' | 'testing' | 'working' | 'error' | 'playing';
     Badge,
     Select,
     Button,
+    Label,
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
@@ -91,7 +93,9 @@ export class UserProfile implements OnInit, OnDestroy {
   isSaving = signal(false);
   isUploadingAvatar = signal(false);
   caldavUrlCopied = signal(false);
-  caldavUrl = `${window.location.origin}/caldav/calendar/`;
+  caldavUrl = `${window.location.origin}/dav/calendar/`;
+  carddavUrl = `${window.location.origin}/dav/addressbook/`;
+  carddavUrlCopied = signal(false);
 
   encryptionEnabled = signal(false);
   encryptionKeyLoaded = signal(false);
@@ -102,17 +106,26 @@ export class UserProfile implements OnInit, OnDestroy {
   encryptionNewPassphrase = '';
   encryptionConfirmPassphrase = '';
 
+  davPasswords = signal<IDavAppPassword[]>([]);
+  isLoadingDavPasswords = signal(false);
+  newDavPasswordLabel = '';
+  newlyCreatedToken = signal<string | null>(null);
+  showCreateDavForm = signal(false);
+  davLoginCopied = signal(false);
+  davTokenCopied = signal(false);
+
   profileForm: FormGroup;
 
   // Tab system
-  activeTab = signal<'profile' | 'system-test'>('profile');
+  activeTab = signal<'profile' | 'system-test' | 'dav'>('profile');
   tabItems = computed<TabItem[]>(() => [
     { id: 'profile', label: this.t.instant('userProfile.tabProfile') },
     { id: 'system-test', label: this.t.instant('userProfile.tabSystemTest') },
+    { id: 'dav', label: this.t.instant('userProfile.tabDav') },
   ]);
 
   setActiveTab(tab: string): void {
-    this.activeTab.set(tab as 'profile' | 'system-test');
+    this.activeTab.set(tab as 'profile' | 'system-test' | 'dav');
   }
 
   // System test state
@@ -190,6 +203,7 @@ export class UserProfile implements OnInit, OnDestroy {
     this.loadDropdownData();
     this.setupLivekitSubscriptions();
     this.refreshEncryptionStatus();
+    this.loadDavPasswords();
   }
 
   private async refreshEncryptionStatus(): Promise<void> {
@@ -956,5 +970,62 @@ export class UserProfile implements OnInit, OnDestroy {
     }
 
     this.videoCallService.disconnect();
+  }
+
+  loadDavPasswords(): void {
+    this.isLoadingDavPasswords.set(true);
+    this.userService.getDavPasswords()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: passwords => {
+          this.davPasswords.set(passwords);
+          this.isLoadingDavPasswords.set(false);
+        },
+        error: () => this.isLoadingDavPasswords.set(false),
+      });
+  }
+
+  createDavPassword(): void {
+    if (!this.newDavPasswordLabel.trim()) return;
+    this.userService.createDavPassword(this.newDavPasswordLabel)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: password => {
+          this.newlyCreatedToken.set(password.token);
+          this.newDavPasswordLabel = '';
+          this.showCreateDavForm.set(false);
+          this.loadDavPasswords();
+        },
+      });
+  }
+
+  deleteDavPassword(id: number): void {
+    this.userService.deleteDavPassword(id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => this.loadDavPasswords(),
+      });
+  }
+
+  copyCarddavUrl(): void {
+    navigator.clipboard.writeText(this.carddavUrl);
+    this.carddavUrlCopied.set(true);
+    setTimeout(() => this.carddavUrlCopied.set(false), 2000);
+  }
+
+  copyDavToken(): void {
+    const token = this.newlyCreatedToken();
+    if (!token) return;
+    navigator.clipboard.writeText(token);
+    this.davTokenCopied.set(true);
+    setTimeout(() => this.davTokenCopied.set(false), 2000);
+  }
+
+  copyDavLogin(): void {
+    const email = this.user()?.email;
+    if (!email) return;
+    navigator.clipboard.writeText(email);
+    this.davLoginCopied.set(true);
+    setTimeout(() => this.davLoginCopied.set(false), 2000);
   }
 }

@@ -14,7 +14,7 @@ from rest_framework import serializers, status
 from rest_framework.response import Response
 
 from .forms import CustomAllAuthPasswordResetForm
-from .models import HealthMetric, Language, Organisation, Speciality, Term, WebPushSubscription
+from .models import HealthMetric, Language, Organisation, Speciality, Term, WebPushSubscription, DAVAppPassword
 
 UserModel = get_user_model()
 
@@ -387,4 +387,24 @@ class UserParticipantDetailSerializer(serializers.ModelSerializer):
         read_only_field = [
             "status",
             "appointment",
+        ]
+
+class DAVAppPasswordSerializer(serializers.ModelSerializer):
+    token = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = DAVAppPassword
+        fields = [
+            "id",
+            "label",
+            "token",
+            "created_at",
+            "last_used_at",
+            "is_active"
+        ]
+        read_only_fields = [
+            "id",
+            "token",
+            "created_at",
+            "last_used_at"
         ]
