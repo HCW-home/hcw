@@ -48,8 +48,9 @@ admin.site.register(Participant, ModelAdmin)
 
 @admin.register(CustomField)
 class CustomFieldAdmin(ModelAdmin, TabbedTranslationAdmin):
-    list_display = ["name", "field_type", "target_model", "required", "ordering"]
-    list_filter = ["target_model", "field_type", "required"]
+    list_display = ["name", "field_type", "target_model", "required", "ordering", "is_public"]
+    list_editable = ["is_public"]
+    list_filter = ["target_model", "field_type", "required", "is_public"]
     search_fields = ["name"]
 
 

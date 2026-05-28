@@ -84,6 +84,7 @@ from .serializers import (
     UserParticipantDetailSerializer,
     WebPushSubscriptionSerializer,
     DAVAppPasswordSerializer,
+    PublicPractitionerSerializer,
 )
 from constance import config
 
@@ -368,7 +369,7 @@ class MapView(APIView):
 
         return Response({
             "organisations": OrganisationSerializer(organisations, many=True).data,
-            "practitioners": UserDetailsSerializer(practitioners, many=True).data,
+            "practitioners": PublicPractitionerSerializer(practitioners, many=True).data,
         })
 
     @staticmethod

@@ -817,6 +817,11 @@ class CustomField(models.Model):
     )
     required = models.BooleanField(_("required"), default=False)
     ordering = models.IntegerField(_("ordering"), default=0)
+    is_public = models.BooleanField(
+        _("public"),
+        default=False,
+        help_text=_("When enabled, this field value is exposed on the public practitioner profile"),
+    )
 
     class Meta:
         verbose_name = _("custom field")

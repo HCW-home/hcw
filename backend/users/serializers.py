@@ -408,3 +408,47 @@ class DAVAppPasswordSerializer(serializers.ModelSerializer):
             "created_at",
             "last_used_at"
         ]
+
+class PublicPractitionerSerializer(serializers.ModelSerializer):
+    """
+    Read-only serializer exposing only public practitioner data for the map.
+    """
+
+    specialities = SpecialitySerializer(many=True, read_only=True)
+    main_organisation = OrganisationSerializer(read_only=True)
+    public_custom_fields = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserModel
+        fields = [
+            "pk",
+            "first_name",
+            "last_name",
+            "email",
+            "mobile_phone_number",
+            "picture",
+            "job_title",
+            "specialities",
+            "main_organisation",
+            "location",
+            "street",
+            "city",
+            "postal_code",
+            "country",
+            "public_custom_fields",
+        ]
+        read_only_fields = fields
+
+    def get_public_custom_fields(self, obj):
+        from consultations.models import CustomFieldValue
+        from consultations.serializers import CustomFieldValueReadSerializer
+        from django.contrib.contenttypes.models import ContentType
+
+        ct = ContentType.objects.get_for_model(obj.__class__)
+        values = CustomFieldValue.objects.filter(
+            content_type=ct,
+            object_id=obj.pk,
+            custom_field__is_public=True,
+            custom_field__target_model="users.User",
+        ).select_related("custom_field")
+        return CustomFieldValueReadSerializer(values, many=True).data
