@@ -141,6 +141,10 @@ INSTALLED_APPS = list(SHARED_APPS) + \
 TENANT_MODEL = "tenants.Tenant"
 TENANT_DOMAIN_MODEL = "tenants.Domain"
 
+# Custom runner that drops leftover `test` tenants between runs.
+# See core/test_runner.py for details.
+TEST_RUNNER = "core.test_runner.TenantAwareTestRunner"
+
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "core.middleware.MaintenanceMiddleware",

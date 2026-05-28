@@ -1,6 +1,7 @@
 """FHIR metadata/CapabilityStatement view."""
 from __future__ import annotations
 
+from django.utils import timezone
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -50,7 +51,7 @@ class CapabilityStatementView(APIView):
         capability = {
             "resourceType": "CapabilityStatement",
             "status": "active",
-            "date": "",
+            "date": timezone.now().isoformat(),
             "kind": "instance",
             "fhirVersion": "4.0.1",
             "format": ["application/fhir+json"],

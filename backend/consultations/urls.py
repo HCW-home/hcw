@@ -8,7 +8,7 @@ from .views import (
     DashboardPractitionerView,
     MessageViewSet,
     ParticipantViewSet,
-    # PrescriptionViewSet,
+    # PrescriptionViewSet,  # endpoint not exposed yet
     QueueViewSet,
     ReasonSlotsView,
     ReasonViewSet,

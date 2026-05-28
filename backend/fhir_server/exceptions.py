@@ -36,7 +36,20 @@ def is_fhir_request(request) -> bool:
     accepted = getattr(request, "accepted_media_type", "") or ""
     if FHIR_MEDIA_TYPE in accepted:
         return True
-    if request.query_params.get("format") == "fhir" or request.query_params.get("_format") == "fhir":
+    # Inbound payload media type: a PUT/POST with Content-Type:
+    # application/fhir+json is also FHIR, even if no explicit Accept was set.
+    content_type = getattr(request, "content_type", "") or ""
+    if FHIR_MEDIA_TYPE in content_type:
+        return True
+    meta_ct = getattr(request, "META", {}).get("CONTENT_TYPE", "") if hasattr(request, "META") else ""
+    if FHIR_MEDIA_TYPE in meta_ct:
+        return True
+    # `query_params` only exists on DRF Request; plain Django WSGIRequest
+    # exposes the same data via `GET` (a QueryDict).
+    query_params = getattr(request, "query_params", None) or getattr(request, "GET", None)
+    if query_params is not None and (
+        query_params.get("format") == "fhir" or query_params.get("_format") == "fhir"
+    ):
         return True
     return False
 

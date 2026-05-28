@@ -171,6 +171,19 @@ class AppointmentFhirMapper(FhirResourceMapper):
     # -- from_fhir ----------------------------------------------------------
 
     def from_fhir(self, payload: dict, instance=None, *, context=None):
+        # FHIR R4 marks Appointment.participant as 1..* (Pydantic enforces it).
+        # On partial updates (PUT to just change status etc.) callers commonly
+        # omit it. When that happens AND we have an existing instance, inject
+        # a placeholder to satisfy Pydantic and remember to skip the
+        # participant-sync step in `post_save` (so existing participants stay
+        # untouched instead of being soft-deactivated).
+        participant_omitted = (
+            instance is not None
+            and isinstance(payload, dict)
+            and "participant" not in payload
+        )
+        if participant_omitted:
+            payload = {**payload, "participant": []}
         # Validate via Pydantic; handler turns errors into OperationOutcome.
         parsed = FhirAppointment(**payload)
         request = (context or {}).get("request")
@@ -209,7 +222,10 @@ class AppointmentFhirMapper(FhirResourceMapper):
                     instance.external_id = ident.value
                     break
 
-        instance._fhir_participants_pending = list(parsed.participant or [])
+        # When the caller omitted `participant` on a partial update we keep
+        # the existing rows: leave the attribute unset so `post_save` skips.
+        if not participant_omitted:
+            instance._fhir_participants_pending = list(parsed.participant or [])
         return instance
 
     def _resolve_encounter_reference(self, parsed):
