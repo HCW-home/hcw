@@ -536,7 +536,8 @@
                   participant.id) {
                   <app-participant-item
                     [participant]="participant"
-                    [currentUser]="currentUser()"></app-participant-item>
+                    [currentUser]="currentUser()"
+                    [appointmentCancelled]="appointment.status === AppointmentStatus.CANCELLED"></app-participant-item>
                   }
                 </div>
                 } @else {
