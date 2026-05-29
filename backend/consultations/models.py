@@ -184,6 +184,34 @@ class Consultation(models.Model):
     def __str__(self):
         return f"Consultation #{self.pk}"
 
+    class RoleOnConsultation(models.TextChoices):
+        beneficiary = "beneficiary", _("beneficiary")
+        practitioner = "practitioner", _("practitioner")
+        participant = "participant", _("participant")
+
+    def role_of(self, user):
+        """Role of `user` relative to this consultation, or None if unrelated.
+
+        Drives which interface (patient vs practitioner) a recipient is
+        linked to: a beneficiary or a merely-invited participant lands on the
+        patient interface even when they are a practitioner globally.
+        """
+        if user is None:
+            return None
+        if self.beneficiary_id and self.beneficiary_id == user.pk:
+            return self.RoleOnConsultation.beneficiary
+        if (
+            self.created_by_id == user.pk
+            or self.owned_by_id == user.pk
+            or (self.group_id and self.group.users.filter(pk=user.pk).exists())
+        ):
+            return self.RoleOnConsultation.practitioner
+        if Participant.objects.filter(
+            appointment__consultation=self, user=user
+        ).exists():
+            return self.RoleOnConsultation.participant
+        return None
+
 
 class AppointmentStatus(models.TextChoices):
     draft = "draft", _("Draft")
