@@ -809,49 +809,12 @@ class Message(ModelCeleryAbstract):
 
     additionnal_link_args = models.JSONField(blank=True, null=True)
 
-    def _consultation_role(self):
-        """(consultation, role) of the recipient for the related consultation,
-        or (None, None) when this notification is not tied to a consultation.
-
-        Lazy imports keep messaging decoupled from consultations (avoids the
-        import cycle, consultations.signals already imports this module).
-        """
-        obj = self.content_object
-        if obj is None or self.sent_to is None:
-            return None, None
-
-        from consultations.models import Consultation
-
-        if isinstance(obj, Consultation):
-            consultation = obj
-        else:
-            consultation = getattr(obj, "consultation", None)  # chat Message
-            if consultation is None:
-                appointment = getattr(obj, "appointment", None)  # Participant
-                consultation = getattr(appointment, "consultation", None)
-
-        if consultation is None:
-            return None, None
-        return consultation, consultation.role_of(self.sent_to)
-
     @property
     def access_link(self):
         if not self.template or not self.template.action:
             return
         """Generate access link if template has an action defined"""
-        from consultations.models import Consultation
-
-        _, role = self._consultation_role()
-        if role is not None:
-            # Beneficiary and merely-invited participant land on the patient
-            # interface, even when they are practitioners globally; only an
-            # actual professional (creator, assigned practitioner, group
-            # member) gets the practitioner interface.
-            is_patient = role != Consultation.RoleOnConsultation.practitioner
-        else:
-            # Templates not tied to a consultation (auth code, email
-            # verification...): fall back to the recipient's global role.
-            is_patient = self.sent_to.is_patient
+        is_patient = self.sent_to.is_patient
         base_url = (
             config.patient_base_url
             if is_patient
@@ -1048,13 +1011,6 @@ class Message(ModelCeleryAbstract):
                 self.pk, field, self.template_system_name, self.language,
             )
 
-            from consultations.models import Consultation
-
-            _, role = self._consultation_role()
-            # Lazy translation: resolved within the translation.override block
-            # below so the label matches the recipient's language.
-            recipient_role = Consultation.RoleOnConsultation(role).label if role else ""
-
             with (
                 translation.override(self.language),
                 timezone.override(self.sent_to.user_tz),
@@ -1082,7 +1038,6 @@ class Message(ModelCeleryAbstract):
                         "action": self.action,
                         "action_label": self.action_label,
                         "access_link": self.access_link,
-                        "recipient_role": recipient_role,
                     }
                 )
                 logger.debug("render: field=%s result length=%d", field, len(result) if result else 0)

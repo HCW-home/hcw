@@ -125,13 +125,10 @@ DEFAULT_NOTIFICATION_MESSAGES = {
     "consultation_assigned": {
         "template_subject": _("A consultation has been assigned to you"),
         "template_content": _(
-            'A consultation "{{ obj.title }}" has been assigned to you'
-            '{% if recipient_role %} as {{ recipient_role }}{% endif %}.'
-            ' You can now interact with it and view its details.'
+            'A consultation "{{ obj.title }}" has been assigned to you. You can now interact with it and view its details.'
         ),
         "template_content_html": _(
-            '<p>A consultation <strong>"{{ obj.title }}"</strong> has been assigned to you'
-            '{% if recipient_role %} as {{ recipient_role }}{% endif %}.</p>'
+            '<p>A consultation <strong>"{{ obj.title }}"</strong> has been assigned to you.</p>'
             '<p>You can now interact with it and view its details.</p>'
         ),
         "action": "consultation",
