@@ -53,6 +53,11 @@ urlpatterns = [
         }),
         name="practitioner-conditional",
     ),
+    path(
+        "api/practitioners/<int:pk>/public/",
+        views.PublicPractitionerView.as_view(),
+        name="practitioner-public",
+    ),
     path("api/", include(router.urls)),
     path("api/map/", views.MapView.as_view(), name="map"),
     path("api/auth/openid/", views.OpenIDView.as_view(), name="openid_login"),

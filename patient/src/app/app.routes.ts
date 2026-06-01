@@ -92,4 +92,8 @@ export const routes: Routes = [
     canActivate: [AuthGuard, FirstLoginGuard, TermsGuard, EncryptionGuard],
     canDeactivate: [canDeactivateVideoCall],
   },
+  {
+    path: 'practitioners/:pk/public',
+    loadComponent: () => import('./pages/practitioner-profile/practitioner-profile.page').then(m => m.PractitionerProfilePage),
+  },
 ];

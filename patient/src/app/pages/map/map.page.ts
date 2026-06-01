@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router'; 
 import {
   IonContent,
   IonIcon,
@@ -109,6 +110,7 @@ export class MapPage implements OnInit, OnDestroy {
   constructor(
     private apiService: ApiService,
     private authService: AuthService,
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
@@ -404,6 +406,9 @@ export class MapPage implements OnInit, OnDestroy {
       if (idx >= 0 && this.markers[idx]) {
         this.markers[idx].openPopup();
       }
+    }
+    if (item.type === 'doctor' && item.doctor) {
+      this.router.navigate(['/practitioners', item.doctor.pk, 'public']);
     }
   }
 

@@ -452,6 +452,29 @@ class MapView(APIView):
                 kept.append(user)
         return kept
 
+class PublicPractitionerView(APIView):
+    """
+    Public read-only profile for a single practitioner.
+    """
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get_permissions(self):
+        if constance_config.public_organisations:
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+    def get(self, request, pk):
+        try:
+            practitioner = User.objects.get(
+                pk=pk, is_practitioner=True, is_active=True
+            )
+        except User.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        from .serializers import PublicPractitionerSerializer
+        return Response(PublicPractitionerSerializer(practitioner).data)
 
 def generate_magic_token(user):
     serializer = URLSafeTimedSerializer(settings.SECRET_KEY)

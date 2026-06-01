@@ -1,0 +1,91 @@
+<app-header [pageTitle]="'practitioner.profile' | translate"></app-header>
+
+<ion-content class="profile-content">
+  @if (isLoading()) {
+    <div class="loading-container">
+      <ion-spinner name="crescent"></ion-spinner>
+    </div>
+  } @else if (notFound()) {
+    <div class="error-container">
+      <ion-icon name="person-outline" class="error-icon"></ion-icon>
+      <p>{{ 'practitioner.notFound' | translate }}</p>
+    </div>
+  } @else if (practitioner(); as p) {
+    <div class="profile-container">
+
+      <div class="profile-header">
+        @if (p.picture) {
+          <img [src]="p.picture" [alt]="p.first_name + ' ' + p.last_name" class="profile-picture" />
+        } @else {
+          <div class="profile-avatar">
+            {{ p.first_name.charAt(0) }}{{ p.last_name.charAt(0) }}
+          </div>
+        }
+        <div class="profile-identity">
+          <h1>{{ p.first_name }} {{ p.last_name }}</h1>
+          @if (p.job_title) {
+            <p class="job-title">{{ p.job_title }}</p>
+          }
+          @if (p.specialities.length > 0) {
+            <p class="specialities">
+              <ion-icon name="medkit-outline"></ion-icon>
+              {{ formatSpecialities(p.specialities) }}
+            </p>
+          }
+        </div>
+      </div>
+
+      <div class="profile-section">
+        @if (p.email) {
+          <div class="profile-row">
+            <ion-icon name="mail-outline"></ion-icon>
+            <a [href]="'mailto:' + p.email">{{ p.email }}</a>
+          </div>
+        }
+        @if (p.mobile_phone_number) {
+          <div class="profile-row">
+            <ion-icon name="call-outline"></ion-icon>
+            <a [href]="'tel:' + p.mobile_phone_number">{{ p.mobile_phone_number }}</a>
+          </div>
+        }
+        @if (formatAddress(p)) {
+          <div class="profile-row">
+            <ion-icon name="location-outline"></ion-icon>
+            <span>{{ formatAddress(p) }}</span>
+          </div>
+        }
+      </div>
+
+      @if (p.main_organisation) {
+        <div class="profile-section">
+          <h2>{{ 'practitioner.organisation' | translate }}</h2>
+          @if (p.main_organisation.logo_color) {
+            <img [src]="p.main_organisation.logo_color" [alt]="p.main_organisation.name" class="org-logo" />
+          }
+          <p class="org-name">{{ p.main_organisation.name }}</p>
+          @if (p.main_organisation.phone) {
+            <div class="profile-row">
+              <ion-icon name="call-outline"></ion-icon>
+              <a [href]="'tel:' + p.main_organisation.phone">{{ p.main_organisation.phone }}</a>
+            </div>
+          }
+        </div>
+      }
+
+      @if (p.public_custom_fields.length > 0) {
+        <div class="profile-section">
+          <h2>{{ 'practitioner.additionalInfo' | translate }}</h2>
+          @for (field of p.public_custom_fields; track field.field) {
+            @if (field.value) {
+              <div class="profile-row custom-field">
+                <span class="field-label">{{ field.field_name }}</span>
+                <span class="field-value">{{ field.value }}</span>
+              </div>
+            }
+          }
+        </div>
+      }
+
+    </div>
+  }
+</ion-content>
