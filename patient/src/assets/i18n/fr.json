@@ -519,5 +519,10 @@
         "defaultMessage": "Le service est temporairement indisponible pour maintenance. Veuillez r\u00e9essayer plus tard.",
         "autoRefresh": "Cette page se rafra\u00eechira automatiquement dans {{seconds}} secondes.",
         "retry": "Rafra\u00eechir maintenant"
+    },
+    "practitioner": {
+        "notFound": "praticien non trouvé",
+        "organisation": "Organisation",
+        "additionalInfo": "Informations complémentaires"
     }
 }
