@@ -6,6 +6,7 @@ from django.contrib import admin, messages
 from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext_lazy
@@ -28,9 +29,11 @@ from unfold.contrib.import_export.forms import (
     SelectableFieldsExportForm,
 )
 from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
+from unfold.contrib.inlines.admin import NonrelatedStackedInline
 from django import forms
 from unfold.widgets import UnfoldAdminColorInputWidget, UnfoldAdminLocationWidget
 from rest_framework.authtoken.models import TokenProxy
+from consultations.models import CustomField, CustomFieldValue
 
 from .models import (
     DAVAppPassword,
@@ -89,6 +92,34 @@ class UserChangeFormWithLocation(UserChangeForm):
                 based_fields=["street", "city", "postal_code", "country"],
             )
 
+class PractitionerCustomFieldInline(NonrelatedStackedInline):
+    model = CustomFieldValue
+    extra = 0
+    verbose_name = "Custom field value"
+    verbose_name_plural = "Custom fields (Practitioner)"
+    fields = ["custom_field", "value"]
+
+    def get_form_queryset(self, obj):
+        ct = ContentType.objects.get_for_model(obj)
+        return CustomFieldValue.objects.filter(
+            content_type=ct,
+            object_id=obj.pk,
+            custom_field__target_model="users.Practitioner",
+        ).select_related("custom_field")
+
+    def save_new_instance(self, parent, instance):
+        ct = ContentType.objects.get_for_model(parent)
+        instance.content_type = ct
+        instance.object_id = parent.pk
+        instance.save()
+
+    def get_formset(self, request, obj=None, **kwargs):
+        formset = super().get_formset(request, obj, **kwargs)
+        if "custom_field" in formset.form.base_fields:
+            formset.form.base_fields["custom_field"].queryset = (
+                CustomField.objects.filter(target_model="users.Practitioner")
+            )
+        return formset
 
 class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
     form = UserChangeFormWithLocation
@@ -197,6 +228,11 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
         )
 
     specialities_display.short_description = "Specialities"
+
+    def get_inlines(self, request, obj=None):
+        if obj and obj.is_practitioner:
+            return [PractitionerCustomFieldInline]
+        return []
 
 
 admin.site.register(User, UserAdmin)

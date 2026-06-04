@@ -449,6 +449,6 @@ class PublicPractitionerSerializer(serializers.ModelSerializer):
             content_type=ct,
             object_id=obj.pk,
             custom_field__is_public=True,
-            custom_field__target_model="users.User",
+            custom_field__target_model__in=["users.User", "users.Practitioner"],
         ).select_related("custom_field")
         return CustomFieldValueReadSerializer(values, many=True).data
