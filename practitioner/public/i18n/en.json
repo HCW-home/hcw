@@ -1104,7 +1104,8 @@
     "davNoPasswords": "No application passwords created yet.",
     "davNeverUsed": "Never used",
     "davRevoke": "Revoke",
-    "davExplanation": "An application password allows an external app (calendar, contacts) to connect to your account via CalDAV/CardDAV without using your main password."
+    "davExplanation": "An application password allows an external app (calendar, contacts) to connect to your account via CalDAV/CardDAV without using your main password.",
+    "customFields":"Custom Fields"
   },
   "consultationRowItem": {
     "untitledConsultation": "Untitled Follow-up",

@@ -304,7 +304,8 @@
     "davNoPasswords": "Aucun mot de passe d'application créé pour l'instant.",
     "davNeverUsed": "Jamais utilisé",
     "davRevoke": "Révoquer",
-    "davExplanation": "Un mot de passe d'application permet à une application externe (agenda, contacts) de se connecter à votre compte via CalDAV/CardDAV sans utiliser votre mot de passe principal."
+    "davExplanation": "Un mot de passe d'application permet à une application externe (agenda, contacts) de se connecter à votre compte via CalDAV/CardDAV sans utiliser votre mot de passe principal.",
+    "customFields": "Champs personnalisés"
   },
   "consultationRowItem": {
     "untitledConsultation": "Suivi sans titre",

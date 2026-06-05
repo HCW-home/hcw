@@ -523,6 +523,7 @@
   "practitioner": {
     "notFound": "Practitioner not found",
     "organisation": "Organisation",
-    "additionalInfo": "Additional Information"
+    "additionalInfo": "Additional Information",
+    "profile": "Profile"
   }
 }
