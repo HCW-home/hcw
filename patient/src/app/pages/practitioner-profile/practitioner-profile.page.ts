@@ -94,4 +94,8 @@ export class PractitionerProfilePage implements OnInit {
   formatSpecialities(specialities: { id: number; name: string }[]): string {
     return specialities.map(s => s.name).join(', ');
   }
+
+  hasPublicCustomFields(p: PublicPractitioner): boolean {
+    return p.public_custom_fields.some(f => f.value);
+  }
 }

@@ -72,7 +72,7 @@
         </div>
       }
 
-      @if (p.public_custom_fields.length > 0) {
+      @if (hasPublicCustomFields(p)) {
         <div class="profile-section">
           <h2>{{ 'practitioner.additionalInfo' | translate }}</h2>
           @for (field of p.public_custom_fields; track field.field) {
