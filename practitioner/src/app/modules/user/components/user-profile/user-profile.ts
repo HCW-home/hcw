@@ -96,6 +96,9 @@ export class UserProfile implements OnInit, OnDestroy {
   caldavUrl = `${window.location.origin}/dav/calendar/`;
   carddavUrl = `${window.location.origin}/dav/addressbook/`;
   carddavUrlCopied = signal(false);
+  customFields = signal<any[]>([]);
+  customFieldValues: { [id: number]: string } = {};
+  isSavingCustomFields = signal(false);
 
   encryptionEnabled = signal(false);
   encryptionKeyLoaded = signal(false);
@@ -204,6 +207,7 @@ export class UserProfile implements OnInit, OnDestroy {
     this.setupLivekitSubscriptions();
     this.refreshEncryptionStatus();
     this.loadDavPasswords();
+    this.loadCustomFields();
   }
 
   private async refreshEncryptionStatus(): Promise<void> {
@@ -1027,5 +1031,38 @@ export class UserProfile implements OnInit, OnDestroy {
     navigator.clipboard.writeText(email);
     this.davLoginCopied.set(true);
     setTimeout(() => this.davLoginCopied.set(false), 2000);
+  }
+
+  loadCustomFields(): void {
+  this.userService.getPractitionerCustomFields()
+    .pipe(takeUntil(this.destroy$))
+    .subscribe({
+      next: fields => {
+        this.customFields.set(fields);
+        fields.forEach(f => {
+          this.customFieldValues[f.id] = f.value ?? '';
+        });
+      },
+    });
+}
+
+  saveCustomFields(): void {
+    this.isSavingCustomFields.set(true);
+    const payload = this.customFields().map(f => ({
+      id: f.id,
+      value: this.customFieldValues[f.id] ?? null,
+    }));
+    this.userService.updatePractitionerCustomFields(payload)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.isSavingCustomFields.set(false);
+          this.toasterService.show('success', this.t.instant('userProfile.profileUpdated'), this.t.instant('userProfile.profileUpdatedMessage'));
+        },
+        error: () => {
+          this.isSavingCustomFields.set(false);
+          this.toasterService.show('error', this.t.instant('userProfile.errorUpdatingProfile'), '');
+        },
+      });
   }
 }
