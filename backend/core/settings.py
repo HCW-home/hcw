@@ -258,6 +258,7 @@ LANGUAGES = (
     ("es", gettext("Spanish")),
     ("fr", gettext("French")),
     ("it", gettext("Italian")),
+    ("uk", gettext("Ukrainian")),
 )
 
 # Static files (CSS, JavaScript, Images)

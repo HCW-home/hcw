@@ -362,7 +362,11 @@ export class MediasoupService implements VideoCallImpl {
 
   private async loadDevice(): Promise<void> {
     const mediasoupClient = await import('mediasoup-client');
-    this.device = new mediasoupClient.Device();
+    // mediasoup-client is a CommonJS module; depending on the CJS/ESM interop
+    // done by the bundler, the Device class may land on `.default`.
+    const DeviceCtor =
+      (mediasoupClient as any).Device ?? (mediasoupClient as any).default?.Device;
+    this.device = new DeviceCtor();
     const routerRtpCapabilities = (await this.sendRequest(
       'getRouterRtpCapabilities',
     )) as RtpCapabilities & { headerExtensions?: { uri: string }[] };
