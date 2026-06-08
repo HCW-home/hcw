@@ -1342,6 +1342,9 @@ class OpenIDAdapter(OpenIDConnectOAuth2Adapter):
 
 class CustomOAuth2Client(OAuth2Client):
     _pkce_code_verifier = None
+    # Raw OIDC id_token captured from the token endpoint response, needed as
+    # id_token_hint for RP-initiated logout (allauth decodes then discards it).
+    _id_token = None
 
     def __init__(
         self,
@@ -1376,6 +1379,9 @@ class CustomOAuth2Client(OAuth2Client):
         try:
             result = super().get_access_token(code, pkce_code_verifier)
             self._pkce_code_verifier = None
+            # Capture the raw id_token so it can be sent back to the frontend
+            # and used as id_token_hint for the OIDC logout.
+            CustomOAuth2Client._id_token = result.get("id_token")
             return result
         except Exception as e:
             self._pkce_code_verifier = None
@@ -1407,6 +1413,9 @@ class OpenIDView(SocialLoginView):
         else:
             CustomOAuth2Client._pkce_code_verifier = None
 
+        # Reset any previously captured id_token before the exchange
+        CustomOAuth2Client._id_token = None
+
         # Add callback_url to request data if not present
         if "code" in request.data and "callback_url" not in request.data:
             request.data["callback_url"] = callback_url
@@ -1419,6 +1428,12 @@ class OpenIDView(SocialLoginView):
             if not user.is_practitioner:
                 user.is_practitioner = True
                 user.save(update_fields=['is_practitioner'])
+
+        # Return the id_token to the frontend so it can be used as
+        # id_token_hint for the OIDC logout (RP-initiated logout).
+        if response.status_code == 200 and CustomOAuth2Client._id_token:
+            response.data["id_token"] = CustomOAuth2Client._id_token
+        CustomOAuth2Client._id_token = None
 
         return response
 
@@ -1442,14 +1457,21 @@ class AppConfigView(APIView):
             "enabled": False,
             "client_id": None,
             "authorization_url": None,
+            "end_session_url": None,
             "provider_name": None,
         }
 
         social_app = SocialApp.objects.filter(provider="openid_connect").first()
         if social_app:
             authorization_url = None
+            end_session_url = None
             try:
-                authorization_url = OpenIDAdapter(request).authorize_url
+                # Reuse a single adapter instance: openid_config is cached per
+                # instance, so authorize_url and end_session_endpoint share one
+                # discovery fetch.
+                adapter = OpenIDAdapter(request)
+                authorization_url = adapter.authorize_url
+                end_session_url = adapter.openid_config.get("end_session_endpoint")
             except Exception as e:
                 logger.warning(f"Failed to fetch OIDC discovery: {e}")
 
@@ -1457,6 +1479,7 @@ class AppConfigView(APIView):
                 "enabled": bool(social_app.client_id),
                 "client_id": social_app.client_id,
                 "authorization_url": authorization_url,
+                "end_session_url": end_session_url,
                 "provider_name": social_app.name,
             }
 

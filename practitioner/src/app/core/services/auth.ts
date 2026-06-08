@@ -14,6 +14,7 @@ import {
   IOpenIDConfig,
   IOpenIDLoginBody,
 } from '../models/admin-auth';
+import { RoutePaths } from '../constants/routes';
 
 @Injectable({
   providedIn: 'root',
@@ -51,7 +52,31 @@ export class Auth {
   removeToken(): void {
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
+    localStorage.removeItem('oidc_logout_url');
     this.isAuthenticatedSubject.next(false);
+  }
+
+  getLogoutUrl(): string | null {
+    return localStorage.getItem('oidc_logout_url');
+  }
+
+  // Build the full OIDC RP-initiated logout URL at login time (all parts are
+  // available then) and store it ready-to-use for the logout redirect.
+  buildAndStoreLogoutUrl(idToken: string, config: IOpenIDConfig | null): void {
+    if (!idToken || !config?.end_session_url || !config.client_id) {
+      return;
+    }
+
+    const params = new URLSearchParams({
+      id_token_hint: idToken,
+      post_logout_redirect_uri: `${window.location.origin}/${RoutePaths.AUTH}`,
+      client_id: config.client_id,
+    });
+
+    localStorage.setItem(
+      'oidc_logout_url',
+      `${config.end_session_url}?${params.toString()}`
+    );
   }
 
   async logout(): Promise<void> {

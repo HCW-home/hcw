@@ -1,5 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
 import { Auth } from '../../../../core/services/auth';
 import { RoutePaths } from '../../../../core/constants/routes';
@@ -45,9 +46,19 @@ export class OpenIdCallback implements OnInit {
 
       if (code) {
         this.authService.loginWithOpenID(code).subscribe({
-          next: response => {
+          next: async response => {
             this.authService.setToken(response.access);
             this.authService.setRefreshToken(response.refresh);
+            // Pre-build the OIDC logout URL while the id_token is available.
+            if (response.id_token) {
+              const config = await firstValueFrom(
+                this.authService.getOpenIDConfig()
+              );
+              this.authService.buildAndStoreLogoutUrl(
+                response.id_token,
+                config
+              );
+            }
             this.router.navigate([`/${RoutePaths.USER}`, RoutePaths.DASHBOARD]);
           },
           error: err => {
