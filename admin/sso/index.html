@@ -876,6 +876,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#logout-single-logout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logout (Single Logout)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#testing-the-flow" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1191,6 +1202,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#logout-single-logout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logout (Single Logout)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#testing-the-flow" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1328,6 +1350,11 @@
 <p>When registering HCW@Home as a client on the identity provider, the redirect URI to allow is:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>https://&lt;practitioner-domain&gt;/auth/callback
 </code></pre></div>
+<h2 id="logout-single-logout">Logout (Single Logout)</h2>
+<p>On logout, HCW@Home performs an OIDC <strong>RP-initiated logout</strong>: the browser is redirected to the provider's <code>end_session_endpoint</code> to terminate the SSO session, then sent back to the login page. For the provider to accept the return redirect, register the <strong>post logout redirect URI</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>https://&lt;practitioner-domain&gt;/auth
+</code></pre></div>
+<p>On Keycloak this is the <strong>Valid post logout redirect URIs</strong> field of the client (Azure AD, Okta, … have an equivalent). If the provider's discovery document exposes no <code>end_session_endpoint</code>, HCW@Home silently falls back to a local-only logout.</p>
 <h2 id="testing-the-flow">Testing the flow</h2>
 <ol>
 <li>Save the Social Application.</li>
