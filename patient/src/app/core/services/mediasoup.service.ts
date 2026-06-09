@@ -366,7 +366,10 @@ export class MediasoupService implements VideoCallImpl {
     // done by the bundler, the Device class may land on `.default`.
     const DeviceCtor =
       (mediasoupClient as any).Device ?? (mediasoupClient as any).default?.Device;
-    this.device = new DeviceCtor();
+    // Keep a local const so the non-null type survives the await below
+    // (TypeScript drops narrowing of mutable class fields across awaits).
+    const device = new DeviceCtor();
+    this.device = device;
     const routerRtpCapabilities = (await this.sendRequest(
       'getRouterRtpCapabilities',
     )) as RtpCapabilities & { headerExtensions?: { uri: string }[] };
@@ -375,7 +378,7 @@ export class MediasoupService implements VideoCallImpl {
         (ext: { uri: string }) => ext.uri !== 'urn:3gpp:video-orientation',
       );
     }
-    await this.device.load({ routerRtpCapabilities });
+    await device.load({ routerRtpCapabilities });
   }
 
   private async createTransports(): Promise<void> {

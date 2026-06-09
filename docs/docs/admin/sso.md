@@ -51,6 +51,16 @@ When registering HCW@Home as a client on the identity provider, the redirect URI
 https://<practitioner-domain>/auth/callback
 ```
 
+## Logout (Single Logout)
+
+On logout, HCW@Home performs an OIDC **RP-initiated logout**: the browser is redirected to the provider's `end_session_endpoint` to terminate the SSO session, then sent back to the login page. For the provider to accept the return redirect, register the **post logout redirect URI**:
+
+```
+https://<practitioner-domain>/auth
+```
+
+On Keycloak this is the **Valid post logout redirect URIs** field of the client (Azure AD, Okta, … have an equivalent). If the provider's discovery document exposes no `end_session_endpoint`, HCW@Home silently falls back to a local-only logout.
+
 ## Testing the flow
 
 1. Save the Social Application.

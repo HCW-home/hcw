@@ -433,11 +433,19 @@ export class Header implements OnInit, OnDestroy {
     this.closeMobileMenu();
     this.userWsService.disconnect();
     this.userService.clearCurrentUser();
+    // Read the OIDC logout URL before clearing localStorage.
+    const oidcLogoutUrl = this.authService.getLogoutUrl();
     const savedLanguage = localStorage.getItem('app_language');
     await this.authService.logout();
     localStorage.clear();
     if (savedLanguage) {
       localStorage.setItem('app_language', savedLanguage);
+    }
+    if (oidcLogoutUrl) {
+      // RP-initiated logout: end the SSO session at the provider, which then
+      // redirects back to the login page.
+      window.location.href = oidcLogoutUrl;
+      return;
     }
     this.router.navigate([RoutePaths.AUTH]);
   }
