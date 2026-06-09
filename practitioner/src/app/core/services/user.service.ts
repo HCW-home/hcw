@@ -134,12 +134,4 @@ export class UserService {
   deleteDavPassword(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/user/dav-passwords/${id}/`);
   }
-
-  getPractitionerCustomFields(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/user/practitioner-custom-fields/`);
-  }
-
-  updatePractitionerCustomFields(fields: { id: number; value: string | null }[]): Observable<any> {
-    return this.http.patch(`${this.apiUrl}/user/practitioner-custom-fields/`, fields);
-  }
 }

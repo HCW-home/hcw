@@ -58,11 +58,6 @@ urlpatterns = [
         views.PublicPractitionerView.as_view(),
         name="practitioner-public",
     ),
-    path(
-        "api/user/practitioner-custom-fields/",
-        views.PractitionerCustomFieldsView.as_view(),
-        name="practitioner_custom_fields",
-    ),
     path("api/", include(router.urls)),
     path("api/map/", views.MapView.as_view(), name="map"),
     path("api/auth/openid/", views.OpenIDView.as_view(), name="openid_login"),

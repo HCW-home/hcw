@@ -14,6 +14,7 @@ export interface CustomFieldValue {
   field_type: string;
   value: string | null;
   options: string[] | null;
+  required?: boolean;
 }
 
 export interface User {

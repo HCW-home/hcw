@@ -98,7 +98,6 @@ export class UserProfile implements OnInit, OnDestroy {
   carddavUrlCopied = signal(false);
   customFields = signal<any[]>([]);
   customFieldValues: { [id: number]: string } = {};
-  isSavingCustomFields = signal(false);
 
   encryptionEnabled = signal(false);
   encryptionKeyLoaded = signal(false);
@@ -207,7 +206,6 @@ export class UserProfile implements OnInit, OnDestroy {
     this.setupLivekitSubscriptions();
     this.refreshEncryptionStatus();
     this.loadDavPasswords();
-    this.loadCustomFields();
   }
 
   private async refreshEncryptionStatus(): Promise<void> {
@@ -320,6 +318,7 @@ export class UserProfile implements OnInit, OnDestroy {
         next: user => {
           this.user.set(user);
           this.populateForm(user);
+          this.populateCustomFields(user);
           this.isLoadingUser.set(false);
           this.refreshEncryptionStatus();
         },
@@ -332,6 +331,22 @@ export class UserProfile implements OnInit, OnDestroy {
           );
         },
       });
+  }
+
+  private populateCustomFields(user: IUser): void {
+    const fields = (user.custom_fields ?? []).map(cf => ({
+      id: cf.field,
+      name: cf.field_name,
+      field_type: cf.field_type,
+      options: cf.options,
+      required: cf.required,
+      value: cf.value,
+    }));
+    this.customFields.set(fields);
+    this.customFieldValues = {};
+    fields.forEach(f => {
+      this.customFieldValues[f.id] = f.value ?? '';
+    });
   }
 
   private populateForm(user: IUser): void {
@@ -360,6 +375,10 @@ export class UserProfile implements OnInit, OnDestroy {
         preferred_language: formValue.preferred_language,
         timezone: formValue.timezone,
         language_ids: this.getLanguageIds(formValue.language_ids),
+        custom_fields: this.customFields().map(f => ({
+          field: f.id,
+          value: this.customFieldValues[f.id] ?? null,
+        })),
       };
 
       this.userService
@@ -368,6 +387,7 @@ export class UserProfile implements OnInit, OnDestroy {
         .subscribe({
           next: updatedUser => {
             this.user.set(updatedUser);
+            this.populateCustomFields(updatedUser);
             this.isSaving.set(false);
             if (formValue.preferred_language) {
               this.t.setLanguage(formValue.preferred_language);
@@ -1033,36 +1053,4 @@ export class UserProfile implements OnInit, OnDestroy {
     setTimeout(() => this.davLoginCopied.set(false), 2000);
   }
 
-  loadCustomFields(): void {
-  this.userService.getPractitionerCustomFields()
-    .pipe(takeUntil(this.destroy$))
-    .subscribe({
-      next: fields => {
-        this.customFields.set(fields);
-        fields.forEach(f => {
-          this.customFieldValues[f.id] = f.value ?? '';
-        });
-      },
-    });
-}
-
-  saveCustomFields(): void {
-    this.isSavingCustomFields.set(true);
-    const payload = this.customFields().map(f => ({
-      id: f.id,
-      value: this.customFieldValues[f.id] ?? null,
-    }));
-    this.userService.updatePractitionerCustomFields(payload)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => {
-          this.isSavingCustomFields.set(false);
-          this.toasterService.show('success', this.t.instant('userProfile.profileUpdated'), this.t.instant('userProfile.profileUpdatedMessage'));
-        },
-        error: () => {
-          this.isSavingCustomFields.set(false);
-          this.toasterService.show('error', this.t.instant('userProfile.errorUpdatingProfile'), '');
-        },
-      });
-  }
 }

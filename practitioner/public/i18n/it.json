@@ -1002,11 +1002,7 @@
         "commManual": "Contatto manuale",
         "commNone": "Nessuno",
         "tabProfile": "Profilo",
-        "tabSystemTest": "Test di sistema",
-        "calendarSync": "Sincronizzazione calendario",
-        "calendarSyncDescription": "Aggiungi questo URL CalDAV nella tua app calendario (Google Calendar, Apple Calendar, Thunderbird, Outlook) per sincronizzare i tuoi appuntamenti.",
-        "caldavUrl": "URL CalDAV",
-        "caldavAuthHint": "Usa la tua email e password per autenticarti."
+        "tabSystemTest": "Test di sistema"
     },
     "consultationRowItem": {
         "untitledConsultation": "Seguito senza titolo",

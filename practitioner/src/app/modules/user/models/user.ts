@@ -90,6 +90,7 @@ export interface IUserUpdateRequest {
   timezone?: string;
   language_ids?: number[];
   is_first_login?: boolean;
+  custom_fields?: { field: number; value: string | null }[];
 }
 
 export interface IDavAppPassword {
