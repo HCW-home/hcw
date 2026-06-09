@@ -178,6 +178,7 @@ class UserDetailsSerializer(CustomFieldsMixin, serializers.ModelSerializer):
                 "field_type": f.field_type,
                 "options": f.options,
                 "required": f.required,
+                "is_public": f.is_public,
                 "value": values.get(f.pk),
             }
             for f in fields

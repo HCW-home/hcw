@@ -392,6 +392,7 @@
         "commManual": "Contacto manual",
         "commNone": "Ninguno",
         "tabProfile": "Perfil",
+        "publicFieldHint": "Este campo es visible en su perfil público",
         "tabSystemTest": "Prueba del sistema"
     },
     "openIdCallback": {

@@ -271,6 +271,13 @@
   .required {
     color: var(--rose-500);
   }
+
+  .public-field-icon {
+    display: inline-flex;
+    vertical-align: middle;
+    margin-left: 4px;
+    cursor: help;
+  }
 }
 
 .form-input {

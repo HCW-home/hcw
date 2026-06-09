@@ -15,6 +15,7 @@ export interface CustomFieldValue {
   value: string | null;
   options: string[] | null;
   required?: boolean;
+  is_public?: boolean;
 }
 
 export interface User {

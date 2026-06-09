@@ -361,6 +361,7 @@
     "userProfile": {
         "commNone": "Keiner",
         "tabProfile": "Profil",
+        "publicFieldHint": "Dieses Feld ist in Ihrem öffentlichen Profil sichtbar",
         "tabSystemTest": "Systemtest",
         "loadingProfile": "Profil wird geladen...",
         "personalInformation": "Persönliche Daten",

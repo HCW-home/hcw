@@ -262,6 +262,7 @@
     "commManual": "Contact manuel",
     "commNone": "Aucun",
     "tabProfile": "Profil",
+    "publicFieldHint": "Ce champ est visible sur votre profil public",
     "tabSystemTest": "Test système",
     "cancel": "Annuler",
     "encryption": "Chiffrement",

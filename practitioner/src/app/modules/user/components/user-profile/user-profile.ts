@@ -340,6 +340,7 @@ export class UserProfile implements OnInit, OnDestroy {
       field_type: cf.field_type,
       options: cf.options,
       required: cf.required,
+      is_public: cf.is_public,
       value: cf.value,
     }));
     this.customFields.set(fields);

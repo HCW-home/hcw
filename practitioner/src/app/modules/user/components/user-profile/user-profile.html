@@ -87,6 +87,38 @@
                 formControlName="email"
                 [placeholder]="'userProfile.emailPlaceholder' | translate" />
             </div>
+
+            @for (field of customFields(); track field.id) {
+              <div class="form-group" [class.full-width]="field.field_type === 'long_text'">
+                <label class="form-label">
+                  {{ field.name }}
+                  @if (field.required) { <span class="required">*</span> }
+                  @if (field.is_public) {
+                    <app-svg
+                      src="globe"
+                      class="public-field-icon"
+                      [title]="'userProfile.publicFieldHint' | translate"
+                      [svgStyle]="{'width.px': 14, 'height.px': 14, 'color': 'var(--slate-400)'}"></app-svg>
+                  }
+                </label>
+                @if (field.field_type === 'long_text') {
+                  <textarea class="form-input" [(ngModel)]="customFieldValues[field.id]" [ngModelOptions]="{standalone: true}" rows="3"></textarea>
+                } @else if (field.field_type === 'list' && field.options) {
+                  <select class="form-input" [(ngModel)]="customFieldValues[field.id]" [ngModelOptions]="{standalone: true}">
+                    <option value="">—</option>
+                    @for (opt of field.options; track opt) {
+                      <option [value]="opt">{{ opt }}</option>
+                    }
+                  </select>
+                } @else {
+                  <input
+                    class="form-input"
+                    [(ngModel)]="customFieldValues[field.id]"
+                    [ngModelOptions]="{standalone: true}"
+                    [type]="field.field_type === 'number' ? 'number' : field.field_type === 'date' ? 'date' : 'text'" />
+                }
+              </div>
+            }
           </div>
         </div>
 
@@ -257,38 +289,6 @@
             </button>
           }
         </div>
-        }
-
-        @if (customFields().length > 0) {
-          <div class="profile-section">
-            <h3 class="section-title">{{ 'userProfile.customFields' | translate }}</h3>
-            <div class="form-grid">
-              @for (field of customFields(); track field.id) {
-                <div class="form-group" [class.full-width]="field.field_type === 'long_text'">
-                  <label class="form-label">
-                    {{ field.name }}
-                    @if (field.required) { <span class="required">*</span> }
-                  </label>
-                  @if (field.field_type === 'long_text') {
-                    <textarea class="form-input" [(ngModel)]="customFieldValues[field.id]" [ngModelOptions]="{standalone: true}" rows="3"></textarea>
-                  } @else if (field.field_type === 'list' && field.options) {
-                    <select class="form-input" [(ngModel)]="customFieldValues[field.id]" [ngModelOptions]="{standalone: true}">
-                      <option value="">—</option>
-                      @for (opt of field.options; track opt) {
-                        <option [value]="opt">{{ opt }}</option>
-                      }
-                    </select>
-                  } @else {
-                    <input
-                      class="form-input"
-                      [(ngModel)]="customFieldValues[field.id]"
-                      [ngModelOptions]="{standalone: true}"
-                      [type]="field.field_type === 'number' ? 'number' : field.field_type === 'date' ? 'date' : 'text'" />
-                  }
-                </div>
-              }
-            </div>
-          </div>
         }
 
         <div class="form-actions">

@@ -1062,6 +1062,7 @@
     "commManual": "Ручний контакт",
     "commNone": "Немає",
     "tabProfile": "Профіль",
+    "publicFieldHint": "Це поле відображається у вашому публічному профілі",
     "tabSystemTest": "Тестування системи",
     "cancel": "Скасувати",
     "encryption": "Шифрування",

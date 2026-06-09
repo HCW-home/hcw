@@ -1062,6 +1062,7 @@
     "commManual": "Manual Contact",
     "commNone": "None",
     "tabProfile": "Profile",
+    "publicFieldHint": "This field is visible on your public profile",
     "tabSystemTest": "System Test",
     "cancel": "Cancel",
     "encryption": "Encryption",
