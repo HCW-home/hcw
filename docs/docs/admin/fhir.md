@@ -1,20 +1,56 @@
 # FHIR R4 Integration
 
-HCW@Home exposes a FHIR R4 server alongside its native REST API so that external clinical systems — typically **OpenMRS / OzoneHIS** — can drive appointments, encounters, prescriptions, and patient/practitioner profiles through standard FHIR interactions. Every FHIR-capable endpoint also keeps responding to the native JSON shape: the FHIR flavour is activated only when the request asks for it (via `Accept: application/fhir+json` or `?format=fhir`).
+HCW@Home exposes a FHIR R4 server alongside its native REST API so that external clinical systems — typically **OpenMRS / OzoneHIS** — can drive appointments, encounters, prescriptions, and patient/practitioner profiles through standard FHIR interactions. Every FHIR-capable endpoint also keeps responding to the native JSON shape: on the native routes the FHIR flavour is activated only when the request asks for it (via `Accept: application/fhir+json` or `?format=fhir`).
+
+A dedicated, always-FHIR namespace is also available under **`/api/fhir/`** — see [The `/api/fhir/` namespace](#the-apifhir-namespace) below. It is the recommended entry point for external integrations.
 
 This page focuses on the **external integration story**: how a third-party system carries its own identifier across HCW's resources, and how that identifier is used to address those resources back without ever holding HCW's primary keys.
 
 ## Resources exposed as FHIR
 
-| HCW model | FHIR resource | Endpoint |
-|-----------|---------------|----------|
-| `Appointment` | `Appointment` | `/api/appointments/` |
-| `Consultation` (follow-up) | `Encounter` | `/api/consultations/` |
-| `User` (patient) | `Patient` | `/api/patients/` |
-| `User` (practitioner) | `Practitioner` | `/api/practitioners/` |
-| `Prescription` | `MedicationRequest` | `/api/prescriptions/` |
+| HCW model | FHIR resource | FHIR namespace (recommended) | Native route |
+|-----------|---------------|------------------------------|--------------|
+| `Appointment` | `Appointment` | `/api/fhir/Appointment` | `/api/appointments/` |
+| `Consultation` (follow-up) | `Encounter` | `/api/fhir/Encounter` | `/api/consultations/` |
+| `User` (patient) | `Patient` | `/api/fhir/Patient` | `/api/patients/` |
+| `User` (practitioner) | `Practitioner` | `/api/fhir/Practitioner` | `/api/practitioners/` |
+| `Prescription` | `MedicationRequest` | `/api/fhir/MedicationRequest` | `/api/prescriptions/` |
 
 Each endpoint supports the full FHIR REST suite: `read`, `search-type`, `create`, `update`, `patch`, `delete`. `DELETE` is **always a soft delete** (status flipped to `cancelled` / `closed` rather than a row deletion).
+
+> The native routes (`/api/appointments/` …) are dual-mode: native JSON by default, FHIR on demand. The `/api/fhir/…` routes are **always FHIR**. The examples in the rest of this page use the native `?format=fhir` form, but every one of them works identically against the `/api/fhir/…` route — just drop the `?format=fhir` / `Content-Type` opt-in.
+
+## The `/api/fhir/` namespace
+
+All FHIR-capable resources are also grouped under a single, canonically-named namespace:
+
+```
+/api/fhir/Appointment
+/api/fhir/Appointment/<id>
+/api/fhir/Encounter
+/api/fhir/Patient
+/api/fhir/Practitioner
+/api/fhir/metadata          # CapabilityStatement
+```
+
+These routes behave exactly like their native counterparts, with two conveniences for integrators:
+
+- **Always FHIR.** No `?format=fhir` and no `Accept: application/fhir+json` header is needed — the namespace implies it. A plain `GET /api/fhir/Appointment` returns a FHIR `Bundle`; an error returns an `OperationOutcome`.
+- **Canonical naming.** The path segment is the FHIR resource type in PascalCase (`Appointment`, `Patient`, …, **singular, no trailing slash**), matching what FHIR clients expect.
+
+Everything else is identical to the native routes: same authentication and permissions, same search parameters, same conditional `?identifier=…` update/delete, same soft-delete semantics. For example, a conditional cancel becomes:
+
+```http
+PUT /api/fhir/Appointment?identifier=https://ozonehis.example/ns/appointment-id|OZ-7
+Authorization: Token <token>
+Content-Type: application/fhir+json
+
+{"resourceType": "Appointment", "status": "cancelled", "start": "2026-06-01T09:00:00Z"}
+```
+
+`Bundle` entry `fullUrl`s and resource references resolve into this namespace too (e.g. `https://tenant.local/api/fhir/Appointment/42`).
+
+> **Authentication still applies.** `/api/fhir/…` is **not** anonymous; it enforces the same permissions as the native routes. Only `/api/fhir/metadata` (the CapabilityStatement) is public.
 
 ## The `external_id` field
 
@@ -240,4 +276,11 @@ curl -X DELETE 'https://tenant.local/api/appointments/?identifier=https://ozoneh
 # 5. Fetch the linked Encounter (consultation note)
 curl 'https://tenant.local/api/consultations/?format=fhir&appointment=https://ozonehis.example/ns/appointment-id|OZ-7' \
   -H "Authorization: Token TOKEN"
+
+# Same operations against the always-FHIR namespace (no ?format=fhir needed):
+#   POST   https://tenant.local/api/fhir/Appointment
+#   GET    'https://tenant.local/api/fhir/Appointment?identifier=https://ozonehis.example/ns/appointment-id|OZ-7'
+#   PUT    'https://tenant.local/api/fhir/Appointment?identifier=…|OZ-7'
+#   DELETE 'https://tenant.local/api/fhir/Appointment?identifier=…|OZ-7'
+#   GET     https://tenant.local/api/fhir/metadata     # CapabilityStatement
 ```
