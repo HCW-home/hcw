@@ -32,7 +32,8 @@ from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationFo
 from unfold.contrib.inlines.admin import NonrelatedStackedInline
 from django import forms
 from unfold.widgets import UnfoldAdminColorInputWidget, UnfoldAdminLocationWidget
-from rest_framework.authtoken.models import TokenProxy
+from rest_framework.authtoken.admin import TokenAdmin as DRFTokenAdmin
+from rest_framework.authtoken.models import Token, TokenProxy
 from consultations.models import CustomField, CustomFieldValue
 
 from .models import (
@@ -62,10 +63,18 @@ admin.site.unregister(TokenProxy)
 
 
 @admin.register(TokenProxy)
-class TokenAdmin(ModelAdmin):
+class TokenAdmin(DRFTokenAdmin, ModelAdmin):
+    # Hérite de l'admin DRF pour récupérer get_object()/delete_model() qui re-mappent
+    # TokenProxy.pk (= user_id) vers la vraie PK Token (= key). Sans ça, la suppression
+    # échouait silencieusement. ModelAdmin (unfold) reste en second pour le rendu.
     list_display = ["key", "user", "created"]
     fields = ["user"]
     ordering = ["-created"]
+
+    def delete_queryset(self, request, queryset):
+        # DRF ne surcharge pas delete_queryset() : on remappe vers les vrais Token via key
+        # pour que la suppression en lot ("Delete selected") fonctionne aussi.
+        Token.objects.filter(key__in=[obj.key for obj in queryset]).delete()
 
 admin.site.unregister(SocialToken)
 admin.site.register(SocialToken, ModelAdmin)
