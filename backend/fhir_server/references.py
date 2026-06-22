@@ -136,10 +136,17 @@ def parse_reference(ref: str) -> tuple[str | None, str | None]:
 
 
 def build_absolute_url(request, resource_type: str, pk) -> str:
-    """Return an absolute URL for a Bundle entry fullUrl."""
+    """Return an absolute URL for a Bundle entry fullUrl.
+
+    Points into the canonical `/api/fhir/<ResourceType>/<pk>` namespace so the
+    fullUrl is actually resolvable (the bare `/api/<ResourceType>/<pk>` form is
+    not a real route).
+    """
     if pk is None:
         return ""
     if request is not None:
         base = request.build_absolute_uri("/").rstrip("/")
-        return f"{base}/api/{resource_type}/{pk}"
+        return f"{base}/api/fhir/{resource_type}/{pk}"
+    # No request: fall back to the canonical FHIR system base, which already
+    # denotes the FHIR root (e.g. ".../fhir"), so append the resource directly.
     return f"{get_system_base_url()}/{resource_type}/{pk}"

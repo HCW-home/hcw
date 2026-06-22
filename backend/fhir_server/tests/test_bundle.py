@@ -53,7 +53,7 @@ class BundleTests(SimpleTestCase):
         self.assertEqual(bundle["total"], 10)
         self.assertEqual(len(bundle["entry"]), 2)
         self.assertEqual(bundle["entry"][0]["search"]["mode"], "match")
-        self.assertTrue(bundle["entry"][0]["fullUrl"].endswith("/api/Fake/1"))
+        self.assertTrue(bundle["entry"][0]["fullUrl"].endswith("/api/fhir/Fake/1"))
         relations = {lnk["relation"] for lnk in bundle["link"]}
         self.assertIn("self", relations)
         self.assertIn("next", relations)
