@@ -254,3 +254,164 @@ class NativeApiHidesExternalIdTests(_FhirExternalIdBase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertNotIn("external_id", response.data)
+
+
+# -- chained search (`<ref>.identifier` / `<ref>.name`) ----------------------
+
+_EXTERNAL_PAT_SYS = "https://ozonehis.test/ns/patient-id"
+_EXTERNAL_PRAC_SYS = "https://ozonehis.test/ns/practitioner-id"
+
+
+class _ChainedSearchBase(_FhirExternalIdBase):
+
+    def setUp(self):
+        super().setUp()
+        constance_config.fhir_external_patient_system = _EXTERNAL_PAT_SYS
+        constance_config.fhir_external_practitioner_system = _EXTERNAL_PRAC_SYS
+        self.patient.external_id = "PAT-1"
+        self.patient.first_name = "Gregory"
+        self.patient.save()
+        self.practitioner.external_id = "DOC-1"
+        self.practitioner.first_name = "House"
+        self.practitioner.save()
+
+
+class AppointmentChainedSearchTests(_ChainedSearchBase):
+
+    def test_search_by_patient_external_identifier(self):
+        self._create_appointment()  # links self.patient as participant
+        url = reverse("appointment-list")
+        response = self.client.get(
+            f"{url}?format=fhir&patient.identifier={_EXTERNAL_PAT_SYS}|PAT-1",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["total"], 1)
+
+    def test_search_by_patient_canonical_pk(self):
+        self._create_appointment()
+        url = reverse("appointment-list")
+        response = self.client.get(
+            f"{url}?format=fhir&patient.identifier={self.patient.pk}",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["total"], 1)
+
+    def test_search_by_patient_name(self):
+        self._create_appointment()
+        url = reverse("appointment-list")
+        response = self.client.get(f"{url}?format=fhir&patient.name=Greg")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["total"], 1)
+
+    def test_role_filter_patient_does_not_match_practitioner(self):
+        # Add the practitioner as an active participant of the appointment.
+        appt = self._create_appointment()
+        Participant.objects.create(
+            appointment=appt, user=self.practitioner, is_confirmed=True,
+        )
+        url = reverse("appointment-list")
+        # patient.* must NOT match the practitioner participant...
+        r1 = self.client.get(
+            f"{url}?format=fhir&patient.identifier={_EXTERNAL_PRAC_SYS}|DOC-1",
+        )
+        self.assertEqual(r1.data["total"], 0)
+        # ...and practitioner.* must match it.
+        r2 = self.client.get(
+            f"{url}?format=fhir&practitioner.identifier={_EXTERNAL_PRAC_SYS}|DOC-1",
+        )
+        self.assertEqual(r2.data["total"], 1)
+        # practitioner.* must NOT match the patient participant.
+        r3 = self.client.get(
+            f"{url}?format=fhir&practitioner.identifier={_EXTERNAL_PAT_SYS}|PAT-1",
+        )
+        self.assertEqual(r3.data["total"], 0)
+
+    def test_flat_patient_param_excludes_practitioner(self):
+        appt = self._create_appointment()
+        Participant.objects.create(
+            appointment=appt, user=self.practitioner, is_confirmed=True,
+        )
+        url = reverse("appointment-list")
+        response = self.client.get(
+            f"{url}?format=fhir&patient=Patient/{self.practitioner.pk}",
+        )
+        self.assertEqual(response.data["total"], 0)
+
+    def test_two_patients_each_find_same_appointment_once(self):
+        appt = self._create_appointment()  # self.patient (PAT-1)
+        patient_b = User.objects.create_user(
+            email="pat-b@example.com", password="x", external_id="PAT-2",
+        )
+        Participant.objects.create(
+            appointment=appt, user=patient_b, is_confirmed=True,
+        )
+        url = reverse("appointment-list")
+        r1 = self.client.get(
+            f"{url}?format=fhir&patient.identifier={_EXTERNAL_PAT_SYS}|PAT-1",
+        )
+        r2 = self.client.get(
+            f"{url}?format=fhir&patient.identifier={_EXTERNAL_PAT_SYS}|PAT-2",
+        )
+        self.assertEqual(r1.data["total"], 1)
+        self.assertEqual(r2.data["total"], 1)
+        self.assertEqual(int(r1.data["entry"][0]["resource"]["id"]), appt.pk)
+        self.assertEqual(int(r2.data["entry"][0]["resource"]["id"]), appt.pk)
+
+
+class EncounterChainedSearchTests(_ChainedSearchBase):
+
+    def _create_consultation(self, external_id="OZ-9"):
+        consultation = Consultation.objects.create(
+            title="Note", created_by=self.practitioner, beneficiary=self.patient,
+        )
+        appt = self._create_appointment(external_id=external_id)
+        appt.consultation = consultation
+        appt.save()
+        return consultation, appt
+
+    def test_search_by_patient_external_identifier(self):
+        consultation, _ = self._create_consultation()
+        url = reverse("consultation-list")
+        response = self.client.get(
+            f"{url}?format=fhir&patient.identifier={_EXTERNAL_PAT_SYS}|PAT-1",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(int(response.data["entry"][0]["resource"]["id"]), consultation.pk)
+
+    def test_search_by_practitioner_name(self):
+        self._create_consultation()
+        url = reverse("consultation-list")
+        response = self.client.get(f"{url}?format=fhir&practitioner.name=Hou")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["total"], 1)
+
+    def test_appointment_identifier_conformant_key(self):
+        consultation, _ = self._create_consultation(external_id="OZ-9")
+        url = reverse("consultation-list")
+        # Conformant chained key...
+        r_chained = self.client.get(
+            f"{url}?format=fhir&appointment.identifier={_EXTERNAL_APPT_SYS}|OZ-9",
+        )
+        self.assertEqual(r_chained.data["total"], 1)
+        self.assertEqual(int(r_chained.data["entry"][0]["resource"]["id"]), consultation.pk)
+        # ...and the legacy non-conformant alias still works.
+        r_legacy = self.client.get(
+            f"{url}?format=fhir&appointment={_EXTERNAL_APPT_SYS}|OZ-9",
+        )
+        self.assertEqual(r_legacy.data["total"], 1)
+
+    def test_appointment_identifier_no_duplicate_rows(self):
+        # A Consultation linked to two matching Appointments must appear once.
+        consultation, _ = self._create_consultation(external_id="OZ-9")
+        appt2 = self._create_appointment(external_id="OZ-9b")
+        appt2.consultation = consultation
+        appt2.save()
+        url = reverse("consultation-list")
+        # Bare numeric canonical id of the consultation's first appointment is
+        # not what we want here; instead match both via external system by
+        # querying one, then assert single row.
+        response = self.client.get(
+            f"{url}?format=fhir&appointment.identifier={_EXTERNAL_APPT_SYS}|OZ-9",
+        )
+        self.assertEqual(response.data["total"], 1)

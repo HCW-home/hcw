@@ -209,6 +209,11 @@ class DateParam(SearchParam):
 class RefParam(SearchParam):
     type: str = "reference"
     resource_type: str | None = None
+    # Chaining metadata: when `chainable`, `chained_params` derives the
+    # `<key>.identifier` and `<key>.name` descriptors from this reference.
+    chainable: bool = False
+    target_resource_type: str | None = None  # FHIR type of the REFERENCED resource
+    name_fields: list[str] | None = None  # target name field(s), relative to `field`
 
     def to_q(self, raw_value: str, modifier: str | None) -> Q:
         q = Q()
@@ -245,7 +250,53 @@ class CallableParam(SearchParam):
         return self.build(raw_value, modifier) & (self.extra or Q())
 
 
+def chained_params(ref_key: str, ref: RefParam) -> dict[str, "SearchParam"]:
+    """Derive the chained `<key>.identifier` / `<key>.name` descriptors.
+
+    FHIR clients search across a reference with dot notation, e.g.
+    `?appointment.identifier=system|value` or `?patient.name=Smith`. We generate
+    those descriptors from the plain `RefParam` so plain and chained search
+    always target the same relation with the same `extra` constraint.
+
+    Returns {} when the reference is not `chainable`.
+    """
+    if not ref.chainable:
+        return {}
+    path = ref.field
+    out: dict[str, SearchParam] = {
+        f"{ref_key}.identifier": IdentifierParam(
+            canonical_field=f"{path}__pk",
+            external_field=f"{path}__external_id",
+            resource_type=ref.target_resource_type,
+            extra=ref.extra,
+        ),
+    }
+    if ref.name_fields:
+        name_paths = [f"{path}__{f}" for f in ref.name_fields]
+        out[f"{ref_key}.name"] = StringParam(
+            # `field` is set (not just `fields`) so the distinct heuristic in
+            # `apply_fhir_search` detects the `__` join. See that loop.
+            field=name_paths[0],
+            fields=name_paths,
+            extra=ref.extra,
+        )
+    return out
+
+
+def with_chained(params: dict) -> dict:
+    """Return `params` augmented with chained descriptors for every chainable ref."""
+    out = dict(params)
+    for key, param in list(params.items()):
+        if isinstance(param, RefParam) and param.chainable:
+            out.update(chained_params(key, param))
+    return out
+
+
 def _parse_param_key(key: str) -> tuple[str, str | None]:
+    # Split the modifier off the end. A chained name (e.g. `patient.name`) never
+    # contains `:`, so splitting on the first `:` correctly yields
+    # `("patient.name", "contains")` for `patient.name:contains`. The dotted
+    # key is then looked up verbatim in `search_params`.
     if ":" in key:
         name, modifier = key.split(":", 1)
         return name, modifier
@@ -311,6 +362,13 @@ def apply_fhir_search(queryset, query_params, mapper) -> tuple:
             if isinstance(field_value, str) and "__" in field_value:
                 needs_distinct = True
                 break
+        else:
+            # StringParam keeps its joins in `fields` (a list), not `field`.
+            field_list = getattr(param, "fields", None)
+            if isinstance(field_list, (list, tuple)) and any(
+                isinstance(f, str) and "__" in f for f in field_list
+            ):
+                needs_distinct = True
 
     if filter_q:
         queryset = queryset.filter(filter_q)

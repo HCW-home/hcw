@@ -22,6 +22,8 @@ from fhir_server.search import (
     IdentifierParam,
     RefParam,
     TokenParam,
+    chained_params,
+    with_chained,
 )
 
 from .models import (
@@ -61,9 +63,25 @@ class AppointmentFhirMapper(FhirResourceMapper):
     model = Appointment
     profile_urls = ["http://hl7.org/fhir/StructureDefinition/Appointment"]
 
-    search_params = {
-        "patient": RefParam(field="participant__user", extra=Q(participant__is_active=True)),
-        "practitioner": RefParam(field="created_by"),
+    # Both patient and practitioner resolve to active participants, filtered by
+    # role — matching what `to_fhir` serialises (`_map_participant_out` types
+    # each participant Patient/Practitioner via `is_practitioner`). The chained
+    # `.identifier` / `.name` params are derived from these by `with_chained`.
+    search_params = with_chained({
+        "patient": RefParam(
+            field="participant__user",
+            extra=Q(participant__is_active=True, participant__user__is_practitioner=False),
+            chainable=True,
+            target_resource_type="Patient",
+            name_fields=["first_name", "last_name"],
+        ),
+        "practitioner": RefParam(
+            field="participant__user",
+            extra=Q(participant__is_active=True, participant__user__is_practitioner=True),
+            chainable=True,
+            target_resource_type="Practitioner",
+            name_fields=["first_name", "last_name"],
+        ),
         "date": DateParam(field="scheduled_at"),
         "status": TokenParam(field="status", mapping={v: k for k, v in _STATUS_TO_FHIR.items()}),
         "identifier": IdentifierParam(
@@ -72,7 +90,7 @@ class AppointmentFhirMapper(FhirResourceMapper):
             resource_type="Appointment",
         ),
         "_lastUpdated": DateParam(field="updated_at"),
-    }
+    })
 
     @property
     def include_targets(self):
@@ -361,24 +379,52 @@ class EncounterFhirMapper(FhirResourceMapper):
     profile_urls = ["http://hl7.org/fhir/StructureDefinition/Encounter"]
 
     search_params = {
-        "patient": RefParam(field="beneficiary"),
-        "subject": RefParam(field="beneficiary"),
-        "practitioner": RefParam(field="created_by"),
-        "participant": RefParam(field="created_by"),
-        "date": DateParam(field="created_at"),
-        "identifier": IdentifierParam(
-            canonical_field="pk",
-            external_field="external_id",
-            resource_type="Encounter",
-        ),
-        # Find Encounters by the linked Appointment id or external_id.
+        **with_chained({
+            "patient": RefParam(
+                field="beneficiary", chainable=True,
+                target_resource_type="Patient",
+                name_fields=["first_name", "last_name"],
+            ),
+            "subject": RefParam(
+                field="beneficiary", chainable=True,
+                target_resource_type="Patient",
+                name_fields=["first_name", "last_name"],
+            ),
+            "practitioner": RefParam(
+                field="created_by", chainable=True,
+                target_resource_type="Practitioner",
+                name_fields=["first_name", "last_name"],
+            ),
+            "participant": RefParam(
+                field="created_by", chainable=True,
+                target_resource_type="Practitioner",
+                name_fields=["first_name", "last_name"],
+            ),
+            "date": DateParam(field="created_at"),
+            "identifier": IdentifierParam(
+                canonical_field="pk",
+                external_field="external_id",
+                resource_type="Encounter",
+            ),
+            "_lastUpdated": DateParam(field="updated_at"),
+            "status": CallableParam(build=lambda raw, mod: _encounter_status_filter(raw)),
+        }),
+        # Legacy non-conformant alias: find Encounters by the linked Appointment
+        # id or external_id. Kept for backward compatibility. The conformant
+        # `appointment.identifier` / `appointment.name` keys are added below.
         "appointment": IdentifierParam(
             canonical_field="appointments__pk",
             external_field="appointments__external_id",
             resource_type="Appointment",
         ),
-        "_lastUpdated": DateParam(field="updated_at"),
-        "status": CallableParam(build=lambda raw, mod: _encounter_status_filter(raw)),
+        **chained_params(
+            "appointment",
+            RefParam(
+                field="appointments", chainable=True,
+                target_resource_type="Appointment",
+                name_fields=["title"],
+            ),
+        ),
     }
 
     @property

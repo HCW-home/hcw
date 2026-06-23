@@ -4,13 +4,16 @@ from django.test import SimpleTestCase, override_settings
 from django.utils.datastructures import MultiValueDict
 from django.db.models import Q
 
+from fhir_server.exceptions import FhirOperationError
 from fhir_server.search import (
     DateParam,
     IdentifierParam,
     RefParam,
     StringParam,
     TokenParam,
+    _parse_param_key,
     apply_fhir_search,
+    with_chained,
 )
 
 
@@ -217,3 +220,108 @@ class IdentifierParamTests(SimpleTestCase):
             _IdentifierJoinedMapper(),
         )
         self.assertTrue(qs.distinct_called)
+
+
+class _ChainedMapper:
+    """Stub mirroring AppointmentFhirMapper's chained references."""
+
+    search_params = with_chained({
+        "patient": RefParam(
+            field="participant__user",
+            extra=Q(participant__is_active=True, participant__user__is_practitioner=False),
+            chainable=True,
+            target_resource_type="Patient",
+            name_fields=["first_name", "last_name"],
+        ),
+        "practitioner": RefParam(
+            field="participant__user",
+            extra=Q(participant__is_active=True, participant__user__is_practitioner=True),
+            chainable=True,
+            target_resource_type="Practitioner",
+            name_fields=["first_name", "last_name"],
+        ),
+    })
+
+
+@override_settings(FHIR_SYSTEM_BASE_URL="https://unit.test/fhir")
+class ChainedSearchTests(SimpleTestCase):
+
+    def setUp(self):
+        patcher = patch(
+            "fhir_server.references.get_external_identifier_system",
+            side_effect=lambda rt: (
+                "https://ozonehis.example/ns/patient-id" if rt == "Patient"
+                else "https://ozonehis.example/ns/practitioner-id" if rt == "Practitioner"
+                else None
+            ),
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def _filter(self, params):
+        qs = _QuerysetStub()
+        apply_fhir_search(qs, _qs_from(params), _ChainedMapper())
+        return qs
+
+    def test_chained_identifier_canonical(self):
+        qs = self._filter({"patient.identifier": "https://unit.test/fhir/ns/patient-id|42"})
+        rendered = str(qs.filters[0])
+        self.assertIn("participant__user__pk", rendered)
+        self.assertIn("42", rendered)
+        self.assertNotIn("external_id", rendered)
+
+    def test_chained_identifier_external(self):
+        qs = self._filter(
+            {"patient.identifier": "https://ozonehis.example/ns/patient-id|PAT-1"}
+        )
+        rendered = str(qs.filters[0])
+        self.assertIn("participant__user__external_id__iexact", rendered)
+        self.assertIn("PAT-1", rendered)
+
+    def test_chained_identifier_bare_numeric_both(self):
+        qs = self._filter({"patient.identifier": "42"})
+        rendered = str(qs.filters[0])
+        self.assertIn("participant__user__pk", rendered)
+        self.assertIn("participant__user__external_id__iexact", rendered)
+
+    def test_chained_name_default_prefix(self):
+        qs = self._filter({"patient.name": "Jo"})
+        rendered = str(qs.filters[0])
+        self.assertIn("participant__user__first_name__istartswith", rendered)
+        self.assertIn("participant__user__last_name__istartswith", rendered)
+
+    def test_chained_name_contains_modifier(self):
+        qs = self._filter({"patient.name:contains": "ohn"})
+        self.assertIn("__icontains", str(qs.filters[0]))
+
+    def test_chained_extra_and_role_filter_propagated(self):
+        qs = self._filter({"patient.identifier": "42"})
+        rendered = str(qs.filters[0])
+        self.assertIn("participant__is_active", rendered)
+        self.assertIn("participant__user__is_practitioner", rendered)
+
+    def test_practitioner_chain_filters_role_true(self):
+        qs = self._filter({"practitioner.identifier": "42"})
+        rendered = str(qs.filters[0])
+        self.assertIn("participant__user__is_practitioner", rendered)
+        self.assertIn("True", rendered)
+
+    def test_chained_triggers_distinct(self):
+        # .identifier (canonical_field has __) and .name (fields have __) both join.
+        self.assertTrue(self._filter({"patient.identifier": "42"}).distinct_called)
+        self.assertTrue(self._filter({"patient.name": "Jo"}).distinct_called)
+
+    def test_unknown_chain_part_ignored_by_default(self):
+        qs = self._filter({"patient.gender": "male"})
+        self.assertEqual(qs.filters, [])
+
+    def test_unknown_chain_part_strict_raises(self):
+        with override_settings(FHIR_STRICT_SEARCH=True):
+            with self.assertRaises(FhirOperationError):
+                apply_fhir_search(
+                    _QuerysetStub(), _qs_from({"patient.gender": "male"}), _ChainedMapper(),
+                )
+
+    def test_parse_key_splits_dot_before_modifier(self):
+        self.assertEqual(_parse_param_key("patient.name:contains"), ("patient.name", "contains"))
+        self.assertEqual(_parse_param_key("patient.identifier"), ("patient.identifier", None))
