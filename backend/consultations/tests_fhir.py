@@ -224,3 +224,148 @@ class AppointmentFhirMapperUnitTests(_AppointmentFhirBase):
         instance = mapper.from_fhir(data, instance=Appointment(pk=None, created_by=self.practitioner),
                                     context={"request": _Req()})
         self.assertEqual(instance.status, AppointmentStatus.scheduled)
+
+
+class AppointmentContainedParticipantTests(_AppointmentFhirBase):
+    """FHIR clients inline Patient/Practitioner in `contained` and reference
+    them via `#fragment`. Patients are find-or-created; practitioners must
+    already exist (never created via FHIR)."""
+
+    def _fhir_post(self, payload):
+        return self.client.post(
+            reverse("appointment-list"),
+            data=json.dumps(payload),
+            content_type="application/fhir+json",
+            HTTP_ACCEPT="application/fhir+json",
+        )
+
+    def _payload(self, *, contained, participants, status="proposed"):
+        return {
+            "resourceType": "Appointment",
+            "status": status,
+            "start": (timezone.now() + timedelta(days=3)).isoformat(),
+            "end": (timezone.now() + timedelta(days=3, minutes=30)).isoformat(),
+            "contained": contained,
+            "participant": participants,
+        }
+
+    _PATIENT_CONTAINED = {
+        "resourceType": "Patient", "id": "patient",
+        "name": [{"family": "John", "given": ["Doe"]}],
+        "telecom": [{"system": "email", "value": "jdoe@ozone.com"}],
+        "gender": "male",
+    }
+    _PRACTITIONER_CONTAINED = {
+        "resourceType": "Practitioner", "id": "practitioner",
+        "telecom": [{"system": "email", "value": "doc@ozone.com", "use": "work"}],
+    }
+    _PARTICIPANTS = [
+        {"status": "needs-action", "actor": {"reference": "#patient"}},
+        {"status": "needs-action", "actor": {"reference": "#practitioner"}},
+    ]
+
+    def test_contained_patient_created_and_linked(self):
+        # Practitioner must pre-exist (lookup-only).
+        User.objects.create_user(
+            email="doc@ozone.com", password="x", is_practitioner=True,
+        )
+        response = self._fhir_post(self._payload(
+            contained=[self._PATIENT_CONTAINED, self._PRACTITIONER_CONTAINED],
+            participants=self._PARTICIPANTS,
+        ))
+        self.assertEqual(response.status_code, 201, response.data)
+        created_patient = User.objects.get(email="jdoe@ozone.com")
+        self.assertFalse(created_patient.is_practitioner)
+        self.assertTrue(created_patient.temporary)
+        self.assertEqual(created_patient.first_name, "Doe")
+        self.assertEqual(created_patient.last_name, "John")
+        appt = Appointment.objects.get(pk=response.data["id"])
+        self.assertTrue(
+            Participant.objects.filter(
+                appointment=appt, user=created_patient, is_active=True,
+            ).exists()
+        )
+
+    def test_contained_patient_matched_by_email_no_duplicate(self):
+        existing = User.objects.create_user(email="jdoe@ozone.com", password="x")
+        User.objects.create_user(
+            email="doc@ozone.com", password="x", is_practitioner=True,
+        )
+        response = self._fhir_post(self._payload(
+            contained=[self._PATIENT_CONTAINED, self._PRACTITIONER_CONTAINED],
+            participants=self._PARTICIPANTS,
+        ))
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertEqual(User.objects.filter(email="jdoe@ozone.com").count(), 1)
+        appt = Appointment.objects.get(pk=response.data["id"])
+        self.assertTrue(
+            Participant.objects.filter(appointment=appt, user=existing).exists()
+        )
+
+    def test_contained_practitioner_matched_no_creation(self):
+        doc = User.objects.create_user(
+            email="doc@ozone.com", password="x", is_practitioner=True,
+        )
+        response = self._fhir_post(self._payload(
+            contained=[self._PATIENT_CONTAINED, self._PRACTITIONER_CONTAINED],
+            participants=self._PARTICIPANTS,
+        ))
+        self.assertEqual(response.status_code, 201, response.data)
+        # No second practitioner created.
+        self.assertEqual(
+            User.objects.filter(email="doc@ozone.com").count(), 1,
+        )
+        appt = Appointment.objects.get(pk=response.data["id"])
+        self.assertTrue(Participant.objects.filter(appointment=appt, user=doc).exists())
+
+    def test_contained_practitioner_not_found_errors_and_rolls_back(self):
+        appt_count = Appointment.objects.count()
+        response = self._fhir_post(self._payload(
+            contained=[self._PATIENT_CONTAINED, self._PRACTITIONER_CONTAINED],
+            participants=self._PARTICIPANTS,
+        ))
+        self.assertEqual(response.status_code, 422, response.data)
+        self.assertEqual(response.data["resourceType"], "OperationOutcome")
+        # Rollback: neither the appointment nor the contained patient persisted.
+        self.assertEqual(Appointment.objects.count(), appt_count)
+        self.assertFalse(User.objects.filter(email="jdoe@ozone.com").exists())
+
+    def test_mixed_contained_and_pk_reference(self):
+        doc = User.objects.create_user(
+            email="doc2@ozone.com", password="x", is_practitioner=True,
+        )
+        response = self._fhir_post(self._payload(
+            contained=[self._PATIENT_CONTAINED],
+            participants=[
+                {"status": "needs-action", "actor": {"reference": "#patient"}},
+                {"status": "accepted", "actor": {"reference": f"Practitioner/{doc.pk}"}},
+            ],
+        ))
+        self.assertEqual(response.status_code, 201, response.data)
+        appt = Appointment.objects.get(pk=response.data["id"])
+        created_patient = User.objects.get(email="jdoe@ozone.com")
+        self.assertEqual(
+            set(appt.participant_set.filter(is_active=True).values_list("user_id", flat=True)),
+            {created_patient.pk, doc.pk},
+        )
+
+    def test_contained_anonymous_patient_created(self):
+        anon = {"resourceType": "Patient", "id": "patient",
+                "name": [{"family": "NoContact"}]}
+        response = self._fhir_post(self._payload(
+            contained=[anon],
+            participants=[{"status": "needs-action", "actor": {"reference": "#patient"}}],
+        ))
+        self.assertEqual(response.status_code, 201, response.data)
+        appt = Appointment.objects.get(pk=response.data["id"])
+        self.assertEqual(appt.participant_set.filter(is_active=True).count(), 1)
+        part = appt.participant_set.filter(is_active=True).first()
+        self.assertTrue(part.user.temporary)
+
+    def test_missing_contained_fragment_errors(self):
+        response = self._fhir_post(self._payload(
+            contained=[],  # #patient referenced but not provided
+            participants=[{"status": "needs-action", "actor": {"reference": "#patient"}}],
+        ))
+        self.assertEqual(response.status_code, 404, response.data)
+        self.assertEqual(response.data["resourceType"], "OperationOutcome")

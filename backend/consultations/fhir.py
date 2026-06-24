@@ -244,6 +244,14 @@ class AppointmentFhirMapper(FhirResourceMapper):
         # the existing rows: leave the attribute unset so `post_save` skips.
         if not participant_omitted:
             instance._fhir_participants_pending = list(parsed.participant or [])
+            # Contained resources (inline Patient/Practitioner) keyed by their
+            # fragment id, so `post_save` can resolve `#patient` references.
+            contained = {}
+            for res in (parsed.contained or []):
+                rid = getattr(res, "id", None)
+                if rid:
+                    contained[rid] = res
+            instance._fhir_contained = contained
         return instance
 
     def _resolve_encounter_reference(self, parsed):
@@ -261,33 +269,120 @@ class AppointmentFhirMapper(FhirResourceMapper):
 
     # -- lifecycle hooks (called by FhirViewSetMixin) -----------------------
 
+    @staticmethod
+    def _participant_is_confirmed(status_value):
+        return (
+            True if status_value == "accepted"
+            else False if status_value == "declined"
+            else None
+        )
+
+    def _resolve_participant_user(self, entry, instance, context):
+        """Resolve one FHIR participant entry to ``(user, is_confirmed)``.
+
+        Supports three reference forms:
+        - `#fragment` → an inline `contained` Patient/Practitioner resource.
+        - `Patient/<pk>` / `Practitioner/<pk>` → an existing User by pk.
+        Returns None when the entry carries no resolvable reference.
+        """
+        from users.models import User  # local import to avoid cycles
+        from users.fhir import _GENDER_FROM_FHIR
+        from .fhir_participants import (
+            get_or_create_patient_user,
+            resolve_practitioner_user,
+        )
+
+        actor = getattr(entry, "actor", None)
+        ref = (getattr(actor, "reference", None) if actor else None) or ""
+        is_confirmed = self._participant_is_confirmed(getattr(entry, "status", None))
+
+        # -- contained resource (#fragment) --------------------------------
+        if ref.startswith("#"):
+            frag = ref[1:]
+            res = (getattr(instance, "_fhir_contained", None) or {}).get(frag)
+            if res is None:
+                raise FhirOperationError(
+                    f"Contained resource '#{frag}' referenced by a participant "
+                    f"is missing from the `contained` array.",
+                    code="not-found", status_code=404,
+                )
+            # fhir.resources 8.2.0 parses contained into concrete types; the
+            # resource type is exposed via get_resource_type() / __resource_type__.
+            rtype = (
+                res.get_resource_type() if hasattr(res, "get_resource_type")
+                else getattr(type(res), "__resource_type__", None)
+            )
+            email, phone = self._extract_contained_telecom(res)
+            if rtype == "Patient":
+                first, last = self._extract_contained_name(res)
+                gender = _GENDER_FROM_FHIR.get(getattr(res, "gender", None) or "")
+                user = get_or_create_patient_user(
+                    email=email, phone=phone, first_name=first, last_name=last,
+                    gender=gender or None, birth_date=getattr(res, "birthDate", None),
+                    created_by=instance.created_by,
+                )
+                return user, is_confirmed
+            if rtype == "Practitioner":
+                return resolve_practitioner_user(email=email), is_confirmed
+            raise FhirOperationError(
+                f"Unsupported contained resource type '{rtype}' for a participant.",
+                code="not-supported", status_code=422,
+            )
+
+        # -- existing reference (Patient/<pk>) -----------------------------
+        _, ident = parse_reference(ref)
+        if not ident:
+            return None
+        try:
+            user_pk = int(ident)
+        except (TypeError, ValueError):
+            return None
+        user = User.objects.filter(pk=user_pk).first()
+        if user is None:
+            raise FhirOperationError(
+                f"Referenced user {user_pk} not found in this tenant.",
+                code="not-found", status_code=404,
+            )
+        return user, is_confirmed
+
+    @staticmethod
+    def _extract_contained_telecom(res):
+        email = phone = None
+        for entry in (getattr(res, "telecom", None) or []):
+            system = getattr(entry, "system", None)
+            value = getattr(entry, "value", None)
+            if not value:
+                continue
+            if system == "email" and email is None:
+                email = value
+            elif system in ("phone", "sms") and phone is None:
+                phone = value
+        return email, phone
+
+    @staticmethod
+    def _extract_contained_name(res):
+        names = getattr(res, "name", None) or []
+        if not names:
+            return "", ""
+        first = names[0]
+        given = getattr(first, "given", None) or []
+        family = getattr(first, "family", None) or ""
+        return (given[0] if given else ""), family
+
     def post_save(self, instance, *, payload=None, context=None, created=False):
         pending = getattr(instance, "_fhir_participants_pending", None)
         if pending is None:
             return
 
-        from users.models import User  # local import to avoid cycles
-
         desired_user_ids = set()
         desired = []
         for entry in pending:
-            actor = getattr(entry, "actor", None)
-            ref = getattr(actor, "reference", None) if actor else None
-            rtype, ident = parse_reference(ref or "")
-            if not ident:
+            resolved = self._resolve_participant_user(entry, instance, context)
+            if resolved is None:
                 continue
-            try:
-                user_pk = int(ident)
-            except (TypeError, ValueError):
-                continue
-            status_value = getattr(entry, "status", None)
-            is_confirmed = (
-                True if status_value == "accepted"
-                else False if status_value == "declined"
-                else None
-            )
-            desired_user_ids.add(user_pk)
-            desired.append((user_pk, is_confirmed))
+            user, is_confirmed = resolved
+            desired_user_ids.add(user.pk)
+            desired.append((user.pk, is_confirmed))
 
         existing = {p.user_id: p for p in instance.participant_set.all()}
         for user_pk, is_confirmed in desired:
@@ -297,11 +392,6 @@ class AppointmentFhirMapper(FhirResourceMapper):
                 part.is_confirmed = is_confirmed
                 part.save()
             else:
-                if not User.objects.filter(pk=user_pk).exists():
-                    raise FhirOperationError(
-                        f"Referenced user {user_pk} not found in this tenant.",
-                        code="not-found", status_code=404,
-                    )
                 Participant.objects.create(
                     appointment=instance,
                     user_id=user_pk,
@@ -317,6 +407,8 @@ class AppointmentFhirMapper(FhirResourceMapper):
                     part.save(update_fields=["is_active"])
 
         delattr(instance, "_fhir_participants_pending")
+        if hasattr(instance, "_fhir_contained"):
+            delattr(instance, "_fhir_contained")
 
     def soft_delete(self, instance, *, context=None):
         instance.status = AppointmentStatus.cancelled

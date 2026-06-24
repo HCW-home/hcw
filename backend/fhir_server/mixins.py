@@ -11,6 +11,7 @@ selects `application/fhir+json` (via `Accept` header or `?format=fhir`).
 """
 from __future__ import annotations
 
+from django.db import transaction
 from rest_framework import status
 from rest_framework.response import Response
 
@@ -142,17 +143,22 @@ class FhirViewSetMixin:
         """Hook: persist the instance built by `mapper.from_fhir`.
 
         Subclasses override when m2m relations must be reconciled after save.
+        The save and `post_save` run in one transaction so a failure in
+        `post_save` (e.g. a missing referenced resource) rolls back the
+        instance and any side-effect rows it created.
         """
-        instance.save()
-        post_save = getattr(mapper, "post_save", None)
-        if callable(post_save):
-            post_save(instance, payload=payload, context=context, created=True)
+        with transaction.atomic():
+            instance.save()
+            post_save = getattr(mapper, "post_save", None)
+            if callable(post_save):
+                post_save(instance, payload=payload, context=context, created=True)
 
     def perform_fhir_update(self, mapper, instance, payload, context):
-        instance.save()
-        post_save = getattr(mapper, "post_save", None)
-        if callable(post_save):
-            post_save(instance, payload=payload, context=context, created=False)
+        with transaction.atomic():
+            instance.save()
+            post_save = getattr(mapper, "post_save", None)
+            if callable(post_save):
+                post_save(instance, payload=payload, context=context, created=False)
 
     # -- destroy ------------------------------------------------------------
 
