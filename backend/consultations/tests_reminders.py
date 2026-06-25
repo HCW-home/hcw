@@ -2,6 +2,7 @@ from datetime import timedelta
 from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
+from constance.test import override_config
 from django.urls import reverse
 from django.utils import timezone
 from django_tenants.test.cases import TenantTestCase
@@ -473,6 +474,7 @@ class ReminderOccurrenceTests(_ReminderBase):
         # Without created_by, only the current user's reminders show.
         self.assertEqual(len(resp.data), 1)
 
+    @override_config(users_visibility="all")
     def test_occurrences_filtered_by_created_by(self):
         base = timezone.now() + timedelta(days=1)
         mine = self._mk(scheduled_at=base)
@@ -493,3 +495,27 @@ class ReminderOccurrenceTests(_ReminderBase):
         self.assertEqual(resp.status_code, 200)
         ids = sorted(o["reminder_id"] for o in resp.data)
         self.assertEqual(ids, sorted([mine.id, other.id]))
+
+    @override_config(users_visibility="alone")
+    def test_occurrences_created_by_scope_alone_excludes_others(self):
+        # With "alone", requesting another practitioner's reminders returns
+        # nothing for them (the param can't widen access beyond the scope).
+        base = timezone.now() + timedelta(days=1)
+        mine = self._mk(scheduled_at=base)
+        Reminder.objects.create(
+            title="Other's",
+            recipient=self.patient,
+            created_by=self.other_practitioner,
+            scheduled_at=base,
+        )
+        resp = self.client.get(
+            reverse("reminder-occurrences"),
+            {
+                "start": timezone.now().date().isoformat(),
+                "end": (timezone.now() + timedelta(days=2)).date().isoformat(),
+                "created_by": [self.practitioner.id, self.other_practitioner.id],
+            },
+        )
+        self.assertEqual(resp.status_code, 200)
+        ids = [o["reminder_id"] for o in resp.data]
+        self.assertEqual(ids, [mine.id])

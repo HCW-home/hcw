@@ -40,6 +40,7 @@ export interface ReminderOccurrence {
   title: string;
   description: string;
   recipient: User;
+  created_by: number | null;
   consultation: number | null;
   is_recurring: boolean;
   occurrence_index: number;

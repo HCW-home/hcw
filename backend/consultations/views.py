@@ -558,11 +558,17 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
             ).distinct()
 
         # For all other actions (list, retrieve, join, leave, start_recording, etc.):
-        # include appointments where user is an active participant
+        # include appointments where user is an active participant, plus those
+        # of practitioners the user is allowed to see (users_visibility scope).
+        from users.services import visible_practitioner_ids
+
+        visible_ids = visible_practitioner_ids(user)
         return Appointment.objects.filter(
             Q(participant__user=user, participant__is_active=True)
             | Q(created_by=user)
             | Q(consultation__in=Consultation.objects.accessible_by(user))
+            | Q(created_by_id__in=visible_ids)
+            | Q(participant__user_id__in=visible_ids, participant__is_active=True)
         ).distinct()
 
     @extend_schema(
@@ -1744,16 +1750,24 @@ class ReminderViewSet(CreatedByMixin, viewsets.ModelViewSet):
         # The calendar can show reminders created by several selected
         # practitioners. When `created_by` ids are provided, show those
         # practitioners' reminders; otherwise fall back to the current user's.
+        # Requested creators are intersected with the practitioners the user is
+        # allowed to see (users_visibility scope), so the param can't widen
+        # access beyond what the setting permits.
+        from users.services import visible_practitioner_ids
+
         created_by_ids = request.query_params.getlist("created_by")
         if created_by_ids:
             try:
-                created_by_ids = [int(i) for i in created_by_ids]
+                requested_ids = {int(i) for i in created_by_ids}
             except ValueError:
                 return Response(
                     {"detail": "created_by must be integer ids."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            base_qs = Reminder.objects.filter(created_by__in=created_by_ids)
+            allowed_ids = set(visible_practitioner_ids(request.user))
+            allowed_ids.add(request.user.id)
+            scoped_ids = requested_ids & allowed_ids
+            base_qs = Reminder.objects.filter(created_by_id__in=scoped_ids)
         else:
             base_qs = Reminder.objects.filter(created_by=request.user)
 
@@ -1773,6 +1787,7 @@ class ReminderViewSet(CreatedByMixin, viewsets.ModelViewSet):
                         "title": reminder.title,
                         "description": reminder.description,
                         "recipient": reminder.recipient,
+                        "created_by": reminder.created_by_id,
                         "consultation": reminder.consultation_id,
                         "is_recurring": reminder.is_recurring,
                         "occurrence_index": index,

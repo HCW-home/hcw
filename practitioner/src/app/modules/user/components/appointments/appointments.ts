@@ -208,6 +208,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     eventResize: this.handleEventResize.bind(this),
     eventMouseEnter: this.handleEventMouseEnter.bind(this),
     eventMouseLeave: this.handleEventMouseLeave.bind(this),
+    eventContent: this.renderEventContent.bind(this),
     slotMinTime: '00:00:00',
     slotMaxTime: '24:00:00',
     allDaySlot: false,
@@ -618,7 +619,48 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     return `${title} (${type})`;
   }
 
-  private readonly reminderEventColor = '#8b5cf6'; // violet, distinct from appointments
+  // Custom event rendering: a small icon distinguishes reminders (bell) from
+  // appointments (calendar); both keep the practitioner colour.
+  private renderEventContent(arg: {
+    event: { title: string; extendedProps: Record<string, unknown> };
+    timeText: string;
+  }): { domNodes: HTMLElement[] } {
+    const isReminder = !!arg.event.extendedProps['isReminder'];
+    const bellPath =
+      'M12 2a6 6 0 0 0-6 6v3.6L4.3 15a1 1 0 0 0 .9 1.5h13.6a1 1 0 0 0 .9-1.5L18 11.6V8a6 6 0 0 0-6-6zm0 20a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22z';
+    const calPath =
+      'M7 2v2H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7zm12 7v10H5V9h14z';
+
+    const container = document.createElement('div');
+    container.className = 'fc-event-custom';
+
+    const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    icon.setAttribute('viewBox', '0 0 24 24');
+    icon.setAttribute('width', '12');
+    icon.setAttribute('height', '12');
+    icon.setAttribute('fill', 'currentColor');
+    icon.classList.add('fc-event-icon');
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', isReminder ? bellPath : calPath);
+    icon.appendChild(path);
+
+    const label = document.createElement('span');
+    label.className = 'fc-event-label';
+    label.textContent = arg.timeText
+      ? `${arg.timeText} ${arg.event.title}`
+      : arg.event.title;
+
+    container.appendChild(icon);
+    container.appendChild(label);
+    return { domNodes: [container] };
+  }
+
+  private getPractitionerColorById(practitionerId: number | null): string {
+    const practitioner = this.practitioners().find(
+      p => p.user.pk === practitionerId
+    );
+    return practitioner?.color || '#3b82f6';
+  }
 
   private transformOccurrencesToEvents(
     occurrences: ReminderOccurrence[]
@@ -641,14 +683,18 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
               total: String(occ.occurrence_total),
             })
           : '';
+      // Same colour scheme as appointments (per practitioner); reminders are
+      // distinguished by an icon rendered in eventContent, not by colour.
+      const color = this.getPractitionerColorById(occ.created_by);
       return {
         id: `reminder-${occ.reminder_id}-${occ.occurrence_index}-${i}`,
-        title: `${this.t.instant('reminders.eventPrefix')}: ${occ.title}${recipientPart}${suffix}`,
+        title: `${occ.title}${recipientPart}${suffix}`,
         start: parseDateWithoutTimezone(occ.occurrence_at) || occ.occurrence_at,
-        backgroundColor: this.reminderEventColor,
-        borderColor: this.reminderEventColor,
+        backgroundColor: color,
+        borderColor: color,
         textColor: '#ffffff',
         extendedProps: {
+          isReminder: true,
           reminderId: occ.reminder_id,
           reminderTitle: occ.title,
           reminderDescription: occ.description,

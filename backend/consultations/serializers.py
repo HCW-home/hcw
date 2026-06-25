@@ -1546,6 +1546,7 @@ class ReminderOccurrenceSerializer(serializers.Serializer):
     title = serializers.CharField()
     description = serializers.CharField(allow_blank=True)
     recipient = ConsultationUserSerializer()
+    created_by = serializers.IntegerField(allow_null=True)
     consultation = serializers.IntegerField(allow_null=True)
     is_recurring = serializers.BooleanField()
     occurrence_index = serializers.IntegerField()

@@ -610,6 +610,24 @@
       sans-serif;
   }
 
+  .fc-event-custom {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    padding: 0 2px;
+
+    .fc-event-icon {
+      flex-shrink: 0;
+    }
+
+    .fc-event-label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
   .fc-theme-standard td,
   .fc-theme-standard th {
     border-color: var(--slate-100);

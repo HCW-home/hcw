@@ -127,3 +127,10 @@ creating an appointment via FHIR also seems not to work well with a fhir client,
 Add support of contained on Encounter also
 
 Au glisser dans le calendrier (nouvel élément), afficher désormais une modale demandant quel type de il s'agit : rappel ou rendez-vous.
+
+créer un patient, il faut mettre la langue préférée du practicioner par défaut
+créer un patient depuis la modale de création de rappel
+numéro de téléphone +33 699 55 42 29 (gérer les espaces)
+création d'un user depuis l'admin : doctor par défaut
+du coup, le créer par doit également s'afficher dans la modale d'affichage du rappel
+problème avec le rappel de demain qui n'est pas dans le timezone du user

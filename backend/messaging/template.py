@@ -1,5 +1,5 @@
-from django.utils.translation import gettext_lazy as _
 from django.conf import settings
+from django.utils.translation import gettext_lazy as _
 
 DEFAULT_NOTIFICATION_MESSAGES = {
     "appointment_first_reminder": {
@@ -46,8 +46,12 @@ DEFAULT_NOTIFICATION_MESSAGES = {
     },
     "appointment_cancelled": {
         "template_subject": _("Your appointment has been cancelled"),
-        "template_content": _("Your appointment scheduled for {{ obj.appointment.scheduled_at|localtime|date }} at {{ obj.appointment.scheduled_at|localtime|time }} has been cancelled."),
-        "template_content_html": _("<p>Your appointment scheduled for {{ obj.appointment.scheduled_at|localtime|date }} at {{ obj.appointment.scheduled_at|localtime|time }} has been cancelled.</p>"),
+        "template_content": _(
+            "Your appointment scheduled for {{ obj.appointment.scheduled_at|localtime|date }} at {{ obj.appointment.scheduled_at|localtime|time }} has been cancelled."
+        ),
+        "template_content_html": _(
+            "<p>Your appointment scheduled for {{ obj.appointment.scheduled_at|localtime|date }} at {{ obj.appointment.scheduled_at|localtime|time }} has been cancelled.</p>"
+        ),
         "model": "consultations.Participant",
         "helper_text": "Message sent to participant when appointment is cancelled",
     },
@@ -98,9 +102,7 @@ DEFAULT_NOTIFICATION_MESSAGES = {
     },
     "email_verification": {
         "template_subject": _("Verify your email address"),
-        "template_content": _(
-            "We are requiring to verify your email address."
-        ),
+        "template_content": _("We are requiring to verify your email address."),
         "template_content_html": _(
             "<p>We are requiring to verify your email address.</p>"
         ),
@@ -129,7 +131,7 @@ DEFAULT_NOTIFICATION_MESSAGES = {
         ),
         "template_content_html": _(
             '<p>A consultation <strong>"{{ obj.title }}"</strong> has been assigned to you.</p>'
-            '<p>You can now interact with it and view its details.</p>'
+            "<p>You can now interact with it and view its details.</p>"
         ),
         "action": "consultation",
         "action_label": _("View consultation"),
