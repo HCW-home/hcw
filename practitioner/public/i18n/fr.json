@@ -1018,7 +1018,9 @@
     "pushNotification": "Notification push",
     "english": "Anglais",
     "german": "Allemand",
-    "french": "Français"
+    "french": "Français",
+    "dontInviteContact": "Ne pas inviter le contact",
+    "roleContact": "Contact"
   },
   "videoCall": {
     "leaveCallTitle": "Quitter l'appel vidéo ?",
@@ -1080,6 +1082,7 @@
     "updated": "Rappel modifié",
     "errorUpdating": "Erreur lors de la modification du rappel",
     "deleteTitle": "Supprimer le rappel",
-    "deleteMessage": "Voulez-vous vraiment supprimer ce rappel ? Cette action est irréversible."
+    "deleteMessage": "Voulez-vous vraiment supprimer ce rappel ? Cette action est irréversible.",
+    "eventPrefix": "Rappel"
   }
 }

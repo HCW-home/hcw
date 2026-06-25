@@ -264,6 +264,19 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
     return !this.owner;
   }
 
+  // Shown only when creating an appointment from a contact page (the contact
+  // is pre-added as a participant).
+  get showContactInviteFlag(): boolean {
+    return !this.isEditMode && this.initialParticipants.length > 0;
+  }
+
+  // True if a pending participant is one of the contacts pre-added from a
+  // contact page (used to grey it out when "don't invite the contact" is on).
+  isInitialContact(pending: CreateParticipantRequest): boolean {
+    if (!this.showContactInviteFlag || !pending.user_id) return false;
+    return this.initialParticipants.some(p => p.user_id === pending.user_id);
+  }
+
   getBeneficiaryUser(): User | null {
     return this.beneficiary;
   }
@@ -356,6 +369,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
       end_time: [''],
       dont_invite_beneficiary: [false],
       dont_invite_practitioner: [false],
+      dont_invite_contact: [false],
       dont_invite_me: [false],
     });
   }
@@ -424,6 +438,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
       type: AppointmentType.ONLINE,
       dont_invite_beneficiary: false,
       dont_invite_practitioner: false,
+      dont_invite_contact: false,
       dont_invite_me: false,
     });
     this.participants.set([]);
@@ -781,6 +796,16 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
     const temporary_participants: ITemporaryParticipant[] = [];
     const participants_visibility: { user_id: number; is_consultation_visible: boolean }[] = [];
 
+    // When created from a contact page, "don't invite the contact" excludes the
+    // pre-added contact(s) from the request.
+    const excludedContactIds =
+      this.showContactInviteFlag &&
+      this.appointmentForm.get('dont_invite_contact')?.value
+        ? this.initialParticipants
+            .map(p => p.user_id)
+            .filter((id): id is number => !!id)
+        : [];
+
     for (const p of this.participants()) {
       if (p.user?.id) {
         participants_ids.push(p.user.id);
@@ -788,6 +813,9 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
     }
 
     for (const pending of this.pendingParticipants()) {
+      if (pending.user_id && excludedContactIds.includes(pending.user_id)) {
+        continue;
+      }
       if (pending.user_id) {
         participants_ids.push(pending.user_id);
         if (pending.is_consultation_visible) {

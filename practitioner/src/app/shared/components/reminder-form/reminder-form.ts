@@ -60,6 +60,9 @@ export class ReminderForm implements OnInit, OnChanges, OnDestroy {
   @Input() consultationId?: number;
   @Input() editingReminder: Reminder | null = null;
   @Input() initialRecipient: IUser | null = null;
+  // Lock the recipient field (e.g. when creating from a contact page, the
+  // reminder is necessarily for that contact).
+  @Input() lockRecipient = false;
 
   @Output() cancelled = new EventEmitter<void>();
   @Output() reminderCreated = new EventEmitter<Reminder>();
@@ -111,6 +114,12 @@ export class ReminderForm implements OnInit, OnChanges, OnDestroy {
       } as IUser;
     }
     return this.initialRecipient;
+  }
+
+  get lockedRecipientName(): string {
+    const u = this.displayRecipient;
+    if (!u) return '';
+    return `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email || '';
   }
 
   ngOnInit(): void {

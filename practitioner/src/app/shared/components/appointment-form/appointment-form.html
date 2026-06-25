@@ -78,14 +78,24 @@
         @if (!isEditMode) {
         <div class="invite-flags-section">
           <div class="invite-flags">
+            @if (!isBeneficiaryCheckboxDisabled()) {
             <app-checkbox
               [label]="'appointmentForm.dontInvitePatient' | translate"
               formControlName="dont_invite_beneficiary">
             </app-checkbox>
+            }
+            @if (!isPractitionerCheckboxDisabled()) {
             <app-checkbox
               [label]="'appointmentForm.dontInvitePractitioner' | translate"
               formControlName="dont_invite_practitioner">
             </app-checkbox>
+            }
+            @if (showContactInviteFlag) {
+            <app-checkbox
+              [label]="'appointmentForm.dontInviteContact' | translate"
+              formControlName="dont_invite_contact">
+            </app-checkbox>
+            }
             <app-checkbox
               [label]="'appointmentForm.dontInviteMe' | translate"
               formControlName="dont_invite_me">
@@ -393,11 +403,20 @@
         </app-participant-item>
         } @for (pending of pendingParticipants(); track $index) {
         <app-participant-item
+          [class.excluded]="isInitialContact(pending) && appointmentForm.get('dont_invite_contact')?.value"
           [pendingParticipant]="pending"
           [isPending]="true"
-          [showRemoveAction]="true"
+          [showRemoveAction]="!isInitialContact(pending)"
           [currentUser]="currentUser()"
           (remove)="removePendingParticipant($index)">
+          @if (isInitialContact(pending)) {
+          <span class="role-tag">{{ 'appointmentForm.roleContact' | translate }}</span>
+          <app-switch
+            [ngModel]="!appointmentForm.get('dont_invite_contact')?.value"
+            [ngModelOptions]="{standalone: true}"
+            (ngModelChange)="toggleInvite('dont_invite_contact', $event)">
+          </app-switch>
+          }
         </app-participant-item>
         }
       </div>

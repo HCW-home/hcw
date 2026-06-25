@@ -136,6 +136,8 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   hasMore = signal(false);
   appointments = signal<Appointment[]>([]);
   calendarEvents = signal<EventInput[]>([]);
+  private appointmentCalendarEvents: EventInput[] = [];
+  private reminderCalendarEvents: EventInput[] = [];
   currentView = signal<CalendarView>('timeGridWeek');
   currentTitle = signal<string>('');
 
@@ -413,7 +415,8 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
 
     if (selected.length === 0) {
       this.appointments.set([]);
-      this.calendarEvents.set([]);
+      this.appointmentCalendarEvents = [];
+      this.recomputeCalendarEvents();
       this.loading.set(false);
       return;
     }
@@ -448,7 +451,8 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
           });
 
           this.appointments.set(allAppointments);
-          this.calendarEvents.set(allEvents);
+          this.appointmentCalendarEvents = allEvents;
+          this.recomputeCalendarEvents();
           this.loading.set(false);
         },
         error: err => {
@@ -589,6 +593,28 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     return `${title} (${type})`;
   }
 
+  private readonly reminderEventColor = '#8b5cf6'; // violet, distinct from appointments
+
+  private transformRemindersToEvents(reminders: Reminder[]): EventInput[] {
+    return reminders.map(reminder => ({
+      id: `reminder-${reminder.id}`,
+      title: `${this.t.instant('reminders.eventPrefix')}: ${reminder.title}`,
+      start:
+        parseDateWithoutTimezone(reminder.scheduled_at) || reminder.scheduled_at,
+      backgroundColor: this.reminderEventColor,
+      borderColor: this.reminderEventColor,
+      textColor: '#ffffff',
+      extendedProps: { reminder },
+    }));
+  }
+
+  private recomputeCalendarEvents(): void {
+    this.calendarEvents.set([
+      ...this.appointmentCalendarEvents,
+      ...this.reminderCalendarEvents,
+    ]);
+  }
+
   getAppointmentTypeLabel(type: AppointmentType | string): string {
     const t = typeof type === 'string' ? type.toLowerCase() : type;
     switch (t) {
@@ -629,6 +655,14 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     clickInfo.jsEvent.preventDefault();
     clickInfo.jsEvent.stopPropagation();
 
+    const reminder = clickInfo.event.extendedProps['reminder'] as
+      | Reminder
+      | undefined;
+    if (reminder) {
+      this.openEditReminderModal(reminder);
+      return;
+    }
+
     const appointment = clickInfo.event.extendedProps[
       'appointment'
     ] as Appointment;
@@ -656,6 +690,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     ) {
       this.currentDateRange = { start: newStart, end: newEnd };
       this.loadAppointments();
+      this.loadReminders();
     }
   }
 
@@ -1014,6 +1049,10 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
         next: response => {
           this.reminders.set(response.results);
           this.hasMoreReminders.set(response.next !== null);
+          this.reminderCalendarEvents = this.transformRemindersToEvents(
+            response.results
+          );
+          this.recomputeCalendarEvents();
           this.isLoadingReminders.set(false);
         },
         error: error => {
@@ -1070,6 +1109,10 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
       .subscribe({
         next: () => {
           this.reminders.set(this.reminders().filter(r => r.id !== reminder.id));
+          this.reminderCalendarEvents = this.reminderCalendarEvents.filter(
+            e => e.id !== `reminder-${reminder.id}`
+          );
+          this.recomputeCalendarEvents();
           this.toasterService.show(
             'success',
             this.t.instant('reminders.deleted')

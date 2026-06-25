@@ -388,7 +388,9 @@
     "pushNotification": "Notifiche push",
     "english": "Inglese",
     "german": "tedesco",
-    "french": "Francese"
+    "french": "Francese",
+    "dontInviteContact": "Do not invite contact",
+    "roleContact": "Contact"
   },
   "patientDetail": {
     "totalConsultations": "Numero totale di follow-up",
@@ -1116,6 +1118,7 @@
     "updated": "Reminder updated",
     "errorUpdating": "Error updating reminder",
     "deleteTitle": "Delete reminder",
-    "deleteMessage": "Are you sure you want to delete this reminder? This action cannot be undone."
+    "deleteMessage": "Are you sure you want to delete this reminder? This action cannot be undone.",
+    "eventPrefix": "Reminder"
   }
 }

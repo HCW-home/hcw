@@ -962,7 +962,9 @@
     "pushNotification": "Notificación push",
     "english": "Inglés",
     "german": "Alemán",
-    "french": "Francés"
+    "french": "Francés",
+    "dontInviteContact": "Do not invite contact",
+    "roleContact": "Contact"
   },
   "language": {
     "title": "Idioma",
@@ -1116,6 +1118,7 @@
     "updated": "Reminder updated",
     "errorUpdating": "Error updating reminder",
     "deleteTitle": "Delete reminder",
-    "deleteMessage": "Are you sure you want to delete this reminder? This action cannot be undone."
+    "deleteMessage": "Are you sure you want to delete this reminder? This action cannot be undone.",
+    "eventPrefix": "Reminder"
   }
 }

@@ -125,5 +125,3 @@ creating an appointment via FHIR also seems not to work well with a fhir client,
 # Support of contained on Encounter also
 
 Add support of contained on Encounter also
-
-# Les rappels ne s'affichent pas dans la vue calendrier

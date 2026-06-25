@@ -849,7 +849,9 @@
     "pushNotification": "Push-Benachrichtigung",
     "english": "Englisch",
     "german": "Deutsch",
-    "french": "Französisch"
+    "french": "Französisch",
+    "dontInviteContact": "Kontakt nicht einladen",
+    "roleContact": "Kontakt"
   },
   "confirmPresence": {
     "loadingAppointments": "Termine werden geladen...",
@@ -1088,6 +1090,7 @@
     "updated": "Erinnerung aktualisiert",
     "errorUpdating": "Fehler beim Aktualisieren der Erinnerung",
     "deleteTitle": "Erinnerung löschen",
-    "deleteMessage": "Möchten Sie diese Erinnerung wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+    "deleteMessage": "Möchten Sie diese Erinnerung wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "eventPrefix": "Erinnerung"
   }
 }

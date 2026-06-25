@@ -462,14 +462,17 @@
     }
   </div>
 
+  @if (showReminderModal()) {
   <app-reminder-form-modal
     [isOpen]="showReminderModal()"
     [editingReminder]="editingReminder()"
     [initialRecipient]="patient()"
+    [lockRecipient]="true"
     (closed)="closeReminderModal()"
     (reminderCreated)="onReminderSaved()"
     (reminderUpdated)="onReminderSaved()">
   </app-reminder-form-modal>
+  }
 
   @if (showAppointmentModal()) {
   <app-appointment-form-modal

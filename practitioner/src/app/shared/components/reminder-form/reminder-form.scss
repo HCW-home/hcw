@@ -18,6 +18,27 @@
   }
 }
 
+.recipient-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 16px;
+  line-height: 20px;
+  color: var(--slate-700);
+}
+
+.recipient-locked {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border: 2px solid var(--slate-200);
+  border-radius: 12px;
+  background-color: var(--slate-50);
+  color: var(--slate-500);
+  font-size: 16px;
+  line-height: 16px;
+  cursor: not-allowed;
+}
+
 .recurrence-section {
   padding: 16px;
   border-radius: 8px;

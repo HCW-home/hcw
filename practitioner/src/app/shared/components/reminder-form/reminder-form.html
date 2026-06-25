@@ -1,6 +1,12 @@
 <div class="reminder-form-wrapper">
   <form [formGroup]="reminderForm">
     <div class="form-group">
+      @if (lockRecipient) {
+      <label class="recipient-label">{{ 'reminders.recipient' | translate }}</label>
+      <div class="recipient-locked">
+        <span>{{ lockedRecipientName }}</span>
+      </div>
+      } @else {
       <app-user-search-select
         [label]="'reminders.recipient' | translate"
         [placeholder]="'reminders.recipientPlaceholder' | translate"
@@ -11,6 +17,7 @@
       </app-user-search-select>
       @if (getFieldError('recipient_id')) {
       <div class="field-error">{{ getFieldError('recipient_id') }}</div>
+      }
       }
     </div>
 
