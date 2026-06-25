@@ -1564,7 +1564,7 @@ msgstr "OVH SMS"
 #| msgid "Your appointment planned {{ obj.appointment.scheduled_at|date }}"
 msgid ""
 "Your appointment planned {{ obj.appointment.scheduled_at|localtime|date }}"
-msgstr "Ihr Termin ist geplant für {{ obj.appointment.scheduled_at|date }}"
+msgstr "Ihr Termin ist geplant für {{ obj.appointment.scheduled_at|localtime|date }}"
 
 #: messaging/template.py:10
 #, fuzzy
@@ -1576,9 +1576,7 @@ msgid ""
 "This is a reminder for your appointment scheduled for "
 "{{ obj.appointment.scheduled_at|localtime|date }} at "
 "{{ obj.appointment.scheduled_at|localtime|time }}."
-msgstr ""
-"Dies ist eine Erinnerung an Ihren Termin am {{ obj.appointment.scheduled_at|"
-"date }} um {{ obj.appointment.scheduled_at|time }}."
+msgstr "Dies ist eine Erinnerung an Ihren Termin am {{ obj.appointment.scheduled_at|localtime|date }} um {{ obj.appointment.scheduled_at|localtime|time }}."
 
 #: messaging/template.py:13
 #, fuzzy
@@ -1590,10 +1588,7 @@ msgid ""
 "<p>This is a reminder for your appointment scheduled for "
 "<strong>{{ obj.appointment.scheduled_at|localtime|date }}</strong> at "
 "<strong>{{ obj.appointment.scheduled_at|localtime|time }}</strong>.</p>"
-msgstr ""
-"<p>Dies ist eine Erinnerung an Ihren Termin am "
-"<strong>{{ obj.appointment.scheduled_at|date }}</strong> um "
-"<strong>{{ obj.appointment.scheduled_at|time }}</strong>.</p>"
+msgstr "<p>Dies ist eine Erinnerung an Ihren Termin am <strong>{{ obj.appointment.scheduled_at|localtime|date }}</strong> um <strong>{{ obj.appointment.scheduled_at|localtime|time }}</strong>.</p>"
 
 #: messaging/template.py:20
 msgid ""
@@ -1608,7 +1603,7 @@ msgstr "Ihr Termin beginnt in {{config.appointment_last_reminder}} Minuten"
 msgid ""
 "Your consultation appointment will start at {{ obj.appointment.scheduled_at|"
 "localtime|time }}"
-msgstr "Ihr Beratungstermin beginnt um {{ obj.appointment.scheduled_at|time }}"
+msgstr "Ihr Beratungstermin beginnt um {{ obj.appointment.scheduled_at|localtime|time }}"
 
 #: messaging/template.py:26
 #, fuzzy
@@ -1618,9 +1613,7 @@ msgstr "Ihr Beratungstermin beginnt um {{ obj.appointment.scheduled_at|time }}"
 msgid ""
 "<p>Your consultation appointment will start at "
 "<strong>{{ obj.appointment.scheduled_at|localtime|time }}</strong></p>"
-msgstr ""
-"<p>Ihr Beratungstermin beginnt um <strong>{{ obj.appointment.scheduled_at|"
-"time }}</strong></p>"
+msgstr "<p>Ihr Beratungstermin beginnt um <strong>{{ obj.appointment.scheduled_at|localtime|time }}</strong></p>"
 
 #: messaging/template.py:29
 msgid "Join the consultation"
@@ -1640,10 +1633,7 @@ msgid ""
 "Your consultation has been scheduled for {{ obj.appointment.scheduled_at|"
 "localtime|date }} at {{ obj.appointment.scheduled_at|localtime|time }} "
 "({{ obj.appointment.scheduled_at }})"
-msgstr ""
-"Ihr Beratungstermin wurde für {{ obj.appointment.scheduled_at|date }} um "
-"{{ obj.appointment.scheduled_at|time }} ({{ obj.appointment.scheduled_at }}) "
-"vereinbart."
+msgstr "Ihr Beratungstermin wurde für {{ obj.appointment.scheduled_at|localtime|date }} um {{ obj.appointment.scheduled_at|localtime|time }} ({{ obj.appointment.scheduled_at }}) vereinbart."
 
 #: messaging/template.py:39
 #, fuzzy
@@ -1657,11 +1647,7 @@ msgid ""
 "scheduled for <strong>{{ obj.appointment.scheduled_at|localtime|date }}</"
 "strong> at <strong>{{ obj.appointment.scheduled_at|localtime|time }}</"
 "strong> ({{ obj.appointment.scheduled_at }})</p>"
-msgstr ""
-"<p>Ihre Beratung wurde erfolgreich terminiert.</p><p>Der Termin ist für "
-"<strong>{{ obj.appointment.scheduled_at|date }}</strong> um "
-"<strong>{{ obj.appointment.scheduled_at|time }}</strong> "
-"({{ obj.appointment.scheduled_at }})</p> geplant."
+msgstr "<p>Ihre Beratung wurde erfolgreich terminiert.</p><p>Der Termin ist für <strong>{{ obj.appointment.scheduled_at|localtime|date }}</strong> um <strong>{{ obj.appointment.scheduled_at|localtime|time }}</strong> ({{ obj.appointment.scheduled_at }})</p> geplant."
 
 #: messaging/template.py:43 messaging/template.py:67
 msgid "Confirm your presence"
@@ -1680,9 +1666,7 @@ msgid ""
 "Your appointment scheduled for {{ obj.appointment.scheduled_at|localtime|"
 "date }} at {{ obj.appointment.scheduled_at|localtime|time }} has been "
 "cancelled."
-msgstr ""
-"Ihr Termin am {{ obj.appointment.scheduled_at|date }} um "
-"{{ obj.appointment.scheduled_at|time }} wurde abgesagt."
+msgstr "Ihr Termin am {{ obj.appointment.scheduled_at|localtime|date }} um {{ obj.appointment.scheduled_at|localtime|time }} wurde abgesagt."
 
 #: messaging/template.py:50
 #, fuzzy
@@ -1693,9 +1677,7 @@ msgid ""
 "<p>Your appointment scheduled for {{ obj.appointment.scheduled_at|localtime|"
 "date }} at {{ obj.appointment.scheduled_at|localtime|time }} has been "
 "cancelled.</p>"
-msgstr ""
-"<p>Ihr Termin am {{ obj.appointment.scheduled_at|date }} um "
-"{{ obj.appointment.scheduled_at|time }} wurde abgesagt.</p>"
+msgstr "<p>Ihr Termin am {{ obj.appointment.scheduled_at|localtime|date }} um {{ obj.appointment.scheduled_at|localtime|time }} wurde abgesagt.</p>"
 
 #: messaging/template.py:55
 msgid "Your appointment has been updated"
@@ -1715,11 +1697,7 @@ msgid ""
 "{{ obj.appointment.previous_scheduled_at|localtime|time }} is now scheduled "
 "for {{ obj.appointment.scheduled_at|localtime|date }} at "
 "{{ obj.appointment.scheduled_at|localtime|time }}\n"
-msgstr ""
-"Ihr ursprünglich für {{ obj.appointment.previous_scheduled_at|date }} um "
-"{{ obj.appointment.previous_scheduled_at|time }} geplanter Termin wurde auf "
-"{{ obj.appointment.scheduled_at|date }} um {{ obj.appointment.scheduled_at|"
-"time }} verschoben.\n"
+msgstr "Ihr ursprünglich für {{ obj.appointment.previous_scheduled_at|localtime|date }} um {{ obj.appointment.previous_scheduled_at|localtime|time }} geplanter Termin wurde auf {{ obj.appointment.scheduled_at|localtime|date }} um {{ obj.appointment.scheduled_at|localtime|time }} verschoben.\n"
 
 #: messaging/template.py:62
 #, fuzzy
@@ -1736,12 +1714,7 @@ msgid ""
 "strong> is now scheduled for <strong>{{ obj.appointment.scheduled_at|"
 "localtime|date }}</strong> at <strong>{{ obj.appointment.scheduled_at|"
 "localtime|time }}</strong></p>"
-msgstr ""
-"Ihr ursprünglich für <strong>{{ obj.appointment.previous_scheduled_at|date }}"
-"</strong> um <strong>{{ obj.appointment.previous_scheduled_at|time }}</"
-"strong> geplanter Termin wurde nun für "
-"<strong>{{ obj.appointment.scheduled_at|date }}</strong> um "
-"<strong>{{ obj.appointment.scheduled_at|time }}</strong></p> verschoben."
+msgstr "Ihr ursprünglich für <strong>{{ obj.appointment.previous_scheduled_at|localtime|date }}</strong> um <strong>{{ obj.appointment.previous_scheduled_at|localtime|time }}</strong> geplanter Termin wurde nun für <strong>{{ obj.appointment.scheduled_at|localtime|date }}</strong> um <strong>{{ obj.appointment.scheduled_at|localtime|time }}</strong></p> verschoben."
 
 #: messaging/template.py:72
 msgid "Your confirmation code"

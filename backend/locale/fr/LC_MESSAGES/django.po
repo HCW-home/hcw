@@ -1539,27 +1539,21 @@ msgstr "SMS OVH"
 #: messaging/template.py:7
 msgid ""
 "Your appointment planned {{ obj.appointment.scheduled_at|localtime|date }}"
-msgstr "Votre rendez-vous prévu le {{ obj.appointment.scheduled_at|date }}"
+msgstr "Votre rendez-vous prévu le {{ obj.appointment.scheduled_at|localtime|date }}"
 
 #: messaging/template.py:10
 msgid ""
 "This is a reminder for your appointment scheduled for "
 "{{ obj.appointment.scheduled_at|localtime|date }} at "
 "{{ obj.appointment.scheduled_at|localtime|time }}."
-msgstr ""
-"Ceci est un rappel pour votre rendez-vous prévu le : "
-"{{ obj.appointment.scheduled_at|date }} à {{ obj.appointment.scheduled_at|"
-"time }}."
+msgstr "Ceci est un rappel pour votre rendez-vous prévu le : {{ obj.appointment.scheduled_at|localtime|date }} à {{ obj.appointment.scheduled_at|localtime|time }}."
 
 #: messaging/template.py:13
 msgid ""
 "<p>This is a reminder for your appointment scheduled for "
 "<strong>{{ obj.appointment.scheduled_at|localtime|date }}</strong> at "
 "<strong>{{ obj.appointment.scheduled_at|localtime|time }}</strong>.</p>"
-msgstr ""
-"Ceci est un rappel pour votre rendez-vous prévu le : "
-"{{ obj.appointment.scheduled_at|date }} à {{ obj.appointment.scheduled_at|"
-"time }}."
+msgstr "Ceci est un rappel pour votre rendez-vous prévu le : {{ obj.appointment.scheduled_at|localtime|date }} à {{ obj.appointment.scheduled_at|localtime|time }}."
 
 #: messaging/template.py:20
 msgid ""
