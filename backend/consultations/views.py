@@ -26,6 +26,7 @@ from django.db.models import (
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse, StreamingHttpResponse
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from django.utils.text import slugify
 from django.utils.translation import gettext as _, gettext_lazy
 from django_filters.rest_framework import DjangoFilterBackend
@@ -79,6 +80,7 @@ from .serializers import (
     QueueSerializer,
     ReasonDetailSerializer,
     ReminderSerializer,
+    ReminderOccurrenceSerializer,
     RequestSerializer,
 )
 
@@ -1713,3 +1715,60 @@ class ReminderViewSet(CreatedByMixin, viewsets.ModelViewSet):
         if not user.is_authenticated:
             return Reminder.objects.none()
         return Reminder.objects.filter(created_by=user)
+
+    @action(detail=False, methods=["get"])
+    def occurrences(self, request):
+        """Return expanded reminder occurrences within [start, end].
+
+        ``start`` and ``end`` are dates (YYYY-MM-DD). Recurring reminders are
+        expanded to one entry per occurrence falling in the window. Reminders
+        whose [scheduled_at, recurrence_end_at] range does not intersect the
+        window are excluded at the DB level via the dedicated index.
+        """
+        start_str = request.query_params.get("start")
+        end_str = request.query_params.get("end")
+        start_date = parse_date(start_str) if start_str else None
+        end_date = parse_date(end_str) if end_str else None
+        if not start_date or not end_date:
+            return Response(
+                {"detail": "start and end query params (YYYY-MM-DD) are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Inclusive window bounds as aware datetimes (start 00:00, end 23:59:59)
+        # in the user's timezone, so a calendar day maps to the user's day.
+        tz = request.user.user_tz
+        window_start = datetime.combine(start_date, time.min, tzinfo=tz)
+        window_end = datetime.combine(end_date, time.max, tzinfo=tz)
+
+        # Intersection of [scheduled_at, recurrence_end_at] with the window.
+        reminders = self.get_queryset().filter(
+            is_active=True,
+            scheduled_at__lte=window_end,
+            recurrence_end_at__gte=window_start,
+        )
+
+        occurrences = []
+        for reminder in reminders:
+            for index, occ in reminder.occurrences_between(window_start, window_end):
+                occurrences.append(
+                    {
+                        "reminder_id": reminder.id,
+                        "title": reminder.title,
+                        "description": reminder.description,
+                        "recipient": reminder.recipient,
+                        "consultation": reminder.consultation_id,
+                        "is_recurring": reminder.is_recurring,
+                        "occurrence_index": index,
+                        "occurrence_total": reminder.recurrence_count
+                        if reminder.is_recurring
+                        else 1,
+                        "occurrence_at": occ,
+                    }
+                )
+
+        occurrences.sort(key=lambda o: o["occurrence_at"])
+        serializer = ReminderOccurrenceSerializer(
+            occurrences, many=True, context={"request": request}
+        )
+        return Response(serializer.data)

@@ -23,7 +23,11 @@ import {
   DashboardResponse,
   IParticipantDetail,
 } from '../models/consultation';
-import { Reminder, CreateReminderRequest } from '../models/reminder';
+import {
+  Reminder,
+  CreateReminderRequest,
+  ReminderOccurrence,
+} from '../models/reminder';
 import { PaginatedResponse } from '../models/global';
 import { VideoCallConfig } from './video-call.types';
 
@@ -213,8 +217,23 @@ export class ConsultationService {
     });
   }
 
+  getReminder(id: number): Observable<Reminder> {
+    return this.http.get<Reminder>(`${this.apiUrl}/reminders/${id}/`);
+  }
+
   deleteReminder(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/reminders/${id}/`);
+  }
+
+  getReminderOccurrences(
+    start: string,
+    end: string
+  ): Observable<ReminderOccurrence[]> {
+    const httpParams = new HttpParams().set('start', start).set('end', end);
+    return this.http.get<ReminderOccurrence[]>(
+      `${this.apiUrl}/reminders/occurrences/`,
+      { params: httpParams }
+    );
   }
 
   getAppointments(params?: {

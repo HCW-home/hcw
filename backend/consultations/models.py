@@ -905,6 +905,10 @@ class Reminder(models.Model):
     )  # number of occurrences
     occurrences_sent = models.PositiveIntegerField(default=0)
     next_run_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    # Datetime of the LAST occurrence (denormalized). For a non-recurring
+    # reminder it equals scheduled_at. Used to filter reminders that intersect
+    # a calendar window without expanding every occurrence in the DB.
+    recurrence_end_at = models.DateTimeField(null=True, blank=True, db_index=True)
     last_sent_at = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(_("is active"), default=True)
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
@@ -914,7 +918,10 @@ class Reminder(models.Model):
         verbose_name = _("reminder")
         verbose_name_plural = _("reminders")
         ordering = ["-created_at"]
-        indexes = [models.Index(fields=["is_active", "next_run_at"])]
+        indexes = [
+            models.Index(fields=["is_active", "next_run_at"]),
+            models.Index(fields=["scheduled_at", "recurrence_end_at"]),
+        ]
 
     def __str__(self):
         return f"Reminder #{self.pk} - {self.title}"
@@ -923,15 +930,13 @@ class Reminder(models.Model):
         # Seed the first run from scheduled_at on creation.
         if self.next_run_at is None and self.is_active and self.occurrences_sent == 0:
             self.next_run_at = self.scheduled_at
+        # Keep the denormalized last-occurrence date in sync on every save.
+        self.recurrence_end_at = self.compute_recurrence_end_at()
         super().save(*args, **kwargs)
 
-    def compute_next_run_at(self):
-        """Next due datetime, or None when the schedule is exhausted."""
-        if not self.is_recurring or self.occurrences_sent >= self.recurrence_count:
-            return None
-        n, base = self.recurrence_interval, self.next_run_at
-        if base is None:
-            return None
+    def _advance(self, base, steps):
+        """Return ``base`` advanced by ``steps`` recurrence periods."""
+        n = self.recurrence_interval * steps
         if self.recurrence_period == RecurrencePeriod.day:
             return base + timedelta(days=n)
         if self.recurrence_period == RecurrencePeriod.week:
@@ -939,5 +944,43 @@ class Reminder(models.Model):
         if self.recurrence_period == RecurrencePeriod.month:
             return base + relativedelta(months=n)
         return None
+
+    def compute_next_run_at(self):
+        """Next due datetime, or None when the schedule is exhausted."""
+        if not self.is_recurring or self.occurrences_sent >= self.recurrence_count:
+            return None
+        if self.next_run_at is None:
+            return None
+        return self._advance(self.next_run_at, 1)
+
+    def compute_recurrence_end_at(self):
+        """Datetime of the last occurrence.
+
+        Equals scheduled_at for a non-recurring reminder; otherwise
+        scheduled_at advanced by (count - 1) periods.
+        """
+        if not self.is_recurring or not self.recurrence_period:
+            return self.scheduled_at
+        count = max(self.recurrence_count or 1, 1)
+        end = self._advance(self.scheduled_at, count - 1)
+        return end or self.scheduled_at
+
+    def occurrences_between(self, start, end):
+        """List of occurrence datetimes that fall within [start, end] (inclusive)."""
+        results = []
+        if not self.is_recurring or not self.recurrence_period:
+            if self.scheduled_at and start <= self.scheduled_at <= end:
+                results.append((0, self.scheduled_at))
+            return results
+        count = max(self.recurrence_count or 1, 1)
+        for index in range(count):
+            occ = self._advance(self.scheduled_at, index)
+            if occ is None:
+                break
+            if occ > end:
+                break
+            if occ >= start:
+                results.append((index, occ))
+        return results
 
 

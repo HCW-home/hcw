@@ -66,7 +66,7 @@ import { ConfirmPresenceModal } from './confirm-presence-modal/confirm-presence-
 import { AppointmentFormModal } from '../consultation-detail/appointment-form-modal/appointment-form-modal';
 import { ReminderFormModal } from '../../../../shared/components/reminder-form-modal/reminder-form-modal';
 import { ReminderCard } from '../../../../shared/components/reminder-card/reminder-card';
-import { Reminder } from '../../../../core/models/reminder';
+import { Reminder, ReminderOccurrence } from '../../../../core/models/reminder';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { IUser } from '../../../user/models/user';
 
@@ -233,7 +233,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   ngOnInit(): void {
     this.loadConfig();
     this.loadPractitioners();
-    this.loadReminders();
+    this.refreshReminders();
 
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
       const participantId = params['participantId'];
@@ -595,17 +595,24 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
 
   private readonly reminderEventColor = '#8b5cf6'; // violet, distinct from appointments
 
-  private transformRemindersToEvents(reminders: Reminder[]): EventInput[] {
-    return reminders.map(reminder => ({
-      id: `reminder-${reminder.id}`,
-      title: `${this.t.instant('reminders.eventPrefix')}: ${reminder.title}`,
-      start:
-        parseDateWithoutTimezone(reminder.scheduled_at) || reminder.scheduled_at,
-      backgroundColor: this.reminderEventColor,
-      borderColor: this.reminderEventColor,
-      textColor: '#ffffff',
-      extendedProps: { reminder },
-    }));
+  private transformOccurrencesToEvents(
+    occurrences: ReminderOccurrence[]
+  ): EventInput[] {
+    return occurrences.map((occ, i) => {
+      const suffix =
+        occ.is_recurring && occ.occurrence_total > 1
+          ? ` (${occ.occurrence_index + 1}/${occ.occurrence_total})`
+          : '';
+      return {
+        id: `reminder-${occ.reminder_id}-${occ.occurrence_index}-${i}`,
+        title: `${this.t.instant('reminders.eventPrefix')}: ${occ.title}${suffix}`,
+        start: parseDateWithoutTimezone(occ.occurrence_at) || occ.occurrence_at,
+        backgroundColor: this.reminderEventColor,
+        borderColor: this.reminderEventColor,
+        textColor: '#ffffff',
+        extendedProps: { reminderId: occ.reminder_id },
+      };
+    });
   }
 
   private recomputeCalendarEvents(): void {
@@ -655,11 +662,23 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     clickInfo.jsEvent.preventDefault();
     clickInfo.jsEvent.stopPropagation();
 
-    const reminder = clickInfo.event.extendedProps['reminder'] as
-      | Reminder
+    const reminderId = clickInfo.event.extendedProps['reminderId'] as
+      | number
       | undefined;
-    if (reminder) {
-      this.openEditReminderModal(reminder);
+    if (reminderId) {
+      // Occurrences only carry the parent id; fetch the full reminder to edit.
+      this.consultationService
+        .getReminder(reminderId)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: reminder => this.openEditReminderModal(reminder),
+          error: error =>
+            this.toasterService.show(
+              'error',
+              this.t.instant('reminders.errorLoading'),
+              getErrorMessage(error)
+            ),
+        });
       return;
     }
 
@@ -690,7 +709,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     ) {
       this.currentDateRange = { start: newStart, end: newEnd };
       this.loadAppointments();
-      this.loadReminders();
+      this.loadReminderOccurrences();
     }
   }
 
@@ -994,13 +1013,13 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   onReminderCreated(): void {
     this.createReminderModalOpen.set(false);
     this.editingReminder.set(null);
-    this.loadReminders();
+    this.refreshReminders();
   }
 
   onReminderUpdated(): void {
     this.createReminderModalOpen.set(false);
     this.editingReminder.set(null);
-    this.loadReminders();
+    this.refreshReminders();
   }
 
   private buildReminderParams(page: number): {
@@ -1049,14 +1068,43 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
         next: response => {
           this.reminders.set(response.results);
           this.hasMoreReminders.set(response.next !== null);
-          this.reminderCalendarEvents = this.transformRemindersToEvents(
-            response.results
-          );
-          this.recomputeCalendarEvents();
           this.isLoadingReminders.set(false);
         },
         error: error => {
           this.isLoadingReminders.set(false);
+          this.toasterService.show(
+            'error',
+            this.t.instant('reminders.errorLoading'),
+            getErrorMessage(error)
+          );
+        },
+      });
+  }
+
+  // Refresh both reminder sources relevant to the current view.
+  private refreshReminders(): void {
+    this.loadReminders();
+    if (this.currentView() !== 'list') {
+      this.loadReminderOccurrences();
+    }
+  }
+
+  // Calendar view: load expanded reminder occurrences for the visible range.
+  loadReminderOccurrences(): void {
+    if (!this.currentDateRange) return;
+    this.consultationService
+      .getReminderOccurrences(
+        this.currentDateRange.start,
+        this.currentDateRange.end
+      )
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: occurrences => {
+          this.reminderCalendarEvents =
+            this.transformOccurrencesToEvents(occurrences);
+          this.recomputeCalendarEvents();
+        },
+        error: error => {
           this.toasterService.show(
             'error',
             this.t.instant('reminders.errorLoading'),
@@ -1109,10 +1157,9 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
       .subscribe({
         next: () => {
           this.reminders.set(this.reminders().filter(r => r.id !== reminder.id));
-          this.reminderCalendarEvents = this.reminderCalendarEvents.filter(
-            e => e.id !== `reminder-${reminder.id}`
-          );
-          this.recomputeCalendarEvents();
+          if (this.currentView() !== 'list') {
+            this.loadReminderOccurrences();
+          }
           this.toasterService.show(
             'success',
             this.t.instant('reminders.deleted')

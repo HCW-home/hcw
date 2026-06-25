@@ -1534,3 +1534,28 @@ class ReminderSerializer(serializers.ModelSerializer):
             reminder.next_run_at = reminder.scheduled_at
             reminder.save(update_fields=["next_run_at"])
         return reminder
+
+
+class ReminderOccurrenceSerializer(serializers.Serializer):
+    """One expanded occurrence of a (possibly recurring) reminder."""
+
+    reminder_id = serializers.IntegerField()
+    title = serializers.CharField()
+    description = serializers.CharField(allow_blank=True)
+    recipient = ConsultationUserSerializer()
+    consultation = serializers.IntegerField(allow_null=True)
+    is_recurring = serializers.BooleanField()
+    occurrence_index = serializers.IntegerField()
+    occurrence_total = serializers.IntegerField()
+    occurrence_at = serializers.DateTimeField()
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get("request")
+        if request and request.user.is_authenticated and data.get("occurrence_at"):
+            user_tz = request.user.user_tz
+            dt = timezone.datetime.fromisoformat(
+                data["occurrence_at"].replace("Z", "+00:00")
+            )
+            data["occurrence_at"] = dt.astimezone(user_tz).isoformat()
+        return data

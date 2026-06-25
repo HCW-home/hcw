@@ -312,3 +312,89 @@ class ReminderTaskTests(_ReminderBase):
         self.assertIsNone(reminder.next_run_at)
 
         self.assertEqual(Message.objects.filter(sent_to=self.patient).count(), 3)
+
+
+class ReminderOccurrenceTests(_ReminderBase):
+    def _mk(self, **kw):
+        defaults = dict(
+            title="R",
+            recipient=self.patient,
+            created_by=self.practitioner,
+        )
+        defaults.update(kw)
+        return Reminder.objects.create(**defaults)
+
+    def test_recurrence_end_at_non_recurring_equals_scheduled(self):
+        dt = timezone.now() + timedelta(days=2)
+        r = self._mk(scheduled_at=dt)
+        self.assertEqual(r.recurrence_end_at, r.scheduled_at)
+
+    def test_recurrence_end_at_weekly(self):
+        dt = timezone.now() + timedelta(days=1)
+        r = self._mk(
+            scheduled_at=dt,
+            is_recurring=True,
+            recurrence_interval=1,
+            recurrence_period=RecurrencePeriod.week,
+            recurrence_count=3,
+        )
+        # 3 occurrences -> last is +2 weeks.
+        self.assertEqual(r.recurrence_end_at, dt + timedelta(weeks=2))
+
+    def test_occurrences_between_filters_window(self):
+        base = timezone.now().replace(microsecond=0) + timedelta(days=1)
+        r = self._mk(
+            scheduled_at=base,
+            is_recurring=True,
+            recurrence_interval=1,
+            recurrence_period=RecurrencePeriod.week,
+            recurrence_count=4,
+        )
+        # Occurrences: base, +1w, +2w, +3w. Window covering only the 2nd one.
+        win_start = base + timedelta(weeks=1) - timedelta(hours=1)
+        win_end = base + timedelta(weeks=1) + timedelta(hours=1)
+        occ = r.occurrences_between(win_start, win_end)
+        self.assertEqual(len(occ), 1)
+        self.assertEqual(occ[0][0], 1)  # index
+        self.assertEqual(occ[0][1], base + timedelta(weeks=1))
+
+    def test_occurrences_endpoint_expands_recurring_in_window(self):
+        # Weekly reminder starting BEFORE the window, with an occurrence inside.
+        base = timezone.now().replace(hour=9, minute=0, second=0, microsecond=0)
+        start = base - timedelta(days=3)  # first occurrence 3 days ago
+        r = self._mk(
+            scheduled_at=start,
+            is_recurring=True,
+            recurrence_interval=1,
+            recurrence_period=RecurrencePeriod.day,
+            recurrence_count=10,
+        )
+        # Window = today .. +2 days (excludes the first occurrence).
+        win_start = (base).date().isoformat()
+        win_end = (base + timedelta(days=2)).date().isoformat()
+        resp = self.client.get(
+            reverse("reminder-occurrences"),
+            {"start": win_start, "end": win_end},
+        )
+        self.assertEqual(resp.status_code, 200, resp.data)
+        # Occurrences for days 0,1,2 of the window -> 3 entries, same reminder.
+        self.assertTrue(len(resp.data) >= 3)
+        self.assertTrue(all(o["reminder_id"] == r.id for o in resp.data))
+
+    def test_occurrences_endpoint_excludes_out_of_window(self):
+        # A non-recurring reminder far in the future is excluded from a past window.
+        future = timezone.now() + timedelta(days=60)
+        self._mk(scheduled_at=future)
+        resp = self.client.get(
+            reverse("reminder-occurrences"),
+            {
+                "start": timezone.now().date().isoformat(),
+                "end": (timezone.now() + timedelta(days=2)).date().isoformat(),
+            },
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(resp.data), 0)
+
+    def test_occurrences_endpoint_requires_params(self):
+        resp = self.client.get(reverse("reminder-occurrences"))
+        self.assertEqual(resp.status_code, 400)

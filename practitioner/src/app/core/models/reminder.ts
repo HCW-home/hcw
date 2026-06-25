@@ -33,3 +33,15 @@ export interface CreateReminderRequest {
   recurrence_period?: RecurrencePeriod;
   recurrence_count?: number;
 }
+
+export interface ReminderOccurrence {
+  reminder_id: number;
+  title: string;
+  description: string;
+  recipient: User;
+  consultation: number | null;
+  is_recurring: boolean;
+  occurrence_index: number;
+  occurrence_total: number;
+  occurrence_at: string;
+}
