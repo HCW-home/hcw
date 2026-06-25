@@ -922,7 +922,7 @@
     "addTheParticipant": "Agregar este participante",
     "participantType": "Tipo de participante",
     "existingUser": "Usuario existente",
-    "externalGuest": "Invitado externo",
+    "externalGuest": "Invitado temporal",
     "selectContact": "Seleccionar contacto",
     "searchByNameOrEmail": "Buscar o introducir un correo electrónico/número de teléfono móvil",
     "contactMethod": "Método de contacto",

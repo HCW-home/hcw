@@ -850,7 +850,7 @@
     "consultationVisibleHelp": "Надає доступ до чату та спільних функцій консультації.",
     "participantType": "Тип учасника",
     "existingUser": "Наявний користувач",
-    "externalGuest": "Зовнішній гість",
+    "externalGuest": "Тимчасовий гість",
     "selectContact": "Виберіть контакт",
     "searchByNameOrEmail": "Шукайте або введіть електронну адресу / номер мобільного",
     "contactMethod": "Спосіб зв'язку",

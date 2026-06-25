@@ -810,7 +810,7 @@
     "addTheParticipant": "Diesen Teilnehmer hinzufügen",
     "participantType": "Teilnehmertyp",
     "existingUser": "Bestehender Benutzer",
-    "externalGuest": "Externer Gast",
+    "externalGuest": "Temporärer Gast",
     "selectContact": "Kontakt auswählen",
     "searchByNameOrEmail": "Suchen oder E-Mail / Mobiltelefon eingeben",
     "contactMethod": "Kontaktmethode",

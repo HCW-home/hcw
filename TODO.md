@@ -122,12 +122,7 @@ creating an appointment via FHIR also seems not to work well with a fhir client,
     ]
 }
 
-numéro de téléphone +33 699 55 42 29 (gérer les espaces)
 création d'un user depuis l'admin : doctor par défaut
 du coup, le créer par doit également s'afficher dans la modale d'affichage du rappel
-renomme "Invité externe" en "Invité temporaire"
-
-
-corriger patient temporaire, dans le cas des rappels (suppression automatique)
 
 dans la page http://localhost:4200/app/appointments, ça serait bien de se rappeler quel praticien étaient cochés la dernière fois (stocker dans un local storage du browser ?)

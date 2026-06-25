@@ -1195,6 +1195,24 @@ class UserViewSet(viewsets.ModelViewSet):
 
         return (practitioners_qs | patients_qs).distinct()
 
+    def filter_queryset(self, queryset):
+        """Run the default SearchFilter, then also match phone numbers ignoring
+        spaces/separators: the search term is normalized the same way numbers
+        are stored, so '06 12 34 56 78' and '0612345678' both match."""
+        visible = self.get_queryset()
+        filtered = super().filter_queryset(queryset)
+
+        search = self.request.query_params.get("search")
+        normalized = User.normalize_phone_number(search) if search else None
+        # Only attempt a phone match when the term actually contains digits and
+        # differs from the raw term (otherwise SearchFilter already covered it).
+        if normalized and any(c.isdigit() for c in normalized):
+            phone_matches = visible.filter(
+                mobile_phone_number__icontains=normalized
+            )
+            return (filtered | phone_matches).distinct()
+        return filtered
+
     def _filter_practitioners(self, base_queryset, current_user):
         """Filter practitioners based on USERS_VISIBILITY setting."""
         qs = base_queryset.filter(is_practitioner=True)

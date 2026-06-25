@@ -1,3 +1,4 @@
+import re
 import uuid
 from zoneinfo import ZoneInfo, available_timezones
 
@@ -337,15 +338,26 @@ class User(AbstractUser):
         devices = FCMDeviceOverride.objects.filter(user=self)
         return devices.send_message(message)
 
+    @staticmethod
+    def normalize_phone_number(value):
+        """Strip spaces and common separators from a phone number, keeping a
+        leading '+'. Stores a canonical form so search and SMS sending match
+        regardless of how the number was typed (e.g. '06 12 34 56 78')."""
+        if not value:
+            return value
+        cleaned = re.sub(r"[\s\-.() ]", "", value.strip())
+        return cleaned or None
+
     def save(self, *args, **kwargs):
         if self.temporary and not self.one_time_auth_token:
             self.one_time_auth_token = str(uuid.uuid4())
             self.verification_code_created_at = timezone.now()
         if not self.email:
             self.email = None
-        if not self.mobile_phone_number:
-            self.mobile_phone_number = None
-        
+        self.mobile_phone_number = self.normalize_phone_number(
+            self.mobile_phone_number
+        )
+
         super().save(*args, **kwargs)
 
     class Meta:
