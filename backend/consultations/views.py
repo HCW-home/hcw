@@ -1764,6 +1764,8 @@ class ReminderViewSet(CreatedByMixin, viewsets.ModelViewSet):
                         if reminder.is_recurring
                         else 1,
                         "occurrence_at": occ,
+                        "next_run_at": reminder.next_run_at,
+                        "recurrence_end_at": reminder.recurrence_end_at,
                     }
                 )
 

@@ -1453,6 +1453,7 @@ class ReminderSerializer(serializers.ModelSerializer):
             "recurrence_count",
             "occurrences_sent",
             "next_run_at",
+            "recurrence_end_at",
             "last_sent_at",
             "is_active",
             "created_at",
@@ -1464,6 +1465,7 @@ class ReminderSerializer(serializers.ModelSerializer):
             "created_by",
             "occurrences_sent",
             "next_run_at",
+            "recurrence_end_at",
             "last_sent_at",
             "created_at",
             "updated_at",
@@ -1479,6 +1481,7 @@ class ReminderSerializer(serializers.ModelSerializer):
             for field in [
                 "scheduled_at",
                 "next_run_at",
+                "recurrence_end_at",
                 "last_sent_at",
                 "created_at",
                 "updated_at",
@@ -1548,14 +1551,18 @@ class ReminderOccurrenceSerializer(serializers.Serializer):
     occurrence_index = serializers.IntegerField()
     occurrence_total = serializers.IntegerField()
     occurrence_at = serializers.DateTimeField()
+    next_run_at = serializers.DateTimeField(allow_null=True)
+    recurrence_end_at = serializers.DateTimeField(allow_null=True)
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
         request = self.context.get("request")
-        if request and request.user.is_authenticated and data.get("occurrence_at"):
+        if request and request.user.is_authenticated:
             user_tz = request.user.user_tz
-            dt = timezone.datetime.fromisoformat(
-                data["occurrence_at"].replace("Z", "+00:00")
-            )
-            data["occurrence_at"] = dt.astimezone(user_tz).isoformat()
+            for field in ["occurrence_at", "next_run_at", "recurrence_end_at"]:
+                if data.get(field):
+                    dt = timezone.datetime.fromisoformat(
+                        data[field].replace("Z", "+00:00")
+                    )
+                    data[field] = dt.astimezone(user_tz).isoformat()
         return data

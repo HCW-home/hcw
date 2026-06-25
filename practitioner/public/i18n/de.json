@@ -1093,7 +1093,9 @@
     "deleteMessage": "Möchten Sie diese Erinnerung wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
     "eventPrefix": "Erinnerung",
     "detailTitle": "Erinnerungsdetails",
-    "occurrenceLabel": "Vorkommen {{index}} von {{total}}"
+    "occurrenceLabel": "Vorkommen {{index}} von {{total}}",
+    "until": "bis",
+    "nextRun": "Nächste Erinnerung"
   },
   "elementType": {
     "title": "Welche Art von Element möchten Sie erstellen?",

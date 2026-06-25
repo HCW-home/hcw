@@ -140,6 +140,8 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     recipient: string;
     occurrenceAt: string;
     recurrence: string;
+    nextRunAt: string | null;
+    recurrenceEndAt: string | null;
   } | null>(null);
   tooltipPosition = signal<{ top: number; left: number }>({ top: 0, left: 0 });
   selectedAppointmentForMenu = signal<Appointment | null>(null);
@@ -647,6 +649,8 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
           reminderRecipient: recipient,
           reminderOccurrenceAt: occ.occurrence_at,
           reminderRecurrence: recurrence,
+          reminderNextRunAt: occ.next_run_at,
+          reminderRecurrenceEndAt: occ.is_recurring ? occ.recurrence_end_at : null,
         },
       };
     });
@@ -769,6 +773,8 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
         recipient: props['reminderRecipient'] as string,
         occurrenceAt: props['reminderOccurrenceAt'] as string,
         recurrence: props['reminderRecurrence'] as string,
+        nextRunAt: (props['reminderNextRunAt'] as string | null) ?? null,
+        recurrenceEndAt: (props['reminderRecurrenceEndAt'] as string | null) ?? null,
       });
       return;
     }

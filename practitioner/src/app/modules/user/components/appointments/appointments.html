@@ -378,7 +378,22 @@
       @if (hoveredReminder()!.recurrence) {
       <div class="tooltip-time">
         <app-svg src="schedule" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
-        <span>{{ hoveredReminder()!.recurrence }}</span>
+        <span>
+          {{ hoveredReminder()!.recurrence }}
+          @if (hoveredReminder()!.recurrenceEndAt) {
+          ({{ 'reminders.until' | translate }} {{ hoveredReminder()!.recurrenceEndAt | localDate : 'mediumDate' }})
+          }
+        </span>
+      </div>
+      }
+
+      @if (hoveredReminder()!.nextRunAt) {
+      <div class="tooltip-time">
+        <app-svg src="bell" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
+        <span>
+          {{ 'reminders.nextRun' | translate }}:
+          {{ hoveredReminder()!.nextRunAt | localDate : 'mediumDate' }} - {{ hoveredReminder()!.nextRunAt | localDate : 'HH:mm' }}
+        </span>
       </div>
       }
     </div>

@@ -16,6 +16,7 @@ export interface Reminder {
   recurrence_count: number;
   occurrences_sent: number;
   next_run_at: string | null;
+  recurrence_end_at: string | null;
   last_sent_at: string | null;
   is_active: boolean;
   created_at: string;
@@ -44,4 +45,6 @@ export interface ReminderOccurrence {
   occurrence_index: number;
   occurrence_total: number;
   occurrence_at: string;
+  next_run_at: string | null;
+  recurrence_end_at: string | null;
 }

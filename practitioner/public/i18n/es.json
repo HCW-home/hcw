@@ -1121,7 +1121,9 @@
     "deleteMessage": "Are you sure you want to delete this reminder? This action cannot be undone.",
     "eventPrefix": "Reminder",
     "detailTitle": "Detalles del recordatorio",
-    "occurrenceLabel": "Ocurrencia {{index}} de {{total}}"
+    "occurrenceLabel": "Ocurrencia {{index}} de {{total}}",
+    "until": "hasta el",
+    "nextRun": "Próximo recordatorio"
   },
   "elementType": {
     "title": "¿Qué tipo de elemento desea crear?",

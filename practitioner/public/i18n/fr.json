@@ -1085,7 +1085,9 @@
     "deleteMessage": "Voulez-vous vraiment supprimer ce rappel ? Cette action est irréversible.",
     "eventPrefix": "Rappel",
     "detailTitle": "Détails du rappel",
-    "occurrenceLabel": "Occurrence {{index}} sur {{total}}"
+    "occurrenceLabel": "Occurrence {{index}} sur {{total}}",
+    "until": "jusqu'au",
+    "nextRun": "Prochain rappel"
   },
   "elementType": {
     "title": "Quel type d'élément souhaitez-vous créer ?",
