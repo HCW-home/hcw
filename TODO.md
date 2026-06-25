@@ -121,5 +121,3 @@ creating an appointment via FHIR also seems not to work well with a fhir client,
         }
     ]
 }
-
-du coup, le créer par doit également s'afficher dans la modale d'affichage du rappel
