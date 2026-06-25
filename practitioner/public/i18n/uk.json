@@ -491,7 +491,9 @@
     "genderMale": "Чоловіча",
     "genderFemale": "Жіноча",
     "genderOther": "Інша",
-    "genderUnknown": "Невідомо"
+    "genderUnknown": "Невідомо",
+    "timezone": "Часовий пояс",
+    "selectTimezone": "Виберіть часовий пояс"
   },
   "patients": {
     "searchPlaceholder": "Пошук контактів...",

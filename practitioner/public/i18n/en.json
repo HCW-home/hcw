@@ -491,7 +491,9 @@
     "genderMale": "Male",
     "genderFemale": "Female",
     "genderOther": "Other",
-    "genderUnknown": "Unknown"
+    "genderUnknown": "Unknown",
+    "timezone": "Timezone",
+    "selectTimezone": "Select timezone"
   },
   "patients": {
     "searchPlaceholder": "Search contacts...",

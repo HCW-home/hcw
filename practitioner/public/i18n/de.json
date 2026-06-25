@@ -444,7 +444,9 @@
     "errorCreating": "Fehler beim Erstellen des Patienten",
     "temporary": "Vorübergehender Patient",
     "temporaryNotice": "Der Patient wird automatisch gelöscht, wenn alle seine Konsultationen gelöscht werden.",
-    "customFields": "Weitere Informationen"
+    "customFields": "Weitere Informationen",
+    "timezone": "Zeitzone",
+    "selectTimezone": "Zeitzone auswählen"
   },
   "consultationDetail": {
     "filterCancelled": "Nicht verfügbar",

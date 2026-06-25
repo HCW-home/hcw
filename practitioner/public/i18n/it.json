@@ -879,7 +879,9 @@
     "selectCommunicationMethod": "Selezionare il metodo di comunicazione",
     "temporary": "Paziente temporaneo",
     "temporaryNotice": "Il paziente verrà eliminato automaticamente quando tutte le sue consultazioni saranno state cancellate.",
-    "customFields": "Informazioni aggiuntive"
+    "customFields": "Informazioni aggiuntive",
+    "timezone": "Fuso orario",
+    "selectTimezone": "Seleziona fuso orario"
   },
   "videoConsultation": {
     "connecting": "Connessione alla videochiamata in corso...",

@@ -700,7 +700,9 @@
     "selectCommunicationMethod": "Seleccione el método de comunicación",
     "temporary": "Paciente temporal",
     "temporaryNotice": "El paciente será eliminado automáticamente cuando se borren todas sus consultas.",
-    "customFields": "información adicional"
+    "customFields": "información adicional",
+    "timezone": "Zona horaria",
+    "selectTimezone": "Seleccionar zona horaria"
   },
   "patients": {
     "searchPlaceholder": "Buscar contactos...",

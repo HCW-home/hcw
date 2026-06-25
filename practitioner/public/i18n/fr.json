@@ -499,7 +499,9 @@
     "genderMale": "Homme",
     "genderFemale": "Femme",
     "genderOther": "Autre",
-    "genderUnknown": "Non précisé"
+    "genderUnknown": "Non précisé",
+    "timezone": "Fuseau horaire",
+    "selectTimezone": "Sélectionner un fuseau horaire"
   },
   "patients": {
     "searchPlaceholder": "Rechercher des contacts...",
