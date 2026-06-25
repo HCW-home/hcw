@@ -156,12 +156,12 @@
           <form [formGroup]="participantForm">
             @if (isExistingUser()) {
             <div class="form-group">
-              <app-user-search-select
+              <app-user-select-or-create
                 [label]="'appointmentForm.selectContact' | translate"
                 [placeholder]="'appointmentForm.selectContact' | translate"
                 [meUser]="currentUser()"
                 (userSelected)="onParticipantUserSelected($event)">
-              </app-user-search-select>
+              </app-user-select-or-create>
             </div>
             <div class="form-group">
               <app-checkbox

@@ -1,0 +1,27 @@
+<app-select
+  [label]="label"
+  [placeholder]="placeholder"
+  [options]="[]"
+  [asyncSearch]="searchFn"
+  [initialOption]="initialOption"
+  [clearable]="clearable"
+  [required]="required"
+  [creatable]="true"
+  [createOptionLabel]="createOptionLabel"
+  [formControl]="control"
+  (createItem)="openAddModal($event)">
+</app-select>
+
+@if (addModalOpen()) {
+<app-modal
+  [isOpen]="addModalOpen()"
+  size="large"
+  [showCloseButton]="false"
+  (closed)="closeAddModal()">
+  <app-add-edit-patient
+    [initialName]="newUserInitialName()"
+    (saved)="onUserCreated($event)"
+    (cancelled)="closeAddModal()">
+  </app-add-edit-patient>
+</app-modal>
+}

@@ -206,14 +206,13 @@
                 >{{ 'consultationDetail.patient' | translate }}</span
               >
               @if (isEditMode()) {
-              <app-select
+              <app-user-select-or-create
                 [placeholder]="'consultationDetail.searchPatient' | translate"
-                [options]="[]"
-                [asyncSearch]="beneficiarySearchFn"
-                [initialOption]="beneficiaryInitialOption()"
-                [clearable]="true"
+                [meUser]="currentUser()"
+                [initialUser]="selectedBeneficiary()"
+                (userSelected)="selectedBeneficiary.set($event)"
                 formControlName="beneficiary_id">
-              </app-select>
+              </app-user-select-or-create>
               } @else if (consultation()?.beneficiary) {
               <div class="info-user">
                 <app-user-avatar

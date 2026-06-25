@@ -84,6 +84,7 @@ import { ModalComponent } from '../../../../shared/components/modal/modal.compon
 import { AppointmentFormModal } from './appointment-form-modal/appointment-form-modal';
 import { ReminderFormModal } from '../../../../shared/components/reminder-form-modal/reminder-form-modal';
 import { ReminderCard } from '../../../../shared/components/reminder-card/reminder-card';
+import { UserSelectOrCreate } from '../../../../shared/components/user-select-or-create/user-select-or-create';
 import { Reminder } from '../../../../core/models/reminder';
 import { RoutePaths } from '../../../../core/constants/routes';
 import { ParticipantItem } from '../../../../shared/components/participant-item/participant-item';
@@ -115,6 +116,7 @@ type AppointmentTimeFilter = 'all' | 'upcoming' | 'past';
     AppointmentFormModal,
     ReminderFormModal,
     ReminderCard,
+    UserSelectOrCreate,
     ModalComponent,
     FullCalendarModule,
     LocalDatePipe,

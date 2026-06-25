@@ -31,7 +31,7 @@ import { Input as InputComponent } from '../../ui-components/input/input';
 import { Textarea } from '../../ui-components/textarea/textarea';
 import { Select } from '../../ui-components/select/select';
 import { Checkbox } from '../../ui-components/checkbox/checkbox';
-import { UserSearchSelect } from '../user-search-select/user-search-select';
+import { UserSelectOrCreate } from '../user-select-or-create/user-select-or-create';
 import { ButtonStyleEnum, ButtonSizeEnum } from '../../constants/button';
 import { SelectOption } from '../../models/select';
 import { extractDateFromISO, extractTimeFromISO } from '../../tools/helper';
@@ -50,7 +50,7 @@ import { TranslationService } from '../../../core/services/translation.service';
     Textarea,
     CommonModule,
     InputComponent,
-    UserSearchSelect,
+    UserSelectOrCreate,
     ReactiveFormsModule,
     FormsModule,
     TranslatePipe,
@@ -214,8 +214,8 @@ export class ReminderForm implements OnInit, OnChanges, OnDestroy {
   }
 
   onRecipientSelected(user: IUser | null): void {
+    // recipient_id is bound via formControlName; just keep the resolved user.
     this.selectedRecipient.set(user);
-    this.reminderForm.patchValue({ recipient_id: user ? user.pk : null });
   }
 
   getFieldError(fieldName: string): string {

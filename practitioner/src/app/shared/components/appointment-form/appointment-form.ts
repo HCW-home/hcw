@@ -44,7 +44,7 @@ import { Switch } from '../../ui-components/switch/switch';
 import { Svg } from '../../ui-components/svg/svg';
 import { Loader } from '../loader/loader';
 import { ModalComponent } from '../modal/modal.component';
-import { UserSearchSelect } from '../user-search-select/user-search-select';
+import { UserSelectOrCreate } from '../user-select-or-create/user-select-or-create';
 import { ParticipantItem } from '../participant-item/participant-item';
 import {
   ButtonStyleEnum,
@@ -73,7 +73,7 @@ import { TranslationService } from '../../../core/services/translation.service';
     InputComponent,
     ModalComponent,
     ParticipantItem,
-    UserSearchSelect,
+    UserSelectOrCreate,
     ReactiveFormsModule,
     FormsModule,
     TranslatePipe,

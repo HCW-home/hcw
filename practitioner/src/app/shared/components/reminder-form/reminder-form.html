@@ -7,14 +7,15 @@
         <span>{{ lockedRecipientName }}</span>
       </div>
       } @else {
-      <app-user-search-select
+      <app-user-select-or-create
         [label]="'reminders.recipient' | translate"
         [placeholder]="'reminders.recipientPlaceholder' | translate"
         [required]="true"
         [meUser]="currentUser()"
         [initialUser]="displayRecipient"
-        (userSelected)="onRecipientSelected($event)">
-      </app-user-search-select>
+        (userSelected)="onRecipientSelected($event)"
+        formControlName="recipient_id">
+      </app-user-select-or-create>
       @if (getFieldError('recipient_id')) {
       <div class="field-error">{{ getFieldError('recipient_id') }}</div>
       }
