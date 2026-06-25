@@ -1237,7 +1237,8 @@
     "deleteTitle": "Delete reminder",
     "deleteMessage": "Are you sure you want to delete this reminder? This action cannot be undone.",
     "eventPrefix": "Reminder",
-    "detailTitle": "Reminder details"
+    "detailTitle": "Reminder details",
+    "occurrenceLabel": "Occurrence {{index}} of {{total}}"
   },
   "elementType": {
     "title": "What type of element do you want to create?",

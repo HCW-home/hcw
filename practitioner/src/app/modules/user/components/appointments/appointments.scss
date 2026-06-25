@@ -442,6 +442,13 @@
     }
   }
 
+  .tooltip-description {
+    font-size: 13px;
+    color: var(--slate-600);
+    margin-bottom: 8px;
+    white-space: pre-line;
+  }
+
   .tooltip-datetime,
   .tooltip-time {
     display: flex;

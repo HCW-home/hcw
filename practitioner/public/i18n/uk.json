@@ -1236,7 +1236,8 @@
     "deleteTitle": "Delete reminder",
     "deleteMessage": "Are you sure you want to delete this reminder? This action cannot be undone.",
     "eventPrefix": "Reminder",
-    "detailTitle": "Деталі нагадування"
+    "detailTitle": "Деталі нагадування",
+    "occurrenceLabel": "Повторення {{index}} з {{total}}"
   },
   "elementType": {
     "title": "Який тип елемента ви хочете створити?",

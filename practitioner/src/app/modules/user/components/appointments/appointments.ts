@@ -134,6 +134,13 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
 
   calendarComponent = viewChild<FullCalendarComponent>('calendar');
   hoveredAppointment = signal<Appointment | null>(null);
+  hoveredReminder = signal<{
+    title: string;
+    description: string;
+    recipient: string;
+    occurrenceAt: string;
+    recurrence: string;
+  } | null>(null);
   tooltipPosition = signal<{ top: number; left: number }>({ top: 0, left: 0 });
   selectedAppointmentForMenu = signal<Appointment | null>(null);
   menuPosition = signal<{ top: number; left: number }>({ top: 0, left: 0 });
@@ -619,6 +626,13 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
           ''
         : '';
       const recipientPart = recipient ? ` - ${recipient}` : '';
+      const recurrence =
+        occ.is_recurring && occ.occurrence_total > 1
+          ? this.t.instant('reminders.occurrenceLabel', {
+              index: String(occ.occurrence_index + 1),
+              total: String(occ.occurrence_total),
+            })
+          : '';
       return {
         id: `reminder-${occ.reminder_id}-${occ.occurrence_index}-${i}`,
         title: `${this.t.instant('reminders.eventPrefix')}: ${occ.title}${recipientPart}${suffix}`,
@@ -626,7 +640,14 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
         backgroundColor: this.reminderEventColor,
         borderColor: this.reminderEventColor,
         textColor: '#ffffff',
-        extendedProps: { reminderId: occ.reminder_id },
+        extendedProps: {
+          reminderId: occ.reminder_id,
+          reminderTitle: occ.title,
+          reminderDescription: occ.description,
+          reminderRecipient: recipient,
+          reminderOccurrenceAt: occ.occurrence_at,
+          reminderRecurrence: recurrence,
+        },
       };
     });
   }
@@ -733,19 +754,35 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   }
 
   handleEventMouseEnter(info: EventHoveringArg): void {
-    const appointment = info.event.extendedProps['appointment'] as Appointment;
-    if (appointment) {
-      const rect = info.el.getBoundingClientRect();
-      this.tooltipPosition.set({
-        top: rect.bottom + window.scrollY + 8,
-        left: rect.left + window.scrollX,
+    const props = info.event.extendedProps;
+    const rect = info.el.getBoundingClientRect();
+    const position = {
+      top: rect.bottom + window.scrollY + 8,
+      left: rect.left + window.scrollX,
+    };
+
+    if (props['reminderId']) {
+      this.tooltipPosition.set(position);
+      this.hoveredReminder.set({
+        title: props['reminderTitle'] as string,
+        description: props['reminderDescription'] as string,
+        recipient: props['reminderRecipient'] as string,
+        occurrenceAt: props['reminderOccurrenceAt'] as string,
+        recurrence: props['reminderRecurrence'] as string,
       });
+      return;
+    }
+
+    const appointment = props['appointment'] as Appointment;
+    if (appointment) {
+      this.tooltipPosition.set(position);
       this.hoveredAppointment.set(appointment);
     }
   }
 
   handleEventMouseLeave(): void {
     this.hoveredAppointment.set(null);
+    this.hoveredReminder.set(null);
   }
 
   handleDateSelect(selectInfo: DateSelectArg): void {

@@ -1084,7 +1084,8 @@
     "deleteTitle": "Supprimer le rappel",
     "deleteMessage": "Voulez-vous vraiment supprimer ce rappel ? Cette action est irréversible.",
     "eventPrefix": "Rappel",
-    "detailTitle": "Détails du rappel"
+    "detailTitle": "Détails du rappel",
+    "occurrenceLabel": "Occurrence {{index}} sur {{total}}"
   },
   "elementType": {
     "title": "Quel type d'élément souhaitez-vous créer ?",

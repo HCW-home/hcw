@@ -347,6 +347,43 @@
     </div>
     }
 
+    @if (hoveredReminder()) {
+    <div
+      class="calendar-tooltip reminder-tooltip"
+      [style.top.px]="tooltipPosition().top"
+      [style.left.px]="tooltipPosition().left">
+      <div class="tooltip-header">
+        <div class="tooltip-title-row">
+          <span class="tooltip-title">{{ hoveredReminder()!.title }}</span>
+          <app-badge [type]="BadgeTypeEnum.purple">
+            {{ 'reminders.eventPrefix' | translate }}
+          </app-badge>
+        </div>
+      </div>
+
+      @if (hoveredReminder()!.description) {
+      <div class="tooltip-description">{{ hoveredReminder()!.description }}</div>
+      }
+
+      <div class="tooltip-datetime">
+        <app-svg src="bell" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
+        <span>{{ hoveredReminder()!.recipient }}</span>
+      </div>
+
+      <div class="tooltip-time">
+        <app-svg src="clock" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
+        <span>{{ hoveredReminder()!.occurrenceAt | localDate : 'fullDate' }} - {{ hoveredReminder()!.occurrenceAt | localDate : 'HH:mm' }}</span>
+      </div>
+
+      @if (hoveredReminder()!.recurrence) {
+      <div class="tooltip-time">
+        <app-svg src="schedule" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
+        <span>{{ hoveredReminder()!.recurrence }}</span>
+      </div>
+      }
+    </div>
+    }
+
     <app-confirm-presence-modal
       [isOpen]="confirmPresenceModalOpen()"
       [appointment]="confirmPresenceAppointment()"
