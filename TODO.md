@@ -122,7 +122,6 @@ creating an appointment via FHIR also seems not to work well with a fhir client,
     ]
 }
 
-création d'un user depuis l'admin : doctor par défaut
 du coup, le créer par doit également s'afficher dans la modale d'affichage du rappel
 
 dans la page http://localhost:4200/app/appointments, ça serait bien de se rappeler quel praticien étaient cochés la dernière fois (stocker dans un local storage du browser ?)

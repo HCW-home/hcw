@@ -219,10 +219,22 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
             None,
             {
                 "classes": ("wide",),
-                "fields": ("email", "usable_password", "password1", "password2"),
+                "fields": (
+                    "email",
+                    "is_practitioner",
+                    "usable_password",
+                    "password1",
+                    "password2",
+                ),
             },
         ),
     )
+
+    def get_changeform_initial_data(self, request):
+        """Default new admin-created users to practitioners (doctors)."""
+        initial = super().get_changeform_initial_data(request)
+        initial.setdefault("is_practitioner", True)
+        return initial
 
     def languages_display(self, obj):
         return ", ".join([lang.name for lang in obj.languages.all()[:3]]) + (
