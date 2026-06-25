@@ -1083,6 +1083,16 @@
     "errorUpdating": "Erreur lors de la modification du rappel",
     "deleteTitle": "Supprimer le rappel",
     "deleteMessage": "Voulez-vous vraiment supprimer ce rappel ? Cette action est irréversible.",
-    "eventPrefix": "Rappel"
+    "eventPrefix": "Rappel",
+    "detailTitle": "Détails du rappel"
+  },
+  "elementType": {
+    "title": "Quel type d'élément souhaitez-vous créer ?",
+    "appointment": "Rendez-vous",
+    "appointmentDesc": "Planifier une réunion vidéo ou en personne avec des participants.",
+    "createAppointment": "Créer un rendez-vous",
+    "reminder": "Rappel",
+    "reminderDesc": "Envoyer un rappel automatique par SMS ou e-mail à un contact.",
+    "createReminder": "Créer un rappel"
   }
 }

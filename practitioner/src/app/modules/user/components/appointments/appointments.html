@@ -367,12 +367,29 @@
       (appointmentUpdated)="onAppointmentUpdated()">
     </app-appointment-form-modal>
 
+    @if (createReminderModalOpen()) {
     <app-reminder-form-modal
       [isOpen]="createReminderModalOpen()"
       [editingReminder]="editingReminder()"
+      [initialDate]="selectedStartDate()"
       (closed)="onReminderModalClosed()"
       (reminderCreated)="onReminderCreated()"
       (reminderUpdated)="onReminderUpdated()">
     </app-reminder-form-modal>
+    }
+
+    <app-element-type-modal
+      [isOpen]="elementTypeModalOpen()"
+      (closed)="onElementTypeModalClosed()"
+      (typeSelected)="onElementTypeSelected($event)">
+    </app-element-type-modal>
+
+    <app-reminder-detail-modal
+      [isOpen]="reminderDetailModalOpen()"
+      [reminder]="detailReminder()"
+      (closed)="onReminderDetailClosed()"
+      (edit)="onReminderDetailEdit($event)"
+      (delete)="onReminderDetailDelete($event)">
+    </app-reminder-detail-modal>
   </div>
 </app-page>

@@ -1236,6 +1236,16 @@
     "errorUpdating": "Error updating reminder",
     "deleteTitle": "Delete reminder",
     "deleteMessage": "Are you sure you want to delete this reminder? This action cannot be undone.",
-    "eventPrefix": "Reminder"
+    "eventPrefix": "Reminder",
+    "detailTitle": "Reminder details"
+  },
+  "elementType": {
+    "title": "What type of element do you want to create?",
+    "appointment": "Appointment",
+    "appointmentDesc": "Schedule a video or in-person meeting with participants.",
+    "createAppointment": "Create an appointment",
+    "reminder": "Reminder",
+    "reminderDesc": "Send an automatic SMS or email reminder to a contact.",
+    "createReminder": "Create a reminder"
   }
 }

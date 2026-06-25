@@ -1119,6 +1119,16 @@
     "errorUpdating": "Error updating reminder",
     "deleteTitle": "Delete reminder",
     "deleteMessage": "Are you sure you want to delete this reminder? This action cannot be undone.",
-    "eventPrefix": "Reminder"
+    "eventPrefix": "Reminder",
+    "detailTitle": "Dettagli del promemoria"
+  },
+  "elementType": {
+    "title": "Che tipo di elemento vuoi creare?",
+    "appointment": "Appuntamento",
+    "appointmentDesc": "Pianifica un incontro video o di persona con i partecipanti.",
+    "createAppointment": "Crea un appuntamento",
+    "reminder": "Promemoria",
+    "reminderDesc": "Invia un promemoria automatico via SMS o e-mail a un contatto.",
+    "createReminder": "Crea un promemoria"
   }
 }

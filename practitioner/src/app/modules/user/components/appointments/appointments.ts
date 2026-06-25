@@ -65,6 +65,11 @@ import { Auth } from '../../../../core/services/auth';
 import { ConfirmPresenceModal } from './confirm-presence-modal/confirm-presence-modal';
 import { AppointmentFormModal } from '../consultation-detail/appointment-form-modal/appointment-form-modal';
 import { ReminderFormModal } from '../../../../shared/components/reminder-form-modal/reminder-form-modal';
+import {
+  ElementTypeModal,
+  ElementType,
+} from '../../../../shared/components/element-type-modal/element-type-modal';
+import { ReminderDetailModal } from '../../../../shared/components/reminder-detail-modal/reminder-detail-modal';
 import { ReminderCard } from '../../../../shared/components/reminder-card/reminder-card';
 import { Reminder, ReminderOccurrence } from '../../../../core/models/reminder';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
@@ -101,6 +106,8 @@ type AppointmentTimeFilter = 'all' | 'upcoming' | 'past';
     AppointmentFormModal,
     ReminderFormModal,
     ReminderCard,
+    ElementTypeModal,
+    ReminderDetailModal,
   ],
   templateUrl: './appointments.html',
   styleUrl: './appointments.scss',
@@ -147,6 +154,9 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   createAppointmentModalOpen = signal(false);
   createReminderModalOpen = signal(false);
   editingReminder = signal<Reminder | null>(null);
+  elementTypeModalOpen = signal(false);
+  reminderDetailModalOpen = signal(false);
+  detailReminder = signal<Reminder | null>(null);
 
   reminders = signal<Reminder[]>([]);
   isLoadingReminders = signal(false);
@@ -672,12 +682,15 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
       | number
       | undefined;
     if (reminderId) {
-      // Occurrences only carry the parent id; fetch the full reminder to edit.
+      // Occurrences only carry the parent id; fetch the full reminder to show.
       this.consultationService
         .getReminder(reminderId)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
-          next: reminder => this.openEditReminderModal(reminder),
+          next: reminder => {
+            this.detailReminder.set(reminder);
+            this.reminderDetailModalOpen.set(true);
+          },
           error: error =>
             this.toasterService.show(
               'error',
@@ -738,9 +751,26 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   handleDateSelect(selectInfo: DateSelectArg): void {
     this.selectedStartDate.set(selectInfo.start);
     this.selectedEndDate.set(selectInfo.end);
-    this.openCreateAppointmentModal();
+    // Ask which kind of element to create before opening the relevant form.
+    this.elementTypeModalOpen.set(true);
     const calendarApi = selectInfo.view.calendar;
     calendarApi.unselect();
+  }
+
+  onElementTypeModalClosed(): void {
+    this.elementTypeModalOpen.set(false);
+    this.selectedStartDate.set(null);
+    this.selectedEndDate.set(null);
+  }
+
+  onElementTypeSelected(type: ElementType): void {
+    this.elementTypeModalOpen.set(false);
+    if (type === 'appointment') {
+      this.openCreateAppointmentModal();
+    } else {
+      this.editingReminder.set(null);
+      this.createReminderModalOpen.set(true);
+    }
   }
 
   handleEventDrop(info: EventDropArg): void {
@@ -1074,6 +1104,8 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
 
   openCreateReminderModal(): void {
     this.editingReminder.set(null);
+    this.selectedStartDate.set(null);
+    this.selectedEndDate.set(null);
     this.createReminderModalOpen.set(true);
   }
 
@@ -1082,14 +1114,35 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     this.createReminderModalOpen.set(true);
   }
 
+  onReminderDetailClosed(): void {
+    this.reminderDetailModalOpen.set(false);
+    this.detailReminder.set(null);
+  }
+
+  onReminderDetailEdit(reminder: Reminder): void {
+    this.reminderDetailModalOpen.set(false);
+    this.detailReminder.set(null);
+    this.openEditReminderModal(reminder);
+  }
+
+  onReminderDetailDelete(reminder: Reminder): void {
+    this.reminderDetailModalOpen.set(false);
+    this.detailReminder.set(null);
+    this.deleteReminder(reminder);
+  }
+
   onReminderModalClosed(): void {
     this.createReminderModalOpen.set(false);
     this.editingReminder.set(null);
+    this.selectedStartDate.set(null);
+    this.selectedEndDate.set(null);
   }
 
   onReminderCreated(): void {
     this.createReminderModalOpen.set(false);
     this.editingReminder.set(null);
+    this.selectedStartDate.set(null);
+    this.selectedEndDate.set(null);
     this.refreshReminders();
   }
 

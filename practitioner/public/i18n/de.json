@@ -1091,6 +1091,16 @@
     "errorUpdating": "Fehler beim Aktualisieren der Erinnerung",
     "deleteTitle": "Erinnerung löschen",
     "deleteMessage": "Möchten Sie diese Erinnerung wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
-    "eventPrefix": "Erinnerung"
+    "eventPrefix": "Erinnerung",
+    "detailTitle": "Erinnerungsdetails"
+  },
+  "elementType": {
+    "title": "Welche Art von Element möchten Sie erstellen?",
+    "appointment": "Termin",
+    "appointmentDesc": "Planen Sie ein Video- oder Präsenztreffen mit Teilnehmern.",
+    "createAppointment": "Termin erstellen",
+    "reminder": "Erinnerung",
+    "reminderDesc": "Senden Sie einem Kontakt eine automatische SMS- oder E-Mail-Erinnerung.",
+    "createReminder": "Erinnerung erstellen"
   }
 }

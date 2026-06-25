@@ -26,6 +26,7 @@ export class ReminderFormModal {
   @Input() consultationId?: number;
   @Input() editingReminder: Reminder | null = null;
   @Input() initialRecipient: IUser | null = null;
+  @Input() initialDate: Date | null = null;
   @Input() lockRecipient = false;
 
   @Output() closed = new EventEmitter<void>();

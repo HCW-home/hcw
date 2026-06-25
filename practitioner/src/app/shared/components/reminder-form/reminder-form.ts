@@ -60,6 +60,7 @@ export class ReminderForm implements OnInit, OnChanges, OnDestroy {
   @Input() consultationId?: number;
   @Input() editingReminder: Reminder | null = null;
   @Input() initialRecipient: IUser | null = null;
+  @Input() initialDate: Date | null = null;
   // Lock the recipient field (e.g. when creating from a contact page, the
   // reminder is necessarily for that contact).
   @Input() lockRecipient = false;
@@ -128,8 +129,18 @@ export class ReminderForm implements OnInit, OnChanges, OnDestroy {
 
     if (this.editingReminder) {
       this.populateFormForEdit();
-    } else if (this.initialRecipient) {
-      this.reminderForm.patchValue({ recipient_id: this.initialRecipient.pk });
+    } else {
+      if (this.initialRecipient) {
+        this.reminderForm.patchValue({ recipient_id: this.initialRecipient.pk });
+      }
+      if (this.initialDate) {
+        const d = this.initialDate;
+        const pad = (n: number) => String(n).padStart(2, '0');
+        this.reminderForm.patchValue({
+          date: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
+          time: `${pad(d.getHours())}:${pad(d.getMinutes())}`,
+        });
+      }
     }
 
     this.reminderForm.valueChanges

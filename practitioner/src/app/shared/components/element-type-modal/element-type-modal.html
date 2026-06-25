@@ -1,0 +1,49 @@
+<app-modal
+  [isOpen]="isOpen"
+  [title]="'elementType.title' | translate"
+  size="large"
+  (closed)="onClose()">
+  <div class="element-type-grid">
+    <div class="element-type-card appointment">
+      <div class="element-type-icon">
+        <app-svg
+          src="calendar"
+          [svgStyle]="{'width.px': 28, 'height.px': 28}"></app-svg>
+      </div>
+      <span class="element-type-name">
+        {{ 'elementType.appointment' | translate }}
+      </span>
+      <span class="element-type-desc">
+        {{ 'elementType.appointmentDesc' | translate }}
+      </span>
+      <app-button
+        class="element-type-action"
+        [text]="'elementType.createAppointment' | translate"
+        [style]="ButtonStyleEnum.primary"
+        [size]="ButtonSizeEnum.medium"
+        (buttonClick)="select('appointment')">
+      </app-button>
+    </div>
+
+    <div class="element-type-card reminder">
+      <div class="element-type-icon">
+        <app-svg
+          src="bell"
+          [svgStyle]="{'width.px': 28, 'height.px': 28}"></app-svg>
+      </div>
+      <span class="element-type-name">
+        {{ 'elementType.reminder' | translate }}
+      </span>
+      <span class="element-type-desc">
+        {{ 'elementType.reminderDesc' | translate }}
+      </span>
+      <app-button
+        class="element-type-action"
+        [text]="'elementType.createReminder' | translate"
+        [style]="ButtonStyleEnum.stroke"
+        [size]="ButtonSizeEnum.medium"
+        (buttonClick)="select('reminder')">
+      </app-button>
+    </div>
+  </div>
+</app-modal>

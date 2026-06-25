@@ -1,0 +1,57 @@
+.reminder-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  .detail-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    background: #f3e8ff;
+    color: #8b5cf6;
+  }
+
+  .detail-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--slate-800);
+  }
+}
+
+.detail-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  .detail-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--slate-500);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  .detail-value {
+    font-size: 15px;
+    color: var(--slate-800);
+    white-space: pre-line;
+  }
+}
+
+.detail-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
