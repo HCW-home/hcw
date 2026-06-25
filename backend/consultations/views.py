@@ -1741,8 +1741,24 @@ class ReminderViewSet(CreatedByMixin, viewsets.ModelViewSet):
         window_start = datetime.combine(start_date, time.min, tzinfo=tz)
         window_end = datetime.combine(end_date, time.max, tzinfo=tz)
 
+        # The calendar can show reminders created by several selected
+        # practitioners. When `created_by` ids are provided, show those
+        # practitioners' reminders; otherwise fall back to the current user's.
+        created_by_ids = request.query_params.getlist("created_by")
+        if created_by_ids:
+            try:
+                created_by_ids = [int(i) for i in created_by_ids]
+            except ValueError:
+                return Response(
+                    {"detail": "created_by must be integer ids."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            base_qs = Reminder.objects.filter(created_by__in=created_by_ids)
+        else:
+            base_qs = Reminder.objects.filter(created_by=request.user)
+
         # Intersection of [scheduled_at, recurrence_end_at] with the window.
-        reminders = self.get_queryset().filter(
+        reminders = base_qs.filter(
             is_active=True,
             scheduled_at__lte=window_end,
             recurrence_end_at__gte=window_start,

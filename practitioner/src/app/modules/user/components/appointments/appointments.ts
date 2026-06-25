@@ -318,6 +318,9 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
             }))
           );
           this.loadAppointments();
+          if (this.currentView() !== 'list') {
+            this.loadReminderOccurrences();
+          }
         },
       });
   }
@@ -336,6 +339,9 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
       )
     );
     this.loadAppointments();
+    if (this.currentView() !== 'list') {
+      this.loadReminderOccurrences();
+    }
   }
 
   getSelectedPractitionerCount(): number {
@@ -1265,10 +1271,21 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   // Calendar view: load expanded reminder occurrences for the visible range.
   loadReminderOccurrences(): void {
     if (!this.currentDateRange) return;
+    // Show reminders created by the selected practitioners (same selection as
+    // the appointments). Empty selection -> no reminders.
+    const createdByIds = this.practitioners()
+      .filter(p => p.selected)
+      .map(p => p.user.pk);
+    if (createdByIds.length === 0) {
+      this.reminderCalendarEvents = [];
+      this.recomputeCalendarEvents();
+      return;
+    }
     this.consultationService
       .getReminderOccurrences(
         this.currentDateRange.start,
-        this.currentDateRange.end
+        this.currentDateRange.end,
+        createdByIds
       )
       .pipe(takeUntil(this.destroy$))
       .subscribe({

@@ -227,9 +227,13 @@ export class ConsultationService {
 
   getReminderOccurrences(
     start: string,
-    end: string
+    end: string,
+    createdBy?: number[]
   ): Observable<ReminderOccurrence[]> {
-    const httpParams = new HttpParams().set('start', start).set('end', end);
+    let httpParams = new HttpParams().set('start', start).set('end', end);
+    for (const id of createdBy ?? []) {
+      httpParams = httpParams.append('created_by', id.toString());
+    }
     return this.http.get<ReminderOccurrence[]>(
       `${this.apiUrl}/reminders/occurrences/`,
       { params: httpParams }

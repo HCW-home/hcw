@@ -452,3 +452,44 @@ class ReminderOccurrenceTests(_ReminderBase):
     def test_occurrences_endpoint_requires_params(self):
         resp = self.client.get(reverse("reminder-occurrences"))
         self.assertEqual(resp.status_code, 400)
+
+    def test_occurrences_default_only_current_user(self):
+        base = timezone.now() + timedelta(days=1)
+        self._mk(scheduled_at=base)  # created by self.practitioner
+        Reminder.objects.create(
+            title="Other's",
+            recipient=self.patient,
+            created_by=self.other_practitioner,
+            scheduled_at=base,
+        )
+        resp = self.client.get(
+            reverse("reminder-occurrences"),
+            {
+                "start": timezone.now().date().isoformat(),
+                "end": (timezone.now() + timedelta(days=2)).date().isoformat(),
+            },
+        )
+        self.assertEqual(resp.status_code, 200)
+        # Without created_by, only the current user's reminders show.
+        self.assertEqual(len(resp.data), 1)
+
+    def test_occurrences_filtered_by_created_by(self):
+        base = timezone.now() + timedelta(days=1)
+        mine = self._mk(scheduled_at=base)
+        other = Reminder.objects.create(
+            title="Other's",
+            recipient=self.patient,
+            created_by=self.other_practitioner,
+            scheduled_at=base,
+        )
+        resp = self.client.get(
+            reverse("reminder-occurrences"),
+            {
+                "start": timezone.now().date().isoformat(),
+                "end": (timezone.now() + timedelta(days=2)).date().isoformat(),
+                "created_by": [self.practitioner.id, self.other_practitioner.id],
+            },
+        )
+        self.assertEqual(resp.status_code, 200)
+        ids = sorted(o["reminder_id"] for o in resp.data)
+        self.assertEqual(ids, sorted([mine.id, other.id]))
