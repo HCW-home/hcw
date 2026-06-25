@@ -138,6 +138,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     title: string;
     description: string;
     recipient: string;
+    createdBy: string;
     occurrenceAt: string;
     recurrence: string;
     nextRunAt: string | null;
@@ -697,6 +698,14 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     return practitioner?.color || '#3b82f6';
   }
 
+  private getPractitionerNameById(practitionerId: number | null): string {
+    const u = this.practitioners().find(
+      p => p.user.pk === practitionerId
+    )?.user;
+    if (!u) return '';
+    return `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email || '';
+  }
+
   private transformOccurrencesToEvents(
     occurrences: ReminderOccurrence[]
   ): EventInput[] {
@@ -734,6 +743,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
           reminderTitle: occ.title,
           reminderDescription: occ.description,
           reminderRecipient: recipient,
+          reminderCreatedBy: this.getPractitionerNameById(occ.created_by),
           reminderOccurrenceAt: occ.occurrence_at,
           reminderRecurrence: recurrence,
           reminderNextRunAt: occ.next_run_at,
@@ -858,6 +868,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
         title: props['reminderTitle'] as string,
         description: props['reminderDescription'] as string,
         recipient: props['reminderRecipient'] as string,
+        createdBy: (props['reminderCreatedBy'] as string) || '',
         occurrenceAt: props['reminderOccurrenceAt'] as string,
         recurrence: props['reminderRecurrence'] as string,
         nextRunAt: (props['reminderNextRunAt'] as string | null) ?? null,

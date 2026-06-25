@@ -1125,7 +1125,8 @@
     "detailTitle": "Dettagli del promemoria",
     "occurrenceLabel": "Occorrenza {{index}} di {{total}}",
     "until": "fino al",
-    "nextRun": "Prossimo promemoria"
+    "nextRun": "Prossimo promemoria",
+    "createdBy": "Creato da"
   },
   "elementType": {
     "title": "Che tipo di elemento vuoi creare?",

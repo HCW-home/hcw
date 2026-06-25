@@ -46,6 +46,12 @@ export class ReminderDetailModal {
     return `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email || '';
   }
 
+  get creatorName(): string {
+    const u = this.reminder?.created_by;
+    if (!u) return '';
+    return `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email || '';
+  }
+
   get recurrenceLabel(): string {
     const r = this.reminder;
     if (!r || !r.is_recurring || !r.recurrence_period) return '';

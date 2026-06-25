@@ -1097,7 +1097,8 @@
     "detailTitle": "Erinnerungsdetails",
     "occurrenceLabel": "Vorkommen {{index}} von {{total}}",
     "until": "bis",
-    "nextRun": "Nächste Erinnerung"
+    "nextRun": "Nächste Erinnerung",
+    "createdBy": "Erstellt von"
   },
   "elementType": {
     "title": "Welche Art von Element möchten Sie erstellen?",

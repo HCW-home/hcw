@@ -370,6 +370,13 @@
         <span>{{ hoveredReminder()!.recipient }}</span>
       </div>
 
+      @if (hoveredReminder()!.createdBy) {
+      <div class="tooltip-time">
+        <app-svg src="user" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
+        <span>{{ 'reminders.createdBy' | translate }}: {{ hoveredReminder()!.createdBy }}</span>
+      </div>
+      }
+
       <div class="tooltip-time">
         <app-svg src="clock" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
         <span>{{ hoveredReminder()!.occurrenceAt | localDate : 'fullDate' }} - {{ hoveredReminder()!.occurrenceAt | localDate : 'HH:mm' }}</span>

@@ -1125,7 +1125,8 @@
     "detailTitle": "Detalles del recordatorio",
     "occurrenceLabel": "Ocurrencia {{index}} de {{total}}",
     "until": "hasta el",
-    "nextRun": "Próximo recordatorio"
+    "nextRun": "Próximo recordatorio",
+    "createdBy": "Creado por"
   },
   "elementType": {
     "title": "¿Qué tipo de elemento desea crear?",

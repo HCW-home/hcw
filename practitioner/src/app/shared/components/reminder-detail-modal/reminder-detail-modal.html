@@ -24,6 +24,13 @@
       <span class="detail-value">{{ recipientName }}</span>
     </div>
 
+    @if (creatorName) {
+    <div class="detail-row">
+      <span class="detail-label">{{ 'reminders.createdBy' | translate }}</span>
+      <span class="detail-value">{{ creatorName }}</span>
+    </div>
+    }
+
     <div class="detail-row">
       <span class="detail-label">{{ 'reminders.date' | translate }}</span>
       <span class="detail-value">

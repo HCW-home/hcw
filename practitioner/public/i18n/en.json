@@ -1242,7 +1242,8 @@
     "detailTitle": "Reminder details",
     "occurrenceLabel": "Occurrence {{index}} of {{total}}",
     "until": "until",
-    "nextRun": "Next reminder"
+    "nextRun": "Next reminder",
+    "createdBy": "Created by"
   },
   "elementType": {
     "title": "What type of element do you want to create?",

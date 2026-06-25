@@ -1241,7 +1241,8 @@
     "detailTitle": "Деталі нагадування",
     "occurrenceLabel": "Повторення {{index}} з {{total}}",
     "until": "до",
-    "nextRun": "Наступне нагадування"
+    "nextRun": "Наступне нагадування",
+    "createdBy": "Створив"
   },
   "elementType": {
     "title": "Який тип елемента ви хочете створити?",
