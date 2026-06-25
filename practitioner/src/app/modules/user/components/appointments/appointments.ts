@@ -64,6 +64,10 @@ import { UserService } from '../../../../core/services/user.service';
 import { Auth } from '../../../../core/services/auth';
 import { ConfirmPresenceModal } from './confirm-presence-modal/confirm-presence-modal';
 import { AppointmentFormModal } from '../consultation-detail/appointment-form-modal/appointment-form-modal';
+import { ReminderFormModal } from '../../../../shared/components/reminder-form-modal/reminder-form-modal';
+import { ReminderCard } from '../../../../shared/components/reminder-card/reminder-card';
+import { Reminder } from '../../../../core/models/reminder';
+import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { IUser } from '../../../user/models/user';
 
 interface PractitionerOption {
@@ -95,6 +99,8 @@ type AppointmentTimeFilter = 'all' | 'upcoming' | 'past';
     TranslatePipe,
     ConfirmPresenceModal,
     AppointmentFormModal,
+    ReminderFormModal,
+    ReminderCard,
   ],
   templateUrl: './appointments.html',
   styleUrl: './appointments.scss',
@@ -110,6 +116,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   private el = inject(ElementRef);
   private incomingCallService = inject(IncomingCallService);
   private activeCallService = inject(ActiveCallService);
+  private confirmationService = inject(ConfirmationService);
   private t = inject(TranslationService);
 
   protected readonly getAppointmentBadgeType = getAppointmentBadgeType;
@@ -136,6 +143,15 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   confirmPresenceAppointment = signal<Appointment | null>(null);
   confirmPresenceMyParticipantId = signal<number | null>(null);
   createAppointmentModalOpen = signal(false);
+  createReminderModalOpen = signal(false);
+  editingReminder = signal<Reminder | null>(null);
+
+  reminders = signal<Reminder[]>([]);
+  isLoadingReminders = signal(false);
+  isLoadingMoreReminders = signal(false);
+  hasMoreReminders = signal(false);
+  private reminderPage = 1;
+  private reminderPageSize = 20;
   editingAppointment = signal<Appointment | null>(null);
   selectedStartDate = signal<Date | null>(null);
   selectedEndDate = signal<Date | null>(null);
@@ -215,6 +231,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   ngOnInit(): void {
     this.loadConfig();
     this.loadPractitioners();
+    this.loadReminders();
 
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
       const participantId = params['participantId'];
@@ -924,6 +941,150 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     this.createAppointmentModalOpen.set(true);
   }
 
+  openCreateReminderModal(): void {
+    this.editingReminder.set(null);
+    this.createReminderModalOpen.set(true);
+  }
+
+  openEditReminderModal(reminder: Reminder): void {
+    this.editingReminder.set(reminder);
+    this.createReminderModalOpen.set(true);
+  }
+
+  onReminderModalClosed(): void {
+    this.createReminderModalOpen.set(false);
+    this.editingReminder.set(null);
+  }
+
+  onReminderCreated(): void {
+    this.createReminderModalOpen.set(false);
+    this.editingReminder.set(null);
+    this.loadReminders();
+  }
+
+  onReminderUpdated(): void {
+    this.createReminderModalOpen.set(false);
+    this.editingReminder.set(null);
+    this.loadReminders();
+  }
+
+  private buildReminderParams(page: number): {
+    page: number;
+    page_size: number;
+    ordering: string;
+    future?: boolean;
+    scheduled_at__date__gte?: string;
+    scheduled_at__date__lte?: string;
+  } {
+    const params: {
+      page: number;
+      page_size: number;
+      ordering: string;
+      future?: boolean;
+      scheduled_at__date__gte?: string;
+      scheduled_at__date__lte?: string;
+    } = {
+      page,
+      page_size: this.reminderPageSize,
+      ordering: 'scheduled_at',
+    };
+
+    const timeFilter = this.appointmentTimeFilter();
+    if (timeFilter === 'upcoming') {
+      params.future = true;
+    } else if (timeFilter === 'past') {
+      params.future = false;
+    }
+
+    if (this.currentDateRange) {
+      params.scheduled_at__date__gte = this.currentDateRange.start;
+      params.scheduled_at__date__lte = this.currentDateRange.end;
+    }
+
+    return params;
+  }
+
+  loadReminders(): void {
+    this.isLoadingReminders.set(true);
+    this.reminderPage = 1;
+    this.consultationService
+      .getReminders(this.buildReminderParams(1))
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: response => {
+          this.reminders.set(response.results);
+          this.hasMoreReminders.set(response.next !== null);
+          this.isLoadingReminders.set(false);
+        },
+        error: error => {
+          this.isLoadingReminders.set(false);
+          this.toasterService.show(
+            'error',
+            this.t.instant('reminders.errorLoading'),
+            getErrorMessage(error)
+          );
+        },
+      });
+  }
+
+  loadMoreReminders(): void {
+    if (this.isLoadingMoreReminders() || !this.hasMoreReminders()) return;
+
+    this.isLoadingMoreReminders.set(true);
+    this.reminderPage++;
+    this.consultationService
+      .getReminders(this.buildReminderParams(this.reminderPage))
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: response => {
+          this.reminders.set([...this.reminders(), ...response.results]);
+          this.hasMoreReminders.set(response.next !== null);
+          this.isLoadingMoreReminders.set(false);
+        },
+        error: error => {
+          this.reminderPage--;
+          this.isLoadingMoreReminders.set(false);
+          this.toasterService.show(
+            'error',
+            this.t.instant('reminders.errorLoading'),
+            getErrorMessage(error)
+          );
+        },
+      });
+  }
+
+  async deleteReminder(reminder: Reminder): Promise<void> {
+    const confirmed = await this.confirmationService.confirm({
+      title: this.t.instant('reminders.deleteTitle'),
+      message: this.t.instant('reminders.deleteMessage'),
+      confirmText: this.t.instant('reminders.delete'),
+      cancelText: this.t.instant('reminders.cancel'),
+      confirmStyle: 'danger',
+    });
+
+    if (!confirmed) return;
+
+    this.consultationService
+      .deleteReminder(reminder.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.reminders.set(this.reminders().filter(r => r.id !== reminder.id));
+          this.toasterService.show(
+            'success',
+            this.t.instant('reminders.deleted')
+          );
+        },
+        error: error => {
+          this.toasterService.show(
+            'error',
+            this.t.instant('reminders.errorDeleting'),
+            getErrorMessage(error)
+          );
+        },
+      });
+  }
+
   onCreateAppointmentModalClosed(): void {
     this.createAppointmentModalOpen.set(false);
     this.editingAppointment.set(null);
@@ -1061,5 +1222,6 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   setAppointmentTimeFilter(filter: AppointmentTimeFilter): void {
     this.appointmentTimeFilter.set(filter);
     this.loadAllAppointments();
+    this.loadReminders();
   }
 }

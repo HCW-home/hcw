@@ -23,6 +23,7 @@ import {
   DashboardResponse,
   IParticipantDetail,
 } from '../models/consultation';
+import { Reminder, CreateReminderRequest } from '../models/reminder';
 import { PaginatedResponse } from '../models/global';
 import { VideoCallConfig } from './video-call.types';
 
@@ -156,6 +157,64 @@ export class ConsultationService {
         context: new HttpContext().set(SKIP_ERROR_TOAST, true),
       }
     );
+  }
+
+  getReminders(params?: {
+    page?: number;
+    page_size?: number;
+    ordering?: string;
+    consultation?: number;
+    recipient?: number;
+    future?: boolean;
+    is_active?: boolean;
+    scheduled_at__date__gte?: string;
+    scheduled_at__date__lte?: string;
+  }): Observable<PaginatedResponse<Reminder>> {
+    let httpParams = new HttpParams();
+    if (params?.page) httpParams = httpParams.set('page', params.page.toString());
+    if (params?.page_size)
+      httpParams = httpParams.set('page_size', params.page_size.toString());
+    if (params?.ordering) httpParams = httpParams.set('ordering', params.ordering);
+    if (params?.consultation)
+      httpParams = httpParams.set('consultation', params.consultation.toString());
+    if (params?.recipient)
+      httpParams = httpParams.set('recipient', params.recipient.toString());
+    if (params?.future !== undefined)
+      httpParams = httpParams.set('future', params.future.toString());
+    if (params?.is_active !== undefined)
+      httpParams = httpParams.set('is_active', params.is_active.toString());
+    if (params?.scheduled_at__date__gte)
+      httpParams = httpParams.set(
+        'scheduled_at__date__gte',
+        params.scheduled_at__date__gte
+      );
+    if (params?.scheduled_at__date__lte)
+      httpParams = httpParams.set(
+        'scheduled_at__date__lte',
+        params.scheduled_at__date__lte
+      );
+    return this.http.get<PaginatedResponse<Reminder>>(`${this.apiUrl}/reminders/`, {
+      params: httpParams,
+    });
+  }
+
+  createReminder(data: CreateReminderRequest): Observable<Reminder> {
+    return this.http.post<Reminder>(`${this.apiUrl}/reminders/`, data, {
+      context: new HttpContext().set(SKIP_ERROR_TOAST, true),
+    });
+  }
+
+  updateReminder(
+    id: number,
+    data: Partial<CreateReminderRequest>
+  ): Observable<Reminder> {
+    return this.http.patch<Reminder>(`${this.apiUrl}/reminders/${id}/`, data, {
+      context: new HttpContext().set(SKIP_ERROR_TOAST, true),
+    });
+  }
+
+  deleteReminder(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/reminders/${id}/`);
   }
 
   getAppointments(params?: {

@@ -260,6 +260,59 @@
   }
 }
 
+.reminders-section {
+  background: var(--White);
+  border-radius: 20px;
+  border: 1px solid var(--slate-100);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  margin-top: 24px;
+  padding: 24px;
+
+  .reminders-section-header {
+    margin-bottom: 16px;
+  }
+
+  .reminders-section-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--slate-800);
+    margin: 0;
+  }
+
+  .reminders-loading {
+    display: flex;
+    justify-content: center;
+    padding: 32px;
+  }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 48px 24px;
+    color: var(--slate-400);
+
+    span {
+      font-size: 14px;
+      color: var(--slate-500);
+    }
+  }
+
+  .reminders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .load-more-container {
+    display: flex;
+    justify-content: flex-start;
+    padding-top: 12px;
+  }
+}
+
 .appointment-item {
   display: flex;
   align-items: center;

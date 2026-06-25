@@ -361,6 +361,57 @@
             </div>
           </div>
         </div>
+        } @if (activeTab() === 'reminders') {
+        <div class="reminders-section">
+          <div class="section-card">
+            <div class="card-header">
+              <div>
+                <app-typography
+                  [variant]="TypographyTypeEnum['body-l-bold']"
+                  color="var(--slate-800)">
+                  {{ 'patientDetail.tabReminders' | translate }}
+                </app-typography>
+                <app-typography
+                  [variant]="TypographyTypeEnum['body-s-regular']"
+                  color="var(--slate-500)">
+                  {{ 'reminders.remindersCount' | translate:{ count:
+                  reminders().length } }}
+                </app-typography>
+              </div>
+              <app-button
+                [text]="'reminders.newReminder' | translate"
+                leftIcon="plus"
+                [size]="ButtonSizeEnum.small"
+                [style]="ButtonStyleEnum.primary"
+                (buttonClick)="openCreateReminderModal()">
+              </app-button>
+            </div>
+            <div class="reminders-list">
+              @if (loadingReminders()) {
+              <div class="loading-state">
+                <app-loader></app-loader>
+              </div>
+              } @else if (reminders().length === 0) {
+              <div class="empty-state">
+                <app-svg
+                  src="bell"
+                  [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
+                <app-typography
+                  [variant]="TypographyTypeEnum['body-regular']"
+                  color="var(--slate-500)">
+                  {{ 'reminders.noReminders' | translate }}
+                </app-typography>
+              </div>
+              } @else { @for (reminder of reminders(); track reminder.id) {
+              <app-reminder-card
+                [reminder]="reminder"
+                (edit)="openEditReminderModal($event)"
+                (delete)="deleteReminder($event)">
+              </app-reminder-card>
+              } }
+            </div>
+          </div>
+        </div>
         }
       </div>
     </div>
@@ -383,6 +434,15 @@
     </div>
     }
   </div>
+
+  <app-reminder-form-modal
+    [isOpen]="showReminderModal()"
+    [editingReminder]="editingReminder()"
+    [initialRecipient]="patient()"
+    (closed)="closeReminderModal()"
+    (reminderCreated)="onReminderSaved()"
+    (reminderUpdated)="onReminderSaved()">
+  </app-reminder-form-modal>
 
   @if (showEditModal()) {
   <app-modal

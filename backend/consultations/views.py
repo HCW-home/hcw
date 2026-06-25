@@ -46,7 +46,7 @@ from rest_framework.views import APIView
 
 from .fhir import AppointmentFhirMapper, EncounterFhirMapper, PrescriptionFhirMapper
 from fhir_server.mixins import FhirViewSetMixin
-from .filters import AppointmentFilter, ConsultationFilter
+from .filters import AppointmentFilter, ConsultationFilter, ReminderFilter
 from .models import (
     Appointment,
     AppointmentStatus,
@@ -59,6 +59,7 @@ from .models import (
     Prescription,
     Queue,
     Reason,
+    Reminder,
     Request,
     RequestStatus,
     Type,
@@ -77,6 +78,7 @@ from .serializers import (
     PrescriptionSerializer,
     QueueSerializer,
     ReasonDetailSerializer,
+    ReminderSerializer,
     RequestSerializer,
 )
 
@@ -1690,3 +1692,24 @@ class ReasonViewSet(viewsets.ReadOnlyModelViewSet):
             qs = qs.filter(id__in=ids)
 
         return qs
+
+
+class ReminderViewSet(CreatedByMixin, viewsets.ModelViewSet):
+    """CRUD for standalone reminders. Each practitioner only sees the
+    reminders they created. Delivery is handled by the periodic
+    ``handle_custom_reminders`` task."""
+
+    serializer_class = ReminderSerializer
+    permission_classes = [IsAuthenticated, IsPractitioner]
+    pagination_class = ConsultationPagination
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_class = ReminderFilter
+    ordering = ["-created_at"]
+    ordering_fields = ["created_at", "scheduled_at", "next_run_at"]
+    http_method_names = ["get", "post", "patch", "put", "delete", "head", "options"]
+
+    def get_queryset(self):
+        user = self.request.user
+        if not user.is_authenticated:
+            return Reminder.objects.none()
+        return Reminder.objects.filter(created_by=user)

@@ -722,7 +722,7 @@
     "noPatient": "No patient assigned",
     "unknownPatient": "Unknown patient",
     "unknown": "Unknown",
-    "appointmentsCount": "Appointments ({{count}})",
+    "appointmentsCount": "Appointments - {{count}} item(s)",
     "newAppointment": "New Appointment",
     "viewList": "List",
     "viewCalendar": "Calendar",
@@ -946,7 +946,8 @@
     "statusCancelled": "Cancelled",
     "statusCompleted": "Completed",
     "statusDraft": "Draft",
-    "statusInProgress": "In Progress"
+    "statusInProgress": "In Progress",
+    "tabReminders": "Reminders"
   },
   "appointments": {
     "appointmentsCount": "{{count}} appointments",
@@ -1102,7 +1103,7 @@
     "davNeverUsed": "Never used",
     "davRevoke": "Revoke",
     "davExplanation": "An application password allows an external app (calendar, contacts) to connect to your account via CalDAV/CardDAV without using your main password.",
-    "customFields":"Custom Fields"
+    "customFields": "Custom Fields"
   },
   "consultationRowItem": {
     "untitledConsultation": "Untitled Follow-up",
@@ -1189,5 +1190,45 @@
     "defaultMessage": "The service is temporarily unavailable for maintenance. Please try again later.",
     "autoRefresh": "This page will refresh automatically in {{seconds}} seconds.",
     "retry": "Refresh now"
+  },
+  "reminders": {
+    "newReminder": "New Reminder",
+    "recipient": "Recipient",
+    "recipientPlaceholder": "Search by name or email...",
+    "title": "Title",
+    "titlePlaceholder": "Reminder title",
+    "description": "Description",
+    "descriptionPlaceholder": "Reminder details",
+    "date": "Date",
+    "time": "Time",
+    "recurring": "Recurring reminder",
+    "interval": "Every",
+    "period": "Period",
+    "count": "Occurrences",
+    "day": "Day",
+    "week": "Week",
+    "month": "Month",
+    "create": "Create reminder",
+    "cancel": "Cancel",
+    "created": "Reminder created",
+    "createdMessage": "The reminder has been scheduled.",
+    "errorCreating": "Error creating reminder",
+    "fieldRequired": "This field is required",
+    "scheduledInPast": "Cannot schedule in the past",
+    "remindersCount": "Reminders - {{count}} item(s)",
+    "loading": "Loading reminders...",
+    "noReminders": "No reminders yet",
+    "errorLoading": "Error loading reminders",
+    "delete": "Delete",
+    "deleted": "Reminder deleted",
+    "errorDeleting": "Error deleting reminder",
+    "recurrenceSummary": "Every {{interval}} {{period}}, {{count}} times",
+    "editReminder": "Edit reminder",
+    "edit": "Edit",
+    "save": "Save",
+    "updated": "Reminder updated",
+    "errorUpdating": "Error updating reminder",
+    "deleteTitle": "Delete reminder",
+    "deleteMessage": "Are you sure you want to delete this reminder? This action cannot be undone."
   }
 }

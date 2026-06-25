@@ -13,6 +13,13 @@
           leftIcon="plus"
           (buttonClick)="openCreateAppointmentModal()">
         </app-button>
+        <app-button
+          [text]="'reminders.newReminder' | translate"
+          [style]="ButtonStyleEnum.stroke"
+          [size]="ButtonSizeEnum.small"
+          leftIcon="plus"
+          (buttonClick)="openCreateReminderModal()">
+        </app-button>
       </div>
       <div class="header-controls">
         @if (practitioners().length > 1) {
@@ -217,6 +224,50 @@
     </div>
     }
 
+    @if (!loading() && currentView() === 'list') {
+    <div class="reminders-section">
+      <div class="reminders-section-header">
+        <h3 class="reminders-section-title">
+          {{ 'reminders.remindersCount' | translate: { count: reminders().length } }}
+        </h3>
+      </div>
+
+      @if (isLoadingReminders()) {
+      <div class="reminders-loading">
+        <app-loader></app-loader>
+      </div>
+      } @else if (reminders().length === 0) {
+      <div class="empty-state">
+        <app-svg
+          src="bell"
+          [svgStyle]="{'width.px': 48, 'height.px': 48}"></app-svg>
+        <span>{{ 'reminders.noReminders' | translate }}</span>
+      </div>
+      } @else {
+      <div class="reminders-list">
+        @for (reminder of reminders(); track reminder.id) {
+        <app-reminder-card
+          [reminder]="reminder"
+          (edit)="openEditReminderModal($event)"
+          (delete)="deleteReminder($event)">
+        </app-reminder-card>
+        } @if (hasMoreReminders()) {
+        <div class="load-more-container">
+          <app-button
+            [text]="'appointments.viewMore' | translate"
+            [style]="ButtonStyleEnum.text"
+            [size]="ButtonSizeEnum.medium"
+            [loading]="isLoadingMoreReminders()"
+            [disabled]="isLoadingMoreReminders()"
+            (buttonClick)="loadMoreReminders()">
+          </app-button>
+        </div>
+        }
+      </div>
+      }
+    </div>
+    }
+
     <div
       class="calendar-wrapper"
       [style.display]="loading() || currentView() === 'list' ? 'none' : 'block'">
@@ -319,5 +370,13 @@
       (appointmentCreated)="onAppointmentCreated()"
       (appointmentUpdated)="onAppointmentUpdated()">
     </app-appointment-form-modal>
+
+    <app-reminder-form-modal
+      [isOpen]="createReminderModalOpen()"
+      [editingReminder]="editingReminder()"
+      (closed)="onReminderModalClosed()"
+      (reminderCreated)="onReminderCreated()"
+      (reminderUpdated)="onReminderUpdated()">
+    </app-reminder-form-modal>
   </div>
 </app-page>

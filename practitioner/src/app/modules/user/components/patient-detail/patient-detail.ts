@@ -32,6 +32,10 @@ import { TranslationService } from '../../../../core/services/translation.servic
 import { Badge } from '../../../../shared/components/badge/badge';
 import { BadgeTypeEnum } from '../../../../shared/constants/badge';
 import { ConsultationRowItem } from '../../../../shared/components/consultation-row-item/consultation-row-item';
+import { ReminderCard } from '../../../../shared/components/reminder-card/reminder-card';
+import { ReminderFormModal } from '../../../../shared/components/reminder-form-modal/reminder-form-modal';
+import { ConfirmationService } from '../../../../core/services/confirmation.service';
+import { Reminder } from '../../../../core/models/reminder';
 import {
   getConsultationBadgeType,
   getAppointmentBadgeType,
@@ -54,6 +58,8 @@ import { LocalDatePipe } from '../../../../shared/pipes/local-date.pipe';
     AddEditPatient,
     Badge,
     ConsultationRowItem,
+    ReminderCard,
+    ReminderFormModal,
     UserAvatar,
     LocalDatePipe,
   ],
@@ -67,6 +73,7 @@ export class PatientDetail implements OnInit, OnDestroy {
   private patientService = inject(PatientService);
   private consultationService = inject(ConsultationService);
   private toasterService = inject(ToasterService);
+  private confirmationService = inject(ConfirmationService);
   private t = inject(TranslationService);
 
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
@@ -77,16 +84,23 @@ export class PatientDetail implements OnInit, OnDestroy {
   protected readonly BadgeTypeEnum = BadgeTypeEnum;
 
   patientId: number | null = null;
-  activeTab = signal<'overview' | 'consultations' | 'appointments'>('overview');
+  activeTab = signal<
+    'overview' | 'consultations' | 'appointments' | 'reminders'
+  >('overview');
   showEditModal = signal(false);
   loading = signal(true);
   loadingConsultations = signal(false);
   loadingAppointments = signal(false);
+  loadingReminders = signal(false);
 
   patient = signal<IUser | null>(null);
   healthMetrics = signal<IHealthMetric[]>([]);
   consultations = signal<Consultation[]>([]);
   appointments = signal<Appointment[]>([]);
+  reminders = signal<Reminder[]>([]);
+
+  showReminderModal = signal(false);
+  editingReminder = signal<Reminder | null>(null);
 
   get tabItems(): TabItem[] {
     return [
@@ -99,6 +113,10 @@ export class PatientDetail implements OnInit, OnDestroy {
         id: 'appointments',
         label: this.t.instant('patientDetail.tabAppointments'),
       },
+      {
+        id: 'reminders',
+        label: this.t.instant('patientDetail.tabReminders'),
+      },
     ];
   }
 
@@ -107,7 +125,8 @@ export class PatientDetail implements OnInit, OnDestroy {
       if (
         fragment === 'overview' ||
         fragment === 'consultations' ||
-        fragment === 'appointments'
+        fragment === 'appointments' ||
+        fragment === 'reminders'
       ) {
         this.activeTab.set(fragment);
       }
@@ -119,6 +138,7 @@ export class PatientDetail implements OnInit, OnDestroy {
         this.loadPatient();
         this.loadConsultations();
         this.loadAppointments();
+        this.loadReminders();
       }
     });
   }
@@ -195,6 +215,88 @@ export class PatientDetail implements OnInit, OnDestroy {
             getErrorMessage(err)
           );
           this.loadingAppointments.set(false);
+        },
+      });
+  }
+
+  loadReminders(): void {
+    if (!this.patientId) return;
+
+    this.loadingReminders.set(true);
+    this.consultationService
+      .getReminders({
+        recipient: this.patientId,
+        ordering: 'scheduled_at',
+        page_size: 100,
+      })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: response => {
+          this.reminders.set(response.results);
+          this.loadingReminders.set(false);
+        },
+        error: err => {
+          this.toasterService.show(
+            'error',
+            this.t.instant('reminders.errorLoading'),
+            getErrorMessage(err)
+          );
+          this.loadingReminders.set(false);
+        },
+      });
+  }
+
+  openCreateReminderModal(): void {
+    this.editingReminder.set(null);
+    this.showReminderModal.set(true);
+  }
+
+  openEditReminderModal(reminder: Reminder): void {
+    this.editingReminder.set(reminder);
+    this.showReminderModal.set(true);
+  }
+
+  closeReminderModal(): void {
+    this.showReminderModal.set(false);
+    this.editingReminder.set(null);
+  }
+
+  onReminderSaved(): void {
+    this.showReminderModal.set(false);
+    this.editingReminder.set(null);
+    this.loadReminders();
+  }
+
+  async deleteReminder(reminder: Reminder): Promise<void> {
+    const confirmed = await this.confirmationService.confirm({
+      title: this.t.instant('reminders.deleteTitle'),
+      message: this.t.instant('reminders.deleteMessage'),
+      confirmText: this.t.instant('reminders.delete'),
+      cancelText: this.t.instant('reminders.cancel'),
+      confirmStyle: 'danger',
+    });
+
+    if (!confirmed) return;
+
+    this.consultationService
+      .deleteReminder(reminder.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.reminders.set(
+            this.reminders().filter(r => r.id !== reminder.id)
+          );
+          this.toasterService.show(
+            'success',
+            this.t.instant('reminders.deleted')
+          );
+        },
+        error: error => {
+          this.toasterService.show(
+            'error',
+            this.t.instant('reminders.errorDeleting'),
+            getErrorMessage(error)
+          );
         },
       });
   }

@@ -427,6 +427,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "consultations.tasks.handle_reminders",
         "schedule": crontab(minute="*", hour="*"),
     },
+    "handle_custom_reminders": {
+        "task": "consultations.tasks.handle_custom_reminders",
+        "schedule": crontab(minute="*", hour="*"),
+    },
     "auto_delete_closed_consultations": {
         "task": "consultations.tasks.auto_delete_closed_consultations",
         "schedule": crontab(minute=0),

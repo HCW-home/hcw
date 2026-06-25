@@ -110,6 +110,46 @@ def handle_reminders():
                         )
 
 
+@app.task
+def handle_custom_reminders():
+    """Deliver standalone reminders whose next_run_at matches the current minute.
+
+    Creates a Message rendered through the ``reminder`` template (the reminder
+    itself is the template ``obj``) per due reminder; its post_save signal
+    triggers send_message, routing to the recipient's configured channel
+    (SMS/email/WhatsApp). Recurring reminders are rescheduled in place until
+    their occurrence count is exhausted.
+    """
+    now = timezone.now().replace(second=0, microsecond=0)
+    TenantModel = get_tenant_model()
+    for tenant in TenantModel.objects.exclude(schema_name="public"):
+        with tenant_context(tenant):
+            from .models import Reminder
+
+            for reminder in Reminder.objects.filter(is_active=True, next_run_at=now):
+                Message.objects.create(
+                    sent_to=reminder.recipient,
+                    sent_by=reminder.created_by,
+                    template_system_name="reminder",
+                    content_type=ContentType.objects.get_for_model(reminder),
+                    object_id=reminder.pk,
+                    # No communication_method: the recipient's channel decides.
+                )
+                reminder.occurrences_sent += 1
+                reminder.last_sent_at = now
+                nxt = reminder.compute_next_run_at()
+                reminder.is_active = nxt is not None
+                reminder.next_run_at = nxt
+                reminder.save(
+                    update_fields=[
+                        "occurrences_sent",
+                        "last_sent_at",
+                        "next_run_at",
+                        "is_active",
+                    ]
+                )
+
+
 @app.task(
     bind=True,
     max_retries=settings.RECORDING_CHECK_MAX_RETRIES,

@@ -12,6 +12,7 @@ from .views import (
     QueueViewSet,
     ReasonSlotsView,
     ReasonViewSet,
+    ReminderViewSet,
     RequestViewSet,
 )
 
@@ -24,6 +25,7 @@ router.register(r"queues", QueueViewSet, basename="queue")
 router.register(r"requests", RequestViewSet, basename="request")
 router.register(r"messages", MessageViewSet, basename="message")
 router.register(r"reasons", ReasonViewSet, basename="reason")
+router.register(r"reminders", ReminderViewSet, basename="reminder")
 router.register(r"custom-fields", CustomFieldViewSet, basename="custom-field")
 # router.register(r"prescriptions", PrescriptionViewSet, basename="prescription")
 

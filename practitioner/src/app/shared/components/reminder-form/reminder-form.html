@@ -1,0 +1,107 @@
+<div class="reminder-form-wrapper">
+  <form [formGroup]="reminderForm">
+    <div class="form-group">
+      <app-user-search-select
+        [label]="'reminders.recipient' | translate"
+        [placeholder]="'reminders.recipientPlaceholder' | translate"
+        [required]="true"
+        [meUser]="currentUser()"
+        [initialUser]="displayRecipient"
+        (userSelected)="onRecipientSelected($event)">
+      </app-user-search-select>
+      @if (getFieldError('recipient_id')) {
+      <div class="field-error">{{ getFieldError('recipient_id') }}</div>
+      }
+    </div>
+
+    <div class="form-group">
+      <app-input
+        type="text"
+        [label]="'reminders.title' | translate"
+        [placeholder]="'reminders.titlePlaceholder' | translate"
+        [required]="true"
+        [invalid]="!!getFieldError('title')"
+        [invalidMessage]="getFieldError('title')"
+        formControlName="title">
+      </app-input>
+    </div>
+
+    <div class="form-group">
+      <app-textarea
+        [label]="'reminders.description' | translate"
+        [placeholder]="'reminders.descriptionPlaceholder' | translate"
+        formControlName="description">
+      </app-textarea>
+    </div>
+
+    <div class="form-row">
+      <app-input
+        type="date"
+        [label]="'reminders.date' | translate"
+        [required]="true"
+        [invalid]="!!getFieldError('date')"
+        [invalidMessage]="getFieldError('date')"
+        formControlName="date">
+      </app-input>
+      <app-input
+        type="time"
+        [label]="'reminders.time' | translate"
+        [required]="true"
+        [invalid]="!!getFieldError('time')"
+        [invalidMessage]="getFieldError('time')"
+        formControlName="time">
+      </app-input>
+    </div>
+
+    <div class="form-group">
+      <app-checkbox
+        [label]="'reminders.recurring' | translate"
+        formControlName="is_recurring">
+      </app-checkbox>
+    </div>
+
+    @if (isRecurring) {
+    <div class="recurrence-section">
+      <div class="form-row">
+        <app-input
+          type="number"
+          [label]="'reminders.interval' | translate"
+          min="1"
+          [invalid]="!!getFieldError('recurrence_interval')"
+          [invalidMessage]="getFieldError('recurrence_interval')"
+          formControlName="recurrence_interval">
+        </app-input>
+        <app-select
+          [label]="'reminders.period' | translate"
+          [options]="periodOptions"
+          formControlName="recurrence_period">
+        </app-select>
+        <app-input
+          type="number"
+          [label]="'reminders.count' | translate"
+          min="1"
+          [invalid]="!!getFieldError('recurrence_count')"
+          [invalidMessage]="getFieldError('recurrence_count')"
+          formControlName="recurrence_count">
+        </app-input>
+      </div>
+    </div>
+    }
+  </form>
+
+  <div class="form-actions">
+    <app-button
+      [text]="'reminders.cancel' | translate"
+      [style]="ButtonStyleEnum.stroke"
+      [size]="ButtonSizeEnum.medium"
+      (buttonClick)="onCancel()">
+    </app-button>
+    <app-button
+      [text]="(isEditMode ? 'reminders.save' : 'reminders.create') | translate"
+      [style]="ButtonStyleEnum.primary"
+      [size]="ButtonSizeEnum.medium"
+      [loading]="isSubmitting()"
+      (buttonClick)="submit()">
+    </app-button>
+  </div>
+</div>

@@ -625,6 +625,66 @@
           </div>
           }
         </div>
+
+        <div class="reminders-section">
+          <div class="section-header">
+            <div class="section-title-row">
+              <h3 class="section-title">
+                {{ 'reminders.remindersCount' | translate: { count:
+                reminders().length } }}
+              </h3>
+              @if (!consultation()?.closed_at && !consultation()?.temporary) {
+              <app-button
+                [text]="'reminders.newReminder' | translate"
+                leftIcon="plus"
+                [size]="ButtonSizeEnum.small"
+                [style]="ButtonStyleEnum.primary"
+                (buttonClick)="openCreateReminderModal()">
+              </app-button>
+              }
+            </div>
+          </div>
+
+          @if (isLoadingReminders()) {
+          <div class="loading-container small">
+            <app-loader></app-loader>
+            <span class="loading-text"
+              >{{ 'reminders.loading' | translate }}</span
+            >
+          </div>
+          } @else if (reminders().length === 0) {
+          <div class="empty-state">
+            <app-svg
+              src="bell"
+              [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
+            <span class="empty-title"
+              >{{ 'reminders.noReminders' | translate }}</span
+            >
+          </div>
+          } @else {
+          <div class="reminders-list">
+            @for (reminder of reminders(); track reminder.id) {
+            <app-reminder-card
+              [reminder]="reminder"
+              [showActions]="!consultation()?.closed_at"
+              (edit)="openEditReminderModal($event)"
+              (delete)="deleteReminder($event)">
+            </app-reminder-card>
+            } @if (hasMoreReminders()) {
+            <div class="load-more-container">
+              <app-button
+                [text]="'consultationDetail.viewMore' | translate"
+                [style]="ButtonStyleEnum.text"
+                [size]="ButtonSizeEnum.medium"
+                [loading]="isLoadingMoreReminders()"
+                [disabled]="isLoadingMoreReminders()"
+                (buttonClick)="loadMoreReminders()">
+              </app-button>
+            </div>
+            }
+          </div>
+          }
+        </div>
       </div>
 
       <div class="messages-sidebar">
@@ -722,6 +782,15 @@
     (appointmentCreated)="onAppointmentCreated($event)"
     (appointmentUpdated)="onAppointmentUpdated($event)">
   </app-appointment-form-modal>
+
+  <app-reminder-form-modal
+    [isOpen]="showCreateReminderModal()"
+    [consultationId]="consultationId"
+    [editingReminder]="editingReminder()"
+    (closed)="closeCreateReminderModal()"
+    (reminderCreated)="onReminderCreated()"
+    (reminderUpdated)="onReminderUpdated()">
+  </app-reminder-form-modal>
 
   <app-modal
     [isOpen]="showBeneficiaryLinkModal()"

@@ -180,6 +180,19 @@ DEFAULT_NOTIFICATION_MESSAGES = {
         "model": "users.User",
         "helper_text": "Sent to the practitioner who created a manual-contact patient, carrying the patient's encryption passphrase",
     },
+    "reminder": {
+        "template_subject": _("{{ obj.title }}"),
+        "template_content": _(
+            "{{ obj.title }}\n\n"
+            "{% if obj.description %}{{ obj.description }}{% endif %}"
+        ),
+        "template_content_html": _(
+            "<p><strong>{{ obj.title }}</strong></p>"
+            "{% if obj.description %}<p>{{ obj.description }}</p>{% endif %}"
+        ),
+        "model": "consultations.Reminder",
+        "helper_text": "Custom reminder scheduled by a practitioner towards a contact",
+    },
 }
 
 
