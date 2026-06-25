@@ -274,6 +274,13 @@
                   appointments().length } }}
                 </app-typography>
               </div>
+              <app-button
+                [text]="'consultationDetail.newAppointment' | translate"
+                leftIcon="plus"
+                [size]="ButtonSizeEnum.small"
+                [style]="ButtonStyleEnum.primary"
+                (buttonClick)="openCreateAppointmentModal()">
+              </app-button>
             </div>
             <div class="appointments-list">
               @if (loadingAppointments()) {
@@ -353,6 +360,26 @@
                       </span>
                       }
                     </div>
+                  </div>
+                  }
+
+                  @if (appointment.status !== AppointmentStatus.CANCELLED) {
+                  <div class="appointment-actions">
+                    <app-button
+                      [text]="'reminders.edit' | translate"
+                      leftIcon="edit"
+                      [size]="ButtonSizeEnum.small"
+                      [style]="ButtonStyleEnum.stroke"
+                      (buttonClick)="openEditAppointmentModal(appointment)">
+                    </app-button>
+                    <app-button
+                      [text]="'reminders.delete' | translate"
+                      leftIcon="trash"
+                      [size]="ButtonSizeEnum.small"
+                      [style]="ButtonStyleEnum.stroke"
+                      [state]="ButtonStateEnum.error"
+                      (buttonClick)="deleteAppointment(appointment)">
+                    </app-button>
                   </div>
                   }
                 </div>
@@ -443,6 +470,17 @@
     (reminderCreated)="onReminderSaved()"
     (reminderUpdated)="onReminderSaved()">
   </app-reminder-form-modal>
+
+  @if (showAppointmentModal()) {
+  <app-appointment-form-modal
+    [isOpen]="showAppointmentModal()"
+    [editingAppointment]="editingAppointment()"
+    [initialParticipants]="patientAsParticipant"
+    (closed)="closeAppointmentModal()"
+    (appointmentCreated)="onAppointmentSaved()"
+    (appointmentUpdated)="onAppointmentSaved()">
+  </app-appointment-form-modal>
+  }
 
   @if (showEditModal()) {
   <app-modal

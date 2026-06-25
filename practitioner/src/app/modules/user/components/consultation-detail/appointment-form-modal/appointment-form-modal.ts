@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-import { Appointment, User, CreateAppointmentRequest } from '../../../../../core/models/consultation';
+import { Appointment, User, CreateAppointmentRequest, CreateParticipantRequest } from '../../../../../core/models/consultation';
 import { ModalComponent } from '../../../../../shared/components/modal/modal.component';
 import { AppointmentForm } from '../../../../../shared/components/appointment-form/appointment-form';
 import { TranslationService } from '../../../../../core/services/translation.service';
@@ -27,6 +27,7 @@ export class AppointmentFormModal {
   @Input() owner: User | null = null;
   @Input() initialStartDate: Date | null = null;
   @Input() initialEndDate: Date | null = null;
+  @Input() initialParticipants: CreateParticipantRequest[] = [];
 
   @Output() closed = new EventEmitter<void>();
   @Output() appointmentCreated = new EventEmitter<Appointment>();

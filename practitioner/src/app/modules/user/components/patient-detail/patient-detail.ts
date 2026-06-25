@@ -16,6 +16,7 @@ import { TypographyTypeEnum } from '../../../../shared/constants/typography';
 import {
   ButtonSizeEnum,
   ButtonStyleEnum,
+  ButtonStateEnum,
 } from '../../../../shared/constants/button';
 import { IHealthMetric, IHealthMetricResponse } from '../../models/patient';
 import { IUser } from '../../models/user';
@@ -25,7 +26,9 @@ import { ConsultationService } from '../../../../core/services/consultation.serv
 import {
   Consultation,
   Appointment,
+  AppointmentStatus,
   CustomFieldValue,
+  CreateParticipantRequest,
 } from '../../../../core/models/consultation';
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { TranslationService } from '../../../../core/services/translation.service';
@@ -34,6 +37,7 @@ import { BadgeTypeEnum } from '../../../../shared/constants/badge';
 import { ConsultationRowItem } from '../../../../shared/components/consultation-row-item/consultation-row-item';
 import { ReminderCard } from '../../../../shared/components/reminder-card/reminder-card';
 import { ReminderFormModal } from '../../../../shared/components/reminder-form-modal/reminder-form-modal';
+import { AppointmentFormModal } from '../consultation-detail/appointment-form-modal/appointment-form-modal';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { Reminder } from '../../../../core/models/reminder';
 import {
@@ -60,6 +64,7 @@ import { LocalDatePipe } from '../../../../shared/pipes/local-date.pipe';
     ConsultationRowItem,
     ReminderCard,
     ReminderFormModal,
+    AppointmentFormModal,
     UserAvatar,
     LocalDatePipe,
   ],
@@ -79,6 +84,8 @@ export class PatientDetail implements OnInit, OnDestroy {
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
+  protected readonly ButtonStateEnum = ButtonStateEnum;
+  protected readonly AppointmentStatus = AppointmentStatus;
   protected readonly getConsultationBadgeType = getConsultationBadgeType;
   protected readonly getAppointmentBadgeType = getAppointmentBadgeType;
   protected readonly BadgeTypeEnum = BadgeTypeEnum;
@@ -101,6 +108,9 @@ export class PatientDetail implements OnInit, OnDestroy {
 
   showReminderModal = signal(false);
   editingReminder = signal<Reminder | null>(null);
+
+  showAppointmentModal = signal(false);
+  editingAppointment = signal<Appointment | null>(null);
 
   get tabItems(): TabItem[] {
     return [
@@ -215,6 +225,76 @@ export class PatientDetail implements OnInit, OnDestroy {
             getErrorMessage(err)
           );
           this.loadingAppointments.set(false);
+        },
+      });
+  }
+
+  // When creating an appointment from the contact page, pre-add the contact
+  // as a participant.
+  get patientAsParticipant(): CreateParticipantRequest[] {
+    const p = this.patient();
+    if (!p) return [];
+    return [
+      {
+        user_id: p.pk,
+        first_name: p.first_name,
+        last_name: p.last_name,
+        email: p.email,
+      },
+    ];
+  }
+
+  openCreateAppointmentModal(): void {
+    this.editingAppointment.set(null);
+    this.showAppointmentModal.set(true);
+  }
+
+  openEditAppointmentModal(appointment: Appointment): void {
+    this.editingAppointment.set(appointment);
+    this.showAppointmentModal.set(true);
+  }
+
+  closeAppointmentModal(): void {
+    this.showAppointmentModal.set(false);
+    this.editingAppointment.set(null);
+  }
+
+  onAppointmentSaved(): void {
+    this.showAppointmentModal.set(false);
+    this.editingAppointment.set(null);
+    this.loadAppointments();
+  }
+
+  async deleteAppointment(appointment: Appointment): Promise<void> {
+    const confirmed = await this.confirmationService.confirm({
+      title: this.t.instant('patientDetail.deleteAppointmentTitle'),
+      message: this.t.instant('patientDetail.deleteAppointmentMessage'),
+      confirmText: this.t.instant('reminders.delete'),
+      cancelText: this.t.instant('reminders.cancel'),
+      confirmStyle: 'danger',
+    });
+
+    if (!confirmed) return;
+
+    this.consultationService
+      .deleteAppointment(appointment.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.appointments.set(
+            this.appointments().filter(a => a.id !== appointment.id)
+          );
+          this.toasterService.show(
+            'success',
+            this.t.instant('patientDetail.appointmentDeleted')
+          );
+        },
+        error: error => {
+          this.toasterService.show(
+            'error',
+            this.t.instant('patientDetail.errorDeletingAppointment'),
+            getErrorMessage(error)
+          );
         },
       });
   }

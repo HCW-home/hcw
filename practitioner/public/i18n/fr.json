@@ -147,7 +147,11 @@
     "statusCompleted": "Terminé",
     "statusDraft": "Brouillon",
     "statusInProgress": "En cours",
-    "tabReminders": "Rappels"
+    "tabReminders": "Rappels",
+    "deleteAppointmentTitle": "Supprimer le rendez-vous",
+    "deleteAppointmentMessage": "Voulez-vous vraiment supprimer ce rendez-vous ? Cette action est irréversible.",
+    "appointmentDeleted": "Rendez-vous supprimé",
+    "errorDeletingAppointment": "Erreur lors de la suppression du rendez-vous"
   },
   "appointments": {
     "appointmentsCount": "{{count}} rendez-vous",

@@ -86,6 +86,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   @Input() autoSave = true;
   @Input() beneficiary: User | null = null;
   @Input() owner: User | null = null;
+  @Input() initialParticipants: CreateParticipantRequest[] = [];
   @Input() initialStartDate: Date | null = null;
   @Input() initialEndDate: Date | null = null;
   @Input() highlightAddParticipant = false;
@@ -205,6 +206,17 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
     this.loadConfig();
     this.updateInviteCheckboxStates();
 
+    // When the component is created with an appointment already set (e.g. the
+    // modal is wrapped in an @if), populate the edit state here since
+    // ngOnChanges fired before the form existed.
+    if (this.editingAppointment) {
+      this.populateFormForEdit();
+      this.loadParticipants();
+    } else if (this.initialParticipants.length) {
+      // Pre-fill participants (e.g. creating an appointment from a contact page).
+      this.pendingParticipants.set([...this.initialParticipants]);
+    }
+
     // Clear backend errors when form values change
     this.appointmentForm.valueChanges
       .pipe(takeUntil(this.destroy$))
@@ -270,6 +282,8 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
       if (this.editingAppointment) {
         this.populateFormForEdit();
         this.loadParticipants();
+      } else if (this.initialParticipants.length) {
+        this.pendingParticipants.set([...this.initialParticipants]);
       }
     }
     if ((changes['beneficiary'] || changes['owner']) && this.appointmentForm) {

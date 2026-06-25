@@ -947,7 +947,11 @@
     "statusCompleted": "Завершено",
     "statusDraft": "Чернетка",
     "statusInProgress": "У процесі",
-    "tabReminders": "Reminders"
+    "tabReminders": "Reminders",
+    "deleteAppointmentTitle": "Delete appointment",
+    "deleteAppointmentMessage": "Are you sure you want to delete this appointment? This action cannot be undone.",
+    "appointmentDeleted": "Appointment deleted",
+    "errorDeletingAppointment": "Error deleting appointment"
   },
   "appointments": {
     "appointmentsCount": "{{count}} прийомів",

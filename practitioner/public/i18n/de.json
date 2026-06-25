@@ -327,7 +327,11 @@
     "statusCompleted": "Vollendet",
     "statusDraft": "Entwurf",
     "statusInProgress": "Geplant",
-    "tabReminders": "Erinnerungen"
+    "tabReminders": "Erinnerungen",
+    "deleteAppointmentTitle": "Termin löschen",
+    "deleteAppointmentMessage": "Möchten Sie diesen Termin wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "appointmentDeleted": "Termin gelöscht",
+    "errorDeletingAppointment": "Fehler beim Löschen des Termins"
   },
   "sidebar": {
     "appointmentsSubtitle": "Planen und verwalten",
