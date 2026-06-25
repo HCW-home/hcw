@@ -79,6 +79,10 @@ export class ReminderForm implements OnInit, OnChanges, OnDestroy {
   isSubmitting = signal(false);
   currentUser = signal<IUser | null>(null);
   selectedRecipient = signal<IUser | null>(null);
+  // Stable reference for the search-select initial value: computed once so it
+  // does not re-trigger the select's effect (which would re-impose the
+  // recipient after the user clears it).
+  displayRecipient: IUser | null = null;
   reminderForm!: FormGroup;
   backendErrors = signal<Record<string, string[]>>({});
 
@@ -102,8 +106,9 @@ export class ReminderForm implements OnInit, OnChanges, OnDestroy {
   }
 
   // Recipient to pre-fill the search-select: the edited reminder's recipient
-  // takes precedence, otherwise the recipient provided on creation.
-  get displayRecipient(): IUser | null {
+  // takes precedence, otherwise the recipient provided on creation. Computed
+  // once (see ngOnInit) to keep a stable object reference.
+  private computeDisplayRecipient(): IUser | null {
     const r = this.editingReminder?.recipient;
     if (r) {
       return {
@@ -126,6 +131,7 @@ export class ReminderForm implements OnInit, OnChanges, OnDestroy {
   ngOnInit(): void {
     this.initForm();
     this.loadCurrentUser();
+    this.displayRecipient = this.computeDisplayRecipient();
 
     if (this.editingReminder) {
       this.populateFormForEdit();
