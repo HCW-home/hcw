@@ -311,11 +311,15 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
       .subscribe({
         next: response => {
           const currentUser = this.userService.currentUserValue;
+          const savedSelection = this.readSelectedPractitioners();
           this.practitioners.set(
             response.results.map((user, index) => ({
               user,
               color: PRACTITIONER_COLORS[index % PRACTITIONER_COLORS.length],
-              selected: user.pk === currentUser?.pk,
+              // Restore last selection if any, otherwise default to self.
+              selected: savedSelection
+                ? savedSelection.includes(user.pk)
+                : user.pk === currentUser?.pk,
             }))
           );
           this.loadAppointments();
@@ -323,6 +327,36 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
             this.loadReminderOccurrences();
           }
         },
+      });
+  }
+
+  // Key inside the user's app_preferences JSON (persisted server-side).
+  private static readonly SELECTED_PRACTITIONERS_PREF =
+    'appointmentsSelectedPractitionerIds';
+
+  private readSelectedPractitioners(): number[] | null {
+    const prefs = this.userService.currentUserValue?.app_preferences;
+    const value = prefs?.[Appointments.SELECTED_PRACTITIONERS_PREF];
+    return Array.isArray(value)
+      ? value.filter((id): id is number => typeof id === 'number')
+      : null;
+  }
+
+  private persistSelectedPractitioners(): void {
+    const ids = this.practitioners()
+      .filter(p => p.selected)
+      .map(p => p.user.pk);
+    const current = this.userService.currentUserValue?.app_preferences ?? {};
+    const app_preferences = {
+      ...current,
+      [Appointments.SELECTED_PRACTITIONERS_PREF]: ids,
+    };
+    this.userService
+      .updateCurrentUser({ app_preferences })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        // Persistence is best-effort; selection already applied in the UI.
+        error: () => {},
       });
   }
 
@@ -339,6 +373,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
           : p
       )
     );
+    this.persistSelectedPractitioners();
     this.loadAppointments();
     if (this.currentView() !== 'list') {
       this.loadReminderOccurrences();
