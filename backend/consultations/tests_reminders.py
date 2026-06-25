@@ -245,10 +245,11 @@ class ReminderTaskTests(_ReminderBase):
         handle_custom_reminders()
 
         msg = Message.objects.get(sent_to=self.patient)
-        # Subject comes from the title.
-        self.assertEqual(msg.render_subject, "Visit reminder")
-        # Plain-text/SMS bodies carry both the title and the description.
-        self.assertIn("Visit reminder", msg.render_content)
+        # Subject is prefixed with "Reminder:" and carries the title.
+        self.assertEqual(msg.render_subject, "Reminder: Visit reminder")
+        # When a description is set, bodies carry the explicit lead-in and the
+        # description (the title is not repeated in the body).
+        self.assertIn("This is an automatic message to remind you", msg.render_content)
         self.assertIn("Please attend your appointment.", msg.render_content)
         self.assertIn("Please attend your appointment.", msg.render_content_sms)
         # HTML rendering must not raise and must carry the content.
@@ -269,7 +270,9 @@ class ReminderTaskTests(_ReminderBase):
         handle_custom_reminders()
 
         msg = Message.objects.get(sent_to=self.patient)
-        self.assertEqual(msg.render_subject, "Standalone title")
+        self.assertEqual(msg.render_subject, "Reminder: Standalone title")
+        # No description -> the body falls back to the title.
+        self.assertIn("This is an automatic message to remind you", msg.render_content)
         self.assertIn("Standalone title", msg.render_content)
 
     @patch("messaging.tasks.send_message.delay")

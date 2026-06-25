@@ -181,14 +181,15 @@ DEFAULT_NOTIFICATION_MESSAGES = {
         "helper_text": "Sent to the practitioner who created a manual-contact patient, carrying the patient's encryption passphrase",
     },
     "reminder": {
-        "template_subject": _("{{ obj.title }}"),
+        "template_subject": _("Reminder: {{ obj.title }}"),
         "template_content": _(
-            "{{ obj.title }}\n\n"
-            "{% if obj.description %}{{ obj.description }}{% endif %}"
+            "This is an automatic message to remind you: "
+            "{% if obj.description %}{{ obj.description }}{% else %}{{ obj.title }}{% endif %}"
         ),
         "template_content_html": _(
-            "<p><strong>{{ obj.title }}</strong></p>"
-            "{% if obj.description %}<p>{{ obj.description }}</p>{% endif %}"
+            "<p>This is an automatic message to remind you:</p>"
+            "{% if obj.description %}<p>{{ obj.description }}</p>"
+            "{% else %}<p><strong>{{ obj.title }}</strong></p>{% endif %}"
         ),
         "model": "consultations.Reminder",
         "helper_text": "Custom reminder scheduled by a practitioner towards a contact",

@@ -603,9 +603,15 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
         occ.is_recurring && occ.occurrence_total > 1
           ? ` (${occ.occurrence_index + 1}/${occ.occurrence_total})`
           : '';
+      const recipient = occ.recipient
+        ? `${occ.recipient.first_name || ''} ${occ.recipient.last_name || ''}`.trim() ||
+          occ.recipient.email ||
+          ''
+        : '';
+      const recipientPart = recipient ? ` - ${recipient}` : '';
       return {
         id: `reminder-${occ.reminder_id}-${occ.occurrence_index}-${i}`,
-        title: `${this.t.instant('reminders.eventPrefix')}: ${occ.title}${suffix}`,
+        title: `${this.t.instant('reminders.eventPrefix')}: ${occ.title}${recipientPart}${suffix}`,
         start: parseDateWithoutTimezone(occ.occurrence_at) || occ.occurrence_at,
         backgroundColor: this.reminderEventColor,
         borderColor: this.reminderEventColor,

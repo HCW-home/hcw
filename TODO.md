@@ -125,3 +125,5 @@ creating an appointment via FHIR also seems not to work well with a fhir client,
 # Support of contained on Encounter also
 
 Add support of contained on Encounter also
+
+Au glisser dans le calendrier (nouvel élément), afficher désormais une modale demandant quel type de il s'agit : rappel ou rendez-vous.
