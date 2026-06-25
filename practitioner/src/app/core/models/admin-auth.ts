@@ -80,6 +80,10 @@ export interface IOpenIDConfig {
   encryption_enabled: boolean;
   master_public_key: string;
   master_public_key_fingerprint: string;
+  calendar_colorization_enabled: boolean;
+  calendar_rotation_colors: string[];
+  calendar_rotation_anchor_date: string;
+  calendar_first_day_of_week: number;
 }
 
 export interface IOpenIDLoginBody {

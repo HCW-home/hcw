@@ -6,6 +6,7 @@ import {
   signal,
   inject,
   viewChild,
+  effect,
   ElementRef,
   HostListener,
 } from '@angular/core';
@@ -56,6 +57,8 @@ import {
   getAppointmentBadgeType,
   parseDateWithoutTimezone,
 } from '../../../../shared/tools/helper';
+import { weekRotationColor } from '../../../../shared/tools/calendar-rotation';
+import { applyCalendarLocale } from '../../../../shared/tools/calendar-locale';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
 import { LocalDatePipe } from '../../../../shared/pipes/local-date.pipe';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -132,6 +135,18 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
 
+  constructor() {
+    // Localize the FullCalendar headers (day/month names) to the user's
+    // language, re-applying whenever the language or the calendar instance
+    // changes. The admin-configured first day of week is preserved.
+    effect(() => {
+      const lang = this.t.currentLanguage();
+      const firstDay = this.firstDayOfWeek();
+      const api = this.calendarComponent()?.getApi();
+      applyCalendarLocale(api, lang, firstDay);
+    });
+  }
+
   calendarComponent = viewChild<FullCalendarComponent>('calendar');
   hoveredAppointment = signal<Appointment | null>(null);
   hoveredReminder = signal<{
@@ -147,6 +162,12 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   tooltipPosition = signal<{ top: number; left: number }>({ top: 0, left: 0 });
   selectedAppointmentForMenu = signal<Appointment | null>(null);
   menuPosition = signal<{ top: number; left: number }>({ top: 0, left: 0 });
+
+  // Calendar background colorization (admin-controlled, 4-week rotation).
+  colorizationEnabled = signal<boolean>(false);
+  private rotationColors: string[] = [];
+  private rotationAnchorDate = '';
+  private firstDayOfWeek = signal<number>(0);
 
   loading = signal(true);
   loadingMore = signal(false);
@@ -196,6 +217,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     initialView: 'timeGridWeek',
     headerToolbar: false,
     height: 'auto',
+    firstDay: 0,
     weekends: true,
     editable: true,
     eventDurationEditable: true,
@@ -210,6 +232,8 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     eventMouseEnter: this.handleEventMouseEnter.bind(this),
     eventMouseLeave: this.handleEventMouseLeave.bind(this),
     eventContent: this.renderEventContent.bind(this),
+    dayCellClassNames: this.dayCellRotationClass.bind(this),
+    dayHeaderClassNames: this.dayHeaderRotationClass.bind(this),
     slotMinTime: '00:00:00',
     slotMaxTime: '24:00:00',
     allDaySlot: false,
@@ -299,11 +323,68 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
           if (config.appointment_early_join_minutes) {
             this.appointmentEarlyJoinMinutes = config.appointment_early_join_minutes;
           }
+          this.rotationColors = config.calendar_rotation_colors ?? [];
+          this.rotationAnchorDate = config.calendar_rotation_anchor_date ?? '';
+          const firstDay = config.calendar_first_day_of_week ?? 0;
+          // Drives the rotation week alignment and the locale effect.
+          this.firstDayOfWeek.set(firstDay);
+          // Reassign a fresh options object so the FullCalendar component diffs
+          // and applies firstDay even before its api is reachable imperatively.
+          this.calendarOptions = { ...this.calendarOptions, firstDay };
+          this.calendarComponent()?.getApi()?.setOption('firstDay', firstDay);
+          this.colorizationEnabled.set(
+            !!config.calendar_colorization_enabled &&
+            this.rotationColors.length > 0 &&
+            !!this.rotationAnchorDate
+          );
+          this.applyRotationColorVariables();
+          this.calendarComponent()?.getApi()?.render();
         },
         error: () => {
           // Use default value on error
         }
       });
+  }
+
+  /** Index (0-based) of the rotation color for a given day, or null when disabled. */
+  private rotationIndex(date: Date): number | null {
+    if (!this.colorizationEnabled()) {
+      return null;
+    }
+    const color = weekRotationColor(date, this.rotationAnchorDate, this.rotationColors, this.firstDayOfWeek());
+    if (color === null) {
+      return null;
+    }
+    return this.rotationColors.indexOf(color);
+  }
+
+  /** Class applied to each FullCalendar day cell / column to colorize its background. */
+  private dayCellRotationClass(arg: { date: Date }): string[] {
+    const index = this.rotationIndex(arg.date);
+    return index === null ? [] : [`fc-rot-${index}`];
+  }
+
+  /** Same rotation class for the day header so the colorization reads as one block. */
+  private dayHeaderRotationClass(arg: { date: Date }): string[] {
+    const index = this.rotationIndex(arg.date);
+    return index === null ? [] : [`fc-rot-${index}`];
+  }
+
+  /** Background color of a list-view row, based on its appointment date. */
+  rowColor(appointment: Appointment): string | null {
+    if (!this.colorizationEnabled()) {
+      return null;
+    }
+    const date = parseDateWithoutTimezone(appointment.scheduled_at) || new Date(appointment.scheduled_at);
+    return weekRotationColor(date, this.rotationAnchorDate, this.rotationColors, this.firstDayOfWeek());
+  }
+
+  /** Expose the configured colors as CSS variables consumed by the SCSS rules. */
+  private applyRotationColorVariables(): void {
+    const host = this.el.nativeElement as HTMLElement;
+    this.rotationColors.forEach((color, index) => {
+      host.style.setProperty(`--calendar-rot-${index}`, color);
+    });
   }
 
   private loadPractitioners(): void {
@@ -397,6 +478,13 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     setTimeout(() => {
       this.updateCalendarHeight();
       this.scrollToNowIndicator();
+      // Guarantee the calendar picks up the user's locale and the admin first
+      // day of week once the FullCalendar instance is actually mounted.
+      applyCalendarLocale(
+        this.calendarComponent()?.getApi(),
+        this.t.currentLanguage(),
+        this.firstDayOfWeek(),
+      );
     });
   }
 

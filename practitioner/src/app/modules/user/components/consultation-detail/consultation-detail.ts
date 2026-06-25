@@ -5,6 +5,7 @@ import {
   signal,
   inject,
   computed,
+  effect,
   viewChild,
   ViewChildren,
   QueryList,
@@ -78,6 +79,7 @@ import {
   getAppointmentBadgeType,
   parseDateWithoutTimezone,
 } from '../../../../shared/tools/helper';
+import { applyCalendarLocale } from '../../../../shared/tools/calendar-locale';
 import { LocalDatePipe } from '../../../../shared/pipes/local-date.pipe';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
@@ -378,6 +380,18 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   >(null);
 
   consultationAutoDeleteHours = 0;
+  private firstDayOfWeek = signal<number>(0);
+
+  constructor() {
+    // Localize the appointment calendar headers to the user's language and keep
+    // the admin-configured first day of week, reacting to changes in either.
+    effect(() => {
+      const lang = this.t.currentLanguage();
+      const firstDay = this.firstDayOfWeek();
+      const api = this.calendarComponent()?.getApi();
+      applyCalendarLocale(api, lang, firstDay);
+    });
+  }
 
   ngOnInit(): void {
     this.initEditForm();
@@ -389,6 +403,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       next: (config) => {
         this.consultationAutoDeleteHours = config.consultation_auto_delete_hours || 0;
         this.appointmentEarlyJoinMinutes = config.appointment_early_join_minutes || 5;
+        this.firstDayOfWeek.set(config.calendar_first_day_of_week ?? 0);
       },
       error: (err: unknown) => {
         console.error('Failed to get app config:', err);

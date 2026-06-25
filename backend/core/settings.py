@@ -934,6 +934,43 @@ CONSTANCE_CONFIG = {
         "FHIR Identifier.system URL of the external partner for MedicationRequest "
         "resources (Prescription in HCW). Leave blank to disable.",
     ),
+    "enable_calendar_colorization": (
+        False,
+        "Colorize the calendar background in the practitioner view using a "
+        "rotating 4-week palette. Disabled by default.",
+    ),
+    "calendar_color_week_1": (
+        "#e0f2fe",
+        "Calendar background color for week 1 of the 4-week rotation (hex).",
+        "calendar_color_field",
+    ),
+    "calendar_color_week_2": (
+        "#dcfce7",
+        "Calendar background color for week 2 of the 4-week rotation (hex).",
+        "calendar_color_field",
+    ),
+    "calendar_color_week_3": (
+        "#fef9c3",
+        "Calendar background color for week 3 of the 4-week rotation (hex).",
+        "calendar_color_field",
+    ),
+    "calendar_color_week_4": (
+        "#fce7f3",
+        "Calendar background color for week 4 of the 4-week rotation (hex).",
+        "calendar_color_field",
+    ),
+    "calendar_rotation_anchor_date": (
+        "2026-01-01",
+        "Anchor date (YYYY-MM-DD) for the continuous week counter. The week "
+        "containing this date is week 1 of the rotation. The counter never "
+        "resets, so colors stay consistent across year boundaries.",
+    ),
+    "calendar_first_day_of_week": (
+        "1",
+        "First day of the week shown in the practitioner calendars "
+        "(0 = Sunday, 1 = Monday).",
+        "calendar_first_day_select",
+    ),
 }
 
 
@@ -961,6 +998,15 @@ CONSTANCE_CONFIG_FIELDSETS = {
         "fhir_external_patient_system",
         "fhir_external_practitioner_system",
         "fhir_external_medicationrequest_system",
+    ),
+    "Calendar appearance": (
+        "calendar_first_day_of_week",
+        "enable_calendar_colorization",
+        "calendar_color_week_1",
+        "calendar_color_week_2",
+        "calendar_color_week_3",
+        "calendar_color_week_4",
+        "calendar_rotation_anchor_date",
     ),
 }
 
@@ -1012,6 +1058,12 @@ CONSTANCE_FIELDSET_DESCRIPTIONS = {
         "URLs used by your external partner when posting FHIR resources. "
         "Set each one to match the URL your partner emits — leave blank to "
         "disable external-identifier handling for that resource type."
+    ),
+    "Calendar appearance": (
+        "First day of the week, plus optional background colorization of the "
+        "practitioner calendars. Enable the toggle, then pick four colors "
+        "applied on a continuous 4-week rotation anchored to a fixed date so "
+        "the sequence never resets at year boundaries."
     ),
 }
 
@@ -1094,6 +1146,28 @@ CONSTANCE_ADDITIONAL_FIELDS = {
             "choices": (
                 ("livekit", "LiveKit"),
                 ("mediasoup", "MediaSoup"),
+            ),
+        },
+    ],
+    "calendar_color_field": [
+        "django.forms.CharField",
+        {
+            "widget": "core.widgets.UnfoldColorInputWidget",
+            "required": False,
+        },
+    ],
+    "calendar_first_day_select": [
+        "django.forms.fields.ChoiceField",
+        {
+            "widget": "django.forms.Select",
+            "choices": (
+                ("0", "Sunday"),
+                ("1", "Monday"),
+                ("2", "Tuesday"),
+                ("3", "Wednesday"),
+                ("4", "Thursday"),
+                ("5", "Friday"),
+                ("6", "Saturday"),
             ),
         },
     ],

@@ -1569,6 +1569,15 @@ class AppConfigView(APIView):
                 "encryption_enabled": constance_config.encryption_enabled,
                 "master_public_key": constance_config.master_public_key,
                 "master_public_key_fingerprint": constance_config.master_public_key_fingerprint,
+                "calendar_colorization_enabled": constance_config.enable_calendar_colorization,
+                "calendar_rotation_colors": [
+                    constance_config.calendar_color_week_1,
+                    constance_config.calendar_color_week_2,
+                    constance_config.calendar_color_week_3,
+                    constance_config.calendar_color_week_4,
+                ],
+                "calendar_rotation_anchor_date": constance_config.calendar_rotation_anchor_date,
+                "calendar_first_day_of_week": int(constance_config.calendar_first_day_of_week),
             }
         )
 

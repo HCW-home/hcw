@@ -126,8 +126,8 @@
         <span>{{ 'appointments.noAppointmentsFound' | translate }}</span>
       </div>
       } @else { @for (appointment of appointments(); track appointment.id) {
-      <div class="appointment-item" [class.highlighted]="highlightedAppointmentId() === appointment.id" (click)="viewAppointment(appointment)">
-        <div class="appointment-date">
+      <div class="appointment-item" [class.highlighted]="highlightedAppointmentId() === appointment.id" [class.colorized]="colorizationEnabled() && !!rowColor(appointment)" [style.border-left-color]="rowColor(appointment)" (click)="viewAppointment(appointment)">
+        <div class="appointment-date" [style.background-color]="rowColor(appointment)">
           <span class="day"
             >{{ appointment.scheduled_at | localDate:'dd' }}</span
           >
@@ -266,6 +266,7 @@
 
     <div
       class="calendar-wrapper"
+      [class.calendar-colorized]="colorizationEnabled()"
       [style.display]="loading() || currentView() === 'list' ? 'none' : 'block'">
       <full-calendar
         #calendar

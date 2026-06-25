@@ -325,6 +325,14 @@
     background: var(--slate-50);
   }
 
+  // Calendar background colorization (4-week rotation): a colored left bar marks
+  // the rotation week. The actual color comes from the inline border-left-color
+  // binding; here we only give the border its width/style so it becomes visible.
+  &.colorized {
+    border-left-width: 4px;
+    border-left-style: solid;
+  }
+
   &.highlighted {
     background: var(--primary-50);
     border-left: 3px solid var(--primary-500);
@@ -637,6 +645,18 @@
     border-color: var(--slate-100);
   }
 
+  // When the background colorization is active, the light grey grid lines blend
+  // into the colored cells; switch them to a darker grey so the grid stays
+  // legible on the pastel backgrounds.
+  .calendar-colorized {
+    .fc-theme-standard td,
+    .fc-theme-standard th,
+    .fc-theme-standard .fc-scrollgrid,
+    .fc-scrollgrid-section > * {
+      border-color: var(--slate-200);
+    }
+  }
+
   .fc-col-header-cell {
     background: var(--slate-50);
     padding: 12px 0;
@@ -764,6 +784,22 @@
 
   .fc-timegrid-col.fc-day-today {
     background: rgba(var(--primary-500-rgb), 0.03);
+  }
+
+  // Calendar background colorization (admin-controlled 4-week rotation).
+  // The day cell / column / header gets an `fc-rot-N` class; the matching color
+  // comes from the `--calendar-rot-N` CSS variables set by the component.
+  // Applied at a soft opacity so appointment events stay readable on top.
+  @for $i from 0 through 3 {
+    .fc-daygrid-day.fc-rot-#{$i},
+    .fc-timegrid-col.fc-rot-#{$i},
+    .fc-col-header-cell.fc-rot-#{$i} {
+      background-color: color-mix(
+        in srgb,
+        var(--calendar-rot-#{$i}) 55%,
+        transparent
+      );
+    }
   }
 
   .fc-daygrid-day-events {
