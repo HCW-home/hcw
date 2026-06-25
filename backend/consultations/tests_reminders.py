@@ -311,7 +311,58 @@ class ReminderTaskTests(_ReminderBase):
         self.assertFalse(reminder.is_active)
         self.assertIsNone(reminder.next_run_at)
 
-        self.assertEqual(Message.objects.filter(sent_to=self.patient).count(), 3)
+    @patch("messaging.tasks.send_message.delay")
+    def test_overdue_reminder_is_sent(self, mock_send):
+        """A one-off reminder whose next_run_at is in the past (missed beat)
+        is still delivered."""
+        past = timezone.now().replace(second=0, microsecond=0) - timedelta(hours=2)
+        reminder = Reminder.objects.create(
+            title="Late",
+            recipient=self.patient,
+            created_by=self.practitioner,
+            scheduled_at=past,
+        )
+        self.assertEqual(reminder.next_run_at, past)
+
+        handle_custom_reminders()
+
+        self.assertEqual(Message.objects.filter(sent_to=self.patient).count(), 1)
+        reminder.refresh_from_db()
+        self.assertEqual(reminder.occurrences_sent, 1)
+        self.assertFalse(reminder.is_active)
+
+    @patch("messaging.tasks.send_message.delay")
+    def test_recurring_backlog_is_caught_up(self, mock_send):
+        """After downtime, a daily reminder started in the past catches up all
+        the missed occurrences in a single run, one Message each.
+
+        Start is offset by 12h so occurrence times never land exactly on the
+        current minute (avoids a boundary-dependent count).
+        """
+        start = timezone.now().replace(
+            second=0, microsecond=0
+        ) - timedelta(days=3, hours=12)
+        reminder = Reminder.objects.create(
+            title="Daily",
+            recipient=self.patient,
+            created_by=self.practitioner,
+            scheduled_at=start,
+            is_recurring=True,
+            recurrence_interval=1,
+            recurrence_period=RecurrencePeriod.day,
+            recurrence_count=10,
+        )
+
+        handle_custom_reminders()
+
+        # Occurrences at start, +1d, +2d, +3d (all in the past) -> 4 messages;
+        # the 5th (+4d, ~12h in the future) is not yet due.
+        self.assertEqual(Message.objects.filter(sent_to=self.patient).count(), 4)
+        reminder.refresh_from_db()
+        self.assertEqual(reminder.occurrences_sent, 4)
+        self.assertTrue(reminder.is_active)
+        self.assertEqual(reminder.next_run_at, start + timedelta(days=4))
+        self.assertGreater(reminder.next_run_at, timezone.now())
 
 
 class ReminderOccurrenceTests(_ReminderBase):

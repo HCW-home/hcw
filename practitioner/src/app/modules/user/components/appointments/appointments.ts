@@ -738,6 +738,14 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   }
 
   handleEventDrop(info: EventDropArg): void {
+    const reminderId = info.event.extendedProps['reminderId'] as
+      | number
+      | undefined;
+    if (reminderId) {
+      this.handleReminderDrop(reminderId, info);
+      return;
+    }
+
     const appointment = info.event.extendedProps['appointment'] as Appointment;
     const newStart = info.event.start;
     const newEnd = info.event.end;
@@ -750,6 +758,12 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   }
 
   handleEventResize(info: EventResizeDoneArg): void {
+    // Reminders are point-in-time and have no duration: nothing to resize.
+    if (info.event.extendedProps['reminderId']) {
+      info.revert();
+      return;
+    }
+
     const appointment = info.event.extendedProps['appointment'] as Appointment;
     const newStart = info.event.start;
     const newEnd = info.event.end;
@@ -759,6 +773,63 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     }
 
     this.updateAppointmentTime(appointment.id, newStart, newEnd, info.revert);
+  }
+
+  private handleReminderDrop(reminderId: number, info: EventDropArg): void {
+    const newStart = info.event.start;
+    const oldStart = info.oldEvent.start;
+    if (!newStart || !oldStart) {
+      info.revert();
+      return;
+    }
+
+    // Dragging any occurrence translates the WHOLE series by the same delta.
+    // We apply that delta to the reminder's base scheduled_at.
+    const deltaMs = newStart.getTime() - oldStart.getTime();
+
+    const formatLocal = (d: Date): string => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
+
+    this.consultationService
+      .getReminder(reminderId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: reminder => {
+          const newScheduled = new Date(
+            new Date(reminder.scheduled_at).getTime() + deltaMs
+          );
+          this.consultationService
+            .updateReminder(reminderId, {
+              scheduled_at: formatLocal(newScheduled),
+            })
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+              next: () => this.loadReminderOccurrences(),
+              error: err => {
+                info.revert();
+                this.toasterService.show(
+                  'error',
+                  this.t.instant('reminders.errorUpdating'),
+                  getErrorMessage(err)
+                );
+              },
+            });
+        },
+        error: err => {
+          info.revert();
+          this.toasterService.show(
+            'error',
+            this.t.instant('reminders.errorLoading'),
+            getErrorMessage(err)
+          );
+        },
+      });
   }
 
   private updateAppointmentTime(

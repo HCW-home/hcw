@@ -112,7 +112,12 @@ def handle_reminders():
 
 @app.task
 def handle_custom_reminders():
-    """Deliver standalone reminders whose next_run_at matches the current minute.
+    """Deliver standalone reminders that are due (next_run_at <= now).
+
+    Uses ``<= now`` rather than ``== now`` so a missed beat (worker downtime,
+    deploy, overload) still gets delivered on the next run instead of being
+    skipped forever. For recurring reminders, ``compute_next_run_at`` advances
+    one step per delivery, so a backlog is caught up one occurrence at a time.
 
     Creates a Message rendered through the ``reminder`` template (the reminder
     itself is the template ``obj``) per due reminder; its post_save signal
@@ -126,20 +131,31 @@ def handle_custom_reminders():
         with tenant_context(tenant):
             from .models import Reminder
 
-            for reminder in Reminder.objects.filter(is_active=True, next_run_at=now):
-                Message.objects.create(
-                    sent_to=reminder.recipient,
-                    sent_by=reminder.created_by,
-                    template_system_name="reminder",
-                    content_type=ContentType.objects.get_for_model(reminder),
-                    object_id=reminder.pk,
-                    # No communication_method: the recipient's channel decides.
-                )
-                reminder.occurrences_sent += 1
-                reminder.last_sent_at = now
-                nxt = reminder.compute_next_run_at()
-                reminder.is_active = nxt is not None
-                reminder.next_run_at = nxt
+            due = Reminder.objects.filter(
+                is_active=True, next_run_at__isnull=False, next_run_at__lte=now
+            )
+            for reminder in due:
+                # Catch up every occurrence that should already have been sent
+                # (e.g. after downtime), one Message per missed occurrence.
+                while (
+                    reminder.is_active
+                    and reminder.next_run_at is not None
+                    and reminder.next_run_at <= now
+                ):
+                    occurrence_at = reminder.next_run_at
+                    Message.objects.create(
+                        sent_to=reminder.recipient,
+                        sent_by=reminder.created_by,
+                        template_system_name="reminder",
+                        content_type=ContentType.objects.get_for_model(reminder),
+                        object_id=reminder.pk,
+                        # No communication_method: the recipient's channel decides.
+                    )
+                    reminder.occurrences_sent += 1
+                    reminder.last_sent_at = occurrence_at
+                    nxt = reminder.compute_next_run_at()
+                    reminder.is_active = nxt is not None
+                    reminder.next_run_at = nxt
                 reminder.save(
                     update_fields=[
                         "occurrences_sent",
