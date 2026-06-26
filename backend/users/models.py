@@ -344,7 +344,7 @@ class User(AbstractUser):
         leading '+'. Stores a canonical form so search and SMS sending match
         regardless of how the number was typed (e.g. '06 12 34 56 78')."""
         if not value:
-            return value
+            return None
         cleaned = re.sub(r"[\s\-.() ]", "", value.strip())
         return cleaned or None
 
