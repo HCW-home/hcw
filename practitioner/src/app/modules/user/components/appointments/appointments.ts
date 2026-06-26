@@ -807,6 +807,32 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     return this.isOwnedByCurrentUser(reminder?.created_by?.id);
   }
 
+  // Build a Reminder from the calendar occurrence so the detail modal can be
+  // shown without an extra GET (which would 404 for other practitioners'
+  // reminders, since /reminders/:id is scoped to the creator).
+  private occurrenceToReminder(occ: ReminderOccurrence): Reminder {
+    return {
+      id: occ.reminder_id,
+      title: occ.title,
+      description: occ.description,
+      consultation: occ.consultation,
+      recipient: occ.recipient,
+      created_by: occ.created_by_user as Reminder['created_by'],
+      scheduled_at: occ.scheduled_at,
+      is_recurring: occ.is_recurring,
+      recurrence_interval: occ.recurrence_interval,
+      recurrence_period: occ.recurrence_period,
+      recurrence_count: occ.recurrence_count,
+      occurrences_sent: 0,
+      next_run_at: occ.next_run_at,
+      recurrence_end_at: occ.recurrence_end_at,
+      last_sent_at: null,
+      is_active: true,
+      created_at: '',
+      updated_at: '',
+    };
+  }
+
   private transformOccurrencesToEvents(
     occurrences: ReminderOccurrence[]
   ): EventInput[] {
@@ -843,6 +869,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
         extendedProps: {
           isReminder: true,
           reminderOwned: owned,
+          occurrence: occ,
           reminderId: occ.reminder_id,
           reminderTitle: occ.title,
           reminderDescription: occ.description,
@@ -904,26 +931,14 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     clickInfo.jsEvent.preventDefault();
     clickInfo.jsEvent.stopPropagation();
 
-    const reminderId = clickInfo.event.extendedProps['reminderId'] as
-      | number
+    const occurrence = clickInfo.event.extendedProps['occurrence'] as
+      | ReminderOccurrence
       | undefined;
-    if (reminderId) {
-      // Occurrences only carry the parent id; fetch the full reminder to show.
-      this.consultationService
-        .getReminder(reminderId)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: reminder => {
-            this.detailReminder.set(reminder);
-            this.reminderDetailModalOpen.set(true);
-          },
-          error: error =>
-            this.toasterService.show(
-              'error',
-              this.t.instant('reminders.errorLoading'),
-              getErrorMessage(error)
-            ),
-        });
+    if (occurrence) {
+      // Reuse the data already returned by /reminders/occurrences/ — no extra
+      // GET (which would 404 for another practitioner's reminder).
+      this.detailReminder.set(this.occurrenceToReminder(occurrence));
+      this.reminderDetailModalOpen.set(true);
       return;
     }
 
@@ -1069,7 +1084,15 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     }
 
     // Dragging any occurrence translates the WHOLE series by the same delta.
-    // We apply that delta to the reminder's base scheduled_at.
+    // We apply that delta to the reminder's base scheduled_at, which we already
+    // have from the occurrence — no extra GET needed.
+    const occurrence = info.event.extendedProps['occurrence'] as
+      | ReminderOccurrence
+      | undefined;
+    if (!occurrence) {
+      info.revert();
+      return;
+    }
     const deltaMs = newStart.getTime() - oldStart.getTime();
 
     const formatLocal = (d: Date): string => {
@@ -1081,36 +1104,19 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
       return `${year}-${month}-${day}T${hours}:${minutes}`;
     };
 
+    const newScheduled = new Date(
+      new Date(occurrence.scheduled_at).getTime() + deltaMs
+    );
     this.consultationService
-      .getReminder(reminderId)
+      .updateReminder(reminderId, { scheduled_at: formatLocal(newScheduled) })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: reminder => {
-          const newScheduled = new Date(
-            new Date(reminder.scheduled_at).getTime() + deltaMs
-          );
-          this.consultationService
-            .updateReminder(reminderId, {
-              scheduled_at: formatLocal(newScheduled),
-            })
-            .pipe(takeUntil(this.destroy$))
-            .subscribe({
-              next: () => this.loadReminderOccurrences(),
-              error: err => {
-                info.revert();
-                this.toasterService.show(
-                  'error',
-                  this.t.instant('reminders.errorUpdating'),
-                  getErrorMessage(err)
-                );
-              },
-            });
-        },
+        next: () => this.loadReminderOccurrences(),
         error: err => {
           info.revert();
           this.toasterService.show(
             'error',
-            this.t.instant('reminders.errorLoading'),
+            this.t.instant('reminders.errorUpdating'),
             getErrorMessage(err)
           );
         },

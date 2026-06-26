@@ -1547,11 +1547,16 @@ class ReminderOccurrenceSerializer(serializers.Serializer):
     description = serializers.CharField(allow_blank=True)
     recipient = ConsultationUserSerializer()
     created_by = serializers.IntegerField(allow_null=True)
+    created_by_user = ConsultationUserSerializer(allow_null=True)
     consultation = serializers.IntegerField(allow_null=True)
     is_recurring = serializers.BooleanField()
+    recurrence_interval = serializers.IntegerField()
+    recurrence_period = serializers.CharField(allow_blank=True)
+    recurrence_count = serializers.IntegerField()
     occurrence_index = serializers.IntegerField()
     occurrence_total = serializers.IntegerField()
     occurrence_at = serializers.DateTimeField()
+    scheduled_at = serializers.DateTimeField()
     next_run_at = serializers.DateTimeField(allow_null=True)
     recurrence_end_at = serializers.DateTimeField(allow_null=True)
 
@@ -1560,7 +1565,12 @@ class ReminderOccurrenceSerializer(serializers.Serializer):
         request = self.context.get("request")
         if request and request.user.is_authenticated:
             user_tz = request.user.user_tz
-            for field in ["occurrence_at", "next_run_at", "recurrence_end_at"]:
+            for field in [
+                "occurrence_at",
+                "scheduled_at",
+                "next_run_at",
+                "recurrence_end_at",
+            ]:
                 if data.get(field):
                     dt = timezone.datetime.fromisoformat(
                         data[field].replace("Z", "+00:00")

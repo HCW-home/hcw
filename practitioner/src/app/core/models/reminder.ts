@@ -41,11 +41,16 @@ export interface ReminderOccurrence {
   description: string;
   recipient: User;
   created_by: number | null;
+  created_by_user: User | null;
   consultation: number | null;
   is_recurring: boolean;
+  recurrence_interval: number;
+  recurrence_period: RecurrencePeriod | '';
+  recurrence_count: number;
   occurrence_index: number;
   occurrence_total: number;
   occurrence_at: string;
+  scheduled_at: string;
   next_run_at: string | null;
   recurrence_end_at: string | null;
 }

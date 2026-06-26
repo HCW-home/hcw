@@ -1783,7 +1783,7 @@ class ReminderViewSet(CreatedByMixin, viewsets.ModelViewSet):
             is_active=True,
             scheduled_at__lte=window_end,
             recurrence_end_at__gte=window_start,
-        )
+        ).select_related("recipient", "created_by")
 
         occurrences = []
         for reminder in reminders:
@@ -1795,13 +1795,18 @@ class ReminderViewSet(CreatedByMixin, viewsets.ModelViewSet):
                         "description": reminder.description,
                         "recipient": reminder.recipient,
                         "created_by": reminder.created_by_id,
+                        "created_by_user": reminder.created_by,
                         "consultation": reminder.consultation_id,
                         "is_recurring": reminder.is_recurring,
+                        "recurrence_interval": reminder.recurrence_interval,
+                        "recurrence_period": reminder.recurrence_period,
+                        "recurrence_count": reminder.recurrence_count,
                         "occurrence_index": index,
                         "occurrence_total": reminder.recurrence_count
                         if reminder.is_recurring
                         else 1,
                         "occurrence_at": occ,
+                        "scheduled_at": reminder.scheduled_at,
                         "next_run_at": reminder.next_run_at,
                         "recurrence_end_at": reminder.recurrence_end_at,
                     }
