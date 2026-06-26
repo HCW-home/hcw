@@ -40,7 +40,7 @@
 
         @if (connectionStatus === 'connected' && getParticipantsArray().length > 0) {
           @for (participant of getParticipantsArray(); track participant.identity) {
-            <div class="video-tile" [class.camera-off]="!participant.isCameraEnabled">
+            <div class="video-tile" [class.camera-off]="!participant.isCameraEnabled" [class.speaking]="participant.isSpeaking">
               <video
                 [id]="'video-' + participant.identity"
                 autoplay

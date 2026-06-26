@@ -52,7 +52,7 @@
         }
 
         @for (participant of getParticipantsArray(); track trackByIdentity($index, participant)) {
-          <div class="video-tile">
+          <div class="video-tile" [class.speaking]="participant.isSpeaking">
             <video
               [id]="'video-' + participant.identity"
               autoplay

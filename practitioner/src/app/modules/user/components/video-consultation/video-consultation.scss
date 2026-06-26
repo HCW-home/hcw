@@ -234,6 +234,15 @@
   width: 100%;
   height: 100%;
   min-height: 0;
+
+  // Active speaker — thick inset green ring (the tile clips overflow, so an
+  // inset box-shadow reads as a border) plus an outer glow. On/off, no
+  // animation.
+  &.speaking {
+    box-shadow:
+      inset 0 0 0 5px #22c55e,
+      0 0 20px 5px rgba(34, 197, 94, 0.8);
+  }
 }
 
 .local-tile {
