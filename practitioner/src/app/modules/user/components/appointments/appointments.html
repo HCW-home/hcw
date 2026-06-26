@@ -447,6 +447,7 @@
     <app-reminder-detail-modal
       [isOpen]="reminderDetailModalOpen()"
       [reminder]="detailReminder()"
+      [canEdit]="canEditReminder(detailReminder())"
       (closed)="onReminderDetailClosed()"
       (edit)="onReminderDetailEdit($event)"
       (delete)="onReminderDetailDelete($event)">

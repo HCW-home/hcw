@@ -41,6 +41,10 @@ export class ReminderFormModal {
       : this.t.instant('reminders.newReminder');
   }
 
+  get titleHelp(): string {
+    return this.editingReminder ? '' : this.t.instant('reminders.formHelper');
+  }
+
   onClose(): void {
     if (this.reminderForm) {
       this.reminderForm.resetForm();

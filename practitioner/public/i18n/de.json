@@ -853,7 +853,8 @@
     "german": "Deutsch",
     "french": "Französisch",
     "dontInviteContact": "Kontakt nicht einladen",
-    "roleContact": "Kontakt"
+    "roleContact": "Kontakt",
+    "formHelper": "Die eingeladenen Teilnehmer erhalten eine Einladung (per SMS oder E-Mail, je nach Kanal) mit den Termindetails und, bei Online-Terminen, einem Link zum Videoanruf."
   },
   "confirmPresence": {
     "loadingAppointments": "Termine werden geladen...",
@@ -1098,7 +1099,8 @@
     "occurrenceLabel": "Vorkommen {{index}} von {{total}}",
     "until": "bis",
     "nextRun": "Nächste Erinnerung",
-    "createdBy": "Erstellt von"
+    "createdBy": "Erstellt von",
+    "formHelper": "Zum geplanten Zeitpunkt erhält der Kontakt diese Erinnerung automatisch per SMS oder E-Mail, je nach konfiguriertem Kommunikationskanal."
   },
   "elementType": {
     "title": "Welche Art von Element möchten Sie erstellen?",
@@ -1108,5 +1110,8 @@
     "reminder": "Erinnerung",
     "reminderDesc": "Senden Sie einem Kontakt eine automatische SMS- oder E-Mail-Erinnerung.",
     "createReminder": "Erinnerung erstellen"
+  },
+  "createConsultationModal": {
+    "formHelper": "Ein Verlauf bündelt Termine, sichere Nachrichten und Dokumente, die mit einem Empfänger geteilt werden. Sie können optional sofort einen ersten Termin planen."
   }
 }

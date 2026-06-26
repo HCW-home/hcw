@@ -61,6 +61,7 @@
   </div>
   }
 
+  @if (canEdit) {
   <div modal-footer class="detail-actions">
     <app-button
       [text]="'reminders.delete' | translate"
@@ -78,4 +79,5 @@
       (buttonClick)="onEdit()">
     </app-button>
   </div>
+  }
 </app-modal>

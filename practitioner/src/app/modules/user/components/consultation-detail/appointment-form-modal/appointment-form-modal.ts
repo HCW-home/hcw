@@ -44,6 +44,10 @@ export class AppointmentFormModal {
     return this.isEditMode ? this.t.instant('appointmentFormModal.editAppointment') : this.t.instant('appointmentFormModal.createNewAppointment');
   }
 
+  get titleHelp(): string {
+    return this.isEditMode ? '' : this.t.instant('appointmentForm.formHelper');
+  }
+
   onClose(): void {
     if (this.appointmentForm) {
       this.appointmentForm.resetForm();

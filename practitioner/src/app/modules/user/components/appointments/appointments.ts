@@ -720,6 +720,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   private transformToCalendarEvents(appointments: Appointment[], color?: string): EventInput[] {
     return appointments.map(appointment => {
       const eventColor = color || this.getPractitionerColor(appointment);
+      const owned = this.isOwnedByCurrentUser(appointment.created_by?.id);
       return {
         id: color ? `${appointment.id}-${color}` : appointment.id.toString(),
         title: this.getEventTitle(appointment),
@@ -732,6 +733,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
         backgroundColor: eventColor,
         borderColor: eventColor,
         textColor: '#ffffff',
+        editable: owned,
         extendedProps: { appointment },
       };
     });
@@ -794,6 +796,17 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     return `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email || '';
   }
 
+  // Only the creator may move/edit an element; others would get a 404 from the
+  // API, so we disable drag/resize and click-to-edit for non-owned items.
+  private isOwnedByCurrentUser(createdById: number | null | undefined): boolean {
+    const currentUser = this.userService.currentUserValue;
+    return !!currentUser && createdById === currentUser.pk;
+  }
+
+  canEditReminder(reminder: Reminder | null): boolean {
+    return this.isOwnedByCurrentUser(reminder?.created_by?.id);
+  }
+
   private transformOccurrencesToEvents(
     occurrences: ReminderOccurrence[]
   ): EventInput[] {
@@ -818,6 +831,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
       // Same colour scheme as appointments (per practitioner); reminders are
       // distinguished by an icon rendered in eventContent, not by colour.
       const color = this.getPractitionerColorById(occ.created_by);
+      const owned = this.isOwnedByCurrentUser(occ.created_by);
       return {
         id: `reminder-${occ.reminder_id}-${occ.occurrence_index}-${i}`,
         title: `${occ.title}${recipientPart}${suffix}`,
@@ -825,8 +839,10 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
         backgroundColor: color,
         borderColor: color,
         textColor: '#ffffff',
+        editable: owned,
         extendedProps: {
           isReminder: true,
+          reminderOwned: owned,
           reminderId: occ.reminder_id,
           reminderTitle: occ.title,
           reminderDescription: occ.description,
@@ -1014,7 +1030,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     const appointment = info.event.extendedProps['appointment'] as Appointment;
     const newStart = info.event.start;
     const newEnd = info.event.end;
-    if (!newStart) {
+    if (!newStart || !this.isOwnedByCurrentUser(appointment?.created_by?.id)) {
       info.revert();
       return;
     }
@@ -1032,7 +1048,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     const appointment = info.event.extendedProps['appointment'] as Appointment;
     const newStart = info.event.start;
     const newEnd = info.event.end;
-    if (!newStart) {
+    if (!newStart || !this.isOwnedByCurrentUser(appointment?.created_by?.id)) {
       info.revert();
       return;
     }
@@ -1043,7 +1059,11 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   private handleReminderDrop(reminderId: number, info: EventDropArg): void {
     const newStart = info.event.start;
     const oldStart = info.oldEvent.start;
-    if (!newStart || !oldStart) {
+    if (
+      !newStart ||
+      !oldStart ||
+      !info.event.extendedProps['reminderOwned']
+    ) {
       info.revert();
       return;
     }

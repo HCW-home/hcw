@@ -688,7 +688,8 @@
     "selectOrCreateBeneficiary": "Select or create beneficiary",
     "scheduleConsultation": "Schedule the consultation",
     "advancedOptions": "Permission and access",
-    "disablePatientChat": "Do not allow the patient to interact with the chat"
+    "disablePatientChat": "Do not allow the patient to interact with the chat",
+    "formHelper": "A follow-up groups together appointments, secure messages and documents shared with a beneficiary. You can optionally schedule a first appointment right away."
   },
   "consultationDetail": {
     "copyAccessLink": "Copy access link",
@@ -894,7 +895,8 @@
     "german": "German",
     "french": "French",
     "dontInviteContact": "Do not invite contact",
-    "roleContact": "Contact"
+    "roleContact": "Contact",
+    "formHelper": "The invited participants will receive an invitation (by SMS or email, depending on their channel) with the appointment details and, for online appointments, a link to join the video call."
   },
   "language": {
     "title": "Language",
@@ -1243,7 +1245,8 @@
     "occurrenceLabel": "Occurrence {{index}} of {{total}}",
     "until": "until",
     "nextRun": "Next reminder",
-    "createdBy": "Created by"
+    "createdBy": "Created by",
+    "formHelper": "At the scheduled date and time, the contact will automatically receive this reminder by SMS or email, depending on their configured communication channel."
   },
   "elementType": {
     "title": "What type of element do you want to create?",

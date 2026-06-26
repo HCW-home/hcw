@@ -390,7 +390,8 @@
     "german": "tedesco",
     "french": "Francese",
     "dontInviteContact": "Do not invite contact",
-    "roleContact": "Contact"
+    "roleContact": "Contact",
+    "formHelper": "I partecipanti invitati riceveranno un invito (via SMS o e-mail, a seconda del canale) con i dettagli dell'appuntamento e, per gli appuntamenti online, un link per partecipare alla videochiamata."
   },
   "patientDetail": {
     "totalConsultations": "Numero totale di follow-up",
@@ -937,7 +938,8 @@
     "selectOrCreateBeneficiary": "Seleziona o crea beneficiario",
     "scheduleConsultation": "Fissa un appuntamento per la consulenza",
     "advancedOptions": "Autorizzazione e accesso",
-    "disablePatientChat": "Non consentire al paziente di interagire con la chat"
+    "disablePatientChat": "Non consentire al paziente di interagire con la chat",
+    "formHelper": "Un percorso raggruppa appuntamenti, messaggi sicuri e documenti condivisi con un beneficiario. Puoi eventualmente pianificare subito un primo appuntamento."
   },
   "appointmentFormModal": {
     "editAppointment": "Modifica appuntamento",
@@ -1126,7 +1128,8 @@
     "occurrenceLabel": "Occorrenza {{index}} di {{total}}",
     "until": "fino al",
     "nextRun": "Prossimo promemoria",
-    "createdBy": "Creato da"
+    "createdBy": "Creato da",
+    "formHelper": "Alla data e ora previste, il contatto riceverà automaticamente questo promemoria via SMS o e-mail, in base al canale di comunicazione configurato."
   },
   "elementType": {
     "title": "Che tipo di elemento vuoi creare?",

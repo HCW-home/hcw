@@ -773,7 +773,8 @@
     "selectOrCreateBeneficiary": "Seleccione o cree un beneficiario.",
     "scheduleConsultation": "Programe la consulta",
     "advancedOptions": "Permisos y acceso",
-    "disablePatientChat": "No permita que el paciente interactúe con el chat."
+    "disablePatientChat": "No permita que el paciente interactúe con el chat.",
+    "formHelper": "Un seguimiento agrupa las citas, los mensajes seguros y los documentos compartidos con un beneficiario. Opcionalmente, puede programar una primera cita ahora mismo."
   },
   "consultationDetail": {
     "loadingConsultation": "Cargando seguimiento...",
@@ -966,7 +967,8 @@
     "german": "Alemán",
     "french": "Francés",
     "dontInviteContact": "Do not invite contact",
-    "roleContact": "Contact"
+    "roleContact": "Contact",
+    "formHelper": "Los participantes invitados recibirán una invitación (por SMS o correo electrónico, según su canal) con los detalles de la cita y, para las citas en línea, un enlace para unirse a la videollamada."
   },
   "language": {
     "title": "Idioma",
@@ -1126,7 +1128,8 @@
     "occurrenceLabel": "Ocurrencia {{index}} de {{total}}",
     "until": "hasta el",
     "nextRun": "Próximo recordatorio",
-    "createdBy": "Creado por"
+    "createdBy": "Creado por",
+    "formHelper": "En la fecha y hora previstas, el contacto recibirá automáticamente este recordatorio por SMS o correo electrónico, según su canal de comunicación configurado."
   },
   "elementType": {
     "title": "¿Qué tipo de elemento desea crear?",

@@ -31,6 +31,8 @@ export class ReminderDetailModal {
 
   @Input() isOpen = false;
   @Input() reminder: Reminder | null = null;
+  // Edit/delete only when the current user owns the reminder.
+  @Input() canEdit = true;
 
   @Output() closed = new EventEmitter<void>();
   @Output() edit = new EventEmitter<Reminder>();
