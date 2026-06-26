@@ -26,12 +26,10 @@ class _FhirNamespaceBase(TenantTestCase):
     def setUp(self):
         self.practitioner = User.objects.create_user(
             email="doc@example.com",
-            password="x",
             is_practitioner=True,
         )
         self.patient = User.objects.create_user(
             email="pat@example.com",
-            password="x",
         )
         self.consultation = Consultation.objects.create(
             title="Follow-up",

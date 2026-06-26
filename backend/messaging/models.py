@@ -371,7 +371,7 @@ class Template(models.Model):
     def clean(self):
         """Validate Jinja2 template syntax"""
         super().clean()
-        env = jinja2.Environment()
+        env = jinja2.Environment(autoescape=True)
         env.filters.update(register.filters)
 
         # Validate template_text
@@ -428,7 +428,8 @@ class Template(models.Model):
         if obj is not None:
             render_context["obj"] = obj
 
-        env = jinja2.Environment()
+        # Plain-text render only (subject + text body), so no HTML autoescape.
+        env = jinja2.Environment(autoescape=False)
         env.filters.update(register.filters)
 
         # Render template text
@@ -529,7 +530,7 @@ class Template(models.Model):
         variables = set()
 
         try:
-            env = jinja2.Environment()
+            env = jinja2.Environment(autoescape=True)
             env.filters.update(register.filters)
 
             # Extract variables from template_text
@@ -1015,7 +1016,13 @@ class Message(ModelCeleryAbstract):
                 translation.override(self.language),
                 timezone.override(self.sent_to.user_tz),
             ):
-                env = jinja2.Environment(extensions=['jinja2.ext.i18n'])
+                # Only escape interpolated values for HTML output; plain-text
+                # fields (subject, text body for SMS/WhatsApp) must stay literal
+                # so values like "O'Brien" are not turned into HTML entities.
+                env = jinja2.Environment(
+                    extensions=['jinja2.ext.i18n'],
+                    autoescape=field == "template_content_html",
+                )
                 env.install_gettext_callables(
                     translation.gettext,
                     translation.ngettext,
