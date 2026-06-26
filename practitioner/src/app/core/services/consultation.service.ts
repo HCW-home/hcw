@@ -463,6 +463,20 @@ export class ConsultationService {
     );
   }
 
+  muteParticipant(
+    appointmentId: number,
+    targetUserId: number,
+    muted = true
+  ): Observable<{ status: string; tracks: number }> {
+    return this.http.post<{ status: string; tracks: number }>(
+      `${this.apiUrl}/appointments/${appointmentId}/mute_participant/`,
+      { target_user_id: targetUserId, muted },
+      // Handle errors in the component so we can show a specific message
+      // (e.g. remote unmute disabled) instead of the generic error toast.
+      { context: new HttpContext().set(SKIP_ERROR_TOAST, true) }
+    );
+  }
+
   getMessageAttachment(messageId: number): Observable<Blob> {
     return this.http.get(`${this.apiUrl}/messages/${messageId}/attachment/`, {
       responseType: 'blob',

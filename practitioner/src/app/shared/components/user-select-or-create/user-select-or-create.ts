@@ -25,7 +25,6 @@ import { SelectOption } from '../../models/select';
 import { IUser } from '../../../modules/user/models/user';
 import { UserService } from '../../../core/services/user.service';
 import { TranslationService } from '../../../core/services/translation.service';
-import { TranslatePipe } from '@ngx-translate/core';
 
 /**
  * Reusable "select an existing user OR create a new one" field.
@@ -52,7 +51,6 @@ import { TranslatePipe } from '@ngx-translate/core';
     Select,
     ModalComponent,
     AddEditPatient,
-    TranslatePipe,
   ],
 })
 export class UserSelectOrCreate implements ControlValueAccessor {

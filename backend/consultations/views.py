@@ -36,7 +36,7 @@ from drf_spectacular.utils import (
     OpenApiTypes,
     extend_schema,
 )
-from mediaserver.exceptions import NoMediaServerAvailable
+from mediaserver.exceptions import NoMediaServerAvailable, RemoteUnmuteDisabled
 from mediaserver.models import Server
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
@@ -867,6 +867,89 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
             return Response(
                 {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    @action(detail=True, methods=["post"])
+    def mute_participant(self, request, pk=None):
+        """Force-mute another participant's microphone (practitioners only).
+
+        The mute is enforced server-side, so the participant is silenced for
+        everyone in the call. Used to stop echo/feedback when a participant
+        cannot mute themselves (e.g. on speakerphone, or a patient who joined
+        with help and is now alone)."""
+        appointment = self.get_object()
+        consultation = appointment.consultation
+
+        # Only practitioners may moderate the call.
+        if not self._is_doctor(request.user, consultation, appointment):
+            return Response(
+                {"error": _("Only practitioners can mute participants")},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        target_user_id = request.data.get("target_user_id")
+        if not target_user_id:
+            return Response(
+                {"error": _("target_user_id is required")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Default to muting; allow explicit unmute via {"muted": false}.
+        muted = request.data.get("muted", True)
+
+        target = (
+            appointment.participant_set.filter(user__pk=target_user_id)
+            .select_related("user")
+            .first()
+        )
+        if not target:
+            return Response(
+                {"error": _("Participant not found in this appointment")},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # A practitioner muting themselves is pointless and should use the
+        # normal in-call control instead.
+        if target.user.pk == request.user.pk:
+            return Response(
+                {"error": _("Use your own microphone control to mute yourself")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            server = Server.get_or_pin_for_room(appointment.room_uuid)
+        except NoMediaServerAvailable:
+            return Response(
+                {"detail": _("No media server available.")},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        if not server.instance.supports_remote_mute():
+            return Response(
+                {"detail": _("Muting participants is not supported by the configured media server.")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            affected = server.instance.mute_participant(
+                appointment.room_uuid, target.user, muted=muted
+            )
+        except RemoteUnmuteDisabled:
+            return Response(
+                {
+                    "detail": _(
+                        "Remote unmute is disabled on the media server. "
+                        "The participant must reactivate their own microphone."
+                    ),
+                    "code": "remote_unmute_disabled",
+                },
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
+        except Exception as e:
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        return Response({"status": "muted" if muted else "unmuted", "tracks": affected})
 
     def _is_doctor(self, user, consultation, appointment=None):
         """Check if user is a doctor (in Queue group)"""

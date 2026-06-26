@@ -29,7 +29,9 @@ export async function applyCalendarLocale(
   const code = LOCALE_ALIASES[requested] ?? requested;
   try {
     if (code !== 'en') {
-      const module = await import(`@fullcalendar/core/locales/${code}.js`);
+      const module = await import(
+        /* @vite-ignore */ `@fullcalendar/core/locales/${code}.js`
+      );
       api.setOption('locale', module.default ?? module);
     } else {
       api.setOption('locale', 'en');

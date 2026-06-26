@@ -71,6 +71,18 @@
                 <app-svg src="microphone-off" [svgStyle]="{'width.px': 14, 'height.px': 14}" class="muted-indicator"></app-svg>
               }
             </div>
+            @if (canModerate) {
+              <button
+                type="button"
+                class="mute-participant-btn"
+                [class.is-muted]="!participant.isMicrophoneEnabled"
+                [disabled]="isMuting(participant)"
+                [attr.aria-label]="(participant.isMicrophoneEnabled ? 'videoConsultation.muteParticipant' : 'videoConsultation.unmuteParticipant') | translate"
+                [title]="(participant.isMicrophoneEnabled ? 'videoConsultation.muteParticipant' : 'videoConsultation.unmuteParticipant') | translate"
+                (click)="toggleParticipantMute(participant)">
+                <app-svg [src]="participant.isMicrophoneEnabled ? 'microphone' : 'microphone-off'" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+              </button>
+            }
           </div>
 
           @if (participant.isScreenShareEnabled && participant.screenShareTrack) {

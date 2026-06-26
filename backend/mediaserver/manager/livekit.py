@@ -9,6 +9,9 @@ from livekit import api
 from livekit.api import (
     AccessToken,
     ListRoomsRequest,
+    RoomParticipantIdentity,
+    MuteRoomTrackRequest,
+    TrackType,
     LiveKitAPI,
     SendDataRequest,
     TwirpError,
@@ -22,6 +25,7 @@ from livekit.api import (
 from consultations.models import RecordingModeChoices
 
 from . import BaseMediaserver
+from ..exceptions import RemoteUnmuteDisabled
 
 
 class Main(BaseMediaserver):
@@ -85,6 +89,10 @@ class Main(BaseMediaserver):
             room_join=True,
             can_publish=True,
             can_subscribe=True,
+            # Practitioners moderate the call (e.g. remote-muting a participant
+            # whose open mic is causing echo). The actual mute is performed
+            # server-side via the API, but room_admin keeps the grant honest.
+            room_admin=bool(getattr(user, "is_practitioner", False)),
         )
         return (
             AccessToken(
@@ -116,6 +124,54 @@ class Main(BaseMediaserver):
 
     def consultation_user_info(self, consultation, user):
         return self._build_response(consultation.room_uuid, user)
+
+    def supports_remote_mute(self) -> bool:
+        return True
+
+    async def _mute_participant_async(self, room_name: str, identity: str, muted: bool) -> int:
+        """Mute (or unmute) every audio track published by a participant.
+
+        Returns the number of tracks affected. Raises if the participant is not
+        found in the room.
+        """
+        async with LiveKitAPI(
+            url=self.server.url,
+            api_key=self.server.api_token,
+            api_secret=self.server.api_secret,
+        ) as client:
+            participant = await client.room.get_participant(
+                RoomParticipantIdentity(room=room_name, identity=identity)
+            )
+
+            affected = 0
+            for track in participant.tracks:
+                if track.type != TrackType.AUDIO:  # only microphone/audio tracks
+                    continue
+                try:
+                    await client.room.mute_published_track(
+                        MuteRoomTrackRequest(
+                            room=room_name,
+                            identity=identity,
+                            track_sid=track.sid,
+                            muted=muted,
+                        )
+                    )
+                except TwirpError as e:
+                    # LiveKit disables remote unmute by default; surface a clear
+                    # business error instead of a raw 500.
+                    if not muted and "unmute" in str(e).lower():
+                        raise RemoteUnmuteDisabled() from e
+                    raise
+                affected += 1
+            return affected
+
+    def mute_participant(self, room_uuid, target_user, muted: bool = True) -> int:
+        """Force-mute a participant's audio. Returns number of tracks affected."""
+        room_name = str(room_uuid)
+        identity = self._build_identity(target_user)
+        return asyncio.run(
+            self._mute_participant_async(room_name, identity, muted)
+        )
 
     async def get_room_info(self, room_name: str):
         """Get information about a specific room"""

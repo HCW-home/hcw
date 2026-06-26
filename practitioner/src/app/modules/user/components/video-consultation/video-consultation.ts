@@ -13,6 +13,7 @@ import {
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Subject, firstValueFrom } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -106,6 +107,9 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   private readonly MAX_CAPTION_LINES = 200;
   private activeRemoteTranscriptions = new Set<string>();
   private currentUserId: number | null = null;
+  private isPractitioner = false;
+  /** Identities currently being (un)muted, to disable the button mid-request. */
+  mutingInProgress = new Set<string>();
 
   enableVideoRecording = false;
   enableLiveTranscription = false;
@@ -149,6 +153,8 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     // but subscribing ensures we pick it up even if populated after ngOnInit.
     this.userService.currentUser$.pipe(takeUntil(this.destroy$)).subscribe(user => {
       this.currentUserId = user?.pk ?? null;
+      this.isPractitioner = user?.is_practitioner ?? false;
+      this.cdr.markForCheck();
     });
     if (!this.userService.currentUserValue) {
       this.userService.getCurrentUser().pipe(takeUntil(this.destroy$)).subscribe();
@@ -363,11 +369,20 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     if (this.videoCallConfig) {
       return this.videoCallConfig;
     }
+    // When joining via appointment/consultation, the config is fetched here
+    // rather than passed as an @Input. Cache it so the rest of the component
+    // (e.g. canModerate, which depends on config.provider) sees it too.
     if (this.appointmentId) {
-      return this.consultationService.joinAppointment(this.appointmentId).toPromise();
+      this.videoCallConfig = await this.consultationService
+        .joinAppointment(this.appointmentId)
+        .toPromise();
+      return this.videoCallConfig;
     }
     if (this.consultationId) {
-      return this.consultationService.joinConsultation(this.consultationId).toPromise();
+      this.videoCallConfig = await this.consultationService
+        .joinConsultation(this.consultationId)
+        .toPromise();
+      return this.videoCallConfig;
     }
     throw new Error(this.t.instant('videoConsultation.appointmentRequired'));
   }
@@ -780,6 +795,80 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
 
   getParticipantsArray(): ParticipantInfo[] {
     return Array.from(this.participants.values());
+  }
+
+  /**
+   * Whether the local user may moderate (force-mute) other participants.
+   * Only practitioners can, and only on LiveKit — mediasoup has no
+   * server-side remote-mute, so we never show the control there.
+   */
+  get canModerate(): boolean {
+    return this.isPractitioner && this.videoCallConfig?.provider === 'livekit';
+  }
+
+  isMuting(participant: ParticipantInfo): boolean {
+    return this.mutingInProgress.has(participant.identity);
+  }
+
+  /**
+   * The LiveKit participant identity is `str(user.pk)`, optionally prefixed
+   * with the tenant schema as `schema:pk`. Take the segment after the last
+   * colon to recover the numeric user pk.
+   */
+  private userIdFromIdentity(identity: string): number | null {
+    const segment = identity.split(':').pop() ?? identity;
+    const pk = Number(segment);
+    return Number.isInteger(pk) ? pk : null;
+  }
+
+  async toggleParticipantMute(participant: ParticipantInfo): Promise<void> {
+    if (!this.canModerate || !this.appointmentId) return;
+    if (this.mutingInProgress.has(participant.identity)) return;
+
+    const targetUserId = this.userIdFromIdentity(participant.identity);
+    if (targetUserId === null) {
+      this.toasterService.show(
+        'error',
+        this.t.instant('videoConsultation.muteError'),
+        this.t.instant('videoConsultation.failedMuteParticipant')
+      );
+      return;
+    }
+
+    // Muting when the mic is currently on, unmuting when it is off.
+    const mute = participant.isMicrophoneEnabled;
+
+    this.mutingInProgress.add(participant.identity);
+    this.cdr.markForCheck();
+    try {
+      await firstValueFrom(
+        this.consultationService.muteParticipant(this.appointmentId, targetUserId, mute)
+      );
+    } catch (error) {
+      // The media server can refuse a remote unmute (privacy safeguard): the
+      // participant must re-open their own mic. Surface a clear message.
+      const code = (error as HttpErrorResponse)?.error?.code;
+      if (code === 'remote_unmute_disabled') {
+        this.toasterService.show(
+          'info',
+          this.t.instant('videoConsultation.unmuteParticipant'),
+          this.t.instant('videoConsultation.remoteUnmuteDisabled')
+        );
+      } else {
+        this.toasterService.show(
+          'error',
+          this.t.instant('videoConsultation.muteError'),
+          this.t.instant(
+            mute
+              ? 'videoConsultation.failedMuteParticipant'
+              : 'videoConsultation.failedUnmuteParticipant'
+          )
+        );
+      }
+    } finally {
+      this.mutingInProgress.delete(participant.identity);
+      this.cdr.markForCheck();
+    }
   }
 
   getParticipantVideoElement(identity: string): HTMLVideoElement | undefined {

@@ -804,7 +804,13 @@
     "failedStopTranscript": "Impossible d'arrêter la transcription",
     "captionsError": "Erreur de sous-titres",
     "failedStartCaptions": "Impossible de se connecter au serveur de transcription",
-    "participant": "Participant"
+    "participant": "Participant",
+    "muteParticipant": "Couper le micro du participant",
+    "unmuteParticipant": "Réactiver le micro du participant",
+    "muteError": "Erreur de coupure du micro",
+    "failedMuteParticipant": "Impossible de couper le micro du participant",
+    "failedUnmuteParticipant": "Impossible de réactiver le micro du participant",
+    "remoteUnmuteDisabled": "Le participant doit réactiver lui-même son microphone."
   },
   "sidebar": {
     "dashboard": "Tableau de bord",
