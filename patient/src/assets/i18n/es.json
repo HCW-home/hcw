@@ -209,6 +209,8 @@
     },
     "home": {
         "nextAppointment": "Próxima cita",
+        "openInApp": "Abrir en la app",
+        "openInAppPrompt": "Hay una aplicación móvil disponible. ¿Desea abrirla?",
         "myRequests": "Mis peticiones",
         "myRequest": "Mi petición",
         "noPendingRequests": "Aún no hay solicitudes pendientes.",

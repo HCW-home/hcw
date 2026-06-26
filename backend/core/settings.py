@@ -913,6 +913,11 @@ CONSTANCE_CONFIG = {
         "Platform certification blob (JSON) authorizing this host for the native app. "
         "Get certificated on https://hcw-at-home.com/get-certificate/.",
     ),
+    "enable_deeplink": (
+        False,
+        "Show a banner on the patient web home inviting users to open the native app.",
+        bool,
+    ),
     "fhir_external_appointment_system": (
         "https://ozonehis.example/ns/appointment-id",
         "FHIR Identifier.system URL of the external partner for Appointment "
@@ -991,7 +996,7 @@ CONSTANCE_CONFIG_FIELDSETS = {
         "default_appointment_duration_in_minutes",
     ),
     "Data Retention": ("consultation_auto_delete_hours", "temporary_user_auto_delete"),
-    "Security": ("temporary_participant_token_expiry_hours", "instance_signature"),
+    "Security": ("temporary_participant_token_expiry_hours", "instance_signature", "enable_deeplink"),
     "Uploads": ("max_upload_size_mb",),
     "Authentication": ("disable_password_login", "enable_registration"),
     "Visibility": ("users_visibility", "patient_visibility", "public_organisations"),

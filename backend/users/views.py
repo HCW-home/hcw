@@ -1565,6 +1565,7 @@ class AppConfigView(APIView):
                 "primary_video_provider": constance_config.primary_video_provider,
                 "public_organisations": constance_config.public_organisations,
                 "force_temporary_patients": constance_config.force_temporary_patients,
+                "enable_deeplink": constance_config.enable_deeplink,
                 "has_reasons": Reason.objects.filter(is_active=True).exists(),
                 "encryption_enabled": constance_config.encryption_enabled,
                 "master_public_key": constance_config.master_public_key,

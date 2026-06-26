@@ -242,6 +242,8 @@
     },
     "home": {
         "nextAppointment": "Prossimo appuntamento",
+        "openInApp": "Apri nell'app",
+        "openInAppPrompt": "È disponibile un'app mobile. Vuoi aprirla?",
         "myRequests": "Le mie richieste",
         "myRequest": "La mia richiesta",
         "noPendingRequests": "Nessuna richiesta in sospeso al momento",

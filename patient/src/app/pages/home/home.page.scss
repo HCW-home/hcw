@@ -11,6 +11,25 @@
     justify-content: flex-end;
   }
 
+  .open-in-app-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--app-spacing-md);
+    flex-wrap: wrap;
+    padding: var(--app-spacing-lg);
+    margin-bottom: var(--app-spacing-lg);
+    background: var(--ion-color-primary-bg, rgba(8, 145, 178, 0.08));
+    border-radius: var(--app-card-radius);
+    border: 1px solid var(--ion-color-primary-tint, rgba(8, 145, 178, 0.2));
+    color: var(--app-text-primary);
+
+    span {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
   .greeting {
     margin-bottom: var(--app-spacing-lg);
 

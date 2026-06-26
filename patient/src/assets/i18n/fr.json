@@ -139,6 +139,8 @@
   },
   "home": {
     "nextAppointment": "Prochain rendez-vous",
+    "openInApp": "Ouvrir dans l'app",
+    "openInAppPrompt": "Une application mobile est disponible. Voulez-vous l'ouvrir ?",
     "myRequests": "Mes demandes",
     "myRequest": "Ma demande",
     "noPendingRequests": "Aucune demande en attente",
