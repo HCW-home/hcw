@@ -22,6 +22,20 @@ class PhoneNormalizationTests(TenantTestCase):
         u.refresh_from_db()
         self.assertEqual(u.mobile_phone_number, "+33612345678")
 
+    def test_blank_phone_number_stored_as_null(self):
+        """Empty strings must become NULL so the unique constraint allows
+        multiple users without a phone number."""
+        u1 = User.objects.create_user(
+            email="blank1@example.com", mobile_phone_number=""
+        )
+        u2 = User.objects.create_user(
+            email="blank2@example.com", mobile_phone_number=""
+        )
+        u1.refresh_from_db()
+        u2.refresh_from_db()
+        self.assertIsNone(u1.mobile_phone_number)
+        self.assertIsNone(u2.mobile_phone_number)
+
 
 class PhoneSearchTests(TenantTestCase):
     def setUp(self):
