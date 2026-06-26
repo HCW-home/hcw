@@ -782,14 +782,17 @@
     (appointmentUpdated)="onAppointmentUpdated($event)">
   </app-appointment-form-modal>
 
+  @if (showCreateReminderModal()) {
   <app-reminder-form-modal
     [isOpen]="showCreateReminderModal()"
     [consultationId]="consultationId"
     [editingReminder]="editingReminder()"
+    [initialRecipient]="selectedBeneficiary()"
     (closed)="closeCreateReminderModal()"
     (reminderCreated)="onReminderCreated()"
     (reminderUpdated)="onReminderUpdated()">
   </app-reminder-form-modal>
+  }
 
   <app-modal
     [isOpen]="showBeneficiaryLinkModal()"
