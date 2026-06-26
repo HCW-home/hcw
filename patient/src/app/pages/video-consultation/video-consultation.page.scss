@@ -290,6 +290,22 @@
     align-items: center;
     gap: 16px;
 
+    // Anchors the unread badge to the chat button.
+    .chat-button-wrapper {
+      position: relative;
+      display: inline-flex;
+
+      .unread-badge {
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        z-index: 1;
+        min-width: 20px;
+        border-radius: 10px;
+        pointer-events: none;
+      }
+    }
+
     .control-button {
       --border-radius: 50%;
       width: 56px;

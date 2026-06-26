@@ -221,11 +221,14 @@
           @if (!isMinimized) {
             <!-- Chat -->
             <button
-              class="control-button"
+              class="control-button chat-control"
               [class.active]="showChat()"
               (click)="toggleChatPanel()">
               <app-svg src="message-square" [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
               <span class="control-label">{{ 'videoConsultation.chat' | translate }}</span>
+              @if (unreadCount() > 0) {
+                <span class="unread-badge">{{ unreadCount() > 9 ? '9+' : unreadCount() }}</span>
+              }
             </button>
           }
 

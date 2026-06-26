@@ -150,12 +150,17 @@
             </ion-button>
 
             @if (chatAvailable()) {
-              <ion-button
-                [color]="showChat() ? 'primary' : 'light'"
-                class="control-button"
-                (click)="openChat()">
-                <ion-icon name="chatbubble-outline" slot="icon-only"></ion-icon>
-              </ion-button>
+              <div class="chat-button-wrapper">
+                <ion-button
+                  [color]="showChat() ? 'primary' : 'light'"
+                  class="control-button"
+                  (click)="openChat()">
+                  <ion-icon name="chatbubble-outline" slot="icon-only"></ion-icon>
+                </ion-button>
+                @if (unreadCount() > 0) {
+                  <ion-badge color="danger" class="unread-badge">{{ unreadCount() > 9 ? '9+' : unreadCount() }}</ion-badge>
+                }
+              </div>
             }
           </div>
         </div>

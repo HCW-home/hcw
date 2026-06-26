@@ -8,6 +8,8 @@ import {
   ElementRef,
   ViewChild,
   AfterViewInit,
+  OnChanges,
+  SimpleChanges,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   signal,
@@ -67,7 +69,7 @@ interface CaptionEntry {
   styleUrls: ['./video-consultation.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewInit {
+export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewInit, OnChanges {
   @Input() appointmentId?: number;
   @Input() consultationId?: number;
   @Input() videoCallConfig?: VideoCallConfig;
@@ -98,6 +100,12 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   isLoading = false;
   errorMessage = '';
   showChat = signal(false);
+  unreadCount = signal(0);
+  /** Ids of messages already accounted for, to detect genuinely new ones. */
+  private seenMessageIds = new Set<number>();
+  /** Timestamp (ms) of the newest message seen, so paginated history (which is
+   *  prepended with older timestamps) never counts as unread. */
+  private latestSeenTs = 0;
   showCaptions = signal(false);
   captionLines = signal<CaptionEntry[]>([]);
   phase = signal<'lobby' | 'connecting' | 'in-call'>('lobby');
@@ -167,6 +175,35 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       }
     });
     this.setupSubscriptions();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (!changes['messages']) return;
+
+    // First population (loading history): record everything as seen without
+    // raising the badge — these aren't "new" arrivals.
+    const isFirstPopulation = changes['messages'].firstChange || this.seenMessageIds.size === 0;
+
+    for (const msg of this.messages) {
+      if (this.seenMessageIds.has(msg.id)) continue;
+      this.seenMessageIds.add(msg.id);
+
+      const ts = new Date(msg.timestamp).getTime();
+      // Count as unread only a genuinely new, incoming (not ours, not system)
+      // message that is newer than anything seen so far (so prepended
+      // pagination history never counts), and only while the chat is closed.
+      if (
+        !isFirstPopulation &&
+        ts > this.latestSeenTs &&
+        !msg.isCurrentUser &&
+        !msg.isSystem &&
+        !this.showChat()
+      ) {
+        this.unreadCount.update(n => n + 1);
+      }
+      this.latestSeenTs = Math.max(this.latestSeenTs, ts);
+    }
+    this.cdr.markForCheck();
   }
 
   ngAfterViewInit(): void {
@@ -775,6 +812,10 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
 
   toggleChatPanel(): void {
     this.showChat.update(v => !v);
+    // Opening the chat clears the unread badge.
+    if (this.showChat()) {
+      this.unreadCount.set(0);
+    }
   }
 
   onSendMessage(data: SendMessageData): void {

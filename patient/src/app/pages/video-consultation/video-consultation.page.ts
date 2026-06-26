@@ -9,6 +9,7 @@ import {
   IonSpinner,
   IonAvatar,
   IonChip,
+  IonBadge,
   NavController,
   AlertController,
   ToastController
@@ -46,6 +47,7 @@ import { IPreJoinSettings } from '../../core/models/media-device.model';
     IonSpinner,
     IonAvatar,
     IonChip,
+    IonBadge,
     MessageListComponent,
     PreJoinLobbyComponent,
     TranslatePipe
@@ -77,6 +79,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
   errorMessage = '';
 
   showChat = signal(false);
+  unreadCount = signal(0);
   chatAvailable = signal(true);
   phase = signal<'lobby' | 'connecting' | 'in-call'>('lobby');
   messages = signal<Message[]>([]);
@@ -171,6 +174,10 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
               event.data as ConsultationMessage,
             );
             this.messages.update(msgs => [...msgs, newMessage]);
+            // Count it as unread only if it's not ours and the chat is closed.
+            if (!newMessage.isCurrentUser && !this.showChat()) {
+              this.unreadCount.update(n => n + 1);
+            }
           }
         } else if (event.state === 'updated' || event.state === 'deleted') {
           this.loadMessages();
@@ -695,6 +702,10 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
 
   openChat(): void {
     this.showChat.update(v => !v);
+    // Opening the chat clears the unread badge.
+    if (this.showChat()) {
+      this.unreadCount.set(0);
+    }
   }
 
   async onSendMessage(data: SendMessageData): Promise<void> {
