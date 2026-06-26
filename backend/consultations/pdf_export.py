@@ -195,7 +195,9 @@ def _get_attachment_image(attachment):
         return None
 
 
-def generate_consultation_pdf(consultation, appointments, messages, organisation):
+def generate_consultation_pdf(
+    consultation, appointments, messages, organisation, reminders=None
+):
     buffer = io.BytesIO()
     primary_color = organisation.primary_color_practitioner if organisation else None
     styles = _build_styles(primary_color)
@@ -216,6 +218,7 @@ def generate_consultation_pdf(consultation, appointments, messages, organisation
     _add_custom_fields(elements, styles, consultation)
     _add_people(elements, styles, consultation)
     _add_appointments(elements, styles, appointments)
+    _add_reminders(elements, styles, reminders)
     _add_messages(elements, styles, messages)
     _add_footer(elements, styles, organisation)
 
@@ -406,6 +409,53 @@ def _add_appointments(elements, styles, appointments):
             p_table.setStyle(TABLE_STYLE)
             elements.append(p_table)
 
+        elements.append(Spacer(1, 4 * mm))
+
+
+def _add_reminders(elements, styles, reminders):
+    reminders = list(reminders) if reminders is not None else []
+    elements.append(
+        Paragraph(f"Reminders ({len(reminders)})", styles["SectionHeading"])
+    )
+
+    if not reminders:
+        elements.append(Paragraph("No reminders", styles["InfoValue"]))
+        return
+
+    for i, reminder in enumerate(reminders):
+        label = f"Reminder #{i + 1} - {reminder.title}"
+        elements.append(Paragraph(label, styles["SubHeading"]))
+
+        data = [
+            ["Field", "Value"],
+            ["Title", Paragraph(reminder.title or "-", styles["CellText"])],
+        ]
+        if reminder.description:
+            data.append(
+                ["Description", Paragraph(reminder.description, styles["CellText"])]
+            )
+        data.append(["Recipient", _format_user(reminder.recipient)])
+        data.append(["Scheduled At", _format_datetime(reminder.scheduled_at)])
+
+        if reminder.is_recurring and reminder.recurrence_period:
+            recurrence = (
+                f"Every {reminder.recurrence_interval} "
+                f"{reminder.get_recurrence_period_display().lower()}"
+                f", {reminder.recurrence_count} times"
+            )
+            data.append(["Recurrence", recurrence])
+            if reminder.recurrence_end_at:
+                data.append(
+                    ["Last Occurrence", _format_datetime(reminder.recurrence_end_at)]
+                )
+
+        if reminder.created_by:
+            data.append(["Created By", _format_user(reminder.created_by)])
+
+        col_widths = [35 * mm, 140 * mm]
+        table = Table(data, colWidths=col_widths)
+        table.setStyle(TABLE_STYLE)
+        elements.append(table)
         elements.append(Spacer(1, 4 * mm))
 
 

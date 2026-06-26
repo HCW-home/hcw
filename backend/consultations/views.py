@@ -504,12 +504,19 @@ class ConsultationViewSet(FhirViewSetMixin, CreatedByMixin, viewsets.ModelViewSe
             .order_by("created_at")
         )
 
+        reminders = (
+            consultation.reminders.all()
+            .select_related("recipient", "created_by")
+            .order_by("scheduled_at")
+        )
+
         organisation = request.user.main_organisation
 
         pdf_buffer = generate_consultation_pdf(
             consultation=consultation,
             appointments=appointments,
             messages=messages,
+            reminders=reminders,
             organisation=organisation,
         )
 
