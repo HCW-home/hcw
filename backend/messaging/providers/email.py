@@ -68,6 +68,10 @@ class Main(BaseMessagingProvider):
                 img.add_header("Content-ID", "<logo>")
                 img.add_header("Content-Disposition", "inline", filename="logo")
                 email.attach(img)
+                # The cid: reference in the HTML only resolves when the image
+                # is bundled with the HTML in a multipart/related container.
+                # Without this, clients (e.g. Gmail) show a broken image.
+                email.mixed_subtype = "related"
             except Exception as e:
                 logger.warning("Failed to attach inline logo: %s", e)
 
