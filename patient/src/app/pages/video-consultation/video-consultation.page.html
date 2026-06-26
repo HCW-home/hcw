@@ -143,13 +143,6 @@
             </ion-button>
 
             <ion-button
-              [color]="isSpeakerOn ? 'light' : 'medium'"
-              class="control-button"
-              (click)="toggleSpeaker()">
-              <ion-icon [name]="isSpeakerOn ? 'volume-high' : 'volume-mute'" slot="icon-only"></ion-icon>
-            </ion-button>
-
-            <ion-button
               [color]="isScreenShareEnabled ? 'primary' : 'light'"
               class="control-button"
               (click)="toggleScreenShare()">

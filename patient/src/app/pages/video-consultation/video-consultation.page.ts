@@ -636,13 +636,6 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     }
   }
 
-  toggleSpeaker(): void {
-    this.isSpeakerOn = !this.isSpeakerOn;
-    for (const audioEl of this.audioElements.values()) {
-      audioEl.muted = !this.isSpeakerOn;
-    }
-  }
-
   async toggleScreenShare(): Promise<void> {
     try {
       await this.videoCallService.toggleScreenShare();
