@@ -79,7 +79,14 @@ export class Header implements OnInit, OnDestroy {
   showNotifications = signal(false);
   showMobileMenu = signal(false);
   showNewConsultationButton = signal(false);
-  showOnboardingHint = signal(false);
+  // 0 = hidden, 1 = bubble on "New consultation" button,
+  // 2 = highlight the title field, 3 = highlight the "schedule consultation" checkbox,
+  // 4 = highlight the "add participant" button, 5 = highlight the "external guest" toggle,
+  // 6 = highlight the email field, 7 = highlight the "can read messages" checkbox,
+  // 8 = highlight the "add the participant" submit button, 9 = highlight date/time fields,
+  // 10 = highlight the "create consultation" button, 11 = success congratulations bubble.
+  onboardingStep = signal(0);
+  protected readonly ONBOARDING_TOTAL_STEPS = 11;
   showCreateConsultationModal = signal(false);
   hintTop = signal(0);
   hintLeft = signal(0);
@@ -93,16 +100,17 @@ export class Header implements OnInit, OnDestroy {
 
   protected readonly NotificationStatus = NotificationStatus;
 
-  private handleDocumentClick = (): void => {
-    if (this.showOnboardingHint()) {
-      this.dismissOnboardingHint();
-    }
-  };
-
   @HostListener('document:click')
   onClickOutside(): void {
     this.showProfileMenu.set(false);
     this.showNotifications.set(false);
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    if (this.onboardingStep() === 1) {
+      this.updateHintPosition();
+    }
   }
 
   ngOnInit() {
@@ -134,9 +142,6 @@ export class Header implements OnInit, OnDestroy {
         }
       },
     });
-
-    // Close onboarding hint on any click outside
-    document.addEventListener('click', this.handleDocumentClick);
 
     this.userWsService.notifications$
       .pipe(takeUntil(this.destroy$))
@@ -206,12 +211,24 @@ export class Header implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
-    document.removeEventListener('click', this.handleDocumentClick);
   }
 
   private checkOnboardingHint(): void {
-    if (localStorage.getItem('show_onboarding_hint') === 'true') {
-      this.showOnboardingHint.set(true);
+    if (this.onboardingStep() > 0) {
+      // Wizard is already active. If user navigated away from a page that
+      // doesn't expose the "new consultation" button, stop step 1.
+      if (this.onboardingStep() === 1 && !this.showNewConsultationButton()) {
+        this.onboardingStep.set(0);
+      } else if (this.onboardingStep() === 1) {
+        this.updateHintPosition();
+      }
+      return;
+    }
+    if (
+      localStorage.getItem('show_onboarding_hint') === 'true'
+      && this.showNewConsultationButton()
+    ) {
+      this.onboardingStep.set(1);
       this.updateHintPosition();
     }
   }
@@ -227,9 +244,67 @@ export class Header implements OnInit, OnDestroy {
     });
   }
 
+  nextOnboardingStep(): void {
+    const current = this.onboardingStep();
+    if (current === 1) {
+      this.onboardingStep.set(2);
+      this.showCreateConsultationModal.set(true);
+      return;
+    }
+    if (current >= 2 && current < this.ONBOARDING_TOTAL_STEPS) {
+      this.onboardingStep.set(current + 1);
+      return;
+    }
+    this.dismissOnboardingHint();
+  }
+
+  onScheduleToggled(checked: boolean): void {
+    if (checked && this.onboardingStep() === 3) {
+      this.onboardingStep.set(4);
+    }
+  }
+
+  onAddParticipantClicked(): void {
+    if (this.onboardingStep() === 4) {
+      this.onboardingStep.set(5);
+    }
+  }
+
+  onExternalGuestSelected(): void {
+    if (this.onboardingStep() === 5) {
+      this.onboardingStep.set(6);
+    }
+  }
+
+  onParticipantAdded(): void {
+    if (this.onboardingStep() === 8) {
+      this.onboardingStep.set(9);
+    }
+  }
+
+  onConsultationCreated(): void {
+    if (this.onboardingStep() === 10) {
+      this.onboardingStep.set(11);
+    }
+  }
+
   dismissOnboardingHint(): void {
-    this.showOnboardingHint.set(false);
+    this.onboardingStep.set(0);
     localStorage.removeItem('show_onboarding_hint');
+  }
+
+  restartOnboardingWizard(): void {
+    localStorage.setItem('show_onboarding_hint', 'true');
+    this.showCreateConsultationModal.set(false);
+    this.onboardingStep.set(0);
+    if (!this.showNewConsultationButton()) {
+      this.router.navigate([RoutePaths.USER, RoutePaths.DASHBOARD]);
+      return;
+    }
+    setTimeout(() => {
+      this.onboardingStep.set(1);
+      this.updateHintPosition();
+    });
   }
 
   private updatePageInfo() {
@@ -286,10 +361,18 @@ export class Header implements OnInit, OnDestroy {
   navigateToNewConsultation() {
     this.closeMobileMenu();
     this.showCreateConsultationModal.set(true);
+    if (this.onboardingStep() === 1) {
+      this.onboardingStep.set(2);
+    }
   }
 
   closeCreateConsultationModal() {
     this.showCreateConsultationModal.set(false);
+    const step = this.onboardingStep();
+    // Step 11 is shown after the consultation was successfully created — let it stay.
+    if (step >= 2 && step < 11) {
+      this.dismissOnboardingHint();
+    }
   }
 
   goBack() {
@@ -350,11 +433,19 @@ export class Header implements OnInit, OnDestroy {
     this.closeMobileMenu();
     this.userWsService.disconnect();
     this.userService.clearCurrentUser();
+    // Read the OIDC logout URL before clearing localStorage.
+    const oidcLogoutUrl = this.authService.getLogoutUrl();
     const savedLanguage = localStorage.getItem('app_language');
     await this.authService.logout();
     localStorage.clear();
     if (savedLanguage) {
       localStorage.setItem('app_language', savedLanguage);
+    }
+    if (oidcLogoutUrl) {
+      // RP-initiated logout: end the SSO session at the provider, which then
+      // redirects back to the login page.
+      window.location.href = oidcLogoutUrl;
+      return;
     }
     this.router.navigate([RoutePaths.AUTH]);
   }

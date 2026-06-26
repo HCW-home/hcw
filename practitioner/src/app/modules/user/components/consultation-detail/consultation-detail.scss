@@ -218,7 +218,8 @@
   }
 }
 
-.appointments-section {
+.appointments-section,
+.reminders-section {
   background: var(--White);
   border-radius: 20px;
   padding: 32px;
@@ -637,6 +638,49 @@
   }
 }
 
+.reminders-section {
+  margin-top: 24px;
+}
+
+.reminders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  .load-more-container {
+    display: flex;
+    justify-content: flex-start;
+    padding-top: 8px;
+  }
+}
+
+.appointment-date-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  background: var(--primary-50);
+  border-radius: 12px;
+  flex-shrink: 0;
+
+  .day {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary-700);
+    line-height: 1;
+  }
+
+  .month {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--primary-600);
+    text-transform: uppercase;
+  }
+}
+
 .appointment-card {
   background: var(--slate-50);
   border-radius: 16px;
@@ -658,33 +702,6 @@
     }
     100% {
       box-shadow: 0 0 16px rgba(99, 102, 241, 0.25);
-    }
-  }
-
-  .appointment-date-box {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 48px;
-    height: 48px;
-    min-width: 48px;
-    background: var(--primary-50);
-    border-radius: 12px;
-    flex-shrink: 0;
-
-    .day {
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--primary-700);
-      line-height: 1;
-    }
-
-    .month {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--primary-600);
-      text-transform: uppercase;
     }
   }
 

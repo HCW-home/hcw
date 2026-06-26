@@ -14,7 +14,7 @@ from rest_framework import serializers, status
 from rest_framework.response import Response
 
 from .forms import CustomAllAuthPasswordResetForm
-from .models import HealthMetric, Language, Organisation, Speciality, Term, WebPushSubscription
+from .models import HealthMetric, Language, Organisation, Speciality, Term, WebPushSubscription, DAVAppPassword
 
 UserModel = get_user_model()
 
@@ -142,6 +142,72 @@ class UserDetailsSerializer(CustomFieldsMixin, serializers.ModelSerializer):
         ):
             return None
         return obj.encrypted_private_key or None
+
+    def _custom_field_target(self, instance):
+        """Custom fields are scoped to the user role: practitioner vs patient."""
+        return "users.Practitioner" if instance.is_practitioner else "users.User"
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        ret["custom_fields"] = self._role_custom_fields(instance)
+        return ret
+
+    def _role_custom_fields(self, instance):
+        """Full list of custom field definitions for the user role, each merged
+        with its current value (null when not filled yet)."""
+        from django.contrib.contenttypes.models import ContentType
+        from consultations.models import CustomField, CustomFieldValue
+
+        target = self._custom_field_target(instance)
+        ct = ContentType.objects.get_for_model(instance.__class__)
+        values = {
+            v.custom_field_id: v.value
+            for v in CustomFieldValue.objects.filter(
+                content_type=ct,
+                object_id=instance.pk,
+                custom_field__target_model=target,
+            )
+        }
+        fields = CustomField.objects.filter(target_model=target).order_by(
+            "ordering", "name"
+        )
+        return [
+            {
+                "field": f.pk,
+                "field_name": f.name,
+                "field_type": f.field_type,
+                "options": f.options,
+                "required": f.required,
+                "is_public": f.is_public,
+                "value": values.get(f.pk),
+            }
+            for f in fields
+        ]
+
+    def _save_custom_fields(self, instance, custom_fields_data):
+        """Upsert custom field values, restricted to the fields belonging to the
+        user role so a client cannot write values for unrelated targets."""
+        if custom_fields_data is None:
+            return
+        from django.contrib.contenttypes.models import ContentType
+        from consultations.models import CustomField, CustomFieldValue
+
+        target = self._custom_field_target(instance)
+        ct = ContentType.objects.get_for_model(instance.__class__)
+        valid_ids = set(
+            CustomField.objects.filter(target_model=target).values_list(
+                "id", flat=True
+            )
+        )
+        for item in custom_fields_data:
+            if item["field"] not in valid_ids:
+                continue
+            CustomFieldValue.objects.update_or_create(
+                custom_field_id=item["field"],
+                content_type=ct,
+                object_id=instance.pk,
+                defaults={"value": item.get("value")},
+            )
 
     def validate_mobile_phone_number(self, value):
         if self.instance and value:
@@ -388,3 +454,67 @@ class UserParticipantDetailSerializer(serializers.ModelSerializer):
             "status",
             "appointment",
         ]
+
+class DAVAppPasswordSerializer(serializers.ModelSerializer):
+    token = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = DAVAppPassword
+        fields = [
+            "id",
+            "label",
+            "token",
+            "created_at",
+            "last_used_at",
+            "is_active"
+        ]
+        read_only_fields = [
+            "id",
+            "token",
+            "created_at",
+            "last_used_at"
+        ]
+
+class PublicPractitionerSerializer(serializers.ModelSerializer):
+    """
+    Read-only serializer exposing only public practitioner data for the map.
+    """
+
+    specialities = SpecialitySerializer(many=True, read_only=True)
+    main_organisation = OrganisationSerializer(read_only=True)
+    public_custom_fields = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserModel
+        fields = [
+            "pk",
+            "first_name",
+            "last_name",
+            "email",
+            "mobile_phone_number",
+            "picture",
+            "job_title",
+            "specialities",
+            "main_organisation",
+            "location",
+            "street",
+            "city",
+            "postal_code",
+            "country",
+            "public_custom_fields",
+        ]
+        read_only_fields = fields
+
+    def get_public_custom_fields(self, obj):
+        from consultations.models import CustomFieldValue
+        from consultations.serializers import CustomFieldValueReadSerializer
+        from django.contrib.contenttypes.models import ContentType
+
+        ct = ContentType.objects.get_for_model(obj.__class__)
+        values = CustomFieldValue.objects.filter(
+            content_type=ct,
+            object_id=obj.pk,
+            custom_field__is_public=True,
+            custom_field__target_model__in=["users.User", "users.Practitioner"],
+        ).select_related("custom_field")
+        return CustomFieldValueReadSerializer(values, many=True).data

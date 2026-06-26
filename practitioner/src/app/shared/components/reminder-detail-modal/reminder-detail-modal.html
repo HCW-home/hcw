@@ -1,0 +1,83 @@
+<app-modal
+  [isOpen]="isOpen"
+  [title]="'reminders.detailTitle' | translate"
+  size="medium"
+  (closed)="onClose()">
+  @if (reminder) {
+  <div class="reminder-detail">
+    <div class="detail-header">
+      <div class="detail-icon">
+        <app-svg src="bell" [svgStyle]="{'width.px': 22, 'height.px': 22}"></app-svg>
+      </div>
+      <span class="detail-title">{{ reminder.title }}</span>
+    </div>
+
+    @if (reminder.description) {
+    <div class="detail-row">
+      <span class="detail-label">{{ 'reminders.description' | translate }}</span>
+      <span class="detail-value">{{ reminder.description }}</span>
+    </div>
+    }
+
+    <div class="detail-row">
+      <span class="detail-label">{{ 'reminders.recipient' | translate }}</span>
+      <span class="detail-value">{{ recipientName }}</span>
+    </div>
+
+    @if (creatorName) {
+    <div class="detail-row">
+      <span class="detail-label">{{ 'reminders.createdBy' | translate }}</span>
+      <span class="detail-value">{{ creatorName }}</span>
+    </div>
+    }
+
+    <div class="detail-row">
+      <span class="detail-label">{{ 'reminders.date' | translate }}</span>
+      <span class="detail-value">
+        {{ reminder.scheduled_at | localDate:'dd MMM yyyy, HH:mm' }}
+      </span>
+    </div>
+
+    @if (reminder.is_recurring) {
+    <div class="detail-row">
+      <span class="detail-label">{{ 'reminders.recurring' | translate }}</span>
+      <span class="detail-value">
+        {{ recurrenceLabel }}
+        @if (reminder.recurrence_end_at) {
+        ({{ 'reminders.until' | translate }} {{ reminder.recurrence_end_at | localDate:'dd MMM yyyy' }})
+        }
+      </span>
+    </div>
+    }
+
+    @if (reminder.next_run_at) {
+    <div class="detail-row">
+      <span class="detail-label">{{ 'reminders.nextRun' | translate }}</span>
+      <span class="detail-value">
+        {{ reminder.next_run_at | localDate:'dd MMM yyyy, HH:mm' }}
+      </span>
+    </div>
+    }
+  </div>
+  }
+
+  @if (canEdit) {
+  <div modal-footer class="detail-actions">
+    <app-button
+      [text]="'reminders.delete' | translate"
+      leftIcon="trash"
+      [style]="ButtonStyleEnum.stroke"
+      [size]="ButtonSizeEnum.medium"
+      [state]="ButtonStateEnum.error"
+      (buttonClick)="onDelete()">
+    </app-button>
+    <app-button
+      [text]="'reminders.edit' | translate"
+      leftIcon="edit"
+      [style]="ButtonStyleEnum.primary"
+      [size]="ButtonSizeEnum.medium"
+      (buttonClick)="onEdit()">
+    </app-button>
+  </div>
+  }
+</app-modal>

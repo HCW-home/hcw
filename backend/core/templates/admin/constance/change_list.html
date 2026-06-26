@@ -1,0 +1,101 @@
+{% extends "admin/base_site.html" %}
+
+{% load admin_list static i18n unfold admin_extras %}
+
+{% block extrahead %}
+    {% url 'admin:jsi18n' as jsi18nurl %}
+    <script type="text/javascript" src="{{ jsi18nurl|default:'../../jsi18n/' }}"></script>
+    {{ block.super }}
+    {{ media.js }}
+    <script type="text/javascript" src="{% static 'admin/js/constance.js' %}"></script>
+    <style>[x-cloak] { display: none !important; }</style>
+{% endblock %}
+
+{% block is_fullwidth %}1{% endblock %}
+
+{% block content %}
+    <div id="content-main" class="constance">
+        {% if fieldsets %}
+            <div id="changelist"
+                 class="flex flex-col gap-4 w-full"
+                 x-data="{ activeTab: window.location.hash ? window.location.hash.replace('#','') : '{{ fieldsets.0.title|slugify }}' }">
+
+                <nav class="flex flex-row flex-wrap gap-1 p-1 bg-base-100 rounded-default font-medium text-sm dark:bg-white/[.06]">
+                    {% for fieldset in fieldsets %}
+                        <a href="#{{ fieldset.title|slugify }}"
+                           x-on:click.prevent="activeTab = '{{ fieldset.title|slugify }}'; window.location.hash = '{{ fieldset.title|slugify }}'"
+                           x-bind:class="activeTab === '{{ fieldset.title|slugify }}' ? 'bg-white shadow-xs text-font-important-light dark:bg-base-700 dark:text-font-important-dark' : 'text-base-600 dark:text-base-300'"
+                           class="px-3 py-1.5 rounded-default hover:bg-base-700/[.06] dark:hover:bg-white/[.06] whitespace-nowrap cursor-pointer">
+                            {{ fieldset.title }}
+                        </a>
+                    {% endfor %}
+                </nav>
+
+                <form id="changelist-form"
+                      action=""
+                      method="post"
+                      enctype="multipart/form-data"
+                      novalidate
+                      class="flex flex-col gap-8 w-full">
+                    {% csrf_token %}
+
+                    {% include "unfold/helpers/form_errors.html" with errors=form.non_field_errors %}
+
+                    {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+
+                    {% for fieldset in fieldsets %}
+                        <section x-show="activeTab === '{{ fieldset.title|slugify }}'"
+                                 x-cloak
+                                 class="flex flex-col gap-4"
+                                 id="tab-{{ fieldset.title|slugify }}">
+
+                            {% with desc=fieldset.title|fieldset_description %}
+                                {% if desc %}
+                                    <div class="bg-base-50 border-l-4 border-primary-500 px-4 py-3 rounded-default text-sm leading-relaxed text-font-default-light dark:bg-white/[.04] dark:text-font-default-dark dark:border-primary-400">
+                                        {{ desc }}
+                                    </div>
+                                {% endif %}
+                            {% endwith %}
+
+                            <div class="border border-base-200 rounded-default overflow-x-auto dark:border-base-800">
+                                <table class="w-full border-collapse">
+                                    {% with config_values=fieldset.config_values %}
+                                        {% include "admin/constance/includes/results_list.html" %}
+                                    {% endwith %}
+                                </table>
+                            </div>
+                        </section>
+                    {% endfor %}
+
+                    <div class="flex justify-end">
+                        {% component "unfold/components/button.html" with submit=1 %}
+                            {% trans "Save" %}
+                        {% endcomponent %}
+                    </div>
+                </form>
+            </div>
+        {% else %}
+            <div id="changelist" class="flex flex-col gap-8 w-full">
+                <form id="changelist-form" action="" method="post" enctype="multipart/form-data" novalidate class="flex flex-col gap-8 w-full">
+                    {% csrf_token %}
+
+                    {% include "unfold/helpers/form_errors.html" with errors=form.non_field_errors %}
+
+                    {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+
+                    <div class="border border-base-200 rounded-default overflow-x-auto dark:border-base-800">
+                        <table class="w-full border-collapse">
+                            {% include "admin/constance/includes/results_list.html" %}
+                        </table>
+                    </div>
+
+                    <div class="flex justify-end">
+                        {% component "unfold/components/button.html" with submit=1 %}
+                            {% trans "Save" %}
+                        {% endcomponent %}
+                    </div>
+                </form>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

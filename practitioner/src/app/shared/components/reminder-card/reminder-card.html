@@ -1,0 +1,41 @@
+<div class="reminder-card">
+  <div class="reminder-header">
+    <div class="reminder-date-box">
+      <span class="day">{{ reminder.scheduled_at | localDate:'dd' }}</span>
+      <span class="month">{{ reminder.scheduled_at | localDate:'MMM' }}</span>
+    </div>
+    <div class="reminder-body">
+      <span class="reminder-title">{{ reminder.title }}</span>
+      @if (reminder.description) {
+      <span class="reminder-description">{{ reminder.description }}</span>
+      }
+      <div class="reminder-meta">
+        <span class="reminder-date">{{ reminder.scheduled_at | localDate:'dd MMM yyyy, HH:mm' }}</span>
+        <span class="reminder-recipient">{{ recipientName }}</span>
+        @if (reminder.is_recurring) {
+        <span class="reminder-recurrence">{{ recurrenceLabel }}</span>
+        }
+      </div>
+    </div>
+  </div>
+
+  @if (showActions) {
+  <div class="reminder-actions">
+    <app-button
+      [text]="'reminders.edit' | translate"
+      leftIcon="edit"
+      [size]="ButtonSizeEnum.small"
+      [style]="ButtonStyleEnum.stroke"
+      (buttonClick)="edit.emit(reminder)">
+    </app-button>
+    <app-button
+      [text]="'reminders.delete' | translate"
+      leftIcon="trash"
+      [size]="ButtonSizeEnum.small"
+      [style]="ButtonStyleEnum.stroke"
+      [state]="ButtonStateEnum.error"
+      (buttonClick)="delete.emit(reminder)">
+    </app-button>
+  </div>
+  }
+</div>

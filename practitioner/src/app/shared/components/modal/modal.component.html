@@ -4,9 +4,17 @@
       @if (title() || showCloseButton()) {
         <div class="modal-header">
           @if (title()) {
-            <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
-              {{ title() }}
-            </app-typography>
+            <div class="modal-title-row">
+              <app-typography [variant]="TypographyTypeEnum['body-l-bold']" color="var(--slate-800)">
+                {{ title() }}
+              </app-typography>
+              @if (titleHelp()) {
+                <span class="modal-title-help" tabindex="0" [attr.aria-label]="titleHelp()">
+                  <app-svg src="help-circle" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                  <span class="modal-title-tooltip">{{ titleHelp() }}</span>
+                </span>
+              }
+            </div>
           }
           @if (showCloseButton()) {
             <button class="close-button" (click)="close()">

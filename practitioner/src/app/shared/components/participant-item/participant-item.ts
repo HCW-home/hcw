@@ -56,6 +56,7 @@ export class ParticipantItem {
   @Input() showRemoveAction = false;
   @Input() isPending = false;
   @Input() currentUser: any = null;
+  @Input() appointmentCancelled = false;
 
   @Output() remove = new EventEmitter<void>();
 
@@ -220,6 +221,10 @@ export class ParticipantItem {
   loadingAccessUrl = signal(false);
 
   hasAccessUrl(): boolean {
+    // Don't show the access link for cancelled participants or cancelled appointments
+    if (this.appointmentCancelled || this.participant?.status === 'cancelled') {
+      return false;
+    }
     return !!this.participant?.requires_manual_access;
   }
 

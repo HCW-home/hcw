@@ -6,6 +6,7 @@ import {
   signal,
   inject,
   viewChild,
+  effect,
   ElementRef,
   HostListener,
 } from '@angular/core';
@@ -56,6 +57,8 @@ import {
   getAppointmentBadgeType,
   parseDateWithoutTimezone,
 } from '../../../../shared/tools/helper';
+import { weekRotationColor } from '../../../../shared/tools/calendar-rotation';
+import { applyCalendarLocale } from '../../../../shared/tools/calendar-locale';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
 import { LocalDatePipe } from '../../../../shared/pipes/local-date.pipe';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -64,6 +67,15 @@ import { UserService } from '../../../../core/services/user.service';
 import { Auth } from '../../../../core/services/auth';
 import { ConfirmPresenceModal } from './confirm-presence-modal/confirm-presence-modal';
 import { AppointmentFormModal } from '../consultation-detail/appointment-form-modal/appointment-form-modal';
+import { ReminderFormModal } from '../../../../shared/components/reminder-form-modal/reminder-form-modal';
+import {
+  ElementTypeModal,
+  ElementType,
+} from '../../../../shared/components/element-type-modal/element-type-modal';
+import { ReminderDetailModal } from '../../../../shared/components/reminder-detail-modal/reminder-detail-modal';
+import { ReminderCard } from '../../../../shared/components/reminder-card/reminder-card';
+import { Reminder, ReminderOccurrence } from '../../../../core/models/reminder';
+import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { IUser } from '../../../user/models/user';
 
 interface PractitionerOption {
@@ -95,6 +107,10 @@ type AppointmentTimeFilter = 'all' | 'upcoming' | 'past';
     TranslatePipe,
     ConfirmPresenceModal,
     AppointmentFormModal,
+    ReminderFormModal,
+    ReminderCard,
+    ElementTypeModal,
+    ReminderDetailModal,
   ],
   templateUrl: './appointments.html',
   styleUrl: './appointments.scss',
@@ -110,6 +126,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   private el = inject(ElementRef);
   private incomingCallService = inject(IncomingCallService);
   private activeCallService = inject(ActiveCallService);
+  private confirmationService = inject(ConfirmationService);
   private t = inject(TranslationService);
 
   protected readonly getAppointmentBadgeType = getAppointmentBadgeType;
@@ -118,17 +135,47 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
 
+  constructor() {
+    // Localize the FullCalendar headers (day/month names) to the user's
+    // language, re-applying whenever the language or the calendar instance
+    // changes. The admin-configured first day of week is preserved.
+    effect(() => {
+      const lang = this.t.currentLanguage();
+      const firstDay = this.firstDayOfWeek();
+      const api = this.calendarComponent()?.getApi();
+      applyCalendarLocale(api, lang, firstDay);
+    });
+  }
+
   calendarComponent = viewChild<FullCalendarComponent>('calendar');
   hoveredAppointment = signal<Appointment | null>(null);
+  hoveredReminder = signal<{
+    title: string;
+    description: string;
+    recipient: string;
+    createdBy: string;
+    occurrenceAt: string;
+    recurrence: string;
+    nextRunAt: string | null;
+    recurrenceEndAt: string | null;
+  } | null>(null);
   tooltipPosition = signal<{ top: number; left: number }>({ top: 0, left: 0 });
   selectedAppointmentForMenu = signal<Appointment | null>(null);
   menuPosition = signal<{ top: number; left: number }>({ top: 0, left: 0 });
+
+  // Calendar background colorization (admin-controlled, 4-week rotation).
+  colorizationEnabled = signal<boolean>(false);
+  private rotationColors: string[] = [];
+  private rotationAnchorDate = '';
+  private firstDayOfWeek = signal<number>(0);
 
   loading = signal(true);
   loadingMore = signal(false);
   hasMore = signal(false);
   appointments = signal<Appointment[]>([]);
   calendarEvents = signal<EventInput[]>([]);
+  private appointmentCalendarEvents: EventInput[] = [];
+  private reminderCalendarEvents: EventInput[] = [];
   currentView = signal<CalendarView>('timeGridWeek');
   currentTitle = signal<string>('');
 
@@ -136,6 +183,18 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   confirmPresenceAppointment = signal<Appointment | null>(null);
   confirmPresenceMyParticipantId = signal<number | null>(null);
   createAppointmentModalOpen = signal(false);
+  createReminderModalOpen = signal(false);
+  editingReminder = signal<Reminder | null>(null);
+  elementTypeModalOpen = signal(false);
+  reminderDetailModalOpen = signal(false);
+  detailReminder = signal<Reminder | null>(null);
+
+  reminders = signal<Reminder[]>([]);
+  isLoadingReminders = signal(false);
+  isLoadingMoreReminders = signal(false);
+  hasMoreReminders = signal(false);
+  private reminderPage = 1;
+  private reminderPageSize = 20;
   editingAppointment = signal<Appointment | null>(null);
   selectedStartDate = signal<Date | null>(null);
   selectedEndDate = signal<Date | null>(null);
@@ -158,6 +217,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     initialView: 'timeGridWeek',
     headerToolbar: false,
     height: 'auto',
+    firstDay: 0,
     weekends: true,
     editable: true,
     eventDurationEditable: true,
@@ -171,6 +231,9 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     eventResize: this.handleEventResize.bind(this),
     eventMouseEnter: this.handleEventMouseEnter.bind(this),
     eventMouseLeave: this.handleEventMouseLeave.bind(this),
+    eventContent: this.renderEventContent.bind(this),
+    dayCellClassNames: this.dayCellRotationClass.bind(this),
+    dayHeaderClassNames: this.dayHeaderRotationClass.bind(this),
     slotMinTime: '00:00:00',
     slotMaxTime: '24:00:00',
     allDaySlot: false,
@@ -215,6 +278,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   ngOnInit(): void {
     this.loadConfig();
     this.loadPractitioners();
+    this.refreshReminders();
 
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
       const participantId = params['participantId'];
@@ -259,11 +323,68 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
           if (config.appointment_early_join_minutes) {
             this.appointmentEarlyJoinMinutes = config.appointment_early_join_minutes;
           }
+          this.rotationColors = config.calendar_rotation_colors ?? [];
+          this.rotationAnchorDate = config.calendar_rotation_anchor_date ?? '';
+          const firstDay = config.calendar_first_day_of_week ?? 0;
+          // Drives the rotation week alignment and the locale effect.
+          this.firstDayOfWeek.set(firstDay);
+          // Reassign a fresh options object so the FullCalendar component diffs
+          // and applies firstDay even before its api is reachable imperatively.
+          this.calendarOptions = { ...this.calendarOptions, firstDay };
+          this.calendarComponent()?.getApi()?.setOption('firstDay', firstDay);
+          this.colorizationEnabled.set(
+            !!config.calendar_colorization_enabled &&
+            this.rotationColors.length > 0 &&
+            !!this.rotationAnchorDate
+          );
+          this.applyRotationColorVariables();
+          this.calendarComponent()?.getApi()?.render();
         },
         error: () => {
           // Use default value on error
         }
       });
+  }
+
+  /** Index (0-based) of the rotation color for a given day, or null when disabled. */
+  private rotationIndex(date: Date): number | null {
+    if (!this.colorizationEnabled()) {
+      return null;
+    }
+    const color = weekRotationColor(date, this.rotationAnchorDate, this.rotationColors, this.firstDayOfWeek());
+    if (color === null) {
+      return null;
+    }
+    return this.rotationColors.indexOf(color);
+  }
+
+  /** Class applied to each FullCalendar day cell / column to colorize its background. */
+  private dayCellRotationClass(arg: { date: Date }): string[] {
+    const index = this.rotationIndex(arg.date);
+    return index === null ? [] : [`fc-rot-${index}`];
+  }
+
+  /** Same rotation class for the day header so the colorization reads as one block. */
+  private dayHeaderRotationClass(arg: { date: Date }): string[] {
+    const index = this.rotationIndex(arg.date);
+    return index === null ? [] : [`fc-rot-${index}`];
+  }
+
+  /** Background color of a list-view row, based on its appointment date. */
+  rowColor(appointment: Appointment): string | null {
+    if (!this.colorizationEnabled()) {
+      return null;
+    }
+    const date = parseDateWithoutTimezone(appointment.scheduled_at) || new Date(appointment.scheduled_at);
+    return weekRotationColor(date, this.rotationAnchorDate, this.rotationColors, this.firstDayOfWeek());
+  }
+
+  /** Expose the configured colors as CSS variables consumed by the SCSS rules. */
+  private applyRotationColorVariables(): void {
+    const host = this.el.nativeElement as HTMLElement;
+    this.rotationColors.forEach((color, index) => {
+      host.style.setProperty(`--calendar-rot-${index}`, color);
+    });
   }
 
   private loadPractitioners(): void {
@@ -272,15 +393,52 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
       .subscribe({
         next: response => {
           const currentUser = this.userService.currentUserValue;
+          const savedSelection = this.readSelectedPractitioners();
           this.practitioners.set(
             response.results.map((user, index) => ({
               user,
               color: PRACTITIONER_COLORS[index % PRACTITIONER_COLORS.length],
-              selected: user.pk === currentUser?.pk,
+              // Restore last selection if any, otherwise default to self.
+              selected: savedSelection
+                ? savedSelection.includes(user.pk)
+                : user.pk === currentUser?.pk,
             }))
           );
           this.loadAppointments();
+          if (this.currentView() !== 'list') {
+            this.loadReminderOccurrences();
+          }
         },
+      });
+  }
+
+  // Key inside the user's app_preferences JSON (persisted server-side).
+  private static readonly SELECTED_PRACTITIONERS_PREF =
+    'appointmentsSelectedPractitionerIds';
+
+  private readSelectedPractitioners(): number[] | null {
+    const prefs = this.userService.currentUserValue?.app_preferences;
+    const value = prefs?.[Appointments.SELECTED_PRACTITIONERS_PREF];
+    return Array.isArray(value)
+      ? value.filter((id): id is number => typeof id === 'number')
+      : null;
+  }
+
+  private persistSelectedPractitioners(): void {
+    const ids = this.practitioners()
+      .filter(p => p.selected)
+      .map(p => p.user.pk);
+    const current = this.userService.currentUserValue?.app_preferences ?? {};
+    const app_preferences = {
+      ...current,
+      [Appointments.SELECTED_PRACTITIONERS_PREF]: ids,
+    };
+    this.userService
+      .updateCurrentUser({ app_preferences })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        // Persistence is best-effort; selection already applied in the UI.
+        error: () => {},
       });
   }
 
@@ -297,7 +455,11 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
           : p
       )
     );
+    this.persistSelectedPractitioners();
     this.loadAppointments();
+    if (this.currentView() !== 'list') {
+      this.loadReminderOccurrences();
+    }
   }
 
   getSelectedPractitionerCount(): number {
@@ -316,6 +478,13 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     setTimeout(() => {
       this.updateCalendarHeight();
       this.scrollToNowIndicator();
+      // Guarantee the calendar picks up the user's locale and the admin first
+      // day of week once the FullCalendar instance is actually mounted.
+      applyCalendarLocale(
+        this.calendarComponent()?.getApi(),
+        this.t.currentLanguage(),
+        this.firstDayOfWeek(),
+      );
     });
   }
 
@@ -396,7 +565,8 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
 
     if (selected.length === 0) {
       this.appointments.set([]);
-      this.calendarEvents.set([]);
+      this.appointmentCalendarEvents = [];
+      this.recomputeCalendarEvents();
       this.loading.set(false);
       return;
     }
@@ -431,7 +601,8 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
           });
 
           this.appointments.set(allAppointments);
-          this.calendarEvents.set(allEvents);
+          this.appointmentCalendarEvents = allEvents;
+          this.recomputeCalendarEvents();
           this.loading.set(false);
         },
         error: err => {
@@ -549,6 +720,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   private transformToCalendarEvents(appointments: Appointment[], color?: string): EventInput[] {
     return appointments.map(appointment => {
       const eventColor = color || this.getPractitionerColor(appointment);
+      const owned = this.isOwnedByCurrentUser(appointment.created_by?.id);
       return {
         id: color ? `${appointment.id}-${color}` : appointment.id.toString(),
         title: this.getEventTitle(appointment),
@@ -561,6 +733,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
         backgroundColor: eventColor,
         borderColor: eventColor,
         textColor: '#ffffff',
+        editable: owned,
         extendedProps: { appointment },
       };
     });
@@ -570,6 +743,152 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     const title = appointment.title || this.t.instant('appointments.defaultTitle');
     const type = this.getAppointmentTypeLabel(appointment.type);
     return `${title} (${type})`;
+  }
+
+  // Custom event rendering: a small icon distinguishes reminders (bell) from
+  // appointments (calendar); both keep the practitioner colour.
+  private renderEventContent(arg: {
+    event: { title: string; extendedProps: Record<string, unknown> };
+    timeText: string;
+  }): { domNodes: HTMLElement[] } {
+    const isReminder = !!arg.event.extendedProps['isReminder'];
+    const bellPath =
+      'M12 2a6 6 0 0 0-6 6v3.6L4.3 15a1 1 0 0 0 .9 1.5h13.6a1 1 0 0 0 .9-1.5L18 11.6V8a6 6 0 0 0-6-6zm0 20a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22z';
+    const calPath =
+      'M7 2v2H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7zm12 7v10H5V9h14z';
+
+    const container = document.createElement('div');
+    container.className = 'fc-event-custom';
+
+    const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    icon.setAttribute('viewBox', '0 0 24 24');
+    icon.setAttribute('width', '12');
+    icon.setAttribute('height', '12');
+    icon.setAttribute('fill', 'currentColor');
+    icon.classList.add('fc-event-icon');
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', isReminder ? bellPath : calPath);
+    icon.appendChild(path);
+
+    const label = document.createElement('span');
+    label.className = 'fc-event-label';
+    label.textContent = arg.timeText
+      ? `${arg.timeText} ${arg.event.title}`
+      : arg.event.title;
+
+    container.appendChild(icon);
+    container.appendChild(label);
+    return { domNodes: [container] };
+  }
+
+  private getPractitionerColorById(practitionerId: number | null): string {
+    const practitioner = this.practitioners().find(
+      p => p.user.pk === practitionerId
+    );
+    return practitioner?.color || '#3b82f6';
+  }
+
+  private getPractitionerNameById(practitionerId: number | null): string {
+    const u = this.practitioners().find(
+      p => p.user.pk === practitionerId
+    )?.user;
+    if (!u) return '';
+    return `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email || '';
+  }
+
+  // Only the creator may move/edit an element; others would get a 404 from the
+  // API, so we disable drag/resize and click-to-edit for non-owned items.
+  private isOwnedByCurrentUser(createdById: number | null | undefined): boolean {
+    const currentUser = this.userService.currentUserValue;
+    return !!currentUser && createdById === currentUser.pk;
+  }
+
+  canEditReminder(reminder: Reminder | null): boolean {
+    return this.isOwnedByCurrentUser(reminder?.created_by?.id);
+  }
+
+  // Build a Reminder from the calendar occurrence so the detail modal can be
+  // shown without an extra GET (which would 404 for other practitioners'
+  // reminders, since /reminders/:id is scoped to the creator).
+  private occurrenceToReminder(occ: ReminderOccurrence): Reminder {
+    return {
+      id: occ.reminder_id,
+      title: occ.title,
+      description: occ.description,
+      consultation: occ.consultation,
+      recipient: occ.recipient,
+      created_by: occ.created_by_user as Reminder['created_by'],
+      scheduled_at: occ.scheduled_at,
+      is_recurring: occ.is_recurring,
+      recurrence_interval: occ.recurrence_interval,
+      recurrence_period: occ.recurrence_period,
+      recurrence_count: occ.recurrence_count,
+      occurrences_sent: 0,
+      next_run_at: occ.next_run_at,
+      recurrence_end_at: occ.recurrence_end_at,
+      last_sent_at: null,
+      is_active: true,
+      created_at: '',
+      updated_at: '',
+    };
+  }
+
+  private transformOccurrencesToEvents(
+    occurrences: ReminderOccurrence[]
+  ): EventInput[] {
+    return occurrences.map((occ, i) => {
+      const suffix =
+        occ.is_recurring && occ.occurrence_total > 1
+          ? ` (${occ.occurrence_index + 1}/${occ.occurrence_total})`
+          : '';
+      const recipient = occ.recipient
+        ? `${occ.recipient.first_name || ''} ${occ.recipient.last_name || ''}`.trim() ||
+          occ.recipient.email ||
+          ''
+        : '';
+      const recipientPart = recipient ? ` - ${recipient}` : '';
+      const recurrence =
+        occ.is_recurring && occ.occurrence_total > 1
+          ? this.t.instant('reminders.occurrenceLabel', {
+              index: String(occ.occurrence_index + 1),
+              total: String(occ.occurrence_total),
+            })
+          : '';
+      // Same colour scheme as appointments (per practitioner); reminders are
+      // distinguished by an icon rendered in eventContent, not by colour.
+      const color = this.getPractitionerColorById(occ.created_by);
+      const owned = this.isOwnedByCurrentUser(occ.created_by);
+      return {
+        id: `reminder-${occ.reminder_id}-${occ.occurrence_index}-${i}`,
+        title: `${occ.title}${recipientPart}${suffix}`,
+        start: parseDateWithoutTimezone(occ.occurrence_at) || occ.occurrence_at,
+        backgroundColor: color,
+        borderColor: color,
+        textColor: '#ffffff',
+        editable: owned,
+        extendedProps: {
+          isReminder: true,
+          reminderOwned: owned,
+          occurrence: occ,
+          reminderId: occ.reminder_id,
+          reminderTitle: occ.title,
+          reminderDescription: occ.description,
+          reminderRecipient: recipient,
+          reminderCreatedBy: this.getPractitionerNameById(occ.created_by),
+          reminderOccurrenceAt: occ.occurrence_at,
+          reminderRecurrence: recurrence,
+          reminderNextRunAt: occ.next_run_at,
+          reminderRecurrenceEndAt: occ.is_recurring ? occ.recurrence_end_at : null,
+        },
+      };
+    });
+  }
+
+  private recomputeCalendarEvents(): void {
+    this.calendarEvents.set([
+      ...this.appointmentCalendarEvents,
+      ...this.reminderCalendarEvents,
+    ]);
   }
 
   getAppointmentTypeLabel(type: AppointmentType | string): string {
@@ -612,6 +931,17 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     clickInfo.jsEvent.preventDefault();
     clickInfo.jsEvent.stopPropagation();
 
+    const occurrence = clickInfo.event.extendedProps['occurrence'] as
+      | ReminderOccurrence
+      | undefined;
+    if (occurrence) {
+      // Reuse the data already returned by /reminders/occurrences/ — no extra
+      // GET (which would 404 for another practitioner's reminder).
+      this.detailReminder.set(this.occurrenceToReminder(occurrence));
+      this.reminderDetailModalOpen.set(true);
+      return;
+    }
+
     const appointment = clickInfo.event.extendedProps[
       'appointment'
     ] as Appointment;
@@ -639,38 +969,83 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     ) {
       this.currentDateRange = { start: newStart, end: newEnd };
       this.loadAppointments();
+      this.loadReminderOccurrences();
     }
   }
 
   handleEventMouseEnter(info: EventHoveringArg): void {
-    const appointment = info.event.extendedProps['appointment'] as Appointment;
-    if (appointment) {
-      const rect = info.el.getBoundingClientRect();
-      this.tooltipPosition.set({
-        top: rect.bottom + window.scrollY + 8,
-        left: rect.left + window.scrollX,
+    const props = info.event.extendedProps;
+    const rect = info.el.getBoundingClientRect();
+    const position = {
+      top: rect.bottom + window.scrollY + 8,
+      left: rect.left + window.scrollX,
+    };
+
+    if (props['reminderId']) {
+      this.tooltipPosition.set(position);
+      this.hoveredReminder.set({
+        title: props['reminderTitle'] as string,
+        description: props['reminderDescription'] as string,
+        recipient: props['reminderRecipient'] as string,
+        createdBy: (props['reminderCreatedBy'] as string) || '',
+        occurrenceAt: props['reminderOccurrenceAt'] as string,
+        recurrence: props['reminderRecurrence'] as string,
+        nextRunAt: (props['reminderNextRunAt'] as string | null) ?? null,
+        recurrenceEndAt: (props['reminderRecurrenceEndAt'] as string | null) ?? null,
       });
+      return;
+    }
+
+    const appointment = props['appointment'] as Appointment;
+    if (appointment) {
+      this.tooltipPosition.set(position);
       this.hoveredAppointment.set(appointment);
     }
   }
 
   handleEventMouseLeave(): void {
     this.hoveredAppointment.set(null);
+    this.hoveredReminder.set(null);
   }
 
   handleDateSelect(selectInfo: DateSelectArg): void {
     this.selectedStartDate.set(selectInfo.start);
     this.selectedEndDate.set(selectInfo.end);
-    this.openCreateAppointmentModal();
+    // Ask which kind of element to create before opening the relevant form.
+    this.elementTypeModalOpen.set(true);
     const calendarApi = selectInfo.view.calendar;
     calendarApi.unselect();
   }
 
+  onElementTypeModalClosed(): void {
+    this.elementTypeModalOpen.set(false);
+    this.selectedStartDate.set(null);
+    this.selectedEndDate.set(null);
+  }
+
+  onElementTypeSelected(type: ElementType): void {
+    this.elementTypeModalOpen.set(false);
+    if (type === 'appointment') {
+      this.openCreateAppointmentModal();
+    } else {
+      this.editingReminder.set(null);
+      this.createReminderModalOpen.set(true);
+    }
+  }
+
   handleEventDrop(info: EventDropArg): void {
+    const reminderId = info.event.extendedProps['reminderId'] as
+      | number
+      | undefined;
+    if (reminderId) {
+      this.handleReminderDrop(reminderId, info);
+      return;
+    }
+
     const appointment = info.event.extendedProps['appointment'] as Appointment;
     const newStart = info.event.start;
     const newEnd = info.event.end;
-    if (!newStart) {
+    if (!newStart || !this.isOwnedByCurrentUser(appointment?.created_by?.id)) {
       info.revert();
       return;
     }
@@ -679,15 +1054,73 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   }
 
   handleEventResize(info: EventResizeDoneArg): void {
+    // Reminders are point-in-time and have no duration: nothing to resize.
+    if (info.event.extendedProps['reminderId']) {
+      info.revert();
+      return;
+    }
+
     const appointment = info.event.extendedProps['appointment'] as Appointment;
     const newStart = info.event.start;
     const newEnd = info.event.end;
-    if (!newStart) {
+    if (!newStart || !this.isOwnedByCurrentUser(appointment?.created_by?.id)) {
       info.revert();
       return;
     }
 
     this.updateAppointmentTime(appointment.id, newStart, newEnd, info.revert);
+  }
+
+  private handleReminderDrop(reminderId: number, info: EventDropArg): void {
+    const newStart = info.event.start;
+    const oldStart = info.oldEvent.start;
+    if (
+      !newStart ||
+      !oldStart ||
+      !info.event.extendedProps['reminderOwned']
+    ) {
+      info.revert();
+      return;
+    }
+
+    // Dragging any occurrence translates the WHOLE series by the same delta.
+    // We apply that delta to the reminder's base scheduled_at, which we already
+    // have from the occurrence — no extra GET needed.
+    const occurrence = info.event.extendedProps['occurrence'] as
+      | ReminderOccurrence
+      | undefined;
+    if (!occurrence) {
+      info.revert();
+      return;
+    }
+    const deltaMs = newStart.getTime() - oldStart.getTime();
+
+    const formatLocal = (d: Date): string => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
+
+    const newScheduled = new Date(
+      new Date(occurrence.scheduled_at).getTime() + deltaMs
+    );
+    this.consultationService
+      .updateReminder(reminderId, { scheduled_at: formatLocal(newScheduled) })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => this.loadReminderOccurrences(),
+        error: err => {
+          info.revert();
+          this.toasterService.show(
+            'error',
+            this.t.instant('reminders.errorUpdating'),
+            getErrorMessage(err)
+          );
+        },
+      });
   }
 
   private updateAppointmentTime(
@@ -924,6 +1357,220 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     this.createAppointmentModalOpen.set(true);
   }
 
+  openCreateReminderModal(): void {
+    this.editingReminder.set(null);
+    this.selectedStartDate.set(null);
+    this.selectedEndDate.set(null);
+    this.createReminderModalOpen.set(true);
+  }
+
+  openEditReminderModal(reminder: Reminder): void {
+    this.editingReminder.set(reminder);
+    this.createReminderModalOpen.set(true);
+  }
+
+  onReminderDetailClosed(): void {
+    this.reminderDetailModalOpen.set(false);
+    this.detailReminder.set(null);
+  }
+
+  onReminderDetailEdit(reminder: Reminder): void {
+    this.reminderDetailModalOpen.set(false);
+    this.detailReminder.set(null);
+    this.openEditReminderModal(reminder);
+  }
+
+  onReminderDetailDelete(reminder: Reminder): void {
+    this.reminderDetailModalOpen.set(false);
+    this.detailReminder.set(null);
+    this.deleteReminder(reminder);
+  }
+
+  onReminderModalClosed(): void {
+    this.createReminderModalOpen.set(false);
+    this.editingReminder.set(null);
+    this.selectedStartDate.set(null);
+    this.selectedEndDate.set(null);
+  }
+
+  onReminderCreated(): void {
+    this.createReminderModalOpen.set(false);
+    this.editingReminder.set(null);
+    this.selectedStartDate.set(null);
+    this.selectedEndDate.set(null);
+    this.refreshReminders();
+  }
+
+  onReminderUpdated(): void {
+    this.createReminderModalOpen.set(false);
+    this.editingReminder.set(null);
+    this.refreshReminders();
+  }
+
+  private buildReminderParams(page: number): {
+    page: number;
+    page_size: number;
+    ordering: string;
+    future?: boolean;
+    scheduled_at__date__gte?: string;
+    scheduled_at__date__lte?: string;
+  } {
+    const params: {
+      page: number;
+      page_size: number;
+      ordering: string;
+      future?: boolean;
+      scheduled_at__date__gte?: string;
+      scheduled_at__date__lte?: string;
+    } = {
+      page,
+      page_size: this.reminderPageSize,
+      ordering: 'scheduled_at',
+    };
+
+    const timeFilter = this.appointmentTimeFilter();
+    if (timeFilter === 'upcoming') {
+      params.future = true;
+    } else if (timeFilter === 'past') {
+      params.future = false;
+    }
+
+    if (this.currentDateRange) {
+      params.scheduled_at__date__gte = this.currentDateRange.start;
+      params.scheduled_at__date__lte = this.currentDateRange.end;
+    }
+
+    return params;
+  }
+
+  loadReminders(): void {
+    this.isLoadingReminders.set(true);
+    this.reminderPage = 1;
+    this.consultationService
+      .getReminders(this.buildReminderParams(1))
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: response => {
+          this.reminders.set(response.results);
+          this.hasMoreReminders.set(response.next !== null);
+          this.isLoadingReminders.set(false);
+        },
+        error: error => {
+          this.isLoadingReminders.set(false);
+          this.toasterService.show(
+            'error',
+            this.t.instant('reminders.errorLoading'),
+            getErrorMessage(error)
+          );
+        },
+      });
+  }
+
+  // Refresh both reminder sources relevant to the current view.
+  private refreshReminders(): void {
+    this.loadReminders();
+    if (this.currentView() !== 'list') {
+      this.loadReminderOccurrences();
+    }
+  }
+
+  // Calendar view: load expanded reminder occurrences for the visible range.
+  loadReminderOccurrences(): void {
+    if (!this.currentDateRange) return;
+    // Show reminders created by the selected practitioners (same selection as
+    // the appointments). Empty selection -> no reminders.
+    const createdByIds = this.practitioners()
+      .filter(p => p.selected)
+      .map(p => p.user.pk);
+    if (createdByIds.length === 0) {
+      this.reminderCalendarEvents = [];
+      this.recomputeCalendarEvents();
+      return;
+    }
+    this.consultationService
+      .getReminderOccurrences(
+        this.currentDateRange.start,
+        this.currentDateRange.end,
+        createdByIds
+      )
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: occurrences => {
+          this.reminderCalendarEvents =
+            this.transformOccurrencesToEvents(occurrences);
+          this.recomputeCalendarEvents();
+        },
+        error: error => {
+          this.toasterService.show(
+            'error',
+            this.t.instant('reminders.errorLoading'),
+            getErrorMessage(error)
+          );
+        },
+      });
+  }
+
+  loadMoreReminders(): void {
+    if (this.isLoadingMoreReminders() || !this.hasMoreReminders()) return;
+
+    this.isLoadingMoreReminders.set(true);
+    this.reminderPage++;
+    this.consultationService
+      .getReminders(this.buildReminderParams(this.reminderPage))
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: response => {
+          this.reminders.set([...this.reminders(), ...response.results]);
+          this.hasMoreReminders.set(response.next !== null);
+          this.isLoadingMoreReminders.set(false);
+        },
+        error: error => {
+          this.reminderPage--;
+          this.isLoadingMoreReminders.set(false);
+          this.toasterService.show(
+            'error',
+            this.t.instant('reminders.errorLoading'),
+            getErrorMessage(error)
+          );
+        },
+      });
+  }
+
+  async deleteReminder(reminder: Reminder): Promise<void> {
+    const confirmed = await this.confirmationService.confirm({
+      title: this.t.instant('reminders.deleteTitle'),
+      message: this.t.instant('reminders.deleteMessage'),
+      confirmText: this.t.instant('reminders.delete'),
+      cancelText: this.t.instant('reminders.cancel'),
+      confirmStyle: 'danger',
+    });
+
+    if (!confirmed) return;
+
+    this.consultationService
+      .deleteReminder(reminder.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.reminders.set(this.reminders().filter(r => r.id !== reminder.id));
+          if (this.currentView() !== 'list') {
+            this.loadReminderOccurrences();
+          }
+          this.toasterService.show(
+            'success',
+            this.t.instant('reminders.deleted')
+          );
+        },
+        error: error => {
+          this.toasterService.show(
+            'error',
+            this.t.instant('reminders.errorDeleting'),
+            getErrorMessage(error)
+          );
+        },
+      });
+  }
+
   onCreateAppointmentModalClosed(): void {
     this.createAppointmentModalOpen.set(false);
     this.editingAppointment.set(null);
@@ -1061,5 +1708,6 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   setAppointmentTimeFilter(filter: AppointmentTimeFilter): void {
     this.appointmentTimeFilter.set(filter);
     this.loadAllAppointments();
+    this.loadReminders();
   }
 }

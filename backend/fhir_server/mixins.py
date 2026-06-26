@@ -11,6 +11,7 @@ selects `application/fhir+json` (via `Accept` header or `?format=fhir`).
 """
 from __future__ import annotations
 
+from django.db import transaction
 from rest_framework import status
 from rest_framework.response import Response
 
@@ -132,7 +133,7 @@ class FhirViewSetMixin:
 
         mapper = self._fhir_mapper()
         partial = kwargs.pop("partial", False)
-        instance = self.get_object()
+        instance = self._resolve_conditional_target(request) or self.get_object()
         context = {"request": request, "view": self, "partial": partial}
         updated = mapper.from_fhir(request.data, instance=instance, context=context)
         self.perform_fhir_update(mapper, updated, request.data, context)
@@ -142,17 +143,22 @@ class FhirViewSetMixin:
         """Hook: persist the instance built by `mapper.from_fhir`.
 
         Subclasses override when m2m relations must be reconciled after save.
+        The save and `post_save` run in one transaction so a failure in
+        `post_save` (e.g. a missing referenced resource) rolls back the
+        instance and any side-effect rows it created.
         """
-        instance.save()
-        post_save = getattr(mapper, "post_save", None)
-        if callable(post_save):
-            post_save(instance, payload=payload, context=context, created=True)
+        with transaction.atomic():
+            instance.save()
+            post_save = getattr(mapper, "post_save", None)
+            if callable(post_save):
+                post_save(instance, payload=payload, context=context, created=True)
 
     def perform_fhir_update(self, mapper, instance, payload, context):
-        instance.save()
-        post_save = getattr(mapper, "post_save", None)
-        if callable(post_save):
-            post_save(instance, payload=payload, context=context, created=False)
+        with transaction.atomic():
+            instance.save()
+            post_save = getattr(mapper, "post_save", None)
+            if callable(post_save):
+                post_save(instance, payload=payload, context=context, created=False)
 
     # -- destroy ------------------------------------------------------------
 
@@ -166,10 +172,49 @@ class FhirViewSetMixin:
         mapper = self._fhir_mapper() if self.fhir_class else None
         soft_delete = getattr(mapper, "soft_delete", None) if mapper else None
         if callable(soft_delete):
-            instance = self.get_object()
+            instance = self._resolve_conditional_target(request) or self.get_object()
             soft_delete(instance, context={"request": request, "view": self})
             return Response(status=status.HTTP_204_NO_CONTENT)
         return super().destroy(request, *args, **kwargs)
+
+    # -- conditional ops ----------------------------------------------------
+
+    def _resolve_conditional_target(self, request):
+        """Resolve the target instance for a FHIR conditional update/delete.
+
+        Conditional operations target the collection URL with a
+        `?identifier=system|value` query (no pk in the URL). Returns the
+        matched instance or None when the request is not conditional.
+        Raises FhirOperationError(404) on no match, (412) on multiple matches.
+        """
+        lookup_field = getattr(self, "lookup_url_kwarg", None) or getattr(
+            self, "lookup_field", "pk"
+        )
+        if self.kwargs.get(lookup_field) is not None:
+            return None
+        if not request.query_params.get("identifier"):
+            return None
+
+        mapper = self._fhir_mapper()
+        try:
+            queryset = self.filter_queryset(self.get_queryset())
+        except AttributeError:
+            queryset = self.get_queryset()
+        queryset, _ = apply_fhir_search(queryset, request.query_params, mapper)
+        matches = list(queryset[:2])
+        if not matches:
+            raise FhirOperationError(
+                "No resource matches the conditional identifier.",
+                code="not-found",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+        if len(matches) > 1:
+            raise FhirOperationError(
+                "Conditional operation matched multiple resources.",
+                code="multiple-matches",
+                status_code=status.HTTP_412_PRECONDITION_FAILED,
+            )
+        return matches[0]
 
     # -- response helpers ---------------------------------------------------
 

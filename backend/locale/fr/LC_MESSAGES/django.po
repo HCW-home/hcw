@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-03-25 08:43+0000\n"
+"POT-Creation-Date: 2026-06-25 14:14+0000\n"
 "PO-Revision-Date: 2026-03-25 13:26+0000\n"
 "Last-Translator: Olivier Bitsch <olivier.b@iabsis.com>\n"
 "Language-Team: French <https://translate.iabsis.com/projects/hcwhome-v6/"
@@ -19,427 +19,703 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
 "X-Generator: Weblate 5.8.2\n"
 
-#: consultations/models.py:26 consultations/models.py:307
-#: consultations/models.py:519 messaging/models.py:46 users/models.py:97
+#: consultations/admin.py:101 core/settings.py:779
+#, fuzzy
+#| msgid "description"
+msgid "Encryption"
+msgstr "description"
+
+#: consultations/admin.py:121
+msgid "Reset encryption keypair (irreversible)"
+msgstr ""
+
+#: consultations/admin.py:141
+msgid "Encryption is disabled platform-wide; nothing to reset."
+msgstr ""
+
+#: consultations/admin.py:148
+msgid "Master public key is not configured."
+msgstr ""
+
+#: consultations/admin.py:174
+#, python-format
+msgid ""
+"Encryption keypair regenerated for %(count)d queue(s) under the current "
+"master."
+msgstr ""
+
+#: consultations/models.py:27 consultations/models.py:507
+#: consultations/models.py:797 messaging/models.py:47 users/models.py:103
 msgid "name"
 msgstr "nom"
 
-#: consultations/models.py:28
+#: consultations/models.py:29
 msgid "organisation"
 msgstr "organisation"
 
-#: consultations/models.py:31
+#: consultations/models.py:33
 msgid "users"
 msgstr "utilisateurs"
 
-#: consultations/models.py:35
+#: consultations/models.py:43 consultations/models.py:406
 msgid "queue"
 msgstr "file d'attente"
 
-#: consultations/models.py:36
+#: consultations/models.py:44
 msgid "queues"
 msgstr "files d'attente"
 
-#: consultations/models.py:43
+#: consultations/models.py:61
+#, fuzzy
+#| msgid "updated at"
+msgid "Added at"
+msgstr "mis à jour le"
+
+#: consultations/models.py:64
+msgid "queue membership"
+msgstr ""
+
+#: consultations/models.py:65
+msgid "queue memberships"
+msgstr ""
+
+#: consultations/models.py:70
 msgid "Online"
 msgstr "En ligne"
 
-#: consultations/models.py:44
+#: consultations/models.py:71
 msgid "In person"
 msgstr "En personne"
 
-#: consultations/models.py:48 consultations/models.py:131
-#: consultations/models.py:249 consultations/models.py:308
-#: consultations/models.py:385 consultations/models.py:475
+#: consultations/models.py:75
+msgid "Screen Recording"
+msgstr ""
+
+#: consultations/models.py:76
+#, fuzzy
+#| msgid "prescription"
+msgid "Transcript"
+msgstr "ordonnance"
+
+#: consultations/models.py:93 consultations/models.py:197
+msgid "room UUID"
+msgstr ""
+
+#: consultations/models.py:95 consultations/models.py:225
+#: consultations/models.py:451 consultations/models.py:523
+#: consultations/models.py:641 consultations/models.py:731
+#: consultations/models.py:914
 msgid "created at"
 msgstr "créé le"
 
-#: consultations/models.py:49 consultations/models.py:250
-#: consultations/models.py:386 consultations/models.py:476
+#: consultations/models.py:96 consultations/models.py:226
+#: consultations/models.py:452 consultations/models.py:642
+#: consultations/models.py:732 consultations/models.py:915 users/models.py:175
 msgid "updated at"
 msgstr "mis à jour le"
 
-#: consultations/models.py:50
+#: consultations/models.py:97
 msgid "closed at"
 msgstr "clôturé le"
 
-#: consultations/models.py:52
+#: consultations/models.py:99 consultations/models.py:870
 msgid "description"
 msgstr "description"
 
-#: consultations/models.py:53 consultations/models.py:106
+#: consultations/models.py:100 consultations/models.py:200
+#: consultations/models.py:869
 msgid "title"
 msgstr "titre"
 
-#: consultations/models.py:60
+#: consultations/models.py:107
 msgid "beneficiary"
 msgstr "bénéficiaire"
 
-#: consultations/models.py:67 consultations/models.py:128
-#: consultations/models.py:245 consultations/models.py:472
+#: consultations/models.py:114 consultations/models.py:222
+#: consultations/models.py:447 consultations/models.py:728
+#: consultations/models.py:889
 msgid "created by"
 msgstr "créé par"
 
-#: consultations/models.py:71
+#: consultations/models.py:118
 msgid "group"
 msgstr "groupe"
 
-#: consultations/models.py:80
+#: consultations/models.py:127
 msgid "owned by"
 msgstr "appartient à"
 
-#: consultations/models.py:84
+#: consultations/models.py:131
 msgid "visible by patient"
 msgstr "visible par le patient"
 
-#: consultations/models.py:90 consultations/models.py:118
-#: consultations/models.py:240 consultations/models.py:284
-#: consultations/models.py:468
+#: consultations/models.py:135
+msgid "temporary"
+msgstr ""
+
+#: consultations/models.py:138
+msgid ""
+"Auto-created for an online Appointment without explicit consultation; hidden "
+"from practitioner and patient lists, auto-closed once the appointment join "
+"window has elapsed."
+msgstr ""
+
+#: consultations/models.py:155
+msgid ""
+"Consultation private key wrapped (envelope) with the platform master pubkey "
+"for admin recovery."
+msgstr ""
+
+#: consultations/models.py:160 consultations/models.py:242
+#: consultations/models.py:752 users/models.py:290
+msgid "external id"
+msgstr ""
+
+#: consultations/models.py:166 consultations/models.py:248
+#: consultations/models.py:758 users/models.py:296
+msgid ""
+"Identifier from an external system (e.g. OpenMRS). Hidden from native API; "
+"exposed only via FHIR identifier array."
+msgstr ""
+
+#: consultations/models.py:174 consultations/models.py:212
+#: consultations/models.py:390 consultations/models.py:442
+#: consultations/models.py:489 consultations/models.py:724
+#: consultations/models.py:877
 msgid "consultation"
 msgstr "consultation"
 
-#: consultations/models.py:91
+#: consultations/models.py:175
 msgid "consultations"
 msgstr "consultations"
 
-#: consultations/models.py:99 consultations/models.py:457
+#: consultations/models.py:190 consultations/models.py:713
 msgid "Draft"
 msgstr "Brouillon"
 
-#: consultations/models.py:100
+#: consultations/models.py:191
 msgid "Scheduled"
 msgstr "Planifié"
 
-#: consultations/models.py:101 consultations/models.py:380
-#: consultations/models.py:460
+#: consultations/models.py:192 consultations/models.py:636
+#: consultations/models.py:716
 msgid "Cancelled"
 msgstr "Annulé"
 
-#: consultations/models.py:108 consultations/models.py:480
-#: messaging/models.py:590 messaging/models.py:692
+#: consultations/models.py:202 consultations/models.py:736
+#: messaging/models.py:591 messaging/models.py:693
 msgid "status"
 msgstr "statut"
 
-#: consultations/models.py:120 consultations/models.py:122
+#: consultations/models.py:214 consultations/models.py:216
+#: consultations/models.py:891
 msgid "scheduled at"
 msgstr "Prévu le"
 
-#: consultations/models.py:124
+#: consultations/models.py:218
 msgid "end expected at"
 msgstr "fin prévue à"
 
-#: consultations/models.py:144 consultations/models.py:154
-#: consultations/models.py:187
+#: consultations/models.py:234
+#, fuzzy
+#| msgid "prescription"
+msgid "transcript"
+msgstr "ordonnance"
+
+#: consultations/models.py:237
+msgid "JSON array of transcript lines with timestamps and speakers"
+msgstr ""
+
+#: consultations/models.py:258 consultations/models.py:281
+#: consultations/models.py:321
 msgid "appointment"
 msgstr "rendez-vous"
 
-#: consultations/models.py:145
+#: consultations/models.py:259
 msgid "appointments"
 msgstr "rendez-vous"
 
-#: consultations/models.py:156
+#: consultations/models.py:283
 msgid "egress ID"
 msgstr "ID d'enregistrement"
 
-#: consultations/models.py:158
+#: consultations/models.py:285
 msgid "S3 filepath"
 msgstr "Chemin de fichier S3"
 
-#: consultations/models.py:158
+#: consultations/models.py:285
 msgid "S3 key set at recording start"
 msgstr "Clé S3 définie au début de l'enregistrement"
 
-#: consultations/models.py:160
+#: consultations/models.py:288
+#, fuzzy
+#| msgid "recording S3 key"
+msgid "recording mode"
+msgstr "enregistrement de la clé S3"
+
+#: consultations/models.py:293
 msgid "started at"
 msgstr "commencé à"
 
-#: consultations/models.py:161
+#: consultations/models.py:294
 msgid "stopped at"
 msgstr "arrêté à"
 
-#: consultations/models.py:168 consultations/models.py:275
+#: consultations/models.py:295
+msgid "transcript text"
+msgstr ""
+
+#: consultations/models.py:302 consultations/models.py:480
 msgid "message"
 msgstr "message"
 
-#: consultations/models.py:172
+#: consultations/models.py:306
 msgid "appointment recording"
 msgstr "enregistrement du rendez-vous"
 
-#: consultations/models.py:173
+#: consultations/models.py:307
 msgid "appointment recordings"
 msgstr "enregistrements du rendez-vous"
 
-#: consultations/models.py:189 consultations/models.py:290
+#: consultations/models.py:323 consultations/models.py:398
+#: consultations/models.py:495
 msgid "user"
 msgstr "utilisateur"
 
-#: consultations/models.py:253
+#: consultations/models.py:330
+#, fuzzy
+#| msgid "View consultation"
+msgid "visible in consultation"
+msgstr "Voir la consultation"
+
+#: consultations/models.py:333
+msgid "Grants access to the chat and shared consultation features."
+msgstr ""
+
+#: consultations/models.py:408
+msgid "encrypted private key"
+msgstr ""
+
+#: consultations/models.py:409
+msgid "pubkey fingerprint"
+msgstr ""
+
+#: consultations/models.py:414
+#, fuzzy
+#| msgid "consultation"
+msgid "consultation key"
+msgstr "consultation"
+
+#: consultations/models.py:415
+#, fuzzy
+#| msgid "consultations"
+msgid "consultation keys"
+msgstr "consultations"
+
+#: consultations/models.py:455
 msgid "deleted at"
 msgstr "supprimé à"
 
-#: consultations/models.py:255
+#: consultations/models.py:457
 msgid "event"
 msgstr "événement"
 
-#: consultations/models.py:256
+#: consultations/models.py:458
 msgid "content"
 msgstr "contenu"
 
-#: consultations/models.py:258
+#: consultations/models.py:460
 msgid "attachment"
 msgstr "pièce jointe"
 
-#: consultations/models.py:265
+#: consultations/models.py:467
 msgid "recording S3 key"
 msgstr "enregistrement de la clé S3"
 
-#: consultations/models.py:269
+#: consultations/models.py:471
 msgid "S3 key/path for call recordings"
 msgstr "Clé/chemin S3 pour les enregistrements d'appels"
 
-#: consultations/models.py:276
+#: consultations/models.py:481
 msgid "messages"
 msgstr "messages"
 
-#: consultations/models.py:292
+#: consultations/models.py:497
 msgid "last read at"
 msgstr "dernier lu à"
 
-#: consultations/models.py:295
+#: consultations/models.py:500
 msgid "consultation read status"
 msgstr "statut de lecture de la consultation"
 
-#: consultations/models.py:296
+#: consultations/models.py:501
 msgid "consultation read statuses"
 msgstr "statuts de lecture de la consultation"
 
-#: consultations/models.py:305 users/models.py:100
-msgid "speciality"
-msgstr "spécialité"
+#: consultations/models.py:507
+msgid "Display name of the reason visible to the patient"
+msgstr ""
 
-#: consultations/models.py:314
-msgid "queue assignee"
-msgstr "file d'attente assigné"
-
-#: consultations/models.py:321
-msgid "user assignee"
-msgstr "utilisateur assigné"
-
-#: consultations/models.py:324 consultations/models.py:489
+#: consultations/models.py:509 consultations/models.py:745
 msgid "duration"
 msgstr "durée"
 
-#: consultations/models.py:324
+#: consultations/models.py:509
 msgid "Duration in minutes"
 msgstr "Durée en minutes"
 
-#: consultations/models.py:326 mediaserver/models.py:21 messaging/models.py:84
-#: messaging/models.py:280
+#: consultations/models.py:519 users/models.py:106
+msgid "speciality"
+msgstr "spécialité"
+
+#: consultations/models.py:529
+msgid "queue assignee"
+msgstr "file d'attente assigné"
+
+#: consultations/models.py:536
+msgid "user assignee"
+msgstr "utilisateur assigné"
+
+#: consultations/models.py:539
+msgid "skip doctor selection"
+msgstr ""
+
+#: consultations/models.py:541
+msgid "Do not allow the patient to select a practitioner"
+msgstr ""
+
+#: consultations/models.py:544 consultations/models.py:913
+#: mediaserver/models.py:37 messaging/models.py:85 messaging/models.py:281
 msgid "is active"
 msgstr "est actif"
 
-#: consultations/models.py:331
+#: consultations/models.py:547 consultations/models.py:810
 msgid "reason"
 msgstr "motif"
 
-#: consultations/models.py:332
+#: consultations/models.py:548
 msgid "reasons"
 msgstr "motifs"
 
-#: consultations/models.py:378
+#: consultations/models.py:560
+msgid "Queue assignee must be empty for appointment assignment."
+msgstr ""
+
+#: consultations/models.py:564
+msgid "User assignee must be empty for appointment assignment."
+msgstr ""
+
+#: consultations/models.py:568
+#, fuzzy
+#| msgid "At least 2 participants are required for an appointment."
+msgid "Speciality is required for appointment assignment."
+msgstr "Au moins 2 participants sont requis pour un rendez-vous."
+
+#: consultations/models.py:574
+msgid "Queue assignee is required for queue assignment."
+msgstr ""
+
+#: consultations/models.py:579
+msgid "User assignee must be empty for queue assignment."
+msgstr ""
+
+#: consultations/models.py:585
+msgid "User assignee is required for user assignment."
+msgstr ""
+
+#: consultations/models.py:590
+msgid "Queue assignee must be empty for user assignment."
+msgstr ""
+
+#: consultations/models.py:634
 msgid "Requested"
 msgstr "Demandé"
 
-#: consultations/models.py:379
+#: consultations/models.py:635
 msgid "Accepted"
 msgstr "Accepté"
 
-#: consultations/models.py:381
+#: consultations/models.py:637
 msgid "Refused"
 msgstr "Refusé"
 
-#: consultations/models.py:452
+#: consultations/models.py:708
 msgid "Slot valid until this date"
 msgstr "Créneaux reservables jusqu'à cette date"
 
-#: consultations/models.py:458
+#: consultations/models.py:714
 msgid "Prescribed"
 msgstr "Prescrit"
 
-#: consultations/models.py:459
+#: consultations/models.py:715
 msgid "Dispensed"
 msgstr "Dispensé"
 
-#: consultations/models.py:477
+#: consultations/models.py:733
 msgid "prescribed at"
 msgstr "prescrit le"
 
-#: consultations/models.py:486
+#: consultations/models.py:742
 msgid "medication name"
 msgstr "nom du médicament"
 
-#: consultations/models.py:487
+#: consultations/models.py:743
 msgid "dosage"
 msgstr "dosage"
 
-#: consultations/models.py:488
+#: consultations/models.py:744
 msgid "frequency"
 msgstr "fréquence"
 
-#: consultations/models.py:491
+#: consultations/models.py:747
 msgid "instructions"
 msgstr "instructions"
 
-#: consultations/models.py:492
+#: consultations/models.py:748
 msgid "notes"
 msgstr "notes"
 
-#: consultations/models.py:495
+#: consultations/models.py:764
 msgid "prescription"
 msgstr "ordonnance"
 
-#: consultations/models.py:496
+#: consultations/models.py:765
 msgid "prescriptions"
 msgstr "ordonnances"
 
-#: consultations/models.py:504
+#: consultations/models.py:780
 msgid "Short text"
 msgstr "Texte court"
 
-#: consultations/models.py:505
+#: consultations/models.py:781
 msgid "Long text"
 msgstr "Texte long"
 
-#: consultations/models.py:506
+#: consultations/models.py:782
 msgid "Date"
 msgstr "Date"
 
-#: consultations/models.py:507
+#: consultations/models.py:783
 msgid "Number"
 msgstr "Nombre"
 
-#: consultations/models.py:508
+#: consultations/models.py:784
 msgid "List"
 msgstr "Liste"
 
-#: consultations/models.py:512
+#: consultations/models.py:788
 msgid "Health Metric"
 msgstr "Métrique de santé"
 
-#: consultations/models.py:513
+#: consultations/models.py:789
 msgid "Request"
 msgstr "Demande"
 
-#: consultations/models.py:514
+#: consultations/models.py:790
 msgid "Consultation"
 msgstr "Consultation"
 
-#: consultations/models.py:515
+#: consultations/models.py:791
 msgid "Patient"
 msgstr "Patient"
 
-#: consultations/models.py:521
+#: consultations/models.py:792
+#, fuzzy
+#| msgid "duration"
+msgid "Practitioner"
+msgstr "durée"
+
+#: consultations/models.py:793
+#, fuzzy
+#| msgid "organisation"
+msgid "Organisation"
+msgstr "organisation"
+
+#: consultations/models.py:799
 msgid "type"
 msgstr "type"
 
-#: consultations/models.py:524
+#: consultations/models.py:802
 msgid "target model"
 msgstr "modèle cible"
 
-#: consultations/models.py:527
+#: consultations/models.py:811
+msgid "Reason this field is attached to (asked at booking validation)"
+msgstr ""
+
+#: consultations/models.py:814
 msgid "options"
 msgstr "options"
 
-#: consultations/models.py:530
+#: consultations/models.py:817
 msgid "List of options for 'list' type"
 msgstr "Liste d'options pour le type 'liste'"
 
-#: consultations/models.py:532
+#: consultations/models.py:819
 msgid "required"
 msgstr "requis"
 
-#: consultations/models.py:533
+#: consultations/models.py:820
 msgid "ordering"
 msgstr "tri"
 
-#: consultations/models.py:536
+#: consultations/models.py:822
+msgid "public"
+msgstr ""
+
+#: consultations/models.py:824
+msgid ""
+"When enabled, this field value is exposed on the public practitioner profile"
+msgstr ""
+
+#: consultations/models.py:828
 msgid "custom field"
 msgstr "champ personnalisé"
 
-#: consultations/models.py:537
+#: consultations/models.py:829
 msgid "custom fields"
 msgstr "Champs personnalisés"
 
-#: consultations/models.py:553
+#: consultations/models.py:845
 msgid "value"
 msgstr "valeur"
 
-#: consultations/models.py:556
+#: consultations/models.py:848
 msgid "custom field value"
 msgstr "valeur de champ personnalisé"
 
-#: consultations/models.py:557
+#: consultations/models.py:849
 msgid "custom field values"
 msgstr "valeurs de champ personnalisées"
 
-#: consultations/serializers.py:233
+#: consultations/models.py:854
+msgid "Day"
+msgstr ""
+
+#: consultations/models.py:855
+msgid "Week"
+msgstr ""
+
+#: consultations/models.py:856
+msgid "Month"
+msgstr ""
+
+#: consultations/models.py:883
+#, fuzzy
+#| msgid "recipient phone"
+msgid "recipient"
+msgstr "téléphone du destinataire"
+
+#: consultations/models.py:892
+#, fuzzy
+#| msgid "ordering"
+msgid "is recurring"
+msgstr "tri"
+
+#: consultations/models.py:894
+msgid "recurrence interval"
+msgstr ""
+
+#: consultations/models.py:897
+msgid "recurrence period"
+msgstr ""
+
+#: consultations/models.py:904
+msgid "recurrence count"
+msgstr ""
+
+#: consultations/models.py:918
+msgid "reminder"
+msgstr ""
+
+#: consultations/models.py:919
+msgid "reminders"
+msgstr ""
+
+#: consultations/serializers.py:274
 msgid "Only one of phone or email can be provided."
 msgstr "Seul un numéro de téléphone ou un email peut être fourni."
 
-#: consultations/serializers.py:241 users/serializers.py:168
+#: consultations/serializers.py:282 users/serializers.py:268
 msgid "An email is required when communication method is Email."
 msgstr "Un email est requis lorsque la méthode de communication est Email."
 
-#: consultations/serializers.py:252 users/serializers.py:154
+#: consultations/serializers.py:293 users/serializers.py:254
 msgid ""
 "A phone number is required when communication method is SMS or WhatsApp."
 msgstr ""
 "Un numéro de téléphone est requis lorsque la méthode de communication est "
 "SMS ou WhatsApp."
 
-#: consultations/serializers.py:460
+#: consultations/serializers.py:450
+msgid ""
+"Encryption is enabled platform-wide; new consultations must be created with "
+"is_encrypted=true and the consultation public_key + "
+"encrypted_private_key_master fields filled in."
+msgstr ""
+
+#: consultations/serializers.py:644
 msgid "Scheduled time cannot be in the past."
 msgstr "L'heure planifiée ne peut pas être dans le passé."
 
-#: consultations/serializers.py:474
+#: consultations/serializers.py:658
 msgid "End expected at time cannot be in the past."
 msgstr "Fin prévue à l'heure ne peut pas être dans le passé."
 
-#: consultations/serializers.py:611
+#: consultations/serializers.py:852
 msgid "At least 2 participants are required for an appointment."
 msgstr "Au moins 2 participants sont requis pour un rendez-vous."
 
-#: consultations/serializers.py:756
+#: consultations/serializers.py:882
+#, fuzzy
+#| msgid "Appointments"
+msgid "Appointment chat"
+msgstr "Rendez-vous"
+
+#: consultations/serializers.py:1077
 #, python-format
 msgid "File size exceeds the maximum allowed size of %(max_size)d MB."
 msgstr ""
 
-#: consultations/views.py:171
+#: consultations/serializers.py:1503
+#, fuzzy
+#| msgid "Scheduled time cannot be in the past."
+msgid "Cannot schedule in the past."
+msgstr "L'heure planifiée ne peut pas être dans le passé."
+
+#: consultations/serializers.py:1518
+msgid "Required for recurring reminders."
+msgstr ""
+
+#: consultations/views.py:310
 msgid "Unable to close consultation with appointment scheduled in future"
 msgstr ""
 "Impossible de fermer la consultation avec un rendez-vous prévu dans le futur"
 
-#: consultations/views.py:282
-msgid "Cannot call in a closed consultation."
-msgstr "Impossible de participer à l'appel si la consultation est fermée"
-
-#: consultations/views.py:288
-msgid "No beneficiary configured for this consultation."
-msgstr ""
-
-#: consultations/views.py:299 users/views.py:302
+#: consultations/views.py:380 consultations/views.py:427
+#: consultations/views.py:628 consultations/views.py:774
+#: consultations/views.py:832 users/views.py:644 users/views.py:1062
+#: users/views.py:1071 users/views.py:1721
 msgid "No media server available."
 msgstr ""
 
-#: consultations/views.py:480
+#: consultations/views.py:413
+msgid "Cannot call in a closed consultation."
+msgstr "Impossible de participer à l'appel si la consultation est fermée"
+
+#: consultations/views.py:419
+msgid "No beneficiary configured for this consultation."
+msgstr ""
+
+#: consultations/views.py:600
 msgid "Cannot join call in closed consultation"
 msgstr "Impossible de participer à l'appel si la consultation est fermée"
 
-#: consultations/views.py:485 users/views.py:681
+#: consultations/views.py:605 users/views.py:1039
 msgid "Cannot join consultation if not online"
 msgstr "Impossible de participer à la consultation si vous n'êtes pas en ligne"
 
-#: consultations/views.py:495 users/views.py:691
+#: consultations/views.py:615 users/views.py:1049
 #, python-format
 msgid ""
 "Too early to join. The meeting starts at %(time)s. You can join %(minutes)d "
@@ -448,61 +724,68 @@ msgstr ""
 "Trop tôt pour rejoindre. La réunion commence à %(time)s. Vous pouvez "
 "rejoindre %(minutes)d minutes avant l'heure prévue."
 
-#: consultations/views.py:541 users/views.py:737
+#: consultations/views.py:664 users/views.py:1105
 #, python-format
 msgid "%(user_name)s joined the meeting"
 msgstr "%(user_name)s a rejoint la réunion"
 
-#: consultations/views.py:564 consultations/views.py:568
-#: consultations/views.py:601 users/views.py:803
+#: consultations/views.py:676 consultations/views.py:680
+#: consultations/views.py:713 users/views.py:1160
 msgid "Left successfully"
 msgstr "Quitté avec succès"
 
-#: consultations/views.py:576
+#: consultations/views.py:688
 #, python-format
 msgid "%(user_name)s left the meeting"
 msgstr "%(user_name)s a quitté la réunion"
 
-#: consultations/views.py:631
+#: consultations/views.py:742
+msgid "Video recording is disabled"
+msgstr ""
+
+#: consultations/views.py:752
 msgid "Only doctors can start recording"
 msgstr "Seuls les médecins peuvent commencer à enregistrer"
 
-#: consultations/views.py:641
+#: consultations/views.py:762
 msgid "Recording already in progress"
 msgstr "Enregistrement déjà en cours"
 
-#: consultations/views.py:677
+#: consultations/views.py:780 consultations/views.py:838
+msgid "Recording is not supported by the configured media server."
+msgstr ""
+
+#: consultations/views.py:814
 msgid "Only doctors can stop recording"
 msgstr "Seuls les médecins peuvent arrêter l'enregistrement"
 
-#: consultations/views.py:687
+#: consultations/views.py:824
 msgid "No recording in progress"
 msgstr "Aucun enregistrement en cours"
 
-#: consultations/views.py:759
+#: consultations/views.py:940
 msgid "No user associated with this participant"
 msgstr "Aucun utilisateur associé à ce participant"
 
-#: consultations/views.py:765
-msgid "Access URL is only available for temporary users"
-msgstr ""
-"L'URL d'accès est uniquement disponible pour les utilisateurs temporaires"
-
-#: consultations/views.py:771
-msgid "Access URL is only available for users without email or phone"
+#: consultations/views.py:947
+#, fuzzy
+#| msgid "Access URL is only available for users without email or phone"
+msgid ""
+"Access URL is only available for users without an email or with manual "
+"communication"
 msgstr ""
 "L'URL d'accès est uniquement disponible pour les utilisateurs sans adresse e-"
 "mail ni numéro de téléphone"
 
-#: core/authentication.py:45
+#: core/authentication.py:48
 msgid "Token does not contain tenant information"
 msgstr ""
 
-#: core/authentication.py:55
+#: core/authentication.py:58
 msgid "No tenant context available"
 msgstr ""
 
-#: core/authentication.py:63
+#: core/authentication.py:66
 msgid "Token tenant does not match current tenant"
 msgstr ""
 
@@ -510,109 +793,158 @@ msgstr ""
 msgid "An unhandled error has occured"
 msgstr "Une erreur non gérée s'est produite"
 
-#: core/settings.py:241
+#: core/settings.py:256
 msgid "English"
 msgstr "Anglais"
 
-#: core/settings.py:242
+#: core/settings.py:257
 msgid "German"
 msgstr "Allemand"
 
-#: core/settings.py:243
+#: core/settings.py:258
+msgid "Spanish"
+msgstr ""
+
+#: core/settings.py:259
 msgid "French"
 msgstr "Français"
 
-#: core/settings.py:397 core/views.py:52
+#: core/settings.py:260
+msgid "Italian"
+msgstr ""
+
+#: core/settings.py:261
+msgid "Ukrainian"
+msgstr ""
+
+#: core/settings.py:479 core/views.py:52
 msgid "HCW@Home Admin"
 msgstr "Administration HCW@Home"
 
-#: core/settings.py:398
+#: core/settings.py:480
 msgid "HCW@Home Administration"
 msgstr "Administration HCW@Home"
 
-#: core/settings.py:410
+#: core/settings.py:492
 msgid "Navigation"
 msgstr "Navigation"
 
-#: core/settings.py:414
+#: core/settings.py:496
 msgid "Dashboard"
 msgstr "Tableau de bord"
 
-#: core/settings.py:421
+#: core/settings.py:503
 msgid "Users & Authentication"
 msgstr "Utilisateurs et authentification"
 
-#: core/settings.py:426
+#: core/settings.py:508
 msgid "Users"
 msgstr "Utilisateurs"
 
-#: core/settings.py:442
+#: core/settings.py:524
 msgid "Groups"
 msgstr "Groupes"
 
-#: core/settings.py:458 core/views.py:135
+#: core/settings.py:540 core/views.py:129
 msgid "Organizations"
 msgstr "Organisations"
 
-#: core/settings.py:466
+#: core/settings.py:548
 msgid "Terms"
 msgstr "Conditions d'utilisation"
 
-#: core/settings.py:474
+#: core/settings.py:556
 msgid "Languages"
 msgstr "Langues"
 
-#: core/settings.py:482
+#: core/settings.py:564
 msgid "Specialities"
 msgstr "Spécialités"
 
-#: core/settings.py:502 core/views.py:125
+#: core/settings.py:584 core/views.py:119
 msgid "Consultations"
 msgstr "Consultations"
 
-#: core/settings.py:535
+#: core/settings.py:617
 msgid "Reasons"
 msgstr "Motifs"
 
-#: core/settings.py:563
+#: core/settings.py:645
 msgid "Messaging"
 msgstr "Messagerie"
 
-#: core/settings.py:568
+#: core/settings.py:650
 msgid "Messaging providers"
 msgstr "Fournisseurs de messagerie"
 
-#: core/settings.py:586
+#: core/settings.py:668
 msgid "Template overrides"
 msgstr "Modèles personnalisés"
 
-#: core/settings.py:594
+#: core/settings.py:676
 msgid "Template Validations"
 msgstr "Validations de modèles"
 
-#: core/settings.py:606
+#: core/settings.py:688
 msgid "Media & API"
 msgstr "Médias et API"
 
-#: core/settings.py:611
+#: core/settings.py:693
 msgid "Media Server"
 msgstr "Serveur média"
 
-#: core/settings.py:678
+#: core/settings.py:760
 msgid "Settings"
 msgstr "Paramètres"
 
-#: core/settings.py:683
+#: core/settings.py:765
 msgid "Custom Fields"
 msgstr "Champs personnalisés"
 
-#: core/settings.py:693
+#: core/settings.py:773
 msgid "Translation Overrides"
 msgstr "Remplacements de traduction"
 
-#: core/settings.py:698
+#: core/settings.py:785
 msgid "Configuration"
 msgstr "Configuration"
+
+#: core/settings.py:791
+#, fuzzy
+#| msgid "API token"
+msgid "API Tokens"
+msgstr "Jeton API"
+
+#: core/settings.py:797
+msgid "SSO Providers"
+msgstr ""
+
+#: core/templates/admin/constance/change_list.html:72
+#: core/templates/admin/constance/change_list.html:94
+msgid "Save"
+msgstr ""
+
+#: core/templates/admin/constance/includes/results_list.html:7
+msgid "Name"
+msgstr ""
+
+#: core/templates/admin/constance/includes/results_list.html:8
+#, fuzzy
+#| msgid "value"
+msgid "Value"
+msgstr "valeur"
+
+#: core/templates/admin/constance/includes/results_list.html:9
+msgid "Default"
+msgstr ""
+
+#: core/templates/admin/constance/includes/results_list.html:10
+msgid "Code"
+msgstr ""
+
+#: core/templates/admin/constance/includes/results_list.html:53
+msgid "Reset to default"
+msgstr ""
 
 #: core/templates/admin/index.html:10
 msgid "Django site admin"
@@ -629,42 +961,6 @@ msgstr "Temps réel"
 #: core/templates/admin/index.html:58
 msgid "Weekly Activity"
 msgstr "Activité hebdomadaire"
-
-#: core/templates/admin/index.html:79
-msgid "System Health"
-msgstr "Santé du système"
-
-#: core/templates/admin/index.html:82
-msgid "User Activity Rate"
-msgstr "Taux d'activité des utilisateurs"
-
-#: core/templates/admin/index.html:86
-msgid "Online Users Rate"
-msgstr "Taux d'utilisateurs en ligne"
-
-#: core/templates/admin/index.html:90
-msgid "Consultation Completion Rate"
-msgstr "Taux de complétion des consultations"
-
-#: core/templates/admin/index.html:97
-msgid "Platform Overview"
-msgstr "Vue d'ensemble de la plateforme"
-
-#: core/templates/admin/index.html:100
-msgid "Platform activity summary for healthcare professionals"
-msgstr "Résumé de l'activité de la plateforme pour les professionnels de santé"
-
-#: core/templates/admin/index.html:106
-msgid "Total Users"
-msgstr "Total des utilisateurs"
-
-#: core/templates/admin/index.html:110 core/views.py:120
-msgid "Online Now"
-msgstr "Actuellement en ligne"
-
-#: core/templates/admin/index.html:115
-msgid "Last updated:"
-msgstr "Dernière mise à jour :"
 
 #: core/templates/login.html:5 core/templates/login.html:52 core/views.py:53
 msgid "Sign in"
@@ -704,109 +1000,113 @@ msgstr ""
 msgid "Invalid email or password."
 msgstr "Email ou mot de passe invalide."
 
-#: core/views.py:114
+#: core/views.py:113
 msgid "Active Users"
 msgstr "Utilisateurs actifs"
 
-#: core/views.py:130
+#: core/views.py:124
 msgid "Appointments"
 msgstr "Rendez-vous"
 
-#: core/views.py:141
+#: core/views.py:135
 msgid "Queues"
 msgstr "Files d'attente"
 
-#: core/views.py:147
+#: core/views.py:141
 msgid "Requests"
 msgstr "Demandes"
 
-#: core/views.py:157
+#: core/views.py:151
 msgid "New Users This Week"
 msgstr "Nouveaux utilisateurs cette semaine"
 
-#: core/views.py:160
+#: core/views.py:154
 msgid "New user registrations"
 msgstr "Nouvelles inscriptions d'utilisateurs"
 
-#: core/views.py:163
+#: core/views.py:157
 msgid "Consultations This Week"
 msgstr "Consultations cette semaine"
 
-#: core/views.py:166
+#: core/views.py:160
 msgid "Consultations started this week"
 msgstr "Consultations démarrées cette semaine"
 
-#: core/views.py:169
+#: core/views.py:163
 msgid "Appointments This Week"
 msgstr "Rendez-vous cette semaine"
 
-#: core/views.py:172
+#: core/views.py:166
 msgid "Appointments scheduled this week"
 msgstr "Rendez-vous planifiés cette semaine"
 
-#: mediaserver/admin.py:39
+#: mediaserver/admin.py:27 mediaserver/models.py:34
+msgid "API secret"
+msgstr "clé API secrète"
+
+#: mediaserver/admin.py:30
+msgid "Leave blank to keep the current value."
+msgstr ""
+
+#: mediaserver/admin.py:55
 msgid "Save and test access"
 msgstr "Sauvegarder et tester l'accès"
 
-#: mediaserver/admin.py:49
+#: mediaserver/admin.py:65
 #, python-brace-format
 msgid "Connection to server {url} was successful."
 msgstr "La connexion au serveur {url} a réussi."
 
-#: mediaserver/admin.py:54
+#: mediaserver/admin.py:70
 #, python-brace-format
 msgid "Failed to connect to server {url}: {error}"
 msgstr "Échec de connexion au serveur {url} : {error}"
 
-#: mediaserver/models.py:16 mediaserver/models.py:72
+#: mediaserver/models.py:32 mediaserver/models.py:161
 msgid "URL"
 msgstr "URL"
 
-#: mediaserver/models.py:17
+#: mediaserver/models.py:33
 msgid "API token"
 msgstr "Jeton API"
 
-#: mediaserver/models.py:18
-msgid "API secret"
-msgstr "clé API secrète"
-
-#: mediaserver/models.py:19
+#: mediaserver/models.py:35
 msgid "max session number"
 msgstr "nombre maximum de sessions"
 
-#: mediaserver/models.py:24
+#: mediaserver/models.py:40
 msgid "server"
 msgstr "serveur"
 
-#: mediaserver/models.py:25
+#: mediaserver/models.py:41
 msgid "servers"
 msgstr "serveurs"
 
-#: mediaserver/models.py:60
+#: mediaserver/models.py:149
 msgid "login"
 msgstr "identifiant"
 
-#: mediaserver/models.py:61
+#: mediaserver/models.py:150
 msgid "credential"
 msgstr "identifiant de connexion"
 
-#: mediaserver/models.py:64 mediaserver/models.py:70
+#: mediaserver/models.py:153 mediaserver/models.py:159
 msgid "TURN server"
 msgstr "serveur TURN"
 
-#: mediaserver/models.py:65
+#: mediaserver/models.py:154
 msgid "TURN servers"
 msgstr "serveurs TURN"
 
-#: mediaserver/models.py:72
+#: mediaserver/models.py:161
 msgid "TURN URL (e.g., turn://example.com)"
 msgstr "URL TURN (ex: turn://exemple.com)"
 
-#: mediaserver/models.py:75
+#: mediaserver/models.py:164
 msgid "TURN URL"
 msgstr "URL TURN"
 
-#: mediaserver/models.py:76
+#: mediaserver/models.py:165
 msgid "TURN URLs"
 msgstr "URLs TURN"
 
@@ -922,63 +1222,63 @@ msgstr ""
 "%(created)d validation(s) créée(s) pour %(providers)d fournisseur(s) "
 "WhatsApp."
 
-#: messaging/models.py:50
+#: messaging/models.py:51
 msgid "API key"
 msgstr "clé API"
 
-#: messaging/models.py:52
+#: messaging/models.py:53
 msgid "auth token"
 msgstr "jeton d'authentification"
 
-#: messaging/models.py:55
+#: messaging/models.py:56
 msgid "account SID"
 msgstr "SID du compte"
 
-#: messaging/models.py:59
+#: messaging/models.py:60
 msgid "client ID"
 msgstr "ID client"
 
-#: messaging/models.py:61
+#: messaging/models.py:62
 msgid "client secret"
 msgstr "secret client"
 
-#: messaging/models.py:66
+#: messaging/models.py:67
 msgid "application key"
 msgstr "clé d'application"
 
-#: messaging/models.py:69
+#: messaging/models.py:70
 msgid "application secret"
 msgstr "secret d'application"
 
-#: messaging/models.py:72
+#: messaging/models.py:73
 msgid "consumer key"
 msgstr "clé consommateur"
 
-#: messaging/models.py:75
+#: messaging/models.py:76
 msgid "service name"
 msgstr "nom du service"
 
-#: messaging/models.py:79
+#: messaging/models.py:80
 msgid "from phone"
 msgstr "téléphone émetteur"
 
-#: messaging/models.py:80
+#: messaging/models.py:81
 msgid "from email"
 msgstr "email émetteur"
 
-#: messaging/models.py:81
+#: messaging/models.py:82
 msgid "sender ID"
 msgstr "ID de l'expéditeur"
 
-#: messaging/models.py:83
+#: messaging/models.py:84
 msgid "priority"
 msgstr "priorité"
 
-#: messaging/models.py:91
+#: messaging/models.py:92
 msgid "excluded prefixes"
 msgstr "préfixes exclus"
 
-#: messaging/models.py:93
+#: messaging/models.py:94
 msgid ""
 "Phone prefixes that should NOT use this provider. Separate multiple prefixes "
 "with commas (e.g. +33, +41, +1)"
@@ -986,11 +1286,11 @@ msgstr ""
 "Préfixes téléphoniques qui ne doivent PAS utiliser ce fournisseur. Séparez "
 "les préfixes multiples par des virgules (ex : +33, +41, +1)"
 
-#: messaging/models.py:100
+#: messaging/models.py:101
 msgid "included prefixes"
 msgstr "préfixes inclus"
 
-#: messaging/models.py:102
+#: messaging/models.py:103
 msgid ""
 "Phone prefixes that should use this provider. Separate multiple prefixes "
 "with commas (e.g. +33, +41). If empty, all prefixes except excluded ones are "
@@ -1000,46 +1300,46 @@ msgstr ""
 "préfixes multiples par des virgules (ex : +33, +41). Si vide, tous les "
 "préfixes sauf ceux exclus sont autorisés"
 
-#: messaging/models.py:169
+#: messaging/models.py:170
 msgid "All prefixes must start with \"+\". Invalid prefix: \"{}\""
 msgstr ""
 "Tous les préfixes doivent commencer par \"+\". Préfixe invalide : \"{}\""
 
-#: messaging/models.py:179
+#: messaging/models.py:180
 msgid "Prefixes can only contain \"+\" and digits. Invalid prefix: \"{}\""
 msgstr ""
 "Les préfixes ne peuvent contenir que \"+\" et des chiffres. Préfixe "
 "invalide : \"{}\""
 
-#: messaging/models.py:219 messaging/models.py:573
+#: messaging/models.py:220 messaging/models.py:574
 msgid "messaging provider"
 msgstr "fournisseur de messagerie"
 
-#: messaging/models.py:220
+#: messaging/models.py:221
 msgid "messaging providers"
 msgstr "fournisseurs de messagerie"
 
-#: messaging/models.py:239
+#: messaging/models.py:240
 msgid "action label"
 msgstr "étiquette d'action"
 
-#: messaging/models.py:241
+#: messaging/models.py:242
 msgid "Label display in the action"
 msgstr "Affichage des étiquettes dans l'action"
 
-#: messaging/models.py:245
+#: messaging/models.py:246
 msgid "system name"
 msgstr "nom système"
 
-#: messaging/models.py:249
+#: messaging/models.py:250
 msgid "Unique identifier for the template"
 msgstr "Identifiant unique pour le modèle"
 
-#: messaging/models.py:253
+#: messaging/models.py:254
 msgid "template html"
 msgstr "modèle html"
 
-#: messaging/models.py:255
+#: messaging/models.py:256
 msgid ""
 "Jinja2 template for message content in html, use {{ obj }} to get object "
 "attributes"
@@ -1047,70 +1347,70 @@ msgstr ""
 "Modèle Jinja2 pour le contenu du message, utilisez {{ obj }} pour accéder "
 "aux attributs de l'objet"
 
-#: messaging/models.py:262
+#: messaging/models.py:263
 msgid "template text"
 msgstr "texte du modèle"
 
-#: messaging/models.py:264
+#: messaging/models.py:265
 msgid ""
 "Jinja2 template for message content, use {{ obj }} to get object attributes"
 msgstr ""
 "Modèle Jinja2 pour le contenu du message, utilisez {{ obj }} pour accéder "
 "aux attributs de l'objet"
 
-#: messaging/models.py:269
+#: messaging/models.py:270
 msgid "template subject"
 msgstr "sujet du modèle"
 
-#: messaging/models.py:272
+#: messaging/models.py:273
 msgid "Jinja2 template for message subject"
 msgstr "Modèle Jinja2 pour le sujet du message"
 
-#: messaging/models.py:367
+#: messaging/models.py:368
 msgid "template override"
 msgstr "modèle personnalisé"
 
-#: messaging/models.py:368
+#: messaging/models.py:369
 msgid "template overrides"
 msgstr "modèles personnalisés"
 
-#: messaging/models.py:382 messaging/models.py:391
+#: messaging/models.py:383 messaging/models.py:392
 msgid "Invalid Jinja2 template syntax: {}"
 msgstr "Syntaxe de modèle Jinja2 invalide : {}"
 
-#: messaging/models.py:552
+#: messaging/models.py:553
 msgid "Created"
 msgstr "Créé le"
 
-#: messaging/models.py:553
+#: messaging/models.py:554
 msgid "Pending"
 msgstr "En attente"
 
-#: messaging/models.py:554
+#: messaging/models.py:555
 msgid "Validated"
 msgstr "Validé"
 
-#: messaging/models.py:555
+#: messaging/models.py:556
 msgid "Rejected"
 msgstr "Rejeté"
 
-#: messaging/models.py:556
+#: messaging/models.py:557
 msgid "Failed"
 msgstr "Échoué"
 
-#: messaging/models.py:557
+#: messaging/models.py:558
 msgid "Outdated"
 msgstr "Obsolète"
 
-#: messaging/models.py:558
+#: messaging/models.py:559
 msgid "Unused"
 msgstr "Inutilisé"
 
-#: messaging/models.py:563
+#: messaging/models.py:564
 msgid "external template ID"
 msgstr "ID du modèle externe"
 
-#: messaging/models.py:567
+#: messaging/models.py:568
 msgid ""
 "External template ID from the messaging provider (populated after validation "
 "submission)"
@@ -1118,82 +1418,82 @@ msgstr ""
 "ID du modèle externe fourni par le fournisseur de messagerie (rempli après "
 "soumission de la validation)"
 
-#: messaging/models.py:574
+#: messaging/models.py:575
 msgid "The messaging provider where the template is validated"
 msgstr "Le fournisseur de messagerie où le modèle est validé"
 
-#: messaging/models.py:577
+#: messaging/models.py:578
 msgid "event type"
 msgstr "type d'événement"
 
-#: messaging/models.py:580
+#: messaging/models.py:581
 msgid "The template event type to validate"
 msgstr "Le type d'événement à valider"
 
-#: messaging/models.py:583
+#: messaging/models.py:584
 msgid "language code"
 msgstr "code de langue"
 
-#: messaging/models.py:586
+#: messaging/models.py:587
 msgid ""
 "Language code for the template validation (e.g., \"en\", \"fr\", \"de\")"
 msgstr ""
 "Code de langue pour la validation du modèle (ex : \"en\", \"fr\", \"de\")"
 
-#: messaging/models.py:594
+#: messaging/models.py:595
 msgid "Current validation status"
 msgstr "Statut de validation actuel"
 
-#: messaging/models.py:601
+#: messaging/models.py:602
 msgid "When the template was validated"
 msgstr "Quand le modèle a été validé"
 
-#: messaging/models.py:608
+#: messaging/models.py:609
 msgid "Response from the messaging provider during validation"
 msgstr "Réponse du fournisseur de messagerie lors de la validation"
 
-#: messaging/models.py:613
+#: messaging/models.py:614
 msgid "MD5 hash of template content at last validation submission"
 msgstr ""
 "Hachage MD5 du contenu du modèle lors de la dernière soumission de validation"
 
-#: messaging/models.py:617
+#: messaging/models.py:618
 msgid "template validation"
 msgstr "validation de modèle"
 
-#: messaging/models.py:618
+#: messaging/models.py:619
 msgid "template validations"
 msgstr "validations de modèles"
 
-#: messaging/models.py:663
+#: messaging/models.py:664
 msgid "content text"
 msgstr "texte du contenu"
 
-#: messaging/models.py:664
+#: messaging/models.py:665
 msgid "content html"
 msgstr "contenu html"
 
-#: messaging/models.py:665
+#: messaging/models.py:666
 msgid "subject"
 msgstr "sujet"
 
-#: messaging/models.py:676
+#: messaging/models.py:677
 msgid "communication method"
 msgstr "méthode de communication"
 
-#: messaging/models.py:682
+#: messaging/models.py:683
 msgid "provider name"
 msgstr "nom du fournisseur"
 
-#: messaging/models.py:686
+#: messaging/models.py:687
 msgid "recipient phone"
 msgstr "téléphone du destinataire"
 
-#: messaging/models.py:688
+#: messaging/models.py:689
 msgid "recipient email"
 msgstr "email du destinataire"
 
-#: messaging/models.py:1034
+#: messaging/models.py:1057
 msgid ""
 "You must specify at least a recipient phone, a recipient email or a user in "
 "Sent to"
@@ -1201,25 +1501,25 @@ msgstr ""
 "Vous devez spécifier au moins un téléphone destinataire, un email "
 "destinataire ou un utilisateur dans Envoyé à"
 
-#: messaging/models.py:1049
+#: messaging/models.py:1072
 msgid "The Sent to user has no phone number, so recipient phone is mandatory"
 msgstr ""
 "L'utilisateur destinataire n'a pas de numéro de téléphone, le téléphone "
 "destinataire est donc obligatoire"
 
-#: messaging/models.py:1058
+#: messaging/models.py:1081
 msgid "The Sent to user has no email, so recipient email is mandatory"
 msgstr ""
 "L'utilisateur destinataire n'a pas d'email, l'email destinataire est donc "
 "obligatoire"
 
-#: messaging/models.py:1067
+#: messaging/models.py:1090
 msgid "Communication method is required if no sent to user"
 msgstr ""
 "La méthode de communication est requise s'il n'y a pas d'utilisateur "
 "destinataire"
 
-#: messaging/models.py:1085
+#: messaging/models.py:1108
 #, python-format
 msgid ""
 "The linked object type (%(actual)s) does not match the expected model "
@@ -1228,7 +1528,7 @@ msgstr ""
 "Le type d'objet lié (%(actual)s) ne correspond pas au modèle attendu "
 "(%(expected)s) pour le modèle \"%(template)s\"."
 
-#: messaging/providers/email.py:17
+#: messaging/providers/email.py:20
 msgid "Email over Django SMTP"
 msgstr "Email via Django SMTP"
 
@@ -1239,27 +1539,21 @@ msgstr "SMS OVH"
 #: messaging/template.py:7
 msgid ""
 "Your appointment planned {{ obj.appointment.scheduled_at|localtime|date }}"
-msgstr "Votre rendez-vous prévu le {{ obj.appointment.scheduled_at|date }}"
+msgstr "Votre rendez-vous prévu le {{ obj.appointment.scheduled_at|localtime|date }}"
 
 #: messaging/template.py:10
 msgid ""
 "This is a reminder for your appointment scheduled for "
 "{{ obj.appointment.scheduled_at|localtime|date }} at "
 "{{ obj.appointment.scheduled_at|localtime|time }}."
-msgstr ""
-"Ceci est un rappel pour votre rendez-vous prévu le : "
-"{{ obj.appointment.scheduled_at|date }} à {{ obj.appointment.scheduled_at|"
-"time }}."
+msgstr "Ceci est un rappel pour votre rendez-vous prévu le : {{ obj.appointment.scheduled_at|localtime|date }} à {{ obj.appointment.scheduled_at|localtime|time }}."
 
 #: messaging/template.py:13
 msgid ""
 "<p>This is a reminder for your appointment scheduled for "
 "<strong>{{ obj.appointment.scheduled_at|localtime|date }}</strong> at "
 "<strong>{{ obj.appointment.scheduled_at|localtime|time }}</strong>.</p>"
-msgstr ""
-"Ceci est un rappel pour votre rendez-vous prévu le : "
-"{{ obj.appointment.scheduled_at|date }} à {{ obj.appointment.scheduled_at|"
-"time }}."
+msgstr "Ceci est un rappel pour votre rendez-vous prévu le : {{ obj.appointment.scheduled_at|localtime|date }} à {{ obj.appointment.scheduled_at|localtime|time }}."
 
 #: messaging/template.py:20
 msgid ""
@@ -1280,7 +1574,8 @@ msgid ""
 "<p>Your consultation appointment will start at "
 "<strong>{{ obj.appointment.scheduled_at|localtime|time }}</strong></p>"
 msgstr ""
-"<p>Votre rendez-vous démarre à <strong>{{ obj.appointment.scheduled_at|localtime|time }}</strong></p>"
+"<p>Votre rendez-vous démarre à <strong>{{ obj.appointment.scheduled_at|"
+"localtime|time }}</strong></p>"
 
 #: messaging/template.py:29
 msgid "Join the consultation"
@@ -1296,9 +1591,9 @@ msgid ""
 "localtime|date }} at {{ obj.appointment.scheduled_at|localtime|time }} "
 "({{ obj.appointment.scheduled_at }})"
 msgstr ""
-"Votre consultation est prévue pour le {{ obj.appointment."
-"scheduled_at|localtime|date }} à {{ obj.appointment.scheduled_at|localtime|"
-"time }} ({{ obj.appointment.scheduled_at }})"
+"Votre consultation est prévue pour le {{ obj.appointment.scheduled_at|"
+"localtime|date }} à {{ obj.appointment.scheduled_at|localtime|time }} "
+"({{ obj.appointment.scheduled_at }})"
 
 #: messaging/template.py:39
 msgid ""
@@ -1307,10 +1602,10 @@ msgid ""
 "strong> at <strong>{{ obj.appointment.scheduled_at|localtime|time }}</"
 "strong> ({{ obj.appointment.scheduled_at }})</p>"
 msgstr ""
-"<p>Votre consultation a été planifiée avec succès.</p><p>Rendez-vous "
-"prévu le <strong>{{ obj.appointment.scheduled_at|localtime|date }}</"
-"strong> à <strong>{{ obj.appointment.scheduled_at|localtime|time }}</"
-"strong> ({{ obj.appointment.scheduled_at }})</p>"
+"<p>Votre consultation a été planifiée avec succès.</p><p>Rendez-vous prévu "
+"le <strong>{{ obj.appointment.scheduled_at|localtime|date }}</strong> à "
+"<strong>{{ obj.appointment.scheduled_at|localtime|time }}</strong> "
+"({{ obj.appointment.scheduled_at }})</p>"
 
 #: messaging/template.py:43 messaging/template.py:67
 msgid "Confirm your presence"
@@ -1326,9 +1621,8 @@ msgid ""
 "date }} at {{ obj.appointment.scheduled_at|localtime|time }} has been "
 "cancelled."
 msgstr ""
-"Votre rendez-vous prévu le "
-"{{ obj.appointment.scheduled_at|localtime|date }} à "
-"{{ obj.appointment.scheduled_at|localtime|time }} a été annulé."
+"Votre rendez-vous prévu le {{ obj.appointment.scheduled_at|localtime|date }} "
+"à {{ obj.appointment.scheduled_at|localtime|time }} a été annulé."
 
 #: messaging/template.py:50
 msgid ""
@@ -1336,9 +1630,8 @@ msgid ""
 "date }} at {{ obj.appointment.scheduled_at|localtime|time }} has been "
 "cancelled.</p>"
 msgstr ""
-"<p>Votre rendez-vous prévu le "
-"{{ obj.appointment.scheduled_at|localtime|date }} à "
-"{{ obj.appointment.scheduled_at|localtime|time }} a été annulé.</p>"
+"<p>Votre rendez-vous prévu le {{ obj.appointment.scheduled_at|localtime|"
+"date }} à {{ obj.appointment.scheduled_at|localtime|time }} a été annulé.</p>"
 
 #: messaging/template.py:55
 msgid "Your appointment has been updated"
@@ -1479,19 +1772,86 @@ msgstr ""
 msgid "View consultation"
 msgstr "Voir la consultation"
 
-#: users/admin.py:105
+#: messaging/template.py:140
+msgid "Your encryption passphrase"
+msgstr ""
+
+#: messaging/template.py:142
+msgid ""
+"End-to-end encryption has been enabled for your account.\n"
+"Your personal passphrase is: {{ passphrase }}\n"
+"\n"
+"Keep it safe — you will need it the next time you log in to decrypt your "
+"messages. Nobody at HCW can recover this passphrase for you if you lose it."
+msgstr ""
+
+#: messaging/template.py:149
+msgid ""
+"<p>End-to-end encryption has been enabled for your account.</p><p>Your "
+"personal passphrase is: <strong>{{ passphrase }}</strong></p><p>Keep it safe "
+"— you will need it the next time you log in to decrypt your messages. Nobody "
+"at HCW can recover this passphrase for you if you lose it.</p>"
+msgstr ""
+
+#: messaging/template.py:160
+msgid ""
+"Encryption passphrase for {{ patient_first_name }} {{ patient_last_name }}"
+msgstr ""
+
+#: messaging/template.py:163
+msgid ""
+"An encryption passphrase has been generated for a patient you created who "
+"has no direct contact method (manual contact).\n"
+"\n"
+"Patient: {{ patient_first_name }} {{ patient_last_name }} (id "
+"#{{ patient_id }}, {{ patient_email|default('no email') }})\n"
+"Passphrase: {{ passphrase }}\n"
+"\n"
+"Pass it to the patient through your usual secure channel. It is required for "
+"them to read their encrypted messages."
+msgstr ""
+
+#: messaging/template.py:172
+msgid ""
+"<p>An encryption passphrase has been generated for a patient you created who "
+"has no direct contact method (manual contact).</p><p><strong>Patient:</"
+"strong> {{ patient_first_name }} {{ patient_last_name }} (id "
+"#{{ patient_id }}, {{ patient_email|default('no email') }})</"
+"p><p><strong>Passphrase:</strong> {{ passphrase }}</p><p>Pass it to the "
+"patient through your usual secure channel. It is required for them to read "
+"their encrypted messages.</p>"
+msgstr ""
+
+#: messaging/template.py:184
+msgid "Reminder: {{ obj.title }}"
+msgstr "Rappel : {{ obj.title }}"
+
+#: messaging/template.py:186
+msgid ""
+"This is an automatic message to remind you: {% if obj.description %}"
+"{{ obj.description }}{% else %}{{ obj.title }}{% endif %}"
+msgstr "Ceci est un message automatique pour vous rappeler : {% if obj.description %}{{ obj.description }}{% else %}{{ obj.title }}{% endif %}"
+
+#: messaging/template.py:190
+msgid ""
+"<p>This is an automatic message to remind you:</p>{% if obj.description %}"
+"<p>{{ obj.description }}</p>{% else %}<p><strong>{{ obj.title }}</strong></"
+"p>{% endif %}"
+msgstr "<p>Ceci est un message automatique pour vous rappeler :</p>{% if obj.description %}<p>{{ obj.description }}</p>{% else %}<p><strong>{{ obj.title }}</strong></p>{% endif %}"
+
+#: users/admin.py:169
 msgid "Personal info"
 msgstr "Informations personnelles"
 
-#: users/admin.py:109
+#: users/admin.py:173
 msgid "Permissions"
 msgstr "Autorisations"
 
-#: users/admin.py:146
+#: users/admin.py:214
 msgid "Important dates"
 msgstr "Dates importantes"
 
-#: users/admin.py:232
+#: users/admin.py:299
 #, python-format
 msgid ""
 "A device failed to un/subscribe to topic. %(count)d device was marked as "
@@ -1506,7 +1866,7 @@ msgstr[1] ""
 "Certains appareils n'ont pas pu se désabonner/se désinscrire de la "
 "discussion. Les appareils %(count)d ont été marqués comme inactifs."
 
-#: users/admin.py:240
+#: users/admin.py:307
 #, python-format
 msgid "A message failed to send. %(count)d device was marked as inactive."
 msgid_plural ""
@@ -1518,44 +1878,44 @@ msgstr[1] ""
 "Certains messages n'ont pas pu être envoyés. %(count)d appareils ont été "
 "marqués comme inactifs."
 
-#: users/admin.py:266
+#: users/admin.py:333
 #, python-format
 msgid "%(response)s (Registration ID/Tokens: %(reg_id)s)"
 msgstr "%(response)s (ID d'inscription/Jetons: %(reg_id)s)"
 
-#: users/admin.py:328
+#: users/admin.py:395
 msgid "Send test notification"
 msgstr "Envoyer une notification de test"
 
-#: users/admin.py:333
+#: users/admin.py:400
 msgid "Send test notification in bulk"
 msgstr "Envoyer des notifications de test en masse"
 
-#: users/admin.py:378
+#: users/admin.py:445
 msgid "Subscribe to test topic"
 msgstr "S'abonner au sujet de test"
 
-#: users/admin.py:383
+#: users/admin.py:450
 msgid "Subscribe to test topic in bulk"
 msgstr "S'abonner au sujet de test en masse"
 
-#: users/admin.py:388
+#: users/admin.py:455
 msgid "Unsubscribe to test topic"
 msgstr "Se désabonner du sujet de test"
 
-#: users/admin.py:393
+#: users/admin.py:460
 msgid "Unsubscribe to test topic in bulk"
 msgstr "Se désabonner du sujet de test en masse"
 
-#: users/admin.py:408
+#: users/admin.py:475
 msgid "Send message test topic"
 msgstr "Envoyer un message au sujet de test"
 
-#: users/admin.py:413
+#: users/admin.py:480
 msgid "Enable selected devices"
 msgstr "Activer les appareils sélectionnés"
 
-#: users/admin.py:418
+#: users/admin.py:485
 msgid "Disable selected devices"
 msgstr "Désactiver les appareils sélectionnés"
 
@@ -1563,21 +1923,60 @@ msgstr "Désactiver les appareils sélectionnés"
 msgid "The email is mandatory"
 msgstr "L'email est obligatoire"
 
-#: users/models.py:101
+#: users/models.py:107
 msgid "specialities"
 msgstr "spécialités"
 
-#: users/models.py:133
+#: users/models.py:139
 msgid "web push subscription"
 msgstr "abonnement push web"
 
-#: users/models.py:134
+#: users/models.py:140
 msgid "web push subscriptions"
 msgstr "abonnements push web"
 
-#: users/models.py:161
+#: users/models.py:157
+msgid "Male"
+msgstr ""
+
+#: users/models.py:158
+msgid "Female"
+msgstr ""
+
+#: users/models.py:159
+msgid "Other"
+msgstr ""
+
+#: users/models.py:160
+msgid "Unknown"
+msgstr ""
+
+#: users/models.py:174
 msgid "email address"
 msgstr "Adresse e-mail"
+
+#: users/models.py:176
+msgid "date of birth"
+msgstr ""
+
+#: users/models.py:178
+#, fuzzy
+#| msgid "sender ID"
+msgid "gender"
+msgstr "ID de l'expéditeur"
+
+#: users/models.py:448
+msgid "DAV app password"
+msgstr ""
+
+#: users/models.py:449
+msgid "DAV app passwords"
+msgstr ""
+
+#: users/serializers.py:284
+msgid ""
+"Patient management is in temporary-only mode; temporary=False is not allowed."
+msgstr ""
 
 #: users/templates/account/email/email_confirmation_message.txt:5
 #, python-format
@@ -1642,19 +2041,65 @@ msgstr ""
 msgid "Messages:"
 msgstr "Messages :"
 
-#: users/views.py:283
+#: users/views.py:636
 msgid "Cannot join call in a closed consultation."
 msgstr "Impossible de participer à l'appel si la consultation est fermée"
 
-#: users/views.py:761
+#: users/views.py:1118
 msgid "No consultation associated"
 msgstr "Aucune consultation associée"
 
-#: users/views.py:767
+#: users/views.py:1124
 msgid "Consultation is already closed"
 msgstr "La consultation est déjà fermée"
 
-#: users/views.py:778
+#: users/views.py:1135
 #, python-format
 msgid "%(user_name)s left the meeting #%(consultation_id)s"
 msgstr "%(user_name)s a quitté la réunion #%(consultation_id)s"
+
+#: users/views.py:1650
+msgid "A verification email has been sent to your email address."
+msgstr ""
+
+#: users/views.py:2001
+#, fuzzy
+#| msgid "Access URL is only available for users without email or phone"
+msgid ""
+"Access URL is only available for patients without an email or with manual "
+"communication"
+msgstr ""
+"L'URL d'accès est uniquement disponible pour les utilisateurs sans adresse e-"
+"mail ni numéro de téléphone"
+
+#~ msgid "Access URL is only available for temporary users"
+#~ msgstr ""
+#~ "L'URL d'accès est uniquement disponible pour les utilisateurs temporaires"
+
+#~ msgid "System Health"
+#~ msgstr "Santé du système"
+
+#~ msgid "User Activity Rate"
+#~ msgstr "Taux d'activité des utilisateurs"
+
+#~ msgid "Online Users Rate"
+#~ msgstr "Taux d'utilisateurs en ligne"
+
+#~ msgid "Consultation Completion Rate"
+#~ msgstr "Taux de complétion des consultations"
+
+#~ msgid "Platform Overview"
+#~ msgstr "Vue d'ensemble de la plateforme"
+
+#~ msgid "Platform activity summary for healthcare professionals"
+#~ msgstr ""
+#~ "Résumé de l'activité de la plateforme pour les professionnels de santé"
+
+#~ msgid "Total Users"
+#~ msgstr "Total des utilisateurs"
+
+#~ msgid "Online Now"
+#~ msgstr "Actuellement en ligne"
+
+#~ msgid "Last updated:"
+#~ msgstr "Dernière mise à jour :"

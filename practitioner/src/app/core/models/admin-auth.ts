@@ -9,6 +9,7 @@ export interface IResponseLogin {
   access: string;
   refresh: string;
   user: IUser;
+  id_token?: string;
 }
 
 export interface IBodyForgotPassword {
@@ -58,6 +59,7 @@ export interface IOpenIDConfig {
   enabled: boolean;
   client_id: string | null;
   authorization_url: string | null;
+  end_session_url: string | null;
   provider_name: string | null;
   disable_password_login: boolean;
   languages: IConfigLanguage[];
@@ -78,6 +80,10 @@ export interface IOpenIDConfig {
   encryption_enabled: boolean;
   master_public_key: string;
   master_public_key_fingerprint: string;
+  calendar_colorization_enabled: boolean;
+  calendar_rotation_colors: string[];
+  calendar_rotation_anchor_date: string;
+  calendar_first_day_of_week: number;
 }
 
 export interface IOpenIDLoginBody {

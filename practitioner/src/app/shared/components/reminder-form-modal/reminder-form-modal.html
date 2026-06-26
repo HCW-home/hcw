@@ -1,0 +1,18 @@
+<app-modal
+  [isOpen]="isOpen"
+  [title]="modalTitle"
+  [titleHelp]="titleHelp"
+  size="large"
+  [closeOnBackdropClick]="false"
+  (closed)="onClose()">
+  <app-reminder-form
+    [consultationId]="consultationId"
+    [editingReminder]="editingReminder"
+    [initialRecipient]="initialRecipient"
+    [initialDate]="initialDate"
+    [lockRecipient]="lockRecipient"
+    (cancelled)="onClose()"
+    (reminderCreated)="onReminderCreated($event)"
+    (reminderUpdated)="onReminderUpdated($event)">
+  </app-reminder-form>
+</app-modal>

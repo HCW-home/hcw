@@ -27,6 +27,7 @@ from .models import (
     PrescriptionStatus,
     Queue,
     Reason,
+    Reminder,
     Request,
     Type,
 )
@@ -933,12 +934,12 @@ class AppointmentCreateSerializer(AppointmentSerializer):
             }
 
             if temp_participant.get("mobile_phone_number"):
-                user, _ = User.objects.get_or_create(
+                user, __ = User.objects.get_or_create(
                     mobile_phone_number=temp_participant["mobile_phone_number"],
                     defaults=user_defaults,
                 )
             elif temp_participant.get("email"):
-                user, _ = User.objects.get_or_create(
+                user, __ = User.objects.get_or_create(
                     email=temp_participant["email"],
                     defaults=user_defaults,
                 )
@@ -1418,3 +1419,161 @@ class PrescriptionSerializer(serializers.ModelSerializer):
             "notes",
         ]
         read_only_fields = ["id", "created_by", "created_at", "updated_at"]
+
+
+class ReminderSerializer(serializers.ModelSerializer):
+    created_by = ConsultationUserSerializer(read_only=True)
+    recipient = ConsultationUserSerializer(read_only=True)
+    recipient_id = serializers.PrimaryKeyRelatedField(
+        source="recipient", queryset=User.objects.all(), write_only=True
+    )
+    consultation_id = serializers.PrimaryKeyRelatedField(
+        source="consultation",
+        queryset=Consultation.objects.all(),
+        write_only=True,
+        required=False,
+        allow_null=True,
+    )
+
+    class Meta:
+        model = Reminder
+        fields = [
+            "id",
+            "title",
+            "description",
+            "consultation",
+            "consultation_id",
+            "recipient",
+            "recipient_id",
+            "created_by",
+            "scheduled_at",
+            "is_recurring",
+            "recurrence_interval",
+            "recurrence_period",
+            "recurrence_count",
+            "occurrences_sent",
+            "next_run_at",
+            "recurrence_end_at",
+            "last_sent_at",
+            "is_active",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "consultation",
+            "created_by",
+            "occurrences_sent",
+            "next_run_at",
+            "recurrence_end_at",
+            "last_sent_at",
+            "created_at",
+            "updated_at",
+        ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get("request")
+
+        if request and request.user.is_authenticated:
+            user_tz = request.user.user_tz
+            # Convert datetime fields to the user's timezone for display.
+            for field in [
+                "scheduled_at",
+                "next_run_at",
+                "recurrence_end_at",
+                "last_sent_at",
+                "created_at",
+                "updated_at",
+            ]:
+                if data.get(field):
+                    dt = timezone.datetime.fromisoformat(
+                        data[field].replace("Z", "+00:00")
+                    )
+                    data[field] = dt.astimezone(user_tz).isoformat()
+
+        return data
+
+    def validate_scheduled_at(self, value):
+        user = self.context["request"].user
+        # The frontend sends a naive datetime in the user's local time. DRF may
+        # have already made it aware in the default TIME_ZONE, so rebind it to
+        # the user's timezone (same approach as AppointmentSerializer) to store
+        # the correct UTC instant.
+        value = value.replace(tzinfo=user.user_tz)
+        if value < timezone.now():
+            raise serializers.ValidationError(
+                _("Cannot schedule in the past.")
+            )
+        return value
+
+    def validate(self, data):
+        is_recurring = data.get(
+            "is_recurring",
+            getattr(self.instance, "is_recurring", False),
+        )
+        if is_recurring:
+            if not data.get(
+                "recurrence_period",
+                getattr(self.instance, "recurrence_period", ""),
+            ):
+                raise serializers.ValidationError(
+                    {"recurrence_period": _("Required for recurring reminders.")}
+                )
+        else:
+            data["recurrence_count"] = 1
+        return data
+
+    def update(self, instance, validated_data):
+        # If the reminder has not fired yet, keep next_run_at aligned with a
+        # rescheduled start time so the change takes effect.
+        new_scheduled_at = validated_data.get("scheduled_at")
+        reminder = super().update(instance, validated_data)
+        if (
+            new_scheduled_at is not None
+            and reminder.occurrences_sent == 0
+            and reminder.is_active
+        ):
+            reminder.next_run_at = reminder.scheduled_at
+            reminder.save(update_fields=["next_run_at"])
+        return reminder
+
+
+class ReminderOccurrenceSerializer(serializers.Serializer):
+    """One expanded occurrence of a (possibly recurring) reminder."""
+
+    reminder_id = serializers.IntegerField()
+    title = serializers.CharField()
+    description = serializers.CharField(allow_blank=True)
+    recipient = ConsultationUserSerializer()
+    created_by = serializers.IntegerField(allow_null=True)
+    created_by_user = ConsultationUserSerializer(allow_null=True)
+    consultation = serializers.IntegerField(allow_null=True)
+    is_recurring = serializers.BooleanField()
+    recurrence_interval = serializers.IntegerField()
+    recurrence_period = serializers.CharField(allow_blank=True)
+    recurrence_count = serializers.IntegerField()
+    occurrence_index = serializers.IntegerField()
+    occurrence_total = serializers.IntegerField()
+    occurrence_at = serializers.DateTimeField()
+    scheduled_at = serializers.DateTimeField()
+    next_run_at = serializers.DateTimeField(allow_null=True)
+    recurrence_end_at = serializers.DateTimeField(allow_null=True)
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get("request")
+        if request and request.user.is_authenticated:
+            user_tz = request.user.user_tz
+            for field in [
+                "occurrence_at",
+                "scheduled_at",
+                "next_run_at",
+                "recurrence_end_at",
+            ]:
+                if data.get(field):
+                    dt = timezone.datetime.fromisoformat(
+                        data[field].replace("Z", "+00:00")
+                    )
+                    data[field] = dt.astimezone(user_tz).isoformat()
+        return data

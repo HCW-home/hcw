@@ -73,6 +73,8 @@ import {
   heroShieldCheck,
   heroLink,
   heroClipboard,
+  heroSparkles,
+  heroQuestionMarkCircle,
 } from '@ng-icons/heroicons/outline';
 import {
   lucideVideoOff,
@@ -93,6 +95,7 @@ import {
   lucideCaptions,
   lucideCaptionsOff,
   lucideClosedCaption,
+  lucideCopy,
 } from '@ng-icons/lucide';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { Auth } from './core/services/auth';
@@ -156,6 +159,8 @@ export const appConfig: ApplicationConfig = {
       heroShieldCheck,
       heroLink,
       heroClipboard,
+      heroSparkles,
+      heroQuestionMarkCircle,
       lucideVideoOff,
       lucideMicOff,
       lucidePhoneOff,
@@ -174,6 +179,7 @@ export const appConfig: ApplicationConfig = {
       lucideCaptions,
       lucideCaptionsOff,
       lucideClosedCaption,
+      lucideCopy,
     }),
     provideServiceWorker('custom-sw.js', {
       enabled: !isDevMode(),

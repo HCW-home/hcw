@@ -18,10 +18,10 @@ class AppointmentTest(TenantTestCase):
     def setUp(self):
         """Préparation des données pour chaque test"""
         self.patient = User.objects.create_user(
-            email="patient@example.com", password="testpass123"
+            email="patient@example.com"
         )
         self.practitioner = User.objects.create_user(
-            email="practitioner@example.com", password="testpass123"
+            email="practitioner@example.com"
         )
 
         self.consultation = Consultation.objects.create(
@@ -77,16 +77,14 @@ class RequestTimezoneTest(TenantTestCase):
         # Create patient with Paris timezone (UTC+1/UTC+2 depending on DST)
         self.patient = User.objects.create_user(
             email="patient@example.com",
-            password="testpass123",
-            timezone="Europe/Paris",
+                        timezone="Europe/Paris",
             main_organisation=self.organisation,
         )
 
         # Create practitioner
         self.practitioner = User.objects.create_user(
             email="practitioner@example.com",
-            password="testpass123",
-            timezone="UTC",
+                        timezone="UTC",
             main_organisation=self.organisation,
         )
 
@@ -185,16 +183,14 @@ class AppointmentTimezoneTest(TenantTestCase):
         # Create patient in Paris timezone
         self.patient = User.objects.create_user(
             email="patient@example.com",
-            password="testpass123",
-            timezone="Europe/Paris",
+                        timezone="Europe/Paris",
             main_organisation=self.organisation,
         )
 
         # Create doctor in Tokyo timezone
         self.doctor = User.objects.create_user(
             email="doctor@example.com",
-            password="testpass123",
-            timezone="Asia/Tokyo",
+                        timezone="Asia/Tokyo",
             main_organisation=self.organisation,
             is_practitioner=True,
         )
@@ -288,16 +284,14 @@ class AssignmentManagerTest(TenantTestCase):
         # Create patient
         self.patient = User.objects.create_user(
             email="patient@example.com",
-            password="testpass123",
-            timezone="Europe/Paris",
+                        timezone="Europe/Paris",
             main_organisation=self.organisation,
         )
 
         # Create doctor
         self.doctor = User.objects.create_user(
             email="doctor@example.com",
-            password="testpass123",
-            timezone="UTC",
+                        timezone="UTC",
             main_organisation=self.organisation,
             is_practitioner=True,
         )
@@ -342,4 +336,206 @@ class AssignmentManagerTest(TenantTestCase):
         self.assertEqual(request_obj.status, RequestStatus.refused)
         self.assertIsNotNone(request_obj.refused_reason)
         self.assertIn("Simulated error", request_obj.refused_reason)
+
+
+class ScheduledFilterUnreadTest(TenantTestCase):
+    """A consultation with a future appointment normally sits in the "Planifié"
+    tab (scheduled=true). As soon as it has unread messages it must move to the
+    "À traiter" tab (scheduled=false) instead, so practitioners don't miss it.
+    """
+
+    def setUp(self):
+        from rest_framework.test import APIClient
+        from .models import Message
+
+        self.Message = Message
+
+        self.practitioner = User.objects.create_user(
+            email="doc@example.com",
+                        is_practitioner=True,
+        )
+        self.patient = User.objects.create_user(
+            email="pat@example.com",
+                    )
+
+        # Consultation owned by the practitioner with a future scheduled appointment.
+        self.consultation = Consultation.objects.create(
+            beneficiary=self.patient,
+            title="Follow-up",
+            created_by=self.practitioner,
+            owned_by=self.practitioner,
+        )
+        Appointment.objects.create(
+            created_by=self.practitioner,
+            consultation=self.consultation,
+            scheduled_at=timezone.now() + timedelta(days=1),
+            status=AppointmentStatus.scheduled,
+        )
+
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.practitioner)
+
+    def _ids(self, scheduled):
+        resp = self.client.get(
+            "/api/consultations/",
+            {"is_closed": "false", "scheduled": str(scheduled).lower()},
+        )
+        self.assertEqual(resp.status_code, 200, resp.content)
+        data = resp.json()
+        results = data["results"] if isinstance(data, dict) else data
+        return {c["id"] for c in results}
+
+    def test_no_unread_stays_scheduled(self):
+        """No unread messages -> appears in Planifié, not in À traiter."""
+        self.assertIn(self.consultation.id, self._ids(scheduled=True))
+        self.assertNotIn(self.consultation.id, self._ids(scheduled=False))
+
+    def test_unread_moves_to_overdue(self):
+        """An unread message from someone else moves it to À traiter."""
+        self.Message.objects.create(
+            consultation=self.consultation,
+            created_by=self.patient,
+            content="Hello doctor",
+        )
+        self.assertIn(self.consultation.id, self._ids(scheduled=False))
+        self.assertNotIn(self.consultation.id, self._ids(scheduled=True))
+
+    def test_own_message_does_not_count_as_unread(self):
+        """A message the practitioner sent themselves is not 'unread'."""
+        self.Message.objects.create(
+            consultation=self.consultation,
+            created_by=self.practitioner,
+            content="My own note",
+        )
+        self.assertIn(self.consultation.id, self._ids(scheduled=True))
+        self.assertNotIn(self.consultation.id, self._ids(scheduled=False))
+
+    def test_marking_read_returns_to_scheduled(self):
+        """After the read status catches up, it goes back to Planifié."""
+        from .models import ConsultationReadStatus
+
+        self.Message.objects.create(
+            consultation=self.consultation,
+            created_by=self.patient,
+            content="Hello doctor",
+        )
+        # Practitioner reads the consultation.
+        ConsultationReadStatus.objects.update_or_create(
+            consultation=self.consultation,
+            user=self.practitioner,
+            defaults={"last_read_at": timezone.now()},
+        )
+        self.assertIn(self.consultation.id, self._ids(scheduled=True))
+        self.assertNotIn(self.consultation.id, self._ids(scheduled=False))
+
+
+class ScheduledFilterReminderTest(TenantTestCase):
+    """A consultation with no future appointment but an active reminder whose
+    next occurrence is still in the future must count as "Planifié", not "À
+    traiter" — recurrences included.
+    """
+
+    def setUp(self):
+        from rest_framework.test import APIClient
+        from .models import RecurrencePeriod, Reminder
+
+        self.RecurrencePeriod = RecurrencePeriod
+        self.Reminder = Reminder
+
+        self.practitioner = User.objects.create_user(
+            email="doc@example.com",
+                        is_practitioner=True,
+        )
+        self.patient = User.objects.create_user(
+            email="pat@example.com",
+                    )
+        # Consultation with NO appointment, so only reminders can make it
+        # "upcoming".
+        self.consultation = Consultation.objects.create(
+            beneficiary=self.patient,
+            title="Follow-up",
+            created_by=self.practitioner,
+            owned_by=self.practitioner,
+        )
+
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.practitioner)
+
+    def _ids(self, scheduled):
+        resp = self.client.get(
+            "/api/consultations/",
+            {"is_closed": "false", "scheduled": str(scheduled).lower()},
+        )
+        self.assertEqual(resp.status_code, 200, resp.content)
+        data = resp.json()
+        results = data["results"] if isinstance(data, dict) else data
+        return {c["id"] for c in results}
+
+    def _reminder(self, **overrides):
+        data = dict(
+            title="Take pills",
+            recipient=self.patient,
+            created_by=self.practitioner,
+            consultation=self.consultation,
+            scheduled_at=timezone.now() + timedelta(days=1),
+        )
+        data.update(overrides)
+        return self.Reminder.objects.create(**data)
+
+    def test_no_reminder_is_overdue(self):
+        """No appointment and no reminder -> À traiter."""
+        self.assertIn(self.consultation.id, self._ids(scheduled=False))
+        self.assertNotIn(self.consultation.id, self._ids(scheduled=True))
+
+    def test_future_reminder_is_scheduled(self):
+        """A future one-off reminder -> Planifié, not À traiter."""
+        self._reminder(scheduled_at=timezone.now() + timedelta(days=2))
+        self.assertIn(self.consultation.id, self._ids(scheduled=True))
+        self.assertNotIn(self.consultation.id, self._ids(scheduled=False))
+
+    def test_past_reminder_is_overdue(self):
+        """A reminder fully in the past -> back to À traiter."""
+        self._reminder(scheduled_at=timezone.now() - timedelta(days=2))
+        self.assertIn(self.consultation.id, self._ids(scheduled=False))
+        self.assertNotIn(self.consultation.id, self._ids(scheduled=True))
+
+    def test_inactive_reminder_is_overdue(self):
+        """An inactive (cancelled) future reminder does not count."""
+        self._reminder(
+            scheduled_at=timezone.now() + timedelta(days=2),
+            is_active=False,
+        )
+        self.assertIn(self.consultation.id, self._ids(scheduled=False))
+        self.assertNotIn(self.consultation.id, self._ids(scheduled=True))
+
+    def test_recurring_reminder_with_future_occurrence_is_scheduled(self):
+        """A recurring reminder that started in the past but still has a future
+        occurrence (via recurrence) -> Planifié.
+        """
+        # Started 2 days ago, weekly, 5 occurrences -> last occurrence is
+        # ~4 weeks out, so a future occurrence definitely remains.
+        self._reminder(
+            scheduled_at=timezone.now() - timedelta(days=2),
+            is_recurring=True,
+            recurrence_period=self.RecurrencePeriod.week,
+            recurrence_interval=1,
+            recurrence_count=5,
+        )
+        self.assertIn(self.consultation.id, self._ids(scheduled=True))
+        self.assertNotIn(self.consultation.id, self._ids(scheduled=False))
+
+    def test_recurring_reminder_fully_past_is_overdue(self):
+        """A recurring reminder whose every occurrence is in the past -> À
+        traiter.
+        """
+        # Started 40 days ago, weekly, 3 occurrences -> last is ~26 days ago.
+        self._reminder(
+            scheduled_at=timezone.now() - timedelta(days=40),
+            is_recurring=True,
+            recurrence_period=self.RecurrencePeriod.week,
+            recurrence_interval=1,
+            recurrence_count=3,
+        )
+        self.assertIn(self.consultation.id, self._ids(scheduled=False))
+        self.assertNotIn(self.consultation.id, self._ids(scheduled=True))
 

@@ -40,7 +40,7 @@
 
         @if (connectionStatus === 'connected' && getParticipantsArray().length > 0) {
           @for (participant of getParticipantsArray(); track participant.identity) {
-            <div class="video-tile" [class.camera-off]="!participant.isCameraEnabled">
+            <div class="video-tile" [class.camera-off]="!participant.isCameraEnabled" [class.speaking]="participant.isSpeaking">
               <video
                 [id]="'video-' + participant.identity"
                 autoplay
@@ -143,13 +143,6 @@
             </ion-button>
 
             <ion-button
-              [color]="isSpeakerOn ? 'light' : 'medium'"
-              class="control-button"
-              (click)="toggleSpeaker()">
-              <ion-icon [name]="isSpeakerOn ? 'volume-high' : 'volume-mute'" slot="icon-only"></ion-icon>
-            </ion-button>
-
-            <ion-button
               [color]="isScreenShareEnabled ? 'primary' : 'light'"
               class="control-button"
               (click)="toggleScreenShare()">
@@ -157,12 +150,17 @@
             </ion-button>
 
             @if (chatAvailable()) {
-              <ion-button
-                [color]="showChat() ? 'primary' : 'light'"
-                class="control-button"
-                (click)="openChat()">
-                <ion-icon name="chatbubble-outline" slot="icon-only"></ion-icon>
-              </ion-button>
+              <div class="chat-button-wrapper">
+                <ion-button
+                  [color]="showChat() ? 'primary' : 'light'"
+                  class="control-button"
+                  (click)="openChat()">
+                  <ion-icon name="chatbubble-outline" slot="icon-only"></ion-icon>
+                </ion-button>
+                @if (unreadCount() > 0) {
+                  <ion-badge color="danger" class="unread-badge">{{ unreadCount() > 9 ? '9+' : unreadCount() }}</ion-badge>
+                }
+              </div>
             }
           </div>
         </div>

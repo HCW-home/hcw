@@ -44,7 +44,7 @@ import { Switch } from '../../ui-components/switch/switch';
 import { Svg } from '../../ui-components/svg/svg';
 import { Loader } from '../loader/loader';
 import { ModalComponent } from '../modal/modal.component';
-import { UserSearchSelect } from '../user-search-select/user-search-select';
+import { UserSelectOrCreate } from '../user-select-or-create/user-select-or-create';
 import { ParticipantItem } from '../participant-item/participant-item';
 import {
   ButtonStyleEnum,
@@ -73,7 +73,7 @@ import { TranslationService } from '../../../core/services/translation.service';
     InputComponent,
     ModalComponent,
     ParticipantItem,
-    UserSearchSelect,
+    UserSelectOrCreate,
     ReactiveFormsModule,
     FormsModule,
     TranslatePipe,
@@ -86,13 +86,24 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   @Input() autoSave = true;
   @Input() beneficiary: User | null = null;
   @Input() owner: User | null = null;
+  @Input() initialParticipants: CreateParticipantRequest[] = [];
   @Input() initialStartDate: Date | null = null;
   @Input() initialEndDate: Date | null = null;
+  @Input() highlightAddParticipant = false;
+  @Input() highlightExternalGuest = false;
+  @Input() highlightExternalEmail = false;
+  @Input() highlightVisibleCheckbox = false;
+  @Input() highlightAddParticipantSubmit = false;
+  @Input() highlightDateTime = false;
+  @Input() disableAddParticipantSubmit = false;
 
   @Output() cancelled = new EventEmitter<void>();
   @Output() appointmentCreated = new EventEmitter<Appointment>();
   @Output() appointmentUpdated = new EventEmitter<Appointment>();
   @Output() appointmentDataReady = new EventEmitter<CreateAppointmentRequest>();
+  @Output() addParticipantClicked = new EventEmitter<void>();
+  @Output() externalGuestSelected = new EventEmitter<void>();
+  @Output() participantAdded = new EventEmitter<void>();
 
   private destroy$ = new Subject<void>();
   private fb = inject(FormBuilder);
@@ -195,6 +206,17 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
     this.loadConfig();
     this.updateInviteCheckboxStates();
 
+    // When the component is created with an appointment already set (e.g. the
+    // modal is wrapped in an @if), populate the edit state here since
+    // ngOnChanges fired before the form existed.
+    if (this.editingAppointment) {
+      this.populateFormForEdit();
+      this.loadParticipants();
+    } else if (this.initialParticipants.length) {
+      // Pre-fill participants (e.g. creating an appointment from a contact page).
+      this.pendingParticipants.set([...this.initialParticipants]);
+    }
+
     // Clear backend errors when form values change
     this.appointmentForm.valueChanges
       .pipe(takeUntil(this.destroy$))
@@ -242,6 +264,19 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
     return !this.owner;
   }
 
+  // Shown only when creating an appointment from a contact page (the contact
+  // is pre-added as a participant).
+  get showContactInviteFlag(): boolean {
+    return !this.isEditMode && this.initialParticipants.length > 0;
+  }
+
+  // True if a pending participant is one of the contacts pre-added from a
+  // contact page (used to grey it out when "don't invite the contact" is on).
+  isInitialContact(pending: CreateParticipantRequest): boolean {
+    if (!this.showContactInviteFlag || !pending.user_id) return false;
+    return this.initialParticipants.some(p => p.user_id === pending.user_id);
+  }
+
   getBeneficiaryUser(): User | null {
     return this.beneficiary;
   }
@@ -260,6 +295,8 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
       if (this.editingAppointment) {
         this.populateFormForEdit();
         this.loadParticipants();
+      } else if (this.initialParticipants.length) {
+        this.pendingParticipants.set([...this.initialParticipants]);
       }
     }
     if ((changes['beneficiary'] || changes['owner']) && this.appointmentForm) {
@@ -272,6 +309,24 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
     ) {
       this.populateFormWithInitialDates();
     }
+    const highlightKeys = [
+      'highlightAddParticipant',
+      'highlightExternalGuest',
+      'highlightExternalEmail',
+      'highlightVisibleCheckbox',
+      'highlightAddParticipantSubmit',
+      'highlightDateTime',
+    ];
+    if (highlightKeys.some(key => changes[key]?.currentValue)) {
+      this.scrollHighlightedIntoView();
+    }
+  }
+
+  private scrollHighlightedIntoView(): void {
+    setTimeout(() => {
+      const el = document.querySelector<HTMLElement>('.wizard-highlight-target');
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 60);
   }
 
   updateInviteCheckboxStates(): void {
@@ -314,6 +369,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
       end_time: [''],
       dont_invite_beneficiary: [false],
       dont_invite_practitioner: [false],
+      dont_invite_contact: [false],
       dont_invite_me: [false],
     });
   }
@@ -382,6 +438,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
       type: AppointmentType.ONLINE,
       dont_invite_beneficiary: false,
       dont_invite_practitioner: false,
+      dont_invite_contact: false,
       dont_invite_me: false,
     });
     this.participants.set([]);
@@ -508,6 +565,9 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
 
   setParticipantType(isExisting: boolean): void {
     this.isExistingUser.set(isExisting);
+    if (!isExisting) {
+      this.externalGuestSelected.emit();
+    }
     this.selectedParticipantUser.set(null);
     const currentUserData = this.currentUser();
     this.participantForm.reset({
@@ -564,6 +624,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
 
   openAddParticipantModal(): void {
     this.showAddParticipantForm.set(true);
+    this.addParticipantClicked.emit();
   }
 
   closeAddParticipantModal(): void {
@@ -621,6 +682,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
 
     this.pendingParticipants.update(list => [...list, data]);
     this.resetParticipantForm();
+    this.participantAdded.emit();
   }
 
   private resetParticipantForm(): void {
@@ -734,6 +796,16 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
     const temporary_participants: ITemporaryParticipant[] = [];
     const participants_visibility: { user_id: number; is_consultation_visible: boolean }[] = [];
 
+    // When created from a contact page, "don't invite the contact" excludes the
+    // pre-added contact(s) from the request.
+    const excludedContactIds =
+      this.showContactInviteFlag &&
+      this.appointmentForm.get('dont_invite_contact')?.value
+        ? this.initialParticipants
+            .map(p => p.user_id)
+            .filter((id): id is number => !!id)
+        : [];
+
     for (const p of this.participants()) {
       if (p.user?.id) {
         participants_ids.push(p.user.id);
@@ -741,6 +813,9 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
     }
 
     for (const pending of this.pendingParticipants()) {
+      if (pending.user_id && excludedContactIds.includes(pending.user_id)) {
+        continue;
+      }
       if (pending.user_id) {
         participants_ids.push(pending.user_id);
         if (pending.is_consultation_visible) {

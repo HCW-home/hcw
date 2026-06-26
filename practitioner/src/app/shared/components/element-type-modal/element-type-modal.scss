@@ -1,0 +1,61 @@
+.element-type-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 24px;
+}
+
+.element-type-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  padding: 28px 20px;
+  border: 2px solid var(--slate-200);
+  border-radius: 16px;
+  background: var(--White);
+
+  .element-type-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+  }
+
+  &.appointment .element-type-icon {
+    background: var(--primary-50);
+    color: var(--primary-600);
+  }
+
+  &.reminder .element-type-icon {
+    background: #f3e8ff; // light violet, matches calendar reminder color
+    color: #8b5cf6;
+  }
+
+  .element-type-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--slate-800);
+  }
+
+  .element-type-desc {
+    font-size: 13px;
+    color: var(--slate-500);
+    line-height: 1.4;
+    flex: 1;
+  }
+
+  .element-type-action {
+    margin-top: 8px;
+    width: 100%;
+  }
+}
+
+@media (max-width: 560px) {
+  .element-type-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -18,16 +18,14 @@ class _UsersFhirBase(TenantTestCase):
         self.organisation = Organisation.objects.create(name="Clinic")
         self.practitioner = User.objects.create_user(
             email="doc@example.com",
-            password="x",
-            is_practitioner=True,
+                        is_practitioner=True,
             first_name="Alice",
             last_name="Doc",
             main_organisation=self.organisation,
         )
         self.patient = User.objects.create_user(
             email="john@example.com",
-            password="x",
-            first_name="John",
+                        first_name="John",
             last_name="Doe",
             mobile_phone_number="+33600000000",
             date_of_birth=date(1985, 5, 12),
@@ -91,8 +89,7 @@ class PatientFhirSearchTests(_UsersFhirBase):
 
     def test_search_by_name(self):
         User.objects.create_user(
-            email="jane@example.com", password="x",
-            first_name="Jane", last_name="Smith",
+            email="jane@example.com",             first_name="Jane", last_name="Smith",
         )
         url = reverse("patient-list")
         response = self.client.get(f"{url}?format=fhir&family=Doe")
@@ -100,8 +97,7 @@ class PatientFhirSearchTests(_UsersFhirBase):
 
     def test_search_by_gender(self):
         User.objects.create_user(
-            email="jane@example.com", password="x",
-            first_name="Jane", last_name="Smith", gender=Gender.female.value,
+            email="jane@example.com",             first_name="Jane", last_name="Smith", gender=Gender.female.value,
         )
         url = reverse("patient-list")
         response = self.client.get(f"{url}?format=fhir&gender=female")

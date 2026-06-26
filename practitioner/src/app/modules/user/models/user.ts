@@ -90,4 +90,15 @@ export interface IUserUpdateRequest {
   timezone?: string;
   language_ids?: number[];
   is_first_login?: boolean;
+  app_preferences?: Record<string, unknown>;
+  custom_fields?: { field: number; value: string | null }[];
+}
+
+export interface IDavAppPassword {
+  id: number;
+  label: string;
+  token: string;
+  created_at: string;
+  last_used_at: string | null;
+  is_active: boolean;
 }

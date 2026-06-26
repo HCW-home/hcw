@@ -40,7 +40,7 @@
           </app-input>
         </div>
 
-        <div class="form-row">
+        <div class="form-row" [class.wizard-highlight-target]="highlightDateTime">
           <app-input
             type="date"
             [label]="'appointmentForm.date' | translate"
@@ -78,14 +78,24 @@
         @if (!isEditMode) {
         <div class="invite-flags-section">
           <div class="invite-flags">
+            @if (!isBeneficiaryCheckboxDisabled()) {
             <app-checkbox
               [label]="'appointmentForm.dontInvitePatient' | translate"
               formControlName="dont_invite_beneficiary">
             </app-checkbox>
+            }
+            @if (!isPractitionerCheckboxDisabled()) {
             <app-checkbox
               [label]="'appointmentForm.dontInvitePractitioner' | translate"
               formControlName="dont_invite_practitioner">
             </app-checkbox>
+            }
+            @if (showContactInviteFlag) {
+            <app-checkbox
+              [label]="'appointmentForm.dontInviteContact' | translate"
+              formControlName="dont_invite_contact">
+            </app-checkbox>
+            }
             <app-checkbox
               [label]="'appointmentForm.dontInviteMe' | translate"
               formControlName="dont_invite_me">
@@ -102,13 +112,15 @@
           >{{ 'appointmentForm.participantsCount' | translate: { count:
           getTotalParticipantsCount() } }}</span
         >
-        <app-button
-          [text]="'appointmentForm.addParticipant' | translate"
-          leftIcon="plus"
-          [size]="ButtonSizeEnum.small"
-          [style]="ButtonStyleEnum.text"
-          (buttonClick)="openAddParticipantModal()">
-        </app-button>
+        <div class="add-participant-btn-wrapper" [class.wizard-highlight-target]="highlightAddParticipant">
+          <app-button
+            [text]="'appointmentForm.addParticipant' | translate"
+            leftIcon="plus"
+            [size]="ButtonSizeEnum.small"
+            [style]="ButtonStyleEnum.text"
+            (buttonClick)="openAddParticipantModal()">
+          </app-button>
+        </div>
       </div>
 
       <app-modal
@@ -134,6 +146,7 @@
                 type="button"
                 class="type-btn"
                 [class.active]="!isExistingUser()"
+                [class.wizard-highlight-target]="highlightExternalGuest"
                 (click)="setParticipantType(false)">
                 {{ 'appointmentForm.externalGuest' | translate }}
               </button>
@@ -143,12 +156,12 @@
           <form [formGroup]="participantForm">
             @if (isExistingUser()) {
             <div class="form-group">
-              <app-user-search-select
+              <app-user-select-or-create
                 [label]="'appointmentForm.selectContact' | translate"
                 [placeholder]="'appointmentForm.selectContact' | translate"
                 [meUser]="currentUser()"
                 (userSelected)="onParticipantUserSelected($event)">
-              </app-user-search-select>
+              </app-user-select-or-create>
             </div>
             <div class="form-group">
               <app-checkbox
@@ -203,7 +216,7 @@
             </div>
 
             @if (participantForm.get('contact_type')?.value === 'email') {
-            <div class="form-group">
+            <div class="form-group" [class.wizard-highlight-target]="highlightExternalEmail">
               <app-input
                 type="email"
                 [label]="'appointmentForm.emailAddress' | translate"
@@ -287,7 +300,7 @@
                   [placeholder]="'appointmentForm.selectLanguage' | translate">
                 </app-select>
               </div>
-              <div class="form-group">
+              <div class="form-group" [class.wizard-highlight-target]="highlightVisibleCheckbox">
                 <app-checkbox
                   [label]="'appointmentForm.consultationVisible' | translate"
                   formControlName="is_consultation_visible">
@@ -310,15 +323,17 @@
             (buttonClick)="closeAddParticipantModal()">
           </app-button>
           @if (!isExistingUser()) {
-          <app-button
-            [text]="'appointmentForm.addTheParticipant' | translate"
-            leftIcon="plus"
-            [style]="ButtonStyleEnum.primary"
-            [size]="ButtonSizeEnum.medium"
-            [disabled]="isAddingParticipant()"
-            [loading]="isAddingParticipant()"
-            (buttonClick)="addParticipant()">
-          </app-button>
+          <div class="add-participant-submit-wrapper" [class.wizard-highlight-target]="highlightAddParticipantSubmit">
+            <app-button
+              [text]="'appointmentForm.addTheParticipant' | translate"
+              leftIcon="plus"
+              [style]="ButtonStyleEnum.primary"
+              [size]="ButtonSizeEnum.medium"
+              [disabled]="isAddingParticipant() || disableAddParticipantSubmit"
+              [loading]="isAddingParticipant()"
+              (buttonClick)="addParticipant()">
+            </app-button>
+          </div>
           } @else if (selectedParticipantUser()) {
           <app-button
             [text]="'appointmentForm.addTheParticipant' | translate"
@@ -388,11 +403,20 @@
         </app-participant-item>
         } @for (pending of pendingParticipants(); track $index) {
         <app-participant-item
+          [class.excluded]="isInitialContact(pending) && appointmentForm.get('dont_invite_contact')?.value"
           [pendingParticipant]="pending"
           [isPending]="true"
-          [showRemoveAction]="true"
+          [showRemoveAction]="!isInitialContact(pending)"
           [currentUser]="currentUser()"
           (remove)="removePendingParticipant($index)">
+          @if (isInitialContact(pending)) {
+          <span class="role-tag">{{ 'appointmentForm.roleContact' | translate }}</span>
+          <app-switch
+            [ngModel]="!appointmentForm.get('dont_invite_contact')?.value"
+            [ngModelOptions]="{standalone: true}"
+            (ngModelChange)="toggleInvite('dont_invite_contact', $event)">
+          </app-switch>
+          }
         </app-participant-item>
         }
       </div>

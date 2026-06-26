@@ -1,9 +1,10 @@
 import { Injectable, signal } from '@angular/core';
+import { VideoCallConfig } from './video-call.types';
 
 export interface ActiveCallConfig {
   appointmentId?: number;
   consultationId?: number;
-  livekitConfig?: { url: string; token: string; room: string };
+  videoCallConfig?: VideoCallConfig;
 }
 
 @Injectable({

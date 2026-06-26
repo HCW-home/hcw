@@ -152,7 +152,8 @@
 }
 
 .consultations-list,
-.appointments-list {
+.appointments-list,
+.reminders-list {
   .loading-state {
     display: flex;
     justify-content: center;
@@ -163,6 +164,13 @@
   .empty-state {
     margin: 24px;
   }
+}
+
+.reminders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px 24px;
 }
 
 // Appointment items (same style as appointments page list view)
@@ -260,6 +268,13 @@
           color: var(--slate-700);
         }
       }
+    }
+
+    .appointment-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      flex-wrap: wrap;
     }
   }
 }

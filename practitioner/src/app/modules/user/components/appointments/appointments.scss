@@ -16,11 +16,6 @@
     gap: 16px;
   }
 
-  .total-count {
-    font-size: 14px;
-    color: var(--slate-500);
-  }
-
   .header-controls {
     display: flex;
     align-items: center;
@@ -260,6 +255,59 @@
   }
 }
 
+.reminders-section {
+  background: var(--White);
+  border-radius: 20px;
+  border: 1px solid var(--slate-100);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  margin-top: 24px;
+  padding: 24px;
+
+  .reminders-section-header {
+    margin-bottom: 16px;
+  }
+
+  .reminders-section-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--slate-800);
+    margin: 0;
+  }
+
+  .reminders-loading {
+    display: flex;
+    justify-content: center;
+    padding: 32px;
+  }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 48px 24px;
+    color: var(--slate-400);
+
+    span {
+      font-size: 14px;
+      color: var(--slate-500);
+    }
+  }
+
+  .reminders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .load-more-container {
+    display: flex;
+    justify-content: flex-start;
+    padding-top: 12px;
+  }
+}
+
 .appointment-item {
   display: flex;
   align-items: center;
@@ -275,6 +323,14 @@
 
   &:hover {
     background: var(--slate-50);
+  }
+
+  // Calendar background colorization (4-week rotation): a colored left bar marks
+  // the rotation week. The actual color comes from the inline border-left-color
+  // binding; here we only give the border its width/style so it becomes visible.
+  &.colorized {
+    border-left-width: 4px;
+    border-left-style: solid;
   }
 
   &.highlighted {
@@ -392,6 +448,13 @@
       font-size: 13px;
       font-weight: 600;
     }
+  }
+
+  .tooltip-description {
+    font-size: 13px;
+    color: var(--slate-600);
+    margin-bottom: 8px;
+    white-space: pre-line;
   }
 
   .tooltip-datetime,
@@ -555,6 +618,24 @@
       sans-serif;
   }
 
+  .fc-event-custom {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    padding: 0 2px;
+
+    .fc-event-icon {
+      flex-shrink: 0;
+    }
+
+    .fc-event-label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
   .fc-theme-standard td,
   .fc-theme-standard th {
     border-color: var(--slate-100);
@@ -562,6 +643,18 @@
 
   .fc-theme-standard .fc-scrollgrid {
     border-color: var(--slate-100);
+  }
+
+  // When the background colorization is active, the light grey grid lines blend
+  // into the colored cells; switch them to a darker grey so the grid stays
+  // legible on the pastel backgrounds.
+  .calendar-colorized {
+    .fc-theme-standard td,
+    .fc-theme-standard th,
+    .fc-theme-standard .fc-scrollgrid,
+    .fc-scrollgrid-section > * {
+      border-color: var(--slate-200);
+    }
   }
 
   .fc-col-header-cell {
@@ -691,6 +784,22 @@
 
   .fc-timegrid-col.fc-day-today {
     background: rgba(var(--primary-500-rgb), 0.03);
+  }
+
+  // Calendar background colorization (admin-controlled 4-week rotation).
+  // The day cell / column / header gets an `fc-rot-N` class; the matching color
+  // comes from the `--calendar-rot-N` CSS variables set by the component.
+  // Applied at a soft opacity so appointment events stay readable on top.
+  @for $i from 0 through 3 {
+    .fc-daygrid-day.fc-rot-#{$i},
+    .fc-timegrid-col.fc-rot-#{$i},
+    .fc-col-header-cell.fc-rot-#{$i} {
+      background-color: color-mix(
+        in srgb,
+        var(--calendar-rot-#{$i}) 55%,
+        transparent
+      );
+    }
   }
 
   .fc-daygrid-day-events {

@@ -17,8 +17,7 @@ class MessageICSAttachmentTestCase(TenantTestCase):
 
         self.user = User.objects.create_user(
             email="doctor@example.com",
-            password="testpass123",
-            first_name="Dr. John",
+                        first_name="Dr. John",
             last_name="Doe",
             communication_method=CommunicationMethod.email,
             main_organisation=self.organisation,
@@ -26,8 +25,7 @@ class MessageICSAttachmentTestCase(TenantTestCase):
 
         self.patient = User.objects.create_user(
             email="patient@example.com",
-            password="testpass123",
-            first_name="Jane",
+                        first_name="Jane",
             last_name="Smith",
             communication_method=CommunicationMethod.email,
             main_organisation=self.organisation,

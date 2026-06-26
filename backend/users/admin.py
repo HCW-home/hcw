@@ -6,6 +6,7 @@ from django.contrib import admin, messages
 from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext_lazy
@@ -28,11 +29,15 @@ from unfold.contrib.import_export.forms import (
     SelectableFieldsExportForm,
 )
 from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
+from unfold.contrib.inlines.admin import NonrelatedStackedInline
 from django import forms
 from unfold.widgets import UnfoldAdminColorInputWidget, UnfoldAdminLocationWidget
-from rest_framework.authtoken.models import TokenProxy
+from rest_framework.authtoken.admin import TokenAdmin as DRFTokenAdmin
+from rest_framework.authtoken.models import Token, TokenProxy
+from consultations.models import CustomField, CustomFieldValue
 
 from .models import (
+    DAVAppPassword,
     FCMDeviceOverride,
     HealthMetric,
     Language,
@@ -58,10 +63,18 @@ admin.site.unregister(TokenProxy)
 
 
 @admin.register(TokenProxy)
-class TokenAdmin(ModelAdmin):
+class TokenAdmin(DRFTokenAdmin, ModelAdmin):
+    # Hérite de l'admin DRF pour récupérer get_object()/delete_model() qui re-mappent
+    # TokenProxy.pk (= user_id) vers la vraie PK Token (= key). Sans ça, la suppression
+    # échouait silencieusement. ModelAdmin (unfold) reste en second pour le rendu.
     list_display = ["key", "user", "created"]
     fields = ["user"]
     ordering = ["-created"]
+
+    def delete_queryset(self, request, queryset):
+        # DRF ne surcharge pas delete_queryset() : on remappe vers les vrais Token via key
+        # pour que la suppression en lot ("Delete selected") fonctionne aussi.
+        Token.objects.filter(key__in=[obj.key for obj in queryset]).delete()
 
 admin.site.unregister(SocialToken)
 admin.site.register(SocialToken, ModelAdmin)
@@ -88,6 +101,34 @@ class UserChangeFormWithLocation(UserChangeForm):
                 based_fields=["street", "city", "postal_code", "country"],
             )
 
+class PractitionerCustomFieldInline(NonrelatedStackedInline):
+    model = CustomFieldValue
+    extra = 0
+    verbose_name = "Custom field value"
+    verbose_name_plural = "Custom fields (Practitioner)"
+    fields = ["custom_field", "value"]
+
+    def get_form_queryset(self, obj):
+        ct = ContentType.objects.get_for_model(obj)
+        return CustomFieldValue.objects.filter(
+            content_type=ct,
+            object_id=obj.pk,
+            custom_field__target_model="users.Practitioner",
+        ).select_related("custom_field")
+
+    def save_new_instance(self, parent, instance):
+        ct = ContentType.objects.get_for_model(parent)
+        instance.content_type = ct
+        instance.object_id = parent.pk
+        instance.save()
+
+    def get_formset(self, request, obj=None, **kwargs):
+        formset = super().get_formset(request, obj, **kwargs)
+        if "custom_field" in formset.form.base_fields:
+            formset.form.base_fields["custom_field"].queryset = (
+                CustomField.objects.filter(target_model="users.Practitioner")
+            )
+        return formset
 
 class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
     form = UserChangeFormWithLocation
@@ -178,10 +219,22 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
             None,
             {
                 "classes": ("wide",),
-                "fields": ("email", "usable_password", "password1", "password2"),
+                "fields": (
+                    "email",
+                    "is_practitioner",
+                    "usable_password",
+                    "password1",
+                    "password2",
+                ),
             },
         ),
     )
+
+    def get_changeform_initial_data(self, request):
+        """Default new admin-created users to practitioners (doctors)."""
+        initial = super().get_changeform_initial_data(request)
+        initial.setdefault("is_practitioner", True)
+        return initial
 
     def languages_display(self, obj):
         return ", ".join([lang.name for lang in obj.languages.all()[:3]]) + (
@@ -196,6 +249,11 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
         )
 
     specialities_display.short_description = "Specialities"
+
+    def get_inlines(self, request, obj=None):
+        if obj and obj.is_practitioner:
+            return [PractitionerCustomFieldInline]
+        return []
 
 
 admin.site.register(User, UserAdmin)
@@ -498,6 +556,13 @@ class HealthMetricAdmin(ModelAdmin):
     ordering = ["-measured_at"]
     autocomplete_fields = ["created_by", "user", "measured_by"]
 
+@admin.register(DAVAppPassword)
+class DAVAppPasswordAdmin(ModelAdmin):
+    list_display = ["user", "label", "is_active", "created_at", "last_used_at"]
+    list_filter = ["is_active"]
+    search_fields = ["user__email", "label"]
+    readonly_fields = ["token", "created_at", "last_used_at"]
+    fields = ["user", "label", "is_active", "token", "created_at", "last_used_at"]
 
 from django.contrib import admin
 from django_celery_beat.admin import ClockedScheduleAdmin as BaseClockedScheduleAdmin

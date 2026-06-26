@@ -11,6 +11,7 @@ import {
   IDashboardResponse,
   IParticipantDetail
 } from '../models/consultation.model';
+import { VideoCallConfig } from './video-call.types';
 
 export interface ConsultationFilters {
   page?: number;
@@ -116,12 +117,8 @@ export class ConsultationService {
     return this.api.get<ConsultationRequest>(`/requests/${id}/`);
   }
 
-  joinConsultation(consultationId: number): Observable<{
-    url: string;
-    token: string;
-    room: string;
-  }> {
-    return this.api.get<{ url: string; token: string; room: string }>(
+  joinConsultation(consultationId: number): Observable<VideoCallConfig> {
+    return this.api.get<VideoCallConfig>(
       `/user/consultations/${consultationId}/join/`
     );
   }
@@ -133,12 +130,8 @@ export class ConsultationService {
     );
   }
 
-  joinAppointment(appointmentId: number): Observable<{
-    url: string;
-    token: string;
-    room: string;
-  }> {
-    return this.api.get<{ url: string; token: string; room: string }>(
+  joinAppointment(appointmentId: number): Observable<VideoCallConfig> {
+    return this.api.get<VideoCallConfig>(
       `/user/appointments/${appointmentId}/join/`
     );
   }

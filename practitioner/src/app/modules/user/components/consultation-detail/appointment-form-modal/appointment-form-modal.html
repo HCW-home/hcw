@@ -1,6 +1,7 @@
 <app-modal
   [isOpen]="isOpen"
   [title]="modalTitle"
+  [titleHelp]="titleHelp"
   size="xlarge"
   [closeOnBackdropClick]="false"
   (closed)="onClose()">
@@ -12,6 +13,7 @@
     [owner]="owner"
     [initialStartDate]="initialStartDate"
     [initialEndDate]="initialEndDate"
+    [initialParticipants]="initialParticipants"
     [showActions]="true"
     (cancelled)="onClose()"
     (appointmentCreated)="onAppointmentCreated($event)"

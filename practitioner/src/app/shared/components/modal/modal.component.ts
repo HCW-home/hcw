@@ -24,6 +24,8 @@ import { TypographyTypeEnum } from '../../constants/typography';
 export class ModalComponent implements AfterViewChecked, OnDestroy {
   isOpen = input<boolean>(false);
   title = input<string>('');
+  // Optional contextual help shown in a tooltip next to the title.
+  titleHelp = input<string>('');
   size = input<'small' | 'medium' | 'large' | 'xlarge'>('medium');
   showCloseButton = input<boolean>(true);
   closeOnBackdropClick = input<boolean>(true);

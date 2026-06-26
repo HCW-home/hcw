@@ -543,5 +543,11 @@
       "identity-probe-failed": "Could not reach this instance to verify its identity.",
       "not-hcw-backend": "This server does not appear to be a HCW instance."
     }
+  },
+  "practitioner": {
+    "notFound": "Practitioner not found",
+    "organisation": "Organisation",
+    "additionalInfo": "Additional Information",
+    "profile": "Profile"
   }
 }

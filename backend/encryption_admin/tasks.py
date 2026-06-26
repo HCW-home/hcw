@@ -40,20 +40,30 @@ def _render_messaging_template(
     """
     template_data = DEFAULT_NOTIFICATION_MESSAGES[template_key]
     with translation.override(language):
-        env = jinja2.Environment(extensions=["jinja2.ext.i18n"])
-        env.install_gettext_callables(
-            translation.gettext, translation.ngettext, newstyle=True
-        )
-        env.filters["localtime"] = timezone.localtime
-        env.filters.update(register.filters)
+
+        def make_env(autoescape: bool) -> jinja2.Environment:
+            env = jinja2.Environment(
+                extensions=["jinja2.ext.i18n"], autoescape=autoescape
+            )
+            env.install_gettext_callables(
+                translation.gettext, translation.ngettext, newstyle=True
+            )
+            env.filters["localtime"] = timezone.localtime
+            env.filters.update(register.filters)
+            return env
+
+        # Plain-text fields keep values literal; only the HTML body escapes
+        # interpolated values to prevent injection.
+        text_env = make_env(autoescape=False)
+        html_env = make_env(autoescape=True)
         full_context = {"config": config, **context}
-        subject = env.from_string(str(template_data["template_subject"])).render(
+        subject = text_env.from_string(str(template_data["template_subject"])).render(
             full_context
         )
-        content = env.from_string(str(template_data["template_content"])).render(
+        content = text_env.from_string(str(template_data["template_content"])).render(
             full_context
         )
-        content_html = env.from_string(
+        content_html = html_env.from_string(
             str(template_data["template_content_html"])
         ).render(full_context)
     return subject, content, content_html

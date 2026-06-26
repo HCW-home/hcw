@@ -81,8 +81,23 @@ export class CreateConsultationModal implements OnInit, OnDestroy {
   private t = inject(TranslationService);
 
   isOpen = input<boolean>(false);
+  highlightTitle = input<boolean>(false);
+  highlightSchedule = input<boolean>(false);
+  highlightAddParticipant = input<boolean>(false);
+  highlightExternalGuest = input<boolean>(false);
+  highlightExternalEmail = input<boolean>(false);
+  highlightVisibleCheckbox = input<boolean>(false);
+  highlightAddParticipantSubmit = input<boolean>(false);
+  highlightDateTime = input<boolean>(false);
+  highlightCreateButton = input<boolean>(false);
+  disableCreateButton = input<boolean>(false);
+  disableAddParticipantSubmit = input<boolean>(false);
   closed = output<void>();
   consultationCreated = output<number>();
+  scheduleToggled = output<boolean>();
+  addParticipantClicked = output<void>();
+  externalGuestSelected = output<void>();
+  participantAdded = output<void>();
 
   queues = signal<Queue[]>([]);
   currentUser = signal<IUser | null>(null);

@@ -23,7 +23,13 @@ import {
   DashboardResponse,
   IParticipantDetail,
 } from '../models/consultation';
+import {
+  Reminder,
+  CreateReminderRequest,
+  ReminderOccurrence,
+} from '../models/reminder';
 import { PaginatedResponse } from '../models/global';
+import { VideoCallConfig } from './video-call.types';
 
 @Injectable({
   providedIn: 'root',
@@ -154,6 +160,83 @@ export class ConsultationService {
       {
         context: new HttpContext().set(SKIP_ERROR_TOAST, true),
       }
+    );
+  }
+
+  getReminders(params?: {
+    page?: number;
+    page_size?: number;
+    ordering?: string;
+    consultation?: number;
+    recipient?: number;
+    future?: boolean;
+    is_active?: boolean;
+    scheduled_at__date__gte?: string;
+    scheduled_at__date__lte?: string;
+  }): Observable<PaginatedResponse<Reminder>> {
+    let httpParams = new HttpParams();
+    if (params?.page) httpParams = httpParams.set('page', params.page.toString());
+    if (params?.page_size)
+      httpParams = httpParams.set('page_size', params.page_size.toString());
+    if (params?.ordering) httpParams = httpParams.set('ordering', params.ordering);
+    if (params?.consultation)
+      httpParams = httpParams.set('consultation', params.consultation.toString());
+    if (params?.recipient)
+      httpParams = httpParams.set('recipient', params.recipient.toString());
+    if (params?.future !== undefined)
+      httpParams = httpParams.set('future', params.future.toString());
+    if (params?.is_active !== undefined)
+      httpParams = httpParams.set('is_active', params.is_active.toString());
+    if (params?.scheduled_at__date__gte)
+      httpParams = httpParams.set(
+        'scheduled_at__date__gte',
+        params.scheduled_at__date__gte
+      );
+    if (params?.scheduled_at__date__lte)
+      httpParams = httpParams.set(
+        'scheduled_at__date__lte',
+        params.scheduled_at__date__lte
+      );
+    return this.http.get<PaginatedResponse<Reminder>>(`${this.apiUrl}/reminders/`, {
+      params: httpParams,
+    });
+  }
+
+  createReminder(data: CreateReminderRequest): Observable<Reminder> {
+    return this.http.post<Reminder>(`${this.apiUrl}/reminders/`, data, {
+      context: new HttpContext().set(SKIP_ERROR_TOAST, true),
+    });
+  }
+
+  updateReminder(
+    id: number,
+    data: Partial<CreateReminderRequest>
+  ): Observable<Reminder> {
+    return this.http.patch<Reminder>(`${this.apiUrl}/reminders/${id}/`, data, {
+      context: new HttpContext().set(SKIP_ERROR_TOAST, true),
+    });
+  }
+
+  getReminder(id: number): Observable<Reminder> {
+    return this.http.get<Reminder>(`${this.apiUrl}/reminders/${id}/`);
+  }
+
+  deleteReminder(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/reminders/${id}/`);
+  }
+
+  getReminderOccurrences(
+    start: string,
+    end: string,
+    createdBy?: number[]
+  ): Observable<ReminderOccurrence[]> {
+    let httpParams = new HttpParams().set('start', start).set('end', end);
+    for (const id of createdBy ?? []) {
+      httpParams = httpParams.append('created_by', id.toString());
+    }
+    return this.http.get<ReminderOccurrence[]>(
+      `${this.apiUrl}/reminders/occurrences/`,
+      { params: httpParams }
     );
   }
 
@@ -354,32 +437,20 @@ export class ConsultationService {
     return this.http.delete<void>(`${this.apiUrl}/user/bookingslots/${id}/`);
   }
 
-  joinAppointment(appointmentId: number): Observable<{
-    url: string;
-    token: string;
-    room: string;
-  }> {
-    return this.http.get<{ url: string; token: string; room: string }>(
+  joinAppointment(appointmentId: number): Observable<VideoCallConfig> {
+    return this.http.get<VideoCallConfig>(
       `${this.apiUrl}/appointments/${appointmentId}/join/`
     );
   }
 
-  joinConsultation(consultationId: number): Observable<{
-    url: string;
-    token: string;
-    room: string;
-  }> {
-    return this.http.get<{ url: string; token: string; room: string }>(
+  joinConsultation(consultationId: number): Observable<VideoCallConfig> {
+    return this.http.get<VideoCallConfig>(
       `${this.apiUrl}/consultations/${consultationId}/join/`
     );
   }
 
-  callBeneficiary(consultationId: number): Observable<{
-    url: string;
-    token: string;
-    room: string;
-  }> {
-    return this.http.post<{ url: string; token: string; room: string }>(
+  callBeneficiary(consultationId: number): Observable<VideoCallConfig> {
+    return this.http.post<VideoCallConfig>(
       `${this.apiUrl}/consultations/${consultationId}/call/`,
       {}
     );
@@ -389,6 +460,20 @@ export class ConsultationService {
     return this.http.post<{detail: string}>(
       `${this.apiUrl}/appointments/${appointmentId}/leave/`,
       {}
+    );
+  }
+
+  muteParticipant(
+    appointmentId: number,
+    targetUserId: number,
+    muted = true
+  ): Observable<{ status: string; tracks: number }> {
+    return this.http.post<{ status: string; tracks: number }>(
+      `${this.apiUrl}/appointments/${appointmentId}/mute_participant/`,
+      { target_user_id: targetUserId, muted },
+      // Handle errors in the component so we can show a specific message
+      // (e.g. remote unmute disabled) instead of the generic error toast.
+      { context: new HttpContext().set(SKIP_ERROR_TOAST, true) }
     );
   }
 

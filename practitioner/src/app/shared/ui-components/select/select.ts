@@ -282,6 +282,9 @@ export class Select implements ControlValueAccessor, OnChanges, OnInit, OnDestro
         this.selectOption(opt);
       }
     } else {
+      // Close the dropdown so it doesn't overlay the create modal that the
+      // host opens in response to this event (dropdown z-index > modal).
+      this.open = false;
       this.createItem.emit(this.searchTerm);
     }
   }

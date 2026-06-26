@@ -8,16 +8,19 @@ import {
   ElementRef,
   ViewChild,
   AfterViewInit,
+  OnChanges,
+  SimpleChanges,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Subject, firstValueFrom } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { LocalVideoTrack, LocalTrack } from 'livekit-client';
 
-import { LiveKitService, ParticipantInfo, ConnectionStatus } from '../../../../core/services/livekit.service';
+import { VideoCallService } from '../../../../core/services/video-call.service';
+import { ConnectionStatus, ParticipantInfo, VideoCallConfig } from '../../../../core/services/video-call.types';
 import { MediaDeviceService } from '../../../../core/services/media-device.service';
 import { ConsultationService } from '../../../../core/services/consultation.service';
 import { TranscriptionService } from '../../../../core/services/transcription.service';
@@ -66,10 +69,10 @@ interface CaptionEntry {
   styleUrls: ['./video-consultation.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewInit {
+export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewInit, OnChanges {
   @Input() appointmentId?: number;
   @Input() consultationId?: number;
-  @Input() livekitConfig?: { url: string; token: string; room: string };
+  @Input() videoCallConfig?: VideoCallConfig;
   @Input() isMinimized = false;
   @Input() messages: Message[] = [];
   @Input() isLoadingMore = false;
@@ -88,8 +91,8 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
 
   connectionStatus: ConnectionStatus = 'disconnected';
   participants: Map<string, ParticipantInfo> = new Map();
-  localVideoTrack: LocalVideoTrack | null = null;
-  localScreenShareTrack: LocalTrack | null = null;
+  localVideoTrack: MediaStreamTrack | null = null;
+  localScreenShareTrack: MediaStreamTrack | null = null;
   isCameraEnabled = false;
   isMicrophoneEnabled = false;
   isScreenShareEnabled = false;
@@ -97,6 +100,12 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   isLoading = false;
   errorMessage = '';
   showChat = signal(false);
+  unreadCount = signal(0);
+  /** Ids of messages already accounted for, to detect genuinely new ones. */
+  private seenMessageIds = new Set<number>();
+  /** Timestamp (ms) of the newest message seen, so paginated history (which is
+   *  prepended with older timestamps) never counts as unread. */
+  private latestSeenTs = 0;
   showCaptions = signal(false);
   captionLines = signal<CaptionEntry[]>([]);
   phase = signal<'lobby' | 'connecting' | 'in-call'>('lobby');
@@ -106,6 +115,9 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   private readonly MAX_CAPTION_LINES = 200;
   private activeRemoteTranscriptions = new Set<string>();
   private currentUserId: number | null = null;
+  private isPractitioner = false;
+  /** Identities currently being (un)muted, to disable the button mid-request. */
+  mutingInProgress = new Set<string>();
 
   enableVideoRecording = false;
   enableLiveTranscription = false;
@@ -127,7 +139,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   private t: TranslationService;
 
   constructor(
-    private livekitService: LiveKitService,
+    private videoCallService: VideoCallService,
     private mediaDeviceService: MediaDeviceService,
     private consultationService: ConsultationService,
     private toasterService: ToasterService,
@@ -149,6 +161,8 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     // but subscribing ensures we pick it up even if populated after ngOnInit.
     this.userService.currentUser$.pipe(takeUntil(this.destroy$)).subscribe(user => {
       this.currentUserId = user?.pk ?? null;
+      this.isPractitioner = user?.is_practitioner ?? false;
+      this.cdr.markForCheck();
     });
     if (!this.userService.currentUserValue) {
       this.userService.getCurrentUser().pipe(takeUntil(this.destroy$)).subscribe();
@@ -163,6 +177,35 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     this.setupSubscriptions();
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    if (!changes['messages']) return;
+
+    // First population (loading history): record everything as seen without
+    // raising the badge — these aren't "new" arrivals.
+    const isFirstPopulation = changes['messages'].firstChange || this.seenMessageIds.size === 0;
+
+    for (const msg of this.messages) {
+      if (this.seenMessageIds.has(msg.id)) continue;
+      this.seenMessageIds.add(msg.id);
+
+      const ts = new Date(msg.timestamp).getTime();
+      // Count as unread only a genuinely new, incoming (not ours, not system)
+      // message that is newer than anything seen so far (so prepended
+      // pagination history never counts), and only while the chat is closed.
+      if (
+        !isFirstPopulation &&
+        ts > this.latestSeenTs &&
+        !msg.isCurrentUser &&
+        !msg.isSystem &&
+        !this.showChat()
+      ) {
+        this.unreadCount.update(n => n + 1);
+      }
+      this.latestSeenTs = Math.max(this.latestSeenTs, ts);
+    }
+    this.cdr.markForCheck();
+  }
+
   ngAfterViewInit(): void {
   }
 
@@ -170,21 +213,21 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     console.log('[VideoConsultation] ngOnDestroy called - cleaning up and disconnecting');
     this.destroy$.next();
     this.destroy$.complete();
-    this.livekitService.disconnect();
+    this.videoCallService.disconnect();
     this.transcriptionService.stop();
     this.activeRemoteTranscriptions.clear();
     this.cleanupMediaElements();
   }
 
   private setupSubscriptions(): void {
-    this.livekitService.connectionStatus$
+    this.videoCallService.connectionStatus$
       .pipe(takeUntil(this.destroy$))
       .subscribe(status => {
         this.connectionStatus = status;
         this.cdr.markForCheck();
       });
 
-    this.livekitService.localVideoTrack$
+    this.videoCallService.localVideoTrack$
       .pipe(takeUntil(this.destroy$))
       .subscribe(track => {
         this.localVideoTrack = track;
@@ -192,7 +235,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
         this.cdr.markForCheck();
       });
 
-    this.livekitService.participants$
+    this.videoCallService.participants$
       .pipe(takeUntil(this.destroy$))
       .subscribe(participants => {
         this.participants = participants;
@@ -206,14 +249,14 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
         }, 0);
       });
 
-    this.livekitService.isCameraEnabled$
+    this.videoCallService.isCameraEnabled$
       .pipe(takeUntil(this.destroy$))
       .subscribe(enabled => {
         this.isCameraEnabled = enabled;
         this.cdr.markForCheck();
       });
 
-    this.livekitService.isMicrophoneEnabled$
+    this.videoCallService.isMicrophoneEnabled$
       .pipe(takeUntil(this.destroy$))
       .subscribe(enabled => {
         this.isMicrophoneEnabled = enabled;
@@ -232,14 +275,14 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
         }
       });
 
-    this.livekitService.isScreenShareEnabled$
+    this.videoCallService.isScreenShareEnabled$
       .pipe(takeUntil(this.destroy$))
       .subscribe(enabled => {
         this.isScreenShareEnabled = enabled;
         this.cdr.markForCheck();
       });
 
-    this.livekitService.localScreenShareTrack$
+    this.videoCallService.localScreenShareTrack$
       .pipe(takeUntil(this.destroy$))
       .subscribe(track => {
         this.localScreenShareTrack = track;
@@ -247,7 +290,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
         setTimeout(() => this.attachLocalScreenShare(), 0);
       });
 
-    this.livekitService.error$
+    this.videoCallService.error$
       .pipe(takeUntil(this.destroy$))
       .subscribe(error => {
         this.errorMessage = error;
@@ -337,16 +380,16 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
         throw new Error(this.t.instant('videoConsultation.failedLivekitConfig'));
       }
 
-      await this.livekitService.connect(config);
+      await this.videoCallService.connect(config);
 
       // Enable camera/microphone separately - don't fail the whole join if camera is unavailable
       try {
-        await this.livekitService.enableCamera(true);
+        await this.videoCallService.enableCamera(true);
       } catch {
         // Camera not available, continue without it
       }
       try {
-        await this.livekitService.enableMicrophone(true);
+        await this.videoCallService.enableMicrophone(true);
       } catch {
         // Microphone not available, continue without it
       }
@@ -359,15 +402,24 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     }
   }
 
-  private async getCallConfig(): Promise<{ url: string; token: string; room: string } | undefined> {
-    if (this.livekitConfig) {
-      return this.livekitConfig;
+  private async getCallConfig(): Promise<VideoCallConfig | undefined> {
+    if (this.videoCallConfig) {
+      return this.videoCallConfig;
     }
+    // When joining via appointment/consultation, the config is fetched here
+    // rather than passed as an @Input. Cache it so the rest of the component
+    // (e.g. canModerate, which depends on config.provider) sees it too.
     if (this.appointmentId) {
-      return this.consultationService.joinAppointment(this.appointmentId).toPromise();
+      this.videoCallConfig = await this.consultationService
+        .joinAppointment(this.appointmentId)
+        .toPromise();
+      return this.videoCallConfig;
     }
     if (this.consultationId) {
-      return this.consultationService.joinConsultation(this.consultationId).toPromise();
+      this.videoCallConfig = await this.consultationService
+        .joinConsultation(this.consultationId)
+        .toPromise();
+      return this.videoCallConfig;
     }
     throw new Error(this.t.instant('videoConsultation.appointmentRequired'));
   }
@@ -397,22 +449,22 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
         deviceIds.microphone = settings.microphoneDeviceId;
       }
 
-      await this.livekitService.connect(config, undefined, deviceIds);
+      await this.videoCallService.connect(config, deviceIds);
 
       // Enable camera/microphone separately - don't fail the whole join if camera is unavailable
       try {
-        await this.livekitService.enableCamera(settings.cameraEnabled);
+        await this.videoCallService.enableCamera(settings.cameraEnabled);
       } catch {
         // Camera not available, continue without it
       }
       try {
-        await this.livekitService.enableMicrophone(settings.microphoneEnabled);
+        await this.videoCallService.enableMicrophone(settings.microphoneEnabled);
       } catch {
         // Microphone not available, continue without it
       }
 
       if (settings.speakerDeviceId) {
-        await this.livekitService.switchSpeaker(settings.speakerDeviceId);
+        await this.videoCallService.switchSpeaker(settings.speakerDeviceId);
       }
 
       this.phase.set('in-call');
@@ -436,13 +488,12 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
 
   private attachLocalVideo(): void {
     if (!this.localVideoRef?.nativeElement || !this.localVideoTrack) return;
-
-    this.localVideoTrack.attach(this.localVideoRef.nativeElement);
+    attachTrack(this.localVideoRef.nativeElement, this.localVideoTrack);
   }
 
   private attachLocalScreenShare(): void {
     if (!this.localScreenShareRef?.nativeElement || !this.localScreenShareTrack) return;
-    this.localScreenShareTrack.attach(this.localScreenShareRef.nativeElement);
+    attachTrack(this.localScreenShareRef.nativeElement, this.localScreenShareTrack);
   }
 
   private attachRemoteMedia(): void {
@@ -473,8 +524,8 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
         }
       }
 
-      if (videoEl && participant.videoTrack.attachedElements.indexOf(videoEl) === -1) {
-        participant.videoTrack.attach(videoEl);
+      if (videoEl) {
+        attachTrack(videoEl, participant.videoTrack);
       }
     }
 
@@ -488,9 +539,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
         document.body.appendChild(audioEl);
       }
 
-      if (participant.audioTrack.attachedElements.indexOf(audioEl) === -1) {
-        participant.audioTrack.attach(audioEl);
-      }
+      attachTrack(audioEl, participant.audioTrack);
     }
 
     if (participant.screenShareTrack) {
@@ -503,8 +552,8 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
         }
       }
 
-      if (screenEl && participant.screenShareTrack.attachedElements.indexOf(screenEl) === -1) {
-        participant.screenShareTrack.attach(screenEl);
+      if (screenEl) {
+        attachTrack(screenEl, participant.screenShareTrack);
       }
     } else {
       const screenEl = this.screenShareElements.get(identity);
@@ -548,7 +597,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
 
   async toggleCamera(): Promise<void> {
     try {
-      await this.livekitService.toggleCamera();
+      await this.videoCallService.toggleCamera();
     } catch (error) {
       this.toasterService.show('error', this.t.instant('videoConsultation.cameraError'), this.t.instant('videoConsultation.failedToggleCamera'));
     }
@@ -556,7 +605,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
 
   async toggleMicrophone(): Promise<void> {
     try {
-      await this.livekitService.toggleMicrophone();
+      await this.videoCallService.toggleMicrophone();
     } catch (error) {
       this.toasterService.show('error', this.t.instant('videoConsultation.microphoneError'), this.t.instant('videoConsultation.failedToggleMicrophone'));
     }
@@ -583,7 +632,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
 
   async switchMicrophone(deviceId: string): Promise<void> {
     try {
-      await this.livekitService.switchMicrophone(deviceId);
+      await this.videoCallService.switchMicrophone(deviceId);
       this.activeMicId = deviceId;
       this.showMicMenu = false;
       this.cdr.markForCheck();
@@ -594,7 +643,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
 
   async switchCamera(deviceId: string): Promise<void> {
     try {
-      await this.livekitService.switchCamera(deviceId);
+      await this.videoCallService.switchCamera(deviceId);
       this.activeCameraId = deviceId;
       this.showCameraMenu = false;
       this.cdr.markForCheck();
@@ -605,7 +654,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
 
   async toggleScreenShare(): Promise<void> {
     try {
-      await this.livekitService.toggleScreenShare();
+      await this.videoCallService.toggleScreenShare();
     } catch (error) {
       this.toasterService.show('error', this.t.instant('videoConsultation.screenShareError'), this.t.instant('videoConsultation.failedToggleScreenShare'));
     }
@@ -696,14 +745,14 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       if (!participant.isMicrophoneEnabled) continue;
 
       // Prefer audio element srcObject — most reliable after attachRemoteMedia has run.
-      // Fall back to the RemoteTrack's mediaStreamTrack.
+      // Fall back to the participant's MediaStreamTrack directly.
       let track: MediaStreamTrack | null = null;
       const audioEl = this.audioElements.get(identity);
       if (audioEl?.srcObject instanceof MediaStream) {
         track = (audioEl.srcObject as MediaStream).getAudioTracks()[0] ?? null;
       }
-      if (!track && participant.audioTrack?.mediaStreamTrack) {
-        track = participant.audioTrack.mediaStreamTrack;
+      if (!track && participant.audioTrack) {
+        track = participant.audioTrack;
       }
       if (!track) continue;
 
@@ -752,7 +801,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       this.showCaptions.set(false);
       this.transcriptionService.stop();
       this.activeRemoteTranscriptions.clear();
-      await this.livekitService.disconnect();
+      await this.videoCallService.disconnect();
       this.leave.emit();
     }
   }
@@ -763,6 +812,10 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
 
   toggleChatPanel(): void {
     this.showChat.update(v => !v);
+    // Opening the chat clears the unread badge.
+    if (this.showChat()) {
+      this.unreadCount.set(0);
+    }
   }
 
   onSendMessage(data: SendMessageData): void {
@@ -783,6 +836,80 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
 
   getParticipantsArray(): ParticipantInfo[] {
     return Array.from(this.participants.values());
+  }
+
+  /**
+   * Whether the local user may moderate (force-mute) other participants.
+   * Only practitioners can, and only on LiveKit — mediasoup has no
+   * server-side remote-mute, so we never show the control there.
+   */
+  get canModerate(): boolean {
+    return this.isPractitioner && this.videoCallConfig?.provider === 'livekit';
+  }
+
+  isMuting(participant: ParticipantInfo): boolean {
+    return this.mutingInProgress.has(participant.identity);
+  }
+
+  /**
+   * The LiveKit participant identity is `str(user.pk)`, optionally prefixed
+   * with the tenant schema as `schema:pk`. Take the segment after the last
+   * colon to recover the numeric user pk.
+   */
+  private userIdFromIdentity(identity: string): number | null {
+    const segment = identity.split(':').pop() ?? identity;
+    const pk = Number(segment);
+    return Number.isInteger(pk) ? pk : null;
+  }
+
+  async toggleParticipantMute(participant: ParticipantInfo): Promise<void> {
+    if (!this.canModerate || !this.appointmentId) return;
+    if (this.mutingInProgress.has(participant.identity)) return;
+
+    const targetUserId = this.userIdFromIdentity(participant.identity);
+    if (targetUserId === null) {
+      this.toasterService.show(
+        'error',
+        this.t.instant('videoConsultation.muteError'),
+        this.t.instant('videoConsultation.failedMuteParticipant')
+      );
+      return;
+    }
+
+    // Muting when the mic is currently on, unmuting when it is off.
+    const mute = participant.isMicrophoneEnabled;
+
+    this.mutingInProgress.add(participant.identity);
+    this.cdr.markForCheck();
+    try {
+      await firstValueFrom(
+        this.consultationService.muteParticipant(this.appointmentId, targetUserId, mute)
+      );
+    } catch (error) {
+      // The media server can refuse a remote unmute (privacy safeguard): the
+      // participant must re-open their own mic. Surface a clear message.
+      const code = (error as HttpErrorResponse)?.error?.code;
+      if (code === 'remote_unmute_disabled') {
+        this.toasterService.show(
+          'info',
+          this.t.instant('videoConsultation.unmuteParticipant'),
+          this.t.instant('videoConsultation.remoteUnmuteDisabled')
+        );
+      } else {
+        this.toasterService.show(
+          'error',
+          this.t.instant('videoConsultation.muteError'),
+          this.t.instant(
+            mute
+              ? 'videoConsultation.failedMuteParticipant'
+              : 'videoConsultation.failedUnmuteParticipant'
+          )
+        );
+      }
+    } finally {
+      this.mutingInProgress.delete(participant.identity);
+      this.cdr.markForCheck();
+    }
   }
 
   getParticipantVideoElement(identity: string): HTMLVideoElement | undefined {
@@ -815,4 +942,12 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       this.getScreenSharingParticipant() !== null
     );
   }
+}
+
+function attachTrack(element: HTMLMediaElement, track: MediaStreamTrack): void {
+  const current = element.srcObject;
+  if (current instanceof MediaStream && current.getTracks().includes(track)) {
+    return;
+  }
+  element.srcObject = new MediaStream([track]);
 }

@@ -53,6 +53,24 @@ class BaseMediaserver(ABC):
         """Whether this provider supports server-side recording (egress)."""
         return True
 
+    def supports_remote_mute(self) -> bool:
+        """Whether a moderator can force-mute another participant's audio."""
+        return False
+
+    def mute_participant(self, room_uuid, target_user, muted: bool = True) -> int:
+        """Force-mute (or unmute) a participant's audio for everyone.
+
+        The mute is enforced at the media server, so the track is silenced for
+        all participants, not just the moderator. Returns the number of audio
+        tracks affected.
+
+        Providers that return False from supports_remote_mute() do not override
+        this and callers must not invoke it.
+        """
+        raise NotImplementedError(
+            "This media server does not support remote muting."
+        )
+
 
 MAIN_CLASSES: Dict[str, Type[BaseMediaserver]] = {}
 MAIN_DISPLAY_NAMES: List[Tuple[str, str]] = []

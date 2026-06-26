@@ -51,6 +51,59 @@
   padding: 20px 24px;
   border-bottom: 1px solid var(--slate-100);
 
+  .modal-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .modal-title-help {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    color: var(--slate-400);
+    cursor: help;
+    outline: none;
+
+    &:hover,
+    &:focus-visible {
+      color: var(--primary-500);
+
+      .modal-title-tooltip {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
+    }
+
+    .modal-title-tooltip {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      z-index: 10;
+      width: max-content;
+      max-width: 320px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: var(--slate-800);
+      color: var(--White);
+      font-size: 12px;
+      line-height: 1.4;
+      font-weight: 400;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-4px);
+      transition:
+        opacity 0.15s ease,
+        transform 0.15s ease,
+        visibility 0.15s ease;
+      pointer-events: none;
+      white-space: normal;
+    }
+  }
+
   .close-button {
     width: 32px;
     height: 32px;

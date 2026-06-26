@@ -75,7 +75,8 @@ def auto_delete_temporary_users():
 
             from consultations.utils import appointment_active_cutoff
 
-            one_hour_ago = timezone.now() - timedelta(hours=1)
+            now = timezone.now()
+            one_hour_ago = now - timedelta(hours=1)
             users = User.objects.filter(
                 temporary=True,
                 date_joined__lt=one_hour_ago
@@ -83,9 +84,15 @@ def auto_delete_temporary_users():
                 appointments_participating__status="scheduled",
                 appointments_participating__scheduled_at__gt=appointment_active_cutoff(),
             ).exclude(
+                # Keep users who still have an active reminder addressed to them
+                # whose schedule isn't exhausted yet (recurrence_end_at is the
+                # last occurrence; equals scheduled_at for non-recurring ones).
+                reminders__is_active=True,
+                reminders__recurrence_end_at__gte=now,
+            ).exclude(
                 Q(consultation__isnull=False) |
                 Q(consultation_created__isnull=False) |
                 Q(consultation_owned__isnull=False)
             )
             count, _ = users.delete()
-            logger.info(f"Auto-deleted {count} temporary user(s) with no future appointments and no consultations")
+            logger.info(f"Auto-deleted {count} temporary user(s) with no future appointments, no future reminders and no consultations")

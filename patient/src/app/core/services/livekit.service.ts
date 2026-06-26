@@ -55,6 +55,7 @@ export class LiveKitService implements OnDestroy {
 
   public connectionStatus$: Observable<ConnectionStatus> = this.connectionStatusSubject.asObservable();
   public localVideoTrack$: Observable<LocalVideoTrack | null> = this.localVideoTrackSubject.asObservable();
+  public localAudioTrack$: Observable<LocalAudioTrack | null> = this.localAudioTrackSubject.asObservable();
   public localScreenShareTrack$: Observable<LocalTrack | null> = this.localScreenShareTrackSubject.asObservable();
   public participants$: Observable<Map<string, ParticipantInfo>> = this.participantsSubject.asObservable();
   public isCameraEnabled$: Observable<boolean> = this.isCameraEnabledSubject.asObservable();
@@ -153,11 +154,18 @@ export class LiveKitService implements OnDestroy {
       this.updateParticipants();
     });
 
-    this.room.on(RoomEvent.TrackMuted, (publication, _participant) => {
-      if (publication.source === Track.Source.ScreenShare) {
-        this.updateParticipants();
+    // A track can be muted/unmuted by the participant themselves OR forced by a
+    // moderator server-side (e.g. a practitioner muting a patient to stop echo).
+    // In both cases refresh: our own local state when it's our track, and the
+    // remote participant tiles otherwise.
+    const onMuteChanged = (_publication: unknown, participant: Participant) => {
+      if (participant.isLocal) {
+        this.updateLocalTrackStates();
       }
-    });
+      this.updateParticipants();
+    };
+    this.room.on(RoomEvent.TrackMuted, onMuteChanged);
+    this.room.on(RoomEvent.TrackUnmuted, onMuteChanged);
 
     this.room.on(RoomEvent.ActiveSpeakersChanged, (_speakers: Participant[]) => {
       this.updateParticipants();
@@ -200,8 +208,12 @@ export class LiveKitService implements OnDestroy {
         identity: participant.identity,
         name: participant.name || participant.identity,
         isSpeaking: participant.isSpeaking,
-        isCameraEnabled: videoPublication?.isSubscribed && !videoPublication.isMuted || false,
-        isMicrophoneEnabled: audioPublication?.isSubscribed && !audioPublication.isMuted || false,
+        // A track's muted state is carried by the publication itself and is
+        // independent of subscription (LiveKit may unsubscribe a muted track to
+        // save bandwidth). Treat "enabled" as: the publication exists and is not
+        // muted — so a self-mute or a moderator mute both flip the indicator.
+        isCameraEnabled: !!videoPublication && !videoPublication.isMuted,
+        isMicrophoneEnabled: !!audioPublication && !audioPublication.isMuted,
         isScreenShareEnabled: isScreenShareActive,
         videoTrack: videoPublication?.track || null,
         audioTrack: audioPublication?.track || null,
@@ -316,6 +328,16 @@ export class LiveKitService implements OnDestroy {
     } else {
       await this.startScreenShare();
     }
+  }
+
+  async switchCamera(deviceId: string): Promise<void> {
+    if (!this.room) return;
+    await this.room.switchActiveDevice('videoinput', deviceId);
+  }
+
+  async switchMicrophone(deviceId: string): Promise<void> {
+    if (!this.room) return;
+    await this.room.switchActiveDevice('audioinput', deviceId);
   }
 
   async switchSpeaker(deviceId: string): Promise<void> {

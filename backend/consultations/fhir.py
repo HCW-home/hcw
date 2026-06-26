@@ -13,9 +13,18 @@ from fhir_server.mappers import FhirResourceMapper
 from fhir_server.references import (
     build_identifier,
     build_reference,
+    get_external_identifier_system,
     parse_reference,
 )
-from fhir_server.search import CallableParam, DateParam, RefParam, TokenParam
+from fhir_server.search import (
+    CallableParam,
+    DateParam,
+    IdentifierParam,
+    RefParam,
+    TokenParam,
+    chained_params,
+    with_chained,
+)
 
 from .models import (
     Appointment,
@@ -44,6 +53,32 @@ _STATUS_FROM_FHIR = {
     "entered-in-error": AppointmentStatus.cancelled.value,
 }
 
+
+def _appointment_status_to_fhir(instance) -> str:
+    """Derive the FHIR Appointment.status from HCW state + participant confirmations.
+
+    Cancelled/draft map directly. A scheduled appointment reflects the
+    confirmation state of its active participants (per FHIR semantics):
+    - booked   : every active participant has confirmed (is_confirmed=True)
+    - pending  : at least one has confirmed, but not all
+    - proposed : none have confirmed (all None, or none accepted)
+    """
+    if instance.status == AppointmentStatus.cancelled.value:
+        return "cancelled"
+    if instance.status == AppointmentStatus.draft.value:
+        return "proposed"
+
+    confirmations = list(
+        instance.participant_set.filter(is_active=True).values_list(
+            "is_confirmed", flat=True
+        )
+    )
+    if confirmations and all(c is True for c in confirmations):
+        return "booked"
+    if any(c is True for c in confirmations):
+        return "pending"
+    return "proposed"
+
 _TYPE_SYSTEM = "http://terminology.hl7.org/CodeSystem/v2-0276"
 _TYPE_TO_CODE = {Type.online.value: "ROUTINE", Type.inperson.value: "WALKIN"}
 _CODE_TO_TYPE = {"ROUTINE": Type.online.value, "WALKIN": Type.inperson.value}
@@ -54,14 +89,34 @@ class AppointmentFhirMapper(FhirResourceMapper):
     model = Appointment
     profile_urls = ["http://hl7.org/fhir/StructureDefinition/Appointment"]
 
-    search_params = {
-        "patient": RefParam(field="participant__user", extra=Q(participant__is_active=True)),
-        "practitioner": RefParam(field="created_by"),
+    # Both patient and practitioner resolve to active participants, filtered by
+    # role — matching what `to_fhir` serialises (`_map_participant_out` types
+    # each participant Patient/Practitioner via `is_practitioner`). The chained
+    # `.identifier` / `.name` params are derived from these by `with_chained`.
+    search_params = with_chained({
+        "patient": RefParam(
+            field="participant__user",
+            extra=Q(participant__is_active=True, participant__user__is_practitioner=False),
+            chainable=True,
+            target_resource_type="Patient",
+            name_fields=["first_name", "last_name"],
+        ),
+        "practitioner": RefParam(
+            field="participant__user",
+            extra=Q(participant__is_active=True, participant__user__is_practitioner=True),
+            chainable=True,
+            target_resource_type="Practitioner",
+            name_fields=["first_name", "last_name"],
+        ),
         "date": DateParam(field="scheduled_at"),
         "status": TokenParam(field="status", mapping={v: k for k, v in _STATUS_TO_FHIR.items()}),
-        "identifier": TokenParam(field="id"),
+        "identifier": IdentifierParam(
+            canonical_field="pk",
+            external_field="external_id",
+            resource_type="Appointment",
+        ),
         "_lastUpdated": DateParam(field="updated_at"),
-    }
+    })
 
     @property
     def include_targets(self):
@@ -106,11 +161,20 @@ class AppointmentFhirMapper(FhirResourceMapper):
             if enc_ref:
                 supporting_info.append(enc_ref)
 
+        identifiers = [build_identifier("Appointment", instance.pk)]
+        ext_sys = get_external_identifier_system("Appointment")
+        if ext_sys and instance.external_id:
+            identifiers.append({
+                "use": "secondary",
+                "system": ext_sys,
+                "value": instance.external_id,
+            })
+
         kwargs = dict(
             resourceType="Appointment",
             id=str(instance.pk),
-            identifier=[build_identifier("Appointment", instance.pk)],
-            status=_STATUS_TO_FHIR.get(instance.status, "pending"),
+            identifier=identifiers,
+            status=_appointment_status_to_fhir(instance),
             start=instance.scheduled_at,
             end=instance.end_expected_at,
             created=instance.created_at,
@@ -151,6 +215,19 @@ class AppointmentFhirMapper(FhirResourceMapper):
     # -- from_fhir ----------------------------------------------------------
 
     def from_fhir(self, payload: dict, instance=None, *, context=None):
+        # FHIR R4 marks Appointment.participant as 1..* (Pydantic enforces it).
+        # On partial updates (PUT to just change status etc.) callers commonly
+        # omit it. When that happens AND we have an existing instance, inject
+        # a placeholder to satisfy Pydantic and remember to skip the
+        # participant-sync step in `post_save` (so existing participants stay
+        # untouched instead of being soft-deactivated).
+        participant_omitted = (
+            instance is not None
+            and isinstance(payload, dict)
+            and "participant" not in payload
+        )
+        if participant_omitted:
+            payload = {**payload, "participant": []}
         # Validate via Pydantic; handler turns errors into OperationOutcome.
         parsed = FhirAppointment(**payload)
         request = (context or {}).get("request")
@@ -179,7 +256,28 @@ class AppointmentFhirMapper(FhirResourceMapper):
 
         instance.consultation = self._resolve_encounter_reference(parsed)
 
-        instance._fhir_participants_pending = list(parsed.participant or [])
+        ext_sys = get_external_identifier_system("Appointment")
+        if ext_sys:
+            for ident in (parsed.identifier or []):
+                if (
+                    getattr(ident, "system", None) == ext_sys
+                    and getattr(ident, "value", None)
+                ):
+                    instance.external_id = ident.value
+                    break
+
+        # When the caller omitted `participant` on a partial update we keep
+        # the existing rows: leave the attribute unset so `post_save` skips.
+        if not participant_omitted:
+            instance._fhir_participants_pending = list(parsed.participant or [])
+            # Contained resources (inline Patient/Practitioner) keyed by their
+            # fragment id, so `post_save` can resolve `#patient` references.
+            contained = {}
+            for res in (parsed.contained or []):
+                rid = getattr(res, "id", None)
+                if rid:
+                    contained[rid] = res
+            instance._fhir_contained = contained
         return instance
 
     def _resolve_encounter_reference(self, parsed):
@@ -197,33 +295,120 @@ class AppointmentFhirMapper(FhirResourceMapper):
 
     # -- lifecycle hooks (called by FhirViewSetMixin) -----------------------
 
+    @staticmethod
+    def _participant_is_confirmed(status_value):
+        return (
+            True if status_value == "accepted"
+            else False if status_value == "declined"
+            else None
+        )
+
+    def _resolve_participant_user(self, entry, instance, context):
+        """Resolve one FHIR participant entry to ``(user, is_confirmed)``.
+
+        Supports three reference forms:
+        - `#fragment` → an inline `contained` Patient/Practitioner resource.
+        - `Patient/<pk>` / `Practitioner/<pk>` → an existing User by pk.
+        Returns None when the entry carries no resolvable reference.
+        """
+        from users.models import User  # local import to avoid cycles
+        from users.fhir import _GENDER_FROM_FHIR
+        from .fhir_participants import (
+            get_or_create_patient_user,
+            resolve_practitioner_user,
+        )
+
+        actor = getattr(entry, "actor", None)
+        ref = (getattr(actor, "reference", None) if actor else None) or ""
+        is_confirmed = self._participant_is_confirmed(getattr(entry, "status", None))
+
+        # -- contained resource (#fragment) --------------------------------
+        if ref.startswith("#"):
+            frag = ref[1:]
+            res = (getattr(instance, "_fhir_contained", None) or {}).get(frag)
+            if res is None:
+                raise FhirOperationError(
+                    f"Contained resource '#{frag}' referenced by a participant "
+                    f"is missing from the `contained` array.",
+                    code="not-found", status_code=404,
+                )
+            # fhir.resources 8.2.0 parses contained into concrete types; the
+            # resource type is exposed via get_resource_type() / __resource_type__.
+            rtype = (
+                res.get_resource_type() if hasattr(res, "get_resource_type")
+                else getattr(type(res), "__resource_type__", None)
+            )
+            email, phone = self._extract_contained_telecom(res)
+            if rtype == "Patient":
+                first, last = self._extract_contained_name(res)
+                gender = _GENDER_FROM_FHIR.get(getattr(res, "gender", None) or "")
+                user = get_or_create_patient_user(
+                    email=email, phone=phone, first_name=first, last_name=last,
+                    gender=gender or None, birth_date=getattr(res, "birthDate", None),
+                    created_by=instance.created_by,
+                )
+                return user, is_confirmed
+            if rtype == "Practitioner":
+                return resolve_practitioner_user(email=email), is_confirmed
+            raise FhirOperationError(
+                f"Unsupported contained resource type '{rtype}' for a participant.",
+                code="not-supported", status_code=422,
+            )
+
+        # -- existing reference (Patient/<pk>) -----------------------------
+        _, ident = parse_reference(ref)
+        if not ident:
+            return None
+        try:
+            user_pk = int(ident)
+        except (TypeError, ValueError):
+            return None
+        user = User.objects.filter(pk=user_pk).first()
+        if user is None:
+            raise FhirOperationError(
+                f"Referenced user {user_pk} not found in this tenant.",
+                code="not-found", status_code=404,
+            )
+        return user, is_confirmed
+
+    @staticmethod
+    def _extract_contained_telecom(res):
+        email = phone = None
+        for entry in (getattr(res, "telecom", None) or []):
+            system = getattr(entry, "system", None)
+            value = getattr(entry, "value", None)
+            if not value:
+                continue
+            if system == "email" and email is None:
+                email = value
+            elif system in ("phone", "sms") and phone is None:
+                phone = value
+        return email, phone
+
+    @staticmethod
+    def _extract_contained_name(res):
+        names = getattr(res, "name", None) or []
+        if not names:
+            return "", ""
+        first = names[0]
+        given = getattr(first, "given", None) or []
+        family = getattr(first, "family", None) or ""
+        return (given[0] if given else ""), family
+
     def post_save(self, instance, *, payload=None, context=None, created=False):
         pending = getattr(instance, "_fhir_participants_pending", None)
         if pending is None:
             return
 
-        from users.models import User  # local import to avoid cycles
-
         desired_user_ids = set()
         desired = []
         for entry in pending:
-            actor = getattr(entry, "actor", None)
-            ref = getattr(actor, "reference", None) if actor else None
-            rtype, ident = parse_reference(ref or "")
-            if not ident:
+            resolved = self._resolve_participant_user(entry, instance, context)
+            if resolved is None:
                 continue
-            try:
-                user_pk = int(ident)
-            except (TypeError, ValueError):
-                continue
-            status_value = getattr(entry, "status", None)
-            is_confirmed = (
-                True if status_value == "accepted"
-                else False if status_value == "declined"
-                else None
-            )
-            desired_user_ids.add(user_pk)
-            desired.append((user_pk, is_confirmed))
+            user, is_confirmed = resolved
+            desired_user_ids.add(user.pk)
+            desired.append((user.pk, is_confirmed))
 
         existing = {p.user_id: p for p in instance.participant_set.all()}
         for user_pk, is_confirmed in desired:
@@ -233,11 +418,6 @@ class AppointmentFhirMapper(FhirResourceMapper):
                 part.is_confirmed = is_confirmed
                 part.save()
             else:
-                if not User.objects.filter(pk=user_pk).exists():
-                    raise FhirOperationError(
-                        f"Referenced user {user_pk} not found in this tenant.",
-                        code="not-found", status_code=404,
-                    )
                 Participant.objects.create(
                     appointment=instance,
                     user_id=user_pk,
@@ -253,6 +433,8 @@ class AppointmentFhirMapper(FhirResourceMapper):
                     part.save(update_fields=["is_active"])
 
         delattr(instance, "_fhir_participants_pending")
+        if hasattr(instance, "_fhir_contained"):
+            delattr(instance, "_fhir_contained")
 
     def soft_delete(self, instance, *, context=None):
         instance.status = AppointmentStatus.cancelled
@@ -315,14 +497,52 @@ class EncounterFhirMapper(FhirResourceMapper):
     profile_urls = ["http://hl7.org/fhir/StructureDefinition/Encounter"]
 
     search_params = {
-        "patient": RefParam(field="beneficiary"),
-        "subject": RefParam(field="beneficiary"),
-        "practitioner": RefParam(field="created_by"),
-        "participant": RefParam(field="created_by"),
-        "date": DateParam(field="created_at"),
-        "identifier": TokenParam(field="id"),
-        "_lastUpdated": DateParam(field="updated_at"),
-        "status": CallableParam(build=lambda raw, mod: _encounter_status_filter(raw)),
+        **with_chained({
+            "patient": RefParam(
+                field="beneficiary", chainable=True,
+                target_resource_type="Patient",
+                name_fields=["first_name", "last_name"],
+            ),
+            "subject": RefParam(
+                field="beneficiary", chainable=True,
+                target_resource_type="Patient",
+                name_fields=["first_name", "last_name"],
+            ),
+            "practitioner": RefParam(
+                field="created_by", chainable=True,
+                target_resource_type="Practitioner",
+                name_fields=["first_name", "last_name"],
+            ),
+            "participant": RefParam(
+                field="created_by", chainable=True,
+                target_resource_type="Practitioner",
+                name_fields=["first_name", "last_name"],
+            ),
+            "date": DateParam(field="created_at"),
+            "identifier": IdentifierParam(
+                canonical_field="pk",
+                external_field="external_id",
+                resource_type="Encounter",
+            ),
+            "_lastUpdated": DateParam(field="updated_at"),
+            "status": CallableParam(build=lambda raw, mod: _encounter_status_filter(raw)),
+        }),
+        # Legacy non-conformant alias: find Encounters by the linked Appointment
+        # id or external_id. Kept for backward compatibility. The conformant
+        # `appointment.identifier` / `appointment.name` keys are added below.
+        "appointment": IdentifierParam(
+            canonical_field="appointments__pk",
+            external_field="appointments__external_id",
+            resource_type="Appointment",
+        ),
+        **chained_params(
+            "appointment",
+            RefParam(
+                field="appointments", chainable=True,
+                target_resource_type="Appointment",
+                name_fields=["title"],
+            ),
+        ),
     }
 
     @property
@@ -407,10 +627,19 @@ class EncounterFhirMapper(FhirResourceMapper):
             for appt in instance.appointments.all()
         ]
 
+        identifiers = [build_identifier("Encounter", instance.pk)]
+        ext_sys = get_external_identifier_system("Encounter")
+        if ext_sys and instance.external_id:
+            identifiers.append({
+                "use": "secondary",
+                "system": ext_sys,
+                "value": instance.external_id,
+            })
+
         kwargs = dict(
             resourceType="Encounter",
             id=str(instance.pk),
-            identifier=[build_identifier("Encounter", instance.pk)],
+            identifier=identifiers,
             status=status,
             **{"class": klass},
             period=period,
@@ -484,6 +713,16 @@ class EncounterFhirMapper(FhirResourceMapper):
         if not instance.title and payload.get("text", {}).get("div"):
             instance.title = payload["text"]["div"]
 
+        ext_sys = get_external_identifier_system("Encounter")
+        if ext_sys:
+            for ident in (parsed.identifier or []):
+                if (
+                    getattr(ident, "system", None) == ext_sys
+                    and getattr(ident, "value", None)
+                ):
+                    instance.external_id = ident.value
+                    break
+
         return instance
 
     def soft_delete(self, instance, *, context=None):
@@ -529,7 +768,11 @@ class PrescriptionFhirMapper(FhirResourceMapper):
             mapping={v: k for k, v in _PRESCRIPTION_STATUS_TO_FHIR.items()},
         ),
         "authored": DateParam(field="created_at"),
-        "identifier": TokenParam(field="id"),
+        "identifier": IdentifierParam(
+            canonical_field="pk",
+            external_field="external_id",
+            resource_type="MedicationRequest",
+        ),
         "_lastUpdated": DateParam(field="updated_at"),
     }
 
@@ -592,10 +835,19 @@ class PrescriptionFhirMapper(FhirResourceMapper):
         if dosage_text:
             dosage_instructions.append({"text": dosage_text})
 
+        identifiers = [build_identifier("MedicationRequest", instance.pk)]
+        ext_sys = get_external_identifier_system("MedicationRequest")
+        if ext_sys and instance.external_id:
+            identifiers.append({
+                "use": "secondary",
+                "system": ext_sys,
+                "value": instance.external_id,
+            })
+
         kwargs = dict(
             resourceType="MedicationRequest",
             id=str(instance.pk),
-            identifier=[build_identifier("MedicationRequest", instance.pk)],
+            identifier=identifiers,
             status=_PRESCRIPTION_STATUS_TO_FHIR.get(instance.status, "draft"),
             intent="order",
             medicationCodeableConcept={"text": instance.medication_name},
@@ -698,6 +950,16 @@ class PrescriptionFhirMapper(FhirResourceMapper):
         if parsed.note:
             notes = "\n".join(n.text for n in parsed.note if n.text)
             instance.notes = notes
+
+        ext_sys = get_external_identifier_system("MedicationRequest")
+        if ext_sys:
+            for ident in (parsed.identifier or []):
+                if (
+                    getattr(ident, "system", None) == ext_sys
+                    and getattr(ident, "value", None)
+                ):
+                    instance.external_id = ident.value
+                    break
 
         return instance
 

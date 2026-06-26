@@ -1,16 +1,17 @@
 import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router'; 
 import {
   IonContent,
   IonIcon,
   IonSpinner,
 } from '@ionic/angular/standalone';
 import { TranslatePipe } from '@ngx-translate/core';
-import { Subject, takeUntil, debounceTime, distinctUntilChanged, forkJoin } from 'rxjs';
+import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import * as L from 'leaflet';
 
-import { ApiService, PaginatedResponse } from '../../core/services/api.service';
+import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { TranslationService } from '../../core/services/translation.service';
 import { AppHeaderComponent } from '../../shared/app-header/app-header.component';
@@ -109,6 +110,7 @@ export class MapPage implements OnInit, OnDestroy {
   constructor(
     private apiService: ApiService,
     private authService: AuthService,
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
@@ -259,17 +261,13 @@ export class MapPage implements OnInit, OnDestroy {
   private fetchData(params: any): void {
     this.isLoading.set(true);
 
-    forkJoin({
-      organisations: this.apiService.get<PaginatedResponse<Organisation>>('/organisations/', params),
-      doctors: this.apiService.get<PaginatedResponse<Doctor>>('/users/', params),
-    })
+    this.apiService
+      .get<{ organisations: Organisation[]; practitioners: Doctor[] }>('/map/', params)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: ({ organisations, doctors }) => {
-          const orgs: Organisation[] = Array.isArray(organisations)
-            ? organisations
-            : organisations.results || [];
-          const docs: Doctor[] = doctors.results || [];
+        next: ({ organisations, practitioners }) => {
+          const orgs: Organisation[] = organisations || [];
+          const docs: Doctor[] = practitioners || [];
 
           const items: MapItem[] = [];
 
@@ -408,6 +406,9 @@ export class MapPage implements OnInit, OnDestroy {
       if (idx >= 0 && this.markers[idx]) {
         this.markers[idx].openPopup();
       }
+    }
+    if (item.type === 'doctor' && item.doctor) {
+      this.router.navigate(['/practitioners', item.doctor.pk, 'public']);
     }
   }
 

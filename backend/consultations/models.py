@@ -1,10 +1,11 @@
 import re
 import uuid
-from datetime import time
+from datetime import time, timedelta
 from enum import Enum
 from zoneinfo import available_timezones
 
 from constance import config
+from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.core.exceptions import ValidationError
@@ -154,12 +155,32 @@ class Consultation(models.Model):
         help_text=_("Consultation private key wrapped (envelope) with the platform master pubkey for admin recovery."),
     )
 
+    # Hidden from native API; only exposed via FHIR Encounter.identifier.
+    external_id = models.CharField(
+        _("external id"),
+        max_length=255,
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text=_(
+            "Identifier from an external system (e.g. OpenMRS). "
+            "Hidden from native API; exposed only via FHIR identifier array."
+        ),
+    )
+
     objects = ConsultationManager()
 
     class Meta:
         verbose_name = _("consultation")
         verbose_name_plural = _("consultations")
         ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["external_id"],
+                condition=models.Q(external_id__isnull=False),
+                name="consultation_external_id_unique",
+            ),
+        ]
 
     def __str__(self):
         return f"Consultation #{self.pk}"
@@ -216,6 +237,19 @@ class Appointment(models.Model):
         help_text=_("JSON array of transcript lines with timestamps and speakers"),
     )
 
+    # Hidden from native API; only exposed via FHIR Appointment.identifier.
+    external_id = models.CharField(
+        _("external id"),
+        max_length=255,
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text=_(
+            "Identifier from an external system (e.g. OpenMRS). "
+            "Hidden from native API; exposed only via FHIR identifier array."
+        ),
+    )
+
     @property
     def active_participants(self):
         return self.participants.filter(is_active=True)
@@ -228,6 +262,13 @@ class Appointment(models.Model):
             models.Index(
                 fields=["updated_at", "scheduled_at"],
                 name="appt_updat_sched_idx",
+            ),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["external_id"],
+                condition=models.Q(external_id__isnull=False),
+                name="appointment_external_id_unique",
             ),
         ]
 
@@ -706,10 +747,30 @@ class Prescription(models.Model):
     instructions = models.TextField(_("instructions"), null=True, blank=True)
     notes = models.TextField(_("notes"), null=True, blank=True)
 
+    # Hidden from native API; only exposed via FHIR MedicationRequest.identifier.
+    external_id = models.CharField(
+        _("external id"),
+        max_length=255,
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text=_(
+            "Identifier from an external system (e.g. OpenMRS). "
+            "Hidden from native API; exposed only via FHIR identifier array."
+        ),
+    )
+
     class Meta:
         verbose_name = _("prescription")
         verbose_name_plural = _("prescriptions")
         ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["external_id"],
+                condition=models.Q(external_id__isnull=False),
+                name="prescription_external_id_unique",
+            ),
+        ]
 
     def __str__(self):
         return f"Prescription #{self.pk} - {self.medication_name} for {self.patient}"
@@ -757,6 +818,11 @@ class CustomField(models.Model):
     )
     required = models.BooleanField(_("required"), default=False)
     ordering = models.IntegerField(_("ordering"), default=0)
+    is_public = models.BooleanField(
+        _("public"),
+        default=False,
+        help_text=_("When enabled, this field value is exposed on the public practitioner profile"),
+    )
 
     class Meta:
         verbose_name = _("custom field")
@@ -782,3 +848,139 @@ class CustomFieldValue(models.Model):
         verbose_name = _("custom field value")
         verbose_name_plural = _("custom field values")
         unique_together = ("custom_field", "content_type", "object_id")
+
+
+class RecurrencePeriod(models.TextChoices):
+    day = "day", _("Day")
+    week = "week", _("Week")
+    month = "month", _("Month")
+
+
+class Reminder(models.Model):
+    """Standalone reminder a practitioner schedules towards a contact.
+
+    At its due time, the periodic ``handle_custom_reminders`` task creates a
+    free-text ``messaging.Message`` (no template), whose post_save signal sends
+    it via the recipient's configured channel (SMS/email/WhatsApp). Recurrence
+    is computed on the fly: a single row carries ``next_run_at`` which is
+    recomputed after each send until ``recurrence_count`` is reached.
+    """
+
+    title = models.CharField(_("title"), max_length=200)
+    description = models.TextField(_("description"), blank=True, default="")
+    consultation = models.ForeignKey(
+        Consultation,
+        on_delete=models.CASCADE,
+        related_name="reminders",
+        null=True,
+        blank=True,
+        verbose_name=_("consultation"),
+    )
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="reminders",
+        verbose_name=_("recipient"),
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="created_reminders",
+        verbose_name=_("created by"),
+    )
+    scheduled_at = models.DateTimeField(_("scheduled at"))  # first occurrence, aware UTC
+    is_recurring = models.BooleanField(_("is recurring"), default=False)
+    recurrence_interval = models.PositiveIntegerField(
+        _("recurrence interval"), default=1
+    )  # "every X"
+    recurrence_period = models.CharField(
+        _("recurrence period"),
+        max_length=10,
+        choices=RecurrencePeriod.choices,
+        blank=True,
+        default="",
+    )
+    recurrence_count = models.PositiveIntegerField(
+        _("recurrence count"), default=1
+    )  # number of occurrences
+    occurrences_sent = models.PositiveIntegerField(default=0)
+    next_run_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    # Datetime of the LAST occurrence (denormalized). For a non-recurring
+    # reminder it equals scheduled_at. Used to filter reminders that intersect
+    # a calendar window without expanding every occurrence in the DB.
+    recurrence_end_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    last_sent_at = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(_("is active"), default=True)
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("updated at"), auto_now=True)
+
+    class Meta:
+        verbose_name = _("reminder")
+        verbose_name_plural = _("reminders")
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["is_active", "next_run_at"]),
+            models.Index(fields=["scheduled_at", "recurrence_end_at"]),
+        ]
+
+    def __str__(self):
+        return f"Reminder #{self.pk} - {self.title}"
+
+    def save(self, *args, **kwargs):
+        # Seed the first run from scheduled_at on creation.
+        if self.next_run_at is None and self.is_active and self.occurrences_sent == 0:
+            self.next_run_at = self.scheduled_at
+        # Keep the denormalized last-occurrence date in sync on every save.
+        self.recurrence_end_at = self.compute_recurrence_end_at()
+        super().save(*args, **kwargs)
+
+    def _advance(self, base, steps):
+        """Return ``base`` advanced by ``steps`` recurrence periods."""
+        n = self.recurrence_interval * steps
+        if self.recurrence_period == RecurrencePeriod.day:
+            return base + timedelta(days=n)
+        if self.recurrence_period == RecurrencePeriod.week:
+            return base + timedelta(weeks=n)
+        if self.recurrence_period == RecurrencePeriod.month:
+            return base + relativedelta(months=n)
+        return None
+
+    def compute_next_run_at(self):
+        """Next due datetime, or None when the schedule is exhausted."""
+        if not self.is_recurring or self.occurrences_sent >= self.recurrence_count:
+            return None
+        if self.next_run_at is None:
+            return None
+        return self._advance(self.next_run_at, 1)
+
+    def compute_recurrence_end_at(self):
+        """Datetime of the last occurrence.
+
+        Equals scheduled_at for a non-recurring reminder; otherwise
+        scheduled_at advanced by (count - 1) periods.
+        """
+        if not self.is_recurring or not self.recurrence_period:
+            return self.scheduled_at
+        count = max(self.recurrence_count or 1, 1)
+        end = self._advance(self.scheduled_at, count - 1)
+        return end or self.scheduled_at
+
+    def occurrences_between(self, start, end):
+        """List of occurrence datetimes that fall within [start, end] (inclusive)."""
+        results = []
+        if not self.is_recurring or not self.recurrence_period:
+            if self.scheduled_at and start <= self.scheduled_at <= end:
+                results.append((0, self.scheduled_at))
+            return results
+        count = max(self.recurrence_count or 1, 1)
+        for index in range(count):
+            occ = self._advance(self.scheduled_at, index)
+            if occ is None:
+                break
+            if occ > end:
+                break
+            if occ >= start:
+                results.append((index, occ))
+        return results
+
+

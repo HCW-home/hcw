@@ -75,16 +75,28 @@
       </div>
     </div>
 
-    <div class="form-group">
-      <app-select
-        [label]="'addEditPatient.preferredLanguage' | translate"
-        [placeholder]="'addEditPatient.selectLanguage' | translate"
-        [options]="languageOptions"
-        [formControl]="$any(form.get('preferred_language'))"
-        [clearable]="true"
-        [invalid]="isFieldInvalid('preferred_language')"
-        [invalidMessage]="getFieldError('preferred_language')">
-      </app-select>
+    <div class="form-row">
+      <div class="form-group">
+        <app-select
+          [label]="'addEditPatient.preferredLanguage' | translate"
+          [placeholder]="'addEditPatient.selectLanguage' | translate"
+          [options]="languageOptions"
+          [formControl]="$any(form.get('preferred_language'))"
+          [clearable]="true"
+          [invalid]="isFieldInvalid('preferred_language')"
+          [invalidMessage]="getFieldError('preferred_language')">
+        </app-select>
+      </div>
+      <div class="form-group">
+        <app-select
+          [label]="'addEditPatient.timezone' | translate"
+          [placeholder]="'addEditPatient.selectTimezone' | translate"
+          [options]="timezoneOptions"
+          [formControl]="$any(form.get('timezone'))"
+          [invalid]="isFieldInvalid('timezone')"
+          [invalidMessage]="getFieldError('timezone')">
+        </app-select>
+      </div>
     </div>
 
     <div class="form-row">

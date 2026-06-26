@@ -14,14 +14,14 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+from boto3.s3.transfer import TransferConfig
+from botocore.config import Config
 from celery.schedules import crontab
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from dotenv import load_dotenv
 from firebase_admin import initialize_app
 from unfold.contrib.constance.settings import UNFOLD_CONSTANCE_ADDITIONAL_FIELDS
-from boto3.s3.transfer import TransferConfig
-from botocore.config import Config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -80,8 +80,8 @@ ACCOUNT_MAX_EMAIL_ADDRESSES = 1
 # Application definition
 
 SHARED_APPS = (
-    'django_tenants',
-    'tenants',
+    "django_tenants",
+    "tenants",
     "daphne",
     "unfold",
     "unfold.contrib.filters",
@@ -128,16 +128,23 @@ TENANT_APPS = (
     "mediaserver",
     "api",
     "translations",
+    "dav",
     "caldav",
+    "carddav",
     "encryption_admin",
 )
 
-INSTALLED_APPS = list(SHARED_APPS) + \
-    [app for app in TENANT_APPS if app not in SHARED_APPS]
+INSTALLED_APPS = list(SHARED_APPS) + [
+    app for app in TENANT_APPS if app not in SHARED_APPS
+]
 
 
 TENANT_MODEL = "tenants.Tenant"
 TENANT_DOMAIN_MODEL = "tenants.Domain"
+
+# Custom runner that drops leftover `test` tenants between runs.
+# See core/test_runner.py for details.
+TEST_RUNNER = "core.test_runner.TenantAwareTestRunner"
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
@@ -194,9 +201,7 @@ DATABASES = {
     }
 }
 
-DATABASE_ROUTERS = (
-    'django_tenants.routers.TenantSyncRouter',
-)
+DATABASE_ROUTERS = ("django_tenants.routers.TenantSyncRouter",)
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(
@@ -252,6 +257,7 @@ LANGUAGES = (
     ("es", gettext("Spanish")),
     ("fr", gettext("French")),
     ("it", gettext("Italian")),
+    ("uk", gettext("Ukrainian")),
 )
 
 # Static files (CSS, JavaScript, Images)
@@ -272,25 +278,36 @@ AUTHENTICATION_BACKENDS = [
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "core.authentication.TenantJWTAuthentication",
+        "rest_framework.authentication.TokenAuthentication",
     ),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
     "EXCEPTION_HANDLER": "fhir_server.exceptions.fhir_exception_handler",
 }
 
-# FHIR R4 server configuration (OzoneHIS / OpenMRS interop)
-FHIR_SYSTEM_BASE_URL = os.getenv(
-    "FHIR_SYSTEM_BASE_URL", "https://hcw.example/fhir"
-)
-FHIR_IDENTIFIER_SYSTEMS = {
-    "Patient": f"{FHIR_SYSTEM_BASE_URL}/ns/patient-id",
-    "Practitioner": f"{FHIR_SYSTEM_BASE_URL}/ns/practitioner-id",
-    "Organization": f"{FHIR_SYSTEM_BASE_URL}/ns/organization-id",
-    "Appointment": f"{FHIR_SYSTEM_BASE_URL}/ns/appointment-id",
-    "Encounter": f"{FHIR_SYSTEM_BASE_URL}/ns/encounter-id",
-    "MedicationRequest": f"{FHIR_SYSTEM_BASE_URL}/ns/medicationrequest-id",
-    "Observation": f"{FHIR_SYSTEM_BASE_URL}/ns/observation-id",
-    "ServiceRequest": f"{FHIR_SYSTEM_BASE_URL}/ns/servicerequest-id",
+# FHIR R4 server configuration (OzoneHIS / OpenMRS interop).
+#
+# The canonical Identifier.system URL is auto-derived from the current
+# tenant's primary Domain row as `<scheme>://<tenant-domain><path>/ns/<resource>-id`.
+# Set FHIR_SYSTEM_SCHEME / FHIR_SYSTEM_PATH to tune the scheme or the trailing
+# path. Set FHIR_SYSTEM_BASE_URL to a non-empty value to bypass derivation
+# entirely (single-tenant, or when every tenant must share one canonical URL).
+FHIR_SYSTEM_SCHEME = os.getenv("FHIR_SYSTEM_SCHEME", "https")
+FHIR_SYSTEM_PATH = os.getenv("FHIR_SYSTEM_PATH", "")
+FHIR_SYSTEM_BASE_URL = os.getenv("FHIR_SYSTEM_BASE_URL") or None
+# Per-resource overrides for the canonical system URL. Left empty so
+# `get_identifier_system()` derives from the dynamic base URL; populate this
+# dict only when you need a system URL that doesn't follow the default scheme.
+FHIR_IDENTIFIER_SYSTEMS = {}
+# Mapping of FHIR resource type -> Constance key holding the external system
+# URL for that resource. The actual URLs live in each tenant's Constance
+# config so they can be set per-tenant from the admin UI without redeploying.
+FHIR_EXTERNAL_IDENTIFIER_CONSTANCE_KEYS = {
+    "Appointment": "fhir_external_appointment_system",
+    "Encounter": "fhir_external_encounter_system",
+    "Patient": "fhir_external_patient_system",
+    "Practitioner": "fhir_external_practitioner_system",
+    "MedicationRequest": "fhir_external_medicationrequest_system",
 }
 FHIR_DEFAULT_COUNT = int(os.getenv("FHIR_DEFAULT_COUNT", 20))
 FHIR_MAX_COUNT = int(os.getenv("FHIR_MAX_COUNT", 100))
@@ -337,9 +354,22 @@ SPECTACULAR_SETTINGS = {
                 "type": "http",
                 "scheme": "bearer",
                 "bearerFormat": "JWT",
-            }
+            },
+            "tokenAuth": {  # DRF authtoken (admin -> Tokens)
+                "type": "apiKey",
+                "in": "header",
+                "name": "Authorization",
+                "description": (
+                    "DRF token generated from /admin/authtoken/tokenproxy/. "
+                    "Prefix the value with 'Token ' (e.g. 'Token abcdef123...')."
+                ),
+            },
         }
     },
+    "SECURITY": [
+        {"bearerAuth": []},
+        {"tokenAuth": []},
+    ],
     "SWAGGER_UI_SETTINGS": {
         "persistAuthorization": True,  # <-- keep JWT after refresh
         # "tryItOutEnabled": True,     # optional
@@ -385,8 +415,8 @@ CACHES = {
         if not DEBUG
         else "django.core.cache.backends.locmem.LocMemCache",
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}",
-        'KEY_FUNCTION': 'django_tenants.cache.make_key',
-        'REVERSE_KEY_FUNCTION': 'django_tenants.cache.reverse_key',
+        "KEY_FUNCTION": "django_tenants.cache.make_key",
+        "REVERSE_KEY_FUNCTION": "django_tenants.cache.reverse_key",
     }
 }
 STATIC_ROOT = os.getenv("STATIC_ROOT", "statics")
@@ -394,6 +424,10 @@ STATIC_ROOT = os.getenv("STATIC_ROOT", "statics")
 CELERY_BEAT_SCHEDULE = {
     "handle_reminders": {
         "task": "consultations.tasks.handle_reminders",
+        "schedule": crontab(minute="*", hour="*"),
+    },
+    "handle_custom_reminders": {
+        "task": "consultations.tasks.handle_custom_reminders",
         "schedule": crontab(minute="*", hour="*"),
     },
     "auto_delete_closed_consultations": {
@@ -761,7 +795,9 @@ UNFOLD = {
                     {
                         "title": _("SSO Providers"),
                         "icon": "key",
-                        "link": reverse_lazy("admin:socialaccount_socialapp_changelist"),
+                        "link": reverse_lazy(
+                            "admin:socialaccount_socialapp_changelist"
+                        ),
                         "permission": lambda request: request.user.has_perm(
                             "socialaccount.view_socialapp"
                         ),
@@ -877,6 +913,70 @@ CONSTANCE_CONFIG = {
         "Platform certification blob (JSON) authorizing this host for the native app. "
         "Get certificated on https://hcw-at-home.com/get-certificate/.",
     ),
+    "fhir_external_appointment_system": (
+        "https://ozonehis.example/ns/appointment-id",
+        "FHIR Identifier.system URL of the external partner for Appointment "
+        "resources. Identifiers under this system populate Appointment.external_id. "
+        "Replace the example value with the actual URL of your integration partner. "
+        "Leave blank to disable external-identifier handling for Appointment.",
+    ),
+    "fhir_external_encounter_system": (
+        "https://ozonehis.example/ns/encounter-id",
+        "FHIR Identifier.system URL of the external partner for Encounter "
+        "resources (Consultation in HCW). Leave blank to disable.",
+    ),
+    "fhir_external_patient_system": (
+        "https://ozonehis.example/ns/patient-id",
+        "FHIR Identifier.system URL of the external partner for Patient resources. "
+        "Leave blank to disable.",
+    ),
+    "fhir_external_practitioner_system": (
+        "https://ozonehis.example/ns/practitioner-id",
+        "FHIR Identifier.system URL of the external partner for Practitioner resources. "
+        "Leave blank to disable.",
+    ),
+    "fhir_external_medicationrequest_system": (
+        "https://ozonehis.example/ns/medicationrequest-id",
+        "FHIR Identifier.system URL of the external partner for MedicationRequest "
+        "resources (Prescription in HCW). Leave blank to disable.",
+    ),
+    "enable_calendar_colorization": (
+        False,
+        "Colorize the calendar background in the practitioner view using a "
+        "rotating 4-week palette. Disabled by default.",
+    ),
+    "calendar_color_week_1": (
+        "#e0f2fe",
+        "Calendar background color for week 1 of the 4-week rotation (hex).",
+        "calendar_color_field",
+    ),
+    "calendar_color_week_2": (
+        "#dcfce7",
+        "Calendar background color for week 2 of the 4-week rotation (hex).",
+        "calendar_color_field",
+    ),
+    "calendar_color_week_3": (
+        "#fef9c3",
+        "Calendar background color for week 3 of the 4-week rotation (hex).",
+        "calendar_color_field",
+    ),
+    "calendar_color_week_4": (
+        "#fce7f3",
+        "Calendar background color for week 4 of the 4-week rotation (hex).",
+        "calendar_color_field",
+    ),
+    "calendar_rotation_anchor_date": (
+        "2026-01-01",
+        "Anchor date (YYYY-MM-DD) for the continuous week counter. The week "
+        "containing this date is week 1 of the rotation. The counter never "
+        "resets, so colors stay consistent across year boundaries.",
+    ),
+    "calendar_first_day_of_week": (
+        "1",
+        "First day of the week shown in the practitioner calendars "
+        "(0 = Sunday, 1 = Monday).",
+        "calendar_first_day_select",
+    ),
 }
 
 
@@ -895,9 +995,89 @@ CONSTANCE_CONFIG_FIELDSETS = {
     "Uploads": ("max_upload_size_mb",),
     "Authentication": ("disable_password_login", "enable_registration"),
     "Visibility": ("users_visibility", "patient_visibility", "public_organisations"),
-    "Video Features": ("primary_video_provider", "enable_video_recording", "enable_live_transcription", "whisper_model"),
+    "Video Features": (
+        "primary_video_provider",
+        "enable_video_recording",
+        "enable_live_transcription",
+        "whisper_model",
+    ),
     "Patient Management": ("force_temporary_patients",),
-    "Encryption": ("encryption_enabled", "master_public_key", "master_public_key_fingerprint"),
+    "Encryption": (
+        "encryption_enabled",
+        "master_public_key",
+        "master_public_key_fingerprint",
+    ),
+    "FHIR external identifiers": (
+        "fhir_external_appointment_system",
+        "fhir_external_encounter_system",
+        "fhir_external_patient_system",
+        "fhir_external_practitioner_system",
+        "fhir_external_medicationrequest_system",
+    ),
+    "Calendar appearance": (
+        "calendar_first_day_of_week",
+        "enable_calendar_colorization",
+        "calendar_color_week_1",
+        "calendar_color_week_2",
+        "calendar_color_week_3",
+        "calendar_color_week_4",
+        "calendar_rotation_anchor_date",
+    ),
+}
+
+# Short HTML-safe description rendered at the top of each Constance tab in
+# the admin to give the operator a quick explanation of what the section
+# controls. Keys must match `CONSTANCE_CONFIG_FIELDSETS` titles.
+CONSTANCE_FIELDSET_DESCRIPTIONS = {
+    "General Options": (
+        "Site-wide branding and labels displayed throughout the platform."
+    ),
+    "URLs": (
+        "Public base URLs of the patient and practitioner frontends. Used by "
+        "reminders, e-mails and SMS — make sure they are reachable by your users."
+    ),
+    "Scheduling": (
+        "Reminders, default appointment duration, and the windows during "
+        "which participants are allowed to join or rejoin a call."
+    ),
+    "Data Retention": (
+        "Automatic clean-up policies for closed follow-ups and unused "
+        "temporary accounts."
+    ),
+    "Security": (
+        "Lifetime of one-time access tokens issued to temporary participants."
+    ),
+    "Uploads": "Maximum file size accepted for message attachments.",
+    "Authentication": (
+        "Toggles for password-based login and self-service registration. "
+        "Disable password login to force SSO."
+    ),
+    "Visibility": (
+        "Controls which users and patients each practitioner can see across "
+        "the platform."
+    ),
+    "Video Features": (
+        "Default media-server provider used by the frontends, plus optional "
+        "recording and live transcription."
+    ),
+    "Patient Management": ("Defaults applied when creating new patient accounts."),
+    "Encryption": (
+        "Global toggle for end-to-end encryption of follow-ups and messages, "
+        "and the recovery master public key. See the Encryption admin page "
+        "for full details."
+    ),
+    "FHIR external identifiers": (
+        "<strong>OzoneHIS / OpenMRS integration.</strong> Identifier.system "
+        "URLs used by your external partner when posting FHIR resources. "
+        "Set each one to match the URL your partner emits — leave blank to "
+        "disable external-identifier handling for that resource type."
+    ),
+    "Calendar appearance": (
+        "First day of the week, plus optional background colorization of the "
+        "practitioner calendars. Enable the toggle, then pick four colors "
+        "applied on a continuous 4-week rotation anchored to a fixed date so "
+        "the sequence never resets at year boundaries."
+    ),
 }
 
 # CORS Configuration
@@ -920,7 +1100,9 @@ CORS_ALLOW_HEADERS = [
 
 # CSRF Configuration
 csrf_origins = os.getenv("CSRF_TRUSTED_ORIGINS", "")
-CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_origins.split(",") if origin.strip()]
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip() for origin in csrf_origins.split(",") if origin.strip()
+]
 
 # RECOVERY_ITERATION = 720000
 # MFA_MANDATORY = False
@@ -982,6 +1164,28 @@ CONSTANCE_ADDITIONAL_FIELDS = {
             ),
         },
     ],
+    "calendar_color_field": [
+        "django.forms.CharField",
+        {
+            "widget": "core.widgets.UnfoldColorInputWidget",
+            "required": False,
+        },
+    ],
+    "calendar_first_day_select": [
+        "django.forms.fields.ChoiceField",
+        {
+            "widget": "django.forms.Select",
+            "choices": (
+                ("0", "Sunday"),
+                ("1", "Monday"),
+                ("2", "Tuesday"),
+                ("3", "Wednesday"),
+                ("4", "Thursday"),
+                ("5", "Friday"),
+                ("6", "Saturday"),
+            ),
+        },
+    ],
 }
 
 CONSTANCE_FILE_ROOT = "constance"
@@ -1029,7 +1233,6 @@ S3_VERIFY = os.getenv("S3_VERIFY", None)
 S3_ADDRESSING_STYLE = os.getenv("S3_ADDRESSING_STYLE", "auto")
 
 if S3_BUCKET_NAME and S3_ENDPOINT_URL and S3_ACCESS_KEY and S3_SECRET_KEY:
-
     STORAGES = {
         "default": {
             "BACKEND": "storages.backends.s3.S3Storage",
@@ -1042,7 +1245,7 @@ if S3_BUCKET_NAME and S3_ENDPOINT_URL and S3_ACCESS_KEY and S3_SECRET_KEY:
                 "client_config": Config(
                     retries={"max_attempts": 3, "mode": "standard"},
                     request_checksum_calculation="when_required",
-                    response_checksum_validation="when_required"
+                    response_checksum_validation="when_required",
                 ),
                 "transfer_config": TransferConfig(
                     multipart_threshold=5 * 1024 * 1024 * 1024,

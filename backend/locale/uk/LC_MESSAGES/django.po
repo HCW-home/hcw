@@ -1,0 +1,2100 @@
+# Ukrainian translation for HCW@Home backend.
+# Copyright (C) 2026 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-25 14:14+0000\n"
+"PO-Revision-Date: 2026-05-29 00:00+0000\n"
+"Last-Translator: Automated <noreply@iabsis.com>\n"
+"Language-Team: Ukrainian\n"
+"Language: uk\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#: consultations/admin.py:101 core/settings.py:779
+#, fuzzy
+#| msgid "description"
+msgid "Encryption"
+msgstr "опис"
+
+#: consultations/admin.py:121
+msgid "Reset encryption keypair (irreversible)"
+msgstr ""
+
+#: consultations/admin.py:141
+msgid "Encryption is disabled platform-wide; nothing to reset."
+msgstr ""
+
+#: consultations/admin.py:148
+msgid "Master public key is not configured."
+msgstr ""
+
+#: consultations/admin.py:174
+#, python-format
+msgid ""
+"Encryption keypair regenerated for %(count)d queue(s) under the current "
+"master."
+msgstr ""
+
+#: consultations/models.py:27 consultations/models.py:507
+#: consultations/models.py:797 messaging/models.py:47 users/models.py:103
+msgid "name"
+msgstr "назва"
+
+#: consultations/models.py:29
+msgid "organisation"
+msgstr "організація"
+
+#: consultations/models.py:33
+msgid "users"
+msgstr "користувачі"
+
+#: consultations/models.py:43 consultations/models.py:406
+msgid "queue"
+msgstr "черга"
+
+#: consultations/models.py:44
+msgid "queues"
+msgstr "черги"
+
+#: consultations/models.py:61
+#, fuzzy
+#| msgid "updated at"
+msgid "Added at"
+msgstr "оновлено"
+
+#: consultations/models.py:64
+msgid "queue membership"
+msgstr ""
+
+#: consultations/models.py:65
+msgid "queue memberships"
+msgstr ""
+
+#: consultations/models.py:70
+msgid "Online"
+msgstr "Онлайн"
+
+#: consultations/models.py:71
+msgid "In person"
+msgstr "Особисто"
+
+#: consultations/models.py:75
+msgid "Screen Recording"
+msgstr ""
+
+#: consultations/models.py:76
+#, fuzzy
+#| msgid "prescription"
+msgid "Transcript"
+msgstr "рецепт"
+
+#: consultations/models.py:93 consultations/models.py:197
+msgid "room UUID"
+msgstr ""
+
+#: consultations/models.py:95 consultations/models.py:225
+#: consultations/models.py:451 consultations/models.py:523
+#: consultations/models.py:641 consultations/models.py:731
+#: consultations/models.py:914
+msgid "created at"
+msgstr "створено"
+
+#: consultations/models.py:96 consultations/models.py:226
+#: consultations/models.py:452 consultations/models.py:642
+#: consultations/models.py:732 consultations/models.py:915 users/models.py:175
+msgid "updated at"
+msgstr "оновлено"
+
+#: consultations/models.py:97
+msgid "closed at"
+msgstr "закрито"
+
+#: consultations/models.py:99 consultations/models.py:870
+msgid "description"
+msgstr "опис"
+
+#: consultations/models.py:100 consultations/models.py:200
+#: consultations/models.py:869
+msgid "title"
+msgstr "заголовок"
+
+#: consultations/models.py:107
+msgid "beneficiary"
+msgstr "бенефіціар"
+
+#: consultations/models.py:114 consultations/models.py:222
+#: consultations/models.py:447 consultations/models.py:728
+#: consultations/models.py:889
+msgid "created by"
+msgstr "створив"
+
+#: consultations/models.py:118
+msgid "group"
+msgstr "група"
+
+#: consultations/models.py:127
+msgid "owned by"
+msgstr "власник"
+
+#: consultations/models.py:131
+msgid "visible by patient"
+msgstr "видимо для пацієнта"
+
+#: consultations/models.py:135
+msgid "temporary"
+msgstr ""
+
+#: consultations/models.py:138
+msgid ""
+"Auto-created for an online Appointment without explicit consultation; hidden "
+"from practitioner and patient lists, auto-closed once the appointment join "
+"window has elapsed."
+msgstr ""
+
+#: consultations/models.py:155
+msgid ""
+"Consultation private key wrapped (envelope) with the platform master pubkey "
+"for admin recovery."
+msgstr ""
+
+#: consultations/models.py:160 consultations/models.py:242
+#: consultations/models.py:752 users/models.py:290
+msgid "external id"
+msgstr ""
+
+#: consultations/models.py:166 consultations/models.py:248
+#: consultations/models.py:758 users/models.py:296
+msgid ""
+"Identifier from an external system (e.g. OpenMRS). Hidden from native API; "
+"exposed only via FHIR identifier array."
+msgstr ""
+
+#: consultations/models.py:174 consultations/models.py:212
+#: consultations/models.py:390 consultations/models.py:442
+#: consultations/models.py:489 consultations/models.py:724
+#: consultations/models.py:877
+msgid "consultation"
+msgstr "консультація"
+
+#: consultations/models.py:175
+msgid "consultations"
+msgstr "консультації"
+
+#: consultations/models.py:190 consultations/models.py:713
+msgid "Draft"
+msgstr "Чернетка"
+
+#: consultations/models.py:191
+msgid "Scheduled"
+msgstr "Заплановано"
+
+#: consultations/models.py:192 consultations/models.py:636
+#: consultations/models.py:716
+msgid "Cancelled"
+msgstr "Скасовано"
+
+#: consultations/models.py:202 consultations/models.py:736
+#: messaging/models.py:591 messaging/models.py:693
+msgid "status"
+msgstr "статус"
+
+#: consultations/models.py:214 consultations/models.py:216
+#: consultations/models.py:891
+msgid "scheduled at"
+msgstr "заплановано на"
+
+#: consultations/models.py:218
+msgid "end expected at"
+msgstr "очікуване завершення"
+
+#: consultations/models.py:234
+#, fuzzy
+#| msgid "prescription"
+msgid "transcript"
+msgstr "рецепт"
+
+#: consultations/models.py:237
+msgid "JSON array of transcript lines with timestamps and speakers"
+msgstr ""
+
+#: consultations/models.py:258 consultations/models.py:281
+#: consultations/models.py:321
+msgid "appointment"
+msgstr "прийом"
+
+#: consultations/models.py:259
+msgid "appointments"
+msgstr "прийоми"
+
+#: consultations/models.py:283
+msgid "egress ID"
+msgstr "ID запису"
+
+#: consultations/models.py:285
+msgid "S3 filepath"
+msgstr "Шлях до файлу S3"
+
+#: consultations/models.py:285
+msgid "S3 key set at recording start"
+msgstr "Ключ S3, встановлений на початку запису"
+
+#: consultations/models.py:288
+#, fuzzy
+#| msgid "recording S3 key"
+msgid "recording mode"
+msgstr "ключ S3 запису"
+
+#: consultations/models.py:293
+msgid "started at"
+msgstr "розпочато"
+
+#: consultations/models.py:294
+msgid "stopped at"
+msgstr "зупинено"
+
+#: consultations/models.py:295
+msgid "transcript text"
+msgstr ""
+
+#: consultations/models.py:302 consultations/models.py:480
+msgid "message"
+msgstr "повідомлення"
+
+#: consultations/models.py:306
+msgid "appointment recording"
+msgstr "запис прийому"
+
+#: consultations/models.py:307
+msgid "appointment recordings"
+msgstr "записи прийомів"
+
+#: consultations/models.py:323 consultations/models.py:398
+#: consultations/models.py:495
+msgid "user"
+msgstr "користувач"
+
+#: consultations/models.py:330
+#, fuzzy
+#| msgid "View consultation"
+msgid "visible in consultation"
+msgstr "Переглянути консультацію"
+
+#: consultations/models.py:333
+msgid "Grants access to the chat and shared consultation features."
+msgstr ""
+
+#: consultations/models.py:408
+msgid "encrypted private key"
+msgstr ""
+
+#: consultations/models.py:409
+msgid "pubkey fingerprint"
+msgstr ""
+
+#: consultations/models.py:414
+#, fuzzy
+#| msgid "consultation"
+msgid "consultation key"
+msgstr "консультація"
+
+#: consultations/models.py:415
+#, fuzzy
+#| msgid "consultations"
+msgid "consultation keys"
+msgstr "консультації"
+
+#: consultations/models.py:455
+msgid "deleted at"
+msgstr "видалено"
+
+#: consultations/models.py:457
+msgid "event"
+msgstr "подія"
+
+#: consultations/models.py:458
+msgid "content"
+msgstr "вміст"
+
+#: consultations/models.py:460
+msgid "attachment"
+msgstr "вкладення"
+
+#: consultations/models.py:467
+msgid "recording S3 key"
+msgstr "ключ S3 запису"
+
+#: consultations/models.py:471
+msgid "S3 key/path for call recordings"
+msgstr "Ключ/шлях S3 для записів дзвінків"
+
+#: consultations/models.py:481
+msgid "messages"
+msgstr "повідомлення"
+
+#: consultations/models.py:497
+msgid "last read at"
+msgstr "останнє прочитання"
+
+#: consultations/models.py:500
+msgid "consultation read status"
+msgstr "статус прочитання консультації"
+
+#: consultations/models.py:501
+msgid "consultation read statuses"
+msgstr "статуси прочитання консультації"
+
+#: consultations/models.py:507
+msgid "Display name of the reason visible to the patient"
+msgstr ""
+
+#: consultations/models.py:509 consultations/models.py:745
+msgid "duration"
+msgstr "тривалість"
+
+#: consultations/models.py:509
+msgid "Duration in minutes"
+msgstr "Тривалість у хвилинах"
+
+#: consultations/models.py:519 users/models.py:106
+msgid "speciality"
+msgstr "спеціальність"
+
+#: consultations/models.py:529
+msgid "queue assignee"
+msgstr "призначений черги"
+
+#: consultations/models.py:536
+msgid "user assignee"
+msgstr "призначений користувач"
+
+#: consultations/models.py:539
+msgid "skip doctor selection"
+msgstr ""
+
+#: consultations/models.py:541
+msgid "Do not allow the patient to select a practitioner"
+msgstr ""
+
+#: consultations/models.py:544 consultations/models.py:913
+#: mediaserver/models.py:37 messaging/models.py:85 messaging/models.py:281
+msgid "is active"
+msgstr "активний"
+
+#: consultations/models.py:547 consultations/models.py:810
+msgid "reason"
+msgstr "причина"
+
+#: consultations/models.py:548
+msgid "reasons"
+msgstr "причини"
+
+#: consultations/models.py:560
+msgid "Queue assignee must be empty for appointment assignment."
+msgstr ""
+
+#: consultations/models.py:564
+msgid "User assignee must be empty for appointment assignment."
+msgstr ""
+
+#: consultations/models.py:568
+#, fuzzy
+#| msgid "At least 2 participants are required for an appointment."
+msgid "Speciality is required for appointment assignment."
+msgstr "Для прийому потрібно щонайменше 2 учасники."
+
+#: consultations/models.py:574
+msgid "Queue assignee is required for queue assignment."
+msgstr ""
+
+#: consultations/models.py:579
+msgid "User assignee must be empty for queue assignment."
+msgstr ""
+
+#: consultations/models.py:585
+msgid "User assignee is required for user assignment."
+msgstr ""
+
+#: consultations/models.py:590
+msgid "Queue assignee must be empty for user assignment."
+msgstr ""
+
+#: consultations/models.py:634
+msgid "Requested"
+msgstr "Запитано"
+
+#: consultations/models.py:635
+msgid "Accepted"
+msgstr "Прийнято"
+
+#: consultations/models.py:637
+msgid "Refused"
+msgstr "Відхилено"
+
+#: consultations/models.py:708
+msgid "Slot valid until this date"
+msgstr "Слот дійсний до цієї дати"
+
+#: consultations/models.py:714
+msgid "Prescribed"
+msgstr "Призначено"
+
+#: consultations/models.py:715
+msgid "Dispensed"
+msgstr "Видано"
+
+#: consultations/models.py:733
+msgid "prescribed at"
+msgstr "призначено"
+
+#: consultations/models.py:742
+msgid "medication name"
+msgstr "назва ліків"
+
+#: consultations/models.py:743
+msgid "dosage"
+msgstr "дозування"
+
+#: consultations/models.py:744
+msgid "frequency"
+msgstr "частота"
+
+#: consultations/models.py:747
+msgid "instructions"
+msgstr "інструкції"
+
+#: consultations/models.py:748
+msgid "notes"
+msgstr "примітки"
+
+#: consultations/models.py:764
+msgid "prescription"
+msgstr "рецепт"
+
+#: consultations/models.py:765
+msgid "prescriptions"
+msgstr "рецепти"
+
+#: consultations/models.py:780
+msgid "Short text"
+msgstr "Короткий текст"
+
+#: consultations/models.py:781
+msgid "Long text"
+msgstr "Довгий текст"
+
+#: consultations/models.py:782
+msgid "Date"
+msgstr "Дата"
+
+#: consultations/models.py:783
+msgid "Number"
+msgstr "Число"
+
+#: consultations/models.py:784
+msgid "List"
+msgstr "Список"
+
+#: consultations/models.py:788
+msgid "Health Metric"
+msgstr "Показник здоров'я"
+
+#: consultations/models.py:789
+msgid "Request"
+msgstr "Запит"
+
+#: consultations/models.py:790
+msgid "Consultation"
+msgstr "Консультація"
+
+#: consultations/models.py:791
+msgid "Patient"
+msgstr "Пацієнт"
+
+#: consultations/models.py:792
+#, fuzzy
+#| msgid "duration"
+msgid "Practitioner"
+msgstr "тривалість"
+
+#: consultations/models.py:793
+#, fuzzy
+#| msgid "organisation"
+msgid "Organisation"
+msgstr "організація"
+
+#: consultations/models.py:799
+msgid "type"
+msgstr "тип"
+
+#: consultations/models.py:802
+msgid "target model"
+msgstr "цільова модель"
+
+#: consultations/models.py:811
+msgid "Reason this field is attached to (asked at booking validation)"
+msgstr ""
+
+#: consultations/models.py:814
+msgid "options"
+msgstr "параметри"
+
+#: consultations/models.py:817
+msgid "List of options for 'list' type"
+msgstr "Список параметрів для типу 'список'"
+
+#: consultations/models.py:819
+msgid "required"
+msgstr "обов'язково"
+
+#: consultations/models.py:820
+msgid "ordering"
+msgstr "порядок"
+
+#: consultations/models.py:822
+msgid "public"
+msgstr ""
+
+#: consultations/models.py:824
+msgid ""
+"When enabled, this field value is exposed on the public practitioner profile"
+msgstr ""
+
+#: consultations/models.py:828
+msgid "custom field"
+msgstr "налаштовуване поле"
+
+#: consultations/models.py:829
+msgid "custom fields"
+msgstr "налаштовувані поля"
+
+#: consultations/models.py:845
+msgid "value"
+msgstr "значення"
+
+#: consultations/models.py:848
+msgid "custom field value"
+msgstr "значення налаштовуваного поля"
+
+#: consultations/models.py:849
+msgid "custom field values"
+msgstr "значення налаштовуваних полів"
+
+#: consultations/models.py:854
+msgid "Day"
+msgstr ""
+
+#: consultations/models.py:855
+msgid "Week"
+msgstr ""
+
+#: consultations/models.py:856
+msgid "Month"
+msgstr ""
+
+#: consultations/models.py:883
+#, fuzzy
+#| msgid "recipient phone"
+msgid "recipient"
+msgstr "телефон отримувача"
+
+#: consultations/models.py:892
+#, fuzzy
+#| msgid "ordering"
+msgid "is recurring"
+msgstr "порядок"
+
+#: consultations/models.py:894
+msgid "recurrence interval"
+msgstr ""
+
+#: consultations/models.py:897
+msgid "recurrence period"
+msgstr ""
+
+#: consultations/models.py:904
+msgid "recurrence count"
+msgstr ""
+
+#: consultations/models.py:918
+msgid "reminder"
+msgstr ""
+
+#: consultations/models.py:919
+msgid "reminders"
+msgstr ""
+
+#: consultations/serializers.py:274
+msgid "Only one of phone or email can be provided."
+msgstr "Можна вказати лише телефон або електронну пошту."
+
+#: consultations/serializers.py:282 users/serializers.py:268
+msgid "An email is required when communication method is Email."
+msgstr ""
+"Електронна пошта є обов'язковою, коли спосіб зв'язку — Електронна пошта."
+
+#: consultations/serializers.py:293 users/serializers.py:254
+msgid ""
+"A phone number is required when communication method is SMS or WhatsApp."
+msgstr "Номер телефону є обов'язковим, коли спосіб зв'язку — SMS або WhatsApp."
+
+#: consultations/serializers.py:450
+msgid ""
+"Encryption is enabled platform-wide; new consultations must be created with "
+"is_encrypted=true and the consultation public_key + "
+"encrypted_private_key_master fields filled in."
+msgstr ""
+
+#: consultations/serializers.py:644
+msgid "Scheduled time cannot be in the past."
+msgstr "Запланований час не може бути в минулому."
+
+#: consultations/serializers.py:658
+msgid "End expected at time cannot be in the past."
+msgstr "Очікуваний час завершення не може бути в минулому."
+
+#: consultations/serializers.py:852
+msgid "At least 2 participants are required for an appointment."
+msgstr "Для прийому потрібно щонайменше 2 учасники."
+
+#: consultations/serializers.py:882
+#, fuzzy
+#| msgid "Appointments"
+msgid "Appointment chat"
+msgstr "Прийоми"
+
+#: consultations/serializers.py:1077
+#, python-format
+msgid "File size exceeds the maximum allowed size of %(max_size)d MB."
+msgstr "Розмір файлу перевищує максимально дозволений розмір %(max_size)d МБ."
+
+#: consultations/serializers.py:1503
+#, fuzzy
+#| msgid "Scheduled time cannot be in the past."
+msgid "Cannot schedule in the past."
+msgstr "Запланований час не може бути в минулому."
+
+#: consultations/serializers.py:1518
+msgid "Required for recurring reminders."
+msgstr ""
+
+#: consultations/views.py:310
+msgid "Unable to close consultation with appointment scheduled in future"
+msgstr "Неможливо закрити консультацію із прийомом, запланованим у майбутньому"
+
+#: consultations/views.py:380 consultations/views.py:427
+#: consultations/views.py:628 consultations/views.py:774
+#: consultations/views.py:832 users/views.py:644 users/views.py:1062
+#: users/views.py:1071 users/views.py:1721
+msgid "No media server available."
+msgstr "Немає доступного медіасервера."
+
+#: consultations/views.py:413
+msgid "Cannot call in a closed consultation."
+msgstr "Неможливо здійснити дзвінок у закритій консультації."
+
+#: consultations/views.py:419
+msgid "No beneficiary configured for this consultation."
+msgstr "Для цієї консультації не налаштовано бенефіціара."
+
+#: consultations/views.py:600
+msgid "Cannot join call in closed consultation"
+msgstr "Неможливо приєднатися до дзвінка в закритій консультації"
+
+#: consultations/views.py:605 users/views.py:1039
+msgid "Cannot join consultation if not online"
+msgstr "Неможливо приєднатися до консультації, якщо ви не онлайн"
+
+#: consultations/views.py:615 users/views.py:1049
+#, python-format
+msgid ""
+"Too early to join. The meeting starts at %(time)s. You can join %(minutes)d "
+"minutes before the scheduled time."
+msgstr ""
+"Зарано приєднуватися. Зустріч починається о %(time)s. Ви можете приєднатися "
+"за %(minutes)d хвилин до запланованого часу."
+
+#: consultations/views.py:664 users/views.py:1105
+#, python-format
+msgid "%(user_name)s joined the meeting"
+msgstr "%(user_name)s приєднався до зустрічі"
+
+#: consultations/views.py:676 consultations/views.py:680
+#: consultations/views.py:713 users/views.py:1160
+msgid "Left successfully"
+msgstr "Успішно залишено"
+
+#: consultations/views.py:688
+#, python-format
+msgid "%(user_name)s left the meeting"
+msgstr "%(user_name)s залишив зустріч"
+
+#: consultations/views.py:742
+msgid "Video recording is disabled"
+msgstr ""
+
+#: consultations/views.py:752
+msgid "Only doctors can start recording"
+msgstr "Лише лікарі можуть розпочати запис"
+
+#: consultations/views.py:762
+msgid "Recording already in progress"
+msgstr "Запис уже триває"
+
+#: consultations/views.py:780 consultations/views.py:838
+msgid "Recording is not supported by the configured media server."
+msgstr ""
+
+#: consultations/views.py:814
+msgid "Only doctors can stop recording"
+msgstr "Лише лікарі можуть зупинити запис"
+
+#: consultations/views.py:824
+msgid "No recording in progress"
+msgstr "Запис не триває"
+
+#: consultations/views.py:940
+msgid "No user associated with this participant"
+msgstr "З цим учасником не пов'язано жодного користувача"
+
+#: consultations/views.py:947
+#, fuzzy
+#| msgid "Access URL is only available for users without email or phone"
+msgid ""
+"Access URL is only available for users without an email or with manual "
+"communication"
+msgstr ""
+"URL доступу доступний лише для користувачів без електронної пошти чи телефону"
+
+#: core/authentication.py:48
+msgid "Token does not contain tenant information"
+msgstr "Токен не містить інформації про орендаря"
+
+#: core/authentication.py:58
+msgid "No tenant context available"
+msgstr "Немає доступного контексту орендаря"
+
+#: core/authentication.py:66
+msgid "Token tenant does not match current tenant"
+msgstr "Орендар токена не відповідає поточному орендарю"
+
+#: core/exceptions.py:21
+msgid "An unhandled error has occured"
+msgstr "Сталася необроблена помилка"
+
+#: core/settings.py:256
+msgid "English"
+msgstr "Англійська"
+
+#: core/settings.py:257
+msgid "German"
+msgstr "Німецька"
+
+#: core/settings.py:258
+msgid "Spanish"
+msgstr ""
+
+#: core/settings.py:259
+msgid "French"
+msgstr "Французька"
+
+#: core/settings.py:260
+msgid "Italian"
+msgstr ""
+
+#: core/settings.py:261
+msgid "Ukrainian"
+msgstr "Українська"
+
+#: core/settings.py:479 core/views.py:52
+msgid "HCW@Home Admin"
+msgstr "Адміністрація HCW@Home"
+
+#: core/settings.py:480
+msgid "HCW@Home Administration"
+msgstr "Адміністрація HCW@Home"
+
+#: core/settings.py:492
+msgid "Navigation"
+msgstr "Навігація"
+
+#: core/settings.py:496
+msgid "Dashboard"
+msgstr "Панель"
+
+#: core/settings.py:503
+msgid "Users & Authentication"
+msgstr "Користувачі та автентифікація"
+
+#: core/settings.py:508
+msgid "Users"
+msgstr "Користувачі"
+
+#: core/settings.py:524
+msgid "Groups"
+msgstr "Групи"
+
+#: core/settings.py:540 core/views.py:129
+msgid "Organizations"
+msgstr "Організації"
+
+#: core/settings.py:548
+msgid "Terms"
+msgstr "Умови використання"
+
+#: core/settings.py:556
+msgid "Languages"
+msgstr "Мови"
+
+#: core/settings.py:564
+msgid "Specialities"
+msgstr "Спеціальності"
+
+#: core/settings.py:584 core/views.py:119
+msgid "Consultations"
+msgstr "Консультації"
+
+#: core/settings.py:617
+msgid "Reasons"
+msgstr "Причини"
+
+#: core/settings.py:645
+msgid "Messaging"
+msgstr "Обмін повідомленнями"
+
+#: core/settings.py:650
+msgid "Messaging providers"
+msgstr "Постачальники обміну повідомленнями"
+
+#: core/settings.py:668
+msgid "Template overrides"
+msgstr "Перевизначення шаблонів"
+
+#: core/settings.py:676
+msgid "Template Validations"
+msgstr "Перевірки шаблонів"
+
+#: core/settings.py:688
+msgid "Media & API"
+msgstr "Медіа та API"
+
+#: core/settings.py:693
+msgid "Media Server"
+msgstr "Медіасервер"
+
+#: core/settings.py:760
+msgid "Settings"
+msgstr "Налаштування"
+
+#: core/settings.py:765
+msgid "Custom Fields"
+msgstr "Налаштовувані поля"
+
+#: core/settings.py:773
+msgid "Translation Overrides"
+msgstr "Перевизначення перекладів"
+
+#: core/settings.py:785
+msgid "Configuration"
+msgstr "Конфігурація"
+
+#: core/settings.py:791
+#, fuzzy
+#| msgid "API token"
+msgid "API Tokens"
+msgstr "API-токен"
+
+#: core/settings.py:797
+msgid "SSO Providers"
+msgstr ""
+
+#: core/templates/admin/constance/change_list.html:72
+#: core/templates/admin/constance/change_list.html:94
+msgid "Save"
+msgstr ""
+
+#: core/templates/admin/constance/includes/results_list.html:7
+msgid "Name"
+msgstr ""
+
+#: core/templates/admin/constance/includes/results_list.html:8
+#, fuzzy
+#| msgid "value"
+msgid "Value"
+msgstr "значення"
+
+#: core/templates/admin/constance/includes/results_list.html:9
+msgid "Default"
+msgstr ""
+
+#: core/templates/admin/constance/includes/results_list.html:10
+msgid "Code"
+msgstr ""
+
+#: core/templates/admin/constance/includes/results_list.html:53
+msgid "Reset to default"
+msgstr ""
+
+#: core/templates/admin/index.html:10
+msgid "Django site admin"
+msgstr "Адміністрування сайту Django"
+
+#: core/templates/admin/index.html:33
+msgid "Management"
+msgstr "Керування"
+
+#: core/templates/admin/index.html:44
+msgid "Real-time"
+msgstr "Реальний час"
+
+#: core/templates/admin/index.html:58
+msgid "Weekly Activity"
+msgstr "Тижнева активність"
+
+#: core/templates/login.html:5 core/templates/login.html:52 core/views.py:53
+msgid "Sign in"
+msgstr "Увійти"
+
+#: core/templates/login.html:16
+msgid "Sign in to administration"
+msgstr "Увійти до адміністрування"
+
+#: core/templates/login.html:38
+msgid "Email"
+msgstr "Електронна пошта"
+
+#: core/templates/login.html:45
+msgid "Password"
+msgstr "Пароль"
+
+#: core/templates/login.html:61
+msgid "or"
+msgstr "або"
+
+#: core/templates/login.html:71
+#, python-format
+msgid "Sign in with %(name)s"
+msgstr "Увійти за допомогою %(name)s"
+
+#: core/templates/login.html:79
+msgid "No identity provider configured."
+msgstr "Не налаштовано жодного постачальника ідентифікації."
+
+#: core/templates/login.html:82
+msgid "Please configure a Social Application in the admin panel."
+msgstr "Будь ласка, налаштуйте соціальний застосунок у панелі адміністрування."
+
+#: core/views.py:37
+msgid "Invalid email or password."
+msgstr "Недійсна електронна пошта або пароль."
+
+#: core/views.py:113
+msgid "Active Users"
+msgstr "Активні користувачі"
+
+#: core/views.py:124
+msgid "Appointments"
+msgstr "Прийоми"
+
+#: core/views.py:135
+msgid "Queues"
+msgstr "Черги"
+
+#: core/views.py:141
+msgid "Requests"
+msgstr "Запити"
+
+#: core/views.py:151
+msgid "New Users This Week"
+msgstr "Нові користувачі цього тижня"
+
+#: core/views.py:154
+msgid "New user registrations"
+msgstr "Нові реєстрації користувачів"
+
+#: core/views.py:157
+msgid "Consultations This Week"
+msgstr "Консультації цього тижня"
+
+#: core/views.py:160
+msgid "Consultations started this week"
+msgstr "Консультації, розпочаті цього тижня"
+
+#: core/views.py:163
+msgid "Appointments This Week"
+msgstr "Прийоми цього тижня"
+
+#: core/views.py:166
+msgid "Appointments scheduled this week"
+msgstr "Прийоми, заплановані цього тижня"
+
+#: mediaserver/admin.py:27 mediaserver/models.py:34
+msgid "API secret"
+msgstr "Секретний ключ API"
+
+#: mediaserver/admin.py:30
+msgid "Leave blank to keep the current value."
+msgstr ""
+
+#: mediaserver/admin.py:55
+msgid "Save and test access"
+msgstr "Зберегти та перевірити доступ"
+
+#: mediaserver/admin.py:65
+#, python-brace-format
+msgid "Connection to server {url} was successful."
+msgstr "З'єднання із сервером {url} успішне."
+
+#: mediaserver/admin.py:70
+#, python-brace-format
+msgid "Failed to connect to server {url}: {error}"
+msgstr "Не вдалося підключитися до сервера {url}: {error}"
+
+#: mediaserver/models.py:32 mediaserver/models.py:161
+msgid "URL"
+msgstr "URL"
+
+#: mediaserver/models.py:33
+msgid "API token"
+msgstr "API-токен"
+
+#: mediaserver/models.py:35
+msgid "max session number"
+msgstr "максимальна кількість сесій"
+
+#: mediaserver/models.py:40
+msgid "server"
+msgstr "сервер"
+
+#: mediaserver/models.py:41
+msgid "servers"
+msgstr "сервери"
+
+#: mediaserver/models.py:149
+msgid "login"
+msgstr "логін"
+
+#: mediaserver/models.py:150
+msgid "credential"
+msgstr "облікові дані"
+
+#: mediaserver/models.py:153 mediaserver/models.py:159
+msgid "TURN server"
+msgstr "TURN-сервер"
+
+#: mediaserver/models.py:154
+msgid "TURN servers"
+msgstr "TURN-сервери"
+
+#: mediaserver/models.py:161
+msgid "TURN URL (e.g., turn://example.com)"
+msgstr "TURN URL (напр., turn://example.com)"
+
+#: mediaserver/models.py:164
+msgid "TURN URL"
+msgstr "TURN URL"
+
+#: mediaserver/models.py:165
+msgid "TURN URLs"
+msgstr "TURN URL-адреси"
+
+#: messaging/admin.py:80
+msgid "Test connection wiht selected providers"
+msgstr "Перевірити з'єднання з вибраними постачальниками"
+
+#: messaging/admin.py:150
+msgid "Sender & Recipient"
+msgstr "Відправник і отримувач"
+
+#: messaging/admin.py:162
+msgid "Content"
+msgstr "Вміст"
+
+#: messaging/admin.py:178
+msgid "Delivery status"
+msgstr "Статус доставки"
+
+#: messaging/admin.py:191
+msgid "Link & Action"
+msgstr "Посилання та дія"
+
+#: messaging/admin.py:206
+msgid "Technical"
+msgstr "Технічне"
+
+#: messaging/admin.py:224 messaging/admin.py:457 messaging/admin.py:478
+msgid "Status"
+msgstr "Статус"
+
+#: messaging/admin.py:237
+msgid "Rendering is valid"
+msgstr "Рендеринг дійсний"
+
+#: messaging/admin.py:252
+msgid "Rendered subject"
+msgstr "Відрендерена тема"
+
+#: messaging/admin.py:259
+msgid "Rendered text content"
+msgstr "Відрендерений текстовий вміст"
+
+#: messaging/admin.py:266
+msgid "Rendered text content SMS"
+msgstr "Відрендерений текстовий вміст SMS"
+
+#: messaging/admin.py:273
+msgid "Rendered HTML content"
+msgstr "Відрендерений HTML-вміст"
+
+#: messaging/admin.py:392
+msgid ""
+"Hello {{ recipient.name }}!\n"
+"\n"
+"Your consultation is scheduled for {{ appointment.date }}."
+msgstr ""
+"Вітаємо, {{ recipient.name }}!\n"
+"\n"
+"Вашу консультацію заплановано на {{ appointment.date }}."
+
+#: messaging/admin.py:444
+msgid "Template Information"
+msgstr "Інформація про шаблон"
+
+#: messaging/admin.py:448
+msgid "Validation Details"
+msgstr "Деталі перевірки"
+
+#: messaging/admin.py:459
+msgid "Validation Response"
+msgstr "Відповідь перевірки"
+
+#: messaging/admin.py:466
+msgid "Timestamps"
+msgstr "Часові позначки"
+
+#: messaging/admin.py:491
+msgid "Content changed"
+msgstr "Вміст змінено"
+
+#: messaging/admin.py:516
+msgid "Submit templates for validation"
+msgstr "Надіслати шаблони на перевірку"
+
+#: messaging/admin.py:525
+#, python-format
+msgid "%(count)d template(s) submitted for validation."
+msgstr "%(count)d шаблон(ів) надіслано на перевірку."
+
+#: messaging/admin.py:529
+msgid "Check validation status"
+msgstr "Перевірити статус перевірки"
+
+#: messaging/admin.py:538
+#, python-format
+msgid "Checking status for %(count)d template(s)."
+msgstr "Перевірка статусу для %(count)d шаблону(ів)."
+
+#: messaging/admin.py:543
+msgid "Generate WhatsApp validations"
+msgstr "Згенерувати перевірки WhatsApp"
+
+#: messaging/admin.py:554
+msgid "No active WhatsApp provider found."
+msgstr "Активного постачальника WhatsApp не знайдено."
+
+#: messaging/admin.py:575
+#, python-format
+msgid ""
+"%(created)d validation(s) created for %(providers)d WhatsApp provider(s)."
+msgstr ""
+"Створено %(created)d перевірок для %(providers)d постачальників WhatsApp."
+
+#: messaging/models.py:51
+msgid "API key"
+msgstr "ключ API"
+
+#: messaging/models.py:53
+msgid "auth token"
+msgstr "токен автентифікації"
+
+#: messaging/models.py:56
+msgid "account SID"
+msgstr "SID облікового запису"
+
+#: messaging/models.py:60
+msgid "client ID"
+msgstr "ID клієнта"
+
+#: messaging/models.py:62
+msgid "client secret"
+msgstr "секрет клієнта"
+
+#: messaging/models.py:67
+msgid "application key"
+msgstr "ключ застосунку"
+
+#: messaging/models.py:70
+msgid "application secret"
+msgstr "секрет застосунку"
+
+#: messaging/models.py:73
+msgid "consumer key"
+msgstr "ключ споживача"
+
+#: messaging/models.py:76
+msgid "service name"
+msgstr "назва сервісу"
+
+#: messaging/models.py:80
+msgid "from phone"
+msgstr "телефон відправника"
+
+#: messaging/models.py:81
+msgid "from email"
+msgstr "електронна пошта відправника"
+
+#: messaging/models.py:82
+msgid "sender ID"
+msgstr "ID відправника"
+
+#: messaging/models.py:84
+msgid "priority"
+msgstr "пріоритет"
+
+#: messaging/models.py:92
+msgid "excluded prefixes"
+msgstr "виключені префікси"
+
+#: messaging/models.py:94
+msgid ""
+"Phone prefixes that should NOT use this provider. Separate multiple prefixes "
+"with commas (e.g. +33, +41, +1)"
+msgstr ""
+"Телефонні префікси, які НЕ повинні використовувати цього постачальника. "
+"Розділяйте кілька префіксів комами (напр., +33, +41, +1)"
+
+#: messaging/models.py:101
+msgid "included prefixes"
+msgstr "включені префікси"
+
+#: messaging/models.py:103
+msgid ""
+"Phone prefixes that should use this provider. Separate multiple prefixes "
+"with commas (e.g. +33, +41). If empty, all prefixes except excluded ones are "
+"allowed"
+msgstr ""
+"Телефонні префікси, які повинні використовувати цього постачальника. "
+"Розділяйте кілька префіксів комами (напр., +33, +41). Якщо порожньо, "
+"дозволені всі префікси, крім виключених"
+
+#: messaging/models.py:170
+msgid "All prefixes must start with \"+\". Invalid prefix: \"{}\""
+msgstr "Усі префікси мають починатися з \"+\". Недійсний префікс: \"{}\""
+
+#: messaging/models.py:180
+msgid "Prefixes can only contain \"+\" and digits. Invalid prefix: \"{}\""
+msgstr "Префікси можуть містити лише \"+\" та цифри. Недійсний префікс: \"{}\""
+
+#: messaging/models.py:220 messaging/models.py:574
+msgid "messaging provider"
+msgstr "постачальник обміну повідомленнями"
+
+#: messaging/models.py:221
+msgid "messaging providers"
+msgstr "постачальники обміну повідомленнями"
+
+#: messaging/models.py:240
+msgid "action label"
+msgstr "мітка дії"
+
+#: messaging/models.py:242
+msgid "Label display in the action"
+msgstr "Відображення мітки в дії"
+
+#: messaging/models.py:246
+msgid "system name"
+msgstr "системна назва"
+
+#: messaging/models.py:250
+msgid "Unique identifier for the template"
+msgstr "Унікальний ідентифікатор шаблону"
+
+#: messaging/models.py:254
+msgid "template html"
+msgstr "html шаблону"
+
+#: messaging/models.py:256
+msgid ""
+"Jinja2 template for message content in html, use {{ obj }} to get object "
+"attributes"
+msgstr ""
+"Шаблон Jinja2 для вмісту повідомлення в html, використовуйте {{ obj }} для "
+"доступу до атрибутів об'єкта"
+
+#: messaging/models.py:263
+msgid "template text"
+msgstr "текст шаблону"
+
+#: messaging/models.py:265
+msgid ""
+"Jinja2 template for message content, use {{ obj }} to get object attributes"
+msgstr ""
+"Шаблон Jinja2 для вмісту повідомлення, використовуйте {{ obj }} для доступу "
+"до атрибутів об'єкта"
+
+#: messaging/models.py:270
+msgid "template subject"
+msgstr "тема шаблону"
+
+#: messaging/models.py:273
+msgid "Jinja2 template for message subject"
+msgstr "Шаблон Jinja2 для теми повідомлення"
+
+#: messaging/models.py:368
+msgid "template override"
+msgstr "перевизначення шаблону"
+
+#: messaging/models.py:369
+msgid "template overrides"
+msgstr "перевизначення шаблонів"
+
+#: messaging/models.py:383 messaging/models.py:392
+msgid "Invalid Jinja2 template syntax: {}"
+msgstr "Недійсний синтаксис шаблону Jinja2: {}"
+
+#: messaging/models.py:553
+msgid "Created"
+msgstr "Створено"
+
+#: messaging/models.py:554
+msgid "Pending"
+msgstr "В очікуванні"
+
+#: messaging/models.py:555
+msgid "Validated"
+msgstr "Перевірено"
+
+#: messaging/models.py:556
+msgid "Rejected"
+msgstr "Відхилено"
+
+#: messaging/models.py:557
+msgid "Failed"
+msgstr "Не вдалося"
+
+#: messaging/models.py:558
+msgid "Outdated"
+msgstr "Застаріло"
+
+#: messaging/models.py:559
+msgid "Unused"
+msgstr "Не використовується"
+
+#: messaging/models.py:564
+msgid "external template ID"
+msgstr "ID зовнішнього шаблону"
+
+#: messaging/models.py:568
+msgid ""
+"External template ID from the messaging provider (populated after validation "
+"submission)"
+msgstr ""
+"ID зовнішнього шаблону від постачальника обміну повідомленнями (заповнюється "
+"після надсилання на перевірку)"
+
+#: messaging/models.py:575
+msgid "The messaging provider where the template is validated"
+msgstr "Постачальник обміну повідомленнями, де перевіряється шаблон"
+
+#: messaging/models.py:578
+msgid "event type"
+msgstr "тип події"
+
+#: messaging/models.py:581
+msgid "The template event type to validate"
+msgstr "Тип події шаблону для перевірки"
+
+#: messaging/models.py:584
+msgid "language code"
+msgstr "код мови"
+
+#: messaging/models.py:587
+msgid ""
+"Language code for the template validation (e.g., \"en\", \"fr\", \"de\")"
+msgstr "Код мови для перевірки шаблону (напр., \"en\", \"fr\", \"de\")"
+
+#: messaging/models.py:595
+msgid "Current validation status"
+msgstr "Поточний статус перевірки"
+
+#: messaging/models.py:602
+msgid "When the template was validated"
+msgstr "Коли шаблон було перевірено"
+
+#: messaging/models.py:609
+msgid "Response from the messaging provider during validation"
+msgstr "Відповідь від постачальника обміну повідомленнями під час перевірки"
+
+#: messaging/models.py:614
+msgid "MD5 hash of template content at last validation submission"
+msgstr "MD5-хеш вмісту шаблону під час останнього надсилання на перевірку"
+
+#: messaging/models.py:618
+msgid "template validation"
+msgstr "перевірка шаблону"
+
+#: messaging/models.py:619
+msgid "template validations"
+msgstr "перевірки шаблонів"
+
+#: messaging/models.py:664
+msgid "content text"
+msgstr "текст вмісту"
+
+#: messaging/models.py:665
+msgid "content html"
+msgstr "html вмісту"
+
+#: messaging/models.py:666
+msgid "subject"
+msgstr "тема"
+
+#: messaging/models.py:677
+msgid "communication method"
+msgstr "спосіб зв'язку"
+
+#: messaging/models.py:683
+msgid "provider name"
+msgstr "назва постачальника"
+
+#: messaging/models.py:687
+msgid "recipient phone"
+msgstr "телефон отримувача"
+
+#: messaging/models.py:689
+msgid "recipient email"
+msgstr "електронна пошта отримувача"
+
+#: messaging/models.py:1057
+msgid ""
+"You must specify at least a recipient phone, a recipient email or a user in "
+"Sent to"
+msgstr ""
+"Ви повинні вказати щонайменше телефон отримувача, електронну пошту "
+"отримувача або користувача в полі «Кому надіслано»"
+
+#: messaging/models.py:1072
+msgid "The Sent to user has no phone number, so recipient phone is mandatory"
+msgstr ""
+"У користувача-отримувача немає номера телефону, тому телефон отримувача є "
+"обов'язковим"
+
+#: messaging/models.py:1081
+msgid "The Sent to user has no email, so recipient email is mandatory"
+msgstr ""
+"У користувача-отримувача немає електронної пошти, тому електронна пошта "
+"отримувача є обов'язковою"
+
+#: messaging/models.py:1090
+msgid "Communication method is required if no sent to user"
+msgstr "Спосіб зв'язку є обов'язковим, якщо немає користувача-отримувача"
+
+#: messaging/models.py:1108
+#, python-format
+msgid ""
+"The linked object type (%(actual)s) does not match the expected model "
+"(%(expected)s) for template \"%(template)s\"."
+msgstr ""
+"Тип пов'язаного об'єкта (%(actual)s) не відповідає очікуваній моделі "
+"(%(expected)s) для шаблону \"%(template)s\"."
+
+#: messaging/providers/email.py:20
+msgid "Email over Django SMTP"
+msgstr "Електронна пошта через Django SMTP"
+
+#: messaging/providers/ovh.py:20
+msgid "OVH SMS"
+msgstr "OVH SMS"
+
+#: messaging/template.py:7
+msgid ""
+"Your appointment planned {{ obj.appointment.scheduled_at|localtime|date }}"
+msgstr ""
+"Ваш прийом заплановано на {{ obj.appointment.scheduled_at|localtime|date }}"
+
+#: messaging/template.py:10
+msgid ""
+"This is a reminder for your appointment scheduled for "
+"{{ obj.appointment.scheduled_at|localtime|date }} at "
+"{{ obj.appointment.scheduled_at|localtime|time }}."
+msgstr ""
+"Це нагадування про ваш прийом, запланований на "
+"{{ obj.appointment.scheduled_at|localtime|date }} о "
+"{{ obj.appointment.scheduled_at|localtime|time }}."
+
+#: messaging/template.py:13
+msgid ""
+"<p>This is a reminder for your appointment scheduled for "
+"<strong>{{ obj.appointment.scheduled_at|localtime|date }}</strong> at "
+"<strong>{{ obj.appointment.scheduled_at|localtime|time }}</strong>.</p>"
+msgstr ""
+"<p>Це нагадування про ваш прийом, запланований на "
+"<strong>{{ obj.appointment.scheduled_at|localtime|date }}</strong> о "
+"<strong>{{ obj.appointment.scheduled_at|localtime|time }}</strong>.</p>"
+
+#: messaging/template.py:20
+msgid ""
+"Your appointment will start in {{config.appointment_last_reminder}} minutes"
+msgstr ""
+"Ваш прийом розпочнеться через {{config.appointment_last_reminder}} хвилин"
+
+#: messaging/template.py:23
+msgid ""
+"Your consultation appointment will start at {{ obj.appointment.scheduled_at|"
+"localtime|time }}"
+msgstr ""
+"Ваш консультаційний прийом розпочнеться о {{ obj.appointment.scheduled_at|"
+"localtime|time }}"
+
+#: messaging/template.py:26
+msgid ""
+"<p>Your consultation appointment will start at "
+"<strong>{{ obj.appointment.scheduled_at|localtime|time }}</strong></p>"
+msgstr ""
+"<p>Ваш консультаційний прийом розпочнеться о "
+"<strong>{{ obj.appointment.scheduled_at|localtime|time }}</strong></p>"
+
+#: messaging/template.py:29
+msgid "Join the consultation"
+msgstr "Приєднатися до консультації"
+
+#: messaging/template.py:34
+msgid "Your consultation has been scheduled"
+msgstr "Вашу консультацію заплановано"
+
+#: messaging/template.py:36
+msgid ""
+"Your consultation has been scheduled for {{ obj.appointment.scheduled_at|"
+"localtime|date }} at {{ obj.appointment.scheduled_at|localtime|time }} "
+"({{ obj.appointment.scheduled_at }})"
+msgstr ""
+"Вашу консультацію заплановано на {{ obj.appointment.scheduled_at|localtime|"
+"date }} о {{ obj.appointment.scheduled_at|localtime|time }} "
+"({{ obj.appointment.scheduled_at }})"
+
+#: messaging/template.py:39
+msgid ""
+"<p>Your consultation has been successfully scheduled.</p><p>Appointment is "
+"scheduled for <strong>{{ obj.appointment.scheduled_at|localtime|date }}</"
+"strong> at <strong>{{ obj.appointment.scheduled_at|localtime|time }}</"
+"strong> ({{ obj.appointment.scheduled_at }})</p>"
+msgstr ""
+"<p>Вашу консультацію успішно заплановано.</p><p>Прийом заплановано на "
+"<strong>{{ obj.appointment.scheduled_at|localtime|date }}</strong> о "
+"<strong>{{ obj.appointment.scheduled_at|localtime|time }}</strong> "
+"({{ obj.appointment.scheduled_at }})</p>"
+
+#: messaging/template.py:43 messaging/template.py:67
+msgid "Confirm your presence"
+msgstr "Підтвердіть свою присутність"
+
+#: messaging/template.py:48
+msgid "Your appointment has been cancelled"
+msgstr "Ваш прийом скасовано"
+
+#: messaging/template.py:49
+msgid ""
+"Your appointment scheduled for {{ obj.appointment.scheduled_at|localtime|"
+"date }} at {{ obj.appointment.scheduled_at|localtime|time }} has been "
+"cancelled."
+msgstr ""
+"Ваш прийом, запланований на {{ obj.appointment.scheduled_at|localtime|"
+"date }} о {{ obj.appointment.scheduled_at|localtime|time }}, скасовано."
+
+#: messaging/template.py:50
+msgid ""
+"<p>Your appointment scheduled for {{ obj.appointment.scheduled_at|localtime|"
+"date }} at {{ obj.appointment.scheduled_at|localtime|time }} has been "
+"cancelled.</p>"
+msgstr ""
+"<p>Ваш прийом, запланований на {{ obj.appointment.scheduled_at|localtime|"
+"date }} о {{ obj.appointment.scheduled_at|localtime|time }}, скасовано.</p>"
+
+#: messaging/template.py:55
+msgid "Your appointment has been updated"
+msgstr "Ваш прийом оновлено"
+
+#: messaging/template.py:57
+msgid ""
+"Your appointment previously scheduled for "
+"{{ obj.appointment.previous_scheduled_at|localtime|date }} at "
+"{{ obj.appointment.previous_scheduled_at|localtime|time }} is now scheduled "
+"for {{ obj.appointment.scheduled_at|localtime|date }} at "
+"{{ obj.appointment.scheduled_at|localtime|time }}\n"
+msgstr ""
+"Ваш прийом, раніше запланований на {{ obj.appointment.previous_scheduled_at|"
+"localtime|date }} о {{ obj.appointment.previous_scheduled_at|localtime|"
+"time }}, тепер заплановано на {{ obj.appointment.scheduled_at|localtime|"
+"date }} о {{ obj.appointment.scheduled_at|localtime|time }}\n"
+
+#: messaging/template.py:62
+msgid ""
+"<p>Your appointment previously scheduled for "
+"<strong>{{ obj.appointment.previous_scheduled_at|localtime|date }}</strong> "
+"at <strong>{{ obj.appointment.previous_scheduled_at|localtime|time }}</"
+"strong> is now scheduled for <strong>{{ obj.appointment.scheduled_at|"
+"localtime|date }}</strong> at <strong>{{ obj.appointment.scheduled_at|"
+"localtime|time }}</strong></p>"
+msgstr ""
+"<p>Ваш прийом, раніше запланований на "
+"<strong>{{ obj.appointment.previous_scheduled_at|localtime|date }}</strong> "
+"о <strong>{{ obj.appointment.previous_scheduled_at|localtime|time }}</"
+"strong>, тепер заплановано на <strong>{{ obj.appointment.scheduled_at|"
+"localtime|date }}</strong> о <strong>{{ obj.appointment.scheduled_at|"
+"localtime|time }}</strong></p>"
+
+#: messaging/template.py:72
+msgid "Your confirmation code"
+msgstr "Ваш код підтвердження"
+
+#: messaging/template.py:74
+msgid ""
+"To continue your login process, please use your the confirmation code: "
+"{{ obj.verification_code }}"
+msgstr ""
+"Щоб продовжити процес входу, скористайтеся кодом підтвердження: "
+"{{ obj.verification_code }}"
+
+#: messaging/template.py:77
+msgid ""
+"<p>To continue your login process, please use your the confirmation code: "
+"<strong>{{ obj.verification_code }}</strong></p>"
+msgstr ""
+"<p>Щоб продовжити процес входу, скористайтеся кодом підтвердження: "
+"<strong>{{ obj.verification_code }}</strong></p>"
+
+#: messaging/template.py:83
+msgid "New message in consultation"
+msgstr "Нове повідомлення в консультації"
+
+#: messaging/template.py:85
+msgid ""
+"{{ obj.created_by.name }} sent you a message in consultation "
+"\"{{ obj.consultation.title }}\": {{ obj.content }}"
+msgstr ""
+"{{ obj.created_by.name }} надіслав вам повідомлення в консультації "
+"\"{{ obj.consultation.title }}\": {{ obj.content }}"
+
+#: messaging/template.py:90
+msgid ""
+"<p>{{ obj.created_by.name }} sent you a message in consultation "
+"\"{{ obj.consultation.title }}\":</p><p>{{ obj.content }}</p>"
+msgstr ""
+"<p>{{ obj.created_by.name }} надіслав вам повідомлення в консультації "
+"\"{{ obj.consultation.title }}\":</p><p>{{ obj.content }}</p>"
+
+#: messaging/template.py:97
+msgid "Click here to answer"
+msgstr "Натисніть тут, щоб відповісти"
+
+#: messaging/template.py:100
+msgid "Verify your email address"
+msgstr "Підтвердіть свою електронну адресу"
+
+#: messaging/template.py:102
+msgid "We are requiring to verify your email address."
+msgstr "Нам потрібно підтвердити вашу електронну адресу."
+
+#: messaging/template.py:105
+msgid "<p>We are requiring to verify your email address.</p>"
+msgstr "<p>Нам потрібно підтвердити вашу електронну адресу.</p>"
+
+#: messaging/template.py:110
+msgid "Verify my email"
+msgstr "Підтвердити мою електронну пошту"
+
+#: messaging/template.py:113 messaging/template.py:123
+msgid "Reset your password"
+msgstr "Скиньте свій пароль"
+
+#: messaging/template.py:115
+msgid ""
+"You requested a password change, ignore this message if it was not requested "
+"by you."
+msgstr ""
+"Ви запросили зміну пароля. Проігноруйте це повідомлення, якщо ви цього не "
+"робили."
+
+#: messaging/template.py:118
+msgid ""
+"<p>You requested a password change, ignore this message if it was not "
+"requested by you.</p>"
+msgstr ""
+"<p>Ви запросили зміну пароля. Проігноруйте це повідомлення, якщо ви цього не "
+"робили.</p>"
+
+#: messaging/template.py:126
+msgid "A consultation has been assigned to you"
+msgstr "Вам призначено консультацію"
+
+#: messaging/template.py:128
+msgid ""
+"A consultation \"{{ obj.title }}\" has been assigned to you. You can now "
+"interact with it and view its details."
+msgstr ""
+"Вам призначено консультацію \"{{ obj.title }}\". Тепер ви можете взаємодіяти "
+"з нею та переглядати її деталі."
+
+#: messaging/template.py:131
+msgid ""
+"<p>A consultation <strong>\"{{ obj.title }}\"</strong> has been assigned to "
+"you.</p><p>You can now interact with it and view its details.</p>"
+msgstr ""
+"<p>Вам призначено консультацію <strong>\"{{ obj.title }}\"</strong>.</"
+"p><p>Тепер ви можете взаємодіяти з нею та переглядати її деталі.</p>"
+
+#: messaging/template.py:135
+msgid "View consultation"
+msgstr "Переглянути консультацію"
+
+#: messaging/template.py:140
+msgid "Your encryption passphrase"
+msgstr ""
+
+#: messaging/template.py:142
+msgid ""
+"End-to-end encryption has been enabled for your account.\n"
+"Your personal passphrase is: {{ passphrase }}\n"
+"\n"
+"Keep it safe — you will need it the next time you log in to decrypt your "
+"messages. Nobody at HCW can recover this passphrase for you if you lose it."
+msgstr ""
+
+#: messaging/template.py:149
+msgid ""
+"<p>End-to-end encryption has been enabled for your account.</p><p>Your "
+"personal passphrase is: <strong>{{ passphrase }}</strong></p><p>Keep it safe "
+"— you will need it the next time you log in to decrypt your messages. Nobody "
+"at HCW can recover this passphrase for you if you lose it.</p>"
+msgstr ""
+
+#: messaging/template.py:160
+msgid ""
+"Encryption passphrase for {{ patient_first_name }} {{ patient_last_name }}"
+msgstr ""
+
+#: messaging/template.py:163
+msgid ""
+"An encryption passphrase has been generated for a patient you created who "
+"has no direct contact method (manual contact).\n"
+"\n"
+"Patient: {{ patient_first_name }} {{ patient_last_name }} (id "
+"#{{ patient_id }}, {{ patient_email|default('no email') }})\n"
+"Passphrase: {{ passphrase }}\n"
+"\n"
+"Pass it to the patient through your usual secure channel. It is required for "
+"them to read their encrypted messages."
+msgstr ""
+
+#: messaging/template.py:172
+msgid ""
+"<p>An encryption passphrase has been generated for a patient you created who "
+"has no direct contact method (manual contact).</p><p><strong>Patient:</"
+"strong> {{ patient_first_name }} {{ patient_last_name }} (id "
+"#{{ patient_id }}, {{ patient_email|default('no email') }})</"
+"p><p><strong>Passphrase:</strong> {{ passphrase }}</p><p>Pass it to the "
+"patient through your usual secure channel. It is required for them to read "
+"their encrypted messages.</p>"
+msgstr ""
+
+#: messaging/template.py:184
+msgid "Reminder: {{ obj.title }}"
+msgstr "Нагадування: {{ obj.title }}"
+
+#: messaging/template.py:186
+msgid ""
+"This is an automatic message to remind you: {% if obj.description %}"
+"{{ obj.description }}{% else %}{{ obj.title }}{% endif %}"
+msgstr "Це автоматичне повідомлення, щоб нагадати вам: {% if obj.description %}{{ obj.description }}{% else %}{{ obj.title }}{% endif %}"
+
+#: messaging/template.py:190
+msgid ""
+"<p>This is an automatic message to remind you:</p>{% if obj.description %}"
+"<p>{{ obj.description }}</p>{% else %}<p><strong>{{ obj.title }}</strong></"
+"p>{% endif %}"
+msgstr "<p>Це автоматичне повідомлення, щоб нагадати вам:</p>{% if obj.description %}<p>{{ obj.description }}</p>{% else %}<p><strong>{{ obj.title }}</strong></p>{% endif %}"
+
+#: users/admin.py:169
+msgid "Personal info"
+msgstr "Особиста інформація"
+
+#: users/admin.py:173
+msgid "Permissions"
+msgstr "Дозволи"
+
+#: users/admin.py:214
+msgid "Important dates"
+msgstr "Важливі дати"
+
+#: users/admin.py:299
+#, python-format
+msgid ""
+"A device failed to un/subscribe to topic. %(count)d device was marked as "
+"inactive."
+msgid_plural ""
+"Some devices failed to un/subscribe to topic. %(count)d devices were marked "
+"as inactive."
+msgstr[0] ""
+"Не вдалося підписати/відписати пристрій від теми. %(count)d пристрій "
+"позначено як неактивний."
+msgstr[1] ""
+"Не вдалося підписати/відписати деякі пристрої від теми. %(count)d пристрої "
+"позначено як неактивні."
+msgstr[2] ""
+"Не вдалося підписати/відписати деякі пристрої від теми. %(count)d пристроїв "
+"позначено як неактивні."
+
+#: users/admin.py:307
+#, python-format
+msgid "A message failed to send. %(count)d device was marked as inactive."
+msgid_plural ""
+"Some messages failed to send. %(count)d devices were marked as inactive."
+msgstr[0] ""
+"Не вдалося надіслати повідомлення. %(count)d пристрій позначено як "
+"неактивний."
+msgstr[1] ""
+"Не вдалося надіслати деякі повідомлення. %(count)d пристрої позначено як "
+"неактивні."
+msgstr[2] ""
+"Не вдалося надіслати деякі повідомлення. %(count)d пристроїв позначено як "
+"неактивні."
+
+#: users/admin.py:333
+#, python-format
+msgid "%(response)s (Registration ID/Tokens: %(reg_id)s)"
+msgstr "%(response)s (ID реєстрації/токени: %(reg_id)s)"
+
+#: users/admin.py:395
+msgid "Send test notification"
+msgstr "Надіслати тестове сповіщення"
+
+#: users/admin.py:400
+msgid "Send test notification in bulk"
+msgstr "Надіслати тестові сповіщення масово"
+
+#: users/admin.py:445
+msgid "Subscribe to test topic"
+msgstr "Підписатися на тестову тему"
+
+#: users/admin.py:450
+msgid "Subscribe to test topic in bulk"
+msgstr "Підписатися на тестову тему масово"
+
+#: users/admin.py:455
+msgid "Unsubscribe to test topic"
+msgstr "Відписатися від тестової теми"
+
+#: users/admin.py:460
+msgid "Unsubscribe to test topic in bulk"
+msgstr "Відписатися від тестової теми масово"
+
+#: users/admin.py:475
+msgid "Send message test topic"
+msgstr "Надіслати повідомлення в тестову тему"
+
+#: users/admin.py:480
+msgid "Enable selected devices"
+msgstr "Увімкнути вибрані пристрої"
+
+#: users/admin.py:485
+msgid "Disable selected devices"
+msgstr "Вимкнути вибрані пристрої"
+
+#: users/managers.py:8
+msgid "The email is mandatory"
+msgstr "Електронна пошта є обов'язковою"
+
+#: users/models.py:107
+msgid "specialities"
+msgstr "спеціальності"
+
+#: users/models.py:139
+msgid "web push subscription"
+msgstr "веб-push підписка"
+
+#: users/models.py:140
+msgid "web push subscriptions"
+msgstr "веб-push підписки"
+
+#: users/models.py:157
+msgid "Male"
+msgstr ""
+
+#: users/models.py:158
+msgid "Female"
+msgstr ""
+
+#: users/models.py:159
+msgid "Other"
+msgstr ""
+
+#: users/models.py:160
+msgid "Unknown"
+msgstr ""
+
+#: users/models.py:174
+msgid "email address"
+msgstr "електронна адреса"
+
+#: users/models.py:176
+msgid "date of birth"
+msgstr ""
+
+#: users/models.py:178
+#, fuzzy
+#| msgid "sender ID"
+msgid "gender"
+msgstr "ID відправника"
+
+#: users/models.py:448
+msgid "DAV app password"
+msgstr ""
+
+#: users/models.py:449
+msgid "DAV app passwords"
+msgstr ""
+
+#: users/serializers.py:284
+msgid ""
+"Patient management is in temporary-only mode; temporary=False is not allowed."
+msgstr ""
+
+#: users/templates/account/email/email_confirmation_message.txt:5
+#, python-format
+msgid ""
+"You're receiving this email because user %(user_display)s has given your "
+"email address to register an account on %(site_domain)s."
+msgstr ""
+"Ви отримали цей лист, оскільки користувач %(user_display)s вказав вашу "
+"електронну адресу для реєстрації облікового запису на %(site_domain)s."
+
+#: users/templates/account/email/email_confirmation_message.txt:7
+msgid ""
+"Your email verification code is listed below. Please enter it in your open "
+"browser window."
+msgstr ""
+"Ваш код підтвердження електронної пошти наведено нижче. Будь ласка, введіть "
+"його у відкритому вікні браузера."
+
+#: users/templates/account/email/email_confirmation_message.txt:9
+#, python-format
+msgid "To confirm this is correct, go to %(activate_url)s"
+msgstr ""
+"Щоб підтвердити, що це правильно, перейдіть за адресою %(activate_url)s"
+
+#: users/templates/account/email_confirm.html:6
+#: users/templates/account/email_confirm.html:10
+msgid "Confirm Email Address"
+msgstr "Підтвердити електронну адресу"
+
+#: users/templates/account/email_confirm.html:16
+#, python-format
+msgid ""
+"Please confirm that <a href=\"mailto:%(email)s\">%(email)s</a> is an email "
+"address for user %(user_display)s."
+msgstr ""
+"Будь ласка, підтвердіть, що <a href=\"mailto:%(email)s\">%(email)s</a> є "
+"електронною адресою користувача %(user_display)s."
+
+#: users/templates/account/email_confirm.html:24
+msgid "Confirm"
+msgstr "Підтвердити"
+
+#: users/templates/account/email_confirm.html:30
+#, python-format
+msgid ""
+"Unable to confirm %(email)s because it is already confirmed by a different "
+"account."
+msgstr ""
+"Не вдалося підтвердити %(email)s, оскільки її вже підтверджено іншим "
+"обліковим записом."
+
+#: users/templates/account/email_confirm.html:36
+#, python-format
+msgid ""
+"This email confirmation link expired or is invalid. Please <a "
+"href=\"%(email_url)s\">issue a new email confirmation request</a>."
+msgstr ""
+"Це посилання для підтвердження електронної пошти застаріло або недійсне. "
+"Будь ласка, <a href=\"%(email_url)s\">створіть новий запит на підтвердження "
+"електронної пошти</a>."
+
+#: users/templates/allauth/layouts/base.html:29
+msgid "Messages:"
+msgstr "Повідомлення:"
+
+#: users/views.py:636
+msgid "Cannot join call in a closed consultation."
+msgstr "Неможливо приєднатися до дзвінка в закритій консультації."
+
+#: users/views.py:1118
+msgid "No consultation associated"
+msgstr "Немає пов'язаної консультації"
+
+#: users/views.py:1124
+msgid "Consultation is already closed"
+msgstr "Консультацію вже закрито"
+
+#: users/views.py:1135
+#, python-format
+msgid "%(user_name)s left the meeting #%(consultation_id)s"
+msgstr "%(user_name)s залишив зустріч #%(consultation_id)s"
+
+#: users/views.py:1650
+msgid "A verification email has been sent to your email address."
+msgstr ""
+
+#: users/views.py:2001
+#, fuzzy
+#| msgid "Access URL is only available for users without email or phone"
+msgid ""
+"Access URL is only available for patients without an email or with manual "
+"communication"
+msgstr ""
+"URL доступу доступний лише для користувачів без електронної пошти чи телефону"
+
+#~ msgid "Access URL is only available for temporary users"
+#~ msgstr "URL доступу доступний лише для тимчасових користувачів"
+
+#~ msgid "System Health"
+#~ msgstr "Стан системи"
+
+#~ msgid "User Activity Rate"
+#~ msgstr "Рівень активності користувачів"
+
+#~ msgid "Online Users Rate"
+#~ msgstr "Рівень користувачів онлайн"
+
+#~ msgid "Consultation Completion Rate"
+#~ msgstr "Рівень завершення консультацій"
+
+#~ msgid "Platform Overview"
+#~ msgstr "Огляд платформи"
+
+#~ msgid "Platform activity summary for healthcare professionals"
+#~ msgstr "Зведення активності платформи для медичних працівників"
+
+#~ msgid "Total Users"
+#~ msgstr "Усього користувачів"
+
+#~ msgid "Online Now"
+#~ msgstr "Зараз онлайн"
+
+#~ msgid "Last updated:"
+#~ msgstr "Останнє оновлення:"

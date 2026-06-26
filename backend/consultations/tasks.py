@@ -110,6 +110,62 @@ def handle_reminders():
                         )
 
 
+@app.task
+def handle_custom_reminders():
+    """Deliver standalone reminders that are due (next_run_at <= now).
+
+    Uses ``<= now`` rather than ``== now`` so a missed beat (worker downtime,
+    deploy, overload) still gets delivered on the next run instead of being
+    skipped forever. For recurring reminders, ``compute_next_run_at`` advances
+    one step per delivery, so a backlog is caught up one occurrence at a time.
+
+    Creates a Message rendered through the ``reminder`` template (the reminder
+    itself is the template ``obj``) per due reminder; its post_save signal
+    triggers send_message, routing to the recipient's configured channel
+    (SMS/email/WhatsApp). Recurring reminders are rescheduled in place until
+    their occurrence count is exhausted.
+    """
+    now = timezone.now().replace(second=0, microsecond=0)
+    TenantModel = get_tenant_model()
+    for tenant in TenantModel.objects.exclude(schema_name="public"):
+        with tenant_context(tenant):
+            from .models import Reminder
+
+            due = Reminder.objects.filter(
+                is_active=True, next_run_at__isnull=False, next_run_at__lte=now
+            )
+            for reminder in due:
+                # Catch up every occurrence that should already have been sent
+                # (e.g. after downtime), one Message per missed occurrence.
+                while (
+                    reminder.is_active
+                    and reminder.next_run_at is not None
+                    and reminder.next_run_at <= now
+                ):
+                    occurrence_at = reminder.next_run_at
+                    Message.objects.create(
+                        sent_to=reminder.recipient,
+                        sent_by=reminder.created_by,
+                        template_system_name="reminder",
+                        content_type=ContentType.objects.get_for_model(reminder),
+                        object_id=reminder.pk,
+                        # No communication_method: the recipient's channel decides.
+                    )
+                    reminder.occurrences_sent += 1
+                    reminder.last_sent_at = occurrence_at
+                    nxt = reminder.compute_next_run_at()
+                    reminder.is_active = nxt is not None
+                    reminder.next_run_at = nxt
+                reminder.save(
+                    update_fields=[
+                        "occurrences_sent",
+                        "last_sent_at",
+                        "next_run_at",
+                        "is_active",
+                    ]
+                )
+
+
 @app.task(
     bind=True,
     max_retries=settings.RECORDING_CHECK_MAX_RETRIES,
@@ -198,10 +254,47 @@ def auto_delete_closed_consultations():
                 logger.info("Auto-delete of closed consultations is disabled (0 hours)")
                 return
 
-            cutoff = timezone.now() - timedelta(hours=hours)
+            now = timezone.now()
+            cutoff = now - timedelta(hours=hours)
             qs = Consultation.objects.filter(closed_at__isnull=False, closed_at__lte=cutoff)
             count, _ = qs.delete()
             logger.info(f"Auto-deleted {count} closed consultation(s) older than {hours}h")
+
+            # Belt-and-suspenders: temporary consultations that somehow stayed
+            # open past the join window are also dropped once their effective
+            # end + call_limit + auto_delete_hours has elapsed.
+            join_limit = int(config.call_limit_join_minutes)
+            default_duration = int(config.default_appointment_duration_in_minutes)
+            delete_threshold = timedelta(hours=hours)
+
+            temp_qs = Consultation.objects.filter(
+                temporary=True, closed_at__isnull=True
+            )
+            temp_deleted = 0
+            for consultation in temp_qs:
+                appt = (
+                    consultation.appointments.exclude(
+                        status=AppointmentStatus.cancelled
+                    )
+                    .order_by("-scheduled_at")
+                    .first()
+                )
+                if appt:
+                    end = appt.end_expected_at or (
+                        appt.scheduled_at + timedelta(minutes=default_duration)
+                    )
+                    expires_at = end + timedelta(minutes=join_limit)
+                else:
+                    expires_at = consultation.created_at
+
+                if now >= expires_at + delete_threshold:
+                    consultation.delete()
+                    temp_deleted += 1
+
+            if temp_deleted:
+                logger.info(
+                    f"Auto-deleted {temp_deleted} unclosed temporary consultation(s) past auto-delete threshold"
+                )
 
 
 @app.task

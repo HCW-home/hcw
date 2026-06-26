@@ -234,6 +234,15 @@
   width: 100%;
   height: 100%;
   min-height: 0;
+
+  // Active speaker — thick inset green ring (the tile clips overflow, so an
+  // inset box-shadow reads as a border) plus an outer glow. On/off, no
+  // animation.
+  &.speaking {
+    box-shadow:
+      inset 0 0 0 5px #22c55e,
+      0 0 20px 5px rgba(34, 197, 94, 0.8);
+  }
 }
 
 .local-tile {
@@ -296,6 +305,42 @@
 
 .muted-indicator {
   color: #ef4444;
+}
+
+.mute-participant-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: #ffffff;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: #ef4444;
+  }
+
+  // Participant is currently muted by the moderator — the button now unmutes.
+  &.is-muted {
+    background-color: #ef4444;
+
+    &:hover {
+      background-color: #dc2626;
+    }
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.5;
+  }
 }
 
 .waiting-for-participants {
@@ -367,6 +412,28 @@
   &.active {
     background-color: #3d3d5c;
     color: #ffffff;
+  }
+
+  // Anchor for the unread-count badge on the chat button.
+  &.chat-control {
+    position: relative;
+  }
+
+  .unread-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background-color: #ef4444;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 18px;
+    text-align: center;
+    pointer-events: none;
   }
 
   &.inactive {

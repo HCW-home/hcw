@@ -5,6 +5,7 @@ import {
   signal,
   inject,
   computed,
+  effect,
   viewChild,
   ViewChildren,
   QueryList,
@@ -78,10 +79,15 @@ import {
   getAppointmentBadgeType,
   parseDateWithoutTimezone,
 } from '../../../../shared/tools/helper';
+import { applyCalendarLocale } from '../../../../shared/tools/calendar-locale';
 import { LocalDatePipe } from '../../../../shared/pipes/local-date.pipe';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { AppointmentFormModal } from './appointment-form-modal/appointment-form-modal';
+import { ReminderFormModal } from '../../../../shared/components/reminder-form-modal/reminder-form-modal';
+import { ReminderCard } from '../../../../shared/components/reminder-card/reminder-card';
+import { UserSelectOrCreate } from '../../../../shared/components/user-select-or-create/user-select-or-create';
+import { Reminder } from '../../../../core/models/reminder';
 import { RoutePaths } from '../../../../core/constants/routes';
 import { ParticipantItem } from '../../../../shared/components/participant-item/participant-item';
 import { UserAvatar } from '../../../../shared/components/user-avatar/user-avatar';
@@ -110,6 +116,9 @@ type AppointmentTimeFilter = 'all' | 'upcoming' | 'past';
     Checkbox,
     Select,
     AppointmentFormModal,
+    ReminderFormModal,
+    ReminderCard,
+    UserSelectOrCreate,
     ModalComponent,
     FullCalendarModule,
     LocalDatePipe,
@@ -152,6 +161,13 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   private appointmentPage = 1;
   private appointmentPageSize = 20;
 
+  reminders = signal<Reminder[]>([]);
+  isLoadingReminders = signal(false);
+  isLoadingMoreReminders = signal(false);
+  hasMoreReminders = signal(false);
+  private reminderPage = 1;
+  private reminderPageSize = 20;
+
   messages = signal<Message[]>([]);
   unreadSeparatorTimestamp = signal<string | null>(null);
   isWebSocketConnected = signal(false);
@@ -190,6 +206,8 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   isExportingPdf = signal(false);
 
   showCreateAppointmentModal = signal(false);
+  showCreateReminderModal = signal(false);
+  editingReminder = signal<Reminder | null>(null);
   editingAppointment = signal<Appointment | null>(null);
 
   appointmentViewMode = signal<AppointmentViewMode>('list');
@@ -362,6 +380,18 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   >(null);
 
   consultationAutoDeleteHours = 0;
+  private firstDayOfWeek = signal<number>(0);
+
+  constructor() {
+    // Localize the appointment calendar headers to the user's language and keep
+    // the admin-configured first day of week, reacting to changes in either.
+    effect(() => {
+      const lang = this.t.currentLanguage();
+      const firstDay = this.firstDayOfWeek();
+      const api = this.calendarComponent()?.getApi();
+      applyCalendarLocale(api, lang, firstDay);
+    });
+  }
 
   ngOnInit(): void {
     this.initEditForm();
@@ -373,6 +403,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       next: (config) => {
         this.consultationAutoDeleteHours = config.consultation_auto_delete_hours || 0;
         this.appointmentEarlyJoinMinutes = config.appointment_early_join_minutes || 5;
+        this.firstDayOfWeek.set(config.calendar_first_day_of_week ?? 0);
       },
       error: (err: unknown) => {
         console.error('Failed to get app config:', err);
@@ -397,6 +428,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
 
       this.loadConsultation();
       this.loadAppointments();
+      this.loadReminders();
       // loadMessages is triggered from inside loadConsultation once we know
       // whether the consultation is encrypted (and, if so, after the
       // consultation private key has been unwrapped). Calling it eagerly
@@ -1395,6 +1427,63 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       });
   }
 
+  loadReminders(): void {
+    this.isLoadingReminders.set(true);
+    this.reminderPage = 1;
+    this.consultationService
+      .getReminders({
+        consultation: this.consultationId,
+        page: 1,
+        page_size: this.reminderPageSize,
+      })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: response => {
+          this.reminders.set(response.results);
+          this.hasMoreReminders.set(response.next !== null);
+          this.isLoadingReminders.set(false);
+        },
+        error: error => {
+          this.isLoadingReminders.set(false);
+          this.toasterService.show(
+            'error',
+            this.t.instant('reminders.errorLoading'),
+            getErrorMessage(error)
+          );
+        },
+      });
+  }
+
+  loadMoreReminders(): void {
+    if (this.isLoadingMoreReminders() || !this.hasMoreReminders()) return;
+
+    this.isLoadingMoreReminders.set(true);
+    this.reminderPage++;
+    this.consultationService
+      .getReminders({
+        consultation: this.consultationId,
+        page: this.reminderPage,
+        page_size: this.reminderPageSize,
+      })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: response => {
+          this.reminders.set([...this.reminders(), ...response.results]);
+          this.hasMoreReminders.set(response.next !== null);
+          this.isLoadingMoreReminders.set(false);
+        },
+        error: error => {
+          this.reminderPage--;
+          this.isLoadingMoreReminders.set(false);
+          this.toasterService.show(
+            'error',
+            this.t.instant('reminders.errorLoading'),
+            getErrorMessage(error)
+          );
+        },
+      });
+  }
+
   loadAppointmentsForCalendar(): void {
     if (!this.calendarDateRange) return;
 
@@ -1907,7 +1996,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       next: (config) => {
         this.activeCallService.startCall({
           consultationId: this.consultationId,
-          livekitConfig: config,
+          videoCallConfig: config,
         });
         this.isCallingBeneficiary.set(false);
       },
@@ -1936,6 +2025,67 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   closeCreateAppointmentModal(): void {
     this.showCreateAppointmentModal.set(false);
     this.editingAppointment.set(null);
+  }
+
+  openCreateReminderModal(): void {
+    this.editingReminder.set(null);
+    this.showCreateReminderModal.set(true);
+  }
+
+  openEditReminderModal(reminder: Reminder): void {
+    this.editingReminder.set(reminder);
+    this.showCreateReminderModal.set(true);
+  }
+
+  closeCreateReminderModal(): void {
+    this.showCreateReminderModal.set(false);
+    this.editingReminder.set(null);
+  }
+
+  onReminderCreated(): void {
+    this.showCreateReminderModal.set(false);
+    this.editingReminder.set(null);
+    this.loadReminders();
+  }
+
+  onReminderUpdated(): void {
+    this.showCreateReminderModal.set(false);
+    this.editingReminder.set(null);
+    this.loadReminders();
+  }
+
+  async deleteReminder(reminder: Reminder): Promise<void> {
+    const confirmed = await this.confirmationService.confirm({
+      title: this.t.instant('reminders.deleteTitle'),
+      message: this.t.instant('reminders.deleteMessage'),
+      confirmText: this.t.instant('reminders.delete'),
+      cancelText: this.t.instant('reminders.cancel'),
+      confirmStyle: 'danger',
+    });
+
+    if (!confirmed) return;
+
+    this.consultationService
+      .deleteReminder(reminder.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.reminders.set(
+            this.reminders().filter(r => r.id !== reminder.id)
+          );
+          this.toasterService.show(
+            'success',
+            this.t.instant('reminders.deleted')
+          );
+        },
+        error: error => {
+          this.toasterService.show(
+            'error',
+            this.t.instant('reminders.errorDeleting'),
+            getErrorMessage(error)
+          );
+        },
+      });
   }
 
   private markAppointmentAsLocallyModified(appointmentId: number): void {

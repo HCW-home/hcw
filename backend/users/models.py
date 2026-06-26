@@ -1,3 +1,4 @@
+import re
 import uuid
 from zoneinfo import ZoneInfo, available_timezones
 
@@ -21,6 +22,8 @@ from core.storage import TenantUploadTo
 
 from .abstracts import ModelOwnerAbstract
 from .managers import UserManager
+
+import secrets
 
 # Create your models here.
 
@@ -283,6 +286,19 @@ class User(AbstractUser):
         help_text="Whether to show the first login dialog asking for preferred language and communication methods",
     )
 
+    # Hidden from native API; only exposed via FHIR Patient/Practitioner.identifier.
+    external_id = models.CharField(
+        _("external id"),
+        max_length=255,
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text=_(
+            "Identifier from an external system (e.g. OpenMRS). "
+            "Hidden from native API; exposed only via FHIR identifier array."
+        ),
+    )
+
     notification_messages = GenericRelation("messaging.Message")
 
     @property
@@ -322,24 +338,40 @@ class User(AbstractUser):
         devices = FCMDeviceOverride.objects.filter(user=self)
         return devices.send_message(message)
 
+    @staticmethod
+    def normalize_phone_number(value):
+        """Strip spaces and common separators from a phone number, keeping a
+        leading '+'. Stores a canonical form so search and SMS sending match
+        regardless of how the number was typed (e.g. '06 12 34 56 78')."""
+        if not value:
+            return None
+        cleaned = re.sub(r"[\s\-.() ]", "", value.strip())
+        return cleaned or None
+
     def save(self, *args, **kwargs):
         if self.temporary and not self.one_time_auth_token:
             self.one_time_auth_token = str(uuid.uuid4())
             self.verification_code_created_at = timezone.now()
         if not self.email:
             self.email = None
-        if not self.mobile_phone_number:
-            self.mobile_phone_number = None
-        
+        self.mobile_phone_number = self.normalize_phone_number(
+            self.mobile_phone_number
+        )
+
         super().save(*args, **kwargs)
 
     class Meta:
         ordering = ["first_name", "last_name", "email"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["external_id"],
+                condition=models.Q(external_id__isnull=False),
+                name="user_external_id_unique",
+            ),
+        ]
 
 
 class HealthMetric(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -392,3 +424,66 @@ class HealthMetric(models.Model):
         return f"{self.user} @ {self.measured_at:%Y-%m-%d %H:%M}"
 
     acknowledged_at = models.DateTimeField(blank=True, null=True)
+
+
+class DAVAppPassword(models.Model):
+    """
+    App password for CalDAV/CardDAV access.
+    Allows users authenticated via OpenID to use DAV protocols
+    which require HTTP Basic Auth.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="dav_app_passwords",
+    )
+    token = models.CharField(
+        max_length=256,
+        unique=True,
+        editable=False,
+        help_text="Random token used as password in Basic Auth",
+    )
+    label = models.CharField(
+        max_length=100,
+        help_text="Human-readable label, e.g. 'iPhone CardDAV'",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_used_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Last time this token was used to authenticate",
+    )
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = _("DAV app password")
+        verbose_name_plural = _("DAV app passwords")
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user} — {self.label}"
+
+    def save(self, *args, **kwargs):
+        if not self.token:
+            self.token = secrets.token_urlsafe(48)
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def authenticate(cls, username: str, password: str):
+        """
+        Try to authenticate via app password.
+        Returns the User if valid, None otherwise.
+        """
+        try:
+            app_pw = cls.objects.select_related("user").get(
+                user__email__iexact=username,
+                token=password,
+                is_active=True,
+            )
+        except cls.DoesNotExist:
+            return None
+
+        app_pw.last_used_at = timezone.now()
+        app_pw.save(update_fields=["last_used_at"])
+        return app_pw.user

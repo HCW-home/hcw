@@ -45,18 +45,33 @@ def get_users_to_notification_consultation(consultation: Consultation):
         for user in consultation.group.users.all():
             users_to_notify_pks.add(user.pk)
 
-    # Add visible participants who have explicit consultation access
+    # Add participants who can access the consultation chat.
+    #
+    # This must mirror UserConsultationsViewSet.get_queryset (detail/messages
+    # access): an active participant of a *temporary* consultation can use the
+    # chat without the explicit is_consultation_visible flag, while on regular
+    # consultations the flag is still required. Keeping both rules in sync is
+    # what makes the WebSocket echo reach a temporary patient in real time
+    # (otherwise they only saw messages after a manual page refresh).
+    from django.db.models import Q
+
     from .models import Participant
 
-    visible_user_pks = (
-        Participant.objects.filter(
+    participant_filter = Q(
+        appointment__consultation=consultation,
+        is_active=True,
+        is_consultation_visible=True,
+    )
+    if consultation.temporary:
+        participant_filter |= Q(
             appointment__consultation=consultation,
             is_active=True,
-            is_consultation_visible=True,
         )
-        .values_list("user_id", flat=True)
+
+    notify_user_pks = Participant.objects.filter(participant_filter).values_list(
+        "user_id", flat=True
     )
-    users_to_notify_pks.update(visible_user_pks)
+    users_to_notify_pks.update(notify_user_pks)
 
     return users_to_notify_pks
 

@@ -27,8 +27,39 @@ user_router.register(
     r"participants", views.UserParticipantViewSet, basename="user-participants"
 )
 
+user_router.register(
+    r"dav-passwords", views.DAVAppPasswordViewSet, basename="user-dav-passwords"
+)
+
 urlpatterns = [
+    # FHIR conditional operations on the collection URL — see consultations/urls.py.
+    path(
+        "api/patients/",
+        views.PatientViewSet.as_view({
+            "get": "list",
+            "post": "create",
+            "put": "update",
+            "delete": "destroy",
+        }),
+        name="patient-conditional",
+    ),
+    path(
+        "api/practitioners/",
+        views.PractitionerViewSet.as_view({
+            "get": "list",
+            "post": "create",
+            "put": "update",
+            "delete": "destroy",
+        }),
+        name="practitioner-conditional",
+    ),
+    path(
+        "api/practitioners/<int:pk>/public/",
+        views.PublicPractitionerView.as_view(),
+        name="practitioner-public",
+    ),
     path("api/", include(router.urls)),
+    path("api/map/", views.MapView.as_view(), name="map"),
     path("api/auth/openid/", views.OpenIDView.as_view(), name="openid_login"),
     path('api/auth/send-verification-code/', views.SendVerificationCodeView.as_view()),
     path(

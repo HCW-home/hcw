@@ -26,6 +26,7 @@ from django.db.models import (
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse, StreamingHttpResponse
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from django.utils.text import slugify
 from django.utils.translation import gettext as _, gettext_lazy
 from django_filters.rest_framework import DjangoFilterBackend
@@ -35,7 +36,7 @@ from drf_spectacular.utils import (
     OpenApiTypes,
     extend_schema,
 )
-from mediaserver.exceptions import NoMediaServerAvailable
+from mediaserver.exceptions import NoMediaServerAvailable, RemoteUnmuteDisabled
 from mediaserver.models import Server
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
@@ -46,7 +47,7 @@ from rest_framework.views import APIView
 
 from .fhir import AppointmentFhirMapper, EncounterFhirMapper, PrescriptionFhirMapper
 from fhir_server.mixins import FhirViewSetMixin
-from .filters import AppointmentFilter, ConsultationFilter
+from .filters import AppointmentFilter, ConsultationFilter, ReminderFilter
 from .models import (
     Appointment,
     AppointmentStatus,
@@ -59,6 +60,7 @@ from .models import (
     Prescription,
     Queue,
     Reason,
+    Reminder,
     Request,
     RequestStatus,
     Type,
@@ -77,6 +79,8 @@ from .serializers import (
     PrescriptionSerializer,
     QueueSerializer,
     ReasonDetailSerializer,
+    ReminderSerializer,
+    ReminderOccurrenceSerializer,
     RequestSerializer,
 )
 
@@ -347,7 +351,7 @@ class ConsultationViewSet(FhirViewSetMixin, CreatedByMixin, viewsets.ModelViewSe
                 },
                 "example": {
                     "url": "wss://livekit.example.com",
-                    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                    "token": "<jwt-token>",
                     "room": "usertest_123",
                 },
             },
@@ -500,12 +504,19 @@ class ConsultationViewSet(FhirViewSetMixin, CreatedByMixin, viewsets.ModelViewSe
             .order_by("created_at")
         )
 
+        reminders = (
+            consultation.reminders.all()
+            .select_related("recipient", "created_by")
+            .order_by("scheduled_at")
+        )
+
         organisation = request.user.main_organisation
 
         pdf_buffer = generate_consultation_pdf(
             consultation=consultation,
             appointments=appointments,
             messages=messages,
+            reminders=reminders,
             organisation=organisation,
         )
 
@@ -554,11 +565,17 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
             ).distinct()
 
         # For all other actions (list, retrieve, join, leave, start_recording, etc.):
-        # include appointments where user is an active participant
+        # include appointments where user is an active participant, plus those
+        # of practitioners the user is allowed to see (users_visibility scope).
+        from users.services import visible_practitioner_ids
+
+        visible_ids = visible_practitioner_ids(user)
         return Appointment.objects.filter(
             Q(participant__user=user, participant__is_active=True)
             | Q(created_by=user)
             | Q(consultation__in=Consultation.objects.accessible_by(user))
+            | Q(created_by_id__in=visible_ids)
+            | Q(participant__user_id__in=visible_ids, participant__is_active=True)
         ).distinct()
 
     @extend_schema(
@@ -575,7 +592,7 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
                 },
                 "example": {
                     "url": "wss://livekit.example.com",
-                    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                    "token": "<jwt-token>",
                     "room": "usertest_123",
                 },
             },
@@ -850,6 +867,89 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
             return Response(
                 {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    @action(detail=True, methods=["post"])
+    def mute_participant(self, request, pk=None):
+        """Force-mute another participant's microphone (practitioners only).
+
+        The mute is enforced server-side, so the participant is silenced for
+        everyone in the call. Used to stop echo/feedback when a participant
+        cannot mute themselves (e.g. on speakerphone, or a patient who joined
+        with help and is now alone)."""
+        appointment = self.get_object()
+        consultation = appointment.consultation
+
+        # Only practitioners may moderate the call.
+        if not self._is_doctor(request.user, consultation, appointment):
+            return Response(
+                {"error": _("Only practitioners can mute participants")},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        target_user_id = request.data.get("target_user_id")
+        if not target_user_id:
+            return Response(
+                {"error": _("target_user_id is required")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Default to muting; allow explicit unmute via {"muted": false}.
+        muted = request.data.get("muted", True)
+
+        target = (
+            appointment.participant_set.filter(user__pk=target_user_id)
+            .select_related("user")
+            .first()
+        )
+        if not target:
+            return Response(
+                {"error": _("Participant not found in this appointment")},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # A practitioner muting themselves is pointless and should use the
+        # normal in-call control instead.
+        if target.user.pk == request.user.pk:
+            return Response(
+                {"error": _("Use your own microphone control to mute yourself")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            server = Server.get_or_pin_for_room(appointment.room_uuid)
+        except NoMediaServerAvailable:
+            return Response(
+                {"detail": _("No media server available.")},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        if not server.instance.supports_remote_mute():
+            return Response(
+                {"detail": _("Muting participants is not supported by the configured media server.")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            affected = server.instance.mute_participant(
+                appointment.room_uuid, target.user, muted=muted
+            )
+        except RemoteUnmuteDisabled:
+            return Response(
+                {
+                    "detail": _(
+                        "Remote unmute is disabled on the media server. "
+                        "The participant must reactivate their own microphone."
+                    ),
+                    "code": "remote_unmute_disabled",
+                },
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
+        except Exception as e:
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        return Response({"status": "muted" if muted else "unmuted", "tracks": affected})
 
     def _is_doctor(self, user, consultation, appointment=None):
         """Check if user is a doctor (in Queue group)"""
@@ -1690,3 +1790,113 @@ class ReasonViewSet(viewsets.ReadOnlyModelViewSet):
             qs = qs.filter(id__in=ids)
 
         return qs
+
+
+class ReminderViewSet(CreatedByMixin, viewsets.ModelViewSet):
+    """CRUD for standalone reminders. Each practitioner only sees the
+    reminders they created. Delivery is handled by the periodic
+    ``handle_custom_reminders`` task."""
+
+    serializer_class = ReminderSerializer
+    permission_classes = [IsAuthenticated, IsPractitioner]
+    pagination_class = ConsultationPagination
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_class = ReminderFilter
+    ordering = ["-created_at"]
+    ordering_fields = ["created_at", "scheduled_at", "next_run_at"]
+    http_method_names = ["get", "post", "patch", "put", "delete", "head", "options"]
+
+    def get_queryset(self):
+        user = self.request.user
+        if not user.is_authenticated:
+            return Reminder.objects.none()
+        return Reminder.objects.filter(created_by=user)
+
+    @action(detail=False, methods=["get"])
+    def occurrences(self, request):
+        """Return expanded reminder occurrences within [start, end].
+
+        ``start`` and ``end`` are dates (YYYY-MM-DD). Recurring reminders are
+        expanded to one entry per occurrence falling in the window. Reminders
+        whose [scheduled_at, recurrence_end_at] range does not intersect the
+        window are excluded at the DB level via the dedicated index.
+        """
+        start_str = request.query_params.get("start")
+        end_str = request.query_params.get("end")
+        start_date = parse_date(start_str) if start_str else None
+        end_date = parse_date(end_str) if end_str else None
+        if not start_date or not end_date:
+            return Response(
+                {"detail": "start and end query params (YYYY-MM-DD) are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Inclusive window bounds as aware datetimes (start 00:00, end 23:59:59)
+        # in the user's timezone, so a calendar day maps to the user's day.
+        tz = request.user.user_tz
+        window_start = datetime.combine(start_date, time.min, tzinfo=tz)
+        window_end = datetime.combine(end_date, time.max, tzinfo=tz)
+
+        # The calendar can show reminders created by several selected
+        # practitioners. When `created_by` ids are provided, show those
+        # practitioners' reminders; otherwise fall back to the current user's.
+        # Requested creators are intersected with the practitioners the user is
+        # allowed to see (users_visibility scope), so the param can't widen
+        # access beyond what the setting permits.
+        from users.services import visible_practitioner_ids
+
+        created_by_ids = request.query_params.getlist("created_by")
+        if created_by_ids:
+            try:
+                requested_ids = {int(i) for i in created_by_ids}
+            except ValueError:
+                return Response(
+                    {"detail": "created_by must be integer ids."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            allowed_ids = set(visible_practitioner_ids(request.user))
+            allowed_ids.add(request.user.id)
+            scoped_ids = requested_ids & allowed_ids
+            base_qs = Reminder.objects.filter(created_by_id__in=scoped_ids)
+        else:
+            base_qs = Reminder.objects.filter(created_by=request.user)
+
+        # Intersection of [scheduled_at, recurrence_end_at] with the window.
+        reminders = base_qs.filter(
+            is_active=True,
+            scheduled_at__lte=window_end,
+            recurrence_end_at__gte=window_start,
+        ).select_related("recipient", "created_by")
+
+        occurrences = []
+        for reminder in reminders:
+            for index, occ in reminder.occurrences_between(window_start, window_end):
+                occurrences.append(
+                    {
+                        "reminder_id": reminder.id,
+                        "title": reminder.title,
+                        "description": reminder.description,
+                        "recipient": reminder.recipient,
+                        "created_by": reminder.created_by_id,
+                        "created_by_user": reminder.created_by,
+                        "consultation": reminder.consultation_id,
+                        "is_recurring": reminder.is_recurring,
+                        "recurrence_interval": reminder.recurrence_interval,
+                        "recurrence_period": reminder.recurrence_period,
+                        "recurrence_count": reminder.recurrence_count,
+                        "occurrence_index": index,
+                        "occurrence_total": reminder.recurrence_count
+                        if reminder.is_recurring
+                        else 1,
+                        "occurrence_at": occ,
+                        "scheduled_at": reminder.scheduled_at,
+                        "next_run_at": reminder.next_run_at,
+                        "recurrence_end_at": reminder.recurrence_end_at,
+                    }
+                )
+
+        occurrences.sort(key=lambda o: o["occurrence_at"])
+        serializer = ReminderOccurrenceSerializer(
+            occurrences, many=True, context={"request": request}
+        )
+        return Response(serializer.data)

@@ -2,16 +2,19 @@
   <div class="appointments-container">
     <div class="calendar-header">
       <div class="header-left">
-        <span class="total-count"
-          >{{ 'appointments.appointmentsCount' | translate:{ count:
-          appointments().length } }}</span
-        >
         <app-button
           [text]="'appointments.createNew' | translate"
           [style]="ButtonStyleEnum.primary"
           [size]="ButtonSizeEnum.small"
           leftIcon="plus"
           (buttonClick)="openCreateAppointmentModal()">
+        </app-button>
+        <app-button
+          [text]="'reminders.newReminder' | translate"
+          [style]="ButtonStyleEnum.stroke"
+          [size]="ButtonSizeEnum.small"
+          leftIcon="plus"
+          (buttonClick)="openCreateReminderModal()">
         </app-button>
       </div>
       <div class="header-controls">
@@ -123,8 +126,8 @@
         <span>{{ 'appointments.noAppointmentsFound' | translate }}</span>
       </div>
       } @else { @for (appointment of appointments(); track appointment.id) {
-      <div class="appointment-item" [class.highlighted]="highlightedAppointmentId() === appointment.id" (click)="viewAppointment(appointment)">
-        <div class="appointment-date">
+      <div class="appointment-item" [class.highlighted]="highlightedAppointmentId() === appointment.id" [class.colorized]="colorizationEnabled() && !!rowColor(appointment)" [style.border-left-color]="rowColor(appointment)" (click)="viewAppointment(appointment)">
+        <div class="appointment-date" [style.background-color]="rowColor(appointment)">
           <span class="day"
             >{{ appointment.scheduled_at | localDate:'dd' }}</span
           >
@@ -217,8 +220,53 @@
     </div>
     }
 
+    @if (!loading() && currentView() === 'list') {
+    <div class="reminders-section">
+      <div class="reminders-section-header">
+        <h3 class="reminders-section-title">
+          {{ 'reminders.remindersCount' | translate: { count: reminders().length } }}
+        </h3>
+      </div>
+
+      @if (isLoadingReminders()) {
+      <div class="reminders-loading">
+        <app-loader></app-loader>
+      </div>
+      } @else if (reminders().length === 0) {
+      <div class="empty-state">
+        <app-svg
+          src="bell"
+          [svgStyle]="{'width.px': 48, 'height.px': 48}"></app-svg>
+        <span>{{ 'reminders.noReminders' | translate }}</span>
+      </div>
+      } @else {
+      <div class="reminders-list">
+        @for (reminder of reminders(); track reminder.id) {
+        <app-reminder-card
+          [reminder]="reminder"
+          (edit)="openEditReminderModal($event)"
+          (delete)="deleteReminder($event)">
+        </app-reminder-card>
+        } @if (hasMoreReminders()) {
+        <div class="load-more-container">
+          <app-button
+            [text]="'appointments.viewMore' | translate"
+            [style]="ButtonStyleEnum.text"
+            [size]="ButtonSizeEnum.medium"
+            [loading]="isLoadingMoreReminders()"
+            [disabled]="isLoadingMoreReminders()"
+            (buttonClick)="loadMoreReminders()">
+          </app-button>
+        </div>
+        }
+      </div>
+      }
+    </div>
+    }
+
     <div
       class="calendar-wrapper"
+      [class.calendar-colorized]="colorizationEnabled()"
       [style.display]="loading() || currentView() === 'list' ? 'none' : 'block'">
       <full-calendar
         #calendar
@@ -300,6 +348,65 @@
     </div>
     }
 
+    @if (hoveredReminder()) {
+    <div
+      class="calendar-tooltip reminder-tooltip"
+      [style.top.px]="tooltipPosition().top"
+      [style.left.px]="tooltipPosition().left">
+      <div class="tooltip-header">
+        <div class="tooltip-title-row">
+          <span class="tooltip-title">{{ hoveredReminder()!.title }}</span>
+          <app-badge [type]="BadgeTypeEnum.purple">
+            {{ 'reminders.eventPrefix' | translate }}
+          </app-badge>
+        </div>
+      </div>
+
+      @if (hoveredReminder()!.description) {
+      <div class="tooltip-description">{{ hoveredReminder()!.description }}</div>
+      }
+
+      <div class="tooltip-datetime">
+        <app-svg src="bell" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
+        <span>{{ hoveredReminder()!.recipient }}</span>
+      </div>
+
+      @if (hoveredReminder()!.createdBy) {
+      <div class="tooltip-time">
+        <app-svg src="user" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
+        <span>{{ 'reminders.createdBy' | translate }}: {{ hoveredReminder()!.createdBy }}</span>
+      </div>
+      }
+
+      <div class="tooltip-time">
+        <app-svg src="clock" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
+        <span>{{ hoveredReminder()!.occurrenceAt | localDate : 'fullDate' }} - {{ hoveredReminder()!.occurrenceAt | localDate : 'HH:mm' }}</span>
+      </div>
+
+      @if (hoveredReminder()!.recurrence) {
+      <div class="tooltip-time">
+        <app-svg src="schedule" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
+        <span>
+          {{ hoveredReminder()!.recurrence }}
+          @if (hoveredReminder()!.recurrenceEndAt) {
+          ({{ 'reminders.until' | translate }} {{ hoveredReminder()!.recurrenceEndAt | localDate : 'mediumDate' }})
+          }
+        </span>
+      </div>
+      }
+
+      @if (hoveredReminder()!.nextRunAt) {
+      <div class="tooltip-time">
+        <app-svg src="bell" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
+        <span>
+          {{ 'reminders.nextRun' | translate }}:
+          {{ hoveredReminder()!.nextRunAt | localDate : 'mediumDate' }} - {{ hoveredReminder()!.nextRunAt | localDate : 'HH:mm' }}
+        </span>
+      </div>
+      }
+    </div>
+    }
+
     <app-confirm-presence-modal
       [isOpen]="confirmPresenceModalOpen()"
       [appointment]="confirmPresenceAppointment()"
@@ -319,5 +426,31 @@
       (appointmentCreated)="onAppointmentCreated()"
       (appointmentUpdated)="onAppointmentUpdated()">
     </app-appointment-form-modal>
+
+    @if (createReminderModalOpen()) {
+    <app-reminder-form-modal
+      [isOpen]="createReminderModalOpen()"
+      [editingReminder]="editingReminder()"
+      [initialDate]="selectedStartDate()"
+      (closed)="onReminderModalClosed()"
+      (reminderCreated)="onReminderCreated()"
+      (reminderUpdated)="onReminderUpdated()">
+    </app-reminder-form-modal>
+    }
+
+    <app-element-type-modal
+      [isOpen]="elementTypeModalOpen()"
+      (closed)="onElementTypeModalClosed()"
+      (typeSelected)="onElementTypeSelected($event)">
+    </app-element-type-modal>
+
+    <app-reminder-detail-modal
+      [isOpen]="reminderDetailModalOpen()"
+      [reminder]="detailReminder()"
+      [canEdit]="canEditReminder(detailReminder())"
+      (closed)="onReminderDetailClosed()"
+      (edit)="onReminderDetailEdit($event)"
+      (delete)="onReminderDetailDelete($event)">
+    </app-reminder-detail-modal>
   </div>
 </app-page>

@@ -51,12 +51,73 @@ Néanmoins, je souhaite lui mettre un message en rouge lorsque ses disponibité 
 - Adding participant without clicking on add 
 - Queue / Groups of users 
 
-# Encryption
-
-Si pas possible de décrypter, indiquer sur le chat
-
-http://localhost:8001/home
-
 # Désassignation de consultation
 
 ne disparait pas
+
+# Corriger logo dans email qui n'apparait pas
+
+Le logo n'apparait pas dans les emails
+
+# Corriger problème Fhir
+
+creating an appointment via FHIR also seems not to work well with a fhir client, the participants are not getting created, the current supported payload structure is not what a fhir client generates for participants, what the fhir client generates is as below,
+{
+    "resourceType": "Appointment",
+    "status": "proposed",
+    "description": "30-minute consultation",
+    "start": "2026-06-24T11:00:00Z",
+    "end": "2026-06-24T11:30:00Z",
+    "identifier": [
+        {
+            "system": "https://ozonehis.example/ns/appointment-id",
+            "value": "123"
+        }
+    ],
+    "contained": [
+        {
+            "resourceType": "Patient",
+            "id": "patient",
+            "name": [
+                {
+                    "family": "John",
+                    "given": [
+                        "Doe"
+                    ]
+                }
+            ],
+            "telecom": [
+                {
+                    "system": "email",
+                    "value": "jdoe@ozone.com"
+                }
+            ],
+            "gender": "male"
+        },
+        {
+            "resourceType": "Practitioner",
+            "id": "practitioner",
+            "telecom": [
+                {
+                    "system": "email",
+                    "value": "doc@ozone.com",
+                    "use": "work"
+                }
+            ]
+        }
+    ],
+    "participant": [
+        {
+            "status": "needs-action",
+            "actor": {
+                "reference": "#patient"
+            }
+        },
+        {
+            "status": "needs-action",
+            "actor": {
+                "reference": "#practitioner"
+            }
+        }
+    ]
+}

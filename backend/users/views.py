@@ -45,7 +45,7 @@ from dj_rest_auth.views import PasswordResetConfirmView as DjRestAuthPasswordRes
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import Q
+from django.db.models import Exists, OuterRef, Q
 from django.http import FileResponse
 from django.shortcuts import render
 from django.utils import timezone, translation
@@ -73,7 +73,7 @@ from constance import config as constance_config
 from allauth.socialaccount.models import SocialApp
 
 from .filters import UserFilter
-from .models import HealthMetric, Language, Organisation, Speciality, Term, User, WebPushSubscription
+from .models import HealthMetric, Language, Organisation, Speciality, Term, User, WebPushSubscription, DAVAppPassword
 from .serializers import (
     HealthMetricSerializer,
     LanguageSerializer,
@@ -83,6 +83,8 @@ from .serializers import (
     UserDetailsSerializer,
     UserParticipantDetailSerializer,
     WebPushSubscriptionSerializer,
+    DAVAppPasswordSerializer,
+    PublicPractitionerSerializer,
 )
 from constance import config
 
@@ -298,21 +300,15 @@ class SpecialityViewSet(viewsets.ReadOnlyModelViewSet):
 
 class OrganisationViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    ViewSet for organisations - read only.
-    Access can be public or authenticated depending on the
-    public_organisations setting.
-    Supports bounding box filtering (lat_min, lat_max, lng_min, lng_max)
-    and search query parameter.
+    ViewSet for organisations - read only, authenticated callers only.
+    Public map browsing now lives at /api/map/.
+    Supports a `search` query parameter.
     """
 
     queryset = Organisation.objects.all()
     serializer_class = OrganisationSerializer
     pagination_class = UniversalPagination
-
-    def get_permissions(self):
-        if constance_config.public_organisations:
-            return [AllowAny()]
-        return [IsAuthenticated()]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         qs = super().get_queryset().exclude(
@@ -329,45 +325,156 @@ class OrganisationViewSet(viewsets.ReadOnlyModelViewSet):
             )
         return qs
 
-    def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
 
-        # Apply bounding box filter if provided and no search
-        if not request.query_params.get("search"):
-            queryset = self._filter_by_bounding_box(queryset, request)
+class MapView(APIView):
+    """
+    Single endpoint backing the public practitioner/organisation map.
 
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+    Returns `{ "organisations": [...], "practitioners": [...] }` in one
+    response (one SQL query per side) so the client doesn't have to fan
+    out into multiple paginated requests.
+
+    Access: `AllowAny` when `constance_config.public_organisations` is
+    enabled, `IsAuthenticated` otherwise. Practitioners are always
+    filtered to `is_practitioner=True` with a usable location (their own
+    or their `main_organisation`'s).
+
+    Supported query params:
+      - `lat_min`, `lat_max`, `lng_min`, `lng_max`: bounding-box filter
+        (all four required; ignored otherwise).
+      - `speciality`: speciality id to restrict practitioners.
+      - `has_slots`: when truthy, restrict practitioners to those with
+        at least one currently-valid booking slot.
+      - `search`: free-text search across practitioner/org name, address
+        and main organisation. When provided the bounding box is
+        ignored, matching the previous per-endpoint behavior.
+    """
+
+    def get_permissions(self):
+        if constance_config.public_organisations:
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+    def get(self, request):
+        bounds = self._parse_bounds(request)
+        search = request.query_params.get("search") or None
+        speciality = request.query_params.get("speciality") or None
+        has_slots_raw = request.query_params.get("has_slots") or ""
+        has_slots = has_slots_raw.lower() in ("true", "1")
+
+        organisations = self._build_organisations(bounds, search)
+        practitioners = self._build_practitioners(
+            bounds, search, speciality, has_slots
+        )
+
+        return Response({
+            "organisations": OrganisationSerializer(organisations, many=True).data,
+            "practitioners": PublicPractitionerSerializer(practitioners, many=True).data,
+        })
 
     @staticmethod
-    def _filter_by_bounding_box(queryset, request):
+    def _parse_bounds(request):
         lat_min = request.query_params.get("lat_min")
         lat_max = request.query_params.get("lat_max")
         lng_min = request.query_params.get("lng_min")
         lng_max = request.query_params.get("lng_max")
         if not all(v is not None for v in (lat_min, lat_max, lng_min, lng_max)):
-            return queryset
+            return None
         try:
-            bounds = float(lat_min), float(lat_max), float(lng_min), float(lng_max)
+            return float(lat_min), float(lat_max), float(lng_min), float(lng_max)
         except (ValueError, TypeError):
-            return queryset
-        queryset = queryset.exclude(location__isnull=True).exclude(location="")
-        ids = []
-        for obj in queryset:
-            if not obj.location:
-                continue
-            try:
-                lat, lng = (float(x) for x in obj.location.split(","))
-                if bounds[0] <= lat <= bounds[1] and bounds[2] <= lng <= bounds[3]:
-                    ids.append(obj.id)
-            except (ValueError, AttributeError):
-                continue
-        return queryset.model.objects.filter(id__in=ids)
+            return None
 
+    @staticmethod
+    def _location_in_bounds(location: str | None, bounds) -> bool:
+        if not location:
+            return False
+        try:
+            lat, lng = (float(x) for x in location.split(","))
+        except (ValueError, AttributeError):
+            return False
+        return bounds[0] <= lat <= bounds[1] and bounds[2] <= lng <= bounds[3]
+
+    def _build_organisations(self, bounds, search):
+        qs = Organisation.objects.exclude(
+            location__isnull=True
+        ).exclude(location="")
+        if search:
+            qs = qs.filter(
+                Q(name__icontains=search)
+                | Q(city__icontains=search)
+                | Q(street__icontains=search)
+                | Q(postal_code__icontains=search)
+                | Q(country__icontains=search)
+            )
+            return list(qs)
+        if bounds is None:
+            return list(qs)
+        return [org for org in qs if self._location_in_bounds(org.location, bounds)]
+
+    def _build_practitioners(self, bounds, search, speciality, has_slots):
+        qs = User.objects.filter(
+            is_active=True,
+            is_practitioner=True,
+        ).select_related("main_organisation").filter(
+            Q(location__isnull=False) & ~Q(location="")
+            | Q(main_organisation__isnull=False)
+            & Q(main_organisation__location__isnull=False)
+            & ~Q(main_organisation__location="")
+        )
+        if speciality:
+            qs = qs.filter(specialities__id=speciality)
+        if has_slots:
+            today = timezone.now().date()
+            qs = qs.filter(
+                Q(slots__isnull=False)
+                & (Q(slots__valid_until__isnull=True) | Q(slots__valid_until__gte=today))
+            ).distinct()
+        if search:
+            return list(qs.filter(
+                Q(first_name__icontains=search)
+                | Q(last_name__icontains=search)
+                | Q(street__icontains=search)
+                | Q(city__icontains=search)
+                | Q(postal_code__icontains=search)
+                | Q(country__icontains=search)
+                | Q(main_organisation__name__icontains=search)
+                | Q(main_organisation__city__icontains=search)
+            ))
+        if bounds is None:
+            return list(qs)
+        kept = []
+        for user in qs:
+            loc = user.location or (
+                user.main_organisation.location if user.main_organisation else None
+            )
+            if self._location_in_bounds(loc, bounds):
+                kept.append(user)
+        return kept
+
+class PublicPractitionerView(APIView):
+    """
+    Public read-only profile for a single practitioner.
+    """
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get_permissions(self):
+        if constance_config.public_organisations:
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+    def get(self, request, pk):
+        try:
+            practitioner = User.objects.get(
+                pk=pk, is_practitioner=True, is_active=True
+            )
+        except User.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        from .serializers import PublicPractitionerSerializer
+        return Response(PublicPractitionerSerializer(practitioner).data)
 
 def generate_magic_token(user):
     serializer = URLSafeTimedSerializer(settings.SECRET_KEY)
@@ -404,18 +511,33 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
         user is an active participant of, so the appointment chat works without
         exposing the temp follow-up in the patient's main list.
         """
+        from consultations.utils import appointment_active_cutoff
         from consultations.views import annotate_unread_count
 
         user = self.request.user
         if self.action == "list":
-            qs = Consultation.objects.filter(
-                Q(beneficiary=user, visible_by_patient=True)
-                | Q(
-                    appointments__participant__user=user,
-                    appointments__participant__is_active=True,
-                    appointments__participant__is_consultation_visible=True,
+            active_cutoff = appointment_active_cutoff()
+            has_active_appointment = Exists(
+                Appointment.objects.filter(
+                    consultation=OuterRef("pk"),
+                    scheduled_at__gte=active_cutoff,
                 )
-            ).distinct()
+            )
+            has_no_appointment = ~Exists(
+                Appointment.objects.filter(consultation=OuterRef("pk"))
+            )
+            qs = (
+                Consultation.objects.filter(
+                    Q(beneficiary=user, visible_by_patient=True)
+                    | Q(
+                        appointments__participant__user=user,
+                        appointments__participant__is_active=True,
+                        appointments__participant__is_consultation_visible=True,
+                    )
+                )
+                .filter(has_active_appointment | has_no_appointment)
+                .distinct()
+            )
         else:
             qs = Consultation.objects.filter(
                 Q(beneficiary=user, visible_by_patient=True)
@@ -886,7 +1008,7 @@ class UserAppointmentsViewSet(viewsets.ReadOnlyModelViewSet):
                 },
                 "example": {
                     "url": "wss://livekit.example.com",
-                    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                    "token": "<jwt-token>",
                     "room": "usertest_123",
                 },
             },
@@ -1042,14 +1164,15 @@ class UserViewSet(viewsets.ModelViewSet):
     """
     ViewSet for users - read only with GET endpoint
     Supports search by first name, last name, and email
-    Visibility controlled by USERS_VISIBILITY setting.
-    When public_organisations is enabled, unauthenticated users
-    can list practitioners (with bounding-box filtering).
+    Visibility controlled by USERS_VISIBILITY / PATIENT_VISIBILITY settings.
+    Authenticated practitioners only; the public map listing now lives at
+    /api/map/.
     """
 
     queryset = User.objects.all()
     serializer_class = UserDetailsSerializer
     pagination_class = UniversalPagination
+    permission_classes = [IsAuthenticated, IsPractitioner]
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     search_fields = [
         "first_name", "last_name", "email", "mobile_phone_number",
@@ -1058,64 +1181,37 @@ class UserViewSet(viewsets.ModelViewSet):
     ]
     filterset_class = UserFilter
 
-    def get_permissions(self):
-        if self.action == "list" and constance_config.public_organisations:
-            return [AllowAny()]
-        return [IsAuthenticated(), IsPractitioner()]
-
     def get_queryset(self):
         """
         Filter users based on visibility settings:
         - USERS_VISIBILITY controls practitioner visibility
         - PATIENT_VISIBILITY controls patient visibility
-        Public (unauthenticated) access returns practitioners only.
         """
         base_queryset = self.queryset.filter(is_active=True)
-
-        # Public access: return only practitioners with a location
-        # (either their own or their main_organisation's)
-        if not (self.request.user and self.request.user.is_authenticated):
-            qs = base_queryset.filter(
-                is_practitioner=True,
-            ).select_related("main_organisation").filter(
-                # User has own location OR main_organisation has location
-                Q(location__isnull=False) & ~Q(location="")
-                | Q(main_organisation__isnull=False)
-                & Q(main_organisation__location__isnull=False)
-                & ~Q(main_organisation__location="")
-            )
-            speciality = self.request.query_params.get("speciality")
-            if speciality:
-                qs = qs.filter(specialities__id=speciality)
-            has_slots = self.request.query_params.get("has_slots")
-            if has_slots and has_slots.lower() in ("true", "1"):
-                today = timezone.now().date()
-                qs = qs.filter(
-                    Q(slots__isnull=False)
-                    & (Q(slots__valid_until__isnull=True) | Q(slots__valid_until__gte=today))
-                ).distinct()
-            search = self.request.query_params.get("search")
-            if search:
-                qs = qs.filter(
-                    Q(first_name__icontains=search)
-                    | Q(last_name__icontains=search)
-                    | Q(street__icontains=search)
-                    | Q(city__icontains=search)
-                    | Q(postal_code__icontains=search)
-                    | Q(country__icontains=search)
-                    | Q(main_organisation__name__icontains=search)
-                    | Q(main_organisation__city__icontains=search)
-                )
-            else:
-                qs = self._filter_by_bounding_box(qs)
-            return qs
-
         current_user = self.request.user
 
         practitioners_qs = self._filter_practitioners(base_queryset, current_user)
         patients_qs = self._filter_patients(base_queryset, current_user)
 
         return (practitioners_qs | patients_qs).distinct()
+
+    def filter_queryset(self, queryset):
+        """Run the default SearchFilter, then also match phone numbers ignoring
+        spaces/separators: the search term is normalized the same way numbers
+        are stored, so '06 12 34 56 78' and '0612345678' both match."""
+        visible = self.get_queryset()
+        filtered = super().filter_queryset(queryset)
+
+        search = self.request.query_params.get("search")
+        normalized = User.normalize_phone_number(search) if search else None
+        # Only attempt a phone match when the term actually contains digits and
+        # differs from the raw term (otherwise SearchFilter already covered it).
+        if normalized and any(c.isdigit() for c in normalized):
+            phone_matches = visible.filter(
+                mobile_phone_number__icontains=normalized
+            )
+            return (filtered | phone_matches).distinct()
+        return filtered
 
     def _filter_practitioners(self, base_queryset, current_user):
         """Filter practitioners based on USERS_VISIBILITY setting."""
@@ -1185,32 +1281,6 @@ class UserViewSet(viewsets.ModelViewSet):
         for f in filters[1:]:
             combined |= f
         return combined
-
-    def _filter_by_bounding_box(self, queryset):
-        """Filter queryset by geographic bounding box.
-        Uses user.location first, falls back to main_organisation.location."""
-        lat_min = self.request.query_params.get("lat_min")
-        lat_max = self.request.query_params.get("lat_max")
-        lng_min = self.request.query_params.get("lng_min")
-        lng_max = self.request.query_params.get("lng_max")
-        if not all(v is not None for v in (lat_min, lat_max, lng_min, lng_max)):
-            return queryset
-        try:
-            bounds = float(lat_min), float(lat_max), float(lng_min), float(lng_max)
-        except (ValueError, TypeError):
-            return queryset
-        ids = []
-        for obj in queryset.select_related("main_organisation"):
-            loc = obj.location or (obj.main_organisation.location if obj.main_organisation else None)
-            if not loc:
-                continue
-            try:
-                lat, lng = (float(x) for x in loc.split(","))
-                if bounds[0] <= lat <= bounds[1] and bounds[2] <= lng <= bounds[3]:
-                    ids.append(obj.id)
-            except (ValueError, AttributeError):
-                continue
-        return queryset.filter(id__in=ids)
 
     def create(self, request, *args, **kwargs):
         """
@@ -1314,6 +1384,9 @@ class OpenIDAdapter(OpenIDConnectOAuth2Adapter):
 
 class CustomOAuth2Client(OAuth2Client):
     _pkce_code_verifier = None
+    # Raw OIDC id_token captured from the token endpoint response, needed as
+    # id_token_hint for RP-initiated logout (allauth decodes then discards it).
+    _id_token = None
 
     def __init__(
         self,
@@ -1348,6 +1421,9 @@ class CustomOAuth2Client(OAuth2Client):
         try:
             result = super().get_access_token(code, pkce_code_verifier)
             self._pkce_code_verifier = None
+            # Capture the raw id_token so it can be sent back to the frontend
+            # and used as id_token_hint for the OIDC logout.
+            CustomOAuth2Client._id_token = result.get("id_token")
             return result
         except Exception as e:
             self._pkce_code_verifier = None
@@ -1379,6 +1455,9 @@ class OpenIDView(SocialLoginView):
         else:
             CustomOAuth2Client._pkce_code_verifier = None
 
+        # Reset any previously captured id_token before the exchange
+        CustomOAuth2Client._id_token = None
+
         # Add callback_url to request data if not present
         if "code" in request.data and "callback_url" not in request.data:
             request.data["callback_url"] = callback_url
@@ -1391,6 +1470,12 @@ class OpenIDView(SocialLoginView):
             if not user.is_practitioner:
                 user.is_practitioner = True
                 user.save(update_fields=['is_practitioner'])
+
+        # Return the id_token to the frontend so it can be used as
+        # id_token_hint for the OIDC logout (RP-initiated logout).
+        if response.status_code == 200 and CustomOAuth2Client._id_token:
+            response.data["id_token"] = CustomOAuth2Client._id_token
+        CustomOAuth2Client._id_token = None
 
         return response
 
@@ -1414,14 +1499,21 @@ class AppConfigView(APIView):
             "enabled": False,
             "client_id": None,
             "authorization_url": None,
+            "end_session_url": None,
             "provider_name": None,
         }
 
         social_app = SocialApp.objects.filter(provider="openid_connect").first()
         if social_app:
             authorization_url = None
+            end_session_url = None
             try:
-                authorization_url = OpenIDAdapter(request).authorize_url
+                # Reuse a single adapter instance: openid_config is cached per
+                # instance, so authorize_url and end_session_endpoint share one
+                # discovery fetch.
+                adapter = OpenIDAdapter(request)
+                authorization_url = adapter.authorize_url
+                end_session_url = adapter.openid_config.get("end_session_endpoint")
             except Exception as e:
                 logger.warning(f"Failed to fetch OIDC discovery: {e}")
 
@@ -1429,6 +1521,7 @@ class AppConfigView(APIView):
                 "enabled": bool(social_app.client_id),
                 "client_id": social_app.client_id,
                 "authorization_url": authorization_url,
+                "end_session_url": end_session_url,
                 "provider_name": social_app.name,
             }
 
@@ -1476,6 +1569,15 @@ class AppConfigView(APIView):
                 "encryption_enabled": constance_config.encryption_enabled,
                 "master_public_key": constance_config.master_public_key,
                 "master_public_key_fingerprint": constance_config.master_public_key_fingerprint,
+                "calendar_colorization_enabled": constance_config.enable_calendar_colorization,
+                "calendar_rotation_colors": [
+                    constance_config.calendar_color_week_1,
+                    constance_config.calendar_color_week_2,
+                    constance_config.calendar_color_week_3,
+                    constance_config.calendar_color_week_4,
+                ],
+                "calendar_rotation_anchor_date": constance_config.calendar_rotation_anchor_date,
+                "calendar_first_day_of_week": int(constance_config.calendar_first_day_of_week),
             }
         )
 
@@ -1625,7 +1727,7 @@ class TestRTCView(APIView):
                 },
                 "example": {
                     "url": "wss://livekit.example.com",
-                    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                    "token": "<jwt-token>",
                     "room": "usertest_123",
                 },
             },
@@ -1709,6 +1811,20 @@ class UserDashboardView(APIView):
 
         from consultations.views import annotate_unread_count
 
+        # A consultation stays visible to the patient as long as it has at
+        # least one appointment still within the active window
+        # (scheduled_at + default duration + join limit). Consultations with
+        # no appointments are unaffected by this rule.
+        has_active_appointment = Exists(
+            Appointment.objects.filter(
+                consultation=OuterRef("pk"),
+                scheduled_at__gte=active_cutoff,
+            )
+        )
+        has_no_appointment = ~Exists(
+            Appointment.objects.filter(consultation=OuterRef("pk"))
+        )
+
         consultations = annotate_unread_count(
             Consultation.objects.exclude(request__in=user_requests)
             .filter(closed_at__isnull=True)
@@ -1720,6 +1836,7 @@ class UserDashboardView(APIView):
                     appointments__participant__is_consultation_visible=True,
                 )
             )
+            .filter(has_active_appointment | has_no_appointment)
             .distinct()
             .order_by("-created_at"),
             user,
@@ -1951,3 +2068,14 @@ class PractitionerViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         return self.queryset.filter(is_active=True)
+
+class DAVAppPasswordViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = DAVAppPasswordSerializer
+    http_method_names = ["get", "post", "delete", "head", "options"]
+
+    def get_queryset(self):
+        return DAVAppPassword.objects.filter(user=self.request.user)
+    
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

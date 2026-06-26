@@ -52,7 +52,7 @@
         }
 
         @for (participant of getParticipantsArray(); track trackByIdentity($index, participant)) {
-          <div class="video-tile">
+          <div class="video-tile" [class.speaking]="participant.isSpeaking">
             <video
               [id]="'video-' + participant.identity"
               autoplay
@@ -71,6 +71,18 @@
                 <app-svg src="microphone-off" [svgStyle]="{'width.px': 14, 'height.px': 14}" class="muted-indicator"></app-svg>
               }
             </div>
+            @if (canModerate) {
+              <button
+                type="button"
+                class="mute-participant-btn"
+                [class.is-muted]="!participant.isMicrophoneEnabled"
+                [disabled]="isMuting(participant)"
+                [attr.aria-label]="(participant.isMicrophoneEnabled ? 'videoConsultation.muteParticipant' : 'videoConsultation.unmuteParticipant') | translate"
+                [title]="(participant.isMicrophoneEnabled ? 'videoConsultation.muteParticipant' : 'videoConsultation.unmuteParticipant') | translate"
+                (click)="toggleParticipantMute(participant)">
+                <app-svg [src]="participant.isMicrophoneEnabled ? 'microphone' : 'microphone-off'" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+              </button>
+            }
           </div>
 
           @if (participant.isScreenShareEnabled && participant.screenShareTrack) {
@@ -209,11 +221,14 @@
           @if (!isMinimized) {
             <!-- Chat -->
             <button
-              class="control-button"
+              class="control-button chat-control"
               [class.active]="showChat()"
               (click)="toggleChatPanel()">
               <app-svg src="message-square" [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
               <span class="control-label">{{ 'videoConsultation.chat' | translate }}</span>
+              @if (unreadCount() > 0) {
+                <span class="unread-badge">{{ unreadCount() > 9 ? '9+' : unreadCount() }}</span>
+              }
             </button>
           }
 

@@ -20,6 +20,7 @@ import { IUser, ILanguage } from '../../models/user';
 import { CommunicationMethodEnum, CommunicationMethodOptions } from '../../constants/user';
 import { CustomField } from '../../../../core/models/consultation';
 import { SelectOption } from '../../../../shared/models/select';
+import { TIMEZONE_OPTIONS } from '../../../../shared/constants/timezone';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
 import { TranslatePipe } from '@ngx-translate/core';
 import { TranslationService } from '../../../../core/services/translation.service';
@@ -113,6 +114,7 @@ export class AddEditPatient implements OnInit, OnDestroy {
   customFieldsForm!: FormGroup;
   loading = false;
   languageOptions: SelectOption[] = [];
+  timezoneOptions: SelectOption[] = TIMEZONE_OPTIONS;
   communicationMethodOptions: SelectOption[] = [];
   private availableCommunicationMethods: string[] = [];
   customFields = signal<CustomField[]>([]);
@@ -310,6 +312,18 @@ export class AddEditPatient implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  // For a new contact, default timezone/language to the current practitioner's;
+  // when editing, keep the contact's own values.
+  private defaultTimezone(p: IUser | null): string {
+    if (p?.timezone) return p.timezone;
+    return this.userService.currentUserValue?.timezone || 'UTC';
+  }
+
+  private defaultLanguage(p: IUser | null): number | string | null {
+    if (p?.preferred_language != null) return p.preferred_language;
+    return this.userService.currentUserValue?.preferred_language ?? null;
+  }
+
   private initForm(): void {
     const p = this.patient();
     let firstName = p?.first_name || '';
@@ -332,8 +346,8 @@ export class AddEditPatient implements OnInit, OnDestroy {
       email: [email, [Validators.email]],
       mobile_phone_number: [phone],
       communication_method: [p?.communication_method || '', [Validators.required]],
-      timezone: [p?.timezone || 'UTC'],
-      preferred_language: [p?.preferred_language || null],
+      timezone: [this.defaultTimezone(p)],
+      preferred_language: [this.defaultLanguage(p)],
       street: [p?.street || ''],
       city: [p?.city || ''],
       postal_code: [p?.postal_code || ''],
@@ -351,8 +365,8 @@ export class AddEditPatient implements OnInit, OnDestroy {
       email: p?.email || '',
       mobile_phone_number: p?.mobile_phone_number || '',
       communication_method: p?.communication_method || '',
-      timezone: p?.timezone || 'UTC',
-      preferred_language: p?.preferred_language || null,
+      timezone: this.defaultTimezone(p),
+      preferred_language: this.defaultLanguage(p),
       street: p?.street || '',
       city: p?.city || '',
       postal_code: p?.postal_code || '',
