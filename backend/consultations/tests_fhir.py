@@ -226,6 +226,77 @@ class AppointmentFhirMapperUnitTests(_AppointmentFhirBase):
         self.assertEqual(instance.status, AppointmentStatus.scheduled)
 
 
+class AppointmentFhirStatusDerivationTests(_AppointmentFhirBase):
+    """FHIR Appointment.status reflects participant confirmations (per spec):
+    proposed = none confirmed, pending = some confirmed, booked = all confirmed."""
+
+    def _status_of(self, appt):
+        return AppointmentFhirMapper().to_fhir(appt)["status"]
+
+    def _make_appt(self, confirmations):
+        appt = Appointment.objects.create(
+            created_by=self.practitioner,
+            scheduled_at=timezone.now() + timedelta(days=2),
+            status=AppointmentStatus.scheduled,
+        )
+        for i, confirmed in enumerate(confirmations):
+            user = User.objects.create_user(email=f"p{i}@ex.com", password="x")
+            Participant.objects.create(
+                appointment=appt, user=user, is_confirmed=confirmed, is_active=True,
+            )
+        return appt
+
+    def test_all_confirmed_is_booked(self):
+        appt = self._make_appt([True, True])
+        self.assertEqual(self._status_of(appt), "booked")
+
+    def test_some_confirmed_is_pending(self):
+        appt = self._make_appt([True, None])
+        self.assertEqual(self._status_of(appt), "pending")
+
+    def test_none_confirmed_is_proposed(self):
+        appt = self._make_appt([None, None])
+        self.assertEqual(self._status_of(appt), "proposed")
+
+    def test_declined_without_any_accepted_is_proposed(self):
+        # No is_confirmed=True anywhere -> proposed.
+        appt = self._make_appt([False, None])
+        self.assertEqual(self._status_of(appt), "proposed")
+
+    def test_declined_with_one_accepted_is_pending(self):
+        appt = self._make_appt([True, False])
+        self.assertEqual(self._status_of(appt), "pending")
+
+    def test_no_active_participants_is_proposed(self):
+        appt = Appointment.objects.create(
+            created_by=self.practitioner,
+            scheduled_at=timezone.now() + timedelta(days=2),
+            status=AppointmentStatus.scheduled,
+        )
+        self.assertEqual(self._status_of(appt), "proposed")
+
+    def test_inactive_confirmed_participant_ignored(self):
+        # An inactive (cancelled) participant must not count toward "all confirmed".
+        appt = self._make_appt([None])
+        gone = User.objects.create_user(email="gone@ex.com", password="x")
+        Participant.objects.create(
+            appointment=appt, user=gone, is_confirmed=True, is_active=False,
+        )
+        self.assertEqual(self._status_of(appt), "proposed")
+
+    def test_cancelled_appointment_is_cancelled(self):
+        appt = self._make_appt([True, True])
+        appt.status = AppointmentStatus.cancelled
+        appt.save(update_fields=["status"])
+        self.assertEqual(self._status_of(appt), "cancelled")
+
+    def test_draft_appointment_is_proposed(self):
+        appt = self._make_appt([True])
+        appt.status = AppointmentStatus.draft
+        appt.save(update_fields=["status"])
+        self.assertEqual(self._status_of(appt), "proposed")
+
+
 class AppointmentContainedParticipantTests(_AppointmentFhirBase):
     """FHIR clients inline Patient/Practitioner in `contained` and reference
     them via `#fragment`. Patients are find-or-created; practitioners must

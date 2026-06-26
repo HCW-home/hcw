@@ -53,6 +53,32 @@ _STATUS_FROM_FHIR = {
     "entered-in-error": AppointmentStatus.cancelled.value,
 }
 
+
+def _appointment_status_to_fhir(instance) -> str:
+    """Derive the FHIR Appointment.status from HCW state + participant confirmations.
+
+    Cancelled/draft map directly. A scheduled appointment reflects the
+    confirmation state of its active participants (per FHIR semantics):
+    - booked   : every active participant has confirmed (is_confirmed=True)
+    - pending  : at least one has confirmed, but not all
+    - proposed : none have confirmed (all None, or none accepted)
+    """
+    if instance.status == AppointmentStatus.cancelled.value:
+        return "cancelled"
+    if instance.status == AppointmentStatus.draft.value:
+        return "proposed"
+
+    confirmations = list(
+        instance.participant_set.filter(is_active=True).values_list(
+            "is_confirmed", flat=True
+        )
+    )
+    if confirmations and all(c is True for c in confirmations):
+        return "booked"
+    if any(c is True for c in confirmations):
+        return "pending"
+    return "proposed"
+
 _TYPE_SYSTEM = "http://terminology.hl7.org/CodeSystem/v2-0276"
 _TYPE_TO_CODE = {Type.online.value: "ROUTINE", Type.inperson.value: "WALKIN"}
 _CODE_TO_TYPE = {"ROUTINE": Type.online.value, "WALKIN": Type.inperson.value}
@@ -148,7 +174,7 @@ class AppointmentFhirMapper(FhirResourceMapper):
             resourceType="Appointment",
             id=str(instance.pk),
             identifier=identifiers,
-            status=_STATUS_TO_FHIR.get(instance.status, "pending"),
+            status=_appointment_status_to_fhir(instance),
             start=instance.scheduled_at,
             end=instance.end_expected_at,
             created=instance.created_at,
