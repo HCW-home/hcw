@@ -9,8 +9,7 @@ class PhoneNormalizationTests(TenantTestCase):
     def test_save_strips_spaces_and_separators(self):
         u = User.objects.create_user(
             email="p1@example.com",
-            password="x",
-            mobile_phone_number="06 12 34 56 78",
+                        mobile_phone_number="06 12 34 56 78",
         )
         u.refresh_from_db()
         self.assertEqual(u.mobile_phone_number, "0612345678")
@@ -18,8 +17,7 @@ class PhoneNormalizationTests(TenantTestCase):
     def test_save_keeps_leading_plus(self):
         u = User.objects.create_user(
             email="p2@example.com",
-            password="x",
-            mobile_phone_number="+33 6 12.34-56(78)",
+                        mobile_phone_number="+33 6 12.34-56(78)",
         )
         u.refresh_from_db()
         self.assertEqual(u.mobile_phone_number, "+33612345678")
@@ -28,12 +26,11 @@ class PhoneNormalizationTests(TenantTestCase):
 class PhoneSearchTests(TenantTestCase):
     def setUp(self):
         self.practitioner = User.objects.create_user(
-            email="doc@example.com", password="x", is_practitioner=True
+            email="doc@example.com", is_practitioner=True
         )
         self.patient = User.objects.create_user(
             email="pat@example.com",
-            password="x",
-            first_name="Jean",
+                        first_name="Jean",
             mobile_phone_number="06 12 34 56 78",  # stored normalized
         )
         self.client = APIClient()

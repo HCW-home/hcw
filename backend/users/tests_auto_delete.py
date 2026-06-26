@@ -13,11 +13,11 @@ from users.tasks import auto_delete_temporary_users
 class AutoDeleteTemporaryUsersReminderTests(TenantTestCase):
     def setUp(self):
         self.practitioner = User.objects.create_user(
-            email="doc@example.com", password="x", is_practitioner=True
+            email="doc@example.com", is_practitioner=True
         )
 
     def _make_temp_user(self, email):
-        u = User.objects.create_user(email=email, password="x", temporary=True)
+        u = User.objects.create_user(email=email, temporary=True)
         # Eligible for deletion: joined more than 1h ago.
         User.objects.filter(pk=u.pk).update(
             date_joined=timezone.now() - timedelta(hours=2)

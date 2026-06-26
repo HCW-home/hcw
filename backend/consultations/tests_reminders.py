@@ -17,13 +17,13 @@ from users.models import User
 class _ReminderBase(TenantTestCase):
     def setUp(self):
         self.practitioner = User.objects.create_user(
-            email="doc@example.com", password="x", is_practitioner=True
+            email="doc@example.com", is_practitioner=True
         )
         self.other_practitioner = User.objects.create_user(
-            email="doc2@example.com", password="x", is_practitioner=True
+            email="doc2@example.com", is_practitioner=True
         )
         self.patient = User.objects.create_user(
-            email="pat@example.com", password="x"
+            email="pat@example.com"
         )
         self.client = APIClient()
         self.client.force_authenticate(user=self.practitioner)
@@ -144,7 +144,7 @@ class ReminderApiTests(_ReminderBase):
 
     def test_filter_by_recipient(self):
         other_patient = User.objects.create_user(
-            email="pat2@example.com", password="x"
+            email="pat2@example.com"
         )
         mine = Reminder.objects.create(
             title="For patient 1",

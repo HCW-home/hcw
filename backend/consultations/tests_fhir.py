@@ -20,13 +20,11 @@ class _AppointmentFhirBase(TenantTestCase):
     def setUp(self):
         self.practitioner = User.objects.create_user(
             email="doc@example.com",
-            password="x",
-            is_practitioner=True,
+                        is_practitioner=True,
         )
         self.patient = User.objects.create_user(
             email="pat@example.com",
-            password="x",
-        )
+                    )
         self.consultation = Consultation.objects.create(
             title="Follow-up",
             description="Check pulse",
@@ -100,7 +98,7 @@ class AppointmentFhirSearchTests(_AppointmentFhirBase):
         self.assertEqual(response.data["total"], 1)
 
     def test_filter_by_patient(self):
-        other_patient = User.objects.create_user(email="other@example.com", password="x")
+        other_patient = User.objects.create_user(email="other@example.com")
         other = Appointment.objects.create(
             created_by=self.practitioner,
             scheduled_at=timezone.now() + timedelta(days=3),
@@ -240,7 +238,7 @@ class AppointmentFhirStatusDerivationTests(_AppointmentFhirBase):
             status=AppointmentStatus.scheduled,
         )
         for i, confirmed in enumerate(confirmations):
-            user = User.objects.create_user(email=f"p{i}@ex.com", password="x")
+            user = User.objects.create_user(email=f"p{i}@ex.com")
             Participant.objects.create(
                 appointment=appt, user=user, is_confirmed=confirmed, is_active=True,
             )
@@ -278,7 +276,7 @@ class AppointmentFhirStatusDerivationTests(_AppointmentFhirBase):
     def test_inactive_confirmed_participant_ignored(self):
         # An inactive (cancelled) participant must not count toward "all confirmed".
         appt = self._make_appt([None])
-        gone = User.objects.create_user(email="gone@ex.com", password="x")
+        gone = User.objects.create_user(email="gone@ex.com")
         Participant.objects.create(
             appointment=appt, user=gone, is_confirmed=True, is_active=False,
         )
@@ -338,7 +336,7 @@ class AppointmentContainedParticipantTests(_AppointmentFhirBase):
     def test_contained_patient_created_and_linked(self):
         # Practitioner must pre-exist (lookup-only).
         User.objects.create_user(
-            email="doc@ozone.com", password="x", is_practitioner=True,
+            email="doc@ozone.com", is_practitioner=True,
         )
         response = self._fhir_post(self._payload(
             contained=[self._PATIENT_CONTAINED, self._PRACTITIONER_CONTAINED],
@@ -358,9 +356,9 @@ class AppointmentContainedParticipantTests(_AppointmentFhirBase):
         )
 
     def test_contained_patient_matched_by_email_no_duplicate(self):
-        existing = User.objects.create_user(email="jdoe@ozone.com", password="x")
+        existing = User.objects.create_user(email="jdoe@ozone.com")
         User.objects.create_user(
-            email="doc@ozone.com", password="x", is_practitioner=True,
+            email="doc@ozone.com", is_practitioner=True,
         )
         response = self._fhir_post(self._payload(
             contained=[self._PATIENT_CONTAINED, self._PRACTITIONER_CONTAINED],
@@ -375,7 +373,7 @@ class AppointmentContainedParticipantTests(_AppointmentFhirBase):
 
     def test_contained_practitioner_matched_no_creation(self):
         doc = User.objects.create_user(
-            email="doc@ozone.com", password="x", is_practitioner=True,
+            email="doc@ozone.com", is_practitioner=True,
         )
         response = self._fhir_post(self._payload(
             contained=[self._PATIENT_CONTAINED, self._PRACTITIONER_CONTAINED],
@@ -403,7 +401,7 @@ class AppointmentContainedParticipantTests(_AppointmentFhirBase):
 
     def test_mixed_contained_and_pk_reference(self):
         doc = User.objects.create_user(
-            email="doc2@ozone.com", password="x", is_practitioner=True,
+            email="doc2@ozone.com", is_practitioner=True,
         )
         response = self._fhir_post(self._payload(
             contained=[self._PATIENT_CONTAINED],

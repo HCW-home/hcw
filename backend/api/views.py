@@ -60,8 +60,8 @@ class AnonymousTokenAuthView(APIView):
                 "content": {
                     "application/json": {
                         "example": {
-                            "access": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
-                            "refresh": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+                            "access": "<access-jwt-token>",
+                            "refresh": "<refresh-jwt-token>",
                             "user_id": 123,
                         }
                     }

@@ -18,10 +18,10 @@ class AppointmentTest(TenantTestCase):
     def setUp(self):
         """Préparation des données pour chaque test"""
         self.patient = User.objects.create_user(
-            email="patient@example.com", password="testpass123"
+            email="patient@example.com"
         )
         self.practitioner = User.objects.create_user(
-            email="practitioner@example.com", password="testpass123"
+            email="practitioner@example.com"
         )
 
         self.consultation = Consultation.objects.create(
@@ -77,16 +77,14 @@ class RequestTimezoneTest(TenantTestCase):
         # Create patient with Paris timezone (UTC+1/UTC+2 depending on DST)
         self.patient = User.objects.create_user(
             email="patient@example.com",
-            password="testpass123",
-            timezone="Europe/Paris",
+                        timezone="Europe/Paris",
             main_organisation=self.organisation,
         )
 
         # Create practitioner
         self.practitioner = User.objects.create_user(
             email="practitioner@example.com",
-            password="testpass123",
-            timezone="UTC",
+                        timezone="UTC",
             main_organisation=self.organisation,
         )
 
@@ -185,16 +183,14 @@ class AppointmentTimezoneTest(TenantTestCase):
         # Create patient in Paris timezone
         self.patient = User.objects.create_user(
             email="patient@example.com",
-            password="testpass123",
-            timezone="Europe/Paris",
+                        timezone="Europe/Paris",
             main_organisation=self.organisation,
         )
 
         # Create doctor in Tokyo timezone
         self.doctor = User.objects.create_user(
             email="doctor@example.com",
-            password="testpass123",
-            timezone="Asia/Tokyo",
+                        timezone="Asia/Tokyo",
             main_organisation=self.organisation,
             is_practitioner=True,
         )
@@ -288,16 +284,14 @@ class AssignmentManagerTest(TenantTestCase):
         # Create patient
         self.patient = User.objects.create_user(
             email="patient@example.com",
-            password="testpass123",
-            timezone="Europe/Paris",
+                        timezone="Europe/Paris",
             main_organisation=self.organisation,
         )
 
         # Create doctor
         self.doctor = User.objects.create_user(
             email="doctor@example.com",
-            password="testpass123",
-            timezone="UTC",
+                        timezone="UTC",
             main_organisation=self.organisation,
             is_practitioner=True,
         )
@@ -358,13 +352,11 @@ class ScheduledFilterUnreadTest(TenantTestCase):
 
         self.practitioner = User.objects.create_user(
             email="doc@example.com",
-            password="testpass123",
-            is_practitioner=True,
+                        is_practitioner=True,
         )
         self.patient = User.objects.create_user(
             email="pat@example.com",
-            password="testpass123",
-        )
+                    )
 
         # Consultation owned by the practitioner with a future scheduled appointment.
         self.consultation = Consultation.objects.create(
@@ -452,13 +444,11 @@ class ScheduledFilterReminderTest(TenantTestCase):
 
         self.practitioner = User.objects.create_user(
             email="doc@example.com",
-            password="testpass123",
-            is_practitioner=True,
+                        is_practitioner=True,
         )
         self.patient = User.objects.create_user(
             email="pat@example.com",
-            password="testpass123",
-        )
+                    )
         # Consultation with NO appointment, so only reminders can make it
         # "upcoming".
         self.consultation = Consultation.objects.create(

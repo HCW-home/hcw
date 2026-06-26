@@ -18,14 +18,12 @@ class _EncounterBase(TenantTestCase):
     def setUp(self):
         self.organisation = Organisation.objects.create(name="Clinic")
         self.practitioner = User.objects.create_user(
-            email="doc@example.com", password="x",
-            first_name="Alice", last_name="Doc",
+            email="doc@example.com",             first_name="Alice", last_name="Doc",
             is_practitioner=True,
             main_organisation=self.organisation,
         )
         self.patient = User.objects.create_user(
-            email="pat@example.com", password="x",
-            first_name="John", last_name="Doe",
+            email="pat@example.com",             first_name="John", last_name="Doe",
         )
         self.consultation = Consultation.objects.create(
             title="Follow-up",
@@ -85,7 +83,7 @@ class EncounterReadTests(_EncounterBase):
 class EncounterSearchTests(_EncounterBase):
 
     def test_filter_by_patient(self):
-        other_patient = User.objects.create_user(email="other@example.com", password="x")
+        other_patient = User.objects.create_user(email="other@example.com")
         Consultation.objects.create(
             title="Other", created_by=self.practitioner, beneficiary=other_patient,
         )

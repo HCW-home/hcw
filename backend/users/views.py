@@ -1008,7 +1008,7 @@ class UserAppointmentsViewSet(viewsets.ReadOnlyModelViewSet):
                 },
                 "example": {
                     "url": "wss://livekit.example.com",
-                    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                    "token": "<jwt-token>",
                     "room": "usertest_123",
                 },
             },
@@ -1727,7 +1727,7 @@ class TestRTCView(APIView):
                 },
                 "example": {
                     "url": "wss://livekit.example.com",
-                    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                    "token": "<jwt-token>",
                     "room": "usertest_123",
                 },
             },

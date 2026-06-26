@@ -351,7 +351,7 @@ class ConsultationViewSet(FhirViewSetMixin, CreatedByMixin, viewsets.ModelViewSe
                 },
                 "example": {
                     "url": "wss://livekit.example.com",
-                    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                    "token": "<jwt-token>",
                     "room": "usertest_123",
                 },
             },
@@ -592,7 +592,7 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
                 },
                 "example": {
                     "url": "wss://livekit.example.com",
-                    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                    "token": "<jwt-token>",
                     "room": "usertest_123",
                 },
             },

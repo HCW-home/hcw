@@ -20,13 +20,11 @@ class _PrescriptionBase(TenantTestCase):
 
     def setUp(self):
         self.practitioner = User.objects.create_user(
-            email="doc@example.com", password="x",
-            first_name="Alice", last_name="Doc",
+            email="doc@example.com",             first_name="Alice", last_name="Doc",
             is_practitioner=True,
         )
         self.patient = User.objects.create_user(
-            email="pat@example.com", password="x",
-            first_name="John", last_name="Doe",
+            email="pat@example.com",             first_name="John", last_name="Doe",
         )
         self.consultation = Consultation.objects.create(
             title="Flu",
@@ -87,7 +85,7 @@ class PrescriptionReadTests(_PrescriptionBase):
 class PrescriptionSearchTests(_PrescriptionBase):
 
     def test_filter_by_patient(self):
-        other_patient = User.objects.create_user(email="other@example.com", password="x")
+        other_patient = User.objects.create_user(email="other@example.com")
         other_cons = Consultation.objects.create(
             title="Other", created_by=self.practitioner, beneficiary=other_patient,
         )

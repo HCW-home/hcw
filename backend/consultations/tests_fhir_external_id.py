@@ -42,11 +42,10 @@ class _FhirExternalIdBase(TenantTestCase):
         constance_config.fhir_external_medicationrequest_system = _EXTERNAL_MED_SYS
 
         self.practitioner = User.objects.create_user(
-            email="doc@example.com", password="x", is_practitioner=True,
+            email="doc@example.com", is_practitioner=True,
         )
         self.patient = User.objects.create_user(
-            email="pat@example.com", password="x",
-        )
+            email="pat@example.com",         )
         self.client = APIClient()
         self.client.force_authenticate(user=self.practitioner)
 
@@ -340,7 +339,7 @@ class AppointmentChainedSearchTests(_ChainedSearchBase):
     def test_two_patients_each_find_same_appointment_once(self):
         appt = self._create_appointment()  # self.patient (PAT-1)
         patient_b = User.objects.create_user(
-            email="pat-b@example.com", password="x", external_id="PAT-2",
+            email="pat-b@example.com", external_id="PAT-2",
         )
         Participant.objects.create(
             appointment=appt, user=patient_b, is_confirmed=True,

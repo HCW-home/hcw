@@ -13,8 +13,7 @@ class ForceTemporaryPatientsBase(TenantTestCase):
         self.organisation = Organisation.objects.create(name="Clinic")
         self.practitioner = User.objects.create_user(
             email="doc@example.com",
-            password="x",
-            is_practitioner=True,
+                        is_practitioner=True,
             first_name="Alice",
             last_name="Doc",
             main_organisation=self.organisation,
@@ -81,8 +80,7 @@ class ForceTemporaryPatientsFlagEnabledTests(ForceTemporaryPatientsBase):
     def test_editing_existing_permanent_patient_preserves_temporary_value(self):
         existing = User.objects.create_user(
             email="existing@example.com",
-            password="x",
-            first_name="Existing",
+                        first_name="Existing",
             last_name="Patient",
             temporary=False,
         )
@@ -114,8 +112,7 @@ class ForceTemporaryPatientsFlagEnabledTests(ForceTemporaryPatientsBase):
     def test_temporary_user_merge_keeps_temporary_flag(self):
         temp = User.objects.create_user(
             email="temp@example.com",
-            password="x",
-            temporary=True,
+                        temporary=True,
         )
         url = reverse("user-list")
         response = self.client.post(
