@@ -1,8 +1,38 @@
 import django_filters
-from .models import Consultation, Appointment, Reminder, Request
+from datetime import datetime
+from zoneinfo import ZoneInfo
+from .models import (
+    Consultation,
+    Appointment,
+    ConsultationReadStatus,
+    Message,
+    Reminder,
+    Request,
+)
 from .utils import appointment_active_cutoff
-from django.db.models import Exists, OuterRef
+from django.db.models import Exists, OuterRef, Subquery, Value
+from django.db.models.functions import Coalesce
 from django.utils import timezone
+
+EPOCH = datetime(1970, 1, 1, tzinfo=ZoneInfo("UTC"))
+
+
+def has_unread_messages(user):
+    """Exists() subquery: the consultation has at least one message unread by
+    ``user`` (created after the user's last read, by someone else, not deleted).
+    Mirrors annotate_unread_count() in views.py.
+    """
+    last_read_sq = ConsultationReadStatus.objects.filter(
+        consultation=OuterRef("pk"),
+        user=user,
+    ).values("last_read_at")[:1]
+    return Exists(
+        Message.objects.filter(
+            consultation=OuterRef("pk"),
+            deleted_at__isnull=True,
+            created_at__gt=Coalesce(Subquery(last_read_sq), Value(EPOCH)),
+        ).exclude(created_by=user)
+    )
 
 class ConsultationFilter(django_filters.FilterSet):
     # Custom boolean filter to check if closed_at is set
@@ -33,11 +63,20 @@ class ConsultationFilter(django_filters.FilterSet):
                 status=AppointmentStatus.scheduled,
             )
         )
+        # A consultation with unread messages always needs attention, so it
+        # belongs in the "à traiter" tab even when a future appointment exists.
+        user = getattr(self.request, "user", None)
+        if value is None:
+            return queryset
+        if user is None or not user.is_authenticated:
+            # No user context: fall back to appointment-only classification.
+            return queryset.filter(has_future) if value else queryset.filter(~has_future)
+        has_unread = has_unread_messages(user)
         if value is True:
-            return queryset.filter(has_future)
-        elif value is False:
-            return queryset.filter(~has_future)
-        return queryset
+            # "Planifié": future appointment AND nothing left to read.
+            return queryset.filter(has_future & ~has_unread)
+        # "À traiter": no future appointment OR unread messages.
+        return queryset.filter(~has_future | has_unread)
 
     def filter_unassigned_request(self, queryset, name, value):
         # Consultations without an owner that originate from a Request,

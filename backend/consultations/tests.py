@@ -343,3 +343,96 @@ class AssignmentManagerTest(TenantTestCase):
         self.assertIsNotNone(request_obj.refused_reason)
         self.assertIn("Simulated error", request_obj.refused_reason)
 
+
+class ScheduledFilterUnreadTest(TenantTestCase):
+    """A consultation with a future appointment normally sits in the "Planifié"
+    tab (scheduled=true). As soon as it has unread messages it must move to the
+    "À traiter" tab (scheduled=false) instead, so practitioners don't miss it.
+    """
+
+    def setUp(self):
+        from rest_framework.test import APIClient
+        from .models import Message
+
+        self.Message = Message
+
+        self.practitioner = User.objects.create_user(
+            email="doc@example.com",
+            password="testpass123",
+            is_practitioner=True,
+        )
+        self.patient = User.objects.create_user(
+            email="pat@example.com",
+            password="testpass123",
+        )
+
+        # Consultation owned by the practitioner with a future scheduled appointment.
+        self.consultation = Consultation.objects.create(
+            beneficiary=self.patient,
+            title="Follow-up",
+            created_by=self.practitioner,
+            owned_by=self.practitioner,
+        )
+        Appointment.objects.create(
+            created_by=self.practitioner,
+            consultation=self.consultation,
+            scheduled_at=timezone.now() + timedelta(days=1),
+            status=AppointmentStatus.scheduled,
+        )
+
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.practitioner)
+
+    def _ids(self, scheduled):
+        resp = self.client.get(
+            "/api/consultations/",
+            {"is_closed": "false", "scheduled": str(scheduled).lower()},
+        )
+        self.assertEqual(resp.status_code, 200, resp.content)
+        data = resp.json()
+        results = data["results"] if isinstance(data, dict) else data
+        return {c["id"] for c in results}
+
+    def test_no_unread_stays_scheduled(self):
+        """No unread messages -> appears in Planifié, not in À traiter."""
+        self.assertIn(self.consultation.id, self._ids(scheduled=True))
+        self.assertNotIn(self.consultation.id, self._ids(scheduled=False))
+
+    def test_unread_moves_to_overdue(self):
+        """An unread message from someone else moves it to À traiter."""
+        self.Message.objects.create(
+            consultation=self.consultation,
+            created_by=self.patient,
+            content="Hello doctor",
+        )
+        self.assertIn(self.consultation.id, self._ids(scheduled=False))
+        self.assertNotIn(self.consultation.id, self._ids(scheduled=True))
+
+    def test_own_message_does_not_count_as_unread(self):
+        """A message the practitioner sent themselves is not 'unread'."""
+        self.Message.objects.create(
+            consultation=self.consultation,
+            created_by=self.practitioner,
+            content="My own note",
+        )
+        self.assertIn(self.consultation.id, self._ids(scheduled=True))
+        self.assertNotIn(self.consultation.id, self._ids(scheduled=False))
+
+    def test_marking_read_returns_to_scheduled(self):
+        """After the read status catches up, it goes back to Planifié."""
+        from .models import ConsultationReadStatus
+
+        self.Message.objects.create(
+            consultation=self.consultation,
+            created_by=self.patient,
+            content="Hello doctor",
+        )
+        # Practitioner reads the consultation.
+        ConsultationReadStatus.objects.update_or_create(
+            consultation=self.consultation,
+            user=self.practitioner,
+            defaults={"last_read_at": timezone.now()},
+        )
+        self.assertIn(self.consultation.id, self._ids(scheduled=True))
+        self.assertNotIn(self.consultation.id, self._ids(scheduled=False))
+
