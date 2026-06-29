@@ -166,7 +166,9 @@
     <div class="email-wrapper">
         <div class="email-container">
             <div class="email-header">
-                {% if has_logo %}
+                {% if logo_mode == "url" and logo_url %}
+                <img src="{{ logo_url }}" alt="{{ branding }}">
+                {% elif has_logo %}
                 <img src="cid:logo" alt="{{ branding }}">
                 {% elif branding %}
                 <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;">{{ branding }}</h1>

@@ -982,6 +982,13 @@ CONSTANCE_CONFIG = {
         "(0 = Sunday, 1 = Monday).",
         "calendar_first_day_select",
     ),
+    "email_logo_mode": (
+        "embed",
+        "How the organisation logo is included in emails: 'embed' attaches it "
+        "inline (Content-ID, always displayed) or 'url' links to the media file "
+        "(lighter, but many clients block remote images by default).",
+        "email_logo_mode_select",
+    ),
 }
 
 
@@ -1028,6 +1035,7 @@ CONSTANCE_CONFIG_FIELDSETS = {
         "calendar_color_week_4",
         "calendar_rotation_anchor_date",
     ),
+    "Email": ("email_logo_mode",),
 }
 
 # Short HTML-safe description rendered at the top of each Constance tab in
@@ -1082,6 +1090,12 @@ CONSTANCE_FIELDSET_DESCRIPTIONS = {
         "practitioner calendars. Enable the toggle, then pick four colors "
         "applied on a continuous 4-week rotation anchored to a fixed date so "
         "the sequence never resets at year boundaries."
+    ),
+    "Email": (
+        "How the organisation logo is delivered in e-mails. <strong>Embed "
+        "inline</strong> attaches the image to each message so it always "
+        "displays; <strong>Media URL</strong> links to the stored file "
+        "(lighter, but many clients block remote images by default)."
     ),
 }
 
@@ -1188,6 +1202,16 @@ CONSTANCE_ADDITIONAL_FIELDS = {
                 ("4", "Thursday"),
                 ("5", "Friday"),
                 ("6", "Saturday"),
+            ),
+        },
+    ],
+    "email_logo_mode_select": [
+        "django.forms.fields.ChoiceField",
+        {
+            "widget": "django.forms.Select",
+            "choices": (
+                ("embed", "Embed inline (cid:)"),
+                ("url", "Media URL"),
             ),
         },
     ],

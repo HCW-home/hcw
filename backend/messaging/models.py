@@ -4,6 +4,7 @@ import logging
 import uuid
 from importlib import import_module
 from typing import Dict, Optional, Sequence, Tuple
+from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo
 from datetime import datetime
 
@@ -891,6 +892,21 @@ class Message(ModelCeleryAbstract):
             subject = self.render_subject
             main_org = Organisation.objects.filter(is_main=True).first()
 
+            has_logo = bool(main_org and main_org.logo_white)
+            logo_mode = getattr(constance_config, "email_logo_mode", "embed")
+            logo_url = None
+            if has_logo and logo_mode == "url":
+                logo_url = main_org.logo_white.url
+                # Local storage returns a relative MEDIA_URL path (e.g.
+                # /upload/...), unusable in an email. Prefix it with the
+                # patient frontend's absolute base so remote clients can load
+                # it. S3 storage already returns an absolute URL, untouched.
+                if logo_url.startswith("/"):
+                    base = (constance_config.patient_base_url or "").rstrip("/")
+                    parsed = urlsplit(base)
+                    if parsed.scheme and parsed.netloc:
+                        logo_url = f"{parsed.scheme}://{parsed.netloc}{logo_url}"
+
             return render_to_string(
                 "messaging/email_base.html",
                 {
@@ -900,7 +916,9 @@ class Message(ModelCeleryAbstract):
                     "access_link": self.access_link,
                     "organisation": main_org,
                     "branding": constance_config.site_name,
-                    "has_logo": bool(main_org and main_org.logo_white),
+                    "has_logo": has_logo,
+                    "logo_mode": logo_mode,
+                    "logo_url": logo_url,
                 },
             )
         except Exception as e:
