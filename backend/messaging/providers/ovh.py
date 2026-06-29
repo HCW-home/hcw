@@ -65,8 +65,9 @@ class Main(BaseMessagingProvider):
         service_name = self.messaging_provider.service_name
         sender = self.messaging_provider.sender_id
 
-        if not all([application_key, consumer_key, service_name, sender]):
-            error_msg = "Missing OVH configuration fields (application_key, consumer_key, service_name, or sender_id)"
+        # sender_id is optional: when left empty, OVH picks the sender itself.
+        if not all([application_key, consumer_key, service_name]):
+            error_msg = "Missing OVH configuration fields (application_key, consumer_key, or service_name)"
             logger.error(error_msg)
             message.task_logs += f"{error_msg}\n"
             message.save()
@@ -79,10 +80,16 @@ class Main(BaseMessagingProvider):
 
         body = {
             "message": message.render_content_sms,
-            "receivers": [message.phone_number],
-            "sender": sender,
-            "senderForResponse": True,
+            "receivers": [phone],
+            # senderForResponse must be False for a custom sender to be honored;
+            # when True, OVH ignores "sender" and uses a short number for replies.
+            "senderForResponse": False,
         }
+        if sender:
+            body["sender"] = sender
+        else:
+            # No configured sender: let OVH choose one from the account.
+            body["senderForResponse"] = True
 
         body_json = json.dumps(body)
         timestamp = int(time.time())
