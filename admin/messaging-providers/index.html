@@ -761,6 +761,62 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="SMS">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ovh-sms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OVH SMS
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="OVH SMS">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-create-the-api-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Create the API token
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-fill-in-the-provider-in-hughome" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Fill in the provider in HUG@Home
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Test
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1121,6 +1177,62 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="SMS">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ovh-sms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OVH SMS
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="OVH SMS">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-create-the-api-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Create the API token
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-fill-in-the-provider-in-hughome" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Fill in the provider in HUG@Home
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Test
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1160,7 +1272,69 @@
 <h2 id="email">Email</h2>
 <p>An SMTP provider can be configured to send emails (invitations, appointment reminders, password reset, etc.).</p>
 <h2 id="sms">SMS</h2>
-<p>An SMS gateway (e.g., Twilio) can be configured to send SMS notifications to patients who do not have an email address or for urgent reminders.</p>
+<p>An SMS gateway can be configured to send SMS notifications to patients who do not have an email address or for urgent reminders.</p>
+<h3 id="ovh-sms">OVH SMS</h3>
+<p>To send SMS through OVH, you first need an OVH SMS account, then an API token (application key, application secret and consumer key) authorized for the SMS endpoints.</p>
+<h4 id="1-create-the-api-token">1. Create the API token</h4>
+<p>Open the following URL while logged in to your OVH account. It pre-fills the <strong>exact</strong> access rules the integration needs:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>https://auth.eu.ovhcloud.com/api/createToken?GET=/sms/&amp;GET=/sms/*/jobs&amp;POST=/sms/*/jobs
+</code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Access rules must match exactly</p>
+<p>OVH matches token access rules on the exact path. The integration calls <code>GET /sms</code> (list services) and <code>POST /sms/{service}/jobs/</code> (send), so the token <strong>must</strong> be granted <code>GET /sms/</code>, <code>GET /sms/*/jobs</code> and <code>POST /sms/*/jobs</code>. A token granted only <code>GET /sms</code> (or with a different path) returns <code>403 NOT_GRANTED_CALL</code>.</p>
+</div>
+<p>On the token creation page:</p>
+<ul>
+<li>The <strong>Application name</strong> and <strong>Application description</strong> are free text — they only help you identify what the key is used for.</li>
+<li>Set <strong>Validity</strong> to <strong>Unlimited</strong>, otherwise the token will stop working after the expiry date.</li>
+</ul>
+<p><img alt="Create OVH API key" src="../../assets/images/ovh-create-api-key.png" /></p>
+<div class="admonition danger">
+<p class="admonition-title">Copy the credentials immediately</p>
+<p>After validation, OVH shows the <strong>Application Key</strong>, <strong>Application Secret</strong> and <strong>Consumer Key</strong> <strong>only once</strong>. Copy all three before leaving the page — they cannot be displayed again afterwards.</p>
+</div>
+<p><img alt="OVH API key created" src="../../assets/images/ovh-created-api-key.png" /></p>
+<h4 id="2-fill-in-the-provider-in-hughome">2. Fill in the provider in HUG@Home</h4>
+<blockquote>
+<p><strong>Menu:</strong> Messaging &gt; Messaging providers &gt; add/edit the OVH provider</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Application key</td>
+<td>The <em>Application Key</em> from OVH</td>
+</tr>
+<tr>
+<td>Application secret</td>
+<td>The <em>Application Secret</em> from OVH</td>
+</tr>
+<tr>
+<td>Consumer key</td>
+<td>The <em>Consumer Key</em> from OVH</td>
+</tr>
+<tr>
+<td>Service name</td>
+<td>The SMS service name as shown in OVH (e.g. <code>sms-xxxxxxx-1</code>)</td>
+</tr>
+<tr>
+<td>Sender ID</td>
+<td>The registered sender name (see below), or leave empty</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Sender ID</p>
+<p>The <strong>Sender ID</strong> is the name displayed to the SMS recipient. It must be a sender <strong>registered and validated in your OVH account</strong> beforehand — OVH validates senders manually, which can take a few hours.</p>
+<p>If you leave the field <strong>empty</strong>, OVH will send from a <strong>short number</strong> instead of a named sender.</p>
+</div>
+<h4 id="3-test">3. Test</h4>
+<p>Use the <strong>Test connection</strong> action on the provider to verify the credentials and that the configured service name exists in your OVH account.</p>
 <h2 id="whatsapp">WhatsApp</h2>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
