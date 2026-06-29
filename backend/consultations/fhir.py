@@ -138,8 +138,21 @@ class AppointmentFhirMapper(FhirResourceMapper):
     # -- to_fhir ------------------------------------------------------------
 
     def to_fhir(self, instance, *, context=None) -> dict:
+        # Local imports mirror `_patient_mapper` (phase-2 cycle avoidance).
+        from users.fhir import PatientFhirMapper, PractitionerFhirMapper
+        mappers = {
+            "patient": PatientFhirMapper(),
+            "practitioner": PractitionerFhirMapper(),
+        }
+        contained: list[dict] = []
+        seen: dict = {}            # user.pk -> fragment id (dedup)
+        counters = {"patient": 0, "practitioner": 0}
+
         participants = [
-            self._map_participant_out(p)
+            self._map_participant_out(
+                p, contained=contained, seen=seen,
+                counters=counters, mappers=mappers, context=context,
+            )
             for p in instance.participant_set.all().select_related("user")
         ]
         appt_type_code = _TYPE_TO_CODE.get(instance.type)
@@ -191,20 +204,39 @@ class AppointmentFhirMapper(FhirResourceMapper):
 
         appt = FhirAppointment(**kwargs)
         body = appt.model_dump(by_alias=True, exclude_none=True, mode="json")
+        if contained:
+            body["contained"] = contained
         meta = self.build_meta(instance)
         if meta:
             body["meta"] = meta
         return body
 
-    def _map_participant_out(self, participant: Participant) -> dict:
+    def _map_participant_out(
+        self, participant: Participant, *,
+        contained: list, seen: dict, counters: dict, mappers: dict, context=None,
+    ) -> dict:
         user = participant.user
         if user is None:
             return {"status": "needs-action"}
-        resource_type = "Practitioner" if user.is_practitioner else "Patient"
+
+        kind = "practitioner" if user.is_practitioner else "patient"
+        frag = seen.get(user.pk)
+        if frag is None:
+            idx = counters[kind]
+            frag = kind if idx == 0 else f"{kind}-{idx}"
+            counters[kind] = idx + 1
+            seen[user.pk] = frag
+            # Embed the full Patient/Practitioner as a contained resource so the
+            # `#fragment` reference below resolves within the same document.
+            res = mappers[kind].to_fhir(user, context=context)
+            res["id"] = frag
+            res.pop("meta", None)
+            contained.append(res)
+
         display = user.name if hasattr(user, "name") else (user.email or str(user.pk))
         return {
             "actor": {
-                "reference": f"{resource_type}/{user.pk}",
+                "reference": f"#{frag}",
                 "display": display,
             },
             "status": "accepted" if participant.is_confirmed else (

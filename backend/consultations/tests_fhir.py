@@ -211,7 +211,8 @@ class AppointmentFhirMapperUnitTests(_AppointmentFhirBase):
         data = AppointmentFhirMapper().to_fhir(self.appointment)
         FhirAppointment.model_validate(data)
         self.assertEqual(data["status"], "booked")
-        self.assertEqual(data["participant"][0]["actor"]["reference"], f"Patient/{self.patient.pk}")
+        # Participants are embedded as contained resources, referenced locally.
+        self.assertEqual(data["participant"][0]["actor"]["reference"], "#patient")
 
     def test_round_trip(self):
         mapper = AppointmentFhirMapper()
@@ -438,3 +439,80 @@ class AppointmentContainedParticipantTests(_AppointmentFhirBase):
         ))
         self.assertEqual(response.status_code, 404, response.data)
         self.assertEqual(response.data["resourceType"], "OperationOutcome")
+
+
+class AppointmentOutboundContainedTests(_AppointmentFhirBase):
+    """Serialising an Appointment embeds each participant as a `contained`
+    Patient/Practitioner and points `actor.reference` at its `#fragment`."""
+
+    def _to_fhir(self):
+        return AppointmentFhirMapper().to_fhir(self.appointment)
+
+    @staticmethod
+    def _frag(participant):
+        return participant["actor"]["reference"]
+
+    def test_single_patient_contained_and_referenced(self):
+        data = self._to_fhir()
+        FhirAppointment.model_validate(data)
+        self.assertEqual(len(data["contained"]), 1)
+        patient = data["contained"][0]
+        self.assertEqual(patient["resourceType"], "Patient")
+        self.assertEqual(patient["id"], "patient")
+        self.assertNotIn("meta", patient)
+        # Canonical Patient/<pk> identifier is preserved for dereferencing.
+        self.assertTrue(
+            any(i.get("value") == str(self.patient.pk) for i in patient["identifier"])
+        )
+        actor = data["participant"][0]["actor"]
+        self.assertEqual(actor["reference"], "#patient")
+        self.assertTrue(actor.get("display"))
+
+    def test_practitioner_participant_contained(self):
+        Participant.objects.create(
+            appointment=self.appointment, user=self.practitioner, is_confirmed=True,
+        )
+        data = self._to_fhir()
+        types = {c["resourceType"]: c for c in data["contained"]}
+        self.assertIn("Practitioner", types)
+        self.assertEqual(types["Practitioner"]["id"], "practitioner")
+        refs = {self._frag(p) for p in data["participant"]}
+        self.assertIn("#practitioner", refs)
+
+    def test_multiple_practitioners_get_indexed_fragments(self):
+        doc2 = User.objects.create_user(email="doc2@example.com", is_practitioner=True)
+        Participant.objects.create(appointment=self.appointment, user=self.practitioner)
+        Participant.objects.create(appointment=self.appointment, user=doc2)
+        data = self._to_fhir()
+        ids = {c["id"] for c in data["contained"]}
+        self.assertIn("practitioner", ids)
+        self.assertIn("practitioner-1", ids)
+        refs = {self._frag(p) for p in data["participant"]}
+        self.assertTrue({"#practitioner", "#practitioner-1"} <= refs)
+
+    def test_multiple_patients_get_indexed_fragments(self):
+        pat2 = User.objects.create_user(email="pat2@example.com")
+        Participant.objects.create(appointment=self.appointment, user=pat2)
+        data = self._to_fhir()
+        ids = {c["id"] for c in data["contained"]}
+        self.assertIn("patient", ids)
+        self.assertIn("patient-1", ids)
+
+    def test_round_trip_through_contained(self):
+        data = self._to_fhir()
+
+        class _Req:
+            user = self.practitioner
+        instance = AppointmentFhirMapper().from_fhir(
+            data,
+            instance=Appointment(pk=None, created_by=self.practitioner),
+            context={"request": _Req()},
+        )
+        self.assertEqual(set(instance._fhir_contained), {"patient"})
+
+    def test_endpoint_retrieve_includes_contained(self):
+        url = reverse("appointment-detail", kwargs={"pk": self.appointment.pk})
+        response = self.client.get(f"{url}?format=fhir")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["contained"][0]["resourceType"], "Patient")
+        self.assertEqual(response.data["participant"][0]["actor"]["reference"], "#patient")
