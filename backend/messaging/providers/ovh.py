@@ -72,7 +72,10 @@ class Main(BaseMessagingProvider):
             message.save()
             raise Exception(error_msg)
 
-        url = f"https://eu.api.ovh.com/1.0/sms/{service_name}/jobs"
+        # Trailing slash is required: OVH consumer-key access rules are matched on the
+        # exact path, and the granted rule is "/sms/*/jobs/". Without the slash the
+        # call is rejected with 403 NOT_GRANTED_CALL.
+        url = f"https://eu.api.ovh.com/1.0/sms/{service_name}/jobs/"
 
         body = {
             "message": message.render_content_sms,
@@ -94,7 +97,10 @@ class Main(BaseMessagingProvider):
         }
 
         logger.info(f"Sending POST request to OVH SMS API: {url}")
-        response = requests.post(url, json=body, headers=headers)
+        # Send the exact bytes the signature was computed over (body_json), not a
+        # re-serialized copy: passing json=body would let requests re-serialize the
+        # dict, producing a different byte string and an INVALID_SIGNATURE error.
+        response = requests.post(url, data=body_json, headers=headers)
         logger.info(f"OVH response status: {response.status_code}")
 
         message.task_logs += f"OVH API response: {response.status_code}\n"
@@ -117,7 +123,11 @@ class Main(BaseMessagingProvider):
         if not all([application_key, consumer_key, service_name]):
             raise Exception("Missing application_key, consumer_key or service_name")
 
-        url = f"https://eu.api.ovh.com/1.0/sms/{service_name}"
+        # Use GET /sms (list the SMS services) rather than GET /sms/{service_name}:
+        # the consumer key is typically granted only on /sms and /sms/*/jobs/, so
+        # querying the service resource itself returns 403 NOT_GRANTED_CALL even
+        # though sending (POST /sms/*/jobs/) works fine.
+        url = "https://eu.api.ovh.com/1.0/sms"
         timestamp = int(time.time())
         signature = self._get_signature("GET", url, "", timestamp)
 
@@ -130,3 +140,10 @@ class Main(BaseMessagingProvider):
 
         response = requests.get(url, headers=headers)
         response.raise_for_status()
+
+        services = response.json()
+        if service_name not in services:
+            raise Exception(
+                f"Service '{service_name}' not found in OVH account. "
+                f"Available services: {services}"
+            )
