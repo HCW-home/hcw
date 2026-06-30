@@ -1258,6 +1258,7 @@ S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME", None)
 S3_ENDPOINT_URL = os.getenv("S3_ENDPOINT_URL", None)
 S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY", None)
 S3_SECRET_KEY = os.getenv("S3_SECRET_KEY", None)
+S3_REGION = os.getenv("S3_REGION", "us-east-1")
 S3_VERIFY = os.getenv("S3_VERIFY", None)
 S3_ADDRESSING_STYLE = os.getenv("S3_ADDRESSING_STYLE", "auto")
 
@@ -1286,12 +1287,14 @@ if S3_BUCKET_NAME and S3_ENDPOINT_URL and S3_ACCESS_KEY and S3_SECRET_KEY:
         },
     }
 
-# LiveKit Recording S3 Configuration
-LIVEKIT_S3_BUCKET_NAME = os.getenv("LIVEKIT_S3_BUCKET_NAME", None)
-LIVEKIT_S3_ENDPOINT_URL = os.getenv("LIVEKIT_S3_ENDPOINT_URL", None)
-LIVEKIT_S3_ACCESS_KEY = os.getenv("LIVEKIT_S3_ACCESS_KEY", None)
-LIVEKIT_S3_SECRET_KEY = os.getenv("LIVEKIT_S3_SECRET_KEY", None)
-LIVEKIT_S3_REGION = os.getenv("LIVEKIT_S3_REGION", "us-east-1")
+# LiveKit Recording S3 Configuration.
+# Falls back to the generic S3_* settings so a single S3/MinIO can be configured
+# once; set these only to store recordings on a different bucket or server.
+LIVEKIT_S3_BUCKET_NAME = os.getenv("LIVEKIT_S3_BUCKET_NAME", S3_BUCKET_NAME)
+LIVEKIT_S3_ENDPOINT_URL = os.getenv("LIVEKIT_S3_ENDPOINT_URL", S3_ENDPOINT_URL)
+LIVEKIT_S3_ACCESS_KEY = os.getenv("LIVEKIT_S3_ACCESS_KEY", S3_ACCESS_KEY)
+LIVEKIT_S3_SECRET_KEY = os.getenv("LIVEKIT_S3_SECRET_KEY", S3_SECRET_KEY)
+LIVEKIT_S3_REGION = os.getenv("LIVEKIT_S3_REGION", S3_REGION)
 
 # Recording task configuration
 RECORDING_CHECK_INITIAL_DELAY = int(
