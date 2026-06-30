@@ -23,9 +23,13 @@ export class AuthGuard implements CanActivate {
       return true;
     }
 
-    // Preserve query params (email, action, id, model) so the login page can
-    // pre-fill the email field and route the user after authentication.
-    this.navCtrl.navigateRoot('/login', { queryParams: route.queryParams });
+    // Preserve query params (email/auth, action, id, model) so the target page
+    // can pre-fill the email field / consume the magic-link token and route the
+    // user after authentication. A magic-link token must go to verify-invite,
+    // which is the only page that knows how to log in with it; the login page
+    // only handles the email flow.
+    const target = route.queryParams['auth'] ? '/verify-invite' : '/login';
+    this.navCtrl.navigateRoot(target, { queryParams: route.queryParams });
     return false;
   }
 }
