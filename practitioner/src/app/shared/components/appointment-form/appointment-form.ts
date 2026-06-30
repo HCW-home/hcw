@@ -386,7 +386,8 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
       timezone: [currentUserData?.timezone || ''],
       communication_method: [currentUserData?.communication_method || ''],
       preferred_language: [currentUserData?.preferred_language || ''],
-      is_consultation_visible: [false],
+      // Checked by default: new participants can see the follow-up messages.
+      is_consultation_visible: [true],
     });
 
     // Update validators when contact_type changes
@@ -451,7 +452,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
       timezone: currentUserData?.timezone || '',
       communication_method: currentUserData?.communication_method || '',
       preferred_language: currentUserData?.preferred_language || '',
-      is_consultation_visible: false,
+      is_consultation_visible: true,
     });
     this.backendErrors.set({});
   }
@@ -576,6 +577,8 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
       communication_method: currentUserData?.communication_method || '',
       preferred_language: currentUserData?.preferred_language || '',
       user_id: null,
+      // Keep the follow-up visibility checked by default for guests too.
+      is_consultation_visible: true,
     });
   }
 
@@ -603,7 +606,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   onParticipantUserSelected(user: IUser | null): void {
     this.selectedParticipantUser.set(user);
     if (user) {
-      this.participantForm.patchValue({ is_consultation_visible: false });
+      this.participantForm.patchValue({ is_consultation_visible: true });
     }
   }
 
@@ -692,7 +695,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
       timezone: currentUserData?.timezone || '',
       communication_method: currentUserData?.communication_method || '',
       preferred_language: currentUserData?.preferred_language || '',
-      is_consultation_visible: false,
+      is_consultation_visible: true,
     });
     this.isExistingUser.set(true);
     this.selectedParticipantUser.set(null);
