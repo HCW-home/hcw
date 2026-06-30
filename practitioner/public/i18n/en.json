@@ -1133,7 +1133,8 @@
     "status": "Status",
     "unreadMessage": "unread message",
     "unreadMessages": "unread messages",
-    "noOwner": "No owner"
+    "noOwner": "No owner",
+    "temporary": "Temporary"
   },
   "participantItem": {
     "pending": "Pending",

@@ -176,12 +176,12 @@ class ConsultationViewSet(FhirViewSetMixin, CreatedByMixin, viewsets.ModelViewSe
 
     def get_queryset(self):
         user = self.request.user
-        # Listing only surfaces real follow-ups. Detail/messages access also
-        # allows temporary consultations attached to an appointment the user
-        # owns or participates in, so the chat keeps working without polluting
-        # the practitioner's main list.
+        # Listing surfaces temporary follow-ups too, so their chats remain easy
+        # to find; the row item flags them as temporary in the UI. Detail/messages
+        # access additionally allows temporary consultations attached to an
+        # appointment the user owns or participates in.
         if self.action == "list":
-            qs = Consultation.objects.accessible_by(user)
+            qs = Consultation.objects.accessible_by(user, include_temporary=True)
         else:
             qs = Consultation.objects.filter(
                 Q(owned_by=user)

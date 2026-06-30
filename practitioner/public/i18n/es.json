@@ -1016,7 +1016,8 @@
     "status": "Estado",
     "unreadMessage": "mensaje no leído",
     "unreadMessages": "mensajes no leídos",
-    "noOwner": "Sin responsable"
+    "noOwner": "Sin responsable",
+    "temporary": "Temporal"
   },
   "participantItem": {
     "pending": "Pendiente",

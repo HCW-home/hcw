@@ -16,6 +16,11 @@
           {{ 'consultationRowItem.noOwner' | translate }}
         </span>
       }
+      @if (consultation().temporary) {
+        <span class="temporary-badge">
+          {{ 'consultationRowItem.temporary' | translate }}
+        </span>
+      }
     </div>
   </div>
 

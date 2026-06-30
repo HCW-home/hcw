@@ -59,6 +59,18 @@
       font-weight: 600;
       line-height: 1;
     }
+
+    .temporary-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 10px;
+      border-radius: 6px;
+      background: rgba(217, 119, 6, 0.1);
+      color: var(--amber-600, #d97706);
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1;
+    }
   }
 
   .row-details {

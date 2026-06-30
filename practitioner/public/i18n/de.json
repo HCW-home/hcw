@@ -416,7 +416,8 @@
     "closed": "Geschlossen",
     "description": "Beschreibung",
     "status": "Status",
-    "noOwner": "Kein Verantwortlicher"
+    "noOwner": "Kein Verantwortlicher",
+    "temporary": "Temporär"
   },
   "addEditPatient": {
     "editTitle": "Patienteninformationen bearbeiten",

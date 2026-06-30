@@ -1132,7 +1132,8 @@
     "status": "Статус",
     "unreadMessage": "непрочитане повідомлення",
     "unreadMessages": "непрочитаних повідомлень",
-    "noOwner": "Без власника"
+    "noOwner": "Без власника",
+    "temporary": "Тимчасовий"
   },
   "participantItem": {
     "pending": "В очікуванні",

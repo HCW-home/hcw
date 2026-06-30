@@ -321,7 +321,8 @@
     "status": "Statut",
     "unreadMessage": "message non lu",
     "unreadMessages": "messages non lus",
-    "noOwner": "Pas de responsable"
+    "noOwner": "Pas de responsable",
+    "temporary": "Temporaire"
   },
   "participantItem": {
     "pending": "En attente",

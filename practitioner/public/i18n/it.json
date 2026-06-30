@@ -1034,7 +1034,8 @@
     "status": "Stato",
     "unreadMessage": "messaggio non letto",
     "unreadMessages": "messaggi non letti",
-    "noOwner": "Senza responsabile"
+    "noOwner": "Senza responsabile",
+    "temporary": "Temporaneo"
   },
   "messageList": {
     "messages": "Messaggi",
