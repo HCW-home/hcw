@@ -199,8 +199,12 @@
             <button
               class="control-button record-button"
               [class.active]="isRecording"
+              [class.loading]="isRecordingLoading"
+              [disabled]="isRecordingLoading"
               (click)="toggleRecording()">
-              @if (isRecording) {
+              @if (isRecordingLoading) {
+                <span class="control-spinner"></span>
+              } @else if (isRecording) {
                 <app-svg src="record-stop" [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
               } @else {
                 <app-svg src="record" [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
@@ -213,8 +217,14 @@
             <button
               class="control-button captions-button"
               [class.active]="showCaptions()"
+              [class.loading]="isCaptionsLoading"
+              [disabled]="isCaptionsLoading"
               (click)="toggleCaptions()">
-              <app-svg src="captions" [svgStyle]="{'width.px': 24, 'height.px': 24}"></app-svg>
+              @if (isCaptionsLoading) {
+                <span class="control-spinner"></span>
+              } @else {
+                <app-svg src="captions" [svgStyle]="{'width.px': 24, 'height.px': 24}"></app-svg>
+              }
             </button>
           }
 

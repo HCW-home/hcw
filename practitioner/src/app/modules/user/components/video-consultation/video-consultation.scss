@@ -449,6 +449,36 @@
       background-color: #dc2626;
     }
   }
+
+  // While a record/transcription start is being validated by the backend.
+  &.loading {
+    cursor: progress;
+  }
+
+  &:disabled {
+    cursor: progress;
+    opacity: 0.7;
+
+    &:hover {
+      background-color: #3d3d5c;
+    }
+  }
+
+  // Inline spinner shown in place of the button icon during validation.
+  .control-spinner {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-top-color: #ffffff;
+    animation: control-spin 0.7s linear infinite;
+  }
+}
+
+@keyframes control-spin {
+  to {
+    transform: rotate(1turn);
+  }
 }
 
 // Button group for mic/camera with device selector

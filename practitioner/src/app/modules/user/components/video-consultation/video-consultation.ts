@@ -97,6 +97,10 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   isMicrophoneEnabled = false;
   isScreenShareEnabled = false;
   isRecording = false;
+  /** True while a start/stop recording request is awaiting backend confirmation. */
+  isRecordingLoading = false;
+  /** True while a start/stop live transcription request is in progress. */
+  isCaptionsLoading = false;
   isLoading = false;
   errorMessage = '';
   showChat = signal(false);
@@ -661,6 +665,10 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   }
 
   async toggleRecording(): Promise<void> {
+    // Ignore extra clicks while a previous request is still being validated.
+    if (this.isRecordingLoading) {
+      return;
+    }
     if (this.isRecording) {
       await this.stopRecording();
     } else {
@@ -674,13 +682,17 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       return;
     }
 
+    this.isRecordingLoading = true;
+    this.cdr.markForCheck();
     try {
       await this.consultationService.startRecording(this.appointmentId).toPromise();
       this.isRecording = true;
-      this.cdr.markForCheck();
       this.toasterService.show('success', this.t.instant('videoConsultation.recordingStarted'), this.t.instant('videoConsultation.recordingStartedMessage'));
     } catch (error) {
       this.toasterService.show('error', this.t.instant('videoConsultation.recordingError'), this.t.instant('videoConsultation.failedStartRecording'));
+    } finally {
+      this.isRecordingLoading = false;
+      this.cdr.markForCheck();
     }
   }
 
@@ -690,17 +702,25 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       return;
     }
 
+    this.isRecordingLoading = true;
+    this.cdr.markForCheck();
     try {
       await this.consultationService.stopRecording(this.appointmentId).toPromise();
       this.isRecording = false;
-      this.cdr.markForCheck();
       this.toasterService.show('success', this.t.instant('videoConsultation.recordingStopped'), this.t.instant('videoConsultation.recordingStoppedMessage'));
     } catch (error) {
       this.toasterService.show('error', this.t.instant('videoConsultation.recordingError'), this.t.instant('videoConsultation.failedStopRecording'));
+    } finally {
+      this.isRecordingLoading = false;
+      this.cdr.markForCheck();
     }
   }
 
   async toggleCaptions(): Promise<void> {
+    // Ignore extra clicks while a previous request is still being validated.
+    if (this.isCaptionsLoading) {
+      return;
+    }
     if (this.showCaptions()) {
       this.transcriptionService.stop();
       this.activeRemoteTranscriptions.clear();
@@ -712,10 +732,14 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       this.showCaptions.set(true);
       // Start local transcription only when the microphone is active.
       if (this.isMicrophoneEnabled) {
+        this.isCaptionsLoading = true;
+        this.cdr.markForCheck();
         try {
           await this.transcriptionService.start(this.appointmentId, this.t.currentLanguage());
         } catch (error) {
           this.toasterService.show('error', this.t.instant('videoConsultation.captionsError'), this.t.instant('videoConsultation.failedStartCaptions'));
+        } finally {
+          this.isCaptionsLoading = false;
         }
       }
       // Start transcription for any remote participants already in the call.
