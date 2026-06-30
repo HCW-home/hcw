@@ -852,6 +852,10 @@ CONSTANCE_CONFIG = {
         False,
         "Disable password login for practitioners (SSO only)",
     ),
+    "enable_patient_password_login": (
+        False,
+        "Allow patients to log in with a password on the patient app; when off, patients authenticate with an email/SMS code instead. Practitioners and admins can always use password login.",
+    ),
     "enable_registration": (
         False,
         "Enable self-registration for new users",
@@ -1005,7 +1009,7 @@ CONSTANCE_CONFIG_FIELDSETS = {
     "Data Retention": ("consultation_auto_delete_hours", "temporary_user_auto_delete"),
     "Security": ("temporary_participant_token_expiry_hours", "instance_signature", "enable_deeplink"),
     "Uploads": ("max_upload_size_mb",),
-    "Authentication": ("disable_password_login", "enable_registration"),
+    "Authentication": ("disable_password_login", "enable_patient_password_login", "enable_registration"),
     "Visibility": ("users_visibility", "patient_visibility", "public_organisations"),
     "Video Features": (
         "primary_video_provider",

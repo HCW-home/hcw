@@ -59,6 +59,9 @@ export class LoginPage implements OnInit {
   showPassword = false;
   registrationEnabled = false;
   passwordLoginDisabled = false;
+  // Whether patients are allowed to authenticate with a password on the patient
+  // app. Off by default: patients then receive an email/SMS code instead.
+  patientPasswordLoginEnabled = false;
 
   isLoading = false;
   isResending = false;
@@ -101,6 +104,7 @@ export class LoginPage implements OnInit {
         this.registrationEnabled =
           !!config.registration_enabled && !config.force_temporary_patients;
         this.passwordLoginDisabled = !!config.force_temporary_patients;
+        this.patientPasswordLoginEnabled = !!config.enable_patient_password_login;
         if (this.passwordLoginDisabled) {
           this.passwordForm.get('password')?.disable({ emitEvent: false });
         }
@@ -111,11 +115,23 @@ export class LoginPage implements OnInit {
     });
   }
 
+  /** Password login is offered only when enabled for patients and the account
+   *  is not forced to be a temporary (passwordless) one. */
+  get canUsePasswordLogin(): boolean {
+    return this.patientPasswordLoginEnabled && !this.passwordLoginDisabled;
+  }
+
   onContinue() {
-    if (this.emailForm.valid) {
+    if (this.emailForm.invalid) {
+      return;
+    }
+    this.errorMessage = null;
+    if (this.canUsePasswordLogin) {
       this.step = 'credentials';
-      this.errorMessage = null;
       setTimeout(() => this.passwordInput?.setFocus(), 300);
+    } else {
+      // No password login for patients: send the email/SMS code straight away.
+      this.sendCode();
     }
   }
 

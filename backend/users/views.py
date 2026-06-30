@@ -1551,6 +1551,7 @@ class AppConfigView(APIView):
                 **openid,
                 "registration_enabled": constance_config.enable_registration,
                 "disable_password_login": constance_config.disable_password_login,
+                "enable_patient_password_login": constance_config.enable_patient_password_login,
                 "main_organization": main_organization,
                 "branding": constance_config.site_name,
                 "primary_color_patient": main_org.primary_color_patient if main_org else None,
@@ -1588,15 +1589,29 @@ class LoginView(DjRestAuthLoginView):
 
     def post(self, request, *args, **kwargs):
 
-        if constance_config.disable_password_login:
-            # Check if the user trying to log in is a practitioner
+        if constance_config.disable_password_login or not constance_config.enable_patient_password_login:
+            # Resolve the user once to apply the per-role password-login gates.
+            # Practitioners and admins are always allowed to use password login;
+            # patients are gated by enable_patient_password_login.
             email = request.data.get("email")
             if email:
                 try:
                     user = User.objects.get(email=email)
-                    if user.is_practitioner:
+                    if (
+                        constance_config.disable_password_login
+                        and user.is_practitioner
+                    ):
                         return Response(
                             {"detail": "Password login is disabled for practitioners. Please use SSO."},
+                            status=status.HTTP_403_FORBIDDEN,
+                        )
+                    if (
+                        not constance_config.enable_patient_password_login
+                        and user.is_patient
+                        and not user.is_staff
+                    ):
+                        return Response(
+                            {"detail": "Password login is disabled for patients. Please use an email or SMS code."},
                             status=status.HTTP_403_FORBIDDEN,
                         )
                 except User.DoesNotExist:

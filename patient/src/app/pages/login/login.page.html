@@ -24,9 +24,14 @@
             expand="block"
             shape="round"
             type="submit"
-            [disabled]="emailForm.invalid"
+            [disabled]="emailForm.invalid || isLoading"
             class="login-button">
-            {{ 'login.continue' | translate }}
+            @if (isLoading) {
+              <ion-spinner name="crescent" class="button-spinner"></ion-spinner>
+              {{ 'login.sendingCode' | translate }}
+            } @else {
+              {{ 'login.continue' | translate }}
+            }
           </ion-button>
         </form>
         }
