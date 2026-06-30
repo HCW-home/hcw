@@ -23,7 +23,9 @@ export class AuthGuard implements CanActivate {
       return true;
     }
 
-    this.navCtrl.navigateRoot('/login');
+    // Preserve query params (email, action, id, model) so the login page can
+    // pre-fill the email field and route the user after authentication.
+    this.navCtrl.navigateRoot('/login', { queryParams: route.queryParams });
     return false;
   }
 }
