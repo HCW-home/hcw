@@ -17,6 +17,7 @@ import { APP_INITIALIZER } from '@angular/core';
 import { AuthService } from './app/core/services/auth.service';
 import { importProvidersFrom, isDevMode } from '@angular/core';
 import { provideServiceWorker } from '@angular/service-worker';
+import { Capacitor } from '@capacitor/core';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 import { AuthInterceptor } from './app/core/interceptors/auth.interceptor';
@@ -228,7 +229,10 @@ bootstrapApplication(AppComponent, {
       lang: 'en',
     }),
     provideServiceWorker('custom-sw.js', {
-      enabled: !isDevMode(),
+      // Only on the web. In the native (Capacitor) app the APK already bundles
+      // the latest build, so the SW's "new version available" flow is both
+      // pointless and confusing — never register it there.
+      enabled: !isDevMode() && !Capacitor.isNativePlatform(),
       registrationStrategy: 'registerWhenStable:30000',
     }),
   ]

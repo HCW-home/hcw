@@ -3,6 +3,7 @@ import { BehaviorSubject, Observable, Subject, firstValueFrom, filter } from 'rx
 import { WebSocketService } from './websocket.service';
 import { AuthService } from './auth.service';
 import { environment } from '../../../environments/environment';
+import { DeeplinkService } from './deeplink.service';
 import {
   WebSocketState,
   UserMessageEvent,
@@ -66,12 +67,26 @@ export class UserWebSocketService implements OnDestroy {
       return;
     }
 
-    const wsUrl = `${environment.wsUrl}/user/?token=${token}`;
+    const wsUrl = `${this.wsBaseUrl()}/user/?token=${token}`;
     this.wsService.connect({
       url: wsUrl,
       reconnect: false, // We handle reconnection ourselves
       pingInterval: 30000,
     });
+  }
+
+  /**
+   * WebSocket base URL. On native (Capacitor) window.location.host is
+   * 'localhost', so environment.wsUrl points at the device instead of the
+   * backend. When an instance origin was selected, derive the ws(s) URL from
+   * it; otherwise fall back to the web behaviour (environment.wsUrl).
+   */
+  private wsBaseUrl(): string {
+    const origin = DeeplinkService.getStoredApiOrigin();
+    if (origin) {
+      return `${origin.replace(/^http/, 'ws')}/ws`;
+    }
+    return environment.wsUrl;
   }
 
   disconnect(): void {

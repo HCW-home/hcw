@@ -7,6 +7,7 @@ import {
 import { Title } from "@angular/platform-browser";
 import { Router } from "@angular/router";
 import { Subject, takeUntil } from "rxjs";
+import { Capacitor } from "@capacitor/core";
 import { AuthService } from "./core/services/auth.service";
 import { UserWebSocketService } from "./core/services/user-websocket.service";
 import { NotificationService } from "./core/services/notification.service";
@@ -50,6 +51,7 @@ export class AppComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.unregisterServiceWorkerOnNative();
     this.deeplinkService.initialize();
     this.handleDeepLinks();
     this.setupWebSocketSubscriptions();
@@ -67,6 +69,26 @@ export class AppComponent implements OnInit, OnDestroy {
           this.userWsService.disconnect();
         }
       });
+  }
+
+  /**
+   * On native, remove any service worker a previous APK build may have
+   * registered (and its caches). The bundled APK is always the latest build,
+   * so a lingering SW would only serve stale assets and trigger bogus
+   * "new version available" prompts.
+   */
+  private unregisterServiceWorkerOnNative(): void {
+    if (!Capacitor.isNativePlatform() || !('serviceWorker' in navigator)) {
+      return;
+    }
+    navigator.serviceWorker.getRegistrations()
+      .then((registrations) => registrations.forEach((r) => r.unregister()))
+      .catch(() => undefined);
+    if (typeof caches !== 'undefined') {
+      caches.keys()
+        .then((keys) => keys.filter((k) => k.startsWith('ngsw:')).forEach((k) => caches.delete(k)))
+        .catch(() => undefined);
+    }
   }
 
   private setupWebSocketSubscriptions(): void {

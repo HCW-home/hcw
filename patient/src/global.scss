@@ -66,9 +66,13 @@
  * https://ionicframework.com/docs/theming/dark-mode
  */
 
+/* Dark mode is intentionally disabled: the UI is designed for a light palette
+ * only, and following the OS setting (dark.system.css) produced an inconsistent
+ * mix (e.g. dark input fields on a light card). Re-enable one of these if a
+ * full dark theme is designed later. */
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
-@import "@ionic/angular/css/palettes/dark.system.css";
+/* @import "@ionic/angular/css/palettes/dark.system.css"; */
 
 /* Import custom variables */
 

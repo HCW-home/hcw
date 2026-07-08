@@ -1,6 +1,7 @@
 import { Injectable, ApplicationRef } from '@angular/core';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 import { ToastController } from '@ionic/angular/standalone';
+import { Capacitor } from '@capacitor/core';
 import { TranslationService } from './translation.service';
 import { filter, first, switchMap, interval, concat } from 'rxjs';
 
@@ -16,6 +17,12 @@ export class AppUpdateService {
   ) {}
 
   initialize(): void {
+    // In the native (Capacitor) app the APK always bundles the latest build,
+    // so the "new version available" flow is never relevant — and a service
+    // worker left over from a previous APK could still emit VERSION_READY.
+    if (Capacitor.isNativePlatform()) {
+      return;
+    }
     if (!this.swUpdate.isEnabled) {
       console.log('Service Worker is not enabled');
       return;

@@ -101,6 +101,11 @@ export class LoginPage implements OnInit {
     }
     this.authService.getConfig().subscribe({
       next: (config: any) => {
+        // getConfig() emits null when the backend is unreachable; guard so the
+        // page renders sane defaults instead of throwing on null.property.
+        if (!config) {
+          return;
+        }
         this.registrationEnabled =
           !!config.registration_enabled && !config.force_temporary_patients;
         this.passwordLoginDisabled = !!config.force_temporary_patients;

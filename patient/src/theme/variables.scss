@@ -153,18 +153,21 @@
   --ion-font-family: "Roboto", "Helvetica Neue", sans-serif;
 }
 
-// Dark mode variables
-@media (prefers-color-scheme: dark) {
-  :root {
-    --app-background: #1A1A1A;
-    --app-background-secondary: #2A2A2A;
-    --app-text-primary: #FFFFFF;
-    --app-text-secondary: #B0B0B0;
-    --app-text-tertiary: #808080;
-    --app-border-color: #3A3A3A;
-    --app-card-background: #2A2A2A;
-    --app-card-shadow: rgba(0, 0, 0, 0.3);
-    --app-input-background: #2A2A2A;
-    --app-input-border: #3A3A3A;
-  }
-}
+// Dark mode variables — disabled on purpose (see global.scss). Following the OS
+// dark setting produced an inconsistent UI (dark inputs on a light card), so the
+// app stays on its light palette. Re-enable alongside the Ionic dark palette if
+// a full dark theme is designed later.
+// @media (prefers-color-scheme: dark) {
+//   :root {
+//     --app-background: #1A1A1A;
+//     --app-background-secondary: #2A2A2A;
+//     --app-text-primary: #FFFFFF;
+//     --app-text-secondary: #B0B0B0;
+//     --app-text-tertiary: #808080;
+//     --app-border-color: #3A3A3A;
+//     --app-card-background: #2A2A2A;
+//     --app-card-shadow: rgba(0, 0, 0, 0.3);
+//     --app-input-background: #2A2A2A;
+//     --app-input-border: #3A3A3A;
+//   }
+// }

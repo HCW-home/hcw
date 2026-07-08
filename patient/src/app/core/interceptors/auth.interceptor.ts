@@ -7,6 +7,7 @@ import { UserWebSocketService } from '../services/user-websocket.service';
 import { TranslationService } from '../services/translation.service';
 import { MaintenanceService } from '../services/maintenance.service';
 import { NavController } from '@ionic/angular';
+import { DeeplinkService } from '../services/deeplink.service';
 
 let isRefreshing = false;
 const refreshTokenSubject = new BehaviorSubject<string | null>(null);
@@ -22,6 +23,16 @@ export class AuthInterceptor implements HttpInterceptor {
   ) {}
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    // On native (Capacitor) the WebView is served from https://localhost, so
+    // requests to the relative '/api' base never reach the backend. Rebase any
+    // root-relative URL onto the instance origin the user selected. This covers
+    // every service using environment.apiUrl in one place. ApiService already
+    // builds absolute URLs, so those (already starting with http) are untouched.
+    const origin = DeeplinkService.getStoredApiOrigin();
+    if (origin && request.url.startsWith('/')) {
+      request = request.clone({ url: `${origin}${request.url}` });
+    }
+
     const lang = this.translationService.currentLanguage();
     request = request.clone({
       setHeaders: { 'Accept-Language': lang }

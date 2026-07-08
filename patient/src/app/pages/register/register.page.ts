@@ -71,8 +71,9 @@ export class RegisterPage implements OnInit {
   ngOnInit() {
     this.authService.getConfig().subscribe({
       next: (config: any) => {
+        // getConfig() emits null when the backend is unreachable.
         this.registrationEnabled =
-          !!config.registration_enabled && !config.force_temporary_patients;
+          !!config?.registration_enabled && !config?.force_temporary_patients;
         this.loading = false;
       },
       error: () => {
