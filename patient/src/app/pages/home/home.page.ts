@@ -1,7 +1,6 @@
 import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
-import { Capacitor } from '@capacitor/core';
 import {
   IonIcon,
   IonContent,
@@ -73,7 +72,6 @@ export class HomePage implements OnInit, OnDestroy {
   isLoading = signal(false);
   appointmentEarlyJoinMinutes = 5; // Default value
   highlightedRequestId = signal<number | null>(null);
-  showDeeplinkBanner = signal(false);
 
   totalRequests = computed(() => this.requests().length);
   totalConsultations = computed(() => this.consultations().length);
@@ -179,17 +177,11 @@ export class HomePage implements OnInit, OnDestroy {
           if (config.appointment_early_join_minutes) {
             this.appointmentEarlyJoinMinutes = config.appointment_early_join_minutes;
           }
-          this.showDeeplinkBanner.set(!!config?.enable_deeplink && !Capacitor.isNativePlatform());
         },
         error: () => {
           // Use default value on error
         }
       });
-  }
-
-  openInApp(): void {
-    const host = window.location.host;
-    window.location.href = `hcw://${host}/home`;
   }
 
   ngOnDestroy(): void {

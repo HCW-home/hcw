@@ -19,6 +19,7 @@ import {
   ToastController,
 } from "@ionic/angular/standalone";
 import { ActivatedRoute } from "@angular/router";
+import { Capacitor } from "@capacitor/core";
 import { TranslatePipe } from "@ngx-translate/core";
 import { AuthService } from "../../core/services/auth.service";
 import { TranslationService } from "../../core/services/translation.service";
@@ -59,6 +60,9 @@ export class LoginPage implements OnInit {
   showPassword = false;
   registrationEnabled = false;
   passwordLoginDisabled = false;
+  // Invite web users to open the native app (only before they sign in, and
+  // never inside the native app itself).
+  showDeeplinkBanner = false;
   // Whether patients are allowed to authenticate with a password on the patient
   // app. Off by default: patients then receive an email/SMS code instead.
   patientPasswordLoginEnabled = false;
@@ -110,6 +114,7 @@ export class LoginPage implements OnInit {
           !!config.registration_enabled && !config.force_temporary_patients;
         this.passwordLoginDisabled = !!config.force_temporary_patients;
         this.patientPasswordLoginEnabled = !!config.enable_patient_password_login;
+        this.showDeeplinkBanner = !!config.enable_deeplink && !Capacitor.isNativePlatform();
         if (this.passwordLoginDisabled) {
           this.passwordForm.get('password')?.disable({ emitEvent: false });
         }
@@ -118,6 +123,12 @@ export class LoginPage implements OnInit {
         }
       },
     });
+  }
+
+  /** Open the current instance in the native app via the hcw:// deeplink. */
+  openInApp(): void {
+    const host = window.location.host;
+    window.location.href = `hcw://${host}/home`;
   }
 
   /** Password login is offered only when enabled for patients and the account
