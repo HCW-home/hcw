@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.healthcare.patient',
-  appName: 'Healthcare Patient',
+  appName: 'HCW@Home',
   webDir: 'www',
   server: {
     androidScheme: 'https',
