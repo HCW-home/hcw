@@ -1106,9 +1106,14 @@ CONSTANCE_FIELDSET_DESCRIPTIONS = {
 # CORS Configuration
 CORS_ALLOW_ALL_ORIGINS = DEBUG  # Only allow all origins in DEBUG mode
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = []
-# Add specific origins here for production when DEBUG=False
-# Example: 'https://yourdomain.com', 'https://www.yourdomain.com'
+# Capacitor mobile apps serve the WebView from these fixed origins.
+# Extra origins (e.g. web front-ends) can be added via the CORS_ALLOWED_ORIGINS env var.
+cors_origins = os.getenv("CORS_ALLOWED_ORIGINS", "")
+CORS_ALLOWED_ORIGINS = [
+    "https://localhost",  # Capacitor Android
+    "capacitor://localhost",  # Capacitor iOS
+    "http://localhost",  # Capacitor Android (cleartext)
+] + [origin.strip() for origin in cors_origins.split(",") if origin.strip()]
 CORS_ALLOW_HEADERS = [
     "accept",
     "accept-encoding",
