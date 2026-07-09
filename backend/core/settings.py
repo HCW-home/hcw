@@ -307,6 +307,15 @@ MOBILE_ANDROID_STORE_URL = os.getenv(
     "https://play.google.com/store/apps/details?id=com.healthcare.patient",
 )
 MOBILE_IOS_STORE_URL = os.getenv("MOBILE_IOS_STORE_URL", "")
+
+# Public Ed25519 key (base64, raw 32 bytes) of the Iabsis signing authority.
+# Used to verify the `instance_signature` blob so the patient web app only
+# offers to open/install the native app on a certified instance. Must match the
+# key embedded in the native app (patient/src/app/core/security/iabsis-keys.ts).
+IABSIS_PUBLIC_KEY_B64 = os.getenv(
+    "IABSIS_PUBLIC_KEY_B64",
+    "+VlJpb+ii+qn+ckekS/GVChLoFOvTzyKvU7/sczRsAs=",
+)
 # Per-resource overrides for the canonical system URL. Left empty so
 # `get_identifier_system()` derives from the dynamic base URL; populate this
 # dict only when you need a system URL that doesn't follow the default scheme.

@@ -116,7 +116,12 @@ export class LoginPage implements OnInit {
           !!config.registration_enabled && !config.force_temporary_patients;
         this.passwordLoginDisabled = !!config.force_temporary_patients;
         this.patientPasswordLoginEnabled = !!config.enable_patient_password_login;
-        this.showDeeplinkBanner = !!config.enable_deeplink && !Capacitor.isNativePlatform();
+        // Only offer the native app on a certified instance — deep-linking to
+        // an uncertified one would fail.
+        this.showDeeplinkBanner =
+          !!config.enable_deeplink &&
+          !!config.instance_certified &&
+          !Capacitor.isNativePlatform();
         if (this.passwordLoginDisabled) {
           this.passwordForm.get('password')?.disable({ emitEvent: false });
         }

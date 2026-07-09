@@ -1546,6 +1546,16 @@ class AppConfigView(APIView):
             .distinct()
         )
 
+        # Whether this instance is certified by Iabsis (valid, non-expired
+        # signature matching this host). The patient web app only offers to
+        # open/install the native app when this is true, otherwise deep-linking
+        # to an uncertified instance would surface an error.
+        from core.instance_signature import is_instance_certified
+
+        instance_certified = is_instance_certified(
+            constance_config.instance_signature, request.get_host()
+        )
+
         return Response(
             {
                 **openid,
@@ -1568,6 +1578,7 @@ class AppConfigView(APIView):
                 "force_temporary_patients": constance_config.force_temporary_patients,
                 "enable_deeplink": constance_config.enable_deeplink,
                 "force_mobile_app": constance_config.force_mobile_app,
+                "instance_certified": instance_certified,
                 "mobile_android_package": constance_config.mobile_android_package,
                 "mobile_android_store_url": constance_config.mobile_android_store_url,
                 "mobile_ios_store_url": constance_config.mobile_ios_store_url,

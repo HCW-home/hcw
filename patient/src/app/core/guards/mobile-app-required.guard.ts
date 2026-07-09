@@ -20,15 +20,19 @@ export const mobileAppRequiredGuard: CanActivateFn = async (): Promise<boolean |
   }
 
   let forced = false;
+  let certified = false;
   try {
     const config = await firstValueFrom(authService.getConfig());
     forced = !!config?.force_mobile_app;
+    certified = !!config?.instance_certified;
   } catch {
     // If config can't be fetched, don't lock the user out.
     return true;
   }
 
-  if (!forced) {
+  // Only enforce on a certified instance: forcing the app on an uncertified
+  // one would trap the user (the deeplink/store open would just error).
+  if (!forced || !certified) {
     return true;
   }
 

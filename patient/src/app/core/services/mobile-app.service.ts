@@ -31,13 +31,21 @@ export class MobileAppService {
     let androidPackage = '';
     let androidStoreUrl = '';
     let iosStoreUrl = '';
+    let certified = false;
     try {
       const config = await firstValueFrom(this.authService.getConfig());
+      certified = !!config?.instance_certified;
       androidPackage = config?.mobile_android_package || '';
       androidStoreUrl = config?.mobile_android_store_url || '';
       iosStoreUrl = config?.mobile_ios_store_url || '';
     } catch {
-      // Fall back to a plain deeplink below.
+      return;
+    }
+
+    // Never deep-link / open a store for an uncertified instance: the native
+    // app refuses uncertified hosts, so this would only surface an error.
+    if (!certified) {
+      return;
     }
 
     if (/android/i.test(ua) && androidPackage) {
