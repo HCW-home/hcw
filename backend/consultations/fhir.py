@@ -4,6 +4,7 @@ from __future__ import annotations
 import warnings
 
 from django.db.models import Q
+from django.utils.translation import gettext_lazy as _
 from fhir.resources.R4B.appointment import Appointment as FhirAppointment
 from fhir.resources.R4B.encounter import Encounter as FhirEncounter
 from fhir.resources.R4B.medicationrequest import MedicationRequest as FhirMedicationRequest
@@ -428,9 +429,26 @@ class AppointmentFhirMapper(FhirResourceMapper):
         return (given[0] if given else ""), family
 
     def post_save(self, instance, *, payload=None, context=None, created=False):
+        # A newly created online Appointment without an explicit Encounter gets
+        # a temporary consultation so the chat/messaging stack works, mirroring
+        # the native `AppointmentCreateSerializer` path. It is hidden from the
+        # practitioner/patient lists and auto-closed once the join window has
+        # elapsed. Runs before the participant sync (and its early return) so it
+        # happens even when the caller omitted `participant`.
+        if created:
+            self._ensure_temporary_consultation(instance)
+
         pending = getattr(instance, "_fhir_participants_pending", None)
         if pending is None:
             return
+
+        # Participants of a temporary consultation can use the chat by default,
+        # so flag them visible when we auto-created one.
+        temp_consultation = (
+            instance.consultation
+            if instance.consultation_id and getattr(instance, "_created_temp_consultation", False)
+            else None
+        )
 
         desired_user_ids = set()
         desired = []
@@ -448,6 +466,8 @@ class AppointmentFhirMapper(FhirResourceMapper):
                 part = existing[user_pk]
                 part.is_active = True
                 part.is_confirmed = is_confirmed
+                if temp_consultation is not None:
+                    part.is_consultation_visible = True
                 part.save()
             else:
                 Participant.objects.create(
@@ -456,6 +476,7 @@ class AppointmentFhirMapper(FhirResourceMapper):
                     is_confirmed=is_confirmed,
                     is_active=True,
                     is_invited=True,
+                    is_consultation_visible=temp_consultation is not None,
                 )
         # Deactivate participants not in the new set (soft remove)
         for user_pk, part in existing.items():
@@ -467,6 +488,51 @@ class AppointmentFhirMapper(FhirResourceMapper):
         delattr(instance, "_fhir_participants_pending")
         if hasattr(instance, "_fhir_contained"):
             delattr(instance, "_fhir_contained")
+
+        # Now that the participant set is known, provision the temp
+        # consultation's encryption keypair (no-op unless platform encryption
+        # is enabled), mirroring the native AppointmentCreateSerializer path.
+        if temp_consultation is not None:
+            self._provision_temp_consultation_encryption(temp_consultation, instance)
+
+    @staticmethod
+    def _provision_temp_consultation_encryption(consultation, appointment):
+        from .serializers import AppointmentCreateSerializer
+        participant_users = {
+            p.user for p in appointment.participant_set.filter(is_active=True) if p.user
+        }
+        try:
+            AppointmentCreateSerializer._provision_temp_consultation_encryption(
+                consultation, appointment, participant_users
+            )
+        except Exception:
+            import logging
+            logging.getLogger(__name__).exception(
+                "Failed to provision encryption for FHIR temp consultation %s",
+                consultation.pk,
+            )
+
+    def _ensure_temporary_consultation(self, instance):
+        """Attach a temporary Consultation to a new online Appointment.
+
+        Mirrors the native `AppointmentCreateSerializer` behaviour: an online
+        appointment created without an explicit Encounter reference gets a
+        hidden, auto-closing consultation so its chat/messaging works.
+        """
+        if instance.consultation_id or instance.type != Type.online.value:
+            return
+        temp_consultation = Consultation.objects.create(
+            created_by=instance.created_by,
+            owned_by=instance.created_by,
+            # str() so a gettext_lazy default doesn't leak a proxy into the
+            # FHIR serializer, which requires a plain string.
+            title=instance.title or str(_("Appointment chat")),
+            temporary=True,
+            visible_by_patient=False,
+        )
+        instance.consultation = temp_consultation
+        instance.save(update_fields=["consultation"])
+        instance._created_temp_consultation = True
 
     def soft_delete(self, instance, *, context=None):
         instance.status = AppointmentStatus.cancelled
