@@ -790,18 +790,28 @@ class EncounterFhirMapper(FhirResourceMapper):
         elif parsed.status == "in-progress":
             instance.closed_at = None
 
-        # subject → beneficiary
-        subject_ref = getattr(parsed.subject, "reference", None) if parsed.subject else None
-        rtype, ident = parse_reference(subject_ref or "")
-        if rtype == "Patient" and ident:
-            from users.models import User as UserModel
-            try:
-                instance.beneficiary = UserModel.objects.get(pk=int(ident), is_practitioner=False)
-            except (UserModel.DoesNotExist, ValueError):
-                raise FhirOperationError(
-                    f"Patient/{ident} not found in current tenant.",
-                    code="not-found", status_code=404,
-                )
+        # subject → beneficiary. Supports both an existing `Patient/<pk>`
+        # reference and an inline `#fragment` contained Patient, which is
+        # find-or-created on the fly (by email/phone) exactly like Appointment
+        # participants.
+        subject_ref = (
+            getattr(parsed.subject, "reference", None) if parsed.subject else None
+        ) or ""
+        if subject_ref.startswith("#"):
+            instance.beneficiary = self._resolve_contained_subject(
+                subject_ref[1:], parsed, instance,
+            )
+        else:
+            rtype, ident = parse_reference(subject_ref)
+            if rtype == "Patient" and ident:
+                from users.models import User as UserModel
+                try:
+                    instance.beneficiary = UserModel.objects.get(pk=int(ident), is_practitioner=False)
+                except (UserModel.DoesNotExist, ValueError):
+                    raise FhirOperationError(
+                        f"Patient/{ident} not found in current tenant.",
+                        code="not-found", status_code=404,
+                    )
 
         # period.end → closed_at when explicitly provided
         if parsed.period and getattr(parsed.period, "end", None):
@@ -822,6 +832,44 @@ class EncounterFhirMapper(FhirResourceMapper):
                     break
 
         return instance
+
+    def _resolve_contained_subject(self, frag, parsed, instance):
+        """Resolve a `#fragment` contained Patient to a beneficiary User.
+
+        Mirrors `AppointmentFhirMapper._resolve_participant_user`: the inline
+        Patient is find-or-created by email/phone (`temporary=True`).
+        """
+        from users.fhir import _GENDER_FROM_FHIR
+        from .fhir_participants import get_or_create_patient_user
+
+        res = None
+        for candidate in (parsed.contained or []):
+            if getattr(candidate, "id", None) == frag:
+                res = candidate
+                break
+        if res is None:
+            raise FhirOperationError(
+                f"Contained resource '#{frag}' referenced by subject is missing "
+                f"from the `contained` array.",
+                code="not-found", status_code=404,
+            )
+        rtype = (
+            res.get_resource_type() if hasattr(res, "get_resource_type")
+            else getattr(type(res), "__resource_type__", None)
+        )
+        if rtype != "Patient":
+            raise FhirOperationError(
+                f"Encounter.subject must reference a Patient, got '{rtype}'.",
+                code="not-supported", status_code=422,
+            )
+        email, phone = AppointmentFhirMapper._extract_contained_telecom(res)
+        first, last = AppointmentFhirMapper._extract_contained_name(res)
+        gender = _GENDER_FROM_FHIR.get(getattr(res, "gender", None) or "")
+        return get_or_create_patient_user(
+            email=email, phone=phone, first_name=first, last_name=last,
+            gender=gender or None, birth_date=getattr(res, "birthDate", None),
+            created_by=instance.created_by,
+        )
 
     def soft_delete(self, instance, *, context=None):
         from django.utils import timezone

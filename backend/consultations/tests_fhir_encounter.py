@@ -148,6 +148,69 @@ class EncounterWriteTests(_EncounterBase):
         self.assertEqual(created.beneficiary, self.patient)
         self.assertEqual(created.created_by, self.practitioner)
 
+    def test_create_with_contained_patient_creates_on_the_fly(self):
+        payload = {
+            "resourceType": "Encounter",
+            "status": "in-progress",
+            "class": {
+                "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+                "code": "VR",
+            },
+            "contained": [{
+                "resourceType": "Patient",
+                "id": "patient",
+                "name": [{"given": ["Jane"], "family": "Roe"}],
+                "telecom": [{"system": "email", "value": "jane.roe@ozone.com"}],
+            }],
+            "subject": {"reference": "#patient"},
+        }
+        response = self._fhir_post(reverse("consultation-list"), payload)
+        self.assertEqual(response.status_code, 201, response.data)
+        created = Consultation.objects.exclude(pk=self.consultation.pk).get()
+        patient = created.beneficiary
+        self.assertIsNotNone(patient)
+        self.assertEqual(patient.email, "jane.roe@ozone.com")
+        self.assertEqual(patient.first_name, "Jane")
+        self.assertEqual(patient.last_name, "Roe")
+        self.assertFalse(patient.is_practitioner)
+        self.assertTrue(patient.temporary)
+
+    def test_create_with_contained_patient_matched_by_email_no_duplicate(self):
+        payload = {
+            "resourceType": "Encounter",
+            "status": "in-progress",
+            "class": {
+                "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+                "code": "VR",
+            },
+            "contained": [{
+                "resourceType": "Patient",
+                "id": "patient",
+                "name": [{"given": ["John"], "family": "Doe"}],
+                "telecom": [{"system": "email", "value": self.patient.email}],
+            }],
+            "subject": {"reference": "#patient"},
+        }
+        before = User.objects.filter(email=self.patient.email).count()
+        response = self._fhir_post(reverse("consultation-list"), payload)
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertEqual(User.objects.filter(email=self.patient.email).count(), before)
+        created = Consultation.objects.exclude(pk=self.consultation.pk).get()
+        self.assertEqual(created.beneficiary, self.patient)
+
+    def test_create_with_missing_contained_subject_errors(self):
+        payload = {
+            "resourceType": "Encounter",
+            "status": "in-progress",
+            "class": {
+                "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+                "code": "VR",
+            },
+            "subject": {"reference": "#patient"},
+        }
+        response = self._fhir_post(reverse("consultation-list"), payload)
+        self.assertEqual(response.status_code, 404, response.data)
+
     def test_update_status_to_finished_closes_consultation(self):
         payload = {
             "resourceType": "Encounter",
