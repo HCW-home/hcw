@@ -1,0 +1,36 @@
+.app-required-wrapper {
+  max-width: 480px;
+  margin: 0 auto;
+  padding-top: 15vh;
+  text-align: center;
+
+  .app-icon {
+    font-size: 64px;
+    color: var(--ion-color-primary, #0891b2);
+    margin-bottom: 16px;
+  }
+
+  h1 {
+    font-size: 1.4rem;
+    margin: 0 0 16px;
+  }
+
+  .message {
+    color: var(--ion-color-medium, #6e6e6e);
+    margin-bottom: 24px;
+  }
+
+  .open-app-btn {
+    padding: 12px 24px;
+    border-radius: 999px;
+    font-weight: var(--app-font-weight-medium, 500);
+    cursor: pointer;
+    background: var(--ion-color-primary, #0891b2);
+    border: 1px solid var(--ion-color-primary, #0891b2);
+    color: #fff;
+
+    &:hover {
+      opacity: 0.9;
+    }
+  }
+}

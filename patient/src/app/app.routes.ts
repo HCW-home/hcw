@@ -4,12 +4,18 @@ import { TermsGuard } from './core/guards/terms.guard';
 import { EncryptionGuard } from './core/guards/encryption.guard';
 import { FirstLoginGuard } from './core/guards/first-login.guard';
 import { canDeactivateVideoCall } from './core/guards/video-call.guard';
+import { mobileAppRequiredGuard } from './core/guards/mobile-app-required.guard';
 
 export const routes: Routes = [
   {
     path: '',
     redirectTo: 'home',
     pathMatch: 'full'
+  },
+  {
+    path: 'app-required',
+    loadComponent: () =>
+      import('./pages/app-required/app-required.page').then(m => m.AppRequiredPage),
   },
   {
     path: 'map',
@@ -31,11 +37,13 @@ export const routes: Routes = [
   },
   {
     path: 'login',
-    loadComponent: () => import('./pages/login/login.page').then(m => m.LoginPage)
+    loadComponent: () => import('./pages/login/login.page').then(m => m.LoginPage),
+    canActivate: [mobileAppRequiredGuard],
   },
   {
     path: 'register',
-    loadComponent: () => import('./pages/register/register.page').then(m => m.RegisterPage)
+    loadComponent: () => import('./pages/register/register.page').then(m => m.RegisterPage),
+    canActivate: [mobileAppRequiredGuard],
   },
   {
     path: 'forgot-password',
@@ -64,13 +72,13 @@ export const routes: Routes = [
   {
     path: 'terms',
     loadComponent: () => import('./pages/terms/terms.page').then(m => m.TermsPage),
-    canActivate: [AuthGuard],
+    canActivate: [mobileAppRequiredGuard, AuthGuard],
   },
   {
     path: 'onboarding',
     loadComponent: () =>
       import('./pages/onboarding/onboarding.page').then(m => m.OnboardingPage),
-    canActivate: [AuthGuard],
+    canActivate: [mobileAppRequiredGuard, AuthGuard],
   },
   {
     path: 'activate-encryption',
@@ -78,32 +86,32 @@ export const routes: Routes = [
       import('./pages/activate-encryption/activate-encryption.page').then(
         m => m.ActivateEncryptionPage,
       ),
-    canActivate: [AuthGuard],
+    canActivate: [mobileAppRequiredGuard, AuthGuard],
   },
   {
     path: 'home',
     loadComponent: () => import('./pages/home/home.page').then(m => m.HomePage),
-    canActivate: [AuthGuard, FirstLoginGuard, TermsGuard, EncryptionGuard],
+    canActivate: [mobileAppRequiredGuard, AuthGuard, FirstLoginGuard, TermsGuard, EncryptionGuard],
   },
   {
     path: 'notifications',
     loadComponent: () => import('./pages/notifications/notifications.page').then(m => m.NotificationsPage),
-    canActivate: [AuthGuard, FirstLoginGuard, TermsGuard, EncryptionGuard],
+    canActivate: [mobileAppRequiredGuard, AuthGuard, FirstLoginGuard, TermsGuard, EncryptionGuard],
   },
   {
     path: 'profile',
     loadComponent: () => import('./pages/profile/profile.page').then(m => m.ProfilePage),
-    canActivate: [AuthGuard, FirstLoginGuard, TermsGuard],
+    canActivate: [mobileAppRequiredGuard, AuthGuard, FirstLoginGuard, TermsGuard],
   },
   {
     path: 'new-request',
     loadComponent: () => import('./pages/new-request/new-request.page').then(m => m.NewRequestPage),
-    canActivate: [AuthGuard, FirstLoginGuard, TermsGuard, EncryptionGuard],
+    canActivate: [mobileAppRequiredGuard, AuthGuard, FirstLoginGuard, TermsGuard, EncryptionGuard],
   },
   {
     path: 'consultation/:id/video',
     loadComponent: () => import('./pages/video-consultation/video-consultation.page').then(m => m.VideoConsultationPage),
-    canActivate: [AuthGuard, FirstLoginGuard, TermsGuard, EncryptionGuard],
+    canActivate: [mobileAppRequiredGuard, AuthGuard, FirstLoginGuard, TermsGuard, EncryptionGuard],
     canDeactivate: [canDeactivateVideoCall],
   },
   {

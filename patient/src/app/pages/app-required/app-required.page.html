@@ -1,0 +1,15 @@
+<ion-content class="ion-padding">
+  <div class="app-required-wrapper">
+    <ion-icon name="phone-portrait-outline" class="app-icon"></ion-icon>
+
+    <h1>{{ 'appRequired.title' | translate }}</h1>
+
+    <p class="message">
+      {{ 'appRequired.message' | translate }}
+    </p>
+
+    <button class="open-app-btn" (click)="openInApp()">
+      {{ 'appRequired.openOrInstall' | translate }}
+    </button>
+  </div>
+</ion-content>

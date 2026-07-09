@@ -21,7 +21,7 @@ import {
 import { ActivatedRoute } from "@angular/router";
 import { Capacitor } from "@capacitor/core";
 import { TranslatePipe } from "@ngx-translate/core";
-import { environment } from "../../../environments/environment";
+import { MobileAppService } from "../../core/services/mobile-app.service";
 import { AuthService } from "../../core/services/auth.service";
 import { TranslationService } from "../../core/services/translation.service";
 import { ActionHandlerService } from "../../core/services/action-handler.service";
@@ -49,6 +49,7 @@ import { AuthBrandingComponent } from '../../shared/components/auth-branding/aut
 })
 export class LoginPage implements OnInit {
   private t = inject(TranslationService);
+  private mobileApp = inject(MobileAppService);
 
   @ViewChild('passwordInput') passwordInput!: IonInput;
 
@@ -64,11 +65,6 @@ export class LoginPage implements OnInit {
   // Invite web users to open the native app (only before they sign in, and
   // never inside the native app itself).
   showDeeplinkBanner = false;
-  // Mobile app identifiers served by the backend /config (env default, with a
-  // per-instance Constance override). Used by openInApp() for store fallback.
-  private mobileAndroidPackage = '';
-  private mobileAndroidStoreUrl = '';
-  private mobileIosStoreUrl = '';
   // Whether patients are allowed to authenticate with a password on the patient
   // app. Off by default: patients then receive an email/SMS code instead.
   patientPasswordLoginEnabled = false;
@@ -121,9 +117,6 @@ export class LoginPage implements OnInit {
         this.passwordLoginDisabled = !!config.force_temporary_patients;
         this.patientPasswordLoginEnabled = !!config.enable_patient_password_login;
         this.showDeeplinkBanner = !!config.enable_deeplink && !Capacitor.isNativePlatform();
-        this.mobileAndroidPackage = config.mobile_android_package || '';
-        this.mobileAndroidStoreUrl = config.mobile_android_store_url || '';
-        this.mobileIosStoreUrl = config.mobile_ios_store_url || '';
         if (this.passwordLoginDisabled) {
           this.passwordForm.get('password')?.disable({ emitEvent: false });
         }
@@ -134,52 +127,9 @@ export class LoginPage implements OnInit {
     });
   }
 
-  /**
-   * Open the current instance in the native app, falling back to the app store
-   * when it isn't installed.
-   *
-   * There is no reliable web API to detect whether an app is installed:
-   *  - Android: use an `intent://` URL. The OS opens the app if the scheme is
-   *    registered, otherwise it follows S.browser_fallback_url to the Play
-   *    Store — no fragile timers needed.
-   *  - iOS: fire the custom-scheme deeplink and, if an App Store URL is
-   *    configured, schedule a fallback redirect; it's cancelled by the tab
-   *    losing focus when the app actually opens.
-   *  - Other platforms: just fire the deeplink.
-   *
-   * Store URLs / package come from environment.mobileApp so they can be changed
-   * per build without touching this code.
-   */
+  /** Open the current instance in the native app (see MobileAppService). */
   openInApp(): void {
-    const host = window.location.host;
-    const scheme = environment.mobileAppScheme;
-    const deeplink = `${scheme}://${host}/home`;
-    const ua = navigator.userAgent;
-
-    if (/android/i.test(ua) && this.mobileAndroidPackage) {
-      const fallback = this.mobileAndroidStoreUrl
-        ? `S.browser_fallback_url=${encodeURIComponent(this.mobileAndroidStoreUrl)};`
-        : '';
-      // intent://<host>/home#Intent;scheme=<scheme>;package=<pkg>;S.browser_fallback_url=<store>;end
-      window.location.href =
-        `intent://${host}/home#Intent;scheme=${scheme};package=${this.mobileAndroidPackage};` +
-        `${fallback}end`;
-      return;
-    }
-
-    if (/iphone|ipad|ipod/i.test(ua) && this.mobileIosStoreUrl) {
-      const fallbackTimer = setTimeout(() => {
-        window.location.href = this.mobileIosStoreUrl;
-      }, 1500);
-      // If the app opens, the page is backgrounded — cancel the store redirect.
-      const cancel = () => clearTimeout(fallbackTimer);
-      window.addEventListener('pagehide', cancel, { once: true });
-      window.addEventListener('blur', cancel, { once: true });
-      window.location.href = deeplink;
-      return;
-    }
-
-    window.location.href = deeplink;
+    this.mobileApp.openInApp();
   }
 
   /** Password login is offered only when enabled for patients and the account

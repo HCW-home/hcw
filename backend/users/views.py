@@ -1567,6 +1567,7 @@ class AppConfigView(APIView):
                 "public_organisations": constance_config.public_organisations,
                 "force_temporary_patients": constance_config.force_temporary_patients,
                 "enable_deeplink": constance_config.enable_deeplink,
+                "force_mobile_app": constance_config.force_mobile_app,
                 "mobile_android_package": constance_config.mobile_android_package,
                 "mobile_android_store_url": constance_config.mobile_android_store_url,
                 "mobile_ios_store_url": constance_config.mobile_ios_store_url,

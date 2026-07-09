@@ -533,6 +533,11 @@
     "confirmRemoveTitle": "Remove instance?",
     "confirmRemoveMessage": "Remove {{host}} from your saved instances?"
   },
+  "appRequired": {
+    "title": "Mobile app required",
+    "message": "This organization requires the mobile app. Please open or install the app to continue.",
+    "openOrInstall": "Open or install the app"
+  },
   "untrustedInstance": {
     "title": "Untrusted instance",
     "hint": "If you are the operator of this instance, request a signature at",

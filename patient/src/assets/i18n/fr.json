@@ -533,6 +533,11 @@
     "confirmRemoveTitle": "Retirer l’instance ?",
     "confirmRemoveMessage": "Retirer {{host}} de vos instances enregistrées ?"
   },
+  "appRequired": {
+    "title": "Application mobile requise",
+    "message": "Cet \u00e9tablissement n\u00e9cessite l\u2019utilisation de l\u2019application mobile. Veuillez ouvrir ou installer l\u2019application pour continuer.",
+    "openOrInstall": "Ouvrir ou installer l\u2019application"
+  },
   "untrustedInstance": {
     "title": "Instance non v\u00e9rifi\u00e9e",
     "hint": "Si vous \u00eates l\u2019op\u00e9rateur de cette instance, demandez une signature sur",

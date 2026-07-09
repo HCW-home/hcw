@@ -934,6 +934,13 @@ CONSTANCE_CONFIG = {
         "Show a banner on the patient web home inviting users to open the native app.",
         bool,
     ),
+    "force_mobile_app": (
+        False,
+        "Require the native mobile app: block the patient web app for this "
+        "tenant and prompt users to open or install the mobile app instead. "
+        "Disabled by default.",
+        bool,
+    ),
     "mobile_android_package": (
         MOBILE_ANDROID_PACKAGE,
         "Android applicationId of the native patient app. Defaults to the "
@@ -1038,6 +1045,7 @@ CONSTANCE_CONFIG_FIELDSETS = {
     "Security": ("temporary_participant_token_expiry_hours", "instance_signature"),
     "Mobile App": (
         "enable_deeplink",
+        "force_mobile_app",
         "mobile_android_package",
         "mobile_android_store_url",
         "mobile_ios_store_url",
