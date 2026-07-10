@@ -71,6 +71,23 @@ class BaseMediaserver(ABC):
             "This media server does not support remote muting."
         )
 
+    def supports_remote_kick(self) -> bool:
+        """Whether a moderator can forcibly remove participants from a room."""
+        return False
+
+    def eject_all_participants(self, room_uuid) -> int:
+        """Forcibly remove every participant from a room.
+
+        Used when a consultation is closed to tear down any call still in
+        progress. Returns the number of participants removed.
+
+        Providers that return False from supports_remote_kick() do not override
+        this and callers must not invoke it.
+        """
+        raise NotImplementedError(
+            "This media server does not support removing participants."
+        )
+
 
 MAIN_CLASSES: Dict[str, Type[BaseMediaserver]] = {}
 MAIN_DISPLAY_NAMES: List[Tuple[str, str]] = []

@@ -505,7 +505,8 @@
     "leaveCallTitle": "Quitter l'appel vidéo ?",
     "leaveCallMessage": "Vous êtes actuellement en appel vidéo. Si vous quittez cette page, l'appel sera interrompu. Voulez-vous vraiment quitter ?",
     "leaveCallConfirm": "Quitter l'appel",
-    "leaveCallCancel": "Rester"
+    "leaveCallCancel": "Rester",
+    "callEndedByServer": "L'appel a été interrompu car la consultation a été clôturée."
   },
   "map": {
     "title": "Trouver un praticien",

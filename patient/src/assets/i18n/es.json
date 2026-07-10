@@ -458,7 +458,8 @@
         "leaveCallTitle": "¿Abandonar la videollamada?",
         "leaveCallMessage": "Estás en una videollamada. Si sales de esta página, la llamada se Cerrar sesión. ¿De verdad desea salir?",
         "leaveCallConfirm": "Dejar llamada",
-        "leaveCallCancel": "Permanecer"
+        "leaveCallCancel": "Permanecer",
+        "callEndedByServer": "La llamada ha finalizado porque la consulta se ha cerrado."
     },
     "map": {
         "title": "Encontrar un médico",

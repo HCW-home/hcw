@@ -299,6 +299,10 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       });
 
+    this.videoCallService.removedByServer$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.handleServerRemoval());
+
     this.videoCallService.localVideoTrack$
       .pipe(takeUntil(this.destroy$))
       .subscribe(track => {
@@ -697,6 +701,20 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     this.incomingCallService.clearActiveCall();
 
     // Navigate to home page
+    this.navCtrl.navigateRoot('/home');
+  }
+
+  /**
+   * The media server removed us from the call (typically because the
+   * practitioner closed the consultation). Tear the call down and navigate
+   * home without prompting, so the patient isn't left on a dead screen.
+   */
+  private async handleServerRemoval(): Promise<void> {
+    this.phase.set('lobby'); // Prevent the leave guard from triggering on navigation
+    await this.videoCallService.disconnect();
+    this.stopDurationTimer();
+    this.incomingCallService.clearActiveCall();
+    await this.showToast(this.t.instant('videoCall.callEndedByServer'));
     this.navCtrl.navigateRoot('/home');
   }
 

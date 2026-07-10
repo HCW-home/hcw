@@ -141,6 +141,20 @@ class Server(models.Model):
         return candidate
 
     @classmethod
+    def get_pinned_for_room(cls, room_uuid: Union[str, UUID]) -> Optional["Server"]:
+        """Return the server currently pinned to a room, or None.
+
+        Unlike get_or_pin_for_room, this never picks and pins a new server: if
+        no server is pinned there is no live call on that room, so there is
+        nothing to act on. Used to reach the media server hosting an ongoing
+        call (e.g. to eject participants when a consultation is closed).
+        """
+        pinned_pk = cache.get(_room_pin_cache_key(room_uuid))
+        if pinned_pk is None:
+            return None
+        return cls.objects.filter(pk=pinned_pk, is_active=True).first()
+
+    @classmethod
     def clear_room_pin(cls, room_uuid: Union[str, UUID]) -> None:
         cache.delete(_room_pin_cache_key(room_uuid))
 

@@ -454,7 +454,8 @@
         "leaveCallTitle": "Videoanruf verlassen?",
         "leaveCallMessage": "Sie befinden sich gerade in einem Videoanruf. Wenn Sie diese Seite verlassen, wird die Verbindung getrennt. Möchten Sie die Seite wirklich verlassen?",
         "leaveCallConfirm": "Anruf hinterlassen",
-        "leaveCallCancel": "Bleiben"
+        "leaveCallCancel": "Bleiben",
+        "callEndedByServer": "Der Anruf wurde beendet, da die Konsultation geschlossen wurde."
     },
     "appointments": {
         "defaultTitle": "Termin"

@@ -52,6 +52,7 @@ export class LiveKitService implements OnDestroy {
   private isMicrophoneEnabledSubject = new BehaviorSubject<boolean>(false);
   private isScreenShareEnabledSubject = new BehaviorSubject<boolean>(false);
   private errorSubject = new Subject<string>();
+  private removedByServerSubject = new Subject<void>();
 
   public connectionStatus$: Observable<ConnectionStatus> = this.connectionStatusSubject.asObservable();
   public localVideoTrack$: Observable<LocalVideoTrack | null> = this.localVideoTrackSubject.asObservable();
@@ -62,6 +63,7 @@ export class LiveKitService implements OnDestroy {
   public isMicrophoneEnabled$: Observable<boolean> = this.isMicrophoneEnabledSubject.asObservable();
   public isScreenShareEnabled$: Observable<boolean> = this.isScreenShareEnabledSubject.asObservable();
   public error$: Observable<string> = this.errorSubject.asObservable();
+  public removedByServer$: Observable<void> = this.removedByServerSubject.asObservable();
 
   async connect(
     config: LiveKitConfig,
@@ -127,6 +129,16 @@ export class LiveKitService implements OnDestroy {
 
     this.room.on(RoomEvent.Disconnected, (reason?: DisconnectReason) => {
       this.connectionStatusSubject.next('disconnected');
+      // PARTICIPANT_REMOVED / ROOM_DELETED mean the server ended our
+      // participation deliberately (e.g. the practitioner closed the
+      // consultation). Signal the UI to tear the call down instead of showing
+      // a stuck "disconnected" state.
+      if (
+        reason === DisconnectReason.PARTICIPANT_REMOVED ||
+        reason === DisconnectReason.ROOM_DELETED
+      ) {
+        this.removedByServerSubject.next();
+      }
       this.cleanup();
     });
 

@@ -80,3 +80,15 @@ class ServerPinningTests(TenantTestCase):
             Server.clear_room_pin(room_uuid)
             repick = Server.get_or_pin_for_room(room_uuid)
         self.assertNotEqual(pinned.pk, repick.pk)
+
+    def test_get_pinned_for_room_returns_none_when_unpinned(self):
+        self.assertIsNone(Server.get_pinned_for_room(uuid.uuid4()))
+
+    def test_get_pinned_for_room_returns_pinned_without_repinning(self):
+        room_uuid = uuid.uuid4()
+        with patch.object(Server, "instance", new_callable=_all_ok_property):
+            pinned = Server.get_or_pin_for_room(room_uuid)
+        # No connection test / round-robin advance: it just reads the pin.
+        found = Server.get_pinned_for_room(room_uuid)
+        self.assertIsNotNone(found)
+        self.assertEqual(found.pk, pinned.pk)

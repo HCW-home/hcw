@@ -1190,7 +1190,9 @@
     "leaveCallTitle": "Leave video call?",
     "leaveCallMessage": "You are currently in a video call. If you leave this page, the call will be disconnected. Do you really want to leave?",
     "leaveCallConfirm": "Leave call",
-    "leaveCallCancel": "Stay"
+    "leaveCallCancel": "Stay",
+    "callEndedTitle": "Call ended",
+    "callEndedByServer": "The call has ended because the consultation was closed."
   },
   "websocket": {
     "disconnected": "Connection lost",

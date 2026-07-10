@@ -1073,7 +1073,9 @@
     "leaveCallTitle": "Uscire dalla videochiamata?",
     "leaveCallMessage": "Attualmente sei impegnato in una videochiamata. Se esci da questa pagina, la chiamata verrà interrotta. Vuoi davvero uscire?",
     "leaveCallConfirm": "Lascia la chiamata",
-    "leaveCallCancel": "Rimanere"
+    "leaveCallCancel": "Rimanere",
+    "callEndedTitle": "Chiamata terminata",
+    "callEndedByServer": "La chiamata è stata interrotta perché la consultazione è stata chiusa."
   },
   "websocket": {
     "disconnected": "Connessione persa",

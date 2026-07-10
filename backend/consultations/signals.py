@@ -1,3 +1,5 @@
+import logging
+
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.contrib.auth import get_user_model
@@ -22,6 +24,8 @@ from .serializers import ConsultationMessageSerializer
 from .tasks import handle_invites
 
 User = get_user_model()
+
+logger = logging.getLogger(__name__)
 
 
 def get_users_to_notification_consultation(consultation: Consultation):
@@ -290,18 +294,46 @@ def track_beneficiary_change(sender, instance: Consultation, **kwargs):
         instance._was_closed = False
 
 
+def _eject_and_release_room(room_uuid):
+    """Eject any participant still in a room's call, then release its pin.
+
+    Ejecting relies on the server currently pinned to the room; if none is
+    pinned there is no live call, so we only clear the (absent) pin. Any media
+    server error is logged and swallowed so closing a consultation never fails
+    because a call could not be torn down.
+    """
+    from mediaserver.models import Server
+
+    server = Server.get_pinned_for_room(room_uuid)
+    if server is not None and server.instance.supports_remote_kick():
+        try:
+            removed = server.instance.eject_all_participants(room_uuid)
+            if removed:
+                logger.info(
+                    "Ejected %d participant(s) from room %s on consultation close",
+                    removed,
+                    room_uuid,
+                )
+        except Exception:
+            logger.exception(
+                "Failed to eject participants from room %s on consultation close",
+                room_uuid,
+            )
+    Server.clear_room_pin(room_uuid)
+
+
 @receiver(post_save, sender=Consultation)
 def release_room_pin_on_close(sender, instance: Consultation, created, **kwargs):
-    """Release the media server pin when a consultation is closed."""
+    """Eject participants and release the media server pin when a consultation
+    is closed."""
     if created or instance.closed_at is None:
         return
     if getattr(instance, "_was_closed", False):
         return
-    from mediaserver.models import Server
 
-    Server.clear_room_pin(instance.room_uuid)
+    _eject_and_release_room(instance.room_uuid)
     for appointment in instance.appointments.all():
-        Server.clear_room_pin(appointment.room_uuid)
+        _eject_and_release_room(appointment.room_uuid)
 
 
 @receiver(post_save, sender=Consultation)

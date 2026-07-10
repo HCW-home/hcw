@@ -32,6 +32,7 @@ export class LiveKitAdapter implements VideoCallImpl {
   readonly isMicrophoneEnabled$: Observable<boolean> = this.inner.isMicrophoneEnabled$;
   readonly isScreenShareEnabled$: Observable<boolean> = this.inner.isScreenShareEnabled$;
   readonly error$: Observable<string> = this.inner.error$;
+  readonly removedByServer$: Observable<void> = this.inner.removedByServer$;
 
   connect(config: VideoCallConfig, deviceIds?: VideoCallDeviceIds): Promise<void> {
     return this.inner.connect(
