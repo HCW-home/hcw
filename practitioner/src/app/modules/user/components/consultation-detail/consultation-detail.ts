@@ -288,7 +288,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   );
 
   beneficiarySearchFn: AsyncSearchFn = (query: string, page: number): Observable<AsyncSearchResult> => {
-    return this.userService.searchUsers(query, page, 20, false).pipe(
+    return this.userService.searchUsers(query, page, 20, undefined).pipe(
       map(response => {
         const results: SelectOption[] = response.results.map(user => {
           this.beneficiaryCache.set(user.pk, user);
