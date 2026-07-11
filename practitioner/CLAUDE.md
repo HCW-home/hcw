@@ -158,7 +158,7 @@ The project includes a comprehensive shared UI component library in `src/app/sha
 - `<app-accordion>` - Collapsible content sections
 
 ### Layout & Feedback Components
-- `<app-modal>` - Modal dialogs (currently being implemented)
+- `<app-modal>` - Modal dialogs. The body is padded by default (aligned with header/footer); do NOT add padding inside modal content wrappers. For full-bleed content (embedded components that manage their own spacing, images), set `[bodyPadding]="false"`. Footer content goes in a `<div modal-footer>` slot.
 - `<app-loader>` - Loading spinners and indicators
 - `<app-overlay>` - Background overlays for modals
 - `<app-badge>` - Status and notification badges

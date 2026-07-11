@@ -15,6 +15,7 @@ from fhir_server.references import (
     build_identifier,
     build_reference,
     get_external_identifier_system,
+    get_system_base_url,
     parse_reference,
 )
 from fhir_server.search import (
@@ -587,6 +588,16 @@ def _encounter_status_filter(raw_value: str) -> Q:
     return q
 
 
+def _encounter_note_extension_url() -> str:
+    """Canonical URL of the Encounter.note extension for this tenant.
+
+    FHIR R4 `Encounter` has no native `note` element, so the internal clinical
+    notes ride on a tenant-scoped extension under the same base URL used for
+    identifier systems.
+    """
+    return f"{get_system_base_url()}/ns/encounter-note"
+
+
 class EncounterFhirMapper(FhirResourceMapper):
     """Map HCW `Consultation` to FHIR R4 `Encounter`."""
 
@@ -745,6 +756,13 @@ class EncounterFhirMapper(FhirResourceMapper):
             appointment=appointments or None,
             reasonCode=reason_codes or None,
         )
+        # Internal clinical notes (practitioner-only). FHIR R4 Encounter has no
+        # native `note`, so they ride on a tenant-scoped extension.
+        if instance.notes:
+            kwargs["extension"] = [{
+                "url": _encounter_note_extension_url(),
+                "valueString": instance.notes,
+            }]
         if instance.beneficiary_id:
             kwargs["subject"] = build_reference(
                 "Patient", instance.beneficiary_id,
@@ -820,6 +838,13 @@ class EncounterFhirMapper(FhirResourceMapper):
         # text → title fallback
         if not instance.title and payload.get("text", {}).get("div"):
             instance.title = payload["text"]["div"]
+
+        # note extension → internal clinical notes (practitioner-only)
+        note_url = _encounter_note_extension_url()
+        for ext in (parsed.extension or []):
+            if getattr(ext, "url", None) == note_url and ext.valueString:
+                instance.notes = ext.valueString
+                break
 
         ext_sys = get_external_identifier_system("Encounter")
         if ext_sys:

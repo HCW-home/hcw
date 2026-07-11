@@ -99,6 +99,19 @@ class Consultation(models.Model):
     description = models.CharField(_("description"), null=True, blank=True)
     title = models.CharField(_("title"), null=True, blank=True)
 
+    # Internal clinical notes. Never exposed to the beneficiary (patient);
+    # only practitioners can read/write it (via the consultation edit form and
+    # the FHIR Encounter.note mapping).
+    notes = models.TextField(
+        _("notes"),
+        null=True,
+        blank=True,
+        help_text=_(
+            "Internal clinical notes, only visible to practitioners. "
+            "Never shown to the beneficiary. Mapped to FHIR Encounter.note."
+        ),
+    )
+
     beneficiary = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,

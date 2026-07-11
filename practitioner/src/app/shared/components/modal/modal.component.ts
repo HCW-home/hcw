@@ -29,6 +29,10 @@ export class ModalComponent implements AfterViewChecked, OnDestroy {
   size = input<'small' | 'medium' | 'large' | 'xlarge'>('medium');
   showCloseButton = input<boolean>(true);
   closeOnBackdropClick = input<boolean>(true);
+  // The body is padded by default so plain content lines up with the
+  // header/footer. Set to false for full-bleed content (embedded
+  // components that manage their own spacing, images, ...).
+  bodyPadding = input<boolean>(true);
 
   closed = output<void>();
 

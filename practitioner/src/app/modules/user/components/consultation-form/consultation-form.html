@@ -71,6 +71,18 @@
             </app-textarea>
           </div>
 
+          <div class="form-group">
+            <app-textarea
+              [label]="'consultationForm.notes' | translate"
+              [placeholder]="'consultationForm.notesPlaceholder' | translate"
+              [rows]="4"
+              formControlName="notes">
+            </app-textarea>
+            <span class="field-helper-text">
+              {{ 'consultationForm.notesHelperText' | translate }}
+            </span>
+          </div>
+
           @if (customFields().length > 0) {
           <div class="custom-fields-section" formGroupName="custom_fields">
             @for (field of customFields(); track field.id) {
@@ -352,6 +364,7 @@
     [isOpen]="isAddPatientModalOpen()"
     size="large"
     [showCloseButton]="false"
+    [bodyPadding]="false"
     (closed)="closeAddPatientModal()">
     <app-add-edit-patient
       [initialName]="newPatientInitialName()"

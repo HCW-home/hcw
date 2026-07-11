@@ -74,6 +74,7 @@
   <app-modal
     [isOpen]="showSlotModal()"
     [showCloseButton]="false"
+    [bodyPadding]="false"
     (closed)="closeSlotModal()">
     <app-slot-modal
       [modalTitle]="modalTitle()"

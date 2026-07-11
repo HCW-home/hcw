@@ -14,8 +14,8 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule, Location } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { Observable, Subject, takeUntil, map } from 'rxjs';
+import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { Observable, Subject, of, takeUntil, map, switchMap } from 'rxjs';
 import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
 import {
   FullCalendarModule,
@@ -202,6 +202,13 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   hasUpcomingAppointment = computed(() => !!this.upcomingAppointment());
 
   showCallAppointmentModal = signal(false);
+
+  // Close follow-up modal: lets the practitioner fill in the internal
+  // clinical notes before the consultation is closed.
+  showCloseConsultationModal = signal(false);
+  isClosingConsultation = signal(false);
+  closeConsultationMessage = signal('');
+  closeConsultationNotes = new FormControl<string>('', { nonNullable: true });
 
   isExportingPdf = signal(false);
 
@@ -1597,8 +1604,9 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  async closeConsultation(): Promise<void> {
-    if (!this.consultation()) return;
+  closeConsultation(): void {
+    const consultation = this.consultation();
+    if (!consultation) return;
 
     let message = this.t.instant('consultationDetail.closeConsultationMessage');
     if (this.consultationAutoDeleteHours > 0) {
@@ -1607,38 +1615,53 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       });
     }
 
-    const confirmed = await this.confirmationService.confirm({
-      title: this.t.instant('consultationDetail.closeConsultationTitle'),
-      message: message,
-      confirmText: this.t.instant('consultationDetail.close'),
-      cancelText: this.t.instant('consultationDetail.cancel'),
-      confirmStyle: 'danger',
-    });
+    this.closeConsultationMessage.set(message);
+    this.closeConsultationNotes.setValue(consultation.notes || '');
+    this.showCloseConsultationModal.set(true);
+  }
 
-    if (confirmed) {
-      this.consultationService
-        .closeConsultation(this.consultationId)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: () => {
-            this.toasterService.show(
-              'success',
-              this.t.instant('consultationDetail.consultationClosed'),
-              this.t.instant('consultationDetail.consultationClosedMessage')
-            );
-            this.router.navigate([
-              `/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`,
-            ]);
-          },
-          error: error => {
-            this.toasterService.show(
-              'error',
-              this.t.instant('consultationDetail.errorClosingConsultation'),
-              getErrorMessage(error)
-            );
-          },
-        });
-    }
+  confirmCloseConsultation(): void {
+    const consultation = this.consultation();
+    if (!consultation || this.isClosingConsultation()) return;
+
+    const notes = this.closeConsultationNotes.value;
+    const saveNotes$: Observable<Consultation | null> =
+      notes !== (consultation.notes || '')
+        ? this.consultationService.updateConsultation(this.consultationId, {
+            notes,
+          })
+        : of(null);
+
+    this.isClosingConsultation.set(true);
+    saveNotes$
+      .pipe(
+        switchMap(() =>
+          this.consultationService.closeConsultation(this.consultationId)
+        ),
+        takeUntil(this.destroy$)
+      )
+      .subscribe({
+        next: () => {
+          this.isClosingConsultation.set(false);
+          this.showCloseConsultationModal.set(false);
+          this.toasterService.show(
+            'success',
+            this.t.instant('consultationDetail.consultationClosed'),
+            this.t.instant('consultationDetail.consultationClosedMessage')
+          );
+          this.router.navigate([
+            `/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`,
+          ]);
+        },
+        error: error => {
+          this.isClosingConsultation.set(false);
+          this.toasterService.show(
+            'error',
+            this.t.instant('consultationDetail.errorClosingConsultation'),
+            getErrorMessage(error)
+          );
+        },
+      });
   }
 
   async reopenConsultation(): Promise<void> {

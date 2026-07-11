@@ -336,6 +336,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
         ],
       ],
       description: ['', [Validators.maxLength(1000)]],
+      notes: ['', [Validators.maxLength(5000)]],
       group_id: [''],
       beneficiary_id: [''],
       owned_by_id: [''],
@@ -453,6 +454,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
     this.consultationForm.patchValue({
       title: consultation.title || '',
       description: consultation.description || '',
+      notes: consultation.notes || '',
       group_id: consultation.group?.id?.toString() || '',
       beneficiary_id: consultation.beneficiary?.id?.toString() || '',
       visible_by_patient: consultation.visible_by_patient ?? true,
@@ -505,6 +507,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
     const consultationData: Partial<CreateConsultationRequest> = {
       title: formValue.title,
       description: formValue.description || undefined,
+      notes: formValue.notes ?? '',
       group_id: formValue.group_id ? parseInt(formValue.group_id) : undefined,
       beneficiary_id: formValue.beneficiary_id ? parseInt(formValue.beneficiary_id) : undefined,
       visible_by_patient: formValue.visible_by_patient,
@@ -561,6 +564,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
     const consultationData: CreateConsultationRequest = {
       title: formValue.title,
       description: formValue.description || undefined,
+      notes: formValue.notes || undefined,
       group_id: groupId,
       beneficiary_id: beneficiaryId,
       owned_by_id: ownedById,
@@ -764,6 +768,7 @@ export class ConsultationForm implements OnInit, OnDestroy {
     const consultationData: Partial<CreateConsultationRequest> = {
       title: formValue.title,
       description: formValue.description || undefined,
+      notes: formValue.notes ?? '',
       group_id: formValue.group_id ? parseInt(formValue.group_id) : undefined,
       beneficiary_id: formValue.beneficiary_id
         ? parseInt(formValue.beneficiary_id)

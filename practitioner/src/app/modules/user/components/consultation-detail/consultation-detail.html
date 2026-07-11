@@ -771,6 +771,44 @@
     </div>
   </app-modal>
 
+  <app-modal
+    [isOpen]="showCloseConsultationModal()"
+    [title]="'consultationDetail.closeConsultationTitle' | translate"
+    size="small"
+    (closed)="showCloseConsultationModal.set(false)">
+    <div class="close-consultation-modal-content">
+      <p class="close-consultation-message">{{ closeConsultationMessage() }}</p>
+      <div class="form-group">
+        <app-textarea
+          [label]="'consultationForm.notes' | translate"
+          [placeholder]="'consultationForm.notesPlaceholder' | translate"
+          [rows]="4"
+          [formControl]="closeConsultationNotes">
+        </app-textarea>
+        <span class="field-helper-text">
+          {{ 'consultationForm.notesHelperText' | translate }}
+        </span>
+      </div>
+    </div>
+    <div modal-footer class="close-consultation-modal-footer">
+      <app-button
+        [text]="'consultationDetail.cancel' | translate"
+        [style]="ButtonStyleEnum.stroke"
+        [size]="ButtonSizeEnum.medium"
+        [disabled]="isClosingConsultation()"
+        (buttonClick)="showCloseConsultationModal.set(false)">
+      </app-button>
+      <app-button
+        [text]="'consultationDetail.close' | translate"
+        [style]="ButtonStyleEnum.primary"
+        [state]="ButtonStateEnum.error"
+        [size]="ButtonSizeEnum.medium"
+        [loading]="isClosingConsultation()"
+        (buttonClick)="confirmCloseConsultation()">
+      </app-button>
+    </div>
+  </app-modal>
+
   <app-appointment-form-modal
     [isOpen]="showCreateAppointmentModal()"
     [consultationId]="consultationId"

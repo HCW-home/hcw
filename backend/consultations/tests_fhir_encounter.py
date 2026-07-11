@@ -62,6 +62,28 @@ class EncounterMapperUnitTests(_EncounterBase):
         data = EncounterFhirMapper().to_fhir(self.consultation)
         self.assertEqual(data["class"]["code"], "AMB")
 
+    def test_notes_mapped_to_extension_roundtrip(self):
+        from consultations.fhir import _encounter_note_extension_url
+
+        self.consultation.notes = "Patient anxious, do not disclose."
+        self.consultation.save()
+        data = EncounterFhirMapper().to_fhir(self.consultation)
+        FhirEncounter.model_validate(data)
+        note_url = _encounter_note_extension_url()
+        exts = [e for e in data.get("extension", []) if e["url"] == note_url]
+        self.assertEqual(len(exts), 1)
+        self.assertEqual(exts[0]["valueString"], "Patient anxious, do not disclose.")
+
+        # round-trip back into a Consultation
+        instance = EncounterFhirMapper().from_fhir(
+            data, context={"request": type("R", (), {"user": self.practitioner})()},
+        )
+        self.assertEqual(instance.notes, "Patient anxious, do not disclose.")
+
+    def test_no_notes_emits_no_extension(self):
+        data = EncounterFhirMapper().to_fhir(self.consultation)
+        self.assertNotIn("extension", data)
+
 
 class EncounterReadTests(_EncounterBase):
 
@@ -147,6 +169,27 @@ class EncounterWriteTests(_EncounterBase):
         created = Consultation.objects.exclude(pk=self.consultation.pk).get()
         self.assertEqual(created.beneficiary, self.patient)
         self.assertEqual(created.created_by, self.practitioner)
+
+    def test_create_with_note_extension_sets_notes(self):
+        from consultations.fhir import _encounter_note_extension_url
+
+        payload = {
+            "resourceType": "Encounter",
+            "status": "in-progress",
+            "class": {
+                "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+                "code": "VR",
+            },
+            "subject": {"reference": f"Patient/{self.patient.pk}"},
+            "extension": [{
+                "url": _encounter_note_extension_url(),
+                "valueString": "Internal clinical note.",
+            }],
+        }
+        response = self._fhir_post(reverse("consultation-list"), payload)
+        self.assertEqual(response.status_code, 201, response.data)
+        created = Consultation.objects.exclude(pk=self.consultation.pk).get()
+        self.assertEqual(created.notes, "Internal clinical note.")
 
     def test_create_with_contained_patient_creates_on_the_fly(self):
         payload = {
@@ -234,3 +277,28 @@ class EncounterWriteTests(_EncounterBase):
         self.assertEqual(response.status_code, 204)
         self.consultation.refresh_from_db()
         self.assertIsNotNone(self.consultation.closed_at)
+
+
+class ConsultationNotesVisibilityTests(_EncounterBase):
+    """`notes` are internal: exposed to practitioners, hidden from patients."""
+
+    def _serialize(self, user):
+        from rest_framework.test import APIRequestFactory
+
+        from consultations.serializers import ConsultationSerializer
+
+        self.consultation.notes = "Confidential clinical note."
+        self.consultation.save()
+        request = APIRequestFactory().get("/")
+        request.user = user
+        return ConsultationSerializer(
+            self.consultation, context={"request": request}
+        ).data
+
+    def test_practitioner_sees_notes(self):
+        data = self._serialize(self.practitioner)
+        self.assertEqual(data["notes"], "Confidential clinical note.")
+
+    def test_patient_does_not_see_notes(self):
+        data = self._serialize(self.patient)
+        self.assertNotIn("notes", data)

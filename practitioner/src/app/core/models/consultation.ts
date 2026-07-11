@@ -117,6 +117,7 @@ export interface Consultation {
   closed_at: string | null;
   title: string | null;
   description: string | null;
+  notes?: string | null;
   beneficiary: User | null;
   beneficiary_id?: number;
   created_by: User;
@@ -153,6 +154,7 @@ export interface ConsultationKeyInput {
 export interface CreateConsultationRequest {
   title?: string | null;
   description?: string | null;
+  notes?: string | null;
   group_id?: number | null;
   beneficiary_id?: number | null;
   owned_by_id?: number | null;

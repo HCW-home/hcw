@@ -351,6 +351,7 @@ class ConsultationSerializer(CustomFieldsMixin, serializers.ModelSerializer):
             "group_id",
             "description",
             "title",
+            "notes",
             "closed_at",
             "visible_by_patient",
             "temporary",
@@ -378,6 +379,18 @@ class ConsultationSerializer(CustomFieldsMixin, serializers.ModelSerializer):
             "last_read_at",
             "keys",
         ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # `notes` are internal clinical notes: only practitioners may read
+        # them. Strip the field for anyone else (e.g. a patient receiving the
+        # nested consultation via the appointment serializer). The write side
+        # is already limited to the practitioner-only ConsultationViewSet.
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        if not (user and getattr(user, "is_practitioner", False)):
+            data.pop("notes", None)
+        return data
 
     def get_keys(self, obj):
         """Return the ConsultationKey rows the current user can use to
