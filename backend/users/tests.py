@@ -146,3 +146,45 @@ class ForceTemporaryPatientsFlagEnabledTests(ForceTemporaryPatientsBase):
         self.assertEqual(response.status_code, 201, response.data)
         created = User.objects.get(email="pierre@example.com")
         self.assertTrue(created.temporary)
+
+
+class RequiresManualAccessTests(TenantTestCase):
+    """The `requires_manual_access` property drives whether a manual
+    (copy-it-yourself) access link is offered. It must be True only when no
+    channel can deliver the link automatically."""
+
+    def test_email_contact_does_not_require_manual(self):
+        user = User.objects.create_user(
+            email="pat@example.com", communication_method="email"
+        )
+        self.assertFalse(user.requires_manual_access)
+
+    def test_sms_contact_does_not_require_manual(self):
+        # A phone-only SMS contact receives the link inside the SMS. Email-less
+        # contacts are created directly (create_user mandates an email).
+        user = User.objects.create(
+            mobile_phone_number="+41791234567",
+            communication_method="sms",
+        )
+        self.assertFalse(user.requires_manual_access)
+
+    def test_whatsapp_contact_does_not_require_manual(self):
+        user = User.objects.create(
+            mobile_phone_number="+41791234568",
+            communication_method="whatsapp",
+        )
+        self.assertFalse(user.requires_manual_access)
+
+    def test_manual_method_requires_manual(self):
+        user = User.objects.create_user(
+            email="manual@example.com", communication_method="manual"
+        )
+        self.assertTrue(user.requires_manual_access)
+
+    def test_no_channel_requires_manual(self):
+        # Neither email nor phone: the link cannot be delivered automatically.
+        user = User.objects.create(
+            mobile_phone_number=None,
+            communication_method="email",
+        )
+        self.assertTrue(user.requires_manual_access)

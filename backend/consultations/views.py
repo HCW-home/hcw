@@ -1037,10 +1037,9 @@ class ParticipantViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        allowed = not user.email or user.communication_method == "manual"
-        if not allowed:
+        if not user.requires_manual_access:
             return Response(
-                {"detail": _("Access URL is only available for users without an email or with manual communication")},
+                {"detail": _("Access URL is only available for users without any automatic channel (email/SMS/WhatsApp) or with manual communication")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 

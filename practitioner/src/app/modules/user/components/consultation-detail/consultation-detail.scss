@@ -1167,3 +1167,13 @@
     }
   }
 }
+
+// When the external-contact beneficiary makes the PATIENT item span the whole
+// grid row, keep its content at a readable, left-aligned width instead of
+// stretching the selects/toggle edge to edge.
+.info-item.full-width {
+  app-external-contact-form,
+  .beneficiary-type-toggle {
+    max-width: 520px;
+  }
+}

@@ -201,7 +201,7 @@
               }
             </div>
 
-            <div class="info-item">
+            <div class="info-item" [class.full-width]="isEditMode() && isExternalBeneficiary()">
               <span class="info-label"
                 >{{ 'consultationDetail.patient' | translate }}</span
               >

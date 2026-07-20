@@ -187,12 +187,14 @@ class ParticipantReadSerializer(serializers.ModelSerializer):
 
     def get_requires_manual_access(self, obj):
         """Indique si ce participant nécessite un accès manuel (lien d'invitation).
-        Vrai dès que l'utilisateur n'a pas d'email (le code de vérification ne
-        peut donc pas lui être envoyé) ou qu'il est en communication manuelle.
+        Vrai uniquement quand aucun canal ne peut acheminer le lien
+        automatiquement : communication manuelle, ou ni email ni téléphone. Un
+        contact SMS/WhatsApp reçoit son lien dans le message, donc pas d'accès
+        manuel.
         """
         if not obj.user:
             return False
-        return not obj.user.email or obj.user.communication_method == "manual"
+        return obj.user.requires_manual_access
 
     def get_has_consultation_key(self, obj):
         """True if a direct ConsultationKey row exists for this participant's

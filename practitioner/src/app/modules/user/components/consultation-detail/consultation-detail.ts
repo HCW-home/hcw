@@ -2400,7 +2400,13 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   hasBeneficiaryManualLink(): boolean {
     const beneficiary = this.consultation()?.beneficiary;
     if (!beneficiary) return false;
-    return !beneficiary.email || beneficiary.communication_method === 'manual';
+    // A manual (copy-it-yourself) link is only needed when no channel can
+    // deliver the access link automatically: manual communication, or neither
+    // email nor phone. An SMS/WhatsApp contact receives the link in the message.
+    return (
+      beneficiary.communication_method === 'manual' ||
+      (!beneficiary.email && !beneficiary.mobile_phone_number)
+    );
   }
 
   openBeneficiaryLinkModal(): void {

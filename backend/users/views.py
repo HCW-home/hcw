@@ -2044,19 +2044,19 @@ class PatientViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"])
     def access_url(self, request, pk=None):
-        """Get or regenerate a magic-link access URL for a patient who has no
-        email (so the verification-code flow is unavailable) or who is
-        explicitly configured with `manual` communication. Token is created
-        on the fly if missing.
+        """Get or regenerate a magic-link access URL for a patient who cannot
+        receive the link automatically: no automatic channel at all (neither
+        email nor phone) or explicit `manual` communication. A patient reachable
+        by email/SMS/WhatsApp gets the link in the message, so the manual link is
+        rejected. Token is created on the fly if missing.
         """
         from datetime import timedelta
 
         user = self.get_object()
 
-        allowed = not user.email or user.communication_method == "manual"
-        if not allowed:
+        if not user.requires_manual_access:
             return Response(
-                {"detail": _("Access URL is only available for patients without an email or with manual communication")},
+                {"detail": _("Access URL is only available for patients without any automatic channel (email/SMS/WhatsApp) or with manual communication")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
