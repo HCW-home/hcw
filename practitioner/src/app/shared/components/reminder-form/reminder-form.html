@@ -7,8 +7,26 @@
         <span>{{ lockedRecipientName }}</span>
       </div>
       } @else {
+      <label class="recipient-label">{{ 'reminders.recipient' | translate }}</label>
+      <div class="recipient-type-toggle">
+        <button
+          type="button"
+          class="type-btn"
+          [class.active]="!isExternalRecipient()"
+          (click)="setRecipientType(false)">
+          {{ 'appointmentForm.existingUser' | translate }}
+        </button>
+        <button
+          type="button"
+          class="type-btn"
+          [class.active]="isExternalRecipient()"
+          (click)="setRecipientType(true)">
+          {{ 'appointmentForm.externalGuest' | translate }}
+        </button>
+      </div>
+
+      @if (!isExternalRecipient()) {
       <app-user-select-or-create
-        [label]="'reminders.recipient' | translate"
         [placeholder]="'reminders.recipientPlaceholder' | translate"
         [required]="true"
         [meUser]="currentUser()"
@@ -18,6 +36,12 @@
       </app-user-select-or-create>
       @if (getFieldError('recipient_id')) {
       <div class="field-error">{{ getFieldError('recipient_id') }}</div>
+      }
+      } @else {
+      <app-external-contact-form
+        #externalContactRef
+        [backendErrors]="externalContactErrors()">
+      </app-external-contact-form>
       }
       }
     </div>

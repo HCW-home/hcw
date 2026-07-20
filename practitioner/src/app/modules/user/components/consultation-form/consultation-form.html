@@ -37,8 +37,26 @@
           </div>
 
           <div class="form-group">
+            <label class="form-label">{{ 'consultationForm.selectBeneficiary' | translate }}</label>
+            <div class="beneficiary-type-toggle">
+              <button
+                type="button"
+                class="type-btn"
+                [class.active]="!isExternalBeneficiary()"
+                (click)="setBeneficiaryType(false)">
+                {{ 'appointmentForm.existingUser' | translate }}
+              </button>
+              <button
+                type="button"
+                class="type-btn"
+                [class.active]="isExternalBeneficiary()"
+                (click)="setBeneficiaryType(true)">
+                {{ 'appointmentForm.externalGuest' | translate }}
+              </button>
+            </div>
+
+            @if (!isExternalBeneficiary()) {
             <app-select
-              [label]="'consultationForm.selectBeneficiary' | translate"
               [placeholder]="'consultationForm.searchByNameOrEmail' | translate"
               [options]="[]"
               [asyncSearch]="beneficiarySearchFn"
@@ -52,6 +70,12 @@
             <span class="field-helper-text">
               {{ 'consultationForm.beneficiaryHelperText' | translate }}
             </span>
+            } @else {
+            <app-external-contact-form
+              #externalBeneficiaryRef
+              [backendErrors]="externalBeneficiaryErrors()">
+            </app-external-contact-form>
+            }
           </div>
 
           <div class="form-group visibility-toggle">

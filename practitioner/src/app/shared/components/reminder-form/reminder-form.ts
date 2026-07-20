@@ -7,6 +7,7 @@ import {
   OnChanges,
   OnDestroy,
   Component,
+  viewChild,
   EventEmitter,
   SimpleChanges,
 } from '@angular/core';
@@ -24,6 +25,7 @@ import { ConsultationService } from '../../../core/services/consultation.service
 import { ToasterService } from '../../../core/services/toaster.service';
 import { UserService } from '../../../core/services/user.service';
 import { Reminder, CreateReminderRequest } from '../../../core/models/reminder';
+import { ITemporaryParticipant } from '../../../core/models/consultation';
 import { IUser } from '../../../modules/user/models/user';
 
 import { Button } from '../../ui-components/button/button';
@@ -32,6 +34,7 @@ import { Textarea } from '../../ui-components/textarea/textarea';
 import { Select } from '../../ui-components/select/select';
 import { Checkbox } from '../../ui-components/checkbox/checkbox';
 import { UserSelectOrCreate } from '../user-select-or-create/user-select-or-create';
+import { ExternalContactForm } from '../external-contact-form/external-contact-form';
 import { ButtonStyleEnum, ButtonSizeEnum } from '../../constants/button';
 import { SelectOption } from '../../models/select';
 import { extractDateFromISO, extractTimeFromISO } from '../../tools/helper';
@@ -51,6 +54,7 @@ import { TranslationService } from '../../../core/services/translation.service';
     CommonModule,
     InputComponent,
     UserSelectOrCreate,
+    ExternalContactForm,
     ReactiveFormsModule,
     FormsModule,
     TranslatePipe,
@@ -79,12 +83,16 @@ export class ReminderForm implements OnInit, OnChanges, OnDestroy {
   isSubmitting = signal(false);
   currentUser = signal<IUser | null>(null);
   selectedRecipient = signal<IUser | null>(null);
+  // Toggle between picking an existing user and entering an external contact.
+  isExternalRecipient = signal(false);
+  externalContactRef = viewChild<ExternalContactForm>('externalContactRef');
   // Stable reference for the search-select initial value: computed once so it
   // does not re-trigger the select's effect (which would re-impose the
   // recipient after the user clears it).
   displayRecipient: IUser | null = null;
   reminderForm!: FormGroup;
   backendErrors = signal<Record<string, string[]>>({});
+  externalContactErrors = signal<Record<string, string[]>>({});
 
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
@@ -218,6 +226,20 @@ export class ReminderForm implements OnInit, OnChanges, OnDestroy {
     this.selectedRecipient.set(user);
   }
 
+  setRecipientType(external: boolean): void {
+    this.isExternalRecipient.set(external);
+    const recipientControl = this.reminderForm.get('recipient_id');
+    if (external) {
+      // Drop the existing-user selection so only one source feeds the backend.
+      recipientControl?.clearValidators();
+      recipientControl?.setValue(null);
+      this.selectedRecipient.set(null);
+    } else {
+      recipientControl?.setValidators([Validators.required]);
+    }
+    recipientControl?.updateValueAndValidity();
+  }
+
   getFieldError(fieldName: string): string {
     const errors = this.backendErrors();
     if (errors[fieldName] && errors[fieldName].length > 0) {
@@ -253,6 +275,17 @@ export class ReminderForm implements OnInit, OnChanges, OnDestroy {
       this.reminderForm.get(key)?.markAsTouched();
     });
 
+    // Resolve the external contact (if the external toggle is on).
+    const useExternal = this.isExternalRecipient() && !this.lockRecipient;
+    let temporaryRecipient: ITemporaryParticipant | null = null;
+    if (useExternal) {
+      const ref = this.externalContactRef();
+      ref?.markAllTouched();
+      if (!ref || !ref.isValid()) return;
+      temporaryRecipient = ref.buildPayload();
+      if (!temporaryRecipient) return;
+    }
+
     if (!this.reminderForm.valid) return;
 
     const formValue = this.reminderForm.value;
@@ -270,11 +303,16 @@ export class ReminderForm implements OnInit, OnChanges, OnDestroy {
     const data: CreateReminderRequest = {
       title: formValue.title,
       description: formValue.description || undefined,
-      recipient_id: formValue.recipient_id,
       consultation_id: this.consultationId,
       scheduled_at: scheduledAt,
       is_recurring: !!formValue.is_recurring,
     };
+
+    if (useExternal && temporaryRecipient) {
+      data.temporary_recipient = temporaryRecipient;
+    } else {
+      data.recipient_id = formValue.recipient_id;
+    }
 
     if (formValue.is_recurring) {
       data.recurrence_interval = formValue.recurrence_interval || 1;
@@ -311,18 +349,26 @@ export class ReminderForm implements OnInit, OnChanges, OnDestroy {
       error: error => {
         this.isSubmitting.set(false);
         if (error.status === 400 && error.error) {
-          const backendErrors = error.error as Record<string, string[]>;
+          const backendErrors = error.error as Record<string, unknown>;
           const mappedErrors: Record<string, string[]> = {};
           if (backendErrors['scheduled_at']) {
-            mappedErrors['date'] = backendErrors['scheduled_at'];
-            mappedErrors['time'] = backendErrors['scheduled_at'];
+            mappedErrors['date'] = backendErrors['scheduled_at'] as string[];
+            mappedErrors['time'] = backendErrors['scheduled_at'] as string[];
           }
           Object.keys(backendErrors).forEach(key => {
-            if (key !== 'scheduled_at') {
-              mappedErrors[key] = backendErrors[key];
+            if (key === 'scheduled_at' || key === 'temporary_recipient') {
+              return;
             }
+            mappedErrors[key] = backendErrors[key] as string[];
           });
           this.backendErrors.set(mappedErrors);
+          // Nested errors from the external contact serializer.
+          const nested = backendErrors['temporary_recipient'];
+          this.externalContactErrors.set(
+            nested && typeof nested === 'object'
+              ? (nested as Record<string, string[]>)
+              : {}
+          );
         } else {
           this.toasterService.show(
             'error',

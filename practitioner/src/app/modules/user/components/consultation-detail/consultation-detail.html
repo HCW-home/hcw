@@ -206,6 +206,23 @@
                 >{{ 'consultationDetail.patient' | translate }}</span
               >
               @if (isEditMode()) {
+              <div class="beneficiary-type-toggle">
+                <button
+                  type="button"
+                  class="type-btn"
+                  [class.active]="!isExternalBeneficiary()"
+                  (click)="setBeneficiaryType(false)">
+                  {{ 'appointmentForm.existingUser' | translate }}
+                </button>
+                <button
+                  type="button"
+                  class="type-btn"
+                  [class.active]="isExternalBeneficiary()"
+                  (click)="setBeneficiaryType(true)">
+                  {{ 'appointmentForm.externalGuest' | translate }}
+                </button>
+              </div>
+              @if (!isExternalBeneficiary()) {
               <app-user-select-or-create
                 [placeholder]="'consultationDetail.searchPatient' | translate"
                 [meUser]="currentUser()"
@@ -213,6 +230,12 @@
                 (userSelected)="selectedBeneficiary.set($event)"
                 formControlName="beneficiary_id">
               </app-user-select-or-create>
+              } @else {
+              <app-external-contact-form
+                #externalBeneficiaryRef
+                [backendErrors]="externalBeneficiaryErrors()">
+              </app-external-contact-form>
+              }
               } @else if (consultation()?.beneficiary) {
               <div class="info-user">
                 <app-user-avatar

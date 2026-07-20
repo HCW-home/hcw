@@ -20,6 +20,7 @@ from .models import (
     QueueMembership,
     Reason,
     Request,
+    Reminder
 )
 
 
@@ -44,6 +45,7 @@ class ReasonCustomFieldInline(StackedInline):
     verbose_name_plural = "Custom fields asked at booking"
 
 admin.site.register(Participant, ModelAdmin)
+admin.site.register(Reminder, ModelAdmin)
 
 
 @admin.register(CustomField)

@@ -1,4 +1,4 @@
-import { User } from './consultation';
+import { ITemporaryParticipant, User } from './consultation';
 
 export type RecurrencePeriod = 'day' | 'week' | 'month';
 
@@ -26,7 +26,10 @@ export interface Reminder {
 export interface CreateReminderRequest {
   title: string;
   description?: string;
-  recipient_id: number;
+  // Either an existing user (recipient_id) or an external contact
+  // (temporary_recipient) is required.
+  recipient_id?: number;
+  temporary_recipient?: ITemporaryParticipant;
   consultation_id?: number;
   scheduled_at: string;
   is_recurring: boolean;

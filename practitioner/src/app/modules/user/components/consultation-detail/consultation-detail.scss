@@ -1138,3 +1138,32 @@
     }
   }
 }
+
+.beneficiary-type-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+
+  .type-btn {
+    flex: 1;
+    padding: 8px 12px;
+    background: white;
+    border: 2px solid var(--slate-200);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--slate-600);
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      border-color: var(--primary-300);
+    }
+
+    &.active {
+      background: var(--primary-50);
+      border-color: var(--primary-500);
+      color: var(--primary-700);
+    }
+  }
+}

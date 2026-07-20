@@ -47,6 +47,7 @@ import {
   Queue,
   CreateConsultationRequest,
   ConsultationKeyInput,
+  ITemporaryParticipant,
 } from '../../../../core/models/consultation';
 import { IUser } from '../../models/user';
 
@@ -87,6 +88,7 @@ import { AppointmentFormModal } from './appointment-form-modal/appointment-form-
 import { ReminderFormModal } from '../../../../shared/components/reminder-form-modal/reminder-form-modal';
 import { ReminderCard } from '../../../../shared/components/reminder-card/reminder-card';
 import { UserSelectOrCreate } from '../../../../shared/components/user-select-or-create/user-select-or-create';
+import { ExternalContactForm } from '../../../../shared/components/external-contact-form/external-contact-form';
 import { Reminder } from '../../../../core/models/reminder';
 import { RoutePaths } from '../../../../core/constants/routes';
 import { ParticipantItem } from '../../../../shared/components/participant-item/participant-item';
@@ -119,6 +121,7 @@ type AppointmentTimeFilter = 'all' | 'upcoming' | 'past';
     ReminderFormModal,
     ReminderCard,
     UserSelectOrCreate,
+    ExternalContactForm,
     ModalComponent,
     FullCalendarModule,
     LocalDatePipe,
@@ -282,6 +285,10 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   selectedOwner = signal<IUser | null>(null);
   beneficiaryInitialOption = signal<SelectOption | null>(null);
   ownerInitialOption = signal<SelectOption | null>(null);
+  // Toggle between an existing user and an external contact as beneficiary.
+  isExternalBeneficiary = signal(false);
+  externalBeneficiaryErrors = signal<Record<string, string[]>>({});
+  externalBeneficiaryRef = viewChild<ExternalContactForm>('externalBeneficiaryRef');
   private practitionerCache = new Map<number, IUser>();
   private beneficiaryCache = new Map<number, IUser>();
 
@@ -1795,6 +1802,8 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       this.ownerInitialOption.set(null);
     }
 
+    this.isExternalBeneficiary.set(false);
+    this.externalBeneficiaryErrors.set({});
     this.isEditMode.set(true);
   }
 
@@ -1804,10 +1813,30 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     this.selectedOwner.set(null);
     this.beneficiaryInitialOption.set(null);
     this.ownerInitialOption.set(null);
+    this.isExternalBeneficiary.set(false);
+    this.externalBeneficiaryErrors.set({});
+  }
+
+  setBeneficiaryType(external: boolean): void {
+    this.isExternalBeneficiary.set(external);
+    if (external) {
+      this.editForm.patchValue({ beneficiary_id: '' });
+      this.selectedBeneficiary.set(null);
+    }
   }
 
   async saveConsultationChanges(): Promise<void> {
     if (!this.consultationId) return;
+
+    // Validate the external beneficiary contact if that mode is active.
+    let temporaryBeneficiary: ITemporaryParticipant | null = null;
+    if (this.isExternalBeneficiary()) {
+      const ref = this.externalBeneficiaryRef();
+      ref?.markAllTouched();
+      if (!ref || !ref.isValid()) return;
+      temporaryBeneficiary = ref.buildPayload();
+      if (!temporaryBeneficiary) return;
+    }
 
     this.isSavingConsultation.set(true);
     const formValue = this.editForm.value;
@@ -1828,14 +1857,18 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     const updateData: Partial<CreateConsultationRequest> = {
       title: formValue.title || null,
       description: formValue.description || null,
-      beneficiary_id: formValue.beneficiary_id
-        ? Number(formValue.beneficiary_id)
-        : null,
       owned_by_id: formValue.owned_by_id ? Number(formValue.owned_by_id) : null,
       group_id: formValue.group_id ? Number(formValue.group_id) : null,
       visible_by_patient: formValue.visible_by_patient,
       custom_fields: customFieldsPayload,
     };
+    if (temporaryBeneficiary) {
+      updateData.temporary_beneficiary = temporaryBeneficiary;
+    } else {
+      updateData.beneficiary_id = formValue.beneficiary_id
+        ? Number(formValue.beneficiary_id)
+        : null;
+    }
 
     try {
       const rewrap = await this.buildRewrappedEnvelopes(updateData);
@@ -1866,6 +1899,12 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
         },
         error: error => {
           this.isSavingConsultation.set(false);
+          const nested = error?.error?.temporary_beneficiary;
+          if (nested && typeof nested === 'object') {
+            this.externalBeneficiaryErrors.set(
+              nested as Record<string, string[]>
+            );
+          }
           this.toasterService.show(
             'error',
             this.t.instant('consultationDetail.updateFailed'),
