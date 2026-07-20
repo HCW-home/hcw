@@ -1862,8 +1862,11 @@ class ReminderViewSet(CreatedByMixin, viewsets.ModelViewSet):
             base_qs = Reminder.objects.filter(created_by=request.user)
 
         # Intersection of [scheduled_at, recurrence_end_at] with the window.
+        # No is_active filter here: the calendar must also show occurrences that
+        # already happened. Once a reminder has sent its last occurrence the
+        # delivery task flips it to is_active=False, so filtering on it would hide
+        # every completed (past) reminder from the calendar.
         reminders = base_qs.filter(
-            is_active=True,
             scheduled_at__lte=window_end,
             recurrence_end_at__gte=window_start,
         ).select_related("recipient", "created_by")

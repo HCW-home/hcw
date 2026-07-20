@@ -514,6 +514,25 @@ class ReminderOccurrenceTests(_ReminderBase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(resp.data), 0)
 
+    def test_occurrences_endpoint_includes_completed_past_reminder(self):
+        # A non-recurring reminder that already fired is flipped to
+        # is_active=False by the delivery task. Its past occurrence must still
+        # appear on the calendar.
+        past = timezone.now().replace(
+            hour=9, minute=0, second=0, microsecond=0
+        ) - timedelta(days=1)
+        r = self._mk(scheduled_at=past, is_active=False)
+        resp = self.client.get(
+            reverse("reminder-occurrences"),
+            {
+                "start": (past - timedelta(days=1)).date().isoformat(),
+                "end": (past + timedelta(days=1)).date().isoformat(),
+            },
+        )
+        self.assertEqual(resp.status_code, 200, resp.data)
+        self.assertEqual(len(resp.data), 1)
+        self.assertEqual(resp.data[0]["reminder_id"], r.id)
+
     def test_occurrences_endpoint_requires_params(self):
         resp = self.client.get(reverse("reminder-occurrences"))
         self.assertEqual(resp.status_code, 400)

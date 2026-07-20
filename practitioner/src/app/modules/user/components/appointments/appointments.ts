@@ -1184,6 +1184,8 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
       } else {
         this.loadAllAppointments();
       }
+      // The list view shows the paginated reminders list, not calendar occurrences.
+      this.loadReminders();
     } else {
       const calendarApi = this.calendarComponent()?.getApi();
       if (calendarApi) {
@@ -1191,6 +1193,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
       }
       if (previousView === 'list') {
         this.loadAppointments();
+        this.loadReminderOccurrences();
       }
     }
   }
@@ -1466,10 +1469,13 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
       });
   }
 
-  // Refresh both reminder sources relevant to the current view.
+  // Refresh the reminder source relevant to the current view: the list view
+  // uses the paginated loadReminders(), while the calendar views use
+  // date-ranged occurrences (loadReminderOccurrences) like appointments do.
   private refreshReminders(): void {
-    this.loadReminders();
-    if (this.currentView() !== 'list') {
+    if (this.currentView() === 'list') {
+      this.loadReminders();
+    } else {
       this.loadReminderOccurrences();
     }
   }
