@@ -515,7 +515,11 @@
     "disabled": "Fonctionnalit\u00e9 indisponible",
     "disabledMessage": "Le r\u00e9pertoire des organisations n'est actuellement pas disponible. Veuillez contacter votre administrateur.",
     "noResults": "Aucune organisation trouv\u00e9e",
-    "noLocation": "Localisation non disponible"
+    "noLocation": "Localisation non disponible",
+    "searchTitle": "Recherche",
+    "searchWhoPlaceholder": "Qui ? Spécialit\u00e9 ? Motif de la consultation ?",
+    "searchLocationPlaceholder": "Localisation",
+    "searchButton": "Rechercher"
   },
   "maintenance": {
     "title": "Maintenance en cours",

@@ -11,43 +11,84 @@
       <h2>{{ 'map.disabled' | translate }}</h2>
       <p>{{ 'map.disabledMessage' | translate }}</p>
     </div>
+  } @else if (!hasSearched()) {
+    <div class="initial-search-screen">
+      <h1>{{ 'map.searchTitle' | translate }}</h1>
+
+      <div class="initial-search-field">
+        <input
+          type="text"
+          [placeholder]="'map.searchWhoPlaceholder' | translate"
+          [value]="searchQuery()"
+          (input)="onSearchInput($event)"
+          (keyup.enter)="submitSearch()"
+        />
+      </div>
+
+      <div class="initial-search-field">
+        <input
+          type="text"
+          [placeholder]="'map.searchLocationPlaceholder' | translate"
+          [value]="locationQuery()"
+          (input)="onLocationInput($event)"
+          (keyup.enter)="submitSearch()"
+        />
+      </div>
+
+      <button class="initial-search-button" (click)="submitSearch()">
+        {{ 'map.searchButton' | translate }}
+      </button>
+    </div>
   } @else {
     <div class="map-layout">
-      <div class="search-toolbar">
-        <div class="search-box">
-          <ion-icon name="search-outline"></ion-icon>
+      <div class="results-header">
+        <h1>{{ 'map.searchTitle' | translate }}</h1>
+        <label class="online-toggle">
+          <span>{{ 'map.onlineBooking' | translate }}</span>
+          <button
+            type="button"
+            class="toggle-switch"
+            [class.active]="onlineBookingOnly()"
+            (click)="onOnlineBookingToggle()"
+          >
+            <span class="toggle-knob"></span>
+          </button>
+        </label>
+      </div>
+
+      <div class="search-bar">
+        <div class="search-bar-field">
           <input
             type="text"
-            [placeholder]="'map.searchPlaceholder' | translate"
+            [placeholder]="'map.searchWhoPlaceholder' | translate"
             [value]="searchQuery()"
             (input)="onSearchInput($event)"
+            (keyup.enter)="submitSearch()"
           />
-          @if (isLoading()) {
-            <ion-spinner name="crescent" class="search-spinner"></ion-spinner>
-          }
         </div>
-        <select
-          class="speciality-select"
-          (change)="onSpecialityChange($event)"
-        >
-          <option value="">{{ 'map.allSpecialities' | translate }}</option>
-          @for (spec of specialities(); track spec.id) {
-            <option [value]="spec.id">{{ spec.name }}</option>
-          }
-        </select>
-        <label class="online-booking-filter">
+        <div class="search-bar-divider"></div>
+        <div class="search-bar-field">
           <input
-            type="checkbox"
-            [checked]="onlineBookingOnly()"
-            (change)="onOnlineBookingChange($event)"
+            type="text"
+            [placeholder]="'map.searchLocationPlaceholder' | translate"
+            [value]="locationQuery()"
+            (input)="onLocationInput($event)"
+            (keyup.enter)="submitSearch()"
           />
-          <span>{{ 'map.onlineBooking' | translate }}</span>
-        </label>
+        </div>
+        <div class="search-bar-divider"></div>
+        <button class="search-bar-button" (click)="submitSearch()">
+          {{ 'map.searchButton' | translate }}
+        </button>
       </div>
 
       <div class="map-body">
         <div class="list-panel">
-          @if (items().length === 0 && !isLoading()) {
+          @if (isLoading()) {
+            <div class="loading-container">
+              <ion-spinner name="crescent"></ion-spinner>
+            </div>
+          } @else if (items().length === 0) {
             <div class="empty-state">
               <ion-icon name="business-outline" class="empty-icon"></ion-icon>
               <p>{{ 'map.noResults' | translate }}</p>
@@ -77,17 +118,12 @@
                             <ion-icon name="business"></ion-icon>
                           }
                         </span>
-                        <h3 class="org-name">{{ item.name }}</h3>
+                        <h3 class="org-name" (click)="goToProfile(item); $event.stopPropagation()">{{ item.name }}</h3>
                       </div>
                       @if (item.specialities) {
                         <p class="org-specialities">
                           <ion-icon name="medkit-outline"></ion-icon>
                           {{ item.specialities }}
-                        </p>
-                      }
-                      @if (item.doctor?.job_title) {
-                        <p class="org-job-title">
-                          {{ item.doctor!.job_title }}
                         </p>
                       }
                       @if (item.subtitle) {
@@ -96,22 +132,54 @@
                           {{ item.subtitle }}
                         </p>
                       }
-                      @if (item.org?.phone || item.doctor?.main_organisation?.phone) {
-                        <p class="org-phone">
-                          <ion-icon name="call-outline"></ion-icon>
-                          <a [href]="'tel:' + (item.org?.phone || item.doctor?.main_organisation?.phone)">
-                            {{ item.org?.phone || item.doctor?.main_organisation?.phone }}
-                          </a>
-                        </p>
-                      }
-                      @if (item.doctor?.email) {
-                        <p class="org-email">
-                          <ion-icon name="mail-outline"></ion-icon>
-                          <a [href]="'mailto:' + item.doctor!.email!">{{ item.doctor!.email }}</a>
-                        </p>
-                      }
                     </div>
                   </div>
+
+                  @if (item.type === 'doctor') {
+                    <div class="org-card-body">
+                      <div class="horaires-block">
+                        @if (getSlotsState(item.id)?.loading) {
+                          <ion-spinner name="crescent" class="horaires-spinner"></ion-spinner>
+                        } @else if (!getSlotsState(item.id)?.dates?.length) {
+                          <p class="no-slots">{{ 'map.noSlots' | translate }}</p>
+                        } @else {
+                          <div class="horaires-nav">
+                            <button
+                              class="day-arrow"
+                              [disabled]="!hasPrevDay(item.id)"
+                              (click)="prevDay(item.id); $event.stopPropagation()"
+                            >
+                              <ion-icon name="chevron-back-outline"></ion-icon>
+                            </button>
+                            <span class="day-label">{{ currentDateLabel(item.id) }}</span>
+                            <button
+                              class="day-arrow"
+                              [disabled]="!hasNextDay(item.id)"
+                              (click)="nextDay(item.id); $event.stopPropagation()"
+                            >
+                              <ion-icon name="chevron-forward-outline"></ion-icon>
+                            </button>
+                          </div>
+                          <div class="slot-chips">
+                            @for (slot of currentDateSlots(item.id); track slot.start_time) {
+                              <button
+                                class="slot-chip"
+                                (click)="goToBookingWithSlot(item, slot); $event.stopPropagation()"
+                              >
+                                {{ slot.start_time.substring(0, 5) }}
+                              </button>
+                            }
+                          </div>
+                        }
+                      </div>
+                      <button
+                        class="rdv-button"
+                        (click)="goToBooking(item); $event.stopPropagation()"
+                      >
+                        {{ 'map.bookButton' | translate }}
+                      </button>
+                    </div>
+                  }
                 </div>
               }
             </div>

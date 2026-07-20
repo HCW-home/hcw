@@ -431,16 +431,21 @@ class MapView(APIView):
                 & (Q(slots__valid_until__isnull=True) | Q(slots__valid_until__gte=today))
             ).distinct()
         if search:
-            return list(qs.filter(
-                Q(first_name__icontains=search)
-                | Q(last_name__icontains=search)
+            name_matches = list(qs.filter(
+                Q(first_name__icontains=search) | Q(last_name__icontains=search)
+            ).distinct())
+            name_match_ids = {u.pk for u in name_matches}
+            other_matches = list(qs.filter(
+                Q(specialities__name__icontains=search)
+                | Q(specialities__reasons__name__icontains=search)
                 | Q(street__icontains=search)
                 | Q(city__icontains=search)
                 | Q(postal_code__icontains=search)
                 | Q(country__icontains=search)
                 | Q(main_organisation__name__icontains=search)
                 | Q(main_organisation__city__icontains=search)
-            ))
+            ).exclude(pk__in=name_match_ids).distinct())
+            return name_matches + other_matches
         if bounds is None:
             return list(qs)
         kept = []

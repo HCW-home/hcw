@@ -1,20 +1,22 @@
 import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router'; 
+import { Router } from '@angular/router';
 import {
   IonContent,
   IonIcon,
   IonSpinner,
 } from '@ionic/angular/standalone';
 import { TranslatePipe } from '@ngx-translate/core';
-import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
+import { Subject, takeUntil, forkJoin, of } from 'rxjs';
+import { catchError, map as rxMap } from 'rxjs/operators';
 import * as L from 'leaflet';
 
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { TranslationService } from '../../core/services/translation.service';
 import { AppHeaderComponent } from '../../shared/app-header/app-header.component';
+import { DoctorService, Reason } from '../../core/services/doctor.service';
 
 interface Organisation {
   id: number;
@@ -40,11 +42,6 @@ interface Doctor {
   main_organisation?: Organisation;
 }
 
-interface Speciality {
-  id: number;
-  name: string;
-}
-
 interface MapItem {
   type: 'organisation' | 'doctor';
   id: string;
@@ -56,6 +53,23 @@ interface MapItem {
   initials: string;
   org?: Organisation;
   doctor?: Doctor;
+}
+
+interface SlotEntry {
+  date: string;
+  start_time: string;
+  end_time: string;
+  duration: number;
+  user_id: number;
+}
+
+interface DoctorSlotsState {
+  loading: boolean;
+  reasonId: number | null;
+  dates: string[];
+  slotsByDate: Record<string, SlotEntry[]>;
+  dateIndex: number;
+  error: boolean;
 }
 
 const orgIcon = L.divIcon({
@@ -93,51 +107,29 @@ export class MapPage implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   private t = inject(TranslationService);
   private map!: L.Map;
+  private mapInitialized = false;
   private markers: L.Marker[] = [];
-  private searchSubject = new Subject<string>();
-  private boundsSubject = new Subject<L.LatLngBounds>();
-  private isSearchMode = false;
+  private reasonsCache = new Map<number, Reason[]>();
 
   items = signal<MapItem[]>([]);
-  specialities = signal<Speciality[]>([]);
   isLoading = signal(false);
   isPublicEnabled = signal<boolean | null>(null);
+  hasSearched = signal(false);
   searchQuery = signal('');
-  selectedSpeciality = signal<number | null>(null);
-  selectedItemId = signal<string | null>(null);
+  locationQuery = signal('');
   onlineBookingOnly = signal(false);
+  selectedItemId = signal<string | null>(null);
+  slotsState = signal<Record<string, DoctorSlotsState>>({});
 
   constructor(
     private apiService: ApiService,
     private authService: AuthService,
     private router: Router,
+    private doctorService: DoctorService,
   ) {}
 
   ngOnInit(): void {
     this.checkPublicOrganisations();
-
-    this.searchSubject.pipe(
-      debounceTime(400),
-      distinctUntilChanged(),
-      takeUntil(this.destroy$)
-    ).subscribe(query => {
-      if (query.trim()) {
-        this.isSearchMode = true;
-        this.searchFromApi(query.trim());
-      } else {
-        this.isSearchMode = false;
-        this.loadFromBounds();
-      }
-    });
-
-    this.boundsSubject.pipe(
-      debounceTime(300),
-      takeUntil(this.destroy$)
-    ).subscribe(bounds => {
-      if (!this.isSearchMode) {
-        this.loadFromBoundsWithCoords(bounds);
-      }
-    });
   }
 
   ngOnDestroy(): void {
@@ -154,10 +146,6 @@ export class MapPage implements OnInit, OnDestroy {
       .subscribe({
         next: (config: any) => {
           this.isPublicEnabled.set(!!config?.public_organisations);
-          if (config?.public_organisations) {
-            this.loadSpecialities();
-            setTimeout(() => this.initMap(), 100);
-          }
         },
         error: () => {
           this.isPublicEnabled.set(false);
@@ -165,18 +153,8 @@ export class MapPage implements OnInit, OnDestroy {
       });
   }
 
-  private loadSpecialities(): void {
-    this.apiService.get<Speciality[]>('/specialities/')
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (data) => {
-          const results = Array.isArray(data) ? data : (data as any).results || [];
-          this.specialities.set(results);
-        }
-      });
-  }
-
-  private initMap(): void {
+  private initMapIfNeeded(): void {
+    if (this.mapInitialized) return;
     const mapEl = document.getElementById('map-container');
     if (!mapEl) return;
 
@@ -186,72 +164,47 @@ export class MapPage implements OnInit, OnDestroy {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(this.map);
 
-    this.map.on('moveend', () => {
-      this.boundsSubject.next(this.map.getBounds());
-    });
+    this.mapInitialized = true;
+  }
 
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          if (this.map) {
-            this.map.setView([position.coords.latitude, position.coords.longitude], 12);
-          }
-        },
-        () => {
-          this.boundsSubject.next(this.map.getBounds());
-        }
-      );
-    } else {
-      this.boundsSubject.next(this.map.getBounds());
+  private combinedSearchTerm(): string {
+    const who = this.searchQuery().trim();
+    const location = this.locationQuery().trim();
+    return who || location;
+  }
+
+  onSearchInput(event: Event): void {
+    this.searchQuery.set((event.target as HTMLInputElement).value);
+  }
+
+  onLocationInput(event: Event): void {
+    this.locationQuery.set((event.target as HTMLInputElement).value);
+  }
+
+  onOnlineBookingToggle(): void {
+    this.onlineBookingOnly.set(!this.onlineBookingOnly());
+    if (this.hasSearched()) {
+      this.runSearch();
     }
   }
 
-  onSpecialityChange(event: Event): void {
-    const value = (event.target as HTMLSelectElement).value;
-    this.selectedSpeciality.set(value ? Number(value) : null);
-    this.reload();
+  submitSearch(): void {
+    const term = this.combinedSearchTerm();
+    if (!term) return;
+    this.hasSearched.set(true);
+    setTimeout(() => this.initMapIfNeeded(), 0);
+    this.runSearch();
   }
 
-  private reload(): void {
-    if (this.isSearchMode) {
-      this.searchFromApi(this.searchQuery().trim());
-    } else {
-      this.loadFromBounds();
+  private runSearch(): void {
+    const term = this.combinedSearchTerm();
+    if (!term) {
+      this.items.set([]);
+      this.clearMarkers();
+      return;
     }
-  }
 
-  private loadFromBounds(): void {
-    if (!this.map) return;
-    this.boundsSubject.next(this.map.getBounds());
-  }
-
-  onOnlineBookingChange(event: Event): void {
-    this.onlineBookingOnly.set((event.target as HTMLInputElement).checked);
-    this.reload();
-  }
-
-  private loadFromBoundsWithCoords(bounds: L.LatLngBounds): void {
-    const params: any = {
-      lat_min: bounds.getSouth().toFixed(6),
-      lat_max: bounds.getNorth().toFixed(6),
-      lng_min: bounds.getWest().toFixed(6),
-      lng_max: bounds.getEast().toFixed(6),
-      limit: 50,
-    };
-    if (this.selectedSpeciality()) {
-      params.speciality = this.selectedSpeciality();
-    }
-    if (this.onlineBookingOnly()) {
-      params.has_slots = true;
-    }
-    this.fetchData(params);
-  }
-
-  private searchFromApi(query: string): void {
-    const params: any = { search: query, limit: 50 };
-    if (this.selectedSpeciality()) {
-      params.speciality = this.selectedSpeciality();
-    }
+    const params: any = { search: term, limit: 50 };
     if (this.onlineBookingOnly()) {
       params.has_slots = true;
     }
@@ -309,10 +262,8 @@ export class MapPage implements OnInit, OnDestroy {
           this.items.set(items);
           this.isLoading.set(false);
           this.updateMarkers();
-
-          if (this.isSearchMode) {
-            this.fitMapToItems(items);
-          }
+          this.fitMapToItems(items);
+          this.loadSlotsForDoctors(items);
         },
         error: () => {
           this.isLoading.set(false);
@@ -320,11 +271,171 @@ export class MapPage implements OnInit, OnDestroy {
       });
   }
 
+  private loadSlotsForDoctors(items: MapItem[]): void {
+    const doctorItems = items.filter(i => i.type === 'doctor' && i.doctor);
+    const state = { ...this.slotsState() };
+
+    for (const item of doctorItems) {
+      state[item.id] = {
+        loading: true,
+        reasonId: null,
+        dates: [],
+        slotsByDate: {},
+        dateIndex: 0,
+        error: false,
+      };
+    }
+    this.slotsState.set(state);
+
+    for (const item of doctorItems) {
+      this.loadSlotsForDoctor(item);
+    }
+  }
+
+  private loadSlotsForDoctor(item: MapItem): void {
+    const doctor = item.doctor!;
+    const specialityIds = doctor.specialities?.map(s => s.id) || [];
+
+    if (specialityIds.length === 0) {
+      this.setSlotsState(item.id, { loading: false, reasonId: null, dates: [], slotsByDate: {}, dateIndex: 0, error: false });
+      return;
+    }
+
+    const reasonRequests = specialityIds.map(specId => {
+      const cached = this.reasonsCache.get(specId);
+      if (cached) {
+        return of(cached);
+      }
+      return this.doctorService.getReasonsBySpeciality(specId).pipe(
+        rxMap(reasons => {
+          this.reasonsCache.set(specId, reasons);
+          return reasons;
+        }),
+        catchError(() => of([] as Reason[]))
+      );
+    });
+
+    forkJoin(reasonRequests)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(reasonLists => {
+        const allReasons = new Map<number, Reason>();
+        for (const list of reasonLists) {
+          for (const reason of list) {
+            allReasons.set(reason.id, reason);
+          }
+        }
+
+        if (allReasons.size === 0) {
+          this.setSlotsState(item.id, { loading: false, reasonId: null, dates: [], slotsByDate: {}, dateIndex: 0, error: false });
+          return;
+        }
+
+        const shortestReason = Array.from(allReasons.values())
+          .reduce((shortest, current) => current.duration < shortest.duration ? current : shortest);
+
+        this.doctorService.getAvailableSlots(shortestReason.id, { user_id: doctor.pk })
+          .pipe(
+            takeUntil(this.destroy$),
+            catchError(() => of([] as SlotEntry[]))
+          )
+          .subscribe(slots => {
+            const slotsByDate: Record<string, SlotEntry[]> = {};
+            for (const slot of slots) {
+              if (!slotsByDate[slot.date]) {
+                slotsByDate[slot.date] = [];
+              }
+              slotsByDate[slot.date].push(slot);
+            }
+            const dates = Object.keys(slotsByDate).sort();
+
+            this.setSlotsState(item.id, {
+              loading: false,
+              reasonId: shortestReason.id,
+              dates,
+              slotsByDate,
+              dateIndex: 0,
+              error: false,
+            });
+          });
+      });
+  }
+
+  private setSlotsState(itemId: string, state: DoctorSlotsState): void {
+    this.slotsState.update(current => ({ ...current, [itemId]: state }));
+  }
+
+  getSlotsState(itemId: string): DoctorSlotsState | undefined {
+    return this.slotsState()[itemId];
+  }
+
+  currentDateSlots(itemId: string): SlotEntry[] {
+    const state = this.slotsState()[itemId];
+    if (!state || state.dates.length === 0) return [];
+    return state.slotsByDate[state.dates[state.dateIndex]] || [];
+  }
+
+  currentDateLabel(itemId: string): string {
+    const state = this.slotsState()[itemId];
+    if (!state || state.dates.length === 0) return '';
+    return state.dates[state.dateIndex];
+  }
+
+  hasPrevDay(itemId: string): boolean {
+    const state = this.slotsState()[itemId];
+    return !!state && state.dateIndex > 0;
+  }
+
+  hasNextDay(itemId: string): boolean {
+    const state = this.slotsState()[itemId];
+    return !!state && state.dateIndex < state.dates.length - 1;
+  }
+
+  prevDay(itemId: string): void {
+    this.slotsState.update(current => {
+      const state = current[itemId];
+      if (!state || state.dateIndex <= 0) return current;
+      return { ...current, [itemId]: { ...state, dateIndex: state.dateIndex - 1 } };
+    });
+  }
+
+  nextDay(itemId: string): void {
+    this.slotsState.update(current => {
+      const state = current[itemId];
+      if (!state || state.dateIndex >= state.dates.length - 1) return current;
+      return { ...current, [itemId]: { ...state, dateIndex: state.dateIndex + 1 } };
+    });
+  }
+
+  goToBooking(item: MapItem): void {
+    const state = this.slotsState()[item.id];
+    const queryParams: any = { doctor_id: item.doctor!.pk };
+    if (state?.reasonId) {
+      queryParams.reason_id = state.reasonId;
+    }
+    this.router.navigate(['/new-request'], { queryParams });
+  }
+
+  goToBookingWithSlot(item: MapItem, slot: SlotEntry): void {
+    const state = this.slotsState()[item.id];
+    this.router.navigate(['/new-request'], {
+      queryParams: {
+        doctor_id: item.doctor!.pk,
+        reason_id: state?.reasonId ?? undefined,
+        slot_date: slot.date,
+        slot_time: slot.start_time,
+      }
+    });
+  }
+
+  private clearMarkers(): void {
+    this.markers.forEach(m => m.remove());
+    this.markers = [];
+  }
+
   private updateMarkers(): void {
     if (!this.map) return;
 
-    this.markers.forEach(m => m.remove());
-    this.markers = [];
+    this.clearMarkers();
 
     for (const item of this.items()) {
       const coords = this.parseLocation(item.location);
@@ -333,21 +444,11 @@ export class MapPage implements OnInit, OnDestroy {
       const icon = item.type === 'organisation' ? orgIcon : doctorIcon;
 
       let popupContent = `<strong>${item.name}</strong>`;
-      if (item.doctor?.job_title) {
-        popupContent += `<br>${item.doctor.job_title}`;
-      }
       if (item.specialities) {
         popupContent += `<br><em>${item.specialities}</em>`;
       }
       if (item.subtitle) {
-        popupContent += `<br><ion-icon name="location-outline" style="font-size:12px"></ion-icon> ${item.subtitle}`;
-      }
-      const phone = item.org?.phone || item.doctor?.main_organisation?.phone;
-      if (phone) {
-        popupContent += `<br><ion-icon name="call-outline" style="font-size:12px"></ion-icon> <a href="tel:${phone}">${phone}</a>`;
-      }
-      if (item.doctor?.email) {
-        popupContent += `<br><ion-icon name="mail-outline" style="font-size:12px"></ion-icon> <a href="mailto:${item.doctor.email}">${item.doctor.email}</a>`;
+        popupContent += `<br>${item.subtitle}`;
       }
 
       const marker = L.marker([coords.lat, coords.lng], { icon })
@@ -391,22 +492,15 @@ export class MapPage implements OnInit, OnDestroy {
     return parts.join(', ');
   }
 
-  onSearchInput(event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
-    this.searchQuery.set(value);
-    this.searchSubject.next(value);
-  }
-
   selectItem(item: MapItem): void {
     this.selectedItemId.set(item.id);
     const coords = this.parseLocation(item.location);
     if (coords && this.map) {
       this.map.setView([coords.lat, coords.lng], 15);
-      const idx = this.items().indexOf(item);
-      if (idx >= 0 && this.markers[idx]) {
-        this.markers[idx].openPopup();
-      }
     }
+  }
+
+  goToProfile(item: MapItem): void {
     if (item.type === 'doctor' && item.doctor) {
       this.router.navigate(['/practitioners', item.doctor.pk, 'public']);
     }
