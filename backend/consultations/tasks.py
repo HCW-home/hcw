@@ -5,6 +5,7 @@ import boto3
 from asgiref.sync import async_to_sync
 from botocore.exceptions import ClientError
 from core.celery import app
+from core.channel_groups import user_group
 from channels.layers import get_channel_layer
 from constance import config
 from django.conf import settings
@@ -228,7 +229,7 @@ def check_recording_ready(self, recording_id):
     message_data = ConsultationMessageSerializer(message).data
     for user_pk in get_users_to_notification_consultation(appointment.consultation):
         async_to_sync(channel_layer.group_send)(
-            f"user_{user_pk}",
+            user_group(user_pk),
             {
                 "type": "message",
                 "event": "message",

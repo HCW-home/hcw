@@ -6,6 +6,7 @@ import uuid
 import boto3
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from core.channel_groups import user_group
 from core.mixins import CreatedByMixin
 from django.conf import settings
 from constance import config
@@ -434,7 +435,7 @@ class ConsultationViewSet(FhirViewSetMixin, CreatedByMixin, viewsets.ModelViewSe
         channel_layer = get_channel_layer()
         caller_name = f"{request.user.first_name} {request.user.last_name}".strip() or request.user.email
         async_to_sync(channel_layer.group_send)(
-            f"user_{consultation.beneficiary.pk}",
+            user_group(consultation.beneficiary.pk),
             {
                 "type": "call_request",
                 "consultation_id": consultation.pk,
@@ -653,7 +654,7 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
                 continue
 
             async_to_sync(channel_layer.group_send)(
-                f"user_{participant.user.pk}",
+                user_group(participant.user.pk),
                 {
                     "type": "appointment",
                     "consultation_id": appointment.consultation.pk if appointment.consultation else None,
@@ -710,7 +711,7 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
                 continue
 
             async_to_sync(channel_layer.group_send)(
-                f"user_{participant.user.pk}",
+                user_group(participant.user.pk),
                 {
                     "type": "appointment",
                     "consultation_id": appointment.consultation.pk,

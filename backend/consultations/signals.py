@@ -2,6 +2,7 @@ import logging
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from core.channel_groups import user_group
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
@@ -90,7 +91,7 @@ def consultation_saved(sender, instance: Consultation, created, **kwargs):
     # Send notifications to each user
     for user_pk in get_users_to_notification_consultation(instance):
         async_to_sync(channel_layer.group_send)(
-            f"user_{user_pk}",
+            user_group(user_pk),
             {
                 "type": "consultation",
                 "consultation_id": instance.pk,
@@ -114,7 +115,7 @@ def message_saved(sender, instance: Message, created, **kwargs):
     for user_pk in get_users_to_notification_consultation(instance.consultation):
         # Send WebSocket notification (including to the message creator for multi-tab sync)
         async_to_sync(channel_layer.group_send)(
-            f"user_{user_pk}",
+            user_group(user_pk),
             {
                 "type": "message",
                 "consultation_id": instance.consultation.pk,
@@ -180,7 +181,7 @@ def appointment_saved(sender, instance: Appointment, created, **kwargs):
 
     for user_pk in users_to_notify:
         async_to_sync(channel_layer.group_send)(
-            f"user_{user_pk}",
+            user_group(user_pk),
             {
                 "type": "appointment",
                 "consultation_id": consultation_pk,
@@ -195,7 +196,7 @@ def consultation_deleted(sender, instance, **kwargs):
     channel_layer = get_channel_layer()
     for user_pk in get_users_to_notification_consultation(instance):
         async_to_sync(channel_layer.group_send)(
-            f"user_{user_pk}",
+            user_group(user_pk),
             {
                 "type": "consultation",
                 "consultation_id": instance.pk,

@@ -1,5 +1,6 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from core.channel_groups import user_group
 from django.db import transaction
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -22,7 +23,7 @@ def notify_message_recipient(sender, instance: Message, created, **kwargs):
     if created and instance.sent_to and instance.in_notification:
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
-            f"user_{instance.sent_to.id}",
+            user_group(instance.sent_to.id),
             {
                 "type": "notification",
                 "id": instance.id,

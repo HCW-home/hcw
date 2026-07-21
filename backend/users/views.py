@@ -16,6 +16,7 @@ from allauth.socialaccount.providers.openid_connect.views import (
 )
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from core.channel_groups import user_group
 from consultations.models import (
     Appointment,
     Consultation,
@@ -668,7 +669,7 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
 
         for user_pk in users_to_notify:
             async_to_sync(channel_layer.group_send)(
-                f"user_{user_pk}",
+                user_group(user_pk),
                 {
                     "type": "call_response",
                     "consultation_id": consultation.pk,
@@ -1081,7 +1082,7 @@ class UserAppointmentsViewSet(viewsets.ReadOnlyModelViewSet):
                 continue
 
             async_to_sync(channel_layer.group_send)(
-                f"user_{participant.user.pk}",
+                user_group(participant.user.pk),
                 {
                     "type": "appointment",
                     "consultation_id": appointment.consultation.pk if appointment.consultation else None,
@@ -1144,7 +1145,7 @@ class UserAppointmentsViewSet(viewsets.ReadOnlyModelViewSet):
                 continue
 
             async_to_sync(channel_layer.group_send)(
-                f"user_{participant.user.pk}",
+                user_group(participant.user.pk),
                 {
                     "type": "appointment",
                     "consultation_id": appointment.consultation.pk,

@@ -8,8 +8,11 @@ from django.conf import settings
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from channels.exceptions import DenyConnection
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
-from django_tenants.utils import get_tenant_model, get_tenant_domain_model
-from django.db import connection
+from django_tenants.utils import (
+    get_public_schema_name,
+    get_tenant_domain_model,
+    schema_context,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -20,30 +23,35 @@ def get_tenant_from_scope(scope):
     headers = dict(scope.get("headers", []))
     host = headers.get(b"host", b"").decode("utf-8").split(":")[0]
 
-    try:
-        tenant_model = get_tenant_model()
-        domain_model = get_tenant_domain_model()
+    domain_model = get_tenant_domain_model()
 
-        # Get domain and tenant
-        domain = domain_model.objects.select_related("tenant").get(domain=host)
-        return domain.tenant
+    try:
+        # Tenants and domains live in the public schema, and the connection may
+        # currently be bound to any tenant (see the note below), so pin it.
+        with schema_context(get_public_schema_name()):
+            domain = domain_model.objects.select_related("tenant").get(domain=host)
+            return domain.tenant
     except domain_model.DoesNotExist:
         # Fallback to public schema or raise error
         return None
 
-@database_sync_to_async
-def set_tenant_in_db(tenant):
-    """Set tenant schema in database connection."""
-    if tenant:
-        connection.set_tenant(tenant)
 
 @database_sync_to_async
-def get_user(validated_token):
-    return JWTAuthentication().get_user(validated_token)
+def get_user(validated_token, schema_name):
+    with schema_context(schema_name):
+        return JWTAuthentication().get_user(validated_token)
 
 
 class TenantMiddleware(BaseMiddleware):
-    """Middleware to set the tenant schema for websocket connections."""
+    """Middleware resolving the tenant of a websocket connection.
+
+    The tenant is only published in the scope, never bound to the database
+    connection: thread-sensitive sync calls of the whole ASGI process share a
+    single worker thread, hence a single ``django.db.connection``. Calling
+    ``connection.set_tenant()`` here would silently rebind the schema of every
+    other WebSocket already open in the process. Consumers must therefore wrap
+    their own database access in ``schema_context(scope["tenant"].schema_name)``.
+    """
 
     async def __call__(self, scope, receive, send):
         if scope["type"] == "websocket":
@@ -51,8 +59,6 @@ class TenantMiddleware(BaseMiddleware):
             tenant = await get_tenant_from_scope(scope)
 
             if tenant:
-                # Set the tenant schema
-                await set_tenant_in_db(tenant)
                 scope["tenant"] = tenant
             else:
                 # Log warning if no tenant found
@@ -114,7 +120,7 @@ class JWTAuthMiddleware(BaseMiddleware):
                 raise DenyConnection("Tenant mismatch")
 
             # Get user
-            scope["user"] = await get_user(validated_token)
+            scope["user"] = await get_user(validated_token, current_tenant.schema_name)
 
         except DenyConnection:
             # Re-raise connection denial
