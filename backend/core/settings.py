@@ -1037,6 +1037,13 @@ CONSTANCE_CONFIG = {
         "(lighter, but many clients block remote images by default).",
         "email_logo_mode_select",
     ),
+    "email_media_base_url": (
+        "",
+        "Absolute base URL used to build the logo link when email_logo_mode is "
+        "'url' and media is stored locally (e.g. https://patient.example.com). "
+        "Leave empty to fall back to patient_base_url. Ignored for S3 storage, "
+        "which already returns absolute URLs.",
+    ),
 }
 
 
@@ -1090,7 +1097,7 @@ CONSTANCE_CONFIG_FIELDSETS = {
         "calendar_color_week_4",
         "calendar_rotation_anchor_date",
     ),
-    "Email": ("email_logo_mode",),
+    "Email": ("email_logo_mode", "email_media_base_url"),
 }
 
 # Short HTML-safe description rendered at the top of each Constance tab in

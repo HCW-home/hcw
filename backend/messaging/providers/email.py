@@ -1,5 +1,4 @@
 import logging
-import mimetypes
 from email import encoders as Encoders
 from email.mime.base import MIMEBase
 from email.mime.image import MIMEImage
@@ -62,8 +61,6 @@ class Main(BaseMessagingProvider):
     required_fields = ["from_email"]
 
     def send(self, message: "Message"):
-        from users.models import Organisation
-
         from_email = self.messaging_provider.from_email or settings.DEFAULT_FROM_EMAIL
         logger.info(
             "Preparing email message_id=%s to=%s from=%s",
@@ -90,34 +87,30 @@ class Main(BaseMessagingProvider):
 
         # Attach logo inline only in "embed" mode. In "url" mode the HTML links
         # to the media file directly (see Message.render_full_html), so no
-        # attachment is needed.
+        # attachment is needed. Message.get_email_logo() is the single source of
+        # truth: render_full_html only emits the cid:logo <img> when this same
+        # call succeeds, so the HTML and the attachment can never disagree.
         logo_mode = getattr(config, "email_logo_mode", "embed")
-        main_org = Organisation.objects.filter(is_main=True).first()
-        if logo_mode == "embed" and main_org and main_org.logo_white:
-            try:
-                with main_org.logo_white.open("rb") as fh:
-                    logo_data = fh.read()
+        logo = message.get_email_logo() if logo_mode == "embed" else None
+        if logo:
+            logo_data, mime_type = logo
+            maintype, subtype = mime_type.split("/", 1)
 
-                mime_type = mimetypes.guess_type(main_org.logo_white.name)[0] or "image/png"
-                maintype, subtype = mime_type.split("/", 1)
+            if maintype == "image" and subtype not in ("svg+xml",):
+                img = MIMEImage(logo_data, _subtype=subtype)  # auto base64
+            else:
+                # SVG and other non-standard image types must be base64
+                # encoded explicitly, like Django does for attachments.
+                img = MIMEBase(maintype, subtype)
+                img.set_payload(logo_data)
+                Encoders.encode_base64(img)
 
-                if maintype == "image" and subtype not in ("svg+xml",):
-                    img = MIMEImage(logo_data, _subtype=subtype)  # auto base64
-                else:
-                    # SVG and other non-standard image types must be base64
-                    # encoded explicitly, like Django does for attachments.
-                    img = MIMEBase(maintype, subtype)
-                    img.set_payload(logo_data)
-                    Encoders.encode_base64(img)
-
-                img.add_header("Content-ID", "<logo>")
-                img.add_header("Content-Disposition", "inline", filename="logo")
-                # Inline image -> goes into the multipart/related group so the
-                # cid:logo reference in the HTML resolves. Real attachments
-                # (ICS below) stay in the outer multipart/mixed.
-                email.attach_inline(img)
-            except Exception as e:
-                logger.warning("Failed to attach inline logo: %s", e)
+            img.add_header("Content-ID", "<logo>")
+            img.add_header("Content-Disposition", "inline", filename="logo")
+            # Inline image -> goes into the multipart/related group so the
+            # cid:logo reference in the HTML resolves. Real attachments
+            # (ICS below) stay in the outer multipart/mixed.
+            email.attach_inline(img)
 
         # Attach ICS file if available (for appointments)
         ics_data = message.ics_attachment

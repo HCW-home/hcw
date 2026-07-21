@@ -1,6 +1,7 @@
 from datetime import timedelta
 import hashlib
 import logging
+import mimetypes
 import uuid
 from importlib import import_module
 from typing import Dict, Optional, Sequence, Tuple
@@ -881,6 +882,43 @@ class Message(ModelCeleryAbstract):
             logger.exception("render_content_html failed for message_id=%s: %s", self.pk, e)
             return ""
 
+    def get_email_logo(self):
+        """Return (data, mime_type) for the main organisation's white logo, or
+        None when there is no logo or it cannot be read.
+
+        Memoized on the instance so it is read only once per send and, more
+        importantly, so render_full_html (which decides whether to emit the
+        cid:logo <img>) and the email provider (which attaches the inline
+        image) always share the exact same decision. Without this, the HTML
+        could reference cid:logo while no attachment was produced, rendering
+        as a broken image.
+        """
+        if hasattr(self, "_email_logo"):
+            return self._email_logo
+
+        from users.models import Organisation
+
+        result = None
+        main_org = Organisation.objects.filter(is_main=True).first()
+        if main_org and main_org.logo_white:
+            try:
+                with main_org.logo_white.open("rb") as fh:
+                    data = fh.read()
+                mime_type = (
+                    mimetypes.guess_type(main_org.logo_white.name)[0] or "image/png"
+                )
+                result = (data, mime_type)
+            except Exception:
+                # Log loudly with the resolved path so the real cause (missing
+                # file, storage/tenant misconfig, permissions) surfaces instead
+                # of being silently swallowed into a broken cid:logo image.
+                logger.exception(
+                    "Failed to load email logo (name=%s)", main_org.logo_white.name
+                )
+
+        self._email_logo = result
+        return result
+
     @property
     def render_full_html(self):
         """Render the complete HTML email with base template"""
@@ -892,20 +930,36 @@ class Message(ModelCeleryAbstract):
             subject = self.render_subject
             main_org = Organisation.objects.filter(is_main=True).first()
 
-            has_logo = bool(main_org and main_org.logo_white)
             logo_mode = getattr(constance_config, "email_logo_mode", "embed")
             logo_url = None
-            if has_logo and logo_mode == "url":
-                logo_url = main_org.logo_white.url
-                # Local storage returns a relative MEDIA_URL path (e.g.
-                # /upload/...), unusable in an email. Prefix it with the
-                # patient frontend's absolute base so remote clients can load
-                # it. S3 storage already returns an absolute URL, untouched.
-                if logo_url.startswith("/"):
-                    base = (constance_config.patient_base_url or "").rstrip("/")
-                    parsed = urlsplit(base)
-                    if parsed.scheme and parsed.netloc:
-                        logo_url = f"{parsed.scheme}://{parsed.netloc}{logo_url}"
+            if logo_mode == "url":
+                # URL mode: the mail client fetches the logo over HTTP, so it is
+                # enough that a logo file is configured.
+                has_logo = bool(main_org and main_org.logo_white)
+                if has_logo:
+                    logo_url = main_org.logo_white.url
+                    # Local storage returns a relative MEDIA_URL path (e.g.
+                    # /upload/...), unusable in an email. Prefix it with an
+                    # absolute base so remote clients can load it. Prefer the
+                    # dedicated email_media_base_url (media is served by the
+                    # backend, not necessarily the patient frontend), then fall
+                    # back to patient_base_url. S3 storage already returns an
+                    # absolute URL, untouched.
+                    if logo_url.startswith("/"):
+                        base = (
+                            getattr(constance_config, "email_media_base_url", "")
+                            or constance_config.patient_base_url
+                            or ""
+                        ).rstrip("/")
+                        parsed = urlsplit(base)
+                        if parsed.scheme and parsed.netloc:
+                            logo_url = f"{parsed.scheme}://{parsed.netloc}{logo_url}"
+            else:
+                # Embed mode: the logo is attached inline (cid:logo) by the email
+                # provider. Only advertise it in the HTML when it can actually be
+                # read, so we never emit a cid:logo <img> without a matching
+                # attachment. Falls back to the text branding otherwise.
+                has_logo = self.get_email_logo() is not None
 
             return render_to_string(
                 "messaging/email_base.html",
