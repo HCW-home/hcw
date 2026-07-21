@@ -437,13 +437,12 @@
     flex-direction: column;
     padding: 0 22px 4px;
 
+    // Every appointment row is separated by a top rule (design 3a) — including
+    // the first, which closes off the header from the appointments block.
     app-appointment-info {
       display: block;
-      padding: 12px 0;
-
-      &:not(:first-child) {
-        border-top: 1px solid var(--app-border-subtle);
-      }
+      padding: 14px 0;
+      border-top: 1px solid var(--app-border-subtle);
     }
   }
 
@@ -451,7 +450,8 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 12px 0;
+    padding: 14px 0;
+    border-top: 1px solid var(--app-border-subtle);
     color: var(--app-ink-4);
     font-size: 13px;
 
