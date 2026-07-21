@@ -73,10 +73,7 @@ class Main(BaseMessagingProvider):
             message.save()
             raise Exception(error_msg)
 
-        # Trailing slash is required: OVH consumer-key access rules are matched on the
-        # exact path, and the granted rule is "/sms/*/jobs/". Without the slash the
-        # call is rejected with 403 NOT_GRANTED_CALL.
-        url = f"https://eu.api.ovh.com/1.0/sms/{service_name}/jobs/"
+        url = f"https://eu.api.ovh.com/1.0/sms/{service_name}/jobs"
 
         body = {
             "message": message.render_content_sms,
