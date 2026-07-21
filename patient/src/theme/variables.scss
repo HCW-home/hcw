@@ -141,6 +141,49 @@
   --app-z-index-popover: 1200;
   --app-z-index-tooltip: 1300;
   --app-z-index-toast: 1400;
+
+  // ---------------------------------------------------------------------------
+  // Patient dashboard design tokens (refonte "Tableau de bord patient")
+  // Faithful to the iabsis design system handoff. Kept as dedicated tokens so
+  // the dashboard restyle does not shift the meaning of the generic app tokens.
+  // ---------------------------------------------------------------------------
+  --app-page-bg: #eef3f6;          // dashboard scroll background
+  --app-surface: #ffffff;          // cards
+  --app-surface-muted: #f7f9fb;    // nested panels (suivi)
+  --app-surface-teal: rgba(var(--ion-color-primary-rgb), 0.05); // appointments column (brand tint)
+  --app-border: #dde4ec;           // card borders
+  --app-border-subtle: #eef2f6;    // inner separators
+  --app-ink-1: #0d1319;            // primary text
+  --app-ink-2: #2e3842;            // secondary text
+  --app-ink-3: #6b7783;            // tertiary text
+  --app-ink-4: #96a2b0;            // muted / labels
+  // Brand accents — mapped onto the instance's DYNAMIC primary color, which is
+  // set at runtime by app.component.applyPrimaryColor() from
+  // config.primary_color_patient. Never hardcode the brand hue here.
+  --app-teal: var(--ion-color-primary);
+  --app-teal-dark: var(--ion-color-primary-shade);
+  --app-teal-050: var(--ion-color-primary-bg);            // brand chips / soft backgrounds
+  --app-accent-cyan: var(--ion-color-primary-tint);       // pulsing dot on hero
+  --app-accent-cyan-soft: var(--ion-color-primary-light); // labels on hero
+
+  // Focus banner (hero): fixed navy fallback + a brand-tinted dark gradient
+  // derived from the primary via color-mix (applied through @supports).
+  --app-navy-1: #0b3b46;           // focus banner gradient start (fallback)
+  --app-navy-2: #12253a;           // focus banner gradient end (fallback)
+  --app-hero-1: color-mix(in srgb, var(--ion-color-primary) 32%, #081019);
+  --app-hero-2: color-mix(in srgb, var(--ion-color-primary) 14%, #0d1a27);
+
+  // Navy-tinted shadow scale
+  --shadow-sm: 0 1px 2px rgba(18, 37, 58, 0.06);
+  --shadow-md: 0 4px 12px rgba(18, 37, 58, 0.08);
+  --shadow-lg: 0 14px 32px rgba(18, 37, 58, 0.14);
+
+  // Dashboard radii
+  --radius-card: 14px;
+  --radius-banner: 18px;
+
+  // Motion
+  --app-ease: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 // iOS specific variables

@@ -1,39 +1,38 @@
+:host {
+  display: block;
+}
+
 .appointment-info {
   display: flex;
   flex-direction: row;
   align-items: flex-start;
-  gap: 12px;
-  font-size: 0.9375rem;
-  color: var(--app-text-secondary);
-  padding: 10px 12px;
-  background: var(--app-background);
-  border-radius: 8px;
+  gap: 14px;
+  background: transparent;
 }
 
 .appointment-date-badge {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  min-width: 48px;
-  background: var(--ion-color-primary-bg);
-  border-radius: 10px;
+  justify-content: flex-start;
+  width: 44px;
+  min-width: 44px;
   flex-shrink: 0;
 
   .day {
-    font-size: 18px;
+    font-size: 22px;
     font-weight: 700;
-    color: var(--ion-color-primary);
+    color: var(--app-teal-dark);
     line-height: 1;
   }
 
   .month {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--ion-color-primary);
+    margin-top: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--app-ink-4);
     text-transform: uppercase;
+    letter-spacing: 0.04em;
   }
 }
 
@@ -41,7 +40,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 5px;
+  gap: 4px;
   min-width: 0;
 }
 
@@ -49,73 +48,52 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--app-text-muted);
+  letter-spacing: 0.06em;
+  color: var(--app-ink-4);
+
+  ion-icon {
+    font-size: 14px;
+    color: var(--app-teal);
+  }
+}
+
+.appointment-type-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--app-teal-dark);
 
   ion-icon {
     font-size: 15px;
-    color: var(--ion-color-primary);
+    color: var(--app-teal);
   }
 }
 
 .appointment-info-value {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 1.0625rem;
-  color: var(--app-text-primary);
-  font-weight: 600;
-}
-
-.type-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: var(--ion-color-primary-bg);
-  color: var(--ion-color-primary);
-  padding: 3px 10px;
-  border-radius: 6px;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  white-space: nowrap;
-  flex-shrink: 0;
-
-  ion-icon {
-    font-size: 14px;
-  }
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--app-ink-1);
 }
 
 .appointment-info-participant {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.9375rem;
-  color: var(--app-text-secondary);
-
-  .participant-avatar {
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    background: var(--ion-color-primary-bg);
-    color: var(--ion-color-primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 0.75rem;
-    flex-shrink: 0;
-  }
+  gap: 4px;
+  font-size: 12.5px;
+  color: var(--app-ink-3);
 
   .participant-speciality {
-    font-size: 0.8125rem;
-    color: var(--app-text-muted);
+    font-size: 12.5px;
+    color: var(--app-ink-4);
 
     &::before {
       content: "·";
-      margin: 0 4px 0 -2px;
+      margin: 0 4px 0 2px;
     }
   }
 }

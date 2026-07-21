@@ -23,7 +23,8 @@
         </div>
         <div class="next-appointment-info">
           <span class="next-appointment-label">
-            {{ 'home.nextAppointment' | translate }} —
+            <span class="pulse-dot"></span>
+            {{ 'home.nextAppointment' | translate }} ·
             <ion-icon [name]="nextAppointment()!.type === 'online' ? 'videocam-outline' : 'location-outline'"></ion-icon>
             {{ nextAppointment()!.type === 'online' ? ('common.videoCall' | translate) : ('common.inPerson' | translate) }}
           </span>
@@ -93,6 +94,7 @@
                   }
                   <div class="request-info-footer">
                     <span class="status-badge status-{{ getStatusConfig(request.status).color }}">
+                      <ion-icon [name]="getStatusIcon(request.status)"></ion-icon>
                       {{ getStatusConfig(request.status).label }}
                     </span>
                     @if (request.created_at) {
@@ -145,6 +147,7 @@
 
               <div class="timeline-item-appointments">
                 @if (request.consultation?.appointments?.length) {
+                  <span class="appointments-col-label">{{ 'appointments.defaultTitle' | translate }} · {{ request.consultation!.appointments!.length }}</span>
                   @for (appt of request.consultation!.appointments!; track appt.id) {
                     <app-appointment-info
                       [appointment]="appt"
@@ -153,9 +156,10 @@
                     </app-appointment-info>
                   }
                 } @else if (hasAppointment(request)) {
+                  <span class="appointments-col-label">{{ 'appointments.defaultTitle' | translate }} · 1</span>
                   <app-appointment-info
                     [appointment]="request.appointment!"
-                    [label]="'home.scheduledAppointment' | translate"
+                    [label]="''"
                     [speciality]="getSpecialityName(request)">
                   </app-appointment-info>
                 } @else {
@@ -223,6 +227,7 @@
 
               <div class="timeline-item-appointments">
                 @if (consultation.appointments?.length) {
+                  <span class="appointments-col-label">{{ 'appointments.defaultTitle' | translate }} · {{ consultation.appointments!.length }}</span>
                   @for (appt of consultation.appointments!; track appt.id) {
                     <app-appointment-info
                       [appointment]="appt"
@@ -261,6 +266,7 @@
                 </div>
               </div>
               <div class="timeline-item-appointments">
+                <span class="appointments-col-label">{{ 'appointments.defaultTitle' | translate }} · 1</span>
                 <app-appointment-info
                   [appointment]="appointment">
                 </app-appointment-info>

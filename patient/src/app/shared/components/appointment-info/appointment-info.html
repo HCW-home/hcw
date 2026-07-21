@@ -10,12 +10,9 @@
         <span>{{ label }}</span>
       </div>
     }
-    <div class="appointment-info-title">
-      <span>{{ title }}</span>
-      <span class="type-tag">
-        <ion-icon [name]="typeIcon"></ion-icon>
-        {{ typeLabel }}
-      </span>
+    <div class="appointment-type-line">
+      <ion-icon [name]="typeIcon"></ion-icon>
+      <span>{{ typeLabel }}</span>
     </div>
     <div class="appointment-info-value">
       <span>{{ appointment.scheduled_at | localDate:'mediumDate' }} — {{ appointment.scheduled_at | localDate:'shortTime' }}</span>

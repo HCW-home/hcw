@@ -295,6 +295,18 @@ export class HomePage implements OnInit, OnDestroy {
     return statusMap[normalizedStatus] || statusMap['requested'];
   }
 
+  getStatusIcon(status: string | undefined): string {
+    const normalizedStatus = (status || 'requested').toLowerCase();
+    const iconMap: Record<string, string> = {
+      'requested': 'time-outline',
+      'accepted': 'checkmark-circle-outline',
+      'scheduled': 'calendar-outline',
+      'cancelled': 'close-outline',
+      'refused': 'close-outline'
+    };
+    return iconMap[normalizedStatus] || 'time-outline';
+  }
+
   hasAppointment(request: ConsultationRequest): boolean {
     return !!request.appointment;
   }
