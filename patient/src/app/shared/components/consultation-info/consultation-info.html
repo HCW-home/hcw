@@ -1,36 +1,25 @@
-<div class="consultation-info">
-  <div class="consultation-info-details">
-    @if (label) {
-      <div class="consultation-info-label">
-        <ion-icon name="chatbubbles-outline"></ion-icon>
-        <span>{{ label }}</span>
-      </div>
+<div class="cc-collapsible" [class.open]="expanded">
+  <button class="cc-discuter" (click)="onToggle($event)">
+    <ion-icon class="cc-discuter-icon" name="chatbubbles-outline"></ion-icon>
+    <span class="cc-discuter-label">{{ 'home.accessConsultation' | translate }}</span>
+    @if (unreadCount > 0 && !expanded) {
+      <span class="cc-unread-badge">{{ unreadCount }}</span>
     }
-    @if (title) {
-      <span class="consultation-info-title">{{ getFormattedId() }} · {{ title }}</span>
-    }
-    @if (doctorName) {
-      <div class="consultation-info-doctor">
-        <div class="doctor-avatar">{{ doctorName.charAt(0) }}</div>
-        <span>{{ doctorName }}</span>
-      </div>
-    }
-  </div>
+    <ion-icon class="cc-chevron" name="chevron-down-outline"></ion-icon>
+  </button>
 
-  @if (hideAction && closeLabel) {
-    <button class="consultation-info-btn consultation-info-btn-close" (click)="close.emit(); $event.stopPropagation()">
-      <ion-icon name="close-outline"></ion-icon>
-      <span>{{ closeLabel }}</span>
-    </button>
-  } @else if (!hideAction) {
-    <button class="consultation-info-btn" [class.has-unread]="unreadCount > 0" (click)="onAccess($event)">
-      <ion-icon name="chatbubbles-outline"></ion-icon>
-      <span>{{ 'home.accessConsultation' | translate }}</span>
-      @if (unreadCount > 0) {
-        <span class="unread-badge">{{ unreadCount }} {{ (unreadCount === 1 ? 'home.unreadMessage' : 'home.unreadMessages') | translate }}</span>
+  @if (expanded) {
+    <div class="cc-detail">
+      @if (doctorName) {
+        <div class="cc-practitioner">
+          <div class="cc-avatar">{{ doctorName.charAt(0) }}</div>
+          <div class="cc-practitioner-info">
+            <span class="cc-doc-name">{{ doctorName }}</span>
+            <span class="cc-doc-sub">{{ getFormattedId() }}@if (title) { · {{ title }}}</span>
+          </div>
+        </div>
       }
-    </button>
+      <ng-content></ng-content>
+    </div>
   }
-
-  <ng-content></ng-content>
 </div>

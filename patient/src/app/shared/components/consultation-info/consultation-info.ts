@@ -5,6 +5,12 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import { Consultation } from '../../../core/models/consultation.model';
 
+/**
+ * Collapsible "Discuter avec le praticien" section of a consultation card
+ * (design 3a). The summary button toggles the inline chat, which is projected
+ * from the parent via <ng-content> so the parent keeps full control of the
+ * (functional) chat state.
+ */
 @Component({
   selector: 'app-consultation-info',
   templateUrl: './consultation-info.html',
@@ -18,12 +24,9 @@ import { Consultation } from '../../../core/models/consultation.model';
 })
 export class ConsultationInfoComponent {
   @Input({ required: true }) consultation!: Consultation;
-  @Input() label?: string;
-  @Input() hideAction = false;
-  @Input() closeLabel = '';
   @Input() unreadCount = 0;
-  @Output() access = new EventEmitter<Consultation>();
-  @Output() close = new EventEmitter<void>();
+  @Input() expanded = false;
+  @Output() toggle = new EventEmitter<Consultation>();
 
   get title(): string {
     return this.consultation.title || '';
@@ -40,8 +43,8 @@ export class ConsultationInfoComponent {
     return `#${String(this.consultation.id).padStart(6, '0')}`;
   }
 
-  onAccess(event: Event): void {
+  onToggle(event: Event): void {
     event.stopPropagation();
-    this.access.emit(this.consultation);
+    this.toggle.emit(this.consultation);
   }
 }

@@ -1,31 +1,26 @@
-<div class="appointment-info">
-  <div class="appointment-date-badge">
+<div class="appointment-row">
+  <div class="ar-date">
     <span class="day">{{ appointment.scheduled_at | localDate:'dd' }}</span>
     <span class="month">{{ appointment.scheduled_at | localDate:'MMM' }}</span>
   </div>
-  <div class="appointment-info-details">
-    @if (label) {
-      <div class="appointment-info-label">
-        <ion-icon name="calendar-outline"></ion-icon>
-        <span>{{ label }}</span>
-      </div>
-    }
-    <div class="appointment-type-line">
+  <div class="ar-sep"></div>
+  <div class="ar-main">
+    <div class="ar-type">
       <ion-icon [name]="typeIcon"></ion-icon>
       <span>{{ typeLabel }}</span>
     </div>
-    <div class="appointment-info-value">
-      <span>{{ appointment.scheduled_at | localDate:'mediumDate' }} — {{ appointment.scheduled_at | localDate:'shortTime' }}</span>
-    </div>
-    @for (participant of otherParticipants; track participant.id) {
-      <div class="appointment-info-participant">
-        <span>{{ getParticipantName(participant) }}</span>
-        @if (speciality) {
-          <span class="participant-speciality">{{ speciality }}</span>
-        } @else if (getParticipantSpecialities(participant)) {
-          <span class="participant-speciality">{{ getParticipantSpecialities(participant) }}</span>
-        }
-      </div>
-    }
+    <div class="ar-datetime">{{ appointment.scheduled_at | localDate:'mediumDate' }} — {{ appointment.scheduled_at | localDate:'shortTime' }}</div>
   </div>
+  @if (otherParticipants.length) {
+    <div class="ar-practitioner">
+      @for (participant of otherParticipants; track participant.id) {
+        <span class="ar-doc-name">{{ getParticipantName(participant) }}</span>
+        @if (speciality) {
+          <span class="ar-doc-spec">{{ speciality }}</span>
+        } @else if (getParticipantSpecialities(participant)) {
+          <span class="ar-doc-spec">{{ getParticipantSpecialities(participant) }}</span>
+        }
+      }
+    </div>
+  }
 </div>

@@ -2,7 +2,7 @@
   --background: var(--app-page-bg);
 
   .main-content {
-    max-width: 1200px;
+    max-width: 1080px;
     margin: 0 auto;
     padding: var(--app-spacing-lg);
     padding-bottom: 100px;
@@ -65,9 +65,9 @@
   .next-appointment-banner {
     display: flex;
     align-items: center;
-    gap: 26px;
-    padding: 24px 30px;
-    margin-bottom: 36px;
+    gap: 24px;
+    padding: 22px 28px;
+    margin-bottom: 34px;
     background: linear-gradient(120deg, var(--app-navy-1) 0%, var(--app-navy-2) 100%);
     border-radius: var(--radius-banner);
     box-shadow: var(--shadow-lg);
@@ -78,14 +78,14 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      width: 76px;
-      height: 76px;
+      width: 70px;
+      height: 70px;
       background: rgba(255, 255, 255, 0.08);
       border-radius: 14px;
       flex-shrink: 0;
 
       .day {
-        font-size: 30px;
+        font-size: 28px;
         font-weight: 700;
         color: #fff;
         line-height: 1;
@@ -142,7 +142,7 @@
       }
 
       .next-appointment-date {
-        font-size: 23px;
+        font-size: 22px;
         font-weight: 700;
         line-height: 1.25;
         color: #fff;
@@ -229,7 +229,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Sections
+  // Section
   // ---------------------------------------------------------------------------
   .section {
     margin-bottom: var(--app-spacing-2xl);
@@ -265,7 +265,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Cards — one card per entity (demande / suivi), gap 16
+  // Unified card list — one card per demande / suivi / rdv orphelin
   // ---------------------------------------------------------------------------
   .timeline-list {
     display: flex;
@@ -281,14 +281,13 @@
   }
 
   .timeline-item {
-    display: grid;
-    grid-template-columns: 1fr 340px;
+    display: flex;
+    flex-direction: column;
     background: var(--app-surface);
     border: 1px solid var(--app-border);
     border-radius: var(--radius-card);
     box-shadow: var(--shadow-sm);
     overflow: hidden;
-    cursor: default;
     transition: box-shadow 0.12s var(--app-ease);
 
     &:hover {
@@ -298,11 +297,6 @@
     &.highlighted {
       box-shadow: 0 0 0 2px var(--app-teal), var(--shadow-md);
       animation: pulse 1.5s ease-in-out;
-    }
-
-    &.expanded {
-      grid-template-columns: 1fr;
-      box-shadow: var(--shadow-md);
     }
   }
 
@@ -316,145 +310,81 @@
     }
   }
 
-  // Left column
-  .timeline-item-content {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    padding: 22px 24px;
-  }
-
-  .appointments-section .timeline-item-content {
-    justify-content: center;
-  }
-
-  // Right column — appointments (teal panel)
-  .timeline-item-appointments {
-    display: flex;
-    flex-direction: column;
-    padding: 20px 22px;
-    background: var(--app-surface-teal);
-    border-left: 1px solid var(--app-border-subtle);
-
-    .appointments-col-label {
-      display: block;
-      margin-bottom: 12px;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--app-ink-4);
-    }
-
-    app-appointment-info {
-      display: block;
-      padding: 14px 0;
-
-      &:first-of-type {
-        padding-top: 0;
-      }
-
-      &:last-of-type {
-        padding-bottom: 0;
-      }
-
-      &:not(:last-of-type) {
-        border-bottom: 1px solid var(--app-border-subtle);
-      }
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // Demande — left column content
-  // ---------------------------------------------------------------------------
-  .request-info-block {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    padding: 0;
-    background: transparent;
-  }
-
-  .request-info-label {
+  // Card header
+  .cc-header {
     display: flex;
     align-items: center;
+    gap: 12px;
+    padding: 18px 22px 14px;
+  }
+
+  .type-chip {
+    display: inline-flex;
+    align-items: center;
     gap: 6px;
-    font-size: 11.5px;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 10.5px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.07em;
-    color: var(--app-teal-dark);
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    flex-shrink: 0;
 
     ion-icon {
-      font-size: 15px;
-      color: var(--app-teal);
+      font-size: 13px;
+    }
+
+    &.type-chip--request {
+      background: #eef2f6;
+      color: #4a5460;
+
+      ion-icon {
+        color: #4a5460;
+      }
+    }
+
+    &.type-chip--suivi,
+    &.type-chip--appt {
+      background: var(--app-teal-050);
+      color: var(--app-teal-dark);
+
+      ion-icon {
+        color: var(--app-teal);
+      }
     }
   }
 
-  .request-info-title {
-    font-size: 19px;
+  .cc-title {
+    margin: 0;
+    min-width: 0;
+    font-size: 18px;
     font-weight: 700;
     color: var(--app-ink-1);
     line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  .request-info-subtitle {
-    font-size: 14px;
-    color: var(--app-ink-3);
-  }
-
-  .request-info-doctor {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 14px;
-    color: var(--app-ink-2);
-  }
-
-  .request-info-comment {
-    font-size: 14px;
-    color: var(--app-ink-3);
-    margin: 0;
-    font-style: italic;
-    line-height: 1.4;
-  }
-
-  .request-info-footer {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 2px;
-  }
-
-  .request-info-date {
-    font-size: 12.5px;
-    color: var(--app-ink-4);
-  }
-
-  .doctor-avatar-sm {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: var(--app-teal-050);
-    color: var(--app-teal-dark);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 12px;
+  .cc-appt-count {
+    margin-left: auto;
     flex-shrink: 0;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--app-ink-3);
+    white-space: nowrap;
   }
 
-  // Status badge
+  // Status badge (in header)
   .status-badge {
     display: inline-flex;
     align-items: center;
     gap: 5px;
+    flex-shrink: 0;
     padding: 4px 11px;
     border-radius: 9999px;
-    font-size: 12.5px;
+    font-size: 12px;
     font-weight: 700;
     white-space: nowrap;
 
@@ -501,82 +431,85 @@
     }
   }
 
-  // Inline info rows (awaiting / refused)
-  .card-info-row {
+  // Appointments — full width rows
+  .cc-appointments {
     display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 14px;
-    color: var(--app-ink-3);
-    padding: 10px 12px;
-    background: var(--app-surface-muted);
-    border-radius: 8px;
+    flex-direction: column;
+    padding: 0 22px 4px;
 
-    > ion-icon {
-      font-size: 18px;
-      flex-shrink: 0;
-      color: var(--app-teal);
-    }
+    app-appointment-info {
+      display: block;
+      padding: 12px 0;
 
-    > span {
-      flex: 1;
-      min-width: 0;
-    }
-
-    &.card-info-waiting {
-      background: #fdf1dd;
-      color: #b06f00;
-
-      > ion-icon {
-        color: #f39200;
-      }
-    }
-
-    &.card-info-refused {
-      background: #fde8e8;
-      color: #c20510;
-
-      > ion-icon {
-        color: #c20510;
+      &:not(:first-child) {
+        border-top: 1px solid var(--app-border-subtle);
       }
     }
   }
 
-  // Empty appointment / follow-up placeholder
-  .no-appointment-placeholder {
+  .cc-empty-row {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
     gap: 8px;
-    padding: 14px 16px;
-    border: 1.5px dashed var(--app-border);
-    border-radius: 10px;
+    padding: 12px 0;
     color: var(--app-ink-4);
     font-size: 13px;
 
     ion-icon {
       font-size: 18px;
       flex-shrink: 0;
-      line-height: 1;
       color: var(--app-ink-4);
-    }
-
-    span {
-      line-height: 1.2;
-      position: relative;
-      top: 1px;
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Inline chat (expanded consultation)
-  // ---------------------------------------------------------------------------
+  // Notes (waiting / refused / no follow-up)
+  .cc-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 22px 16px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: var(--app-surface-muted);
+    color: var(--app-ink-3);
+    font-size: 13.5px;
+
+    ion-icon {
+      font-size: 18px;
+      flex-shrink: 0;
+      color: var(--app-teal);
+    }
+
+    span {
+      flex: 1;
+      min-width: 0;
+    }
+
+    &.cc-note-waiting {
+      background: #fdf1dd;
+      color: #b06f00;
+
+      ion-icon {
+        color: #f39200;
+      }
+    }
+
+    &.cc-note-refused {
+      background: #fde8e8;
+      color: #c20510;
+
+      ion-icon {
+        color: #c20510;
+      }
+    }
+  }
+
+  // Inline chat (projected into app-consultation-info)
   .inline-chat {
-    margin-top: var(--app-spacing-sm);
-    animation: chatExpand 0.3s ease-out;
-    overflow: hidden;
     width: 100%;
-    align-self: stretch;
+    margin-top: 4px;
+    overflow: hidden;
+    animation: chatExpand 0.3s ease-out;
 
     app-message-list {
       display: block;
@@ -599,9 +532,7 @@
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Loading / empty states
-  // ---------------------------------------------------------------------------
+  // Loading / empty
   .loading-container {
     display: flex;
     justify-content: center;
@@ -626,25 +557,19 @@
       font-size: 16px;
       font-weight: 600;
       color: var(--app-ink-3);
-      margin: 0 0 var(--app-spacing-md) 0;
-    }
-
-    .empty-cta {
-      margin: 0 auto;
-      padding: 10px 24px;
-      font-size: 1rem;
+      margin: 0;
     }
   }
 
   // ---------------------------------------------------------------------------
-  // Responsive — stack cards below ~880px, focus banner in column
+  // Responsive — focus banner in column below ~880px
   // ---------------------------------------------------------------------------
   @media (max-width: 880px) {
     .next-appointment-banner {
       flex-direction: column;
       align-items: flex-start;
       gap: 18px;
-      padding: 22px;
+      padding: 20px;
 
       .join-button,
       .in-person-badge {
@@ -652,24 +577,15 @@
         justify-content: center;
       }
     }
-
-    .timeline-item {
-      grid-template-columns: 1fr;
-    }
-
-    .timeline-item-appointments {
-      border-left: none;
-      border-top: 1px solid var(--app-border-subtle);
-    }
   }
 
+  // Mobile — chat takes over the screen (keeps the functional chat usable)
   @media (max-width: 768px) {
-    // When chat is open on mobile, hide everything else
     &.home-content--chat-open {
       .main-content {
         padding: var(--app-spacing-sm);
         padding-bottom: 0;
-        height: calc(100vh - 120px);
+        min-height: calc(100vh - 120px);
         display: flex;
         flex-direction: column;
 
@@ -691,12 +607,9 @@
       }
 
       .timeline-list {
-        border: none;
-        border-radius: 0;
         flex: 1;
         min-height: 0;
-        display: flex;
-        flex-direction: column;
+        gap: 0;
       }
 
       .timeline-item:not(.expanded) {
@@ -704,55 +617,25 @@
       }
 
       .timeline-item.expanded {
+        flex: 1;
+        min-height: 0;
+        overflow: visible;
         border: none;
         box-shadow: none;
         border-radius: 0;
-      }
-    }
 
-    .timeline-item.expanded {
-      // Override the grid layout so the inline chat can flex to full height
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      min-height: 0;
-      overflow: hidden;
-
-      > .timeline-item-content {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        min-height: 0;
-      }
-
-      > .timeline-item-appointments {
-        flex-shrink: 0;
-      }
-
-      app-consultation-info {
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-        min-height: 0;
-
-        .consultation-info {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          min-height: 0;
+        .cc-header,
+        .cc-appointments,
+        .cc-note {
+          display: none;
         }
       }
 
       .inline-chat {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        min-height: 0;
+        margin-top: 0;
 
         app-message-list {
-          flex: 1;
-          height: 0;
-          min-height: 0;
+          height: calc(100vh - 200px);
         }
       }
     }

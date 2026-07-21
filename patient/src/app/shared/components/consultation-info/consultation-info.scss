@@ -2,59 +2,85 @@
   display: block;
 }
 
-.consultation-info {
+.cc-collapsible {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 16px;
-  background: var(--app-surface-muted);
-  border: 1px solid var(--app-border-subtle);
-  border-radius: 12px;
+  min-height: 0;
+  border-top: 1px solid var(--app-border-subtle);
 }
 
-.consultation-info-details {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-  width: 100%;
-}
-
-.consultation-info-label {
+.cc-discuter {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 11.5px;
+  gap: 10px;
+  width: 100%;
+  padding: 13px 22px;
+  background: var(--app-surface-muted);
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--app-ink-2);
+  font-size: 13.5px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--app-teal-dark);
+  text-align: left;
+  transition: background 0.15s var(--app-ease);
+  flex-shrink: 0;
 
-  ion-icon {
-    font-size: 15px;
+  &:hover {
+    background: #f1f4f7;
+  }
+
+  .cc-discuter-icon {
+    font-size: 18px;
     color: var(--app-teal);
+    flex-shrink: 0;
+  }
+
+  .cc-discuter-label {
+    flex-shrink: 0;
+  }
+
+  .cc-unread-badge {
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: var(--app-teal);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .cc-chevron {
+    margin-left: auto;
+    font-size: 18px;
+    color: var(--app-ink-3);
+    flex-shrink: 0;
+    transition: transform 0.22s var(--app-ease);
   }
 }
 
-.consultation-info-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--app-ink-1);
-  line-height: 1.3;
+.cc-collapsible.open .cc-chevron {
+  transform: rotate(180deg);
 }
 
-.consultation-info-doctor {
+.cc-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  padding: 18px 22px;
+  border-top: 1px solid var(--app-border-subtle);
+}
+
+.cc-practitioner {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--app-ink-2);
+  gap: 12px;
+  flex-shrink: 0;
 
-  .doctor-avatar {
-    width: 26px;
-    height: 26px;
+  .cc-avatar {
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     background: var(--app-teal-050);
     color: var(--app-teal-dark);
@@ -62,60 +88,24 @@
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    font-size: 12px;
+    font-size: 15px;
     flex-shrink: 0;
   }
-}
 
-.consultation-info-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  align-self: flex-start;
-  padding: 9px 15px;
-  border: 1px solid var(--app-border);
-  border-radius: 9px;
-  background: #fff;
-  color: var(--app-ink-2);
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.15s var(--app-ease), border-color 0.15s var(--app-ease);
-  white-space: nowrap;
-  flex-shrink: 0;
+  .cc-practitioner-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
 
-  ion-icon {
-    font-size: 17px;
-    color: var(--app-teal);
-  }
+    .cc-doc-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--app-ink-1);
+    }
 
-  &:hover {
-    background: var(--app-surface-muted);
-  }
-
-  &.has-unread {
-    border-color: var(--app-teal);
-    color: var(--app-teal-dark);
-  }
-
-  .unread-badge {
-    padding: 2px 8px;
-    border-radius: 10px;
-    background: var(--app-teal);
-    color: white;
-    font-size: 0.75rem;
-    font-weight: 700;
-    white-space: nowrap;
-  }
-
-  &.consultation-info-btn-close {
-    border-color: var(--app-teal);
-    background: #fff;
-    color: var(--app-teal-dark);
-
-    &:hover {
-      background: var(--app-teal-050);
+    .cc-doc-sub {
+      font-size: 12.5px;
+      color: var(--app-ink-3);
     }
   }
 }

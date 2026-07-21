@@ -101,18 +101,6 @@ body {
     background-color: var(--app-background);
   }
 
-  /* Auth pages and video call get full width */
-  ion-app:has(app-login),
-  ion-app:has(app-register),
-  ion-app:has(app-verify-email),
-  ion-app:has(app-forgot-password),
-  ion-app:has(app-reset-password),
-  ion-app:has(app-video-consultation) {
-    max-width: 100%;
-    box-shadow: none;
-    background-color: transparent;
-  }
-
   ion-header ion-toolbar {
     max-width: 1200px;
   }
@@ -120,6 +108,28 @@ body {
   ion-footer {
     max-width: 1200px;
     margin: 0 auto;
+  }
+
+  /* Full-width pages: no framed container / shadow. Auth + video call, plus the
+     patient dashboard (design: full-width nav bar, content centered on the page
+     background — no visible card-like container). */
+  ion-app:has(app-login),
+  ion-app:has(app-register),
+  ion-app:has(app-verify-email),
+  ion-app:has(app-forgot-password),
+  ion-app:has(app-reset-password),
+  ion-app:has(app-video-consultation),
+  ion-app:has(app-home) {
+    max-width: 100%;
+    box-shadow: none;
+    background-color: transparent;
+  }
+
+  /* On the dashboard the nav bar and footer span the full viewport width; the
+     page content is centered by the page itself (home .main-content max-width). */
+  ion-app:has(app-home) ion-header ion-toolbar,
+  ion-app:has(app-home) ion-footer {
+    max-width: 100%;
   }
 
   ion-modal {
