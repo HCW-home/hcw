@@ -1,6 +1,7 @@
 import { Component, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonIcon } from '@ionic/angular/standalone';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { Appointment, Participant } from '../../../core/models/consultation.model';
 import { AuthService } from '../../../core/services/auth.service';
@@ -16,6 +17,7 @@ import { LocalDatePipe } from '../../pipes/local-date.pipe';
     CommonModule,
     IonIcon,
     LocalDatePipe,
+    TranslatePipe,
   ]
 })
 export class AppointmentInfoComponent {
@@ -55,7 +57,12 @@ export class AppointmentInfoComponent {
     return '';
   }
 
+  get isCancelled(): boolean {
+    return this.appointment.status === 'cancelled';
+  }
+
   get typeIcon(): string {
+    if (this.isCancelled) return 'close-circle-outline';
     return this.appointment.type === 'online' ? 'videocam-outline' : 'location-outline';
   }
 

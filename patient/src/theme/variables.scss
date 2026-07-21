@@ -157,6 +157,8 @@
   --app-ink-2: #2e3842;            // secondary text
   --app-ink-3: #6b7783;            // tertiary text
   --app-ink-4: #96a2b0;            // muted / labels
+  --app-danger: #c20510;           // cancelled / refused text and icons
+  --app-danger-soft: #d0656c;      // secondary text inside a cancelled block
   // Brand accents — mapped onto the instance's DYNAMIC primary color, which is
   // set at runtime by app.component.applyPrimaryColor() from
   // config.primary_color_patient. Never hardcode the brand hue here.

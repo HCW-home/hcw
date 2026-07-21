@@ -1,4 +1,4 @@
-<div class="appointment-row">
+<div class="appointment-row" [class.appointment-row--cancelled]="isCancelled">
   <div class="ar-date">
     <span class="day">{{ appointment.scheduled_at | localDate:'dd' }}</span>
     <span class="month">{{ appointment.scheduled_at | localDate:'MMM' }}</span>
@@ -8,6 +8,9 @@
     <div class="ar-type">
       <ion-icon [name]="typeIcon"></ion-icon>
       <span>{{ typeLabel }}</span>
+      @if (isCancelled) {
+        <span class="ar-cancelled-badge">{{ 'appointmentDetail.statusCancelled' | translate }}</span>
+      }
     </div>
     <div class="ar-datetime">{{ appointment.scheduled_at | localDate:'mediumDate' }} — {{ appointment.scheduled_at | localDate:'shortTime' }}</div>
   </div>

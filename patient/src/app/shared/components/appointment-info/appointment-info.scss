@@ -89,6 +89,49 @@
   }
 }
 
+// Cancelled appointment — everything turns red and the date/time is struck through
+.appointment-row--cancelled {
+  .ar-date .day,
+  .ar-date .month {
+    color: var(--app-danger);
+  }
+
+  .ar-date .day {
+    text-decoration: line-through;
+  }
+
+  .ar-main {
+    .ar-type,
+    .ar-type ion-icon {
+      color: var(--app-danger);
+    }
+
+    .ar-datetime {
+      color: var(--app-danger);
+      text-decoration: line-through;
+    }
+  }
+
+  .ar-practitioner {
+    .ar-doc-name,
+    .ar-doc-spec {
+      color: var(--app-danger-soft);
+    }
+  }
+}
+
+.ar-cancelled-badge {
+  margin-left: 2px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--app-danger-bg);
+  color: var(--app-danger);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 @media (max-width: 720px) {
   .ar-date {
     width: 44px;
