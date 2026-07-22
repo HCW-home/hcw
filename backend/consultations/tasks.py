@@ -263,7 +263,11 @@ def auto_delete_closed_consultations():
 
             # Belt-and-suspenders: temporary consultations that somehow stayed
             # open past the join window are also dropped once their effective
-            # end + call_limit + auto_delete_hours has elapsed.
+            # end + call_limit + auto_delete_hours has elapsed. Only when
+            # auto-close is enabled; otherwise temporaries are meant to persist
+            # until closed manually, so we leave them untouched.
+            if not config.auto_close_temporary_consultations:
+                continue
             join_limit = int(config.call_limit_join_minutes)
             default_duration = int(config.default_appointment_duration_in_minutes)
             delete_threshold = timedelta(hours=hours)
@@ -302,6 +306,9 @@ def auto_delete_closed_consultations():
 def auto_close_temporary_consultations():
     """Close temporary consultations whose appointment join window has elapsed.
 
+    No-op unless the `auto_close_temporary_consultations` setting is enabled;
+    when disabled, temporary consultations stay open until closed manually.
+
     For each temp consultation we look at its latest non-cancelled appointment.
     Effective end is `appointment.end_expected_at` when set, otherwise
     `scheduled_at + default_appointment_duration_in_minutes`. The consultation
@@ -310,6 +317,8 @@ def auto_close_temporary_consultations():
     TenantModel = get_tenant_model()
     for tenant in TenantModel.objects.exclude(schema_name="public"):
         with tenant_context(tenant):
+            if not config.auto_close_temporary_consultations:
+                continue
             now = timezone.now()
             join_limit = int(config.call_limit_join_minutes)
             default_duration = int(config.default_appointment_duration_in_minutes)

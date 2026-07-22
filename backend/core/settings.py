@@ -861,6 +861,10 @@ CONSTANCE_CONFIG = {
         0,
         "Hours after closure before a follow-up is automatically deleted (0 to disable)",
     ),
+    "auto_close_temporary_consultations": (
+        False,
+        "Automatically close temporary appointment-chat consultations once the appointment join window has elapsed",
+    ),
     "temporary_user_auto_delete": (
         True,
         "Automatically delete temporary users with no future appointments",
@@ -1057,7 +1061,7 @@ CONSTANCE_CONFIG_FIELDSETS = {
         "call_limit_join_minutes",
         "default_appointment_duration_in_minutes",
     ),
-    "Data Retention": ("consultation_auto_delete_hours", "temporary_user_auto_delete"),
+    "Data Retention": ("consultation_auto_delete_hours", "auto_close_temporary_consultations", "temporary_user_auto_delete"),
     "Security": ("temporary_participant_token_expiry_hours", "instance_signature"),
     "Mobile App": (
         "enable_deeplink",
