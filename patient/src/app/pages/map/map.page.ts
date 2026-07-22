@@ -139,6 +139,7 @@ export class MapPage implements OnInit, OnDestroy {
   isLoading = signal(false);
   isPublicEnabled = signal<boolean | null>(null);
   hasSearched = signal(false);
+
   searchQuery = signal('');
   locationQuery = signal('');
   onlineBookingOnly = signal(false);
@@ -223,10 +224,8 @@ export class MapPage implements OnInit, OnDestroy {
     this.mapInitialized = true;
   }
 
-  private combinedSearchTerm(): string {
-    const who = this.searchQuery().trim();
-    const location = this.locationQuery().trim();
-    return who || location;
+  private hasSearchCriteria(): boolean {
+    return !!(this.searchQuery().trim() || this.locationQuery().trim());
   }
 
   onSearchInput(event: Event): void {
@@ -266,14 +265,21 @@ export class MapPage implements OnInit, OnDestroy {
   }
 
   private runSearch(): void {
-    const term = this.combinedSearchTerm();
-    if (!term) {
+    if (!this.hasSearchCriteria()) {
       this.items.set([]);
       this.clearMarkers();
       return;
     }
 
-    const params: any = { search: term, limit: 50 };
+    const params: any = { limit: 50 };
+    const who = this.searchQuery().trim();
+    const where = this.locationQuery().trim();
+    if (who) {
+      params.search = who;
+    }
+    if (where) {
+      params.location = where;
+    }
     if (this.onlineBookingOnly()) {
       params.has_slots = true;
     }

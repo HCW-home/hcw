@@ -361,15 +361,16 @@ class MapView(APIView):
     def get(self, request):
         bounds = self._parse_bounds(request)
         search = request.query_params.get("search") or None
+        location = request.query_params.get("location") or None
         speciality = request.query_params.get("speciality") or None
         has_slots_raw = request.query_params.get("has_slots") or ""
         has_slots = has_slots_raw.lower() in ("true", "1")
-
-        organisations = self._build_organisations(bounds, search)
+ 
+        organisations = self._build_organisations(bounds, search, location)
         practitioners = self._build_practitioners(
-            bounds, search, speciality, has_slots
+            bounds, search, speciality, has_slots, location
         )
-
+ 
         return Response({
             "organisations": OrganisationSerializer(organisations, many=True).data,
             "practitioners": PublicPractitionerSerializer(practitioners, many=True).data,
@@ -398,24 +399,27 @@ class MapView(APIView):
             return False
         return bounds[0] <= lat <= bounds[1] and bounds[2] <= lng <= bounds[3]
 
-    def _build_organisations(self, bounds, search):
+    def _build_organisations(self, bounds, search, location):
         qs = Organisation.objects.exclude(
             location__isnull=True
         ).exclude(location="")
-        if search:
-            qs = qs.filter(
-                Q(name__icontains=search)
-                | Q(city__icontains=search)
-                | Q(street__icontains=search)
-                | Q(postal_code__icontains=search)
-                | Q(country__icontains=search)
-            )
+        if search or location:
+            if location:
+                qs = qs.filter(
+                    Q(city__icontains=location)
+                    | Q(street__icontains=location)
+                    | Q(postal_code__icontains=location)
+                    | Q(country__icontains=location)
+                )
+            if search:
+                qs = qs.filter(Q(name__icontains=search))
             return list(qs)
         if bounds is None:
             return list(qs)
         return [org for org in qs if self._location_in_bounds(org.location, bounds)]
 
-    def _build_practitioners(self, bounds, search, speciality, has_slots):
+
+    def _build_practitioners(self, bounds, search, speciality, has_slots, location):
         qs = User.objects.filter(
             is_active=True,
             is_practitioner=True,
@@ -433,22 +437,31 @@ class MapView(APIView):
                 Q(slots__isnull=False)
                 & (Q(slots__valid_until__isnull=True) | Q(slots__valid_until__gte=today))
             ).distinct()
-        if search:
-            name_matches = list(qs.filter(
-                Q(first_name__icontains=search) | Q(last_name__icontains=search)
-            ).distinct())
-            name_match_ids = {u.pk for u in name_matches}
-            other_matches = list(qs.filter(
-                Q(specialities__name__icontains=search)
-                | Q(specialities__reasons__name__icontains=search)
-                | Q(street__icontains=search)
-                | Q(city__icontains=search)
-                | Q(postal_code__icontains=search)
-                | Q(country__icontains=search)
-                | Q(main_organisation__name__icontains=search)
-                | Q(main_organisation__city__icontains=search)
-            ).exclude(pk__in=name_match_ids).distinct())
-            return name_matches + other_matches
+ 
+        if search or location:
+            if location:
+                qs = qs.filter(
+                    Q(street__icontains=location)
+                    | Q(city__icontains=location)
+                    | Q(postal_code__icontains=location)
+                    | Q(country__icontains=location)
+                    | Q(main_organisation__street__icontains=location)
+                    | Q(main_organisation__city__icontains=location)
+                    | Q(main_organisation__postal_code__icontains=location)
+                    | Q(main_organisation__country__icontains=location)
+                )
+            if search:
+                name_matches = list(qs.filter(
+                    Q(first_name__icontains=search) | Q(last_name__icontains=search)
+                ).distinct())
+                name_match_ids = {u.pk for u in name_matches}
+                other_matches = list(qs.filter(
+                    Q(specialities__name__icontains=search)
+                    | Q(specialities__reasons__name__icontains=search)
+                ).exclude(pk__in=name_match_ids).distinct())
+                return name_matches + other_matches
+            return list(qs.distinct())
+ 
         if bounds is None:
             return list(qs)
         kept = []
@@ -459,6 +472,7 @@ class MapView(APIView):
             if self._location_in_bounds(loc, bounds):
                 kept.append(user)
         return kept
+
 
 class PublicPractitionerView(APIView):
     """
