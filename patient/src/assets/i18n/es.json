@@ -479,7 +479,11 @@
         "typeDoctor": "Profesional",
         "typeOrganisation": "Centro",
         "noSlots": "Sin disponibilidad",
-        "bookButton": "Pedir cita"
+        "bookButton": "Pedir cita",
+        "suggestSpecialities": "Especialidades",
+        "suggestPractitioners": "Profesionales",
+        "suggestOrganisations": "Centros",
+        "suggestEmpty": "Sin sugerencias"
     },
     "maintenance": {
         "title": "Mantenimiento en curso",

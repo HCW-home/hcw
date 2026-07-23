@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -9,7 +9,7 @@ import {
 } from '@ionic/angular/standalone';
 import { TranslatePipe } from '@ngx-translate/core';
 import { Subject, takeUntil, forkJoin, of } from 'rxjs';
-import { catchError, map as rxMap } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map as rxMap, switchMap } from 'rxjs/operators';
 import * as L from 'leaflet';
 
 import { ApiService } from '../../core/services/api.service';
@@ -19,6 +19,8 @@ import { AppHeaderComponent } from '../../shared/app-header/app-header.component
 import { AppFooterComponent } from '../../shared/app-footer/app-footer.component';
 import { LocalDatePipe } from '../../shared/pipes/local-date.pipe';
 import { DoctorService, Reason } from '../../core/services/doctor.service';
+import { SpecialityService } from '../../core/services/speciality.service';
+import { Speciality } from '../../core/models/doctor.model';
 
 interface Organisation {
   id: number;
@@ -74,6 +76,19 @@ interface DoctorSlotsState {
   error: boolean;
 }
 
+// One chunk of a suggestion label, flagged when it matches the typed term so
+// the template can highlight it without going through innerHTML.
+interface HighlightPart {
+  text: string;
+  match: boolean;
+}
+
+// Free-text suggestions only kick in once the term is worth a round trip.
+const SUGGEST_MIN_LENGTH = 2;
+const SUGGEST_LIMIT = 6;
+// Before anything is typed the panel just lists the available specialities.
+const SUGGEST_IDLE_LIMIT = 8;
+
 const orgIcon = L.divIcon({
   className: 'map-marker-org',
   html: '<div class="marker-pin marker-org"><ion-icon name="business"></ion-icon></div>',
@@ -114,6 +129,8 @@ export class MapPage implements OnInit, OnDestroy {
   private mapInitialized = false;
   private markers: L.Marker[] = [];
   private reasonsCache = new Map<number, Reason[]>();
+  private suggestInput$ = new Subject<string>();
+  private specialitiesLoaded = false;
 
   items = signal<MapItem[]>([]);
   isLoading = signal(false);
@@ -125,15 +142,47 @@ export class MapPage implements OnInit, OnDestroy {
   selectedItemId = signal<string | null>(null);
   slotsState = signal<Record<string, DoctorSlotsState>>({});
 
+  suggestOpen = signal(false);
+  isSuggestLoading = signal(false);
+  suggestPractitioners = signal<MapItem[]>([]);
+  suggestOrganisations = signal<MapItem[]>([]);
+  private allSpecialities = signal<Speciality[]>([]);
+
+  // Typing splits the panel into three columns; before that it is a plain
+  // speciality picker.
+  isSuggestSearching = computed(
+    () => this.searchQuery().trim().length >= SUGGEST_MIN_LENGTH,
+  );
+
+  suggestSpecialities = computed(() => {
+    const term = this.searchQuery().trim().toLowerCase();
+    const all = this.allSpecialities();
+    if (!term) {
+      return all.slice(0, SUGGEST_IDLE_LIMIT);
+    }
+    return all
+      .filter(speciality => speciality.name.toLowerCase().includes(term))
+      .slice(0, SUGGEST_LIMIT);
+  });
+
+  hasSuggestions = computed(
+    () =>
+      this.suggestSpecialities().length > 0 ||
+      this.suggestPractitioners().length > 0 ||
+      this.suggestOrganisations().length > 0,
+  );
+
   constructor(
     private apiService: ApiService,
     private authService: AuthService,
     private router: Router,
     private doctorService: DoctorService,
+    private specialityService: SpecialityService,
   ) {}
 
   ngOnInit(): void {
     this.checkPublicOrganisations();
+    this.watchSuggestInput();
   }
 
   ngOnDestroy(): void {
@@ -178,7 +227,10 @@ export class MapPage implements OnInit, OnDestroy {
   }
 
   onSearchInput(event: Event): void {
-    this.searchQuery.set((event.target as HTMLInputElement).value);
+    const value = (event.target as HTMLInputElement).value;
+    this.searchQuery.set(value);
+    this.suggestOpen.set(true);
+    this.suggestInput$.next(value);
   }
 
   onLocationInput(event: Event): void {
@@ -195,6 +247,7 @@ export class MapPage implements OnInit, OnDestroy {
 
   submitSearch(): void {
     const term = this.combinedSearchTerm();
+    this.closeSuggestions();
     if (!term) return;
     this.hasSearched.set(true);
     setTimeout(() => this.initMapIfNeeded(), 0);
@@ -216,6 +269,47 @@ export class MapPage implements OnInit, OnDestroy {
     this.fetchData(params);
   }
 
+  private buildItems(orgs: Organisation[], docs: Doctor[]): MapItem[] {
+    const items: MapItem[] = [];
+
+    for (const org of orgs) {
+      items.push({
+        type: 'organisation',
+        id: `org-${org.id}`,
+        name: org.name,
+        subtitle: this.formatAddress(org),
+        specialities: '',
+        location: org.location,
+        logo: org.logo_color,
+        initials: org.name.charAt(0).toUpperCase(),
+        org,
+      });
+    }
+
+    for (const doc of docs) {
+      const docLocation = doc.location || doc.main_organisation?.location || null;
+      const specialities = doc.specialities?.map(s => s.name).join(', ') || '';
+      const org = doc.main_organisation;
+      const subtitle = org
+        ? [org.name, this.formatAddress(org)].filter(Boolean).join(' - ')
+        : '';
+
+      items.push({
+        type: 'doctor',
+        id: `doc-${doc.pk}`,
+        name: `${doc.first_name} ${doc.last_name}`,
+        subtitle,
+        specialities,
+        location: docLocation,
+        logo: doc.picture || null,
+        initials: `${doc.first_name.charAt(0)}${doc.last_name.charAt(0)}`.toUpperCase(),
+        doctor: doc,
+      });
+    }
+
+    return items;
+  }
+
   private fetchData(params: any): void {
     this.isLoading.set(true);
 
@@ -224,45 +318,7 @@ export class MapPage implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: ({ organisations, practitioners }) => {
-          const orgs: Organisation[] = organisations || [];
-          const docs: Doctor[] = practitioners || [];
-
-          const items: MapItem[] = [];
-
-          for (const org of orgs) {
-            items.push({
-              type: 'organisation',
-              id: `org-${org.id}`,
-              name: org.name,
-              subtitle: this.formatAddress(org),
-              specialities: '',
-              location: org.location,
-              logo: org.logo_color,
-              initials: org.name.charAt(0).toUpperCase(),
-              org,
-            });
-          }
-
-          for (const doc of docs) {
-            const docLocation = doc.location || doc.main_organisation?.location || null;
-            const specialities = doc.specialities?.map(s => s.name).join(', ') || '';
-            const org = doc.main_organisation;
-            const subtitle = org
-              ? [org.name, this.formatAddress(org)].filter(Boolean).join(' - ')
-              : '';
-
-            items.push({
-              type: 'doctor',
-              id: `doc-${doc.pk}`,
-              name: `${doc.first_name} ${doc.last_name}`,
-              subtitle,
-              specialities,
-              location: docLocation,
-              logo: doc.picture || null,
-              initials: `${doc.first_name.charAt(0)}${doc.last_name.charAt(0)}`.toUpperCase(),
-              doctor: doc,
-            });
-          }
+          const items = this.buildItems(organisations || [], practitioners || []);
 
           this.items.set(items);
           this.isLoading.set(false);
@@ -274,6 +330,117 @@ export class MapPage implements OnInit, OnDestroy {
           this.isLoading.set(false);
         }
       });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Search suggestions
+  // ---------------------------------------------------------------------------
+
+  private watchSuggestInput(): void {
+    this.suggestInput$
+      .pipe(
+        debounceTime(250),
+        distinctUntilChanged(),
+        switchMap(term => {
+          if (term.trim().length < SUGGEST_MIN_LENGTH) {
+            this.isSuggestLoading.set(false);
+            return of(null);
+          }
+          this.isSuggestLoading.set(true);
+          return this.apiService
+            .get<{ organisations: Organisation[]; practitioners: Doctor[] }>(
+              '/map/',
+              { search: term.trim() },
+            )
+            .pipe(catchError(() => of({ organisations: [], practitioners: [] })));
+        }),
+        takeUntil(this.destroy$),
+      )
+      .subscribe(response => {
+        this.isSuggestLoading.set(false);
+        if (!response) {
+          this.suggestPractitioners.set([]);
+          this.suggestOrganisations.set([]);
+          return;
+        }
+        const items = this.buildItems(
+          response.organisations || [],
+          response.practitioners || [],
+        );
+        this.suggestPractitioners.set(
+          items.filter(item => item.type === 'doctor').slice(0, SUGGEST_LIMIT),
+        );
+        this.suggestOrganisations.set(
+          items.filter(item => item.type === 'organisation').slice(0, SUGGEST_LIMIT),
+        );
+      });
+  }
+
+  private loadSpecialitiesOnce(): void {
+    if (this.specialitiesLoaded) return;
+    this.specialitiesLoaded = true;
+    this.specialityService
+      .getSpecialities()
+      .pipe(
+        catchError(() => of([] as Speciality[])),
+        takeUntil(this.destroy$),
+      )
+      .subscribe(specialities => this.allSpecialities.set(specialities || []));
+  }
+
+  onSearchFocus(): void {
+    this.loadSpecialitiesOnce();
+    this.suggestOpen.set(true);
+  }
+
+  closeSuggestions(): void {
+    this.suggestOpen.set(false);
+  }
+
+  selectSpeciality(speciality: Speciality): void {
+    this.searchQuery.set(speciality.name);
+    this.closeSuggestions();
+    this.submitSearch();
+  }
+
+  // A practitioner suggestion goes straight to their public profile; an
+  // organisation has no profile page, so it just runs the search.
+  selectPractitioner(item: MapItem): void {
+    this.closeSuggestions();
+    this.goToProfile(item);
+  }
+
+  selectOrganisation(item: MapItem): void {
+    this.searchQuery.set(item.name);
+    this.closeSuggestions();
+    this.submitSearch();
+  }
+
+  // Splits a label around every occurrence of the typed term so the matching
+  // chunks can be styled in the template.
+  highlight(text: string): HighlightPart[] {
+    const term = this.searchQuery().trim();
+    if (!term) return [{ text, match: false }];
+
+    const haystack = text.toLowerCase();
+    const needle = term.toLowerCase();
+    const parts: HighlightPart[] = [];
+    let cursor = 0;
+
+    while (cursor < text.length) {
+      const found = haystack.indexOf(needle, cursor);
+      if (found === -1) {
+        parts.push({ text: text.slice(cursor), match: false });
+        break;
+      }
+      if (found > cursor) {
+        parts.push({ text: text.slice(cursor, found), match: false });
+      }
+      parts.push({ text: text.slice(found, found + needle.length), match: true });
+      cursor = found + needle.length;
+    }
+
+    return parts;
   }
 
   private loadSlotsForDoctors(items: MapItem[]): void {

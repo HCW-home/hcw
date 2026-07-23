@@ -338,7 +338,9 @@ class MapView(APIView):
     Access: `AllowAny` when `constance_config.public_organisations` is
     enabled, `IsAuthenticated` otherwise. Practitioners are always
     filtered to `is_practitioner=True` with a usable location (their own
-    or their `main_organisation`'s).
+    or their `main_organisation`'s). Entries without a location never
+    show up, search included: everything here is meant to be placed on
+    the map.
 
     Supported query params:
       - `lat_min`, `lat_max`, `lng_min`, `lng_max`: bounding-box filter

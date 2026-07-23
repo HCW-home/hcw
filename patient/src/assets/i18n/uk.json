@@ -525,7 +525,11 @@
     "typeDoctor": "Лікар",
     "typeOrganisation": "Заклад",
     "noSlots": "Немає вільних місць",
-    "bookButton": "Записатися на прийом"
+    "bookButton": "Записатися на прийом",
+    "suggestSpecialities": "Спеціальності",
+    "suggestPractitioners": "Лікарі",
+    "suggestOrganisations": "Заклади",
+    "suggestEmpty": "Немає пропозицій"
   },
   "maintenance": {
     "title": "Триває технічне обслуговування",

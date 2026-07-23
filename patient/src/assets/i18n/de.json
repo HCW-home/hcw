@@ -478,7 +478,11 @@
         "typeDoctor": "Fachperson",
         "typeOrganisation": "Einrichtung",
         "noSlots": "Keine Verfügbarkeit",
-        "bookButton": "Termin buchen"
+        "bookButton": "Termin buchen",
+        "suggestSpecialities": "Fachgebiete",
+        "suggestPractitioners": "Fachpersonen",
+        "suggestOrganisations": "Einrichtungen",
+        "suggestEmpty": "Keine Vorschläge"
     },
     "maintenance": {
         "title": "Wartung im Gange",

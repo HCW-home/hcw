@@ -479,7 +479,11 @@
         "typeDoctor": "Professionista",
         "typeOrganisation": "Struttura",
         "noSlots": "Nessuna disponibilità",
-        "bookButton": "Prenota un appuntamento"
+        "bookButton": "Prenota un appuntamento",
+        "suggestSpecialities": "Specialità",
+        "suggestPractitioners": "Professionisti",
+        "suggestOrganisations": "Strutture",
+        "suggestEmpty": "Nessun suggerimento"
     },
     "maintenance": {
         "title": "Manutenzione in corso",

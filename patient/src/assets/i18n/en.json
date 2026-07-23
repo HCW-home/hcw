@@ -526,7 +526,11 @@
     "typeDoctor": "Practitioner",
     "typeOrganisation": "Facility",
     "noSlots": "No availability",
-    "bookButton": "Book an appointment"
+    "bookButton": "Book an appointment",
+    "suggestSpecialities": "Specialities",
+    "suggestPractitioners": "Practitioners",
+    "suggestOrganisations": "Facilities",
+    "suggestEmpty": "No suggestion"
   },
   "maintenance": {
     "title": "Maintenance in progress",

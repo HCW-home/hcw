@@ -3,32 +3,131 @@
 <!-- One-line search bar, shared by the landing screen and the results screen so
      both stay strictly identical. -->
 <ng-template #searchBlock>
-  <div class="search-bar">
-    <div class="search-bar-field">
-      <ion-icon name="search-outline"></ion-icon>
-      <input
-        type="text"
-        [placeholder]="'map.searchWhoPlaceholder' | translate"
-        [value]="searchQuery()"
-        (input)="onSearchInput($event)"
-        (keyup.enter)="submitSearch()"
-      />
+  @if (suggestOpen()) {
+    <div class="suggest-backdrop" (click)="closeSuggestions()"></div>
+  }
+
+  <div class="search-block">
+    <div class="search-bar">
+      <div class="search-bar-field">
+        <ion-icon name="search-outline"></ion-icon>
+        <input
+          type="text"
+          [placeholder]="'map.searchWhoPlaceholder' | translate"
+          [value]="searchQuery()"
+          (input)="onSearchInput($event)"
+          (focus)="onSearchFocus()"
+          (keyup.enter)="submitSearch()"
+          (keyup.escape)="closeSuggestions()"
+        />
+      </div>
+      <div class="search-bar-divider"></div>
+      <div class="search-bar-field">
+        <ion-icon name="location-outline"></ion-icon>
+        <input
+          type="text"
+          [placeholder]="'map.searchLocationPlaceholder' | translate"
+          [value]="locationQuery()"
+          (input)="onLocationInput($event)"
+          (focus)="closeSuggestions()"
+          (keyup.enter)="submitSearch()"
+        />
+      </div>
+      <button class="search-bar-button" (click)="submitSearch()">
+        <ion-icon name="search-outline"></ion-icon>
+        <span>{{ 'map.searchButton' | translate }}</span>
+      </button>
     </div>
-    <div class="search-bar-divider"></div>
-    <div class="search-bar-field">
-      <ion-icon name="location-outline"></ion-icon>
-      <input
-        type="text"
-        [placeholder]="'map.searchLocationPlaceholder' | translate"
-        [value]="locationQuery()"
-        (input)="onLocationInput($event)"
-        (keyup.enter)="submitSearch()"
-      />
-    </div>
-    <button class="search-bar-button" (click)="submitSearch()">
-      <ion-icon name="search-outline"></ion-icon>
-      <span>{{ 'map.searchButton' | translate }}</span>
-    </button>
+
+    @if (suggestOpen()) {
+      <div class="suggest-panel" [class.suggest-panel--columns]="isSuggestSearching()">
+        @if (!hasSuggestions() && !isSuggestLoading()) {
+          <div class="suggest-empty">
+            <ion-icon name="search-outline"></ion-icon>
+            <span>{{ 'map.suggestEmpty' | translate }}</span>
+          </div>
+        } @else {
+          @if (suggestSpecialities().length) {
+            <div class="suggest-col">
+              <span class="suggest-col-title">{{ 'map.suggestSpecialities' | translate }}</span>
+              <div class="suggest-list">
+                @for (speciality of suggestSpecialities(); track speciality.id) {
+                  <button class="suggest-item" (click)="selectSpeciality(speciality)">
+                    <span class="suggest-item-label">
+                      @for (part of highlight(speciality.name); track $index) {
+                        <span [class.hl]="part.match">{{ part.text }}</span>
+                      }
+                    </span>
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          @if (isSuggestSearching()) {
+            @if (suggestPractitioners().length) {
+              <div class="suggest-col">
+                <span class="suggest-col-title">{{ 'map.suggestPractitioners' | translate }}</span>
+                <div class="suggest-list">
+                  @for (item of suggestPractitioners(); track item.id) {
+                    <button class="suggest-item suggest-item--rich" (click)="selectPractitioner(item)">
+                      @if (item.logo) {
+                        <img [src]="item.logo" [alt]="item.name" class="suggest-avatar suggest-avatar--round" />
+                      } @else {
+                        <span class="suggest-avatar suggest-avatar--round">{{ item.initials }}</span>
+                      }
+                      <span class="suggest-item-text">
+                        <span class="suggest-item-label">
+                          @for (part of highlight(item.name); track $index) {
+                            <span [class.hl]="part.match">{{ part.text }}</span>
+                          }
+                        </span>
+                        @if (item.specialities || item.subtitle) {
+                          <span class="suggest-item-sub">{{ item.specialities || item.subtitle }}</span>
+                        }
+                      </span>
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+
+            @if (suggestOrganisations().length) {
+              <div class="suggest-col">
+                <span class="suggest-col-title">{{ 'map.suggestOrganisations' | translate }}</span>
+                <div class="suggest-list">
+                  @for (item of suggestOrganisations(); track item.id) {
+                    <button class="suggest-item suggest-item--rich" (click)="selectOrganisation(item)">
+                      @if (item.logo) {
+                        <img [src]="item.logo" [alt]="item.name" class="suggest-avatar" />
+                      } @else {
+                        <span class="suggest-avatar">{{ item.initials }}</span>
+                      }
+                      <span class="suggest-item-text">
+                        <span class="suggest-item-label">
+                          @for (part of highlight(item.name); track $index) {
+                            <span [class.hl]="part.match">{{ part.text }}</span>
+                          }
+                        </span>
+                        @if (item.subtitle) {
+                          <span class="suggest-item-sub">{{ item.subtitle }}</span>
+                        }
+                      </span>
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+          }
+        }
+
+        @if (isSuggestLoading()) {
+          <div class="suggest-loading">
+            <ion-spinner name="crescent"></ion-spinner>
+          </div>
+        }
+      </div>
+    }
   </div>
 </ng-template>
 

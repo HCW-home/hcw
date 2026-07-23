@@ -216,17 +216,24 @@
 // Single-line search bar — both fields and the action share one rounded block
 // ---------------------------------------------------------------------------
 
+// Anchors the suggestion panel and lifts the whole block above the backdrop so
+// clicks on the inputs are never swallowed by it.
+.search-block {
+  position: relative;
+  z-index: 30;
+  margin-bottom: var(--app-spacing-lg);
+  flex-shrink: 0;
+}
+
 .search-bar {
   display: flex;
   align-items: stretch;
   min-height: 58px;
-  margin-bottom: var(--app-spacing-lg);
   background: var(--app-surface);
   border: 1px solid var(--app-border);
   border-radius: 12px;
   box-shadow: var(--shadow-sm);
   overflow: hidden;
-  flex-shrink: 0;
 }
 
 .search-bar-field {
@@ -294,6 +301,162 @@
 
   &:hover {
     background: var(--app-teal-dark);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Suggestions — speciality picker on focus, three columns once typing starts
+// ---------------------------------------------------------------------------
+
+.suggest-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+}
+
+.suggest-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 31;
+  display: flex;
+  gap: 0;
+  max-height: 380px;
+  padding: 6px;
+  overflow: hidden;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+
+  // Focus with an empty field: a single speciality column spanning the panel.
+  .suggest-col {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 10px 8px 8px;
+    overflow-y: auto;
+  }
+
+  &.suggest-panel--columns .suggest-col + .suggest-col {
+    border-left: 1px solid var(--app-border-subtle);
+  }
+}
+
+.suggest-col-title {
+  padding: 0 10px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--app-ink-4);
+}
+
+.suggest-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.suggest-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s var(--app-ease);
+
+  &:hover {
+    background: var(--app-teal-050);
+  }
+
+  .suggest-item-label {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--app-ink-1);
+    overflow-wrap: anywhere;
+
+    // The chunk matching what was typed.
+    .hl {
+      color: var(--app-teal);
+    }
+  }
+}
+
+.suggest-item--rich {
+  align-items: center;
+
+  .suggest-item-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .suggest-item-sub {
+    font-size: 12.5px;
+    color: var(--app-ink-3);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.suggest-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--app-surface-muted);
+  color: var(--app-ink-2);
+  font-size: 12.5px;
+  font-weight: 700;
+  object-fit: contain;
+  flex-shrink: 0;
+
+  &.suggest-avatar--round {
+    border-radius: 50%;
+    background: var(--app-teal-050);
+    color: var(--app-teal-dark);
+    object-fit: cover;
+  }
+}
+
+.suggest-empty {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 16px 14px;
+  font-size: 13.5px;
+  color: var(--app-ink-3);
+
+  ion-icon {
+    font-size: 17px;
+    color: var(--app-ink-4);
+    flex-shrink: 0;
+  }
+}
+
+.suggest-loading {
+  display: flex;
+  align-items: center;
+  padding: 14px;
+  margin-left: auto;
+
+  ion-spinner {
+    width: 18px;
+    height: 18px;
+    color: var(--app-teal);
   }
 }
 
@@ -745,6 +908,22 @@
 
   .search-bar-button {
     min-height: 50px;
+  }
+
+  // Three columns never fit on a phone: stack them instead.
+  .suggest-panel {
+    flex-direction: column;
+    max-height: 58vh;
+    overflow-y: auto;
+
+    .suggest-col {
+      overflow: visible;
+    }
+
+    &.suggest-panel--columns .suggest-col + .suggest-col {
+      border-left: none;
+      border-top: 1px solid var(--app-border-subtle);
+    }
   }
 
   .map-body {
