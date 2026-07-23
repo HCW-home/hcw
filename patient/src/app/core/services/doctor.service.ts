@@ -44,6 +44,10 @@ export class DoctorService {
     return this.api.get<Doctor>(`/users/${id}/`);
   }
 
+  getPublicPractitioner(id: number): Observable<Doctor> {
+    return this.api.get<Doctor>(`/practitioners/${id}/public/`);
+  }
+
   getDoctorsBySpeciality(specialityId: number): Observable<Doctor[]> {
     return this.api.get<Doctor[]>(`/specialities/${specialityId}/doctors/`);
   }

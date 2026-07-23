@@ -70,6 +70,7 @@ interface SlotEntry {
 interface DoctorSlotsState {
   loading: boolean;
   reasonId: number | null;
+  specialityId: number | null;
   dates: string[];
   slotsByDate: Record<string, SlotEntry[]>;
   dateIndex: number;
@@ -466,6 +467,7 @@ export class MapPage implements OnInit, OnDestroy {
       state[item.id] = {
         loading: true,
         reasonId: null,
+        specialityId: null,
         dates: [],
         slotsByDate: {},
         dateIndex: 0,
@@ -484,7 +486,9 @@ export class MapPage implements OnInit, OnDestroy {
     const specialityIds = doctor.specialities?.map(s => s.id) || [];
 
     if (specialityIds.length === 0) {
-      this.setSlotsState(item.id, { loading: false, reasonId: null, dates: [], slotsByDate: {}, dateIndex: 0, error: false });
+      this.setSlotsState(item.id, {
+        loading: false, reasonId: null, dates: [], slotsByDate: {}, dateIndex: 0, error: false, specialityId: null
+      });
       return;
     }
 
@@ -506,19 +510,25 @@ export class MapPage implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(reasonLists => {
         const allReasons = new Map<number, Reason>();
-        for (const list of reasonLists) {
+        const reasonToSpeciality = new Map<number, number>();
+        reasonLists.forEach((list, idx) => {
+          const specId = specialityIds[idx];
           for (const reason of list) {
             allReasons.set(reason.id, reason);
+            if (!reasonToSpeciality.has(reason.id)) {
+              reasonToSpeciality.set(reason.id, specId);
+            }
           }
-        }
+        });
 
         if (allReasons.size === 0) {
-          this.setSlotsState(item.id, { loading: false, reasonId: null, dates: [], slotsByDate: {}, dateIndex: 0, error: false });
+          this.setSlotsState(item.id, { loading: false, reasonId: null, specialityId: null, dates: [], slotsByDate: {}, dateIndex: 0, error: false });
           return;
         }
 
         const shortestReason = Array.from(allReasons.values())
           .reduce((shortest, current) => current.duration < shortest.duration ? current : shortest);
+        const specialityId = reasonToSpeciality.get(shortestReason.id) ?? specialityIds[0];
 
         this.doctorService.getAvailableSlots(shortestReason.id, { user_id: doctor.pk })
           .pipe(
@@ -538,6 +548,7 @@ export class MapPage implements OnInit, OnDestroy {
             this.setSlotsState(item.id, {
               loading: false,
               reasonId: shortestReason.id,
+              specialityId,
               dates,
               slotsByDate,
               dateIndex: 0,
@@ -596,8 +607,8 @@ export class MapPage implements OnInit, OnDestroy {
   goToBooking(item: MapItem): void {
     const state = this.slotsState()[item.id];
     const queryParams: any = { doctor_id: item.doctor!.pk };
-    if (state?.reasonId) {
-      queryParams.reason_id = state.reasonId;
+    if (state?.specialityId) {
+      queryParams.speciality_id = state.specialityId;
     }
     this.router.navigate(['/new-request'], { queryParams });
   }
@@ -607,9 +618,10 @@ export class MapPage implements OnInit, OnDestroy {
     this.router.navigate(['/new-request'], {
       queryParams: {
         doctor_id: item.doctor!.pk,
-        reason_id: state?.reasonId ?? undefined,
+        speciality_id: state?.specialityId ?? undefined,
         slot_date: slot.date,
         slot_time: slot.start_time,
+        slot_duration: slot.duration,
       }
     });
   }
