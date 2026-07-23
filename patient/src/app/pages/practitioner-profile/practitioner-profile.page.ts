@@ -5,6 +5,7 @@ import { IonContent, IonSpinner, IonIcon } from '@ionic/angular/standalone';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ApiService } from '../../core/services/api.service';
 import { AppHeaderComponent } from '../../shared/app-header/app-header.component';
+import { AppFooterComponent } from '../../shared/app-footer/app-footer.component';
 
 interface PublicCustomField {
   field: number;
@@ -54,6 +55,7 @@ interface PublicPractitioner {
     IonSpinner,
     IonIcon,
     AppHeaderComponent,
+    AppFooterComponent,
     TranslatePipe,
   ],
 })

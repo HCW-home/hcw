@@ -472,7 +472,7 @@
         "searchTitle": "Suche",
         "searchSubtitle": "Finden Sie eine Fachperson oder eine Einrichtung und buchen Sie online.",
         "searchWhoPlaceholder": "Wer? Fachgebiet? Grund der Konsultation?",
-        "searchLocationPlaceholder": "Ort",
+        "searchLocationPlaceholder": "Wo? Stadt, PLZ, Adresse",
         "searchButton": "Suchen",
         "resultsTitle": "Ergebnisse",
         "typeDoctor": "Fachperson",
@@ -485,5 +485,12 @@
         "defaultMessage": "Der Dienst ist vorübergehend wegen Wartungsarbeiten nicht verfügbar. Bitte versuchen Sie es später erneut.",
         "autoRefresh": "Diese Seite wird in {{seconds}} Sekunden automatisch aktualisiert.",
         "retry": "Jetzt aktualisieren"
+    },
+    "practitioner": {
+        "notFound": "Fachperson nicht gefunden",
+        "organisation": "Organisation",
+        "additionalInfo": "Weitere Informationen",
+        "contact": "Kontakt",
+        "profile": "Profil"
     }
 }

@@ -520,7 +520,7 @@
     "searchTitle": "Search",
     "searchSubtitle": "Find a practitioner or a facility and book online.",
     "searchWhoPlaceholder": "Who? Speciality? Reason for the consultation?",
-    "searchLocationPlaceholder": "Location",
+    "searchLocationPlaceholder": "Where? City, postcode, address",
     "searchButton": "Search",
     "resultsTitle": "Results",
     "typeDoctor": "Practitioner",
@@ -565,7 +565,8 @@
   "practitioner": {
     "notFound": "Practitioner not found",
     "organisation": "Organisation",
-    "additionalInfo": "Additional Information",
+    "additionalInfo": "Additional information",
+    "contact": "Contact",
     "profile": "Profile"
   }
 }

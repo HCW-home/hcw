@@ -185,8 +185,9 @@ export class MapPage implements OnInit, OnDestroy {
     this.locationQuery.set((event.target as HTMLInputElement).value);
   }
 
-  onOnlineBookingToggle(): void {
-    this.onlineBookingOnly.set(!this.onlineBookingOnly());
+  setOnlineBookingOnly(value: boolean): void {
+    if (this.onlineBookingOnly() === value) return;
+    this.onlineBookingOnly.set(value);
     if (this.hasSearched()) {
       this.runSearch();
     }

@@ -77,21 +77,16 @@
   padding: var(--app-spacing-lg);
 }
 
-.search-hero-card {
+.search-hero-inner {
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 560px;
-  padding: 34px 32px 30px;
-  background: var(--app-surface);
-  border: 1px solid var(--app-border);
-  border-radius: var(--radius-banner);
-  box-shadow: var(--shadow-lg);
+  max-width: 940px;
 
   .search-hero-eyebrow {
     display: inline-flex;
     align-items: center;
-    align-self: flex-start;
+    align-self: center;
     gap: 6px;
     padding: 4px 10px;
     margin-bottom: 14px;
@@ -111,91 +106,19 @@
 
   .search-hero-title {
     margin: 0;
-    font-size: 26px;
+    font-size: 30px;
     font-weight: 700;
     line-height: 1.2;
+    text-align: center;
     color: var(--app-ink-1);
   }
 
   .search-hero-subtitle {
-    margin: 8px 0 24px;
-    font-size: 14px;
-    line-height: 1.5;
-    color: var(--app-ink-3);
-  }
-}
-
-.hero-field {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  height: 54px;
-  padding: 0 16px;
-  margin-bottom: 12px;
-  border-radius: 12px;
-  background: var(--app-surface-muted);
-  border: 1px solid var(--app-border);
-  transition: border-color 0.15s var(--app-ease), box-shadow 0.15s var(--app-ease);
-
-  ion-icon {
-    font-size: 18px;
-    color: var(--app-ink-4);
-    flex-shrink: 0;
-  }
-
-  &:focus-within {
-    border-color: var(--app-teal);
-    box-shadow: 0 0 0 3px var(--app-teal-050);
-
-    ion-icon {
-      color: var(--app-teal);
-    }
-  }
-
-  input {
-    flex: 1;
-    min-width: 0;
-    border: none;
-    outline: none;
-    background: transparent;
-    font-family: inherit;
+    margin: 10px 0 26px;
     font-size: 15px;
-    color: var(--app-ink-1);
-
-    &::placeholder {
-      color: var(--app-ink-4);
-    }
-  }
-}
-
-.hero-submit {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  height: 52px;
-  margin-top: 8px;
-  border: none;
-  border-radius: 12px;
-  background: var(--app-teal);
-  color: #fff;
-  font-family: inherit;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: 0 10px 24px rgba(var(--ion-color-primary-rgb), 0.3);
-  transition: background 0.22s var(--app-ease), transform 0.12s var(--app-ease);
-
-  ion-icon {
-    font-size: 19px;
-  }
-
-  &:hover {
-    background: var(--app-teal-dark);
-  }
-
-  &:active {
-    transform: translateY(1px);
+    line-height: 1.5;
+    text-align: center;
+    color: var(--app-ink-3);
   }
 }
 
@@ -290,19 +213,19 @@
 }
 
 // ---------------------------------------------------------------------------
-// Search bar
+// Single-line search bar — both fields and the action share one rounded block
 // ---------------------------------------------------------------------------
 
 .search-bar {
   display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px;
+  align-items: stretch;
+  min-height: 58px;
   margin-bottom: var(--app-spacing-lg);
   background: var(--app-surface);
   border: 1px solid var(--app-border);
-  border-radius: 14px;
+  border-radius: 12px;
   box-shadow: var(--shadow-sm);
+  overflow: hidden;
   flex-shrink: 0;
 }
 
@@ -311,12 +234,11 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 9px;
-  height: 44px;
-  padding: 0 12px;
+  gap: 10px;
+  padding: 0 20px;
 
   ion-icon {
-    font-size: 17px;
+    font-size: 19px;
     color: var(--app-ink-4);
     flex-shrink: 0;
   }
@@ -332,11 +254,12 @@
     outline: none;
     background: transparent;
     font-family: inherit;
-    font-size: 14.5px;
+    font-size: 15px;
     color: var(--app-ink-1);
 
     &::placeholder {
       color: var(--app-ink-4);
+      font-style: italic;
     }
   }
 }
@@ -344,23 +267,22 @@
 .search-bar-divider {
   width: 1px;
   align-self: stretch;
-  margin: 6px 0;
-  background: var(--app-border-subtle);
+  margin: 12px 0;
+  background: var(--app-border);
   flex-shrink: 0;
 }
 
 .search-bar-button {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  height: 44px;
-  padding: 0 22px;
+  padding: 0 38px;
   border: none;
-  border-radius: 10px;
   background: var(--app-teal);
   color: #fff;
   font-family: inherit;
-  font-size: 14.5px;
+  font-size: 15px;
   font-weight: 700;
   cursor: pointer;
   flex-shrink: 0;
@@ -803,23 +725,26 @@
 // ---------------------------------------------------------------------------
 
 @media (max-width: 900px) {
+  // The single line folds into stacked rows, but the bar stays one block.
   .search-bar {
     flex-direction: column;
     align-items: stretch;
-    gap: 0;
-    padding: 6px;
+    min-height: 0;
+  }
+
+  .search-bar-field {
+    min-height: 52px;
   }
 
   .search-bar-divider {
     width: auto;
     height: 1px;
     align-self: auto;
-    margin: 0 12px;
+    margin: 0 20px;
   }
 
   .search-bar-button {
-    justify-content: center;
-    margin-top: 6px;
+    min-height: 50px;
   }
 
   .map-body {
@@ -845,8 +770,14 @@
 }
 
 @media (max-width: 480px) {
-  .search-hero-card {
-    padding: 26px 20px 24px;
+  .search-hero-inner {
+    .search-hero-title {
+      font-size: 24px;
+    }
+
+    .search-hero-subtitle {
+      font-size: 14px;
+    }
   }
 
   .oc-title-row {

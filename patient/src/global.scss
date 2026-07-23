@@ -121,7 +121,8 @@ body {
   ion-app:has(app-reset-password),
   ion-app:has(app-video-consultation),
   ion-app:has(app-home),
-  ion-app:has(app-map) {
+  ion-app:has(app-map),
+  ion-app:has(app-practitioner-profile) {
     max-width: 100%;
     box-shadow: none;
     background-color: transparent;
@@ -129,11 +130,13 @@ body {
 
   /* On the dashboard the nav bar and footer span the full viewport width; the
      page content is centered by the page itself (home .main-content max-width,
-     map .map-layout max-width). */
+     map .map-layout max-width, profile .profile-container max-width). */
   ion-app:has(app-home) ion-header ion-toolbar,
   ion-app:has(app-home) ion-footer,
   ion-app:has(app-map) ion-header ion-toolbar,
-  ion-app:has(app-map) ion-footer {
+  ion-app:has(app-map) ion-footer,
+  ion-app:has(app-practitioner-profile) ion-header ion-toolbar,
+  ion-app:has(app-practitioner-profile) ion-footer {
     max-width: 100%;
   }
 

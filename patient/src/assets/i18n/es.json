@@ -473,7 +473,7 @@
         "searchTitle": "Búsqueda",
         "searchSubtitle": "Encuentre un profesional o un centro y reserve en línea.",
         "searchWhoPlaceholder": "¿Quién? ¿Especialidad? ¿Motivo de la consulta?",
-        "searchLocationPlaceholder": "Ubicación",
+        "searchLocationPlaceholder": "¿Dónde? Ciudad, código postal, dirección",
         "searchButton": "Buscar",
         "resultsTitle": "Resultados",
         "typeDoctor": "Profesional",
@@ -486,5 +486,12 @@
         "defaultMessage": "El servicio no está disponible temporalmente por mantenimiento. Por favor, inténtelo de nuevo más tarde.",
         "autoRefresh": "Esta página se actualizará automáticamente en {{seconds}} segundos.",
         "retry": "Actualizar ahora"
+    },
+    "practitioner": {
+        "notFound": "Profesional no encontrado",
+        "organisation": "Organización",
+        "additionalInfo": "Información adicional",
+        "contact": "Contacto",
+        "profile": "Perfil"
     }
 }

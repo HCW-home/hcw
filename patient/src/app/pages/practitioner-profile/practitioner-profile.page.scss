@@ -1,130 +1,313 @@
-.loading-container,
-.error-container {
+// Public practitioner profile — styled with the patient dashboard design tokens
+// (see theme/variables.scss). The brand hue comes from the instance primary
+// color applied at runtime, so nothing is hardcoded here.
+
+.profile-content {
+  --background: var(--app-page-bg);
+}
+
+.loading-container {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100%;
-  gap: 16px;
-  color: var(--ion-color-medium);
+  min-height: 240px;
+  padding: var(--app-spacing-2xl);
 
-  .error-icon {
-    font-size: 48px;
+  ion-spinner {
+    color: var(--app-teal);
+  }
+}
+
+.state-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  padding: var(--app-spacing-lg);
+}
+
+.state-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 40px 32px;
+  text-align: center;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
+
+  .state-icon {
+    font-size: 52px;
+    color: var(--app-ink-4);
+    margin-bottom: var(--app-spacing-md);
+  }
+
+  .state-text {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--app-ink-3);
   }
 }
 
 .profile-container {
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 24px 16px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: var(--app-spacing-lg);
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--app-spacing-lg);
+  padding-bottom: 60px;
+
+  @media (min-width: 768px) {
+    padding: 28px 32px 60px;
+  }
 }
 
-.profile-header {
+// ---------------------------------------------------------------------------
+// Identity hero
+// ---------------------------------------------------------------------------
+
+.profile-hero {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
+  padding: 24px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--radius-banner);
+  box-shadow: var(--shadow-md);
 
   .profile-picture,
   .profile-avatar {
-    width: 80px;
-    height: 80px;
+    width: 84px;
+    height: 84px;
     border-radius: 50%;
-    object-fit: cover;
     flex-shrink: 0;
+  }
+
+  .profile-picture {
+    object-fit: cover;
+    border: 1px solid var(--app-border-subtle);
   }
 
   .profile-avatar {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--ion-color-primary);
-    color: white;
-    font-size: 28px;
-    font-weight: 600;
+    background: var(--app-teal-050);
+    color: var(--app-teal-dark);
+    font-size: 30px;
+    font-weight: 700;
   }
 
   .profile-identity {
-    h1 {
-      margin: 0 0 4px;
-      font-size: 22px;
-      font-weight: 700;
-    }
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
 
-    .job-title {
-      margin: 0 0 4px;
-      color: var(--ion-color-medium);
-      font-size: 14px;
-    }
+  .profile-name {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--app-ink-1);
+  }
 
-    .specialities {
-      margin: 0;
+  .profile-job {
+    margin: 0;
+    font-size: 14px;
+    color: var(--app-ink-3);
+  }
+
+  .speciality-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    padding: 4px 11px;
+    border-radius: 9999px;
+    background: var(--app-teal-050);
+    color: var(--app-teal-dark);
+    font-size: 12.5px;
+    font-weight: 700;
+
+    ion-icon {
       font-size: 14px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      color: var(--ion-color-primary);
+      color: var(--app-teal);
+      flex-shrink: 0;
     }
   }
 }
 
-.profile-section {
-  background: var(--ion-card-background, var(--ion-background-color));
-  border-radius: 12px;
-  padding: 16px;
+// ---------------------------------------------------------------------------
+// Cards
+// ---------------------------------------------------------------------------
+
+.profile-card {
+  display: flex;
+  flex-direction: column;
+  padding: 18px 22px 20px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
+
+  .card-title {
+    margin: 0 0 14px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--app-ink-4);
+  }
+}
+
+.profile-rows {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-
-  h2 {
-    margin: 0 0 4px;
-    font-size: 16px;
-    font-weight: 600;
-  }
-
-  .org-logo {
-    height: 40px;
-    object-fit: contain;
-    align-self: flex-start;
-  }
-
-  .org-name {
-    margin: 0;
-    font-weight: 500;
-  }
 }
 
 .profile-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 14px;
+  gap: 10px;
+  font-size: 14.5px;
+  color: var(--app-ink-2);
+  min-width: 0;
 
   ion-icon {
     font-size: 18px;
-    color: var(--ion-color-medium);
+    color: var(--app-ink-4);
     flex-shrink: 0;
   }
 
   a {
-    color: var(--ion-color-primary);
+    color: var(--app-teal-dark);
+    font-weight: 600;
     text-decoration: none;
+    overflow-wrap: anywhere;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  span {
+    min-width: 0;
   }
 }
 
-.custom-field {
+// Organisation block
+.org-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  .org-logo {
+    max-width: 120px;
+    max-height: 44px;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+
+  .org-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: var(--app-surface-muted);
+    flex-shrink: 0;
+
+    ion-icon {
+      font-size: 20px;
+      color: var(--app-ink-3);
+    }
+  }
+
+  .org-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--app-ink-1);
+    min-width: 0;
+  }
+}
+
+.org-head + .profile-rows {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--app-border-subtle);
+}
+
+// Custom fields — label / value rows
+.field-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.field-row {
+  display: flex;
+  align-items: baseline;
   justify-content: space-between;
+  gap: var(--app-spacing-lg);
+  padding: 11px 0;
+  border-top: 1px solid var(--app-border-subtle);
+
+  &:first-child {
+    border-top: none;
+    padding-top: 0;
+  }
 
   .field-label {
-    color: var(--ion-color-medium);
     font-size: 13px;
+    color: var(--app-ink-3);
+    flex-shrink: 0;
   }
 
   .field-value {
-    font-weight: 500;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--app-ink-1);
     text-align: right;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Responsive
+// ---------------------------------------------------------------------------
+
+@media (max-width: 480px) {
+  .profile-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 20px;
+
+    .profile-picture,
+    .profile-avatar {
+      width: 72px;
+      height: 72px;
+    }
+
+    .profile-name {
+      font-size: 21px;
+    }
+  }
+
+  .field-row {
+    flex-direction: column;
+    gap: 2px;
+
+    .field-value {
+      text-align: left;
+    }
   }
 }

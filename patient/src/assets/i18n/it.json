@@ -473,7 +473,7 @@
         "searchTitle": "Ricerca",
         "searchSubtitle": "Trova un professionista o una struttura e prenota online.",
         "searchWhoPlaceholder": "Chi? Specialità? Motivo della consultazione?",
-        "searchLocationPlaceholder": "Località",
+        "searchLocationPlaceholder": "Dove? Città, CAP, indirizzo",
         "searchButton": "Cerca",
         "resultsTitle": "Risultati",
         "typeDoctor": "Professionista",
@@ -486,5 +486,12 @@
         "defaultMessage": "Il servizio è temporaneamente non disponibile per manutenzione. Riprova più tardi.",
         "autoRefresh": "Questa pagina si aggiornerà automaticamente tra {{seconds}} secondi.",
         "retry": "Aggiorna ora"
+    },
+    "practitioner": {
+        "notFound": "Professionista non trovato",
+        "organisation": "Organizzazione",
+        "additionalInfo": "Informazioni aggiuntive",
+        "contact": "Contatti",
+        "profile": "Profilo"
     }
 }

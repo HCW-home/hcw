@@ -519,7 +519,7 @@
     "searchTitle": "Пошук",
     "searchSubtitle": "Знайдіть лікаря або заклад і запишіться онлайн.",
     "searchWhoPlaceholder": "Хто? Спеціальність? Причина консультації?",
-    "searchLocationPlaceholder": "Місцезнаходження",
+    "searchLocationPlaceholder": "Де? Місто, поштовий індекс, адреса",
     "searchButton": "Шукати",
     "resultsTitle": "Результати",
     "typeDoctor": "Лікар",
@@ -532,5 +532,12 @@
     "defaultMessage": "Сервіс тимчасово недоступний через технічне обслуговування. Спробуйте пізніше.",
     "autoRefresh": "Ця сторінка автоматично оновиться через {{seconds}} секунд.",
     "retry": "Оновити зараз"
+  },
+  "practitioner": {
+    "notFound": "Лікаря не знайдено",
+    "organisation": "Організація",
+    "additionalInfo": "Додаткова інформація",
+    "contact": "Контакти",
+    "profile": "Профіль"
   }
 }

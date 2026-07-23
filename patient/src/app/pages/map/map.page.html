@@ -1,5 +1,37 @@
 <app-header [pageTitle]="'map.title' | translate"></app-header>
 
+<!-- One-line search bar, shared by the landing screen and the results screen so
+     both stay strictly identical. -->
+<ng-template #searchBlock>
+  <div class="search-bar">
+    <div class="search-bar-field">
+      <ion-icon name="search-outline"></ion-icon>
+      <input
+        type="text"
+        [placeholder]="'map.searchWhoPlaceholder' | translate"
+        [value]="searchQuery()"
+        (input)="onSearchInput($event)"
+        (keyup.enter)="submitSearch()"
+      />
+    </div>
+    <div class="search-bar-divider"></div>
+    <div class="search-bar-field">
+      <ion-icon name="location-outline"></ion-icon>
+      <input
+        type="text"
+        [placeholder]="'map.searchLocationPlaceholder' | translate"
+        [value]="locationQuery()"
+        (input)="onLocationInput($event)"
+        (keyup.enter)="submitSearch()"
+      />
+    </div>
+    <button class="search-bar-button" (click)="submitSearch()">
+      <ion-icon name="search-outline"></ion-icon>
+      <span>{{ 'map.searchButton' | translate }}</span>
+    </button>
+  </div>
+</ng-template>
+
 <ion-content class="map-content">
   @if (isPublicEnabled() === null) {
     <div class="loading-container">
@@ -15,44 +47,20 @@
     </div>
   } @else if (!hasSearched()) {
     <div class="search-hero">
-      <div class="search-hero-card">
+      <div class="search-hero-inner">
         <span class="search-hero-eyebrow">
           <ion-icon name="search-outline"></ion-icon>
           {{ 'map.title' | translate }}
         </span>
         <h1 class="search-hero-title">{{ 'map.searchTitle' | translate }}</h1>
         <p class="search-hero-subtitle">{{ 'map.searchSubtitle' | translate }}</p>
-
-        <div class="hero-field">
-          <ion-icon name="search-outline"></ion-icon>
-          <input
-            type="text"
-            [placeholder]="'map.searchWhoPlaceholder' | translate"
-            [value]="searchQuery()"
-            (input)="onSearchInput($event)"
-            (keyup.enter)="submitSearch()"
-          />
-        </div>
-
-        <div class="hero-field">
-          <ion-icon name="location-outline"></ion-icon>
-          <input
-            type="text"
-            [placeholder]="'map.searchLocationPlaceholder' | translate"
-            [value]="locationQuery()"
-            (input)="onLocationInput($event)"
-            (keyup.enter)="submitSearch()"
-          />
-        </div>
-
-        <button class="hero-submit" (click)="submitSearch()">
-          <ion-icon name="search-outline"></ion-icon>
-          <span>{{ 'map.searchButton' | translate }}</span>
-        </button>
+        <ng-container *ngTemplateOutlet="searchBlock"></ng-container>
       </div>
     </div>
   } @else {
     <div class="map-layout">
+      <ng-container *ngTemplateOutlet="searchBlock"></ng-container>
+
       <div class="results-header">
         <div class="section-title-group">
           <h2 class="section-title">{{ 'map.resultsTitle' | translate }}</h2>
@@ -66,39 +74,11 @@
             type="button"
             class="toggle-switch"
             [class.active]="onlineBookingOnly()"
-            (click)="onOnlineBookingToggle()"
+            (click)="setOnlineBookingOnly(!onlineBookingOnly())"
           >
             <span class="toggle-knob"></span>
           </button>
         </label>
-      </div>
-
-      <div class="search-bar">
-        <div class="search-bar-field">
-          <ion-icon name="search-outline"></ion-icon>
-          <input
-            type="text"
-            [placeholder]="'map.searchWhoPlaceholder' | translate"
-            [value]="searchQuery()"
-            (input)="onSearchInput($event)"
-            (keyup.enter)="submitSearch()"
-          />
-        </div>
-        <div class="search-bar-divider"></div>
-        <div class="search-bar-field">
-          <ion-icon name="location-outline"></ion-icon>
-          <input
-            type="text"
-            [placeholder]="'map.searchLocationPlaceholder' | translate"
-            [value]="locationQuery()"
-            (input)="onLocationInput($event)"
-            (keyup.enter)="submitSearch()"
-          />
-        </div>
-        <button class="search-bar-button" (click)="submitSearch()">
-          <ion-icon name="search-outline"></ion-icon>
-          <span>{{ 'map.searchButton' | translate }}</span>
-        </button>
       </div>
 
       <div class="map-body">

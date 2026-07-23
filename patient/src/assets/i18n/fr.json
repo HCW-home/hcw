@@ -519,7 +519,7 @@
     "noLocation": "Localisation non disponible",
     "searchTitle": "Recherche",
     "searchWhoPlaceholder": "Qui ? Spécialit\u00e9 ? Motif de la consultation ?",
-    "searchLocationPlaceholder": "Localisation",
+    "searchLocationPlaceholder": "Où ? Ville, code postal, adresse",
     "searchButton": "Rechercher",
     "searchSubtitle": "Trouvez un praticien ou un établissement et réservez en ligne.",
     "resultsTitle": "Résultats",
@@ -563,9 +563,10 @@
     }
   },
   "practitioner": {
-    "notFound": "praticien non trouvé",
+    "notFound": "Praticien introuvable",
     "organisation": "Organisation",
     "additionalInfo": "Informations complémentaires",
-    "profile": "Profile"
+    "contact": "Contact",
+    "profile": "Profil"
   }
 }
