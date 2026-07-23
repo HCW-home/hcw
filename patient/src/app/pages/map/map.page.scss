@@ -66,22 +66,50 @@
 }
 
 // ---------------------------------------------------------------------------
-// Initial search screen — hero card
+// Shell — holds both states so the search bar survives the switch to results
 // ---------------------------------------------------------------------------
 
-.search-hero {
+.map-shell {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
   min-height: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
   padding: var(--app-spacing-lg);
+
+  @media (min-width: 768px) {
+    padding: 24px 32px 28px;
+  }
+
+  &.map-shell--results {
+    height: 100%;
+  }
 }
 
-.search-hero-inner {
+// Holds the bar in the upper third on the landing screen, then collapses:
+// this is what lifts the bar to the top instead of re-rendering it there.
+.shell-spacer {
+  flex: 0 0 20vh;
+  transition: flex-basis 0.45s var(--app-ease);
+}
+
+.map-shell--results .shell-spacer {
+  flex-basis: 0;
+}
+
+.hero-text {
   display: flex;
   flex-direction: column;
   width: 100%;
   max-width: 940px;
+  margin: 0 auto 26px;
+  max-height: 260px;
+  opacity: 1;
+  overflow: hidden;
+  transition:
+    max-height 0.45s var(--app-ease),
+    margin-bottom 0.45s var(--app-ease),
+    opacity 0.25s var(--app-ease);
 
   .search-hero-eyebrow {
     display: inline-flex;
@@ -114,7 +142,7 @@
   }
 
   .search-hero-subtitle {
-    margin: 10px 0 26px;
+    margin: 10px 0 0;
     font-size: 15px;
     line-height: 1.5;
     text-align: center;
@@ -122,20 +150,37 @@
   }
 }
 
+.map-shell--results .hero-text {
+  max-height: 0;
+  margin-bottom: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
 // ---------------------------------------------------------------------------
 // Results layout
 // ---------------------------------------------------------------------------
 
-.map-layout {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  max-width: 1440px;
-  margin: 0 auto;
-  padding: var(--app-spacing-lg);
+// The results only show up once the bar has started travelling. The map body
+// fades without a transform: a transformed ancestor confuses Leaflet's
+// positioning while the animation runs.
+@keyframes shellResultsIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
 
-  @media (min-width: 768px) {
-    padding: 24px 32px 28px;
+@keyframes shellFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 
@@ -147,6 +192,7 @@
   flex-wrap: wrap;
   margin-bottom: var(--app-spacing-md);
   flex-shrink: 0;
+  animation: shellResultsIn 0.4s 0.14s both var(--app-ease);
 
   .section-title-group {
     display: flex;
@@ -221,8 +267,16 @@
 .search-block {
   position: relative;
   z-index: 30;
-  margin-bottom: var(--app-spacing-lg);
+  width: 100%;
+  max-width: 940px;
+  margin: 0 auto var(--app-spacing-lg);
   flex-shrink: 0;
+  // Widens as it rises to the top of the results layout.
+  transition: max-width 0.45s var(--app-ease);
+}
+
+.map-shell--results .search-block {
+  max-width: 1440px;
 }
 
 .search-bar {
@@ -469,6 +523,7 @@
   flex: 1;
   min-height: 0;
   gap: var(--app-spacing-lg);
+  animation: shellFadeIn 0.45s 0.14s both var(--app-ease);
 
   .list-panel {
     flex: 1;
@@ -953,7 +1008,7 @@
 }
 
 @media (max-width: 480px) {
-  .search-hero-inner {
+  .hero-text {
     .search-hero-title {
       font-size: 24px;
     }
@@ -969,5 +1024,18 @@
 
   .type-chip {
     margin-left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shell-spacer,
+  .hero-text,
+  .search-block {
+    transition: none;
+  }
+
+  .results-header,
+  .map-body {
+    animation: none;
   }
 }

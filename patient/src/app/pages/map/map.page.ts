@@ -83,6 +83,9 @@ interface HighlightPart {
   match: boolean;
 }
 
+// Kept in sync with the shell transition in map.page.scss.
+const SHELL_TRANSITION_MS = 450;
+
 // Free-text suggestions only kick in once the term is worth a round trip.
 const SUGGEST_MIN_LENGTH = 2;
 const SUGGEST_LIMIT = 6;
@@ -251,7 +254,15 @@ export class MapPage implements OnInit, OnDestroy {
     if (!term) return;
     this.hasSearched.set(true);
     setTimeout(() => this.initMapIfNeeded(), 0);
+    // The search bar slides up before the map settles into its final size, and
+    // Leaflet caches that size on init — re-measure once the shell is done.
+    setTimeout(() => this.refreshMapSize(), SHELL_TRANSITION_MS + 60);
     this.runSearch();
+  }
+
+  private refreshMapSize(): void {
+    if (!this.mapInitialized) return;
+    this.map.invalidateSize();
   }
 
   private runSearch(): void {
@@ -637,6 +648,9 @@ export class MapPage implements OnInit, OnDestroy {
 
   private fitMapToItems(items: MapItem[]): void {
     if (!this.map) return;
+    // Results can land while the shell is still animating; fitBounds needs the
+    // current container size to pick the right zoom.
+    this.map.invalidateSize();
     const points: L.LatLng[] = [];
     for (const item of items) {
       const coords = this.parseLocation(item.location);

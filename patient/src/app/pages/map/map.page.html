@@ -144,22 +144,25 @@
         <p class="state-text">{{ 'map.disabledMessage' | translate }}</p>
       </div>
     </div>
-  } @else if (!hasSearched()) {
-    <div class="search-hero">
-      <div class="search-hero-inner">
+  } @else {
+    <!-- Landing and results share one shell so the search bar is never
+         destroyed: searching only collapses the spacer and the intro text,
+         which slides the bar up before the results fade in. -->
+    <div class="map-shell" [class.map-shell--results]="hasSearched()">
+      <div class="shell-spacer"></div>
+
+      <div class="hero-text">
         <span class="search-hero-eyebrow">
           <ion-icon name="search-outline"></ion-icon>
           {{ 'map.title' | translate }}
         </span>
         <h1 class="search-hero-title">{{ 'map.searchTitle' | translate }}</h1>
         <p class="search-hero-subtitle">{{ 'map.searchSubtitle' | translate }}</p>
-        <ng-container *ngTemplateOutlet="searchBlock"></ng-container>
       </div>
-    </div>
-  } @else {
-    <div class="map-layout">
+
       <ng-container *ngTemplateOutlet="searchBlock"></ng-container>
 
+      @if (hasSearched()) {
       <div class="results-header">
         <div class="section-title-group">
           <h2 class="section-title">{{ 'map.resultsTitle' | translate }}</h2>
@@ -291,6 +294,7 @@
           <div id="map-container"></div>
         </div>
       </div>
+      }
     </div>
   }
 </ion-content>
