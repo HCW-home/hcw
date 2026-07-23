@@ -248,9 +248,7 @@ export class MapPage implements OnInit, OnDestroy {
   }
 
   submitSearch(): void {
-    const term = this.combinedSearchTerm();
-    this.closeSuggestions();
-    if (!term) return;
+    if (!this.hasSearchCriteria()) return;
     this.hasSearched.set(true);
     setTimeout(() => this.initMapIfNeeded(), 0);
     // The search bar slides up before the map settles into its final size, and
