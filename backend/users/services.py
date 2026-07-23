@@ -1,6 +1,7 @@
 import logging
 
 from asgiref.sync import sync_to_async
+from core.consumers import tenant_scope
 from django.core.cache import cache
 from django.db import connection
 
@@ -17,44 +18,53 @@ class UserOnlineStatusService:
     Cache key exists = user is online. Expires naturally if no heartbeat.
     """
 
-    def _get_cache_key(self, user_id):
-        schema = connection.tenant.schema_name
+    def _get_cache_key(self, user_id, schema_name=None):
+        schema = schema_name or connection.tenant.schema_name
         return f"{schema}:{ONLINE_CACHE_PREFIX}{user_id}"
 
-    def set_user_online(self, user_id):
-        cache.set(self._get_cache_key(user_id), True, ONLINE_CACHE_TIMEOUT)
+    def set_user_online(self, user_id, schema_name=None):
+        cache.set(self._get_cache_key(user_id, schema_name), True, ONLINE_CACHE_TIMEOUT)
 
-    def set_user_offline(self, user_id):
-        cache.delete(self._get_cache_key(user_id))
+    def set_user_offline(self, user_id, schema_name=None):
+        cache.delete(self._get_cache_key(user_id, schema_name))
 
-    def is_user_online(self, user_id):
-        return cache.get(self._get_cache_key(user_id), False)
+    def is_user_online(self, user_id, schema_name=None):
+        return cache.get(self._get_cache_key(user_id, schema_name), False)
 
-    def refresh_online(self, user_id):
-        cache.set(self._get_cache_key(user_id), True, ONLINE_CACHE_TIMEOUT)
+    def refresh_online(self, user_id, schema_name=None):
+        cache.set(self._get_cache_key(user_id, schema_name), True, ONLINE_CACHE_TIMEOUT)
 
 
 class AsyncUserOnlineStatusService:
-    """Async wrapper for WebSocket consumers."""
+    """Async wrapper for WebSocket consumers.
+
+    Consumers must pass ``schema_name``: the sync calls below all run in the
+    same shared worker thread, so the tenant bound to ``connection`` there
+    belongs to whichever WebSocket touched it last.
+    """
 
     def __init__(self):
         self.sync_service = UserOnlineStatusService()
 
     @sync_to_async
-    def set_user_online(self, user_id):
-        return self.sync_service.set_user_online(user_id)
+    def set_user_online(self, user_id, schema_name=None):
+        with tenant_scope(schema_name):
+            return self.sync_service.set_user_online(user_id, schema_name)
 
     @sync_to_async
-    def set_user_offline(self, user_id):
-        return self.sync_service.set_user_offline(user_id)
+    def set_user_offline(self, user_id, schema_name=None):
+        with tenant_scope(schema_name):
+            return self.sync_service.set_user_offline(user_id, schema_name)
 
     @sync_to_async
-    def is_user_online(self, user_id):
-        return self.sync_service.is_user_online(user_id)
+    def is_user_online(self, user_id, schema_name=None):
+        with tenant_scope(schema_name):
+            return self.sync_service.is_user_online(user_id, schema_name)
 
     @sync_to_async
-    def refresh_online(self, user_id):
-        return self.sync_service.refresh_online(user_id)
+    def refresh_online(self, user_id, schema_name=None):
+        with tenant_scope(schema_name):
+            return self.sync_service.refresh_online(user_id, schema_name)
 
 
 # Global instances

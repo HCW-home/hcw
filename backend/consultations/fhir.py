@@ -4,6 +4,7 @@ from __future__ import annotations
 import warnings
 
 from django.db.models import Q
+from django.utils.translation import gettext_lazy as _
 from fhir.resources.R4B.appointment import Appointment as FhirAppointment
 from fhir.resources.R4B.encounter import Encounter as FhirEncounter
 from fhir.resources.R4B.medicationrequest import MedicationRequest as FhirMedicationRequest
@@ -14,6 +15,7 @@ from fhir_server.references import (
     build_identifier,
     build_reference,
     get_external_identifier_system,
+    get_system_base_url,
     parse_reference,
 )
 from fhir_server.search import (
@@ -428,9 +430,26 @@ class AppointmentFhirMapper(FhirResourceMapper):
         return (given[0] if given else ""), family
 
     def post_save(self, instance, *, payload=None, context=None, created=False):
+        # A newly created online Appointment without an explicit Encounter gets
+        # a temporary consultation so the chat/messaging stack works, mirroring
+        # the native `AppointmentCreateSerializer` path. It is hidden from the
+        # practitioner/patient lists and auto-closed once the join window has
+        # elapsed. Runs before the participant sync (and its early return) so it
+        # happens even when the caller omitted `participant`.
+        if created:
+            self._ensure_temporary_consultation(instance)
+
         pending = getattr(instance, "_fhir_participants_pending", None)
         if pending is None:
             return
+
+        # Participants of a temporary consultation can use the chat by default,
+        # so flag them visible when we auto-created one.
+        temp_consultation = (
+            instance.consultation
+            if instance.consultation_id and getattr(instance, "_created_temp_consultation", False)
+            else None
+        )
 
         desired_user_ids = set()
         desired = []
@@ -448,6 +467,8 @@ class AppointmentFhirMapper(FhirResourceMapper):
                 part = existing[user_pk]
                 part.is_active = True
                 part.is_confirmed = is_confirmed
+                if temp_consultation is not None:
+                    part.is_consultation_visible = True
                 part.save()
             else:
                 Participant.objects.create(
@@ -456,6 +477,7 @@ class AppointmentFhirMapper(FhirResourceMapper):
                     is_confirmed=is_confirmed,
                     is_active=True,
                     is_invited=True,
+                    is_consultation_visible=temp_consultation is not None,
                 )
         # Deactivate participants not in the new set (soft remove)
         for user_pk, part in existing.items():
@@ -467,6 +489,51 @@ class AppointmentFhirMapper(FhirResourceMapper):
         delattr(instance, "_fhir_participants_pending")
         if hasattr(instance, "_fhir_contained"):
             delattr(instance, "_fhir_contained")
+
+        # Now that the participant set is known, provision the temp
+        # consultation's encryption keypair (no-op unless platform encryption
+        # is enabled), mirroring the native AppointmentCreateSerializer path.
+        if temp_consultation is not None:
+            self._provision_temp_consultation_encryption(temp_consultation, instance)
+
+    @staticmethod
+    def _provision_temp_consultation_encryption(consultation, appointment):
+        from .serializers import AppointmentCreateSerializer
+        participant_users = {
+            p.user for p in appointment.participant_set.filter(is_active=True) if p.user
+        }
+        try:
+            AppointmentCreateSerializer._provision_temp_consultation_encryption(
+                consultation, appointment, participant_users
+            )
+        except Exception:
+            import logging
+            logging.getLogger(__name__).exception(
+                "Failed to provision encryption for FHIR temp consultation %s",
+                consultation.pk,
+            )
+
+    def _ensure_temporary_consultation(self, instance):
+        """Attach a temporary Consultation to a new online Appointment.
+
+        Mirrors the native `AppointmentCreateSerializer` behaviour: an online
+        appointment created without an explicit Encounter reference gets a
+        hidden, auto-closing consultation so its chat/messaging works.
+        """
+        if instance.consultation_id or instance.type != Type.online.value:
+            return
+        temp_consultation = Consultation.objects.create(
+            created_by=instance.created_by,
+            owned_by=instance.created_by,
+            # str() so a gettext_lazy default doesn't leak a proxy into the
+            # FHIR serializer, which requires a plain string.
+            title=instance.title or str(_("Appointment chat")),
+            temporary=True,
+            visible_by_patient=False,
+        )
+        instance.consultation = temp_consultation
+        instance.save(update_fields=["consultation"])
+        instance._created_temp_consultation = True
 
     def soft_delete(self, instance, *, context=None):
         instance.status = AppointmentStatus.cancelled
@@ -519,6 +586,16 @@ def _encounter_status_filter(raw_value: str) -> Q:
     if "in-progress" in values or "planned" in values:
         q |= Q(closed_at__isnull=True)
     return q
+
+
+def _encounter_note_extension_url() -> str:
+    """Canonical URL of the Encounter.note extension for this tenant.
+
+    FHIR R4 `Encounter` has no native `note` element, so the internal clinical
+    notes ride on a tenant-scoped extension under the same base URL used for
+    identifier systems.
+    """
+    return f"{get_system_base_url()}/ns/encounter-note"
 
 
 class EncounterFhirMapper(FhirResourceMapper):
@@ -679,6 +756,13 @@ class EncounterFhirMapper(FhirResourceMapper):
             appointment=appointments or None,
             reasonCode=reason_codes or None,
         )
+        # Internal clinical notes (practitioner-only). FHIR R4 Encounter has no
+        # native `note`, so they ride on a tenant-scoped extension.
+        if instance.notes:
+            kwargs["extension"] = [{
+                "url": _encounter_note_extension_url(),
+                "valueString": instance.notes,
+            }]
         if instance.beneficiary_id:
             kwargs["subject"] = build_reference(
                 "Patient", instance.beneficiary_id,
@@ -724,18 +808,28 @@ class EncounterFhirMapper(FhirResourceMapper):
         elif parsed.status == "in-progress":
             instance.closed_at = None
 
-        # subject → beneficiary
-        subject_ref = getattr(parsed.subject, "reference", None) if parsed.subject else None
-        rtype, ident = parse_reference(subject_ref or "")
-        if rtype == "Patient" and ident:
-            from users.models import User as UserModel
-            try:
-                instance.beneficiary = UserModel.objects.get(pk=int(ident), is_practitioner=False)
-            except (UserModel.DoesNotExist, ValueError):
-                raise FhirOperationError(
-                    f"Patient/{ident} not found in current tenant.",
-                    code="not-found", status_code=404,
-                )
+        # subject → beneficiary. Supports both an existing `Patient/<pk>`
+        # reference and an inline `#fragment` contained Patient, which is
+        # find-or-created on the fly (by email/phone) exactly like Appointment
+        # participants.
+        subject_ref = (
+            getattr(parsed.subject, "reference", None) if parsed.subject else None
+        ) or ""
+        if subject_ref.startswith("#"):
+            instance.beneficiary = self._resolve_contained_subject(
+                subject_ref[1:], parsed, instance,
+            )
+        else:
+            rtype, ident = parse_reference(subject_ref)
+            if rtype == "Patient" and ident:
+                from users.models import User as UserModel
+                try:
+                    instance.beneficiary = UserModel.objects.get(pk=int(ident), is_practitioner=False)
+                except (UserModel.DoesNotExist, ValueError):
+                    raise FhirOperationError(
+                        f"Patient/{ident} not found in current tenant.",
+                        code="not-found", status_code=404,
+                    )
 
         # period.end → closed_at when explicitly provided
         if parsed.period and getattr(parsed.period, "end", None):
@@ -744,6 +838,13 @@ class EncounterFhirMapper(FhirResourceMapper):
         # text → title fallback
         if not instance.title and payload.get("text", {}).get("div"):
             instance.title = payload["text"]["div"]
+
+        # note extension → internal clinical notes (practitioner-only)
+        note_url = _encounter_note_extension_url()
+        for ext in (parsed.extension or []):
+            if getattr(ext, "url", None) == note_url and ext.valueString:
+                instance.notes = ext.valueString
+                break
 
         ext_sys = get_external_identifier_system("Encounter")
         if ext_sys:
@@ -756,6 +857,44 @@ class EncounterFhirMapper(FhirResourceMapper):
                     break
 
         return instance
+
+    def _resolve_contained_subject(self, frag, parsed, instance):
+        """Resolve a `#fragment` contained Patient to a beneficiary User.
+
+        Mirrors `AppointmentFhirMapper._resolve_participant_user`: the inline
+        Patient is find-or-created by email/phone (`temporary=True`).
+        """
+        from users.fhir import _GENDER_FROM_FHIR
+        from .fhir_participants import get_or_create_patient_user
+
+        res = None
+        for candidate in (parsed.contained or []):
+            if getattr(candidate, "id", None) == frag:
+                res = candidate
+                break
+        if res is None:
+            raise FhirOperationError(
+                f"Contained resource '#{frag}' referenced by subject is missing "
+                f"from the `contained` array.",
+                code="not-found", status_code=404,
+            )
+        rtype = (
+            res.get_resource_type() if hasattr(res, "get_resource_type")
+            else getattr(type(res), "__resource_type__", None)
+        )
+        if rtype != "Patient":
+            raise FhirOperationError(
+                f"Encounter.subject must reference a Patient, got '{rtype}'.",
+                code="not-supported", status_code=422,
+            )
+        email, phone = AppointmentFhirMapper._extract_contained_telecom(res)
+        first, last = AppointmentFhirMapper._extract_contained_name(res)
+        gender = _GENDER_FROM_FHIR.get(getattr(res, "gender", None) or "")
+        return get_or_create_patient_user(
+            email=email, phone=phone, first_name=first, last_name=last,
+            gender=gender or None, birth_date=getattr(res, "birthDate", None),
+            created_by=instance.created_by,
+        )
 
     def soft_delete(self, instance, *, context=None):
         from django.utils import timezone

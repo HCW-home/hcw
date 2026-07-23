@@ -5,7 +5,11 @@
 export const environment = {
   production: false,
   apiUrl: 'http://localhost:8000/api',
-  wsUrl: 'ws://localhost:8000/ws'
+  wsUrl: 'ws://localhost:8000/ws',
+  // Custom URL scheme registered by the native apps (matches AndroidManifest /
+  // iOS). The store URLs and Android package come from the backend /config
+  // (env-default, per-instance override), not from here.
+  mobileAppScheme: 'hcw'
 };
 
 /*

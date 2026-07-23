@@ -16,6 +16,7 @@ from allauth.socialaccount.providers.openid_connect.views import (
 )
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from core.channel_groups import user_group
 from consultations.models import (
     Appointment,
     Consultation,
@@ -45,7 +46,7 @@ from dj_rest_auth.views import PasswordResetConfirmView as DjRestAuthPasswordRes
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import Exists, OuterRef, Q
+from django.db.models import Q
 from django.http import FileResponse
 from django.shortcuts import render
 from django.utils import timezone, translation
@@ -511,26 +512,17 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         """Get consultations for the authenticated user.
 
-        Listing only surfaces "real" follow-ups (patient-visible, non-temporary).
-        Detail/messages access additionally allows temporary consultations the
-        user is an active participant of, so the appointment chat works without
-        exposing the temp follow-up in the patient's main list.
+        A consultation stays listed until it is closed (closed_at). The patient
+        reaches it either as beneficiary (visible_by_patient) or as an active,
+        consultation-visible participant of one of its appointments. Detail /
+        messages access additionally allows temporary consultations the user is
+        an active participant of, so the appointment chat works even without the
+        consultation-visible flag.
         """
-        from consultations.utils import appointment_active_cutoff
         from consultations.views import annotate_unread_count
 
         user = self.request.user
         if self.action == "list":
-            active_cutoff = appointment_active_cutoff()
-            has_active_appointment = Exists(
-                Appointment.objects.filter(
-                    consultation=OuterRef("pk"),
-                    scheduled_at__gte=active_cutoff,
-                )
-            )
-            has_no_appointment = ~Exists(
-                Appointment.objects.filter(consultation=OuterRef("pk"))
-            )
             qs = (
                 Consultation.objects.filter(
                     Q(beneficiary=user, visible_by_patient=True)
@@ -540,7 +532,10 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
                         appointments__participant__is_consultation_visible=True,
                     )
                 )
-                .filter(has_active_appointment | has_no_appointment)
+                # A consultation stays visible to the patient until it is
+                # closed (manually or by the optional auto-close task); the
+                # state of its appointments no longer hides it.
+                .filter(closed_at__isnull=True)
                 .distinct()
             )
         else:
@@ -673,7 +668,7 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
 
         for user_pk in users_to_notify:
             async_to_sync(channel_layer.group_send)(
-                f"user_{user_pk}",
+                user_group(user_pk),
                 {
                     "type": "call_response",
                     "consultation_id": consultation.pk,
@@ -1086,7 +1081,7 @@ class UserAppointmentsViewSet(viewsets.ReadOnlyModelViewSet):
                 continue
 
             async_to_sync(channel_layer.group_send)(
-                f"user_{participant.user.pk}",
+                user_group(participant.user.pk),
                 {
                     "type": "appointment",
                     "consultation_id": appointment.consultation.pk if appointment.consultation else None,
@@ -1149,7 +1144,7 @@ class UserAppointmentsViewSet(viewsets.ReadOnlyModelViewSet):
                 continue
 
             async_to_sync(channel_layer.group_send)(
-                f"user_{participant.user.pk}",
+                user_group(participant.user.pk),
                 {
                     "type": "appointment",
                     "consultation_id": appointment.consultation.pk,
@@ -1551,6 +1546,16 @@ class AppConfigView(APIView):
             .distinct()
         )
 
+        # Whether this instance is certified by Iabsis (valid, non-expired
+        # signature matching this host). The patient web app only offers to
+        # open/install the native app when this is true, otherwise deep-linking
+        # to an uncertified instance would surface an error.
+        from core.instance_signature import is_instance_certified
+
+        instance_certified = is_instance_certified(
+            constance_config.instance_signature, request.get_host()
+        )
+
         return Response(
             {
                 **openid,
@@ -1572,6 +1577,11 @@ class AppConfigView(APIView):
                 "public_organisations": constance_config.public_organisations,
                 "force_temporary_patients": constance_config.force_temporary_patients,
                 "enable_deeplink": constance_config.enable_deeplink,
+                "force_mobile_app": constance_config.force_mobile_app,
+                "instance_certified": instance_certified,
+                "mobile_android_package": constance_config.mobile_android_package,
+                "mobile_android_store_url": constance_config.mobile_android_store_url,
+                "mobile_ios_store_url": constance_config.mobile_ios_store_url,
                 "has_reasons": Reason.objects.filter(is_active=True).exists(),
                 "encryption_enabled": constance_config.encryption_enabled,
                 "master_public_key": constance_config.master_public_key,
@@ -1832,20 +1842,9 @@ class UserDashboardView(APIView):
 
         from consultations.views import annotate_unread_count
 
-        # A consultation stays visible to the patient as long as it has at
-        # least one appointment still within the active window
-        # (scheduled_at + default duration + join limit). Consultations with
-        # no appointments are unaffected by this rule.
-        has_active_appointment = Exists(
-            Appointment.objects.filter(
-                consultation=OuterRef("pk"),
-                scheduled_at__gte=active_cutoff,
-            )
-        )
-        has_no_appointment = ~Exists(
-            Appointment.objects.filter(consultation=OuterRef("pk"))
-        )
-
+        # A consultation stays visible to the patient until it is closed
+        # (manually, or by the optional auto-close task). The state of its
+        # appointments — past or future — no longer hides it.
         consultations = annotate_unread_count(
             Consultation.objects.exclude(request__in=user_requests)
             .filter(closed_at__isnull=True)
@@ -1857,7 +1856,6 @@ class UserDashboardView(APIView):
                     appointments__participant__is_consultation_visible=True,
                 )
             )
-            .filter(has_active_appointment | has_no_appointment)
             .distinct()
             .order_by("-created_at"),
             user,
@@ -2034,19 +2032,19 @@ class PatientViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"])
     def access_url(self, request, pk=None):
-        """Get or regenerate a magic-link access URL for a patient who has no
-        email (so the verification-code flow is unavailable) or who is
-        explicitly configured with `manual` communication. Token is created
-        on the fly if missing.
+        """Get or regenerate a magic-link access URL for a patient who cannot
+        receive the link automatically: no automatic channel at all (neither
+        email nor phone) or explicit `manual` communication. A patient reachable
+        by email/SMS/WhatsApp gets the link in the message, so the manual link is
+        rejected. Token is created on the fly if missing.
         """
         from datetime import timedelta
 
         user = self.get_object()
 
-        allowed = not user.email or user.communication_method == "manual"
-        if not allowed:
+        if not user.requires_manual_access:
             return Response(
-                {"detail": _("Access URL is only available for patients without an email or with manual communication")},
+                {"detail": _("Access URL is only available for patients without any automatic channel (email/SMS/WhatsApp) or with manual communication")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -2097,6 +2095,6 @@ class DAVAppPasswordViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return DAVAppPassword.objects.filter(user=self.request.user)
-    
+
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)

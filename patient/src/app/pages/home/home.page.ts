@@ -1,7 +1,6 @@
 import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
-import { Capacitor } from '@capacitor/core';
 import {
   IonIcon,
   IonContent,
@@ -73,11 +72,12 @@ export class HomePage implements OnInit, OnDestroy {
   isLoading = signal(false);
   appointmentEarlyJoinMinutes = 5; // Default value
   highlightedRequestId = signal<number | null>(null);
-  showDeeplinkBanner = signal(false);
 
   totalRequests = computed(() => this.requests().length);
   totalConsultations = computed(() => this.consultations().length);
   totalAppointments = computed(() => this.appointments().length);
+  // Merged dashboard (design 3a): requests + suivis + orphan appointments shown as one list.
+  totalItems = computed(() => this.totalRequests() + this.totalConsultations() + this.totalAppointments());
   hasNoItems = computed(() => this.totalRequests() === 0 && this.totalConsultations() === 0 && this.totalAppointments() === 0);
 
   // Chat inline state
@@ -179,17 +179,11 @@ export class HomePage implements OnInit, OnDestroy {
           if (config.appointment_early_join_minutes) {
             this.appointmentEarlyJoinMinutes = config.appointment_early_join_minutes;
           }
-          this.showDeeplinkBanner.set(!!config?.enable_deeplink && !Capacitor.isNativePlatform());
         },
         error: () => {
           // Use default value on error
         }
       });
-  }
-
-  openInApp(): void {
-    const host = window.location.host;
-    window.location.href = `hcw://${host}/home`;
   }
 
   ngOnDestroy(): void {
@@ -303,8 +297,35 @@ export class HomePage implements OnInit, OnDestroy {
     return statusMap[normalizedStatus] || statusMap['requested'];
   }
 
+  getStatusIcon(status: string | undefined): string {
+    const normalizedStatus = (status || 'requested').toLowerCase();
+    const iconMap: Record<string, string> = {
+      'requested': 'time-outline',
+      'accepted': 'checkmark-circle-outline',
+      'scheduled': 'calendar-outline',
+      'cancelled': 'close-outline',
+      'refused': 'close-outline'
+    };
+    return iconMap[normalizedStatus] || 'time-outline';
+  }
+
   hasAppointment(request: ConsultationRequest): boolean {
     return !!request.appointment;
+  }
+
+  // Number of appointments attached to a request (via its consultation, or the
+  // request's own appointment). Used for the "N rendez-vous" header counter.
+  getRequestAppointmentCount(request: ConsultationRequest): number {
+    if (request.consultation?.appointments?.length) {
+      return request.consultation.appointments.length;
+    }
+    return request.appointment ? 1 : 0;
+  }
+
+  // Card title for a suivi: "#000028 · Test 2" (id + optional title).
+  formatConsultationTitle(consultation: Consultation): string {
+    const id = `#${String(consultation.id).padStart(6, '0')}`;
+    return consultation.title ? `${id} · ${consultation.title}` : id;
   }
 
   hasConsultation(request: ConsultationRequest): boolean {

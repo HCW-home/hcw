@@ -125,11 +125,11 @@
 }
 
 .modal-body {
-  padding: 0;
+  padding: 20px 24px;
   overflow-y: auto;
   flex: 1;
 
-  &.no-header {
+  &.no-padding {
     padding: 0;
   }
 }
@@ -175,6 +175,14 @@
 
   .modal-header {
     padding: 16px 20px;
+  }
+
+  .modal-body {
+    padding: 16px 20px;
+
+    &.no-padding {
+      padding: 0;
+    }
   }
 
   .modal-footer {

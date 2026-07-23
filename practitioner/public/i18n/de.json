@@ -68,6 +68,9 @@
     "reason": "Grund",
     "reasonPlaceholder": "z. B. Nachuntersuchung, Erstbeurteilung...",
     "description": "Beschreibung",
+    "notes": "Interne Notizen",
+    "notesPlaceholder": "Klinische Notizen, die nur für Behandelnde sichtbar sind...",
+    "notesHelperText": "Diese internen Notizen sind nur für Behandelnde sichtbar und werden dem Patienten nie angezeigt.",
     "descriptionPlaceholder": "Fügen Sie für diese Folgemaßnahme alle relevanten Anmerkungen oder Kontextinformationen hinzu...",
     "visibleByPatient": "Für den Patienten sichtbar (der Patient kann in diesem Nachsorge-Chat Nachrichten einsehen und senden)",
     "practitionerAssignment": "Verantwortungsvoll & Zugang",
@@ -1044,7 +1047,9 @@
     "leaveCallTitle": "Videoanruf verlassen?",
     "leaveCallMessage": "Sie befinden sich gerade in einem Videoanruf. Wenn Sie diese Seite verlassen, wird die Verbindung getrennt. Möchten Sie die Seite wirklich verlassen?",
     "leaveCallConfirm": "Anruf hinterlassen",
-    "leaveCallCancel": "Bleiben"
+    "leaveCallCancel": "Bleiben",
+    "callEndedTitle": "Anruf beendet",
+    "callEndedByServer": "Der Anruf wurde beendet, da die Konsultation geschlossen wurde."
   },
   "websocket": {
     "disconnected": "Verbindung unterbrochen",

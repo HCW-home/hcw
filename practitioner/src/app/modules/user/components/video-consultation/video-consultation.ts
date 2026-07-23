@@ -231,6 +231,10 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
         this.cdr.markForCheck();
       });
 
+    this.videoCallService.removedByServer$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.handleServerRemoval());
+
     this.videoCallService.localVideoTrack$
       .pipe(takeUntil(this.destroy$))
       .subscribe(track => {
@@ -828,6 +832,24 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       await this.videoCallService.disconnect();
       this.leave.emit();
     }
+  }
+
+  /**
+   * The media server removed us from the call (typically because the
+   * consultation was closed). Tear the call down without a confirmation prompt
+   * and inform the user, so we don't leave a broken/empty call window open.
+   */
+  private async handleServerRemoval(): Promise<void> {
+    this.showCaptions.set(false);
+    this.transcriptionService.stop();
+    this.activeRemoteTranscriptions.clear();
+    await this.videoCallService.disconnect();
+    this.toasterService.show(
+      'info',
+      this.t.instant('videoCall.callEndedTitle'),
+      this.t.instant('videoCall.callEndedByServer')
+    );
+    this.leave.emit();
   }
 
   onToggleSize(): void {

@@ -142,6 +142,70 @@ class ReminderApiTests(_ReminderBase):
         self.assertEqual(out, expected)
         self.assertEqual((out.hour, out.minute), (9, 30))
 
+    def test_create_reminder_with_temporary_recipient_creates_user(self):
+        payload = self._payload()
+        payload.pop("recipient_id")
+        payload["temporary_recipient"] = {
+            "first_name": "Jane",
+            "last_name": "Doe",
+            "email": "jane.doe@example.com",
+            "communication_method": "email",
+        }
+        response = self.client.post(reverse("reminder-list"), payload, format="json")
+        self.assertEqual(response.status_code, 201, response.data)
+        reminder = Reminder.objects.get(pk=response.data["id"])
+        self.assertEqual(reminder.recipient.email, "jane.doe@example.com")
+        self.assertTrue(reminder.recipient.temporary)
+        self.assertEqual(reminder.recipient.created_by, self.practitioner)
+
+    def test_create_reminder_with_temporary_recipient_maps_existing_user(self):
+        payload = self._payload()
+        payload.pop("recipient_id")
+        payload["temporary_recipient"] = {
+            "first_name": "Ignored",
+            "email": self.patient.email,
+            "communication_method": "email",
+        }
+        response = self.client.post(reverse("reminder-list"), payload, format="json")
+        self.assertEqual(response.status_code, 201, response.data)
+        reminder = Reminder.objects.get(pk=response.data["id"])
+        # Mapped onto the existing account, not duplicated.
+        self.assertEqual(reminder.recipient, self.patient)
+        self.assertEqual(
+            User.objects.filter(email=self.patient.email).count(), 1
+        )
+
+    def test_create_reminder_without_any_recipient_rejected(self):
+        payload = self._payload()
+        payload.pop("recipient_id")
+        response = self.client.post(reverse("reminder-list"), payload, format="json")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("recipient_id", response.data)
+
+    def test_update_reminder_with_temporary_recipient(self):
+        reminder = Reminder.objects.create(
+            title="Old",
+            recipient=self.patient,
+            created_by=self.practitioner,
+            scheduled_at=timezone.now() + timedelta(days=1),
+        )
+        response = self.client.patch(
+            reverse("reminder-detail", args=[reminder.id]),
+            {
+                "temporary_recipient": {
+                    "first_name": "New",
+                    "last_name": "Contact",
+                    "email": "new.contact@example.com",
+                    "communication_method": "email",
+                }
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.data)
+        reminder.refresh_from_db()
+        self.assertEqual(reminder.recipient.email, "new.contact@example.com")
+        self.assertTrue(reminder.recipient.temporary)
+
     def test_filter_by_recipient(self):
         other_patient = User.objects.create_user(
             email="pat2@example.com"
@@ -449,6 +513,25 @@ class ReminderOccurrenceTests(_ReminderBase):
         )
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(resp.data), 0)
+
+    def test_occurrences_endpoint_includes_completed_past_reminder(self):
+        # A non-recurring reminder that already fired is flipped to
+        # is_active=False by the delivery task. Its past occurrence must still
+        # appear on the calendar.
+        past = timezone.now().replace(
+            hour=9, minute=0, second=0, microsecond=0
+        ) - timedelta(days=1)
+        r = self._mk(scheduled_at=past, is_active=False)
+        resp = self.client.get(
+            reverse("reminder-occurrences"),
+            {
+                "start": (past - timedelta(days=1)).date().isoformat(),
+                "end": (past + timedelta(days=1)).date().isoformat(),
+            },
+        )
+        self.assertEqual(resp.status_code, 200, resp.data)
+        self.assertEqual(len(resp.data), 1)
+        self.assertEqual(resp.data[0]["reminder_id"], r.id)
 
     def test_occurrences_endpoint_requires_params(self):
         resp = self.client.get(reverse("reminder-occurrences"))

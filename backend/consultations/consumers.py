@@ -6,12 +6,14 @@ import aiohttp
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from constance import config as constance_config
+from core.channel_groups import consultation_group, user_group
+from core.consumers import TenantConsumerMixin
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
 
-class AppointmentTranscriptionConsumer(AsyncWebsocketConsumer):
+class AppointmentTranscriptionConsumer(TenantConsumerMixin, AsyncWebsocketConsumer):
     """
     WebSocket consumer that receives raw audio from the browser,
     streams it to the whisper-live server, and broadcasts the
@@ -25,7 +27,7 @@ class AppointmentTranscriptionConsumer(AsyncWebsocketConsumer):
             await self.close(code=4001)
             return
 
-        if not await sync_to_async(lambda: constance_config.enable_live_transcription)():
+        if not await self._live_transcription_enabled():
             await self.close(code=4003)
             return
 
@@ -91,7 +93,7 @@ class AppointmentTranscriptionConsumer(AsyncWebsocketConsumer):
 
         # Use speaker_label in uid so each remote participant gets its own whisper session
         uid_suffix = speaker_label or "self"
-        whisper_model = await sync_to_async(lambda: constance_config.whisper_model)()
+        whisper_model = await self._whisper_model()
         # Send initial config — whisper-live expects this as the first message
         config = {
             "uid": f"appointment_{self.appointment_pk}_{self.user.pk}_{uid_suffix}",
@@ -170,7 +172,9 @@ class AppointmentTranscriptionConsumer(AsyncWebsocketConsumer):
         if self.speaker_label:
             event["speaker_label"] = self.speaker_label
         for user_pk in user_pks:
-            await self.channel_layer.group_send(f"user_{user_pk}", event)
+            await self.channel_layer.group_send(
+                user_group(user_pk, self.schema_name), event
+            )
 
     async def _cleanup_whisper_session(self):
         """Close whisper WebSocket and aiohttp session."""
@@ -214,29 +218,40 @@ class AppointmentTranscriptionConsumer(AsyncWebsocketConsumer):
         logger.info(f"Transcription stopped: appointment={self.appointment_pk}")
 
     @sync_to_async
+    def _live_transcription_enabled(self):
+        with self.tenant_scope():
+            return constance_config.enable_live_transcription
+
+    @sync_to_async
+    def _whisper_model(self):
+        with self.tenant_scope():
+            return constance_config.whisper_model
+
+    @sync_to_async
     def _save_transcript(self):
         """Save accumulated transcript lines to the appointment."""
         from consultations.models import Appointment
         import json as json_module
 
-        try:
-            appointment = Appointment.objects.get(pk=self.appointment_pk)
-        except Appointment.DoesNotExist:
-            return
-
-        # Merge with existing transcript data if any
-        existing = []
-        if appointment.transcript:
+        with self.tenant_scope():
             try:
-                existing = json_module.loads(appointment.transcript)
-            except (json_module.JSONDecodeError, TypeError):
-                existing = []
+                appointment = Appointment.objects.get(pk=self.appointment_pk)
+            except Appointment.DoesNotExist:
+                return
 
-        existing.extend(self.transcript_lines)
-        appointment.transcript = json_module.dumps(existing, ensure_ascii=False)
-        appointment.save(update_fields=["transcript"])
-        self.transcript_lines = []
-        logger.info(f"Transcript saved for appointment {self.appointment_pk}: {len(existing)} lines")
+            # Merge with existing transcript data if any
+            existing = []
+            if appointment.transcript:
+                try:
+                    existing = json_module.loads(appointment.transcript)
+                except (json_module.JSONDecodeError, TypeError):
+                    existing = []
+
+            existing.extend(self.transcript_lines)
+            appointment.transcript = json_module.dumps(existing, ensure_ascii=False)
+            appointment.save(update_fields=["transcript"])
+            self.transcript_lines = []
+            logger.info(f"Transcript saved for appointment {self.appointment_pk}: {len(existing)} lines")
 
     @sync_to_async
     def _get_speaker_name(self):
@@ -246,22 +261,24 @@ class AppointmentTranscriptionConsumer(AsyncWebsocketConsumer):
     @sync_to_async
     def _get_consultation(self):
         from consultations.models import Appointment
-        try:
-            return Appointment.objects.select_related("consultation").get(
-                pk=self.appointment_pk
-            ).consultation
-        except Appointment.DoesNotExist:
-            return None
+        with self.tenant_scope():
+            try:
+                return Appointment.objects.select_related("consultation").get(
+                    pk=self.appointment_pk
+                ).consultation
+            except Appointment.DoesNotExist:
+                return None
 
     @sync_to_async
     def _get_user_pks(self):
         from consultations.signals import get_users_to_notification_consultation
         if not self.consultation:
             return set()
-        return get_users_to_notification_consultation(self.consultation)
+        with self.tenant_scope():
+            return get_users_to_notification_consultation(self.consultation)
 
 
-class ConsultationConsumer(AsyncWebsocketConsumer):
+class ConsultationConsumer(TenantConsumerMixin, AsyncWebsocketConsumer):
     """WebSocket consumer for consultation-level real-time events."""
 
     async def connect(self):
@@ -272,11 +289,13 @@ class ConsultationConsumer(AsyncWebsocketConsumer):
 
         self.consultation_pk = self.scope["url_route"]["kwargs"]["consultation_pk"]
         await self.channel_layer.group_add(
-            f"consultation_{self.consultation_pk}", self.channel_name
+            consultation_group(self.consultation_pk, self.schema_name),
+            self.channel_name,
         )
         await self.accept()
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(
-            f"consultation_{self.consultation_pk}", self.channel_name
+            consultation_group(self.consultation_pk, self.schema_name),
+            self.channel_name,
         )

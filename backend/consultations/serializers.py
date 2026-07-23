@@ -187,12 +187,14 @@ class ParticipantReadSerializer(serializers.ModelSerializer):
 
     def get_requires_manual_access(self, obj):
         """Indique si ce participant nécessite un accès manuel (lien d'invitation).
-        Vrai dès que l'utilisateur n'a pas d'email (le code de vérification ne
-        peut donc pas lui être envoyé) ou qu'il est en communication manuelle.
+        Vrai uniquement quand aucun canal ne peut acheminer le lien
+        automatiquement : communication manuelle, ou ni email ni téléphone. Un
+        contact SMS/WhatsApp reçoit son lien dans le message, donc pas d'accès
+        manuel.
         """
         if not obj.user:
             return False
-        return not obj.user.email or obj.user.communication_method == "manual"
+        return obj.user.requires_manual_access
 
     def get_has_consultation_key(self, obj):
         """True if a direct ConsultationKey row exists for this participant's
@@ -297,6 +299,41 @@ class ParticipantSerializer(serializers.Serializer):
 
         return super().validate(attrs)
 
+    @staticmethod
+    def resolve_user(data, created_by):
+        """Map a temporary-contact payload to a User.
+
+        Reuses an existing account matched by mobile phone number or email;
+        otherwise creates a temporary user owned by ``created_by``. Contacts
+        without any lookup key (manual communication) always get a fresh user.
+        """
+        user_defaults = {
+            "first_name": data.get("first_name", ""),
+            "last_name": data.get("last_name", ""),
+            "communication_method": data.get(
+                "communication_method", CommunicationMethod.email
+            ),
+            "preferred_language": data.get("preferred_language"),
+            "timezone": data.get("timezone", "UTC"),
+            "temporary": True,
+            "created_by": created_by,
+        }
+
+        if data.get("mobile_phone_number"):
+            user, __ = User.objects.get_or_create(
+                mobile_phone_number=data["mobile_phone_number"],
+                defaults=user_defaults,
+            )
+        elif data.get("email"):
+            user, __ = User.objects.get_or_create(
+                email=data["email"],
+                defaults=user_defaults,
+            )
+        else:
+            # Manual contact: create user directly (no lookup key)
+            user = User.objects.create(**user_defaults)
+        return user
+
 
 class ConsultationSerializer(CustomFieldsMixin, serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(read_only=True)
@@ -315,6 +352,12 @@ class ConsultationSerializer(CustomFieldsMixin, serializers.ModelSerializer):
         write_only=True,
         required=False,
         allow_null=True,
+    )
+    # External contact as beneficiary: mapped to an existing user by
+    # email/phone or created as a temporary user (same mechanism as
+    # appointment temporary_participants).
+    temporary_beneficiary = ParticipantSerializer(
+        write_only=True, required=False, allow_null=True
     )
     group = QueueSerializer(read_only=True)
     group_id = serializers.PrimaryKeyRelatedField(
@@ -344,6 +387,7 @@ class ConsultationSerializer(CustomFieldsMixin, serializers.ModelSerializer):
             "updated_at",
             "beneficiary",
             "beneficiary_id",
+            "temporary_beneficiary",
             "created_by",
             "owned_by",
             "owned_by_id",
@@ -351,6 +395,7 @@ class ConsultationSerializer(CustomFieldsMixin, serializers.ModelSerializer):
             "group_id",
             "description",
             "title",
+            "notes",
             "closed_at",
             "visible_by_patient",
             "temporary",
@@ -378,6 +423,18 @@ class ConsultationSerializer(CustomFieldsMixin, serializers.ModelSerializer):
             "last_read_at",
             "keys",
         ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # `notes` are internal clinical notes: only practitioners may read
+        # them. Strip the field for anyone else (e.g. a patient receiving the
+        # nested consultation via the appointment serializer). The write side
+        # is already limited to the practitioner-only ConsultationViewSet.
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        if not (user and getattr(user, "is_practitioner", False)):
+            data.pop("notes", None)
+        return data
 
     def get_keys(self, obj):
         """Return the ConsultationKey rows the current user can use to
@@ -457,8 +514,21 @@ class ConsultationSerializer(CustomFieldsMixin, serializers.ModelSerializer):
 
         return attrs
 
+    def _apply_temporary_beneficiary(self, validated_data):
+        """Resolve a temporary_beneficiary payload into the beneficiary field.
+
+        An explicit beneficiary (beneficiary_id) always takes precedence over
+        the temporary contact payload.
+        """
+        temp_beneficiary = validated_data.pop("temporary_beneficiary", None)
+        if temp_beneficiary and not validated_data.get("beneficiary"):
+            validated_data["beneficiary"] = ParticipantSerializer.resolve_user(
+                temp_beneficiary, self.context["request"].user
+            )
+
     def create(self, validated_data):
         initial_keys = validated_data.pop("initial_keys", [])
+        self._apply_temporary_beneficiary(validated_data)
         consultation = super().create(validated_data)
         if consultation.is_encrypted and initial_keys:
             self._persist_initial_keys(consultation, initial_keys)
@@ -466,6 +536,7 @@ class ConsultationSerializer(CustomFieldsMixin, serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         initial_keys = validated_data.pop("initial_keys", [])
+        self._apply_temporary_beneficiary(validated_data)
         consultation = super().update(instance, validated_data)
         if consultation.is_encrypted and initial_keys:
             self._persist_initial_keys(consultation, initial_keys)
@@ -715,33 +786,9 @@ class AppointmentSerializer(serializers.ModelSerializer):
         if temporary_participants_data is not None:
             request_user = self.context["request"].user
             for temp_participant in temporary_participants_data:
-                user_defaults = {
-                    "first_name": temp_participant.get("first_name", ""),
-                    "last_name": temp_participant.get("last_name", ""),
-                    "communication_method": temp_participant.get(
-                        "communication_method", CommunicationMethod.email
-                    ),
-                    "preferred_language": temp_participant.get(
-                        "preferred_language"
-                    ),
-                    "timezone": temp_participant.get("timezone", "UTC"),
-                    "temporary": True,
-                    "created_by": request_user,
-                }
-
-                if temp_participant.get("mobile_phone_number"):
-                    user, _ = User.objects.get_or_create(
-                        mobile_phone_number=temp_participant["mobile_phone_number"],
-                        defaults=user_defaults,
-                    )
-                elif temp_participant.get("email"):
-                    user, _ = User.objects.get_or_create(
-                        email=temp_participant["email"],
-                        defaults=user_defaults,
-                    )
-                else:
-                    # Manual contact: create user directly (no lookup key)
-                    user = User.objects.create(**user_defaults)
+                user = ParticipantSerializer.resolve_user(
+                    temp_participant, request_user
+                )
 
                 visible = temp_participant.get("is_consultation_visible", False)
                 participant, created = Participant.objects.get_or_create(
@@ -921,31 +968,7 @@ class AppointmentCreateSerializer(AppointmentSerializer):
         # Users from temporary_participants
         request_user = self.context["request"].user
         for temp_participant in temporary_participants_data:
-            user_defaults = {
-                "first_name": temp_participant.get("first_name", ""),
-                "last_name": temp_participant.get("last_name", ""),
-                "communication_method": temp_participant.get(
-                    "communication_method", CommunicationMethod.email
-                ),
-                "preferred_language": temp_participant.get("preferred_language"),
-                "timezone": temp_participant.get("timezone", "UTC"),
-                "temporary": True,
-                "created_by": request_user,
-            }
-
-            if temp_participant.get("mobile_phone_number"):
-                user, __ = User.objects.get_or_create(
-                    mobile_phone_number=temp_participant["mobile_phone_number"],
-                    defaults=user_defaults,
-                )
-            elif temp_participant.get("email"):
-                user, __ = User.objects.get_or_create(
-                    email=temp_participant["email"],
-                    defaults=user_defaults,
-                )
-            else:
-                # Manual contact: create user directly (no lookup key)
-                user = User.objects.create(**user_defaults)
+            user = ParticipantSerializer.resolve_user(temp_participant, request_user)
 
             if user not in participant_users:
                 Participant.objects.create(
@@ -1425,7 +1448,16 @@ class ReminderSerializer(serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(read_only=True)
     recipient = ConsultationUserSerializer(read_only=True)
     recipient_id = serializers.PrimaryKeyRelatedField(
-        source="recipient", queryset=User.objects.all(), write_only=True
+        source="recipient",
+        queryset=User.objects.all(),
+        write_only=True,
+        required=False,
+    )
+    # External contact as recipient: mapped to an existing user by email/phone
+    # or created as a temporary user (same mechanism as appointment
+    # temporary_participants).
+    temporary_recipient = ParticipantSerializer(
+        write_only=True, required=False, allow_null=True
     )
     consultation_id = serializers.PrimaryKeyRelatedField(
         source="consultation",
@@ -1445,6 +1477,7 @@ class ReminderSerializer(serializers.ModelSerializer):
             "consultation_id",
             "recipient",
             "recipient_id",
+            "temporary_recipient",
             "created_by",
             "scheduled_at",
             "is_recurring",
@@ -1522,9 +1555,35 @@ class ReminderSerializer(serializers.ModelSerializer):
                 )
         else:
             data["recurrence_count"] = 1
+
+        # A reminder needs a recipient: either an existing user (recipient_id)
+        # or an external contact (temporary_recipient).
+        if self.instance is None and not data.get("recipient") and not data.get(
+            "temporary_recipient"
+        ):
+            raise serializers.ValidationError(
+                {"recipient_id": _("A recipient is required.")}
+            )
         return data
 
+    def _apply_temporary_recipient(self, validated_data):
+        """Resolve a temporary_recipient payload into the recipient field.
+
+        An explicit recipient (recipient_id) always takes precedence over the
+        temporary contact payload.
+        """
+        temp_recipient = validated_data.pop("temporary_recipient", None)
+        if temp_recipient and not validated_data.get("recipient"):
+            validated_data["recipient"] = ParticipantSerializer.resolve_user(
+                temp_recipient, self.context["request"].user
+            )
+
+    def create(self, validated_data):
+        self._apply_temporary_recipient(validated_data)
+        return super().create(validated_data)
+
     def update(self, instance, validated_data):
+        self._apply_temporary_recipient(validated_data)
         # If the reminder has not fired yet, keep next_run_at aligned with a
         # rescheduled start time so the change takes effect.
         new_scheduled_at = validated_data.get("scheduled_at")

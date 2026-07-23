@@ -168,6 +168,9 @@
     "reason": "Razón",
     "reasonPlaceholder": "p. ej., Seguimiento, Evaluación inicial...",
     "description": "Descripción",
+    "notes": "Notas internas",
+    "notesPlaceholder": "Notas clínicas visibles solo para los profesionales...",
+    "notesHelperText": "Estas notas internas solo son visibles para los profesionales y nunca se muestran al paciente.",
     "descriptionPlaceholder": "Añade cualquier nota o contexto relevante para este seguimiento...",
     "visibleByPatient": "Visible para el paciente (el paciente podrá ver y enviar mensajes en este seguimiento).",
     "practitionerAssignment": "Responsable y acceso",
@@ -1073,7 +1076,9 @@
     "leaveCallTitle": "¿Abandonar la videollamada?",
     "leaveCallMessage": "Estás en una videollamada. Si sales de esta página, la llamada se Cerrar sesión. ¿De verdad quieres salir?",
     "leaveCallConfirm": "Dejar llamada",
-    "leaveCallCancel": "Permanecer"
+    "leaveCallCancel": "Permanecer",
+    "callEndedTitle": "Llamada finalizada",
+    "callEndedByServer": "La llamada ha finalizado porque la consulta se ha cerrado."
   },
   "websocket": {
     "disconnected": "Se perdió la conexión.",

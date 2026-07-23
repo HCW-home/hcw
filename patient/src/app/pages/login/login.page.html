@@ -189,6 +189,15 @@
         }
 
         <app-language-selector></app-language-selector>
+
+        @if (showDeeplinkBanner) {
+          <div class="open-in-app-banner">
+            <span>{{ 'home.openInAppPrompt' | translate }}</span>
+            <button class="card-btn card-btn-outline" (click)="openInApp()">
+              {{ 'home.openInApp' | translate }}
+            </button>
+          </div>
+        }
       </div>
     </div>
   </div>

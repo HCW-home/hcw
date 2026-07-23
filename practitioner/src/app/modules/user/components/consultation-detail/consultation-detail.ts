@@ -14,8 +14,8 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule, Location } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { Observable, Subject, takeUntil, map } from 'rxjs';
+import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { Observable, Subject, of, takeUntil, map, switchMap } from 'rxjs';
 import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
 import {
   FullCalendarModule,
@@ -47,6 +47,7 @@ import {
   Queue,
   CreateConsultationRequest,
   ConsultationKeyInput,
+  ITemporaryParticipant,
 } from '../../../../core/models/consultation';
 import { IUser } from '../../models/user';
 
@@ -87,6 +88,7 @@ import { AppointmentFormModal } from './appointment-form-modal/appointment-form-
 import { ReminderFormModal } from '../../../../shared/components/reminder-form-modal/reminder-form-modal';
 import { ReminderCard } from '../../../../shared/components/reminder-card/reminder-card';
 import { UserSelectOrCreate } from '../../../../shared/components/user-select-or-create/user-select-or-create';
+import { ExternalContactForm } from '../../../../shared/components/external-contact-form/external-contact-form';
 import { Reminder } from '../../../../core/models/reminder';
 import { RoutePaths } from '../../../../core/constants/routes';
 import { ParticipantItem } from '../../../../shared/components/participant-item/participant-item';
@@ -119,6 +121,7 @@ type AppointmentTimeFilter = 'all' | 'upcoming' | 'past';
     ReminderFormModal,
     ReminderCard,
     UserSelectOrCreate,
+    ExternalContactForm,
     ModalComponent,
     FullCalendarModule,
     LocalDatePipe,
@@ -203,6 +206,13 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
 
   showCallAppointmentModal = signal(false);
 
+  // Close follow-up modal: lets the practitioner fill in the internal
+  // clinical notes before the consultation is closed.
+  showCloseConsultationModal = signal(false);
+  isClosingConsultation = signal(false);
+  closeConsultationMessage = signal('');
+  closeConsultationNotes = new FormControl<string>('', { nonNullable: true });
+
   isExportingPdf = signal(false);
 
   showCreateAppointmentModal = signal(false);
@@ -275,6 +285,10 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   selectedOwner = signal<IUser | null>(null);
   beneficiaryInitialOption = signal<SelectOption | null>(null);
   ownerInitialOption = signal<SelectOption | null>(null);
+  // Toggle between an existing user and an external contact as beneficiary.
+  isExternalBeneficiary = signal(false);
+  externalBeneficiaryErrors = signal<Record<string, string[]>>({});
+  externalBeneficiaryRef = viewChild<ExternalContactForm>('externalBeneficiaryRef');
   private practitionerCache = new Map<number, IUser>();
   private beneficiaryCache = new Map<number, IUser>();
 
@@ -288,7 +302,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   );
 
   beneficiarySearchFn: AsyncSearchFn = (query: string, page: number): Observable<AsyncSearchResult> => {
-    return this.userService.searchUsers(query, page, 20, false).pipe(
+    return this.userService.searchUsers(query, page, 20, undefined).pipe(
       map(response => {
         const results: SelectOption[] = response.results.map(user => {
           this.beneficiaryCache.set(user.pk, user);
@@ -1597,8 +1611,9 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  async closeConsultation(): Promise<void> {
-    if (!this.consultation()) return;
+  closeConsultation(): void {
+    const consultation = this.consultation();
+    if (!consultation) return;
 
     let message = this.t.instant('consultationDetail.closeConsultationMessage');
     if (this.consultationAutoDeleteHours > 0) {
@@ -1607,38 +1622,53 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       });
     }
 
-    const confirmed = await this.confirmationService.confirm({
-      title: this.t.instant('consultationDetail.closeConsultationTitle'),
-      message: message,
-      confirmText: this.t.instant('consultationDetail.close'),
-      cancelText: this.t.instant('consultationDetail.cancel'),
-      confirmStyle: 'danger',
-    });
+    this.closeConsultationMessage.set(message);
+    this.closeConsultationNotes.setValue(consultation.notes || '');
+    this.showCloseConsultationModal.set(true);
+  }
 
-    if (confirmed) {
-      this.consultationService
-        .closeConsultation(this.consultationId)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: () => {
-            this.toasterService.show(
-              'success',
-              this.t.instant('consultationDetail.consultationClosed'),
-              this.t.instant('consultationDetail.consultationClosedMessage')
-            );
-            this.router.navigate([
-              `/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`,
-            ]);
-          },
-          error: error => {
-            this.toasterService.show(
-              'error',
-              this.t.instant('consultationDetail.errorClosingConsultation'),
-              getErrorMessage(error)
-            );
-          },
-        });
-    }
+  confirmCloseConsultation(): void {
+    const consultation = this.consultation();
+    if (!consultation || this.isClosingConsultation()) return;
+
+    const notes = this.closeConsultationNotes.value;
+    const saveNotes$: Observable<Consultation | null> =
+      notes !== (consultation.notes || '')
+        ? this.consultationService.updateConsultation(this.consultationId, {
+            notes,
+          })
+        : of(null);
+
+    this.isClosingConsultation.set(true);
+    saveNotes$
+      .pipe(
+        switchMap(() =>
+          this.consultationService.closeConsultation(this.consultationId)
+        ),
+        takeUntil(this.destroy$)
+      )
+      .subscribe({
+        next: () => {
+          this.isClosingConsultation.set(false);
+          this.showCloseConsultationModal.set(false);
+          this.toasterService.show(
+            'success',
+            this.t.instant('consultationDetail.consultationClosed'),
+            this.t.instant('consultationDetail.consultationClosedMessage')
+          );
+          this.router.navigate([
+            `/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`,
+          ]);
+        },
+        error: error => {
+          this.isClosingConsultation.set(false);
+          this.toasterService.show(
+            'error',
+            this.t.instant('consultationDetail.errorClosingConsultation'),
+            getErrorMessage(error)
+          );
+        },
+      });
   }
 
   async reopenConsultation(): Promise<void> {
@@ -1772,6 +1802,8 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       this.ownerInitialOption.set(null);
     }
 
+    this.isExternalBeneficiary.set(false);
+    this.externalBeneficiaryErrors.set({});
     this.isEditMode.set(true);
   }
 
@@ -1781,10 +1813,30 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     this.selectedOwner.set(null);
     this.beneficiaryInitialOption.set(null);
     this.ownerInitialOption.set(null);
+    this.isExternalBeneficiary.set(false);
+    this.externalBeneficiaryErrors.set({});
+  }
+
+  setBeneficiaryType(external: boolean): void {
+    this.isExternalBeneficiary.set(external);
+    if (external) {
+      this.editForm.patchValue({ beneficiary_id: '' });
+      this.selectedBeneficiary.set(null);
+    }
   }
 
   async saveConsultationChanges(): Promise<void> {
     if (!this.consultationId) return;
+
+    // Validate the external beneficiary contact if that mode is active.
+    let temporaryBeneficiary: ITemporaryParticipant | null = null;
+    if (this.isExternalBeneficiary()) {
+      const ref = this.externalBeneficiaryRef();
+      ref?.markAllTouched();
+      if (!ref || !ref.isValid()) return;
+      temporaryBeneficiary = ref.buildPayload();
+      if (!temporaryBeneficiary) return;
+    }
 
     this.isSavingConsultation.set(true);
     const formValue = this.editForm.value;
@@ -1805,14 +1857,18 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     const updateData: Partial<CreateConsultationRequest> = {
       title: formValue.title || null,
       description: formValue.description || null,
-      beneficiary_id: formValue.beneficiary_id
-        ? Number(formValue.beneficiary_id)
-        : null,
       owned_by_id: formValue.owned_by_id ? Number(formValue.owned_by_id) : null,
       group_id: formValue.group_id ? Number(formValue.group_id) : null,
       visible_by_patient: formValue.visible_by_patient,
       custom_fields: customFieldsPayload,
     };
+    if (temporaryBeneficiary) {
+      updateData.temporary_beneficiary = temporaryBeneficiary;
+    } else {
+      updateData.beneficiary_id = formValue.beneficiary_id
+        ? Number(formValue.beneficiary_id)
+        : null;
+    }
 
     try {
       const rewrap = await this.buildRewrappedEnvelopes(updateData);
@@ -1843,6 +1899,12 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
         },
         error: error => {
           this.isSavingConsultation.set(false);
+          const nested = error?.error?.temporary_beneficiary;
+          if (nested && typeof nested === 'object') {
+            this.externalBeneficiaryErrors.set(
+              nested as Record<string, string[]>
+            );
+          }
           this.toasterService.show(
             'error',
             this.t.instant('consultationDetail.updateFailed'),
@@ -2338,7 +2400,13 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   hasBeneficiaryManualLink(): boolean {
     const beneficiary = this.consultation()?.beneficiary;
     if (!beneficiary) return false;
-    return !beneficiary.email || beneficiary.communication_method === 'manual';
+    // A manual (copy-it-yourself) link is only needed when no channel can
+    // deliver the access link automatically: manual communication, or neither
+    // email nor phone. An SMS/WhatsApp contact receives the link in the message.
+    return (
+      beneficiary.communication_method === 'manual' ||
+      (!beneficiary.email && !beneficiary.mobile_phone_number)
+    );
   }
 
   openBeneficiaryLinkModal(): void {

@@ -295,6 +295,27 @@ REST_FRAMEWORK = {
 FHIR_SYSTEM_SCHEME = os.getenv("FHIR_SYSTEM_SCHEME", "https")
 FHIR_SYSTEM_PATH = os.getenv("FHIR_SYSTEM_PATH", "")
 FHIR_SYSTEM_BASE_URL = os.getenv("FHIR_SYSTEM_BASE_URL") or None
+
+# Native mobile app store/package identifiers. These are global to every
+# instance (set via env), but each tenant can override them from the Constance
+# admin UI (see MOBILE_* keys in CONSTANCE_CONFIG). They are exposed to the
+# patient web app through /config so the "open in app" banner can deep-link or
+# redirect to the right store.
+MOBILE_ANDROID_PACKAGE = os.getenv("MOBILE_ANDROID_PACKAGE", "com.healthcare.patient")
+MOBILE_ANDROID_STORE_URL = os.getenv(
+    "MOBILE_ANDROID_STORE_URL",
+    "https://play.google.com/store/apps/details?id=com.healthcare.patient",
+)
+MOBILE_IOS_STORE_URL = os.getenv("MOBILE_IOS_STORE_URL", "")
+
+# Public Ed25519 key (base64, raw 32 bytes) of the Iabsis signing authority.
+# Used to verify the `instance_signature` blob so the patient web app only
+# offers to open/install the native app on a certified instance. Must match the
+# key embedded in the native app (patient/src/app/core/security/iabsis-keys.ts).
+IABSIS_PUBLIC_KEY_B64 = os.getenv(
+    "IABSIS_PUBLIC_KEY_B64",
+    "+VlJpb+ii+qn+ckekS/GVChLoFOvTzyKvU7/sczRsAs=",
+)
 # Per-resource overrides for the canonical system URL. Left empty so
 # `get_identifier_system()` derives from the dynamic base URL; populate this
 # dict only when you need a system URL that doesn't follow the default scheme.
@@ -840,6 +861,10 @@ CONSTANCE_CONFIG = {
         0,
         "Hours after closure before a follow-up is automatically deleted (0 to disable)",
     ),
+    "auto_close_temporary_consultations": (
+        False,
+        "Automatically close temporary appointment-chat consultations once the appointment join window has elapsed",
+    ),
     "temporary_user_auto_delete": (
         True,
         "Automatically delete temporary users with no future appointments",
@@ -922,6 +947,29 @@ CONSTANCE_CONFIG = {
         "Show a banner on the patient web home inviting users to open the native app.",
         bool,
     ),
+    "force_mobile_app": (
+        False,
+        "Require the native mobile app: block the patient web app for this "
+        "tenant and prompt users to open or install the mobile app instead. "
+        "Disabled by default.",
+        bool,
+    ),
+    "mobile_android_package": (
+        MOBILE_ANDROID_PACKAGE,
+        "Android applicationId of the native patient app. Defaults to the "
+        "MOBILE_ANDROID_PACKAGE env var; override per instance if needed.",
+    ),
+    "mobile_android_store_url": (
+        MOBILE_ANDROID_STORE_URL,
+        "Play Store URL the web 'open in app' banner falls back to when the app "
+        "is not installed. Defaults to the MOBILE_ANDROID_STORE_URL env var.",
+    ),
+    "mobile_ios_store_url": (
+        MOBILE_IOS_STORE_URL,
+        "App Store URL the web 'open in app' banner falls back to on iOS when "
+        "the app is not installed. Defaults to the MOBILE_IOS_STORE_URL env var. "
+        "Leave blank to disable the iOS store fallback.",
+    ),
     "fhir_external_appointment_system": (
         "https://ozonehis.example/ns/appointment-id",
         "FHIR Identifier.system URL of the external partner for Appointment "
@@ -993,6 +1041,13 @@ CONSTANCE_CONFIG = {
         "(lighter, but many clients block remote images by default).",
         "email_logo_mode_select",
     ),
+    "email_media_base_url": (
+        "",
+        "Absolute base URL used to build the logo link when email_logo_mode is "
+        "'url' and media is stored locally (e.g. https://patient.example.com). "
+        "Leave empty to fall back to patient_base_url. Ignored for S3 storage, "
+        "which already returns absolute URLs.",
+    ),
 }
 
 
@@ -1006,8 +1061,15 @@ CONSTANCE_CONFIG_FIELDSETS = {
         "call_limit_join_minutes",
         "default_appointment_duration_in_minutes",
     ),
-    "Data Retention": ("consultation_auto_delete_hours", "temporary_user_auto_delete"),
-    "Security": ("temporary_participant_token_expiry_hours", "instance_signature", "enable_deeplink"),
+    "Data Retention": ("consultation_auto_delete_hours", "auto_close_temporary_consultations", "temporary_user_auto_delete"),
+    "Security": ("temporary_participant_token_expiry_hours", "instance_signature"),
+    "Mobile App": (
+        "enable_deeplink",
+        "force_mobile_app",
+        "mobile_android_package",
+        "mobile_android_store_url",
+        "mobile_ios_store_url",
+    ),
     "Uploads": ("max_upload_size_mb",),
     "Authentication": ("disable_password_login", "enable_patient_password_login", "enable_registration"),
     "Visibility": ("users_visibility", "patient_visibility", "public_organisations"),
@@ -1039,7 +1101,7 @@ CONSTANCE_CONFIG_FIELDSETS = {
         "calendar_color_week_4",
         "calendar_rotation_anchor_date",
     ),
-    "Email": ("email_logo_mode",),
+    "Email": ("email_logo_mode", "email_media_base_url"),
 }
 
 # Short HTML-safe description rendered at the top of each Constance tab in
@@ -1063,6 +1125,12 @@ CONSTANCE_FIELDSET_DESCRIPTIONS = {
     ),
     "Security": (
         "Lifetime of one-time access tokens issued to temporary participants."
+    ),
+    "Mobile App": (
+        "Native patient app integration: show the 'open in app' banner on the "
+        "web login, and the store/package identifiers used to deep-link or "
+        "redirect to the right store. Values default to the MOBILE_* env vars "
+        "and can be overridden per instance here."
     ),
     "Uploads": "Maximum file size accepted for message attachments.",
     "Authentication": (
@@ -1106,9 +1174,14 @@ CONSTANCE_FIELDSET_DESCRIPTIONS = {
 # CORS Configuration
 CORS_ALLOW_ALL_ORIGINS = DEBUG  # Only allow all origins in DEBUG mode
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = []
-# Add specific origins here for production when DEBUG=False
-# Example: 'https://yourdomain.com', 'https://www.yourdomain.com'
+# Capacitor mobile apps serve the WebView from these fixed origins.
+# Extra origins (e.g. web front-ends) can be added via the CORS_ALLOWED_ORIGINS env var.
+cors_origins = os.getenv("CORS_ALLOWED_ORIGINS", "")
+CORS_ALLOWED_ORIGINS = [
+    "https://localhost",  # Capacitor Android
+    "capacitor://localhost",  # Capacitor iOS
+    "http://localhost",  # Capacitor Android (cleartext)
+] + [origin.strip() for origin in cors_origins.split(",") if origin.strip()]
 CORS_ALLOW_HEADERS = [
     "accept",
     "accept-encoding",

@@ -31,6 +31,7 @@ import {
   CreateAppointmentRequest,
   CreateConsultationRequest,
   ConsultationKeyInput,
+  ITemporaryParticipant,
   Queue,
   User,
 } from '../../../../core/models/consultation';
@@ -44,6 +45,7 @@ import { Select, AsyncSearchFn, AsyncSearchResult } from '../../../../shared/ui-
 import { Button } from '../../../../shared/ui-components/button/button';
 import { Checkbox } from '../../../../shared/ui-components/checkbox/checkbox';
 import { AppointmentForm } from '../../../../shared/components/appointment-form/appointment-form';
+import { ExternalContactForm } from '../../../../shared/components/external-contact-form/external-contact-form';
 import { AddEditPatient } from '../add-edit-patient/add-edit-patient';
 
 import { ButtonSizeEnum, ButtonStyleEnum } from '../../../../shared/constants/button';
@@ -64,6 +66,7 @@ import { TranslatePipe } from '@ngx-translate/core';
     Button,
     Checkbox,
     AppointmentForm,
+    ExternalContactForm,
     AddEditPatient,
     TranslatePipe,
   ],
@@ -110,6 +113,10 @@ export class CreateConsultationModal implements OnInit, OnDestroy {
   newPatientInitialName = signal('');
   pendingAppointmentData = signal<CreateAppointmentRequest | null>(null);
   appointmentFormRef = viewChild<AppointmentForm>('appointmentFormRef');
+  // Toggle between an existing user and an external contact as beneficiary.
+  isExternalBeneficiary = signal(false);
+  externalBeneficiaryErrors = signal<Record<string, string[]>>({});
+  externalBeneficiaryRef = viewChild<ExternalContactForm>('externalBeneficiaryRef');
 
   private beneficiaryCache = new Map<number, IUser>();
   private practitionerCache = new Map<number, IUser>();
@@ -170,7 +177,7 @@ export class CreateConsultationModal implements OnInit, OnDestroy {
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
 
   beneficiarySearchFn: AsyncSearchFn = (query: string, page: number): Observable<AsyncSearchResult> => {
-    return this.userService.searchUsers(query, page, 20, false).pipe(
+    return this.userService.searchUsers(query, page, 20, undefined).pipe(
       map(response => {
         const currentUser = this.currentUser();
         const results: SelectOption[] = response.results.map(user => {
@@ -315,6 +322,14 @@ export class CreateConsultationModal implements OnInit, OnDestroy {
     this.closeAddPatientModal();
   }
 
+  setBeneficiaryType(external: boolean): void {
+    this.isExternalBeneficiary.set(external);
+    if (external) {
+      this.consultationForm.patchValue({ beneficiary_id: '' });
+      this.selectedBeneficiary.set(null);
+    }
+  }
+
   onAppointmentDataReady(data: CreateAppointmentRequest): void {
     this.pendingAppointmentData.set(data);
   }
@@ -350,6 +365,15 @@ export class CreateConsultationModal implements OnInit, OnDestroy {
       return;
     }
 
+    // Validate the external beneficiary contact if that mode is active.
+    if (this.isExternalBeneficiary()) {
+      const ref = this.externalBeneficiaryRef();
+      ref?.markAllTouched();
+      if (!ref || !ref.isValid() || !ref.buildPayload()) {
+        return;
+      }
+    }
+
     // If scheduling is enabled, trigger appointment form validation and data collection
     if (this.showSchedule()) {
       const apptForm = this.appointmentFormRef();
@@ -376,18 +400,28 @@ export class CreateConsultationModal implements OnInit, OnDestroy {
       : (formValue.owned_by_id ? parseInt(formValue.owned_by_id) : undefined);
     const groupId = formValue.group_id ? parseInt(formValue.group_id) : undefined;
 
+    const useExternalBeneficiary = this.isExternalBeneficiary();
+    const temporaryBeneficiary: ITemporaryParticipant | null =
+      useExternalBeneficiary
+        ? this.externalBeneficiaryRef()?.buildPayload() ?? null
+        : null;
+
     const consultationData: CreateConsultationRequest = {
       title: formValue.title,
       group_id: groupId,
-      beneficiary_id: beneficiaryId,
       owned_by_id: ownedById,
       visible_by_patient: formValue.visible_by_patient,
     };
+    if (useExternalBeneficiary && temporaryBeneficiary) {
+      consultationData.temporary_beneficiary = temporaryBeneficiary;
+    } else {
+      consultationData.beneficiary_id = beneficiaryId;
+    }
 
     try {
       const envelopes = await this.buildEncryptionEnvelopes(
         groupId,
-        beneficiaryId,
+        useExternalBeneficiary ? undefined : beneficiaryId,
         ownedById,
       );
       if (envelopes) {
@@ -417,6 +451,12 @@ export class CreateConsultationModal implements OnInit, OnDestroy {
         },
         error: (error) => {
           this.isSaving.set(false);
+          const nested = error?.error?.temporary_beneficiary;
+          if (nested && typeof nested === 'object') {
+            this.externalBeneficiaryErrors.set(
+              nested as Record<string, string[]>
+            );
+          }
           this.toasterService.show('error', this.t.instant('consultationForm.errorCreating'), getErrorMessage(error));
         },
       });

@@ -67,6 +67,108 @@ class AppointmentTest(TenantTestCase):
             self.assertTrue(message.template_is_valid)
 
 
+class ConsultationTemporaryBeneficiaryTest(TenantTestCase):
+    """The consultation beneficiary can be provided as an external contact
+    (temporary_beneficiary): mapped to an existing user by email/phone or
+    created as a temporary user, both on creation and on assignment."""
+
+    def setUp(self):
+        from rest_framework.test import APIClient
+
+        self.practitioner = User.objects.create_user(
+            email="doc@example.com", is_practitioner=True
+        )
+        self.patient = User.objects.create_user(email="pat@example.com")
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.practitioner)
+
+    def test_create_consultation_with_temporary_beneficiary(self):
+        from django.urls import reverse
+
+        response = self.client.post(
+            reverse("consultation-list"),
+            {
+                "title": "Follow-up",
+                "temporary_beneficiary": {
+                    "first_name": "John",
+                    "last_name": "Smith",
+                    "email": "john.smith@example.com",
+                    "communication_method": "email",
+                },
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, 201, response.data)
+        consultation = Consultation.objects.get(pk=response.data["id"])
+        self.assertEqual(consultation.beneficiary.email, "john.smith@example.com")
+        self.assertTrue(consultation.beneficiary.temporary)
+        self.assertEqual(consultation.beneficiary.created_by, self.practitioner)
+
+    def test_create_consultation_temporary_beneficiary_maps_existing_user(self):
+        from django.urls import reverse
+
+        response = self.client.post(
+            reverse("consultation-list"),
+            {
+                "title": "Follow-up",
+                "temporary_beneficiary": {
+                    "email": self.patient.email,
+                    "communication_method": "email",
+                },
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, 201, response.data)
+        consultation = Consultation.objects.get(pk=response.data["id"])
+        # Mapped onto the existing account, not duplicated.
+        self.assertEqual(consultation.beneficiary, self.patient)
+        self.assertEqual(User.objects.filter(email=self.patient.email).count(), 1)
+
+    def test_assign_temporary_beneficiary_on_update(self):
+        from django.urls import reverse
+
+        consultation = Consultation.objects.create(
+            title="Unassigned", created_by=self.practitioner
+        )
+        response = self.client.patch(
+            reverse("consultation-detail", args=[consultation.id]),
+            {
+                "temporary_beneficiary": {
+                    "first_name": "Jane",
+                    "mobile_phone_number": "+41791234567",
+                    "communication_method": "sms",
+                }
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.data)
+        consultation.refresh_from_db()
+        self.assertEqual(
+            consultation.beneficiary.mobile_phone_number, "+41791234567"
+        )
+        self.assertTrue(consultation.beneficiary.temporary)
+
+    def test_explicit_beneficiary_id_wins_over_temporary(self):
+        from django.urls import reverse
+
+        response = self.client.post(
+            reverse("consultation-list"),
+            {
+                "title": "Follow-up",
+                "beneficiary_id": self.patient.id,
+                "temporary_beneficiary": {
+                    "email": "other@example.com",
+                    "communication_method": "email",
+                },
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, 201, response.data)
+        consultation = Consultation.objects.get(pk=response.data["id"])
+        self.assertEqual(consultation.beneficiary, self.patient)
+        self.assertFalse(User.objects.filter(email="other@example.com").exists())
+
+
 class RequestTimezoneTest(TenantTestCase):
     """Test timezone handling in Request creation"""
 

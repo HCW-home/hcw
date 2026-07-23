@@ -6,6 +6,7 @@ import uuid
 import boto3
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from core.channel_groups import user_group
 from core.mixins import CreatedByMixin
 from django.conf import settings
 from constance import config
@@ -434,7 +435,7 @@ class ConsultationViewSet(FhirViewSetMixin, CreatedByMixin, viewsets.ModelViewSe
         channel_layer = get_channel_layer()
         caller_name = f"{request.user.first_name} {request.user.last_name}".strip() or request.user.email
         async_to_sync(channel_layer.group_send)(
-            f"user_{consultation.beneficiary.pk}",
+            user_group(consultation.beneficiary.pk),
             {
                 "type": "call_request",
                 "consultation_id": consultation.pk,
@@ -653,7 +654,7 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
                 continue
 
             async_to_sync(channel_layer.group_send)(
-                f"user_{participant.user.pk}",
+                user_group(participant.user.pk),
                 {
                     "type": "appointment",
                     "consultation_id": appointment.consultation.pk if appointment.consultation else None,
@@ -710,7 +711,7 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
                 continue
 
             async_to_sync(channel_layer.group_send)(
-                f"user_{participant.user.pk}",
+                user_group(participant.user.pk),
                 {
                     "type": "appointment",
                     "consultation_id": appointment.consultation.pk,
@@ -1037,10 +1038,9 @@ class ParticipantViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        allowed = not user.email or user.communication_method == "manual"
-        if not allowed:
+        if not user.requires_manual_access:
             return Response(
-                {"detail": _("Access URL is only available for users without an email or with manual communication")},
+                {"detail": _("Access URL is only available for users without any automatic channel (email/SMS/WhatsApp) or with manual communication")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -1862,8 +1862,11 @@ class ReminderViewSet(CreatedByMixin, viewsets.ModelViewSet):
             base_qs = Reminder.objects.filter(created_by=request.user)
 
         # Intersection of [scheduled_at, recurrence_end_at] with the window.
+        # No is_active filter here: the calendar must also show occurrences that
+        # already happened. Once a reminder has sent its last occurrence the
+        # delivery task flips it to is_active=False, so filtering on it would hide
+        # every completed (past) reminder from the calendar.
         reminders = base_qs.filter(
-            is_active=True,
             scheduled_at__lte=window_end,
             recurrence_end_at__gte=window_start,
         ).select_related("recipient", "created_by")

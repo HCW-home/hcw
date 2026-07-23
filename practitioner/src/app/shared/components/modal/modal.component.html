@@ -23,7 +23,7 @@
           }
         </div>
       }
-      <div class="modal-body" [class.no-header]="!title() && !showCloseButton()">
+      <div class="modal-body" [class.no-padding]="!bodyPadding()">
         <ng-content></ng-content>
       </div>
       <div class="modal-footer">

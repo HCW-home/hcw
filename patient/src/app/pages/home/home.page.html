@@ -6,14 +6,6 @@
   </ion-refresher>
 
   <div class="main-content">
-    @if (showDeeplinkBanner()) {
-      <div class="open-in-app-banner">
-        <span>{{ 'home.openInAppPrompt' | translate }}</span>
-        <button class="card-btn card-btn-outline" (click)="openInApp()">
-          {{ 'home.openInApp' | translate }}
-        </button>
-      </div>
-    }
     @if (hasReasons()) {
       <div class="new-request-action">
         <button class="card-btn card-btn-outline" (click)="goToNewRequest()">
@@ -31,7 +23,8 @@
         </div>
         <div class="next-appointment-info">
           <span class="next-appointment-label">
-            {{ 'home.nextAppointment' | translate }} —
+            <span class="pulse-dot"></span>
+            {{ 'home.nextAppointment' | translate }} ·
             <ion-icon [name]="nextAppointment()!.type === 'online' ? 'videocam-outline' : 'location-outline'"></ion-icon>
             {{ nextAppointment()!.type === 'online' ? ('common.videoCall' | translate) : ('common.inPerson' | translate) }}
           </span>
@@ -56,13 +49,12 @@
       </div>
     }
 
-    @if (hasReasons() && (requests().length > 0 || isLoading() || (consultations().length === 0 && appointments().length === 0))) {
-    <section class="section requests-section" [class.section-with-expanded]="expandedConsultationId()">
+    <section class="section consultations-section" [class.section-with-expanded]="expandedConsultationId()">
       <div class="section-header">
         <div class="section-title-group">
-          <h2 class="section-title">{{ 'home.myRequests' | translate }}</h2>
-          @if (totalRequests() > 0) {
-            <span class="section-badge">{{ totalRequests() }} {{ 'common.total' | translate }}</span>
+          <h2 class="section-title">{{ 'home.myConsultations' | translate }}</h2>
+          @if (totalItems() > 0) {
+            <span class="section-badge">{{ totalItems() }} {{ 'common.total' | translate }}</span>
           }
         </div>
       </div>
@@ -71,146 +63,78 @@
         <div class="loading-container">
           <ion-spinner name="crescent"></ion-spinner>
         </div>
-      } @else if (requests().length === 0) {
+      } @else if (hasNoItems()) {
         <div class="empty-state">
-          <ion-icon name="document-text-outline" class="empty-icon"></ion-icon>
-          <p class="empty-text">{{ 'home.noPendingRequests' | translate }}</p>
+          @if (!hasReasons()) {
+            <ion-icon name="mail-open-outline" class="empty-icon"></ion-icon>
+            <p class="empty-text">{{ 'home.noInvitations' | translate }}</p>
+          } @else {
+            <ion-icon name="document-text-outline" class="empty-icon"></ion-icon>
+            <p class="empty-text">{{ 'home.noPendingRequests' | translate }}</p>
+          }
         </div>
       } @else {
         <div class="timeline-list" [class.has-expanded-chat]="expandedConsultationId()">
+
+          <!-- Requests (demandes) -->
           @for (request of requests(); track request.id) {
-            <div class="timeline-item" [class.highlighted]="isRequestHighlighted(request)" [class.expanded]="hasConsultation(request) && isConsultationExpanded(request.consultation!.id)">
-              <div class="timeline-item-content">
-                <div class="request-info-block">
-                  <div class="request-info-label">
-                    <ion-icon name="document-text-outline"></ion-icon>
-                    <span>{{ 'home.myRequest' | translate }}</span>
-                  </div>
-                  <span class="request-info-title">{{ getReasonName(request) }}</span>
-                  @if (getSpecialityName(request)) {
-                    <span class="request-info-subtitle">{{ getSpecialityName(request) }}</span>
-                  }
-                  @if (getDoctorName(request) && !hasConsultation(request)) {
-                    <div class="request-info-doctor">
-                      <div class="doctor-avatar-sm">{{ getDoctorName(request).charAt(0) }}</div>
-                      <span>{{ getDoctorName(request) }}</span>
-                    </div>
-                  }
-                  @if (request.comment) {
-                    <p class="request-info-comment">{{ request.comment }}</p>
-                  }
-                  <div class="request-info-footer">
-                    <span class="status-badge status-{{ getStatusConfig(request.status).color }}">
-                      {{ getStatusConfig(request.status).label }}
-                    </span>
-                    @if (request.created_at) {
-                      <span class="request-info-date">{{ request.created_at | localDate:'mediumDate' }}</span>
-                    }
-                  </div>
-                  @if ((isStatusRefused(request) || isStatusCancelled(request)) && request.refused_reason) {
-                    <div class="card-info-row card-info-refused">
-                      <ion-icon name="close-circle-outline"></ion-icon>
-                      <span>{{ request.refused_reason }}</span>
-                    </div>
-                  }
-                </div>
-
-                @if (hasConsultation(request)) {
-                  <app-consultation-info
-                    [consultation]="request.consultation!"
-                    [label]="'home.followUp' | translate"
-                    [unreadCount]="getUnreadCount(request.consultation!.id)"
-                    [hideAction]="isConsultationExpanded(request.consultation!.id)"
-                    [closeLabel]="isConsultationExpanded(request.consultation!.id) ? ('common.close' | translate) : ''"
-                    (access)="viewConsultationFromRequest(request)"
-                    (close)="closeChat()">
-                    @if (isConsultationExpanded(request.consultation!.id)) {
-                      <div class="inline-chat">
-                        <app-message-list
-                          [messages]="chatMessages()"
-                          [showHeader]="false"
-                          [unreadSeparatorTimestamp]="chatUnreadSeparator()"
-                          [isConnected]="isChatConnected()"
-                          [isLoadingMore]="isChatLoadingMore()"
-                          [hasMore]="chatHasMore()"
-                          (sendMessage)="onChatSendMessage($event)"
-                          (editMessage)="onChatEditMessage($event)"
-                          (deleteMessage)="onChatDeleteMessage($event)"
-                          (loadMore)="onChatLoadMore()"
-                        ></app-message-list>
-                      </div>
-                    }
-                  </app-consultation-info>
-                }
-
-                @if (isStatusRequested(request)) {
-                  <div class="card-info-row card-info-waiting">
-                    <ion-icon name="hourglass-outline"></ion-icon>
-                    <span>{{ 'home.awaitingAssignment' | translate }}</span>
-                  </div>
+            <div class="timeline-item consult-card"
+                 [class.highlighted]="isRequestHighlighted(request)"
+                 [class.expanded]="hasConsultation(request) && isConsultationExpanded(request.consultation!.id)">
+              <div class="cc-header">
+                <span class="type-chip type-chip--request">
+                  <ion-icon name="document-text-outline"></ion-icon>
+                  {{ 'home.myRequest' | translate }}
+                </span>
+                <h3 class="cc-title">{{ getReasonName(request) }}</h3>
+                <span class="status-badge status-{{ getStatusConfig(request.status).color }}">
+                  <ion-icon [name]="getStatusIcon(request.status)"></ion-icon>
+                  {{ getStatusConfig(request.status).label }}
+                </span>
+                @if (getRequestAppointmentCount(request) > 0) {
+                  <span class="cc-appt-count">{{ getRequestAppointmentCount(request) }} {{ 'appointments.defaultTitle' | translate }}</span>
                 }
               </div>
 
-              <div class="timeline-item-appointments">
-                @if (request.consultation?.appointments?.length) {
+              @if (request.consultation?.appointments?.length) {
+                <div class="cc-appointments">
                   @for (appt of request.consultation!.appointments!; track appt.id) {
-                    <app-appointment-info
-                      [appointment]="appt"
-                      [label]="''"
-                      [speciality]="getSpecialityName(request)">
-                    </app-appointment-info>
+                    <app-appointment-info [appointment]="appt" [speciality]="getSpecialityName(request)"></app-appointment-info>
                   }
-                } @else if (hasAppointment(request)) {
-                  <app-appointment-info
-                    [appointment]="request.appointment!"
-                    [label]="'home.scheduledAppointment' | translate"
-                    [speciality]="getSpecialityName(request)">
-                  </app-appointment-info>
-                } @else {
-                  <div class="no-appointment-placeholder">
+                </div>
+              } @else if (hasAppointment(request)) {
+                <div class="cc-appointments">
+                  <app-appointment-info [appointment]="request.appointment!" [speciality]="getSpecialityName(request)"></app-appointment-info>
+                </div>
+              } @else {
+                <div class="cc-appointments">
+                  <div class="cc-empty-row">
                     <ion-icon name="calendar-outline"></ion-icon>
                     <span>{{ 'home.noAppointment' | translate }}</span>
                   </div>
-                }
-              </div>
-            </div>
-          }
-        </div>
-      }
-    </section>
-    }
+                </div>
+              }
 
-    @if (!hasReasons() && hasNoItems() && !isLoading()) {
-      <section class="section">
-        <div class="empty-state">
-          <ion-icon name="mail-open-outline" class="empty-icon"></ion-icon>
-          <p class="empty-text">{{ 'home.noInvitations' | translate }}</p>
-        </div>
-      </section>
-    }
+              @if (isStatusRequested(request)) {
+                <div class="cc-note cc-note-waiting">
+                  <ion-icon name="hourglass-outline"></ion-icon>
+                  <span>{{ 'home.awaitingAssignment' | translate }}</span>
+                </div>
+              }
+              @if ((isStatusRefused(request) || isStatusCancelled(request)) && request.refused_reason) {
+                <div class="cc-note cc-note-refused">
+                  <ion-icon name="close-circle-outline"></ion-icon>
+                  <span>{{ request.refused_reason }}</span>
+                </div>
+              }
 
-    @if (consultations().length > 0) {
-      <section class="section consultations-section" [class.section-with-expanded]="expandedConsultationId()">
-        <div class="section-header">
-          <div class="section-title-group">
-            <h2 class="section-title">{{ 'home.myConsultations' | translate }}</h2>
-            <span class="section-badge">{{ totalConsultations() }} {{ 'common.total' | translate }}</span>
-          </div>
-        </div>
-
-        <div class="timeline-list" [class.has-expanded-chat]="expandedConsultationId()">
-          @for (consultation of consultations(); track consultation.id) {
-            <div class="timeline-item" [class.expanded]="isConsultationExpanded(consultation.id)">
-              <div class="timeline-item-content">
+              @if (hasConsultation(request)) {
                 <app-consultation-info
-                  [consultation]="consultation"
-                  [label]="'home.followUp' | translate"
-                  [unreadCount]="getUnreadCount(consultation.id)"
-                  [hideAction]="isConsultationExpanded(consultation.id)"
-                  [closeLabel]="isConsultationExpanded(consultation.id) ? ('common.close' | translate) : ''"
-                  (access)="viewConsultationDetails(consultation)"
-                  (close)="closeChat()">
-                  @if (isConsultationExpanded(consultation.id)) {
+                  [consultation]="request.consultation!"
+                  [unreadCount]="getUnreadCount(request.consultation!.id)"
+                  [expanded]="isConsultationExpanded(request.consultation!.id)"
+                  (toggle)="viewConsultationFromRequest(request)">
+                  @if (isConsultationExpanded(request.consultation!.id)) {
                     <div class="inline-chat">
                       <app-message-list
                         [messages]="chatMessages()"
@@ -227,57 +151,87 @@
                     </div>
                   }
                 </app-consultation-info>
+              }
+            </div>
+          }
+
+          <!-- Suivis / consultations -->
+          @for (consultation of consultations(); track consultation.id) {
+            <div class="timeline-item consult-card" [class.expanded]="isConsultationExpanded(consultation.id)">
+              <div class="cc-header">
+                <span class="type-chip type-chip--suivi">
+                  <ion-icon name="chatbubbles-outline"></ion-icon>
+                  {{ 'home.followUp' | translate }}
+                </span>
+                <h3 class="cc-title">{{ formatConsultationTitle(consultation) }}</h3>
+                @if (consultation.appointments?.length) {
+                  <span class="cc-appt-count">{{ consultation.appointments!.length }} {{ 'appointments.defaultTitle' | translate }}</span>
+                }
               </div>
 
-              <div class="timeline-item-appointments">
-                @if (consultation.appointments?.length) {
+              @if (consultation.appointments?.length) {
+                <div class="cc-appointments">
                   @for (appt of consultation.appointments!; track appt.id) {
-                    <app-appointment-info
-                      [appointment]="appt"
-                      [label]="''">
-                    </app-appointment-info>
+                    <app-appointment-info [appointment]="appt"></app-appointment-info>
                   }
-                } @else {
-                  <div class="no-appointment-placeholder">
+                </div>
+              } @else {
+                <div class="cc-appointments">
+                  <div class="cc-empty-row">
                     <ion-icon name="calendar-outline"></ion-icon>
                     <span>{{ 'home.noAppointment' | translate }}</span>
                   </div>
-                }
-              </div>
-            </div>
-          }
-        </div>
-      </section>
-    }
-
-    @if (appointments().length > 0) {
-      <section class="section appointments-section">
-        <div class="section-header">
-          <div class="section-title-group">
-            <h2 class="section-title">{{ 'home.myAppointments' | translate }}</h2>
-            <span class="section-badge">{{ totalAppointments() }} {{ 'common.total' | translate }}</span>
-          </div>
-        </div>
-
-        <div class="timeline-list" [class.has-expanded-chat]="expandedConsultationId()">
-          @for (appointment of appointments(); track appointment.id) {
-            <div class="timeline-item">
-              <div class="timeline-item-content">
-                <div class="no-appointment-placeholder">
-                  <ion-icon name="chatbubbles-outline"></ion-icon>
-                  <span>{{ 'home.noFollowUp' | translate }}</span>
                 </div>
+              }
+
+              <app-consultation-info
+                [consultation]="consultation"
+                [unreadCount]="getUnreadCount(consultation.id)"
+                [expanded]="isConsultationExpanded(consultation.id)"
+                (toggle)="viewConsultationDetails(consultation)">
+                @if (isConsultationExpanded(consultation.id)) {
+                  <div class="inline-chat">
+                    <app-message-list
+                      [messages]="chatMessages()"
+                      [showHeader]="false"
+                      [unreadSeparatorTimestamp]="chatUnreadSeparator()"
+                      [isConnected]="isChatConnected()"
+                      [isLoadingMore]="isChatLoadingMore()"
+                      [hasMore]="chatHasMore()"
+                      (sendMessage)="onChatSendMessage($event)"
+                      (editMessage)="onChatEditMessage($event)"
+                      (deleteMessage)="onChatDeleteMessage($event)"
+                      (loadMore)="onChatLoadMore()"
+                    ></app-message-list>
+                  </div>
+                }
+              </app-consultation-info>
+            </div>
+          }
+
+          <!-- Rendez-vous sans suivi (orphelins) -->
+          @for (appointment of appointments(); track appointment.id) {
+            <div class="timeline-item consult-card">
+              <div class="cc-header">
+                <span class="type-chip type-chip--appt">
+                  <ion-icon name="videocam-outline"></ion-icon>
+                  {{ 'appointments.defaultTitle' | translate }}
+                </span>
+                <h3 class="cc-title">{{ appointment.title || ('appointments.defaultTitle' | translate) }}</h3>
               </div>
-              <div class="timeline-item-appointments">
-                <app-appointment-info
-                  [appointment]="appointment">
-                </app-appointment-info>
+              <div class="cc-appointments">
+                <app-appointment-info [appointment]="appointment"></app-appointment-info>
+              </div>
+              <div class="cc-note">
+                <ion-icon name="chatbubbles-outline"></ion-icon>
+                <span>{{ 'home.noFollowUp' | translate }}</span>
               </div>
             </div>
           }
+
         </div>
-      </section>
-    }
+      }
+    </section>
   </div>
 </ion-content>
 

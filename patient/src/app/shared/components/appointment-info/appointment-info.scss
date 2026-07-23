@@ -1,121 +1,156 @@
-.appointment-info {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  gap: 12px;
-  font-size: 0.9375rem;
-  color: var(--app-text-secondary);
-  padding: 10px 12px;
-  background: var(--app-background);
-  border-radius: 8px;
+:host {
+  display: block;
 }
 
-.appointment-date-badge {
+.appointment-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ar-date {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
-  min-width: 48px;
-  background: var(--ion-color-primary-bg);
-  border-radius: 10px;
+  width: 52px;
+  min-width: 52px;
   flex-shrink: 0;
 
   .day {
-    font-size: 18px;
+    font-size: 24px;
     font-weight: 700;
-    color: var(--ion-color-primary);
+    color: var(--app-teal-dark);
     line-height: 1;
   }
 
   .month {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--ion-color-primary);
+    margin-top: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--app-ink-4);
     text-transform: uppercase;
+    letter-spacing: 0.04em;
   }
 }
 
-.appointment-info-details {
+.ar-sep {
+  align-self: stretch;
+  width: 1px;
+  min-height: 34px;
+  background: var(--app-border-subtle);
+  flex-shrink: 0;
+}
+
+.ar-main {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 5px;
-  min-width: 0;
-}
+  gap: 3px;
 
-.appointment-info-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--app-text-muted);
-
-  ion-icon {
-    font-size: 15px;
-    color: var(--ion-color-primary);
-  }
-}
-
-.appointment-info-value {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 1.0625rem;
-  color: var(--app-text-primary);
-  font-weight: 600;
-}
-
-.type-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: var(--ion-color-primary-bg);
-  color: var(--ion-color-primary);
-  padding: 3px 10px;
-  border-radius: 6px;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  white-space: nowrap;
-  flex-shrink: 0;
-
-  ion-icon {
-    font-size: 14px;
-  }
-}
-
-.appointment-info-participant {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.9375rem;
-  color: var(--app-text-secondary);
-
-  .participant-avatar {
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    background: var(--ion-color-primary-bg);
-    color: var(--ion-color-primary);
+  .ar-type {
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 6px;
+    font-size: 12px;
     font-weight: 700;
-    font-size: 0.75rem;
-    flex-shrink: 0;
+    color: var(--app-teal-dark);
+
+    ion-icon {
+      font-size: 15px;
+      color: var(--app-teal);
+    }
   }
 
-  .participant-speciality {
-    font-size: 0.8125rem;
-    color: var(--app-text-muted);
+  .ar-datetime {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--app-ink-1);
+  }
+}
 
-    &::before {
-      content: "·";
-      margin: 0 4px 0 -2px;
+.ar-practitioner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  flex-shrink: 0;
+
+  .ar-doc-name {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--app-ink-3);
+  }
+
+  .ar-doc-spec {
+    font-size: 12px;
+    color: var(--app-ink-4);
+  }
+}
+
+// Cancelled appointment — everything turns red and the date/time is struck through
+.appointment-row--cancelled {
+  .ar-date .day,
+  .ar-date .month {
+    color: var(--app-danger);
+  }
+
+  .ar-date .day {
+    text-decoration: line-through;
+  }
+
+  .ar-main {
+    .ar-type,
+    .ar-type ion-icon {
+      color: var(--app-danger);
     }
+
+    .ar-datetime {
+      color: var(--app-danger);
+      text-decoration: line-through;
+    }
+  }
+
+  .ar-practitioner {
+    .ar-doc-name,
+    .ar-doc-spec {
+      color: var(--app-danger-soft);
+    }
+  }
+}
+
+.ar-cancelled-badge {
+  margin-left: 2px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--app-danger-bg);
+  color: var(--app-danger);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 720px) {
+  .ar-date {
+    width: 44px;
+    min-width: 44px;
+
+    .day {
+      font-size: 20px;
+    }
+  }
+
+  .appointment-row {
+    flex-wrap: wrap;
+  }
+
+  .ar-practitioner {
+    align-items: flex-start;
+    text-align: left;
+    width: 100%;
+    margin-top: 6px;
+    padding-left: 58px;
   }
 }

@@ -62,6 +62,28 @@ class EncounterMapperUnitTests(_EncounterBase):
         data = EncounterFhirMapper().to_fhir(self.consultation)
         self.assertEqual(data["class"]["code"], "AMB")
 
+    def test_notes_mapped_to_extension_roundtrip(self):
+        from consultations.fhir import _encounter_note_extension_url
+
+        self.consultation.notes = "Patient anxious, do not disclose."
+        self.consultation.save()
+        data = EncounterFhirMapper().to_fhir(self.consultation)
+        FhirEncounter.model_validate(data)
+        note_url = _encounter_note_extension_url()
+        exts = [e for e in data.get("extension", []) if e["url"] == note_url]
+        self.assertEqual(len(exts), 1)
+        self.assertEqual(exts[0]["valueString"], "Patient anxious, do not disclose.")
+
+        # round-trip back into a Consultation
+        instance = EncounterFhirMapper().from_fhir(
+            data, context={"request": type("R", (), {"user": self.practitioner})()},
+        )
+        self.assertEqual(instance.notes, "Patient anxious, do not disclose.")
+
+    def test_no_notes_emits_no_extension(self):
+        data = EncounterFhirMapper().to_fhir(self.consultation)
+        self.assertNotIn("extension", data)
+
 
 class EncounterReadTests(_EncounterBase):
 
@@ -148,6 +170,90 @@ class EncounterWriteTests(_EncounterBase):
         self.assertEqual(created.beneficiary, self.patient)
         self.assertEqual(created.created_by, self.practitioner)
 
+    def test_create_with_note_extension_sets_notes(self):
+        from consultations.fhir import _encounter_note_extension_url
+
+        payload = {
+            "resourceType": "Encounter",
+            "status": "in-progress",
+            "class": {
+                "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+                "code": "VR",
+            },
+            "subject": {"reference": f"Patient/{self.patient.pk}"},
+            "extension": [{
+                "url": _encounter_note_extension_url(),
+                "valueString": "Internal clinical note.",
+            }],
+        }
+        response = self._fhir_post(reverse("consultation-list"), payload)
+        self.assertEqual(response.status_code, 201, response.data)
+        created = Consultation.objects.exclude(pk=self.consultation.pk).get()
+        self.assertEqual(created.notes, "Internal clinical note.")
+
+    def test_create_with_contained_patient_creates_on_the_fly(self):
+        payload = {
+            "resourceType": "Encounter",
+            "status": "in-progress",
+            "class": {
+                "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+                "code": "VR",
+            },
+            "contained": [{
+                "resourceType": "Patient",
+                "id": "patient",
+                "name": [{"given": ["Jane"], "family": "Roe"}],
+                "telecom": [{"system": "email", "value": "jane.roe@ozone.com"}],
+            }],
+            "subject": {"reference": "#patient"},
+        }
+        response = self._fhir_post(reverse("consultation-list"), payload)
+        self.assertEqual(response.status_code, 201, response.data)
+        created = Consultation.objects.exclude(pk=self.consultation.pk).get()
+        patient = created.beneficiary
+        self.assertIsNotNone(patient)
+        self.assertEqual(patient.email, "jane.roe@ozone.com")
+        self.assertEqual(patient.first_name, "Jane")
+        self.assertEqual(patient.last_name, "Roe")
+        self.assertFalse(patient.is_practitioner)
+        self.assertTrue(patient.temporary)
+
+    def test_create_with_contained_patient_matched_by_email_no_duplicate(self):
+        payload = {
+            "resourceType": "Encounter",
+            "status": "in-progress",
+            "class": {
+                "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+                "code": "VR",
+            },
+            "contained": [{
+                "resourceType": "Patient",
+                "id": "patient",
+                "name": [{"given": ["John"], "family": "Doe"}],
+                "telecom": [{"system": "email", "value": self.patient.email}],
+            }],
+            "subject": {"reference": "#patient"},
+        }
+        before = User.objects.filter(email=self.patient.email).count()
+        response = self._fhir_post(reverse("consultation-list"), payload)
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertEqual(User.objects.filter(email=self.patient.email).count(), before)
+        created = Consultation.objects.exclude(pk=self.consultation.pk).get()
+        self.assertEqual(created.beneficiary, self.patient)
+
+    def test_create_with_missing_contained_subject_errors(self):
+        payload = {
+            "resourceType": "Encounter",
+            "status": "in-progress",
+            "class": {
+                "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+                "code": "VR",
+            },
+            "subject": {"reference": "#patient"},
+        }
+        response = self._fhir_post(reverse("consultation-list"), payload)
+        self.assertEqual(response.status_code, 404, response.data)
+
     def test_update_status_to_finished_closes_consultation(self):
         payload = {
             "resourceType": "Encounter",
@@ -171,3 +277,28 @@ class EncounterWriteTests(_EncounterBase):
         self.assertEqual(response.status_code, 204)
         self.consultation.refresh_from_db()
         self.assertIsNotNone(self.consultation.closed_at)
+
+
+class ConsultationNotesVisibilityTests(_EncounterBase):
+    """`notes` are internal: exposed to practitioners, hidden from patients."""
+
+    def _serialize(self, user):
+        from rest_framework.test import APIRequestFactory
+
+        from consultations.serializers import ConsultationSerializer
+
+        self.consultation.notes = "Confidential clinical note."
+        self.consultation.save()
+        request = APIRequestFactory().get("/")
+        request.user = user
+        return ConsultationSerializer(
+            self.consultation, context={"request": request}
+        ).data
+
+    def test_practitioner_sees_notes(self):
+        data = self._serialize(self.practitioner)
+        self.assertEqual(data["notes"], "Confidential clinical note.")
+
+    def test_patient_does_not_see_notes(self):
+        data = self._serialize(self.patient)
+        self.assertNotIn("notes", data)

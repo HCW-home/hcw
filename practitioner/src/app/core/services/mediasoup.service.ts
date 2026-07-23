@@ -68,6 +68,7 @@ export class MediasoupService implements VideoCallImpl {
   private microphoneEnabled = new BehaviorSubject<boolean>(false);
   private screenShareEnabled = new BehaviorSubject<boolean>(false);
   private errorSubject = new Subject<string>();
+  private removedByServerSubject = new Subject<void>();
 
   private cameraDeviceId: string | undefined;
   private microphoneDeviceId: string | undefined;
@@ -82,6 +83,7 @@ export class MediasoupService implements VideoCallImpl {
   readonly isMicrophoneEnabled$: Observable<boolean> = this.microphoneEnabled.asObservable();
   readonly isScreenShareEnabled$: Observable<boolean> = this.screenShareEnabled.asObservable();
   readonly error$: Observable<string> = this.errorSubject.asObservable();
+  readonly removedByServer$: Observable<void> = this.removedByServerSubject.asObservable();
 
   async connect(config: VideoCallConfig, deviceIds?: VideoCallDeviceIds): Promise<void> {
     this.cameraDeviceId = deviceIds?.camera;

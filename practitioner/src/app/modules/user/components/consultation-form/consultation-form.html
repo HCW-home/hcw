@@ -37,8 +37,26 @@
           </div>
 
           <div class="form-group">
+            <label class="form-label">{{ 'consultationForm.selectBeneficiary' | translate }}</label>
+            <div class="beneficiary-type-toggle">
+              <button
+                type="button"
+                class="type-btn"
+                [class.active]="!isExternalBeneficiary()"
+                (click)="setBeneficiaryType(false)">
+                {{ 'appointmentForm.existingUser' | translate }}
+              </button>
+              <button
+                type="button"
+                class="type-btn"
+                [class.active]="isExternalBeneficiary()"
+                (click)="setBeneficiaryType(true)">
+                {{ 'appointmentForm.externalGuest' | translate }}
+              </button>
+            </div>
+
+            @if (!isExternalBeneficiary()) {
             <app-select
-              [label]="'consultationForm.selectBeneficiary' | translate"
               [placeholder]="'consultationForm.searchByNameOrEmail' | translate"
               [options]="[]"
               [asyncSearch]="beneficiarySearchFn"
@@ -52,6 +70,12 @@
             <span class="field-helper-text">
               {{ 'consultationForm.beneficiaryHelperText' | translate }}
             </span>
+            } @else {
+            <app-external-contact-form
+              #externalBeneficiaryRef
+              [backendErrors]="externalBeneficiaryErrors()">
+            </app-external-contact-form>
+            }
           </div>
 
           <div class="form-group visibility-toggle">
@@ -69,6 +93,18 @@
               [rows]="4"
               formControlName="description">
             </app-textarea>
+          </div>
+
+          <div class="form-group">
+            <app-textarea
+              [label]="'consultationForm.notes' | translate"
+              [placeholder]="'consultationForm.notesPlaceholder' | translate"
+              [rows]="4"
+              formControlName="notes">
+            </app-textarea>
+            <span class="field-helper-text">
+              {{ 'consultationForm.notesHelperText' | translate }}
+            </span>
           </div>
 
           @if (customFields().length > 0) {
@@ -352,6 +388,7 @@
     [isOpen]="isAddPatientModalOpen()"
     size="large"
     [showCloseButton]="false"
+    [bodyPadding]="false"
     (closed)="closeAddPatientModal()">
     <app-add-edit-patient
       [initialName]="newPatientInitialName()"

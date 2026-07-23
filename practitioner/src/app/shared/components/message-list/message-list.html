@@ -226,6 +226,7 @@
   [isOpen]="!!viewingImage()"
   [title]="viewingImage()?.fileName || ''"
   size="xlarge"
+  [bodyPadding]="false"
   (closed)="closeImageViewer()">
   <div class="image-viewer-body">
     <img

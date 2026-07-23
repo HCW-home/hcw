@@ -257,4 +257,40 @@
       }
     }
   }
+
+  // Invite web visitors to open the native app (shown only before sign-in).
+  .open-in-app-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--app-spacing-md);
+    flex-wrap: wrap;
+    margin-top: var(--app-spacing-lg);
+    padding: var(--app-spacing-lg);
+    background: var(--ion-color-primary-bg, rgba(8, 145, 178, 0.08));
+    border-radius: var(--app-card-radius, 12px);
+    border: 1px solid var(--ion-color-primary-tint, rgba(8, 145, 178, 0.2));
+    color: var(--app-text-primary);
+
+    span {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .card-btn {
+      flex-shrink: 0;
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-weight: var(--app-font-weight-medium, 500);
+      cursor: pointer;
+      background: transparent;
+      border: 1px solid var(--ion-color-primary, #0891b2);
+      color: var(--ion-color-primary, #0891b2);
+
+      &:hover {
+        background: var(--ion-color-primary, #0891b2);
+        color: #fff;
+      }
+    }
+  }
 }

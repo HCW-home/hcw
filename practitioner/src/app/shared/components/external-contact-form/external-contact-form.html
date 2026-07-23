@@ -1,0 +1,141 @@
+<div [formGroup]="contactForm" class="external-contact-form">
+  <div class="form-group">
+    <label class="form-label"
+      >{{ 'appointmentForm.contactMethod' | translate }}</label
+    >
+    <div class="type-toggle compact">
+      @if (hasEmailMethod) {
+      <button
+        type="button"
+        class="type-btn"
+        [class.active]="contactForm.get('contact_type')?.value === 'email'"
+        (click)="setContactType('email')">
+        <app-svg
+          src="email"
+          [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
+        {{ 'appointmentForm.email' | translate }}
+      </button>
+      }
+      @if (hasPhoneMethod) {
+      <button
+        type="button"
+        class="type-btn"
+        [class.active]="contactForm.get('contact_type')?.value === 'sms'"
+        (click)="setContactType('sms')">
+        <app-svg
+          src="phone"
+          [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
+        {{ 'appointmentForm.phone' | translate }}
+      </button>
+      }
+      <button
+        type="button"
+        class="type-btn"
+        [class.active]="contactForm.get('contact_type')?.value === 'manual'"
+        (click)="setContactType('manual')">
+        <app-svg
+          src="link"
+          [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
+        {{ 'appointmentForm.manual' | translate }}
+      </button>
+    </div>
+  </div>
+
+  @if (contactForm.get('contact_type')?.value === 'email') {
+  <div class="form-group">
+    <app-input
+      type="email"
+      [label]="'appointmentForm.emailAddress' | translate"
+      [required]="true"
+      [invalid]="!!getFieldError('email')"
+      [invalidMessage]="getFieldError('email')"
+      leftIcon="email"
+      [placeholder]="'appointmentForm.emailPlaceholder' | translate"
+      formControlName="email">
+    </app-input>
+  </div>
+  } @else if (contactForm.get('contact_type')?.value === 'sms') {
+  <div class="form-group">
+    <app-input
+      type="tel"
+      [label]="'appointmentForm.phoneNumber' | translate"
+      [required]="true"
+      [invalid]="!!getFieldError('phone')"
+      [invalidMessage]="getFieldError('phone')"
+      leftIcon="phone"
+      [placeholder]="'appointmentForm.phonePlaceholder' | translate"
+      formControlName="phone">
+    </app-input>
+  </div>
+  } @else if (contactForm.get('contact_type')?.value === 'manual') {
+  <div class="manual-notice">
+    <app-svg
+      src="info"
+      [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+    <span>{{ 'appointmentForm.manualNotice' | translate }}</span>
+  </div>
+  }
+
+  <div class="name-row">
+    <div class="form-group">
+      <app-input
+        type="text"
+        [label]="'appointmentForm.firstName' | translate"
+        leftIcon="user"
+        [placeholder]="'appointmentForm.firstNamePlaceholder' | translate"
+        formControlName="first_name">
+      </app-input>
+    </div>
+    <div class="form-group">
+      <app-input
+        type="text"
+        [label]="'appointmentForm.lastName' | translate"
+        [placeholder]="'appointmentForm.lastNamePlaceholder' | translate"
+        formControlName="last_name">
+      </app-input>
+    </div>
+  </div>
+
+  <div class="participant-settings">
+    <div class="form-group">
+      <app-select
+        [label]="'appointmentForm.timezone' | translate"
+        formControlName="timezone"
+        [options]="timezoneOptions"
+        [placeholder]="'appointmentForm.selectTimezone' | translate">
+      </app-select>
+    </div>
+    @if (shouldShowCommunicationMethodField) {
+    <div class="form-group">
+      <app-select
+        [label]="'appointmentForm.communicationMethod' | translate"
+        [required]="hasMultipleCommunicationMethods"
+        [invalid]="!!getFieldError('communication_method')"
+        [invalidMessage]="getFieldError('communication_method')"
+        formControlName="communication_method"
+        [options]="communicationMethods"
+        [placeholder]="'appointmentForm.selectMethod' | translate">
+      </app-select>
+    </div>
+    }
+    <div class="form-group">
+      <app-select
+        [label]="'appointmentForm.preferredLanguage' | translate"
+        formControlName="preferred_language"
+        [options]="languageOptions"
+        [placeholder]="'appointmentForm.selectLanguage' | translate">
+      </app-select>
+    </div>
+    @if (showVisibility) {
+    <div class="form-group">
+      <app-checkbox
+        [label]="'appointmentForm.consultationVisible' | translate"
+        formControlName="is_consultation_visible">
+      </app-checkbox>
+      <span class="field-helper-text">
+        {{ 'appointmentForm.consultationVisibleHelp' | translate }}
+      </span>
+    </div>
+    }
+  </div>
+</div>

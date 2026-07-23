@@ -587,6 +587,9 @@
     "reason": "Reason",
     "reasonPlaceholder": "e.g., Follow-up, Initial assessment...",
     "description": "Description",
+    "notes": "Internal notes",
+    "notesPlaceholder": "Clinical notes only visible to practitioners...",
+    "notesHelperText": "These internal notes are only visible to practitioners and are never shown to the patient.",
     "descriptionPlaceholder": "Add any relevant notes or context for this follow-up...",
     "visibleByPatient": "Visible by patient (the patient will be able to view and send messages in this follow-up)",
     "practitionerAssignment": "Responsible & Access",
@@ -1190,7 +1193,9 @@
     "leaveCallTitle": "Leave video call?",
     "leaveCallMessage": "You are currently in a video call. If you leave this page, the call will be disconnected. Do you really want to leave?",
     "leaveCallConfirm": "Leave call",
-    "leaveCallCancel": "Stay"
+    "leaveCallCancel": "Stay",
+    "callEndedTitle": "Call ended",
+    "callEndedByServer": "The call has ended because the consultation was closed."
   },
   "websocket": {
     "disconnected": "Connection lost",

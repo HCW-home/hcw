@@ -163,6 +163,48 @@ class AppointmentFhirWriteTests(_AppointmentFhirBase):
             Participant.objects.filter(appointment=created, user=self.patient, is_active=True).exists()
         )
 
+    def test_create_without_encounter_spins_temp_consultation(self):
+        payload = {
+            "resourceType": "Appointment",
+            "status": "booked",
+            "start": (timezone.now() + timedelta(days=5)).isoformat(),
+            "description": "Ad-hoc slot",
+            "participant": [
+                {"actor": {"reference": f"Patient/{self.patient.pk}"}, "status": "accepted"},
+            ],
+        }
+        response = self._fhir_post(reverse("appointment-list"), payload)
+        self.assertEqual(response.status_code, 201, response.data)
+        created = Appointment.objects.exclude(pk=self.appointment.pk).get()
+        # A temporary consultation is auto-created and linked.
+        self.assertIsNotNone(created.consultation)
+        self.assertTrue(created.consultation.temporary)
+        self.assertFalse(created.consultation.visible_by_patient)
+        self.assertEqual(created.consultation.created_by, self.practitioner)
+        self.assertEqual(created.consultation.owned_by, self.practitioner)
+        # Participants can use the chat by default.
+        part = Participant.objects.get(appointment=created, user=self.patient)
+        self.assertTrue(part.is_consultation_visible)
+
+    def test_create_with_encounter_reference_keeps_it(self):
+        payload = {
+            "resourceType": "Appointment",
+            "status": "booked",
+            "start": (timezone.now() + timedelta(days=5)).isoformat(),
+            "supportingInformation": [
+                {"reference": f"Encounter/{self.consultation.pk}"},
+            ],
+            "participant": [
+                {"actor": {"reference": f"Patient/{self.patient.pk}"}, "status": "accepted"},
+            ],
+        }
+        response = self._fhir_post(reverse("appointment-list"), payload)
+        self.assertEqual(response.status_code, 201, response.data)
+        created = Appointment.objects.exclude(pk=self.appointment.pk).get()
+        # No temp consultation: the referenced Encounter is used and untouched.
+        self.assertEqual(created.consultation_id, self.consultation.pk)
+        self.assertFalse(created.consultation.temporary)
+
     def test_update_via_put(self):
         payload = {
             "resourceType": "Appointment",

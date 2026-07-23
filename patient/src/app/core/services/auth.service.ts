@@ -10,6 +10,8 @@ import { TranslationService } from './translation.service';
   providedIn: 'root'
 })
 export class AuthService {
+  // Relative base ('/api' in prod). AuthInterceptor rebases root-relative URLs
+  // onto the selected instance origin, so native builds reach the right backend.
   private apiUrl = environment.apiUrl;
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();

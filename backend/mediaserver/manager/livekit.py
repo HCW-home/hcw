@@ -9,6 +9,7 @@ from livekit import api
 from livekit.api import (
     AccessToken,
     ListRoomsRequest,
+    ListParticipantsRequest,
     RoomParticipantIdentity,
     MuteRoomTrackRequest,
     TrackType,
@@ -172,6 +173,43 @@ class Main(BaseMediaserver):
         return asyncio.run(
             self._mute_participant_async(room_name, identity, muted)
         )
+
+    def supports_remote_kick(self) -> bool:
+        return True
+
+    async def _eject_all_participants_async(self, room_name: str) -> int:
+        """Remove every participant currently in the room.
+
+        Returns the number of participants removed. A room that does not exist
+        (already empty/torn down) lists no participants and removes nothing.
+        """
+        async with LiveKitAPI(
+            url=self.server.url,
+            api_key=self.server.api_token,
+            api_secret=self.server.api_secret,
+        ) as client:
+            try:
+                response = await client.room.list_participants(
+                    ListParticipantsRequest(room=room_name)
+                )
+            except TwirpError:
+                # Room no longer exists on the server: nothing to eject.
+                return 0
+
+            removed = 0
+            for participant in response.participants:
+                await client.room.remove_participant(
+                    RoomParticipantIdentity(
+                        room=room_name, identity=participant.identity
+                    )
+                )
+                removed += 1
+            return removed
+
+    def eject_all_participants(self, room_uuid) -> int:
+        """Forcibly remove every participant from a room. Returns count removed."""
+        room_name = str(room_uuid)
+        return asyncio.run(self._eject_all_participants_async(room_name))
 
     async def get_room_info(self, room_name: str):
         """Get information about a specific room"""

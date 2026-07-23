@@ -311,6 +311,20 @@ class User(AbstractUser):
         return not self.is_practitioner
 
     @property
+    def requires_manual_access(self):
+        """Whether this user needs a manually-shared access link.
+
+        True only when no channel can deliver the link automatically: either
+        the communication method is explicitly ``manual``, or the user has
+        neither an email nor a phone number. A user reachable by email, SMS or
+        WhatsApp receives the access link automatically (the link is embedded in
+        the message), so no manual link is needed.
+        """
+        return self.communication_method == CommunicationMethod.manual or (
+            not self.email and not self.mobile_phone_number
+        )
+
+    @property
     def name(self) -> str:
         if self.first_name or self.last_name:
             if self.email:

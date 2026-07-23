@@ -19,7 +19,9 @@ import {
   ToastController,
 } from "@ionic/angular/standalone";
 import { ActivatedRoute } from "@angular/router";
+import { Capacitor } from "@capacitor/core";
 import { TranslatePipe } from "@ngx-translate/core";
+import { MobileAppService } from "../../core/services/mobile-app.service";
 import { AuthService } from "../../core/services/auth.service";
 import { TranslationService } from "../../core/services/translation.service";
 import { ActionHandlerService } from "../../core/services/action-handler.service";
@@ -47,6 +49,7 @@ import { AuthBrandingComponent } from '../../shared/components/auth-branding/aut
 })
 export class LoginPage implements OnInit {
   private t = inject(TranslationService);
+  private mobileApp = inject(MobileAppService);
 
   @ViewChild('passwordInput') passwordInput!: IonInput;
 
@@ -59,6 +62,9 @@ export class LoginPage implements OnInit {
   showPassword = false;
   registrationEnabled = false;
   passwordLoginDisabled = false;
+  // Invite web users to open the native app (only before they sign in, and
+  // never inside the native app itself).
+  showDeeplinkBanner = false;
   // Whether patients are allowed to authenticate with a password on the patient
   // app. Off by default: patients then receive an email/SMS code instead.
   patientPasswordLoginEnabled = false;
@@ -101,10 +107,21 @@ export class LoginPage implements OnInit {
     }
     this.authService.getConfig().subscribe({
       next: (config: any) => {
+        // getConfig() emits null when the backend is unreachable; guard so the
+        // page renders sane defaults instead of throwing on null.property.
+        if (!config) {
+          return;
+        }
         this.registrationEnabled =
           !!config.registration_enabled && !config.force_temporary_patients;
         this.passwordLoginDisabled = !!config.force_temporary_patients;
         this.patientPasswordLoginEnabled = !!config.enable_patient_password_login;
+        // Only offer the native app on a certified instance — deep-linking to
+        // an uncertified one would fail.
+        this.showDeeplinkBanner =
+          !!config.enable_deeplink &&
+          !!config.instance_certified &&
+          !Capacitor.isNativePlatform();
         if (this.passwordLoginDisabled) {
           this.passwordForm.get('password')?.disable({ emitEvent: false });
         }
@@ -113,6 +130,11 @@ export class LoginPage implements OnInit {
         }
       },
     });
+  }
+
+  /** Open the current instance in the native app (see MobileAppService). */
+  openInApp(): void {
+    this.mobileApp.openInApp();
   }
 
   /** Password login is offered only when enabled for patients and the account

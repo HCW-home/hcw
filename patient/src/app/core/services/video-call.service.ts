@@ -25,6 +25,7 @@ export class VideoCallService implements OnDestroy {
   private microphoneEnabled = new BehaviorSubject<boolean>(false);
   private screenShareEnabled = new BehaviorSubject<boolean>(false);
   private errorSubject = new Subject<string>();
+  private removedByServerSubject = new Subject<void>();
 
   readonly connectionStatus$: Observable<ConnectionStatus> = this.connectionStatus.asObservable();
   readonly participants$: Observable<Map<string, ParticipantInfo>> = this.participants.asObservable();
@@ -35,6 +36,7 @@ export class VideoCallService implements OnDestroy {
   readonly isMicrophoneEnabled$: Observable<boolean> = this.microphoneEnabled.asObservable();
   readonly isScreenShareEnabled$: Observable<boolean> = this.screenShareEnabled.asObservable();
   readonly error$: Observable<string> = this.errorSubject.asObservable();
+  readonly removedByServer$: Observable<void> = this.removedByServerSubject.asObservable();
 
   async connect(config: VideoCallConfig, deviceIds?: VideoCallDeviceIds): Promise<void> {
     await this.disconnect();
@@ -130,6 +132,7 @@ export class VideoCallService implements OnDestroy {
     this.subs.push(impl.isMicrophoneEnabled$.subscribe((v) => this.microphoneEnabled.next(v)));
     this.subs.push(impl.isScreenShareEnabled$.subscribe((v) => this.screenShareEnabled.next(v)));
     this.subs.push(impl.error$.subscribe((v) => this.errorSubject.next(v)));
+    this.subs.push(impl.removedByServer$.subscribe(() => this.removedByServerSubject.next()));
   }
 
   private teardownImpl(): void {

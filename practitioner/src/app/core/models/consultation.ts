@@ -117,6 +117,7 @@ export interface Consultation {
   closed_at: string | null;
   title: string | null;
   description: string | null;
+  notes?: string | null;
   beneficiary: User | null;
   beneficiary_id?: number;
   created_by: User;
@@ -153,8 +154,12 @@ export interface ConsultationKeyInput {
 export interface CreateConsultationRequest {
   title?: string | null;
   description?: string | null;
+  notes?: string | null;
   group_id?: number | null;
   beneficiary_id?: number | null;
+  // External contact as beneficiary: mapped to an existing user by
+  // email/phone or created as a temporary user.
+  temporary_beneficiary?: ITemporaryParticipant;
   owned_by_id?: number | null;
   visible_by_patient?: boolean;
   custom_fields?: { field: number; value: string | null }[];

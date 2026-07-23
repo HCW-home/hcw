@@ -2,7 +2,8 @@ import asyncio
 import logging
 
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
-from django.contrib.auth import get_user_model
+from core.channel_groups import broadcast_group, user_group
+from core.consumers import TenantConsumerMixin
 
 from .services import async_user_online_service
 
@@ -14,7 +15,7 @@ HEARTBEAT_INTERVAL = 30
 HEARTBEAT_TIMEOUT = 10
 
 
-class UserOnlineStatusMixin(AsyncJsonWebsocketConsumer):
+class UserOnlineStatusMixin(TenantConsumerMixin, AsyncJsonWebsocketConsumer):
     """Mixin for automatic WebSocket user online status tracking."""
 
     def __init__(self, *args, **kwargs):
@@ -35,7 +36,9 @@ class UserOnlineStatusMixin(AsyncJsonWebsocketConsumer):
         self.user_id = user.id
 
         try:
-            await async_user_online_service.set_user_online(self.user_id)
+            await async_user_online_service.set_user_online(
+                self.user_id, self.schema_name
+            )
             logger.info(f"User {self.user_id} connected")
             await self.accept()
             self._heartbeat_task = asyncio.create_task(self._heartbeat_loop())
@@ -56,12 +59,14 @@ class UserOnlineStatusMixin(AsyncJsonWebsocketConsumer):
 
         if self.user_id:
             # Delete cache
-            await async_user_online_service.set_user_offline(self.user_id)
+            await async_user_online_service.set_user_offline(
+                self.user_id, self.schema_name
+            )
 
             # Ask other consumers to restore cache if they are alive
             try:
                 await self.channel_layer.group_send(
-                    f"user_{self.user_id}",
+                    user_group(self.user_id, self.schema_name),
                     {
                         "type": "alive_check",
                         "sender_channel": self.channel_name,
@@ -73,7 +78,9 @@ class UserOnlineStatusMixin(AsyncJsonWebsocketConsumer):
             # After 1s, check if another consumer restored the cache.
             # If not, broadcast offline.
             asyncio.ensure_future(
-                self._delayed_offline_check(self.user_id, self.channel_layer)
+                self._delayed_offline_check(
+                    self.user_id, self.channel_layer, self.schema_name
+                )
             )
 
         await super().disconnect(close_code)
@@ -93,7 +100,9 @@ class UserOnlineStatusMixin(AsyncJsonWebsocketConsumer):
                         self._pong_received.wait(), timeout=HEARTBEAT_TIMEOUT
                     )
                     # Pong received: refresh cache TTL
-                    await async_user_online_service.refresh_online(self.user_id)
+                    await async_user_online_service.refresh_online(
+                        self.user_id, self.schema_name
+                    )
                 except asyncio.TimeoutError:
                     logger.warning(
                         f"User {self.user_id} heartbeat timeout"
@@ -104,15 +113,15 @@ class UserOnlineStatusMixin(AsyncJsonWebsocketConsumer):
             pass
 
     @staticmethod
-    async def _delayed_offline_check(user_id, channel_layer):
+    async def _delayed_offline_check(user_id, channel_layer, schema_name):
         """Wait, then broadcast offline only if no other consumer restored the cache."""
         await asyncio.sleep(1)
-        is_online = await async_user_online_service.is_user_online(user_id)
+        is_online = await async_user_online_service.is_user_online(user_id, schema_name)
         if not is_online:
             logger.info(f"User {user_id} confirmed offline after delay")
             try:
                 await channel_layer.group_send(
-                    "broadcast",
+                    broadcast_group(schema_name),
                     {
                         "type": "user",
                         "user_id": user_id,
@@ -129,7 +138,7 @@ class UserOnlineStatusMixin(AsyncJsonWebsocketConsumer):
         )
         try:
             await self.channel_layer.group_send(
-                "broadcast",
+                broadcast_group(self.schema_name),
                 {
                     "type": "user",
                     "user_id": self.user_id,
@@ -153,20 +162,26 @@ class WebsocketConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
             return
 
         # Join groups BEFORE super().connect() so we receive our own status broadcast
-        await self.channel_layer.group_add(f"user_{user.id}", self.channel_name)
-        await self.channel_layer.group_add("broadcast", self.channel_name)
+        await self.channel_layer.group_add(
+            user_group(user.id, self.schema_name), self.channel_name
+        )
+        await self.channel_layer.group_add(
+            broadcast_group(self.schema_name), self.channel_name
+        )
 
         await super().connect()
 
     async def disconnect(self, close_code):
         """Disconnect: remove own channel from broadcast first, then broadcast offline."""
-        await self.channel_layer.group_discard("broadcast", self.channel_name)
+        await self.channel_layer.group_discard(
+            broadcast_group(self.schema_name), self.channel_name
+        )
 
         await super().disconnect(close_code)
 
         if self.user_id:
             await self.channel_layer.group_discard(
-                f"user_{self.user_id}", self.channel_name
+                user_group(self.user_id, self.schema_name), self.channel_name
             )
 
     async def receive_json(self, content, **kwargs):
@@ -195,11 +210,13 @@ class WebsocketConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
     # Message handlers
     async def _handle_ping(self, content, _data):
         # Client-initiated ping: refresh cache and respond
-        await async_user_online_service.refresh_online(self.user_id)
+        await async_user_online_service.refresh_online(self.user_id, self.schema_name)
         await self.send_json({"type": "pong", "timestamp": content.get("timestamp")})
 
     async def _handle_get_status(self, _content, _data):
-        is_online = await async_user_online_service.is_user_online(self.user_id)
+        is_online = await async_user_online_service.is_user_online(
+            self.user_id, self.schema_name
+        )
 
         await self.send_json(
             {
@@ -220,11 +237,8 @@ class WebsocketConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
             return
 
         try:
-            User = get_user_model()
-            sender = await User.objects.aget(id=self.user_id)
-
             await self.channel_layer.group_send(
-                f"user_{target_user_id}",
+                user_group(target_user_id, self.schema_name),
                 {
                     "type": "user_message",
                     "data": {
@@ -246,15 +260,11 @@ class WebsocketConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
             await self._send_error(f"Failed to send message: {str(e)}")
 
     async def _handle_broadcast(self, content, data):
-        try:
-            User = get_user_model()
-            user = await User.objects.aget(id=self.user_id)
-
-            if not (user.is_staff or user.is_superuser):
-                await self._send_error("Permission denied: Admin privileges required")
-                return
-        except Exception:
-            await self._send_error("User not found")
+        # The user is already loaded by JWTAuthMiddleware in its own tenant scope:
+        # re-querying it here would run on the shared connection of another tenant.
+        user = self.scope.get("user")
+        if not user or not (user.is_staff or user.is_superuser):
+            await self._send_error("Permission denied: Admin privileges required")
             return
 
         message = data.get("message")
@@ -263,7 +273,7 @@ class WebsocketConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
             return
 
         await self.channel_layer.group_send(
-            "broadcast",
+            broadcast_group(self.schema_name),
             {
                 "type": "broadcast",
                 "data": {

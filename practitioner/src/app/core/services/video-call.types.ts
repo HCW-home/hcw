@@ -45,6 +45,13 @@ export interface VideoCallImpl {
   isMicrophoneEnabled$: Observable<boolean>;
   isScreenShareEnabled$: Observable<boolean>;
   error$: Observable<string>;
+  /**
+   * Emits when the media server forcibly removed us from the call (e.g. the
+   * practitioner closed the consultation). Distinct from a normal disconnect:
+   * the UI should tear the call down and navigate away rather than wait for a
+   * reconnect.
+   */
+  removedByServer$: Observable<void>;
 
   connect(config: VideoCallConfig, deviceIds?: VideoCallDeviceIds): Promise<void>;
   disconnect(): Promise<void>;

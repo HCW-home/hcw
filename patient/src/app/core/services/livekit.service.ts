@@ -52,6 +52,13 @@ export class LiveKitService implements OnDestroy {
   private isMicrophoneEnabledSubject = new BehaviorSubject<boolean>(false);
   private isScreenShareEnabledSubject = new BehaviorSubject<boolean>(false);
   private errorSubject = new Subject<string>();
+  private removedByServerSubject = new Subject<void>();
+
+  // True while an explicit screen-share toggle is running. LiveKit reports the
+  // same failure twice — it emits RoomEvent.MediaDevicesError AND rejects the
+  // setScreenShareEnabled() promise — so this flag lets the global media-error
+  // handler skip the duplicate while startScreenShare() handles the rejection.
+  private isTogglingScreenShare = false;
 
   public connectionStatus$: Observable<ConnectionStatus> = this.connectionStatusSubject.asObservable();
   public localVideoTrack$: Observable<LocalVideoTrack | null> = this.localVideoTrackSubject.asObservable();
@@ -62,6 +69,7 @@ export class LiveKitService implements OnDestroy {
   public isMicrophoneEnabled$: Observable<boolean> = this.isMicrophoneEnabledSubject.asObservable();
   public isScreenShareEnabled$: Observable<boolean> = this.isScreenShareEnabledSubject.asObservable();
   public error$: Observable<string> = this.errorSubject.asObservable();
+  public removedByServer$: Observable<void> = this.removedByServerSubject.asObservable();
 
   async connect(
     config: LiveKitConfig,
@@ -125,8 +133,18 @@ export class LiveKitService implements OnDestroy {
       }
     });
 
-    this.room.on(RoomEvent.Disconnected, (_reason?: DisconnectReason) => {
+    this.room.on(RoomEvent.Disconnected, (reason?: DisconnectReason) => {
       this.connectionStatusSubject.next('disconnected');
+      // PARTICIPANT_REMOVED / ROOM_DELETED mean the server ended our
+      // participation deliberately (e.g. the practitioner closed the
+      // consultation). Signal the UI to tear the call down instead of showing
+      // a stuck "disconnected" state.
+      if (
+        reason === DisconnectReason.PARTICIPANT_REMOVED ||
+        reason === DisconnectReason.ROOM_DELETED
+      ) {
+        this.removedByServerSubject.next();
+      }
       this.cleanup();
     });
 
@@ -180,6 +198,14 @@ export class LiveKitService implements OnDestroy {
     });
 
     this.room.on(RoomEvent.MediaDevicesError, (error: Error) => {
+      // A failure raised while starting a screen share is already surfaced by
+      // startScreenShare() (and cancelling the picker is a benign user action),
+      // so skip the duplicate toast this global handler would add. LiveKit emits
+      // this event synchronously, just before setScreenShareEnabled() rejects,
+      // so the flag is still set when we get here.
+      if (this.isTogglingScreenShare) {
+        return;
+      }
       this.errorSubject.next(`Media device error: ${error.message}`);
     });
   }
@@ -298,12 +324,21 @@ export class LiveKitService implements OnDestroy {
       return;
     }
 
+    this.isTogglingScreenShare = true;
     try {
       await this.room.localParticipant.setScreenShareEnabled(true);
       this.isScreenShareEnabledSubject.next(true);
     } catch (error) {
-      this.errorSubject.next(error instanceof Error ? error.message : 'Failed to start screen share');
+      // Cancelling or denying the browser screen-share picker throws
+      // NotAllowedError/AbortError. That is expected user behaviour, not a
+      // failure, so treat it as a no-op. Any other error is re-thrown and
+      // reported once by the component.
+      if (this.isScreenShareCancellation(error)) {
+        return;
+      }
       throw error;
+    } finally {
+      this.isTogglingScreenShare = false;
     }
   }
 
@@ -328,6 +363,19 @@ export class LiveKitService implements OnDestroy {
     } else {
       await this.startScreenShare();
     }
+  }
+
+  /**
+   * A cancelled or denied screen-share picker is reported by browsers as a
+   * DOMException named "NotAllowedError" (Chrome, Firefox, Safari) or, in some
+   * cases, "AbortError". Both mean the user opted out rather than something
+   * going wrong, so callers treat it as a no-op instead of an error.
+   */
+  private isScreenShareCancellation(error: unknown): boolean {
+    return (
+      error instanceof Error &&
+      (error.name === 'NotAllowedError' || error.name === 'AbortError')
+    );
   }
 
   async switchCamera(deviceId: string): Promise<void> {
