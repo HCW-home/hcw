@@ -1,270 +1,438 @@
+// Practitioner search / map — styled with the patient dashboard design tokens
+// (see theme/variables.scss). No hardcoded brand hue here: the instance primary
+// color is applied at runtime by app.component.applyPrimaryColor().
+
 .map-content {
-  --background: #f5f5f5;
+  --background: var(--app-page-bg);
 }
 
 .loading-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 300px;
-}
+  padding: var(--app-spacing-2xl);
+  min-height: 240px;
 
-.error-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 60vh;
-  text-align: center;
-  padding: 2rem;
-
-  .error-icon {
-    font-size: 4rem;
-    color: var(--ion-color-danger);
-    margin-bottom: 1rem;
-  }
-
-  h2 {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 0.5rem;
-  }
-
-  p {
-    color: #666;
-    max-width: 400px;
+  ion-spinner {
+    color: var(--app-teal);
   }
 }
 
-// --- Initial search screen ---
+// ---------------------------------------------------------------------------
+// Full page states (feature disabled)
+// ---------------------------------------------------------------------------
 
-.initial-search-screen {
+.state-wrap {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 100%;
-  padding: 2rem 1.5rem;
-  gap: 1.25rem;
+  padding: var(--app-spacing-lg);
+}
 
-  h1 {
-    font-size: 1.4rem;
-    font-weight: 600;
-    color: #1f2937;
-    margin: 0 0 0.5rem;
-    align-self: flex-start;
-    width: 100%;
-    max-width: 480px;
+.state-card {
+  width: 100%;
+  max-width: 460px;
+  padding: 40px 32px;
+  text-align: center;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
+
+  .state-icon {
+    font-size: 52px;
+    color: var(--app-ink-4);
+    margin-bottom: var(--app-spacing-md);
+
+    &.state-icon--danger {
+      color: var(--app-danger);
+    }
+  }
+
+  .state-title {
+    margin: 0 0 var(--app-spacing-sm);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--app-ink-1);
+  }
+
+  .state-text {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--app-ink-3);
   }
 }
 
-.initial-search-field {
-  width: 100%;
-  max-width: 480px;
+// ---------------------------------------------------------------------------
+// Initial search screen — hero card
+// ---------------------------------------------------------------------------
+
+.search-hero {
   display: flex;
   align-items: center;
-  padding: 0 18px;
-  border-radius: 14px;
-  background: #f7f8fa;
-  border: 1px solid #d1d5db;
-  height: 56px;
+  justify-content: center;
+  min-height: 100%;
+  padding: var(--app-spacing-lg);
+}
+
+.search-hero-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 560px;
+  padding: 34px 32px 30px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--radius-banner);
+  box-shadow: var(--shadow-lg);
+
+  .search-hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    gap: 6px;
+    padding: 4px 10px;
+    margin-bottom: 14px;
+    border-radius: 9999px;
+    background: var(--app-teal-050);
+    color: var(--app-teal-dark);
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+
+    ion-icon {
+      font-size: 13px;
+      color: var(--app-teal);
+    }
+  }
+
+  .search-hero-title {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--app-ink-1);
+  }
+
+  .search-hero-subtitle {
+    margin: 8px 0 24px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--app-ink-3);
+  }
+}
+
+.hero-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 54px;
+  padding: 0 16px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  background: var(--app-surface-muted);
+  border: 1px solid var(--app-border);
+  transition: border-color 0.15s var(--app-ease), box-shadow 0.15s var(--app-ease);
+
+  ion-icon {
+    font-size: 18px;
+    color: var(--app-ink-4);
+    flex-shrink: 0;
+  }
+
+  &:focus-within {
+    border-color: var(--app-teal);
+    box-shadow: 0 0 0 3px var(--app-teal-050);
+
+    ion-icon {
+      color: var(--app-teal);
+    }
+  }
 
   input {
     flex: 1;
+    min-width: 0;
     border: none;
     outline: none;
-    font-size: 0.95rem;
     background: transparent;
-    color: #1f2937;
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--app-ink-1);
 
     &::placeholder {
-      color: #94a3b8;
+      color: var(--app-ink-4);
     }
   }
 }
 
-.initial-search-button {
-  align-self: flex-end;
-  width: 100%;
-  max-width: 480px;
-  height: 48px;
-  margin-top: 0.25rem;
+.hero-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 52px;
+  margin-top: 8px;
   border: none;
-  border-radius: 10px;
-  background: var(--ion-color-primary, #0891b2);
+  border-radius: 12px;
+  background: var(--app-teal);
   color: #fff;
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
   cursor: pointer;
-  transition: opacity 0.15s;
+  box-shadow: 0 10px 24px rgba(var(--ion-color-primary-rgb), 0.3);
+  transition: background 0.22s var(--app-ease), transform 0.12s var(--app-ease);
+
+  ion-icon {
+    font-size: 19px;
+  }
 
   &:hover {
-    opacity: 0.9;
+    background: var(--app-teal-dark);
+  }
+
+  &:active {
+    transform: translateY(1px);
   }
 }
 
-// --- Layout ---
+// ---------------------------------------------------------------------------
+// Results layout
+// ---------------------------------------------------------------------------
 
 .map-layout {
   display: flex;
   flex-direction: column;
   height: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: var(--app-spacing-lg);
+
+  @media (min-width: 768px) {
+    padding: 24px 32px 28px;
+  }
 }
 
 .results-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 1rem 0.5rem;
+  gap: var(--app-spacing-md);
+  flex-wrap: wrap;
+  margin-bottom: var(--app-spacing-md);
   flex-shrink: 0;
 
-  h1 {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #1f2937;
+  .section-title-group {
+    display: flex;
+    align-items: center;
+    gap: var(--app-spacing-sm);
+  }
+
+  .section-title {
     margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--app-ink-1);
+  }
+
+  .section-badge {
+    padding: 3px 10px;
+    border-radius: 9999px;
+    background: var(--app-teal-050);
+    color: var(--app-teal-dark);
+    font-size: 12.5px;
+    font-weight: 700;
   }
 }
 
 .online-toggle {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 10px;
   cursor: pointer;
-  font-size: 0.9rem;
-  color: #1f2937;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--app-ink-2);
 }
 
 .toggle-switch {
-  width: 42px;
-  height: 24px;
-  border-radius: 12px;
-  border: none;
-  background: #d1d5db;
+  width: 44px;
+  height: 25px;
   padding: 3px;
   display: flex;
   align-items: center;
+  border: none;
+  border-radius: 9999px;
+  background: #cfd8e3;
   cursor: pointer;
-  transition: background 0.15s;
   flex-shrink: 0;
+  transition: background 0.2s var(--app-ease);
 
   .toggle-knob {
-    width: 18px;
-    height: 18px;
+    width: 19px;
+    height: 19px;
     border-radius: 50%;
     background: #fff;
-    transition: transform 0.15s;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s var(--app-ease);
   }
 
   &.active {
-    background: var(--ion-color-primary, #0891b2);
+    background: var(--app-teal);
 
     .toggle-knob {
-      transform: translateX(18px);
+      transform: translateX(19px);
     }
   }
 }
 
+// ---------------------------------------------------------------------------
+// Search bar
+// ---------------------------------------------------------------------------
+
 .search-bar {
   display: flex;
-  align-items: stretch;
-  margin: 0.5rem 1rem 0.75rem;
-  border-radius: 12px;
-  background: #f7f8fa;
-  border: 1px solid #d1d5db;
-  overflow: hidden;
+  align-items: center;
+  gap: 4px;
+  padding: 6px;
+  margin-bottom: var(--app-spacing-lg);
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
   flex-shrink: 0;
 }
 
 .search-bar-field {
   flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
-  padding: 0 16px;
-  height: 52px;
+  gap: 9px;
+  height: 44px;
+  padding: 0 12px;
+
+  ion-icon {
+    font-size: 17px;
+    color: var(--app-ink-4);
+    flex-shrink: 0;
+  }
+
+  &:focus-within ion-icon {
+    color: var(--app-teal);
+  }
 
   input {
     flex: 1;
+    min-width: 0;
     border: none;
     outline: none;
-    font-size: 0.95rem;
     background: transparent;
-    color: #1f2937;
+    font-family: inherit;
+    font-size: 14.5px;
+    color: var(--app-ink-1);
 
     &::placeholder {
-      color: #94a3b8;
+      color: var(--app-ink-4);
     }
   }
 }
 
 .search-bar-divider {
   width: 1px;
-  background: #d1d5db;
-  margin: 10px 0;
+  align-self: stretch;
+  margin: 6px 0;
+  background: var(--app-border-subtle);
+  flex-shrink: 0;
 }
 
 .search-bar-button {
-  padding: 0 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 22px;
   border: none;
-  background: var(--ion-color-primary, #0891b2);
+  border-radius: 10px;
+  background: var(--app-teal);
   color: #fff;
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 700;
   cursor: pointer;
-  transition: opacity 0.15s;
+  flex-shrink: 0;
+  transition: background 0.2s var(--app-ease);
+
+  ion-icon {
+    font-size: 18px;
+  }
 
   &:hover {
-    opacity: 0.9;
+    background: var(--app-teal-dark);
   }
 }
+
+// ---------------------------------------------------------------------------
+// Body — results list + map
+// ---------------------------------------------------------------------------
 
 .map-body {
   display: flex;
   flex: 1;
-  overflow: hidden;
-  gap: 1rem;
-  padding: 0 1rem 1rem;
+  min-height: 0;
+  gap: var(--app-spacing-lg);
 
   .list-panel {
-    width: 420px;
-    min-width: 320px;
+    flex: 1;
+    min-width: 340px;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    min-height: 0;
 
     .org-list {
       flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
       overflow-y: auto;
-      padding: 0.25rem;
+      padding: 2px 4px 4px 2px;
     }
 
     .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 3rem 1rem;
-      color: #999;
+      text-align: center;
+      padding: var(--app-spacing-2xl);
+      background: var(--app-surface);
+      border: 1px solid var(--app-border);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow-sm);
 
       .empty-icon {
-        font-size: 2.5rem;
-        margin-bottom: 0.75rem;
+        font-size: 52px;
+        color: var(--app-ink-4);
+        margin-bottom: var(--app-spacing-md);
       }
 
-      p {
-        font-size: 0.9rem;
+      .empty-text {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--app-ink-3);
       }
     }
   }
 
   .map-panel {
-    flex: 0 0 45%;
-    max-width: 520px;
+    flex: 0 0 46%;
+    max-width: 620px;
     position: relative;
-    border-radius: 12px;
     overflow: hidden;
-    border: 1px solid #e0e0e0;
+    background: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-sm);
 
     #map-container {
       width: 100%;
@@ -273,182 +441,248 @@
   }
 }
 
-// --- Cards ---
+// ---------------------------------------------------------------------------
+// Result cards
+// ---------------------------------------------------------------------------
 
 .org-card {
-  background: #fff;
-  border: 1px solid #e2e2e2;
-  padding: 0.85rem;
-  border-radius: 12px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
   cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  margin-bottom: 0.65rem;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.12s var(--app-ease), border-color 0.12s var(--app-ease);
 
   &:hover {
-    border-color: var(--ion-color-primary, #0891b2);
+    box-shadow: var(--shadow-md);
   }
 
   &.selected {
-    border-color: var(--ion-color-primary, #0891b2);
-    box-shadow: 0 0 0 2px rgba(8, 145, 178, 0.15);
-  }
-
-  .org-card-header {
-    display: flex;
-    gap: 0.75rem;
-    align-items: flex-start;
-  }
-
-  .org-logo {
-    width: 40px;
-    height: 40px;
-    object-fit: contain;
-    border-radius: 6px;
-    flex-shrink: 0;
-
-    &.doctor-logo {
-      border-radius: 50%;
-    }
-  }
-
-  .org-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 6px;
-    background: var(--ion-color-primary, #0891b2);
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    font-size: 1.1rem;
-    flex-shrink: 0;
-
-    &.doctor-avatar {
-      border-radius: 50%;
-      background: #6366f1;
-    }
-  }
-
-  .org-info {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .org-name-row {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-  }
-
-  .type-badge {
-    display: flex;
-    align-items: center;
-    color: var(--ion-color-primary, #0891b2);
-    font-size: 0.85rem;
-    flex-shrink: 0;
-
-    &.type-doctor {
-      color: #6366f1;
-    }
-  }
-
-  .org-name {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #1f2937;
-    margin: 0;
-    line-height: 1.3;
-
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-
-  .org-specialities {
-    font-size: 0.8rem;
-    color: #6366f1;
-    margin: 0.2rem 0 0;
-    display: flex;
-    align-items: flex-start;
-    gap: 0.25rem;
-    line-height: 1.4;
-    font-weight: 500;
-
-    ion-icon {
-      flex-shrink: 0;
-      margin-top: 2px;
-      font-size: 0.85rem;
-    }
-  }
-
-  .org-address {
-    font-size: 0.8rem;
-    color: #777;
-    margin: 0.2rem 0 0;
-    display: flex;
-    align-items: flex-start;
-    gap: 0.25rem;
-    line-height: 1.4;
-
-    ion-icon {
-      flex-shrink: 0;
-      margin-top: 2px;
-      font-size: 0.85rem;
-    }
+    border-color: var(--app-teal);
+    box-shadow: 0 0 0 2px var(--app-teal), var(--shadow-md);
   }
 }
 
-.org-card-body {
-  margin-top: 0.6rem;
-  padding-top: 0.6rem;
-  border-top: 1px solid #eee;
+.oc-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 18px;
+}
+
+.oc-logo {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  border-radius: 10px;
+  border: 1px solid var(--app-border-subtle);
+  background: #fff;
+  flex-shrink: 0;
+
+  &.oc-logo--doctor {
+    object-fit: cover;
+    border-radius: 50%;
+  }
+}
+
+.oc-avatar {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--app-surface-muted);
+  color: var(--app-ink-2);
+  font-size: 16px;
+  font-weight: 700;
+  flex-shrink: 0;
+
+  &.oc-avatar--doctor {
+    border-radius: 50%;
+    background: var(--app-teal-050);
+    color: var(--app-teal-dark);
+  }
 }
 
-.horaires-block {
+.oc-main {
   flex: 1;
   min-width: 0;
 }
 
-.horaires-spinner {
-  width: 18px;
-  height: 18px;
+.oc-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.no-slots {
-  font-size: 0.8rem;
-  color: #999;
+.oc-name {
   margin: 0;
+  min-width: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--app-ink-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &:hover {
+    color: var(--app-teal-dark);
+  }
 }
 
-.horaires-nav {
+// Same two-tone chip system as the dashboard cards: brand tint for people,
+// neutral grey for institutions.
+.type-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  background: #eef2f6;
+  color: #4a5460;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  ion-icon {
+    font-size: 12px;
+    color: #4a5460;
+  }
+
+  &.type-chip--doctor {
+    background: var(--app-teal-050);
+    color: var(--app-teal-dark);
+
+    ion-icon {
+      color: var(--app-teal);
+    }
+  }
+}
+
+.oc-meta {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 5px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--app-ink-3);
+
+  ion-icon {
+    font-size: 15px;
+    margin-top: 1px;
+    color: var(--app-ink-4);
+    flex-shrink: 0;
+  }
+
+  &.oc-meta--spec {
+    font-weight: 600;
+    color: var(--app-teal-dark);
+
+    ion-icon {
+      color: var(--app-teal);
+    }
+  }
+}
+
+// Booking block — day navigation, slots, CTA. Stacked by default; side by side
+// as soon as the result panel is wide enough to keep the CTA from stretching.
+.oc-booking {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 18px 16px;
+  border-top: 1px solid var(--app-border-subtle);
+  background: var(--app-surface-muted);
+  border-radius: 0 0 var(--radius-card) var(--radius-card);
+
+  .oc-slot-area {
+    flex: 1;
+    min-width: 0;
+  }
+
+  @media (min-width: 901px) {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--app-spacing-lg);
+
+    .rdv-button {
+      width: auto;
+      flex-shrink: 0;
+    }
+  }
+}
+
+.oc-slots-loading {
+  display: flex;
+  justify-content: center;
+  padding: 4px 0;
+
+  ion-spinner {
+    width: 20px;
+    height: 20px;
+    color: var(--app-teal);
+  }
+}
+
+.oc-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--app-ink-3);
+
+  ion-icon {
+    font-size: 17px;
+    color: var(--app-ink-4);
+    flex-shrink: 0;
+  }
+}
+
+.day-nav {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  margin-bottom: 0.4rem;
+  gap: 10px;
 
   .day-label {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #555;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-transform: capitalize;
+    color: var(--app-ink-2);
   }
 
   .day-arrow {
-    border: none;
-    background: none;
-    cursor: pointer;
-    color: var(--ion-color-primary, #0891b2);
-    font-size: 1rem;
-    padding: 2px;
     display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--app-teal);
+    cursor: pointer;
+    transition: background 0.15s var(--app-ease);
+
+    ion-icon {
+      font-size: 16px;
+    }
+
+    &:hover:not(:disabled) {
+      background: var(--app-teal-050);
+    }
 
     &:disabled {
-      color: #ccc;
+      color: var(--app-ink-4);
+      opacity: 0.5;
       cursor: default;
     }
   }
@@ -457,42 +691,57 @@
 .slot-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem;
+  gap: 6px;
 }
 
 .slot-chip {
-  border: 1px solid var(--ion-color-primary, #0891b2);
-  color: var(--ion-color-primary, #0891b2);
-  background: #fff;
+  padding: 6px 11px;
+  border: 1px solid var(--app-border);
   border-radius: 8px;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.78rem;
+  background: var(--app-surface);
+  color: var(--app-teal-dark);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.15s var(--app-ease), border-color 0.15s var(--app-ease);
 
   &:hover {
-    background: rgba(8, 145, 178, 0.08);
+    background: var(--app-teal-050);
+    border-color: var(--app-teal);
   }
 }
 
 .rdv-button {
-  flex-shrink: 0;
-  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 11px 16px;
+  border: 1px solid var(--app-teal);
   border-radius: 8px;
-  background: #6366f1;
-  color: #fff;
-  font-size: 0.85rem;
-  font-weight: 600;
-  padding: 0.55rem 0.9rem;
+  background: var(--app-surface);
+  color: var(--app-teal-dark);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
-  transition: opacity 0.15s;
+  transition: background 0.15s var(--app-ease);
+
+  ion-icon {
+    font-size: 17px;
+    color: var(--app-teal);
+  }
 
   &:hover {
-    opacity: 0.9;
+    background: var(--app-teal-050);
   }
 }
 
-// --- Custom map markers ---
+// ---------------------------------------------------------------------------
+// Custom map markers
+// ---------------------------------------------------------------------------
 
 :host ::ng-deep {
   .map-marker-org,
@@ -509,72 +758,102 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    border: 2px solid #fff;
+    box-shadow: var(--shadow-md);
 
     ion-icon {
       transform: rotate(45deg);
-      font-size: 16px;
+      font-size: 15px;
       color: #fff;
     }
   }
 
   .marker-org {
-    background: var(--ion-color-primary, #0891b2);
+    background: var(--app-navy-2);
   }
 
   .marker-doctor {
-    background: #6366f1;
+    background: var(--app-teal);
+  }
+
+  .leaflet-popup-content-wrapper {
+    border-radius: 10px;
+    box-shadow: var(--shadow-md);
+    color: var(--app-ink-2);
+  }
+
+  .leaflet-popup-content {
+    font-size: 13px;
+    line-height: 1.45;
+
+    strong {
+      color: var(--app-ink-1);
+    }
+
+    em {
+      color: var(--app-teal-dark);
+      font-style: normal;
+      font-weight: 600;
+    }
   }
 }
 
-// --- Responsive ---
+// ---------------------------------------------------------------------------
+// Responsive
+// ---------------------------------------------------------------------------
 
-@media (max-width: 768px) {
-  .initial-search-screen {
-    padding: 1.5rem 1rem;
-  }
-
+@media (max-width: 900px) {
   .search-bar {
     flex-direction: column;
-    height: auto;
-  }
-
-  .search-bar-field {
-    height: 48px;
+    align-items: stretch;
+    gap: 0;
+    padding: 6px;
   }
 
   .search-bar-divider {
     width: auto;
     height: 1px;
-    margin: 0 10px;
+    align-self: auto;
+    margin: 0 12px;
   }
 
   .search-bar-button {
-    padding: 0.75rem;
-  }
-
-  .org-card-body {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .rdv-button {
-    width: 100%;
+    justify-content: center;
+    margin-top: 6px;
   }
 
   .map-body {
     flex-direction: column;
+    overflow-y: auto;
 
     .list-panel {
-      width: 100%;
-      min-width: unset;
-      max-height: 40vh;
+      min-width: 0;
+
+      .org-list {
+        overflow: visible;
+      }
     }
 
     .map-panel {
+      order: -1;
       flex: 0 0 auto;
       max-width: none;
-      min-height: 40vh;
+      height: 38vh;
+      min-height: 260px;
     }
+  }
+}
+
+@media (max-width: 480px) {
+  .search-hero-card {
+    padding: 26px 20px 24px;
+  }
+
+  .oc-title-row {
+    flex-wrap: wrap;
+  }
+
+  .type-chip {
+    margin-left: 0;
   }
 }

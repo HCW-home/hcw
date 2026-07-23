@@ -469,7 +469,17 @@
         "disabled": "Funzione non disponibile",
         "disabledMessage": "L'elenco delle organizzazioni non è attualmente disponibile. Contatta il tuo amministratore.",
         "noResults": "Nessuna organizzazione trovata",
-        "noLocation": "Posizione non disponibile"
+        "noLocation": "Posizione non disponibile",
+        "searchTitle": "Ricerca",
+        "searchSubtitle": "Trova un professionista o una struttura e prenota online.",
+        "searchWhoPlaceholder": "Chi? Specialità? Motivo della consultazione?",
+        "searchLocationPlaceholder": "Località",
+        "searchButton": "Cerca",
+        "resultsTitle": "Risultati",
+        "typeDoctor": "Professionista",
+        "typeOrganisation": "Struttura",
+        "noSlots": "Nessuna disponibilità",
+        "bookButton": "Prenota un appuntamento"
     },
     "maintenance": {
         "title": "Manutenzione in corso",

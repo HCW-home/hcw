@@ -468,7 +468,17 @@
         "disabled": "Funktion nicht verfügbar",
         "disabledMessage": "Das Organisationsverzeichnis ist derzeit nicht verfügbar. Bitte kontaktieren Sie Ihren Administrator.",
         "noResults": "Keine Organisationen gefunden",
-        "noLocation": "Standort nicht verfügbar"
+        "noLocation": "Standort nicht verfügbar",
+        "searchTitle": "Suche",
+        "searchSubtitle": "Finden Sie eine Fachperson oder eine Einrichtung und buchen Sie online.",
+        "searchWhoPlaceholder": "Wer? Fachgebiet? Grund der Konsultation?",
+        "searchLocationPlaceholder": "Ort",
+        "searchButton": "Suchen",
+        "resultsTitle": "Ergebnisse",
+        "typeDoctor": "Fachperson",
+        "typeOrganisation": "Einrichtung",
+        "noSlots": "Keine Verfügbarkeit",
+        "bookButton": "Termin buchen"
     },
     "maintenance": {
         "title": "Wartung im Gange",

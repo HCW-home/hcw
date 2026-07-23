@@ -516,7 +516,17 @@
     "disabled": "Feature unavailable",
     "disabledMessage": "The organisations directory is currently not available. Please contact your administrator.",
     "noResults": "No organisations found",
-    "noLocation": "Location not available"
+    "noLocation": "Location not available",
+    "searchTitle": "Search",
+    "searchSubtitle": "Find a practitioner or a facility and book online.",
+    "searchWhoPlaceholder": "Who? Speciality? Reason for the consultation?",
+    "searchLocationPlaceholder": "Location",
+    "searchButton": "Search",
+    "resultsTitle": "Results",
+    "typeDoctor": "Practitioner",
+    "typeOrganisation": "Facility",
+    "noSlots": "No availability",
+    "bookButton": "Book an appointment"
   },
   "maintenance": {
     "title": "Maintenance in progress",

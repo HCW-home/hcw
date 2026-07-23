@@ -6,43 +6,60 @@
       <ion-spinner name="crescent"></ion-spinner>
     </div>
   } @else if (!isPublicEnabled()) {
-    <div class="error-container">
-      <ion-icon name="lock-closed-outline" class="error-icon"></ion-icon>
-      <h2>{{ 'map.disabled' | translate }}</h2>
-      <p>{{ 'map.disabledMessage' | translate }}</p>
+    <div class="state-wrap">
+      <div class="state-card">
+        <ion-icon name="lock-closed-outline" class="state-icon state-icon--danger"></ion-icon>
+        <h2 class="state-title">{{ 'map.disabled' | translate }}</h2>
+        <p class="state-text">{{ 'map.disabledMessage' | translate }}</p>
+      </div>
     </div>
   } @else if (!hasSearched()) {
-    <div class="initial-search-screen">
-      <h1>{{ 'map.searchTitle' | translate }}</h1>
+    <div class="search-hero">
+      <div class="search-hero-card">
+        <span class="search-hero-eyebrow">
+          <ion-icon name="search-outline"></ion-icon>
+          {{ 'map.title' | translate }}
+        </span>
+        <h1 class="search-hero-title">{{ 'map.searchTitle' | translate }}</h1>
+        <p class="search-hero-subtitle">{{ 'map.searchSubtitle' | translate }}</p>
 
-      <div class="initial-search-field">
-        <input
-          type="text"
-          [placeholder]="'map.searchWhoPlaceholder' | translate"
-          [value]="searchQuery()"
-          (input)="onSearchInput($event)"
-          (keyup.enter)="submitSearch()"
-        />
+        <div class="hero-field">
+          <ion-icon name="search-outline"></ion-icon>
+          <input
+            type="text"
+            [placeholder]="'map.searchWhoPlaceholder' | translate"
+            [value]="searchQuery()"
+            (input)="onSearchInput($event)"
+            (keyup.enter)="submitSearch()"
+          />
+        </div>
+
+        <div class="hero-field">
+          <ion-icon name="location-outline"></ion-icon>
+          <input
+            type="text"
+            [placeholder]="'map.searchLocationPlaceholder' | translate"
+            [value]="locationQuery()"
+            (input)="onLocationInput($event)"
+            (keyup.enter)="submitSearch()"
+          />
+        </div>
+
+        <button class="hero-submit" (click)="submitSearch()">
+          <ion-icon name="search-outline"></ion-icon>
+          <span>{{ 'map.searchButton' | translate }}</span>
+        </button>
       </div>
-
-      <div class="initial-search-field">
-        <input
-          type="text"
-          [placeholder]="'map.searchLocationPlaceholder' | translate"
-          [value]="locationQuery()"
-          (input)="onLocationInput($event)"
-          (keyup.enter)="submitSearch()"
-        />
-      </div>
-
-      <button class="initial-search-button" (click)="submitSearch()">
-        {{ 'map.searchButton' | translate }}
-      </button>
     </div>
   } @else {
     <div class="map-layout">
       <div class="results-header">
-        <h1>{{ 'map.searchTitle' | translate }}</h1>
+        <div class="section-title-group">
+          <h2 class="section-title">{{ 'map.resultsTitle' | translate }}</h2>
+          @if (!isLoading() && items().length > 0) {
+            <span class="section-badge">{{ items().length }} {{ 'common.total' | translate }}</span>
+          }
+        </div>
         <label class="online-toggle">
           <span>{{ 'map.onlineBooking' | translate }}</span>
           <button
@@ -58,6 +75,7 @@
 
       <div class="search-bar">
         <div class="search-bar-field">
+          <ion-icon name="search-outline"></ion-icon>
           <input
             type="text"
             [placeholder]="'map.searchWhoPlaceholder' | translate"
@@ -68,6 +86,7 @@
         </div>
         <div class="search-bar-divider"></div>
         <div class="search-bar-field">
+          <ion-icon name="location-outline"></ion-icon>
           <input
             type="text"
             [placeholder]="'map.searchLocationPlaceholder' | translate"
@@ -76,9 +95,9 @@
             (keyup.enter)="submitSearch()"
           />
         </div>
-        <div class="search-bar-divider"></div>
         <button class="search-bar-button" (click)="submitSearch()">
-          {{ 'map.searchButton' | translate }}
+          <ion-icon name="search-outline"></ion-icon>
+          <span>{{ 'map.searchButton' | translate }}</span>
         </button>
       </div>
 
@@ -91,7 +110,7 @@
           } @else if (items().length === 0) {
             <div class="empty-state">
               <ion-icon name="business-outline" class="empty-icon"></ion-icon>
-              <p>{{ 'map.noResults' | translate }}</p>
+              <p class="empty-text">{{ 'map.noResults' | translate }}</p>
             </div>
           } @else {
             <div class="org-list">
@@ -101,49 +120,51 @@
                   [class.selected]="isSelected(item)"
                   (click)="selectItem(item)"
                 >
-                  <div class="org-card-header">
+                  <div class="oc-top">
                     @if (item.logo) {
-                      <img [src]="item.logo" [alt]="item.name" class="org-logo" [class.doctor-logo]="item.type === 'doctor'" />
+                      <img [src]="item.logo" [alt]="item.name" class="oc-logo" [class.oc-logo--doctor]="item.type === 'doctor'" />
                     } @else {
-                      <div class="org-avatar" [class.doctor-avatar]="item.type === 'doctor'">
+                      <div class="oc-avatar" [class.oc-avatar--doctor]="item.type === 'doctor'">
                         {{ item.initials }}
                       </div>
                     }
-                    <div class="org-info">
-                      <div class="org-name-row">
-                        <span class="type-badge" [class.type-doctor]="item.type === 'doctor'">
-                          @if (item.type === 'doctor') {
-                            <ion-icon name="person"></ion-icon>
-                          } @else {
-                            <ion-icon name="business"></ion-icon>
-                          }
+                    <div class="oc-main">
+                      <div class="oc-title-row">
+                        <h3 class="oc-name" (click)="goToProfile(item); $event.stopPropagation()">{{ item.name }}</h3>
+                        <span class="type-chip" [class.type-chip--doctor]="item.type === 'doctor'">
+                          <ion-icon [name]="item.type === 'doctor' ? 'person' : 'business'"></ion-icon>
+                          {{ (item.type === 'doctor' ? 'map.typeDoctor' : 'map.typeOrganisation') | translate }}
                         </span>
-                        <h3 class="org-name" (click)="goToProfile(item); $event.stopPropagation()">{{ item.name }}</h3>
                       </div>
                       @if (item.specialities) {
-                        <p class="org-specialities">
+                        <p class="oc-meta oc-meta--spec">
                           <ion-icon name="medkit-outline"></ion-icon>
-                          {{ item.specialities }}
+                          <span>{{ item.specialities }}</span>
                         </p>
                       }
                       @if (item.subtitle) {
-                        <p class="org-address">
+                        <p class="oc-meta">
                           <ion-icon name="location-outline"></ion-icon>
-                          {{ item.subtitle }}
+                          <span>{{ item.subtitle }}</span>
                         </p>
                       }
                     </div>
                   </div>
 
                   @if (item.type === 'doctor') {
-                    <div class="org-card-body">
-                      <div class="horaires-block">
+                    <div class="oc-booking">
+                      <div class="oc-slot-area">
                         @if (getSlotsState(item.id)?.loading) {
-                          <ion-spinner name="crescent" class="horaires-spinner"></ion-spinner>
+                          <div class="oc-slots-loading">
+                            <ion-spinner name="crescent"></ion-spinner>
+                          </div>
                         } @else if (!getSlotsState(item.id)?.dates?.length) {
-                          <p class="no-slots">{{ 'map.noSlots' | translate }}</p>
+                          <div class="oc-note">
+                            <ion-icon name="calendar-outline"></ion-icon>
+                            <span>{{ 'map.noSlots' | translate }}</span>
+                          </div>
                         } @else {
-                          <div class="horaires-nav">
+                          <div class="day-nav">
                             <button
                               class="day-arrow"
                               [disabled]="!hasPrevDay(item.id)"
@@ -151,7 +172,7 @@
                             >
                               <ion-icon name="chevron-back-outline"></ion-icon>
                             </button>
-                            <span class="day-label">{{ currentDateLabel(item.id) }}</span>
+                            <span class="day-label">{{ currentDateLabel(item.id) | localDate: 'EEE d MMM' }}</span>
                             <button
                               class="day-arrow"
                               [disabled]="!hasNextDay(item.id)"
@@ -176,7 +197,8 @@
                         class="rdv-button"
                         (click)="goToBooking(item); $event.stopPropagation()"
                       >
-                        {{ 'map.bookButton' | translate }}
+                        <ion-icon name="calendar-outline"></ion-icon>
+                        <span>{{ 'map.bookButton' | translate }}</span>
                       </button>
                     </div>
                   }
@@ -193,3 +215,5 @@
     </div>
   }
 </ion-content>
+
+<app-footer></app-footer>

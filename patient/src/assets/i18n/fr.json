@@ -520,7 +520,13 @@
     "searchTitle": "Recherche",
     "searchWhoPlaceholder": "Qui ? Spécialit\u00e9 ? Motif de la consultation ?",
     "searchLocationPlaceholder": "Localisation",
-    "searchButton": "Rechercher"
+    "searchButton": "Rechercher",
+    "searchSubtitle": "Trouvez un praticien ou un établissement et réservez en ligne.",
+    "resultsTitle": "Résultats",
+    "typeDoctor": "Praticien",
+    "typeOrganisation": "Établissement",
+    "noSlots": "Aucune disponibilité",
+    "bookButton": "Prendre rendez-vous"
   },
   "maintenance": {
     "title": "Maintenance en cours",

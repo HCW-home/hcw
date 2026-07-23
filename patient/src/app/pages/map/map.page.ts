@@ -16,6 +16,8 @@ import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { TranslationService } from '../../core/services/translation.service';
 import { AppHeaderComponent } from '../../shared/app-header/app-header.component';
+import { AppFooterComponent } from '../../shared/app-footer/app-footer.component';
+import { LocalDatePipe } from '../../shared/pipes/local-date.pipe';
 import { DoctorService, Reason } from '../../core/services/doctor.service';
 
 interface Organisation {
@@ -100,6 +102,8 @@ const doctorIcon = L.divIcon({
     IonIcon,
     IonSpinner,
     AppHeaderComponent,
+    AppFooterComponent,
+    LocalDatePipe,
     TranslatePipe,
   ]
 })

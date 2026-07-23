@@ -111,24 +111,29 @@ body {
   }
 
   /* Full-width pages: no framed container / shadow. Auth + video call, plus the
-     patient dashboard (design: full-width nav bar, content centered on the page
-     background — no visible card-like container). */
+     patient dashboard and the practitioner search (design: full-width nav bar,
+     content centered on the page background — no visible card-like container;
+     the search needs the room for its results + map split view). */
   ion-app:has(app-login),
   ion-app:has(app-register),
   ion-app:has(app-verify-email),
   ion-app:has(app-forgot-password),
   ion-app:has(app-reset-password),
   ion-app:has(app-video-consultation),
-  ion-app:has(app-home) {
+  ion-app:has(app-home),
+  ion-app:has(app-map) {
     max-width: 100%;
     box-shadow: none;
     background-color: transparent;
   }
 
   /* On the dashboard the nav bar and footer span the full viewport width; the
-     page content is centered by the page itself (home .main-content max-width). */
+     page content is centered by the page itself (home .main-content max-width,
+     map .map-layout max-width). */
   ion-app:has(app-home) ion-header ion-toolbar,
-  ion-app:has(app-home) ion-footer {
+  ion-app:has(app-home) ion-footer,
+  ion-app:has(app-map) ion-header ion-toolbar,
+  ion-app:has(app-map) ion-footer {
     max-width: 100%;
   }
 
