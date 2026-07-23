@@ -493,6 +493,12 @@ CHANNEL_LAYERS = {
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
+# Django defaults to "same-origin", which strips the Referer header from
+# cross-origin requests. The OpenStreetMap tile servers used by the admin map
+# widget reject such requests with a "Referer is required" 403 tile, so we send
+# the origin only (no path/query) on cross-origin requests instead.
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+
 # Unfold Admin Configuration
 UNFOLD = {
     "SHOW_LANGUAGES": True,
