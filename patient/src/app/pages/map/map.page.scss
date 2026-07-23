@@ -513,6 +513,10 @@
     flex: 0 0 46%;
     max-width: 620px;
     position: relative;
+    // Leaflet gives its panes and controls z-indexes up to 1000. Without a
+    // stacking context of its own they compete with the rest of the page and
+    // paint over the suggestion panel — `z-index: 0` traps them in here.
+    z-index: 0;
     overflow: hidden;
     background: var(--app-surface);
     border: 1px solid var(--app-border);
