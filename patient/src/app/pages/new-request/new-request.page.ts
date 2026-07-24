@@ -88,14 +88,15 @@ export class NewRequestPage implements OnInit, OnDestroy {
   customFieldValues: Record<number, string> = {};
 
   comment = '';
-  
+
   private pendingSlot: Slot | null = null;
+  private visitedDoctorStep = false;
 
   stepTitle = computed(() => {
     switch (this.currentStep()) {
       case 1: return this.t.instant('newRequest.selectSpecialty');
-      case 2: return this.t.instant('newRequest.selectDoctor');
-      case 3: return this.t.instant('newRequest.selectReason');
+      case 2: return this.t.instant('newRequest.selectReason');
+      case 3: return this.t.instant('newRequest.selectDoctor');
       case 4: return this.t.instant('newRequest.chooseTimeSlot');
       case 5: return this.t.instant('newRequest.reviewAndSubmit');
       default: return this.t.instant('newRequest.newRequest');
@@ -196,7 +197,7 @@ export class NewRequestPage implements OnInit, OnDestroy {
         }
 
         this.loadReasons(specialityId);
-        this.currentStep.set(3);
+        this.currentStep.set(2);
         this.isLoading.set(false);
       },
       error: () => {
@@ -224,58 +225,8 @@ export class NewRequestPage implements OnInit, OnDestroy {
 
   selectSpeciality(speciality: Speciality): void {
     this.selectedSpeciality.set(speciality);
-    this.loadDoctors();
+    this.loadReasons(speciality.id);
     this.currentStep.set(2);
-  }
-
-  private loadDoctors(): void {
-    const speciality = this.selectedSpeciality();
-    if (!speciality) return;
-
-    this.isLoading.set(true);
-    this.doctorService.getDoctorsBySpeciality(speciality.id)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (doctors) => {
-          this.doctors.set(doctors);
-          this.isLoading.set(false);
-        },
-        error: () => {
-          this.showToast(this.t.instant('newRequest.failedDoctors'), 'danger');
-          this.isLoading.set(false);
-        }
-      });
-  }
-
-  selectDoctor(doctor: Doctor): void {
-    this.selectedDoctor.set(doctor);
-  }
-
-  proceedToReason(): void {
-    const speciality = this.selectedSpeciality();
-    if (speciality) {
-      this.loadReasons(speciality.id);
-      this.currentStep.set(3);
-    }
-  }
-
-  skipDoctorSelection(): void {
-    this.selectedDoctor.set(null);
-    this.proceedToReason();
-  }
-
-  isDoctorSelected(doctor: Doctor): boolean {
-    const selected = this.selectedDoctor();
-    if (!selected || !doctor) {
-      return false;
-    }
-    const selectedId = (selected as any).pk ?? selected.id;
-    const doctorId = (doctor as any).pk ?? doctor.id;
-    return selectedId === doctorId;
-  }
-
-  getDoctorFullName(doctor: Doctor): string {
-    return `Dr. ${doctor.first_name} ${doctor.last_name}`;
   }
 
   loadReasons(specialityId: number): void {
@@ -302,7 +253,7 @@ export class NewRequestPage implements OnInit, OnDestroy {
     }
 
     const pending = this.pendingSlot;
-    if (pending && pending.duration === reason.duration) {
+    if (pending && !reason.skip_doctor_selection && pending.duration === reason.duration) {
       this.selectedSlot.set(pending);
       this.pendingSlot = null;
       this.proceedToRecapOrAuth();
@@ -310,14 +261,71 @@ export class NewRequestPage implements OnInit, OnDestroy {
     }
     this.pendingSlot = null;
 
-    if (reason.assignment_method === 'appointment') {
+    if (reason.assignment_method !== 'appointment') {
       this.selectedSlot.set(null);
+      this.proceedToRecapOrAuth();
+      return;
+    }
+
+    if (reason.skip_doctor_selection || this.selectedDoctor()) {
+      this.visitedDoctorStep = false;
       this.loadAvailableSlots(reason.id);
       this.currentStep.set(4);
     } else {
-      this.selectedSlot.set(null);
-      this.proceedToRecapOrAuth();
+      this.visitedDoctorStep = true;
+      this.loadDoctors();
+      this.currentStep.set(3);
     }
+  }
+
+  private loadDoctors(): void {
+    const speciality = this.selectedSpeciality();
+    if (!speciality) return;
+
+    this.isLoading.set(true);
+    this.doctorService.getDoctorsBySpeciality(speciality.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (doctors) => {
+          this.doctors.set(doctors);
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.showToast(this.t.instant('newRequest.failedDoctors'), 'danger');
+          this.isLoading.set(false);
+        }
+      });
+  }
+
+  selectDoctor(doctor: Doctor): void {
+    this.selectedDoctor.set(doctor);
+  }
+
+  proceedWithDoctor(): void {
+    const reason = this.selectedReason();
+    if (reason) {
+      this.loadAvailableSlots(reason.id);
+      this.currentStep.set(4);
+    }
+  }
+
+  skipDoctorSelection(): void {
+    this.selectedDoctor.set(null);
+    this.proceedWithDoctor();
+  }
+
+  isDoctorSelected(doctor: Doctor): boolean {
+    const selected = this.selectedDoctor();
+    if (!selected || !doctor) {
+      return false;
+    }
+    const selectedId = (selected as any).pk ?? selected.id;
+    const doctorId = (doctor as any).pk ?? doctor.id;
+    return selectedId === doctorId;
+  }
+
+  getDoctorFullName(doctor: Doctor): string {
+    return `Dr. ${doctor.first_name} ${doctor.last_name}`;
   }
 
   loadAvailableSlots(reasonId: number): void {
@@ -391,7 +399,8 @@ export class NewRequestPage implements OnInit, OnDestroy {
     };
     try {
       sessionStorage.setItem(BOOKING_DRAFT_KEY, JSON.stringify(draft));
-    } catch {}
+    } catch {
+    }
     this.router.navigate(['/login'], { queryParams: { action: 'completeBooking' } });
   }
 
@@ -417,7 +426,7 @@ export class NewRequestPage implements OnInit, OnDestroy {
       this.currentStep.set(5);
       return true;
     } catch {
-      try { sessionStorage.removeItem(BOOKING_DRAFT_KEY); } catch { /* noop */ }
+      try { sessionStorage.removeItem(BOOKING_DRAFT_KEY); } catch { }
       return false;
     }
   }
@@ -440,14 +449,14 @@ export class NewRequestPage implements OnInit, OnDestroy {
         this.currentStep.set(2);
         break;
       case 4:
-        this.currentStep.set(3);
+        this.currentStep.set(this.visitedDoctorStep ? 3 : 2);
         break;
       case 5: {
         const reason = this.selectedReason();
         if (reason && reason.assignment_method === 'appointment') {
           this.currentStep.set(4);
         } else {
-          this.currentStep.set(3);
+          this.currentStep.set(2);
         }
         break;
       }

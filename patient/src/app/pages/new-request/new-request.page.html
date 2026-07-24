@@ -48,6 +48,44 @@
 
       @case (2) {
         <div class="step-content">
+          <h2 class="step-title">{{ 'newRequest.reasonForVisit' | translate }}</h2>
+          <p class="step-description">{{ 'newRequest.selectReasonDesc' | translate }}</p>
+          <div class="reason-list">
+            @for (reason of reasons(); track reason.id) {
+              <div class="reason-item" (click)="selectReason(reason)">
+                <div class="reason-icon">
+                  <ion-icon name="clipboard-outline"></ion-icon>
+                </div>
+                <div class="reason-details">
+                  <p class="reason-name">{{ reason.name }}</p>
+                  <p class="reason-type">
+                    @if (reason.assignment_method === 'appointment') {
+                      <ion-icon name="calendar-outline"></ion-icon>
+                      {{ 'newRequest.scheduled' | translate }}
+                    } @else {
+                      <ion-icon name="flash-outline"></ion-icon>
+                      {{ 'newRequest.immediate' | translate }}
+                    }
+                    @if (reason.duration) {
+                      <span class="reason-duration"> · {{ 'newRequest.duration' | translate:{ duration: reason.duration } }}</span>
+                    }
+                  </p>
+                </div>
+                <ion-icon name="chevron-forward-outline" class="reason-arrow"></ion-icon>
+              </div>
+            }
+          </div>
+          @if (reasons().length === 0) {
+            <div class="empty-state">
+              <ion-icon name="information-circle-outline"></ion-icon>
+              <span>{{ 'newRequest.noReasons' | translate }}</span>
+            </div>
+          }
+        </div>
+      }
+
+      @case (3) {
+        <div class="step-content">
           <h2 class="step-title">{{ 'newRequest.selectDoctor' | translate }}</h2>
           <p class="step-description">{{ 'newRequest.selectDoctorDesc' | translate }}</p>
           <div class="doctors-list">
@@ -84,7 +122,7 @@
           }
           <div class="step-actions">
             @if (selectedDoctor()) {
-              <button class="primary-action" (click)="proceedToReason()">
+              <button class="primary-action" (click)="proceedWithDoctor()">
                 {{ 'newRequest.continueWithDoctor' | translate }}
               </button>
             }
@@ -94,44 +132,6 @@
               </button>
             }
           </div>
-        </div>
-      }
-
-      @case (3) {
-        <div class="step-content">
-          <h2 class="step-title">{{ 'newRequest.reasonForVisit' | translate }}</h2>
-          <p class="step-description">{{ 'newRequest.selectReasonDesc' | translate }}</p>
-          <div class="reason-list">
-            @for (reason of reasons(); track reason.id) {
-              <div class="reason-item" (click)="selectReason(reason)">
-                <div class="reason-icon">
-                  <ion-icon name="clipboard-outline"></ion-icon>
-                </div>
-                <div class="reason-details">
-                  <p class="reason-name">{{ reason.name }}</p>
-                  <p class="reason-type">
-                    @if (reason.assignment_method === 'appointment') {
-                      <ion-icon name="calendar-outline"></ion-icon>
-                      {{ 'newRequest.scheduled' | translate }}
-                    } @else {
-                      <ion-icon name="flash-outline"></ion-icon>
-                      {{ 'newRequest.immediate' | translate }}
-                    }
-                    @if (reason.duration) {
-                      <span class="reason-duration"> · {{ 'newRequest.duration' | translate:{ duration: reason.duration } }}</span>
-                    }
-                  </p>
-                </div>
-                <ion-icon name="chevron-forward-outline" class="reason-arrow"></ion-icon>
-              </div>
-            }
-          </div>
-          @if (reasons().length === 0) {
-            <div class="empty-state">
-              <ion-icon name="information-circle-outline"></ion-icon>
-              <span>{{ 'newRequest.noReasons' | translate }}</span>
-            </div>
-          }
         </div>
       }
 
