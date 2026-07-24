@@ -56,12 +56,6 @@ class OrganisationSerializer(serializers.ModelSerializer):
         ]
 
 
-class SpecialitySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Speciality
-        fields = ["id", "name"]
-
-
 class UserDetailsSerializer(CustomFieldsMixin, serializers.ModelSerializer):
     """
     User model w/o password
@@ -375,7 +369,7 @@ class LoginSerializer(serializers.Serializer):
 class SpecialitySerializer(serializers.ModelSerializer):
     class Meta:
         model = Speciality
-        fields = ["id", "name"]
+        fields = ["id", "name", "icon"]
 
 
 class UserSerializer(serializers.ModelSerializer):

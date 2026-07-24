@@ -25,12 +25,16 @@
         <div class="step-content">
           <h2 class="step-title">{{ 'newRequest.chooseSpecialty' | translate }}</h2>
           <p class="step-description">{{ 'newRequest.chooseSpecialtyDesc' | translate }}</p>
-          <div class="speciality-grid">
+            <div class="speciality-grid">
             @for (speciality of specialities(); track speciality.id) {
               <div class="speciality-card" (click)="selectSpeciality(speciality)">
                 <ion-card-content>
                   <div class="speciality-icon-wrapper">
-                    <ion-icon name="medical-outline" class="speciality-icon"></ion-icon>
+                    @if (speciality.icon) {
+                      <img [src]="speciality.icon" [alt]="speciality.name" class="speciality-icon-img">
+                    } @else {
+                      <ion-icon name="medical-outline" class="speciality-icon"></ion-icon>
+                    }
                   </div>
                   <span class="speciality-name">{{ speciality.name }}</span>
                 </ion-card-content>
@@ -225,7 +229,11 @@
 
             <div class="review-item">
               <div class="review-icon">
-                <ion-icon name="medical-outline"></ion-icon>
+                @if (selectedSpeciality()?.icon) {
+                  <img [src]="selectedSpeciality()?.icon" [alt]="selectedSpeciality()?.name" class="review-speciality-icon-img">
+                } @else {
+                  <ion-icon name="medical-outline"></ion-icon>
+                }
               </div>
               <div class="review-details">
                 <p class="review-label">{{ 'newRequest.specialty' | translate }}</p>
