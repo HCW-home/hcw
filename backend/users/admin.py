@@ -8,6 +8,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext_lazy
 from fcm_django.admin import DeviceAdmin
@@ -523,9 +524,16 @@ class LanguageAdmin(ModelAdmin):
 
 @admin.register(Speciality)
 class SpecialityAdmin(ModelAdmin, TabbedTranslationAdmin):
-    list_display = ["name"]
+    list_display = ["name", "icon_preview"]
     search_fields = ["name"]
     ordering = ["name"]
+    fields = ["name", "icon"]
+
+    def icon_preview(self, obj):
+        if obj.icon:
+            return format_html('<img src="{}" style="max-height: 40px;" />', obj.icon.url)
+        return "—"
+    icon_preview.short_description = "Icon"
 
 
 @admin.register(Organisation)

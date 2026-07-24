@@ -102,6 +102,7 @@ class Language(models.Model):
 
 class Speciality(models.Model):
     name = models.CharField(_("name"), max_length=100)
+    icon = models.ImageField(upload_to=TenantUploadTo("specialities"), blank=True, null=True, help_text=_("Custom icon for this speciality."))
 
     class Meta:
         verbose_name = _("speciality")
