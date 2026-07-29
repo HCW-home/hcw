@@ -54,9 +54,8 @@ class AppointmentTranscriptionConsumer(TenantConsumerMixin, AsyncWebsocketConsum
         self.segment_texts = {}
         self.transcript_segments = {}
         self.saved_segment_ids = set()
-        # Segment ids restart at 0 on each whisper session; shift them to stay unique
-        self.segment_id_offset = 0
-        self.next_segment_id = 0
+        # Namespaces segment timestamps, which restart at 0 on each whisper session
+        self.session_seq = 0
 
         await self.accept()
         logger.info(
@@ -113,8 +112,7 @@ class AppointmentTranscriptionConsumer(TenantConsumerMixin, AsyncWebsocketConsum
         self.segment_texts = {}
         self.transcript_segments = {}
         self.saved_segment_ids = set()
-        self.segment_id_offset = 0
-        self.next_segment_id = 0
+        self.session_seq = 0
 
         self.consultation = await self._get_consultation()
         # Resolved once: hitting the DB on every segment refinement would stall the
@@ -166,14 +164,14 @@ class AppointmentTranscriptionConsumer(TenantConsumerMixin, AsyncWebsocketConsum
                 if self.stopping:
                     return
 
-                # The next session restarts its segment numbering at 0; shift it past
-                # everything already emitted so refinements cannot rewrite older lines.
-                self.segment_id_offset = self.next_segment_id
+                # Segment timestamps restart at 0 in the next session; bump the counter
+                # they are namespaced with so refinements cannot rewrite older lines.
+                self.session_seq += 1
                 self.segment_texts = {}
                 await self._cleanup_whisper_session()
                 logger.info(
                     f"whisper-live session ended, reconnecting "
-                    f"(appointment={self.appointment_pk} offset={self.segment_id_offset})"
+                    f"(appointment={self.appointment_pk} session={self.session_seq})"
                 )
                 await self._send_json({"event": "transcription_reconnecting"})
                 await asyncio.sleep(1)
@@ -243,12 +241,14 @@ class AppointmentTranscriptionConsumer(TenantConsumerMixin, AsyncWebsocketConsum
                             text = seg.get("text", "").strip()
                             if not text or not self.consultation:
                                 continue
-                            if self.segment_texts.get(index) == text:
+                            # whisper only sends a sliding window of its last segments,
+                            # so positional indexes shift and cannot identify a line.
+                            # Its start timestamp is stable; prefix it with the session
+                            # counter since timestamps restart at 0 after a reconnect.
+                            segment_id = f"{self.session_seq}:{seg.get('start', index)}"
+                            if self.segment_texts.get(segment_id) == text:
                                 continue
-                            self.segment_texts[index] = text
-                            # Segment ids must stay unique across reconnects
-                            segment_id = self.segment_id_offset + index
-                            self.next_segment_id = max(self.next_segment_id, segment_id + 1)
+                            self.segment_texts[segment_id] = text
                             # Hand off to a worker: aiohttp only answers whisper's
                             # keepalive pings from inside this receive loop, so the
                             # loop must never await anything slow.
@@ -429,20 +429,22 @@ class AppointmentTranscriptionConsumer(TenantConsumerMixin, AsyncWebsocketConsum
         """
         Segment ids that will not change any more, so they can be persisted.
 
-        Whisper only revises its trailing segment, so everything before the highest
-        id is settled. Flushing a segment still being refined would freeze it on a
-        truncated version, since it is dropped from transcript_segments afterwards.
+        Whisper only revises its trailing segment, so everything inserted before the
+        latest one is settled. Flushing a segment still being refined would freeze it
+        on a truncated version, since it is dropped from transcript_segments after.
+
+        Ids are timestamp strings, so rely on dict insertion order — which is
+        chronological — rather than sorting them.
         """
-        if not self.transcript_segments:
-            return []
-        if flush_all:
-            return sorted(self.transcript_segments)
-        last_id = max(self.transcript_segments)
-        return sorted(
+        ids = list(self.transcript_segments)
+        if flush_all or not ids:
+            return ids
+        last_id = ids[-1]
+        return [
             sid
-            for sid, line in self.transcript_segments.items()
-            if sid != last_id or line["is_final"]
-        )
+            for sid in ids
+            if sid != last_id or self.transcript_segments[sid]["is_final"]
+        ]
 
     @sync_to_async
     def _save_transcript(self, flush_all=False):

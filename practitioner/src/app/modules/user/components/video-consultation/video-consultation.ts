@@ -119,8 +119,8 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   phase = signal<'lobby' | 'connecting' | 'in-call'>('lobby');
 
   private captionEntryId = 0;
-  /** Keep up to this many caption entries — enough for a full session. */
-  private readonly MAX_CAPTION_LINES = 200;
+  /** Rolling window of caption lines kept on screen — the full transcript is stored backend-side. */
+  private readonly MAX_CAPTION_LINES = 4;
   private activeRemoteTranscriptions = new Set<string>();
   private currentUserId: number | null = null;
   private isPractitioner = false;
@@ -361,7 +361,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
         // several messages sharing one segment_id. Rewrite that line rather than
         // appending, and fall back to the last-line heuristic for older backends
         // that do not send segment_id.
-        const hasSegmentId = event.segment_id !== undefined;
+        const hasSegmentId = event.segment_id !== undefined && event.segment_id !== null;
         const segmentKey = hasSegmentId
           ? `${speakerKey}#${event.segment_id}`
           : `${speakerKey}#${++this.captionEntryId}`;
