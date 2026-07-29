@@ -122,6 +122,10 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   /** Rolling window of caption lines kept on screen — the full transcript is stored backend-side. */
   private readonly MAX_CAPTION_LINES = 4;
   private activeRemoteTranscriptions = new Set<string>();
+  /** Last time a speaker was heard transcribing their own microphone. */
+  private ownMicTranscriptionAt = new Map<number, number>();
+  /** How long a speaker's own transcription suppresses our capture of their track. */
+  private readonly OWN_MIC_PRIORITY_MS = 15000;
   private currentUserId: number | null = null;
   private isPractitioner = false;
   /** Identities currently being (un)muted, to disable the button mid-request. */
@@ -224,6 +228,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     this.videoCallService.disconnect();
     this.transcriptionService.stop();
     this.activeRemoteTranscriptions.clear();
+    this.ownMicTranscriptionAt.clear();
     this.cleanupMediaElements();
   }
 
@@ -317,6 +322,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
           this.showCaptions.set(false);
           this.captionLines.set([]);
           this.activeRemoteTranscriptions.clear();
+          this.ownMicTranscriptionAt.clear();
           this.toasterService.show('error', this.t.instant('videoConsultation.captionsError'), this.t.instant('videoConsultation.failedStartCaptions'));
           this.cdr.markForCheck();
         }
@@ -328,33 +334,42 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
         if (event.appointment_id !== this.appointmentId) return;
         if (!this.showCaptions()) return;
 
-        let isMe: boolean;
-        let speakerLabel: string;
-        let speakerKey: string;
+        // A single utterance can reach us twice: once from the speaker's own
+        // microphone session, and once from our own capture of their LiveKit track
+        // (needed for clients that do not transcribe themselves, like the patient
+        // app). speaker_label carries the identity of the audio source when the
+        // event comes from a remote capture.
+        const fromRemoteCapture = !!event.speaker_label;
+        const speakerId = fromRemoteCapture
+          ? Number(event.speaker_label)
+          : event.speaker_id;
 
-        if (event.speaker_label) {
-          // speaker_label is the LiveKit identity (= str(user.pk)) of the audio source.
-          if (event.speaker_label === String(this.currentUserId)) {
-            // Another participant captured OUR voice — merge with the local "You" bubble
-            // so the same speech doesn't appear twice with different labels.
-            isMe = true;
-            speakerLabel = this.t.instant('videoConsultation.you');
-            speakerKey = '__local__';
-          } else {
-            isMe = false;
-            // Resolve the participant's display name from the current participants map.
-            const participant = this.participants.get(event.speaker_label);
-            const rawName = participant?.name || event.speaker_label;
-            speakerLabel = rawName.replace(/\s*\([^)]*@[^)]*\)\s*$/, '').trim() || rawName;
-            speakerKey = `remote_label_${event.speaker_label}`;
-          }
+        if (speakerId === null || Number.isNaN(speakerId)) return;
+
+        const now = Date.now();
+        if (fromRemoteCapture) {
+          // The speaker transcribes themselves — drop our duplicate. Time-bounded so
+          // captions come back if they turn their own transcription off.
+          const lastOwnMic = this.ownMicTranscriptionAt.get(speakerId);
+          if (lastOwnMic !== undefined && now - lastOwnMic < this.OWN_MIC_PRIORITY_MS) return;
         } else {
-          isMe = event.speaker_id !== null && event.speaker_id === this.currentUserId;
-          speakerLabel = isMe
-            ? this.t.instant('videoConsultation.you')
-            : this.t.instant('videoConsultation.participant');
-          speakerKey = isMe ? '__local__' : `unknown_${event.speaker_id}`;
+          this.ownMicTranscriptionAt.set(speakerId, now);
         }
+
+        const isMe = speakerId === this.currentUserId;
+        let speakerLabel: string;
+        if (isMe) {
+          speakerLabel = this.t.instant('videoConsultation.you');
+        } else {
+          // Resolve the participant's display name from the current participants map.
+          const participant = this.participants.get(String(speakerId));
+          const rawName = participant?.name;
+          speakerLabel = rawName
+            ? rawName.replace(/\s*\([^)]*@[^)]*\)\s*$/, '').trim() || rawName
+            : this.t.instant('videoConsultation.participant');
+        }
+        // Same key for both sources so a speaker never gets two parallel bubbles
+        const speakerKey = isMe ? '__local__' : `speaker_${speakerId}`;
 
         const current = this.captionLines();
         // Whisper re-sends a segment as it extends it, so a long sentence arrives as
@@ -749,6 +764,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     if (this.showCaptions()) {
       this.transcriptionService.stop();
       this.activeRemoteTranscriptions.clear();
+      this.ownMicTranscriptionAt.clear();
       this.showCaptions.set(false);
       this.captionLines.set([]);
     } else {
@@ -850,6 +866,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       this.showCaptions.set(false);
       this.transcriptionService.stop();
       this.activeRemoteTranscriptions.clear();
+      this.ownMicTranscriptionAt.clear();
       await this.videoCallService.disconnect();
       this.leave.emit();
     }
@@ -864,6 +881,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     this.showCaptions.set(false);
     this.transcriptionService.stop();
     this.activeRemoteTranscriptions.clear();
+    this.ownMicTranscriptionAt.clear();
     await this.videoCallService.disconnect();
     this.toasterService.show(
       'info',
