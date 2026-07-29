@@ -6,6 +6,7 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
+from core.throttling import ratelimit
 from users.models import DAVAppPassword
 
 DAV = "DAV:"
@@ -57,6 +58,10 @@ def _require_auth(request):
         return None, response
     return user, None
 
+@method_decorator(
+    ratelimit(rate="30/min", methods=["OPTIONS", "PROPFIND"], scope="dav"),
+    name="dispatch",
+)
 @method_decorator(csrf_exempt, name="dispatch")
 class DAVDiscoveryView(View):
     """Handle DAV root discovery for both CalDAV and CardDAV."""
@@ -96,6 +101,10 @@ class DAVDiscoveryView(View):
 
         return _multistatus_response(multistatus)
 
+@method_decorator(
+    ratelimit(rate="30/min", methods=["OPTIONS", "PROPFIND"], scope="dav"),
+    name="dispatch",
+)
 @method_decorator(csrf_exempt, name="dispatch")
 class DAVPrincipalView(View):
     """Handle principal PROPFIND returning both calendar-home-set and addressbook-home-set."""

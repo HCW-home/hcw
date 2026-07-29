@@ -14,6 +14,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from core.authentication import TenantRefreshToken
+from core.throttling import AnonymousTokenRateThrottle
 from users.models import User
 
 MAX_VERIFICATION_ATTEMPTS = getattr(django_settings, "MAX_VERIFICATION_ATTEMPTS", 3)
@@ -72,6 +73,7 @@ class AnonymousTokenAuthView(APIView):
     """
 
     permission_classes = [AllowAny]
+    throttle_classes = [AnonymousTokenRateThrottle]
 
     @extend_schema(
         summary="Anonymous Token Authentication",

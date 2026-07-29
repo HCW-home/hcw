@@ -4,6 +4,8 @@ from django.utils import timezone
 from django.contrib.auth import authenticate, get_user_model, login
 from django.shortcuts import redirect
 from django.views import View
+from django.utils.decorators import method_decorator
+from core.throttling import ratelimit
 from constance import config
 from consultations.models import Consultation, Appointment, Queue, Request
 from users.models import Organisation
@@ -13,6 +15,9 @@ from django.utils.translation import gettext_lazy as _
 User = get_user_model()
 
 
+@method_decorator(
+    ratelimit(rate="5/min", methods=["POST"], scope="admin_login"), name="dispatch"
+)
 class LoginSelectorView(View):
     """View that lists available identity providers for admin login."""
 
