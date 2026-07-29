@@ -70,6 +70,13 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from core.throttling import (
+    LoginRateThrottle,
+    OpenIDRateThrottle,
+    PasswordResetRateThrottle,
+    VerificationCodeIPRateThrottle,
+    VerificationCodeRateThrottle,
+)
 from constance import config as constance_config
 from allauth.socialaccount.models import SocialApp
 
@@ -1454,6 +1461,7 @@ class OpenIDView(SocialLoginView):
     adapter_class = OpenIDAdapter
     serializer_class = SocialLoginSerializer
     client_class = CustomOAuth2Client
+    throttle_classes = [OpenIDRateThrottle]
 
     def post(self, request, *args, **kwargs):
         # Get origin from request headers
@@ -1618,6 +1626,8 @@ class AppConfigView(APIView):
 class LoginView(DjRestAuthLoginView):
     """Login endpoint controlled by disable_password_login constance setting for practitioners."""
 
+    throttle_classes = [LoginRateThrottle]
+
     def post(self, request, *args, **kwargs):
 
         if constance_config.disable_password_login or not constance_config.enable_patient_password_login:
@@ -1664,6 +1674,8 @@ class PasswordChangeView(DjRestAuthPasswordChangeView):
 
 class PasswordResetView(DjRestAuthPasswordResetView):
     """Password reset endpoint controlled by DISABLE_PASSWORD_LOGIN setting for practitioners."""
+
+    throttle_classes = [PasswordResetRateThrottle]
 
     def post(self, request, *args, **kwargs):
         if constance_config.disable_password_login:
@@ -1935,6 +1947,7 @@ class SendVerificationCodeView(APIView):
     """
 
     permission_classes = [AllowAny]
+    throttle_classes = [VerificationCodeRateThrottle, VerificationCodeIPRateThrottle]
 
     @extend_schema(
         summary="Send Verification Code",

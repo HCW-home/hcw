@@ -283,6 +283,16 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
     "EXCEPTION_HANDLER": "fhir_server.exceptions.fhir_exception_handler",
+    # Per-scope rates for the throttle classes in core/throttling.py. Applied
+    # only to the sensitive auth endpoints that opt in via throttle_classes.
+    "DEFAULT_THROTTLE_RATES": {
+        "login": "5/min",
+        "password_reset": "3/min",
+        "verification_code": "3/min",
+        "verification_code_ip": "10/min",
+        "anonymous_token": "5/min",
+        "openid": "10/min",
+    },
 }
 
 # FHIR R4 server configuration (OzoneHIS / OpenMRS interop).
