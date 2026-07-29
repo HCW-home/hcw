@@ -47,9 +47,13 @@ interface CaptionEntry {
   id: number;
   /** Unique key used for same-speaker deduplication (not necessarily numeric). */
   speakerKey: string;
+  /** speakerKey + whisper segment id — identifies the line to rewrite on refinement. */
+  segmentKey: string;
   speakerLabel: string;
   isMe: boolean;
   text: string;
+  /** False while whisper may still extend this segment; used to dim the live line. */
+  isFinal: boolean;
 }
 
 @Component({
@@ -353,20 +357,37 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
         }
 
         const current = this.captionLines();
-        const last = current[current.length - 1];
+        // Whisper re-sends a segment as it extends it, so a long sentence arrives as
+        // several messages sharing one segment_id. Rewrite that line rather than
+        // appending, and fall back to the last-line heuristic for older backends
+        // that do not send segment_id.
+        const hasSegmentId = event.segment_id !== undefined;
+        const segmentKey = hasSegmentId
+          ? `${speakerKey}#${event.segment_id}`
+          : `${speakerKey}#${++this.captionEntryId}`;
+        const existingIndex = hasSegmentId
+          ? current.findIndex((line: CaptionEntry) => line.segmentKey === segmentKey)
+          : current.length > 0 && current[current.length - 1].speakerKey === speakerKey
+            ? current.length - 1
+            : -1;
 
         let updated: CaptionEntry[];
-        if (last && last.speakerKey === speakerKey) {
-          // Same speaker still talking — update the last line in place
-          updated = [...current.slice(0, -1), { ...last, text: event.text }];
+        if (existingIndex !== -1) {
+          updated = [...current];
+          updated[existingIndex] = {
+            ...updated[existingIndex],
+            text: event.text,
+            isFinal: event.is_final ?? true,
+          };
         } else {
-          // New speaker — append a new line, keep only last N
           const entry: CaptionEntry = {
             id: ++this.captionEntryId,
             speakerKey,
+            segmentKey,
             speakerLabel,
             isMe,
             text: event.text,
+            isFinal: event.is_final ?? true,
           };
           updated = [...current, entry].slice(-this.MAX_CAPTION_LINES);
         }

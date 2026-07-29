@@ -589,8 +589,9 @@
   bottom: 90px;
   left: 50%;
   transform: translateX(-50%);
-  width: min(760px, 88%);
-  max-height: 220px;
+  width: min(860px, 92%);
+  // Long sentences need room to breathe, but must not swallow the video
+  max-height: min(320px, 38vh);
   background-color: rgba(0, 0, 0, 0.80);
   border-radius: 10px;
   padding: 14px 20px;
@@ -615,18 +616,26 @@
     border-radius: 2px;
   }
 
+  // Block flow (not flex) so a long sentence wraps as a normal paragraph and
+  // continuation lines run the full width instead of hanging after the label.
   .caption-line {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    flex-wrap: wrap;
+    margin: 0;
+    // Whisper does not punctuate mid-segment; preserve any newline it does send
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    transition: opacity 0.15s ease-in-out;
+
+    // Segment whisper may still extend — hint that the sentence is unfinished
+    &.is-interim {
+      opacity: 0.72;
+    }
   }
 
   .caption-speaker {
     font-size: 13px;
     font-weight: 700;
     white-space: nowrap;
-    flex-shrink: 0;
+    margin-right: 8px;
     color: #60a5fa;
 
     &.is-me {

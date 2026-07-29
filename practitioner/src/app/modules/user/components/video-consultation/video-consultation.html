@@ -286,10 +286,10 @@
       @if (showCaptions() && captionLines().length > 0) {
         <div class="captions-container" #captionsContainer>
           @for (line of captionLines(); track line.id) {
-            <div class="caption-line">
+            <p class="caption-line" [class.is-interim]="!line.isFinal">
               <span class="caption-speaker" [class.is-me]="line.isMe">{{ line.speakerLabel }}:</span>
               <span class="caption-text">{{ line.text }}</span>
-            </div>
+            </p>
           }
         </div>
       }

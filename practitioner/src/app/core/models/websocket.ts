@@ -149,6 +149,10 @@ export interface TranscriptionEvent {
   text: string;
   speaker_id: number | null;
   speaker_label?: string;
+  /** Whisper segment index — the same id is re-sent as the segment gets refined. */
+  segment_id?: number;
+  /** True once whisper considers the segment complete and will not revise it. */
+  is_final?: boolean;
 }
 
 export interface CallResponseEvent {
