@@ -1406,3 +1406,4 @@ ROOM_SERVER_PIN_TTL = int(os.getenv("ROOM_SERVER_PIN_TTL", 24 * 3600))
 
 # Whisper-live transcription server
 WHISPER_LIVE_URL = os.getenv("WHISPER_LIVE_URL", "ws://127.0.0.1:9090")
+WHISPER_LIVE_API_KEY = os.getenv("WHISPER_LIVE_API_KEY", "")
