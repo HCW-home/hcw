@@ -359,6 +359,9 @@ class WebsocketConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
             "appointment_id": event["appointment_id"],
             "text": event["text"],
             "speaker_id": event.get("speaker_id"),
+            # Identifies the caption line to rewrite as whisper refines the segment
+            "segment_id": event.get("segment_id"),
+            "is_final": event.get("is_final", True),
         }
         if "speaker_label" in event:
             payload["speaker_label"] = event["speaker_label"]
