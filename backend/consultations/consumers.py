@@ -188,12 +188,19 @@ class AppointmentTranscriptionConsumer(TenantConsumerMixin, AsyncWebsocketConsum
         """Open a whisper-live session and send its initial config. False on failure."""
         whisper_url = settings.WHISPER_LIVE_URL
 
+        # Sent as a header rather than ?token= so the key stays out of access logs
+        headers = {}
+        if settings.WHISPER_LIVE_API_KEY:
+            headers["Authorization"] = f"Bearer {settings.WHISPER_LIVE_API_KEY}"
+
         try:
             # sock_connect/connect only bound the handshake, not the (long-lived) WS itself
             self.whisper_session = aiohttp.ClientSession(
                 timeout=aiohttp.ClientTimeout(connect=10, sock_connect=10)
             )
-            self.whisper_ws = await self.whisper_session.ws_connect(whisper_url, compress=0)
+            self.whisper_ws = await self.whisper_session.ws_connect(
+                whisper_url, compress=0, headers=headers
+            )
 
             # Use speaker_label in uid so each remote participant gets its own session
             uid_suffix = self.speaker_label or "self"
