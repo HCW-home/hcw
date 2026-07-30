@@ -37,6 +37,7 @@ import { Typography } from '../../../../shared/ui-components/typography/typograp
 import { Loader } from '../../../../shared/components/loader/loader';
 import { PreJoinLobby } from '../../../../shared/components/pre-join-lobby/pre-join-lobby';
 import { MessageList, Message, SendMessageData, EditMessageData, DeleteMessageData } from '../../../../shared/components/message-list/message-list';
+import { InCallParticipants } from '../../../../shared/components/in-call-participants/in-call-participants';
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
 import { ButtonStyleEnum } from '../../../../shared/constants/button';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
@@ -66,6 +67,7 @@ interface CaptionEntry {
     Typography,
     Loader,
     MessageList,
+    InCallParticipants,
     PreJoinLobby,
     TranslatePipe,
   ],
@@ -108,6 +110,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   isLoading = false;
   errorMessage = '';
   showChat = signal(false);
+  showParticipants = signal(false);
   unreadCount = signal(0);
   /** Ids of messages already accounted for, to detect genuinely new ones. */
   private seenMessageIds = new Set<number>();
@@ -900,7 +903,25 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     // Opening the chat clears the unread badge.
     if (this.showChat()) {
       this.unreadCount.set(0);
+      // Both panels dock on the same edge: only one can be visible.
+      this.showParticipants.set(false);
     }
+  }
+
+  toggleParticipantsPanel(): void {
+    this.showParticipants.update(v => !v);
+    if (this.showParticipants()) {
+      this.showChat.set(false);
+    }
+  }
+
+  /**
+   * Whether the local user may manage the appointment roster during the call.
+   * Practitioners only, and only when the call is tied to an appointment
+   * (calling a beneficiary straight from a consultation has none).
+   */
+  get canManageParticipants(): boolean {
+    return this.isPractitioner && !!this.appointmentId && !this.isMinimized;
   }
 
   onSendMessage(data: SendMessageData): void {

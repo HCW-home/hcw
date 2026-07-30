@@ -1151,5 +1151,19 @@
     "reminder": "Promemoria",
     "reminderDesc": "Invia un promemoria automatico via SMS o e-mail a un contatto.",
     "createReminder": "Crea un promemoria"
+  },
+  "inCallParticipants": {
+    "title": "Partecipanti",
+    "addParticipant": "Aggiungi partecipante",
+    "inCall": "In chiamata",
+    "notJoined": "Non connesso",
+    "empty": "Nessun partecipante per ora.",
+    "participantAdded": "Partecipante aggiunto",
+    "participantRemoved": "Partecipante rimosso",
+    "addError": "Impossibile aggiungere il partecipante",
+    "removeError": "Impossibile rimuovere il partecipante",
+    "remove": "Rimuovi",
+    "removeTitle": "Rimuovi partecipante",
+    "removeMessage": "Rimuovere {{name}} da questo appuntamento? Verrà disconnesso dalla chiamata."
   }
 }

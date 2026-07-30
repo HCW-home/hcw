@@ -228,6 +228,17 @@
             </button>
           }
 
+          @if (canManageParticipants) {
+            <!-- Participants -->
+            <button
+              class="control-button"
+              [class.active]="showParticipants()"
+              (click)="toggleParticipantsPanel()">
+              <app-svg src="users" [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
+              <span class="control-label">{{ 'inCallParticipants.title' | translate }}</span>
+            </button>
+          }
+
           @if (!isMinimized) {
             <!-- Chat -->
             <button
@@ -280,6 +291,20 @@
             (deleteMessage)="onDeleteMessage($event)"
             (loadMore)="onLoadMore()">
           </app-message-list>
+        </div>
+      }
+
+      @if (showParticipants() && canManageParticipants) {
+        <div class="side-panel participants-side-panel">
+          <app-in-call-participants
+            [appointmentId]="appointmentId!"
+            [consultationId]="consultationId"
+            [liveParticipants]="getParticipantsArray()"
+            [canModerate]="canModerate"
+            [mutingIdentities]="mutingInProgress"
+            (muteToggle)="toggleParticipantMute($event)"
+            (closed)="toggleParticipantsPanel()">
+          </app-in-call-participants>
         </div>
       }
 

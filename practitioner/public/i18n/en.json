@@ -1268,5 +1268,19 @@
     "reminder": "Reminder",
     "reminderDesc": "Send an automatic SMS or email reminder to a contact.",
     "createReminder": "Create a reminder"
+  },
+  "inCallParticipants": {
+    "title": "Participants",
+    "addParticipant": "Add participant",
+    "inCall": "In call",
+    "notJoined": "Not joined",
+    "empty": "No participant yet.",
+    "participantAdded": "Participant added",
+    "participantRemoved": "Participant removed",
+    "addError": "Failed to add the participant",
+    "removeError": "Failed to remove the participant",
+    "remove": "Remove",
+    "removeTitle": "Remove participant",
+    "removeMessage": "Remove {{name}} from this appointment? They will be disconnected from the call."
   }
 }

@@ -296,6 +296,12 @@ export interface UpdateAppointmentRequest {
   consultation?: number;
 }
 
+export interface AddParticipantsRequest {
+  participants_ids?: number[];
+  temporary_participants?: ITemporaryParticipant[];
+  participants_visibility?: ParticipantVisibilityInput[];
+}
+
 export interface CreateParticipantRequest {
   user_id?: number;
   email?: string;

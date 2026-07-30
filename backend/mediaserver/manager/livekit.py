@@ -211,6 +211,31 @@ class Main(BaseMediaserver):
         room_name = str(room_uuid)
         return asyncio.run(self._eject_all_participants_async(room_name))
 
+    async def _remove_participant_async(self, room_name: str, identity: str) -> bool:
+        """Remove one participant from the room.
+
+        Returns False when the participant is not connected (or the room no
+        longer exists): removing someone who already left is not an error.
+        """
+        async with LiveKitAPI(
+            url=self.server.url,
+            api_key=self.server.api_token,
+            api_secret=self.server.api_secret,
+        ) as client:
+            try:
+                await client.room.remove_participant(
+                    RoomParticipantIdentity(room=room_name, identity=identity)
+                )
+            except TwirpError:
+                return False
+            return True
+
+    def remove_participant(self, room_uuid, target_user) -> bool:
+        """Forcibly remove a single participant from a room."""
+        room_name = str(room_uuid)
+        identity = self._build_identity(target_user)
+        return asyncio.run(self._remove_participant_async(room_name, identity))
+
     async def get_room_info(self, room_name: str):
         """Get information about a specific room"""
         async with LiveKitAPI(

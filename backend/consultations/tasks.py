@@ -90,6 +90,43 @@ def handle_invites(appointment_id):
 
 
 @app.task
+def notify_ongoing_appointment_invite(appointment_id, user_ids):
+    """Tell participants added mid-call that the meeting is already running.
+
+    The regular `invitation_to_appointment` template announces a future
+    appointment, which reads wrong when the call has already started: these
+    people need a "join now" link instead.
+    """
+    appointment = Appointment.objects.get(pk=appointment_id)
+    participants = Participant.objects.filter(
+        appointment=appointment,
+        user_id__in=user_ids,
+        is_active=True,
+        is_invited=True,
+    ).select_related("user")
+
+    for participant in participants:
+        # Don't notify creator
+        if appointment.created_by == participant.user:
+            continue
+
+        Message.objects.create(
+            communication_method=participant.user.communication_method,
+            recipient_phone=participant.user.mobile_phone_number,
+            recipient_email=participant.user.email,
+            sent_to=participant.user,
+            sent_by=appointment.created_by,
+            template_system_name="invitation_to_ongoing_appointment",
+            content_type=ContentType.objects.get_for_model(participant),
+            object_id=participant.pk,
+        )
+        # Mark as notified so the scheduled-invite flow doesn't send a second,
+        # contradictory message for the same appointment.
+        participant.is_notified = True
+        participant.save(update_fields=["is_notified"])
+
+
+@app.task
 def handle_reminders():
     now = timezone.now().replace(second=0, microsecond=0)
     TenantModel = get_tenant_model()

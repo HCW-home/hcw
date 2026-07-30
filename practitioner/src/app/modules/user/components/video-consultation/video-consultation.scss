@@ -763,3 +763,23 @@
     overflow: hidden;
   }
 }
+
+// Docked panel sharing the chat's edge (participants roster).
+.side-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 380px;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  z-index: 30;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.3);
+
+  app-in-call-participants {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+}
