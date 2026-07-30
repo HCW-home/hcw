@@ -88,6 +88,19 @@ class BaseMediaserver(ABC):
             "This media server does not support removing participants."
         )
 
+    def remove_participant(self, room_uuid, target_user) -> bool:
+        """Forcibly remove a single participant from a room.
+
+        Used when a moderator removes someone from an ongoing call. Returns
+        True when the participant was actually in the room and got kicked.
+
+        Providers that return False from supports_remote_kick() do not override
+        this and callers must not invoke it.
+        """
+        raise NotImplementedError(
+            "This media server does not support removing participants."
+        )
+
 
 MAIN_CLASSES: Dict[str, Type[BaseMediaserver]] = {}
 MAIN_DISPLAY_NAMES: List[Tuple[str, str]] = []

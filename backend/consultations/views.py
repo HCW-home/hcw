@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
+import logging
 from zoneinfo import ZoneInfo
 import uuid
 
@@ -11,7 +12,7 @@ from core.mixins import CreatedByMixin
 from django.conf import settings
 from constance import config
 from django.contrib.auth import get_user_model
-from django.db import models
+from django.db import models, transaction
 from django.db.models import (
     BooleanField,
     Case,
@@ -69,6 +70,7 @@ from .models import (
 from .paginations import ConsultationPagination
 from .permissions import IsPractitioner
 from .serializers import (
+    AppointmentAddParticipantsSerializer,
     AppointmentCreateSerializer,
     AppointmentSerializer,
     BookingSlotSerializer,
@@ -77,6 +79,7 @@ from .serializers import (
     ConsultationSerializer,
     CustomFieldSerializer,
     ParticipantDetailSerializer,
+    ParticipantReadSerializer,
     PrescriptionSerializer,
     QueueSerializer,
     ReasonDetailSerializer,
@@ -86,6 +89,8 @@ from .serializers import (
 )
 
 User = get_user_model()
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -558,8 +563,17 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
 
-        # For create, update, partial_update: restrict to creator or consultation access
-        if self.action in ["create", "update", "partial_update"]:
+        # For create, update, partial_update and the participant moderation
+        # actions: restrict to creator or consultation access. Read actions use
+        # a wider scope that also covers plain participants, which must not be
+        # able to alter the roster.
+        if self.action in [
+            "create",
+            "update",
+            "partial_update",
+            "add_participants",
+            "remove_participant",
+        ]:
             return Appointment.objects.filter(
                 Q(created_by=user)
                 | Q(consultation__in=Consultation.objects.accessible_by(user))
@@ -951,6 +965,197 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
             )
 
         return Response({"status": "muted" if muted else "unmuted", "tracks": affected})
+
+    @extend_schema(
+        request=AppointmentAddParticipantsSerializer,
+        responses=ParticipantReadSerializer(many=True),
+        description=(
+            "Add participants to an appointment, typically while the call is "
+            "running. Purely additive: participants already attached are left "
+            "untouched. Invites are (re)sent to anyone not notified yet."
+        ),
+    )
+    @action(detail=True, methods=["post"])
+    def add_participants(self, request, pk=None):
+        """Invite additional participants to an ongoing appointment."""
+        from .tasks import handle_invites, notify_ongoing_appointment_invite
+
+        appointment = self.get_object()
+        if appointment.consultation and appointment.consultation.closed_at:
+            return Response(
+                {"detail": _("Cannot add participants to a closed consultation")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = AppointmentAddParticipantsSerializer(
+            data=request.data, context=self.get_serializer_context()
+        )
+        serializer.is_valid(raise_exception=True)
+        added = serializer.save(appointment)
+
+        appointment_pk = appointment.pk
+        if self._is_call_ongoing(appointment):
+            # The meeting is already running: invite them to join right now
+            # instead of announcing a future appointment.
+            added_user_ids = [participant.user_id for participant in added]
+            transaction.on_commit(
+                lambda: notify_ongoing_appointment_invite.delay(
+                    appointment_pk, added_user_ids
+                )
+            )
+        else:
+            transaction.on_commit(lambda: handle_invites.delay(appointment_pk))
+
+        for participant in added:
+            self._broadcast_participant_change(
+                appointment, participant.user, "participant_added"
+            )
+
+        participants = appointment.participant_set.filter(
+            is_active=True
+        ).select_related("user")
+        return Response(
+            ParticipantReadSerializer(
+                participants, many=True, context=self.get_serializer_context()
+            ).data
+        )
+
+    @extend_schema(
+        responses={
+            200: {
+                "type": "object",
+                "properties": {
+                    "status": {"type": "string"},
+                    "ejected": {
+                        "type": "boolean",
+                        "description": "Whether the user was kicked out of the live room",
+                    },
+                },
+            }
+        },
+        description=(
+            "Remove a participant from an appointment. The participant is "
+            "deactivated and, when the media server supports it, immediately "
+            "ejected from the running call."
+        ),
+    )
+    @action(detail=True, methods=["post"])
+    def remove_participant(self, request, pk=None):
+        """Remove a participant from the appointment and from the live call."""
+        appointment = self.get_object()
+        consultation = appointment.consultation
+
+        target_user_id = request.data.get("user_id")
+        if not target_user_id:
+            return Response(
+                {"error": _("user_id is required")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        participant = (
+            appointment.participant_set.filter(user__pk=target_user_id, is_active=True)
+            .select_related("user")
+            .first()
+        )
+        if not participant:
+            return Response(
+                {"error": _("Participant not found in this appointment")},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if participant.user.pk == request.user.pk:
+            return Response(
+                {"error": _("Leave the call instead of removing yourself")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # The beneficiary is the reason the consultation exists: removing them
+        # would leave an appointment nobody can act on.
+        if consultation and consultation.beneficiary_id == participant.user.pk:
+            return Response(
+                {"error": _("The beneficiary cannot be removed from the appointment")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        target_user = participant.user
+        AppointmentSerializer.deactivate_participant(participant)
+
+        # Kicking out of the live room is best effort: the participant is
+        # already removed in database, and a media server hiccup must not undo
+        # that.
+        ejected = False
+        try:
+            server = Server.get_or_pin_for_room(appointment.room_uuid)
+            if server.instance.supports_remote_kick():
+                ejected = server.instance.remove_participant(
+                    appointment.room_uuid, target_user
+                )
+        except NoMediaServerAvailable:
+            pass
+        except Exception:
+            logger.exception(
+                "Failed to eject user %s from room %s",
+                target_user.pk,
+                appointment.room_uuid,
+            )
+
+        self._broadcast_participant_change(
+            appointment, target_user, "participant_removed"
+        )
+
+        return Response({"status": "removed", "ejected": ejected})
+
+    @staticmethod
+    def _is_call_ongoing(appointment):
+        """Whether the call can be joined right now.
+
+        Same window as the `join` action: an online appointment whose
+        early-join window has opened and whose consultation is still open.
+        """
+        if appointment.type != Type.online:
+            return False
+        if appointment.consultation and appointment.consultation.closed_at:
+            return False
+        earliest_join = appointment.scheduled_at - timedelta(
+            minutes=config.appointment_early_join_minutes
+        )
+        return timezone.now() >= earliest_join
+
+    def _broadcast_participant_change(self, appointment, target_user, state):
+        """Notify everyone concerned that the appointment roster changed.
+
+        Recipients are the consultation members plus the added/removed user
+        themselves, so a removed participant learns about it even after being
+        ejected from the room.
+        """
+        from .signals import get_users_to_notification_consultation
+
+        recipient_pks = {target_user.pk}
+        if appointment.consultation:
+            recipient_pks.update(
+                get_users_to_notification_consultation(appointment.consultation)
+            )
+        recipient_pks.update(
+            appointment.participant_set.filter(is_active=True).values_list(
+                "user_id", flat=True
+            )
+        )
+
+        channel_layer = get_channel_layer()
+        payload = {
+            "type": "appointment",
+            "consultation_id": (
+                appointment.consultation.pk if appointment.consultation else None
+            ),
+            "appointment_id": appointment.pk,
+            "state": state,
+            "data": {
+                "user_id": target_user.pk,
+                "user_name": target_user.name or target_user.email,
+            },
+        }
+        for user_pk in recipient_pks:
+            async_to_sync(channel_layer.group_send)(user_group(user_pk), payload)
 
     def _is_doctor(self, user, consultation, appointment=None):
         """Check if user is a doctor (in Queue group)"""

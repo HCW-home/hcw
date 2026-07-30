@@ -1115,5 +1115,19 @@
     "reminder": "Rappel",
     "reminderDesc": "Envoyer un rappel automatique par SMS ou e-mail à un contact.",
     "createReminder": "Créer un rappel"
+  },
+  "inCallParticipants": {
+    "title": "Participants",
+    "addParticipant": "Ajouter un participant",
+    "inCall": "En appel",
+    "notJoined": "Absent",
+    "empty": "Aucun participant pour le moment.",
+    "participantAdded": "Participant ajouté",
+    "participantRemoved": "Participant retiré",
+    "addError": "Impossible d'ajouter le participant",
+    "removeError": "Impossible de retirer le participant",
+    "remove": "Retirer",
+    "removeTitle": "Retirer le participant",
+    "removeMessage": "Retirer {{name}} de ce rendez-vous ? La personne sera déconnectée de l'appel."
   }
 }

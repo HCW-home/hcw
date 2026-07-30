@@ -1125,5 +1125,19 @@
   },
   "createConsultationModal": {
     "formHelper": "Ein Verlauf bündelt Termine, sichere Nachrichten und Dokumente, die mit einem Empfänger geteilt werden. Sie können optional sofort einen ersten Termin planen."
+  },
+  "inCallParticipants": {
+    "title": "Teilnehmer",
+    "addParticipant": "Teilnehmer hinzufügen",
+    "inCall": "Im Anruf",
+    "notJoined": "Nicht beigetreten",
+    "empty": "Noch keine Teilnehmer.",
+    "participantAdded": "Teilnehmer hinzugefügt",
+    "participantRemoved": "Teilnehmer entfernt",
+    "addError": "Teilnehmer konnte nicht hinzugefügt werden",
+    "removeError": "Teilnehmer konnte nicht entfernt werden",
+    "remove": "Entfernen",
+    "removeTitle": "Teilnehmer entfernen",
+    "removeMessage": "{{name}} aus diesem Termin entfernen? Die Person wird aus dem Anruf getrennt."
   }
 }

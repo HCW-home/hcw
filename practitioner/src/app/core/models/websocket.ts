@@ -135,7 +135,11 @@ export interface AppointmentJoinedEvent {
   type: 'appointment';
   consultation_id: number;
   appointment_id: number;
-  state: 'participant_joined';
+  state:
+    | 'participant_joined'
+    | 'participant_left'
+    | 'participant_added'
+    | 'participant_removed';
   data: {
     user_id: number;
     user_name: string;

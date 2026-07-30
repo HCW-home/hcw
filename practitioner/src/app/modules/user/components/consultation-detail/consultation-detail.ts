@@ -36,6 +36,7 @@ import { IncomingCallService } from '../../../../core/services/incoming-call.ser
 import { ActiveCallService } from '../../../../core/services/active-call.service';
 import { Auth } from '../../../../core/services/auth';
 import { EncryptionService } from '../../../../core/services/encryption.service';
+import { ConsultationCryptoService } from '../../../../core/services/consultation-crypto.service';
 import {
   Consultation,
   ConsultationMessage,
@@ -371,6 +372,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   activeCallService = inject(ActiveCallService);
   private authService = inject(Auth);
   private encryptionService = inject(EncryptionService);
+  private cryptoService = inject(ConsultationCryptoService);
   private t = inject(TranslationService);
 
   // Decrypted consultation private RSA key, imported non-extractable so its
@@ -1122,7 +1124,6 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     ) {
       return;
     }
-    const seenUserIds = new Set<number>();
     const privateKeyBytes = new TextEncoder().encode(
       this.consultationPrivateKeyPem,
     );
@@ -1158,45 +1159,15 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       }
     }
 
-    for (const appointment of this.appointments()) {
-      for (const participant of appointment.participants || []) {
-        const userId = participant.user?.id;
-        if (
-          !userId
-          || !participant.is_active
-          || !participant.is_consultation_visible
-          || participant.has_consultation_key
-          || seenUserIds.has(userId)
-        ) {
-          continue;
-        }
-        const pubkey = participant.user?.public_key;
-        if (!pubkey) {
-          continue;
-        }
-        seenUserIds.add(userId);
-        try {
-          const encryptedPrivate =
-            await this.encryptionService.rsaEnvelopeEncrypt(
-              privateKeyBytes,
-              pubkey,
-            );
-          const fingerprint = participant.user?.public_key_fingerprint
-            ?? await this.encryptionService.fingerprintPublicKey(pubkey);
-          toProvision.push({
-            user_id: userId,
-            encrypted_private_key: encryptedPrivate,
-            pubkey_fingerprint: fingerprint,
-          });
-        } catch (err) {
-          console.warn(
-            '[encryption] failed to wrap consultation key for participant',
-            participant.id,
-            err,
-          );
-        }
-      }
-    }
+    const participants = this.appointments().flatMap(
+      appointment => appointment.participants || [],
+    );
+    toProvision.push(
+      ...(await this.cryptoService.buildParticipantEnvelopes(
+        participants,
+        this.consultationPrivateKeyPem,
+      )),
+    );
 
     if (!toProvision.length) {
       return;

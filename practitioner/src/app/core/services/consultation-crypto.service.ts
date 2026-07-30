@@ -3,7 +3,9 @@ import { EncryptionService } from './encryption.service';
 import {
   Consultation,
   ConsultationKeyEnvelope,
+  ConsultationKeyInput,
   ConsultationMessage,
+  Participant,
 } from '../models/consultation';
 
 interface AttachmentDecryptResult {
@@ -29,6 +31,11 @@ export class ConsultationCryptoService {
   // unwrapping happens once per consultation per session.
   private cache = new Map<number, CryptoKey>();
 
+  // Same key material as `cache`, kept in PEM form because provisioning new
+  // participants requires re-wrapping it with their public key (a
+  // non-extractable CryptoKey cannot be exported).
+  private pemCache = new Map<number, string>();
+
   async loadConsultationKey(
     consultation: Consultation,
     userId: number,
@@ -37,6 +44,35 @@ export class ConsultationCryptoService {
       return null;
     }
     const cached = this.cache.get(consultation.id);
+    if (cached) {
+      return cached;
+    }
+    const consultPrivPem = await this.loadConsultationPrivatePem(
+      consultation,
+      userId,
+    );
+    if (!consultPrivPem) {
+      return null;
+    }
+    const consultPrivKey =
+      await this.encryptionService.importPrivateKey(consultPrivPem);
+    this.cache.set(consultation.id, consultPrivKey);
+    return consultPrivKey;
+  }
+
+  /**
+   * Unwrap the consultation private key and return it as PEM, memoised per
+   * consultation. The PEM never leaves the browser: it is only used to build
+   * the wrapped envelopes sent to `sync-consultation-keys`.
+   */
+  async loadConsultationPrivatePem(
+    consultation: Consultation,
+    userId: number,
+  ): Promise<string | null> {
+    if (!consultation?.is_encrypted) {
+      return null;
+    }
+    const cached = this.pemCache.get(consultation.id);
     if (cached) {
       return cached;
     }
@@ -52,18 +88,69 @@ export class ConsultationCryptoService {
     if (!consultPrivPem) {
       return null;
     }
-    const consultPrivKey =
-      await this.encryptionService.importPrivateKey(consultPrivPem);
-    this.cache.set(consultation.id, consultPrivKey);
-    return consultPrivKey;
+    this.pemCache.set(consultation.id, consultPrivPem);
+    return consultPrivPem;
+  }
+
+  /**
+   * Wrap the consultation private key for every participant who can access
+   * the chat but has no ConsultationKey row yet. Returns the envelopes to
+   * POST to `sync-consultation-keys`; participants without a published
+   * public key are skipped (they get their envelope once they have one).
+   */
+  async buildParticipantEnvelopes(
+    participants: Participant[],
+    consultationPrivatePem: string,
+  ): Promise<ConsultationKeyInput[]> {
+    const privateKeyBytes = new TextEncoder().encode(consultationPrivatePem);
+    const seenUserIds = new Set<number>();
+    const envelopes: ConsultationKeyInput[] = [];
+
+    for (const participant of participants) {
+      const userId = participant.user?.id;
+      const pubkey = participant.user?.public_key;
+      if (
+        !userId
+        || !pubkey
+        || !participant.is_active
+        || !participant.is_consultation_visible
+        || participant.has_consultation_key
+        || seenUserIds.has(userId)
+      ) {
+        continue;
+      }
+      seenUserIds.add(userId);
+      try {
+        const encryptedPrivate = await this.encryptionService.rsaEnvelopeEncrypt(
+          privateKeyBytes,
+          pubkey,
+        );
+        const fingerprint = participant.user?.public_key_fingerprint
+          ?? await this.encryptionService.fingerprintPublicKey(pubkey);
+        envelopes.push({
+          user_id: userId,
+          encrypted_private_key: encryptedPrivate,
+          pubkey_fingerprint: fingerprint,
+        });
+      } catch (err) {
+        console.warn(
+          '[encryption] failed to wrap consultation key for participant',
+          participant.id,
+          err,
+        );
+      }
+    }
+    return envelopes;
   }
 
   forget(consultationId: number): void {
     this.cache.delete(consultationId);
+    this.pemCache.delete(consultationId);
   }
 
   clear(): void {
     this.cache.clear();
+    this.pemCache.clear();
   }
 
   private async resolveConsultationPrivatePem(

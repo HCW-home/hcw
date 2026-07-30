@@ -13,6 +13,7 @@ import {
   CreateBookingSlot,
   ConsultationMessage,
   ConsultationRequest,
+  AddParticipantsRequest,
   CreateAppointmentRequest,
   UpdateAppointmentRequest,
   CreateParticipantRequest,
@@ -474,6 +475,26 @@ export class ConsultationService {
       // Handle errors in the component so we can show a specific message
       // (e.g. remote unmute disabled) instead of the generic error toast.
       { context: new HttpContext().set(SKIP_ERROR_TOAST, true) }
+    );
+  }
+
+  addAppointmentParticipants(
+    appointmentId: number,
+    payload: AddParticipantsRequest
+  ): Observable<Participant[]> {
+    return this.http.post<Participant[]>(
+      `${this.apiUrl}/appointments/${appointmentId}/add_participants/`,
+      payload
+    );
+  }
+
+  removeAppointmentParticipant(
+    appointmentId: number,
+    userId: number
+  ): Observable<{ status: string; ejected: boolean }> {
+    return this.http.post<{ status: string; ejected: boolean }>(
+      `${this.apiUrl}/appointments/${appointmentId}/remove_participant/`,
+      { user_id: userId }
     );
   }
 

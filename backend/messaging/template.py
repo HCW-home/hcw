@@ -44,6 +44,21 @@ DEFAULT_NOTIFICATION_MESSAGES = {
         "model": "consultations.Participant",
         "helper_text": "Message sent to participant with invitation to join a consultation at a later time",
     },
+    "invitation_to_ongoing_appointment": {
+        "template_subject": _("A consultation is in progress — you are invited"),
+        "template_content": _(
+            """You have been invited to join a consultation that is currently in progress. """
+            """Join now to take part in the call."""
+        ),
+        "template_content_html": _(
+            """<p>You have been invited to join a consultation that is <strong>currently in progress</strong>.</p>"""
+            """<p>Join now to take part in the call.</p>"""
+        ),
+        "action": "join",
+        "action_label": _("Join the consultation"),
+        "model": "consultations.Participant",
+        "helper_text": "Message sent to a participant invited while the call is already running",
+    },
     "appointment_cancelled": {
         "template_subject": _("Your appointment has been cancelled"),
         "template_content": _(

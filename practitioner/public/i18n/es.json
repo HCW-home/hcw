@@ -1151,5 +1151,19 @@
     "reminder": "Recordatorio",
     "reminderDesc": "Envíe un recordatorio automático por SMS o correo a un contacto.",
     "createReminder": "Crear un recordatorio"
+  },
+  "inCallParticipants": {
+    "title": "Participantes",
+    "addParticipant": "Añadir participante",
+    "inCall": "En la llamada",
+    "notJoined": "No conectado",
+    "empty": "Aún no hay participantes.",
+    "participantAdded": "Participante añadido",
+    "participantRemoved": "Participante eliminado",
+    "addError": "No se pudo añadir al participante",
+    "removeError": "No se pudo eliminar al participante",
+    "remove": "Eliminar",
+    "removeTitle": "Eliminar participante",
+    "removeMessage": "¿Eliminar a {{name}} de esta cita? Se desconectará de la llamada."
   }
 }

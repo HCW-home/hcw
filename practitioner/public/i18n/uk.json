@@ -1267,5 +1267,19 @@
     "reminder": "Нагадування",
     "reminderDesc": "Надішліть контакту автоматичне нагадування через SMS або e-mail.",
     "createReminder": "Створити нагадування"
+  },
+  "inCallParticipants": {
+    "title": "Учасники",
+    "addParticipant": "Додати учасника",
+    "inCall": "У дзвінку",
+    "notJoined": "Не приєднався",
+    "empty": "Учасників поки немає.",
+    "participantAdded": "Учасника додано",
+    "participantRemoved": "Учасника видалено",
+    "addError": "Не вдалося додати учасника",
+    "removeError": "Не вдалося видалити учасника",
+    "remove": "Видалити",
+    "removeTitle": "Видалити учасника",
+    "removeMessage": "Видалити {{name}} із цієї зустрічі? Його буде відключено від дзвінка."
   }
 }

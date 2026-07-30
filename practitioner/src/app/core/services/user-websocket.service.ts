@@ -39,6 +39,7 @@ export class UserWebSocketService implements OnDestroy {
   private messagesSubject = new Subject<UserMessageEvent>();
   private notificationsSubject = new Subject<NotificationEvent>();
   private appointmentJoinedSubject = new Subject<AppointmentJoinedEvent>();
+  private appointmentEventSubject = new Subject<AppointmentJoinedEvent>();
   private transcriptionSubject = new Subject<TranscriptionEvent>();
   private consultationEventSubject = new Subject<ConsultationEvent>();
   private callResponseSubject = new Subject<CallResponseEvent>();
@@ -62,6 +63,9 @@ export class UserWebSocketService implements OnDestroy {
     this.notificationsSubject.asObservable();
   public appointmentJoined$: Observable<AppointmentJoinedEvent> =
     this.appointmentJoinedSubject.asObservable();
+  /** Every appointment event, whatever its state (roster changes included). */
+  public appointmentEvent$: Observable<AppointmentJoinedEvent> =
+    this.appointmentEventSubject.asObservable();
   public transcription$: Observable<TranscriptionEvent> =
     this.transcriptionSubject.asObservable();
   public consultationEvent$: Observable<ConsultationEvent> =
@@ -261,6 +265,7 @@ export class UserWebSocketService implements OnDestroy {
       .subscribe(event => {
         const appointmentEvent = event as AppointmentJoinedEvent;
         console.log('[UserWS] Appointment event received:', appointmentEvent);
+        this.appointmentEventSubject.next(appointmentEvent);
         if (appointmentEvent.state === 'participant_joined') {
           console.log('[UserWS] participant_joined - showing incoming call');
           this.appointmentJoinedSubject.next(appointmentEvent);

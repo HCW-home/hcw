@@ -751,26 +751,11 @@ class AppointmentSerializer(serializers.ModelSerializer):
 
             # Add new participants or reactivate existing ones
             for user_id in new_users - existing_users:
-                visible = visibility_map.get(user_id, False)
-                participant, created = Participant.objects.get_or_create(
-                    appointment=appointment,
-                    user_id=user_id,
-                    defaults={
-                        "is_active": True,
-                        "is_consultation_visible": visible,
-                    },
+                AppointmentSerializer.add_or_reactivate_participant(
+                    appointment,
+                    user_id,
+                    visibility_map.get(user_id, False),
                 )
-
-                update_fields = []
-                if not created and not participant.is_active:
-                    participant.is_active = True
-                    participant.is_notified = False
-                    update_fields += ["is_active", "is_notified"]
-                if not created and visible and not participant.is_consultation_visible:
-                    participant.is_consultation_visible = True
-                    update_fields += ["is_consultation_visible"]
-                if update_fields:
-                    participant.save(update_fields=update_fields)
 
             # Deactivate removed participants
             removed_users = existing_users - new_users
@@ -779,9 +764,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
                     appointment=appointment, user_id__in=removed_users, is_active=True
                 )
                 for participant in participants_to_deactivate:
-                    participant.is_active = False
-                    participant.save(update_fields=["is_active"])
-                    AppointmentSerializer._revoke_consultation_key(participant)
+                    AppointmentSerializer.deactivate_participant(participant)
 
         if temporary_participants_data is not None:
             request_user = self.context["request"].user
@@ -791,25 +774,9 @@ class AppointmentSerializer(serializers.ModelSerializer):
                 )
 
                 visible = temp_participant.get("is_consultation_visible", False)
-                participant, created = Participant.objects.get_or_create(
-                    appointment=appointment,
-                    user=user,
-                    defaults={
-                        "is_active": True,
-                        "is_consultation_visible": visible,
-                    },
+                participant = AppointmentSerializer.add_or_reactivate_participant(
+                    appointment, user, visible, downgrade_visibility=True
                 )
-
-                update_fields = []
-                if not created and not participant.is_active:
-                    participant.is_active = True
-                    participant.is_notified = False
-                    update_fields += ["is_active", "is_notified"]
-                if not created and participant.is_consultation_visible != visible:
-                    participant.is_consultation_visible = visible
-                    update_fields += ["is_consultation_visible"]
-                if update_fields:
-                    participant.save(update_fields=update_fields)
 
                 if (
                     not visible or not participant.is_active
@@ -817,6 +784,55 @@ class AppointmentSerializer(serializers.ModelSerializer):
                     AppointmentSerializer._revoke_consultation_key(participant)
 
         return appointment
+
+    @staticmethod
+    def add_or_reactivate_participant(
+        appointment, user, visible=False, downgrade_visibility=False
+    ):
+        """Attach a user to an appointment, or revive a previously removed row.
+
+        Reactivating resets `is_notified` so the invite is sent again.
+        `downgrade_visibility` also allows turning consultation visibility off
+        on an existing row; by default visibility is only ever granted.
+        """
+        lookup = (
+            {"user": user} if isinstance(user, User) else {"user_id": user}
+        )
+        participant, created = Participant.objects.get_or_create(
+            appointment=appointment,
+            defaults={
+                "is_active": True,
+                "is_consultation_visible": visible,
+            },
+            **lookup,
+        )
+
+        if created:
+            return participant
+
+        update_fields = []
+        if not participant.is_active:
+            participant.is_active = True
+            participant.is_notified = False
+            update_fields += ["is_active", "is_notified"]
+        if downgrade_visibility:
+            if participant.is_consultation_visible != visible:
+                participant.is_consultation_visible = visible
+                update_fields += ["is_consultation_visible"]
+        elif visible and not participant.is_consultation_visible:
+            participant.is_consultation_visible = True
+            update_fields += ["is_consultation_visible"]
+        if update_fields:
+            participant.save(update_fields=update_fields)
+        return participant
+
+    @staticmethod
+    def deactivate_participant(participant):
+        """Soft-remove a participant and revoke their consultation key."""
+        participant.is_active = False
+        participant.save(update_fields=["is_active"])
+        AppointmentSerializer._revoke_consultation_key(participant)
+        return participant
 
     @staticmethod
     def _extract_visibility_map(payload):
@@ -841,6 +857,66 @@ class AppointmentSerializer(serializers.ModelSerializer):
             consultation_id=participant.appointment.consultation_id,
             user_id=participant.user_id,
         ).delete()
+
+
+class AppointmentAddParticipantsSerializer(serializers.Serializer):
+    """Payload of the in-call "add participants" action.
+
+    Unlike AppointmentSerializer, this is purely additive: participants left
+    out of the payload are untouched, so adding someone mid-call cannot race
+    with a concurrent edit of the appointment and silently drop people.
+    """
+
+    participants_ids = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=User.objects.all(), required=False
+    )
+    temporary_participants = ParticipantSerializer(
+        many=True, write_only=True, required=False
+    )
+    participants_visibility = serializers.ListField(
+        child=serializers.DictField(),
+        required=False,
+        write_only=True,
+        help_text=(
+            "Visibility flag for participants picked from existing users via "
+            "participants_ids: [{user_id, is_consultation_visible}]."
+        ),
+    )
+
+    def validate(self, attrs):
+        if not attrs.get("participants_ids") and not attrs.get(
+            "temporary_participants"
+        ):
+            raise serializers.ValidationError(
+                _("Provide at least one participant to add.")
+            )
+        return attrs
+
+    def save(self, appointment):
+        """Attach every requested participant. Returns the added Participants."""
+        request_user = self.context["request"].user
+        visibility_map = AppointmentSerializer._extract_visibility_map(
+            self.validated_data.get("participants_visibility")
+        )
+
+        added = []
+        for user in self.validated_data.get("participants_ids", []):
+            added.append(
+                AppointmentSerializer.add_or_reactivate_participant(
+                    appointment, user, visibility_map.get(user.pk, False)
+                )
+            )
+
+        for temp_participant in self.validated_data.get("temporary_participants", []):
+            user = ParticipantSerializer.resolve_user(temp_participant, request_user)
+            added.append(
+                AppointmentSerializer.add_or_reactivate_participant(
+                    appointment,
+                    user,
+                    temp_participant.get("is_consultation_visible", False),
+                )
+            )
+        return added
 
 
 class AppointmentCreateSerializer(AppointmentSerializer):

@@ -1,0 +1,72 @@
+<div class="participants-panel">
+  <div class="panel-header">
+    <app-typography [variant]="TypographyTypeEnum['body-l-bold']">
+      {{ 'inCallParticipants.title' | translate }}
+    </app-typography>
+    <button class="close-panel-btn" type="button" (click)="onClose()">
+      <app-svg src="close" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
+    </button>
+  </div>
+
+  <div class="panel-actions">
+    <app-button
+      [text]="'inCallParticipants.addParticipant' | translate"
+      leftIcon="plus"
+      [size]="ButtonSizeEnum.small"
+      [style]="ButtonStyleEnum.stroke"
+      (buttonClick)="openAddForm()">
+    </app-button>
+  </div>
+
+  @if (isLoading()) {
+  <div class="panel-loading">
+    <app-loader></app-loader>
+  </div>
+  } @else {
+  <div class="panel-list">
+    @for (row of rows(); track row.participant.id) {
+    <app-participant-item
+      [participant]="row.participant"
+      [currentUser]="currentUser()"
+      [showRemoveAction]="canRemove(row)"
+      (remove)="removeParticipant(row)">
+      @if (row.live) {
+      <span class="presence-tag online">
+        {{ 'inCallParticipants.inCall' | translate }}
+      </span>
+      @if (canModerate) {
+      <button
+        type="button"
+        class="mute-btn"
+        [disabled]="isMuting(row)"
+        [title]="(row.live.isMicrophoneEnabled ? 'videoConsultation.muteParticipant' : 'videoConsultation.unmuteParticipant') | translate"
+        (click)="onMuteToggle(row)">
+        <app-svg
+          [src]="row.live.isMicrophoneEnabled ? 'microphone' : 'microphone-off'"
+          [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+      </button>
+      }
+      } @else {
+      <span class="presence-tag offline">
+        {{ 'inCallParticipants.notJoined' | translate }}
+      </span>
+      }
+    </app-participant-item>
+    } @empty {
+    <div class="panel-empty">
+      <app-typography [variant]="TypographyTypeEnum['body-s-regular']">
+        {{ 'inCallParticipants.empty' | translate }}
+      </app-typography>
+    </div>
+    }
+  </div>
+  }
+</div>
+
+<app-participant-add-form
+  [isOpen]="showAddForm()"
+  [currentUser]="currentUser()"
+  [isSubmitting]="isAdding()"
+  (added)="onParticipantAdded($event)"
+  (closed)="closeAddForm()">
+</app-participant-add-form>
