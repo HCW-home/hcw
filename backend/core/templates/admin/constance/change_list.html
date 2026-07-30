@@ -26,7 +26,8 @@
                            x-on:click.prevent="activeTab = '{{ fieldset.title|slugify }}'; window.location.hash = '{{ fieldset.title|slugify }}'"
                            x-bind:class="activeTab === '{{ fieldset.title|slugify }}' ? 'bg-white shadow-xs text-font-important-light dark:bg-base-700 dark:text-font-important-dark' : 'text-base-600 dark:text-base-300'"
                            class="px-3 py-1.5 rounded-default hover:bg-base-700/[.06] dark:hover:bg-white/[.06] whitespace-nowrap cursor-pointer">
-                            {{ fieldset.title }}
+                            {# Anchors keep the untranslated slug; only the label is translated #}
+                            {% trans fieldset.title %}
                         </a>
                     {% endfor %}
                 </nav>

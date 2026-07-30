@@ -45,7 +45,7 @@ DEFAULT_NOTIFICATION_MESSAGES = {
         "helper_text": "Message sent to participant with invitation to join a consultation at a later time",
     },
     "invitation_to_ongoing_appointment": {
-        "template_subject": _("A consultation is in progress — you are invited"),
+        "template_subject": _("A consultation is in progress - you are invited"),
         "template_content": _(
             """You have been invited to join a consultation that is currently in progress. """
             """Join now to take part in the call."""

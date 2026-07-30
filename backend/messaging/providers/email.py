@@ -1,4 +1,5 @@
 import logging
+import mimetypes
 from email import encoders as Encoders
 from email.mime.base import MIMEBase
 from email.mime.image import MIMEImage
@@ -101,16 +102,35 @@ class Main(BaseMessagingProvider):
             else:
                 # SVG and other non-standard image types must be base64
                 # encoded explicitly, like Django does for attachments.
+                if subtype == "svg+xml":
+                    logger.warning(
+                        "Organisation logo is an SVG: most email clients "
+                        "(Gmail, Outlook) cannot render it, use a PNG instead"
+                    )
                 img = MIMEBase(maintype, subtype)
                 img.set_payload(logo_data)
                 Encoders.encode_base64(img)
 
             img.add_header("Content-ID", "<logo>")
-            img.add_header("Content-Disposition", "inline", filename="logo")
+            # Some clients (Outlook in particular) refuse to render an inline
+            # part whose filename has no extension, so derive one from the
+            # MIME type instead of using a bare "logo".
+            filename = "logo" + (mimetypes.guess_extension(mime_type) or ".png")
+            img.add_header("Content-Disposition", "inline", filename=filename)
             # Inline image -> goes into the multipart/related group so the
             # cid:logo reference in the HTML resolves. Real attachments
             # (ICS below) stay in the outer multipart/mixed.
             email.attach_inline(img)
+            logger.info(
+                "Attached inline logo message_id=%s type=%s size=%d",
+                message.pk, mime_type, len(logo_data),
+            )
+        elif logo_mode == "embed":
+            logger.warning(
+                "No inline logo attached for message_id=%s (embed mode): the "
+                "organisation logo could not be read, falling back to text branding",
+                message.pk,
+            )
 
         # Attach ICS file if available (for appointments)
         ics_data = message.ics_attachment
