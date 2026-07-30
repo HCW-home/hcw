@@ -1144,7 +1144,10 @@ class RequestViewSet(CreatedByMixin, viewsets.ModelViewSet):
 
 
 class ReasonSlotsView(APIView):
-    permission_classes = [IsAuthenticated]
+    def get_permissions(self):
+        if config.public_organisations:
+            return [AllowAny()]
+        return [IsAuthenticated()]
 
     @extend_schema(
         parameters=[
@@ -1409,8 +1412,15 @@ class ReasonSlotsView(APIView):
                         current_time = slot_end_time
 
         # Convert slots to patient's timezone
-        patient_timezone = request.user.timezone or settings.TIME_ZONE
-        patient_tz = ZoneInfo(patient_timezone)
+        if request.user.is_authenticated:
+            patient_timezone = request.user.timezone or settings.TIME_ZONE
+        else:
+            patient_timezone = request.query_params.get("timezone") or settings.TIME_ZONE
+        try:
+            patient_tz = ZoneInfo(patient_timezone)
+        except Exception:
+            patient_tz = ZoneInfo(settings.TIME_ZONE)
+
 
         slots_data = []
         for slot in available_slots:

@@ -57,6 +57,7 @@ export class DoctorService {
   }
 
   getAvailableSlots(reasonId: number, params?: { from_date?: string; user_id?: number; organisation_id?: number }): Observable<Slot[]> {
-    return this.api.get<Slot[]>(`/reasons/${reasonId}/slots/`, params);
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return this.api.get<Slot[]>(`/reasons/${reasonId}/slots/`, { ...params, timezone });
   }
 }

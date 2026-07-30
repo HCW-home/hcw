@@ -15,7 +15,8 @@ import {
   IonTextarea,
   IonProgressBar,
   NavController,
-  ToastController
+  ToastController,
+  ViewWillEnter
 } from '@ionic/angular/standalone';
 import { TranslatePipe } from '@ngx-translate/core';
 import { Subject, takeUntil, forkJoin } from 'rxjs';
@@ -62,7 +63,7 @@ interface BookingDraft {
     LocalDatePipe
   ]
 })
-export class NewRequestPage implements OnInit, OnDestroy {
+export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
   private destroy$ = new Subject<void>();
   private t = inject(TranslationService);
 
@@ -91,6 +92,7 @@ export class NewRequestPage implements OnInit, OnDestroy {
 
   private pendingSlot: Slot | null = null;
   private visitedDoctorStep = false;
+  private initializedOnce = false;
 
   stepTitle = computed(() => {
     switch (this.currentStep()) {
@@ -148,6 +150,8 @@ export class NewRequestPage implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
+    this.initializedOnce = true;
+
     if (this.tryRestoreDraft()) {
       return;
     }
@@ -162,6 +166,13 @@ export class NewRequestPage implements OnInit, OnDestroy {
     }
 
     this.loadSpecialities();
+  }
+
+  ionViewWillEnter(): void {
+    if (!this.initializedOnce) {
+      return;
+    }
+    this.tryRestoreDraft();
   }
 
   ngOnDestroy() {

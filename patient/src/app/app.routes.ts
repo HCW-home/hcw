@@ -106,7 +106,7 @@ export const routes: Routes = [
   {
     path: 'new-request',
     loadComponent: () => import('./pages/new-request/new-request.page').then(m => m.NewRequestPage),
-    canActivate: [mobileAppRequiredGuard, AuthGuard, FirstLoginGuard, TermsGuard, EncryptionGuard],
+    canActivate: [mobileAppRequiredGuard, FirstLoginGuard, TermsGuard, EncryptionGuard],
   },
   {
     path: 'consultation/:id/video',
