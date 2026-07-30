@@ -59,8 +59,20 @@ def handle_invites(appointment_id):
             template_system_name = "appointment_updated"
             participants = participants.filter(is_active=True)
         else:
-            template_system_name = "invitation_to_appointment"
             participants = participants.filter(is_notified=False)
+            # Appointment created inside the last-reminder window: the "join now"
+            # reminder would never reach them in time, so invite them to join
+            # straight away instead of asking to confirm their presence.
+            try:
+                last_reminder = int(config.appointment_last_reminder)
+            except (TypeError, ValueError):
+                last_reminder = 0
+            if appointment.scheduled_at <= timezone.now() + timedelta(
+                minutes=last_reminder
+            ):
+                template_system_name = "invitation_to_ongoing_appointment"
+            else:
+                template_system_name = "invitation_to_appointment"
     elif appointment.status == AppointmentStatus.cancelled:
         template_system_name = "appointment_cancelled"
     else:

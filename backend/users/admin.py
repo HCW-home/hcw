@@ -8,6 +8,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.http import HttpResponseRedirect
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext_lazy
@@ -82,6 +83,50 @@ admin.site.register(SocialToken, ModelAdmin)
 
 admin.site.unregister(SocialAccount)
 admin.site.register(SocialAccount, ModelAdmin)
+
+
+admin.site.unregister([Config])
+
+
+@admin.register(Config)
+class CustomConstanceAdmin(ConstanceAdmin):
+    """Constance admin adding consistency warnings on the saved settings."""
+
+    def changelist_view(self, request, extra_context=None):
+        response = super().changelist_view(request, extra_context)
+        # Only check once the values have actually been saved (constance
+        # redirects on success, and re-renders the form on failure).
+        if request.method == "POST" and isinstance(response, HttpResponseRedirect):
+            self.warn_inconsistent_settings(request)
+        return response
+
+    def warn_inconsistent_settings(self, request):
+        from constance import config as live_config
+
+        def as_int(name):
+            try:
+                return int(getattr(live_config, name))
+            except (TypeError, ValueError):
+                return None
+
+        last_reminder = as_int("appointment_last_reminder")
+        early_join = as_int("appointment_early_join_minutes")
+        if last_reminder is None or early_join is None:
+            return
+
+        if last_reminder > early_join:
+            messages.warning(
+                request,
+                _(
+                    "The last reminder is sent %(reminder)s minutes before the "
+                    "appointment, but participants can only join %(join)s minutes "
+                    "before it starts. It is recommended to allow joining the call "
+                    "as soon as the last reminder is received: set "
+                    "'appointment_early_join_minutes' to at least "
+                    "%(reminder)s minutes."
+                )
+                % {"reminder": last_reminder, "join": early_join},
+            )
 
 
 
