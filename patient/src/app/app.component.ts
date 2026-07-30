@@ -6,7 +6,7 @@ import {
 } from "@ionic/angular/standalone";
 import { Title } from "@angular/platform-browser";
 import { Router } from "@angular/router";
-import { Subject, takeUntil } from "rxjs";
+import { Subject, firstValueFrom, takeUntil } from "rxjs";
 import { Capacitor } from "@capacitor/core";
 import { AuthService } from "./core/services/auth.service";
 import { UserWebSocketService } from "./core/services/user-websocket.service";
@@ -147,7 +147,7 @@ export class AppComponent implements OnInit, OnDestroy {
       });
   }
 
-  private handleDeepLinks(): void {
+  private async handleDeepLinks(): Promise<void> {
     const urlParams = new URLSearchParams(window.location.search);
     const authToken = urlParams.get("auth");
     const action = urlParams.get("action");
@@ -160,50 +160,112 @@ export class AppComponent implements OnInit, OnDestroy {
       this.navCtrl.navigateRoot(["/verify-email"], {
         queryParams: { token },
       });
-    } else if (uid && token) {
+      return;
+    }
+
+    if (uid && token) {
       this.navCtrl.navigateRoot(["/reset-password"], {
         queryParams: { uid, token },
       });
-    } else if (authToken) {
-      const queryParams: Record<string, string> = { auth: authToken };
-      if (action) queryParams["action"] = action;
-      if (actionId) queryParams["id"] = actionId;
-      this.navCtrl.navigateRoot(["/verify-invite"], { queryParams });
-    } else if (email) {
-      this.navCtrl.navigateRoot(["/login"], {
-        queryParams: { email, action, id: actionId },
-      });
-    } else if (action && actionId) {
-      if (action === "join") {
-        this.consultationService
-          .getParticipantById(Number(actionId))
-          .subscribe({
-            next: (participant) => {
-              const consultation = participant.appointment.consultation;
-              if (consultation) {
-                const consultationId =
-                  typeof consultation === "object"
-                    ? (consultation as { id: number }).id
-                    : consultation;
-                this.navCtrl.navigateRoot(
-                  [`/consultation/${consultationId}/video`],
-                  { queryParams: { appointmentId: participant.appointment.id } },
-                );
-              } else {
-                this.navCtrl.navigateRoot(
-                  [`/consultation/${participant.appointment.id}/video`],
-                );
-              }
-            },
-            error: () => {
-              this.navCtrl.navigateRoot([`/confirm-presence/${actionId}`]);
-            },
-          });
+      return;
+    }
+
+    if (authToken || email) {
+      // The link targets one specific account: when we are already signed in as
+      // that very account, follow the link instead of asking to authenticate
+      // again.
+      if (await this.isLinkForCurrentUser(email, action, actionId)) {
+        this.navigateToAction(action, actionId);
+        return;
+      }
+
+      if (authToken) {
+        const queryParams: Record<string, string> = { auth: authToken };
+        if (action) queryParams["action"] = action;
+        if (actionId) queryParams["id"] = actionId;
+        this.navCtrl.navigateRoot(["/verify-invite"], { queryParams });
       } else {
-        const actionRoute = this.actionHandler.getRouteWithParams(action, actionId);
-        this.navCtrl.navigateRoot([actionRoute.path], { queryParams: actionRoute.queryParams });
+        this.navCtrl.navigateRoot(["/login"], {
+          queryParams: { email, action, id: actionId },
+        });
+      }
+      return;
+    }
+
+    if (action && actionId) {
+      this.navigateToAction(action, actionId);
+    }
+  }
+
+  /**
+   * Tell whether a received link belongs to the account currently signed in.
+   * The email carried by the link is compared to the current user; a magic-link
+   * token cannot be matched client-side, so participant-based actions are
+   * checked against /user/participants/, which only exposes the current user's
+   * own participations.
+   */
+  private async isLinkForCurrentUser(
+    email: string | null,
+    action: string | null,
+    actionId: string | null,
+  ): Promise<boolean> {
+    await this.authService.authReady;
+    if (!this.authService.isAuthenticatedValue) {
+      return false;
+    }
+
+    if (email) {
+      const currentEmail = this.authService.currentUserValue?.email;
+      return (
+        !!currentEmail && currentEmail.toLowerCase() === email.toLowerCase()
+      );
+    }
+
+    if (actionId && (action === "join" || action === "presence")) {
+      try {
+        await firstValueFrom(
+          this.consultationService.getParticipantById(Number(actionId)),
+        );
+        return true;
+      } catch {
+        return false;
       }
     }
+
+    return false;
+  }
+
+  private navigateToAction(action: string | null, actionId: string | null): void {
+    if (action === "join" && actionId) {
+      this.consultationService
+        .getParticipantById(Number(actionId))
+        .subscribe({
+          next: (participant) => {
+            const consultation = participant.appointment.consultation;
+            if (consultation) {
+              const consultationId =
+                typeof consultation === "object"
+                  ? (consultation as { id: number }).id
+                  : consultation;
+              this.navCtrl.navigateRoot(
+                [`/consultation/${consultationId}/video`],
+                { queryParams: { appointmentId: participant.appointment.id } },
+              );
+            } else {
+              this.navCtrl.navigateRoot(
+                [`/consultation/${participant.appointment.id}/video`],
+              );
+            }
+          },
+          error: () => {
+            this.navCtrl.navigateRoot([`/confirm-presence/${actionId}`]);
+          },
+        });
+      return;
+    }
+
+    const actionRoute = this.actionHandler.getRouteWithParams(action, actionId);
+    this.navCtrl.navigateRoot([actionRoute.path], { queryParams: actionRoute.queryParams });
   }
 
   private loadBranding(): void {
