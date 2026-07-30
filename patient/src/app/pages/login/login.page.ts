@@ -102,14 +102,22 @@ export class LoginPage implements OnInit {
 
   ngOnInit() {
     const email = this.route.snapshot.queryParamMap.get("email");
+    const action = this.route.snapshot.queryParamMap.get("action");
     if (email) {
       this.emailForm.patchValue({ email });
     }
+    // Coming from a link received by mail/SMS: the recipient already knows
+    // which account they own, so skip the email step. Depending on the config,
+    // onContinue() then shows the password form or sends the code straight away.
+    const skipEmailStep = !!email && !!action && this.emailForm.valid;
     this.authService.getConfig().subscribe({
       next: (config: any) => {
         // getConfig() emits null when the backend is unreachable; guard so the
         // page renders sane defaults instead of throwing on null.property.
         if (!config) {
+          if (skipEmailStep) {
+            this.onContinue();
+          }
           return;
         }
         this.registrationEnabled =
@@ -127,6 +135,9 @@ export class LoginPage implements OnInit {
         }
         if (config.languages?.length) {
           this.t.loadLanguages(config.languages);
+        }
+        if (skipEmailStep) {
+          this.onContinue();
         }
       },
     });
