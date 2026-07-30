@@ -882,8 +882,37 @@ class Message(ModelCeleryAbstract):
             logger.exception("render_content_html failed for message_id=%s: %s", self.pk, e)
             return ""
 
+    @staticmethod
+    def get_email_logo_file(main_org=None):
+        """Return the FieldFile to use as the email logo, or None.
+
+        The email header has a coloured background, so the white logo is the
+        preferred variant, but many installations only upload the coloured one.
+        Falling back to logo_color is much better than silently dropping the
+        logo and showing the plain text branding instead.
+        """
+        from users.models import Organisation
+
+        if main_org is None:
+            main_org = Organisation.objects.filter(is_main=True).first()
+
+        if not main_org:
+            logger.warning("No main organisation found, email logo disabled")
+            return None
+
+        logo = main_org.logo_white or main_org.logo_color
+        if not logo:
+            logger.warning(
+                "Main organisation %s has neither logo_white nor logo_color, "
+                "email logo disabled",
+                main_org.pk,
+            )
+            return None
+
+        return logo
+
     def get_email_logo(self):
-        """Return (data, mime_type) for the main organisation's white logo, or
+        """Return (data, mime_type) for the main organisation's email logo, or
         None when there is no logo or it cannot be read.
 
         Memoized on the instance so it is read only once per send and, more
@@ -896,25 +925,22 @@ class Message(ModelCeleryAbstract):
         if hasattr(self, "_email_logo"):
             return self._email_logo
 
-        from users.models import Organisation
-
         result = None
-        main_org = Organisation.objects.filter(is_main=True).first()
-        if main_org and main_org.logo_white:
+        logo = self.get_email_logo_file()
+        if logo:
             try:
-                with main_org.logo_white.open("rb") as fh:
+                with logo.open("rb") as fh:
                     data = fh.read()
-                mime_type = (
-                    mimetypes.guess_type(main_org.logo_white.name)[0] or "image/png"
-                )
-                result = (data, mime_type)
+                mime_type = mimetypes.guess_type(logo.name)[0] or "image/png"
+                if not data:
+                    logger.warning("Email logo %s is empty, skipping", logo.name)
+                else:
+                    result = (data, mime_type)
             except Exception:
                 # Log loudly with the resolved path so the real cause (missing
                 # file, storage/tenant misconfig, permissions) surfaces instead
                 # of being silently swallowed into a broken cid:logo image.
-                logger.exception(
-                    "Failed to load email logo (name=%s)", main_org.logo_white.name
-                )
+                logger.exception("Failed to load email logo (name=%s)", logo.name)
 
         self._email_logo = result
         return result
@@ -935,9 +961,10 @@ class Message(ModelCeleryAbstract):
             if logo_mode == "url":
                 # URL mode: the mail client fetches the logo over HTTP, so it is
                 # enough that a logo file is configured.
-                has_logo = bool(main_org and main_org.logo_white)
+                logo_file = self.get_email_logo_file(main_org)
+                has_logo = logo_file is not None
                 if has_logo:
-                    logo_url = main_org.logo_white.url
+                    logo_url = logo_file.url
                     # Local storage returns a relative MEDIA_URL path (e.g.
                     # /upload/...), unusable in an email. Prefix it with an
                     # absolute base so remote clients can load it. Prefer the

@@ -19,6 +19,7 @@ from botocore.config import Config
 from celery.schedules import crontab
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_noop
 from dotenv import load_dotenv
 from firebase_admin import initialize_app
 from unfold.contrib.constance.settings import UNFOLD_CONSTANCE_ADDITIONAL_FIELDS
@@ -846,269 +847,357 @@ UNFOLD = {
 }
 
 # Default Configuration Values
+# Help texts are wrapped in gettext_noop: Constance itself runs gettext() on
+# them at render time, so they must stay plain strings here while still being
+# picked up by makemessages.
 CONSTANCE_CONFIG = {
-    "site_name": ("HCW@Home", "The name of the application displayed to users"),
-    "patient_base_url": ("http://localhost:8001", "Base URL of patient frontend"),
+    "site_name": (
+        "HCW@Home",
+        gettext_noop("The name of the application displayed to users"),
+    ),
+    "patient_base_url": (
+        "http://localhost:8001",
+        gettext_noop("Base URL of patient frontend"),
+    ),
     "practitioner_base_url": (
         "http://localhost:4200",
-        "Base URL of practitioner frontend",
+        gettext_noop("Base URL of practitioner frontend"),
     ),
     "appointment_first_reminder": (
         "1440",
-        "When to send first appointment reminder, in minute before the appointment time",
+        gettext_noop(
+            "When to send first appointment reminder, in minute before the appointment time"
+        ),
     ),
     "appointment_last_reminder": (
         "10",
-        "When to send last appointment reminder, in minute before the appointment time",
+        gettext_noop(
+            "When to send last appointment reminder, in minute before the appointment time"
+        ),
     ),
     "appointment_early_join_minutes": (
         10,
-        "Minutes before appointment scheduled time that participants can join",
+        gettext_noop(
+            "Minutes before appointment scheduled time that participants can join"
+        ),
     ),
     "call_limit_join_minutes": (
         15,
-        "Minutes after the expected end of the appointment during which participants can still rejoin the call",
+        gettext_noop(
+            "Minutes after the expected end of the appointment during which participants can still rejoin the call"
+        ),
     ),
     "default_appointment_duration_in_minutes": (
         30,
-        "Default duration in minutes for an appointment without an explicit end time",
+        gettext_noop(
+            "Default duration in minutes for an appointment without an explicit end time"
+        ),
     ),
     "consultation_auto_delete_hours": (
         0,
-        "Hours after closure before a follow-up is automatically deleted (0 to disable)",
+        gettext_noop(
+            "Hours after closure before a follow-up is automatically deleted (0 to disable)"
+        ),
     ),
     "auto_close_temporary_consultations": (
         False,
-        "Automatically close temporary appointment-chat consultations once the appointment join window has elapsed",
+        gettext_noop(
+            "Automatically close temporary appointment-chat consultations once the appointment join window has elapsed"
+        ),
     ),
     "temporary_user_auto_delete": (
         True,
-        "Automatically delete temporary users with no future appointments",
+        gettext_noop("Automatically delete temporary users with no future appointments"),
     ),
     "temporary_participant_token_expiry_hours": (
         1,
-        "Hours before a temporary participant access token expires",
+        gettext_noop("Hours before a temporary participant access token expires"),
     ),
     "disable_password_login": (
         False,
-        "Disable password login for practitioners (SSO only)",
+        gettext_noop("Disable password login for practitioners (SSO only)"),
     ),
     "enable_patient_password_login": (
         False,
-        "Allow patients to log in with a password on the patient app; when off, patients authenticate with an email/SMS code instead. Practitioners and admins can always use password login.",
+        gettext_noop(
+            "Allow patients to log in with a password on the patient app; when off, patients authenticate with an email/SMS code instead. Practitioners and admins can always use password login."
+        ),
     ),
     "enable_registration": (
         False,
-        "Enable self-registration for new users",
+        gettext_noop("Enable self-registration for new users"),
     ),
     "max_upload_size_mb": (
         10,
-        "Maximum file upload size in MB (0 to disable limit)",
+        gettext_noop("Maximum file upload size in MB (0 to disable limit)"),
     ),
     "users_visibility": (
         "all",
-        "Controls which users practitioners can see: all = all users, alone = no sharing, alone, organization = same organization practitioners",
+        gettext_noop(
+            "Controls which users practitioners can see: all = all users, alone = no sharing, alone, organization = same organization practitioners"
+        ),
         "users_visibility_select",
     ),
     "patient_visibility": (
         "all",
-        "Controls which patients practitioners can see: all = all patients, alone = only patients they created, organization = patients from same organization",
+        gettext_noop(
+            "Controls which patients practitioners can see: all = all patients, alone = only patients they created, organization = patients from same organization"
+        ),
         "patient_visibility_select",
     ),
     "enable_video_recording": (
         False,
-        "Enable video recording during appointments",
+        gettext_noop("Enable video recording during appointments"),
     ),
     "enable_live_transcription": (
         False,
-        "Enable live transcription and subtitles during appointments (requires whisper-live server)",
+        gettext_noop(
+            "Enable live transcription and subtitles during appointments (requires whisper-live server)"
+        ),
     ),
     "whisper_model": (
         "small",
-        "Whisper model to use for transcription (tiny, base, small, medium, large-v3)",
+        gettext_noop(
+            "Whisper model to use for transcription (tiny, base, small, medium, large-v3)"
+        ),
         "whisper_model_select",
     ),
     "public_organisations": (
         False,
-        "Allow unauthenticated access to the organisations and reasons endpoints",
+        gettext_noop(
+            "Allow unauthenticated access to the organisations and reasons endpoints"
+        ),
     ),
     "force_temporary_patients": (
         False,
-        "Force all newly created patients to be temporary users (no permanent patient accounts)",
+        gettext_noop(
+            "Force all newly created patients to be temporary users (no permanent patient accounts)"
+        ),
     ),
     "primary_video_provider": (
         "livekit",
-        "Default media server provider for video calls; used by frontends to lazy-prefetch the matching SDK",
+        gettext_noop(
+            "Default media server provider for video calls; used by frontends to lazy-prefetch the matching SDK"
+        ),
         "primary_video_provider_select",
     ),
     "encryption_enabled": (
         False,
-        "Global toggle for end-to-end encryption of consultations and messages",
+        gettext_noop(
+            "Global toggle for end-to-end encryption of consultations and messages"
+        ),
     ),
     "master_public_key": (
         "",
-        "PEM-encoded SPKI master public key (recovery). Set via the Encryption admin page.",
+        gettext_noop(
+            "PEM-encoded SPKI master public key (recovery). Set via the Encryption admin page."
+        ),
     ),
     "master_public_key_fingerprint": (
         "",
-        "SHA-256 hex fingerprint of the master public key (display only)",
+        gettext_noop(
+            "SHA-256 hex fingerprint of the master public key (display only)"
+        ),
     ),
     "instance_signature": (
         "",
-        "Platform certification blob (JSON) authorizing this host for the native app. "
-        "Get certificated on https://hcw-at-home.com/get-certificate/.",
+        gettext_noop(
+            "Platform certification blob (JSON) authorizing this host for the native app. "
+            "Get certificated on https://hcw-at-home.com/get-certificate/."
+        ),
     ),
     "enable_deeplink": (
         False,
-        "Show a banner on the patient web home inviting users to open the native app.",
+        gettext_noop(
+            "Show a banner on the patient web home inviting users to open the native app."
+        ),
         bool,
     ),
     "force_mobile_app": (
         False,
-        "Require the native mobile app: block the patient web app for this "
-        "tenant and prompt users to open or install the mobile app instead. "
-        "Disabled by default.",
+        gettext_noop(
+            "Require the native mobile app: block the patient web app for this "
+            "tenant and prompt users to open or install the mobile app instead. "
+            "Disabled by default."
+        ),
         bool,
     ),
     "mobile_android_package": (
         MOBILE_ANDROID_PACKAGE,
-        "Android applicationId of the native patient app. Defaults to the "
-        "MOBILE_ANDROID_PACKAGE env var; override per instance if needed.",
+        gettext_noop(
+            "Android applicationId of the native patient app. Defaults to the "
+            "MOBILE_ANDROID_PACKAGE env var; override per instance if needed."
+        ),
     ),
     "mobile_android_store_url": (
         MOBILE_ANDROID_STORE_URL,
-        "Play Store URL the web 'open in app' banner falls back to when the app "
-        "is not installed. Defaults to the MOBILE_ANDROID_STORE_URL env var.",
+        gettext_noop(
+            "Play Store URL the web 'open in app' banner falls back to when the app "
+            "is not installed. Defaults to the MOBILE_ANDROID_STORE_URL env var."
+        ),
     ),
     "mobile_ios_store_url": (
         MOBILE_IOS_STORE_URL,
-        "App Store URL the web 'open in app' banner falls back to on iOS when "
-        "the app is not installed. Defaults to the MOBILE_IOS_STORE_URL env var. "
-        "Leave blank to disable the iOS store fallback.",
+        gettext_noop(
+            "App Store URL the web 'open in app' banner falls back to on iOS when "
+            "the app is not installed. Defaults to the MOBILE_IOS_STORE_URL env var. "
+            "Leave blank to disable the iOS store fallback."
+        ),
     ),
     "fhir_external_appointment_system": (
         "https://ozonehis.example/ns/appointment-id",
-        "FHIR Identifier.system URL of the external partner for Appointment "
-        "resources. Identifiers under this system populate Appointment.external_id. "
-        "Replace the example value with the actual URL of your integration partner. "
-        "Leave blank to disable external-identifier handling for Appointment.",
+        gettext_noop(
+            "FHIR Identifier.system URL of the external partner for Appointment "
+            "resources. Identifiers under this system populate Appointment.external_id. "
+            "Replace the example value with the actual URL of your integration partner. "
+            "Leave blank to disable external-identifier handling for Appointment."
+        ),
     ),
     "fhir_external_encounter_system": (
         "https://ozonehis.example/ns/encounter-id",
-        "FHIR Identifier.system URL of the external partner for Encounter "
-        "resources (Consultation in HCW). Leave blank to disable.",
+        gettext_noop(
+            "FHIR Identifier.system URL of the external partner for Encounter "
+            "resources (Consultation in HCW). Leave blank to disable."
+        ),
     ),
     "fhir_external_patient_system": (
         "https://ozonehis.example/ns/patient-id",
-        "FHIR Identifier.system URL of the external partner for Patient resources. "
-        "Leave blank to disable.",
+        gettext_noop(
+            "FHIR Identifier.system URL of the external partner for Patient resources. "
+            "Leave blank to disable."
+        ),
     ),
     "fhir_external_practitioner_system": (
         "https://ozonehis.example/ns/practitioner-id",
-        "FHIR Identifier.system URL of the external partner for Practitioner resources. "
-        "Leave blank to disable.",
+        gettext_noop(
+            "FHIR Identifier.system URL of the external partner for Practitioner resources. "
+            "Leave blank to disable."
+        ),
     ),
     "fhir_external_medicationrequest_system": (
         "https://ozonehis.example/ns/medicationrequest-id",
-        "FHIR Identifier.system URL of the external partner for MedicationRequest "
-        "resources (Prescription in HCW). Leave blank to disable.",
+        gettext_noop(
+            "FHIR Identifier.system URL of the external partner for MedicationRequest "
+            "resources (Prescription in HCW). Leave blank to disable."
+        ),
     ),
     "enable_calendar_colorization": (
         False,
-        "Colorize the calendar background in the practitioner view using a "
-        "rotating 4-week palette. Disabled by default.",
+        gettext_noop(
+            "Colorize the calendar background in the practitioner view using a "
+            "rotating 4-week palette. Disabled by default."
+        ),
     ),
     "calendar_color_week_1": (
         "#e0f2fe",
-        "Calendar background color for week 1 of the 4-week rotation (hex).",
+        gettext_noop(
+            "Calendar background color for week 1 of the 4-week rotation (hex)."
+        ),
         "calendar_color_field",
     ),
     "calendar_color_week_2": (
         "#dcfce7",
-        "Calendar background color for week 2 of the 4-week rotation (hex).",
+        gettext_noop(
+            "Calendar background color for week 2 of the 4-week rotation (hex)."
+        ),
         "calendar_color_field",
     ),
     "calendar_color_week_3": (
         "#fef9c3",
-        "Calendar background color for week 3 of the 4-week rotation (hex).",
+        gettext_noop(
+            "Calendar background color for week 3 of the 4-week rotation (hex)."
+        ),
         "calendar_color_field",
     ),
     "calendar_color_week_4": (
         "#fce7f3",
-        "Calendar background color for week 4 of the 4-week rotation (hex).",
+        gettext_noop(
+            "Calendar background color for week 4 of the 4-week rotation (hex)."
+        ),
         "calendar_color_field",
     ),
     "calendar_rotation_anchor_date": (
         "2026-01-01",
-        "Anchor date (YYYY-MM-DD) for the continuous week counter. The week "
-        "containing this date is week 1 of the rotation. The counter never "
-        "resets, so colors stay consistent across year boundaries.",
+        gettext_noop(
+            "Anchor date (YYYY-MM-DD) for the continuous week counter. The week "
+            "containing this date is week 1 of the rotation. The counter never "
+            "resets, so colors stay consistent across year boundaries."
+        ),
     ),
     "calendar_first_day_of_week": (
         "1",
-        "First day of the week shown in the practitioner calendars "
-        "(0 = Sunday, 1 = Monday).",
+        gettext_noop(
+            "First day of the week shown in the practitioner calendars "
+            "(0 = Sunday, 1 = Monday)."
+        ),
         "calendar_first_day_select",
     ),
     "email_logo_mode": (
         "embed",
-        "How the organisation logo is included in emails: 'embed' attaches it "
-        "inline (Content-ID, always displayed) or 'url' links to the media file "
-        "(lighter, but many clients block remote images by default).",
+        gettext_noop(
+            "How the organisation logo is included in emails: 'embed' attaches it "
+            "inline (Content-ID, always displayed) or 'url' links to the media file "
+            "(lighter, but many clients block remote images by default)."
+        ),
         "email_logo_mode_select",
     ),
     "email_media_base_url": (
         "",
-        "Absolute base URL used to build the logo link when email_logo_mode is "
-        "'url' and media is stored locally (e.g. https://patient.example.com). "
-        "Leave empty to fall back to patient_base_url. Ignored for S3 storage, "
-        "which already returns absolute URLs.",
+        gettext_noop(
+            "Absolute base URL used to build the logo link when email_logo_mode is "
+            "'url' and media is stored locally (e.g. https://patient.example.com). "
+            "Leave empty to fall back to patient_base_url. Ignored for S3 storage, "
+            "which already returns absolute URLs."
+        ),
     ),
 }
 
 
+# Fieldset titles stay untranslated here on purpose: they are dict keys, used
+# as tab anchors and to look up CONSTANCE_FIELDSET_DESCRIPTIONS. The admin
+# template translates them for display via {% trans fieldset.title %}.
 CONSTANCE_CONFIG_FIELDSETS = {
-    "General Options": ("site_name",),
-    "URLs": ("patient_base_url", "practitioner_base_url"),
-    "Scheduling": (
+    gettext_noop("General Options"): ("site_name",),
+    gettext_noop("URLs"): ("patient_base_url", "practitioner_base_url"),
+    gettext_noop("Scheduling"): (
         "appointment_first_reminder",
         "appointment_last_reminder",
         "appointment_early_join_minutes",
         "call_limit_join_minutes",
         "default_appointment_duration_in_minutes",
     ),
-    "Data Retention": ("consultation_auto_delete_hours", "auto_close_temporary_consultations", "temporary_user_auto_delete"),
-    "Security": ("temporary_participant_token_expiry_hours", "instance_signature"),
-    "Mobile App": (
+    gettext_noop("Data Retention"): ("consultation_auto_delete_hours", "auto_close_temporary_consultations", "temporary_user_auto_delete"),
+    gettext_noop("Security"): ("temporary_participant_token_expiry_hours", "instance_signature"),
+    gettext_noop("Mobile App"): (
         "enable_deeplink",
         "force_mobile_app",
         "mobile_android_package",
         "mobile_android_store_url",
         "mobile_ios_store_url",
     ),
-    "Uploads": ("max_upload_size_mb",),
-    "Authentication": ("disable_password_login", "enable_patient_password_login", "enable_registration"),
-    "Visibility": ("users_visibility", "patient_visibility", "public_organisations"),
-    "Video Features": (
+    gettext_noop("Uploads"): ("max_upload_size_mb",),
+    gettext_noop("Authentication"): ("disable_password_login", "enable_patient_password_login", "enable_registration"),
+    gettext_noop("Visibility"): ("users_visibility", "patient_visibility", "public_organisations"),
+    gettext_noop("Video Features"): (
         "primary_video_provider",
         "enable_video_recording",
         "enable_live_transcription",
         "whisper_model",
     ),
-    "Patient Management": ("force_temporary_patients",),
-    "Encryption": (
+    gettext_noop("Patient Management"): ("force_temporary_patients",),
+    gettext_noop("Encryption"): (
         "encryption_enabled",
         "master_public_key",
         "master_public_key_fingerprint",
     ),
-    "FHIR external identifiers": (
+    gettext_noop("FHIR external identifiers"): (
         "fhir_external_appointment_system",
         "fhir_external_encounter_system",
         "fhir_external_patient_system",
         "fhir_external_practitioner_system",
         "fhir_external_medicationrequest_system",
     ),
-    "Calendar appearance": (
+    gettext_noop("Calendar appearance"): (
         "calendar_first_day_of_week",
         "enable_calendar_colorization",
         "calendar_color_week_1",
@@ -1117,69 +1206,74 @@ CONSTANCE_CONFIG_FIELDSETS = {
         "calendar_color_week_4",
         "calendar_rotation_anchor_date",
     ),
-    "Email": ("email_logo_mode", "email_media_base_url"),
+    gettext_noop("Email"): ("email_logo_mode", "email_media_base_url"),
 }
 
 # Short HTML-safe description rendered at the top of each Constance tab in
 # the admin to give the operator a quick explanation of what the section
-# controls. Keys must match `CONSTANCE_CONFIG_FIELDSETS` titles.
+# controls. Keys must match `CONSTANCE_CONFIG_FIELDSETS` titles. Values are
+# translated at render time by the `fieldset_description` template filter.
 CONSTANCE_FIELDSET_DESCRIPTIONS = {
-    "General Options": (
+    gettext_noop("General Options"): gettext_noop(
         "Site-wide branding and labels displayed throughout the platform."
     ),
-    "URLs": (
+    gettext_noop("URLs"): gettext_noop(
         "Public base URLs of the patient and practitioner frontends. Used by "
         "reminders, e-mails and SMS — make sure they are reachable by your users."
     ),
-    "Scheduling": (
+    gettext_noop("Scheduling"): gettext_noop(
         "Reminders, default appointment duration, and the windows during "
         "which participants are allowed to join or rejoin a call."
     ),
-    "Data Retention": (
+    gettext_noop("Data Retention"): gettext_noop(
         "Automatic clean-up policies for closed follow-ups and unused "
         "temporary accounts."
     ),
-    "Security": (
+    gettext_noop("Security"): gettext_noop(
         "Lifetime of one-time access tokens issued to temporary participants."
     ),
-    "Mobile App": (
+    gettext_noop("Mobile App"): gettext_noop(
         "Native patient app integration: show the 'open in app' banner on the "
         "web login, and the store/package identifiers used to deep-link or "
         "redirect to the right store. Values default to the MOBILE_* env vars "
         "and can be overridden per instance here."
     ),
-    "Uploads": "Maximum file size accepted for message attachments.",
-    "Authentication": (
+    gettext_noop("Uploads"): gettext_noop(
+        "Maximum file size accepted for message attachments."
+    ),
+    gettext_noop("Authentication"): gettext_noop(
         "Toggles for password-based login and self-service registration. "
         "Disable password login to force SSO."
     ),
-    "Visibility": (
+    gettext_noop("Visibility"): gettext_noop(
         "Controls which users and patients each practitioner can see across "
         "the platform."
     ),
-    "Video Features": (
+    gettext_noop("Video Features"): gettext_noop(
         "Default media-server provider used by the frontends, plus optional "
         "recording and live transcription."
     ),
-    "Patient Management": ("Defaults applied when creating new patient accounts."),
-    "Encryption": (
+    gettext_noop("Patient Management"): gettext_noop(
+        "Defaults applied when creating new patient accounts."
+    ),
+    gettext_noop("Encryption"): gettext_noop(
         "Global toggle for end-to-end encryption of follow-ups and messages, "
         "and the recovery master public key. See the Encryption admin page "
         "for full details."
     ),
-    "FHIR external identifiers": (
+    gettext_noop("FHIR external identifiers"): gettext_noop(
         "<strong>OzoneHIS / OpenMRS integration.</strong> Identifier.system "
         "URLs used by your external partner when posting FHIR resources. "
         "Set each one to match the URL your partner emits — leave blank to "
         "disable external-identifier handling for that resource type."
     ),
-    "Calendar appearance": (
+    gettext_noop("Calendar appearance"): gettext_noop(
         "First day of the week, plus optional background colorization of the "
         "practitioner calendars. Enable the toggle, then pick four colors "
         "applied on a continuous 4-week rotation anchored to a fixed date so "
         "the sequence never resets at year boundaries."
     ),
-    "Email": (
+    gettext_noop("Email"): gettext_noop(
         "How the organisation logo is delivered in e-mails. <strong>Embed "
         "inline</strong> attaches the image to each message so it always "
         "displays; <strong>Media URL</strong> links to the stored file "
@@ -1236,9 +1330,9 @@ CONSTANCE_ADDITIONAL_FIELDS = {
         {
             "widget": "django.forms.Select",
             "choices": (
-                ("all", "All users"),
-                ("alone", "Only myself"),
-                ("organization", "Users of same organization"),
+                ("all", _("All users")),
+                ("alone", _("Only myself")),
+                ("organization", _("Users of same organization")),
             ),
         },
     ],
@@ -1247,9 +1341,9 @@ CONSTANCE_ADDITIONAL_FIELDS = {
         {
             "widget": "django.forms.Select",
             "choices": (
-                ("all", "All patients"),
-                ("alone", "Only patients created by myself"),
-                ("organization", "Patients of same organization"),
+                ("all", _("All patients")),
+                ("alone", _("Only patients created by myself")),
+                ("organization", _("Patients of same organization")),
             ),
         },
     ],
@@ -1258,11 +1352,11 @@ CONSTANCE_ADDITIONAL_FIELDS = {
         {
             "widget": "django.forms.Select",
             "choices": (
-                ("tiny", "Tiny (~1 GB, very fast, low accuracy)"),
-                ("base", "Base (~1 GB, fast, acceptable accuracy)"),
-                ("small", "Small (~2 GB, good balance)"),
-                ("medium", "Medium (~5 GB, slower, great accuracy)"),
-                ("large-v3", "Large v3 (~10 GB, best accuracy, GPU recommended)"),
+                ("tiny", _("Tiny (~1 GB, very fast, low accuracy)")),
+                ("base", _("Base (~1 GB, fast, acceptable accuracy)")),
+                ("small", _("Small (~2 GB, good balance)")),
+                ("medium", _("Medium (~5 GB, slower, great accuracy)")),
+                ("large-v3", _("Large v3 (~10 GB, best accuracy, GPU recommended)")),
             ),
         },
     ],
@@ -1288,13 +1382,13 @@ CONSTANCE_ADDITIONAL_FIELDS = {
         {
             "widget": "django.forms.Select",
             "choices": (
-                ("0", "Sunday"),
-                ("1", "Monday"),
-                ("2", "Tuesday"),
-                ("3", "Wednesday"),
-                ("4", "Thursday"),
-                ("5", "Friday"),
-                ("6", "Saturday"),
+                ("0", _("Sunday")),
+                ("1", _("Monday")),
+                ("2", _("Tuesday")),
+                ("3", _("Wednesday")),
+                ("4", _("Thursday")),
+                ("5", _("Friday")),
+                ("6", _("Saturday")),
             ),
         },
     ],
@@ -1303,8 +1397,8 @@ CONSTANCE_ADDITIONAL_FIELDS = {
         {
             "widget": "django.forms.Select",
             "choices": (
-                ("embed", "Embed inline (cid:)"),
-                ("url", "Media URL"),
+                ("embed", _("Embed inline (cid:)")),
+                ("url", _("Media URL")),
             ),
         },
     ],
