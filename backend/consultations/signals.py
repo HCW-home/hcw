@@ -267,6 +267,12 @@ def appointment_previous_scheduled_at(sender, instance, **kwargs):
 @receiver(post_save, sender=Participant)
 def participant_cancelling(sender, instance: Participant, **kwargs):
     if not instance.is_active:
+        # Once the call has started, removing someone is a moderation action
+        # inside the ongoing call, not a cancellation: notifying them would be
+        # confusing and pointless.
+        appointment = instance.appointment
+        if appointment.scheduled_at and appointment.scheduled_at <= timezone.now():
+            return
         NotificationMessage.objects.create(
             template_system_name="appointment_cancelled",
             sent_to=instance.user,
