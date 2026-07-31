@@ -895,6 +895,8 @@
     "errorCreatingAppointment": "Error Creating Appointment",
     "errorUpdatingAppointment": "Error Updating Appointment",
     "scheduledInPast": "Appointment time cannot be in the past",
+    "now": "Now",
+    "nowHint": "The appointment will start immediately",
     "manual": "Manual",
     "manualNotice": "The invitation link will be available to copy once the appointment is saved.",
     "sms": "SMS",

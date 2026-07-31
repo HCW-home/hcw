@@ -77,6 +77,18 @@
   }
 }
 
+.immediate-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.immediate-hint {
+  font-size: 13px;
+  color: var(--slate-500);
+}
+
 .type-toggle,
 .contact-toggle {
   display: flex;

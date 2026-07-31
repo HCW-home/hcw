@@ -10,6 +10,7 @@ from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_clamd.validators import validate_file_infection
 from messaging.models import CommunicationMethod
@@ -224,7 +225,9 @@ class Appointment(models.Model):
         blank=True,
         verbose_name=_("consultation"),
     )
-    scheduled_at = models.DateTimeField(_("scheduled at"))
+    # Optional: when left empty the appointment is immediate and starts now
+    # (filled in on save).
+    scheduled_at = models.DateTimeField(_("scheduled at"), null=True, blank=True)
     previous_scheduled_at = models.DateTimeField(
         _("scheduled at"), null=True, blank=True
     )
@@ -262,6 +265,15 @@ class Appointment(models.Model):
             "Hidden from native API; exposed only via FHIR identifier array."
         ),
     )
+
+    def save(self, *args, **kwargs):
+        # No schedule means an immediate appointment: start it now.
+        if self.scheduled_at is None:
+            self.scheduled_at = timezone.now()
+            update_fields = kwargs.get("update_fields")
+            if update_fields is not None:
+                kwargs["update_fields"] = list(update_fields) + ["scheduled_at"]
+        return super().save(*args, **kwargs)
 
     @property
     def active_participants(self):

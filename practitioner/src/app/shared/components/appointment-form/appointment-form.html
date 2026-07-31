@@ -40,11 +40,27 @@
           </app-input>
         </div>
 
+        @if (!isEditMode) {
+        <div class="immediate-row">
+          <app-button
+            [text]="'appointmentForm.now' | translate"
+            leftIcon="clock"
+            [size]="ButtonSizeEnum.small"
+            [style]="isImmediate() ? ButtonStyleEnum.primary : ButtonStyleEnum.stroke"
+            (buttonClick)="toggleImmediate()">
+          </app-button>
+          @if (isImmediate()) {
+          <span class="immediate-hint"
+            >{{ 'appointmentForm.nowHint' | translate }}</span
+          >
+          }
+        </div>
+        }
+
         <div class="form-row" [class.wizard-highlight-target]="highlightDateTime">
           <app-input
             type="date"
             [label]="'appointmentForm.date' | translate"
-            [required]="true"
             [invalid]="!!getAppointmentFieldError('date')"
             [invalidMessage]="getAppointmentFieldError('date')"
             formControlName="date">
@@ -52,7 +68,6 @@
           <app-input
             type="time"
             [label]="'appointmentForm.time' | translate"
-            [required]="true"
             [invalid]="!!getAppointmentFieldError('time')"
             [invalidMessage]="getAppointmentFieldError('time')"
             formControlName="time">
