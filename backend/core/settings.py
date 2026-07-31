@@ -17,6 +17,7 @@ from pathlib import Path
 from boto3.s3.transfer import TransferConfig
 from botocore.config import Config
 from celery.schedules import crontab
+from django.core.exceptions import ImproperlyConfigured
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import gettext_noop
@@ -185,7 +186,13 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "core.wsgi.application"
-MEDIA_ROOT = os.getenv("MEDIA_ROOT", "upload")
+# Always resolve to an absolute path: a relative MEDIA_ROOT is resolved against
+# the process working directory, and the web server and the Celery worker are
+# not started from the same one (see Procfile). That made uploads land in one
+# directory while the worker looked for them in another.
+MEDIA_ROOT = str(Path(os.getenv("MEDIA_ROOT", "upload")).expanduser())
+if not os.path.isabs(MEDIA_ROOT):
+    MEDIA_ROOT = str(BASE_DIR / MEDIA_ROOT)
 MEDIA_URL = "/upload/"
 
 # Database
@@ -1449,7 +1456,26 @@ S3_REGION = os.getenv("S3_REGION", "us-east-1")
 S3_VERIFY = os.getenv("S3_VERIFY", None)
 S3_ADDRESSING_STYLE = os.getenv("S3_ADDRESSING_STYLE", "auto")
 
-if S3_BUCKET_NAME and S3_ENDPOINT_URL and S3_ACCESS_KEY and S3_SECRET_KEY:
+_S3_REQUIRED = {
+    "S3_BUCKET_NAME": S3_BUCKET_NAME,
+    "S3_ENDPOINT_URL": S3_ENDPOINT_URL,
+    "S3_ACCESS_KEY": S3_ACCESS_KEY,
+    "S3_SECRET_KEY": S3_SECRET_KEY,
+}
+_s3_missing = [name for name, value in _S3_REQUIRED.items() if not value]
+
+if _s3_missing and len(_s3_missing) < len(_S3_REQUIRED):
+    # Partial S3 configuration silently falls back to local filesystem storage,
+    # which is very hard to diagnose: uploads made by a correctly configured
+    # process become unreadable by this one (missing logo in emails, missing
+    # attachments...). Fail fast instead.
+    raise ImproperlyConfigured(
+        "Incomplete S3 configuration, missing: %s. Set all of %s to use S3, "
+        "or none of them to use local filesystem storage."
+        % (", ".join(_s3_missing), ", ".join(_S3_REQUIRED))
+    )
+
+if not _s3_missing:
     STORAGES = {
         "default": {
             "BACKEND": "storages.backends.s3.S3Storage",
@@ -1463,6 +1489,10 @@ if S3_BUCKET_NAME and S3_ENDPOINT_URL and S3_ACCESS_KEY and S3_SECRET_KEY:
                     retries={"max_attempts": 3, "mode": "standard"},
                     request_checksum_calculation="when_required",
                     response_checksum_validation="when_required",
+                    # S3_ADDRESSING_STYLE was declared but never applied, so
+                    # setting it to "path" (required by MinIO/Ceph deployments
+                    # whose bucket is not a DNS subdomain) had no effect.
+                    s3={"addressing_style": S3_ADDRESSING_STYLE},
                 ),
                 "transfer_config": TransferConfig(
                     multipart_threshold=5 * 1024 * 1024 * 1024,

@@ -22,6 +22,7 @@ from django.db import models
 from django.template.defaultfilters import register
 from django.template.loader import render_to_string
 from django.utils import timezone, translation
+from django.utils.functional import LazyObject, empty
 from django.utils.translation import gettext_lazy as _
 from factory.django import DjangoModelFactory
 from modeltranslation.utils import get_translation_fields
@@ -937,10 +938,22 @@ class Message(ModelCeleryAbstract):
                 else:
                     result = (data, mime_type)
             except Exception:
-                # Log loudly with the resolved path so the real cause (missing
-                # file, storage/tenant misconfig, permissions) surfaces instead
-                # of being silently swallowed into a broken cid:logo image.
-                logger.exception("Failed to load email logo (name=%s)", logo.name)
+                # Log loudly with the resolved path AND the storage backend so
+                # the real cause surfaces instead of being silently swallowed
+                # into a missing logo. The backend matters: emails are rendered
+                # by the Celery worker, and if it does not receive the same S3_*
+                # environment as the web process it silently falls back to local
+                # filesystem storage and cannot find any uploaded file.
+                storage = logo.storage
+                # default_storage is a lazy proxy, unwrap it to report the
+                # backend actually in use.
+                if isinstance(storage, LazyObject) and storage._wrapped is not empty:
+                    storage = storage._wrapped
+                logger.exception(
+                    "Failed to load email logo (name=%s, storage=%s)",
+                    logo.name,
+                    type(storage).__name__,
+                )
 
         self._email_logo = result
         return result
