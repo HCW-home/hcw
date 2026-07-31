@@ -967,6 +967,8 @@
     "errorCreatingAppointment": "Error al crear la cita",
     "errorUpdatingAppointment": "Error al actualizar la cita",
     "scheduledInPast": "La hora de la cita no puede ser anterior a la fecha indicada.",
+    "now": "Ahora",
+    "nowHint": "La cita comenzará inmediatamente",
     "manual": "Manual",
     "manualNotice": "Una vez guardada la cita, podrá copiar el enlace de invitación.",
     "sms": "SMS",

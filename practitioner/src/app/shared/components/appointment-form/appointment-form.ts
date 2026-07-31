@@ -112,6 +112,9 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   currentUser = signal<IUser | null>(null);
   appointmentForm!: FormGroup;
   backendErrors = signal<Record<string, string[]>>({});
+  // "Now" mode: no schedule is sent, the backend starts the appointment
+  // immediately.
+  isImmediate = signal(false);
 
   participants = signal<Participant[]>([]);
   pendingParticipants = signal<CreateParticipantRequest[]>([]);
@@ -281,8 +284,9 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
     this.appointmentForm = this.fb.group({
       type: [AppointmentType.ONLINE, [Validators.required]],
       title: [''],
-      date: ['', [Validators.required]],
-      time: ['', [Validators.required]],
+      // Left empty, the appointment is created as immediate.
+      date: [''],
+      time: [''],
       end_date: [''],
       end_time: [''],
       dont_invite_beneficiary: [false],
@@ -292,7 +296,33 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
     });
   }
 
+  /** Toggle the "now" mode: clears and locks the schedule fields. */
+  toggleImmediate(): void {
+    const immediate = !this.isImmediate();
+    this.isImmediate.set(immediate);
+
+    const scheduleControls = ['date', 'time', 'end_date', 'end_time'];
+    for (const name of scheduleControls) {
+      const control = this.appointmentForm.get(name);
+      if (!control) continue;
+      if (immediate) {
+        control.setValue('');
+        control.disable();
+      } else {
+        control.enable();
+      }
+    }
+
+    if (immediate) {
+      this.backendErrors.set({});
+    }
+  }
+
   resetForm(): void {
+    this.isImmediate.set(false);
+    ['date', 'time', 'end_date', 'end_time'].forEach(name =>
+      this.appointmentForm.get(name)?.enable()
+    );
     this.appointmentForm.reset({
       type: AppointmentType.ONLINE,
       dont_invite_beneficiary: false,
@@ -455,24 +485,34 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
 
     if (!this.appointmentForm.valid) return;
 
-    this.isSubmitting.set(true);
-    const formValue = this.appointmentForm.value;
+    const formValue = this.appointmentForm.getRawValue();
 
-    const scheduledAt = `${formValue.date}T${formValue.time}`;
+    // No date/time means an immediate appointment: the backend schedules it now.
+    let scheduledAt: string | undefined;
+    if (!this.isImmediate() && (formValue.date || formValue.time)) {
+      if (!formValue.date || !formValue.time) {
+        this.backendErrors.set({
+          date: formValue.date ? [] : [this.t.instant('appointmentForm.fieldRequired')],
+          time: formValue.time ? [] : [this.t.instant('appointmentForm.fieldRequired')],
+        });
+        return;
+      }
+      scheduledAt = `${formValue.date}T${formValue.time}`;
 
-    // Validate scheduled time is not in the past
-    const scheduledDate = new Date(scheduledAt);
-    if (scheduledDate < new Date()) {
-      this.backendErrors.set({
-        date: [this.t.instant('appointmentForm.scheduledInPast')],
-        time: [this.t.instant('appointmentForm.scheduledInPast')],
-      });
-      this.isSubmitting.set(false);
-      return;
+      // Validate scheduled time is not in the past
+      if (new Date(scheduledAt) < new Date()) {
+        this.backendErrors.set({
+          date: [this.t.instant('appointmentForm.scheduledInPast')],
+          time: [this.t.instant('appointmentForm.scheduledInPast')],
+        });
+        return;
+      }
     }
 
+    this.isSubmitting.set(true);
+
     let endExpectedAt: string | undefined;
-    if (formValue.end_date && formValue.end_time) {
+    if (!this.isImmediate() && formValue.end_date && formValue.end_time) {
       endExpectedAt = `${formValue.end_date}T${formValue.end_time}`;
     }
 

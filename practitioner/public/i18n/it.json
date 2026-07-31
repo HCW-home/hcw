@@ -384,6 +384,8 @@
     "errorCreatingAppointment": "Errore durante la creazione dell'appuntamento",
     "errorUpdatingAppointment": "Errore durante l'aggiornamento dell'appuntamento",
     "scheduledInPast": "L'orario dell'appuntamento non può essere nel passato.",
+    "now": "Adesso",
+    "nowHint": "L'appuntamento inizierà immediatamente",
     "manual": "Manuale",
     "manualNotice": "Il link di invito sarà disponibile per essere copiato una volta salvato l'appuntamento.",
     "sms": "sms",

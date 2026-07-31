@@ -1024,6 +1024,8 @@
     "errorCreatingAppointment": "Erreur de création du rendez-vous",
     "errorUpdatingAppointment": "Erreur de mise à jour du rendez-vous",
     "scheduledInPast": "L'heure du rendez-vous ne peut pas être dans le passé",
+    "now": "Maintenant",
+    "nowHint": "Le rendez-vous démarrera immédiatement",
     "manual": "Manuelle",
     "manualNotice": "Le lien d'invitation sera disponible à copier une fois le rendez-vous enregistré.",
     "sms": "SMS",

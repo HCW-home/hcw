@@ -631,6 +631,8 @@ class ConsultationSerializer(CustomFieldsMixin, serializers.ModelSerializer):
 class AppointmentSerializer(serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(read_only=True)
     consultation_id = serializers.IntegerField(required=False, allow_null=True)
+    # Optional: an appointment without a schedule is immediate and starts now.
+    scheduled_at = serializers.DateTimeField(required=False, allow_null=True)
     consultation_title = serializers.CharField(
         source="consultation.title", read_only=True, default=None
     )
@@ -715,6 +717,18 @@ class AppointmentSerializer(serializers.ModelSerializer):
                 _("Scheduled time cannot be in the past.")
             )
         return value
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+
+        # No schedule provided: the appointment is immediate, start it now.
+        if attrs.get("scheduled_at") is None:
+            if self.instance is None:
+                attrs["scheduled_at"] = timezone.now()
+            else:
+                attrs.pop("scheduled_at", None)
+
+        return attrs
 
     def validate_end_expected_at(self, value):
         user = self.context["request"].user

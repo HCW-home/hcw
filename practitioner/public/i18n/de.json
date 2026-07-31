@@ -849,6 +849,8 @@
     "errorCreatingAppointment": "Fehler beim Erstellen des Termins",
     "errorUpdatingAppointment": "Fehler beim Aktualisieren des Termins",
     "scheduledInPast": "Der Termin darf nicht in der Vergangenheit liegen.",
+    "now": "Jetzt",
+    "nowHint": "Der Termin beginnt sofort",
     "manualNotice": "Der Einladungslink kann kopiert werden, sobald der Termin gespeichert ist.",
     "sms": "SMS",
     "whatsApp": "WhatsApp",
