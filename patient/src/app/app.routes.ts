@@ -5,6 +5,7 @@ import { EncryptionGuard } from './core/guards/encryption.guard';
 import { FirstLoginGuard } from './core/guards/first-login.guard';
 import { canDeactivateVideoCall } from './core/guards/video-call.guard';
 import { mobileAppRequiredGuard } from './core/guards/mobile-app-required.guard';
+import { PublicAccessGuard } from './core/guards/public-access.guard';
 
 export const routes: Routes = [
   {
@@ -19,7 +20,8 @@ export const routes: Routes = [
   },
   {
     path: 'map',
-    loadComponent: () => import('./pages/map/map.page').then(m => m.MapPage)
+    loadComponent: () => import('./pages/map/map.page').then(m => m.MapPage),
+    canActivate: [mobileAppRequiredGuard, PublicAccessGuard],
   },
   {
     path: 'untrusted-instance',
@@ -106,7 +108,7 @@ export const routes: Routes = [
   {
     path: 'new-request',
     loadComponent: () => import('./pages/new-request/new-request.page').then(m => m.NewRequestPage),
-    canActivate: [mobileAppRequiredGuard, FirstLoginGuard, TermsGuard, EncryptionGuard],
+    canActivate: [mobileAppRequiredGuard, FirstLoginGuard, PublicAccessGuard, TermsGuard, EncryptionGuard],
   },
   {
     path: 'consultation/:id/video',
