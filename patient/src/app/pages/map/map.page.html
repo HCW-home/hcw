@@ -136,7 +136,7 @@
     <div class="loading-container">
       <ion-spinner name="crescent"></ion-spinner>
     </div>
-  } @else if (!isPublicEnabled()) {
+  } @else if (!canViewMap()) {
     <div class="state-wrap">
       <div class="state-card">
         <ion-icon name="lock-closed-outline" class="state-icon state-icon--danger"></ion-icon>

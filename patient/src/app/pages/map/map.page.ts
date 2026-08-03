@@ -153,6 +153,9 @@ export class MapPage implements OnInit, OnDestroy {
   suggestOrganisations = signal<MapItem[]>([]);
   private allSpecialities = signal<Speciality[]>([]);
 
+  isAuthenticated = signal(false);
+  canViewMap = computed(() => this.isPublicEnabled() || this.isAuthenticated());
+
   // Typing splits the panel into three columns; before that it is a plain
   // speciality picker.
   isSuggestSearching = computed(
@@ -199,6 +202,14 @@ export class MapPage implements OnInit, OnDestroy {
   }
 
   private checkPublicOrganisations(): void {
+    this.authService.authReady.then(() => {
+      this.isAuthenticated.set(this.authService.isAuthenticatedValue);
+    });
+
+    this.authService.isAuthenticated$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(value => this.isAuthenticated.set(value));
+
     this.authService.getConfig()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
