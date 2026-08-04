@@ -281,6 +281,152 @@
 }
 
 // ---------------------------------------------------------------------------
+// Booking — day navigation, slots, CTA (same pattern as the map result cards)
+// ---------------------------------------------------------------------------
+
+.oc-booking {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  .oc-slot-area {
+    flex: 1;
+    min-width: 0;
+  }
+
+  @media (min-width: 560px) {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--app-spacing-lg);
+
+    .rdv-button {
+      width: auto;
+      flex-shrink: 0;
+    }
+  }
+}
+
+.oc-slots-loading {
+  display: flex;
+  justify-content: center;
+  padding: 4px 0;
+
+  ion-spinner {
+    width: 20px;
+    height: 20px;
+    color: var(--app-teal);
+  }
+}
+
+.oc-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--app-ink-3);
+
+  ion-icon {
+    font-size: 17px;
+    color: var(--app-ink-4);
+    flex-shrink: 0;
+  }
+}
+
+.day-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  .day-label {
+    font-size: 12.5px;
+    font-weight: 700;
+    text-transform: capitalize;
+    color: var(--app-ink-2);
+  }
+
+  .day-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--app-teal);
+    cursor: pointer;
+    transition: background 0.15s var(--app-ease);
+
+    ion-icon {
+      font-size: 16px;
+    }
+
+    &:hover:not(:disabled) {
+      background: var(--app-teal-050);
+    }
+
+    &:disabled {
+      color: var(--app-ink-4);
+      opacity: 0.5;
+      cursor: default;
+    }
+  }
+}
+
+.slot-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.slot-chip {
+  padding: 6px 11px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface);
+  color: var(--app-teal-dark);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s var(--app-ease), border-color 0.15s var(--app-ease);
+
+  &:hover {
+    background: var(--app-teal-050);
+    border-color: var(--app-teal);
+  }
+}
+
+.rdv-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 11px 16px;
+  border: 1px solid var(--app-teal);
+  border-radius: 8px;
+  background: var(--app-surface);
+  color: var(--app-teal-dark);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s var(--app-ease);
+
+  ion-icon {
+    font-size: 17px;
+    color: var(--app-teal);
+  }
+
+  &:hover {
+    background: var(--app-teal-050);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Responsive
 // ---------------------------------------------------------------------------
 
