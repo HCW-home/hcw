@@ -7,12 +7,14 @@ import {
   IonIcon,
   NavController,
   IonButton,
-} from '@ionic/angular/standalone';
-import { TranslatePipe } from '@ngx-translate/core';
+  IonHeader,
+  IonToolbar,
+  IonButtons,
+  IonTitle,
+} from '@ionic/angular/standalone';import { TranslatePipe } from '@ngx-translate/core';
 import { Subject, forkJoin, of, takeUntil } from 'rxjs';
 import { catchError, map as rxMap } from 'rxjs/operators';
 import { ApiService } from '../../core/services/api.service';
-import { AppHeaderComponent } from '../../shared/app-header/app-header.component';
 import { AppFooterComponent } from '../../shared/app-footer/app-footer.component';
 import { LocalDatePipe } from '../../shared/pipes/local-date.pipe';
 import { DoctorService, Reason } from '../../core/services/doctor.service';
@@ -83,7 +85,10 @@ interface SlotsState {
     IonSpinner,
     IonIcon,
     IonButton,
-    AppHeaderComponent,
+    IonHeader,
+    IonToolbar,
+    IonButtons,
+    IonTitle,
     AppFooterComponent,
     LocalDatePipe,
     TranslatePipe,

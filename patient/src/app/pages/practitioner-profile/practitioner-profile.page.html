@@ -1,4 +1,13 @@
-<app-header [pageTitle]="'practitioner.profile' | translate"></app-header>
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="goBack()">
+        <ion-icon name="arrow-back-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>{{ 'practitioner.profile' | translate }}</ion-title>
+  </ion-toolbar>
+</ion-header>
 
 <ion-content class="profile-content">
   @if (isLoading()) {
@@ -14,10 +23,6 @@
     </div>
   } @else if (practitioner(); as p) {
     <div class="profile-container">
-
-      <ion-button (click)="goBack()">
-        <ion-icon name="arrow-back-outline"></ion-icon>
-      </ion-button>
 
       <div class="profile-hero">
         @if (p.picture) {
