@@ -7,8 +7,6 @@ import {
   IonIcon, 
   NavController, 
   IonButton,
-  IonButtons,
-  IonToolbar,
 } from '@ionic/angular/standalone';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ApiService } from '../../core/services/api.service';
@@ -63,8 +61,6 @@ interface PublicPractitioner {
     IonSpinner,
     IonIcon,
     IonButton,
-    IonButtons,
-    IonToolbar,
     AppHeaderComponent,
     AppFooterComponent,
     TranslatePipe,
