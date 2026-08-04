@@ -15,6 +15,10 @@
   } @else if (practitioner(); as p) {
     <div class="profile-container">
 
+      <ion-button (click)="goBack()">
+        <ion-icon name="arrow-back-outline"></ion-icon>
+      </ion-button>
+
       <div class="profile-hero">
         @if (p.picture) {
           <img [src]="p.picture" [alt]="p.first_name + ' ' + p.last_name" class="profile-picture" />

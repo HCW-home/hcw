@@ -1,7 +1,15 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
-import { IonContent, IonSpinner, IonIcon } from '@ionic/angular/standalone';
+import { 
+  IonContent, 
+  IonSpinner, 
+  IonIcon, 
+  NavController, 
+  IonButton,
+  IonButtons,
+  IonToolbar,
+} from '@ionic/angular/standalone';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ApiService } from '../../core/services/api.service';
 import { AppHeaderComponent } from '../../shared/app-header/app-header.component';
@@ -54,6 +62,9 @@ interface PublicPractitioner {
     IonContent,
     IonSpinner,
     IonIcon,
+    IonButton,
+    IonButtons,
+    IonToolbar,
     AppHeaderComponent,
     AppFooterComponent,
     TranslatePipe,
@@ -67,6 +78,7 @@ export class PractitionerProfilePage implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private apiService: ApiService,
+    private navCtrl: NavController,
   ) {}
 
   ngOnInit(): void {
@@ -99,5 +111,9 @@ export class PractitionerProfilePage implements OnInit {
 
   hasPublicCustomFields(p: PublicPractitioner): boolean {
     return p.public_custom_fields.some(f => f.value);
+  }
+
+  goBack(): void {
+    this.navCtrl.back();
   }
 }
