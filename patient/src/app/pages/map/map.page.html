@@ -200,7 +200,7 @@
                 <div
                   class="org-card"
                   [class.selected]="isSelected(item)"
-                  (click)="selectItem(item)"
+                  (click)="goToProfile(item); $event.stopPropagation()"
                 >
                   <div class="oc-top">
                     @if (item.logo) {
@@ -212,7 +212,7 @@
                     }
                     <div class="oc-main">
                       <div class="oc-title-row">
-                        <h3 class="oc-name" (click)="goToProfile(item); $event.stopPropagation()">{{ item.name }}</h3>
+                        <h3 class="oc-name">{{ item.name }}</h3>
                         <span class="type-chip" [class.type-chip--doctor]="item.type === 'doctor'">
                           <ion-icon [name]="item.type === 'doctor' ? 'person' : 'business'"></ion-icon>
                           {{ (item.type === 'doctor' ? 'map.typeDoctor' : 'map.typeOrganisation') | translate }}
