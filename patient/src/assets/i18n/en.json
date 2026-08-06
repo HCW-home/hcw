@@ -218,7 +218,13 @@
     "failedDoctors": "Failed to load doctors",
     "selectReasonWarning": "Please select a reason",
     "submitSuccess": "Request submitted successfully",
-    "submitFailed": "Failed to submit request"
+    "submitFailed": "Failed to submit request",
+    "signInToContinue": "Sign in to continue",
+    "signInToContinueDesc": "You need to sign in or create an account to complete your request.",
+    "loginTitle": "Already have an account?",
+    "loginDesc": "Sign in to continue with your consultation request.",
+    "registerTitle": "New patient?",
+    "registerDesc": "Create an account to complete your consultation request."
   },
   "profile": {
     "title": "Profile",

@@ -68,9 +68,10 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
   private t = inject(TranslationService);
 
   currentStep = signal(1);
-  totalSteps = 5;
+  totalSteps = 6;
   isLoading = signal(false);
   isSubmitting = signal(false);
+  registrationEnabled = signal(false);
 
   specialities = signal<Speciality[]>([]);
   selectedSpeciality = signal<Speciality | null>(null);
@@ -100,7 +101,8 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
       case 2: return this.t.instant('newRequest.selectReason');
       case 3: return this.t.instant('newRequest.selectDoctor');
       case 4: return this.t.instant('newRequest.chooseTimeSlot');
-      case 5: return this.t.instant('newRequest.reviewAndSubmit');
+      case 5: return this.t.instant('newRequest.signInToContinue');
+      case 6: return this.t.instant('newRequest.reviewAndSubmit');
       default: return this.t.instant('newRequest.newRequest');
     }
   });
@@ -188,9 +190,17 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
       doctor: this.doctorService.getPublicPractitioner(doctorId),
     }).pipe(takeUntil(this.destroy$)).subscribe({
       next: ({ specialities, doctor }) => {
-        this.specialities.set(specialities);
-        const speciality = specialities.find(s => s.id === specialityId) ?? null;
+        const doctorSpecialities = doctor.specialities ?? [];
+
+        const filteredSpecialities = doctorSpecialities.length > 0
+          ? doctorSpecialities.filter(s => s.id === specialityId)
+          : specialities.filter(s => s.id === specialityId);
+
+        this.specialities.set(filteredSpecialities);
+
+        const speciality = filteredSpecialities[0] ?? null;
         this.selectedSpeciality.set(speciality);
+        
         this.selectedDoctor.set(doctor);
 
         const slotDate = params.get('slot_date');
@@ -393,13 +403,27 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
   proceedToRecapOrAuth(): void {
     this.loadCustomFields();
     if (!this.authService.isAuthenticatedValue) {
-      this.saveDraftAndRedirectToLogin();
+      this.currentStep.set(5);
+      this.authService.getConfig().subscribe({
+        next: (config: any) => {
+          if (!config) return;
+          this.registrationEnabled.set(!!config.registration_enabled && !config.force_temporary_patients);
+        },
+      });
       return;
     }
-    this.currentStep.set(5);
+    this.currentStep.set(6);
   }
 
-  private saveDraftAndRedirectToLogin(): void {
+  goToLogin(): void {
+    this.saveDraftAndRedirect('/login');
+  }
+
+  goToRegister(): void {
+    this.saveDraftAndRedirect('/register');
+  }
+
+  private saveDraftAndRedirect(path: string): void {
     const draft: BookingDraft = {
       speciality: this.selectedSpeciality(),
       doctor: this.selectedDoctor(),
@@ -412,7 +436,7 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
       sessionStorage.setItem(BOOKING_DRAFT_KEY, JSON.stringify(draft));
     } catch {
     }
-    this.router.navigate(['/login'], { queryParams: { action: 'completeBooking' } });
+    this.router.navigate([path], { queryParams: { action: 'completeBooking' } });
   }
 
   private tryRestoreDraft(): boolean {
@@ -434,7 +458,7 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
       this.comment = draft.comment ?? '';
       sessionStorage.removeItem(BOOKING_DRAFT_KEY);
       this.loadCustomFields();
-      this.currentStep.set(5);
+      this.currentStep.set(6);
       return true;
     } catch {
       try { sessionStorage.removeItem(BOOKING_DRAFT_KEY); } catch { }
@@ -462,7 +486,10 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
       case 4:
         this.currentStep.set(this.visitedDoctorStep ? 3 : 2);
         break;
-      case 5: {
+      case 5: 
+        this.currentStep.set(4);
+        break;
+      case 6: {
         const reason = this.selectedReason();
         if (reason && reason.assignment_method === 'appointment') {
           this.currentStep.set(4);
@@ -485,7 +512,7 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
     }
 
     if (!this.authService.isAuthenticatedValue) {
-      this.saveDraftAndRedirectToLogin();
+      this.saveDraftAndRedirect("/login");
       return;
     }
 

@@ -22,6 +22,7 @@ import { AuthService } from "../../core/services/auth.service";
 import { TranslationService } from "../../core/services/translation.service";
 import { LanguageSelectorComponent } from "../../shared/components/language-selector/language-selector.component";
 import { AuthBrandingComponent } from '../../shared/components/auth-branding/auth-branding.component';
+import { ActivatedRoute } from "@angular/router";
 
 @Component({
   selector: "app-register",
@@ -55,6 +56,7 @@ export class RegisterPage implements OnInit {
     private navCtrl: NavController,
     private loadingCtrl: LoadingController,
     private toastCtrl: ToastController,
+    private route: ActivatedRoute,
   ) {
     this.registerForm = this.fb.group(
       {
@@ -68,10 +70,14 @@ export class RegisterPage implements OnInit {
     );
   }
 
+  private returnAction: string | null = null;
+
   ngOnInit() {
+    this.returnAction = this.route.snapshot.queryParamMap.get('action');
+
     this.authService.getConfig().subscribe({
-      next: (config: any) => {
         // getConfig() emits null when the backend is unreachable.
+      next: (config: any) => {
         this.registrationEnabled =
           !!config?.registration_enabled && !config?.force_temporary_patients;
         this.loading = false;
@@ -147,6 +153,14 @@ export class RegisterPage implements OnInit {
   }
 
   goToLogin() {
-    this.navCtrl.navigateBack("/login");
+    if (this.returnAction) {
+      this.navCtrl.navigateBack("/login", {
+        queryParams: {
+          action: this.returnAction
+        }
+      });
+    } else {
+      this.navCtrl.navigateBack("/login");
+    }
   }
 }

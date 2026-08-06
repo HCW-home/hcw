@@ -191,6 +191,31 @@
       }
 
       @case (5) {
+        <div class="step-content auth-choice-step">
+          <h2 class="step-title">{{ 'newRequest.signInToContinue' | translate }}</h2>
+          <p class="step-description">{{ 'newRequest.signInToContinueDesc' | translate }}</p>
+
+          <div class="choice-cards" [class.single-choice]="!registrationEnabled()">
+            <div class="choice-card" (click)="goToLogin()">
+              <ion-icon name="log-in-outline"></ion-icon>
+              <h3>{{ 'newRequest.loginTitle' | translate }}</h3>
+              <p>{{ 'newRequest.loginDesc' | translate }}</p>
+              <button class="primary-action">{{ 'login.title' | translate }}</button>
+            </div>
+
+            @if (registrationEnabled()) {
+              <div class="choice-card" (click)="goToRegister()">
+                <ion-icon name="person-add-outline"></ion-icon>
+                <h3>{{ 'newRequest.registerTitle' | translate }}</h3>
+                <p>{{ 'newRequest.registerDesc' | translate }}</p>
+                <button class="secondary-action">{{ 'login.signUp' | translate }}</button>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      @case (6) {
         <div class="step-content review-step">
           <h2 class="step-title">{{ 'newRequest.reviewAndSubmit' | translate }}</h2>
           <p class="step-description">{{ 'newRequest.reviewDesc' | translate }}</p>

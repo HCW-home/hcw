@@ -25,10 +25,6 @@ ion-header {
   padding-right: var(--app-spacing-lg);
 }
 
-.new-request-content {
-
-}
-
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -678,5 +674,117 @@ ion-header {
     border-radius: var(--app-card-radius);
     border: 1px solid var(--app-border-color);
     font-size: 0.9375rem;
+  }
+}
+
+.auth-choice-step {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100%;
+
+  .primary-action {
+    width: 100%;
+    padding: var(--app-spacing-md) var(--app-spacing-lg);
+    background: linear-gradient(
+      135deg,
+      var(--ion-color-primary),
+      var(--ion-color-primary-shade)
+    );
+    color: white;
+    border: none;
+    border-radius: var(--app-button-radius);
+    font-size: .9375rem;
+    font-weight: 600;
+    box-shadow:
+      0 4px 6px -1px rgba(0,0,0,.1),
+      0 4px 14px -3px rgba(8,145,178,.4);
+    font-family: inherit;
+  }
+
+  .secondary-action {
+    width: 100%;
+    padding: var(--app-spacing-md) var(--app-spacing-lg);
+    background: transparent;
+    color: var(--ion-color-primary);
+    border: 1px solid var(--ion-color-primary);
+    border-radius: var(--app-button-radius);
+    font-size: .9375rem;
+    font-weight: 600;
+    font-family: inherit;
+  }
+
+  .choice-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--app-spacing-lg);
+    margin-top: var(--app-spacing-xl);
+
+    &.single-choice {
+      grid-template-columns: 1fr;
+      max-width: 420px;
+      margin: var(--app-spacing-xl) auto 0;
+    }
+  }
+
+  .choice-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: var(--app-spacing-2xl);
+    background: var(--app-card-background);
+    border: 1px solid var(--app-border-color);
+    border-radius: var(--app-card-radius);
+    cursor: pointer;
+    transition:
+      border-color .2s ease,
+      box-shadow .2s ease,
+      transform .2s ease;
+
+    &:active {
+      transform: scale(0.98);
+      border-color: var(--ion-color-primary);
+      box-shadow: 0 4px 12px rgba(8, 145, 178, .18);
+    }
+
+    ion-icon {
+      font-size: 52px;
+      color: var(--ion-color-primary);
+      margin-bottom: var(--app-spacing-lg);
+    }
+
+    h3 {
+      margin: 0 0 var(--app-spacing-sm);
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--app-text-primary);
+    }
+
+    p {
+      margin: 0 0 var(--app-spacing-xl);
+      font-size: .875rem;
+      line-height: 1.5;
+      color: var(--app-text-secondary);
+      flex: 1;
+    }
+
+    .primary-action,
+    .secondary-action {
+      width: 100%;
+      pointer-events: none;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .auth-choice-step {
+    .choice-cards {
+      grid-template-columns: 1fr;
+    }
+
+    .choice-card {
+      padding: var(--app-spacing-xl);
+    }
   }
 }
