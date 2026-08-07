@@ -172,6 +172,17 @@ ion-item {
   --border-color: var(--app-border-color);
 }
 
+/* Ionic marks any item wrapping a single select/checkbox/radio/datetime as
+ * activatable (Item.hasCover()), which paints a grey tint across the whole row
+ * on hover and on press — stacked label included. Form rows are fields, not
+ * clickable surfaces, so the tint is dropped for every item that is not really
+ * a button. The focused tint is left alone: it is keyboard-only and is the sole
+ * focus indicator these rows have. */
+ion-item:not([button]) {
+  --background-hover-opacity: 0;
+  --background-activated-opacity: 0;
+}
+
 ion-button {
   --border-radius: var(--app-button-radius);
   font-weight: var(--app-font-weight-semibold);
