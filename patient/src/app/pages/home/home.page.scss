@@ -56,6 +56,113 @@
       &:active {
         background: var(--app-teal-050);
       }
+
+      // Reads as "this is what the button opened" while the panel is unfolded.
+      &.card-btn-active {
+        background: var(--app-teal-050);
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Practitioner search — unfolds under the action row
+  // ---------------------------------------------------------------------------
+  .home-search {
+    max-height: 0;
+    margin-bottom: 0;
+    padding: 0 22px;
+    opacity: 0;
+    // Clipped while folded and while folding, so the suggestion dropdown can
+    // still escape the panel once it has settled open.
+    overflow: hidden;
+    background: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-sm);
+    transition:
+      max-height 0.32s var(--app-ease),
+      padding 0.32s var(--app-ease),
+      margin-bottom 0.32s var(--app-ease),
+      opacity 0.22s var(--app-ease);
+
+    &.home-search--open {
+      max-height: 320px;
+      margin-bottom: var(--app-spacing-lg);
+      padding: 20px 22px 24px;
+      opacity: 1;
+    }
+
+    &.home-search--open:not(.home-search--settling) {
+      overflow: visible;
+    }
+  }
+
+  .home-search-head {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: start;
+    margin-bottom: 14px;
+
+    .home-search-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--app-ink-1);
+
+      ion-icon {
+        font-size: 17px;
+        color: var(--app-teal);
+      }
+    }
+
+    .home-search-subtitle {
+      grid-column: 1;
+      margin: 3px 0 0;
+      font-size: 13px;
+      line-height: 1.45;
+      color: var(--app-ink-3);
+    }
+
+    .home-search-close {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border: 1px solid var(--app-border);
+      border-radius: 9px;
+      background: var(--app-surface);
+      color: var(--app-ink-3);
+      cursor: pointer;
+      transition: background 0.15s var(--app-ease), border-color 0.15s var(--app-ease), color 0.15s var(--app-ease);
+
+      ion-icon {
+        font-size: 18px;
+      }
+
+      &:hover {
+        border-color: var(--app-danger);
+        color: var(--app-danger);
+        background: var(--app-surface-muted);
+      }
+    }
+  }
+
+  @media (max-width: 900px) {
+    // The bar stacks into three rows on narrow screens.
+    .home-search.home-search--open {
+      max-height: 420px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .home-search {
+      transition: none;
     }
   }
 

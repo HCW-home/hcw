@@ -28,11 +28,16 @@ import { LocalDatePipe } from '../../shared/pipes/local-date.pipe';
 import { AppointmentInfoComponent } from '../../shared/components/appointment-info/appointment-info';
 import { ConsultationInfoComponent } from '../../shared/components/consultation-info/consultation-info';
 import { MessageListComponent, Message, SendMessageData, EditMessageData, DeleteMessageData } from '../../shared/components/message-list/message-list';
+import { SearchBarComponent } from '../../shared/components/search-bar/search-bar.component';
+import { SearchItem, SearchQuery } from '../../core/models/search.model';
 
 interface RequestStatus {
   label: string;
   color: 'warning' | 'info' | 'primary' | 'success' | 'muted' | 'danger';
 }
+
+// Kept in sync with the panel transition in home.page.scss.
+const SEARCH_PANEL_TRANSITION_MS = 320;
 
 @Component({
   selector: 'app-home',
@@ -53,6 +58,7 @@ interface RequestStatus {
     AppointmentInfoComponent,
     ConsultationInfoComponent,
     MessageListComponent,
+    SearchBarComponent,
   ]
 })
 export class HomePage implements OnInit, OnDestroy {
@@ -65,6 +71,13 @@ export class HomePage implements OnInit, OnDestroy {
 
   currentUser = signal<User | null>(null);
   hasReasons = signal(false);
+  // "Request a consultation" unfolds the practitioner search right here instead
+  // of jumping to the wizard: the search is the entry point of a booking.
+  searchOpen = signal(false);
+  // The panel clips its content while it folds, otherwise the suggestion
+  // dropdown would be cut off once it is open.
+  searchSettling = signal(false);
+  private searchTransitionTimer: ReturnType<typeof setTimeout> | null = null;
   nextAppointment = signal<Appointment | null>(null);
   requests = signal<ConsultationRequest[]>([]);
   consultations = signal<Consultation[]>([]);
@@ -188,6 +201,9 @@ export class HomePage implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.chatWsService.disconnect();
+    if (this.searchTransitionTimer) {
+      clearTimeout(this.searchTransitionTimer);
+    }
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -281,8 +297,56 @@ export class HomePage implements OnInit, OnDestroy {
       });
   }
 
-  goToNewRequest(): void {
-    this.navCtrl.navigateForward('/new-request');
+  toggleSearch(): void {
+    this.setSearchOpen(!this.searchOpen());
+  }
+
+  closeSearch(): void {
+    this.setSearchOpen(false);
+  }
+
+  private setSearchOpen(open: boolean): void {
+    if (this.searchOpen() === open) return;
+    this.searchOpen.set(open);
+    this.searchSettling.set(true);
+    if (this.searchTransitionTimer) {
+      clearTimeout(this.searchTransitionTimer);
+    }
+    this.searchTransitionTimer = setTimeout(
+      () => this.searchSettling.set(false),
+      SEARCH_PANEL_TRANSITION_MS,
+    );
+  }
+
+  // The results live in the wizard, which owns the rest of the booking flow.
+  // Empty terms are left out entirely: the router serializes an undefined value
+  // as the literal "undefined", which would come back as a search term.
+  onSearch(query: SearchQuery): void {
+    const queryParams: Record<string, string> = {};
+    if (query.who) {
+      queryParams['who'] = query.who;
+    }
+    if (query.where) {
+      queryParams['where'] = query.where;
+    }
+    this.navCtrl.navigateForward('/new-request', { queryParams });
+  }
+
+  onPractitionerSelected(item: SearchItem): void {
+    const doctor = item.doctor;
+    if (!doctor) return;
+
+    // The wizard opens the reason list of a speciality; without one, all it can
+    // do is search for that practitioner by name.
+    const specialityId = doctor.specialities?.[0]?.id;
+    if (!specialityId) {
+      this.navCtrl.navigateForward('/new-request', { queryParams: { who: item.name } });
+      return;
+    }
+
+    this.navCtrl.navigateForward('/new-request', {
+      queryParams: { doctor_id: doctor.pk, speciality_id: specialityId },
+    });
   }
 
   getStatusConfig(status: string | undefined): RequestStatus {

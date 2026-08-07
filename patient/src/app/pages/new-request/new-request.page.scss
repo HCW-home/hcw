@@ -78,16 +78,6 @@
   transition: width 0.35s var(--app-ease);
 }
 
-.step-indicator {
-  flex-shrink: 0;
-  padding: 3px 10px;
-  border-radius: 9999px;
-  background: var(--app-teal-050);
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--app-teal-dark);
-}
-
 .wizard-cancel {
   display: inline-flex;
   align-items: center;
@@ -155,71 +145,144 @@
   line-height: 1.5;
 }
 
-.speciality-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: var(--app-spacing-md);
+// ---------------------------------------------------------------------------
+// Step 1 — directory search. Same bar and same result cards as the practitioner
+// map (shared components), so searching here never leaves the wizard.
+// ---------------------------------------------------------------------------
+
+.search-step {
+  display: flex;
+  flex-direction: column;
 }
 
-.speciality-card {
-  margin: 0;
-  cursor: pointer;
-  transition: transform 0.2s var(--app-ease), box-shadow 0.2s var(--app-ease), border-color 0.2s var(--app-ease);
-  border: 1px solid var(--app-border);
-  border-radius: var(--radius-card);
-  background: var(--app-surface);
-  box-shadow: var(--shadow-sm);
+// The intro collapses instead of unmounting: that is what lifts the bar to the
+// top of the step rather than re-rendering it there.
+.hero-text {
+  max-height: 220px;
+  opacity: 1;
+  overflow: hidden;
+  transition:
+    max-height 0.45s var(--app-ease),
+    opacity 0.25s var(--app-ease);
+}
 
-  &:hover {
-    border-color: var(--app-teal);
-    box-shadow: var(--shadow-md);
+.search-step--results .hero-text {
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+app-search-bar {
+  margin-bottom: var(--app-spacing-lg);
+  flex-shrink: 0;
+}
+
+// The results only show up once the bar has started travelling. The body fades
+// without a transform: a transformed ancestor confuses Leaflet's positioning
+// while the animation runs.
+@keyframes stepResultsIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes stepFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--app-spacing-md);
+  flex-wrap: wrap;
+  margin-bottom: var(--app-spacing-md);
+  animation: stepResultsIn 0.4s 0.1s both var(--app-ease);
+
+  .section-title-group {
+    display: flex;
+    align-items: center;
+    gap: var(--app-spacing-sm);
   }
 
-  &:active {
-    transform: scale(0.98);
-    border-color: var(--app-teal);
+  .section-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--app-ink-1);
   }
 
-  ion-card-content {
+  .section-badge {
+    padding: 3px 10px;
+    border-radius: 9999px;
+    background: var(--app-teal-050);
+    color: var(--app-teal-dark);
+    font-size: 12.5px;
+    font-weight: 700;
+  }
+}
+
+// Results and map side by side, like the practitioner map. The page keeps its
+// own scroll, so the map sticks instead of filling a full-height shell.
+.results-body {
+  display: flex;
+  gap: var(--app-spacing-lg);
+  margin-bottom: var(--app-spacing-xl);
+  animation: stepFadeIn 0.45s 0.14s both var(--app-ease);
+
+  .list-panel {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .org-list {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    padding: var(--app-spacing-xl) var(--app-spacing-md);
-    text-align: center;
+    gap: 12px;
   }
 
-  .speciality-icon-wrapper {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: var(--app-teal-050);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: var(--app-spacing-md);
+  .map-panel {
+    flex: 0 0 42%;
+    max-width: 520px;
+    height: 520px;
+    position: sticky;
+    top: 0;
+  }
+}
+
+@media (max-width: 900px) {
+  .results-body {
+    flex-direction: column;
+
+    .map-panel {
+      order: -1;
+      flex: 0 0 auto;
+      max-width: none;
+      height: 38vh;
+      min-height: 260px;
+      position: static;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-text {
+    transition: none;
   }
 
-  .speciality-icon {
-    font-size: 28px;
-    color: var(--app-teal);
-  }
-
-  .speciality-icon-img {
-    width: 36px;
-    height: 36px;
-    object-fit: contain;
-  }
-
-  .speciality-icon-img {
-    width: 36px;
-    height: 36px;
-    object-fit: contain;
-  }
-
-  .speciality-name {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--app-ink-1);
+  .results-header,
+  .results-body {
+    animation: none;
   }
 }
 

@@ -13,7 +13,6 @@
       <div class="wizard-progress">
         <span class="wizard-progress-fill" [style.width.%]="progress() * 100"></span>
       </div>
-      <span class="step-indicator">{{ currentStep() }}/{{ totalSteps }}</span>
       <button class="wizard-cancel" type="button" (click)="confirmCancel()">
         <ion-icon name="close-outline"></ion-icon>
         <span>{{ 'newRequest.cancelRequest' | translate }}</span>
@@ -28,29 +27,64 @@
     } @else {
       @switch (currentStep()) {
         @case (1) {
-          <div class="step-content">
-            <h2 class="step-title">{{ 'newRequest.chooseSpecialty' | translate }}</h2>
-            <p class="step-description">{{ 'newRequest.chooseSpecialtyDesc' | translate }}</p>
-              <div class="speciality-grid">
-              @for (speciality of specialities(); track speciality.id) {
-                <div class="speciality-card" (click)="selectSpeciality(speciality)">
-                  <ion-card-content>
-                    <div class="speciality-icon-wrapper">
-                      @if (speciality.icon) {
-                        <img [src]="speciality.icon" [alt]="speciality.name" class="speciality-icon-img">
-                      } @else {
-                        <ion-icon name="medical-outline" class="speciality-icon"></ion-icon>
+          <!-- Landing and results share one shell so the search bar is never
+               destroyed: searching only collapses the intro, which slides the
+               bar up before the results fade in. -->
+          <div class="step-content search-step" [class.search-step--results]="hasSearched()">
+            <div class="hero-text">
+              <h2 class="step-title">{{ 'map.searchTitle' | translate }}</h2>
+              <p class="step-description">{{ 'map.searchSubtitle' | translate }}</p>
+            </div>
+
+            <app-search-bar
+              [who]="initialWho"
+              [where]="initialWhere"
+              (search)="onSearch($event)"
+              (practitionerSelected)="startBookingWithPractitioner($event)"
+            ></app-search-bar>
+
+            @if (hasSearched()) {
+              <div class="results-header">
+                <div class="section-title-group">
+                  <h2 class="section-title">{{ 'map.resultsTitle' | translate }}</h2>
+                  @if (!isSearching() && searchResults().length > 0) {
+                    <span class="section-badge">{{ searchResults().length }} {{ 'common.total' | translate }}</span>
+                  }
+                </div>
+              </div>
+
+              <div class="results-body">
+                <div class="list-panel">
+                  @if (isSearching()) {
+                    <div class="loading-container">
+                      <ion-spinner name="crescent" color="primary"></ion-spinner>
+                    </div>
+                  } @else if (searchResults().length === 0) {
+                    <div class="empty-state">
+                      <ion-icon name="business-outline"></ion-icon>
+                      <span>{{ 'map.noResults' | translate }}</span>
+                    </div>
+                  } @else {
+                    <div class="org-list">
+                      @for (item of searchResults(); track item.id) {
+                        <app-search-result-card
+                          [item]="item"
+                          [selected]="isSelected(item)"
+                          (itemClick)="startBookingWithPractitioner($event)"
+                          (book)="startBookingWithIntent($event)"
+                        ></app-search-result-card>
                       }
                     </div>
-                    <span class="speciality-name">{{ speciality.name }}</span>
-                  </ion-card-content>
+                  }
                 </div>
-              }
-            </div>
-            @if (specialities().length === 0) {
-              <div class="empty-state">
-                <ion-icon name="information-circle-outline"></ion-icon>
-                <span>{{ 'newRequest.noSpecialties' | translate }}</span>
+
+                @if (!isSearching() && searchResults().length > 0) {
+                  <app-search-map
+                    class="map-panel"
+                    [items]="searchResults()"
+                    (markerSelected)="onMarkerSelected($event)"
+                  ></app-search-map>
+                }
               </div>
             }
           </div>

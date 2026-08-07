@@ -1,136 +1,5 @@
 <app-header [pageTitle]="'map.title' | translate"></app-header>
 
-<!-- One-line search bar, shared by the landing screen and the results screen so
-     both stay strictly identical. -->
-<ng-template #searchBlock>
-  @if (suggestOpen()) {
-    <div class="suggest-backdrop" (click)="closeSuggestions()"></div>
-  }
-
-  <div class="search-block">
-    <div class="search-bar">
-      <div class="search-bar-field">
-        <ion-icon name="search-outline"></ion-icon>
-        <input
-          type="text"
-          [placeholder]="'map.searchWhoPlaceholder' | translate"
-          [value]="searchQuery()"
-          (input)="onSearchInput($event)"
-          (focus)="onSearchFocus()"
-          (keyup.enter)="submitSearch()"
-          (keyup.escape)="closeSuggestions()"
-        />
-      </div>
-      <div class="search-bar-divider"></div>
-      <div class="search-bar-field">
-        <ion-icon name="location-outline"></ion-icon>
-        <input
-          type="text"
-          [placeholder]="'map.searchLocationPlaceholder' | translate"
-          [value]="locationQuery()"
-          (input)="onLocationInput($event)"
-          (focus)="closeSuggestions()"
-          (keyup.enter)="submitSearch()"
-        />
-      </div>
-      <button class="search-bar-button" (click)="submitSearch()">
-        <ion-icon name="search-outline"></ion-icon>
-        <span>{{ 'map.searchButton' | translate }}</span>
-      </button>
-    </div>
-
-    @if (suggestOpen()) {
-      <div class="suggest-panel" [class.suggest-panel--columns]="isSuggestSearching()">
-        @if (!hasSuggestions() && !isSuggestLoading()) {
-          <div class="suggest-empty">
-            <ion-icon name="search-outline"></ion-icon>
-            <span>{{ 'map.suggestEmpty' | translate }}</span>
-          </div>
-        } @else {
-          @if (suggestSpecialities().length) {
-            <div class="suggest-col">
-              <span class="suggest-col-title">{{ 'map.suggestSpecialities' | translate }}</span>
-              <div class="suggest-list">
-                @for (speciality of suggestSpecialities(); track speciality.id) {
-                  <button class="suggest-item" (click)="selectSpeciality(speciality)">
-                    <span class="suggest-item-label">
-                      @for (part of highlight(speciality.name); track $index) {
-                        <span [class.hl]="part.match">{{ part.text }}</span>
-                      }
-                    </span>
-                  </button>
-                }
-              </div>
-            </div>
-          }
-
-          @if (isSuggestSearching()) {
-            @if (suggestPractitioners().length) {
-              <div class="suggest-col">
-                <span class="suggest-col-title">{{ 'map.suggestPractitioners' | translate }}</span>
-                <div class="suggest-list">
-                  @for (item of suggestPractitioners(); track item.id) {
-                    <button class="suggest-item suggest-item--rich" (click)="selectPractitioner(item)">
-                      @if (item.logo) {
-                        <img [src]="item.logo" [alt]="item.name" class="suggest-avatar suggest-avatar--round" />
-                      } @else {
-                        <span class="suggest-avatar suggest-avatar--round">{{ item.initials }}</span>
-                      }
-                      <span class="suggest-item-text">
-                        <span class="suggest-item-label">
-                          @for (part of highlight(item.name); track $index) {
-                            <span [class.hl]="part.match">{{ part.text }}</span>
-                          }
-                        </span>
-                        @if (item.specialities || item.subtitle) {
-                          <span class="suggest-item-sub">{{ item.specialities || item.subtitle }}</span>
-                        }
-                      </span>
-                    </button>
-                  }
-                </div>
-              </div>
-            }
-
-            @if (suggestOrganisations().length) {
-              <div class="suggest-col">
-                <span class="suggest-col-title">{{ 'map.suggestOrganisations' | translate }}</span>
-                <div class="suggest-list">
-                  @for (item of suggestOrganisations(); track item.id) {
-                    <button class="suggest-item suggest-item--rich" (click)="selectOrganisation(item)">
-                      @if (item.logo) {
-                        <img [src]="item.logo" [alt]="item.name" class="suggest-avatar" />
-                      } @else {
-                        <span class="suggest-avatar">{{ item.initials }}</span>
-                      }
-                      <span class="suggest-item-text">
-                        <span class="suggest-item-label">
-                          @for (part of highlight(item.name); track $index) {
-                            <span [class.hl]="part.match">{{ part.text }}</span>
-                          }
-                        </span>
-                        @if (item.subtitle) {
-                          <span class="suggest-item-sub">{{ item.subtitle }}</span>
-                        }
-                      </span>
-                    </button>
-                  }
-                </div>
-              </div>
-            }
-          }
-        }
-
-        @if (isSuggestLoading()) {
-          <div class="suggest-loading">
-            <ion-spinner name="crescent"></ion-spinner>
-          </div>
-        }
-      </div>
-    }
-  </div>
-</ng-template>
-
 <ion-content class="map-content">
   @if (isPublicEnabled() === null) {
     <div class="loading-container">
@@ -160,7 +29,10 @@
         <p class="search-hero-subtitle">{{ 'map.searchSubtitle' | translate }}</p>
       </div>
 
-      <ng-container *ngTemplateOutlet="searchBlock"></ng-container>
+      <app-search-bar
+        (search)="onSearch($event)"
+        (practitionerSelected)="goToProfile($event)"
+      ></app-search-bar>
 
       @if (hasSearched()) {
       <div class="results-header">
@@ -197,102 +69,22 @@
           } @else {
             <div class="org-list">
               @for (item of items(); track item.id) {
-                <div
-                  class="org-card"
-                  [class.selected]="isSelected(item)"
-                  (click)="goToProfile(item); $event.stopPropagation()"
-                >
-                  <div class="oc-top">
-                    @if (item.logo) {
-                      <img [src]="item.logo" [alt]="item.name" class="oc-logo" [class.oc-logo--doctor]="item.type === 'doctor'" />
-                    } @else {
-                      <div class="oc-avatar" [class.oc-avatar--doctor]="item.type === 'doctor'">
-                        {{ item.initials }}
-                      </div>
-                    }
-                    <div class="oc-main">
-                      <div class="oc-title-row">
-                        <h3 class="oc-name">{{ item.name }}</h3>
-                        <span class="type-chip" [class.type-chip--doctor]="item.type === 'doctor'">
-                          <ion-icon [name]="item.type === 'doctor' ? 'person' : 'business'"></ion-icon>
-                          {{ (item.type === 'doctor' ? 'map.typeDoctor' : 'map.typeOrganisation') | translate }}
-                        </span>
-                      </div>
-                      @if (item.specialities) {
-                        <p class="oc-meta oc-meta--spec">
-                          <ion-icon name="medkit-outline"></ion-icon>
-                          <span>{{ item.specialities }}</span>
-                        </p>
-                      }
-                      @if (item.subtitle) {
-                        <p class="oc-meta">
-                          <ion-icon name="location-outline"></ion-icon>
-                          <span>{{ item.subtitle }}</span>
-                        </p>
-                      }
-                    </div>
-                  </div>
-
-                  @if (item.type === 'doctor') {
-                    <div class="oc-booking">
-                      <div class="oc-slot-area">
-                        @if (getSlotsState(item.id)?.loading) {
-                          <div class="oc-slots-loading">
-                            <ion-spinner name="crescent"></ion-spinner>
-                          </div>
-                        } @else if (!getSlotsState(item.id)?.dates?.length) {
-                          <div class="oc-note">
-                            <ion-icon name="calendar-outline"></ion-icon>
-                            <span>{{ 'map.noSlots' | translate }}</span>
-                          </div>
-                        } @else {
-                          <div class="day-nav">
-                            <button
-                              class="day-arrow"
-                              [disabled]="!hasPrevDay(item.id)"
-                              (click)="prevDay(item.id); $event.stopPropagation()"
-                            >
-                              <ion-icon name="chevron-back-outline"></ion-icon>
-                            </button>
-                            <span class="day-label">{{ currentDateLabel(item.id) | localDate: 'EEE d MMM' }}</span>
-                            <button
-                              class="day-arrow"
-                              [disabled]="!hasNextDay(item.id)"
-                              (click)="nextDay(item.id); $event.stopPropagation()"
-                            >
-                              <ion-icon name="chevron-forward-outline"></ion-icon>
-                            </button>
-                          </div>
-                          <div class="slot-chips">
-                            @for (slot of currentDateSlots(item.id); track slot.start_time) {
-                              <button
-                                class="slot-chip"
-                                (click)="goToBookingWithSlot(item, slot); $event.stopPropagation()"
-                              >
-                                {{ slot.start_time.substring(0, 5) }}
-                              </button>
-                            }
-                          </div>
-                        }
-                      </div>
-                      <button
-                        class="rdv-button"
-                        (click)="goToBooking(item); $event.stopPropagation()"
-                      >
-                        <ion-icon name="calendar-outline"></ion-icon>
-                        <span>{{ 'map.bookButton' | translate }}</span>
-                      </button>
-                    </div>
-                  }
-                </div>
+                <app-search-result-card
+                  [item]="item"
+                  [selected]="isSelected(item)"
+                  (itemClick)="goToProfile($event)"
+                  (book)="goToBooking($event)"
+                ></app-search-result-card>
               }
             </div>
           }
         </div>
 
-        <div class="map-panel">
-          <div id="map-container"></div>
-        </div>
+        <app-search-map
+          class="map-panel"
+          [items]="items()"
+          (markerSelected)="onMarkerSelected($event)"
+        ></app-search-map>
       </div>
       }
     </div>

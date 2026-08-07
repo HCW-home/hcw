@@ -8,10 +8,39 @@
   <div class="main-content">
     @if (hasReasons()) {
       <div class="new-request-action">
-        <button class="card-btn card-btn-outline" (click)="goToNewRequest()">
-          <ion-icon name="add-outline"></ion-icon>
+        <button class="card-btn card-btn-outline" [class.card-btn-active]="searchOpen()" (click)="toggleSearch()">
+          <ion-icon [name]="searchOpen() ? 'close-outline' : 'add-outline'"></ion-icon>
           <span>{{ 'home.requestConsultation' | translate }}</span>
         </button>
+      </div>
+
+      <!-- Folds open under the button instead of leaving the dashboard: the
+           search is the first step of a booking. -->
+      <div
+        class="home-search"
+        [class.home-search--open]="searchOpen()"
+        [class.home-search--settling]="searchSettling()"
+      >
+        <div class="home-search-head">
+          <span class="home-search-title">
+            <ion-icon name="search-outline"></ion-icon>
+            {{ 'map.searchTitle' | translate }}
+          </span>
+          <p class="home-search-subtitle">{{ 'map.searchSubtitle' | translate }}</p>
+          <button
+            class="home-search-close"
+            type="button"
+            (click)="closeSearch()"
+            [attr.aria-label]="'common.close' | translate"
+          >
+            <ion-icon name="close-outline"></ion-icon>
+          </button>
+        </div>
+
+        <app-search-bar
+          (search)="onSearch($event)"
+          (practitionerSelected)="onPractitionerSelected($event)"
+        ></app-search-bar>
       </div>
     }
 

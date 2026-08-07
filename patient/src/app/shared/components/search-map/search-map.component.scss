@@ -1,0 +1,79 @@
+// Leaflet panel — the host sets the size, this only fills it.
+
+:host {
+  display: block;
+  position: relative;
+  // Leaflet gives its panes and controls z-indexes up to 1000. Without a
+  // stacking context of its own they compete with the rest of the page and
+  // paint over the suggestion panel — `z-index: 0` traps them in here.
+  z-index: 0;
+  overflow: hidden;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
+}
+
+.map-canvas {
+  width: 100%;
+  height: 100%;
+}
+
+// ---------------------------------------------------------------------------
+// Custom markers — Leaflet builds this DOM itself, hence ::ng-deep
+// ---------------------------------------------------------------------------
+
+:host ::ng-deep {
+  .map-marker-org,
+  .map-marker-doctor {
+    background: none !important;
+    border: none !important;
+  }
+
+  .marker-pin {
+    width: 32px;
+    height: 32px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #fff;
+    box-shadow: var(--shadow-md);
+
+    ion-icon {
+      transform: rotate(45deg);
+      font-size: 15px;
+      color: #fff;
+    }
+  }
+
+  .marker-org {
+    background: var(--app-navy-2);
+  }
+
+  .marker-doctor {
+    background: var(--app-teal);
+  }
+
+  .leaflet-popup-content-wrapper {
+    border-radius: 10px;
+    box-shadow: var(--shadow-md);
+    color: var(--app-ink-2);
+  }
+
+  .leaflet-popup-content {
+    font-size: 13px;
+    line-height: 1.45;
+
+    strong {
+      color: var(--app-ink-1);
+    }
+
+    em {
+      color: var(--app-teal-dark);
+      font-style: normal;
+      font-weight: 600;
+    }
+  }
+}

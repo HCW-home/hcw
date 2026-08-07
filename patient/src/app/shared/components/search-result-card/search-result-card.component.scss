@@ -1,0 +1,310 @@
+// Directory result card — patient dashboard design tokens only
+// (see theme/variables.scss), no hardcoded brand hue.
+
+:host {
+  display: block;
+}
+
+.org-card {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: box-shadow 0.12s var(--app-ease), border-color 0.12s var(--app-ease);
+
+  &:hover {
+    box-shadow: var(--shadow-md);
+  }
+
+  &.selected {
+    border-color: var(--app-teal);
+    box-shadow: 0 0 0 2px var(--app-teal), var(--shadow-md);
+  }
+}
+
+.oc-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 18px;
+}
+
+.oc-logo {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  border-radius: 10px;
+  border: 1px solid var(--app-border-subtle);
+  background: #fff;
+  flex-shrink: 0;
+
+  &.oc-logo--doctor {
+    object-fit: cover;
+    border-radius: 50%;
+  }
+}
+
+.oc-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--app-surface-muted);
+  color: var(--app-ink-2);
+  font-size: 16px;
+  font-weight: 700;
+  flex-shrink: 0;
+
+  &.oc-avatar--doctor {
+    border-radius: 50%;
+    background: var(--app-teal-050);
+    color: var(--app-teal-dark);
+  }
+}
+
+.oc-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.oc-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.oc-name {
+  margin: 0;
+  min-width: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--app-ink-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &:hover {
+    color: var(--app-teal-dark);
+  }
+}
+
+// Same two-tone chip system as the dashboard cards: brand tint for people,
+// neutral grey for institutions.
+.type-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  background: #eef2f6;
+  color: #4a5460;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  ion-icon {
+    font-size: 12px;
+    color: #4a5460;
+  }
+
+  &.type-chip--doctor {
+    background: var(--app-teal-050);
+    color: var(--app-teal-dark);
+
+    ion-icon {
+      color: var(--app-teal);
+    }
+  }
+}
+
+.oc-meta {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 5px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--app-ink-3);
+
+  ion-icon {
+    font-size: 15px;
+    margin-top: 1px;
+    color: var(--app-ink-4);
+    flex-shrink: 0;
+  }
+
+  &.oc-meta--spec {
+    font-weight: 600;
+    color: var(--app-teal-dark);
+
+    ion-icon {
+      color: var(--app-teal);
+    }
+  }
+}
+
+// Booking block — day navigation, slots, CTA. Stacked by default; side by side
+// as soon as the result panel is wide enough to keep the CTA from stretching.
+.oc-booking {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 18px 16px;
+  border-top: 1px solid var(--app-border-subtle);
+  background: var(--app-surface-muted);
+  border-radius: 0 0 var(--radius-card) var(--radius-card);
+
+  .oc-slot-area {
+    flex: 1;
+    min-width: 0;
+  }
+
+  @media (min-width: 901px) {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--app-spacing-lg);
+
+    .rdv-button {
+      width: auto;
+      flex-shrink: 0;
+    }
+  }
+}
+
+.oc-slots-loading {
+  display: flex;
+  justify-content: center;
+  padding: 4px 0;
+
+  ion-spinner {
+    width: 20px;
+    height: 20px;
+    color: var(--app-teal);
+  }
+}
+
+.oc-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--app-ink-3);
+
+  ion-icon {
+    font-size: 17px;
+    color: var(--app-ink-4);
+    flex-shrink: 0;
+  }
+}
+
+.day-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  .day-label {
+    font-size: 12.5px;
+    font-weight: 700;
+    text-transform: capitalize;
+    color: var(--app-ink-2);
+  }
+
+  .day-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--app-teal);
+    cursor: pointer;
+    transition: background 0.15s var(--app-ease);
+
+    ion-icon {
+      font-size: 16px;
+    }
+
+    &:hover:not(:disabled) {
+      background: var(--app-teal-050);
+    }
+
+    &:disabled {
+      color: var(--app-ink-4);
+      opacity: 0.5;
+      cursor: default;
+    }
+  }
+}
+
+.slot-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.slot-chip {
+  padding: 6px 11px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface);
+  color: var(--app-teal-dark);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s var(--app-ease), border-color 0.15s var(--app-ease);
+
+  &:hover {
+    background: var(--app-teal-050);
+    border-color: var(--app-teal);
+  }
+}
+
+.rdv-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 11px 16px;
+  border: 1px solid var(--app-teal);
+  border-radius: 8px;
+  background: var(--app-surface);
+  color: var(--app-teal-dark);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s var(--app-ease);
+
+  ion-icon {
+    font-size: 17px;
+    color: var(--app-teal);
+  }
+
+  &:hover {
+    background: var(--app-teal-050);
+  }
+}
+
+@media (max-width: 480px) {
+  .oc-title-row {
+    flex-wrap: wrap;
+  }
+
+  .type-chip {
+    margin-left: 0;
+  }
+}

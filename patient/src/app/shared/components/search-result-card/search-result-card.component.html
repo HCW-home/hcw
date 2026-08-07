@@ -1,0 +1,70 @@
+<div class="org-card" [class.selected]="selected" (click)="onCardClick()">
+  <div class="oc-top">
+    @if (item.logo) {
+      <img [src]="item.logo" [alt]="item.name" class="oc-logo" [class.oc-logo--doctor]="item.type === 'doctor'" />
+    } @else {
+      <div class="oc-avatar" [class.oc-avatar--doctor]="item.type === 'doctor'">
+        {{ item.initials }}
+      </div>
+    }
+    <div class="oc-main">
+      <div class="oc-title-row">
+        <h3 class="oc-name">{{ item.name }}</h3>
+        <span class="type-chip" [class.type-chip--doctor]="item.type === 'doctor'">
+          <ion-icon [name]="item.type === 'doctor' ? 'person' : 'business'"></ion-icon>
+          {{ (item.type === 'doctor' ? 'map.typeDoctor' : 'map.typeOrganisation') | translate }}
+        </span>
+      </div>
+      @if (item.specialities) {
+        <p class="oc-meta oc-meta--spec">
+          <ion-icon name="medkit-outline"></ion-icon>
+          <span>{{ item.specialities }}</span>
+        </p>
+      }
+      @if (item.subtitle) {
+        <p class="oc-meta">
+          <ion-icon name="location-outline"></ion-icon>
+          <span>{{ item.subtitle }}</span>
+        </p>
+      }
+    </div>
+  </div>
+
+  @if (item.type === 'doctor') {
+    <div class="oc-booking">
+      <div class="oc-slot-area">
+        @if (isLoadingSlots()) {
+          <div class="oc-slots-loading">
+            <ion-spinner name="crescent"></ion-spinner>
+          </div>
+        } @else if (!hasSlots()) {
+          <div class="oc-note">
+            <ion-icon name="calendar-outline"></ion-icon>
+            <span>{{ 'map.noSlots' | translate }}</span>
+          </div>
+        } @else {
+          <div class="day-nav">
+            <button class="day-arrow" type="button" [disabled]="!hasPrevDay()" (click)="prevDay($event)">
+              <ion-icon name="chevron-back-outline"></ion-icon>
+            </button>
+            <span class="day-label">{{ currentDate() | localDate: 'EEE d MMM' }}</span>
+            <button class="day-arrow" type="button" [disabled]="!hasNextDay()" (click)="nextDay($event)">
+              <ion-icon name="chevron-forward-outline"></ion-icon>
+            </button>
+          </div>
+          <div class="slot-chips">
+            @for (slot of currentSlots(); track slot.start_time) {
+              <button class="slot-chip" type="button" (click)="onBook($event, slot)">
+                {{ slot.start_time.substring(0, 5) }}
+              </button>
+            }
+          </div>
+        }
+      </div>
+      <button class="rdv-button" type="button" (click)="onBook($event)">
+        <ion-icon name="calendar-outline"></ion-icon>
+        <span>{{ 'map.bookButton' | translate }}</span>
+      </button>
+    </div>
+  }
+</div>

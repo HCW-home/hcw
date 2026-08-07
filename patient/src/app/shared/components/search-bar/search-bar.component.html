@@ -1,0 +1,124 @@
+@if (suggestOpen()) {
+  <div class="suggest-backdrop" (click)="closeSuggestions()"></div>
+}
+
+<div class="search-bar">
+  <div class="search-bar-field">
+    <ion-icon name="search-outline"></ion-icon>
+    <input
+      type="text"
+      [placeholder]="'map.searchWhoPlaceholder' | translate"
+      [value]="whoQuery()"
+      (input)="onWhoInput($event)"
+      (focus)="onWhoFocus()"
+      (keyup.enter)="submit()"
+      (keyup.escape)="closeSuggestions()"
+    />
+  </div>
+  <div class="search-bar-divider"></div>
+  <div class="search-bar-field">
+    <ion-icon name="location-outline"></ion-icon>
+    <input
+      type="text"
+      [placeholder]="'map.searchLocationPlaceholder' | translate"
+      [value]="whereQuery()"
+      (input)="onWhereInput($event)"
+      (focus)="closeSuggestions()"
+      (keyup.enter)="submit()"
+    />
+  </div>
+  <button class="search-bar-button" type="button" (click)="submit()">
+    <ion-icon name="search-outline"></ion-icon>
+    <span>{{ 'map.searchButton' | translate }}</span>
+  </button>
+</div>
+
+@if (suggestOpen()) {
+  <div class="suggest-panel" [class.suggest-panel--columns]="isSuggestSearching()">
+    @if (!hasSuggestions() && !isSuggestLoading()) {
+      <div class="suggest-empty">
+        <ion-icon name="search-outline"></ion-icon>
+        <span>{{ 'map.suggestEmpty' | translate }}</span>
+      </div>
+    } @else {
+      @if (suggestSpecialities().length) {
+        <div class="suggest-col">
+          <span class="suggest-col-title">{{ 'map.suggestSpecialities' | translate }}</span>
+          <div class="suggest-list">
+            @for (speciality of suggestSpecialities(); track speciality.id) {
+              <button class="suggest-item" type="button" (click)="selectSpeciality(speciality)">
+                <span class="suggest-item-label">
+                  @for (part of highlight(speciality.name); track $index) {
+                    <span [class.hl]="part.match">{{ part.text }}</span>
+                  }
+                </span>
+              </button>
+            }
+          </div>
+        </div>
+      }
+
+      @if (isSuggestSearching()) {
+        @if (suggestPractitioners().length) {
+          <div class="suggest-col">
+            <span class="suggest-col-title">{{ 'map.suggestPractitioners' | translate }}</span>
+            <div class="suggest-list">
+              @for (item of suggestPractitioners(); track item.id) {
+                <button class="suggest-item suggest-item--rich" type="button" (click)="selectPractitioner(item)">
+                  @if (item.logo) {
+                    <img [src]="item.logo" [alt]="item.name" class="suggest-avatar suggest-avatar--round" />
+                  } @else {
+                    <span class="suggest-avatar suggest-avatar--round">{{ item.initials }}</span>
+                  }
+                  <span class="suggest-item-text">
+                    <span class="suggest-item-label">
+                      @for (part of highlight(item.name); track $index) {
+                        <span [class.hl]="part.match">{{ part.text }}</span>
+                      }
+                    </span>
+                    @if (item.specialities || item.subtitle) {
+                      <span class="suggest-item-sub">{{ item.specialities || item.subtitle }}</span>
+                    }
+                  </span>
+                </button>
+              }
+            </div>
+          </div>
+        }
+
+        @if (suggestOrganisations().length) {
+          <div class="suggest-col">
+            <span class="suggest-col-title">{{ 'map.suggestOrganisations' | translate }}</span>
+            <div class="suggest-list">
+              @for (item of suggestOrganisations(); track item.id) {
+                <button class="suggest-item suggest-item--rich" type="button" (click)="selectOrganisation(item)">
+                  @if (item.logo) {
+                    <img [src]="item.logo" [alt]="item.name" class="suggest-avatar" />
+                  } @else {
+                    <span class="suggest-avatar">{{ item.initials }}</span>
+                  }
+                  <span class="suggest-item-text">
+                    <span class="suggest-item-label">
+                      @for (part of highlight(item.name); track $index) {
+                        <span [class.hl]="part.match">{{ part.text }}</span>
+                      }
+                    </span>
+                    @if (item.subtitle) {
+                      <span class="suggest-item-sub">{{ item.subtitle }}</span>
+                    }
+                  </span>
+                </button>
+              }
+            </div>
+          </div>
+        }
+      }
+    }
+
+    @if (isSuggestLoading()) {
+      <div class="suggest-loading">
+        <ion-spinner name="crescent"></ion-spinner>
+      </div>
+    }
+  </div>
+}

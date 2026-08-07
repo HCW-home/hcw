@@ -21,10 +21,15 @@ import { SpecialityService } from '../../core/services/speciality.service';
 import { DoctorService } from '../../core/services/doctor.service';
 import { ConsultationService, ConsultationRequestData } from '../../core/services/consultation.service';
 import { AuthService } from '../../core/services/auth.service';
+import { PractitionerSearchService } from '../../core/services/practitioner-search.service';
 import { Speciality, Doctor } from '../../core/models/doctor.model';
 import { Reason, Slot, CustomField } from '../../core/models/consultation.model';
+import { BookingIntent, SearchItem, SearchQuery } from '../../core/models/search.model';
 import { AppHeaderComponent } from '../../shared/app-header/app-header.component';
 import { AppFooterComponent } from '../../shared/app-footer/app-footer.component';
+import { SearchBarComponent } from '../../shared/components/search-bar/search-bar.component';
+import { SearchMapComponent } from '../../shared/components/search-map/search-map.component';
+import { SearchResultCardComponent } from '../../shared/components/search-result-card/search-result-card.component';
 
 const BOOKING_DRAFT_KEY = 'hcw_booking_draft';
 
@@ -53,6 +58,9 @@ interface BookingDraft {
     IonTextarea,
     AppHeaderComponent,
     AppFooterComponent,
+    SearchBarComponent,
+    SearchMapComponent,
+    SearchResultCardComponent,
     TranslatePipe
   ]
 })
@@ -66,8 +74,17 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
   isSubmitting = signal(false);
   registrationEnabled = signal(false);
 
-  specialities = signal<Speciality[]>([]);
   selectedSpeciality = signal<Speciality | null>(null);
+
+  // The first step is a directory search: patients look for a practitioner,
+  // a facility or a speciality, then pick a slot from the results.
+  hasSearched = signal(false);
+  isSearching = signal(false);
+  searchResults = signal<SearchItem[]>([]);
+  selectedItemId = signal<string | null>(null);
+  // Prefill for a search started from the dashboard.
+  initialWho = '';
+  initialWhere = '';
 
   reasons = signal<Reason[]>([]);
   selectedReason = signal<Reason | null>(null);
@@ -90,7 +107,7 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
 
   stepTitle = computed(() => {
     switch (this.currentStep()) {
-      case 1: return this.t.instant('newRequest.selectSpecialty');
+      case 1: return this.t.instant('map.searchTitle');
       case 2: return this.t.instant('newRequest.selectReason');
       case 3: return this.t.instant('newRequest.selectDoctor');
       case 4: return this.t.instant('newRequest.chooseTimeSlot');
@@ -143,6 +160,7 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
     private doctorService: DoctorService,
     private consultationService: ConsultationService,
     private authService: AuthService,
+    private searchService: PractitionerSearchService,
   ) {}
 
   ngOnInit() {
@@ -153,15 +171,27 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
     }
 
     const params = this.route.snapshot.queryParamMap;
-    const doctorId = params.get('doctor_id');
-    const specialityId = params.get('speciality_id');
+    const doctorId = Number(this.readParam(params, 'doctor_id'));
+    const specialityId = Number(this.readParam(params, 'speciality_id'));
 
     if (doctorId && specialityId) {
-      this.initFromQueryParams(Number(doctorId), Number(specialityId), params);
+      this.startBooking(doctorId, specialityId, this.slotFromParams(params, doctorId));
       return;
     }
 
-    this.loadSpecialities();
+    // Coming from the dashboard: the terms were typed there, run them here.
+    this.initialWho = this.readParam(params, 'who');
+    this.initialWhere = this.readParam(params, 'where');
+    if (this.initialWho || this.initialWhere) {
+      this.onSearch({ who: this.initialWho, where: this.initialWhere });
+    }
+  }
+
+  // Query params are whatever the URL holds: a hand-edited or stale link can
+  // carry a literal "undefined", which must not be taken for a value.
+  private readParam(params: import('@angular/router').ParamMap, name: string): string {
+    const value = params.get(name) ?? '';
+    return value === 'undefined' || value === 'null' ? '' : value;
   }
 
   ionViewWillEnter(): void {
@@ -176,7 +206,29 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
     this.destroy$.complete();
   }
 
-  private initFromQueryParams(doctorId: number, specialityId: number, params: import('@angular/router').ParamMap): void {
+  private slotFromParams(params: import('@angular/router').ParamMap, doctorId: number): Slot | null {
+    const slotDate = this.readParam(params, 'slot_date');
+    const slotTime = this.readParam(params, 'slot_time');
+    if (!slotDate || !slotTime) {
+      return null;
+    }
+    const duration = Number(this.readParam(params, 'slot_duration')) || 0;
+    return {
+      date: slotDate,
+      start_time: slotTime,
+      end_time: this.computeEndTime(slotTime, duration),
+      duration,
+      user_id: doctorId,
+    } as Slot;
+  }
+
+  /**
+   * Enters the wizard on a known practitioner — from a deep link out of the map
+   * or from the search on the first step. The speciality is already settled, so
+   * the flow resumes at the reason step; a slot picked upfront is replayed once
+   * the reason confirms it lasts as long.
+   */
+  private startBooking(doctorId: number, specialityId: number, slot: Slot | null): void {
     this.isLoading.set(true);
 
     forkJoin({
@@ -190,58 +242,77 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
           ? doctorSpecialities.filter(s => s.id === specialityId)
           : specialities.filter(s => s.id === specialityId);
 
-        this.specialities.set(filteredSpecialities);
+        this.selectedSpeciality.set(filteredSpecialities[0] ?? null);
 
-        const speciality = filteredSpecialities[0] ?? null;
-        this.selectedSpeciality.set(speciality);
-        
         this.selectedDoctor.set(doctor);
-
-        const slotDate = params.get('slot_date');
-        const slotTime = params.get('slot_time');
-        const slotDurationRaw = params.get('slot_duration');
-        if (slotDate && slotTime) {
-          const duration = slotDurationRaw ? Number(slotDurationRaw) : 0;
-          this.pendingSlot = {
-            date: slotDate,
-            start_time: slotTime,
-            end_time: this.computeEndTime(slotTime, duration),
-            duration,
-            user_id: doctorId,
-          } as Slot;
-        }
+        this.pendingSlot = slot;
 
         this.loadReasons(specialityId);
         this.currentStep.set(2);
         this.isLoading.set(false);
       },
       error: () => {
+        this.showToast(this.t.instant('newRequest.failedSpecialties'), 'danger');
         this.isLoading.set(false);
-        this.loadSpecialities();
       }
     });
   }
 
-  loadSpecialities(): void {
-    this.isLoading.set(true);
-    this.specialityService.getSpecialities()
+  // ---------------------------------------------------------------------------
+  // Directory search (step 1)
+  // ---------------------------------------------------------------------------
+
+  onSearch(query: SearchQuery): void {
+    this.hasSearched.set(true);
+    this.isSearching.set(true);
+    this.selectedItemId.set(null);
+    this.searchService.search(query)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (specialities) => {
-          this.specialities.set(specialities);
-          this.isLoading.set(false);
+        next: (items) => {
+          this.searchResults.set(items);
+          this.isSearching.set(false);
         },
         error: () => {
-          this.showToast(this.t.instant('newRequest.failedSpecialties'), 'danger');
-          this.isLoading.set(false);
+          this.searchResults.set([]);
+          this.isSearching.set(false);
         }
       });
   }
 
-  selectSpeciality(speciality: Speciality): void {
-    this.selectedSpeciality.set(speciality);
-    this.loadReasons(speciality.id);
-    this.currentStep.set(2);
+  clearSearch(): void {
+    this.hasSearched.set(false);
+    this.searchResults.set([]);
+    this.selectedItemId.set(null);
+  }
+
+  isSelected(item: SearchItem): boolean {
+    return this.selectedItemId() === item.id;
+  }
+
+  onMarkerSelected(item: SearchItem): void {
+    this.selectedItemId.set(item.id);
+  }
+
+  // A result with no slot context yet: fall back to the practitioner's first
+  // speciality, which is the one the wizard will offer reasons for.
+  startBookingWithPractitioner(item: SearchItem): void {
+    this.startBookingWithIntent({ item, specialityId: null, slot: null });
+  }
+
+  startBookingWithIntent(intent: BookingIntent): void {
+    const doctor = intent.item.doctor;
+    if (!doctor) {
+      return;
+    }
+
+    const specialityId = intent.specialityId ?? doctor.specialities?.[0]?.id ?? null;
+    if (!specialityId) {
+      this.showToast(this.t.instant('newRequest.noSpecialties'), 'warning');
+      return;
+    }
+
+    this.startBooking(doctor.pk, specialityId, intent.slot);
   }
 
   loadReasons(specialityId: number): void {
@@ -469,7 +540,13 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
     const step = this.currentStep();
     switch (step) {
       case 1:
-        this.navCtrl.back();
+        // Results are a state of the first step, not a step of their own:
+        // going back drops them and shows the speciality grid again.
+        if (this.hasSearched()) {
+          this.clearSearch();
+        } else {
+          this.navCtrl.back();
+        }
         break;
       case 2:
         this.currentStep.set(1);
