@@ -17,6 +17,7 @@ const ACTION_ROUTES: Record<string, ActionConfig> = {
   'join': { route: '/confirm-presence', requiresAuth: true, appendId: true },
   'message': { route: '/home', requiresAuth: true, appendId: false },
   'consultation': { route: '/home', requiresAuth: true, appendId: false, idAsQueryParam: 'openChat' },
+  'completeBooking': { route: '/new-request', requiresAuth: true, appendId: false },
 };
 
 const DEFAULT_ACTION: ActionConfig = { route: '/home', requiresAuth: true, appendId: false };

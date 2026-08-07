@@ -44,6 +44,10 @@ export class DoctorService {
     return this.api.get<Doctor>(`/users/${id}/`);
   }
 
+  getPublicPractitioner(id: number): Observable<Doctor> {
+    return this.api.get<Doctor>(`/practitioners/${id}/public/`);
+  }
+
   getDoctorsBySpeciality(specialityId: number): Observable<Doctor[]> {
     return this.api.get<Doctor[]>(`/specialities/${specialityId}/doctors/`);
   }
@@ -53,6 +57,7 @@ export class DoctorService {
   }
 
   getAvailableSlots(reasonId: number, params?: { from_date?: string; user_id?: number; organisation_id?: number }): Observable<Slot[]> {
-    return this.api.get<Slot[]>(`/reasons/${reasonId}/slots/`, params);
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return this.api.get<Slot[]>(`/reasons/${reasonId}/slots/`, { ...params, timezone });
   }
 }

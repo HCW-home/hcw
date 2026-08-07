@@ -8,6 +8,7 @@
         "cancel": "Annuler",
         "remove": "Retirer",
         "close": "Fermer",
+        "back": "Retour",
         "save": "Enregistrer",
         "error": "Erreur",
         "success": "Succès",
@@ -218,7 +219,18 @@
         "failedDoctors": "Échec du chargement des médecins",
         "selectReasonWarning": "Veuillez sélectionner un motif",
         "submitSuccess": "Demande envoyée avec succès",
-        "submitFailed": "Échec de l'envoi de la demande"
+        "submitFailed": "Échec de l'envoi de la demande",
+        "signInToContinue": "Connectez-vous pour continuer",
+        "signInToContinueDesc": "Vous devez vous connecter ou créer un compte pour finaliser votre demande.",
+        "loginTitle": "Vous avez déjà un compte ?",
+        "loginDesc": "Connectez-vous pour continuer votre demande de consultation.",
+        "registerTitle": "Nouveau patient ?",
+        "registerDesc": "Créez un compte pour finaliser votre demande de consultation.",
+        "cancelRequest": "Annuler",
+        "cancelConfirmTitle": "Annuler la demande ?",
+        "cancelConfirmMessage": "Les informations saisies seront perdues.",
+        "cancelConfirmStay": "Continuer la demande",
+        "cancelConfirmLeave": "Quitter"
     },
     "profile": {
         "title": "Profil",

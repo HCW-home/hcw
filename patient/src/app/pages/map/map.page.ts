@@ -70,6 +70,7 @@ interface SlotEntry {
 interface DoctorSlotsState {
   loading: boolean;
   reasonId: number | null;
+  specialityId: number | null;
   dates: string[];
   slotsByDate: Record<string, SlotEntry[]>;
   dateIndex: number;
@@ -139,6 +140,7 @@ export class MapPage implements OnInit, OnDestroy {
   isLoading = signal(false);
   isPublicEnabled = signal<boolean | null>(null);
   hasSearched = signal(false);
+
   searchQuery = signal('');
   locationQuery = signal('');
   onlineBookingOnly = signal(false);
@@ -150,6 +152,9 @@ export class MapPage implements OnInit, OnDestroy {
   suggestPractitioners = signal<MapItem[]>([]);
   suggestOrganisations = signal<MapItem[]>([]);
   private allSpecialities = signal<Speciality[]>([]);
+
+  isAuthenticated = signal(false);
+  canViewMap = computed(() => this.isPublicEnabled() || this.isAuthenticated());
 
   // Typing splits the panel into three columns; before that it is a plain
   // speciality picker.
@@ -197,6 +202,14 @@ export class MapPage implements OnInit, OnDestroy {
   }
 
   private checkPublicOrganisations(): void {
+    this.authService.authReady.then(() => {
+      this.isAuthenticated.set(this.authService.isAuthenticatedValue);
+    });
+
+    this.authService.isAuthenticated$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(value => this.isAuthenticated.set(value));
+
     this.authService.getConfig()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
@@ -223,10 +236,8 @@ export class MapPage implements OnInit, OnDestroy {
     this.mapInitialized = true;
   }
 
-  private combinedSearchTerm(): string {
-    const who = this.searchQuery().trim();
-    const location = this.locationQuery().trim();
-    return who || location;
+  private hasSearchCriteria(): boolean {
+    return !!(this.searchQuery().trim() || this.locationQuery().trim());
   }
 
   onSearchInput(event: Event): void {
@@ -249,9 +260,7 @@ export class MapPage implements OnInit, OnDestroy {
   }
 
   submitSearch(): void {
-    const term = this.combinedSearchTerm();
-    this.closeSuggestions();
-    if (!term) return;
+    if (!this.hasSearchCriteria()) return;
     this.hasSearched.set(true);
     setTimeout(() => this.initMapIfNeeded(), 0);
     // The search bar slides up before the map settles into its final size, and
@@ -266,14 +275,21 @@ export class MapPage implements OnInit, OnDestroy {
   }
 
   private runSearch(): void {
-    const term = this.combinedSearchTerm();
-    if (!term) {
+    if (!this.hasSearchCriteria()) {
       this.items.set([]);
       this.clearMarkers();
       return;
     }
 
-    const params: any = { search: term, limit: 50 };
+    const params: any = { limit: 50 };
+    const who = this.searchQuery().trim();
+    const where = this.locationQuery().trim();
+    if (who) {
+      params.search = who;
+    }
+    if (where) {
+      params.location = where;
+    }
     if (this.onlineBookingOnly()) {
       params.has_slots = true;
     }
@@ -462,6 +478,7 @@ export class MapPage implements OnInit, OnDestroy {
       state[item.id] = {
         loading: true,
         reasonId: null,
+        specialityId: null,
         dates: [],
         slotsByDate: {},
         dateIndex: 0,
@@ -480,7 +497,9 @@ export class MapPage implements OnInit, OnDestroy {
     const specialityIds = doctor.specialities?.map(s => s.id) || [];
 
     if (specialityIds.length === 0) {
-      this.setSlotsState(item.id, { loading: false, reasonId: null, dates: [], slotsByDate: {}, dateIndex: 0, error: false });
+      this.setSlotsState(item.id, {
+        loading: false, reasonId: null, dates: [], slotsByDate: {}, dateIndex: 0, error: false, specialityId: null
+      });
       return;
     }
 
@@ -502,19 +521,25 @@ export class MapPage implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(reasonLists => {
         const allReasons = new Map<number, Reason>();
-        for (const list of reasonLists) {
+        const reasonToSpeciality = new Map<number, number>();
+        reasonLists.forEach((list, idx) => {
+          const specId = specialityIds[idx];
           for (const reason of list) {
             allReasons.set(reason.id, reason);
+            if (!reasonToSpeciality.has(reason.id)) {
+              reasonToSpeciality.set(reason.id, specId);
+            }
           }
-        }
+        });
 
         if (allReasons.size === 0) {
-          this.setSlotsState(item.id, { loading: false, reasonId: null, dates: [], slotsByDate: {}, dateIndex: 0, error: false });
+          this.setSlotsState(item.id, { loading: false, reasonId: null, specialityId: null, dates: [], slotsByDate: {}, dateIndex: 0, error: false });
           return;
         }
 
         const shortestReason = Array.from(allReasons.values())
           .reduce((shortest, current) => current.duration < shortest.duration ? current : shortest);
+        const specialityId = reasonToSpeciality.get(shortestReason.id) ?? specialityIds[0];
 
         this.doctorService.getAvailableSlots(shortestReason.id, { user_id: doctor.pk })
           .pipe(
@@ -534,6 +559,7 @@ export class MapPage implements OnInit, OnDestroy {
             this.setSlotsState(item.id, {
               loading: false,
               reasonId: shortestReason.id,
+              specialityId,
               dates,
               slotsByDate,
               dateIndex: 0,
@@ -592,8 +618,8 @@ export class MapPage implements OnInit, OnDestroy {
   goToBooking(item: MapItem): void {
     const state = this.slotsState()[item.id];
     const queryParams: any = { doctor_id: item.doctor!.pk };
-    if (state?.reasonId) {
-      queryParams.reason_id = state.reasonId;
+    if (state?.specialityId) {
+      queryParams.speciality_id = state.specialityId;
     }
     this.router.navigate(['/new-request'], { queryParams });
   }
@@ -603,9 +629,10 @@ export class MapPage implements OnInit, OnDestroy {
     this.router.navigate(['/new-request'], {
       queryParams: {
         doctor_id: item.doctor!.pk,
-        reason_id: state?.reasonId ?? undefined,
+        speciality_id: state?.specialityId ?? undefined,
         slot_date: slot.date,
         slot_time: slot.start_time,
+        slot_duration: slot.duration,
       }
     });
   }

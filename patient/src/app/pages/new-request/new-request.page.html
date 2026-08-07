@@ -1,341 +1,363 @@
-<ion-header class="ion-no-border">
-  <ion-toolbar>
-    <ion-buttons slot="start">
-      <ion-button (click)="goBack()">
-        <ion-icon name="arrow-back-outline" slot="icon-only"></ion-icon>
-      </ion-button>
-    </ion-buttons>
-    <ion-title>{{ stepTitle() }}</ion-title>
-    <ion-buttons slot="end">
-      <span class="step-indicator">{{ currentStep() }}/{{ totalSteps }}</span>
-    </ion-buttons>
-  </ion-toolbar>
-  <ion-progress-bar [value]="progress()"></ion-progress-bar>
-</ion-header>
+<app-header [pageTitle]="'newRequest.newRequest' | translate"></app-header>
 
 <ion-content class="new-request-content">
-  @if (isLoading()) {
-    <div class="loading-container">
-      <ion-spinner name="crescent" color="primary"></ion-spinner>
-      <span>{{ 'common.loading' | translate }}</span>
+  <div class="main-content">
+    <!-- Wizard chrome: back and progress. Lives inside the content so the page
+         keeps the same shell (branded header + footer) as the rest of the app
+         instead of hijacking the toolbar. The step title is not repeated here:
+         every step already renders it as its own heading. -->
+    <div class="wizard-bar">
+      <button class="wizard-back" type="button" (click)="goBack()" [attr.aria-label]="'common.back' | translate">
+        <ion-icon name="arrow-back-outline"></ion-icon>
+      </button>
+      <div class="wizard-progress">
+        <span class="wizard-progress-fill" [style.width.%]="progress() * 100"></span>
+      </div>
+      <span class="step-indicator">{{ currentStep() }}/{{ totalSteps }}</span>
+      <button class="wizard-cancel" type="button" (click)="confirmCancel()">
+        <ion-icon name="close-outline"></ion-icon>
+        <span>{{ 'newRequest.cancelRequest' | translate }}</span>
+      </button>
     </div>
-  } @else {
-    @switch (currentStep()) {
-      @case (1) {
-        <div class="step-content">
-          <h2 class="step-title">{{ 'newRequest.chooseSpecialty' | translate }}</h2>
-          <p class="step-description">{{ 'newRequest.chooseSpecialtyDesc' | translate }}</p>
-            <div class="speciality-grid">
-            @for (speciality of specialities(); track speciality.id) {
-              <div class="speciality-card" (click)="selectSpeciality(speciality)">
-                <ion-card-content>
-                  <div class="speciality-icon-wrapper">
-                    @if (speciality.icon) {
-                      <img [src]="speciality.icon" [alt]="speciality.name" class="speciality-icon-img">
-                    } @else {
-                      <ion-icon name="medical-outline" class="speciality-icon"></ion-icon>
-                    }
-                  </div>
-                  <span class="speciality-name">{{ speciality.name }}</span>
-                </ion-card-content>
+
+    @if (isLoading()) {
+      <div class="loading-container">
+        <ion-spinner name="crescent" color="primary"></ion-spinner>
+        <span>{{ 'common.loading' | translate }}</span>
+      </div>
+    } @else {
+      @switch (currentStep()) {
+        @case (1) {
+          <div class="step-content">
+            <h2 class="step-title">{{ 'newRequest.chooseSpecialty' | translate }}</h2>
+            <p class="step-description">{{ 'newRequest.chooseSpecialtyDesc' | translate }}</p>
+              <div class="speciality-grid">
+              @for (speciality of specialities(); track speciality.id) {
+                <div class="speciality-card" (click)="selectSpeciality(speciality)">
+                  <ion-card-content>
+                    <div class="speciality-icon-wrapper">
+                      @if (speciality.icon) {
+                        <img [src]="speciality.icon" [alt]="speciality.name" class="speciality-icon-img">
+                      } @else {
+                        <ion-icon name="medical-outline" class="speciality-icon"></ion-icon>
+                      }
+                    </div>
+                    <span class="speciality-name">{{ speciality.name }}</span>
+                  </ion-card-content>
+                </div>
+              }
+            </div>
+            @if (specialities().length === 0) {
+              <div class="empty-state">
+                <ion-icon name="information-circle-outline"></ion-icon>
+                <span>{{ 'newRequest.noSpecialties' | translate }}</span>
               </div>
             }
           </div>
-          @if (specialities().length === 0) {
-            <div class="empty-state">
-              <ion-icon name="information-circle-outline"></ion-icon>
-              <span>{{ 'newRequest.noSpecialties' | translate }}</span>
-            </div>
-          }
-        </div>
-      }
+        }
 
-      @case (2) {
-        <div class="step-content">
-          <h2 class="step-title">{{ 'newRequest.reasonForVisit' | translate }}</h2>
-          <p class="step-description">{{ 'newRequest.selectReasonDesc' | translate }}</p>
-          <div class="reason-list">
-            @for (reason of reasons(); track reason.id) {
-              <div class="reason-item" (click)="selectReason(reason)">
-                <div class="reason-icon">
+        @case (2) {
+          <div class="step-content">
+            <h2 class="step-title">{{ 'newRequest.reasonForVisit' | translate }}</h2>
+            <p class="step-description">{{ 'newRequest.selectReasonDesc' | translate }}</p>
+            <div class="reason-list">
+              @for (reason of reasons(); track reason.id) {
+                <div class="reason-item" (click)="selectReason(reason)">
+                  <div class="reason-icon">
+                    <ion-icon name="clipboard-outline"></ion-icon>
+                  </div>
+                  <div class="reason-details">
+                    <p class="reason-name">{{ reason.name }}</p>
+                    <p class="reason-type">
+                      @if (reason.assignment_method === 'appointment') {
+                        <ion-icon name="calendar-outline"></ion-icon>
+                        {{ 'newRequest.scheduled' | translate }}
+                      } @else {
+                        <ion-icon name="flash-outline"></ion-icon>
+                        {{ 'newRequest.immediate' | translate }}
+                      }
+                      @if (reason.duration) {
+                        <span class="reason-duration"> · {{ 'newRequest.duration' | translate:{ duration: reason.duration } }}</span>
+                      }
+                    </p>
+                  </div>
+                  <ion-icon name="chevron-forward-outline" class="reason-arrow"></ion-icon>
+                </div>
+              }
+            </div>
+            @if (reasons().length === 0) {
+              <div class="empty-state">
+                <ion-icon name="information-circle-outline"></ion-icon>
+                <span>{{ 'newRequest.noReasons' | translate }}</span>
+              </div>
+            }
+          </div>
+        }
+
+        @case (3) {
+          <div class="step-content">
+            <h2 class="step-title">{{ 'newRequest.selectDoctor' | translate }}</h2>
+            <p class="step-description">{{ 'newRequest.selectDoctorDesc' | translate }}</p>
+            <div class="doctors-list">
+              @for (doctor of doctors(); track doctor.id) {
+                <div
+                  class="doctor-card"
+                  [class.selected]="isDoctorSelected(doctor)"
+                  (click)="selectDoctor(doctor)">
+                  <ion-card-content>
+                    <div class="doctor-info">
+                      <div class="doctor-avatar">
+                        @if (doctor.picture) {
+                          <img [src]="doctor.picture" [alt]="getDoctorFullName(doctor)">
+                        } @else {
+                          {{ getDoctorFullName(doctor).charAt(0) }}
+                        }
+                      </div>
+                      <div class="doctor-details">
+                        <span class="doctor-name">{{ getDoctorFullName(doctor) }}</span>
+                        @if (doctor.specialities && doctor.specialities.length > 0) {
+                          <span class="doctor-specialty">{{ doctor.specialities[0].name }}</span>
+                        }
+                      </div>
+                    </div>
+                  </ion-card-content>
+                </div>
+              }
+            </div>
+            @if (doctors().length === 0) {
+              <div class="empty-state">
+                <ion-icon name="information-circle-outline"></ion-icon>
+                <span>{{ 'newRequest.noDoctors' | translate }}</span>
+              </div>
+            }
+            <div class="step-actions">
+              @if (selectedDoctor()) {
+                <button class="primary-action" (click)="proceedWithDoctor()">
+                  {{ 'newRequest.continueWithDoctor' | translate }}
+                </button>
+              }
+              @if (doctors().length > 0) {
+                <button class="secondary-action" (click)="skipDoctorSelection()">
+                  {{ 'newRequest.skipDoctor' | translate }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+
+        @case (4) {
+          <div class="step-content">
+            <h2 class="step-title">{{ 'newRequest.chooseTimeSlot' | translate }}</h2>
+            <p class="step-description">{{ 'newRequest.selectTimeSlotDesc' | translate }}</p>
+
+            <div class="week-navigation">
+              <ion-button fill="clear" (click)="previousWeek()" [disabled]="!canGoPreviousWeek()">
+                <ion-icon name="chevron-back-outline" slot="icon-only"></ion-icon>
+              </ion-button>
+              <span class="week-label">{{ formatDisplayDate(weekDates()[0]) }} - {{ formatDisplayDate(weekDates()[weekDates().length - 1]) }}</span>
+              <ion-button fill="clear" (click)="nextWeek()">
+                <ion-icon name="chevron-forward-outline" slot="icon-only"></ion-icon>
+              </ion-button>
+            </div>
+
+            <div class="slots-container">
+              @for (date of weekDates(); track date.getTime()) {
+                @if (!isPastDate(date)) {
+                <div class="day-column" [class.today]="isToday(date)">
+                  <div class="day-header">
+                    <span class="day-name">{{ formatDayName(date) }}</span>
+                    <span class="day-date">{{ formatDayNumber(date) }}</span>
+                  </div>
+                  <div class="day-slots">
+                    @for (slot of getSlotsForDate(date); track slot.start_time + slot.user_id) {
+                      <ion-button
+                        size="small"
+                        [fill]="isSlotSelected(slot) ? 'solid' : 'outline'"
+                        color="primary"
+                        class="slot-button"
+                        [class.slot-selected]="isSlotSelected(slot)"
+                        [class.slot-default]="!isSlotSelected(slot)"
+                        (click)="selectSlot(slot)">
+                        {{ formatSlotTime(slot) }}
+                      </ion-button>
+                    }
+                    @if (getSlotsForDate(date).length === 0) {
+                      <span class="no-slots">{{ 'newRequest.noSlots' | translate }}</span>
+                    }
+                  </div>
+                </div>
+                }
+              }
+            </div>
+
+            @if (selectedSlot()) {
+              <div class="step-actions sticky-bottom">
+                <button class="primary-action" (click)="proceedToRecapOrAuth()">
+                  {{ 'newRequest.continueWithSlot' | translate }}
+                </button>
+              </div>
+            }
+          </div>
+        }
+
+        @case (5) {
+          <div class="step-content auth-choice-step">
+            <h2 class="step-title">{{ 'newRequest.signInToContinue' | translate }}</h2>
+            <p class="step-description">{{ 'newRequest.signInToContinueDesc' | translate }}</p>
+
+            <div class="choice-cards" [class.single-choice]="!registrationEnabled()">
+              <div class="choice-card" (click)="goToLogin()">
+                <ion-icon name="log-in-outline"></ion-icon>
+                <h3>{{ 'newRequest.loginTitle' | translate }}</h3>
+                <p>{{ 'newRequest.loginDesc' | translate }}</p>
+                <button class="primary-action">{{ 'login.title' | translate }}</button>
+              </div>
+
+              @if (registrationEnabled()) {
+                <div class="choice-card" (click)="goToRegister()">
+                  <ion-icon name="person-add-outline"></ion-icon>
+                  <h3>{{ 'newRequest.registerTitle' | translate }}</h3>
+                  <p>{{ 'newRequest.registerDesc' | translate }}</p>
+                  <button class="secondary-action">{{ 'login.signUp' | translate }}</button>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        @case (6) {
+          <div class="step-content review-step">
+            <h2 class="step-title">{{ 'newRequest.reviewAndSubmit' | translate }}</h2>
+            <p class="step-description">{{ 'newRequest.reviewDesc' | translate }}</p>
+
+            <div class="review-card">
+              <h3 class="review-title">{{ 'newRequest.requestSummary' | translate }}</h3>
+
+              <div class="review-item">
+                <div class="review-icon">
+                  @if (selectedSpeciality()?.icon) {
+                    <img [src]="selectedSpeciality()?.icon" [alt]="selectedSpeciality()?.name" class="review-speciality-icon-img">
+                  } @else {
+                    <ion-icon name="medical-outline"></ion-icon>
+                  }
+                </div>
+                <div class="review-details">
+                  <p class="review-label">{{ 'newRequest.specialty' | translate }}</p>
+                  <p class="review-value">{{ selectedSpeciality()?.name || ('common.notSelected' | translate) }}</p>
+                </div>
+              </div>
+
+              <div class="review-item">
+                <div class="review-icon">
                   <ion-icon name="clipboard-outline"></ion-icon>
                 </div>
-                <div class="reason-details">
-                  <p class="reason-name">{{ reason.name }}</p>
-                  <p class="reason-type">
-                    @if (reason.assignment_method === 'appointment') {
-                      <ion-icon name="calendar-outline"></ion-icon>
-                      {{ 'newRequest.scheduled' | translate }}
-                    } @else {
-                      <ion-icon name="flash-outline"></ion-icon>
-                      {{ 'newRequest.immediate' | translate }}
-                    }
-                    @if (reason.duration) {
-                      <span class="reason-duration"> · {{ 'newRequest.duration' | translate:{ duration: reason.duration } }}</span>
-                    }
-                  </p>
+                <div class="review-details">
+                  <p class="review-label">{{ 'newRequest.reason' | translate }}</p>
+                  <p class="review-value">{{ selectedReason()?.name || ('common.notSelected' | translate) }}</p>
                 </div>
-                <ion-icon name="chevron-forward-outline" class="reason-arrow"></ion-icon>
               </div>
-            }
-          </div>
-          @if (reasons().length === 0) {
-            <div class="empty-state">
-              <ion-icon name="information-circle-outline"></ion-icon>
-              <span>{{ 'newRequest.noReasons' | translate }}</span>
-            </div>
-          }
-        </div>
-      }
 
-      @case (3) {
-        <div class="step-content">
-          <h2 class="step-title">{{ 'newRequest.selectDoctor' | translate }}</h2>
-          <p class="step-description">{{ 'newRequest.selectDoctorDesc' | translate }}</p>
-          <div class="doctors-list">
-            @for (doctor of doctors(); track doctor.id) {
-              <div
-                class="doctor-card"
-                [class.selected]="isDoctorSelected(doctor)"
-                (click)="selectDoctor(doctor)">
-                <ion-card-content>
-                  <div class="doctor-info">
-                    <div class="doctor-avatar">
-                      @if (doctor.picture) {
-                        <img [src]="doctor.picture" [alt]="getDoctorFullName(doctor)">
-                      } @else {
-                        {{ getDoctorFullName(doctor).charAt(0) }}
+              <div class="review-item">
+                <div class="review-icon">
+                  <ion-icon name="time-outline"></ion-icon>
+                </div>
+                <div class="review-details">
+                  <p class="review-label">{{ 'newRequest.preferredTime' | translate }}</p>
+                  <p class="review-value">{{ getExpectedDateTime() }}</p>
+                </div>
+              </div>
+
+              <div class="review-item">
+                <div class="review-icon">
+                  <ion-icon name="person-outline"></ion-icon>
+                </div>
+                <div class="review-details">
+                  <p class="review-label">{{ 'newRequest.preferredDoctor' | translate }}</p>
+                  <p class="review-value">{{ selectedDoctor() ? getDoctorFullName(selectedDoctor()!) : ('newRequest.anyAvailable' | translate) }}</p>
+                </div>
+              </div>
+            </div>
+
+            @if (customFields().length > 0) {
+              <div class="custom-fields-section">
+                <h3 class="review-title">{{ 'newRequest.additionalInfo' | translate }}</h3>
+                @for (field of customFields(); track field.id) {
+                  <div class="custom-field-item">
+                    <label class="custom-field-label">
+                      {{ field.name }}
+                      @if (field.required) {
+                        <span class="required-mark">*</span>
                       }
-                    </div>
-                    <div class="doctor-details">
-                      <span class="doctor-name">{{ getDoctorFullName(doctor) }}</span>
-                      @if (doctor.specialities && doctor.specialities.length > 0) {
-                        <span class="doctor-specialty">{{ doctor.specialities[0].name }}</span>
+                    </label>
+                    @switch (field.field_type) {
+                      @case ('short_text') {
+                        <input type="text" class="custom-field-input"
+                          [placeholder]="field.name"
+                          [required]="field.required"
+                          [(ngModel)]="customFieldValues[field.id]">
                       }
-                    </div>
-                    @if (getDoctorNextSlot(doctor); as nextSlot) {
-                      <div class="doctor-next-slot-badge">
-                        <div class="next-slot-date-box">
-                          <span class="day">{{ nextSlot.date | localDate:'dd' }}</span>
-                          <span class="month">{{ nextSlot.date | localDate:'MMM' }}</span>
-                        </div>
-                        <div class="next-slot-info">
-                          <span class="next-slot-label">{{ 'newRequest.nextSlot' | translate }}</span>
-                          <span class="next-slot-datetime">{{ nextSlot.date | localDate:'fullDate' }} — {{ nextSlot.start_time.substring(0, 5) }}</span>
-                        </div>
-                      </div>
+                      @case ('long_text') {
+                        <ion-textarea
+                          [placeholder]="field.name"
+                          [rows]="3"
+                          [(ngModel)]="customFieldValues[field.id]"
+                          class="custom-field-textarea">
+                        </ion-textarea>
+                      }
+                      @case ('date') {
+                        <input type="date" class="custom-field-input"
+                          [required]="field.required"
+                          [(ngModel)]="customFieldValues[field.id]">
+                      }
+                      @case ('number') {
+                        <input type="number" class="custom-field-input"
+                          [placeholder]="field.name"
+                          [required]="field.required"
+                          [(ngModel)]="customFieldValues[field.id]">
+                      }
+                      @case ('list') {
+                        <select class="custom-field-input"
+                          [required]="field.required"
+                          [(ngModel)]="customFieldValues[field.id]">
+                          <option value="">--</option>
+                          @for (option of field.options || []; track option) {
+                            <option [value]="option">{{ option }}</option>
+                          }
+                        </select>
+                      }
                     }
                   </div>
-                </ion-card-content>
-              </div>
-            }
-          </div>
-          @if (doctors().length === 0) {
-            <div class="empty-state">
-              <ion-icon name="information-circle-outline"></ion-icon>
-              <span>{{ 'newRequest.noDoctors' | translate }}</span>
-            </div>
-          }
-          <div class="step-actions">
-            @if (selectedDoctor()) {
-              <button class="primary-action" (click)="proceedToSlots()">
-                {{ 'newRequest.continueWithDoctor' | translate }}
-              </button>
-            }
-            @if (doctors().length > 0) {
-              <button class="secondary-action" (click)="skipDoctorSelection()">
-                {{ 'newRequest.skipDoctor' | translate }}
-              </button>
-            }
-          </div>
-        </div>
-      }
-
-      @case (4) {
-        <div class="step-content">
-          <h2 class="step-title">{{ 'newRequest.chooseTimeSlot' | translate }}</h2>
-          <p class="step-description">{{ 'newRequest.selectTimeSlotDesc' | translate }}</p>
-
-          <div class="week-navigation">
-            <ion-button fill="clear" (click)="previousWeek()" [disabled]="!canGoPreviousWeek()">
-              <ion-icon name="chevron-back-outline" slot="icon-only"></ion-icon>
-            </ion-button>
-            <span class="week-label">{{ formatDisplayDate(weekDates()[0]) }} - {{ formatDisplayDate(weekDates()[weekDates().length - 1]) }}</span>
-            <ion-button fill="clear" (click)="nextWeek()">
-              <ion-icon name="chevron-forward-outline" slot="icon-only"></ion-icon>
-            </ion-button>
-          </div>
-
-          <div class="slots-container">
-            @for (date of weekDates(); track date.getTime()) {
-              @if (!isPastDate(date)) {
-              <div class="day-column" [class.today]="isToday(date)">
-                <div class="day-header">
-                  <span class="day-name">{{ formatDayName(date) }}</span>
-                  <span class="day-date">{{ formatDayNumber(date) }}</span>
-                </div>
-                <div class="day-slots">
-                  @for (slot of getSlotsForDate(date); track slot.start_time + slot.user_id) {
-                    <ion-button
-                      size="small"
-                      [fill]="isSlotSelected(slot) ? 'solid' : 'outline'"
-                      color="primary"
-                      class="slot-button"
-                      [class.slot-selected]="isSlotSelected(slot)"
-                      [class.slot-default]="!isSlotSelected(slot)"
-                      (click)="selectSlot(slot)">
-                      {{ formatSlotTime(slot) }}
-                    </ion-button>
-                  }
-                  @if (getSlotsForDate(date).length === 0) {
-                    <span class="no-slots">{{ 'newRequest.noSlots' | translate }}</span>
-                  }
-                </div>
-              </div>
-              }
-            }
-          </div>
-
-          @if (selectedSlot()) {
-            <div class="step-actions sticky-bottom">
-              <button class="primary-action" (click)="proceedToReview()">
-                {{ 'newRequest.continueWithSlot' | translate }}
-              </button>
-            </div>
-          }
-        </div>
-      }
-
-      @case (5) {
-        <div class="step-content review-step">
-          <h2 class="step-title">{{ 'newRequest.reviewAndSubmit' | translate }}</h2>
-          <p class="step-description">{{ 'newRequest.reviewDesc' | translate }}</p>
-
-          <div class="review-card">
-            <h3 class="review-title">{{ 'newRequest.requestSummary' | translate }}</h3>
-
-            <div class="review-item">
-              <div class="review-icon">
-                @if (selectedSpeciality()?.icon) {
-                  <img [src]="selectedSpeciality()?.icon" [alt]="selectedSpeciality()?.name" class="review-speciality-icon-img">
-                } @else {
-                  <ion-icon name="medical-outline"></ion-icon>
                 }
               </div>
-              <div class="review-details">
-                <p class="review-label">{{ 'newRequest.specialty' | translate }}</p>
-                <p class="review-value">{{ selectedSpeciality()?.name || ('common.notSelected' | translate) }}</p>
-              </div>
+            }
+
+            <div class="comment-section">
+              <ion-textarea
+                [(ngModel)]="comment"
+                [placeholder]="'newRequest.symptomPlaceholder' | translate"
+                [rows]="4"
+                class="comment-input">
+              </ion-textarea>
             </div>
 
-            <div class="review-item">
-              <div class="review-icon">
-                <ion-icon name="clipboard-outline"></ion-icon>
-              </div>
-              <div class="review-details">
-                <p class="review-label">{{ 'newRequest.reason' | translate }}</p>
-                <p class="review-value">{{ selectedReason()?.name || ('common.notSelected' | translate) }}</p>
-              </div>
-            </div>
-
-            <div class="review-item">
-              <div class="review-icon">
-                <ion-icon name="time-outline"></ion-icon>
-              </div>
-              <div class="review-details">
-                <p class="review-label">{{ 'newRequest.preferredTime' | translate }}</p>
-                <p class="review-value">{{ getExpectedDateTime() }}</p>
-              </div>
-            </div>
-
-            <div class="review-item">
-              <div class="review-icon">
-                <ion-icon name="person-outline"></ion-icon>
-              </div>
-              <div class="review-details">
-                <p class="review-label">{{ 'newRequest.preferredDoctor' | translate }}</p>
-                <p class="review-value">{{ selectedDoctor() ? getDoctorFullName(selectedDoctor()!) : ('newRequest.anyAvailable' | translate) }}</p>
-              </div>
+            <div class="step-actions">
+              <button
+                class="primary-action"
+                [disabled]="isSubmitting()"
+                (click)="submitRequest()">
+                @if (isSubmitting()) {
+                  <ion-spinner name="crescent"></ion-spinner>
+                  {{ 'newRequest.submitting' | translate }}
+                } @else {
+                  {{ 'newRequest.submitRequest' | translate }}
+                }
+              </button>
             </div>
           </div>
-
-          @if (customFields().length > 0) {
-            <div class="custom-fields-section">
-              <h3 class="review-title">{{ 'newRequest.additionalInfo' | translate }}</h3>
-              @for (field of customFields(); track field.id) {
-                <div class="custom-field-item">
-                  <label class="custom-field-label">
-                    {{ field.name }}
-                    @if (field.required) {
-                      <span class="required-mark">*</span>
-                    }
-                  </label>
-                  @switch (field.field_type) {
-                    @case ('short_text') {
-                      <input type="text" class="custom-field-input"
-                        [placeholder]="field.name"
-                        [required]="field.required"
-                        [(ngModel)]="customFieldValues[field.id]">
-                    }
-                    @case ('long_text') {
-                      <ion-textarea
-                        [placeholder]="field.name"
-                        [rows]="3"
-                        [(ngModel)]="customFieldValues[field.id]"
-                        class="custom-field-textarea">
-                      </ion-textarea>
-                    }
-                    @case ('date') {
-                      <input type="date" class="custom-field-input"
-                        [required]="field.required"
-                        [(ngModel)]="customFieldValues[field.id]">
-                    }
-                    @case ('number') {
-                      <input type="number" class="custom-field-input"
-                        [placeholder]="field.name"
-                        [required]="field.required"
-                        [(ngModel)]="customFieldValues[field.id]">
-                    }
-                    @case ('list') {
-                      <select class="custom-field-input"
-                        [required]="field.required"
-                        [(ngModel)]="customFieldValues[field.id]">
-                        <option value="">--</option>
-                        @for (option of field.options || []; track option) {
-                          <option [value]="option">{{ option }}</option>
-                        }
-                      </select>
-                    }
-                  }
-                </div>
-              }
-            </div>
-          }
-
-          <div class="comment-section">
-            <ion-textarea
-              [(ngModel)]="comment"
-              [placeholder]="'newRequest.symptomPlaceholder' | translate"
-              [rows]="4"
-              class="comment-input">
-            </ion-textarea>
-          </div>
-
-          <div class="step-actions">
-            <button
-              class="primary-action"
-              [disabled]="isSubmitting()"
-              (click)="submitRequest()">
-              @if (isSubmitting()) {
-                <ion-spinner name="crescent"></ion-spinner>
-                {{ 'newRequest.submitting' | translate }}
-              } @else {
-                {{ 'newRequest.submitRequest' | translate }}
-              }
-            </button>
-          </div>
-        </div>
+        }
       }
     }
-  }
+  </div>
 </ion-content>
+
+<app-footer></app-footer>

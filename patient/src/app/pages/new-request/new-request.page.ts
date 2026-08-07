@@ -1,31 +1,41 @@
 import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   IonContent,
-  IonHeader,
-  IonTitle,
-  IonToolbar,
-  IonButtons,
   IonButton,
   IonIcon,
   IonCardContent,
   IonSpinner,
   IonTextarea,
-  IonProgressBar,
+  AlertController,
   NavController,
-  ToastController
+  ToastController,
+  ViewWillEnter
 } from '@ionic/angular/standalone';
 import { TranslatePipe } from '@ngx-translate/core';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, forkJoin } from 'rxjs';
 import { TranslationService } from '../../core/services/translation.service';
 import { SpecialityService } from '../../core/services/speciality.service';
 import { DoctorService } from '../../core/services/doctor.service';
 import { ConsultationService, ConsultationRequestData } from '../../core/services/consultation.service';
+import { AuthService } from '../../core/services/auth.service';
 import { Speciality, Doctor } from '../../core/models/doctor.model';
 import { Reason, Slot, CustomField } from '../../core/models/consultation.model';
-import { LocalDatePipe } from '../../shared/pipes/local-date.pipe';
-import { forkJoin } from 'rxjs';
+import { AppHeaderComponent } from '../../shared/app-header/app-header.component';
+import { AppFooterComponent } from '../../shared/app-footer/app-footer.component';
+
+const BOOKING_DRAFT_KEY = 'hcw_booking_draft';
+
+interface BookingDraft {
+  speciality: Speciality | null;
+  doctor: Doctor | null;
+  reason: Reason | null;
+  slot: Slot | null;
+  customFieldValues: Record<number, string>;
+  comment: string;
+}
 
 @Component({
   selector: 'app-new-request',
@@ -36,28 +46,25 @@ import { forkJoin } from 'rxjs';
     CommonModule,
     FormsModule,
     IonContent,
-    IonHeader,
-    IonTitle,
-    IonToolbar,
-    IonButtons,
     IonButton,
     IonIcon,
     IonCardContent,
     IonSpinner,
     IonTextarea,
-    IonProgressBar,
-    TranslatePipe,
-    LocalDatePipe
+    AppHeaderComponent,
+    AppFooterComponent,
+    TranslatePipe
   ]
 })
-export class NewRequestPage implements OnInit, OnDestroy {
+export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
   private destroy$ = new Subject<void>();
   private t = inject(TranslationService);
 
   currentStep = signal(1);
-  totalSteps = 5;
+  totalSteps = 6;
   isLoading = signal(false);
   isSubmitting = signal(false);
+  registrationEnabled = signal(false);
 
   specialities = signal<Speciality[]>([]);
   selectedSpeciality = signal<Speciality | null>(null);
@@ -71,12 +78,15 @@ export class NewRequestPage implements OnInit, OnDestroy {
 
   doctors = signal<Doctor[]>([]);
   selectedDoctor = signal<Doctor | null>(null);
-  doctorNextSlots = signal<Record<number, Slot | null>>({});
 
   customFields = signal<CustomField[]>([]);
   customFieldValues: Record<number, string> = {};
 
   comment = '';
+
+  private pendingSlot: Slot | null = null;
+  private visitedDoctorStep = false;
+  private initializedOnce = false;
 
   stepTitle = computed(() => {
     switch (this.currentStep()) {
@@ -84,7 +94,8 @@ export class NewRequestPage implements OnInit, OnDestroy {
       case 2: return this.t.instant('newRequest.selectReason');
       case 3: return this.t.instant('newRequest.selectDoctor');
       case 4: return this.t.instant('newRequest.chooseTimeSlot');
-      case 5: return this.t.instant('newRequest.reviewAndSubmit');
+      case 5: return this.t.instant('newRequest.signInToContinue');
+      case 6: return this.t.instant('newRequest.reviewAndSubmit');
       default: return this.t.instant('newRequest.newRequest');
     }
   });
@@ -125,18 +136,90 @@ export class NewRequestPage implements OnInit, OnDestroy {
   constructor(
     private navCtrl: NavController,
     private toastCtrl: ToastController,
+    private alertCtrl: AlertController,
+    private route: ActivatedRoute,
+    private router: Router,
     private specialityService: SpecialityService,
     private doctorService: DoctorService,
-    private consultationService: ConsultationService
+    private consultationService: ConsultationService,
+    private authService: AuthService,
   ) {}
 
   ngOnInit() {
+    this.initializedOnce = true;
+
+    if (this.tryRestoreDraft()) {
+      return;
+    }
+
+    const params = this.route.snapshot.queryParamMap;
+    const doctorId = params.get('doctor_id');
+    const specialityId = params.get('speciality_id');
+
+    if (doctorId && specialityId) {
+      this.initFromQueryParams(Number(doctorId), Number(specialityId), params);
+      return;
+    }
+
     this.loadSpecialities();
+  }
+
+  ionViewWillEnter(): void {
+    if (!this.initializedOnce) {
+      return;
+    }
+    this.tryRestoreDraft();
   }
 
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  private initFromQueryParams(doctorId: number, specialityId: number, params: import('@angular/router').ParamMap): void {
+    this.isLoading.set(true);
+
+    forkJoin({
+      specialities: this.specialityService.getSpecialities(),
+      doctor: this.doctorService.getPublicPractitioner(doctorId),
+    }).pipe(takeUntil(this.destroy$)).subscribe({
+      next: ({ specialities, doctor }) => {
+        const doctorSpecialities = doctor.specialities ?? [];
+
+        const filteredSpecialities = doctorSpecialities.length > 0
+          ? doctorSpecialities.filter(s => s.id === specialityId)
+          : specialities.filter(s => s.id === specialityId);
+
+        this.specialities.set(filteredSpecialities);
+
+        const speciality = filteredSpecialities[0] ?? null;
+        this.selectedSpeciality.set(speciality);
+        
+        this.selectedDoctor.set(doctor);
+
+        const slotDate = params.get('slot_date');
+        const slotTime = params.get('slot_time');
+        const slotDurationRaw = params.get('slot_duration');
+        if (slotDate && slotTime) {
+          const duration = slotDurationRaw ? Number(slotDurationRaw) : 0;
+          this.pendingSlot = {
+            date: slotDate,
+            start_time: slotTime,
+            end_time: this.computeEndTime(slotTime, duration),
+            duration,
+            user_id: doctorId,
+          } as Slot;
+        }
+
+        this.loadReasons(specialityId);
+        this.currentStep.set(2);
+        this.isLoading.set(false);
+      },
+      error: () => {
+        this.isLoading.set(false);
+        this.loadSpecialities();
+      }
+    });
   }
 
   loadSpecialities(): void {
@@ -179,19 +262,85 @@ export class NewRequestPage implements OnInit, OnDestroy {
 
   selectReason(reason: Reason): void {
     this.selectedReason.set(reason);
-    if (reason.assignment_method === 'appointment' && !reason.skip_doctor_selection) {
-      this.loadDoctorsWithNextSlot();
-      this.currentStep.set(3);
-    } else if (reason.assignment_method === 'appointment' && reason.skip_doctor_selection) {
+
+    if (reason.skip_doctor_selection) {
       this.selectedDoctor.set(null);
+    }
+
+    const pending = this.pendingSlot;
+    if (pending && !reason.skip_doctor_selection && pending.duration === reason.duration) {
+      this.selectedSlot.set(pending);
+      this.pendingSlot = null;
+      this.proceedToRecapOrAuth();
+      return;
+    }
+    this.pendingSlot = null;
+
+    if (reason.assignment_method !== 'appointment') {
+      this.selectedSlot.set(null);
+      this.proceedToRecapOrAuth();
+      return;
+    }
+
+    if (reason.skip_doctor_selection || this.selectedDoctor()) {
+      this.visitedDoctorStep = false;
       this.loadAvailableSlots(reason.id);
       this.currentStep.set(4);
     } else {
-      this.selectedSlot.set(null);
-      this.selectedDoctor.set(null);
-      this.loadCustomFields();
-      this.currentStep.set(5);
+      this.visitedDoctorStep = true;
+      this.loadDoctors();
+      this.currentStep.set(3);
     }
+  }
+
+  private loadDoctors(): void {
+    const speciality = this.selectedSpeciality();
+    if (!speciality) return;
+
+    this.isLoading.set(true);
+    this.doctorService.getDoctorsBySpeciality(speciality.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (doctors) => {
+          this.doctors.set(doctors);
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.showToast(this.t.instant('newRequest.failedDoctors'), 'danger');
+          this.isLoading.set(false);
+        }
+      });
+  }
+
+  selectDoctor(doctor: Doctor): void {
+    this.selectedDoctor.set(doctor);
+  }
+
+  proceedWithDoctor(): void {
+    const reason = this.selectedReason();
+    if (reason) {
+      this.loadAvailableSlots(reason.id);
+      this.currentStep.set(4);
+    }
+  }
+
+  skipDoctorSelection(): void {
+    this.selectedDoctor.set(null);
+    this.proceedWithDoctor();
+  }
+
+  isDoctorSelected(doctor: Doctor): boolean {
+    const selected = this.selectedDoctor();
+    if (!selected || !doctor) {
+      return false;
+    }
+    const selectedId = (selected as any).pk ?? selected.id;
+    const doctorId = (doctor as any).pk ?? doctor.id;
+    return selectedId === doctorId;
+  }
+
+  getDoctorFullName(doctor: Doctor): string {
+    return `Dr. ${doctor.first_name} ${doctor.last_name}`;
   }
 
   loadAvailableSlots(reasonId: number): void {
@@ -245,78 +394,70 @@ export class NewRequestPage implements OnInit, OnDestroy {
     }
   }
 
-  private loadDoctorsWithNextSlot(): void {
-    const speciality = this.selectedSpeciality();
-    const reason = this.selectedReason();
-    if (!speciality || !reason) return;
-
-    this.isLoading.set(true);
-    const fromDate = this.formatDate(new Date());
-
-    forkJoin({
-      doctors: this.doctorService.getDoctorsBySpeciality(speciality.id),
-      slots: this.doctorService.getAvailableSlots(reason.id, { from_date: fromDate }),
-    }).pipe(takeUntil(this.destroy$)).subscribe({
-      next: ({ doctors, slots }) => {
-        this.doctors.set(doctors);
-
-        // Find the first available slot per doctor
-        const nextSlots: Record<number, Slot | null> = {};
-        for (const doctor of doctors) {
-          const doctorId = (doctor as any).pk ?? doctor.id;
-          const doctorSlot = slots.find(s => s.user_id === doctorId) || null;
-          nextSlots[doctorId] = doctorSlot;
-        }
-        this.doctorNextSlots.set(nextSlots);
-        this.isLoading.set(false);
-      },
-      error: () => {
-        this.showToast(this.t.instant('newRequest.failedDoctors'), 'danger');
-        this.isLoading.set(false);
-      }
-    });
-  }
-
-  selectDoctor(doctor: Doctor): void {
-    this.selectedDoctor.set(doctor);
-  }
-
-  proceedToSlots(): void {
-    const reason = this.selectedReason();
-    if (reason) {
-      this.loadAvailableSlots(reason.id);
-      this.currentStep.set(4);
-    }
-  }
-
-  skipDoctorSelection(): void {
-    this.selectedDoctor.set(null);
-    const reason = this.selectedReason();
-    if (reason) {
-      this.loadAvailableSlots(reason.id);
-      this.currentStep.set(4);
-    }
-  }
-
-  proceedToReview(): void {
+  proceedToRecapOrAuth(): void {
     this.loadCustomFields();
-    this.currentStep.set(5);
+    if (!this.authService.isAuthenticatedValue) {
+      this.currentStep.set(5);
+      this.authService.getConfig().subscribe({
+        next: (config: any) => {
+          if (!config) return;
+          this.registrationEnabled.set(!!config.registration_enabled && !config.force_temporary_patients);
+        },
+      });
+      return;
+    }
+    this.currentStep.set(6);
   }
 
-  skipSlotSelection(): void {
-    this.selectedSlot.set(null);
-    this.loadCustomFields();
-    this.currentStep.set(5);
+  goToLogin(): void {
+    this.saveDraftAndRedirect('/login');
   }
 
-  getDoctorNextSlot(doctor: Doctor): Slot | null {
-    const doctorId = (doctor as any).pk ?? doctor.id;
-    return this.doctorNextSlots()[doctorId] || null;
+  goToRegister(): void {
+    this.saveDraftAndRedirect('/register');
   }
 
-  formatSlotDate(slot: Slot): string {
-    const date = new Date(`${slot.date}T${slot.start_time}`);
-    return date.toLocaleDateString(this.t.currentLanguage(), { weekday: 'short', day: 'numeric', month: 'short' });
+  private saveDraftAndRedirect(path: string): void {
+    const draft: BookingDraft = {
+      speciality: this.selectedSpeciality(),
+      doctor: this.selectedDoctor(),
+      reason: this.selectedReason(),
+      slot: this.selectedSlot(),
+      customFieldValues: this.customFieldValues,
+      comment: this.comment,
+    };
+    try {
+      sessionStorage.setItem(BOOKING_DRAFT_KEY, JSON.stringify(draft));
+    } catch {
+    }
+    this.router.navigate([path], { queryParams: { action: 'completeBooking' } });
+  }
+
+  private tryRestoreDraft(): boolean {
+    let raw: string | null = null;
+    try {
+      raw = sessionStorage.getItem(BOOKING_DRAFT_KEY);
+    } catch {
+      return false;
+    }
+    if (!raw) return false;
+
+    try {
+      const draft: BookingDraft = JSON.parse(raw);
+      this.selectedSpeciality.set(draft.speciality ?? null);
+      this.selectedDoctor.set(draft.doctor ?? null);
+      this.selectedReason.set(draft.reason ?? null);
+      this.selectedSlot.set(draft.slot ?? null);
+      this.customFieldValues = draft.customFieldValues ?? {};
+      this.comment = draft.comment ?? '';
+      sessionStorage.removeItem(BOOKING_DRAFT_KEY);
+      this.loadCustomFields();
+      this.currentStep.set(6);
+      return true;
+    } catch {
+      try { sessionStorage.removeItem(BOOKING_DRAFT_KEY); } catch { }
+      return false;
+    }
   }
 
   loadCustomFields(): void {
@@ -326,20 +467,58 @@ export class NewRequestPage implements OnInit, OnDestroy {
 
   goBack(): void {
     const step = this.currentStep();
-    if (step > 1) {
-      const reason = this.selectedReason();
-      if (step === 5 && reason && reason.assignment_method !== 'appointment') {
+    switch (step) {
+      case 1:
+        this.navCtrl.back();
+        break;
+      case 2:
+        this.currentStep.set(1);
+        break;
+      case 3:
         this.currentStep.set(2);
-      } else if (step === 5) {
+        break;
+      case 4:
+        this.currentStep.set(this.visitedDoctorStep ? 3 : 2);
+        break;
+      case 5: 
         this.currentStep.set(4);
-      } else if (step === 4 && reason && reason.skip_doctor_selection) {
-        this.currentStep.set(2);
-      } else {
-        this.currentStep.set(step - 1);
+        break;
+      case 6: {
+        const reason = this.selectedReason();
+        if (reason && reason.assignment_method === 'appointment') {
+          this.currentStep.set(4);
+        } else {
+          this.currentStep.set(2);
+        }
+        break;
       }
-    } else {
-      this.navCtrl.back();
     }
+  }
+
+  async confirmCancel(): Promise<void> {
+    const alert = await this.alertCtrl.create({
+      header: this.t.instant('newRequest.cancelConfirmTitle'),
+      message: this.t.instant('newRequest.cancelConfirmMessage'),
+      buttons: [
+        { text: this.t.instant('newRequest.cancelConfirmStay'), role: 'cancel' },
+        {
+          text: this.t.instant('newRequest.cancelConfirmLeave'),
+          role: 'destructive',
+          handler: () => this.exitWizard(),
+        },
+      ],
+    });
+    await alert.present();
+  }
+
+  // Drop the draft too, otherwise ionViewWillEnter would restore the wizard on
+  // the review step the next time the page is opened.
+  private exitWizard(): void {
+    try {
+      sessionStorage.removeItem(BOOKING_DRAFT_KEY);
+    } catch {
+    }
+    this.navCtrl.navigateBack(this.authService.isAuthenticatedValue ? '/home' : '/map');
   }
 
   async submitRequest(): Promise<void> {
@@ -349,6 +528,11 @@ export class NewRequestPage implements OnInit, OnDestroy {
 
     if (!reason) {
       this.showToast(this.t.instant('newRequest.selectReasonWarning'), 'warning');
+      return;
+    }
+
+    if (!this.authService.isAuthenticatedValue) {
+      this.saveDraftAndRedirect("/login");
       return;
     }
 
@@ -370,7 +554,7 @@ export class NewRequestPage implements OnInit, OnDestroy {
     };
 
     if (doctor) {
-      requestData.expected_with_id = doctor.id;
+      requestData.expected_with_id = (doctor as any).pk ?? doctor.id;
     }
 
     const cfPayload = Object.entries(this.customFieldValues)
@@ -412,6 +596,14 @@ export class NewRequestPage implements OnInit, OnDestroy {
     const m = (date.getMonth() + 1).toString().padStart(2, '0');
     const d = date.getDate().toString().padStart(2, '0');
     return `${y}-${m}-${d}`;
+  }
+
+  private computeEndTime(startTime: string, durationMinutes: number): string {
+    const [h, m] = startTime.split(':').map(Number);
+    const total = h * 60 + m + durationMinutes;
+    const eh = Math.floor(total / 60) % 24;
+    const em = total % 60;
+    return `${eh.toString().padStart(2, '0')}:${em.toString().padStart(2, '0')}:00`;
   }
 
   formatDisplayDate(date: Date): string {
@@ -456,21 +648,6 @@ export class NewRequestPage implements OnInit, OnDestroy {
       selected.date === slot.date &&
       selected.start_time === slot.start_time &&
       selected.user_id === slot.user_id;
-  }
-
-  isDoctorSelected(doctor: Doctor): boolean {
-    const selected = this.selectedDoctor();
-    if (!selected || !doctor) {
-      return false;
-    }
-    // API returns 'pk' instead of 'id'
-    const selectedId = (selected as any).pk ?? selected.id;
-    const doctorId = (doctor as any).pk ?? doctor.id;
-    return selectedId === doctorId;
-  }
-
-  getDoctorFullName(doctor: Doctor): string {
-    return `Dr. ${doctor.first_name} ${doctor.last_name}`;
   }
 
   getExpectedDateTime(): string {

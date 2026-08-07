@@ -137,6 +137,7 @@
         "loading": "Caricamento...",
         "cancel": "Cancellare",
         "close": "Chiudi",
+        "back": "Indietro",
         "save": "Salva",
         "error": "Errore",
         "success": "Successo",
@@ -321,7 +322,12 @@
         "failedDoctors": "Impossibile caricare i colleghi",
         "selectReasonWarning": "Seleziona un motivo",
         "submitSuccess": "Richiesta inviata correttamente",
-        "submitFailed": "Impossibile inviare la richiesta"
+        "submitFailed": "Impossibile inviare la richiesta",
+        "cancelRequest": "Annulla",
+        "cancelConfirmTitle": "Annullare la richiesta?",
+        "cancelConfirmMessage": "Le informazioni inserite andranno perse.",
+        "cancelConfirmStay": "Continua la richiesta",
+        "cancelConfirmLeave": "Esci"
     },
     "incomingCall": {
         "isCalling": "sta chiamando...",

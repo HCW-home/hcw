@@ -78,6 +78,7 @@
         "signUp": "Registrarse",
         "loading": "Cargando...",
         "close": "Cerrar",
+        "back": "Volver",
         "save": "Guardar",
         "error": "Error",
         "success": "Éxito",
@@ -288,7 +289,12 @@
         "failedDoctors": "No se pudieron cargar los médicos",
         "selectReasonWarning": "Seleccione un motivo",
         "submitSuccess": "Solicitud enviada correctamente",
-        "submitFailed": "No se pudo enviar la solicitud."
+        "submitFailed": "No se pudo enviar la solicitud.",
+        "cancelRequest": "Cancelar",
+        "cancelConfirmTitle": "¿Cancelar la solicitud?",
+        "cancelConfirmMessage": "Se perderá la información introducida.",
+        "cancelConfirmStay": "Continuar la solicitud",
+        "cancelConfirmLeave": "Salir"
     },
     "messageList": {
         "messages": "Mensajes",

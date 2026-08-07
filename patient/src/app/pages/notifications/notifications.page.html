@@ -7,7 +7,9 @@
 
   <div class="main-content">
     @if (notifications.length > 0) {
+      <!-- No section title here: app-header already shows "Notifications". -->
       <div class="section-header">
+        <span class="section-badge">{{ notifications.length }} {{ 'common.total' | translate }}</span>
         <button class="mark-all-btn" (click)="markAllAsRead()">
           <ion-icon name="checkmark-circle-outline"></ion-icon>
           <span>{{ 'notifications.markAllRead' | translate }}</span>
@@ -47,11 +49,9 @@
 
     @if (notifications.length === 0) {
       <div class="empty-state">
-        <ion-icon name="notifications-off-outline" color="medium" class="empty-icon"></ion-icon>
-        <ion-text class="empty-title" color="medium">{{ 'notifications.noNotifications' | translate }}</ion-text>
-        <ion-text class="empty-subtitle" color="medium">
-          {{ 'notifications.noNotificationsYet' | translate }}
-        </ion-text>
+        <ion-icon name="notifications-off-outline" class="empty-icon"></ion-icon>
+        <h2 class="empty-title">{{ 'notifications.noNotifications' | translate }}</h2>
+        <p class="empty-subtitle">{{ 'notifications.noNotificationsYet' | translate }}</p>
       </div>
     }
   </div>

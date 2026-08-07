@@ -1,32 +1,127 @@
-ion-header {
-  ion-toolbar {
-    --background: var(--app-card-background);
-    --border-width: 0;
-    padding: var(--app-spacing-sm) 0;
+// Booking wizard — shares the shell of the dashboard pages (branded app-header,
+// app-footer, page background) and the patient dashboard design tokens
+// (see theme/variables.scss). The brand hue comes from the instance primary
+// color applied at runtime, so nothing is hardcoded here.
 
-    ion-title {
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--app-text-primary);
+.new-request-content {
+  --background: var(--app-page-bg);
+
+  .main-content {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: var(--app-spacing-lg);
+    padding-bottom: 60px;
+
+    @media (min-width: 768px) {
+      padding: 24px 32px 44px;
     }
   }
+}
 
-  ion-progress-bar {
-    --background: var(--app-border-color);
-    --progress-background: var(--ion-color-primary);
-    height: 3px;
+// ---------------------------------------------------------------------------
+// Wizard chrome — back / step title / progress, in the content instead of the
+// toolbar so the branded header stays identical across the app.
+// ---------------------------------------------------------------------------
+
+.wizard-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--app-spacing-md);
+  margin-bottom: var(--app-spacing-lg);
+  padding: 10px 14px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
+}
+
+.wizard-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 1px solid var(--app-border);
+  border-radius: 9px;
+  background: var(--app-surface);
+  color: var(--app-ink-2);
+  cursor: pointer;
+  transition: background 0.15s var(--app-ease), border-color 0.15s var(--app-ease);
+
+  ion-icon {
+    font-size: 18px;
   }
+
+  &:hover {
+    background: var(--app-surface-muted);
+    border-color: var(--app-teal);
+    color: var(--app-teal-dark);
+  }
+}
+
+.wizard-progress {
+  flex: 1;
+  min-width: 0;
+  height: 5px;
+  border-radius: 9999px;
+  background: var(--app-border-subtle);
+  overflow: hidden;
+}
+
+.wizard-progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: 9999px;
+  background: var(--app-teal);
+  transition: width 0.35s var(--app-ease);
 }
 
 .step-indicator {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--app-text-secondary);
-  padding-right: var(--app-spacing-lg);
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  background: var(--app-teal-050);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--app-teal-dark);
 }
 
-.new-request-content {
+.wizard-cancel {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  padding: 7px 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 9px;
+  background: var(--app-surface);
+  color: var(--app-ink-3);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s var(--app-ease), border-color 0.15s var(--app-ease), color 0.15s var(--app-ease);
 
+  ion-icon {
+    font-size: 16px;
+  }
+
+  &:hover {
+    border-color: var(--app-danger);
+    color: var(--app-danger);
+    background: var(--app-surface-muted);
+  }
+
+  // The label is redundant with the icon once the bar gets tight.
+  @media (max-width: 560px) {
+    padding: 7px;
+
+    span {
+      display: none;
+    }
+  }
 }
 
 .loading-container {
@@ -34,53 +129,55 @@ ion-header {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100%;
   gap: var(--app-spacing-lg);
+  min-height: 240px;
+  padding: var(--app-spacing-2xl);
+  font-size: 14px;
+  color: var(--app-ink-3);
 
-  ion-text {
-    font-size: 0.875rem;
-    color: var(--app-text-secondary);
+  ion-spinner {
+    color: var(--app-teal);
   }
-}
-
-.step-content {
-  padding: var(--app-spacing-lg);
-  padding-bottom: 100px;
 }
 
 .step-title {
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--app-text-primary);
+  color: var(--app-ink-1);
   margin: 0 0 var(--app-spacing-sm) 0;
 }
 
 .step-description {
   display: block;
-  margin-bottom: var(--app-spacing-xl);
+  margin: 0 0 var(--app-spacing-xl);
   font-size: 0.9375rem;
-  color: var(--app-text-secondary);
+  color: var(--app-ink-3);
   line-height: 1.5;
 }
 
 .speciality-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: var(--app-spacing-md);
 }
 
 .speciality-card {
   margin: 0;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-  border: 1px solid var(--app-border-color);
-  border-radius: var(--app-card-radius);
-  background: var(--app-card-background);
-  box-shadow: none;
+  transition: transform 0.2s var(--app-ease), box-shadow 0.2s var(--app-ease), border-color 0.2s var(--app-ease);
+  border: 1px solid var(--app-border);
+  border-radius: var(--radius-card);
+  background: var(--app-surface);
+  box-shadow: var(--shadow-sm);
+
+  &:hover {
+    border-color: var(--app-teal);
+    box-shadow: var(--shadow-md);
+  }
 
   &:active {
     transform: scale(0.98);
-    border-color: var(--ion-color-primary);
+    border-color: var(--app-teal);
   }
 
   ion-card-content {
@@ -95,7 +192,7 @@ ion-header {
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    background: var(--ion-color-primary-bg);
+    background: var(--app-teal-050);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -104,7 +201,13 @@ ion-header {
 
   .speciality-icon {
     font-size: 28px;
-    color: var(--ion-color-primary);
+    color: var(--app-teal);
+  }
+
+  .speciality-icon-img {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
   }
 
   .speciality-icon-img {
@@ -116,7 +219,7 @@ ion-header {
   .speciality-name {
     font-size: 0.875rem;
     font-weight: 600;
-    color: var(--app-text-primary);
+    color: var(--app-ink-1);
   }
 }
 
@@ -128,18 +231,16 @@ ion-header {
   padding: var(--app-spacing-3xl) var(--app-spacing-xl);
   text-align: center;
   gap: var(--app-spacing-md);
-  background: var(--app-card-background);
-  border-radius: var(--app-card-radius);
-  border: 1px solid var(--app-border-color);
+  font-size: 0.9375rem;
+  color: var(--app-ink-3);
+  background: var(--app-surface);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--app-border);
+  box-shadow: var(--shadow-sm);
 
   ion-icon {
     font-size: 48px;
-    color: var(--app-text-muted);
-  }
-
-  ion-text {
-    font-size: 0.9375rem;
-    color: var(--app-text-secondary);
+    color: var(--app-ink-4);
   }
 }
 
@@ -154,22 +255,24 @@ ion-header {
   align-items: center;
   gap: var(--app-spacing-md);
   padding: var(--app-spacing-lg);
-  background: var(--app-card-background);
-  border: 1px solid var(--app-border-color);
-  border-radius: var(--app-card-radius);
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
   cursor: pointer;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s var(--app-ease), box-shadow 0.2s var(--app-ease);
 
+  &:hover,
   &:active {
-    border-color: var(--ion-color-primary);
-    box-shadow: 0 2px 8px rgba(8, 145, 178, 0.15);
+    border-color: var(--app-teal);
+    box-shadow: var(--shadow-md);
   }
 
   .reason-icon {
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    background: var(--ion-color-primary-bg);
+    background: var(--app-teal-050);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -177,7 +280,7 @@ ion-header {
 
     ion-icon {
       font-size: 20px;
-      color: var(--ion-color-primary);
+      color: var(--app-teal);
     }
   }
 
@@ -188,13 +291,13 @@ ion-header {
     .reason-name {
       font-size: 0.9375rem;
       font-weight: 600;
-      color: var(--app-text-primary);
+      color: var(--app-ink-1);
       margin: 0 0 4px 0;
     }
 
     .reason-type {
       font-size: 0.8125rem;
-      color: var(--app-text-secondary);
+      color: var(--app-ink-3);
       margin: 0;
       display: flex;
       align-items: center;
@@ -205,13 +308,13 @@ ion-header {
       }
 
       .reason-duration {
-        color: var(--app-text-tertiary);
+        color: var(--app-ink-4);
       }
     }
   }
 
   .reason-arrow {
-    color: var(--app-text-muted);
+    color: var(--app-ink-4);
     font-size: 20px;
   }
 }
@@ -221,12 +324,12 @@ ion-header {
   align-items: center;
   justify-content: space-between;
   margin-bottom: var(--app-spacing-lg);
-  background: var(--ion-color-primary-bg);
-  border-radius: var(--app-card-radius);
+  background: var(--app-teal-050);
+  border-radius: var(--radius-card);
   padding: var(--app-spacing-md) var(--app-spacing-lg);
 
   ion-button {
-    --color: var(--ion-color-primary);
+    --color: var(--app-teal);
     --padding-start: 8px;
     --padding-end: 8px;
 
@@ -243,7 +346,7 @@ ion-header {
   .week-label {
     font-size: 0.9375rem;
     font-weight: 600;
-    color: var(--ion-color-primary);
+    color: var(--app-teal-dark);
   }
 }
 
@@ -255,16 +358,17 @@ ion-header {
 }
 
 .day-column {
-  background: var(--app-card-background);
-  border-radius: var(--app-card-radius);
+  background: var(--app-surface);
+  border-radius: var(--radius-card);
   padding: var(--app-spacing-md);
-  border: 1px solid var(--app-border-color);
+  border: 1px solid var(--app-border);
+  box-shadow: var(--shadow-sm);
   min-height: 160px;
 
   &.today {
-    background: var(--ion-color-primary-bg);
-    border: 2px solid var(--ion-color-primary);
-    box-shadow: 0 2px 8px rgba(8, 145, 178, 0.15);
+    background: var(--app-teal-050);
+    border-color: var(--app-teal);
+    box-shadow: var(--shadow-md);
   }
 
   .day-header {
@@ -275,12 +379,12 @@ ion-header {
     text-align: center;
     margin-bottom: var(--app-spacing-md);
     padding-bottom: var(--app-spacing-sm);
-    border-bottom: 1px solid var(--app-border-color);
+    border-bottom: 1px solid var(--app-border-subtle);
 
     .day-name {
       font-size: 0.6875rem;
       font-weight: 500;
-      color: var(--app-text-secondary);
+      color: var(--app-ink-3);
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
@@ -288,7 +392,7 @@ ion-header {
     .day-date {
       font-size: 1rem;
       font-weight: 700;
-      color: var(--app-text-primary);
+      color: var(--app-ink-1);
     }
   }
 
@@ -311,21 +415,21 @@ ion-header {
     letter-spacing: 0.01em;
 
     &.slot-selected {
-      --background: var(--ion-color-primary);
-      --color: white;
-      --box-shadow: 0 2px 8px rgba(8, 145, 178, 0.35);
+      --background: var(--app-teal);
+      --color: #fff;
+      --box-shadow: var(--shadow-md);
     }
 
     &.slot-default {
-      --background: var(--app-card-background);
-      --color: var(--ion-color-primary);
-      --border-color: var(--ion-color-primary);
+      --background: var(--app-surface);
+      --color: var(--app-teal);
+      --border-color: var(--app-teal);
       --border-width: 2px;
-      color: var(--ion-color-primary) !important;
-      border-color: var(--ion-color-primary) !important;
+      color: var(--app-teal) !important;
+      border-color: var(--app-teal) !important;
 
       &:hover {
-        --background: var(--ion-color-primary-bg);
+        --background: var(--app-teal-050);
       }
     }
   }
@@ -339,8 +443,8 @@ ion-header {
     min-height: 80px;
     font-size: 0.8125rem;
     text-align: center;
-    color: var(--app-text-muted);
-    background: var(--app-background);
+    color: var(--app-ink-4);
+    background: var(--app-surface-muted);
     border-radius: 8px;
     padding: var(--app-spacing-md);
   }
@@ -355,15 +459,19 @@ ion-header {
 .doctor-card {
   margin: 0;
   cursor: pointer;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  border: 2px solid var(--app-border-color);
-  border-radius: var(--app-card-radius);
-  background: var(--app-card-background);
-  box-shadow: none;
+  transition: border-color 0.2s var(--app-ease), box-shadow 0.2s var(--app-ease);
+  border: 2px solid var(--app-border);
+  border-radius: var(--radius-card);
+  background: var(--app-surface);
+  box-shadow: var(--shadow-sm);
+
+  &:hover {
+    border-color: var(--app-teal);
+  }
 
   &.selected {
-    border-color: var(--ion-color-primary);
-    box-shadow: 0 2px 8px rgba(8, 145, 178, 0.15);
+    border-color: var(--app-teal);
+    box-shadow: var(--shadow-md);
   }
 
   ion-card-content {
@@ -380,8 +488,8 @@ ion-header {
     width: 52px;
     height: 52px;
     border-radius: 50%;
-    background: var(--ion-color-primary-bg);
-    color: var(--ion-color-primary);
+    background: var(--app-teal-050);
+    color: var(--app-teal);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -405,14 +513,14 @@ ion-header {
       display: block;
       font-size: 1rem;
       font-weight: 600;
-      color: var(--app-text-primary);
+      color: var(--app-ink-1);
       margin-bottom: 4px;
     }
 
     .doctor-specialty {
       display: block;
       font-size: 0.8125rem;
-      color: var(--app-text-secondary);
+      color: var(--app-ink-3);
     }
 
   }
@@ -424,7 +532,7 @@ ion-header {
     margin-left: auto;
     flex-shrink: 0;
     padding: 6px 10px;
-    background: var(--ion-color-primary-bg);
+    background: var(--app-teal-050);
     border-radius: 10px;
 
     .next-slot-date-box {
@@ -434,7 +542,7 @@ ion-header {
       justify-content: center;
       width: 40px;
       height: 40px;
-      background: var(--ion-color-primary);
+      background: var(--app-teal);
       border-radius: 8px;
       flex-shrink: 0;
 
@@ -463,13 +571,13 @@ ion-header {
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.03em;
-      color: var(--ion-color-primary);
+      color: var(--app-teal-dark);
     }
 
     .next-slot-datetime {
       font-size: 0.8125rem;
       font-weight: 500;
-      color: var(--app-text-secondary);
+      color: var(--app-ink-3);
     }
   }
 
@@ -486,14 +594,14 @@ ion-header {
     bottom: 0;
     margin-top: var(--app-spacing-md);
     padding: var(--app-spacing-md) 0;
-    background: var(--app-card-background);
+    background: var(--app-page-bg);
     z-index: 10;
   }
 
   .primary-action {
     width: 100%;
     padding: var(--app-spacing-md) var(--app-spacing-lg);
-    background: linear-gradient(135deg, var(--ion-color-primary), var(--ion-color-primary-shade));
+    background: linear-gradient(135deg, var(--app-teal), var(--app-teal-dark));
     color: white;
     border: none;
     border-radius: var(--app-button-radius);
@@ -504,9 +612,13 @@ ion-header {
     align-items: center;
     justify-content: center;
     gap: var(--app-spacing-sm);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 4px 14px -3px rgba(8, 145, 178, 0.4);
-    transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+    box-shadow: var(--shadow-md);
+    transition: transform 0.2s var(--app-ease), box-shadow 0.2s var(--app-ease), opacity 0.2s var(--app-ease);
     font-family: inherit;
+
+    &:hover {
+      box-shadow: var(--shadow-lg);
+    }
 
     &:active {
       transform: translateY(-1px);
@@ -526,34 +638,36 @@ ion-header {
   .secondary-action {
     width: 100%;
     padding: var(--app-spacing-md) var(--app-spacing-lg);
-    background: transparent;
-    color: var(--ion-color-primary);
-    border: 1px solid var(--ion-color-primary);
+    background: var(--app-surface);
+    color: var(--app-teal-dark);
+    border: 1px solid var(--app-teal);
     border-radius: var(--app-button-radius);
     font-size: 0.9375rem;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: background 0.2s var(--app-ease);
     font-family: inherit;
 
+    &:hover,
     &:active {
-      background: var(--ion-color-primary-bg);
+      background: var(--app-teal-050);
     }
   }
 }
 
 .review-step {
   .review-card {
-    background: var(--app-card-background);
-    border-radius: var(--app-card-radius);
-    border: 1px solid var(--app-border-color);
+    background: var(--app-surface);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--app-border);
+    box-shadow: var(--shadow-sm);
     padding: var(--app-spacing-lg);
     margin-bottom: var(--app-spacing-xl);
 
     .review-title {
       font-size: 1rem;
       font-weight: 600;
-      color: var(--app-text-primary);
+      color: var(--app-ink-1);
       margin: 0 0 var(--app-spacing-lg) 0;
     }
 
@@ -562,7 +676,7 @@ ion-header {
       align-items: flex-start;
       gap: var(--app-spacing-md);
       padding: var(--app-spacing-md) 0;
-      border-bottom: 1px solid var(--app-border-color);
+      border-bottom: 1px solid var(--app-border-subtle);
 
       &:last-child {
         border-bottom: none;
@@ -577,7 +691,7 @@ ion-header {
         width: 36px;
         height: 36px;
         border-radius: 50%;
-        background: var(--ion-color-primary-bg);
+        background: var(--app-teal-050);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -585,7 +699,13 @@ ion-header {
 
         ion-icon {
           font-size: 18px;
-          color: var(--ion-color-primary);
+          color: var(--app-teal);
+        }
+
+        .review-speciality-icon-img {
+          width: 24px;
+          height: 24px;
+          object-fit: contain;
         }
 
         .review-speciality-icon-img {
@@ -600,7 +720,7 @@ ion-header {
 
         .review-label {
           font-size: 0.75rem;
-          color: var(--app-text-secondary);
+          color: var(--app-ink-3);
           text-transform: uppercase;
           letter-spacing: 0.02em;
           margin: 0 0 4px 0;
@@ -609,7 +729,7 @@ ion-header {
         .review-value {
           font-size: 0.9375rem;
           font-weight: 500;
-          color: var(--app-text-primary);
+          color: var(--app-ink-1);
           margin: 0;
         }
       }
@@ -620,6 +740,13 @@ ion-header {
 .custom-fields-section {
   margin-bottom: var(--app-spacing-xl);
 
+  .review-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--app-ink-1);
+    margin: 0 0 var(--app-spacing-lg) 0;
+  }
+
   .custom-field-item {
     margin-bottom: var(--app-spacing-md);
   }
@@ -628,11 +755,11 @@ ion-header {
     display: block;
     font-size: 0.875rem;
     font-weight: 500;
-    color: var(--app-text-primary);
+    color: var(--app-ink-1);
     margin-bottom: var(--app-spacing-xs);
 
     .required-mark {
-      color: var(--ion-color-danger);
+      color: var(--app-danger);
     }
   }
 
@@ -640,16 +767,16 @@ ion-header {
   .custom-field-textarea {
     width: 100%;
     padding: 10px 12px;
-    border: 1px solid var(--app-border-color);
+    border: 1px solid var(--app-border);
     border-radius: 8px;
     font-size: 0.9375rem;
-    color: var(--app-text-primary);
-    background: var(--app-card-background);
+    color: var(--app-ink-1);
+    background: var(--app-surface);
     outline: none;
     box-sizing: border-box;
 
     &:focus {
-      border-color: var(--ion-color-primary);
+      border-color: var(--app-teal);
     }
   }
 
@@ -667,28 +794,139 @@ ion-header {
     gap: var(--app-spacing-sm);
     font-size: 0.9375rem;
     font-weight: 600;
-    color: var(--app-text-primary);
+    color: var(--app-ink-1);
     margin-bottom: var(--app-spacing-sm);
 
     ion-icon {
       font-size: 18px;
-      color: var(--ion-color-primary);
+      color: var(--app-teal);
     }
 
     .required {
-      color: var(--ion-color-danger);
+      color: var(--app-danger);
     }
   }
 
   .comment-input {
-    --background: var(--app-card-background);
+    --background: var(--app-surface);
     --padding-start: var(--app-spacing-md);
     --padding-end: var(--app-spacing-md);
     --padding-top: var(--app-spacing-md);
     --padding-bottom: var(--app-spacing-md);
-    --border-radius: var(--app-card-radius);
-    border-radius: var(--app-card-radius);
-    border: 1px solid var(--app-border-color);
+    --border-radius: var(--radius-card);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--app-border);
     font-size: 0.9375rem;
+  }
+}
+
+.auth-choice-step {
+  .primary-action {
+    width: 100%;
+    padding: var(--app-spacing-md) var(--app-spacing-lg);
+    background: linear-gradient(135deg, var(--app-teal), var(--app-teal-dark));
+    color: white;
+    border: none;
+    border-radius: var(--app-button-radius);
+    font-size: .9375rem;
+    font-weight: 600;
+    box-shadow: var(--shadow-md);
+    font-family: inherit;
+  }
+
+  .secondary-action {
+    width: 100%;
+    padding: var(--app-spacing-md) var(--app-spacing-lg);
+    background: var(--app-surface);
+    color: var(--app-teal-dark);
+    border: 1px solid var(--app-teal);
+    border-radius: var(--app-button-radius);
+    font-size: .9375rem;
+    font-weight: 600;
+    font-family: inherit;
+  }
+
+  .choice-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--app-spacing-lg);
+    margin-top: var(--app-spacing-xl);
+
+    &.single-choice {
+      grid-template-columns: 1fr;
+      max-width: 420px;
+      margin: var(--app-spacing-xl) auto 0;
+    }
+  }
+
+  .choice-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: var(--app-spacing-2xl);
+    background: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition:
+      border-color .2s var(--app-ease),
+      box-shadow .2s var(--app-ease),
+      transform .2s var(--app-ease);
+
+    &:hover {
+      border-color: var(--app-teal);
+      box-shadow: var(--shadow-md);
+    }
+
+    &:active {
+      transform: scale(0.98);
+      border-color: var(--app-teal);
+      box-shadow: var(--shadow-lg);
+    }
+
+    ion-icon {
+      font-size: 52px;
+      color: var(--app-teal);
+      margin-bottom: var(--app-spacing-lg);
+    }
+
+    h3 {
+      margin: 0 0 var(--app-spacing-sm);
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--app-ink-1);
+    }
+
+    p {
+      margin: 0 0 var(--app-spacing-xl);
+      font-size: .875rem;
+      line-height: 1.5;
+      color: var(--app-ink-3);
+      flex: 1;
+    }
+
+    .primary-action,
+    .secondary-action {
+      width: 100%;
+      pointer-events: none;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .speciality-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .auth-choice-step {
+    .choice-cards {
+      grid-template-columns: 1fr;
+    }
+
+    .choice-card {
+      padding: var(--app-spacing-xl);
+    }
   }
 }

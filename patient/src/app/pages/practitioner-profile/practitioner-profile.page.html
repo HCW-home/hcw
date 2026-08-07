@@ -1,4 +1,13 @@
-<app-header [pageTitle]="'practitioner.profile' | translate"></app-header>
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="goBack()">
+        <ion-icon name="arrow-back-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>{{ 'practitioner.profile' | translate }}</ion-title>
+  </ion-toolbar>
+</ion-header>
 
 <ion-content class="profile-content">
   @if (isLoading()) {
@@ -99,6 +108,61 @@
                 </div>
               }
             }
+          </div>
+        </section>
+      }
+
+      @if (p.specialities.length > 0) {
+        <section class="profile-card">
+          <h2 class="card-title">{{ 'map.onlineBooking' | translate }}</h2>
+          <div class="oc-booking">
+            <div class="oc-slot-area">
+              @if (slotsState()?.loading) {
+                <div class="oc-slots-loading">
+                  <ion-spinner name="crescent"></ion-spinner>
+                </div>
+              } @else if (!slotsState()?.dates?.length) {
+                <div class="oc-note">
+                  <ion-icon name="calendar-outline"></ion-icon>
+                  <span>{{ 'map.noSlots' | translate }}</span>
+                </div>
+              } @else {
+                <div class="day-nav">
+                  <button
+                    class="day-arrow"
+                    [disabled]="!hasPrevDay()"
+                    (click)="prevDay()"
+                  >
+                    <ion-icon name="chevron-back-outline"></ion-icon>
+                  </button>
+                  <span class="day-label">{{ currentDateLabel() | localDate: 'EEE d MMM' }}</span>
+                  <button
+                    class="day-arrow"
+                    [disabled]="!hasNextDay()"
+                    (click)="nextDay()"
+                  >
+                    <ion-icon name="chevron-forward-outline"></ion-icon>
+                  </button>
+                </div>
+                <div class="slot-chips">
+                  @for (slot of currentDateSlots(); track slot.start_time) {
+                    <button
+                      class="slot-chip"
+                      (click)="goToBookingWithSlot(slot)"
+                    >
+                      {{ slot.start_time.substring(0, 5) }}
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+            <button
+              class="rdv-button"
+              (click)="goToBooking()"
+            >
+              <ion-icon name="calendar-outline"></ion-icon>
+              <span>{{ 'map.bookButton' | translate }}</span>
+            </button>
           </div>
         </section>
       }
