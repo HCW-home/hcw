@@ -1,228 +1,337 @@
+// Patient profile — styled with the patient dashboard design tokens
+// (see theme/variables.scss), mirroring the public practitioner profile shell.
+// The brand hue comes from the instance primary color applied at runtime, so
+// nothing is hardcoded here.
+
 .file-input-hidden {
   display: none;
 }
 
 .profile-content {
+  --background: var(--app-page-bg);
+}
 
+.profile-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-spacing-lg);
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--app-spacing-lg);
+  padding-bottom: 60px;
 
-  .profile-header {
-    .profile-card {
-      margin: 16px;
-      margin-bottom: 0;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  @media (min-width: 768px) {
+    padding: 28px 32px 60px;
+  }
+}
 
-      ion-card-content {
-        padding: 16px;
-      }
+// ---------------------------------------------------------------------------
+// Identity hero
+// ---------------------------------------------------------------------------
 
-      .profile-info-wrapper {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-      }
+.profile-hero {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--radius-banner);
+  box-shadow: var(--shadow-md);
 
-      .avatar-section {
-        position: relative;
-        flex-shrink: 0;
+  .avatar-section {
+    position: relative;
+    flex-shrink: 0;
+  }
 
-        .profile-avatar {
-          width: 80px;
-          height: 80px;
-          border: 3px solid var(--ion-color-primary);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  .profile-avatar {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid var(--app-teal);
 
-          .avatar-placeholder {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, var(--ion-color-primary), var(--ion-color-primary-tint));
-            color: white;
-            font-size: 28px;
-            font-weight: 600;
-            border-radius: 50%;
-          }
-        }
-
-        .edit-photo-btn {
-          position: absolute;
-          bottom: -4px;
-          right: -4px;
-          --background: var(--ion-color-primary);
-          --background-activated: var(--ion-color-primary-shade);
-          --border-radius: 50%;
-          width: 32px;
-          height: 32px;
-          margin: 0;
-
-          ion-icon {
-            color: white;
-            font-size: 16px;
-          }
-        }
-      }
-
-      .user-info {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-
-        .user-name {
-          font-size: 20px;
-          font-weight: 600;
-          color: var(--app-text-primary);
-        }
-
-        .user-email,
-        .user-phone {
-          font-size: 14px;
-        }
-      }
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
   }
 
-  .edit-profile-card {
-    margin: 16px;
-    margin-top: 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  .avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--app-teal), var(--app-teal-dark));
+    color: #fff;
+    font-size: 28px;
+    font-weight: 700;
 
-    ion-card-content {
-      padding: 16px;
+    ion-spinner {
+      color: #fff;
+    }
+  }
+
+  .edit-photo-btn {
+    position: absolute;
+    right: -2px;
+    bottom: -2px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 2px solid var(--app-surface);
+    border-radius: 50%;
+    background: var(--app-teal);
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.15s var(--app-ease);
+
+    ion-icon {
+      font-size: 16px;
     }
 
-    ion-list {
-      padding: 0;
-
-      ion-item {
-        --padding-start: 0;
-        --inner-padding-end: 0;
-        margin-bottom: 16px;
-
-        ion-label {
-          font-weight: 600;
-          margin-bottom: 8px;
-        }
-
-        ion-input,
-        ion-select {
-          --background: var(--ion-color-light);
-          --padding-start: 12px;
-          --padding-end: 12px;
-          --padding-top: 8px;
-          --padding-bottom: 8px;
-          border-radius: 8px;
-          margin-top: 4px;
-        }
-
-        &.has-error {
-          ion-label {
-            color: var(--ion-color-danger);
-          }
-
-          ion-input,
-          ion-select {
-            --background: rgba(var(--ion-color-danger-rgb), 0.1);
-            border: 1px solid var(--ion-color-danger);
-          }
-        }
-      }
-
-      .error-message {
-        display: block;
-        padding: 4px 0 8px 0;
-        margin-bottom: 8px;
-      }
+    &:hover {
+      background: var(--app-teal-dark);
     }
+  }
 
-    .save-btn {
-      margin-top: 16px;
-      --border-radius: 8px;
+  .profile-identity {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .user-name {
+    margin: 0 0 6px;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--app-ink-1);
+  }
+
+  .user-email {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 14px;
+    color: var(--app-ink-3);
+    overflow-wrap: anywhere;
+
+    ion-icon {
+      flex-shrink: 0;
+      font-size: 16px;
+      color: var(--app-ink-4);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Cards
+// ---------------------------------------------------------------------------
+
+.profile-card {
+  padding: 24px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
+
+  .card-title {
+    margin: 0 0 var(--app-spacing-lg);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--app-ink-1);
+  }
+
+  // The menu rows draw their own separators edge to edge.
+  &--menu {
+    padding: 8px 0;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Form — Ionic controls flattened onto the design tokens
+// ---------------------------------------------------------------------------
+
+.form-list {
+  padding: 0;
+  background: transparent;
+
+  ion-item {
+    --background: transparent;
+    --padding-start: 0;
+    --inner-padding-end: 0;
+    --min-height: 0;
+    --border-width: 0;
+    --highlight-height: 0;
+    margin-bottom: var(--app-spacing-lg);
+
+    // Ionic scales the stacked label itself, so only colour and weight here.
+    ion-label {
       font-weight: 600;
+      color: var(--app-ink-2) !important;
+      margin-bottom: 6px;
     }
-  }
 
-  .menu-list {
-    padding: 16px;
+    ion-input,
+    ion-select {
+      --background: var(--app-surface-muted);
+      --color: var(--app-ink-1);
+      --placeholder-color: var(--app-ink-4);
+      --padding-start: 12px;
+      --padding-end: 12px;
+      --padding-top: 10px;
+      --padding-bottom: 10px;
+      border: 1px solid var(--app-border);
+      border-radius: 8px;
+      margin-top: 4px;
+      font-size: 15px;
+      transition: border-color 0.15s var(--app-ease);
+    }
 
-    ion-item {
-      --background: var(--app-card-background);
-      --padding-start: 16px;
-      --padding-end: 8px;
-      --min-height: 56px;
-      margin-bottom: 8px;
-      border-radius: 12px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-      cursor: pointer;
-      transition: background 0.2s ease;
-
-      &:hover {
-        --background: rgba(0, 0, 0, 0.03);
+    &.has-error {
+      ion-label {
+        color: var(--app-danger) !important;
       }
 
-      ion-icon[slot="start"] {
-        font-size: 24px;
-        margin-right: 16px;
-      }
-
-      ion-icon[slot="end"] {
-        font-size: 20px;
-      }
-
-      ion-text {
-        font-size: 15px;
-        font-weight: 500;
-      }
-
-      &.danger-item {
-
-        ion-text {
-          font-weight: 600;
-        }
+      ion-input,
+      ion-select {
+        --background: rgba(var(--ion-color-danger-rgb), 0.08);
+        border-color: var(--app-danger);
       }
     }
   }
 
-  ion-modal {
-    --height: auto;
-    --max-height: 90%;
-    --border-radius: 16px 16px 0 0;
+  .error-message {
+    display: block;
+    padding: 0 0 8px;
+    margin-top: -8px;
+    margin-bottom: 8px;
+  }
+}
 
-    ion-content {
-      --padding-top: 16px;
-      --padding-bottom: 16px;
+.card-actions {
+  display: flex;
+  justify-content: flex-end;
 
-      ion-list {
-        padding: 0 16px;
+  .primary-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--app-spacing-sm);
+    min-width: 160px;
+    padding: 11px 24px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--app-teal), var(--app-teal-dark));
+    color: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: var(--shadow-md);
+    transition: box-shadow 0.15s var(--app-ease), opacity 0.15s var(--app-ease);
 
-        ion-item {
-          --padding-start: 0;
-          --inner-padding-end: 0;
-          margin-bottom: 16px;
+    &:hover {
+      box-shadow: var(--shadow-lg);
+    }
 
-          ion-label {
-            font-weight: 600;
-            margin-bottom: 8px;
-          }
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
 
-          ion-input,
-          ion-select {
-            --background: var(--ion-color-light);
-            --padding-start: 12px;
-            --padding-end: 12px;
-            --padding-top: 8px;
-            --padding-bottom: 8px;
-            border-radius: 8px;
-            margin-top: 4px;
-          }
+    ion-spinner {
+      width: 18px;
+      height: 18px;
+    }
+  }
+}
 
-          ion-input.readonly-input {
+// ---------------------------------------------------------------------------
+// Action menu (encryption, logout)
+// ---------------------------------------------------------------------------
 
-            opacity: 0.7;
-            pointer-events: none;
-          }
-        }
+.menu-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 24px;
+  border: none;
+  border-bottom: 1px solid var(--app-border-subtle);
+  background: transparent;
+  color: var(--app-ink-1);
+  font-family: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: background 0.15s var(--app-ease);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: var(--app-surface-muted);
+  }
+
+  .menu-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--app-teal-050);
+
+    ion-icon {
+      font-size: 18px;
+      color: var(--app-teal);
+    }
+  }
+
+  .menu-label {
+    flex: 1;
+    min-width: 0;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .menu-badge {
+    flex-shrink: 0;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    background: var(--app-teal-050);
+    color: var(--app-teal-dark);
+    font-size: 12.5px;
+    font-weight: 700;
+  }
+
+  .menu-arrow {
+    flex-shrink: 0;
+    font-size: 18px;
+    color: var(--app-ink-4);
+  }
+
+  &.danger-item {
+    color: var(--app-danger);
+
+    .menu-icon {
+      background: rgba(var(--ion-color-danger-rgb), 0.1);
+
+      ion-icon {
+        color: var(--app-danger);
       }
     }
   }

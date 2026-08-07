@@ -124,7 +124,9 @@ body {
   ion-app:has(app-home),
   ion-app:has(app-map),
   ion-app:has(app-practitioner-profile),
-  ion-app:has(app-new-request) {
+  ion-app:has(app-new-request),
+  ion-app:has(app-notifications),
+  ion-app:has(app-profile) {
     max-width: 100%;
     box-shadow: none;
     background-color: transparent;
@@ -141,7 +143,11 @@ body {
   ion-app:has(app-practitioner-profile) ion-header ion-toolbar,
   ion-app:has(app-practitioner-profile) ion-footer,
   ion-app:has(app-new-request) ion-header ion-toolbar,
-  ion-app:has(app-new-request) ion-footer {
+  ion-app:has(app-new-request) ion-footer,
+  ion-app:has(app-notifications) ion-header ion-toolbar,
+  ion-app:has(app-notifications) ion-footer,
+  ion-app:has(app-profile) ion-header ion-toolbar,
+  ion-app:has(app-profile) ion-footer {
     max-width: 100%;
   }
 

@@ -1,50 +1,48 @@
 <app-header [pageTitle]="'profile.title' | translate" [showBackButton]="true"></app-header>
 
 <ion-content class="profile-content">
-  <div class="profile-header">
-    <ion-card class="profile-card">
-      <ion-card-content>
-        <div class="profile-info-wrapper">
-          <div class="avatar-section">
-            <input
-              #avatarFileInput
-              type="file"
-              accept="image/*"
-              class="file-input-hidden"
-              (change)="onAvatarFileSelected($event)"
-            />
-            <ion-avatar class="profile-avatar">
-              @if (isUploadingAvatar) {
-                <div class="avatar-placeholder">
-                  <ion-spinner name="crescent"></ion-spinner>
-                </div>
-              } @else if (currentUser && currentUser.picture) {
-                <img [src]="currentUser.picture" [alt]="currentUser.first_name">
-              } @else {
-                <div class="avatar-placeholder">{{ getInitials() }}</div>
-              }
-            </ion-avatar>
-            <ion-button size="small" fill="clear" class="edit-photo-btn" (click)="openAvatarFilePicker()">
-              <ion-icon name="camera-outline"></ion-icon>
-            </ion-button>
-          </div>
-          <div class="user-info">
-            <ion-text class="user-name">
-              {{ currentUser?.first_name }} {{ currentUser?.last_name }}
-            </ion-text>
-            <ion-text class="user-email" color="medium">
-              {{ currentUser?.email }}
-            </ion-text>
-          </div>
-        </div>
-      </ion-card-content>
-    </ion-card>
-  </div>
+  <div class="profile-container">
 
-  <ion-card class="edit-profile-card">
-    <ion-card-content>
-      <ion-list>
-        <ion-item [class.has-error]="getFieldError('mobile_phone_number')">
+    <div class="profile-hero">
+      <div class="avatar-section">
+        <input
+          #avatarFileInput
+          type="file"
+          accept="image/*"
+          class="file-input-hidden"
+          (change)="onAvatarFileSelected($event)"
+        />
+        <div class="profile-avatar">
+          @if (isUploadingAvatar) {
+            <div class="avatar-placeholder">
+              <ion-spinner name="crescent"></ion-spinner>
+            </div>
+          } @else if (currentUser && currentUser.picture) {
+            <img [src]="currentUser.picture" [alt]="currentUser.first_name">
+          } @else {
+            <div class="avatar-placeholder">{{ getInitials() }}</div>
+          }
+        </div>
+        <button class="edit-photo-btn" type="button" (click)="openAvatarFilePicker()">
+          <ion-icon name="camera-outline"></ion-icon>
+        </button>
+      </div>
+      <div class="profile-identity">
+        <h1 class="user-name">{{ currentUser?.first_name }} {{ currentUser?.last_name }}</h1>
+        @if (currentUser?.email) {
+          <p class="user-email">
+            <ion-icon name="mail-outline"></ion-icon>
+            <span>{{ currentUser?.email }}</span>
+          </p>
+        }
+      </div>
+    </div>
+
+    <section class="profile-card">
+      <h2 class="card-title">{{ 'profile.personalInformation' | translate }}</h2>
+
+      <ion-list class="form-list">
+        <ion-item lines="none" [class.has-error]="getFieldError('mobile_phone_number')">
           <ion-label position="stacked">{{ 'profile.phoneNumber' | translate }}</ion-label>
           <ion-input
             [(ngModel)]="editedUser.mobile_phone_number"
@@ -57,7 +55,7 @@
             <small>{{ getFieldError('mobile_phone_number') }}</small>
           </ion-text>
         }
-        <ion-item [class.has-error]="getFieldError('communication_method')">
+        <ion-item lines="none" [class.has-error]="getFieldError('communication_method')">
           <ion-label position="stacked">{{ 'profile.communicationMethod' | translate }}</ion-label>
           <ion-select [(ngModel)]="editedUser.communication_method" [placeholder]="'profile.selectMethod' | translate">
             @for (method of communicationMethods; track method) {
@@ -79,7 +77,7 @@
             <small>{{ getFieldError('communication_method') }}</small>
           </ion-text>
         }
-        <ion-item [class.has-error]="getFieldError('preferred_language')">
+        <ion-item lines="none" [class.has-error]="getFieldError('preferred_language')">
           <ion-label position="stacked">{{ 'profile.preferredLanguage' | translate }}</ion-label>
           <ion-select [(ngModel)]="editedUser.preferred_language" [placeholder]="'profile.selectLanguage' | translate">
             @for (lang of availableLanguages(); track lang.code) {
@@ -92,7 +90,7 @@
             <small>{{ getFieldError('preferred_language') }}</small>
           </ion-text>
         }
-        <ion-item [class.has-error]="getFieldError('timezone')">
+        <ion-item lines="none" [class.has-error]="getFieldError('timezone')">
           <ion-label position="stacked">{{ 'profile.timezone' | translate }}</ion-label>
           <ion-select [(ngModel)]="editedUser.timezone" [placeholder]="'profile.selectTimezone' | translate" interface="action-sheet">
             @for (tz of timezones; track tz) {
@@ -107,36 +105,39 @@
         }
       </ion-list>
 
-      <ion-button expand="block" (click)="saveProfile()" [disabled]="isSaving" color="primary" class="save-btn">
-        @if (isSaving) {
-          <ion-spinner name="crescent"></ion-spinner>
-        } @else {
-          <ion-text>{{ 'common.save' | translate }}</ion-text>
-        }
-      </ion-button>
-    </ion-card-content>
-  </ion-card>
+      <div class="card-actions">
+        <button class="primary-action" type="button" (click)="saveProfile()" [disabled]="isSaving">
+          @if (isSaving) {
+            <ion-spinner name="crescent"></ion-spinner>
+          } @else {
+            {{ 'common.save' | translate }}
+          }
+        </button>
+      </div>
+    </section>
 
-  <ion-list class="menu-list">
-    @for (item of profileMenuItems; track item.title) {
-      <ion-item
-        (click)="handleMenuItemClick(item)"
-        [class.danger-item]="item.color === 'danger'">
-        <ion-icon
-          [name]="item.icon"
-          [color]="item.color || 'primary'"
-          slot="start">
-        </ion-icon>
-        <ion-label>
-          <ion-text [color]="item.color">{{ item.title }}</ion-text>
-        </ion-label>
-        @if (item.badge) {
-          <ion-text color="primary" slot="end">{{ item.badge }}</ion-text>
+    <section class="profile-card profile-card--menu">
+      <div class="menu-list">
+        @for (item of profileMenuItems; track item.title) {
+          <button
+            class="menu-item"
+            type="button"
+            [class.danger-item]="item.color === 'danger'"
+            (click)="handleMenuItemClick(item)">
+            <span class="menu-icon">
+              <ion-icon [name]="item.icon"></ion-icon>
+            </span>
+            <span class="menu-label">{{ item.title }}</span>
+            @if (item.badge) {
+              <span class="menu-badge">{{ item.badge }}</span>
+            }
+            <ion-icon name="chevron-forward-outline" class="menu-arrow"></ion-icon>
+          </button>
         }
-        <ion-icon name="chevron-forward-outline" slot="end" color="medium"></ion-icon>
-      </ion-item>
-    }
-  </ion-list>
+      </div>
+    </section>
+
+  </div>
 </ion-content>
 
 <app-footer></app-footer>
