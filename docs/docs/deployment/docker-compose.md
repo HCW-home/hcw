@@ -73,6 +73,8 @@ Copy the configuration file:
 TAG=0.10.0 docker compose pull
 ```
 
+Then adjust the `environment:` blocks of `docker-compose.yml` to match your setup. The `api`, `celery`, `scheduler` and `migrate` services must all share the same database, Redis and secret key settings. See [Environment Variables](environment-variables.md) for the full reference.
+
 !!! warning "Security"
     Never use the default values for `DJANGOSECRET_KEY` in production. Generate a key with: `echo -n "your secret phrase" | sha256sum`
 

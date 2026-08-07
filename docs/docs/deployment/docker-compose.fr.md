@@ -73,6 +73,8 @@ Recuperer les images :
 TAG=0.10.0 docker compose pull
 ```
 
+Adaptez ensuite les blocs `environment:` de `docker-compose.yml` a votre installation. Les services `api`, `celery`, `scheduler` et `migrate` doivent tous partager les memes reglages de base de donnees, de Redis et de cle secrete. Voir [Variables d'environnement](environment-variables.md) pour la reference complete.
+
 !!! warning "Securite"
     Ne jamais utiliser les valeurs par defaut de `DJANGOSECRET_KEY` en production. Generez une cle avec : `echo -n "votre phrase secrete" | sha256sum`
 

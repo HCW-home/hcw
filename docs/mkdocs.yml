@@ -50,6 +50,7 @@ nav:
   - Deployment:
     - Docker Compose: deployment/docker-compose.md
     - Debian Packages: deployment/debian.md
+    - Environment Variables: deployment/environment-variables.md
 
 extra_css:
   - assets/css/extra.css

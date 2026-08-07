@@ -60,7 +60,7 @@ nano /etc/hcw/backend.conf
 !!! warning "Security"
     Generate an encryption key with: `echo -n "your secret phrase" | sha256sum`
 
-For the full list of variables, see the [Docker Compose](docker-compose.md#environment-variables) page.
+For the full list of variables, see the [Environment Variables](environment-variables.md) page.
 
 ### 5. Create a tenant
 

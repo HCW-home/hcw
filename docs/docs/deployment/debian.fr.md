@@ -60,7 +60,7 @@ nano /etc/hcw/backend.conf
 !!! warning "Securite"
     Generez une cle de chiffrement avec : `echo -n "votre phrase secrete" | sha256sum`
 
-Pour la liste complete des variables, consultez la page [Docker Compose](docker-compose.md#variables-denvironnement).
+Pour la liste complete des variables, consultez la page [Variables d'environnement](environment-variables.md).
 
 ### 5. Creer un tenant
 
