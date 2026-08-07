@@ -423,7 +423,7 @@
       [initialStartDate]="selectedStartDate()"
       [initialEndDate]="selectedEndDate()"
       (closed)="onCreateAppointmentModalClosed()"
-      (appointmentCreated)="onAppointmentCreated()"
+      (appointmentCreated)="onAppointmentCreated($event)"
       (appointmentUpdated)="onAppointmentUpdated()">
     </app-appointment-form-modal>
 

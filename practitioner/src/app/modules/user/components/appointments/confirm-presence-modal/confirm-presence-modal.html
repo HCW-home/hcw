@@ -103,28 +103,59 @@
       </span>
       <div class="participants-list">
         @for (p of appointment.participants; track p.id) {
-        <div class="participant-row">
-          <span class="participant-name">{{ getParticipantName(p) }}</span>
-          @if (p.id === myParticipantId) {
-            <span class="participant-actions">
-              <a class="action-link confirm-link"
-                [class.disabled]="isConfirming() || isDeclining()"
-                (click)="confirmPresence()">
-                {{ 'confirmPresenceModal.confirm' | translate }}
-              </a>
-              <span class="action-separator">|</span>
-              <a class="action-link decline-link"
-                [class.disabled]="isConfirming() || isDeclining()"
-                (click)="declinePresence()">
-                {{ 'confirmPresenceModal.decline' | translate }}
-              </a>
+        <div class="participant-entry">
+          <div class="participant-row">
+            <span class="participant-name">{{ getParticipantName(p) }}</span>
+            @if (p.id === myParticipantId) {
+              <span class="participant-actions">
+                <a class="action-link confirm-link"
+                  [class.disabled]="isConfirming() || isDeclining()"
+                  (click)="confirmPresence()">
+                  {{ 'confirmPresenceModal.confirm' | translate }}
+                </a>
+                <span class="action-separator">|</span>
+                <a class="action-link decline-link"
+                  [class.disabled]="isConfirming() || isDeclining()"
+                  (click)="declinePresence()">
+                  {{ 'confirmPresenceModal.decline' | translate }}
+                </a>
+              </span>
+            }
+            <span
+              class="participant-badge"
+              [style.background-color]="getParticipantStatusColor(p.status)">
+              {{ getParticipantStatusLabel(p.status) }}
             </span>
+          </div>
+          @if (requiresManualAccess(p)) {
+          <div class="participant-access">
+            @if (isLoadingAccessUrl(p)) {
+              <span class="access-loading">
+                {{ 'participantItem.loadingLink' | translate }}
+              </span>
+            } @else if (getAccessUrl(p)) {
+              <app-svg
+                src="link"
+                [svgStyle]="{ 'width.px': 14, 'height.px': 14, color: 'var(--slate-400)' }">
+              </app-svg>
+              <code class="access-url">{{ getAccessUrl(p) }}</code>
+              <button
+                type="button"
+                class="access-copy"
+                [title]="'participantItem.copyLink' | translate"
+                (click)="copyAccessUrl(p)">
+                <app-svg
+                  [src]="copiedParticipantId() === p.id ? 'check' : 'copy'"
+                  [svgStyle]="{ 'width.px': 14, 'height.px': 14 }">
+                </app-svg>
+                <span>
+                  {{ (copiedParticipantId() === p.id ? 'participantItem.copied' :
+                  'participantItem.copyLink') | translate }}
+                </span>
+              </button>
+            }
+          </div>
           }
-          <span
-            class="participant-badge"
-            [style.background-color]="getParticipantStatusColor(p.status)">
-            {{ getParticipantStatusLabel(p.status) }}
-          </span>
         </div>
         }
       </div>

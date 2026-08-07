@@ -3,6 +3,8 @@ import {
   Input,
   Output,
   EventEmitter,
+  OnChanges,
+  SimpleChanges,
   inject,
   signal,
 } from '@angular/core';
@@ -48,7 +50,7 @@ import { RoutePaths } from '../../../../../core/constants/routes';
     TranslatePipe,
   ],
 })
-export class ConfirmPresenceModal {
+export class ConfirmPresenceModal implements OnChanges {
   private destroy$ = new Subject<void>();
   private consultationService = inject(ConsultationService);
   private authService = inject(Auth);
@@ -79,6 +81,12 @@ export class ConfirmPresenceModal {
   isJoining = signal(false);
   tooEarlyError = signal<{ time: string; minutes: number } | null>(null);
 
+  // Access links for participants that can only be reached manually, keyed by
+  // participant id.
+  accessUrls = signal<Record<number, string>>({});
+  loadingAccessUrls = signal<Record<number, boolean>>({});
+  copiedParticipantId = signal<number | null>(null);
+
   get isOnlineAppointment(): boolean {
     return this.appointment?.type === AppointmentType.ONLINE;
   }
@@ -97,6 +105,83 @@ export class ConfirmPresenceModal {
         this.appointmentEarlyJoinMinutes = cfg.appointment_early_join_minutes;
       }
     });
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['appointment']) {
+      this.copiedParticipantId.set(null);
+    }
+    if ((changes['isOpen'] || changes['appointment']) && this.isOpen) {
+      this.loadManualAccessUrls();
+    }
+  }
+
+  requiresManualAccess(participant: Participant): boolean {
+    // The manual link is only useful while both the appointment and the
+    // participant are still active.
+    if (this.appointment?.status === AppointmentStatus.CANCELLED) return false;
+    if (participant.status === 'cancelled') return false;
+    return !!participant.requires_manual_access;
+  }
+
+  getAccessUrl(participant: Participant): string {
+    return this.accessUrls()[participant.id] || '';
+  }
+
+  isLoadingAccessUrl(participant: Participant): boolean {
+    return !!this.loadingAccessUrls()[participant.id];
+  }
+
+  copyAccessUrl(participant: Participant): void {
+    const url = this.getAccessUrl(participant);
+    if (!url) return;
+
+    navigator.clipboard.writeText(url).then(() => {
+      this.copiedParticipantId.set(participant.id);
+      this.toasterService.show(
+        'success',
+        this.t.instant('participantItem.linkCopied')
+      );
+    });
+  }
+
+  private loadManualAccessUrls(): void {
+    const participants = this.appointment?.participants || [];
+
+    for (const participant of participants) {
+      if (
+        !this.requiresManualAccess(participant) ||
+        this.accessUrls()[participant.id] ||
+        this.loadingAccessUrls()[participant.id]
+      ) {
+        continue;
+      }
+
+      const participantId = participant.id;
+      this.loadingAccessUrls.update(state => ({ ...state, [participantId]: true }));
+
+      this.consultationService
+        .getParticipantAccessUrl(participantId)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: response => {
+            this.accessUrls.update(state => ({
+              ...state,
+              [participantId]: response.access_url,
+            }));
+            this.loadingAccessUrls.update(state => ({
+              ...state,
+              [participantId]: false,
+            }));
+          },
+          error: () => {
+            this.loadingAccessUrls.update(state => ({
+              ...state,
+              [participantId]: false,
+            }));
+          },
+        });
+    }
   }
 
   confirmPresence(): void {

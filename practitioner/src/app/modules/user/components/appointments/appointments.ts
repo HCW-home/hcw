@@ -1584,12 +1584,23 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     this.selectedEndDate.set(null);
   }
 
-  onAppointmentCreated(): void {
+  onAppointmentCreated(appointment: Appointment): void {
     this.createAppointmentModalOpen.set(false);
     this.editingAppointment.set(null);
     this.selectedStartDate.set(null);
     this.selectedEndDate.set(null);
     this.loadAppointments();
+
+    // Open the detail modal right away so the practitioner can grab the access
+    // links of participants that must be invited manually. Refetch first: the
+    // creation response may not carry the full participant roster.
+    this.consultationService
+      .getAppointment(appointment.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: created => this.openAppointmentModal(created),
+        error: () => this.openAppointmentModal(appointment),
+      });
   }
 
   onAppointmentUpdated(): void {

@@ -83,6 +83,56 @@
     gap: 6px;
   }
 
+  .participant-entry {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .participant-access {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 10px;
+    padding: 6px 10px;
+    background: var(--slate-50);
+    border: 1px dashed var(--slate-200);
+    border-radius: 8px;
+
+    .access-loading {
+      font-size: 12px;
+      color: var(--slate-500);
+    }
+
+    .access-url {
+      flex: 1;
+      min-width: 0;
+      font-size: 11px;
+      color: var(--slate-600);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .access-copy {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+      padding: 0;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--blue-600);
+
+      &:hover {
+        color: var(--blue-700);
+      }
+    }
+  }
+
   .participant-row {
     display: flex;
     align-items: center;
