@@ -8,6 +8,7 @@
     "cancel": "Cancel",
     "remove": "Remove",
     "close": "Close",
+    "back": "Back",
     "save": "Save",
     "error": "Error",
     "success": "Success",
@@ -224,7 +225,12 @@
     "loginTitle": "Already have an account?",
     "loginDesc": "Sign in to continue with your consultation request.",
     "registerTitle": "New patient?",
-    "registerDesc": "Create an account to complete your consultation request."
+    "registerDesc": "Create an account to complete your consultation request.",
+    "cancelRequest": "Cancel",
+    "cancelConfirmTitle": "Cancel this request?",
+    "cancelConfirmMessage": "The information you entered will be lost.",
+    "cancelConfirmStay": "Continue request",
+    "cancelConfirmLeave": "Leave"
   },
   "profile": {
     "title": "Profile",

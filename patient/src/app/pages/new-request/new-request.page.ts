@@ -4,16 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   IonContent,
-  IonHeader,
-  IonTitle,
-  IonToolbar,
-  IonButtons,
   IonButton,
   IonIcon,
   IonCardContent,
   IonSpinner,
   IonTextarea,
-  IonProgressBar,
+  AlertController,
   NavController,
   ToastController,
   ViewWillEnter
@@ -27,7 +23,8 @@ import { ConsultationService, ConsultationRequestData } from '../../core/service
 import { AuthService } from '../../core/services/auth.service';
 import { Speciality, Doctor } from '../../core/models/doctor.model';
 import { Reason, Slot, CustomField } from '../../core/models/consultation.model';
-import { LocalDatePipe } from '../../shared/pipes/local-date.pipe';
+import { AppHeaderComponent } from '../../shared/app-header/app-header.component';
+import { AppFooterComponent } from '../../shared/app-footer/app-footer.component';
 
 const BOOKING_DRAFT_KEY = 'hcw_booking_draft';
 
@@ -49,18 +46,14 @@ interface BookingDraft {
     CommonModule,
     FormsModule,
     IonContent,
-    IonHeader,
-    IonTitle,
-    IonToolbar,
-    IonButtons,
     IonButton,
     IonIcon,
     IonCardContent,
     IonSpinner,
     IonTextarea,
-    IonProgressBar,
-    TranslatePipe,
-    LocalDatePipe
+    AppHeaderComponent,
+    AppFooterComponent,
+    TranslatePipe
   ]
 })
 export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
@@ -143,6 +136,7 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
   constructor(
     private navCtrl: NavController,
     private toastCtrl: ToastController,
+    private alertCtrl: AlertController,
     private route: ActivatedRoute,
     private router: Router,
     private specialityService: SpecialityService,
@@ -499,6 +493,32 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
         break;
       }
     }
+  }
+
+  async confirmCancel(): Promise<void> {
+    const alert = await this.alertCtrl.create({
+      header: this.t.instant('newRequest.cancelConfirmTitle'),
+      message: this.t.instant('newRequest.cancelConfirmMessage'),
+      buttons: [
+        { text: this.t.instant('newRequest.cancelConfirmStay'), role: 'cancel' },
+        {
+          text: this.t.instant('newRequest.cancelConfirmLeave'),
+          role: 'destructive',
+          handler: () => this.exitWizard(),
+        },
+      ],
+    });
+    await alert.present();
+  }
+
+  // Drop the draft too, otherwise ionViewWillEnter would restore the wizard on
+  // the review step the next time the page is opened.
+  private exitWizard(): void {
+    try {
+      sessionStorage.removeItem(BOOKING_DRAFT_KEY);
+    } catch {
+    }
+    this.navCtrl.navigateBack(this.authService.isAuthenticatedValue ? '/home' : '/map');
   }
 
   async submitRequest(): Promise<void> {

@@ -7,6 +7,7 @@
         "loading": "Laden...",
         "cancel": "Abbrechen",
         "close": "Schliessen",
+        "back": "Zurück",
         "save": "Speichern",
         "error": "Fehler",
         "success": "Erfolg",
@@ -216,7 +217,12 @@
         "failedDoctors": "Laden der Aerzte fehlgeschlagen",
         "selectReasonWarning": "Bitte waehlen Sie einen Grund",
         "submitSuccess": "Anfrage erfolgreich gesendet",
-        "submitFailed": "Senden der Anfrage fehlgeschlagen"
+        "submitFailed": "Senden der Anfrage fehlgeschlagen",
+        "cancelRequest": "Abbrechen",
+        "cancelConfirmTitle": "Anfrage abbrechen?",
+        "cancelConfirmMessage": "Die eingegebenen Informationen gehen verloren.",
+        "cancelConfirmStay": "Anfrage fortsetzen",
+        "cancelConfirmLeave": "Verlassen"
     },
     "profile": {
         "title": "Profil",

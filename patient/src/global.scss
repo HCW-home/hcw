@@ -111,9 +111,10 @@ body {
   }
 
   /* Full-width pages: no framed container / shadow. Auth + video call, plus the
-     patient dashboard and the practitioner search (design: full-width nav bar,
-     content centered on the page background — no visible card-like container;
-     the search needs the room for its results + map split view). */
+     patient dashboard and the whole booking funnel — search, practitioner
+     profile and the request wizard (design: full-width nav bar, content
+     centered on the page background — no visible card-like container; the
+     search needs the room for its results + map split view). */
   ion-app:has(app-login),
   ion-app:has(app-register),
   ion-app:has(app-verify-email),
@@ -122,7 +123,8 @@ body {
   ion-app:has(app-video-consultation),
   ion-app:has(app-home),
   ion-app:has(app-map),
-  ion-app:has(app-practitioner-profile) {
+  ion-app:has(app-practitioner-profile),
+  ion-app:has(app-new-request) {
     max-width: 100%;
     box-shadow: none;
     background-color: transparent;
@@ -130,13 +132,16 @@ body {
 
   /* On the dashboard the nav bar and footer span the full viewport width; the
      page content is centered by the page itself (home .main-content max-width,
-     map .map-layout max-width, profile .profile-container max-width). */
+     map .map-layout max-width, profile .profile-container max-width,
+     new-request .main-content max-width). */
   ion-app:has(app-home) ion-header ion-toolbar,
   ion-app:has(app-home) ion-footer,
   ion-app:has(app-map) ion-header ion-toolbar,
   ion-app:has(app-map) ion-footer,
   ion-app:has(app-practitioner-profile) ion-header ion-toolbar,
-  ion-app:has(app-practitioner-profile) ion-footer {
+  ion-app:has(app-practitioner-profile) ion-footer,
+  ion-app:has(app-new-request) ion-header ion-toolbar,
+  ion-app:has(app-new-request) ion-footer {
     max-width: 100%;
   }
 
