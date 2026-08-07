@@ -99,6 +99,13 @@
         <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/deployment/docker-compose/"/>
     </url>
     <url>
+        <loc>https://hcw-at-home.com/docs/deployment/environment-variables/</loc>
+        <lastmod>2026-08-07</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/deployment/environment-variables/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/deployment/environment-variables/"/>
+    </url>
+    <url>
         <loc>https://hcw-at-home.com/docs/use-cases/appointment-management/</loc>
         <lastmod>2026-08-07</lastmod>
         <changefreq>daily</changefreq>
@@ -229,6 +236,13 @@
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/deployment/docker-compose/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/deployment/docker-compose/"/>
+    </url>
+    <url>
+        <loc>https://hcw-at-home.com/docs/fr/deployment/environment-variables/</loc>
+        <lastmod>2026-08-07</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/deployment/environment-variables/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/deployment/environment-variables/"/>
     </url>
     <url>
         <loc>https://hcw-at-home.com/docs/fr/use-cases/appointment-management/</loc>
