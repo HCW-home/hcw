@@ -156,7 +156,6 @@ body {
   }
 
   ion-action-sheet,
-  ion-alert,
   ion-toast {
     --max-width: 1200px;
   }
@@ -177,6 +176,160 @@ ion-button {
   --border-radius: var(--app-button-radius);
   font-weight: var(--app-font-weight-semibold);
   text-transform: none;
+}
+
+/* ---------------------------------------------------------------------------
+ * Confirmation dialogs (ion-alert)
+ * ---------------------------------------------------------------------------
+ * Ionic ships a stock Material dialog (4px corners, harsh drop shadow,
+ * full-width uppercase text buttons) that looks nothing like the rest of the
+ * app. Every confirmation popup is restyled here: card radius, navy shadow,
+ * ink text scale and compact pill actions.
+ *
+ * Everything is scoped under `ion-alert.md, ion-alert.ios` on purpose. Stencil
+ * suffixes every Ionic selector with its scope class (`.alert-wrapper` ships as
+ * `.alert-wrapper.sc-ion-alert-md`), so a plain `ion-alert .alert-wrapper` is
+ * one class short and silently loses the cascade. The mode class buys back the
+ * specificity we need, and the app does not pin a mode so both are covered.
+ * ------------------------------------------------------------------------- */
+ion-alert.md,
+ion-alert.ios {
+  --background: var(--app-surface);
+  --width: calc(100% - 40px);
+  --max-width: 360px;
+  --backdrop-opacity: 0.4;
+
+  .alert-wrapper {
+    border-radius: var(--radius-card);
+    border: 1px solid var(--app-border);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .alert-head {
+    padding: var(--app-spacing-xl) var(--app-spacing-xl) 0;
+    text-align: start;
+  }
+
+  .alert-head:empty {
+    padding: 0;
+  }
+
+  .alert-title {
+    margin: 0;
+    color: var(--app-ink-1);
+    font-size: 1.0625rem;
+    font-weight: var(--app-font-weight-semibold);
+    line-height: 1.4;
+  }
+
+  .alert-sub-title {
+    margin-top: var(--app-spacing-xs);
+    color: var(--app-ink-3);
+    font-size: var(--app-font-size-sm);
+  }
+
+  .alert-message,
+  .alert-head + .alert-message {
+    padding: var(--app-spacing-md) var(--app-spacing-xl) 0;
+    color: var(--app-ink-3);
+    font-size: var(--app-font-size-sm);
+    line-height: 1.5;
+    text-align: start;
+  }
+
+  .alert-message:empty {
+    padding: 0;
+  }
+
+  /* Passphrase prompts reuse the app input tokens. */
+  .alert-input-group {
+    padding: var(--app-spacing-md) var(--app-spacing-xl) 0;
+  }
+
+  .alert-input {
+    margin: var(--app-spacing-sm) 0 0;
+    padding: 10px var(--app-spacing-md);
+    border: 1px solid var(--app-input-border);
+    border-radius: 10px;
+    background: var(--app-input-background);
+    color: var(--app-input-text);
+    font-size: var(--app-font-size-sm);
+    transition: border-color 0.2s var(--app-ease), box-shadow 0.2s var(--app-ease);
+  }
+
+  .alert-input::placeholder {
+    color: var(--app-input-placeholder);
+  }
+
+  .alert-input:focus {
+    margin: var(--app-spacing-sm) 0 0;
+    border: 1px solid var(--app-input-focus-border);
+    box-shadow: 0 0 0 3px rgba(var(--ion-color-primary-rgb), 0.14);
+  }
+
+  /* Actions hug their label and sit at the trailing edge; they only stack when
+     the two labels no longer fit side by side. */
+  .alert-button-group {
+    margin: 0;
+    padding: var(--app-spacing-xl);
+    gap: var(--app-spacing-sm);
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .alert-button,
+  .alert-button:last-child,
+  .alert-button.ion-focused {
+    flex: 0 1 auto;
+    margin: 0;
+    padding: 7px var(--app-spacing-lg);
+    /* iOS mode lays its buttons out as full-width table cells with a fixed
+       height; reset so both modes render the same compact pill. The height is
+       left to padding + line-height on purpose: Ionic gives `.alert-button-inner`
+       a `min-height: inherit`, so any min-height set here is applied to the
+       label box and the padding then stacks on top of it. */
+    min-width: 0;
+    height: auto;
+    min-height: 0;
+    line-height: 1.35;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--app-teal), var(--app-teal-dark));
+    box-shadow: none;
+    color: var(--ion-color-primary-contrast);
+    font-size: var(--app-font-size-sm);
+    font-weight: var(--app-font-weight-semibold);
+    text-align: center;
+    text-transform: none;
+    transition: background 0.2s var(--app-ease);
+  }
+
+  .alert-button-inner {
+    justify-content: center;
+  }
+
+  /* Dismissing action stays quiet so the confirmation reads first. */
+  .alert-button.alert-button-role-cancel,
+  .alert-button.alert-button-role-cancel.ion-focused {
+    border-color: var(--app-border);
+    background: var(--app-surface);
+    color: var(--app-ink-2);
+  }
+
+  .alert-button.alert-button-role-cancel:hover {
+    background: var(--app-surface-muted);
+  }
+
+  /* Irreversible action (leave the wizard, end the call, remove an instance). */
+  .alert-button.alert-button-role-destructive,
+  .alert-button.alert-button-role-destructive.ion-focused {
+    background: var(--app-danger);
+    color: #ffffff;
+  }
+
+  .alert-button.alert-button-role-destructive:hover {
+    background: color-mix(in srgb, var(--app-danger) 85%, #000);
+  }
 }
 
 // Utility classes
