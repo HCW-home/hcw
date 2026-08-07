@@ -225,7 +225,7 @@
     "statusDeclined": "Refusé",
     "statusCancelled": "Annulé",
     "statusDraft": "Brouillon",
-    "unknownParticipant": "Participant inconnu"
+    "unknownParticipant": "Participant anonyme"
   },
   "userProfile": {
     "loadingProfile": "Chargement du profil...",

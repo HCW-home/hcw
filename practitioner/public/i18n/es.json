@@ -1007,7 +1007,7 @@
     "statusDeclined": "Rechazado",
     "statusCancelled": "Cancelado",
     "statusDraft": "Borrador",
-    "unknownParticipant": "Participante desconocido"
+    "unknownParticipant": "Participante anónimo"
   },
   "consultationRowItem": {
     "untitledConsultation": "Seguimiento sin título",

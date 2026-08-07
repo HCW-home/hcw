@@ -1028,7 +1028,7 @@
     "statusDeclined": "Abgelehnt",
     "statusCancelled": "Storniert",
     "statusDraft": "Entwurf",
-    "unknownParticipant": "Unbekannter Teilnehmer"
+    "unknownParticipant": "Anonymer Teilnehmer"
   },
   "userSearchSelect": {
     "searchingUsers": "Suche nach Benutzern...",

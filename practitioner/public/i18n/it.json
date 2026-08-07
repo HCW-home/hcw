@@ -982,7 +982,7 @@
     "statusDeclined": "Rifiutato",
     "statusCancelled": "Annullato",
     "statusDraft": "Bozza",
-    "unknownParticipant": "Partecipante sconosciuto"
+    "unknownParticipant": "Partecipante anonimo"
   },
   "userProfile": {
     "loadingProfile": "Caricamento del profilo in corso...",
