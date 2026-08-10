@@ -792,6 +792,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../admin/device-sessions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Device Sessions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../admin/encryption/" class="md-nav__link">
         
   
@@ -1746,13 +1774,13 @@
 <tbody>
 <tr>
 <td><code>ACCESS_TOKEN_LIFETIME</code></td>
-<td><code>3600</code></td>
-<td>Duree de vie du jeton JWT d'acces <strong>en minutes</strong> (le defaut represente donc 60 heures). Mettez <code>60</code> pour une duree de vie d'une heure.</td>
+<td><code>15</code></td>
+<td>Duree de vie du jeton JWT d'acces <strong>en minutes</strong>. Un jeton d'acces ne peut pas etre revoque avant son expiration : gardez cette valeur courte, les clients se rafraichissent de maniere transparente.</td>
 </tr>
 <tr>
 <td><code>REFRESH_TOKEN_LIFETIME_DAYS</code></td>
-<td><code>1</code></td>
-<td>Duree de vie du jeton de rafraichissement, en jours. Ces jetons sont renouveles a chaque utilisation.</td>
+<td><code>7</code></td>
+<td>Duree de vie du jeton de rafraichissement, en jours. Ces jetons sont renouveles a chaque utilisation, un utilisateur actif n'est donc jamais deconnecte.</td>
 </tr>
 </tbody>
 </table>
