@@ -78,7 +78,8 @@ import {
   sendOutline, attachOutline, imageOutline, wifiOutline, cloudOfflineOutline, closeOutline,
   atOutline, createOutline, close, shieldCheckmarkOutline, keypadOutline, checkmarkOutline,
   globeOutline, chevronDownOutline, flashOutline, mailOpenOutline,
-  searchOutline, business, businessOutline, person
+  searchOutline, business, businessOutline, person,
+  swapHorizontalOutline, shieldOutline
 } from 'ionicons/icons';
 
 import { routes } from './app/app.routes';
@@ -204,6 +205,8 @@ addIcons({
   'business': business,
   'business-outline': businessOutline,
   'person': person,
+  'swap-horizontal-outline': swapHorizontalOutline,
+  'shield-outline': shieldOutline,
 });
 
 bootstrapApplication(AppComponent, {

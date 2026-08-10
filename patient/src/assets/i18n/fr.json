@@ -233,6 +233,9 @@
         "cancelConfirmLeave": "Quitter"
     },
     "profile": {
+        "changeServer": "Changer de serveur",
+        "confirmChangeServerTitle": "Changer de serveur ?",
+        "confirmChangeServerMessage": "Vous serez déconnecté de {{host}} et invité à choisir un autre serveur.",
         "title": "Profil",
         "editProfile": "Modifier le profil",
         "personalInformation": "Informations personnelles",
@@ -551,6 +554,9 @@
         "retry": "Rafraîchir maintenant"
     },
     "instancePicker": {
+        "currentServer": "Serveur : {{host}}",
+        "changeServer": "Changer de serveur",
+        "removeInstance": "Retirer ce serveur",
         "title": "Choisissez votre instance",
         "knownSubtitle": "Instances récemment utilisées",
         "emptyHint": "Aucune instance configurée. Ajoutez-en une ci-dessous.",
@@ -566,6 +572,7 @@
         "openOrInstall": "Ouvrir ou installer l’application"
     },
     "untrustedInstance": {
+        "backToPicker": "Choisir un autre serveur",
         "title": "Instance non vérifiée",
         "hint": "Si vous êtes l’opérateur de cette instance, demandez une signature sur",
         "reason": {

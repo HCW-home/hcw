@@ -225,7 +225,37 @@
     "cancelConfirmStay": "Продовжити запит",
     "cancelConfirmLeave": "Вийти"
   },
+  "instancePicker": {
+    "title": "Оберіть свій сервер",
+    "knownSubtitle": "Нещодавно використані сервери",
+    "emptyHint": "Немає налаштованих серверів. Додайте один нижче.",
+    "addTitle": "Додати сервер",
+    "hostPlaceholder": "example.consult.hcw-at-home.com",
+    "addButton": "Додати та підключитися",
+    "confirmRemoveTitle": "Видалити сервер?",
+    "confirmRemoveMessage": "Видалити {{host}} зі збережених серверів?",
+    "currentServer": "Сервер: {{host}}",
+    "changeServer": "Змінити сервер",
+    "removeInstance": "Видалити цей сервер"
+  },
+  "untrustedInstance": {
+    "title": "Неперевірений сервер",
+    "hint": "Якщо ви є оператором цього сервера, запросіть підпис на",
+    "backToPicker": "Обрати інший сервер",
+    "reason": {
+      "no-signature": "Цей сервер не підписано центром сертифікації.",
+      "malformed-signature": "Підпис, повернутий цим сервером, недійсний.",
+      "host-mismatch": "Підпис не відповідає домену цього сервера.",
+      "expired": "Термін дії підпису цього сервера минув.",
+      "invalid-signature": "Підпис цього сервера недійсний.",
+      "identity-probe-failed": "Не вдалося зв’язатися з цим сервером для перевірки його ідентичності.",
+      "not-hcw-backend": "Цей сервер, схоже, не є екземпляром HCW."
+    }
+  },
   "profile": {
+    "changeServer": "Змінити сервер",
+    "confirmChangeServerTitle": "Змінити сервер?",
+    "confirmChangeServerMessage": "Ви вийдете з {{host}}, після чого потрібно буде обрати інший сервер.",
     "title": "Профіль",
     "editProfile": "Редагувати профіль",
     "personalInformation": "Особиста інформація",

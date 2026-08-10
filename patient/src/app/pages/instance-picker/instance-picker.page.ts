@@ -3,6 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
   IonContent,
+  IonHeader,
+  IonToolbar,
+  IonButtons,
+  IonTitle,
   IonItem,
   IonLabel,
   IonList,
@@ -13,6 +17,7 @@ import {
   IonItemOptions,
   IonItemOption,
   AlertController,
+  NavController,
   ToastController,
 } from '@ionic/angular/standalone';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -27,6 +32,10 @@ import { DeeplinkService, KnownInstance } from '../../core/services/deeplink.ser
     CommonModule,
     FormsModule,
     IonContent,
+    IonHeader,
+    IonToolbar,
+    IonButtons,
+    IonTitle,
     IonItem,
     IonLabel,
     IonList,
@@ -44,20 +53,30 @@ export class InstancePickerPage implements OnInit {
   private alertCtrl = inject(AlertController);
   private toastCtrl = inject(ToastController);
   private translate = inject(TranslateService);
+  private navCtrl = inject(NavController);
 
   instances: KnownInstance[] = [];
   newHost = '';
   adding = false;
+  // On a fresh install there is no active instance and nowhere to go back to,
+  // so the cancel button is only offered once one is configured.
+  canCancel = false;
 
   ngOnInit(): void {
     this.instances = this.deeplinkService.getKnownInstances();
+    this.canCancel = this.deeplinkService.hasActiveInstance();
+  }
+
+  cancel(): void {
+    this.navCtrl.back();
   }
 
   select(host: string): void {
     this.deeplinkService.selectInstance(host);
   }
 
-  async remove(host: string): Promise<void> {
+  async remove(host: string, event?: Event): Promise<void> {
+    event?.stopPropagation();
     const alert = await this.alertCtrl.create({
       header: this.translate.instant('instancePicker.confirmRemoveTitle'),
       message: this.translate.instant('instancePicker.confirmRemoveMessage', { host }),
@@ -85,9 +104,8 @@ export class InstancePickerPage implements OnInit {
     this.adding = false;
 
     if (result === true) {
-      this.instances = this.deeplinkService.getKnownInstances();
+      // The service already activated the instance and is reloading the app.
       this.newHost = '';
-      this.deeplinkService.selectInstance(this.instances[0].host);
     } else {
       const toast = await this.toastCtrl.create({
         message: this.translate.instant(`untrustedInstance.reason.${result}`),

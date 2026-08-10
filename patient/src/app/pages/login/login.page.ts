@@ -26,6 +26,7 @@ import { AuthService } from "../../core/services/auth.service";
 import { TranslationService } from "../../core/services/translation.service";
 import { ActionHandlerService } from "../../core/services/action-handler.service";
 import { ConsultationService } from "../../core/services/consultation.service";
+import { DeeplinkService } from "../../core/services/deeplink.service";
 import { LanguageSelectorComponent } from "../../shared/components/language-selector/language-selector.component";
 import { AuthBrandingComponent } from '../../shared/components/auth-branding/auth-branding.component';
 
@@ -50,6 +51,7 @@ import { AuthBrandingComponent } from '../../shared/components/auth-branding/aut
 export class LoginPage implements OnInit {
   private t = inject(TranslationService);
   private mobileApp = inject(MobileAppService);
+  private deeplinkService = inject(DeeplinkService);
 
   @ViewChild('passwordInput') passwordInput!: IonInput;
 
@@ -68,6 +70,10 @@ export class LoginPage implements OnInit {
   // Whether patients are allowed to authenticate with a password on the patient
   // app. Off by default: patients then receive an email/SMS code instead.
   patientPasswordLoginEnabled = false;
+  // Native builds talk to the instance picked at first launch; let the user
+  // switch away from it, otherwise a wrong URL locks them out of the app.
+  isNative = Capacitor.isNativePlatform();
+  activeHost = this.deeplinkService.getActiveHost();
 
   isLoading = false;
   isResending = false;
@@ -141,6 +147,10 @@ export class LoginPage implements OnInit {
         }
       },
     });
+  }
+
+  changeServer(): void {
+    this.deeplinkService.openPicker();
   }
 
   /** Open the current instance in the native app (see MobileAppService). */

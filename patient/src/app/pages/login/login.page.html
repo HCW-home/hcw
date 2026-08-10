@@ -190,6 +190,17 @@
 
         <app-language-selector></app-language-selector>
 
+        @if (isNative && activeHost) {
+          <div class="server-switch">
+            <ion-text color="medium" class="server-host">
+              {{ 'instancePicker.currentServer' | translate: { host: activeHost } }}
+            </ion-text>
+            <ion-text color="primary" (click)="changeServer()" class="link-text">
+              {{ 'instancePicker.changeServer' | translate }}
+            </ion-text>
+          </div>
+        }
+
         @if (showDeeplinkBanner) {
           <div class="open-in-app-banner">
             <span>{{ 'home.openInAppPrompt' | translate }}</span>

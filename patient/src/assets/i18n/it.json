@@ -1,5 +1,35 @@
 {
+    "instancePicker": {
+        "title": "Scegli la tua istanza",
+        "knownSubtitle": "Istanze usate di recente",
+        "emptyHint": "Nessuna istanza configurata. Aggiungine una qui sotto.",
+        "addTitle": "Aggiungi un'istanza",
+        "hostPlaceholder": "esempio.consult.hcw-at-home.com",
+        "addButton": "Aggiungi e connetti",
+        "confirmRemoveTitle": "Rimuovere l'istanza?",
+        "confirmRemoveMessage": "Rimuovere {{host}} dalle istanze salvate?",
+        "currentServer": "Server: {{host}}",
+        "changeServer": "Cambia server",
+        "removeInstance": "Rimuovi questo server"
+    },
+    "untrustedInstance": {
+        "title": "Istanza non verificata",
+        "hint": "Se sei l'operatore di questa istanza, richiedi una firma su",
+        "backToPicker": "Scegli un altro server",
+        "reason": {
+            "no-signature": "Questa istanza non è stata firmata dall’autorità di certificazione.",
+            "malformed-signature": "La firma restituita da questa istanza non è valida.",
+            "host-mismatch": "La firma non corrisponde al dominio di questa istanza.",
+            "expired": "La firma di questa istanza è scaduta.",
+            "invalid-signature": "La firma di questa istanza non è valida.",
+            "identity-probe-failed": "Impossibile contattare questa istanza per verificarne l'identità.",
+            "not-hcw-backend": "Questo server non sembra essere un'istanza HCW."
+        }
+    },
     "profile": {
+        "changeServer": "Cambia server",
+        "confirmChangeServerTitle": "Cambiare server?",
+        "confirmChangeServerMessage": "Verrai disconnesso da {{host}} e ti verrà chiesto di scegliere un altro server.",
         "langFrench": "francese",
         "selectMethod": "Selezionare il metodo",
         "commEmail": "E-mail",

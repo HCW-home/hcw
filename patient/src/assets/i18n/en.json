@@ -233,6 +233,9 @@
     "cancelConfirmLeave": "Leave"
   },
   "profile": {
+    "changeServer": "Change server",
+    "confirmChangeServerTitle": "Change server?",
+    "confirmChangeServerMessage": "You will be signed out of {{host}} and asked to choose another server.",
     "title": "Profile",
     "editProfile": "Edit Profile",
     "personalInformation": "Personal Information",
@@ -551,6 +554,9 @@
     "retry": "Refresh now"
   },
   "instancePicker": {
+    "currentServer": "Server: {{host}}",
+    "changeServer": "Change server",
+    "removeInstance": "Remove this server",
     "title": "Choose your instance",
     "knownSubtitle": "Recently connected instances",
     "emptyHint": "No instance is set up yet. Add one below.",
@@ -566,6 +572,7 @@
     "openOrInstall": "Open or install the app"
   },
   "untrustedInstance": {
+    "backToPicker": "Choose another server",
     "title": "Untrusted instance",
     "hint": "If you are the operator of this instance, request a signature at",
     "reason": {

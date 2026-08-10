@@ -224,7 +224,37 @@
         "cancelConfirmStay": "Anfrage fortsetzen",
         "cancelConfirmLeave": "Verlassen"
     },
+    "instancePicker": {
+        "title": "Wählen Sie Ihre Instanz",
+        "knownSubtitle": "Zuletzt verwendete Instanzen",
+        "emptyHint": "Keine Instanz konfiguriert. Fügen Sie unten eine hinzu.",
+        "addTitle": "Instanz hinzufügen",
+        "hostPlaceholder": "beispiel.consult.hcw-at-home.com",
+        "addButton": "Hinzufügen und verbinden",
+        "confirmRemoveTitle": "Instanz entfernen?",
+        "confirmRemoveMessage": "{{host}} aus Ihren gespeicherten Instanzen entfernen?",
+        "currentServer": "Server: {{host}}",
+        "changeServer": "Server wechseln",
+        "removeInstance": "Diesen Server entfernen"
+    },
+    "untrustedInstance": {
+        "title": "Nicht verifizierte Instanz",
+        "hint": "Wenn Sie diese Instanz betreiben, fordern Sie eine Signatur an unter",
+        "backToPicker": "Anderen Server wählen",
+        "reason": {
+            "no-signature": "Diese Instanz wurde nicht von der Zertifizierungsstelle signiert.",
+            "malformed-signature": "Die von dieser Instanz zurückgegebene Signatur ist ungültig.",
+            "host-mismatch": "Die Signatur stimmt nicht mit der Domain dieser Instanz überein.",
+            "expired": "Die Signatur dieser Instanz ist abgelaufen.",
+            "invalid-signature": "Die Signatur dieser Instanz ist ungültig.",
+            "identity-probe-failed": "Diese Instanz konnte nicht erreicht werden, um ihre Identität zu prüfen.",
+            "not-hcw-backend": "Dieser Server scheint keine HCW-Instanz zu sein."
+        }
+    },
     "profile": {
+        "changeServer": "Server wechseln",
+        "confirmChangeServerTitle": "Server wechseln?",
+        "confirmChangeServerMessage": "Sie werden von {{host}} abgemeldet und aufgefordert, einen anderen Server zu wählen.",
         "title": "Profil",
         "editProfile": "Profil bearbeiten",
         "personalInformation": "Persoenliche Informationen",

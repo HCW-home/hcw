@@ -16,8 +16,10 @@ import {
   AlertController,
   ToastController
 } from '@ionic/angular/standalone';
+import { Capacitor } from '@capacitor/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../core/services/auth.service';
+import { DeeplinkService } from '../../core/services/deeplink.service';
 import { EncryptionService } from '../../core/services/encryption.service';
 import { UserWebSocketService } from '../../core/services/user-websocket.service';
 import { NotificationService } from '../../core/services/notification.service';
@@ -61,6 +63,7 @@ interface ProfileMenuItem {
 })
 export class ProfilePage implements OnInit {
   private t = inject(TranslationService);
+  private deeplinkService = inject(DeeplinkService);
   @ViewChild('avatarFileInput') avatarFileInput!: ElementRef<HTMLInputElement>;
 
   currentUser: User | null = null;
@@ -98,6 +101,13 @@ export class ProfilePage implements OnInit {
           action: 'encryption-load',
         });
       }
+    }
+    if (Capacitor.isNativePlatform()) {
+      items.push({
+        title: this.t.instant('profile.changeServer'),
+        icon: 'swap-horizontal-outline',
+        action: 'change-server',
+      });
     }
     items.push({
       title: this.t.instant('profile.logout'),
@@ -181,8 +191,42 @@ export class ProfilePage implements OnInit {
         case 'encryption-change':
           this.promptEncryptionChange();
           break;
+        case 'change-server':
+          this.confirmChangeServer();
+          break;
       }
     }
+  }
+
+  async confirmChangeServer() {
+    const alert = await this.alertCtrl.create({
+      header: this.t.instant('profile.confirmChangeServerTitle'),
+      message: this.t.instant('profile.confirmChangeServerMessage', {
+        host: this.deeplinkService.getActiveHost() ?? '',
+      }),
+      buttons: [
+        { text: this.t.instant('common.cancel'), role: 'cancel' },
+        {
+          text: this.t.instant('profile.changeServer'),
+          handler: () => {
+            this.changeServer();
+          },
+        },
+      ],
+    });
+    await alert.present();
+  }
+
+  /**
+   * Drop everything tied to the current instance before offering another one:
+   * tokens, notifications and the locally stored E2E key all belong to it.
+   */
+  async changeServer() {
+    this.userWsService.disconnect();
+    this.notificationService.resetOnLogout();
+    await this.encryptionService.purgeLocalKey();
+    await this.authService.logout();
+    this.deeplinkService.openPicker();
   }
 
   async promptEncryptionLoad() {

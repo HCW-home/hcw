@@ -1,3 +1,14 @@
+<ion-header *ngIf="canCancel">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="cancel()">
+        <ion-icon name="arrow-back-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>{{ 'instancePicker.changeServer' | translate }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
 <ion-content class="ion-padding">
   <div class="picker-wrapper">
     <h1>{{ 'instancePicker.title' | translate }}</h1>
@@ -12,6 +23,15 @@
               <h2>{{ instance.name || instance.host }}</h2>
               <p *ngIf="instance.name">{{ instance.host }}</p>
             </ion-label>
+            <ion-button
+              slot="end"
+              fill="clear"
+              color="danger"
+              [attr.aria-label]="'instancePicker.removeInstance' | translate"
+              (click)="remove(instance.host, $event)"
+            >
+              <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+            </ion-button>
           </ion-item>
           <ion-item-options side="end">
             <ion-item-option color="danger" (click)="remove(instance.host)">

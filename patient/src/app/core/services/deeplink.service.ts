@@ -63,6 +63,26 @@ export class DeeplinkService {
     return localStorage.getItem(API_ORIGIN_KEY);
   }
 
+  hasActiveInstance(): boolean {
+    return !!DeeplinkService.getStoredApiOrigin();
+  }
+
+  /**
+   * Host of the active instance, without scheme (for display purposes).
+   */
+  getActiveHost(): string | null {
+    const origin = DeeplinkService.getStoredApiOrigin();
+    return origin ? origin.replace(/^https?:\/\//, '') : null;
+  }
+
+  /**
+   * Open the picker on top of the current page, so the user can go back if
+   * they change their mind.
+   */
+  openPicker(): void {
+    this.navCtrl.navigateForward(['/instance-picker']);
+  }
+
   /**
    * Returns the list of instances the user has connected to before,
    * sorted by most-recent first.
@@ -72,19 +92,33 @@ export class DeeplinkService {
   }
 
   /**
-   * Activate an already-known instance and navigate home.
+   * Activate an already-known instance.
    */
   selectInstance(host: string): boolean {
-    const known = this.loadKnownInstances();
-    const match = known.find((i) => i.host === host);
-    if (!match) {
+    if (!this.loadKnownInstances().some((i) => i.host === host)) {
       return false;
     }
-    match.lastUsedAt = Date.now();
-    this.saveKnownInstances(known);
-    localStorage.setItem(API_ORIGIN_KEY, `https://${host}`);
-    this.navCtrl.navigateRoot(['/home']);
+    this.activate(host);
     return true;
+  }
+
+  /**
+   * Make an instance the active one and restart the app on it.
+   *
+   * A full WebView reload is intentional: config, branding, websocket and user
+   * state held in memory all belong to the previous instance, and the
+   * APP_INITIALIZER config fetch has to be replayed against the new origin
+   * (on a fresh install it ran before any origin existed and cached a failure).
+   */
+  private activate(host: string): void {
+    const known = this.loadKnownInstances();
+    const match = known.find((i) => i.host === host);
+    if (match) {
+      match.lastUsedAt = Date.now();
+      this.saveKnownInstances(known);
+    }
+    localStorage.setItem(API_ORIGIN_KEY, `https://${host}`);
+    window.location.href = '/';
   }
 
   removeInstance(host: string): void {
@@ -96,8 +130,8 @@ export class DeeplinkService {
   }
 
   /**
-   * Validate and register a new instance from a user-typed host.
-   * Returns true on success; the navigation to /home is performed by the caller.
+   * Validate and register a new instance from a user-typed host, then activate
+   * it. Returns true on success, the failure reason otherwise.
    */
   async addInstanceManually(rawHost: string): Promise<true | UntrustedReason> {
     const host = rawHost.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
@@ -109,7 +143,7 @@ export class DeeplinkService {
     if (result !== true) {
       return result;
     }
-    localStorage.setItem(API_ORIGIN_KEY, origin);
+    this.activate(host);
     return true;
   }
 

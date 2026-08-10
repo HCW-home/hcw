@@ -1,5 +1,35 @@
 {
+    "instancePicker": {
+        "title": "Elija su instancia",
+        "knownSubtitle": "Instancias usadas recientemente",
+        "emptyHint": "Ninguna instancia configurada. Añada una a continuación.",
+        "addTitle": "Añadir una instancia",
+        "hostPlaceholder": "ejemplo.consult.hcw-at-home.com",
+        "addButton": "Añadir y conectar",
+        "confirmRemoveTitle": "¿Eliminar la instancia?",
+        "confirmRemoveMessage": "¿Eliminar {{host}} de sus instancias guardadas?",
+        "currentServer": "Servidor: {{host}}",
+        "changeServer": "Cambiar de servidor",
+        "removeInstance": "Eliminar este servidor"
+    },
+    "untrustedInstance": {
+        "title": "Instancia no verificada",
+        "hint": "Si usted es el operador de esta instancia, solicite una firma en",
+        "backToPicker": "Elegir otro servidor",
+        "reason": {
+            "no-signature": "Esta instancia no ha sido firmada por la autoridad de certificación.",
+            "malformed-signature": "La firma devuelta por esta instancia no es válida.",
+            "host-mismatch": "La firma no corresponde al dominio de esta instancia.",
+            "expired": "La firma de esta instancia ha caducado.",
+            "invalid-signature": "La firma de esta instancia no es válida.",
+            "identity-probe-failed": "No se puede contactar con esta instancia para verificar su identidad.",
+            "not-hcw-backend": "Este servidor no parece ser una instancia de HCW."
+        }
+    },
     "profile": {
+        "changeServer": "Cambiar de servidor",
+        "confirmChangeServerTitle": "¿Cambiar de servidor?",
+        "confirmChangeServerMessage": "Se cerrará su sesión en {{host}} y se le pedirá que elija otro servidor.",
         "selectLanguage": "Seleccionar idioma",
         "langSpanish": "Español",
         "searchTimezone": "Buscar zona horaria",
