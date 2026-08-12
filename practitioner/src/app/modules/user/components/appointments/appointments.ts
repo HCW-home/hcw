@@ -55,6 +55,7 @@ import {
 import { RoutePaths } from '../../../../core/constants/routes';
 import {
   getAppointmentBadgeType,
+  canSetAppointmentOutcome,
   parseDateWithoutTimezone,
 } from '../../../../shared/tools/helper';
 import { weekRotationColor } from '../../../../shared/tools/calendar-rotation';
@@ -134,6 +135,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   protected readonly BadgeTypeEnum = BadgeTypeEnum;
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
+  protected readonly AppointmentStatus = AppointmentStatus;
 
   constructor() {
     // Localize the FullCalendar headers (day/month names) to the user's
@@ -916,7 +918,11 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
       case AppointmentStatus.CANCELLED:
         return '#ef4444';
       case 'completed':
+      case AppointmentStatus.COMPLETED:
         return '#10b981';
+      case 'noshow':
+      case AppointmentStatus.NOSHOW:
+        return '#f97316';
       case 'in_progress':
         return '#f59e0b';
       case 'draft':
@@ -1285,7 +1291,11 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
       case AppointmentStatus.CANCELLED:
         return this.t.instant('appointments.statusCancelled');
       case 'completed':
+      case AppointmentStatus.COMPLETED:
         return this.t.instant('appointments.statusCompleted');
+      case 'noshow':
+      case AppointmentStatus.NOSHOW:
+        return this.t.instant('appointments.statusNoshow');
       case 'in_progress':
         return this.t.instant('appointments.statusInProgress');
       case 'draft':
@@ -1305,6 +1315,8 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
         return 'cancelled';
       case 'completed':
         return 'completed';
+      case 'noshow':
+        return 'noshow';
       case 'in_progress':
         return 'in-progress';
       default:
@@ -1321,6 +1333,37 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   canConfirmPresence(appointment: Appointment): boolean {
     const myParticipant = this.getMyParticipant(appointment);
     return !!myParticipant && myParticipant.status === 'invited';
+  }
+
+  canSetOutcome(appointment: Appointment): boolean {
+    return canSetAppointmentOutcome(appointment);
+  }
+
+  setAppointmentOutcome(
+    appointment: Appointment,
+    status: AppointmentStatus,
+    event: MouseEvent
+  ): void {
+    event.stopPropagation();
+    this.consultationService
+      .setAppointmentStatus(appointment.id, status)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.toasterService.show(
+            'success',
+            this.t.instant('appointments.setStatusSuccess')
+          );
+          this.loadAppointments();
+        },
+        error: err => {
+          this.toasterService.show(
+            'error',
+            this.t.instant('appointments.setStatusError'),
+            getErrorMessage(err)
+          );
+        },
+      });
   }
 
   openAppointmentModal(appointment: Appointment): void {
@@ -1635,6 +1678,12 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   }
 
   canJoinVideoCall(appointment: Appointment): boolean {
+    // can_join is the server's own answer, which also covers "am I on the
+    // roster" — the backend rejects a join from a non-participant. Older
+    // payloads without the flag fall back to the local rule.
+    if (appointment.can_join !== undefined) {
+      return appointment.can_join && appointment.status === AppointmentStatus.SCHEDULED;
+    }
     return (
       appointment.status === AppointmentStatus.SCHEDULED &&
       appointment.type === AppointmentType.ONLINE

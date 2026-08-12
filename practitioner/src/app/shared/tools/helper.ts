@@ -1,10 +1,17 @@
 import { HttpParams } from '@angular/common/http';
 import { BadgeTypeEnum } from '../constants/badge';
-import { AppointmentStatus, Participant, ParticipantStatus } from '../../core/models/consultation';
+import {
+  Appointment,
+  AppointmentStatus,
+  Participant,
+  ParticipantStatus,
+} from '../../core/models/consultation';
 
 export function getParticipantBadgeType(status: ParticipantStatus | undefined): BadgeTypeEnum {
   switch (status) {
     case 'confirmed':
+      return BadgeTypeEnum.green;
+    case 'arrived':
       return BadgeTypeEnum.green;
     case 'invited':
       return BadgeTypeEnum.blue;
@@ -17,6 +24,24 @@ export function getParticipantBadgeType(status: ParticipantStatus | undefined): 
     default:
       return BadgeTypeEnum.gray;
   }
+}
+
+/**
+ * Whether the "was it held?" buttons should be offered.
+ *
+ * Only once the appointment has started — an appointment that hasn't begun
+ * cannot have an outcome. Online ones are qualified automatically after the
+ * join window, so this is mostly a correction; for in-person ones it is the
+ * only way. Already-cancelled and draft appointments are out.
+ */
+export function canSetAppointmentOutcome(appointment: Appointment): boolean {
+  const settled: AppointmentStatus[] = [
+    AppointmentStatus.SCHEDULED,
+    AppointmentStatus.COMPLETED,
+    AppointmentStatus.NOSHOW,
+  ];
+  if (!settled.includes(appointment.status)) return false;
+  return new Date(appointment.scheduled_at) <= new Date();
 }
 
 export function getParticipantStatusLabel(participant: Participant): string {
@@ -32,6 +57,10 @@ export function getAppointmentBadgeType(status: AppointmentStatus): BadgeTypeEnu
       return BadgeTypeEnum.orange;
     case AppointmentStatus.SCHEDULED:
       return BadgeTypeEnum.green;
+    case AppointmentStatus.COMPLETED:
+      return BadgeTypeEnum.blue;
+    case AppointmentStatus.NOSHOW:
+      return BadgeTypeEnum.orange;
     case AppointmentStatus.CANCELLED:
       return BadgeTypeEnum.red;
     default:

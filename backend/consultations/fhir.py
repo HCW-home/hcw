@@ -39,42 +39,75 @@ from .models import (
 )
 
 # HCW status <-> FHIR Appointment.status (using string values, not enum members)
+# Kept injective, which is what makes the search mapping below expressible.
 _STATUS_TO_FHIR = {
     AppointmentStatus.draft.value: "pending",
     AppointmentStatus.scheduled.value: "booked",
+    AppointmentStatus.completed.value: "fulfilled",
+    AppointmentStatus.noshow.value: "noshow",
     AppointmentStatus.cancelled.value: "cancelled",
 }
 _STATUS_FROM_FHIR = {
     "pending": AppointmentStatus.draft.value,
     "proposed": AppointmentStatus.draft.value,
+    "waitlist": AppointmentStatus.draft.value,
     "booked": AppointmentStatus.scheduled.value,
+    # No check-in step here: an arrived patient is still a booked slot, the
+    # arrival is carried by Participant.arrived_at.
     "arrived": AppointmentStatus.scheduled.value,
-    "fulfilled": AppointmentStatus.scheduled.value,
+    "checked-in": AppointmentStatus.scheduled.value,
+    "fulfilled": AppointmentStatus.completed.value,
+    "noshow": AppointmentStatus.noshow.value,
     "cancelled": AppointmentStatus.cancelled.value,
-    "noshow": AppointmentStatus.cancelled.value,
     "entered-in-error": AppointmentStatus.cancelled.value,
+}
+
+# FHIR Appointment.status search value -> internal statuses.
+# Deliberately over-inclusive for proposed/pending/booked/arrived: those are
+# derived at render time from participant state, which no plain column filter
+# can express. Returning a superset beats returning nothing at all.
+# fulfilled/noshow/cancelled are exact.
+_STATUS_SEARCH_FROM_FHIR = {
+    "proposed": [AppointmentStatus.draft.value, AppointmentStatus.scheduled.value],
+    "pending": [AppointmentStatus.draft.value, AppointmentStatus.scheduled.value],
+    "waitlist": [AppointmentStatus.draft.value],
+    "booked": [AppointmentStatus.scheduled.value],
+    "arrived": [AppointmentStatus.scheduled.value],
+    "fulfilled": [AppointmentStatus.completed.value],
+    "noshow": [AppointmentStatus.noshow.value],
+    "cancelled": [AppointmentStatus.cancelled.value],
+    "entered-in-error": [AppointmentStatus.cancelled.value],
 }
 
 
 def _appointment_status_to_fhir(instance) -> str:
-    """Derive the FHIR Appointment.status from HCW state + participant confirmations.
+    """Derive the FHIR Appointment.status from HCW state + participant state.
 
-    Cancelled/draft map directly. A scheduled appointment reflects the
-    confirmation state of its active participants (per FHIR semantics):
+    Terminal statuses map directly. A scheduled appointment reflects its active
+    participants (per FHIR semantics):
+    - arrived  : at least one participant has joined the call
     - booked   : every active participant has confirmed (is_confirmed=True)
     - pending  : at least one has confirmed, but not all
     - proposed : none have confirmed (all None, or none accepted)
     """
     if instance.status == AppointmentStatus.cancelled.value:
         return "cancelled"
+    if instance.status == AppointmentStatus.completed.value:
+        return "fulfilled"
+    if instance.status == AppointmentStatus.noshow.value:
+        return "noshow"
     if instance.status == AppointmentStatus.draft.value:
         return "proposed"
 
-    confirmations = list(
+    participants = list(
         instance.participant_set.filter(is_active=True).values_list(
-            "is_confirmed", flat=True
+            "is_confirmed", "arrived_at"
         )
     )
+    if any(arrived_at for _, arrived_at in participants):
+        return "arrived"
+
+    confirmations = [is_confirmed for is_confirmed, _ in participants]
     if confirmations and all(c is True for c in confirmations):
         return "booked"
     if any(c is True for c in confirmations):
@@ -111,7 +144,7 @@ class AppointmentFhirMapper(FhirResourceMapper):
             name_fields=["first_name", "last_name"],
         ),
         "date": DateParam(field="scheduled_at"),
-        "status": TokenParam(field="status", mapping={v: k for k, v in _STATUS_TO_FHIR.items()}),
+        "status": TokenParam(field="status", mapping=_STATUS_SEARCH_FROM_FHIR),
         "identifier": IdentifierParam(
             canonical_field="pk",
             external_field="external_id",

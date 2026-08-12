@@ -58,12 +58,15 @@ export type ParticipantStatus =
   | 'draft'
   | 'invited'
   | 'confirmed'
+  | 'arrived'
   | 'unavailable'
   | 'cancelled';
 
 export enum AppointmentStatus {
   DRAFT = 'draft',
   SCHEDULED = 'scheduled',
+  COMPLETED = 'completed',
+  NOSHOW = 'noshow',
   CANCELLED = 'cancelled',
 }
 
@@ -85,6 +88,8 @@ export interface Appointment {
   participants: Participant[];
   consultation_id: number;
   consultation_title?: string | null;
+  // Server-side answer to "may the current user join this call?"
+  can_join?: boolean;
   is_recording?: boolean;
   egress_id?: string | null;
   recording_started_at?: string | null;

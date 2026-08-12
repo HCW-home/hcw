@@ -833,7 +833,10 @@
     "chatLockedUser": "Your personal envelope for this consultation can no longer be decrypted (your key was probably regenerated after the consultation was created).",
     "chatLockedMixed": "None of the envelopes (personal or via group) can decrypt this consultation's key — they were wrapped with keys that no longer match.",
     "chatLockedAdminHint": "Please contact an administrator to resync your access.",
-    "encryptionRequiredTitle": "Encryption required"
+    "encryptionRequiredTitle": "Encryption required",
+    "filterDone": "Done",
+    "statusCompleted": "Completed",
+    "statusNoshow": "No show"
   },
   "appointmentFormModal": {
     "editAppointment": "Edit Appointment",
@@ -968,7 +971,8 @@
     "deleteAppointmentTitle": "Delete appointment",
     "deleteAppointmentMessage": "Are you sure you want to delete this appointment? This action cannot be undone.",
     "appointmentDeleted": "Appointment deleted",
-    "errorDeletingAppointment": "Error deleting appointment"
+    "errorDeletingAppointment": "Error deleting appointment",
+    "statusNoshow": "No show"
   },
   "appointments": {
     "appointmentsCount": "{{count}} appointments",
@@ -1005,7 +1009,12 @@
     "cancelSuccess": "Appointment cancelled successfully",
     "cancelError": "Error cancelling appointment",
     "practitioners": "Practitioners",
-    "consultation": "Consultation"
+    "consultation": "Consultation",
+    "statusNoshow": "No show",
+    "markCompleted": "Mark as completed",
+    "markNoshow": "Mark as no show",
+    "setStatusSuccess": "Appointment status updated",
+    "setStatusError": "Unable to update the appointment status"
   },
   "confirmPresenceModal": {
     "title": "Appointment",

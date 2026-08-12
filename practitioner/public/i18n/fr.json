@@ -151,7 +151,8 @@
     "deleteAppointmentTitle": "Supprimer le rendez-vous",
     "deleteAppointmentMessage": "Voulez-vous vraiment supprimer ce rendez-vous ? Cette action est irréversible.",
     "appointmentDeleted": "Rendez-vous supprimé",
-    "errorDeletingAppointment": "Erreur lors de la suppression du rendez-vous"
+    "errorDeletingAppointment": "Erreur lors de la suppression du rendez-vous",
+    "statusNoshow": "Absent"
   },
   "appointments": {
     "appointmentsCount": "{{count}} rendez-vous",
@@ -188,7 +189,12 @@
     "cancelSuccess": "Rendez-vous annulé avec succès",
     "cancelError": "Erreur lors de l'annulation du rendez-vous",
     "practitioners": "Praticiens",
-    "consultation": "Suivi"
+    "consultation": "Suivi",
+    "statusNoshow": "Absent",
+    "markCompleted": "Marquer comme réalisé",
+    "markNoshow": "Marquer comme absent",
+    "setStatusSuccess": "Statut du rendez-vous mis à jour",
+    "setStatusError": "Impossible de mettre à jour le statut du rendez-vous"
   },
   "confirmPresenceModal": {
     "title": "Rendez-vous",
@@ -962,7 +968,10 @@
     "chatLockedUser": "Votre enveloppe personnelle pour ce suivi n'est plus déchiffrable (votre clé a probablement été régénérée depuis la création du suivi).",
     "chatLockedMixed": "Aucune des enveloppes (personnelle ou via groupe) ne peut déchiffrer la clé de ce suivi — elles ont été chiffrées avec des clés qui ne correspondent plus.",
     "chatLockedAdminHint": "Contactez un administrateur pour qu'il resynchronise vos accès.",
-    "encryptionRequiredTitle": "Chiffrement requis"
+    "encryptionRequiredTitle": "Chiffrement requis",
+    "filterDone": "Terminés",
+    "statusCompleted": "Réalisé",
+    "statusNoshow": "Absent"
   },
   "appointmentFormModal": {
     "editAppointment": "Modifier le rendez-vous",

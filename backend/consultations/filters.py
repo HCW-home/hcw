@@ -118,6 +118,9 @@ class AppointmentFilter(django_filters.FilterSet):
         field_name='participant__user',
         lookup_expr='exact',
     )
+    # Comma-separated statuses, so a caller can ask for an outcome bucket
+    # ("completed,noshow") in one go.
+    status_in = django_filters.BaseInFilter(field_name='status')
 
     class Meta:
         model = Appointment

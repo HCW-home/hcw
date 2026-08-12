@@ -86,7 +86,13 @@ def _appointment_to_vcalendar(appointment):
             f"ATTENDEE;CN={name};PARTSTAT={partstat};ROLE=REQ-PARTICIPANT:mailto:{user.email}"
         )
 
-    status_map = {"scheduled": "CONFIRMED", "cancelled": "CANCELLED", "draft": "TENTATIVE"}
+    status_map = {
+        "scheduled": "CONFIRMED",
+        "completed": "CONFIRMED",
+        "noshow": "CANCELLED",
+        "cancelled": "CANCELLED",
+        "draft": "TENTATIVE",
+    }
     lines.append(f"STATUS:{status_map.get(appointment.status, 'CONFIRMED')}")
     lines.append("SEQUENCE:0")
     lines.append("END:VEVENT")
@@ -177,13 +183,16 @@ def _require_auth(request):
 
 
 def _get_user_appointments(user):
+    # Everything but cancelled: the 90-day lookback deliberately keeps past
+    # appointments in the calendar, and those carry a completed/noshow outcome
+    # rather than staying scheduled.
     return (
         Appointment.objects.filter(
             participant__user=user,
             participant__is_active=True,
-            status=AppointmentStatus.scheduled,
             scheduled_at__gte=timezone.now() - timedelta(days=90),
         )
+        .exclude(status=AppointmentStatus.cancelled)
         .select_related("consultation", "created_by")
         .distinct()
     )

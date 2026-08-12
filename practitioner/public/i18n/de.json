@@ -280,7 +280,12 @@
     "participantUnknown": "Unbekannt",
     "errorLoadingAppointments": "Fehler beim Laden der Termine",
     "confirmPresence": "Anwesenheit bestätigen",
-    "practitioners": "Behandler"
+    "practitioners": "Behandler",
+    "statusNoshow": "Nicht erschienen",
+    "markCompleted": "Als durchgeführt markieren",
+    "markNoshow": "Als nicht erschienen markieren",
+    "setStatusSuccess": "Terminstatus aktualisiert",
+    "setStatusError": "Der Terminstatus konnte nicht aktualisiert werden"
   },
   "patientDetail": {
     "never": "Niemals",
@@ -334,7 +339,8 @@
     "deleteAppointmentTitle": "Termin löschen",
     "deleteAppointmentMessage": "Möchten Sie diesen Termin wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
     "appointmentDeleted": "Termin gelöscht",
-    "errorDeletingAppointment": "Fehler beim Löschen des Termins"
+    "errorDeletingAppointment": "Fehler beim Löschen des Termins",
+    "statusNoshow": "Nicht erschienen"
   },
   "sidebar": {
     "appointmentsSubtitle": "Planen und verwalten",
@@ -574,7 +580,10 @@
     "callAppointmentModalMessage": "Sie haben einen geplanten Termin. Möchten Sie stattdessen dem Termin beitreten?",
     "joinAppointment": "Termin beitreten",
     "callPatientOnly": "Nur Patient anrufen",
-    "error": "Fehler"
+    "error": "Fehler",
+    "filterDone": "Abgeschlossen",
+    "statusCompleted": "Durchgeführt",
+    "statusNoshow": "Nicht erschienen"
   },
   "participantItem": {
     "unknown": "Unbekannt",

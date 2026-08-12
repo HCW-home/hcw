@@ -77,11 +77,16 @@ class AssignmentHandler(BaseAssignmentHandler):
                 )
                 request_date = requested_datetime_in_doctor_tz.date()
 
-                # Count appointments on the requested day
+                # Count appointments on the requested day. Includes the ones
+                # already held earlier today: they consumed the doctor's time
+                # just the same.
                 appointment_count = Appointment.objects.filter(
                     consultation__owned_by=doctor,
                     scheduled_at__date=request_date,
-                    status=AppointmentStatus.scheduled,
+                    status__in=[
+                        AppointmentStatus.scheduled,
+                        AppointmentStatus.completed,
+                    ],
                 ).count()
 
                 available_doctors.append((doctor, appointment_count))

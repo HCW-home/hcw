@@ -200,6 +200,25 @@
             (buttonClick)="openConfirmPresenceForAppointment(appointment, $event)">
           </app-button>
           }
+          @if (canSetOutcome(appointment)) {
+            @if (appointment.status !== AppointmentStatus.COMPLETED) {
+            <app-button
+              [text]="'appointments.markCompleted' | translate"
+              [style]="ButtonStyleEnum.stroke"
+              [size]="ButtonSizeEnum.small"
+              leftIcon="check"
+              (buttonClick)="setAppointmentOutcome(appointment, AppointmentStatus.COMPLETED, $event)">
+            </app-button>
+            }
+            @if (appointment.status !== AppointmentStatus.NOSHOW) {
+            <app-button
+              [text]="'appointments.markNoshow' | translate"
+              [style]="ButtonStyleEnum.stroke"
+              [size]="ButtonSizeEnum.small"
+              (buttonClick)="setAppointmentOutcome(appointment, AppointmentStatus.NOSHOW, $event)">
+            </app-button>
+            }
+          }
           <app-badge [type]="getAppointmentBadgeType(appointment.status)">
             {{ getAppointmentStatusLabel(appointment.status) }}
           </app-badge>

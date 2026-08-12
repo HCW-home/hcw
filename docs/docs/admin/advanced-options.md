@@ -33,6 +33,27 @@ The advanced configuration section provides fine-grained control over platform b
 | When to send first appointment reminder, in minutes before the appointment time | `APPOINTMENT_FIRST_REMINDER` | 1440 | First reminder sent to participants before the appointment. Default is 1440 minutes (24 hours). |
 | When to send last appointment reminder, in minutes before the appointment time | `APPOINTMENT_LAST_REMINDER` | 10 | Last reminder sent shortly before the appointment starts. Default is 10 minutes. |
 | Minutes before appointment scheduled time that participants can join | `APPOINTMENT_EARLY_JOIN_MINUTES` | 10 | How early participants are allowed to join the video room before the scheduled start time. |
+| Automatically mark past online appointments as completed or no-show | `ENABLE_APPOINTMENT_OUTCOME_DETECTION` | TRUE | Once an online appointment is over, it is marked **completed** when at least two participants joined the call, and **no show** otherwise. A status set by hand is never overwritten, and in-person appointments are always qualified manually. |
+| Lookback window for automatic outcome detection, in days | `APPOINTMENT_OUTCOME_LOOKBACK_DAYS` | 7 | Only appointments scheduled within this many days back are qualified automatically. Protects older records from being rewritten when the feature is turned on. |
+
+### Appointment outcome
+
+An appointment carries one of five statuses: `draft`, `scheduled`, `completed`,
+`noshow`, `cancelled`.
+
+Attendance is recorded on the participants: joining the call stamps the
+participant as *arrived*. The appointment itself stays `scheduled` for the whole
+call, and is qualified afterwards by a periodic task, once the join window
+(`CALL_LIMIT_JOIN_MINUTES` after the expected end) has elapsed:
+
+- at least two participants arrived (or every participant, for a
+  one-participant appointment) → **completed**
+- otherwise → **no show**
+
+In-person appointments have no join step, so they are never qualified
+automatically: a practitioner sets their outcome from the appointment list. The
+same manual action corrects an automatic decision — and because the task only
+ever looks at `scheduled` appointments, a manual status is never overwritten.
 
 ## Security
 

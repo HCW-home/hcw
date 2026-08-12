@@ -79,6 +79,7 @@ import { BadgeTypeEnum } from '../../../../shared/constants/badge';
 import {
   getParticipantBadgeType,
   getAppointmentBadgeType,
+  canSetAppointmentOutcome,
   parseDateWithoutTimezone,
 } from '../../../../shared/tools/helper';
 import { applyCalendarLocale } from '../../../../shared/tools/calendar-locale';
@@ -98,7 +99,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { TranslationService } from '../../../../core/services/translation.service';
 
 type AppointmentViewMode = 'list' | 'calendar';
-type AppointmentStatusFilter = 'all' | 'scheduled' | 'cancelled';
+type AppointmentStatusFilter = 'all' | 'scheduled' | 'done' | 'cancelled';
 type AppointmentTimeFilter = 'all' | 'upcoming' | 'past';
 
 @Component({
@@ -1329,6 +1330,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     const timeFilter = this.appointmentTimeFilter();
     const params: {
       status?: string;
+      status_in?: string;
       future?: boolean;
       page?: number;
       page_size?: number;
@@ -1336,9 +1338,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       page: 1,
       page_size: this.appointmentPageSize,
     };
-    if (statusFilter !== 'all') {
-      params.status = statusFilter;
-    }
+    this.applyStatusParam(params, statusFilter);
     if (timeFilter === 'upcoming') {
       params.future = true;
     } else if (timeFilter === 'past') {
@@ -1374,6 +1374,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     const timeFilter = this.appointmentTimeFilter();
     const params: {
       status?: string;
+      status_in?: string;
       future?: boolean;
       page?: number;
       page_size?: number;
@@ -1381,9 +1382,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       page: this.appointmentPage,
       page_size: this.appointmentPageSize,
     };
-    if (statusFilter !== 'all') {
-      params.status = statusFilter;
-    }
+    this.applyStatusParam(params, statusFilter);
     if (timeFilter === 'upcoming') {
       params.future = true;
     } else if (timeFilter === 'past') {
@@ -1477,6 +1476,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
 
     const params: {
       status?: string;
+      status_in?: string;
       page_size?: number;
       scheduled_at__date__gte?: string;
       scheduled_at__date__lte?: string;
@@ -1486,9 +1486,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       scheduled_at__date__lte: this.calendarDateRange.end,
     };
 
-    if (statusFilter !== 'all') {
-      params.status = statusFilter;
-    }
+    this.applyStatusParam(params, statusFilter);
 
     this.consultationService
       .getConsultationAppointments(this.consultationId, params)
@@ -1580,6 +1578,52 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
           },
         });
     }
+  }
+
+  getAppointmentStatusLabel(status: AppointmentStatus): string {
+    const keys: Record<AppointmentStatus, string> = {
+      [AppointmentStatus.DRAFT]: 'consultationDetail.statusDraft',
+      [AppointmentStatus.SCHEDULED]: 'consultationDetail.statusScheduled',
+      [AppointmentStatus.COMPLETED]: 'consultationDetail.statusCompleted',
+      [AppointmentStatus.NOSHOW]: 'consultationDetail.statusNoshow',
+      [AppointmentStatus.CANCELLED]: 'consultationDetail.statusCancelled',
+    };
+    const key = keys[status];
+    return key ? this.t.instant(key) : String(status);
+  }
+
+  canSetOutcome(appointment: Appointment): boolean {
+    return canSetAppointmentOutcome(appointment);
+  }
+
+  setAppointmentOutcome(
+    appointment: Appointment,
+    status: AppointmentStatus
+  ): void {
+    this.consultationService
+      .setAppointmentStatus(appointment.id, status)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: updatedAppointment => {
+          this.appointments.set(
+            this.appointments().map(a =>
+              a.id === appointment.id ? updatedAppointment : a
+            )
+          );
+          this.markAppointmentAsLocallyModified(appointment.id);
+          this.toasterService.show(
+            'success',
+            this.t.instant('appointments.setStatusSuccess')
+          );
+        },
+        error: error => {
+          this.toasterService.show(
+            'error',
+            this.t.instant('appointments.setStatusError'),
+            getErrorMessage(error)
+          );
+        },
+      });
   }
 
   closeConsultation(): void {
@@ -1966,6 +2010,17 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     return !!(createdBy && currentUser && createdBy.id === currentUser.pk);
   }
 
+  /**
+   * can_join is the server's own answer, which also covers "am I on the
+   * roster" — the backend rejects a join from a non-participant. Older
+   * payloads without the flag fall back to the local rule.
+   */
+  canJoinVideoCall(appointment: Appointment): boolean {
+    if (appointment.status !== AppointmentStatus.SCHEDULED) return false;
+    if (appointment.can_join !== undefined) return appointment.can_join;
+    return appointment.type === AppointmentType.ONLINE;
+  }
+
   joinVideoCall(appointmentId: number): void {
     const appointment = this.appointments().find(a => a.id === appointmentId);
     if (!appointment) {
@@ -2264,6 +2319,22 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
+  /**
+   * The "done" tab covers both outcomes of a past appointment, which the API
+   * exposes through the comma-separated status_in filter.
+   */
+  private applyStatusParam(
+    params: { status?: string; status_in?: string },
+    filter: AppointmentStatusFilter
+  ): void {
+    if (filter === 'all') return;
+    if (filter === 'done') {
+      params.status_in = `${AppointmentStatus.COMPLETED},${AppointmentStatus.NOSHOW}`;
+      return;
+    }
+    params.status = filter;
+  }
+
   setAppointmentStatusFilter(filter: AppointmentStatusFilter): void {
     this.appointmentStatusFilter.set(filter);
     if (this.appointmentViewMode() === 'calendar') {
@@ -2290,6 +2361,10 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     switch (status) {
       case AppointmentStatus.SCHEDULED:
         return '#3b82f6';
+      case AppointmentStatus.COMPLETED:
+        return '#10b981';
+      case AppointmentStatus.NOSHOW:
+        return '#f97316';
       case AppointmentStatus.CANCELLED:
         return '#ef4444';
       case AppointmentStatus.DRAFT:

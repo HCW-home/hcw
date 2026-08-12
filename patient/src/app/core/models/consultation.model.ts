@@ -90,7 +90,12 @@ export interface Prescription {
   prescribed_at?: string;
 }
 
-export type AppointmentStatus = 'draft' | 'scheduled' | 'cancelled';
+export type AppointmentStatus =
+  | 'draft'
+  | 'scheduled'
+  | 'completed'
+  | 'noshow'
+  | 'cancelled';
 export type AppointmentType = 'online' | 'inPerson';
 
 export interface Appointment {

@@ -833,7 +833,10 @@
     "chatLockedUser": "Ваш персональний конверт для цієї консультації більше не можна розшифрувати (ймовірно, ваш ключ було перегенеровано після створення консультації).",
     "chatLockedMixed": "Жоден із конвертів (персональний чи груповий) не може розшифрувати ключ цієї консультації — вони були обгорнуті ключами, що більше не збігаються.",
     "chatLockedAdminHint": "Будь ласка, зверніться до адміністратора, щоб повторно синхронізувати ваш доступ.",
-    "encryptionRequiredTitle": "Потрібне шифрування"
+    "encryptionRequiredTitle": "Потрібне шифрування",
+    "filterDone": "Завершені",
+    "statusCompleted": "Проведена",
+    "statusNoshow": "Не з'явився"
   },
   "appointmentFormModal": {
     "editAppointment": "Редагувати прийом",
@@ -968,7 +971,8 @@
     "deleteAppointmentTitle": "Delete appointment",
     "deleteAppointmentMessage": "Are you sure you want to delete this appointment? This action cannot be undone.",
     "appointmentDeleted": "Appointment deleted",
-    "errorDeletingAppointment": "Error deleting appointment"
+    "errorDeletingAppointment": "Error deleting appointment",
+    "statusNoshow": "Не з'явився"
   },
   "appointments": {
     "appointmentsCount": "{{count}} прийомів",
@@ -1005,7 +1009,12 @@
     "cancelSuccess": "Прийом успішно скасовано",
     "cancelError": "Помилка скасування прийому",
     "practitioners": "Лікарі",
-    "consultation": "Консультація"
+    "consultation": "Консультація",
+    "statusNoshow": "Не з'явився",
+    "markCompleted": "Позначити як проведену",
+    "markNoshow": "Позначити як неявку",
+    "setStatusSuccess": "Статус зустрічі оновлено",
+    "setStatusError": "Не вдалося оновити статус зустрічі"
   },
   "confirmPresenceModal": {
     "title": "Прийом",

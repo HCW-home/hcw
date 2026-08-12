@@ -180,6 +180,7 @@ class ParticipantReadSerializer(serializers.ModelSerializer):
             "is_invited",
             "is_notified",
             "is_consultation_visible",
+            "arrived_at",
             "requires_manual_access",
             "has_consultation_key",
         ]
@@ -655,6 +656,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
             "participants_ids: [{user_id, is_consultation_visible}]."
         ),
     )
+    can_join = serializers.SerializerMethodField()
 
     class Meta:
         model = Appointment
@@ -673,8 +675,27 @@ class AppointmentSerializer(serializers.ModelSerializer):
             "participants_ids",
             "temporary_participants",
             "participants_visibility",
+            "can_join",
         ]
         read_only_fields = ["id", "created_by", "created_at"]
+
+    def get_can_join(self, obj):
+        """Whether the requesting user is allowed into this appointment's call.
+
+        Mirrors the guard in the `join` endpoints so every front-end entry point
+        can hide the button from a single flag instead of restating the rule.
+        """
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        if obj.type != Type.online:
+            return False
+        if obj.consultation_id and obj.consultation.closed_at:
+            return False
+        return any(
+            p.user_id == request.user.pk and p.is_active
+            for p in obj.participant_set.all()
+        )
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -871,6 +892,23 @@ class AppointmentSerializer(serializers.ModelSerializer):
             consultation_id=participant.appointment.consultation_id,
             user_id=participant.user_id,
         ).delete()
+
+
+class AppointmentSetStatusSerializer(serializers.Serializer):
+    """Payload of the manual outcome action.
+
+    Only the statuses a practitioner may decide on: draft is reached through
+    creation, never through this action.
+    """
+
+    status = serializers.ChoiceField(
+        choices=[
+            AppointmentStatus.scheduled,
+            AppointmentStatus.completed,
+            AppointmentStatus.noshow,
+            AppointmentStatus.cancelled,
+        ]
+    )
 
 
 class AppointmentAddParticipantsSerializer(serializers.Serializer):

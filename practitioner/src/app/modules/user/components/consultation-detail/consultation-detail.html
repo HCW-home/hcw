@@ -408,6 +408,12 @@
                 </button>
                 <button
                   class="filter-btn"
+                  [class.active]="appointmentStatusFilter() === 'done'"
+                  (click)="setAppointmentStatusFilter('done')">
+                  {{ 'consultationDetail.filterDone' | translate }}
+                </button>
+                <button
+                  class="filter-btn"
                   [class.active]="appointmentStatusFilter() === AppointmentStatus.CANCELLED"
                   (click)="setAppointmentStatusFilter('cancelled')">
                   {{ 'consultationDetail.filterCancelled' | translate }}
@@ -528,9 +534,7 @@
                   </div>
                 </div>
                 <app-badge [type]="getAppointmentBadgeType(appointment.status)">
-                  {{ 'consultationDetail.status' + (appointment.status ===
-                  'draft' ? 'Draft' : appointment.status === 'scheduled' ?
-                  'Scheduled' : 'Cancelled') | translate }}
+                  {{ getAppointmentStatusLabel(appointment.status) }}
                 </app-badge>
               </div>
 
@@ -595,8 +599,7 @@
                   [state]="ButtonStateEnum.error"
                   (buttonClick)="cancelAppointment(appointment)">
                 </app-button>
-                } @if (appointment.status === AppointmentStatus.SCHEDULED &&
-                appointment.type === AppointmentType.ONLINE) {
+                } @if (canJoinVideoCall(appointment)) {
                 <div class="join-button-container">
                   <app-button
                     [text]="'consultationDetail.join' | translate"
@@ -629,6 +632,24 @@
                   [state]="ButtonStateEnum.error"
                   (buttonClick)="cancelAppointment(appointment)">
                 </app-button>
+                } @if (canSetOutcome(appointment) && !consultation()?.closed_at) {
+                  @if (appointment.status !== AppointmentStatus.COMPLETED) {
+                  <app-button
+                    [text]="'appointments.markCompleted' | translate"
+                    leftIcon="check"
+                    [size]="ButtonSizeEnum.small"
+                    [style]="ButtonStyleEnum.stroke"
+                    (buttonClick)="setAppointmentOutcome(appointment, AppointmentStatus.COMPLETED)">
+                  </app-button>
+                  }
+                  @if (appointment.status !== AppointmentStatus.NOSHOW) {
+                  <app-button
+                    [text]="'appointments.markNoshow' | translate"
+                    [size]="ButtonSizeEnum.small"
+                    [style]="ButtonStyleEnum.stroke"
+                    (buttonClick)="setAppointmentOutcome(appointment, AppointmentStatus.NOSHOW)">
+                  </app-button>
+                  }
                 }
               </div>
             </div>
@@ -779,12 +800,14 @@
         [size]="ButtonSizeEnum.medium"
         (buttonClick)="showCallAppointmentModal.set(false)">
       </app-button>
-      <app-button
-        [text]="'consultationDetail.joinAppointment' | translate"
-        [style]="ButtonStyleEnum.primary"
-        [size]="ButtonSizeEnum.medium"
-        (buttonClick)="onCallModalJoinAppointment()">
-      </app-button>
+      @if (upcomingAppointment()?.can_join !== false) {
+        <app-button
+          [text]="'consultationDetail.joinAppointment' | translate"
+          [style]="ButtonStyleEnum.primary"
+          [size]="ButtonSizeEnum.medium"
+          (buttonClick)="onCallModalJoinAppointment()">
+        </app-button>
+      }
       <app-button
         [text]="'consultationDetail.callPatientOnly' | translate"
         [style]="ButtonStyleEnum.stroke"

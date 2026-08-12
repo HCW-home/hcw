@@ -487,6 +487,8 @@ export class PatientDetail implements OnInit, OnDestroy {
         return this.t.instant('patientDetail.statusCancelled');
       case 'completed':
         return this.t.instant('patientDetail.statusCompleted');
+      case 'noshow':
+        return this.t.instant('patientDetail.statusNoshow');
       case 'draft':
         return this.t.instant('patientDetail.statusDraft');
       case 'in_progress':

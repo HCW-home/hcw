@@ -1095,6 +1095,16 @@ class UserAppointmentsViewSet(viewsets.ReadOnlyModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+        # The participant actually joined the call: record their arrival once.
+        # `join` is called again on every reconnect, so keep the first arrival
+        # and stay on a single UPDATE that doesn't fan out through post_save.
+        Participant.objects.filter(
+            appointment=appointment,
+            user=request.user,
+            is_active=True,
+            arrived_at__isnull=True,
+        ).update(arrived_at=timezone.now())
+
         # Send websocket notification to all active participants except the user who joined
         channel_layer = get_channel_layer()
         active_participants = appointment.participant_set.filter(is_active=True)

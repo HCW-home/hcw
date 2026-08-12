@@ -173,7 +173,9 @@
     "tooEarlyTitle": "Meeting not yet available",
     "tooEarlyMessage": "The meeting is scheduled at {{time}}. You can only join {{minutes}} minutes before the scheduled time.",
     "appointmentNotFound": "Appointment not found",
-    "failedToLoadParticipant": "Failed to load participant information"
+    "failedToLoadParticipant": "Failed to load participant information",
+    "statusCompleted": "Completed",
+    "statusNoshow": "Missed"
   },
   "newRequest": {
     "selectSpecialty": "Select Specialty",

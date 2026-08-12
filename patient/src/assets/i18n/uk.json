@@ -172,7 +172,9 @@
     "tooEarlyTitle": "Зустріч ще недоступна",
     "tooEarlyMessage": "Зустріч заплановано на {{time}}. Ви можете приєднатися лише за {{minutes}} хвилин до запланованого часу.",
     "appointmentNotFound": "Прийом не знайдено",
-    "failedToLoadParticipant": "Не вдалося завантажити інформацію про учасника"
+    "failedToLoadParticipant": "Не вдалося завантажити інформацію про учасника",
+    "statusCompleted": "Проведена",
+    "statusNoshow": "Не відбулася"
   },
   "newRequest": {
     "selectSpecialty": "Виберіть спеціальність",

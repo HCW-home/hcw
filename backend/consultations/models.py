@@ -203,6 +203,8 @@ class Consultation(models.Model):
 class AppointmentStatus(models.TextChoices):
     draft = "draft", _("Draft")
     scheduled = "scheduled", _("Scheduled")
+    completed = "completed", _("Completed")
+    noshow = "noshow", _("No show")
     cancelled = "cancelled", _("Cancelled")
 
 
@@ -337,6 +339,7 @@ class ParticipantStatus(Enum):
     draft = "draft"
     invited = "invited"
     confirmed = "confirmed"
+    arrived = "arrived"
     unavailable = "unavailable"
     cancelled = "cancelled"
 
@@ -360,11 +363,20 @@ class Participant(models.Model):
     )
     feedback_rate = models.IntegerField(null=True, blank=True)
     feedback_message = models.TextField(null=True, blank=True)
+    arrived_at = models.DateTimeField(
+        _("arrived at"),
+        null=True,
+        blank=True,
+        help_text=_("First time this participant actually joined the call."),
+    )
 
     @property
     def status(self):
         if not self.is_active:
             return ParticipantStatus.cancelled.value
+        # Having shown up outranks having confirmed.
+        if self.arrived_at:
+            return ParticipantStatus.arrived.value
         if self.is_confirmed == True:
             return ParticipantStatus.confirmed.value
         if self.is_confirmed == False:

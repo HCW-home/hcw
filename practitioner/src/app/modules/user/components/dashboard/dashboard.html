@@ -133,7 +133,7 @@
                     </span>
                   </div>
                   <div class="appointment-right">
-                    @if (isOnlineAppointment(appointment.type)) {
+                    @if (canJoinAppointment(appointment)) {
                       <div class="join-button-container">
                         <app-button
                           [text]="'consultationDetail.join' | translate"

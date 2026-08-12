@@ -328,7 +328,10 @@
     "callAppointmentModalMessage": "Hai un appuntamento programmato. Vuoi unirti all'appuntamento invece?",
     "joinAppointment": "Unisciti all'appuntamento",
     "callPatientOnly": "Chiama solo il paziente",
-    "error": "Errore"
+    "error": "Errore",
+    "filterDone": "Conclusi",
+    "statusCompleted": "Effettuato",
+    "statusNoshow": "Assente"
   },
   "appointmentForm": {
     "online": "Video",
@@ -450,7 +453,8 @@
     "deleteAppointmentTitle": "Delete appointment",
     "deleteAppointmentMessage": "Are you sure you want to delete this appointment? This action cannot be undone.",
     "appointmentDeleted": "Appointment deleted",
-    "errorDeletingAppointment": "Error deleting appointment"
+    "errorDeletingAppointment": "Error deleting appointment",
+    "statusNoshow": "Assente"
   },
   "appointments": {
     "appointmentsCount": "{{count}} appuntamenti",
@@ -486,7 +490,12 @@
     "confirmCancel": "Sei sicuro di voler annullare questo appuntamento?",
     "cancelSuccess": "Appuntamento annullato con successo",
     "cancelError": "Errore durante la cancellazione dell'appuntamento",
-    "practitioners": "Professionisti"
+    "practitioners": "Professionisti",
+    "statusNoshow": "Assente",
+    "markCompleted": "Segna come effettuato",
+    "markNoshow": "Segna come assente",
+    "setStatusSuccess": "Stato dell'appuntamento aggiornato",
+    "setStatusError": "Impossibile aggiornare lo stato dell'appuntamento"
   },
   "participantItem": {
     "pending": "In attesa",

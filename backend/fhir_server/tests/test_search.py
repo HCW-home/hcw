@@ -69,6 +69,18 @@ class SearchParamTranslationTests(SimpleTestCase):
         self.assertIn("status__in", str(qs.filters[0]))
         self.assertIn("scheduled", str(qs.filters[0]))
 
+    def test_token_with_list_mapping_expands(self):
+        """One FHIR code may cover several internal values."""
+        param = TokenParam(field="status", mapping={"proposed": ["draft", "scheduled"]})
+        rendered = str(param.to_q("proposed", None))
+        self.assertIn("status__in", rendered)
+        self.assertIn("draft", rendered)
+        self.assertIn("scheduled", rendered)
+
+    def test_token_unmapped_value_passes_through(self):
+        param = TokenParam(field="status", mapping={"booked": "scheduled"})
+        self.assertIn("unknown", str(param.to_q("unknown", None)))
+
     def test_token_modifier_not_negates(self):
         qs = _QuerysetStub()
         apply_fhir_search(qs, _qs_from({"status:not": "booked"}), _FakeMapper())

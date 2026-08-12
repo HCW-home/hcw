@@ -200,7 +200,9 @@ class ParticipantInline(TabularInline):
     fields = [
         "user",
         "is_invited",
+        "arrived_at",
     ]
+    readonly_fields = ["arrived_at"]
 
 
 @admin.register(Consultation)
@@ -237,11 +239,13 @@ class AppointmentAdmin(ModelAdmin):
     list_display = [
         "id",
         "consultation",
+        "type",
+        "status",
         "scheduled_at",
         "end_expected_at",
         "participants_count",
     ]
-    list_filter = ["scheduled_at", "consultation__group"]
+    list_filter = ["status", "type", "scheduled_at", "consultation__group"]
     search_fields = ["consultation__created_by__email"]
 
     inlines = [ParticipantInline]

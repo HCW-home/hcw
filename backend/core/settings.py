@@ -481,6 +481,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "consultations.tasks.auto_close_temporary_consultations",
         "schedule": crontab(minute="*", hour="*"),
     },
+    "resolve_appointment_outcomes": {
+        "task": "consultations.tasks.resolve_appointment_outcomes",
+        "schedule": crontab(minute="*/10"),
+    },
 }
 
 FIREBASE_APP = initialize_app()
@@ -900,6 +904,18 @@ CONSTANCE_CONFIG = {
             "Default duration in minutes for an appointment without an explicit end time"
         ),
     ),
+    "enable_appointment_outcome_detection": (
+        True,
+        gettext_noop(
+            "Automatically mark past online appointments as completed or no-show, based on who actually joined the call"
+        ),
+    ),
+    "appointment_outcome_lookback_days": (
+        7,
+        gettext_noop(
+            "Only appointments scheduled within this many days back are qualified automatically as completed or no-show"
+        ),
+    ),
     "consultation_auto_delete_hours": (
         0,
         gettext_noop(
@@ -1172,6 +1188,8 @@ CONSTANCE_CONFIG_FIELDSETS = {
         "appointment_early_join_minutes",
         "call_limit_join_minutes",
         "default_appointment_duration_in_minutes",
+        "enable_appointment_outcome_detection",
+        "appointment_outcome_lookback_days",
     ),
     gettext_noop("Data Retention"): ("consultation_auto_delete_hours", "auto_close_temporary_consultations", "temporary_user_auto_delete"),
     gettext_noop("Security"): ("temporary_participant_token_expiry_hours", "instance_signature"),
@@ -1230,7 +1248,11 @@ CONSTANCE_FIELDSET_DESCRIPTIONS = {
     ),
     gettext_noop("Scheduling"): gettext_noop(
         "Reminders, default appointment duration, and the windows during "
-        "which participants are allowed to join or rejoin a call."
+        "which participants are allowed to join or rejoin a call. Once an "
+        "online appointment is over, it is marked <strong>completed</strong> "
+        "when at least two participants joined the call, and <strong>no "
+        "show</strong> otherwise. A status set by hand is never overwritten, "
+        "and in-person appointments are always qualified manually."
     ),
     gettext_noop("Data Retention"): gettext_noop(
         "Automatic clean-up policies for closed follow-ups and unused "

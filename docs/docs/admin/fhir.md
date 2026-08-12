@@ -146,6 +146,41 @@ Accept: application/fhir+json
 
 Returns `204 No Content`. The Appointment is **not** removed from the database — its `status` is flipped to `cancelled`. The same soft semantics apply on Encounter (`closed_at` set), Patient/Practitioner (`is_active=False`), and MedicationRequest (`status=cancelled`).
 
+## Appointment status mapping
+
+`Appointment.status` is partly stored and partly derived. HCW's own statuses map
+one-to-one onto FHIR codes:
+
+| HCW status | FHIR code |
+|---|---|
+| `draft` | `proposed` |
+| `scheduled` | `booked`, `pending`, `proposed` or `arrived` — see below |
+| `completed` | `fulfilled` |
+| `noshow` | `noshow` |
+| `cancelled` | `cancelled` |
+
+While an appointment is `scheduled`, the emitted code reflects its participants:
+
+- **`arrived`** — at least one participant has joined the call
+- **`booked`** — every active participant has accepted
+- **`pending`** — some accepted, not all
+- **`proposed`** — none accepted yet
+
+`fulfilled` and `noshow` are decided once the appointment is over, from who
+actually joined the call (see *Appointment outcome* in
+[Advanced options](advanced-options.md)), or set by hand by a practitioner.
+
+Inbound, all R4 codes are accepted: `fulfilled` sets `completed`, `noshow` sets
+`noshow`, `arrived` / `checked-in` keep the appointment `scheduled` (HCW has no
+check-in step), `waitlist` maps to `draft`, and `entered-in-error` to
+`cancelled`.
+
+Searching by `status` follows the same table. Because `proposed`, `pending`,
+`booked` and `arrived` are derived at render time and cannot be narrowed to a
+single stored value, searching for any of them returns a superset (all `draft`
+and/or `scheduled` appointments). `fulfilled`, `noshow` and `cancelled` are
+exact.
+
 ## Fetching the consultation note attached to an appointment
 
 When an Appointment lives inside HCW, it links to a Consultation (the **clinical record** exposed as a FHIR `Encounter`). The integration can retrieve that Encounter directly from the external Appointment id, without ever knowing HCW's primary keys:

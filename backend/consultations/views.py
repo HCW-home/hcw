@@ -73,6 +73,7 @@ from .serializers import (
     AppointmentAddParticipantsSerializer,
     AppointmentCreateSerializer,
     AppointmentSerializer,
+    AppointmentSetStatusSerializer,
     BookingSlotSerializer,
     ConsultationMessageCreateSerializer,
     ConsultationMessageSerializer,
@@ -573,13 +574,15 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
             "partial_update",
             "add_participants",
             "remove_participant",
+            "set_status",
         ]:
             return Appointment.objects.filter(
                 Q(created_by=user)
                 | Q(consultation__in=Consultation.objects.accessible_by(user))
             ).distinct()
 
-        # For all other actions (list, retrieve, join, leave, start_recording, etc.):
+        # For all other actions (list, retrieve, join, leave, start_recording,
+        # etc.):
         # include appointments where user is an active participant, plus those
         # of practitioners the user is allowed to see (users_visibility scope).
         from users.services import visible_practitioner_ids
@@ -623,6 +626,22 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
     def join(self, request, pk=None):
         """Join consultation call"""
         appointment = self.get_object()
+        # Only participants may join: the read scope of get_queryset is wider
+        # (creator, visible practitioners), but attendance is what decides
+        # whether the appointment took place, so joining implies being on the
+        # roster. A practitioner who wants in adds themselves as a participant.
+        if not appointment.participant_set.filter(
+            user=request.user, is_active=True
+        ).exists():
+            return Response(
+                {
+                    "detail": _(
+                        "You must be a participant of this appointment to join."
+                    ),
+                    "code": "not_participant",
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
         if appointment.consultation and appointment.consultation.closed_at:
             return Response(
                 {"detail": _("Cannot join call in closed consultation")},
@@ -658,6 +677,16 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
             )
 
         call_info = server.instance.appointment_participant_info(appointment, request.user)
+
+        # The participant actually joined the call: record their arrival once.
+        # `join` is called again on every reconnect, so keep the first arrival
+        # and stay on a single UPDATE that doesn't fan out through post_save.
+        Participant.objects.filter(
+            appointment=appointment,
+            user=request.user,
+            is_active=True,
+            arrived_at__isnull=True,
+        ).update(arrived_at=timezone.now())
 
         # Send websocket notification to all active participants except the user who joined
         channel_layer = get_channel_layer()
@@ -756,6 +785,29 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
 
         serializer = self.get_serializer(appointment)
         return Response(serializer.data)
+
+    @extend_schema(
+        request=AppointmentSetStatusSerializer,
+        responses=AppointmentSerializer,
+        description=(
+            "Manually set the outcome of an appointment (completed, no-show, "
+            "cancelled) or put it back to scheduled. Automatic detection only "
+            "ever touches scheduled appointments, so a status set here is "
+            "never overwritten. This is also the only way to qualify an "
+            "in-person appointment, which has no join step."
+        ),
+    )
+    @action(detail=True, methods=["post"])
+    def set_status(self, request, pk=None):
+        """Set the appointment status by hand"""
+        appointment = self.get_object()
+        serializer = AppointmentSetStatusSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        appointment.status = serializer.validated_data["status"]
+        appointment.save(update_fields=["status", "updated_at"])
+
+        return Response(self.get_serializer(appointment).data)
 
     @action(detail=True, methods=["post"])
     def start_recording(self, request, pk=None):
@@ -1483,10 +1535,11 @@ class ReasonSlotsView(APIView):
         ).select_related("user")
 
         end_date = from_date + timedelta(days=15)
+        # Held appointments still occupy their slot, so they must keep it busy.
         existing_appointments = Appointment.objects.filter(
             scheduled_at__date__gte=from_date,
             scheduled_at__date__lt=end_date,
-            status=AppointmentStatus.scheduled,
+            status__in=[AppointmentStatus.scheduled, AppointmentStatus.completed],
         ).select_related("consultation")
 
         appointment_lookup = {}

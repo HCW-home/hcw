@@ -8,6 +8,7 @@ import {
   Participant,
   BookingSlot,
   Appointment,
+  AppointmentStatus,
   Consultation,
   AvailableSlot,
   CreateBookingSlot,
@@ -293,6 +294,20 @@ export class ConsultationService {
     return this.http.post<Appointment>(
       `${this.apiUrl}/appointments/${appointmentId}/send/`,
       {}
+    );
+  }
+
+  /**
+   * Set the outcome of an appointment by hand. Automatic detection only ever
+   * touches scheduled appointments, so a status set here is never overwritten.
+   */
+  setAppointmentStatus(
+    appointmentId: number,
+    status: AppointmentStatus
+  ): Observable<Appointment> {
+    return this.http.post<Appointment>(
+      `${this.apiUrl}/appointments/${appointmentId}/set_status/`,
+      { status }
     );
   }
 

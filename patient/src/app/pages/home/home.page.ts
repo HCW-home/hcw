@@ -492,6 +492,8 @@ export class HomePage implements OnInit, OnDestroy {
     const statusMap: Record<string, { label: string; color: 'warning' | 'info' | 'primary' | 'success' | 'muted' }> = {
       'draft': { label: this.t.instant('home.statusDraft'), color: 'warning' },
       'scheduled': { label: this.t.instant('home.statusScheduled'), color: 'primary' },
+      'completed': { label: this.t.instant('home.statusCompleted'), color: 'success' },
+      'noshow': { label: this.t.instant('home.statusNoshow'), color: 'muted' },
       'cancelled': { label: this.t.instant('home.statusCancelled'), color: 'muted' }
     };
     return statusMap[normalizedStatus] || statusMap['draft'];

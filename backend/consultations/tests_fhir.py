@@ -337,6 +337,106 @@ class AppointmentFhirStatusDerivationTests(_AppointmentFhirBase):
         appt.save(update_fields=["status"])
         self.assertEqual(self._status_of(appt), "proposed")
 
+    def test_completed_appointment_is_fulfilled(self):
+        appt = self._make_appt([True, True])
+        appt.status = AppointmentStatus.completed
+        appt.save(update_fields=["status"])
+        self.assertEqual(self._status_of(appt), "fulfilled")
+
+    def test_noshow_appointment_is_noshow(self):
+        appt = self._make_appt([True, True])
+        appt.status = AppointmentStatus.noshow
+        appt.save(update_fields=["status"])
+        self.assertEqual(self._status_of(appt), "noshow")
+
+    def test_completed_wins_over_unconfirmed_participants(self):
+        # The terminal status must short-circuit the confirmation derivation.
+        appt = self._make_appt([None, None])
+        appt.status = AppointmentStatus.completed
+        appt.save(update_fields=["status"])
+        self.assertEqual(self._status_of(appt), "fulfilled")
+
+    def test_arrived_participant_makes_it_arrived(self):
+        appt = self._make_appt([True, True])
+        participant = appt.participant_set.first()
+        participant.arrived_at = timezone.now()
+        participant.save(update_fields=["arrived_at"])
+        self.assertEqual(self._status_of(appt), "arrived")
+
+    def test_inactive_arrived_participant_ignored(self):
+        appt = self._make_appt([True, True])
+        gone = User.objects.create_user(email="gone2@ex.com")
+        Participant.objects.create(
+            appointment=appt, user=gone, is_confirmed=True, is_active=False,
+            arrived_at=timezone.now(),
+        )
+        self.assertEqual(self._status_of(appt), "booked")
+
+
+class AppointmentFhirOutcomeStatusTests(_AppointmentFhirBase):
+    """The outcome statuses round-trip, and are searchable."""
+
+    def test_fulfilled_maps_back_to_completed(self):
+        mapper = AppointmentFhirMapper()
+        self.appointment.status = AppointmentStatus.completed
+        self.appointment.save(update_fields=["status"])
+        data = mapper.to_fhir(self.appointment)
+        self.assertEqual(data["status"], "fulfilled")
+
+        class _Req:
+            user = self.practitioner
+
+        instance = mapper.from_fhir(
+            data,
+            instance=Appointment(pk=None, created_by=self.practitioner),
+            context={"request": _Req()},
+        )
+        self.assertEqual(instance.status, AppointmentStatus.completed)
+
+    def test_noshow_maps_back_to_noshow(self):
+        mapper = AppointmentFhirMapper()
+        self.appointment.status = AppointmentStatus.noshow
+        self.appointment.save(update_fields=["status"])
+        data = mapper.to_fhir(self.appointment)
+        self.assertEqual(data["status"], "noshow")
+
+        class _Req:
+            user = self.practitioner
+
+        instance = mapper.from_fhir(
+            data,
+            instance=Appointment(pk=None, created_by=self.practitioner),
+            context={"request": _Req()},
+        )
+        self.assertEqual(instance.status, AppointmentStatus.noshow)
+
+    def _search(self, status_value):
+        url = reverse("appointment-list")
+        response = self.client.get(f"{url}?format=fhir&status={status_value}")
+        self.assertEqual(response.status_code, 200, response.data)
+        return [e["resource"]["id"] for e in response.data.get("entry", [])]
+
+    def test_search_by_fulfilled(self):
+        self.appointment.status = AppointmentStatus.completed
+        self.appointment.save(update_fields=["status"])
+        self.assertEqual(self._search("fulfilled"), [str(self.appointment.pk)])
+        self.assertEqual(self._search("noshow"), [])
+
+    def test_search_by_noshow(self):
+        self.appointment.status = AppointmentStatus.noshow
+        self.appointment.save(update_fields=["status"])
+        self.assertEqual(self._search("noshow"), [str(self.appointment.pk)])
+        self.assertEqual(self._search("booked"), [])
+
+    def test_search_by_proposed_is_not_empty(self):
+        """A code derived at render time used to translate to nothing at all."""
+        draft = Appointment.objects.create(
+            created_by=self.practitioner,
+            scheduled_at=timezone.now() + timedelta(days=3),
+            status=AppointmentStatus.draft,
+        )
+        self.assertIn(str(draft.pk), self._search("proposed"))
+
 
 class AppointmentContainedParticipantTests(_AppointmentFhirBase):
     """FHIR clients inline Patient/Practitioner in `contained` and reference

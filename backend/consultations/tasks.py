@@ -11,6 +11,7 @@ from constance import config
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import Count, Q
 from django.utils import timezone
 from messaging.models import Message
 from django_tenants.utils import get_tenant_model, tenant_context
@@ -23,6 +24,7 @@ from .models import (
     Consultation,
     Participant,
     Request,
+    Type,
 )
 
 User = get_user_model()
@@ -401,4 +403,75 @@ def auto_close_temporary_consultations():
             if closed:
                 logger.info(
                     f"Auto-closed {closed} temporary consultation(s) past join window"
+                )
+
+
+@app.task
+def resolve_appointment_outcomes():
+    """Close out past online appointments as completed or no-show.
+
+    Participants are flagged as arrived by the join endpoints. Once the join
+    window has elapsed, an appointment with at least two arrived participants
+    took place; otherwise nobody (or only one side) showed up.
+
+    Only `scheduled` rows are eligible, so a status set by hand is never
+    overwritten. In-person appointments have no join step and are left alone:
+    they are qualified manually.
+    """
+    TenantModel = get_tenant_model()
+    for tenant in TenantModel.objects.exclude(schema_name="public"):
+        with tenant_context(tenant):
+            if not config.enable_appointment_outcome_detection:
+                continue
+
+            now = timezone.now()
+            trailing = timedelta(minutes=int(config.call_limit_join_minutes))
+            lookback = timedelta(days=int(config.appointment_outcome_lookback_days))
+            default_duration = int(config.default_appointment_duration_in_minutes)
+
+            # scheduled_at is a necessary (not sufficient) bound, kept so the
+            # query stays indexed; the real end is re-checked per row below
+            # because end_expected_at can push it much further out.
+            qs = Appointment.objects.filter(
+                status=AppointmentStatus.scheduled,
+                type=Type.online,
+                scheduled_at__isnull=False,
+                scheduled_at__lte=now - trailing,
+                scheduled_at__gte=now - lookback,
+            ).annotate(
+                active_count=Count(
+                    "participant", filter=Q(participant__is_active=True)
+                ),
+                arrived_count=Count(
+                    "participant",
+                    filter=Q(
+                        participant__is_active=True,
+                        participant__arrived_at__isnull=False,
+                    ),
+                ),
+            )
+
+            completed = noshow = 0
+            for appointment in qs.iterator():
+                end = appointment.end_expected_at or (
+                    appointment.scheduled_at + timedelta(minutes=default_duration)
+                )
+                if now < end + trailing:
+                    continue
+
+                # Two attendees mean the consultation happened; fall back to the
+                # roster size so a one-participant appointment isn't doomed.
+                threshold = min(2, appointment.active_count) or 1
+                if appointment.arrived_count >= threshold:
+                    appointment.status = AppointmentStatus.completed
+                    completed += 1
+                else:
+                    appointment.status = AppointmentStatus.noshow
+                    noshow += 1
+                appointment.save(update_fields=["status", "updated_at"])
+
+            if completed or noshow:
+                logger.info(
+                    f"Appointment outcomes ({tenant.schema_name}): "
+                    f"{completed} completed, {noshow} no-show"
                 )

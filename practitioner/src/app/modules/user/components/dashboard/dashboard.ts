@@ -260,6 +260,16 @@ export class Dashboard implements OnInit, OnDestroy {
     return t === 'online' || t === AppointmentType.ONLINE;
   }
 
+  canJoinAppointment(appointment: Appointment): boolean {
+    // can_join is the server's own answer, which also covers "am I on the
+    // roster" — the backend rejects a join from a non-participant. Older
+    // payloads without the flag fall back to the type check.
+    if (appointment.can_join !== undefined) {
+      return appointment.can_join;
+    }
+    return this.isOnlineAppointment(appointment.type);
+  }
+
   viewAppointment(appointment: Appointment): void {
     if (appointment.consultation_id) {
       this.router.navigate(['/app/consultations', appointment.consultation_id], {

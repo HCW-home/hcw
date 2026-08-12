@@ -46,16 +46,22 @@ class SearchParam:
 @dataclass
 class TokenParam(SearchParam):
     type: str = "token"
-    mapping: dict | None = None  # FHIR code -> Django value
+    # FHIR code -> Django value, or -> list of Django values when one FHIR code
+    # covers several internal values (a status derived at render time cannot be
+    # narrowed down to a single column value).
+    mapping: dict | None = None
 
     def to_q(self, raw_value: str, modifier: str | None) -> Q:
         values = [v.strip() for v in raw_value.split(",") if v.strip()]
         translated = []
         for val in values:
-            if self.mapping and val in self.mapping:
-                translated.append(self.mapping[val])
-            else:
+            mapped = self.mapping.get(val) if self.mapping else None
+            if mapped is None:
                 translated.append(val)
+            elif isinstance(mapped, (list, tuple, set)):
+                translated.extend(mapped)
+            else:
+                translated.append(mapped)
         if not translated:
             return Q()
         if modifier == "not":
