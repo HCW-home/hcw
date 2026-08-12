@@ -7,6 +7,8 @@
   width: 100%;
   height: 100%;
   background: #1a1a2e;
+  // Kept for the in-call phase (video grid + floating bars must not scroll).
+  // The lobby scrolls internally, so its content stays reachable regardless.
   overflow: hidden;
   display: flex;
   flex-direction: column;

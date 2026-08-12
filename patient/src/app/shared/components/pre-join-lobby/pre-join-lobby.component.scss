@@ -5,10 +5,21 @@
   right: 0;
   bottom: 0;
   display: flex;
-  align-items: center;
+  // NOT `align-items: center`: that pushes overflow off BOTH ends, clipping the
+  // join button with no way to reach it. `flex-start` + `margin: auto` on the
+  // card centers it while it fits and degrades to top-aligned + scrollable when
+  // it does not (`safe center` is still unsupported in Safari).
+  align-items: flex-start;
   justify-content: center;
+  // Scroll escape hatch: on short viewports (mobile browser chrome, or when all
+  // three device selectors are shown) the card is taller than the container.
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   background-color: #1a1a2e;
   padding: 16px;
+  // Respect the notch and the home indicator / bottom URL bar.
+  padding-top: calc(16px + var(--ion-safe-area-top, 0px));
+  padding-bottom: calc(16px + var(--ion-safe-area-bottom, 0px));
 }
 
 .lobby-loading {
@@ -27,6 +38,11 @@
   position: relative;
   width: 100%;
   max-width: 480px;
+  // Centers vertically while there is room, and — unlike `align-items: center` —
+  // never eats into the top of the card once it overflows.
+  margin: auto;
+  // Never shrink below the content height; let the parent scroll instead.
+  flex-shrink: 0;
   background-color: #242442;
   border-radius: 16px;
   padding: 24px;
@@ -172,4 +188,54 @@
   font-weight: 600;
   font-size: 16px;
   height: 48px;
+  // The button is the primary action: never let it be squeezed by a tall card.
+  flex-shrink: 0;
+}
+
+/* Short viewports — e.g. a phone in landscape, or Safari with the URL bar at the
+ * bottom eating ~100px. Tighten spacing and cap the video preview so the card
+ * fits without scrolling in the common case; the parent still scrolls if not. */
+@media (max-height: 720px) {
+  .lobby-card {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .lobby-title {
+    font-size: 18px;
+  }
+
+  .video-preview-area {
+    // Free the most vertical space: a 16/9 preview is ~270px tall at 480px wide.
+    max-height: 30vh;
+  }
+
+  .preview-video {
+    object-fit: contain;
+  }
+
+  .audio-level-container {
+    height: 16px;
+  }
+
+  .toggle-buttons .toggle-btn {
+    width: 48px;
+    height: 48px;
+  }
+
+  .device-selectors {
+    gap: 8px;
+  }
+}
+
+/* Very short viewports: the device selectors are the least critical control —
+ * they are also reachable in-call — so drop the labels to reclaim ~60px. */
+@media (max-height: 560px) {
+  .video-preview-area {
+    max-height: 24vh;
+  }
+
+  .device-row .device-label {
+    display: none;
+  }
 }
