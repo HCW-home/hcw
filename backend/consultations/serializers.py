@@ -326,8 +326,10 @@ class ParticipantSerializer(serializers.Serializer):
                 defaults=user_defaults,
             )
         elif data.get("email"):
-            user, __ = User.objects.get_or_create(
-                email=data["email"],
+            # Case-insensitive: an address typed "John@x.org" must map to the
+            # existing "john@x.org" account instead of creating a duplicate.
+            user, __ = User.objects.get_or_create_by_email(
+                data["email"],
                 defaults=user_defaults,
             )
         else:

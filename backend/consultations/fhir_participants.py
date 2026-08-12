@@ -24,9 +24,10 @@ def get_or_create_patient_user(
 ):
     """Find-or-create a patient User (``is_practitioner=False``).
 
-    Match order: email first (unique), then phone, else create an anonymous
-    temporary contact. `defaults` are applied only on creation, so an existing
-    matched user is never mutated — matching the native serializer's behaviour.
+    Match order: email first (unique, case-insensitive), then phone, else create
+    an anonymous temporary contact. `defaults` are applied only on creation, so
+    an existing matched user is never mutated — matching the native serializer's
+    behaviour.
     """
     defaults = {
         "first_name": first_name or "",
@@ -42,7 +43,7 @@ def get_or_create_patient_user(
         defaults["date_of_birth"] = birth_date
 
     if email:
-        user, _ = User.objects.get_or_create(email=email, defaults=defaults)
+        user, _ = User.objects.get_or_create_by_email(email, defaults=defaults)
     elif phone:
         user, _ = User.objects.get_or_create(
             mobile_phone_number=phone, defaults=defaults,
@@ -60,7 +61,9 @@ def resolve_practitioner_user(*, email):
     practitioners are not provisioned through FHIR.
     """
     if email:
-        user = User.objects.filter(email=email, is_practitioner=True).first()
+        user = User.objects.filter(
+            email__iexact=email.strip(), is_practitioner=True
+        ).first()
         if user is not None:
             return user
     raise FhirOperationError(

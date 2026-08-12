@@ -10,6 +10,7 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models.fields import BLANK_CHOICE_DASH
+from django.db.models.functions import Lower
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from fcm_django.models import AbstractFCMDevice, FirebaseResponseDict
@@ -382,6 +383,15 @@ class User(AbstractUser):
                 fields=["external_id"],
                 condition=models.Q(external_id__isnull=False),
                 name="user_external_id_unique",
+            ),
+            # The `unique=True` index on email is case-sensitive in PostgreSQL,
+            # while every lookup in the application is case-insensitive. Without
+            # this, "John@x.org" and "john@x.org" coexist as two accounts and
+            # both break authentication (MultipleObjectsReturned). NULL emails
+            # are exempt: a unique index never collides on NULL.
+            models.UniqueConstraint(
+                Lower("email"),
+                name="user_email_case_insensitive_unique",
             ),
         ]
 

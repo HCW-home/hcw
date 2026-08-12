@@ -1323,10 +1323,13 @@ class UserViewSet(viewsets.ModelViewSet):
         email = request.data.get('email')
 
         if email:
-            try:
-                # Check if a temporary user with this email exists
-                existing_user = User.objects.get(email=email, temporary=True)
+            # Case-insensitive lookup: the same person typed with a different
+            # case must reuse their account, not get a second one.
+            existing_user = User.objects.filter(
+                email__iexact=email.strip(), temporary=True
+            ).order_by("-is_active", "pk").first()
 
+            if existing_user is not None:
                 # Update the existing temporary user with new data
                 serializer = self.get_serializer(existing_user, data=request.data, partial=True)
                 serializer.is_valid(raise_exception=True)
@@ -1340,10 +1343,6 @@ class UserViewSet(viewsets.ModelViewSet):
 
                 headers = self.get_success_headers(serializer.data)
                 return Response(serializer.data, status=status.HTTP_200_OK, headers=headers)
-
-            except User.DoesNotExist:
-                # No temporary user exists, proceed with normal creation
-                pass
 
         # Normal user creation
         return super().create(request, *args, **kwargs)
@@ -1646,8 +1645,8 @@ class LoginView(DjRestAuthLoginView):
             # patients are gated by enable_patient_password_login.
             email = request.data.get("email")
             if email:
-                try:
-                    user = User.objects.get(email=email)
+                user = User.objects.find_by_email(email)
+                if user is not None:
                     if (
                         constance_config.disable_password_login
                         and user.is_practitioner
@@ -1665,8 +1664,6 @@ class LoginView(DjRestAuthLoginView):
                             {"detail": "Password login is disabled for patients. Please use an email or SMS code."},
                             status=status.HTTP_403_FORBIDDEN,
                         )
-                except User.DoesNotExist:
-                    pass
         return super().post(request, *args, **kwargs)
 
 
@@ -1692,15 +1689,12 @@ class PasswordResetView(DjRestAuthPasswordResetView):
             # Check if the user requesting reset is a practitioner
             email = request.data.get("email")
             if email:
-                try:
-                    user = User.objects.get(email=email)
-                    if user.is_practitioner:
-                        return Response(
-                            {"detail": "Password reset is disabled for practitioners. Please use SSO."},
-                            status=status.HTTP_403_FORBIDDEN,
-                        )
-                except User.DoesNotExist:
-                    pass
+                user = User.objects.find_by_email(email)
+                if user is not None and user.is_practitioner:
+                    return Response(
+                        {"detail": "Password reset is disabled for practitioners. Please use SSO."},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
         return super().post(request, *args, **kwargs)
 
 
@@ -1728,7 +1722,7 @@ class RegisterView(DjRestAuthRegisterView):
         # Send email verification message
         email = request.data.get("email")
         if email:
-            user = User.objects.filter(email=email).first()
+            user = User.objects.find_by_email(email)
             if user and not user.email_verified:
                 user.email_verification_token = str(uuid.uuid4())
                 user.save(update_fields=["email_verification_token"])
@@ -2001,13 +1995,12 @@ class SendVerificationCodeView(APIView):
                 {"error": "email is required"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Try to find contact first, then user
-        user_instance = None
+        # Resolve the account case-insensitively. Legacy duplicates (same address
+        # stored with a different case) must not turn into a 500 here: send the
+        # code to the account the person actually signs in with.
+        user_instance = User.objects.find_by_email(email)
 
-        try:
-            # Try to get User
-            user_instance = User.objects.get(email__iexact=email.strip())
-        except User.DoesNotExist:
+        if user_instance is None:
             return Response(
                 {"detail": "Verification code sent successfully"},
                 status=status.HTTP_200_OK,

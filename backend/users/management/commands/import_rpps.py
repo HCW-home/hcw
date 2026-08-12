@@ -207,11 +207,15 @@ class Command(BaseCommand):
         # Pre-load specialities
         speciality_cache = {s.name: s for s in Speciality.objects.all()}
 
-        # Pre-load existing emails for deduplication
+        # Pre-load existing emails for deduplication. Compared lowercased: the
+        # database uniqueness is case-sensitive but every lookup in the app is
+        # not, so "John@x.org" next to "john@x.org" would create an account
+        # nobody can log into.
         self._existing_emails = set(
             User.objects.filter(email__isnull=False)
             .values_list("email", flat=True)
         )
+        self._existing_emails = {email.lower() for email in self._existing_emails}
 
         stats = {"created": 0, "updated": 0, "skipped": 0, "errors": 0}
         seen_rpps = set()
@@ -462,17 +466,21 @@ class Command(BaseCommand):
         return city.title() if city else None
 
     def _deduplicate_email(self, email):
-        """Add +N suffix to email local part if it already exists."""
+        """Add +N suffix to email local part if it already exists.
+
+        Existing addresses are tracked lowercased, so a case variant of a known
+        address is treated as a duplicate rather than a new account.
+        """
         if not email:
             return None
-        if email not in self._existing_emails:
-            self._existing_emails.add(email)
+        if email.lower() not in self._existing_emails:
+            self._existing_emails.add(email.lower())
             return email
         local, domain = email.rsplit("@", 1)
         counter = 1
         while True:
             candidate = f"{local}+{counter}@{domain}"
-            if candidate not in self._existing_emails:
-                self._existing_emails.add(candidate)
+            if candidate.lower() not in self._existing_emails:
+                self._existing_emails.add(candidate.lower())
                 return candidate
             counter += 1

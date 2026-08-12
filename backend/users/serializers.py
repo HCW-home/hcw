@@ -219,13 +219,25 @@ class UserDetailsSerializer(CustomFieldsMixin, serializers.ModelSerializer):
         return value
 
     def validate_email(self, value):
-        if self.instance and value:
-            # Check if email is being changed and if new email already exists
-            if self.instance.email != value:
-                if UserModel.objects.filter(email=value).exclude(pk=self.instance.pk).exists():
-                    raise serializers.ValidationError(
-                        "A user with this email already exists."
-                    )
+        # Uniqueness is checked case-insensitively: the model's unique index is
+        # case-sensitive in PostgreSQL but every lookup in the application is
+        # not, so two addresses differing only by case would create an account
+        # nobody can authenticate with (MultipleObjectsReturned on login).
+        if not value:
+            return value
+
+        duplicates = UserModel.objects.filter(email__iexact=value.strip())
+
+        if self.instance:
+            # Unchanged address (case included): nothing to check.
+            if (self.instance.email or "").lower() == value.strip().lower():
+                return value
+            duplicates = duplicates.exclude(pk=self.instance.pk)
+
+        if duplicates.exists():
+            raise serializers.ValidationError(
+                "A user with this email already exists."
+            )
         return value
 
     # def validate_temporary(self, value):
@@ -322,7 +334,7 @@ class RegisterSerializer(serializers.Serializer):
 
         # If user already exists, silently return existing user
         # to avoid leaking information about registered emails
-        existing_user = UserModel.objects.filter(email=email).first()
+        existing_user = UserModel.objects.find_by_email(email)
         if existing_user:
             return existing_user
 
