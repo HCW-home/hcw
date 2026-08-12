@@ -14,7 +14,7 @@
     @if (phase() === 'in-call') {
       <div class="video-grid" #participantsContainer [attr.data-count]="getTotalTileCount()" [class.has-screenshare]="hasActiveScreenShare()">
         <div class="video-tile local-tile" [class.camera-off]="!isCameraEnabled">
-          <video #localVideo autoplay playsinline muted class="tile-video" [class.hidden]="!isCameraEnabled"></video>
+          <video #localVideo autoplay playsinline muted class="tile-video" [appMediaTrack]="localVideoTrack" [trackMuted]="true" [class.hidden]="!isCameraEnabled"></video>
           @if (!isCameraEnabled) {
             <div class="camera-off-placeholder">
               <ion-icon name="videocam-off"></ion-icon>
@@ -30,7 +30,7 @@
 
         @if (isScreenShareEnabled && localScreenShareTrack) {
           <div class="video-tile screen-share-tile local-screen-share">
-            <video #localScreenShare autoplay playsinline class="tile-video"></video>
+            <video #localScreenShare autoplay playsinline muted class="tile-video" [appMediaTrack]="localScreenShareTrack" [trackMuted]="true"></video>
             <div class="participant-label">
               <ion-icon name="desktop-outline"></ion-icon>
               <ion-text>{{ 'videoConsultation.yourScreen' | translate }}</ion-text>
@@ -45,9 +45,17 @@
                 [id]="'video-' + participant.identity"
                 autoplay
                 playsinline
+                muted
                 class="tile-video"
+                [appMediaTrack]="participant.videoTrack"
+                [trackMuted]="true"
                 [class.hidden]="!participant.isCameraEnabled">
               </video>
+              <audio
+                autoplay
+                [appMediaTrack]="participant.audioTrack"
+                [trackMuted]="!isSpeakerOn">
+              </audio>
               @if (!participant.isCameraEnabled) {
                 <div class="camera-off-placeholder">
                   <ion-icon name="videocam-off"></ion-icon>
@@ -70,7 +78,10 @@
                   [id]="'screen-' + participant.identity"
                   autoplay
                   playsinline
-                  class="tile-video">
+                  muted
+                  class="tile-video"
+                  [appMediaTrack]="participant.screenShareTrack"
+                  [trackMuted]="true">
                 </video>
                 <div class="participant-label">
                   <ion-icon name="desktop-outline"></ion-icon>

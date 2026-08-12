@@ -19,7 +19,7 @@ import { takeUntil } from 'rxjs/operators';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { VideoCallService } from '../../core/services/video-call.service';
-import { ConnectionStatus, ParticipantInfo, VideoCallConfig } from '../../core/services/video-call.types';
+import { AttachableTrack, ConnectionStatus, ParticipantInfo, VideoCallConfig } from '../../core/services/video-call.types';
 import { TranslationService } from '../../core/services/translation.service';
 import { ConsultationService } from '../../core/services/consultation.service';
 import { ConsultationWebSocketService } from '../../core/services/consultation-websocket.service';
@@ -31,6 +31,7 @@ import { ConsultationMessage, User } from '../../core/models/consultation.model'
 import { WebSocketState } from '../../core/models/websocket.model';
 import { MessageListComponent, Message, SendMessageData, EditMessageData, DeleteMessageData } from '../../shared/components/message-list/message-list';
 import { PreJoinLobbyComponent } from '../../shared/components/pre-join-lobby/pre-join-lobby.component';
+import { MediaTrackDirective } from '../../shared/directives/media-track.directive';
 import { IPreJoinSettings } from '../../core/models/media-device.model';
 
 @Component({
@@ -50,6 +51,7 @@ import { IPreJoinSettings } from '../../core/models/media-device.model';
     IonBadge,
     MessageListComponent,
     PreJoinLobbyComponent,
+    MediaTrackDirective,
     TranslatePipe
   ]
 })
@@ -65,8 +67,8 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
 
   connectionStatus: ConnectionStatus = 'disconnected';
   participants: Map<string, ParticipantInfo> = new Map();
-  localVideoTrack: MediaStreamTrack | null = null;
-  localScreenShareTrack: MediaStreamTrack | null = null;
+  localVideoTrack: AttachableTrack | null = null;
+  localScreenShareTrack: AttachableTrack | null = null;
 
   isCameraEnabled = false;
   isMicrophoneEnabled = false;
@@ -88,9 +90,6 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
   private durationTimer: Subscription | null = null;
-  private videoElements = new Map<string, HTMLVideoElement>();
-  private audioElements = new Map<string, HTMLAudioElement>();
-  private screenShareElements = new Map<string, HTMLVideoElement>();
 
   private currentUser = signal<User | null>(null);
   private currentPage = 1;
@@ -282,7 +281,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     this.destroy$.complete();
     this.videoCallService.disconnect();
     this.wsService.disconnect();
-    this.cleanupMediaElements();
+    // Media elements detach themselves via appMediaTrack's ngOnDestroy.
     this.stopDurationTimer();
     this.incomingCallService.clearActiveCall();
     window.removeEventListener('beforeunload', this.handleBeforeUnload);
@@ -303,11 +302,12 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => this.handleServerRemoval());
 
+    // Tracks are bound to their elements by appMediaTrack, so the subscriptions
+    // only have to keep the fields up to date and let change detection run.
     this.videoCallService.localVideoTrack$
       .pipe(takeUntil(this.destroy$))
       .subscribe(track => {
         this.localVideoTrack = track;
-        this.attachLocalVideo();
         this.cdr.markForCheck();
       });
 
@@ -316,7 +316,6 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
       .subscribe(participants => {
         this.participants = participants;
         this.cdr.markForCheck();
-        setTimeout(() => this.attachRemoteMedia(), 0);
       });
 
     this.videoCallService.isCameraEnabled$
@@ -345,7 +344,6 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
       .subscribe(track => {
         this.localScreenShareTrack = track;
         this.cdr.markForCheck();
-        setTimeout(() => this.attachLocalScreenShare(), 0);
       });
 
     this.videoCallService.error$
@@ -474,10 +472,6 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
         this.incomingCallService.setActiveCall(this.appointmentId);
       }
       this.cdr.markForCheck();
-      setTimeout(() => {
-        this.attachLocalVideo();
-        this.attachRemoteMedia();
-      });
       this.showToast(this.t.instant('videoConsultation.connectedToConsultation'));
 
       if (this.consultationId) {
@@ -492,115 +486,6 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
       this.isLoading = false;
       this.cdr.markForCheck();
     }
-  }
-
-  private attachLocalVideo(): void {
-    if (!this.localVideoRef?.nativeElement || !this.localVideoTrack) return;
-    attachTrack(this.localVideoRef.nativeElement, this.localVideoTrack);
-  }
-
-  private attachLocalScreenShare(): void {
-    if (!this.localScreenShareRef?.nativeElement || !this.localScreenShareTrack) return;
-    attachTrack(this.localScreenShareRef.nativeElement, this.localScreenShareTrack);
-  }
-
-  private attachRemoteMedia(): void {
-    if (!this.participantsContainerRef?.nativeElement) return;
-
-    const currentParticipantIds = new Set(this.participants.keys());
-    const existingElementIds = new Set(this.videoElements.keys());
-
-    for (const id of existingElementIds) {
-      if (!currentParticipantIds.has(id)) {
-        this.removeParticipantElements(id);
-      }
-    }
-
-    for (const [identity, participant] of this.participants) {
-      this.attachParticipantMedia(identity, participant);
-    }
-  }
-
-  private attachParticipantMedia(identity: string, participant: ParticipantInfo): void {
-    if (participant.videoTrack) {
-      let videoEl = this.videoElements.get(identity);
-      if (!videoEl) {
-        const templateEl = document.getElementById(`video-${identity}`) as HTMLVideoElement;
-        if (templateEl) {
-          videoEl = templateEl;
-          this.videoElements.set(identity, videoEl);
-        }
-      }
-
-      if (videoEl) {
-        attachTrack(videoEl, participant.videoTrack);
-      }
-    }
-
-    if (participant.audioTrack) {
-      let audioEl = this.audioElements.get(identity);
-      if (!audioEl) {
-        audioEl = document.createElement('audio');
-        audioEl.autoplay = true;
-        audioEl.id = `audio-${identity}`;
-        this.audioElements.set(identity, audioEl);
-        document.body.appendChild(audioEl);
-      }
-
-      audioEl.muted = !this.isSpeakerOn;
-      attachTrack(audioEl, participant.audioTrack);
-    }
-
-    if (participant.screenShareTrack) {
-      let screenEl = this.screenShareElements.get(identity);
-      if (!screenEl) {
-        const templateEl = document.getElementById(`screen-${identity}`) as HTMLVideoElement;
-        if (templateEl) {
-          screenEl = templateEl;
-          this.screenShareElements.set(identity, screenEl);
-        }
-      }
-
-      if (screenEl) {
-        attachTrack(screenEl, participant.screenShareTrack);
-      }
-    } else {
-      const screenEl = this.screenShareElements.get(identity);
-      if (screenEl) {
-        screenEl.srcObject = null;
-        this.screenShareElements.delete(identity);
-      }
-    }
-  }
-
-  private removeParticipantElements(identity: string): void {
-    const videoEl = this.videoElements.get(identity);
-    if (videoEl) {
-      videoEl.srcObject = null;
-      this.videoElements.delete(identity);
-    }
-
-    const audioEl = this.audioElements.get(identity);
-    if (audioEl) {
-      audioEl.srcObject = null;
-      audioEl.remove();
-      this.audioElements.delete(identity);
-    }
-
-    const screenEl = this.screenShareElements.get(identity);
-    if (screenEl) {
-      screenEl.srcObject = null;
-      this.screenShareElements.delete(identity);
-    }
-  }
-
-  private cleanupMediaElements(): void {
-    for (const [identity] of this.videoElements) {
-      this.removeParticipantElements(identity);
-    }
-    this.videoElements.clear();
-    this.audioElements.clear();
-    this.screenShareElements.clear();
   }
 
   private startDurationTimer(): void {
@@ -880,10 +765,6 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     return participantsArray.length > 0 ? participantsArray[0] : null;
   }
 
-  getParticipantVideoElement(identity: string): HTMLVideoElement | undefined {
-    return this.videoElements.get(identity);
-  }
-
   getTotalTileCount(): number {
     const participants = this.getParticipantsArray();
     const participantCount = participants.length;
@@ -907,12 +788,4 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
       this.getScreenSharingParticipant() !== null
     );
   }
-}
-
-function attachTrack(element: HTMLMediaElement, track: MediaStreamTrack): void {
-  const current = element.srcObject;
-  if (current instanceof MediaStream && current.getTracks().includes(track)) {
-    return;
-  }
-  element.srcObject = new MediaStream([track]);
 }

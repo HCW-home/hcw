@@ -88,7 +88,13 @@ export class LiveKitService implements OnDestroy {
         dynacast: true,
         disconnectOnPageLeave: false, // Don't auto-disconnect, let our beforeunload handler manage it
         publishDefaults: {
-          videoCodec: 'vp9',
+          // VP8 + simulcast rather than VP9/SVC: VP9 support is uneven on
+          // Safari/iOS (black or frozen remote video), and with SVC a single
+          // weak participant drags quality down for the whole room. Simulcast
+          // lets the SFU pick a layer per receiver instead.
+          // Must stay in sync with the patient app's codec.
+          videoCodec: 'vp8',
+          simulcast: true,
         },
         videoCaptureDefaults: {
           resolution: { width: 1280, height: 720 },

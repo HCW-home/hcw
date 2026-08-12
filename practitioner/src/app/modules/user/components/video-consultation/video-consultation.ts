@@ -20,7 +20,7 @@ import { Subject, firstValueFrom } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 import { VideoCallService } from '../../../../core/services/video-call.service';
-import { ConnectionStatus, ParticipantInfo, VideoCallConfig } from '../../../../core/services/video-call.types';
+import { AttachableTrack, ConnectionStatus, ParticipantInfo, VideoCallConfig } from '../../../../core/services/video-call.types';
 import { MediaDeviceService } from '../../../../core/services/media-device.service';
 import { ConsultationService } from '../../../../core/services/consultation.service';
 import { TranscriptionService } from '../../../../core/services/transcription.service';
@@ -38,6 +38,7 @@ import { Loader } from '../../../../shared/components/loader/loader';
 import { PreJoinLobby } from '../../../../shared/components/pre-join-lobby/pre-join-lobby';
 import { MessageList, Message, SendMessageData, EditMessageData, DeleteMessageData } from '../../../../shared/components/message-list/message-list';
 import { InCallParticipants } from '../../../../shared/components/in-call-participants/in-call-participants';
+import { MediaTrackDirective } from '../../../../shared/components/media-track/media-track.directive';
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
 import { ButtonStyleEnum } from '../../../../shared/constants/button';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
@@ -69,6 +70,7 @@ interface CaptionEntry {
     MessageList,
     InCallParticipants,
     PreJoinLobby,
+    MediaTrackDirective,
     TranslatePipe,
   ],
   templateUrl: './video-consultation.html',
@@ -97,8 +99,8 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
 
   connectionStatus: ConnectionStatus = 'disconnected';
   participants: Map<string, ParticipantInfo> = new Map();
-  localVideoTrack: MediaStreamTrack | null = null;
-  localScreenShareTrack: MediaStreamTrack | null = null;
+  localVideoTrack: AttachableTrack | null = null;
+  localScreenShareTrack: AttachableTrack | null = null;
   isCameraEnabled = false;
   isMicrophoneEnabled = false;
   isScreenShareEnabled = false;
@@ -147,9 +149,6 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
 
   private destroy$ = new Subject<void>();
-  private videoElements = new Map<string, HTMLVideoElement>();
-  private audioElements = new Map<string, HTMLAudioElement>();
-  private screenShareElements = new Map<string, HTMLVideoElement>();
 
   private t: TranslationService;
 
@@ -232,7 +231,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     this.transcriptionService.stop();
     this.activeRemoteTranscriptions.clear();
     this.ownMicTranscriptionAt.clear();
-    this.cleanupMediaElements();
+    // Media elements detach themselves via appMediaTrack's ngOnDestroy.
   }
 
   private setupSubscriptions(): void {
@@ -247,11 +246,12 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => this.handleServerRemoval());
 
+    // Tracks are bound to their elements by appMediaTrack, so the subscriptions
+    // only have to keep the fields up to date and let change detection run.
     this.videoCallService.localVideoTrack$
       .pipe(takeUntil(this.destroy$))
       .subscribe(track => {
         this.localVideoTrack = track;
-        this.attachLocalVideo();
         this.cdr.markForCheck();
       });
 
@@ -260,13 +260,11 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       .subscribe(participants => {
         this.participants = participants;
         this.cdr.markForCheck();
-        // Run after DOM tick so audio elements are attached before sync.
-        setTimeout(() => {
-          this.attachRemoteMedia();
-          if (this.showCaptions()) {
-            this.syncRemoteTranscriptions(participants);
-          }
-        }, 0);
+        // Transcription reads the raw track off the participant, so it no longer
+        // has to wait for a DOM tick.
+        if (this.showCaptions()) {
+          this.syncRemoteTranscriptions(participants);
+        }
       });
 
     this.videoCallService.isCameraEnabled$
@@ -307,7 +305,6 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       .subscribe(track => {
         this.localScreenShareTrack = track;
         this.cdr.markForCheck();
-        setTimeout(() => this.attachLocalScreenShare(), 0);
       });
 
     this.videoCallService.error$
@@ -519,10 +516,6 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       this.activeMicId = settings.microphoneDeviceId || '';
       await this.loadDevices();
       this.cdr.markForCheck();
-      setTimeout(() => {
-        this.attachLocalVideo();
-        this.attachRemoteMedia();
-      });
     } catch (error: any) {
       this.errorMessage = getErrorMessage(error);
       this.toasterService.show('error', this.t.instant('videoConsultation.connectionError'), this.errorMessage);
@@ -531,115 +524,6 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       this.isLoading = false;
       this.cdr.markForCheck();
     }
-  }
-
-  private attachLocalVideo(): void {
-    if (!this.localVideoRef?.nativeElement || !this.localVideoTrack) return;
-    attachTrack(this.localVideoRef.nativeElement, this.localVideoTrack);
-  }
-
-  private attachLocalScreenShare(): void {
-    if (!this.localScreenShareRef?.nativeElement || !this.localScreenShareTrack) return;
-    attachTrack(this.localScreenShareRef.nativeElement, this.localScreenShareTrack);
-  }
-
-  private attachRemoteMedia(): void {
-    if (!this.participantsContainerRef?.nativeElement) return;
-
-    const currentParticipantIds = new Set(this.participants.keys());
-    const existingElementIds = new Set(this.videoElements.keys());
-
-    for (const id of existingElementIds) {
-      if (!currentParticipantIds.has(id)) {
-        this.removeParticipantElements(id);
-      }
-    }
-
-    for (const [identity, participant] of this.participants) {
-      this.attachParticipantMedia(identity, participant);
-    }
-  }
-
-  private attachParticipantMedia(identity: string, participant: ParticipantInfo): void {
-    if (participant.videoTrack) {
-      let videoEl = this.videoElements.get(identity);
-      if (!videoEl) {
-        const templateEl = document.getElementById(`video-${identity}`) as HTMLVideoElement;
-        if (templateEl) {
-          videoEl = templateEl;
-          this.videoElements.set(identity, videoEl);
-        }
-      }
-
-      if (videoEl) {
-        attachTrack(videoEl, participant.videoTrack);
-      }
-    }
-
-    if (participant.audioTrack) {
-      let audioEl = this.audioElements.get(identity);
-      if (!audioEl) {
-        audioEl = document.createElement('audio');
-        audioEl.autoplay = true;
-        audioEl.id = `audio-${identity}`;
-        this.audioElements.set(identity, audioEl);
-        document.body.appendChild(audioEl);
-      }
-
-      attachTrack(audioEl, participant.audioTrack);
-    }
-
-    if (participant.screenShareTrack) {
-      let screenEl = this.screenShareElements.get(identity);
-      if (!screenEl) {
-        const templateEl = document.getElementById(`screen-${identity}`) as HTMLVideoElement;
-        if (templateEl) {
-          screenEl = templateEl;
-          this.screenShareElements.set(identity, screenEl);
-        }
-      }
-
-      if (screenEl) {
-        attachTrack(screenEl, participant.screenShareTrack);
-      }
-    } else {
-      const screenEl = this.screenShareElements.get(identity);
-      if (screenEl) {
-        screenEl.srcObject = null;
-        this.screenShareElements.delete(identity);
-      }
-    }
-  }
-
-  private removeParticipantElements(identity: string): void {
-    const videoEl = this.videoElements.get(identity);
-    if (videoEl) {
-      videoEl.srcObject = null;
-      videoEl.remove();
-      this.videoElements.delete(identity);
-    }
-
-    const audioEl = this.audioElements.get(identity);
-    if (audioEl) {
-      audioEl.srcObject = null;
-      audioEl.remove();
-      this.audioElements.delete(identity);
-    }
-
-    const screenEl = this.screenShareElements.get(identity);
-    if (screenEl) {
-      screenEl.srcObject = null;
-      this.screenShareElements.delete(identity);
-    }
-  }
-
-  private cleanupMediaElements(): void {
-    for (const [identity] of this.videoElements) {
-      this.removeParticipantElements(identity);
-    }
-    this.videoElements.clear();
-    this.audioElements.clear();
-    this.screenShareElements.clear();
   }
 
   async toggleCamera(): Promise<void> {
@@ -812,16 +696,9 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       // Only transcribe when the participant's microphone is actually publishing audio.
       if (!participant.isMicrophoneEnabled) continue;
 
-      // Prefer audio element srcObject — most reliable after attachRemoteMedia has run.
-      // Fall back to the participant's MediaStreamTrack directly.
-      let track: MediaStreamTrack | null = null;
-      const audioEl = this.audioElements.get(identity);
-      if (audioEl?.srcObject instanceof MediaStream) {
-        track = (audioEl.srcObject as MediaStream).getAudioTracks()[0] ?? null;
-      }
-      if (!track && participant.audioTrack) {
-        track = participant.audioTrack;
-      }
+      // Transcription needs the raw MediaStreamTrack; rendering goes through
+      // appMediaTrack instead (see AttachableTrack in video-call.types.ts).
+      const track = participant.audioTrack?.mediaStreamTrack ?? null;
       if (!track) continue;
 
       // Use the LiveKit identity (= str(user.pk)) as speaker_label so the backend
@@ -1018,10 +895,6 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     }
   }
 
-  getParticipantVideoElement(identity: string): HTMLVideoElement | undefined {
-    return this.videoElements.get(identity);
-  }
-
   trackByIdentity(index: number, participant: ParticipantInfo): string {
     return participant.identity;
   }
@@ -1048,12 +921,4 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       this.getScreenSharingParticipant() !== null
     );
   }
-}
-
-function attachTrack(element: HTMLMediaElement, track: MediaStreamTrack): void {
-  const current = element.srcObject;
-  if (current instanceof MediaStream && current.getTracks().includes(track)) {
-    return;
-  }
-  element.srcObject = new MediaStream([track]);
 }

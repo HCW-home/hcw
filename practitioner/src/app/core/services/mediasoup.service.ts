@@ -1,4 +1,4 @@
-import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, map } from 'rxjs';
 
 import type { types as MediasoupTypes } from 'mediasoup-client';
 type Device = MediasoupTypes.Device;
@@ -13,12 +13,20 @@ type IceCandidate = MediasoupTypes.IceCandidate;
 import type { Socket } from 'socket.io-client';
 
 import {
+  AttachableTrack,
   ConnectionStatus,
   ParticipantInfo,
   VideoCallConfig,
   VideoCallDeviceIds,
   VideoCallImpl,
+  toAttachableTrack,
 } from './video-call.types';
+
+// mediasoup hands out plain MediaStreamTracks; wrap them so the UI can attach
+// every provider's tracks through the same interface.
+function wrapTrack(track: MediaStreamTrack | null | undefined): AttachableTrack | null {
+  return track ? toAttachableTrack(track) : null;
+}
 
 const EMPTY_PARTICIPANTS = new Map<string, ParticipantInfo>();
 const REQUEST_TIMEOUT_MS = 20000;
@@ -76,9 +84,15 @@ export class MediasoupService implements VideoCallImpl {
 
   readonly connectionStatus$: Observable<ConnectionStatus> = this.connectionStatus.asObservable();
   readonly participants$: Observable<Map<string, ParticipantInfo>> = this.participants.asObservable();
-  readonly localVideoTrack$: Observable<MediaStreamTrack | null> = this.localVideo.asObservable();
-  readonly localAudioTrack$: Observable<MediaStreamTrack | null> = this.localAudio.asObservable();
-  readonly localScreenShareTrack$: Observable<MediaStreamTrack | null> = this.localScreen.asObservable();
+  readonly localVideoTrack$: Observable<AttachableTrack | null> = this.localVideo.pipe(
+    map(wrapTrack),
+  );
+  readonly localAudioTrack$: Observable<AttachableTrack | null> = this.localAudio.pipe(
+    map(wrapTrack),
+  );
+  readonly localScreenShareTrack$: Observable<AttachableTrack | null> = this.localScreen.pipe(
+    map(wrapTrack),
+  );
   readonly isCameraEnabled$: Observable<boolean> = this.cameraEnabled.asObservable();
   readonly isMicrophoneEnabled$: Observable<boolean> = this.microphoneEnabled.asObservable();
   readonly isScreenShareEnabled$: Observable<boolean> = this.screenShareEnabled.asObservable();
@@ -592,9 +606,9 @@ export class MediasoupService implements VideoCallImpl {
         isCameraEnabled: !!peer.videoConsumer && !peer.videoConsumer.paused,
         isMicrophoneEnabled: !!peer.audioConsumer && !peer.audioConsumer.paused,
         isScreenShareEnabled: !!peer.screenShareConsumer && !peer.screenShareConsumer.paused,
-        videoTrack: peer.videoConsumer?.track ?? null,
-        audioTrack: peer.audioConsumer?.track ?? null,
-        screenShareTrack: peer.screenShareConsumer?.track ?? null,
+        videoTrack: wrapTrack(peer.videoConsumer?.track),
+        audioTrack: wrapTrack(peer.audioConsumer?.track),
+        screenShareTrack: wrapTrack(peer.screenShareConsumer?.track),
       });
     }
     this.participants.next(out);

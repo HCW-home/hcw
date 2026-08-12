@@ -2,6 +2,7 @@ import { Observable, map } from 'rxjs';
 
 import { LiveKitService, ParticipantInfo as LiveKitParticipantInfo } from './livekit.service';
 import {
+  AttachableTrack,
   ConnectionStatus,
   ParticipantInfo,
   VideoCallConfig,
@@ -11,7 +12,11 @@ import {
 
 // Adapter exposing the LiveKitService surface as VideoCallImpl. Keeps
 // livekit-client behind a lazy import boundary so consumers can rely on
-// framework-agnostic MediaStreamTrack / ParticipantInfo types.
+// framework-agnostic AttachableTrack / ParticipantInfo types.
+//
+// LiveKit's own Track objects already implement attach()/detach(), so they are
+// passed straight through: unwrapping them to a raw MediaStreamTrack is what
+// broke adaptiveStream (see AttachableTrack in video-call.types.ts).
 export class LiveKitAdapter implements VideoCallImpl {
   private inner = new LiveKitService();
 
@@ -19,15 +24,10 @@ export class LiveKitAdapter implements VideoCallImpl {
   readonly participants$: Observable<Map<string, ParticipantInfo>> = this.inner.participants$.pipe(
     map((src) => normalizeParticipants(src)),
   );
-  readonly localVideoTrack$: Observable<MediaStreamTrack | null> = this.inner.localVideoTrack$.pipe(
-    map((t) => (t ? t.mediaStreamTrack : null)),
-  );
-  readonly localAudioTrack$: Observable<MediaStreamTrack | null> = this.inner.localAudioTrack$.pipe(
-    map((t) => (t ? t.mediaStreamTrack : null)),
-  );
-  readonly localScreenShareTrack$: Observable<MediaStreamTrack | null> = this.inner.localScreenShareTrack$.pipe(
-    map((t) => (t ? t.mediaStreamTrack : null)),
-  );
+  readonly localVideoTrack$: Observable<AttachableTrack | null> = this.inner.localVideoTrack$;
+  readonly localAudioTrack$: Observable<AttachableTrack | null> = this.inner.localAudioTrack$;
+  readonly localScreenShareTrack$: Observable<AttachableTrack | null> =
+    this.inner.localScreenShareTrack$;
   readonly isCameraEnabled$: Observable<boolean> = this.inner.isCameraEnabled$;
   readonly isMicrophoneEnabled$: Observable<boolean> = this.inner.isMicrophoneEnabled$;
   readonly isScreenShareEnabled$: Observable<boolean> = this.inner.isScreenShareEnabled$;
@@ -103,9 +103,9 @@ function normalizeParticipants(
       isCameraEnabled: p.isCameraEnabled,
       isMicrophoneEnabled: p.isMicrophoneEnabled,
       isScreenShareEnabled: p.isScreenShareEnabled,
-      videoTrack: p.videoTrack ? p.videoTrack.mediaStreamTrack : null,
-      audioTrack: p.audioTrack ? p.audioTrack.mediaStreamTrack : null,
-      screenShareTrack: p.screenShareTrack ? p.screenShareTrack.mediaStreamTrack : null,
+      videoTrack: p.videoTrack,
+      audioTrack: p.audioTrack,
+      screenShareTrack: p.screenShareTrack,
     });
   }
   return out;

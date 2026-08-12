@@ -547,7 +547,7 @@ export class UserProfile implements OnInit, OnDestroy {
         if (this.videoElement?.nativeElement) {
           this.videoElement.nativeElement.srcObject = null;
         }
-        this.localVideoTrack = track;
+        this.localVideoTrack = track?.mediaStreamTrack ?? null;
         if (track) {
           if (this.cameraStatus() === 'testing') {
             this.cameraStatus.set('working');
@@ -559,9 +559,9 @@ export class UserProfile implements OnInit, OnDestroy {
     this.videoCallService.localAudioTrack$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(track => {
-        this.localAudioTrack = track;
-        if (track) {
-          this.setupAudioVisualization(track);
+        this.localAudioTrack = track?.mediaStreamTrack ?? null;
+        if (this.localAudioTrack) {
+          this.setupAudioVisualization(this.localAudioTrack);
           if (this.microphoneStatus() === 'testing') {
             this.microphoneStatus.set('working');
           }

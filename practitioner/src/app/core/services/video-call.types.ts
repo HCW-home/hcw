@@ -18,6 +18,50 @@ export type ConnectionStatus =
   | 'reconnecting'
   | 'failed';
 
+/**
+ * A media track that knows how to bind itself to a media element.
+ *
+ * LiveKit's `adaptiveStream` decides whether to send video at all by observing
+ * the elements a track has been attached to through its own `attach()`/
+ * `detach()` API. Assigning `element.srcObject` by hand bypasses that
+ * bookkeeping, so LiveKit sees no visible element, concludes nobody is watching
+ * and stops or degrades the stream — the call freezes. Providers therefore
+ * expose attach/detach rather than a raw track, and callers must use them.
+ *
+ * `mediaStreamTrack` stays available for consumers that genuinely need the raw
+ * track (e.g. audio analysis), but must not be used to render video.
+ */
+export interface AttachableTrack {
+  readonly mediaStreamTrack: MediaStreamTrack;
+  attach(element: HTMLMediaElement): void;
+  detach(element?: HTMLMediaElement): void;
+}
+
+/**
+ * Wraps a raw MediaStreamTrack for providers that have no attach API of their
+ * own (mediasoup). Mirrors LiveKit's attach/detach semantics so the UI can
+ * treat every provider identically.
+ */
+export function toAttachableTrack(track: MediaStreamTrack): AttachableTrack {
+  return {
+    mediaStreamTrack: track,
+    attach(element: HTMLMediaElement): void {
+      const current = element.srcObject;
+      // Re-assigning an identical stream restarts playback and makes the
+      // element flicker, so only touch srcObject when the track really changed.
+      if (current instanceof MediaStream && current.getTracks().includes(track)) {
+        return;
+      }
+      element.srcObject = new MediaStream([track]);
+    },
+    detach(element?: HTMLMediaElement): void {
+      if (element) {
+        element.srcObject = null;
+      }
+    },
+  };
+}
+
 export interface ParticipantInfo {
   identity: string;
   name: string;
@@ -25,9 +69,9 @@ export interface ParticipantInfo {
   isCameraEnabled: boolean;
   isMicrophoneEnabled: boolean;
   isScreenShareEnabled: boolean;
-  videoTrack: MediaStreamTrack | null;
-  audioTrack: MediaStreamTrack | null;
-  screenShareTrack: MediaStreamTrack | null;
+  videoTrack: AttachableTrack | null;
+  audioTrack: AttachableTrack | null;
+  screenShareTrack: AttachableTrack | null;
 }
 
 export interface VideoCallDeviceIds {
@@ -38,9 +82,9 @@ export interface VideoCallDeviceIds {
 export interface VideoCallImpl {
   connectionStatus$: Observable<ConnectionStatus>;
   participants$: Observable<Map<string, ParticipantInfo>>;
-  localVideoTrack$: Observable<MediaStreamTrack | null>;
-  localAudioTrack$: Observable<MediaStreamTrack | null>;
-  localScreenShareTrack$: Observable<MediaStreamTrack | null>;
+  localVideoTrack$: Observable<AttachableTrack | null>;
+  localAudioTrack$: Observable<AttachableTrack | null>;
+  localScreenShareTrack$: Observable<AttachableTrack | null>;
   isCameraEnabled$: Observable<boolean>;
   isMicrophoneEnabled$: Observable<boolean>;
   isScreenShareEnabled$: Observable<boolean>;

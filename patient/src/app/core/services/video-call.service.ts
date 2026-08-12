@@ -2,6 +2,7 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 
 import {
+  AttachableTrack,
   ConnectionStatus,
   ParticipantInfo,
   VideoCallConfig,
@@ -18,9 +19,9 @@ export class VideoCallService implements OnDestroy {
 
   private connectionStatus = new BehaviorSubject<ConnectionStatus>('disconnected');
   private participants = new BehaviorSubject<Map<string, ParticipantInfo>>(EMPTY_PARTICIPANTS);
-  private localVideo = new BehaviorSubject<MediaStreamTrack | null>(null);
-  private localAudio = new BehaviorSubject<MediaStreamTrack | null>(null);
-  private localScreen = new BehaviorSubject<MediaStreamTrack | null>(null);
+  private localVideo = new BehaviorSubject<AttachableTrack | null>(null);
+  private localAudio = new BehaviorSubject<AttachableTrack | null>(null);
+  private localScreen = new BehaviorSubject<AttachableTrack | null>(null);
   private cameraEnabled = new BehaviorSubject<boolean>(false);
   private microphoneEnabled = new BehaviorSubject<boolean>(false);
   private screenShareEnabled = new BehaviorSubject<boolean>(false);
@@ -29,9 +30,10 @@ export class VideoCallService implements OnDestroy {
 
   readonly connectionStatus$: Observable<ConnectionStatus> = this.connectionStatus.asObservable();
   readonly participants$: Observable<Map<string, ParticipantInfo>> = this.participants.asObservable();
-  readonly localVideoTrack$: Observable<MediaStreamTrack | null> = this.localVideo.asObservable();
-  readonly localAudioTrack$: Observable<MediaStreamTrack | null> = this.localAudio.asObservable();
-  readonly localScreenShareTrack$: Observable<MediaStreamTrack | null> = this.localScreen.asObservable();
+  readonly localVideoTrack$: Observable<AttachableTrack | null> = this.localVideo.asObservable();
+  readonly localAudioTrack$: Observable<AttachableTrack | null> = this.localAudio.asObservable();
+  readonly localScreenShareTrack$: Observable<AttachableTrack | null> =
+    this.localScreen.asObservable();
   readonly isCameraEnabled$: Observable<boolean> = this.cameraEnabled.asObservable();
   readonly isMicrophoneEnabled$: Observable<boolean> = this.microphoneEnabled.asObservable();
   readonly isScreenShareEnabled$: Observable<boolean> = this.screenShareEnabled.asObservable();

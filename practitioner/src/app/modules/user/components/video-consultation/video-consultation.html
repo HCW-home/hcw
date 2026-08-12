@@ -26,7 +26,7 @@
     @if (connectionStatus === 'connected' || connectionStatus === 'reconnecting') {
       <div class="video-grid" #participantsContainer [attr.data-count]="getTotalTileCount()" [class.has-screenshare]="hasActiveScreenShare()">
         <div class="video-tile local-tile">
-          <video #localVideo autoplay playsinline muted class="tile-video" [class.camera-off]="!isCameraEnabled"></video>
+          <video #localVideo autoplay playsinline muted class="tile-video" [appMediaTrack]="localVideoTrack" [trackMuted]="true" [class.camera-off]="!isCameraEnabled"></video>
           @if (!isCameraEnabled) {
             <div class="camera-off-placeholder">
               <app-svg src="camera-off" [svgStyle]="{'width.px': 32, 'height.px': 32}"></app-svg>
@@ -43,7 +43,7 @@
 
         @if (isScreenShareEnabled && localScreenShareTrack) {
           <div class="video-tile screen-share-tile local-screen-share">
-            <video #localScreenShare autoplay playsinline class="tile-video"></video>
+            <video #localScreenShare autoplay playsinline muted class="tile-video" [appMediaTrack]="localScreenShareTrack" [trackMuted]="true"></video>
             <div class="participant-label">
               <app-svg src="screen-share" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
               <app-typography [variant]="TypographyTypeEnum['body-xs-medium']" color="var(--White)">{{ 'videoConsultation.yourScreen' | translate }}</app-typography>
@@ -57,9 +57,13 @@
               [id]="'video-' + participant.identity"
               autoplay
               playsinline
+              muted
               class="tile-video"
+              [appMediaTrack]="participant.videoTrack"
+              [trackMuted]="true"
               [class.camera-off]="!participant.isCameraEnabled">
             </video>
+            <audio autoplay [appMediaTrack]="participant.audioTrack"></audio>
             @if (!participant.isCameraEnabled) {
               <div class="camera-off-placeholder">
                 <app-svg src="camera-off" [svgStyle]="{'width.px': 32, 'height.px': 32}"></app-svg>
@@ -91,7 +95,10 @@
                 [id]="'screen-' + participant.identity"
                 autoplay
                 playsinline
-                class="tile-video">
+                muted
+                class="tile-video"
+                [appMediaTrack]="participant.screenShareTrack"
+                [trackMuted]="true">
               </video>
               <div class="participant-label">
                 <app-svg src="screen-share" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
