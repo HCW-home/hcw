@@ -794,34 +794,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../device-sessions/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Device Sessions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../encryption/" class="md-nav__link">
         
   
@@ -978,6 +950,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Scheduling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#appointment-outcome" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appointment outcome
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1276,6 +1265,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Scheduling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#appointment-outcome" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appointment outcome
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1465,8 +1471,36 @@
 <td>10</td>
 <td>How early participants are allowed to join the video room before the scheduled start time.</td>
 </tr>
+<tr>
+<td>Automatically mark past online appointments as completed or no-show</td>
+<td><code>ENABLE_APPOINTMENT_OUTCOME_DETECTION</code></td>
+<td>TRUE</td>
+<td>Once an online appointment is over, it is marked <strong>completed</strong> when at least two participants joined the call, and <strong>no show</strong> otherwise. A status set by hand is never overwritten, and in-person appointments are always qualified manually.</td>
+</tr>
+<tr>
+<td>Lookback window for automatic outcome detection, in days</td>
+<td><code>APPOINTMENT_OUTCOME_LOOKBACK_DAYS</code></td>
+<td>7</td>
+<td>Only appointments scheduled within this many days back are qualified automatically. Protects older records from being rewritten when the feature is turned on.</td>
+</tr>
 </tbody>
 </table>
+<h3 id="appointment-outcome">Appointment outcome</h3>
+<p>An appointment carries one of five statuses: <code>draft</code>, <code>scheduled</code>, <code>completed</code>,
+<code>noshow</code>, <code>cancelled</code>.</p>
+<p>Attendance is recorded on the participants: joining the call stamps the
+participant as <em>arrived</em>. The appointment itself stays <code>scheduled</code> for the whole
+call, and is qualified afterwards by a periodic task, once the join window
+(<code>CALL_LIMIT_JOIN_MINUTES</code> after the expected end) has elapsed:</p>
+<ul>
+<li>at least two participants arrived (or every participant, for a
+  one-participant appointment) → <strong>completed</strong></li>
+<li>otherwise → <strong>no show</strong></li>
+</ul>
+<p>In-person appointments have no join step, so they are never qualified
+automatically: a practitioner sets their outcome from the appointment list. The
+same manual action corrects an automatic decision — and because the task only
+ever looks at <code>scheduled</code> appointments, a manual status is never overwritten.</p>
 <h2 id="security">Security</h2>
 <table>
 <thead>

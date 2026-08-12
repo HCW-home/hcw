@@ -794,34 +794,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../device-sessions/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Device Sessions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../encryption/" class="md-nav__link">
         
   
@@ -980,6 +952,17 @@
     <span class="md-ellipsis">
       
         Deleting (voiding) a resource by its external identifier
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appointment-status-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appointment status mapping
       
     </span>
   </a>
@@ -1379,6 +1362,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#appointment-status-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appointment status mapping
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#fetching-the-consultation-note-attached-to-an-appointment" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1665,6 +1659,58 @@
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="err">Accept: application/fhir+json</span>
 </code></pre></div>
 <p>Returns <code>204 No Content</code>. The Appointment is <strong>not</strong> removed from the database — its <code>status</code> is flipped to <code>cancelled</code>. The same soft semantics apply on Encounter (<code>closed_at</code> set), Patient/Practitioner (<code>is_active=False</code>), and MedicationRequest (<code>status=cancelled</code>).</p>
+<h2 id="appointment-status-mapping">Appointment status mapping</h2>
+<p><code>Appointment.status</code> is partly stored and partly derived. HCW's own statuses map
+one-to-one onto FHIR codes:</p>
+<table>
+<thead>
+<tr>
+<th>HCW status</th>
+<th>FHIR code</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>draft</code></td>
+<td><code>proposed</code></td>
+</tr>
+<tr>
+<td><code>scheduled</code></td>
+<td><code>booked</code>, <code>pending</code>, <code>proposed</code> or <code>arrived</code> — see below</td>
+</tr>
+<tr>
+<td><code>completed</code></td>
+<td><code>fulfilled</code></td>
+</tr>
+<tr>
+<td><code>noshow</code></td>
+<td><code>noshow</code></td>
+</tr>
+<tr>
+<td><code>cancelled</code></td>
+<td><code>cancelled</code></td>
+</tr>
+</tbody>
+</table>
+<p>While an appointment is <code>scheduled</code>, the emitted code reflects its participants:</p>
+<ul>
+<li><strong><code>arrived</code></strong> — at least one participant has joined the call</li>
+<li><strong><code>booked</code></strong> — every active participant has accepted</li>
+<li><strong><code>pending</code></strong> — some accepted, not all</li>
+<li><strong><code>proposed</code></strong> — none accepted yet</li>
+</ul>
+<p><code>fulfilled</code> and <code>noshow</code> are decided once the appointment is over, from who
+actually joined the call (see <em>Appointment outcome</em> in
+<a href="../advanced-options/">Advanced options</a>), or set by hand by a practitioner.</p>
+<p>Inbound, all R4 codes are accepted: <code>fulfilled</code> sets <code>completed</code>, <code>noshow</code> sets
+<code>noshow</code>, <code>arrived</code> / <code>checked-in</code> keep the appointment <code>scheduled</code> (HCW has no
+check-in step), <code>waitlist</code> maps to <code>draft</code>, and <code>entered-in-error</code> to
+<code>cancelled</code>.</p>
+<p>Searching by <code>status</code> follows the same table. Because <code>proposed</code>, <code>pending</code>,
+<code>booked</code> and <code>arrived</code> are derived at render time and cannot be narrowed to a
+single stored value, searching for any of them returns a superset (all <code>draft</code>
+and/or <code>scheduled</code> appointments). <code>fulfilled</code>, <code>noshow</code> and <code>cancelled</code> are
+exact.</p>
 <h2 id="fetching-the-consultation-note-attached-to-an-appointment">Fetching the consultation note attached to an appointment</h2>
 <p>When an Appointment lives inside HCW, it links to a Consultation (the <strong>clinical record</strong> exposed as a FHIR <code>Encounter</code>). The integration can retrieve that Encounter directly from the external Appointment id, without ever knowing HCW's primary keys:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="err">GET /api/consultations/?format=fhir&amp;appointment=https://ozonehis.example/ns/appointment-id|OZ-7</span>

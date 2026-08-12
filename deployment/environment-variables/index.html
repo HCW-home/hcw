@@ -792,34 +792,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../admin/device-sessions/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Device Sessions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../admin/encryption/" class="md-nav__link">
         
   
@@ -1774,13 +1746,13 @@
 <tbody>
 <tr>
 <td><code>ACCESS_TOKEN_LIFETIME</code></td>
-<td><code>15</code></td>
-<td>JWT access token lifetime <strong>in minutes</strong>. Access tokens cannot be revoked before they expire, so keep this short: clients refresh transparently.</td>
+<td><code>3600</code></td>
+<td>JWT access token lifetime <strong>in minutes</strong> (the default is therefore 60 hours). Lower it to <code>60</code> for a one-hour lifetime.</td>
 </tr>
 <tr>
 <td><code>REFRESH_TOKEN_LIFETIME_DAYS</code></td>
-<td><code>7</code></td>
-<td>Refresh token lifetime in days. Refresh tokens are rotated on every use, so an active user is never signed out.</td>
+<td><code>1</code></td>
+<td>Refresh token lifetime in days. Refresh tokens are rotated on every use.</td>
 </tr>
 </tbody>
 </table>
