@@ -138,7 +138,9 @@ export class PreJoinLobby implements OnInit, OnDestroy {
       if (devices.microphones.length > 0) {
         this.selectedMicrophoneId = devices.microphones[0].deviceId;
       }
-      if (devices.speakers.length > 0) {
+      // Only carry a speaker over to the call when the browser can actually
+      // route output; otherwise the selector is hidden and the id is useless.
+      if (this.speakerSupported && devices.speakers.length > 0) {
         this.selectedSpeakerId = devices.speakers[0].deviceId;
       }
     } catch (error) {

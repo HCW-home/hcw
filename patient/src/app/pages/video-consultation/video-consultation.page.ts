@@ -464,7 +464,11 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
       }
 
       if (settings.speakerDeviceId) {
-        await this.videoCallService.switchSpeaker(settings.speakerDeviceId);
+        try {
+          await this.videoCallService.switchSpeaker(settings.speakerDeviceId);
+        } catch {
+          // Output device selection is unsupported on some browsers, never a join blocker
+        }
       }
 
       this.phase.set('in-call');

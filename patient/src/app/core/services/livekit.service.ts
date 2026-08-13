@@ -395,6 +395,9 @@ export class LiveKitService implements OnDestroy {
 
   async switchSpeaker(deviceId: string): Promise<void> {
     if (!this.room) return;
+    // Safari has no setSinkId, and LiveKit throws instead of ignoring the call.
+    // Output routing is left to the OS there, so treat it as a no-op.
+    if (typeof HTMLMediaElement.prototype.setSinkId !== 'function') return;
     await this.room.switchActiveDevice('audiooutput', deviceId);
   }
 
