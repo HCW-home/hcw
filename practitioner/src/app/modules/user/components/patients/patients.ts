@@ -111,7 +111,11 @@ export class Patients implements OnInit, OnDestroy {
     }
 
     this.loading.set(true);
-    const params: { search?: string; page_size?: number; is_practitioner?: boolean } = { page_size: this.pageSize };
+    // Link-only invitees have no email and no phone: they are not contacts.
+    const params: { search?: string; page_size?: number; is_practitioner?: boolean; has_contact_info: boolean } = {
+      page_size: this.pageSize,
+      has_contact_info: true,
+    };
     if (this.searchQuery) {
       params.search = this.searchQuery;
     }
@@ -153,9 +157,10 @@ export class Patients implements OnInit, OnDestroy {
     const nextPage = cache.currentPage + 1;
 
     this.loadingMore.set(true);
-    const params: { search?: string; page_size?: number; page?: number; is_practitioner?: boolean } = {
+    const params: { search?: string; page_size?: number; page?: number; is_practitioner?: boolean; has_contact_info: boolean } = {
       page_size: this.pageSize,
-      page: nextPage
+      page: nextPage,
+      has_contact_info: true,
     };
     if (this.searchQuery) {
       params.search = this.searchQuery;
@@ -238,19 +243,21 @@ export class Patients implements OnInit, OnDestroy {
   }
 
   private loadCounts(): void {
-    this.patientService.getPatients({ page_size: 1 }).pipe(
+    // Same filter as the list, otherwise the tab counters would include the
+    // link-only invitees that are hidden from the rows.
+    this.patientService.getPatients({ page_size: 1, has_contact_info: true }).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
       next: (response) => this.totalCount.set(response.count)
     });
 
-    this.patientService.getPatients({ page_size: 1, is_practitioner: false }).pipe(
+    this.patientService.getPatients({ page_size: 1, is_practitioner: false, has_contact_info: true }).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
       next: (response) => this.patientCount.set(response.count)
     });
 
-    this.patientService.getPatients({ page_size: 1, is_practitioner: true }).pipe(
+    this.patientService.getPatients({ page_size: 1, is_practitioner: true, has_contact_info: true }).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
       next: (response) => this.practitionerCount.set(response.count)

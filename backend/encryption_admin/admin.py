@@ -1,3 +1,6 @@
+from constance.admin import Config, ConstanceAdmin
+from constance.forms import ConstanceForm
+from django.conf import settings
 from django.contrib import admin
 from django.shortcuts import redirect
 from django.urls import path, reverse
@@ -5,6 +8,17 @@ from unfold.admin import ModelAdmin
 
 from . import views
 from .models import EncryptionSettings
+
+# Constance fieldsets owned by this app: their keys are only meant to be
+# changed through the dedicated Encryption page, which keeps the master key,
+# the per-user provisioning and the global toggle in sync. Editing them by
+# hand in the live settings would silently break already encrypted data.
+HIDDEN_CONSTANCE_FIELDSETS = ("Encryption",)
+HIDDEN_CONSTANCE_KEYS = tuple(
+    key
+    for title in HIDDEN_CONSTANCE_FIELDSETS
+    for key in getattr(settings, "CONSTANCE_CONFIG_FIELDSETS", {}).get(title, ())
+)
 
 
 @admin.register(EncryptionSettings)
@@ -70,3 +84,51 @@ class EncryptionSettingsAdmin(ModelAdmin):
 
     def has_view_permission(self, request, obj=None):
         return request.user.is_superuser
+
+
+class HiddenKeysConstanceForm(ConstanceForm):
+    """Constance form that keeps the encryption keys read-only.
+
+    Their inputs are not rendered any more, so they are missing from the
+    POST payload. Marking the fields disabled makes Django fall back to the
+    stored value instead of clearing it when another tab is saved.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name in HIDDEN_CONSTANCE_KEYS:
+            field = self.fields.get(name)
+            if field is not None:
+                field.disabled = True
+
+
+class HiddenKeysConstanceAdmin(ConstanceAdmin):
+    """Live settings page without the fieldsets managed elsewhere."""
+
+    change_list_form = HiddenKeysConstanceForm
+
+    def changelist_view(self, request, extra_context=None):
+        response = super().changelist_view(request, extra_context)
+        context = getattr(response, "context_data", None)
+        if not context:
+            return response
+
+        if context.get("fieldsets"):
+            context["fieldsets"] = [
+                fieldset
+                for fieldset in context["fieldsets"]
+                if fieldset["title"] not in HIDDEN_CONSTANCE_FIELDSETS
+            ]
+        if context.get("config_values"):
+            context["config_values"] = [
+                config_value
+                for config_value in context["config_values"]
+                if config_value["name"] not in HIDDEN_CONSTANCE_KEYS
+            ]
+        return response
+
+
+# Constance registers its own admin at import time; swap it for ours.
+if admin.site.is_registered(Config):
+    admin.site.unregister([Config])
+admin.site.register([Config], HiddenKeysConstanceAdmin)
