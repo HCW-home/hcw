@@ -337,6 +337,7 @@
     "statusDraft": "Brouillon",
     "statusInvited": "Invité",
     "statusConfirmed": "Confirmé",
+    "statusArrived": "Arrivé",
     "statusUnavailable": "Indisponible",
     "statusCancelled": "Annulé",
     "inviteLink": "Lien d'invitation",

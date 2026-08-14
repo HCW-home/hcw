@@ -1040,6 +1040,7 @@
     "statusDraft": "Borrador",
     "statusInvited": "Invitado",
     "statusConfirmed": "Confirmado",
+    "statusArrived": "Llegado",
     "statusUnavailable": "Indisponible",
     "statusCancelled": "Cancelado",
     "inviteLink": "Enlace de invitación",

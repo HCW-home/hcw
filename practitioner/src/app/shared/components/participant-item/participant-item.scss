@@ -1,7 +1,14 @@
+// The item adapts to the width it is given (wide detail pages vs. the narrow
+// in-call side panel), so it is its own container query context.
+:host {
+  display: block;
+  container-type: inline-size;
+}
+
 .participant-item {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 8px;
   padding: 10px 12px;
   background: var(--White);
   border-radius: 8px;
@@ -10,6 +17,50 @@
   &.pending {
     border-style: dashed;
     background: var(--slate-25, #fafafa);
+  }
+}
+
+.participant-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+
+  app-user-avatar {
+    flex-shrink: 0;
+  }
+}
+
+.participant-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+
+  // No badge, no projected content, no remove button: don't reserve a gap.
+  &:not(:has(*)) {
+    display: none;
+  }
+}
+
+// The access link sits on its own line, indented under the participant name.
+.participant-link {
+  padding-left: 48px;
+}
+
+// Narrow containers (in-call side panel): give the name the full width and
+// push badges and actions to their own line.
+@container (max-width: 460px) {
+  .participant-row {
+    flex-wrap: wrap;
+  }
+
+  .participant-actions {
+    width: 100%;
+    padding-left: 48px;
+    justify-content: flex-start;
   }
 }
 

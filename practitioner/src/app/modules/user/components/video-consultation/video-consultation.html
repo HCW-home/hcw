@@ -282,12 +282,6 @@
 
       @if (showChat() && !isMinimized) {
         <div class="chat-panel">
-          <div class="chat-header">
-            <app-typography [variant]="TypographyTypeEnum['body-l-bold']">{{ 'videoConsultation.chat' | translate }}</app-typography>
-            <button class="close-chat-btn" (click)="toggleChatPanel()">
-              <app-svg src="close" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
-            </button>
-          </div>
           <app-message-list
             [messages]="messages"
             [isConnected]="true"
@@ -297,6 +291,13 @@
             (editMessage)="onEditMessage($event)"
             (deleteMessage)="onDeleteMessage($event)"
             (loadMore)="onLoadMore()">
+            <button
+              messageListHeaderAction
+              class="close-chat-btn"
+              type="button"
+              (click)="toggleChatPanel()">
+              <app-svg src="close" [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
+            </button>
           </app-message-list>
         </div>
       }

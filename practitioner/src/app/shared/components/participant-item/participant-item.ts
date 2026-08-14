@@ -208,6 +208,7 @@ export class ParticipantItem {
       draft: 'participantItem.statusDraft',
       invited: 'participantItem.statusInvited',
       confirmed: 'participantItem.statusConfirmed',
+      arrived: 'participantItem.statusArrived',
       unavailable: 'participantItem.statusUnavailable',
       cancelled: 'participantItem.statusCancelled',
     };

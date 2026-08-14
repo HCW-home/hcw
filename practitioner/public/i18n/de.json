@@ -601,6 +601,7 @@
     "errorLoadingLink": "Fehler beim Generieren des Einladungslinks",
     "temporary": "vorübergehend",
     "statusConfirmed": "Bestätigt",
+    "statusArrived": "Angekommen",
     "pending": "Ausstehend"
   },
   "messageList": {

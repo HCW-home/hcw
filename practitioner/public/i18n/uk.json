@@ -1156,6 +1156,7 @@
     "statusDraft": "Чернетка",
     "statusInvited": "Запрошено",
     "statusConfirmed": "Підтверджено",
+    "statusArrived": "Прибув",
     "statusUnavailable": "Недоступно",
     "statusCancelled": "Скасовано",
     "inviteLink": "Посилання-запрошення",

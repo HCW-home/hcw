@@ -1,78 +1,86 @@
 <div class="participant-item" [class.pending]="isPending">
-  <app-user-avatar
-    [firstName]="getFirstName()"
-    [lastName]="getLastName()"
-    [email]="getEmail()"
-    [picture]="getAvatarImage()"
-    [isOnline]="isOnline() ? true : (participant?.user ? false : undefined)"
-    [isCurrentUser]="isCurrentUser()">
-  </app-user-avatar>
-  <div class="participant-details">
-    <span class="participant-name">{{ getDisplayName() }}</span>
-    @if (getContact()) {
-    <span class="participant-contact">{{ getContact() }}</span>
-    }
-    @if (participant?.user?.temporary || participant?.user?.timezone ||
-    participant?.user?.preferred_language ||
-    participant?.user?.communication_method) {
-    <div class="participant-meta">
-      @if (participant!.user!.temporary) {
-      <span class="meta-item temporary-tag">
-        <app-svg
-          src="clock"
-          [svgStyle]="{'width.px': 12, 'height.px': 12}"></app-svg>
-        {{ 'participantItem.temporary' | translate }}
-      </span>
-      } @if (participant!.user!.timezone) {
-      <span class="meta-item">
-        <app-svg
-          src="clock"
-          [svgStyle]="{'width.px': 12, 'height.px': 12}"></app-svg>
-        {{ participant!.user!.timezone }}
-      </span>
-      } @if (participant!.user!.preferred_language) {
-      <span class="meta-item">
-        <app-svg
-          src="globe"
-          [svgStyle]="{'width.px': 12, 'height.px': 12}"></app-svg>
-        {{ getLanguageLabel(participant!.user!.preferred_language!) }}
-      </span>
-      } @if (participant!.user!.communication_method) {
-      <span class="meta-item">
-        <app-svg
-          src="message-square"
-          [svgStyle]="{'width.px': 12, 'height.px': 12}"></app-svg>
-        {{ participant!.user!.communication_method }}
-      </span>
+  <div class="participant-row">
+    <app-user-avatar
+      [firstName]="getFirstName()"
+      [lastName]="getLastName()"
+      [email]="getEmail()"
+      [picture]="getAvatarImage()"
+      [isOnline]="isOnline() ? true : (participant?.user ? false : undefined)"
+      [isCurrentUser]="isCurrentUser()">
+    </app-user-avatar>
+    <div class="participant-details">
+      <span class="participant-name">{{ getDisplayName() }}</span>
+      @if (getContact()) {
+      <span class="participant-contact">{{ getContact() }}</span>
+      }
+      @if (participant?.user?.temporary || participant?.user?.timezone ||
+      participant?.user?.preferred_language ||
+      participant?.user?.communication_method) {
+      <div class="participant-meta">
+        @if (participant!.user!.temporary) {
+        <span class="meta-item temporary-tag">
+          <app-svg
+            src="clock"
+            [svgStyle]="{'width.px': 12, 'height.px': 12}"></app-svg>
+          {{ 'participantItem.temporary' | translate }}
+        </span>
+        } @if (participant!.user!.timezone) {
+        <span class="meta-item">
+          <app-svg
+            src="clock"
+            [svgStyle]="{'width.px': 12, 'height.px': 12}"></app-svg>
+          {{ participant!.user!.timezone }}
+        </span>
+        } @if (participant!.user!.preferred_language) {
+        <span class="meta-item">
+          <app-svg
+            src="globe"
+            [svgStyle]="{'width.px': 12, 'height.px': 12}"></app-svg>
+          {{ getLanguageLabel(participant!.user!.preferred_language!) }}
+        </span>
+        } @if (participant!.user!.communication_method) {
+        <span class="meta-item">
+          <app-svg
+            src="message-square"
+            [svgStyle]="{'width.px': 12, 'height.px': 12}"></app-svg>
+          {{ participant!.user!.communication_method }}
+        </span>
+        }
+      </div>
       }
     </div>
-    }
+    <div class="participant-actions">
+      <ng-content></ng-content>
+      @if (isPending) {
+      <app-badge [type]="BadgeTypeEnum.gray"
+        >{{ 'participantItem.pending' | translate }}</app-badge
+      >
+      } @else if (participant?.status) {
+      <app-badge [type]="getParticipantBadgeType(participant!.status)">
+        {{ getStatusTranslationKey() | translate }}
+      </app-badge>
+      } @if (showRemoveAction) {
+      <app-button
+        leftIcon="close"
+        padding="6px"
+        [size]="ButtonSizeEnum.small"
+        [style]="ButtonStyleEnum.text"
+        [state]="ButtonStateEnum.error"
+        (buttonClick)="onRemove()">
+      </app-button>
+      }
+    </div>
   </div>
-  <ng-content></ng-content>
   @if (hasAccessUrl()) {
-  <app-button
-    leftIcon="link"
-    [text]="'consultationDetail.copyAccessLink' | translate"
-    [size]="ButtonSizeEnum.small"
-    [style]="ButtonStyleEnum.stroke"
-    (buttonClick)="openLinkModal()">
-  </app-button>
-  } @if (isPending) {
-  <app-badge [type]="BadgeTypeEnum.gray"
-    >{{ 'participantItem.pending' | translate }}</app-badge
-  >
-  } @else if (participant?.status) {
-  <app-badge [type]="getParticipantBadgeType(participant!.status)">
-    {{ getStatusTranslationKey() | translate }}
-  </app-badge>
-  } @if (showRemoveAction) {
-  <app-button
-    leftIcon="close"
-    [size]="ButtonSizeEnum.small"
-    [style]="ButtonStyleEnum.text"
-    [state]="ButtonStateEnum.error"
-    (buttonClick)="onRemove()">
-  </app-button>
+  <div class="participant-link">
+    <app-button
+      leftIcon="link"
+      [text]="'consultationDetail.copyAccessLink' | translate"
+      [size]="ButtonSizeEnum.small"
+      [style]="ButtonStyleEnum.stroke"
+      (buttonClick)="openLinkModal()">
+    </app-button>
+  </div>
   }
 </div>
 

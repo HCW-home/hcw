@@ -731,14 +731,7 @@
   z-index: 30;
   box-shadow: -4px 0 24px rgba(0, 0, 0, 0.3);
 
-  .chat-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px;
-    border-bottom: 1px solid #e5e7eb;
-  }
-
+  // Docked in the message list header, next to the "Messages" title.
   .close-chat-btn {
     width: 32px;
     height: 32px;
@@ -781,5 +774,14 @@
     flex: 1;
     min-height: 0;
     overflow: hidden;
+  }
+}
+
+// On narrow screens the fixed panel width leaves a useless sliver of video on
+// the side: take the whole width instead.
+@media (max-width: 640px) {
+  .chat-panel,
+  .side-panel {
+    width: 100%;
   }
 }

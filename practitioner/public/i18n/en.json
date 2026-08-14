@@ -1157,6 +1157,7 @@
     "statusDraft": "Draft",
     "statusInvited": "Invited",
     "statusConfirmed": "Confirmed",
+    "statusArrived": "Arrived",
     "statusUnavailable": "Unavailable",
     "statusCancelled": "Cancelled",
     "inviteLink": "Invitation Link",

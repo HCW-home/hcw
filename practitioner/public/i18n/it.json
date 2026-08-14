@@ -504,6 +504,7 @@
     "statusDraft": "Bozza",
     "statusInvited": "Invitato",
     "statusConfirmed": "Confermato",
+    "statusArrived": "Arrivato",
     "statusUnavailable": "Non disponibile",
     "statusCancelled": "Annullato",
     "inviteLink": "Link di invito",
