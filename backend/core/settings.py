@@ -923,7 +923,7 @@ CONSTANCE_CONFIG = {
         ),
     ),
     "auto_close_temporary_consultations": (
-        False,
+        True,
         gettext_noop(
             "Automatically close temporary appointment-chat consultations once the appointment join window has elapsed"
         ),
