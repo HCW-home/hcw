@@ -17,7 +17,6 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { ActionHandlerService } from '../../core/services/action-handler.service';
-import { ConsultationService } from '../../core/services/consultation.service';
 import { TranslationService } from '../../core/services/translation.service';
 import { LanguageSelectorComponent } from '../../shared/components/language-selector/language-selector.component';
 import { AuthBrandingComponent } from '../../shared/components/auth-branding/auth-branding.component';
@@ -60,8 +59,7 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
     private authService: AuthService,
     private navCtrl: NavController,
     private toastCtrl: ToastController,
-    private actionHandler: ActionHandlerService,
-    private consultationService: ConsultationService
+    private actionHandler: ActionHandlerService
   ) {
     this.verificationForm = this.fb.group({
       verification_code: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6)]]
@@ -175,36 +173,7 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
     });
     await toast.present();
 
-    if (this.action === 'join' && this.actionId) {
-      this.consultationService
-        .getParticipantById(Number(this.actionId))
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: (participant) => {
-            const consultation = participant.appointment.consultation;
-            if (consultation) {
-              const consultationId =
-                typeof consultation === "object"
-                  ? (consultation as { id: number }).id
-                  : consultation;
-              this.navCtrl.navigateRoot(
-                [`/consultation/${consultationId}/video`],
-                { queryParams: { appointmentId: participant.appointment.id } },
-              );
-            } else {
-              this.navCtrl.navigateRoot(
-                [`/consultation/${participant.appointment.id}/video`],
-              );
-            }
-          },
-          error: () => {
-            this.navCtrl.navigateRoot([`/confirm-presence/${this.actionId}`]);
-          },
-        });
-    } else {
-      const actionRoute = this.actionHandler.getRouteWithParams(this.action, this.actionId);
-      this.navCtrl.navigateRoot(actionRoute.path, { queryParams: actionRoute.queryParams });
-    }
+    this.actionHandler.navigateToAction(this.action, this.actionId);
   }
 
   resendVerificationCode(): void {

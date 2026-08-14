@@ -25,7 +25,6 @@ import { MobileAppService } from "../../core/services/mobile-app.service";
 import { AuthService } from "../../core/services/auth.service";
 import { TranslationService } from "../../core/services/translation.service";
 import { ActionHandlerService } from "../../core/services/action-handler.service";
-import { ConsultationService } from "../../core/services/consultation.service";
 import { DeeplinkService } from "../../core/services/deeplink.service";
 import { LanguageSelectorComponent } from "../../shared/components/language-selector/language-selector.component";
 import { AuthBrandingComponent } from '../../shared/components/auth-branding/auth-branding.component';
@@ -86,7 +85,6 @@ export class LoginPage implements OnInit {
     private route: ActivatedRoute,
     private authService: AuthService,
     private actionHandler: ActionHandlerService,
-    private consultationService: ConsultationService,
     private navCtrl: NavController,
     private loadingCtrl: LoadingController,
     private toastCtrl: ToastController,
@@ -318,26 +316,8 @@ export class LoginPage implements OnInit {
     const action = this.route.snapshot.queryParamMap.get("action");
     const id = this.route.snapshot.queryParamMap.get("id");
 
-    if (action === "join" && id) {
-      this.consultationService.getParticipantById(Number(id)).subscribe({
-        next: (participant) => {
-          const consultation = participant.appointment.consultation;
-          const consultationId =
-            typeof consultation === "object"
-              ? (consultation as { id: number }).id
-              : consultation;
-          this.navCtrl.navigateRoot(
-            `/consultation/${participant.appointment.id}/video`,
-            { queryParams: { type: "appointment", consultationId } },
-          );
-        },
-        error: () => {
-          this.navCtrl.navigateRoot(`/confirm-presence/${id}`);
-        },
-      });
-    } else if (action) {
-      const actionRoute = this.actionHandler.getRouteWithParams(action, id);
-      this.navCtrl.navigateRoot(actionRoute.path, { queryParams: actionRoute.queryParams });
+    if (action) {
+      this.actionHandler.navigateToAction(action, id);
     } else {
       this.navCtrl.navigateRoot("/home");
     }

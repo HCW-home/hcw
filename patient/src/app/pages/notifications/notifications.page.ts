@@ -5,7 +5,6 @@ import {
   IonRefresher,
   IonRefresherContent,
   IonIcon,
-  NavController,
   ToastController
 } from '@ionic/angular/standalone';
 import { AppHeaderComponent } from '../../shared/app-header/app-header.component';
@@ -15,7 +14,6 @@ import { NotificationService } from '../../core/services/notification.service';
 import { INotification, NotificationStatus } from '../../core/models/notification.model';
 import { UserWebSocketService } from '../../core/services/user-websocket.service';
 import { ActionHandlerService } from '../../core/services/action-handler.service';
-import { ConsultationService } from '../../core/services/consultation.service';
 import { AuthService } from '../../core/services/auth.service';
 import { TranslatePipe } from '@ngx-translate/core';
 import { TranslationService } from '../../core/services/translation.service';
@@ -59,12 +57,10 @@ export class NotificationsPage implements OnInit, OnDestroy {
   private t = inject(TranslationService);
 
   constructor(
-    private navCtrl: NavController,
     private toastCtrl: ToastController,
     private notificationService: NotificationService,
     private userWs: UserWebSocketService,
     private actionHandler: ActionHandlerService,
-    private consultationService: ConsultationService,
     private authService: AuthService
   ) {}
 
@@ -254,29 +250,9 @@ export class NotificationsPage implements OnInit, OnDestroy {
       }
     }
 
-    if (action === 'join' && id) {
-      this.consultationService.getParticipantById(Number(id)).subscribe({
-        next: (participant) => {
-          const consultation = participant.appointment.consultation;
-          const consultationId = typeof consultation === 'object' ? (consultation as {id: number}).id : consultation;
-          this.navCtrl.navigateForward(
-            `/consultation/${participant.appointment.id}/video`,
-            { queryParams: { type: 'appointment', consultationId } }
-          );
-        },
-        error: () => {
-          this.navCtrl.navigateForward(`/confirm-presence/${id}`);
-        }
-      });
-      return;
-    }
-
     if (action && id) {
-      const actionRoute = this.actionHandler.getRouteWithParams(action, id);
-      this.navCtrl.navigateForward(actionRoute.path, { queryParams: actionRoute.queryParams });
-      return;
+      this.actionHandler.navigateToAction(action, id, 'forward');
     }
-
   }
 
   dismissNotification(notification: DisplayNotification) {

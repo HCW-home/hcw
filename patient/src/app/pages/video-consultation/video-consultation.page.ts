@@ -404,12 +404,29 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
         this.wsService.connect(this.consultationId);
       }
     } catch (error) {
-      this.errorMessage = error instanceof Error ? error.message : this.t.instant('videoConsultation.failedJoin');
+      this.errorMessage = this.describeJoinError(error);
       this.showToast(this.errorMessage);
     } finally {
       this.isLoading = false;
       this.cdr.markForCheck();
     }
+  }
+
+  /**
+   * A join can legitimately be refused (too early, consultation closed, no
+   * longer a participant): an invitation link opens the lobby without
+   * re-checking any of it. The backend explains why in `detail`, so show that
+   * rather than a generic failure the patient cannot act on.
+   */
+  private describeJoinError(error: unknown): string {
+    const detail = (error as { error?: { detail?: string } })?.error?.detail;
+    if (typeof detail === 'string' && detail) {
+      return detail;
+    }
+    if (error instanceof Error) {
+      return error.message;
+    }
+    return this.t.instant('videoConsultation.failedJoin');
   }
 
   onLobbyClose(): void {
@@ -483,7 +500,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
         this.wsService.connect(this.consultationId);
       }
     } catch (error) {
-      this.errorMessage = error instanceof Error ? error.message : this.t.instant('videoConsultation.failedJoin');
+      this.errorMessage = this.describeJoinError(error);
       this.showToast(this.errorMessage);
       this.phase.set('lobby');
     } finally {

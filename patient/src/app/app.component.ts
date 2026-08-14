@@ -175,7 +175,7 @@ export class AppComponent implements OnInit, OnDestroy {
       // that very account, follow the link instead of asking to authenticate
       // again.
       if (await this.isLinkForCurrentUser(email, action, actionId)) {
-        this.navigateToAction(action, actionId);
+        this.actionHandler.navigateToAction(action, actionId);
         return;
       }
 
@@ -193,7 +193,7 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     if (action && actionId) {
-      this.navigateToAction(action, actionId);
+      this.actionHandler.navigateToAction(action, actionId);
     }
   }
 
@@ -233,39 +233,6 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     return false;
-  }
-
-  private navigateToAction(action: string | null, actionId: string | null): void {
-    if (action === "join" && actionId) {
-      this.consultationService
-        .getParticipantById(Number(actionId))
-        .subscribe({
-          next: (participant) => {
-            const consultation = participant.appointment.consultation;
-            if (consultation) {
-              const consultationId =
-                typeof consultation === "object"
-                  ? (consultation as { id: number }).id
-                  : consultation;
-              this.navCtrl.navigateRoot(
-                [`/consultation/${consultationId}/video`],
-                { queryParams: { appointmentId: participant.appointment.id } },
-              );
-            } else {
-              this.navCtrl.navigateRoot(
-                [`/consultation/${participant.appointment.id}/video`],
-              );
-            }
-          },
-          error: () => {
-            this.navCtrl.navigateRoot([`/confirm-presence/${actionId}`]);
-          },
-        });
-      return;
-    }
-
-    const actionRoute = this.actionHandler.getRouteWithParams(action, actionId);
-    this.navCtrl.navigateRoot([actionRoute.path], { queryParams: actionRoute.queryParams });
   }
 
   private loadBranding(): void {

@@ -2280,7 +2280,7 @@ msgstr ""
 
 #: messaging/template.py:29 messaging/template.py:58
 msgid "Join the consultation"
-msgstr "Rejoindre la consulation"
+msgstr "Rejoindre la consultation"
 
 #: messaging/template.py:34
 msgid "Your consultation has been scheduled"
