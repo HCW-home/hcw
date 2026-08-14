@@ -159,8 +159,15 @@
 
     .section-title {
       font-size: 16px;
+      line-height: 24px;
       font-weight: 600;
       color: var(--slate-800);
+    }
+
+    // The text button pads its label by 16px: pull it back so the label lines
+    // up with the right edge of the participant cards below.
+    .add-participant-btn-wrapper {
+      margin-right: -16px;
     }
   }
 

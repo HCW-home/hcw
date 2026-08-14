@@ -6,6 +6,10 @@
 }
 
 .participant-item {
+  // Avatar width + row gap. Everything that has to line up under the
+  // participant name (wrapped actions, access link) shares this indent.
+  --participant-indent: 48px;
+
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -43,24 +47,36 @@
   &:not(:has(*)) {
     display: none;
   }
+
+  // The icon button carries its own padding: pull it back so the glyph sits
+  // flush with the card padding instead of looking inset from the edge.
+  .remove-btn {
+    margin-right: -6px;
+  }
 }
 
 // The access link sits on its own line, indented under the participant name.
 .participant-link {
-  padding-left: 48px;
+  padding-left: var(--participant-indent);
 }
 
 // Narrow containers (in-call side panel): give the name the full width and
-// push badges and actions to their own line.
-@container (max-width: 460px) {
+// push badges and actions to their own line, indented under the name. The
+// threshold sits below the detail/form cards so only the side panel stacks.
+@container (max-width: 400px) {
   .participant-row {
     flex-wrap: wrap;
+    row-gap: 8px;
   }
 
   .participant-actions {
     width: 100%;
-    padding-left: 48px;
+    padding-left: var(--participant-indent);
     justify-content: flex-start;
+
+    .remove-btn {
+      margin-right: 0;
+    }
   }
 }
 
@@ -71,6 +87,7 @@
   .participant-name {
     display: block;
     font-size: 14px;
+    line-height: 20px;
     font-weight: 600;
     color: var(--slate-800);
     white-space: nowrap;
@@ -81,6 +98,7 @@
   .participant-contact {
     display: block;
     font-size: 12px;
+    line-height: 16px;
     color: var(--slate-500);
     white-space: nowrap;
     overflow: hidden;
@@ -90,17 +108,21 @@
   .participant-meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
-    margin-top: 6px;
+    align-items: center;
+    gap: 4px 12px;
+    margin-top: 4px;
 
     .meta-item {
       display: inline-flex;
       align-items: center;
       gap: 4px;
       font-size: 11px;
+      line-height: 16px;
       color: var(--slate-500);
 
       app-svg {
+        // Inline-flex drops the baseline gap so the icon centres on the label.
+        display: inline-flex;
         color: var(--slate-400);
       }
 
