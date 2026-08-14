@@ -304,7 +304,7 @@ def auto_delete_closed_consultations():
             hours = int(config.consultation_auto_delete_hours)
             if hours == 0:
                 logger.info("Auto-delete of closed consultations is disabled (0 hours)")
-                return
+                continue
 
             now = timezone.now()
             cutoff = now - timedelta(hours=hours)
