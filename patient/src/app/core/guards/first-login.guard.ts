@@ -28,6 +28,13 @@ export class FirstLoginGuard implements CanActivate {
       return true;
     }
 
+    // Temporary users never go through onboarding: their language and
+    // communication method are already set by the practitioner who created
+    // them, and the account is short-lived.
+    if (user.temporary) {
+      return true;
+    }
+
     if (user.is_first_login) {
       this.navCtrl.navigateRoot('/onboarding');
       return false;

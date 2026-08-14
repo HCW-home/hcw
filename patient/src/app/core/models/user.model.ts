@@ -45,6 +45,7 @@ export interface User {
   specialities?: { id: number; name: string }[];
   main_organisation?: IOrganisation | null;
   accepted_term?: number | null;
+  temporary?: boolean;
   is_first_login?: boolean;
   one_time_auth_token?: string;
   verification_code?: number | null;
