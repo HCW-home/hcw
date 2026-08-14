@@ -499,8 +499,9 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
       }
       scheduledAt = `${formValue.date}T${formValue.time}`;
 
-      // Validate scheduled time is not in the past
-      if (new Date(scheduledAt) < new Date()) {
+      // Validate scheduled time is not in the past. Editing an existing
+      // appointment is exempt: a past appointment must stay editable.
+      if (!this.isEditMode && new Date(scheduledAt) < new Date()) {
         this.backendErrors.set({
           date: [this.t.instant('appointmentForm.scheduledInPast')],
           time: [this.t.instant('appointmentForm.scheduledInPast')],

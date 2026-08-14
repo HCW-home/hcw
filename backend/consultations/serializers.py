@@ -735,7 +735,9 @@ class AppointmentSerializer(serializers.ModelSerializer):
         if timezone.is_naive(value):
             value = value.replace(tzinfo=user.user_tz)
 
-        if value < timezone.now():
+        # Only creation must be in the future: an existing appointment stays
+        # editable even once its schedule has passed.
+        if self.instance is None and value < timezone.now():
             raise serializers.ValidationError(
                 _("Scheduled time cannot be in the past.")
             )
@@ -761,7 +763,8 @@ class AppointmentSerializer(serializers.ModelSerializer):
         if timezone.is_naive(value):
             value = value.replace(tzinfo=user.user_tz)
 
-        if value < timezone.now():
+        # Same rule as scheduled_at: the past check applies to creation only.
+        if self.instance is None and value < timezone.now():
             raise serializers.ValidationError(
                 _("End expected at time cannot be in the past.")
             )
