@@ -72,7 +72,9 @@ services:
         condition: service_healthy
 
   scheduler:
-    entrypoint: celery -A core beat --loglevel=info
+    # The schedule database must live outside /app, which is read-only for the
+    # unprivileged runtime user.
+    entrypoint: celery -A core beat --loglevel=info --schedule=/tmp/celerybeat-schedule
     image: docker.io/iabsis/hcw6-backend:${TAG:-latest}
     restart: always
     environment:
