@@ -446,6 +446,12 @@ CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_RESULT_EXTENDED = True
 CELERY_TASK_TRACK_STARTED = True
 
+# Keep the beat state in the database (public schema, django_celery_beat is a
+# shared app) instead of the default local shelve file. Every entry point
+# (Debian unit, Docker Compose, honcho) then behaves the same, and the beat
+# process needs no writable directory at all.
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+
 ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 
