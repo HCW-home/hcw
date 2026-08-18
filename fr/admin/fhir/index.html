@@ -1559,7 +1559,7 @@
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="err">Authorization: Token &lt;token&gt;</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="err">Content-Type: application/fhir+json</span>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="err">{&quot;resourceType&quot;: &quot;Appointment&quot;, &quot;status&quot;: &quot;cancelled&quot;, &quot;start&quot;: &quot;2026-06-01T09:00:00Z&quot;}</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="err">{"resourceType": "Appointment", "status": "cancelled", "start": "2026-06-01T09:00:00Z"}</span>
 </code></pre></div>
 <p><code>Bundle</code> entry <code>fullUrl</code>s and resource references resolve into this namespace too (e.g. <code>https://tenant.local/api/fhir/Appointment/42</code>).</p>
 <blockquote>
@@ -1576,15 +1576,15 @@
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="err">Content-Type: application/fhir+json</span>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
 <a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="err">{</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="err">  &quot;resourceType&quot;: &quot;Appointment&quot;,</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="err">  &quot;status&quot;: &quot;booked&quot;,</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="err">  &quot;start&quot;: &quot;2026-06-01T09:00:00Z&quot;,</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="err">  &quot;end&quot;:   &quot;2026-06-01T09:30:00Z&quot;,</span>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="err">  &quot;identifier&quot;: [</span>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="err">    {&quot;system&quot;: &quot;https://ozonehis.example/ns/appointment-id&quot;, &quot;value&quot;: &quot;OZ-7&quot;}</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="err">  "resourceType": "Appointment",</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="err">  "status": "booked",</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="err">  "start": "2026-06-01T09:00:00Z",</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="err">  "end":   "2026-06-01T09:30:00Z",</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="err">  "identifier": [</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="err">    {"system": "https://ozonehis.example/ns/appointment-id", "value": "OZ-7"}</span>
 <a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="err">  ],</span>
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="err">  &quot;participant&quot;: [</span>
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="err">    {&quot;actor&quot;: {&quot;reference&quot;: &quot;Patient/5&quot;}, &quot;status&quot;: &quot;accepted&quot;}</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="err">  "participant": [</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="err">    {"actor": {"reference": "Patient/5"}, "status": "accepted"}</span>
 <a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="err">  ]</span>
 <a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="err">}</span>
 </code></pre></div>
@@ -1641,9 +1641,9 @@
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="err">Content-Type: application/fhir+json</span>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="err">{</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="err">  &quot;resourceType&quot;: &quot;Appointment&quot;,</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="err">  &quot;status&quot;: &quot;cancelled&quot;,</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="err">  &quot;start&quot;: &quot;2026-06-01T09:00:00Z&quot;</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="err">  "resourceType": "Appointment",</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="err">  "status": "cancelled",</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="err">  "start": "2026-06-01T09:00:00Z"</span>
 <a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="err">}</span>
 </code></pre></div>
 <p>Response codes:</p>
@@ -1757,15 +1757,15 @@ exact.</p>
 <p>If a tenant's FHIR canonical URL must differ from its serving domain (e.g. behind a CDN or reverse-proxy with a different public name), populate the override dict:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># core/settings.py</span>
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">FHIR_SYSTEM_BASE_URL_BY_TENANT</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="s2">&quot;hopital_a&quot;</span><span class="p">:</span> <span class="s2">&quot;https://fhir.hopital-a.santé-publique.fr&quot;</span><span class="p">,</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="s2">&quot;hopital_b&quot;</span><span class="p">:</span> <span class="s2">&quot;https://fhir.hopital-b.santé-publique.fr&quot;</span><span class="p">,</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="s2">"hopital_a"</span><span class="p">:</span> <span class="s2">"https://fhir.hopital-a.santé-publique.fr"</span><span class="p">,</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="s2">"hopital_b"</span><span class="p">:</span> <span class="s2">"https://fhir.hopital-b.santé-publique.fr"</span><span class="p">,</span>
 <a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="p">}</span>
 </code></pre></div>
 <p>Keys are tenant <code>schema_name</code> values.</p>
 <h4 id="per-resource-overrides">Per-resource overrides</h4>
 <p>If you need a non-standard system URL for one resource type (e.g. an OID issued by a national authority), use <code>FHIR_IDENTIFIER_SYSTEMS</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">FHIR_IDENTIFIER_SYSTEMS</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    <span class="s2">&quot;Patient&quot;</span><span class="p">:</span> <span class="s2">&quot;urn:oid:1.2.250.1.71.4.2.7&quot;</span><span class="p">,</span>  <span class="c1"># French RPPS / INSEE-NIR</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    <span class="s2">"Patient"</span><span class="p">:</span> <span class="s2">"urn:oid:1.2.250.1.71.4.2.7"</span><span class="p">,</span>  <span class="c1"># French RPPS / INSEE-NIR</span>
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="p">}</span>
 </code></pre></div>
 <p>Resources absent from this dict use the dynamically derived base URL.</p>
@@ -1826,42 +1826,42 @@ exact.</p>
 <h2 id="quick-reference-curl">Quick reference — curl</h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># 1. Create an appointment carrying an external id</span>
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>https://tenant.local/api/appointments/?format<span class="o">=</span>fhir<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Token TOKEN&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/fhir+json&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="s1">    &quot;resourceType&quot;: &quot;Appointment&quot;,</span>
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="s1">    &quot;status&quot;: &quot;booked&quot;,</span>
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="s1">    &quot;start&quot;: &quot;2026-06-01T09:00:00Z&quot;,</span>
-<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="s1">    &quot;end&quot;:   &quot;2026-06-01T09:30:00Z&quot;,</span>
-<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="s1">    &quot;identifier&quot;: [</span>
-<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="s1">      {&quot;system&quot;: &quot;https://ozonehis.example/ns/appointment-id&quot;, &quot;value&quot;: &quot;OZ-7&quot;}</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Authorization: Token TOKEN"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/fhir+json"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">'{</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="s1">    "resourceType": "Appointment",</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="s1">    "status": "booked",</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="s1">    "start": "2026-06-01T09:00:00Z",</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="s1">    "end":   "2026-06-01T09:30:00Z",</span>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="s1">    "identifier": [</span>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="s1">      {"system": "https://ozonehis.example/ns/appointment-id", "value": "OZ-7"}</span>
 <a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span class="s1">    ],</span>
-<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a><span class="s1">    &quot;participant&quot;: [{&quot;actor&quot;: {&quot;reference&quot;: &quot;Patient/5&quot;}, &quot;status&quot;: &quot;accepted&quot;}]</span>
-<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a><span class="s1">  }&#39;</span>
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a><span class="s1">    "participant": [{"actor": {"reference": "Patient/5"}, "status": "accepted"}]</span>
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a><span class="s1">  }'</span>
 <a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>
 <a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a><span class="c1"># 2. Retrieve it by external id</span>
-<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a>curl<span class="w"> </span><span class="s1">&#39;https://tenant.local/api/appointments/?format=fhir&amp;identifier=https://ozonehis.example/ns/appointment-id|OZ-7&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Token TOKEN&quot;</span>
+<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a>curl<span class="w"> </span><span class="s1">'https://tenant.local/api/appointments/?format=fhir&amp;identifier=https://ozonehis.example/ns/appointment-id|OZ-7'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Authorization: Token TOKEN"</span>
 <a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a>
 <a id="__codelineno-11-20" name="__codelineno-11-20" href="#__codelineno-11-20"></a><span class="c1"># 3. Cancel it (conditional update)</span>
-<a id="__codelineno-11-21" name="__codelineno-11-21" href="#__codelineno-11-21"></a>curl<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span><span class="s1">&#39;https://tenant.local/api/appointments/?identifier=https://ozonehis.example/ns/appointment-id|OZ-7&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-22" name="__codelineno-11-22" href="#__codelineno-11-22"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Token TOKEN&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-23" name="__codelineno-11-23" href="#__codelineno-11-23"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/fhir+json&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-24" name="__codelineno-11-24" href="#__codelineno-11-24"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;resourceType&quot;: &quot;Appointment&quot;, &quot;status&quot;: &quot;cancelled&quot;, &quot;start&quot;: &quot;2026-06-01T09:00:00Z&quot;}&#39;</span>
+<a id="__codelineno-11-21" name="__codelineno-11-21" href="#__codelineno-11-21"></a>curl<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span><span class="s1">'https://tenant.local/api/appointments/?identifier=https://ozonehis.example/ns/appointment-id|OZ-7'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-22" name="__codelineno-11-22" href="#__codelineno-11-22"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Authorization: Token TOKEN"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-23" name="__codelineno-11-23" href="#__codelineno-11-23"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/fhir+json"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-24" name="__codelineno-11-24" href="#__codelineno-11-24"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"resourceType": "Appointment", "status": "cancelled", "start": "2026-06-01T09:00:00Z"}'</span>
 <a id="__codelineno-11-25" name="__codelineno-11-25" href="#__codelineno-11-25"></a>
 <a id="__codelineno-11-26" name="__codelineno-11-26" href="#__codelineno-11-26"></a><span class="c1"># 4. Soft-delete it (conditional delete)</span>
-<a id="__codelineno-11-27" name="__codelineno-11-27" href="#__codelineno-11-27"></a>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span><span class="s1">&#39;https://tenant.local/api/appointments/?identifier=https://ozonehis.example/ns/appointment-id|OZ-7&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-28" name="__codelineno-11-28" href="#__codelineno-11-28"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Token TOKEN&quot;</span>
+<a id="__codelineno-11-27" name="__codelineno-11-27" href="#__codelineno-11-27"></a>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span><span class="s1">'https://tenant.local/api/appointments/?identifier=https://ozonehis.example/ns/appointment-id|OZ-7'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-28" name="__codelineno-11-28" href="#__codelineno-11-28"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Authorization: Token TOKEN"</span>
 <a id="__codelineno-11-29" name="__codelineno-11-29" href="#__codelineno-11-29"></a>
 <a id="__codelineno-11-30" name="__codelineno-11-30" href="#__codelineno-11-30"></a><span class="c1"># 5. Fetch the linked Encounter (consultation note)</span>
-<a id="__codelineno-11-31" name="__codelineno-11-31" href="#__codelineno-11-31"></a>curl<span class="w"> </span><span class="s1">&#39;https://tenant.local/api/consultations/?format=fhir&amp;appointment=https://ozonehis.example/ns/appointment-id|OZ-7&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-32" name="__codelineno-11-32" href="#__codelineno-11-32"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Token TOKEN&quot;</span>
+<a id="__codelineno-11-31" name="__codelineno-11-31" href="#__codelineno-11-31"></a>curl<span class="w"> </span><span class="s1">'https://tenant.local/api/consultations/?format=fhir&amp;appointment=https://ozonehis.example/ns/appointment-id|OZ-7'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-32" name="__codelineno-11-32" href="#__codelineno-11-32"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Authorization: Token TOKEN"</span>
 <a id="__codelineno-11-33" name="__codelineno-11-33" href="#__codelineno-11-33"></a>
 <a id="__codelineno-11-34" name="__codelineno-11-34" href="#__codelineno-11-34"></a><span class="c1"># Same operations against the always-FHIR namespace (no ?format=fhir needed):</span>
 <a id="__codelineno-11-35" name="__codelineno-11-35" href="#__codelineno-11-35"></a><span class="c1">#   POST   https://tenant.local/api/fhir/Appointment</span>
-<a id="__codelineno-11-36" name="__codelineno-11-36" href="#__codelineno-11-36"></a><span class="c1">#   GET    &#39;https://tenant.local/api/fhir/Appointment?identifier=https://ozonehis.example/ns/appointment-id|OZ-7&#39;</span>
-<a id="__codelineno-11-37" name="__codelineno-11-37" href="#__codelineno-11-37"></a><span class="c1">#   PUT    &#39;https://tenant.local/api/fhir/Appointment?identifier=…|OZ-7&#39;</span>
-<a id="__codelineno-11-38" name="__codelineno-11-38" href="#__codelineno-11-38"></a><span class="c1">#   DELETE &#39;https://tenant.local/api/fhir/Appointment?identifier=…|OZ-7&#39;</span>
+<a id="__codelineno-11-36" name="__codelineno-11-36" href="#__codelineno-11-36"></a><span class="c1">#   GET    'https://tenant.local/api/fhir/Appointment?identifier=https://ozonehis.example/ns/appointment-id|OZ-7'</span>
+<a id="__codelineno-11-37" name="__codelineno-11-37" href="#__codelineno-11-37"></a><span class="c1">#   PUT    'https://tenant.local/api/fhir/Appointment?identifier=…|OZ-7'</span>
+<a id="__codelineno-11-38" name="__codelineno-11-38" href="#__codelineno-11-38"></a><span class="c1">#   DELETE 'https://tenant.local/api/fhir/Appointment?identifier=…|OZ-7'</span>
 <a id="__codelineno-11-39" name="__codelineno-11-39" href="#__codelineno-11-39"></a><span class="c1">#   GET     https://tenant.local/api/fhir/metadata     # CapabilityStatement</span>
 </code></pre></div>
 
