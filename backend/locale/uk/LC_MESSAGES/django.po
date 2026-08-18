@@ -843,6 +843,10 @@ msgstr "Сталася необроблена помилка"
 msgid "English"
 msgstr "Англійська"
 
+#: core/settings.py:264
+msgid "Arabic"
+msgstr "Арабська"
+
 #: core/settings.py:257
 msgid "German"
 msgstr "Німецька"

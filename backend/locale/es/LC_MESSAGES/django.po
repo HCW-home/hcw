@@ -854,6 +854,10 @@ msgstr "Se ha producido un error no controlado."
 msgid "English"
 msgstr "Inglés"
 
+#: core/settings.py:264
+msgid "Arabic"
+msgstr "Árabe"
+
 #: core/settings.py:257
 msgid "German"
 msgstr "Alemán"

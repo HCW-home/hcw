@@ -862,6 +862,10 @@ msgstr "Si è verificato un errore non gestito."
 msgid "English"
 msgstr "Inglese"
 
+#: core/settings.py:264
+msgid "Arabic"
+msgstr "Arabo"
+
 #: core/settings.py:257
 msgid "German"
 msgstr "tedesco"

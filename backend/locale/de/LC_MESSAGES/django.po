@@ -870,6 +870,10 @@ msgstr "Es ist ein unbehandelter Fehler aufgetreten."
 msgid "English"
 msgstr "Englisch"
 
+#: core/settings.py:264
+msgid "Arabic"
+msgstr "Arabisch"
+
 #: core/settings.py:257
 msgid "German"
 msgstr "Deutsch"

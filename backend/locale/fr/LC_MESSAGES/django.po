@@ -862,6 +862,10 @@ msgstr "Une erreur non gérée s'est produite"
 msgid "English"
 msgstr "Anglais"
 
+#: core/settings.py:264
+msgid "Arabic"
+msgstr "Arabe"
+
 #: core/settings.py:257
 msgid "German"
 msgstr "Allemand"
