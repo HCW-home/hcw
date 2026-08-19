@@ -81,7 +81,7 @@
       letter-spacing: 0.32px;
       width: calc(100% - 5px);
       color: var(--slate-800);
-      border: 2px solid var(--slate-200);
+      border: 1px solid var(--slate-200);
       background: var(--White);
       font-family: "Plus Jakarta Sans", "Source Sans Pro", sans-serif;
 
@@ -98,7 +98,7 @@
       }
 
       &:focus {
-        border: 2px solid var(--primary-400);
+        border: 1px solid var(--primary-400);
       }
 
       :disabled {
@@ -114,7 +114,7 @@
       }
 
       &.has-value {
-        border: 2px solid var(--primary-400);
+        border: 1px solid var(--primary-400);
       }
 
       &.small {
@@ -127,7 +127,7 @@
 
       &.invalid {
         color: var(--rose-500);
-        border: 2px solid var(--rose-500);
+        border: 1px solid var(--rose-500);
       }
     }
 

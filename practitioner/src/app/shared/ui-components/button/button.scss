@@ -21,7 +21,7 @@
     font-family: "Plus Jakarta Sans", "Source Sans Pro", sans-serif;
     font-weight: 600;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 2px solid transparent;
+    border: 1px solid transparent;
 
     &.large {
       padding: 16px 24px;
@@ -107,7 +107,7 @@
 
     &.stroke {
       background: transparent;
-      border: 2px solid var(--primary-500);
+      border: 1px solid var(--primary-500);
       color: var(--primary-600);
 
       //::ng-deep svg {
@@ -238,7 +238,7 @@
     &.filled-stroke {
       background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
       color: var(--White);
-      border: 2px solid var(--primary-500);
+      border: 1px solid var(--primary-500);
       box-shadow: 0 4px 14px rgba(var(--primary-500-rgb), 0.3);
 
       &:hover {
