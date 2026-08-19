@@ -46,11 +46,18 @@
   }
 
   .section-card {
+    // Inner radius = the card radius minus its 1px border, so a child that
+    // paints its own background lines up with the rounded corner.
+    --card-inner-radius: 15px;
+
     background: var(--White);
     border-radius: 16px;
     border: 1px solid var(--slate-100);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    // Not clipped: .join-error-bubble is meant to hang below the card. The
+    // children carry matching radii instead, otherwise their square
+    // backgrounds paint over the rounded corners.
     overflow: visible;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 
     .section-header {
       display: flex;
@@ -59,6 +66,7 @@
       padding: 20px 24px;
       border-bottom: 1px solid var(--slate-100);
       background: var(--White);
+      border-radius: var(--card-inner-radius) var(--card-inner-radius) 0 0;
 
       .header-left {
         display: flex;
@@ -99,6 +107,21 @@
 
     .section-content {
       padding: 0;
+
+      // The card border already closes the list: a rule on the last row would
+      // double it, and its background has to follow the rounded corners.
+      > :last-child,
+      .appointments-list > :last-child,
+      .overdue-list > :last-child {
+        border-bottom: none;
+        border-radius: 0 0 var(--card-inner-radius) var(--card-inner-radius);
+      }
+
+      // A component host does not clip its own template, so this one has to.
+      .overdue-list > app-consultation-row-item:last-child {
+        display: block;
+        overflow: hidden;
+      }
     }
   }
 
