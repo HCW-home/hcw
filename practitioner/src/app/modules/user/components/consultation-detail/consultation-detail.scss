@@ -52,16 +52,24 @@
   border: 1px solid var(--slate-100);
 
   &.editing {
-    border: 2px solid var(--primary-200);
+    border-color: var(--primary-200);
+
+    // The form sits under a ruled header, as in the read-only strip.
+    .info-header {
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--slate-100);
+    }
   }
 
-  .inline-edit-title {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .description-edit {
-    margin-bottom: 28px;
+  .edit-eyebrow {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--slate-400);
   }
 
   .info-placeholder {
@@ -122,6 +130,145 @@
       margin-top: 10px;
       font-size: 14px;
       color: var(--slate-400);
+    }
+  }
+
+  // Edit mode: labelled fields laid out in rows, in place of the read-only
+  // strip of cells.
+  .edit-form {
+    gap: 20px;
+    display: flex;
+    flex-direction: column;
+
+    .edit-row {
+      display: grid;
+      gap: 16px;
+      align-items: start;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+
+      &.three {
+        grid-template-columns: repeat(auto-fit, minmax(248px, 1fr));
+      }
+    }
+
+    .edit-field {
+      gap: 8px;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+
+      &.full-width {
+        grid-column: 1 / -1;
+      }
+    }
+
+    .edit-label {
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 20px;
+      letter-spacing: 0.32px;
+      color: var(--slate-800);
+
+      .required-indicator {
+        color: var(--rose-500);
+        margin-left: 2px;
+      }
+    }
+
+    // Label, optional qualifier and character count share one baseline.
+    .edit-label-row {
+      gap: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+    }
+
+    .edit-hint {
+      font-size: 13px;
+      line-height: 18px;
+      color: var(--slate-500);
+    }
+
+    .edit-count {
+      font-size: 13px;
+      margin-left: auto;
+      color: var(--slate-400);
+      font-variant-numeric: tabular-nums;
+    }
+
+    // Titled block, in place of the bare rule that used to split the form.
+    .edit-section {
+      gap: 16px;
+      display: flex;
+      padding-top: 20px;
+      flex-direction: column;
+      border-top: 1px solid var(--slate-100);
+    }
+
+    .edit-section-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--slate-700);
+    }
+
+    // The creator cannot be changed: shown as a read-only chip the height of
+    // the field beside it.
+    .readonly-user {
+      gap: 10px;
+      display: flex;
+      padding: 8px 12px;
+      align-items: center;
+      border-radius: 12px;
+      background: var(--slate-50);
+      border: 1px solid var(--slate-100);
+    }
+
+    .readonly-user-name {
+      font-size: 14px;
+      font-weight: 600;
+      flex: 0 0 auto;
+      color: var(--slate-800);
+    }
+
+    .readonly-user-meta {
+      min-width: 0;
+      font-size: 13px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      color: var(--slate-500);
+    }
+
+    .edit-toggle-card {
+      gap: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      padding: 14px 16px;
+      align-items: center;
+      border-radius: 12px;
+      background: var(--slate-50);
+      border: 1px solid var(--slate-100);
+    }
+
+    .edit-toggle-text {
+      gap: 2px;
+      min-width: 0;
+      display: flex;
+      flex: 1 1 240px;
+      flex-direction: column;
+    }
+
+    .edit-toggle-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--slate-800);
+    }
+
+    .edit-toggle-sub {
+      font-size: 13px;
+      line-height: 18px;
+      color: var(--slate-500);
     }
   }
 
@@ -779,15 +926,6 @@
     span {
       flex: 1;
     }
-  }
-}
-
-// When a temporary beneficiary makes the PATIENT item span the whole grid
-// row, keep its content at a readable, left-aligned width instead of
-// stretching the picker edge to edge.
-.info-item.full-width {
-  app-contact-picker {
-    max-width: 520px;
   }
 }
 

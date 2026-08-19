@@ -996,7 +996,12 @@
     "startsInHours": "Dans {{hours}} h",
     "moreActions": "Plus d'actions",
     "assignPractitioner": "Assigner un praticien",
-    "notProvided": "Non renseigné"
+    "notProvided": "Non renseigné",
+    "editingHeading": "Modification du suivi",
+    "followUpTitle": "Titre du suivi",
+    "descriptionHint": "Optionnel · visible par le patient",
+    "visibleByPatientHint": "Le patient peut consulter ce suivi et y envoyer des messages.",
+    "permissionsSection": "Permission et accès"
   },
   "appointmentFormModal": {
     "editAppointment": "Modifier le rendez-vous",
@@ -1186,10 +1191,6 @@
     "createContactFormHint": "Ouvre le formulaire de contact complet",
     "createLinkOnly": "Inviter via un lien",
     "createLinkOnlyHint": "Sans e-mail ni mobile — vous transmettez le lien vous-même",
-    "idleHelper": "Pas encore de compte ? Saisissez son e-mail ou son mobile, l'invité sera créé automatiquement.",
-    "idleHelperEmail": "Pas encore de compte ? Saisissez son e-mail, l'invité sera créé automatiquement.",
-    "idleHelperSms": "Pas encore de compte ? Saisissez son mobile, l'invité sera créé automatiquement.",
-    "idleHelperLinkOnly": "Pas encore de compte ? Créez un contact et transmettez-lui son lien d'accès.",
     "change": "Changer",
     "tagAccount": "Compte existant",
     "tagAccountShort": "Compte",

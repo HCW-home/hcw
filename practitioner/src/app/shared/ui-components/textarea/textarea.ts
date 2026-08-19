@@ -31,6 +31,8 @@ export class Textarea {
   label = input<string>();
   id = input<string>();
   rows = input<number>(4);
+  /** Caps further typing; a longer pre-filled value is left untouched. */
+  maxlength = input<number | null>(null);
 
   value = '';
   disabled = false;

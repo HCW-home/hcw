@@ -342,7 +342,12 @@
     "startsInHours": "Tra {{hours}} h",
     "moreActions": "Altre azioni",
     "assignPractitioner": "Assegnare un medico",
-    "notProvided": "Non indicato"
+    "notProvided": "Non indicato",
+    "editingHeading": "Modifica del percorso",
+    "followUpTitle": "Titolo del percorso",
+    "descriptionHint": "Facoltativo · visibile al paziente",
+    "visibleByPatientHint": "Il paziente può consultare questo percorso e inviarvi messaggi.",
+    "permissionsSection": "Autorizzazioni e accesso"
   },
   "appointmentForm": {
     "online": "Video",
@@ -1222,10 +1227,6 @@
     "createContactFormHint": "Apre il modulo contatto completo",
     "createLinkOnly": "Invita tramite un link",
     "createLinkOnlyHint": "Senza e-mail né cellulare: condividi tu il link",
-    "idleHelper": "Non ha ancora un account? Inserisci la sua e-mail o il cellulare, l'ospite verrà creato automaticamente.",
-    "idleHelperEmail": "Non ha ancora un account? Inserisci la sua e-mail, l'ospite verrà creato automaticamente.",
-    "idleHelperSms": "Non ha ancora un account? Inserisci il suo cellulare, l'ospite verrà creato automaticamente.",
-    "idleHelperLinkOnly": "Non ha ancora un account? Crea un contatto e condividi il suo link di accesso.",
     "change": "Cambia",
     "tagAccount": "Account esistente",
     "tagAccountShort": "Account",

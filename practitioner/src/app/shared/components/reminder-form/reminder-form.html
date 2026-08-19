@@ -12,6 +12,7 @@
         [label]="'reminders.recipient' | translate"
         [placeholder]="'reminders.recipientPlaceholder' | translate"
         [required]="true"
+        [allowManualLink]="false"
         [meUser]="currentUser()"
         [initialUser]="displayRecipient"
         [backendErrors]="externalContactErrors()"

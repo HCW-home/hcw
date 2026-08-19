@@ -13,24 +13,17 @@
         <div class="consultation-info-card" [class.editing]="isEditMode()">
           <form [formGroup]="editForm">
           <div class="info-header">
+            @if (isEditMode()) {
+            <span class="edit-eyebrow"
+              >{{ 'consultationDetail.editingHeading' | translate }}</span
+            >
+            }
             <div class="header-top-row">
               <div class="title-row">
-                @if (isEditMode()) {
-                <app-input
-                  class="inline-edit-title"
-                  [placeholder]="'consultationDetail.titlePlaceholder' | translate"
-                  formControlName="title">
-                </app-input>
-                } @else {
                 <div class="consultation-title-block">
-                  <h2 class="consultation-title">
-                    {{ consultation()?.title ||
-                    ('consultationDetail.consultationNumber' | translate: { id:
-                    consultation()?.id }) }}
-                  </h2>
+                  <h2 class="consultation-title">{{ headerTitle() }}</h2>
                   <span class="consultation-id">{{ formatConsultationId(consultation()!.id) }}</span>
                 </div>
-                }
                 <app-badge
                   [dot]="true"
                   [size]="BadgeSizeEnum.medium"
@@ -107,36 +100,172 @@
               consultation()!.created_at | date: 'longDate' }}</span
             >
           </div>
-
           @if (isEditMode()) {
-          <div class="description-edit">
-            <app-textarea
-              [label]="'consultationDetail.description' | translate"
-              [placeholder]="'consultationDetail.descriptionPlaceholder' | translate"
-              [rows]="3"
-              formControlName="description">
-            </app-textarea>
+          <div class="edit-form">
+            <div class="edit-row">
+              <div class="edit-field">
+                <app-input
+                  [label]="'consultationDetail.followUpTitle' | translate"
+                  [placeholder]="'consultationDetail.titlePlaceholder' | translate"
+                  formControlName="title">
+                </app-input>
+              </div>
+
+              @if (consultation()?.created_by) {
+              <div class="edit-field">
+                <span class="edit-label"
+                  >{{ 'consultationDetail.createdBy' | translate }}</span
+                >
+                <div class="readonly-user">
+                  <app-user-avatar
+                    size="sm"
+                    [firstName]="consultation()!.created_by.first_name"
+                    [lastName]="consultation()!.created_by.last_name"
+                    [email]="consultation()!.created_by.email"
+                    [picture]="consultation()!.created_by.picture || ''"
+                    [isCurrentUser]="isCreatedByCurrentUser()">
+                  </app-user-avatar>
+                  <span class="readonly-user-name"
+                    >{{ getCreatedByDisplayName() }}</span
+                  >
+                  <span class="readonly-user-meta"
+                    >{{ consultation()!.created_by.email }}</span
+                  >
+                </div>
+              </div>
+              }
+            </div>
+
+            <div class="edit-field">
+              <div class="edit-label-row">
+                <label class="edit-label" for="consultation-description"
+                  >{{ 'consultationDetail.description' | translate }}</label
+                >
+                <span class="edit-hint"
+                  >{{ 'consultationDetail.descriptionHint' | translate }}</span
+                >
+                <span class="edit-count"
+                  >{{ descriptionLength() }}/{{ DESCRIPTION_MAX_LENGTH }}</span
+                >
+              </div>
+              <app-textarea
+                name="consultation-description"
+                [placeholder]="'consultationDetail.descriptionPlaceholder' | translate"
+                [rows]="3"
+                [maxlength]="DESCRIPTION_MAX_LENGTH"
+                formControlName="description">
+              </app-textarea>
+            </div>
+
+            @if (customFields().length > 0 && editForm.get('custom_fields')) {
+            <div class="edit-row three" formGroupName="custom_fields">
+              @for (field of customFields(); track field.id) {
+              <div class="edit-field" [class.full-width]="field.field_type === 'long_text'">
+                @switch (field.field_type) { @case ('short_text') {
+                <app-input
+                  [label]="field.name"
+                  [required]="field.required"
+                  [formControlName]="field.id.toString()">
+                </app-input>
+                } @case ('long_text') {
+                <app-textarea
+                  [label]="field.name"
+                  [rows]="3"
+                  [formControlName]="field.id.toString()">
+                </app-textarea>
+                } @case ('date') {
+                <app-input
+                  [label]="field.name"
+                  [required]="field.required"
+                  type="date"
+                  [formControlName]="field.id.toString()">
+                </app-input>
+                } @case ('number') {
+                <app-input
+                  [label]="field.name"
+                  [required]="field.required"
+                  type="number"
+                  [formControlName]="field.id.toString()">
+                </app-input>
+                } @case ('list') {
+                <app-select
+                  [label]="field.name"
+                  [options]="getCustomFieldOptions(field)"
+                  [formControlName]="field.id.toString()">
+                </app-select>
+                } }
+              </div>
+              }
+            </div>
+            }
+
+            <div class="edit-section">
+              <h3 class="edit-section-title">
+                {{ 'consultationDetail.permissionsSection' | translate }}
+              </h3>
+
+              <div class="edit-row three">
+                <div class="edit-field">
+                  <app-contact-picker
+                    #beneficiaryPickerRef
+                    [label]="'consultationDetail.patient' | translate"
+                    [required]="true"
+                    [placeholder]="'consultationDetail.searchPatient' | translate"
+                    [meUser]="currentUser()"
+                    [initialUser]="selectedBeneficiary()"
+                    [backendErrors]="externalBeneficiaryErrors()"
+                    (selectionChange)="onBeneficiarySelection($event)"
+                    formControlName="beneficiary_id">
+                  </app-contact-picker>
+                </div>
+
+                <div class="edit-field">
+                  <app-select
+                    [label]="'consultationDetail.practitioner' | translate"
+                    [placeholder]="'consultationDetail.searchPractitioner' | translate"
+                    [options]="[]"
+                    [asyncSearch]="practitionerSearchFn"
+                    [initialOption]="ownerInitialOption()"
+                    [clearable]="true"
+                    formControlName="owned_by_id">
+                  </app-select>
+                </div>
+
+                <div class="edit-field">
+                  <app-select
+                    [label]="'consultationDetail.queue' | translate"
+                    [options]="queueOptions()"
+                    [placeholder]="queueOptions().length === 0 ? ('consultationForm.selectGroupNoGroups' | translate) : ('consultationDetail.selectGroup' | translate)"
+                    [clearable]="true"
+                    formControlName="group_id">
+                  </app-select>
+                </div>
+              </div>
+
+              <div class="edit-toggle-card">
+                <div class="edit-toggle-text">
+                  <span class="edit-toggle-title"
+                    >{{ 'consultationForm.visibleByPatient' | translate }}</span
+                  >
+                  <span class="edit-toggle-sub"
+                    >{{ 'consultationDetail.visibleByPatientHint' | translate }}</span
+                  >
+                </div>
+                <app-switch formControlName="visible_by_patient"></app-switch>
+              </div>
+            </div>
           </div>
-          } @else if (consultation()?.description) {
+          } @else {
+          @if (consultation()?.description) {
           <p class="description">{{ consultation()?.description }}</p>
           }
 
           <div class="info-grid">
-            <div class="info-item" [class.full-width]="isEditMode() && isExternalBeneficiary()">
+            <div class="info-item">
               <span class="info-label"
                 >{{ 'consultationDetail.patient' | translate }}</span
               >
-              @if (isEditMode()) {
-              <app-contact-picker
-                #beneficiaryPickerRef
-                [placeholder]="'consultationDetail.searchPatient' | translate"
-                [meUser]="currentUser()"
-                [initialUser]="selectedBeneficiary()"
-                [backendErrors]="externalBeneficiaryErrors()"
-                (selectionChange)="onBeneficiarySelection($event)"
-                formControlName="beneficiary_id">
-              </app-contact-picker>
-              } @else if (consultation()?.beneficiary) {
+              @if (consultation()?.beneficiary) {
               <div class="info-user">
                 <app-user-avatar
                   [firstName]="consultation()?.beneficiary?.first_name || ''"
@@ -225,16 +354,7 @@
               <span class="info-label"
                 >{{ 'consultationDetail.practitioner' | translate }}</span
               >
-              @if (isEditMode()) {
-              <app-select
-                [placeholder]="'consultationDetail.searchPractitioner' | translate"
-                [options]="[]"
-                [asyncSearch]="practitionerSearchFn"
-                [initialOption]="ownerInitialOption()"
-                [clearable]="true"
-                formControlName="owned_by_id">
-              </app-select>
-              } @else if (consultation()?.owned_by) {
+              @if (consultation()?.owned_by) {
               <div class="info-user">
                 <app-user-avatar
                   [firstName]="consultation()!.owned_by!.first_name"
@@ -245,9 +365,7 @@
                   [isCurrentUser]="isOwnerCurrentUser()">
                 </app-user-avatar>
                 <div class="info-user-details">
-                  <span class="info-value"
-                    >{{ getOwnerDisplayName() }}</span
-                  >
+                  <span class="info-value">{{ getOwnerDisplayName() }}</span>
                   @if (getUserSubLine(consultation()!.owned_by,
                   getOwnerDisplayName()); as sub) {
                   <span class="info-sub">
@@ -279,14 +397,7 @@
               <span class="info-label"
                 >{{ 'consultationDetail.queue' | translate }}</span
               >
-              @if (isEditMode()) {
-              <app-select
-                [options]="queueOptions()"
-                [placeholder]="queueOptions().length === 0 ? ('consultationForm.selectGroupNoGroups' | translate) : ('consultationDetail.selectGroup' | translate)"
-                [clearable]="true"
-                formControlName="group_id">
-              </app-select>
-              } @else if (consultation()?.group) {
+              @if (consultation()?.group) {
               <span class="info-value">{{ consultation()!.group!.name }}</span>
               } @else {
               <span class="info-placeholder">—</span>
@@ -294,56 +405,7 @@
               }
             </div>
 
-            @if (isEditMode()) {
-            <div class="info-item">
-              <app-checkbox
-                [label]="'consultationForm.visibleByPatient' | translate"
-                formControlName="visible_by_patient">
-              </app-checkbox>
-            </div>
-            }
-
-            @if (isEditMode() && customFields().length > 0 && editForm.get('custom_fields')) {
-            <ng-container formGroupName="custom_fields">
-              @for (field of customFields(); track field.id) {
-              <div class="info-item" [class.full-width]="field.field_type === 'long_text'">
-                @switch (field.field_type) { @case ('short_text') {
-                <app-input
-                  [label]="field.name"
-                  [required]="field.required"
-                  [formControlName]="field.id.toString()">
-                </app-input>
-                } @case ('long_text') {
-                <app-textarea
-                  [label]="field.name"
-                  [rows]="3"
-                  [formControlName]="field.id.toString()">
-                </app-textarea>
-                } @case ('date') {
-                <app-input
-                  [label]="field.name"
-                  [required]="field.required"
-                  type="date"
-                  [formControlName]="field.id.toString()">
-                </app-input>
-                } @case ('number') {
-                <app-input
-                  [label]="field.name"
-                  [required]="field.required"
-                  type="number"
-                  [formControlName]="field.id.toString()">
-                </app-input>
-                } @case ('list') {
-                <app-select
-                  [label]="field.name"
-                  [options]="getCustomFieldOptions(field)"
-                  [formControlName]="field.id.toString()">
-                </app-select>
-                } }
-              </div>
-              }
-            </ng-container>
-            } @else if (consultation()?.custom_fields?.length) {
+            @if (consultation()?.custom_fields?.length) {
               @for (cf of consultation()!.custom_fields!; track cf.field) {
               <div class="info-item" [class.full-width]="cf.field_type === 'long_text'">
                 <span class="info-label">{{ cf.field_name }}</span>
@@ -352,6 +414,7 @@
               }
             }
           </div>
+          }
           </form>
         </div>
 

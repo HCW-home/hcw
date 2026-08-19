@@ -586,7 +586,12 @@
     "startsInHours": "In {{hours}} Std.",
     "moreActions": "Weitere Aktionen",
     "assignPractitioner": "Behandler zuweisen",
-    "notProvided": "Nicht angegeben"
+    "notProvided": "Nicht angegeben",
+    "editingHeading": "Bearbeitung der Betreuung",
+    "followUpTitle": "Titel der Betreuung",
+    "descriptionHint": "Optional · für den Patienten sichtbar",
+    "visibleByPatientHint": "Der Patient kann diese Betreuung einsehen und darin Nachrichten senden.",
+    "permissionsSection": "Berechtigungen und Zugriff"
   },
   "participantItem": {
     "unknown": "Unbekannt",
@@ -1196,10 +1201,6 @@
     "createContactFormHint": "Öffnet das vollständige Kontaktformular",
     "createLinkOnly": "Per Link einladen",
     "createLinkOnlyHint": "Ohne E-Mail und Mobilnummer — Sie übermitteln den Link selbst",
-    "idleHelper": "Noch kein Konto? Geben Sie die E-Mail oder Mobilnummer ein, der Gast wird automatisch angelegt.",
-    "idleHelperEmail": "Noch kein Konto? Geben Sie die E-Mail ein, der Gast wird automatisch angelegt.",
-    "idleHelperSms": "Noch kein Konto? Geben Sie die Mobilnummer ein, der Gast wird automatisch angelegt.",
-    "idleHelperLinkOnly": "Noch kein Konto? Legen Sie einen Kontakt an und übermitteln Sie den Zugangslink.",
     "change": "Ändern",
     "tagAccount": "Bestehendes Konto",
     "tagAccountShort": "Konto",

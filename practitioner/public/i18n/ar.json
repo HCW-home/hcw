@@ -852,7 +852,12 @@
     "startsInHours": "خلال {{hours}} ساعة",
     "moreActions": "إجراءات أخرى",
     "assignPractitioner": "تعيين ممارس",
-    "notProvided": "غير محدد"
+    "notProvided": "غير محدد",
+    "editingHeading": "تعديل المتابعة",
+    "followUpTitle": "عنوان المتابعة",
+    "descriptionHint": "اختياري · مرئي للمريض",
+    "visibleByPatientHint": "يمكن للمريض الاطلاع على هذه المتابعة وإرسال رسائل فيها.",
+    "permissionsSection": "الأذونات والوصول"
   },
   "appointmentFormModal": {
     "editAppointment": "تعديل الموعد",
@@ -1339,10 +1344,6 @@
     "createContactFormHint": "يفتح نموذج جهة الاتصال الكامل",
     "createLinkOnly": "الدعوة عبر رابط",
     "createLinkOnlyHint": "بدون بريد إلكتروني أو جوال — ترسل الرابط بنفسك",
-    "idleHelper": "لا يوجد حساب بعد؟ أدخل البريد الإلكتروني أو رقم الجوال وسيتم إنشاء الضيف تلقائيًا.",
-    "idleHelperEmail": "لا يوجد حساب بعد؟ أدخل البريد الإلكتروني وسيتم إنشاء الضيف تلقائيًا.",
-    "idleHelperSms": "لا يوجد حساب بعد؟ أدخل رقم الجوال وسيتم إنشاء الضيف تلقائيًا.",
-    "idleHelperLinkOnly": "لا يوجد حساب بعد؟ أنشئ جهة اتصال وأرسل لها رابط الدخول.",
     "change": "تغيير",
     "tagAccount": "حساب موجود",
     "tagAccountShort": "حساب",

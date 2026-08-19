@@ -56,7 +56,7 @@ import { Button } from '../../../../shared/ui-components/button/button';
 import { Badge } from '../../../../shared/components/badge/badge';
 import { Input } from '../../../../shared/ui-components/input/input';
 import { Textarea } from '../../../../shared/ui-components/textarea/textarea';
-import { Checkbox } from '../../../../shared/ui-components/checkbox/checkbox';
+import { Switch } from '../../../../shared/ui-components/switch/switch';
 import { Select, AsyncSearchFn, AsyncSearchResult } from '../../../../shared/ui-components/select/select';
 import { SelectOption } from '../../../../shared/models/select';
 import {
@@ -103,7 +103,7 @@ import { TranslationService } from '../../../../core/services/translation.servic
     Badge,
     Input,
     Textarea,
-    Checkbox,
+    Switch,
     Select,
     AppointmentFormModal,
     ReminderFormModal,
@@ -218,6 +218,21 @@ export class ConsultationDetail implements OnInit, OnDestroy {
   isSavingConsultation = signal(false);
   queues = signal<Queue[]>([]);
   editForm!: FormGroup;
+  /** Mirrors the title and description controls so the view can react to them. */
+  editTitle = signal('');
+  descriptionLength = signal(0);
+  protected readonly DESCRIPTION_MAX_LENGTH = 500;
+
+  /** Card heading: follows the field while editing, the saved title otherwise. */
+  headerTitle = computed<string>(() => {
+    const fallback = this.t.instant('consultationDetail.consultationNumber', {
+      id: String(this.consultation()?.id ?? ''),
+    });
+    const title = this.isEditMode()
+      ? this.editTitle()
+      : this.consultation()?.title;
+    return title || fallback;
+  });
   selectedBeneficiary = signal<IUser | null>(null);
   selectedOwner = signal<IUser | null>(null);
   ownerInitialOption = signal<SelectOption | null>(null);
@@ -389,6 +404,15 @@ export class ConsultationDetail implements OnInit, OnDestroy {
       group_id: [''],
       visible_by_patient: [true],
     });
+
+    // The card header shows the title being typed, so it has to follow it.
+    this.editForm.get('title')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(value => this.editTitle.set(value || ''));
+
+    this.editForm.get('description')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(value => this.descriptionLength.set((value || '').length));
 
     this.editForm.get('owned_by_id')?.valueChanges
       .pipe(takeUntil(this.destroy$))

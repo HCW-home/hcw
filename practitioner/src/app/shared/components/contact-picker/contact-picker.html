@@ -19,6 +19,7 @@
           [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
       </span>
       <input
+        #searchInput
         type="text"
         class="search-input"
         [id]="inputId"
@@ -104,7 +105,7 @@
       </button>
       }
 
-      @if (allowGuests && !query()) {
+      @if (canCreateLinkOnly) {
       <button type="button" class="dropdown-row action" (click)="createLinkOnly()">
         <span class="row-avatar neutral">
           <app-svg

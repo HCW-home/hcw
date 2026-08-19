@@ -932,7 +932,12 @@
     "startsInHours": "En {{hours}} h",
     "moreActions": "Más acciones",
     "assignPractitioner": "Asignar un profesional",
-    "notProvided": "No indicado"
+    "notProvided": "No indicado",
+    "editingHeading": "Modificación del seguimiento",
+    "followUpTitle": "Título del seguimiento",
+    "descriptionHint": "Opcional · visible para el paciente",
+    "visibleByPatientHint": "El paciente puede consultar este seguimiento y enviar mensajes en él.",
+    "permissionsSection": "Permisos y acceso"
   },
   "appointmentFormModal": {
     "editAppointment": "Editar cita",
@@ -1222,10 +1227,6 @@
     "createContactFormHint": "Abre el formulario de contacto completo",
     "createLinkOnly": "Invitar mediante un enlace",
     "createLinkOnlyHint": "Sin correo ni móvil: usted comparte el enlace",
-    "idleHelper": "¿Aún no tiene cuenta? Escriba su correo o su móvil y el invitado se creará automáticamente.",
-    "idleHelperEmail": "¿Aún no tiene cuenta? Escriba su correo y el invitado se creará automáticamente.",
-    "idleHelperSms": "¿Aún no tiene cuenta? Escriba su móvil y el invitado se creará automáticamente.",
-    "idleHelperLinkOnly": "¿Aún no tiene cuenta? Cree un contacto y compártale su enlace de acceso.",
     "change": "Cambiar",
     "tagAccount": "Cuenta existente",
     "tagAccountShort": "Cuenta",

@@ -852,7 +852,12 @@
     "startsInHours": "In {{hours}} h",
     "moreActions": "More actions",
     "assignPractitioner": "Assign a practitioner",
-    "notProvided": "Not provided"
+    "notProvided": "Not provided",
+    "editingHeading": "Editing the follow-up",
+    "followUpTitle": "Follow-up title",
+    "descriptionHint": "Optional · visible to the patient",
+    "visibleByPatientHint": "The patient can read this follow-up and send messages in it.",
+    "permissionsSection": "Permissions and access"
   },
   "appointmentFormModal": {
     "editAppointment": "Edit Appointment",
@@ -1339,10 +1344,6 @@
     "createContactFormHint": "Opens the full contact form",
     "createLinkOnly": "Invite with a link",
     "createLinkOnlyHint": "No email nor mobile — you share the link yourself",
-    "idleHelper": "No account yet? Enter their email or mobile number and the guest will be created automatically.",
-    "idleHelperEmail": "No account yet? Enter their email and the guest will be created automatically.",
-    "idleHelperSms": "No account yet? Enter their mobile number and the guest will be created automatically.",
-    "idleHelperLinkOnly": "No account yet? Create a contact and share their access link.",
     "change": "Change",
     "tagAccount": "Existing account",
     "tagAccountShort": "Account",

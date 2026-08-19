@@ -6,6 +6,7 @@ import {
   OnInit,
   OnDestroy,
   Component,
+  AfterViewInit,
   ViewChild,
   forwardRef,
   ElementRef,
@@ -88,8 +89,11 @@ const DROPDOWN_MAX_HEIGHT = 320;
     TranslatePipe,
   ],
 })
-export class ContactPicker implements OnInit, OnDestroy, ControlValueAccessor {
+export class ContactPicker
+  implements OnInit, AfterViewInit, OnDestroy, ControlValueAccessor
+{
   @ViewChild('searchWrapper') searchWrapper?: ElementRef<HTMLDivElement>;
+  @ViewChild('searchInput') searchInput?: ElementRef<HTMLInputElement>;
 
   @Input() label = '';
   @Input() placeholder = '';
@@ -115,6 +119,12 @@ export class ContactPicker implements OnInit, OnDestroy, ControlValueAccessor {
   @Input() onlyPractitioners = false;
   /** Allow inviting someone who has no account yet. */
   @Input() allowGuests = true;
+  /**
+   * Allow contacts reachable only through a link handed over by the
+   * practitioner. Turned off where something has to be delivered on its own,
+   * such as a reminder: there would be nowhere to send it.
+   */
+  @Input() allowManualLink = true;
   /** Add the "can read the follow-up messages" checkbox to the selection. */
   @Input() showVisibility = false;
   /** Onboarding wizard: pulse the search field. */
@@ -123,6 +133,8 @@ export class ContactPicker implements OnInit, OnDestroy, ControlValueAccessor {
   @Input() highlightDetails = false;
   /** Onboarding wizard: pulse the follow-up visibility checkbox. */
   @Input() highlightVisibility = false;
+  /** Put the cursor in the search field as soon as the picker appears. */
+  @Input() autoFocus = false;
   /** Backend field errors keyed by contact field (email/mobile_phone_number). */
   @Input() set backendErrors(errors: Record<string, string[]>) {
     this._backendErrors.set(errors || {});
@@ -200,6 +212,18 @@ export class ContactPicker implements OnInit, OnDestroy, ControlValueAccessor {
     window.addEventListener('resize', this.updateDropdownPosition);
   }
 
+  ngAfterViewInit(): void {
+    if (!this.autoFocus) return;
+    // Wait for the host (usually a modal) to finish laying out, otherwise the
+    // dropdown would be positioned against a box that is still moving.
+    requestAnimationFrame(() => this.focusSearch());
+  }
+
+  /** Give the search field the cursor, if it is on screen. */
+  focusSearch(): void {
+    this.searchInput?.nativeElement.focus();
+  }
+
   ngOnDestroy(): void {
     window.removeEventListener('scroll', this.updateDropdownPosition, true);
     window.removeEventListener('resize', this.updateDropdownPosition);
@@ -249,7 +273,8 @@ export class ContactPicker implements OnInit, OnDestroy, ControlValueAccessor {
    */
   private get supportedChannels(): Set<ContactChannel> {
     const methods = this.availableCommunicationMethods();
-    const channels = new Set<ContactChannel>(['manual']);
+    const channels = new Set<ContactChannel>();
+    if (this.allowManualLink) channels.add('manual');
     if (methods.includes('email')) channels.add('email');
     if (methods.includes('sms') || methods.includes('whatsapp')) {
       channels.add('sms');
@@ -273,21 +298,32 @@ export class ContactPicker implements OnInit, OnDestroy, ControlValueAccessor {
   }
 
   /**
-   * Kept rendered whether or not the dropdown is open: hiding it on focus
-   * would shrink the surrounding modal and move the field out from under the
-   * fixed-positioned dropdown.
+   * Only what the host asked for. Rendered whether or not the dropdown is
+   * open: hiding it on focus would shrink the surrounding modal and move the
+   * field out from under the fixed-positioned dropdown.
    */
   get helperMessage(): string {
-    if (this.helperText) return this.helperText;
-    if (!this.allowGuests) return '';
-    return this.t.instant(`contactPicker.idleHelper${this.channelsSuffix}`);
+    return this.helperText;
   }
 
   get canCreateContact(): boolean {
+    if (
+      !this.allowGuests ||
+      !this.query().trim() ||
+      !this.canOfferGuestActions
+    ) {
+      return false;
+    }
+    // Without an address the entry can only produce a link-only contact.
+    return this.createContactOpensForm || this.supportedChannels.has('manual');
+  }
+
+  /** The "invite with a link" entry offered on an empty field. */
+  get canCreateLinkOnly(): boolean {
     return (
       this.allowGuests &&
-      this.query().trim().length > 0 &&
-      this.canOfferGuestActions
+      !this.query() &&
+      this.supportedChannels.has('manual')
     );
   }
 
@@ -557,11 +593,13 @@ export class ContactPicker implements OnInit, OnDestroy, ControlValueAccessor {
       this.openAddAccountModal();
       return;
     }
+    if (!this.supportedChannels.has('manual')) return;
     this.startGuest('manual', this.query().trim());
   }
 
   /** Create a contact with no e-mail nor mobile: the link is copied by hand. */
   createLinkOnly(): void {
+    if (!this.supportedChannels.has('manual')) return;
     this.startGuest('manual', '');
   }
 

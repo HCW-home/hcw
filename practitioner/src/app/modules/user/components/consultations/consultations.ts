@@ -238,13 +238,10 @@ export class Consultations implements OnInit, OnDestroy {
         const senderId = event.data?.created_by?.id;
         const currentUserId = this.currentUser()?.pk;
         if (senderId && senderId !== currentUserId) {
-          this.consultations.update(list =>
-            list.map(c =>
-              c.id === event.consultation_id
-                ? { ...c, unread_count: (c.unread_count || 0) + 1 }
-                : c
-            )
-          );
+          this.patchConsultation(event.consultation_id, c => ({
+            ...c,
+            unread_count: (c.unread_count || 0) + 1,
+          }));
         }
       });
   }
@@ -445,6 +442,29 @@ export class Consultations implements OnInit, OnDestroy {
       params['search'] = this.searchQuery;
     }
     return params;
+  }
+
+  /**
+   * Apply a change to the rows on screen and to every tab cache. Updating
+   * only the displayed list would be undone by the next tab switch, which
+   * restores the cached snapshot taken before the change.
+   */
+  private patchConsultation(
+    id: number,
+    patch: (consultation: Consultation) => Consultation
+  ): void {
+    this.consultations.update(list =>
+      list.map(c => (c.id === id ? patch(c) : c))
+    );
+
+    (Object.keys(this.tabCache) as ConsultationTabType[]).forEach(tab => {
+      const cache = this.tabCache[tab];
+      if (!cache.loaded) return;
+      this.tabCache[tab] = {
+        ...cache,
+        data: cache.data.map(c => (c.id === id ? patch(c) : c)),
+      };
+    });
   }
 
   private invalidateCache(): void {
