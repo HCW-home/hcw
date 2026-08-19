@@ -125,6 +125,7 @@ TENANT_APPS = (
     "django.contrib.admin",
     "constance",
     "consultations",
+    "integrations",
     "users",
     "messaging",
     "mediaserver",
