@@ -299,137 +299,14 @@
             </app-data-table>
           </div>
         </div>
-        } @if (activeTab() === 'appointments') {
-        <div class="appointments-section">
-          <div class="section-card">
-            <div class="card-header">
-              <div>
-                <app-typography
-                  [variant]="TypographyTypeEnum['body-l-bold']"
-                  color="var(--slate-800)">
-                  {{ 'patientDetail.upcomingAppointments' | translate }}
-                </app-typography>
-                <app-typography
-                  [variant]="TypographyTypeEnum['body-s-regular']"
-                  color="var(--slate-500)">
-                  {{ 'patientDetail.scheduledCount' | translate:{ count:
-                  appointments().length } }}
-                </app-typography>
-              </div>
-              <app-button
-                [text]="'consultationDetail.newAppointment' | translate"
-                leftIcon="plus"
-                [size]="ButtonSizeEnum.small"
-                [style]="ButtonStyleEnum.primary"
-                (buttonClick)="openCreateAppointmentModal()">
-              </app-button>
-            </div>
-            <div class="appointments-list">
-              @if (loadingAppointments()) {
-              <div class="loading-state">
-                <app-loader></app-loader>
-              </div>
-              } @else if (appointments().length === 0) {
-              <div class="empty-state">
-                <app-svg
-                  src="calendar"
-                  [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
-                <app-typography
-                  [variant]="TypographyTypeEnum['body-regular']"
-                  color="var(--slate-500)">
-                  {{ 'patientDetail.noAppointmentsForPatient' | translate }}
-                </app-typography>
-              </div>
-              } @else { @for (appointment of appointments(); track
-              appointment.id) {
-              <div class="appointment-item">
-                <div class="appointment-date">
-                  <span class="day"
-                    >{{ appointment.scheduled_at | localDate:'dd' }}</span
-                  >
-                  <span class="month"
-                    >{{ appointment.scheduled_at | localDate:'MMM' }}</span
-                  >
-                </div>
-                <div class="appointment-main">
-                  <div class="appointment-header">
-                    <app-typography
-                      [variant]="TypographyTypeEnum['body-semibold']"
-                      color="var(--slate-800)">
-                      {{ getAppointmentType(appointment.type) }}
-                    </app-typography>
-                    <app-badge
-                      [type]="getAppointmentBadgeType(appointment.status)">
-                      {{ getAppointmentStatusLabel(appointment.status) }}
-                    </app-badge>
-                  </div>
-                  <div class="appointment-meta">
-                    <span>
-                      <app-svg
-                        src="clock"
-                        [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
-                      {{ appointment.scheduled_at | localDate:'HH:mm' }} @if
-                      (appointment.end_expected_at) { - {{
-                      appointment.end_expected_at | localDate:'HH:mm' }} }
-                    </span>
-                    @if (appointment.created_by) {
-                    <span>
-                      <app-svg
-                        src="user"
-                        [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
-                      {{ appointment.created_by.first_name }} {{
-                      appointment.created_by.last_name }}
-                    </span>
-                    }
-                  </div>
-                  @if (appointment.participants &&
-                  appointment.participants.length > 0) {
-                  <div class="participants-info">
-                    <span class="participants-title"
-                      >{{ 'patientDetail.participantsCount' | translate:{ count:
-                      appointment.participants.length } }}</span
-                    >
-                    <div class="participants-list">
-                      @for (participant of appointment.participants; track
-                      participant.id) {
-                      <span class="participant-badge">
-                        @if (participant.user) { {{ participant.user.first_name
-                        || '' }} {{ participant.user.last_name || '' }} @if
-                        (!participant.user.first_name &&
-                        !participant.user.last_name) { {{ participant.user.email
-                        || ('patientDetail.unknown' | translate) }} } } @else {
-                        {{ 'patientDetail.unknown' | translate }} }
-                      </span>
-                      }
-                    </div>
-                  </div>
-                  }
-
-                  @if (appointment.status !== AppointmentStatus.CANCELLED) {
-                  <div class="appointment-actions">
-                    <app-button
-                      [text]="'reminders.edit' | translate"
-                      leftIcon="edit"
-                      [size]="ButtonSizeEnum.small"
-                      [style]="ButtonStyleEnum.stroke"
-                      (buttonClick)="openEditAppointmentModal(appointment)">
-                    </app-button>
-                    <app-button
-                      [text]="'reminders.delete' | translate"
-                      leftIcon="trash"
-                      [size]="ButtonSizeEnum.small"
-                      [style]="ButtonStyleEnum.stroke"
-                      [state]="ButtonStateEnum.error"
-                      (buttonClick)="deleteAppointment(appointment)">
-                    </app-button>
-                  </div>
-                  }
-                </div>
-              </div>
-              } }
-            </div>
-          </div>
-        </div>
+        } @if (activeTab() === 'appointments' && patientId) {
+        <app-appointment-panel
+          #appointmentPanel
+          [source]="{ kind: 'patient', patientId: patientId }"
+          [currentUser]="currentUser()"
+          (createRequested)="openCreateAppointmentModal()"
+          (editRequested)="openEditAppointmentModal($event)">
+        </app-appointment-panel>
         } @if (activeTab() === 'reminders') {
         <div class="reminders-section">
           <div class="section-card">

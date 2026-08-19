@@ -5,6 +5,7 @@ import {
   signal,
   computed,
   inject,
+  viewChild,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -50,6 +51,8 @@ import { DataTableCellDirective } from '../../../../shared/components/data-table
 import { ReminderCard } from '../../../../shared/components/reminder-card/reminder-card';
 import { ReminderFormModal } from '../../../../shared/components/reminder-form-modal/reminder-form-modal';
 import { AppointmentFormModal } from '../consultation-detail/appointment-form-modal/appointment-form-modal';
+import { AppointmentPanel } from '../../../../shared/components/appointment-panel/appointment-panel';
+import { UserService } from '../../../../core/services/user.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { Reminder } from '../../../../core/models/reminder';
 import {
@@ -81,6 +84,7 @@ import { LocalDatePipe } from '../../../../shared/pipes/local-date.pipe';
     ReminderCard,
     ReminderFormModal,
     AppointmentFormModal,
+    AppointmentPanel,
     UserAvatar,
     LocalDatePipe,
   ],
@@ -96,6 +100,7 @@ export class PatientDetail implements OnInit, OnDestroy {
   private toasterService = inject(ToasterService);
   private confirmationService = inject(ConfirmationService);
   private t = inject(TranslationService);
+  private userService = inject(UserService);
 
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
@@ -107,13 +112,15 @@ export class PatientDetail implements OnInit, OnDestroy {
   protected readonly BadgeTypeEnum = BadgeTypeEnum;
 
   patientId: number | null = null;
+  appointmentPanel = viewChild(AppointmentPanel);
+  /** Signed-in practitioner, so participant cards can label themselves "Me". */
+  currentUser = signal<IUser | null>(null);
   activeTab = signal<
     'overview' | 'consultations' | 'appointments' | 'reminders'
   >('overview');
   showEditModal = signal(false);
   loading = signal(true);
   loadingConsultations = signal(false);
-  loadingAppointments = signal(false);
   loadingReminders = signal(false);
 
   patient = signal<IUser | null>(null);
@@ -161,7 +168,6 @@ export class PatientDetail implements OnInit, OnDestroy {
 
   readonly trackConsultation = (consultation: Consultation): number =>
     consultation.id;
-  appointments = signal<Appointment[]>([]);
   reminders = signal<Reminder[]>([]);
 
   showReminderModal = signal(false);
@@ -200,12 +206,15 @@ export class PatientDetail implements OnInit, OnDestroy {
       }
     });
 
+    this.userService.currentUser$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(user => this.currentUser.set(user));
+
     this.route.params.pipe(takeUntil(this.destroy$)).subscribe(params => {
       if (params['id']) {
         this.patientId = +params['id'];
         this.loadPatient();
         this.loadConsultations();
-        this.loadAppointments();
         this.loadReminders();
       }
     });
@@ -264,28 +273,6 @@ export class PatientDetail implements OnInit, OnDestroy {
       });
   }
 
-  loadAppointments(): void {
-    if (!this.patientId) return;
-
-    this.loadingAppointments.set(true);
-    this.consultationService
-      .getAppointments({ consultation__beneficiary: this.patientId })
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: response => {
-          this.appointments.set(response.results);
-          this.loadingAppointments.set(false);
-        },
-        error: err => {
-          this.toasterService.show(
-            'error',
-            this.t.instant('patientDetail.errorLoadingAppointments'),
-            getErrorMessage(err)
-          );
-          this.loadingAppointments.set(false);
-        },
-      });
-  }
 
   // When creating an appointment from the contact page, pre-add the contact
   // as a participant.
@@ -320,42 +307,9 @@ export class PatientDetail implements OnInit, OnDestroy {
   onAppointmentSaved(): void {
     this.showAppointmentModal.set(false);
     this.editingAppointment.set(null);
-    this.loadAppointments();
+    this.appointmentPanel()?.reload();
   }
 
-  async deleteAppointment(appointment: Appointment): Promise<void> {
-    const confirmed = await this.confirmationService.confirm({
-      title: this.t.instant('patientDetail.deleteAppointmentTitle'),
-      message: this.t.instant('patientDetail.deleteAppointmentMessage'),
-      confirmText: this.t.instant('reminders.delete'),
-      cancelText: this.t.instant('reminders.cancel'),
-      confirmStyle: 'danger',
-    });
-
-    if (!confirmed) return;
-
-    this.consultationService
-      .deleteAppointment(appointment.id)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => {
-          this.appointments.set(
-            this.appointments().filter(a => a.id !== appointment.id)
-          );
-          this.toasterService.show(
-            'success',
-            this.t.instant('patientDetail.appointmentDeleted')
-          );
-        },
-        error: error => {
-          this.toasterService.show(
-            'error',
-            this.t.instant('patientDetail.errorDeletingAppointment'),
-            getErrorMessage(error)
-          );
-        },
-      });
-  }
 
   loadReminders(): void {
     if (!this.patientId) return;
@@ -469,21 +423,6 @@ export class PatientDetail implements OnInit, OnDestroy {
     this.router.navigate([RoutePaths.USER, 'consultations', consultation.id]);
   }
 
-  getAppointmentType(type: string): string {
-    const appointmentType = type?.toLowerCase();
-    switch (appointmentType) {
-      case 'online':
-        return this.t.instant('patientDetail.videoCall');
-      case 'inperson':
-        return this.t.instant('patientDetail.inPerson');
-      case 'in_person':
-        return this.t.instant('patientDetail.inPerson');
-      case 'phone':
-        return this.t.instant('patientDetail.phoneCall');
-      default:
-        return type;
-    }
-  }
 
   openEditModal(): void {
     this.showEditModal.set(true);
@@ -537,24 +476,6 @@ export class PatientDetail implements OnInit, OnDestroy {
     return '-';
   }
 
-  getAppointmentStatusLabel(status: string): string {
-    switch (status?.toLowerCase()) {
-      case 'scheduled':
-        return this.t.instant('patientDetail.statusScheduled');
-      case 'cancelled':
-        return this.t.instant('patientDetail.statusCancelled');
-      case 'completed':
-        return this.t.instant('patientDetail.statusCompleted');
-      case 'noshow':
-        return this.t.instant('patientDetail.statusNoshow');
-      case 'draft':
-        return this.t.instant('patientDetail.statusDraft');
-      case 'in_progress':
-        return this.t.instant('patientDetail.statusInProgress');
-      default:
-        return status;
-    }
-  }
 
   canEditPatient(): boolean {
     const patient = this.patient();
