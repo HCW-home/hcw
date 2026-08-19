@@ -1,49 +1,54 @@
 <app-modal
   [isOpen]="isOpen"
   [title]="'elementType.title' | translate"
-  size="large"
+  size="medium"
+  [bodyPadding]="false"
   (closed)="onClose()">
-  <div class="element-type-grid">
-    <div class="element-type-card appointment">
-      <div class="element-type-icon">
+  <div class="element-type-list">
+    <button
+      type="button"
+      class="element-type-row"
+      (click)="select('appointment')">
+      <span class="row-icon appointment">
         <app-svg
           src="calendar"
-          [svgStyle]="{'width.px': 28, 'height.px': 28}"></app-svg>
-      </div>
-      <span class="element-type-name">
-        {{ 'elementType.appointment' | translate }}
+          [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
       </span>
-      <span class="element-type-desc">
-        {{ 'elementType.appointmentDesc' | translate }}
+      <span class="row-text">
+        <span class="row-title">
+          {{ 'elementType.appointment' | translate }}
+        </span>
+        <span class="row-desc">
+          {{ 'elementType.appointmentDesc' | translate }}
+        </span>
       </span>
-      <app-button
-        class="element-type-action"
-        [text]="'elementType.createAppointment' | translate"
-        [style]="ButtonStyleEnum.primary"
-        [size]="ButtonSizeEnum.medium"
-        (buttonClick)="select('appointment')">
-      </app-button>
-    </div>
+      <app-svg
+        class="row-chevron"
+        src="chevron-right"
+        [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+    </button>
 
-    <div class="element-type-card reminder">
-      <div class="element-type-icon">
+    <button
+      type="button"
+      class="element-type-row"
+      (click)="select('reminder')">
+      <span class="row-icon reminder">
         <app-svg
           src="bell"
-          [svgStyle]="{'width.px': 28, 'height.px': 28}"></app-svg>
-      </div>
-      <span class="element-type-name">
-        {{ 'elementType.reminder' | translate }}
+          [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
       </span>
-      <span class="element-type-desc">
-        {{ 'elementType.reminderDesc' | translate }}
+      <span class="row-text">
+        <span class="row-title">
+          {{ 'elementType.reminder' | translate }}
+        </span>
+        <span class="row-desc">
+          {{ 'elementType.reminderDesc' | translate }}
+        </span>
       </span>
-      <app-button
-        class="element-type-action"
-        [text]="'elementType.createReminder' | translate"
-        [style]="ButtonStyleEnum.stroke"
-        [size]="ButtonSizeEnum.medium"
-        (buttonClick)="select('reminder')">
-      </app-button>
-    </div>
+      <app-svg
+        class="row-chevron"
+        src="chevron-right"
+        [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+    </button>
   </div>
 </app-modal>

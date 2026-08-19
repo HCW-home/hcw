@@ -210,7 +210,6 @@
     "french": "francese",
     "spanish": "spagnolo",
     "german": "tedesco",
-    "createAppointment": "Crea un appuntamento",
     "noAppointments": "Nessun appuntamento programmato",
     "someAppointmentsNotCreated": "Non è stato possibile creare alcuni appuntamenti"
   },
@@ -392,7 +391,6 @@
     "invalidEmail": "L'indirizzo email non è valido",
     "cancelButton": "Cancellare",
     "saveChanges": "Salva le modifiche",
-    "createAppointment": "Crea un appuntamento",
     "missingInfo": "Informazioni mancanti",
     "provideContact": "Si prega di fornire le informazioni di contatto",
     "appointmentCreated": "Appuntamento creato",
@@ -1185,10 +1183,8 @@
     "title": "Che tipo di elemento vuoi creare?",
     "appointment": "Appuntamento",
     "appointmentDesc": "Pianifica un incontro video o di persona con i partecipanti.",
-    "createAppointment": "Crea un appuntamento",
     "reminder": "Promemoria",
-    "reminderDesc": "Invia un promemoria automatico via SMS o e-mail a un contatto.",
-    "createReminder": "Crea un promemoria"
+    "reminderDesc": "Invia un promemoria automatico via SMS o e-mail a un contatto."
   },
   "inCallParticipants": {
     "title": "Partecipanti",

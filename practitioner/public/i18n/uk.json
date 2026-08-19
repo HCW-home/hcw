@@ -699,7 +699,6 @@
     "spanish": "Іспанська",
     "german": "Німецька",
     "pending": "В очікуванні",
-    "createAppointment": "Створити прийом",
     "noAppointments": "Немає запланованих прийомів",
     "someAppointmentsNotCreated": "Деякі прийоми не вдалося створити",
     "encryptionWarningTitle": "Попередження про шифрування",
@@ -908,7 +907,6 @@
     "invalidEmail": "Електронна адреса недійсна",
     "cancelButton": "Скасувати",
     "saveChanges": "Зберегти зміни",
-    "createAppointment": "Створити прийом",
     "missingInfo": "Відсутня інформація",
     "provideContact": "Будь ласка, надайте контактну інформацію",
     "appointmentCreated": "Прийом створено",
@@ -1301,10 +1299,8 @@
     "title": "Який тип елемента ви хочете створити?",
     "appointment": "Прийом",
     "appointmentDesc": "Заплануйте відео- або особисту зустріч з учасниками.",
-    "createAppointment": "Створити прийом",
     "reminder": "Нагадування",
-    "reminderDesc": "Надішліть контакту автоматичне нагадування через SMS або e-mail.",
-    "createReminder": "Створити нагадування"
+    "reminderDesc": "Надішліть контакту автоматичне нагадування через SMS або e-mail."
   },
   "inCallParticipants": {
     "title": "Учасники",

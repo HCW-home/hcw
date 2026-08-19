@@ -271,7 +271,6 @@
     "spanish": "Español",
     "german": "Alemán",
     "pending": "Pendiente",
-    "createAppointment": "Crear cita",
     "noAppointments": "No hay citas programadas",
     "someAppointmentsNotCreated": "No se pudieron crear algunas citas."
   },
@@ -986,7 +985,6 @@
     "invalidEmail": "La dirección de correo electrónico no es válida",
     "cancelButton": "Cancelar",
     "saveChanges": "Guardar cambios",
-    "createAppointment": "Crear cita",
     "missingInfo": "Información faltante",
     "provideContact": "Por favor, proporcione su información de contacto.",
     "appointmentCreated": "Cita creada",
@@ -1185,10 +1183,8 @@
     "title": "¿Qué tipo de elemento desea crear?",
     "appointment": "Cita",
     "appointmentDesc": "Programe una reunión por video o presencial con participantes.",
-    "createAppointment": "Crear una cita",
     "reminder": "Recordatorio",
-    "reminderDesc": "Envíe un recordatorio automático por SMS o correo a un contacto.",
-    "createReminder": "Crear un recordatorio"
+    "reminderDesc": "Envíe un recordatorio automático por SMS o correo a un contacto."
   },
   "inCallParticipants": {
     "title": "Participantes",

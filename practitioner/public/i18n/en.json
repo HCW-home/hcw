@@ -699,7 +699,6 @@
     "spanish": "Spanish",
     "german": "German",
     "pending": "Pending",
-    "createAppointment": "Create Appointment",
     "noAppointments": "No scheduled appointments",
     "someAppointmentsNotCreated": "Some appointments could not be created",
     "encryptionWarningTitle": "Encryption warning",
@@ -908,7 +907,6 @@
     "invalidEmail": "The email address is not valid",
     "cancelButton": "Cancel",
     "saveChanges": "Save Changes",
-    "createAppointment": "Create Appointment",
     "missingInfo": "Missing Information",
     "provideContact": "Please provide contact information",
     "appointmentCreated": "Appointment Created",
@@ -1302,10 +1300,8 @@
     "title": "What type of element do you want to create?",
     "appointment": "Appointment",
     "appointmentDesc": "Schedule a video or in-person meeting with participants.",
-    "createAppointment": "Create an appointment",
     "reminder": "Reminder",
-    "reminderDesc": "Send an automatic SMS or email reminder to a contact.",
-    "createReminder": "Create a reminder"
+    "reminderDesc": "Send an automatic SMS or email reminder to a contact."
   },
   "inCallParticipants": {
     "title": "Participants",

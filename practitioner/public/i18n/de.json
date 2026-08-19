@@ -145,7 +145,6 @@
     "errorRemovingAppointment": "Fehler beim Entfernen des Termins",
     "appointmentUpdated": "Termin aktualisiert",
     "appointmentUpdatedMessage": "Termin erfolgreich aktualisiert",
-    "createAppointment": "Termin erstellen",
     "someAppointmentsNotCreated": "Einige Termine konnten nicht erstellt werden"
   },
   "configuration": {
@@ -877,7 +876,6 @@
     "invalidEmail": "Die E-Mail-Adresse ist ungültig.",
     "cancelButton": "Stornieren",
     "saveChanges": "Änderungen speichern",
-    "createAppointment": "Termin erstellen",
     "missingInfo": "Fehlende Informationen",
     "provideContact": "Bitte geben Sie Ihre Kontaktdaten an.",
     "appointmentCreated": "Termin erstellt",
@@ -1156,10 +1154,8 @@
     "title": "Welche Art von Element möchten Sie erstellen?",
     "appointment": "Termin",
     "appointmentDesc": "Planen Sie ein Video- oder Präsenztreffen mit Teilnehmern.",
-    "createAppointment": "Termin erstellen",
     "reminder": "Erinnerung",
-    "reminderDesc": "Senden Sie einem Kontakt eine automatische SMS- oder E-Mail-Erinnerung.",
-    "createReminder": "Erinnerung erstellen"
+    "reminderDesc": "Senden Sie einem Kontakt eine automatische SMS- oder E-Mail-Erinnerung."
   },
   "createConsultationModal": {
     "formHelper": "Ein Verlauf bündelt Termine, sichere Nachrichten und Dokumente, die mit einem Empfänger geteilt werden. Sie können optional sofort einen ersten Termin planen."

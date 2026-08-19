@@ -709,7 +709,6 @@
     "spanish": "Espagnol",
     "german": "Allemand",
     "pending": "En attente",
-    "createAppointment": "Créer le rendez-vous",
     "noAppointments": "Aucun rendez-vous planifié",
     "someAppointmentsNotCreated": "Certains rendez-vous n'ont pas pu être créés",
     "encryptionWarningTitle": "Avertissement de chiffrement",
@@ -1052,7 +1051,6 @@
     "invalidEmail": "L'adresse email n'est pas valide",
     "cancelButton": "Annuler",
     "saveChanges": "Enregistrer",
-    "createAppointment": "Créer le rendez-vous",
     "missingInfo": "Information manquante",
     "provideContact": "Veuillez fournir les informations de contact",
     "appointmentCreated": "Rendez-vous créé",
@@ -1148,11 +1146,9 @@
   "elementType": {
     "title": "Quel type d'élément souhaitez-vous créer ?",
     "appointment": "Rendez-vous",
-    "appointmentDesc": "Planifier une réunion vidéo ou en personne avec des participants.",
-    "createAppointment": "Créer un rendez-vous",
+    "appointmentDesc": "Planifier une consultation vidéo ou en présentiel avec des participants.",
     "reminder": "Rappel",
-    "reminderDesc": "Envoyer un rappel automatique par SMS ou e-mail à un contact.",
-    "createReminder": "Créer un rappel"
+    "reminderDesc": "Envoyer un message automatique par SMS ou e-mail à un contact."
   },
   "inCallParticipants": {
     "title": "Participants",

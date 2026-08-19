@@ -699,7 +699,6 @@
     "spanish": "الإسبانية",
     "german": "الألمانية",
     "pending": "قيد الانتظار",
-    "createAppointment": "إنشاء موعد",
     "noAppointments": "لا توجد مواعيد مجدولة",
     "someAppointmentsNotCreated": "تعذّر إنشاء بعض المواعيد",
     "encryptionWarningTitle": "تحذير بشأن التشفير",
@@ -908,7 +907,6 @@
     "invalidEmail": "عنوان البريد الإلكتروني غير صالح",
     "cancelButton": "إلغاء",
     "saveChanges": "حفظ التغييرات",
-    "createAppointment": "إنشاء موعد",
     "missingInfo": "معلومات ناقصة",
     "provideContact": "يرجى إدخال معلومات الاتصال",
     "appointmentCreated": "تم إنشاء الموعد",
@@ -1302,10 +1300,8 @@
     "title": "ما نوع العنصر الذي تريد إنشاءه؟",
     "appointment": "موعد",
     "appointmentDesc": "جدولة اجتماع بالفيديو أو حضوري مع مشاركين.",
-    "createAppointment": "إنشاء موعد",
     "reminder": "تذكير",
-    "reminderDesc": "إرسال تذكير تلقائي عبر الرسائل القصيرة أو البريد الإلكتروني إلى جهة اتصال.",
-    "createReminder": "إنشاء تذكير"
+    "reminderDesc": "إرسال تذكير تلقائي عبر الرسائل القصيرة أو البريد الإلكتروني إلى جهة اتصال."
   },
   "inCallParticipants": {
     "title": "المشاركون",
