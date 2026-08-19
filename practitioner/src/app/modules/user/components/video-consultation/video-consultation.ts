@@ -98,7 +98,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   @ViewChild('captionsContainer') captionsContainerRef?: ElementRef<HTMLDivElement>;
 
   connectionStatus: ConnectionStatus = 'disconnected';
-  participants: Map<string, ParticipantInfo> = new Map();
+  participants = new Map<string, ParticipantInfo>();
   localVideoTrack: AttachableTrack | null = null;
   localScreenShareTrack: AttachableTrack | null = null;
   isCameraEnabled = false;

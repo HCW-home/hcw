@@ -97,7 +97,7 @@ export class UserProfile implements OnInit, OnDestroy {
   carddavUrl = `${window.location.origin}/dav/addressbook/`;
   carddavUrlCopied = signal(false);
   customFields = signal<any[]>([]);
-  customFieldValues: { [id: number]: string } = {};
+  customFieldValues: Record<number, string> = {};
 
   encryptionEnabled = signal(false);
   encryptionKeyLoaded = signal(false);

@@ -38,9 +38,9 @@ import { IUser } from '../../../modules/user/models/user';
 
 import { Button } from '../../ui-components/button/button';
 import { Input as InputComponent } from '../../ui-components/input/input';
-import { Checkbox } from '../../ui-components/checkbox/checkbox';
 import { Switch } from '../../ui-components/switch/switch';
 import { Svg } from '../../ui-components/svg/svg';
+import { Badge } from '../badge/badge';
 import { Loader } from '../loader/loader';
 import { ParticipantAddForm } from '../participant-add-form/participant-add-form';
 import { ParticipantItem } from '../participant-item/participant-item';
@@ -49,6 +49,7 @@ import {
   ButtonSizeEnum,
   ButtonStateEnum,
 } from '../../constants/button';
+import { BadgeTypeEnum, BadgeSizeEnum } from '../../constants/badge';
 import { extractDateFromISO, extractTimeFromISO } from '../../tools/helper';
 import { getErrorMessage } from '../../../core/utils/error-helper';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -63,10 +64,10 @@ import { TranslationService } from '../../../core/services/translation.service';
     Loader,
     Button,
     Switch,
-    Checkbox,
     CommonModule,
     InputComponent,
     ParticipantAddForm,
+    Badge,
     ParticipantItem,
     ReactiveFormsModule,
     FormsModule,
@@ -125,6 +126,8 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
   protected readonly ButtonStateEnum = ButtonStateEnum;
+  protected readonly BadgeTypeEnum = BadgeTypeEnum;
+  protected readonly BadgeSizeEnum = BadgeSizeEnum;
   protected readonly AppointmentType = AppointmentType;
 
   get isEditMode(): boolean {
@@ -207,7 +210,22 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   }
 
   getCurrentUserForInvite(): IUser | null {
+    // Already listed as the practitioner or the patient: showing a second
+    // "You" row would be the same person twice.
+    if (this.isCurrentUserOwner() || this.isCurrentUserBeneficiary()) {
+      return null;
+    }
     return this.currentUser();
+  }
+
+  private isCurrentUserOwner(): boolean {
+    const me = this.currentUser();
+    return !!me && !!this.owner && this.owner.id === me.pk;
+  }
+
+  private isCurrentUserBeneficiary(): boolean {
+    const me = this.currentUser();
+    return !!me && !!this.beneficiary && this.beneficiary.id === me.pk;
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -273,6 +291,18 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
 
   toggleInvite(controlName: string, invited: boolean): void {
     this.appointmentForm.get(controlName)?.setValue(!invited);
+
+    // When the signed-in user is also the practitioner or the patient, that
+    // single row drives their invitation: mirror it onto dont_invite_me,
+    // which the backend evaluates separately.
+    const mirrors =
+      (controlName === 'dont_invite_practitioner' &&
+        this.isCurrentUserOwner()) ||
+      (controlName === 'dont_invite_beneficiary' &&
+        this.isCurrentUserBeneficiary());
+    if (mirrors) {
+      this.appointmentForm.get('dont_invite_me')?.setValue(!invited);
+    }
   }
 
   ngOnDestroy(): void {
@@ -422,9 +452,9 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   loadParticipants(): void {
     if (!this.editingAppointment) return;
 
-    this.participants.set(
-      this.editingAppointment.participants.filter(p => p.is_active)
-    );
+    // Deactivated participants stay listed so they can be switched back on:
+    // omitting an id deactivates it server-side, sending it again revives it.
+    this.participants.set([...this.editingAppointment.participants]);
   }
 
   setAppointmentType(type: AppointmentType): void {
@@ -456,11 +486,14 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
   }
 
   getTotalParticipantsCount(): number {
-    let count = this.participants().length + this.pendingParticipants().length;
+    let count =
+      this.participants().filter(p => p.is_active).length +
+      this.pendingParticipants().length;
     if (!this.isEditMode) {
       if (this.beneficiary) count++;
       if (this.owner) count++;
-      if (this.currentUser()) count++;
+      // Counted through their other role when they hold one.
+      if (this.getCurrentUserForInvite()) count++;
     }
     return count;
   }
@@ -469,8 +502,11 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
     this.pendingParticipants.update(list => list.filter((_, i) => i !== index));
   }
 
-  removeParticipant(participant: Participant): void {
-    this.participants.update(list => list.filter(p => p.id !== participant.id));
+  /** Editing an appointment excludes a participant rather than deleting them. */
+  setParticipantActive(participant: Participant, active: boolean): void {
+    this.participants.update(list =>
+      list.map(p => (p.id === participant.id ? { ...p, is_active: active } : p))
+    );
   }
 
   onCancel(): void {
@@ -574,7 +610,7 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
         : [];
 
     for (const p of this.participants()) {
-      if (p.user?.id) {
+      if (p.is_active && p.user?.id) {
         participants_ids.push(p.user.id);
       }
     }

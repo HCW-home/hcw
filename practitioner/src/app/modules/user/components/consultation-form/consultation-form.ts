@@ -29,6 +29,7 @@ import {
   Consultation,
   CreateConsultationRequest,
   CreateAppointmentRequest,
+  CreateParticipantRequest,
   CustomField,
   ITemporaryParticipant,
   Queue,
@@ -44,9 +45,8 @@ import { IStep } from '../../../../shared/components/stepper/stepper-models';
 import { Checkbox } from '../../../../shared/ui-components/checkbox/checkbox';
 import { AppointmentFormModal } from '../consultation-detail/appointment-form-modal/appointment-form-modal';
 import { ParticipantItem } from '../../../../shared/components/participant-item/participant-item';
-import { ModalComponent } from '../../../../shared/components/modal/modal.component';
-import { AddEditPatient } from '../add-edit-patient/add-edit-patient';
-import { ExternalContactForm } from '../../../../shared/components/external-contact-form/external-contact-form';
+import { ContactPicker } from '../../../../shared/components/contact-picker/contact-picker';
+import { ContactSelection } from '../../../../shared/models/contact-picker';
 
 import { Typography } from '../../../../shared/ui-components/typography/typography';
 import { Select, AsyncSearchFn, AsyncSearchResult } from '../../../../shared/ui-components/select/select';
@@ -91,9 +91,7 @@ import { TranslationService } from '../../../../core/services/translation.servic
     TranslatePipe,
     AppointmentFormModal,
     ParticipantItem,
-    ModalComponent,
-    AddEditPatient,
-    ExternalContactForm,
+    ContactPicker,
   ],
 })
 export class ConsultationForm implements OnInit, OnDestroy {
@@ -124,40 +122,17 @@ export class ConsultationForm implements OnInit, OnDestroy {
   selectedOwner = signal<IUser | null>(null);
   selectedBeneficiary = signal<IUser | null>(null);
   currentUser = signal<IUser | null>(null);
-  // Toggle between an existing user and an external contact as beneficiary.
+  // True when the picker holds a temporary contact instead of an account.
   isExternalBeneficiary = signal(false);
   externalBeneficiaryErrors = signal<Record<string, string[]>>({});
-  externalBeneficiaryRef = viewChild<ExternalContactForm>('externalBeneficiaryRef');
+  beneficiaryPickerRef = viewChild<ContactPicker>('beneficiaryPickerRef');
   private practitionerCache = new Map<number, IUser>();
-  private beneficiaryCache = new Map<number, IUser>();
-
-  beneficiaryInitialOption = computed<SelectOption | null>(() => {
-    const beneficiary = this.selectedBeneficiary();
-    if (!beneficiary) return null;
-    const currentUser = this.currentUser();
-    const isCurrentUser = !!(currentUser && beneficiary.pk === currentUser.pk);
-    const name = isCurrentUser
-      ? this.t.instant('userSearchSelect.me')
-      : `${beneficiary.first_name || ''} ${beneficiary.last_name || ''}`.trim() || beneficiary.email || beneficiary.username || 'User';
-    const initials = this.getUserInitials(beneficiary);
-    return {
-      value: beneficiary.pk,
-      label: name,
-      secondaryLabel: beneficiary.email,
-      image: beneficiary.picture || undefined,
-      initials,
-      isCurrentUser,
-      isPractitioner: beneficiary.is_practitioner,
-    };
-  });
 
   // Modal state
   isAppointmentModalOpen = signal(false);
   editingAppointment = signal<Appointment | null>(null);
   appointments = signal<Appointment[]>([]);
   pendingAppointmentRequests = signal<CreateAppointmentRequest[]>([]);
-  isAddPatientModalOpen = signal(false);
-  newPatientInitialName = signal<string>('');
 
   consultationForm!: FormGroup;
 
@@ -215,32 +190,6 @@ export class ConsultationForm implements OnInit, OnDestroy {
         const currentUser = this.currentUser();
         const results: SelectOption[] = response.results.map(user => {
           this.practitionerCache.set(user.pk, user);
-          const isCurrentUser = !!(currentUser && user.pk === currentUser.pk);
-          const name = isCurrentUser
-            ? this.t.instant('userSearchSelect.me')
-            : `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email || user.username || 'User';
-          const initials = this.getUserInitials(user);
-          return {
-            value: user.pk,
-            label: name,
-            secondaryLabel: [user.email, user.mobile_phone_number].filter(Boolean).join(' · '),
-            image: user.picture || undefined,
-            initials,
-            isCurrentUser,
-            isPractitioner: user.is_practitioner,
-          };
-        });
-        return { results, hasMore: response.next !== null };
-      })
-    );
-  };
-
-  beneficiarySearchFn: AsyncSearchFn = (query: string, page: number): Observable<AsyncSearchResult> => {
-    return this.userService.searchUsers(query, page, 20, undefined).pipe(
-      map(response => {
-        const currentUser = this.currentUser();
-        const results: SelectOption[] = response.results.map(user => {
-          this.beneficiaryCache.set(user.pk, user);
           const isCurrentUser = !!(currentUser && user.pk === currentUser.pk);
           const name = isCurrentUser
             ? this.t.instant('userSearchSelect.me')
@@ -468,6 +417,21 @@ export class ConsultationForm implements OnInit, OnDestroy {
       visible_by_patient: consultation.visible_by_patient ?? true,
     });
 
+    // Feed the picker so the assigned beneficiary shows up in edit mode.
+    const beneficiary = consultation.beneficiary;
+    this.selectedBeneficiary.set(
+      beneficiary
+        ? ({
+            pk: beneficiary.id,
+            email: beneficiary.email,
+            first_name: beneficiary.first_name,
+            last_name: beneficiary.last_name,
+            picture: beneficiary.picture,
+            mobile_phone_number: beneficiary.mobile_phone_number,
+          } as IUser)
+        : null
+    );
+
     if (consultation.custom_fields?.length) {
       const cfValues: Record<string, string> = {};
       consultation.custom_fields.forEach(cf => {
@@ -558,11 +522,11 @@ export class ConsultationForm implements OnInit, OnDestroy {
       return;
     }
 
-    // Validate the external beneficiary contact if that mode is active.
+    // Validate the temporary beneficiary if the picker holds one.
     if (this.isExternalBeneficiary()) {
-      const ref = this.externalBeneficiaryRef();
-      ref?.markAllTouched();
-      if (!ref || !ref.isValid() || !ref.buildPayload()) {
+      const picker = this.beneficiaryPickerRef();
+      picker?.markAllTouched();
+      if (!picker || !picker.isValid() || !picker.buildGuestPayload()) {
         return;
       }
     }
@@ -576,10 +540,10 @@ export class ConsultationForm implements OnInit, OnDestroy {
     }
   }
 
-  /** Payload of the external beneficiary contact, or null if not in that mode. */
+  /** Payload of the temporary beneficiary, or null when an account is used. */
   private getTemporaryBeneficiary(): ITemporaryParticipant | null {
     if (!this.isExternalBeneficiary()) return null;
-    return this.externalBeneficiaryRef()?.buildPayload() ?? null;
+    return this.beneficiaryPickerRef()?.buildGuestPayload() ?? null;
   }
 
   async createConsultation(): Promise<void> {
@@ -741,7 +705,8 @@ export class ConsultationForm implements OnInit, OnDestroy {
       }
     }
     if (beneficiaryId) {
-      const beneficiary = this.beneficiaryCache.get(beneficiaryId);
+      const selected = this.selectedBeneficiary();
+      const beneficiary = selected?.pk === beneficiaryId ? selected : null;
       if (beneficiary?.public_key && beneficiaryId !== currentUser?.pk) {
         await wrapFor(beneficiary, { user_id: beneficiaryId });
       }
@@ -899,24 +864,13 @@ export class ConsultationForm implements OnInit, OnDestroy {
         }
           });
 
-    this.consultationForm.get('beneficiary_id')?.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(value => {
-        if (value) {
-          const user = this.beneficiaryCache.get(Number(value));
-          this.selectedBeneficiary.set(user || null);
-        } else {
-          this.selectedBeneficiary.set(null);
-        }
-          });
   }
 
-  setBeneficiaryType(external: boolean): void {
-    this.isExternalBeneficiary.set(external);
-    if (external) {
-      this.consultationForm.patchValue({ beneficiary_id: '' });
-      this.selectedBeneficiary.set(null);
-    }
+  onBeneficiarySelection(selection: ContactSelection | null): void {
+    this.isExternalBeneficiary.set(selection?.kind === 'guest');
+    this.selectedBeneficiary.set(
+      selection?.kind === 'user' ? selection.user : null
+    );
   }
 
   nextStep(): void {
@@ -1024,35 +978,6 @@ export class ConsultationForm implements OnInit, OnDestroy {
   }
 
 
-  onBeneficiarySelected(user: IUser | null): void {
-    this.selectedBeneficiary.set(user);
-    if (user) {
-      this.consultationForm.patchValue({ beneficiary_id: user.pk });
-    } else {
-      this.consultationForm.patchValue({ beneficiary_id: '' });
-    }
-  }
-
-  openAddPatientModal(searchTerm: string): void {
-    this.newPatientInitialName.set(searchTerm);
-    this.isAddPatientModalOpen.set(true);
-  }
-
-  closeAddPatientModal(): void {
-    this.isAddPatientModalOpen.set(false);
-    this.newPatientInitialName.set('');
-  }
-
-  onPatientCreated(patient: IUser): void {
-    // Add to cache
-    this.beneficiaryCache.set(patient.pk, patient);
-    // Select the newly created patient
-    this.selectedBeneficiary.set(patient);
-    this.consultationForm.patchValue({ beneficiary_id: patient.pk });
-    // Close modal
-    this.closeAddPatientModal();
-  }
-
 
   getCustomFieldOptions(field: CustomField): SelectOption[] {
     return (field.options || []).map(o => ({ value: o, label: o }));
@@ -1070,43 +995,35 @@ export class ConsultationForm implements OnInit, OnDestroy {
       }));
   }
 
-  getPendingAppointmentParticipants(appointmentRequest: CreateAppointmentRequest): any[] {
-    const participants: any[] = [];
+  getPendingAppointmentParticipants(
+    appointmentRequest: CreateAppointmentRequest
+  ): CreateParticipantRequest[] {
+    const participants: CreateParticipantRequest[] = [];
+    // The same person can hold several roles (creator and practitioner, or
+    // practitioner and patient): list them once.
+    const seen = new Set<number>();
 
-    // Add beneficiary if not excluded
-    if (!appointmentRequest.dont_invite_beneficiary && this.getBeneficiaryUser()) {
-      const beneficiary = this.getBeneficiaryUser()!;
+    const add = (user: IUser | null): void => {
+      if (!user || seen.has(user.pk)) return;
+      seen.add(user.pk);
       participants.push({
-        user_id: beneficiary.pk,
-        first_name: beneficiary.first_name,
-        last_name: beneficiary.last_name,
-        email: beneficiary.email,
+        user_id: user.pk,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email,
       });
+    };
+
+    if (!appointmentRequest.dont_invite_beneficiary) {
+      add(this.getBeneficiaryUser());
+    }
+    if (!appointmentRequest.dont_invite_practitioner) {
+      add(this.getOwnerUser());
+    }
+    if (!appointmentRequest.dont_invite_me) {
+      add(this.getCurrentUserForInvite());
     }
 
-    // Add owner/practitioner if not excluded
-    if (!appointmentRequest.dont_invite_practitioner && this.getOwnerUser()) {
-      const owner = this.getOwnerUser()!;
-      participants.push({
-        user_id: owner.pk,
-        first_name: owner.first_name,
-        last_name: owner.last_name,
-        email: owner.email,
-      });
-    }
-
-    // Add current user if not excluded
-    if (!appointmentRequest.dont_invite_me && this.getCurrentUserForInvite()) {
-      const currentUser = this.getCurrentUserForInvite()!;
-      participants.push({
-        user_id: currentUser.pk,
-        first_name: currentUser.first_name,
-        last_name: currentUser.last_name,
-        email: currentUser.email,
-      });
-    }
-
-    // Add temporary participants
     if (appointmentRequest.temporary_participants) {
       participants.push(...appointmentRequest.temporary_participants);
     }

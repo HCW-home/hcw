@@ -17,11 +17,6 @@
   background: var(--White);
   border-radius: 8px;
   border: 1px solid var(--slate-100);
-
-  &.pending {
-    border-style: dashed;
-    background: var(--slate-25, #fafafa);
-  }
 }
 
 .participant-row {
@@ -385,5 +380,38 @@
     margin-top: 7px;
     font-size: 14px;
     color: var(--slate-400);
+  }
+}
+
+// Stand-in avatars for contacts that have no account yet: a rounded square
+// rather than the usual circle, tinted like their row in the contact picker.
+.guest-avatar {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  flex: 0 0 auto;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 12px;
+  align-items: center;
+  justify-content: center;
+
+  &.small {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+    border-radius: 9px;
+  }
+
+  // An access link the practitioner hands over.
+  &.link {
+    color: var(--amber-700);
+    background: var(--amber-100);
+  }
+
+  // An invitation the platform sends by e-mail or SMS.
+  &.invited {
+    color: var(--emerald-700);
+    background: var(--emerald-100);
   }
 }

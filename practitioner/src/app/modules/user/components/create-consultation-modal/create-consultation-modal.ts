@@ -45,8 +45,8 @@ import { Select, AsyncSearchFn, AsyncSearchResult } from '../../../../shared/ui-
 import { Button } from '../../../../shared/ui-components/button/button';
 import { Checkbox } from '../../../../shared/ui-components/checkbox/checkbox';
 import { AppointmentForm } from '../../../../shared/components/appointment-form/appointment-form';
-import { ExternalContactForm } from '../../../../shared/components/external-contact-form/external-contact-form';
-import { AddEditPatient } from '../add-edit-patient/add-edit-patient';
+import { ContactPicker } from '../../../../shared/components/contact-picker/contact-picker';
+import { ContactSelection } from '../../../../shared/models/contact-picker';
 
 import { ButtonSizeEnum, ButtonStyleEnum } from '../../../../shared/constants/button';
 import { SelectOption } from '../../../../shared/models/select';
@@ -66,8 +66,7 @@ import { TranslatePipe } from '@ngx-translate/core';
     Button,
     Checkbox,
     AppointmentForm,
-    ExternalContactForm,
-    AddEditPatient,
+    ContactPicker,
     TranslatePipe,
   ],
 })
@@ -109,38 +108,16 @@ export class CreateConsultationModal implements OnInit, OnDestroy {
   isSaving = signal(false);
   showSchedule = signal(false);
   showAdvanced = signal(false);
-  isAddPatientModalOpen = signal(false);
-  newPatientInitialName = signal('');
   pendingAppointmentData = signal<CreateAppointmentRequest | null>(null);
   appointmentFormRef = viewChild<AppointmentForm>('appointmentFormRef');
-  // Toggle between an existing user and an external contact as beneficiary.
+  // True when the picker holds a temporary contact instead of an account.
   isExternalBeneficiary = signal(false);
   externalBeneficiaryErrors = signal<Record<string, string[]>>({});
-  externalBeneficiaryRef = viewChild<ExternalContactForm>('externalBeneficiaryRef');
+  beneficiaryPickerRef = viewChild<ContactPicker>('beneficiaryPickerRef');
 
-  private beneficiaryCache = new Map<number, IUser>();
   private practitionerCache = new Map<number, IUser>();
 
   consultationForm!: FormGroup;
-
-  beneficiaryInitialOption = computed<SelectOption | null>(() => {
-    const beneficiary = this.selectedBeneficiary();
-    if (!beneficiary) return null;
-    const currentUser = this.currentUser();
-    const isCurrentUser = !!(currentUser && beneficiary.pk === currentUser.pk);
-    const name = isCurrentUser
-      ? this.t.instant('userSearchSelect.me')
-      : `${beneficiary.first_name || ''} ${beneficiary.last_name || ''}`.trim() || beneficiary.email || beneficiary.username || 'User';
-    return {
-      value: beneficiary.pk,
-      label: name,
-      secondaryLabel: beneficiary.email,
-      image: beneficiary.picture || undefined,
-      initials: this.getUserInitials(beneficiary),
-      isCurrentUser,
-      isPractitioner: beneficiary.is_practitioner,
-    };
-  });
 
   queueOptions = computed<SelectOption[]>(() =>
     this.queues().map(queue => ({
@@ -175,31 +152,6 @@ export class CreateConsultationModal implements OnInit, OnDestroy {
 
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
-
-  beneficiarySearchFn: AsyncSearchFn = (query: string, page: number): Observable<AsyncSearchResult> => {
-    return this.userService.searchUsers(query, page, 20, undefined).pipe(
-      map(response => {
-        const currentUser = this.currentUser();
-        const results: SelectOption[] = response.results.map(user => {
-          this.beneficiaryCache.set(user.pk, user);
-          const isCurrentUser = !!(currentUser && user.pk === currentUser.pk);
-          const name = isCurrentUser
-            ? this.t.instant('userSearchSelect.me')
-            : `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email || user.username || 'User';
-          return {
-            value: user.pk,
-            label: name,
-            secondaryLabel: [user.email, user.mobile_phone_number].filter(Boolean).join(' · '),
-            image: user.picture || undefined,
-            initials: this.getUserInitials(user),
-            isCurrentUser,
-            isPractitioner: user.is_practitioner,
-          };
-        });
-        return { results, hasMore: response.next !== null };
-      })
-    );
-  };
 
   practitionerSearchFn: AsyncSearchFn = (query: string, page: number): Observable<AsyncSearchResult> => {
     return this.userService.searchUsers(query, page, 20, false, undefined, true).pipe(
@@ -239,7 +191,6 @@ export class CreateConsultationModal implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadQueues();
     this.loadCurrentUser();
-    this.setupBeneficiarySync();
     this.setupOwnerSync();
   }
 
@@ -270,19 +221,6 @@ export class CreateConsultationModal implements OnInit, OnDestroy {
     }
   }
 
-  private setupBeneficiarySync(): void {
-    this.consultationForm.get('beneficiary_id')?.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(value => {
-        if (value) {
-          const user = this.beneficiaryCache.get(Number(value));
-          this.selectedBeneficiary.set(user || null);
-        } else {
-          this.selectedBeneficiary.set(null);
-        }
-      });
-  }
-
   private setupOwnerSync(): void {
     this.consultationForm.get('owned_by_id')?.valueChanges
       .pipe(takeUntil(this.destroy$))
@@ -305,29 +243,11 @@ export class CreateConsultationModal implements OnInit, OnDestroy {
     return (firstName || lastName || user.email || 'U').charAt(0).toUpperCase();
   }
 
-  openAddPatientModal(searchTerm: string): void {
-    this.newPatientInitialName.set(searchTerm);
-    this.isAddPatientModalOpen.set(true);
-  }
-
-  closeAddPatientModal(): void {
-    this.isAddPatientModalOpen.set(false);
-    this.newPatientInitialName.set('');
-  }
-
-  onPatientCreated(patient: IUser): void {
-    this.beneficiaryCache.set(patient.pk, patient);
-    this.selectedBeneficiary.set(patient);
-    this.consultationForm.patchValue({ beneficiary_id: patient.pk });
-    this.closeAddPatientModal();
-  }
-
-  setBeneficiaryType(external: boolean): void {
-    this.isExternalBeneficiary.set(external);
-    if (external) {
-      this.consultationForm.patchValue({ beneficiary_id: '' });
-      this.selectedBeneficiary.set(null);
-    }
+  onBeneficiarySelection(selection: ContactSelection | null): void {
+    this.isExternalBeneficiary.set(selection?.kind === 'guest');
+    this.selectedBeneficiary.set(
+      selection?.kind === 'user' ? selection.user : null
+    );
   }
 
   onAppointmentDataReady(data: CreateAppointmentRequest): void {
@@ -365,11 +285,11 @@ export class CreateConsultationModal implements OnInit, OnDestroy {
       return;
     }
 
-    // Validate the external beneficiary contact if that mode is active.
+    // Validate the temporary beneficiary if the picker holds one.
     if (this.isExternalBeneficiary()) {
-      const ref = this.externalBeneficiaryRef();
-      ref?.markAllTouched();
-      if (!ref || !ref.isValid() || !ref.buildPayload()) {
+      const picker = this.beneficiaryPickerRef();
+      picker?.markAllTouched();
+      if (!picker || !picker.isValid() || !picker.buildGuestPayload()) {
         return;
       }
     }
@@ -403,7 +323,7 @@ export class CreateConsultationModal implements OnInit, OnDestroy {
     const useExternalBeneficiary = this.isExternalBeneficiary();
     const temporaryBeneficiary: ITemporaryParticipant | null =
       useExternalBeneficiary
-        ? this.externalBeneficiaryRef()?.buildPayload() ?? null
+        ? this.beneficiaryPickerRef()?.buildGuestPayload() ?? null
         : null;
 
     const consultationData: CreateConsultationRequest = {
@@ -515,7 +435,8 @@ export class CreateConsultationModal implements OnInit, OnDestroy {
       }
     }
     if (beneficiaryId) {
-      const beneficiary = this.beneficiaryCache.get(beneficiaryId);
+      const selected = this.selectedBeneficiary();
+      const beneficiary = selected?.pk === beneficiaryId ? selected : null;
       if (beneficiary?.public_key && beneficiaryId !== currentUser?.pk) {
         await wrapFor(beneficiary, { user_id: beneficiaryId });
       }

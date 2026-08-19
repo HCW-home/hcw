@@ -1,5 +1,16 @@
 <div class="participant-item" [class.pending]="isPending" [class.compact]="compact">
   <div class="participant-row">
+    @if (showLinkAvatar) {
+    <span class="guest-avatar link" [class.small]="compact">
+      <app-svg
+        src="link"
+        [svgStyle]="compact ? {'width.px': 14, 'height.px': 14} : {'width.px': 17, 'height.px': 17}"></app-svg>
+    </span>
+    } @else if (isInvitedPending) {
+    <span class="guest-avatar invited" [class.small]="compact"
+      >{{ getInitials() }}</span
+    >
+    } @else {
     <app-user-avatar
       [firstName]="getFirstName()"
       [lastName]="getLastName()"
@@ -9,6 +20,7 @@
       [isOnline]="isOnline() ? true : (participant?.user ? false : undefined)"
       [isCurrentUser]="isCurrentUser()">
     </app-user-avatar>
+    }
     <div class="participant-details">
       <span class="participant-name">{{ getDisplayName() }}</span>
       @if (getContact()) {
@@ -52,7 +64,11 @@
     </div>
     <div class="participant-actions">
       <ng-content></ng-content>
-      @if (isPending) {
+      @if (isGuestPending) {
+      <app-badge [type]="BadgeTypeEnum.gray" [size]="BadgeSizeEnum.medium"
+        >{{ 'participantItem.guest' | translate }}</app-badge
+      >
+      } @else if (isPending) {
       <app-badge [type]="BadgeTypeEnum.gray" [size]="BadgeSizeEnum.medium"
         >{{ 'participantItem.pending' | translate }}</app-badge
       >

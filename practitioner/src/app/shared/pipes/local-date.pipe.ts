@@ -11,7 +11,7 @@ import { TranslationService } from '../../core/services/translation.service';
 export class LocalDatePipe implements PipeTransform {
   private t = inject(TranslationService);
 
-  transform(value: string | null | undefined, format: string = 'MMM d, y, HH:mm'): string {
+  transform(value: string | null | undefined, format = 'MMM d, y, HH:mm'): string {
     if (!value) return '';
 
     const date = parseDateWithoutTimezone(value);

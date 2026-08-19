@@ -157,7 +157,7 @@
   }
 
   .info-label {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--slate-500);
     text-transform: uppercase;
@@ -228,19 +228,12 @@
     }
 
     .info-item {
-      position: relative;
       gap: 2px;
       padding: 13px 16px;
       background: transparent;
       border-radius: 0;
       border-top: 1px solid var(--slate-100);
       border-left: 1px solid var(--slate-100);
-
-      // Room for the avatar, which is taken out of the flow to stay centred
-      // whatever the number of text lines.
-      &:has(app-user-avatar) {
-        padding-left: 59px;
-      }
 
       // An odd number of cells would leave the last one alone on its row, with
       // its rules stopping mid-card. Let it span instead so the strip always
@@ -250,22 +243,20 @@
       }
     }
 
-    // Flattened so the label, value and sub-line share one column next to the
-    // avatar instead of being nested two levels down.
-    .info-user,
-    .info-user-details {
-      display: contents;
+    // The label keeps the cell's left edge whether or not someone is assigned;
+    // the avatar sits beside the name and sub-line, not beside the label.
+    .info-user {
+      gap: 8px;
+      align-items: center;
     }
 
-    app-user-avatar {
-      position: absolute;
-      left: 16px;
-      top: 50%;
-      transform: translateY(-50%);
+    // Matches the label/content rhythm the flattened layout used to give.
+    .info-user-details {
+      gap: 2px;
     }
 
     .info-label {
-      font-size: 14px;
+      font-size: 12px;
       letter-spacing: 0.02em;
       color: var(--slate-400);
     }
@@ -791,41 +782,11 @@
   }
 }
 
-.beneficiary-type-toggle {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-
-  .type-btn {
-    flex: 1;
-    padding: 8px 12px;
-    background: white;
-    border: 2px solid var(--slate-200);
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--slate-600);
-    cursor: pointer;
-    transition: all 0.2s;
-
-    &:hover {
-      border-color: var(--primary-300);
-    }
-
-    &.active {
-      background: var(--primary-50);
-      border-color: var(--primary-500);
-      color: var(--primary-700);
-    }
-  }
-}
-
-// When the external-contact beneficiary makes the PATIENT item span the whole
-// grid row, keep its content at a readable, left-aligned width instead of
-// stretching the selects/toggle edge to edge.
+// When a temporary beneficiary makes the PATIENT item span the whole grid
+// row, keep its content at a readable, left-aligned width instead of
+// stretching the picker edge to edge.
 .info-item.full-width {
-  app-external-contact-form,
-  .beneficiary-type-toggle {
+  app-contact-picker {
     max-width: 520px;
   }
 }

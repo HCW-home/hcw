@@ -62,6 +62,11 @@ export class ParticipantItem {
    * small avatar, and the access link expanded inline instead of in a modal.
    */
   @Input() compact = false;
+  /**
+   * Access link affordance. Hidden where the link is not actionable yet, such
+   * as the appointment form, whose participants are still being edited.
+   */
+  @Input() showAccessLink = true;
 
   @Output() remove = new EventEmitter<void>();
 
@@ -71,6 +76,51 @@ export class ParticipantItem {
   protected readonly BadgeTypeEnum = BadgeTypeEnum;
   protected readonly BadgeSizeEnum = BadgeSizeEnum;
   protected readonly getParticipantBadgeType = getParticipantBadgeType;
+
+  /**
+   * A contact invited through a link the practitioner hands over: there is no
+   * address to display and nothing to wait for, so it reads like the contact
+   * picker's card rather than a pending invitation.
+   */
+  get isLinkOnlyPending(): boolean {
+    const pending = this.pendingParticipant;
+    return (
+      !!pending &&
+      !pending.user_id &&
+      pending.communication_method === 'manual'
+    );
+  }
+
+  /**
+   * A pending contact who will receive an access link by e-mail or SMS: same
+   * green convention as the "Invite …" row of the contact picker.
+   */
+  get isInvitedPending(): boolean {
+    const pending = this.pendingParticipant;
+    return (
+      !!pending &&
+      !pending.user_id &&
+      !!pending.communication_method &&
+      pending.communication_method !== 'manual'
+    );
+  }
+
+  /** Either flavour of contact that has no account yet. */
+  get isGuestPending(): boolean {
+    return this.isLinkOnlyPending || this.isInvitedPending;
+  }
+
+  /** No name and no address: the link glyph stands in for the initials. */
+  get showLinkAvatar(): boolean {
+    const pending = this.pendingParticipant;
+    if (!this.isLinkOnlyPending || !pending) return false;
+    return (
+      !pending.first_name &&
+      !pending.last_name &&
+      !pending.email &&
+      !pending.mobile_phone_number
+    );
+  }
 
   getInitials(): string {
     if (this.participant?.user) {
@@ -122,17 +172,38 @@ export class ParticipantItem {
 
       const name =
         `${this.pendingParticipant.first_name || ''} ${this.pendingParticipant.last_name || ''}`.trim();
-      return (
-        name ||
+      if (name) return name;
+      // Whatever the link is sent to identifies the contact: address or number.
+      const address =
         this.pendingParticipant.email ||
-        this.t.instant('participantItem.participant')
-      );
+        this.pendingParticipant.mobile_phone_number;
+      if (address) return address;
+      if (this.isLinkOnlyPending) {
+        return this.t.instant('contactPicker.guestWithoutContact');
+      }
+      return this.t.instant('participantItem.participant');
     }
 
     return this.t.instant('participantItem.unknown');
   }
 
   getContact(): string {
+    if (this.isLinkOnlyPending) {
+      return this.t.instant('participantItem.linkManual');
+    }
+
+    if (this.isInvitedPending) {
+      const address =
+        this.pendingParticipant?.email ||
+        this.pendingParticipant?.mobile_phone_number ||
+        '';
+      // Without a name the address is already the title: no point repeating it.
+      if (address && address !== this.getDisplayName()) {
+        return `${address} · ${this.t.instant(this.deliveryKey('contactPicker'))}`;
+      }
+      return this.t.instant(this.deliveryKey('participantItem'));
+    }
+
     let contact = '';
 
     if (this.participant?.user) {
@@ -153,6 +224,17 @@ export class ParticipantItem {
     }
 
     return contact;
+  }
+
+  /**
+   * How the access link reaches the contact. The contactPicker wording runs
+   * inline after the address, the participantItem one stands on its own.
+   */
+  private deliveryKey(namespace: 'contactPicker' | 'participantItem'): string {
+    const method = this.pendingParticipant?.communication_method;
+    if (method === 'email') return `${namespace}.linkSentByEmail`;
+    if (method === 'whatsapp') return `${namespace}.linkSentByWhatsApp`;
+    return `${namespace}.linkSentBySms`;
   }
 
   isOnline(): boolean {
@@ -229,6 +311,9 @@ export class ParticipantItem {
   loadingAccessUrl = signal(false);
 
   hasAccessUrl(): boolean {
+    if (!this.showAccessLink) {
+      return false;
+    }
     // Don't show the access link for cancelled participants or cancelled appointments
     if (this.appointmentCancelled || this.participant?.status === 'cancelled') {
       return false;

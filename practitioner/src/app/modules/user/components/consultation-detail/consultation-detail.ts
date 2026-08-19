@@ -75,8 +75,8 @@ import { ModalComponent } from '../../../../shared/components/modal/modal.compon
 import { AppointmentFormModal } from './appointment-form-modal/appointment-form-modal';
 import { ReminderFormModal } from '../../../../shared/components/reminder-form-modal/reminder-form-modal';
 import { ReminderCard } from '../../../../shared/components/reminder-card/reminder-card';
-import { UserSelectOrCreate } from '../../../../shared/components/user-select-or-create/user-select-or-create';
-import { ExternalContactForm } from '../../../../shared/components/external-contact-form/external-contact-form';
+import { ContactPicker } from '../../../../shared/components/contact-picker/contact-picker';
+import { ContactSelection } from '../../../../shared/models/contact-picker';
 import { Reminder } from '../../../../core/models/reminder';
 import { RoutePaths } from '../../../../core/constants/routes';
 import {
@@ -108,8 +108,7 @@ import { TranslationService } from '../../../../core/services/translation.servic
     AppointmentFormModal,
     ReminderFormModal,
     ReminderCard,
-    UserSelectOrCreate,
-    ExternalContactForm,
+    ContactPicker,
     ModalComponent,
     LocalDatePipe,
     AppointmentPanel,
@@ -221,14 +220,12 @@ export class ConsultationDetail implements OnInit, OnDestroy {
   editForm!: FormGroup;
   selectedBeneficiary = signal<IUser | null>(null);
   selectedOwner = signal<IUser | null>(null);
-  beneficiaryInitialOption = signal<SelectOption | null>(null);
   ownerInitialOption = signal<SelectOption | null>(null);
   // Toggle between an existing user and an external contact as beneficiary.
   isExternalBeneficiary = signal(false);
   externalBeneficiaryErrors = signal<Record<string, string[]>>({});
-  externalBeneficiaryRef = viewChild<ExternalContactForm>('externalBeneficiaryRef');
+  beneficiaryPickerRef = viewChild<ContactPicker>('beneficiaryPickerRef');
   private practitionerCache = new Map<number, IUser>();
-  private beneficiaryCache = new Map<number, IUser>();
 
   private fb = inject(FormBuilder);
 
@@ -238,18 +235,6 @@ export class ConsultationDetail implements OnInit, OnDestroy {
       label: queue.name,
     }))
   );
-
-  beneficiarySearchFn: AsyncSearchFn = (query: string, page: number): Observable<AsyncSearchResult> => {
-    return this.userService.searchUsers(query, page, 20, undefined).pipe(
-      map(response => {
-        const results: SelectOption[] = response.results.map(user => {
-          this.beneficiaryCache.set(user.pk, user);
-          return this.userToSelectOption(user);
-        });
-        return { results, hasMore: response.next !== null };
-      })
-    );
-  };
 
   practitionerSearchFn: AsyncSearchFn = (query: string, page: number): Observable<AsyncSearchResult> => {
     return this.userService.searchUsers(query, page, 20, false, undefined, true).pipe(
@@ -404,17 +389,6 @@ export class ConsultationDetail implements OnInit, OnDestroy {
       group_id: [''],
       visible_by_patient: [true],
     });
-
-    this.editForm.get('beneficiary_id')?.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(value => {
-        if (value) {
-          const user = this.beneficiaryCache.get(Number(value));
-          this.selectedBeneficiary.set(user || null);
-        } else {
-          this.selectedBeneficiary.set(null);
-        }
-      });
 
     this.editForm.get('owned_by_id')?.valueChanges
       .pipe(takeUntil(this.destroy$))
@@ -1123,8 +1097,7 @@ export class ConsultationDetail implements OnInit, OnDestroy {
     };
 
     if (newBeneficiaryId !== oldBeneficiaryId && newBeneficiaryId) {
-      const ben = this.beneficiaryCache.get(newBeneficiaryId)
-        ?? this.selectedBeneficiary();
+      const ben = this.selectedBeneficiary();
       if (!ben?.public_key) {
         throw new Error('New beneficiary has no public key (not provisioned yet)');
       }
@@ -1466,11 +1439,8 @@ export class ConsultationDetail implements OnInit, OnDestroy {
         last_name: currentConsultation.beneficiary.last_name,
       } as IUser;
       this.selectedBeneficiary.set(bUser);
-      this.beneficiaryCache.set(bUser.pk, bUser);
-      this.beneficiaryInitialOption.set(this.userToSelectOption(bUser));
     } else {
       this.selectedBeneficiary.set(null);
-      this.beneficiaryInitialOption.set(null);
     }
 
     if (currentConsultation.owned_by) {
@@ -1497,18 +1467,16 @@ export class ConsultationDetail implements OnInit, OnDestroy {
     this.isEditMode.set(false);
     this.selectedBeneficiary.set(null);
     this.selectedOwner.set(null);
-    this.beneficiaryInitialOption.set(null);
     this.ownerInitialOption.set(null);
     this.isExternalBeneficiary.set(false);
     this.externalBeneficiaryErrors.set({});
   }
 
-  setBeneficiaryType(external: boolean): void {
-    this.isExternalBeneficiary.set(external);
-    if (external) {
-      this.editForm.patchValue({ beneficiary_id: '' });
-      this.selectedBeneficiary.set(null);
-    }
+  onBeneficiarySelection(selection: ContactSelection | null): void {
+    this.isExternalBeneficiary.set(selection?.kind === 'guest');
+    this.selectedBeneficiary.set(
+      selection?.kind === 'user' ? selection.user : null
+    );
   }
 
   async saveConsultationChanges(): Promise<void> {
@@ -1517,10 +1485,10 @@ export class ConsultationDetail implements OnInit, OnDestroy {
     // Validate the external beneficiary contact if that mode is active.
     let temporaryBeneficiary: ITemporaryParticipant | null = null;
     if (this.isExternalBeneficiary()) {
-      const ref = this.externalBeneficiaryRef();
-      ref?.markAllTouched();
-      if (!ref || !ref.isValid()) return;
-      temporaryBeneficiary = ref.buildPayload();
+      const picker = this.beneficiaryPickerRef();
+      picker?.markAllTouched();
+      if (!picker || !picker.isValid()) return;
+      temporaryBeneficiary = picker.buildGuestPayload();
       if (!temporaryBeneficiary) return;
     }
 

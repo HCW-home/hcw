@@ -1,0 +1,255 @@
+<div class="contact-picker">
+  @if (label) {
+  <label class="field-label" [attr.for]="inputId">
+    {{ label }} @if (required) {
+    <span class="required-indicator">*</span>
+    }
+  </label>
+  }
+
+  @if (!hasSelection) {
+  <div class="search-container">
+    <div
+      class="search-wrapper"
+      #searchWrapper
+      [class.wizard-highlight-target]="highlightSearch">
+      <span class="search-icon">
+        <app-svg
+          src="search"
+          [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
+      </span>
+      <input
+        type="text"
+        class="search-input"
+        [id]="inputId"
+        name="contact-picker-search"
+        autocomplete="off"
+        [placeholder]="placeholder || ('contactPicker.searchPlaceholder' | translate)"
+        [value]="query()"
+        (input)="onQueryInput($event)"
+        (focus)="onFocus()" />
+    </div>
+
+    @if (isOpen()) {
+    <button
+      type="button"
+      class="dropdown-backdrop"
+      tabindex="-1"
+      [attr.aria-label]="'common.close' | translate"
+      (click)="closeDropdown()"></button>
+    <div
+      class="dropdown"
+      [style.top]="dropdownStyle().top"
+      [style.bottom]="dropdownStyle().bottom"
+      [style.left]="dropdownStyle().left"
+      [style.width]="dropdownStyle().width">
+      @if (!query()) {
+      <div class="dropdown-hint">{{ dropdownHintKey | translate }}</div>
+      }
+
+      @if (isLoading()) {
+      <div class="dropdown-loading">
+        <app-loader></app-loader>
+      </div>
+      } @else { @for (user of results(); track user.pk) {
+      <button type="button" class="dropdown-row" (click)="pickUser(user)">
+        <span class="row-avatar account">{{ initials(user) }}</span>
+        <span class="row-text">
+          <span class="row-title">{{ displayName(user) }}</span>
+          <span class="row-subtitle">{{ userMeta(user) }}</span>
+        </span>
+        <span class="row-tag">{{ 'contactPicker.tagAccountShort' | translate }}</span>
+      </button>
+      } @if (query() && results().length === 0) {
+      <div class="dropdown-hint">
+        {{ 'contactPicker.noResult' | translate: { query: query() } }}
+      </div>
+      } }
+
+      @if (canInvite) {
+      <button type="button" class="dropdown-row action invite" (click)="invite()">
+        <span class="row-avatar invite">
+          <app-svg
+            src="plus"
+            [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+        </span>
+        <span class="row-text">
+          <span class="row-title invite"
+            >{{ 'contactPicker.invite' | translate: { query: query().trim() }
+            }}</span
+          >
+          <span class="row-subtitle">{{ inviteHint }}</span>
+        </span>
+      </button>
+      }
+
+      @if (canCreateContact) {
+      <button type="button" class="dropdown-row action" (click)="createContact()">
+        <span class="row-avatar neutral">
+          <app-svg
+            [src]="createContactOpensForm ? 'user-plus' : 'link'"
+            [svgStyle]="{'width.px': 15, 'height.px': 15}"></app-svg>
+        </span>
+        <span class="row-text">
+          <span class="row-title"
+            >{{ (createContactOpensForm ? 'contactPicker.createContact' :
+            'contactPicker.inviteViaLink') | translate: { query: query().trim()
+            } }}</span
+          >
+          <span class="row-subtitle"
+            >{{ (createContactOpensForm ? 'contactPicker.createContactFormHint'
+            : 'contactPicker.inviteViaLinkHint') | translate }}</span
+          >
+        </span>
+      </button>
+      }
+
+      @if (allowGuests && !query()) {
+      <button type="button" class="dropdown-row action" (click)="createLinkOnly()">
+        <span class="row-avatar neutral">
+          <app-svg
+            src="link"
+            [svgStyle]="{'width.px': 15, 'height.px': 15}"></app-svg>
+        </span>
+        <span class="row-text">
+          <span class="row-title"
+            >{{ 'contactPicker.createLinkOnly' | translate }}</span
+          >
+          <span class="row-subtitle"
+            >{{ 'contactPicker.createLinkOnlyHint' | translate }}</span
+          >
+        </span>
+      </button>
+      }
+
+      @if (!createContactOpensForm) {
+      <button type="button" class="dropdown-row action" (click)="openAddAccountModal()">
+        <span class="row-avatar neutral">
+          <app-svg
+            src="user-plus"
+            [svgStyle]="{'width.px': 15, 'height.px': 15}"></app-svg>
+        </span>
+        <span class="row-text">
+          <span class="row-title"
+            >{{ (query().trim() ? 'contactPicker.createContact' :
+            'contactPicker.createContactEmpty') | translate: { query:
+            query().trim() } }}</span
+          >
+          <span class="row-subtitle"
+            >{{ 'contactPicker.createContactFormHint' | translate }}</span
+          >
+        </span>
+      </button>
+      }
+    </div>
+    }
+  </div>
+
+  @if (helperMessage) {
+  <span class="field-helper-text">{{ helperMessage }}</span>
+  } } @else {
+  <div
+    class="selection-card"
+    [class.invited]="isInvitedGuest"
+    [class.link-only]="isLinkGuest">
+    <span class="selection-avatar">
+      @if (showLinkAvatar) {
+      <app-svg
+        src="link"
+        [svgStyle]="{'width.px': 17, 'height.px': 17}"></app-svg>
+      } @else {
+      {{ selectedInitials }}
+      }
+    </span>
+    <span class="selection-text">
+      <span class="selection-title">
+        <span class="selection-name">{{ selectedName }}</span>
+        <span class="selection-tag">{{ selectedTag }}</span>
+      </span>
+      <span class="selection-meta">{{ selectedMeta }}</span>
+    </span>
+    <button type="button" class="selection-change" (click)="clearSelection()">
+      {{ 'contactPicker.change' | translate }}
+    </button>
+  </div>
+
+  @if (contactError) {
+  <div class="field-error">{{ contactError }}</div>
+  } @if (isGuest) {
+  <div
+    class="details"
+    [class.open]="detailsOpen()"
+    [class.wizard-highlight-target]="highlightDetails">
+    <button type="button" class="details-header" (click)="toggleDetails()">
+      <span class="details-title">{{ detailsTitle }}</span>
+      <span class="details-meta">{{ detailsMeta }}</span>
+      <span class="details-toggle">
+        {{ (detailsOpen() ? 'contactPicker.collapse' : 'contactPicker.expand') |
+        translate }}
+      </span>
+    </button>
+
+    @if (detailsOpen()) {
+    <div class="details-body" [formGroup]="detailsForm">
+      <app-input
+        type="text"
+        [label]="'appointmentForm.firstName' | translate"
+        [placeholder]="'contactPicker.optional' | translate"
+        formControlName="first_name">
+      </app-input>
+      <app-input
+        type="text"
+        [label]="'appointmentForm.lastName' | translate"
+        [placeholder]="'contactPicker.optional' | translate"
+        formControlName="last_name">
+      </app-input>
+      <app-select
+        [label]="'appointmentForm.preferredLanguage' | translate"
+        [options]="languageOptions"
+        [placeholder]="'appointmentForm.selectLanguage' | translate"
+        formControlName="preferred_language">
+      </app-select>
+      <app-select
+        [label]="'appointmentForm.timezone' | translate"
+        [options]="timezoneOptions"
+        [placeholder]="'appointmentForm.selectTimezone' | translate"
+        formControlName="timezone">
+      </app-select>
+      @if (showCommunicationMethodField) {
+      <app-select
+        [label]="'appointmentForm.communicationMethod' | translate"
+        [options]="communicationMethods"
+        [placeholder]="'appointmentForm.selectMethod' | translate"
+        formControlName="communication_method">
+      </app-select>
+      }
+    </div>
+    }
+  </div>
+  } @if (showVisibility) {
+  <div class="visibility" [class.wizard-highlight-target]="highlightVisibility">
+    <app-checkbox
+      [label]="'appointmentForm.consultationVisible' | translate"
+      [formControl]="visibilityControl">
+    </app-checkbox>
+    <span class="field-helper-text">
+      {{ 'appointmentForm.consultationVisibleHelp' | translate }}
+    </span>
+  </div>
+  } }
+</div>
+
+@if (addAccountModalOpen()) {
+<app-modal
+  [isOpen]="addAccountModalOpen()"
+  size="large"
+  [showCloseButton]="false"
+  [bodyPadding]="false"
+  (closed)="closeAddAccountModal()">
+  <app-add-edit-patient
+    [initialName]="newAccountName()"
+    (saved)="onAccountCreated($event)"
+    (cancelled)="closeAddAccountModal()">
+  </app-add-edit-patient>
+</app-modal>
+}

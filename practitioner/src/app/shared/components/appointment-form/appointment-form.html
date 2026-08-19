@@ -90,34 +90,6 @@
           </app-input>
         </div>
 
-        @if (!isEditMode) {
-        <div class="invite-flags-section">
-          <div class="invite-flags">
-            @if (!isBeneficiaryCheckboxDisabled()) {
-            <app-checkbox
-              [label]="'appointmentForm.dontInvitePatient' | translate"
-              formControlName="dont_invite_beneficiary">
-            </app-checkbox>
-            }
-            @if (!isPractitionerCheckboxDisabled()) {
-            <app-checkbox
-              [label]="'appointmentForm.dontInvitePractitioner' | translate"
-              formControlName="dont_invite_practitioner">
-            </app-checkbox>
-            }
-            @if (showContactInviteFlag) {
-            <app-checkbox
-              [label]="'appointmentForm.dontInviteContact' | translate"
-              formControlName="dont_invite_contact">
-            </app-checkbox>
-            }
-            <app-checkbox
-              [label]="'appointmentForm.dontInviteMe' | translate"
-              formControlName="dont_invite_me">
-            </app-checkbox>
-          </div>
-        </div>
-        }
       </form>
     </div>
 
@@ -163,8 +135,8 @@
           [class.excluded]="appointmentForm.get('dont_invite_beneficiary')?.value"
           [participant]="{id: 0, user: {id: beneficiary.id, email: beneficiary.email, first_name: beneficiary.first_name, last_name: beneficiary.last_name, picture: beneficiary.picture, is_online: beneficiary.is_online}, is_active: true}"
           [currentUser]="currentUser()">
-          <span class="role-tag"
-            >{{ 'appointmentForm.rolePatient' | translate }}</span
+          <app-badge [type]="BadgeTypeEnum.gray" [size]="BadgeSizeEnum.medium"
+            >{{ 'appointmentForm.rolePatient' | translate }}</app-badge
           >
           <app-switch
             [ngModel]="!appointmentForm.get('dont_invite_beneficiary')?.value"
@@ -177,8 +149,8 @@
           [class.excluded]="appointmentForm.get('dont_invite_practitioner')?.value"
           [participant]="{id: 0, user: {id: owner.id, email: owner.email, first_name: owner.first_name, last_name: owner.last_name, picture: owner.picture, is_online: owner.is_online}, is_active: true}"
           [currentUser]="currentUser()">
-          <span class="role-tag"
-            >{{ 'appointmentForm.rolePractitioner' | translate }}</span
+          <app-badge [type]="BadgeTypeEnum.gray" [size]="BadgeSizeEnum.medium"
+            >{{ 'appointmentForm.rolePractitioner' | translate }}</app-badge
           >
           <app-switch
             [ngModel]="!appointmentForm.get('dont_invite_practitioner')?.value"
@@ -191,8 +163,8 @@
           [class.excluded]="appointmentForm.get('dont_invite_me')?.value"
           [participant]="{id: 0, user: {id: user.pk, email: user.email, first_name: user.first_name, last_name: user.last_name}, is_active: true}"
           [currentUser]="currentUser()">
-          <span class="role-tag"
-            >{{ 'appointmentForm.roleYou' | translate }}</span
+          <app-badge [type]="BadgeTypeEnum.gray" [size]="BadgeSizeEnum.medium"
+            >{{ 'appointmentForm.roleYou' | translate }}</app-badge
           >
           <app-switch
             [ngModel]="!appointmentForm.get('dont_invite_me')?.value"
@@ -202,10 +174,15 @@
         </app-participant-item>
         } } @for (participant of participants(); track participant.id) {
         <app-participant-item
+          [class.excluded]="!participant.is_active"
           [participant]="participant"
-          [showRemoveAction]="true"
-          [currentUser]="currentUser()"
-          (remove)="removeParticipant(participant)">
+          [showAccessLink]="false"
+          [currentUser]="currentUser()">
+          <app-switch
+            [ngModel]="participant.is_active"
+            [ngModelOptions]="{standalone: true}"
+            (ngModelChange)="setParticipantActive(participant, $event)">
+          </app-switch>
         </app-participant-item>
         } @for (pending of pendingParticipants(); track $index) {
         <app-participant-item
@@ -216,7 +193,9 @@
           [currentUser]="currentUser()"
           (remove)="removePendingParticipant($index)">
           @if (isInitialContact(pending)) {
-          <span class="role-tag">{{ 'appointmentForm.roleContact' | translate }}</span>
+          <app-badge [type]="BadgeTypeEnum.gray" [size]="BadgeSizeEnum.medium"
+            >{{ 'appointmentForm.roleContact' | translate }}</app-badge
+          >
           <app-switch
             [ngModel]="!appointmentForm.get('dont_invite_contact')?.value"
             [ngModelOptions]="{standalone: true}"
