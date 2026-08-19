@@ -316,3 +316,38 @@
     gap: 12px;
   }
 }
+
+// Cell templates are rendered inside app-data-table, so they stay at the root
+// of this stylesheet instead of being nested under a page container.
+.cell-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.title-text {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--slate-800);
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.title-ref {
+  flex: 0 0 auto;
+  font-size: 11.5px;
+  color: var(--slate-400);
+  font-variant-numeric: tabular-nums;
+}
+
+.cell-muted {
+  color: var(--slate-400);
+}
+
+.cell-date {
+  color: var(--slate-500);
+  font-variant-numeric: tabular-nums;
+}

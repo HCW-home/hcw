@@ -1,10 +1,11 @@
-<div class="participant-item" [class.pending]="isPending">
+<div class="participant-item" [class.pending]="isPending" [class.compact]="compact">
   <div class="participant-row">
     <app-user-avatar
       [firstName]="getFirstName()"
       [lastName]="getLastName()"
       [email]="getEmail()"
       [picture]="getAvatarImage()"
+      [size]="compact ? 'sm' : 'md'"
       [isOnline]="isOnline() ? true : (participant?.user ? false : undefined)"
       [isCurrentUser]="isCurrentUser()">
     </app-user-avatar>
@@ -21,28 +22,28 @@
         <span class="meta-item temporary-tag">
           <app-svg
             src="clock"
-            [svgStyle]="{'width.px': 12, 'height.px': 12}"></app-svg>
+            [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
           {{ 'participantItem.temporary' | translate }}
         </span>
         } @if (participant!.user!.timezone) {
         <span class="meta-item">
           <app-svg
             src="clock"
-            [svgStyle]="{'width.px': 12, 'height.px': 12}"></app-svg>
+            [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
           {{ participant!.user!.timezone }}
         </span>
         } @if (participant!.user!.preferred_language) {
         <span class="meta-item">
           <app-svg
             src="globe"
-            [svgStyle]="{'width.px': 12, 'height.px': 12}"></app-svg>
+            [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
           {{ getLanguageLabel(participant!.user!.preferred_language!) }}
         </span>
         } @if (participant!.user!.communication_method) {
         <span class="meta-item">
           <app-svg
             src="message-square"
-            [svgStyle]="{'width.px': 12, 'height.px': 12}"></app-svg>
+            [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
           {{ participant!.user!.communication_method }}
         </span>
         }
@@ -52,13 +53,28 @@
     <div class="participant-actions">
       <ng-content></ng-content>
       @if (isPending) {
-      <app-badge [type]="BadgeTypeEnum.gray"
+      <app-badge [type]="BadgeTypeEnum.gray" [size]="BadgeSizeEnum.medium"
         >{{ 'participantItem.pending' | translate }}</app-badge
       >
       } @else if (participant?.status) {
-      <app-badge [type]="getParticipantBadgeType(participant!.status)">
+      <app-badge
+        [type]="getParticipantBadgeType(participant!.status)"
+        [size]="BadgeSizeEnum.medium">
         {{ getStatusTranslationKey() | translate }}
       </app-badge>
+      } @if (hasAccessUrl() && compact) {
+      <button
+        class="link-toggle"
+        type="button"
+        [class.open]="showLinkPanel()"
+        [attr.aria-expanded]="showLinkPanel()"
+        [title]="'participantItem.inviteLink' | translate"
+        (click)="toggleLinkPanel()">
+        <app-svg
+          src="link"
+          [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
+        {{ 'participantItem.linkShort' | translate }}
+      </button>
       } @if (showRemoveAction) {
       <app-button
         class="remove-btn"
@@ -72,7 +88,7 @@
       }
     </div>
   </div>
-  @if (hasAccessUrl()) {
+  @if (hasAccessUrl() && !compact) {
   <div class="participant-link">
     <app-button
       leftIcon="link"
@@ -81,6 +97,35 @@
       [style]="ButtonStyleEnum.stroke"
       (buttonClick)="openLinkModal()">
     </app-button>
+  </div>
+  }
+  @if (hasAccessUrl() && compact && showLinkPanel()) {
+  <div class="participant-link-panel">
+    @if (loadingAccessUrl()) {
+    <span class="link-panel-loading"
+      >{{ 'participantItem.loadingLink' | translate }}</span
+    >
+    } @else {
+    <div class="link-panel-row">
+      <span class="link-panel-url" [title]="getInviteLink()"
+        >{{ getInviteLink() }}</span
+      >
+      <button
+        class="link-panel-copy"
+        type="button"
+        [class.copied]="linkCopied()"
+        (click)="copyLink()">
+        {{ (linkCopied() ? 'participantItem.copiedShort' :
+        'participantItem.copyShort') | translate }}
+      </button>
+    </div>
+    @if (expiresAt()) {
+    <div class="link-panel-expiry">
+      {{ 'participantItem.linkExpires' | translate }} {{ expiresAt() |
+      localDate:'medium' }}
+    </div>
+    }
+    }
   </div>
   }
 </div>

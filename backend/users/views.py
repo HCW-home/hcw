@@ -1604,6 +1604,12 @@ class AppConfigView(APIView):
                 "vapid_public_key": settings.WEBPUSH_VAPID_PUBLIC_KEY,
                 "consultation_auto_delete_hours": int(constance_config.consultation_auto_delete_hours),
                 "appointment_early_join_minutes": int(constance_config.appointment_early_join_minutes),
+                # Front-ends need both to reproduce the "still active" window of
+                # an appointment (see consultations.utils.appointment_active_q).
+                "default_appointment_duration_in_minutes": int(
+                    constance_config.default_appointment_duration_in_minutes
+                ),
+                "call_limit_join_minutes": int(constance_config.call_limit_join_minutes),
                 "enable_video_recording": constance_config.enable_video_recording,
                 "enable_live_transcription": constance_config.enable_live_transcription,
                 "primary_video_provider": constance_config.primary_video_provider,
@@ -1846,7 +1852,10 @@ class UserDashboardView(APIView):
     )
     def get(self, request):
         """Get dashboard data for the authenticated user."""
-        from consultations.utils import appointment_active_cutoff
+        from consultations.utils import (
+            appointment_active_cutoff,
+            appointment_active_q,
+        )
 
         user = request.user
         active_cutoff = appointment_active_cutoff()
@@ -1863,10 +1872,12 @@ class UserDashboardView(APIView):
                     status=RequestStatus.accepted,
                     consultation__closed_at__isnull=True,
                 )
-                | Q(
-                    status=RequestStatus.accepted,
-                    appointment__scheduled_at__gte=active_cutoff,
-                    appointment__status="scheduled",
+                | (
+                    appointment_active_q("appointment")
+                    & Q(
+                        status=RequestStatus.accepted,
+                        appointment__status="scheduled",
+                    )
                 )
             )
             .order_by("-id")

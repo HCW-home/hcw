@@ -32,12 +32,14 @@
                 </div>
                 }
                 <app-badge
+                  [dot]="true"
+                  [size]="BadgeSizeEnum.medium"
                   [type]="consultation()?.closed_at ? BadgeTypeEnum.gray : BadgeTypeEnum.green">
                   {{ consultation()?.closed_at ? ('consultationDetail.closed' |
                   translate) : ('consultationDetail.active' | translate) }}
                 </app-badge>
                 @if (consultation()?.temporary) {
-                <app-badge [type]="BadgeTypeEnum.orange">
+                <app-badge [type]="BadgeTypeEnum.orange" [size]="BadgeSizeEnum.medium">
                   {{ 'consultationDetail.temporary' | translate }}
                 </app-badge>
                 }
@@ -120,87 +122,6 @@
           }
 
           <div class="info-grid">
-            @if (consultation()?.created_by) {
-            <div class="info-item">
-              <span class="info-label"
-                >{{ 'consultationDetail.createdBy' | translate }}</span
-              >
-              <div class="info-user">
-                <app-user-avatar
-                  [firstName]="consultation()!.created_by.first_name"
-                  [lastName]="consultation()!.created_by.last_name"
-                  [email]="consultation()!.created_by.email"
-                  [picture]="consultation()!.created_by.picture || ''"
-                  [isOnline]="consultation()!.created_by.is_online"
-                  [isCurrentUser]="isCreatedByCurrentUser()">
-                </app-user-avatar>
-                <div class="info-user-details">
-                  <span class="info-value"
-                    >{{ getCreatedByDisplayName() }}</span
-                  >
-                  <span class="info-sub">
-                    {{ consultation()!.created_by.email }}
-                    @if (consultation()!.created_by.is_practitioner) {
-                      <span class="practitioner-tag">
-                        <app-svg
-                          src="stethoscope"
-                          [svgStyle]="{'width.px': 12, 'height.px': 12, 'color': 'var(--primary-500)'}">
-                        </app-svg>
-                        <span>{{ 'patients.practitioner' | translate }}</span>
-                      </span>
-                    }
-                  </span>
-                </div>
-              </div>
-            </div>
-            }
-
-            <div class="info-item">
-              <span class="info-label"
-                >{{ 'consultationDetail.practitioner' | translate }}</span
-              >
-              @if (isEditMode()) {
-              <app-select
-                [placeholder]="'consultationDetail.searchPractitioner' | translate"
-                [options]="[]"
-                [asyncSearch]="practitionerSearchFn"
-                [initialOption]="ownerInitialOption()"
-                [clearable]="true"
-                formControlName="owned_by_id">
-              </app-select>
-              } @else if (consultation()?.owned_by) {
-              <div class="info-user">
-                <app-user-avatar
-                  [firstName]="consultation()!.owned_by!.first_name"
-                  [lastName]="consultation()!.owned_by!.last_name"
-                  [email]="consultation()!.owned_by!.email"
-                  [picture]="consultation()!.owned_by!.picture || ''"
-                  [isOnline]="consultation()!.owned_by!.is_online"
-                  [isCurrentUser]="isOwnerCurrentUser()">
-                </app-user-avatar>
-                <div class="info-user-details">
-                  <span class="info-value"
-                    >{{ getOwnerDisplayName() }}</span
-                  >
-                  <span class="info-sub">
-                    {{ consultation()!.owned_by!.email }}
-                    @if (consultation()!.owned_by!.is_practitioner) {
-                      <span class="practitioner-tag">
-                        <app-svg
-                          src="stethoscope"
-                          [svgStyle]="{'width.px': 12, 'height.px': 12, 'color': 'var(--primary-500)'}">
-                        </app-svg>
-                        <span>{{ 'patients.practitioner' | translate }}</span>
-                      </span>
-                    }
-                  </span>
-                </div>
-              </div>
-              } @else {
-              <span class="info-placeholder">{{ 'consultationDetail.noPractitioner' | translate }}</span>
-              }
-            </div>
-
             <div class="info-item" [class.full-width]="isEditMode() && isExternalBeneficiary()">
               <span class="info-label"
                 >{{ 'consultationDetail.patient' | translate }}</span
@@ -250,9 +171,10 @@
                   <span class="info-value"
                     >{{ getBeneficiaryDisplayName() }}</span
                   >
-                  @if (consultation()?.beneficiary?.email) {
+                  @if (getUserSubLine(consultation()!.beneficiary,
+                  getBeneficiaryDisplayName()); as sub) {
                   <span class="info-sub">
-                    {{ consultation()!.beneficiary!.email }}
+                    {{ sub }}
                     @if (consultation()!.beneficiary!.is_practitioner) {
                       <span class="practitioner-tag">
                         <app-svg
@@ -282,6 +204,98 @@
               }
             </div>
 
+            @if (consultation()?.created_by) {
+            <div class="info-item">
+              <span class="info-label"
+                >{{ 'consultationDetail.createdBy' | translate }}</span
+              >
+              <div class="info-user">
+                <app-user-avatar
+                  [firstName]="consultation()!.created_by.first_name"
+                  [lastName]="consultation()!.created_by.last_name"
+                  [email]="consultation()!.created_by.email"
+                  [picture]="consultation()!.created_by.picture || ''"
+                  [isOnline]="consultation()!.created_by.is_online"
+                  [isCurrentUser]="isCreatedByCurrentUser()">
+                </app-user-avatar>
+                <div class="info-user-details">
+                  <span class="info-value"
+                    >{{ getCreatedByDisplayName() }}</span
+                  >
+                  @if (getUserSubLine(consultation()!.created_by,
+                  getCreatedByDisplayName()); as sub) {
+                  <span class="info-sub">
+                    {{ sub }}
+                    @if (consultation()!.created_by.is_practitioner) {
+                      <span class="practitioner-tag">
+                        <app-svg
+                          src="stethoscope"
+                          [svgStyle]="{'width.px': 12, 'height.px': 12, 'color': 'var(--primary-500)'}">
+                        </app-svg>
+                        <span>{{ 'patients.practitioner' | translate }}</span>
+                      </span>
+                    }
+                  </span>
+                  }
+                </div>
+              </div>
+            </div>
+            }
+
+            <div class="info-item">
+              <span class="info-label"
+                >{{ 'consultationDetail.practitioner' | translate }}</span
+              >
+              @if (isEditMode()) {
+              <app-select
+                [placeholder]="'consultationDetail.searchPractitioner' | translate"
+                [options]="[]"
+                [asyncSearch]="practitionerSearchFn"
+                [initialOption]="ownerInitialOption()"
+                [clearable]="true"
+                formControlName="owned_by_id">
+              </app-select>
+              } @else if (consultation()?.owned_by) {
+              <div class="info-user">
+                <app-user-avatar
+                  [firstName]="consultation()!.owned_by!.first_name"
+                  [lastName]="consultation()!.owned_by!.last_name"
+                  [email]="consultation()!.owned_by!.email"
+                  [picture]="consultation()!.owned_by!.picture || ''"
+                  [isOnline]="consultation()!.owned_by!.is_online"
+                  [isCurrentUser]="isOwnerCurrentUser()">
+                </app-user-avatar>
+                <div class="info-user-details">
+                  <span class="info-value"
+                    >{{ getOwnerDisplayName() }}</span
+                  >
+                  @if (getUserSubLine(consultation()!.owned_by,
+                  getOwnerDisplayName()); as sub) {
+                  <span class="info-sub">
+                    {{ sub }}
+                    @if (consultation()!.owned_by!.is_practitioner) {
+                      <span class="practitioner-tag">
+                        <app-svg
+                          src="stethoscope"
+                          [svgStyle]="{'width.px': 12, 'height.px': 12, 'color': 'var(--primary-500)'}">
+                        </app-svg>
+                        <span>{{ 'patients.practitioner' | translate }}</span>
+                      </span>
+                    }
+                  </span>
+                  }
+                </div>
+              </div>
+              } @else {
+              <span class="info-placeholder">{{ 'consultationDetail.noPractitioner' | translate }}</span>
+              @if (!consultation()?.closed_at) {
+              <button class="info-action" type="button" (click)="editConsultation()">
+                {{ 'consultationDetail.assignPractitioner' | translate }}
+              </button>
+              }
+              }
+            </div>
+
             <div class="info-item">
               <span class="info-label"
                 >{{ 'consultationDetail.queue' | translate }}</span
@@ -296,7 +310,8 @@
               } @else if (consultation()?.group) {
               <span class="info-value">{{ consultation()!.group!.name }}</span>
               } @else {
-              <span class="info-placeholder">-</span>
+              <span class="info-placeholder">—</span>
+              <span class="info-sub">{{ 'consultationDetail.notProvided' | translate }}</span>
               }
             </div>
 
@@ -365,82 +380,55 @@
           <div class="section-header">
             <div class="section-title-row">
               <h3 class="section-title">
-                {{ 'consultationDetail.appointmentsCount' | translate: { count:
-                appointments().length } }}
+                {{ 'consultationDetail.appointmentsTitle' | translate }}
               </h3>
+              <span class="section-count">
+                {{ 'consultationDetail.appointmentsSummary' | translate: {
+                upcoming: upcomingAppointmentCount(), past:
+                pastAppointmentCount() } }}
+              </span>
               @if (!consultation()?.closed_at && !consultation()?.temporary) {
               <app-button
+                class="section-cta"
                 [text]="'consultationDetail.newAppointment' | translate"
                 leftIcon="plus"
                 [size]="ButtonSizeEnum.small"
-                [style]="ButtonStyleEnum.primary"
+                [style]="upcomingAppointmentCount() > 0 ? ButtonStyleEnum.stroke : ButtonStyleEnum.primary"
                 (buttonClick)="openCreateAppointmentModal()">
               </app-button>
               }
             </div>
             <div class="section-header-actions">
-              <div class="view-toggle">
+              <div class="segmented">
                 <button
-                  class="view-toggle-btn"
+                  class="segmented-btn"
                   [class.active]="appointmentViewMode() === 'list'"
                   (click)="setAppointmentViewMode('list')">
-                  <app-svg
-                    src="list"
-                    [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
                   {{ 'consultationDetail.viewList' | translate }}
                 </button>
                 <button
-                  class="view-toggle-btn"
+                  class="segmented-btn"
                   [class.active]="appointmentViewMode() === 'calendar'"
                   (click)="setAppointmentViewMode('calendar')">
-                  <app-svg
-                    src="calendar"
-                    [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
                   {{ 'consultationDetail.viewCalendar' | translate }}
                 </button>
               </div>
-              <div class="status-filter">
-                <button
-                  class="filter-btn"
-                  [class.active]="appointmentStatusFilter() === AppointmentStatus.SCHEDULED"
-                  (click)="setAppointmentStatusFilter('scheduled')">
-                  {{ 'consultationDetail.filterActive' | translate }}
-                </button>
-                <button
-                  class="filter-btn"
-                  [class.active]="appointmentStatusFilter() === 'done'"
-                  (click)="setAppointmentStatusFilter('done')">
-                  {{ 'consultationDetail.filterDone' | translate }}
-                </button>
-                <button
-                  class="filter-btn"
-                  [class.active]="appointmentStatusFilter() === AppointmentStatus.CANCELLED"
-                  (click)="setAppointmentStatusFilter('cancelled')">
-                  {{ 'consultationDetail.filterCancelled' | translate }}
-                </button>
-                <button
-                  class="filter-btn"
-                  [class.active]="appointmentStatusFilter() === 'all'"
-                  (click)="setAppointmentStatusFilter('all')">
-                  {{ 'consultationDetail.filterAll' | translate }}
-                </button>
-              </div>
               @if (appointmentViewMode() === 'list') {
-              <div class="time-filter">
+              <div class="segmented">
                 <button
-                  class="filter-btn"
+                  class="segmented-btn"
                   [class.active]="appointmentTimeFilter() === 'upcoming'"
                   (click)="setAppointmentTimeFilter('upcoming')">
                   {{ 'consultationDetail.filterUpcoming' | translate }}
                 </button>
                 <button
-                  class="filter-btn"
+                  class="segmented-btn"
                   [class.active]="appointmentTimeFilter() === 'past'"
                   (click)="setAppointmentTimeFilter('past')">
                   {{ 'consultationDetail.filterPast' | translate }}
                 </button>
                 <button
-                  class="filter-btn"
+                  class="segmented-btn"
                   [class.active]="appointmentTimeFilter() === 'all'"
                   (click)="setAppointmentTimeFilter('all')">
                   {{ 'consultationDetail.filterAll' | translate }}
@@ -496,10 +484,7 @@
               >{{ 'consultationDetail.noAppointments' | translate }}</span
             >
             <span class="empty-text">
-              @if (appointmentStatusFilter() !== 'all') { {{
-              'consultationDetail.noFilteredAppointments' | translate: { status:
-              appointmentStatusFilter() } }} } @else { {{
-              'consultationDetail.createToGetStarted' | translate }} }
+              {{ 'consultationDetail.createToGetStarted' | translate }}
             </span>
           </div>
           } @else {
@@ -524,18 +509,125 @@
                     <span
                       class="appointment-type"
                       [class.online]="appointment.type === AppointmentType.ONLINE">
-                      {{ appointment.type === AppointmentType.ONLINE ?
-                      ('consultationDetail.typeOnline' | translate) :
-                      ('consultationDetail.typeInPerson' | translate) }}
+                      {{ getAppointmentTypeLabel(appointment) }}
                     </span>
+                    @if (getAppointmentCountdown(appointment); as countdown) {
+                      <span class="appointment-countdown">{{ countdown }}</span>
+                    }
+                    <app-badge
+                      [type]="getAppointmentBadgeType(appointment.status)"
+                      [size]="BadgeSizeEnum.medium">
+                      {{ getAppointmentStatusLabel(appointment.status) }}
+                    </app-badge>
                   </div>
                   <div class="date-time">
                     <span>{{ appointment.scheduled_at | localDate : 'fullDate' }} — {{ appointment.scheduled_at | localDate:'shortTime' }}</span>
                   </div>
                 </div>
-                <app-badge [type]="getAppointmentBadgeType(appointment.status)">
-                  {{ getAppointmentStatusLabel(appointment.status) }}
-                </app-badge>
+
+                <div class="appointment-actions">
+                  @if (appointment.status === AppointmentStatus.DRAFT &&
+                  !consultation()?.closed_at) {
+                  <app-button
+                    [text]="'consultationDetail.send' | translate"
+                    leftIcon="send"
+                    [size]="ButtonSizeEnum.small"
+                    [style]="ButtonStyleEnum.primary"
+                    (buttonClick)="sendAppointment(appointment)">
+                  </app-button>
+                  }
+                  @if (canJoinVideoCall(appointment)) {
+                  <div class="join-button-container">
+                    <app-button
+                      [buttonClass]="liveAppointmentId() === appointment.id ? 'join-button' : ''"
+                      [text]="'consultationDetail.join' | translate"
+                      leftIcon="video"
+                      [size]="ButtonSizeEnum.small"
+                      [style]="liveAppointmentId() === appointment.id ? ButtonStyleEnum.primary : ButtonStyleEnum.stroke"
+                      (buttonClick)="joinVideoCall(appointment.id)">
+                    </app-button>
+                    @if (tooEarlyError()?.appointmentId === appointment.id) {
+                      <div class="join-error-bubble">
+                        <app-svg src="clock" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--amber-600)'}"></app-svg>
+                        <span>{{ 'consultationDetail.tooEarlyToJoinMessage' | translate: { time: tooEarlyError()!.time, minutes: tooEarlyError()!.minutes } }}</span>
+                      </div>
+                    }
+                  </div>
+                  }
+                  @if (canMarkCompleted(appointment) &&
+                  !isCompleteInMenu(appointment)) {
+                  <app-button
+                    [text]="'appointments.markCompleted' | translate"
+                    leftIcon="check"
+                    [size]="ButtonSizeEnum.small"
+                    [style]="ButtonStyleEnum.stroke"
+                    (buttonClick)="setAppointmentOutcome(appointment, AppointmentStatus.COMPLETED)">
+                  </app-button>
+                  }
+                  @if (hasAppointmentMenuActions(appointment)) {
+                  <div class="appointment-menu" [attr.data-appointment-id]="appointment.id">
+                    <button
+                      class="appointment-menu-trigger"
+                      type="button"
+                      [attr.aria-expanded]="openAppointmentMenuId() === appointment.id"
+                      [attr.aria-label]="'consultationDetail.moreActions' | translate"
+                      [title]="'consultationDetail.moreActions' | translate"
+                      (click)="toggleAppointmentMenu(appointment, $event)">
+                      <app-svg
+                        src="more"
+                        [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
+                    </button>
+                    @if (openAppointmentMenuId() === appointment.id) {
+                    <div class="appointment-menu-panel" [@fadeIn]>
+                      @if (canEditAppointment(appointment)) {
+                      <button
+                        class="appointment-menu-item"
+                        type="button"
+                        (click)="closeAppointmentMenu(); openEditAppointmentModal(appointment)">
+                        <app-svg
+                          src="edit"
+                          [svgStyle]="{'width.px': 15, 'height.px': 15}"></app-svg>
+                        {{ 'consultationDetail.edit' | translate }}
+                      </button>
+                      }
+                      @if (isCompleteInMenu(appointment)) {
+                      <button
+                        class="appointment-menu-item"
+                        type="button"
+                        (click)="closeAppointmentMenu(); setAppointmentOutcome(appointment, AppointmentStatus.COMPLETED)">
+                        <app-svg
+                          src="check"
+                          [svgStyle]="{'width.px': 15, 'height.px': 15}"></app-svg>
+                        {{ 'appointments.markCompleted' | translate }}
+                      </button>
+                      }
+                      @if (canMarkNoshow(appointment)) {
+                      <button
+                        class="appointment-menu-item"
+                        type="button"
+                        (click)="closeAppointmentMenu(); setAppointmentOutcome(appointment, AppointmentStatus.NOSHOW)">
+                        <app-svg
+                          src="user-check"
+                          [svgStyle]="{'width.px': 15, 'height.px': 15}"></app-svg>
+                        {{ 'appointments.markNoshow' | translate }}
+                      </button>
+                      }
+                      @if (canCancelAppointment(appointment)) {
+                      <button
+                        class="appointment-menu-item danger"
+                        type="button"
+                        (click)="closeAppointmentMenu(); cancelAppointment(appointment)">
+                        <app-svg
+                          src="close"
+                          [svgStyle]="{'width.px': 15, 'height.px': 15}"></app-svg>
+                        {{ 'consultationDetail.cancel' | translate }}
+                      </button>
+                      }
+                    </div>
+                    }
+                  </div>
+                  }
+                </div>
               </div>
 
               @if (appointment.end_expected_at) {
@@ -557,12 +649,13 @@
                   count: appointment.participants.length } }}</span
                 >
                 @if (appointment.participants.length) {
-                <div class="participants-list">
+                <div class="participants-grid">
                   @for (participant of appointment.participants; track
                   participant.id) {
                   <app-participant-item
                     [participant]="participant"
                     [currentUser]="currentUser()"
+                    [compact]="true"
                     [appointmentCancelled]="appointment.status === AppointmentStatus.CANCELLED"></app-participant-item>
                   }
                 </div>
@@ -574,84 +667,6 @@
                 }
               </div>
 
-              <div class="appointment-actions">
-                @if (appointment.status === AppointmentStatus.DRAFT &&
-                !consultation()?.closed_at) {
-                <app-button
-                  [text]="'consultationDetail.edit' | translate"
-                  leftIcon="edit"
-                  [size]="ButtonSizeEnum.small"
-                  [style]="ButtonStyleEnum.stroke"
-                  (buttonClick)="openEditAppointmentModal(appointment)">
-                </app-button>
-                <app-button
-                  [text]="'consultationDetail.send' | translate"
-                  leftIcon="send"
-                  [size]="ButtonSizeEnum.small"
-                  [style]="ButtonStyleEnum.primary"
-                  (buttonClick)="sendAppointment(appointment)">
-                </app-button>
-                <app-button
-                  [text]="'consultationDetail.cancel' | translate"
-                  leftIcon="close"
-                  [size]="ButtonSizeEnum.small"
-                  [style]="ButtonStyleEnum.stroke"
-                  [state]="ButtonStateEnum.error"
-                  (buttonClick)="cancelAppointment(appointment)">
-                </app-button>
-                } @if (canJoinVideoCall(appointment)) {
-                <div class="join-button-container">
-                  <app-button
-                    [text]="'consultationDetail.join' | translate"
-                    leftIcon="video"
-                    [size]="ButtonSizeEnum.small"
-                    [style]="ButtonStyleEnum.primary"
-                    (buttonClick)="joinVideoCall(appointment.id)">
-                  </app-button>
-                  @if (tooEarlyError()?.appointmentId === appointment.id) {
-                    <div class="join-error-bubble">
-                      <app-svg src="clock" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--amber-600)'}"></app-svg>
-                      <span>{{ 'consultationDetail.tooEarlyToJoinMessage' | translate: { time: tooEarlyError()!.time, minutes: tooEarlyError()!.minutes } }}</span>
-                    </div>
-                  }
-                </div>
-                } @if (appointment.status === AppointmentStatus.SCHEDULED &&
-                !consultation()?.closed_at) {
-                <app-button
-                  [text]="'consultationDetail.edit' | translate"
-                  leftIcon="edit"
-                  [size]="ButtonSizeEnum.small"
-                  [style]="ButtonStyleEnum.stroke"
-                  (buttonClick)="openEditAppointmentModal(appointment)">
-                </app-button>
-                <app-button
-                  [text]="'consultationDetail.cancel' | translate"
-                  leftIcon="close"
-                  [size]="ButtonSizeEnum.small"
-                  [style]="ButtonStyleEnum.stroke"
-                  [state]="ButtonStateEnum.error"
-                  (buttonClick)="cancelAppointment(appointment)">
-                </app-button>
-                } @if (canSetOutcome(appointment) && !consultation()?.closed_at) {
-                  @if (appointment.status !== AppointmentStatus.COMPLETED) {
-                  <app-button
-                    [text]="'appointments.markCompleted' | translate"
-                    leftIcon="check"
-                    [size]="ButtonSizeEnum.small"
-                    [style]="ButtonStyleEnum.stroke"
-                    (buttonClick)="setAppointmentOutcome(appointment, AppointmentStatus.COMPLETED)">
-                  </app-button>
-                  }
-                  @if (appointment.status !== AppointmentStatus.NOSHOW) {
-                  <app-button
-                    [text]="'appointments.markNoshow' | translate"
-                    [size]="ButtonSizeEnum.small"
-                    [style]="ButtonStyleEnum.stroke"
-                    (buttonClick)="setAppointmentOutcome(appointment, AppointmentStatus.NOSHOW)">
-                  </app-button>
-                  }
-                }
-              </div>
             </div>
             } @if (hasMoreAppointments()) {
             <div class="load-more-container">
@@ -673,15 +688,19 @@
           <div class="section-header">
             <div class="section-title-row">
               <h3 class="section-title">
-                {{ 'reminders.remindersCount' | translate: { count:
-                reminders().length } }}
+                {{ 'reminders.title' | translate }}
               </h3>
+              <span class="section-count">
+                {{ 'reminders.summary' | translate: { count:
+                reminderTotalCount() } }}
+              </span>
               @if (!consultation()?.closed_at && !consultation()?.temporary) {
               <app-button
+                class="section-cta"
                 [text]="'reminders.newReminder' | translate"
                 leftIcon="plus"
                 [size]="ButtonSizeEnum.small"
-                [style]="ButtonStyleEnum.primary"
+                [style]="reminders().length > 0 ? ButtonStyleEnum.stroke : ButtonStyleEnum.primary"
                 (buttonClick)="openCreateReminderModal()">
               </app-button>
               }

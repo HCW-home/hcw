@@ -160,7 +160,12 @@
     "ownedBy": "Owned by",
     "searchPractitioner": "Search practitioner...",
     "group": "Group",
-    "allGroups": "All groups"
+    "allGroups": "All groups",
+    "columnFollowUp": "Follow-up",
+    "columnCreatedAt": "Created at",
+    "resultsSummary": "{{shown}} of {{total}} follow-ups",
+    "unassigned": "Unassigned",
+    "noGroup": "No group"
   },
   "configuration": {
     "tabSystemTest": "System Test",
@@ -510,7 +515,15 @@
     "viewMore": "View More",
     "errorLoading": "Error Loading Contacts",
     "temporary": "temporary",
-    "practitioner": "practitioner"
+    "practitioner": "practitioner",
+    "columnContact": "Contact",
+    "columnEmail": "Email",
+    "columnPhone": "Phone",
+    "columnType": "Type",
+    "columnStatus": "Status",
+    "typePatient": "Patient",
+    "typePractitioner": "Practitioner",
+    "resultsSummary": "{{shown}} of {{total}} contacts"
   },
   "videoConsultation": {
     "connecting": "Connecting to video call...",
@@ -734,18 +747,14 @@
     "noPatient": "No patient assigned",
     "unknownPatient": "Unknown patient",
     "unknown": "Unknown",
-    "appointmentsCount": "Appointments - {{count}} item(s)",
     "newAppointment": "New Appointment",
     "viewList": "List",
     "viewCalendar": "Calendar",
-    "filterActive": "Active",
-    "filterCancelled": "Cancelled",
     "filterAll": "All",
     "filterUpcoming": "Upcoming",
     "filterPast": "Past",
     "loadingAppointments": "Loading appointments...",
     "noAppointments": "No appointments found",
-    "noFilteredAppointments": "No {{status}} appointments",
     "createToGetStarted": "Create an appointment to get started",
     "today": "Today",
     "expectedEnd": "Expected end:",
@@ -834,9 +843,16 @@
     "chatLockedMixed": "None of the envelopes (personal or via group) can decrypt this consultation's key — they were wrapped with keys that no longer match.",
     "chatLockedAdminHint": "Please contact an administrator to resync your access.",
     "encryptionRequiredTitle": "Encryption required",
-    "filterDone": "Done",
     "statusCompleted": "Completed",
-    "statusNoshow": "No show"
+    "statusNoshow": "No show",
+    "appointmentsTitle": "Appointments",
+    "appointmentsSummary": "{{upcoming}} upcoming · {{past}} past",
+    "startingNow": "Now",
+    "startsInMinutes": "In {{minutes}} min",
+    "startsInHours": "In {{hours}} h",
+    "moreActions": "More actions",
+    "assignPractitioner": "Assign a practitioner",
+    "notProvided": "Not provided"
   },
   "appointmentFormModal": {
     "editAppointment": "Edit Appointment",
@@ -1167,7 +1183,10 @@
     "linkExpires": "This link expires on",
     "loadingLink": "Generating invitation link...",
     "errorLoadingLink": "Error generating invitation link",
-    "temporary": "temporary"
+    "temporary": "temporary",
+    "linkShort": "Link",
+    "copyShort": "Copy",
+    "copiedShort": "Copied"
   },
   "messageList": {
     "messages": "Messages",
@@ -1229,7 +1248,7 @@
     "newReminder": "New Reminder",
     "recipient": "Recipient",
     "recipientPlaceholder": "Search by name or email...",
-    "title": "Title",
+    "title": "Reminders",
     "titlePlaceholder": "Reminder title",
     "description": "Description",
     "descriptionPlaceholder": "Reminder details",
@@ -1270,7 +1289,8 @@
     "until": "until",
     "nextRun": "Next reminder",
     "createdBy": "Created by",
-    "formHelper": "At the scheduled date and time, the contact will automatically receive this reminder by SMS or email, depending on their configured communication channel."
+    "formHelper": "At the scheduled date and time, the contact will automatically receive this reminder by SMS or email, depending on their configured communication channel.",
+    "summary": "{{count}} item(s)"
   },
   "elementType": {
     "title": "What type of element do you want to create?",
@@ -1294,5 +1314,10 @@
     "remove": "Remove",
     "removeTitle": "Remove participant",
     "removeMessage": "Remove {{name}} from this appointment? They will be disconnected from the call."
+  },
+  "dataTable": {
+    "loading": "Loading...",
+    "retry": "Retry",
+    "viewMore": "View More"
   }
 }

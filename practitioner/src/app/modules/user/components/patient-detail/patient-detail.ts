@@ -1,4 +1,11 @@
-import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  signal,
+  computed,
+  inject,
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Subject, takeUntil, forkJoin } from 'rxjs';
@@ -35,12 +42,19 @@ import { TranslationService } from '../../../../core/services/translation.servic
 import { Badge } from '../../../../shared/components/badge/badge';
 import { BadgeTypeEnum } from '../../../../shared/constants/badge';
 import { ConsultationRowItem } from '../../../../shared/components/consultation-row-item/consultation-row-item';
+import {
+  DataTable,
+  DataTableColumn,
+} from '../../../../shared/components/data-table/data-table';
+import { DataTableCellDirective } from '../../../../shared/components/data-table/data-table-cell.directive';
 import { ReminderCard } from '../../../../shared/components/reminder-card/reminder-card';
 import { ReminderFormModal } from '../../../../shared/components/reminder-form-modal/reminder-form-modal';
 import { AppointmentFormModal } from '../consultation-detail/appointment-form-modal/appointment-form-modal';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { Reminder } from '../../../../core/models/reminder';
 import {
+  formatConsultationId,
+  formatUserName,
   getConsultationBadgeType,
   getAppointmentBadgeType,
 } from '../../../../shared/tools/helper';
@@ -62,6 +76,8 @@ import { LocalDatePipe } from '../../../../shared/pipes/local-date.pipe';
     AddEditPatient,
     Badge,
     ConsultationRowItem,
+    DataTable,
+    DataTableCellDirective,
     ReminderCard,
     ReminderFormModal,
     AppointmentFormModal,
@@ -103,6 +119,48 @@ export class PatientDetail implements OnInit, OnDestroy {
   patient = signal<IUser | null>(null);
   healthMetrics = signal<IHealthMetric[]>([]);
   consultations = signal<Consultation[]>([]);
+
+  protected readonly formatConsultationId = formatConsultationId;
+  protected readonly formatUserName = formatUserName;
+
+  consultationColumns = computed<DataTableColumn[]>(() => {
+    // Read the language so headers are rebuilt when the user switches locale.
+    this.t.currentLanguage();
+    return [
+      {
+        key: 'title',
+        label: this.t.instant('consultations.columnFollowUp'),
+        width: 'minmax(220px, 2.2fr)',
+      },
+      {
+        key: 'practitioner',
+        label: this.t.instant('consultationRowItem.practitioner'),
+        width: 'minmax(130px, 1.2fr)',
+      },
+      {
+        key: 'status',
+        label: this.t.instant('consultationRowItem.status'),
+        width: 'minmax(100px, 0.8fr)',
+      },
+      {
+        key: 'created',
+        label: this.t.instant('consultations.columnCreatedAt'),
+        width: 'minmax(150px, 1.1fr)',
+      },
+      {
+        key: 'closed',
+        label: this.t.instant('consultationRowItem.closed'),
+        width: 'minmax(150px, 1.1fr)',
+      },
+      { key: 'chevron', width: '24px', align: 'end', hideOnMobile: true },
+    ];
+  });
+
+  readonly consultationAccent = (consultation: Consultation): string =>
+    consultation.closed_at ? 'var(--slate-300)' : 'var(--emerald-500)';
+
+  readonly trackConsultation = (consultation: Consultation): number =>
+    consultation.id;
   appointments = signal<Appointment[]>([]);
   reminders = signal<Reminder[]>([]);
 

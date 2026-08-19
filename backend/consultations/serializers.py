@@ -584,11 +584,11 @@ class ConsultationSerializer(CustomFieldsMixin, serializers.ModelSerializer):
 
     def get_appointments(self, obj):
         """Get all non-cancelled appointments still within the active window."""
-        from .utils import appointment_active_cutoff
+        from .utils import appointment_active_q
 
         appts = (
             obj.appointments.exclude(status=AppointmentStatus.cancelled)
-            .filter(scheduled_at__gte=appointment_active_cutoff())
+            .filter(appointment_active_q())
             .order_by("scheduled_at")
         )
         return AppointmentSerializer(appts, many=True, context=self.context).data
@@ -1465,9 +1465,9 @@ class RequestSerializer(CustomFieldsMixin, serializers.ModelSerializer):
     def get_appointment(self, obj):
         """Only return appointment if still within the active window."""
         if obj.appointment:
-            from .utils import appointment_active_cutoff
+            from .utils import is_appointment_active
 
-            if obj.appointment.scheduled_at >= appointment_active_cutoff():
+            if is_appointment_active(obj.appointment):
                 return AppointmentSerializer(obj.appointment, context=self.context).data
         return None
 

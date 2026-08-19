@@ -161,12 +161,14 @@ The project includes a comprehensive shared UI component library in `src/app/sha
 - `<app-modal>` - Modal dialogs. The body is padded by default (aligned with header/footer); do NOT add padding inside modal content wrappers. For full-bleed content (embedded components that manage their own spacing, images), set `[bodyPadding]="false"`. Footer content goes in a `<div modal-footer>` slot.
 - `<app-loader>` - Loading spinners and indicators
 - `<app-overlay>` - Background overlays for modals
-- `<app-badge>` - Status and notification badges
+- `<app-badge>` - Status and notification badges. `[dot]="true"` prefixes the label with a status dot tinted to match the badge type.
 - `<error-message>` - Form validation error display
 - `<app-pagination>` - Page navigation controls
 - `<app-back-button>` - Consistent back navigation
 - `<app-breadcrumb>` - Breadcrumb navigation trail
 - `<app-message-list>` - Real-time message display with send input, connection status indicator, message history
+- `<app-participant-item>` - Participant row (avatar, name, contact, status badge, access link). `[compact]="true"` switches to the dense card used inside appointment cards: small avatar, single detail line, and the access link expanded inline instead of in a modal.
+- `<app-data-table>` - **The listing table used by every list screen** (follow-ups, contacts, consultation history). Owns the card shell, the column header row, row hover/click/keyboard, the accent rail, the loading / error / empty states, and the footer (`[summary]` + "view more"). Columns are described with `DataTableColumn[]` (`key`, `label`, `width` grid track, `align`, `wrap`, `hideOnMobile`) and each column is rendered by an `<ng-template appDataTableCell="key" let-row>`. Tabs go in a `slot="tabs"` child, the empty state in a `slot="empty"` child. `[rowAccent]` returns the colour of the left rail per row, `[trackBy]` the row identity. Below 768px rows stack into label / value pairs instead of scrolling horizontally.
 
 ### Usage Guidelines
 1. **Import directly**: All components are standalone, import them directly in your component

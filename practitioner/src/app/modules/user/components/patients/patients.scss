@@ -8,85 +8,59 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: 16px;
-  gap: 16px;
+  gap: 12px;
+  flex-wrap: wrap;
 
   .search-wrapper {
     max-width: 320px;
-    flex: 1;
+    flex: 1 1 260px;
   }
 }
 
-.patients-card {
-  background: var(--White);
-  border-radius: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  border: 1px solid var(--slate-100);
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 64px 32px;
+  gap: 16px;
+}
+
+// Cell templates are rendered inside app-data-table, so they stay at the root
+// of this stylesheet instead of being nested under the page container.
+.cell-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.cell-user-name {
+  min-width: 0;
+  font-weight: 600;
+  color: var(--slate-800);
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.patients-list {
-  .loading-state,
-  .empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 64px 32px;
-    gap: 16px;
-  }
+.cell-muted {
+  color: var(--slate-400);
+}
 
-  .contact-info {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-top: 4px;
-  }
+.cell-tabular {
+  font-variant-numeric: tabular-nums;
+}
 
-  .contact-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
+.cell-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
 
-    .contact-text {
-      font-size: 13px;
-      color: var(--slate-500);
-    }
-  }
-
-  .temporary-tag .contact-text {
-    color: var(--amber-600);
-  }
-
-  .practitioner-tag .contact-text {
-    color: var(--primary-600);
-  }
-
-  .contact-text.no-contact {
-    font-size: 13px;
-    color: var(--slate-400);
-    font-style: italic;
-  }
-
-  .row-action {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background-color 0.2s ease;
-
-    &:hover {
-      background: var(--slate-100);
-    }
-  }
-
-  .load-more-container {
-    display: flex;
-    justify-content: flex-start;
-    padding: 24px;
-    border-top: 1px solid var(--slate-100);
+  &--end {
+    justify-content: flex-end;
   }
 }
 
@@ -113,11 +87,13 @@
   }
 
   .page-header {
-    flex-direction: column;
-    align-items: stretch;
-
     .search-wrapper {
       max-width: none;
+      flex: 1 1 100%;
     }
+  }
+
+  .cell-badges--end {
+    justify-content: flex-start;
   }
 }

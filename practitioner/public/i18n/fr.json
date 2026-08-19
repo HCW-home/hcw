@@ -90,7 +90,12 @@
     "ownedBy": "Assigné à",
     "searchPractitioner": "Rechercher un praticien...",
     "group": "Groupe",
-    "allGroups": "Tous les groupes"
+    "allGroups": "Tous les groupes",
+    "columnFollowUp": "Suivi",
+    "columnCreatedAt": "Créé le",
+    "resultsSummary": "{{shown}} suivis sur {{total}}",
+    "unassigned": "Non assigné",
+    "noGroup": "Aucun groupe"
   },
   "language": {
     "title": "Langue",
@@ -347,7 +352,10 @@
     "linkExpires": "Ce lien expire le",
     "loadingLink": "Génération du lien d'invitation...",
     "errorLoadingLink": "Erreur lors de la génération du lien d'invitation",
-    "temporary": "temporaire"
+    "temporary": "temporaire",
+    "linkShort": "Lien",
+    "copyShort": "Copier",
+    "copiedShort": "Copié"
   },
   "messageList": {
     "messages": "Messages",
@@ -526,7 +534,15 @@
     "viewMore": "Voir plus",
     "errorLoading": "Erreur lors du chargement des contacts",
     "temporary": "temporaire",
-    "practitioner": "praticien"
+    "practitioner": "praticien",
+    "columnContact": "Contact",
+    "columnEmail": "E-mail",
+    "columnPhone": "Téléphone",
+    "columnType": "Type",
+    "columnStatus": "Statut",
+    "typePatient": "Patient",
+    "typePractitioner": "Praticien",
+    "resultsSummary": "{{shown}} contacts sur {{total}}"
   },
   "dashboard": {
     "loading": "Chargement du tableau de bord...",
@@ -870,18 +886,14 @@
     "noPatient": "Aucun patient assigné",
     "unknownPatient": "Patient inconnu",
     "unknown": "Anonyme",
-    "appointmentsCount": "Rendez-vous - {{count}} élément(s)",
     "newAppointment": "Nouveau rendez-vous",
     "viewList": "Liste",
     "viewCalendar": "Calendrier",
-    "filterActive": "Actifs",
-    "filterCancelled": "Annulés",
     "filterAll": "Tous",
     "filterUpcoming": "À venir",
     "filterPast": "Passés",
     "loadingAppointments": "Chargement des rendez-vous...",
     "noAppointments": "Aucun rendez-vous trouvé",
-    "noFilteredAppointments": "Aucun rendez-vous {{status}}",
     "createToGetStarted": "Créez un rendez-vous pour commencer",
     "today": "Aujourd'hui",
     "expectedEnd": "Fin prévue :",
@@ -970,9 +982,16 @@
     "chatLockedMixed": "Aucune des enveloppes (personnelle ou via groupe) ne peut déchiffrer la clé de ce suivi — elles ont été chiffrées avec des clés qui ne correspondent plus.",
     "chatLockedAdminHint": "Contactez un administrateur pour qu'il resynchronise vos accès.",
     "encryptionRequiredTitle": "Chiffrement requis",
-    "filterDone": "Terminés",
     "statusCompleted": "Réalisé",
-    "statusNoshow": "Absent"
+    "statusNoshow": "Absent",
+    "appointmentsTitle": "Rendez-vous",
+    "appointmentsSummary": "{{upcoming}} à venir · {{past}} passés",
+    "startingNow": "Maintenant",
+    "startsInMinutes": "Dans {{minutes}} min",
+    "startsInHours": "Dans {{hours}} h",
+    "moreActions": "Plus d'actions",
+    "assignPractitioner": "Assigner un praticien",
+    "notProvided": "Non renseigné"
   },
   "appointmentFormModal": {
     "editAppointment": "Modifier le rendez-vous",
@@ -1076,7 +1095,7 @@
     "newReminder": "Nouveau rappel",
     "recipient": "Destinataire",
     "recipientPlaceholder": "Rechercher par nom ou e-mail...",
-    "title": "Titre",
+    "title": "Rappels",
     "titlePlaceholder": "Titre du rappel",
     "description": "Description",
     "descriptionPlaceholder": "Détails du rappel",
@@ -1117,7 +1136,8 @@
     "until": "jusqu'au",
     "nextRun": "Prochain rappel",
     "createdBy": "Créé par",
-    "formHelper": "À la date et l'heure prévues, le contact recevra automatiquement ce rappel par SMS ou e-mail, selon le canal de communication configuré sur sa fiche."
+    "formHelper": "À la date et l'heure prévues, le contact recevra automatiquement ce rappel par SMS ou e-mail, selon le canal de communication configuré sur sa fiche.",
+    "summary": "{{count}} élément(s)"
   },
   "elementType": {
     "title": "Quel type d'élément souhaitez-vous créer ?",
@@ -1141,5 +1161,10 @@
     "remove": "Retirer",
     "removeTitle": "Retirer le participant",
     "removeMessage": "Retirer {{name}} de ce rendez-vous ? La personne sera déconnectée de l'appel."
+  },
+  "dataTable": {
+    "loading": "Chargement...",
+    "retry": "Réessayer",
+    "viewMore": "Voir plus"
   }
 }

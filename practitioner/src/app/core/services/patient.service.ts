@@ -46,6 +46,15 @@ export interface IPatientUpdateRequest {
   custom_fields?: { field: number; value: string | null }[];
 }
 
+export interface IPatientQueryParams {
+  search?: string;
+  page?: number;
+  page_size?: number;
+  temporary?: boolean;
+  is_practitioner?: boolean;
+  has_contact_info?: boolean;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -53,14 +62,9 @@ export class PatientService {
   private apiUrl = environment.apiUrl;
   private http = inject(HttpClient);
 
-  getPatients(params?: {
-    search?: string;
-    page?: number;
-    page_size?: number;
-    temporary?: boolean;
-    is_practitioner?: boolean;
-    has_contact_info?: boolean;
-  }): Observable<PaginatedResponse<IUser>> {
+  getPatients(
+    params?: IPatientQueryParams
+  ): Observable<PaginatedResponse<IUser>> {
     let httpParams = new HttpParams();
     if (params) {
       Object.entries(params).forEach(([key, value]) => {

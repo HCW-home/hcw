@@ -11,6 +11,7 @@ import {
   QueryList,
   ElementRef,
   AfterViewInit,
+  HostListener,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule, Location } from '@angular/common';
@@ -42,6 +43,7 @@ import {
   ConsultationMessage,
   Appointment,
   Participant,
+  User,
   AppointmentStatus,
   AppointmentType,
   CustomField,
@@ -75,7 +77,7 @@ import {
   ButtonSizeEnum,
   ButtonStateEnum,
 } from '../../../../shared/constants/button';
-import { BadgeTypeEnum } from '../../../../shared/constants/badge';
+import { BadgeTypeEnum, BadgeSizeEnum } from '../../../../shared/constants/badge';
 import {
   getParticipantBadgeType,
   getAppointmentBadgeType,
@@ -99,7 +101,6 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { TranslationService } from '../../../../core/services/translation.service';
 
 type AppointmentViewMode = 'list' | 'calendar';
-type AppointmentStatusFilter = 'all' | 'scheduled' | 'done' | 'cancelled';
 type AppointmentTimeFilter = 'all' | 'upcoming' | 'past';
 
 @Component({
@@ -153,6 +154,7 @@ type AppointmentTimeFilter = 'all' | 'upcoming' | 'past';
 export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   private destroy$ = new Subject<void>();
   private location = inject(Location);
+  private hostEl = inject(ElementRef<HTMLElement>);
 
   consultationId!: number;
   consultation = signal<Consultation | null>(null);
@@ -166,7 +168,21 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   private appointmentPage = 1;
   private appointmentPageSize = 20;
 
+  // Header summary: totals are independent from the active filter, so they are
+  // fetched separately (page_size=1, only the `count` is used).
+  upcomingAppointmentCount = signal(0);
+  pastAppointmentCount = signal(0);
+
+  // Overflow ("...") menu: id of the appointment whose menu is open.
+  openAppointmentMenuId = signal<number | null>(null);
+
+  // Ticks every 30s so the "starts in ..." chip stays accurate without a reload.
+  private nowTick = signal(Date.now());
+  private nowTickInterval?: ReturnType<typeof setInterval>;
+
   reminders = signal<Reminder[]>([]);
+  // Total for the header summary: the list itself is paginated.
+  reminderTotalCount = signal(0);
   isLoadingReminders = signal(false);
   isLoadingMoreReminders = signal(false);
   hasMoreReminders = signal(false);
@@ -193,9 +209,14 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
 
   tooEarlyError = signal<{ appointmentId: number; time: string; minutes: number } | null>(null);
   appointmentEarlyJoinMinutes = 5; // Default value
+  // Same two settings the backend uses to decide an appointment is over.
+  private defaultAppointmentDurationMinutes = signal(30);
+  private callLimitJoinMinutes = signal(15);
 
   upcomingAppointment = computed<Appointment | null>(() => {
-    const now = Date.now();
+    // nowTick, not Date.now(), so the window re-opens on its own instead of
+    // staying frozen until the next reload.
+    const now = this.nowTick();
     const earlyMs = this.appointmentEarlyJoinMinutes * 60 * 1000;
     return this.appointments().find(a => {
       if (a.status !== AppointmentStatus.SCHEDULED) return false;
@@ -205,6 +226,41 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   });
 
   hasUpcomingAppointment = computed(() => !!this.upcomingAppointment());
+
+  /**
+   * The single appointment whose call is reachable right now: the soonest one
+   * whose early-join window has opened. Only that card gets the primary
+   * "Join" button with its live dot — the others would just answer "too early",
+   * so they stay secondary.
+   */
+  liveAppointmentId = computed<number | null>(() => {
+    const now = this.nowTick();
+    const earlyMs = this.appointmentEarlyJoinMinutes * 60 * 1000;
+    const trailingMs = this.callLimitJoinMinutes() * 60 * 1000;
+    const defaultDurationMs =
+      this.defaultAppointmentDurationMinutes() * 60 * 1000;
+
+    return (
+      this.appointments()
+        .filter(a => {
+          if (!this.canJoinVideoCall(a)) return false;
+          const start = new Date(a.scheduled_at).getTime();
+          if (start - now > earlyMs) return false;
+          // Mirrors the backend window: an appointment stops being reachable
+          // once it is over plus the late-join tolerance. Without an explicit
+          // end, the configured default duration applies.
+          const end = a.end_expected_at
+            ? new Date(a.end_expected_at).getTime()
+            : start + defaultDurationMs;
+          return end + trailingMs >= now;
+        })
+        .sort(
+          (a, b) =>
+            new Date(a.scheduled_at).getTime() -
+            new Date(b.scheduled_at).getTime()
+        )[0]?.id ?? null
+    );
+  });
 
   showCallAppointmentModal = signal(false);
 
@@ -223,7 +279,6 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   editingAppointment = signal<Appointment | null>(null);
 
   appointmentViewMode = signal<AppointmentViewMode>('list');
-  appointmentStatusFilter = signal<AppointmentStatusFilter>('scheduled');
   appointmentTimeFilter = signal<AppointmentTimeFilter>('upcoming');
   calendarComponent = viewChild<FullCalendarComponent>('appointmentCalendar');
   calendarTitle = signal<string>('');
@@ -358,6 +413,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
   protected readonly ButtonStateEnum = ButtonStateEnum;
   protected readonly BadgeTypeEnum = BadgeTypeEnum;
+  protected readonly BadgeSizeEnum = BadgeSizeEnum;
   protected readonly getParticipantBadgeType = getParticipantBadgeType;
   protected readonly getAppointmentBadgeType = getAppointmentBadgeType;
 
@@ -415,11 +471,17 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     this.loadQueues();
     this.loadCustomFields();
 
+    this.nowTickInterval = setInterval(() => this.nowTick.set(Date.now()), 30000);
+
     // Load app config to get consultation_auto_delete_hours and appointment_early_join_minutes
     this.authService.getOpenIDConfig().subscribe({
       next: (config) => {
         this.consultationAutoDeleteHours = config.consultation_auto_delete_hours || 0;
         this.appointmentEarlyJoinMinutes = config.appointment_early_join_minutes || 5;
+        this.defaultAppointmentDurationMinutes.set(
+          config.default_appointment_duration_in_minutes || 30
+        );
+        this.callLimitJoinMinutes.set(config.call_limit_join_minutes || 15);
         this.firstDayOfWeek.set(config.calendar_first_day_of_week ?? 0);
       },
       error: (err: unknown) => {
@@ -436,10 +498,10 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     this.route.params.pipe(takeUntil(this.destroy$)).subscribe(params => {
       this.consultationId = +params['id'];
 
-      // If an appointmentId is in the URL, switch filters to "all" so the appointment is visible
+      // If an appointmentId is in the URL, widen the filter to "all" so the
+      // appointment is visible whether it is upcoming or past.
       const queryParams = this.route.snapshot.queryParams;
       if (queryParams['appointmentId']) {
-        this.appointmentStatusFilter.set('all');
         this.appointmentTimeFilter.set('all');
       }
 
@@ -614,6 +676,9 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     this.destroy$.complete();
     this.wsService.disconnect();
     window.removeEventListener('beforeunload', this.handleBeforeUnload);
+    if (this.nowTickInterval) {
+      clearInterval(this.nowTickInterval);
+    }
   }
 
   private connectWebSocket(): void {
@@ -1326,11 +1391,9 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   loadAppointments(): void {
     this.isLoadingAppointments.set(true);
     this.appointmentPage = 1;
-    const statusFilter = this.appointmentStatusFilter();
+    this.refreshAppointmentCounts();
     const timeFilter = this.appointmentTimeFilter();
     const params: {
-      status?: string;
-      status_in?: string;
       future?: boolean;
       page?: number;
       page_size?: number;
@@ -1338,7 +1401,6 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       page: 1,
       page_size: this.appointmentPageSize,
     };
-    this.applyStatusParam(params, statusFilter);
     if (timeFilter === 'upcoming') {
       params.future = true;
     } else if (timeFilter === 'past') {
@@ -1370,11 +1432,8 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
 
     this.isLoadingMoreAppointments.set(true);
     this.appointmentPage++;
-    const statusFilter = this.appointmentStatusFilter();
     const timeFilter = this.appointmentTimeFilter();
     const params: {
-      status?: string;
-      status_in?: string;
       future?: boolean;
       page?: number;
       page_size?: number;
@@ -1382,7 +1441,6 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       page: this.appointmentPage,
       page_size: this.appointmentPageSize,
     };
-    this.applyStatusParam(params, statusFilter);
     if (timeFilter === 'upcoming') {
       params.future = true;
     } else if (timeFilter === 'past') {
@@ -1424,6 +1482,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       .subscribe({
         next: response => {
           this.reminders.set(response.results);
+          this.reminderTotalCount.set(response.count);
           this.hasMoreReminders.set(response.next !== null);
           this.isLoadingReminders.set(false);
         },
@@ -1469,14 +1528,12 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
   }
 
   loadAppointmentsForCalendar(): void {
+    this.refreshAppointmentCounts();
     if (!this.calendarDateRange) return;
 
     this.isLoadingAppointments.set(true);
-    const statusFilter = this.appointmentStatusFilter();
 
     const params: {
-      status?: string;
-      status_in?: string;
       page_size?: number;
       scheduled_at__date__gte?: string;
       scheduled_at__date__lte?: string;
@@ -1485,8 +1542,6 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       scheduled_at__date__gte: this.calendarDateRange.start,
       scheduled_at__date__lte: this.calendarDateRange.end,
     };
-
-    this.applyStatusParam(params, statusFilter);
 
     this.consultationService
       .getConsultationAppointments(this.consultationId, params)
@@ -1563,6 +1618,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
               )
             );
             this.markAppointmentAsLocallyModified(appointment.id);
+            this.refreshAppointmentCounts();
             this.toasterService.show(
               'success',
               this.t.instant('consultationDetail.appointmentCancelled'),
@@ -1596,6 +1652,160 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
     return canSetAppointmentOutcome(appointment);
   }
 
+  /**
+   * Header summary ("2 upcoming - 5 past"). The list itself is filtered and
+   * paginated, so the totals need their own lightweight requests: page_size=1
+   * and only `count` is read from the response.
+   */
+  private refreshAppointmentCounts(): void {
+    this.consultationService
+      .getConsultationAppointments(this.consultationId, {
+        page: 1,
+        page_size: 1,
+        status: AppointmentStatus.SCHEDULED,
+        future: true,
+      })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: response => this.upcomingAppointmentCount.set(response.count),
+        error: () => this.upcomingAppointmentCount.set(0),
+      });
+
+    this.consultationService
+      .getConsultationAppointments(this.consultationId, {
+        page: 1,
+        page_size: 1,
+        future: false,
+      })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: response => this.pastAppointmentCount.set(response.count),
+        error: () => this.pastAppointmentCount.set(0),
+      });
+  }
+
+  /**
+   * Relative label shown next to an upcoming appointment ("in 21 min").
+   * Returns null when the appointment is not scheduled, already started, or
+   * more than a day away — the absolute date is enough in those cases.
+   */
+  getAppointmentCountdown(appointment: Appointment): string | null {
+    if (appointment.status !== AppointmentStatus.SCHEDULED) return null;
+
+    const start = new Date(appointment.scheduled_at).getTime();
+    if (isNaN(start)) return null;
+
+    const diffMs = start - this.nowTick();
+    if (diffMs > 24 * 60 * 60 * 1000) return null;
+
+    const earlyMs = this.appointmentEarlyJoinMinutes * 60 * 1000;
+    if (diffMs <= earlyMs) {
+      return this.t.instant('consultationDetail.startingNow');
+    }
+
+    const minutes = Math.round(diffMs / 60000);
+    if (minutes < 60) {
+      return this.t.instant('consultationDetail.startsInMinutes', {
+        minutes: String(minutes),
+      });
+    }
+    return this.t.instant('consultationDetail.startsInHours', {
+      hours: String(Math.round(minutes / 60)),
+    });
+  }
+
+  getAppointmentTypeLabel(appointment: Appointment): string {
+    return appointment.type === AppointmentType.ONLINE
+      ? this.t.instant('consultationDetail.typeOnline')
+      : this.t.instant('consultationDetail.typeInPerson');
+  }
+
+  toggleAppointmentMenu(appointment: Appointment, event: MouseEvent): void {
+    event.stopPropagation();
+    this.openAppointmentMenuId.set(
+      this.openAppointmentMenuId() === appointment.id ? null : appointment.id
+    );
+  }
+
+  closeAppointmentMenu(): void {
+    this.openAppointmentMenuId.set(null);
+  }
+
+  /**
+   * Any secondary action is available behind the overflow menu; showing the
+   * trigger for an empty menu would be a dead end.
+   */
+  /**
+   * A settled appointment (completed / no-show) stays editable: the API allows
+   * it on purpose — see `validate_scheduled_at` on the backend serializer — and
+   * a wrong time or title still needs fixing after the fact. Only a cancelled
+   * appointment is frozen: it is replaced by a new one rather than amended.
+   */
+  canEditAppointment(appointment: Appointment): boolean {
+    return (
+      !this.consultation()?.closed_at &&
+      appointment.status !== AppointmentStatus.CANCELLED
+    );
+  }
+
+  canCancelAppointment(appointment: Appointment): boolean {
+    return (
+      !this.consultation()?.closed_at &&
+      (appointment.status === AppointmentStatus.DRAFT ||
+        appointment.status === AppointmentStatus.SCHEDULED)
+    );
+  }
+
+  canMarkCompleted(appointment: Appointment): boolean {
+    return (
+      this.canSetOutcome(appointment) &&
+      !this.consultation()?.closed_at &&
+      appointment.status !== AppointmentStatus.COMPLETED
+    );
+  }
+
+  /**
+   * A video appointment already carries "Join" as its primary action, so the
+   * outcome moves into the overflow menu next to "No show". In-person ones have
+   * no call to join: their outcome stays a visible one-click action.
+   */
+  isCompleteInMenu(appointment: Appointment): boolean {
+    return (
+      this.canMarkCompleted(appointment) &&
+      appointment.type === AppointmentType.ONLINE
+    );
+  }
+
+  canMarkNoshow(appointment: Appointment): boolean {
+    return (
+      this.canSetOutcome(appointment) &&
+      appointment.status !== AppointmentStatus.NOSHOW
+    );
+  }
+
+  hasAppointmentMenuActions(appointment: Appointment): boolean {
+    return (
+      this.canEditAppointment(appointment) ||
+      this.isCompleteInMenu(appointment) ||
+      this.canMarkNoshow(appointment) ||
+      this.canCancelAppointment(appointment)
+    );
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const openId = this.openAppointmentMenuId();
+    if (openId === null) return;
+    const target = event.target as HTMLElement;
+    // Scoped to the open card: every card renders its own menu container.
+    const menu = this.hostEl.nativeElement.querySelector(
+      `.appointment-menu[data-appointment-id="${openId}"]`
+    );
+    if (!menu || !menu.contains(target)) {
+      this.closeAppointmentMenu();
+    }
+  }
+
   setAppointmentOutcome(
     appointment: Appointment,
     status: AppointmentStatus
@@ -1611,6 +1821,7 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
             )
           );
           this.markAppointmentAsLocallyModified(appointment.id);
+          this.refreshAppointmentCounts();
           this.toasterService.show(
             'success',
             this.t.instant('appointments.setStatusSuccess')
@@ -1942,6 +2153,23 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       );
     }
     return this.t.instant('consultationDetail.unknown');
+  }
+
+  /**
+   * Secondary line of an "actor" cell. The e-mail is the natural sub-line, but
+   * a contact without a name already shows it as the main value — in that case
+   * fall back to how they are reached (timezone, language, channel).
+   */
+  getUserSubLine(user: User | null | undefined, displayName: string): string {
+    if (!user) return '';
+    if (user.email && user.email !== displayName) return user.email;
+    return [
+      user.timezone,
+      user.preferred_language?.toUpperCase(),
+      user.communication_method,
+    ]
+      .filter(Boolean)
+      .join(' · ');
   }
 
   getBeneficiaryDisplayName(): string {
@@ -2315,31 +2543,6 @@ export class ConsultationDetail implements OnInit, OnDestroy, AfterViewInit {
       }
     } else if (mode === 'list' && previousMode === 'calendar') {
       // En mode liste, recharger avec les filtres de liste
-      this.loadAppointments();
-    }
-  }
-
-  /**
-   * The "done" tab covers both outcomes of a past appointment, which the API
-   * exposes through the comma-separated status_in filter.
-   */
-  private applyStatusParam(
-    params: { status?: string; status_in?: string },
-    filter: AppointmentStatusFilter
-  ): void {
-    if (filter === 'all') return;
-    if (filter === 'done') {
-      params.status_in = `${AppointmentStatus.COMPLETED},${AppointmentStatus.NOSHOW}`;
-      return;
-    }
-    params.status = filter;
-  }
-
-  setAppointmentStatusFilter(filter: AppointmentStatusFilter): void {
-    this.appointmentStatusFilter.set(filter);
-    if (this.appointmentViewMode() === 'calendar') {
-      this.loadAppointmentsForCalendar();
-    } else {
       this.loadAppointments();
     }
   }

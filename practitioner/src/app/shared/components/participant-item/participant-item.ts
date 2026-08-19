@@ -28,7 +28,7 @@ import {
   ButtonSizeEnum,
   ButtonStateEnum,
 } from '../../constants/button';
-import { BadgeTypeEnum } from '../../constants/badge';
+import { BadgeTypeEnum, BadgeSizeEnum } from '../../constants/badge';
 import { getParticipantBadgeType } from '../../tools/helper';
 
 @Component({
@@ -57,6 +57,11 @@ export class ParticipantItem {
   @Input() isPending = false;
   @Input() currentUser: any = null;
   @Input() appointmentCancelled = false;
+  /**
+   * Dense card layout used inside the appointment cards: single detail line,
+   * small avatar, and the access link expanded inline instead of in a modal.
+   */
+  @Input() compact = false;
 
   @Output() remove = new EventEmitter<void>();
 
@@ -64,6 +69,7 @@ export class ParticipantItem {
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
   protected readonly ButtonStateEnum = ButtonStateEnum;
   protected readonly BadgeTypeEnum = BadgeTypeEnum;
+  protected readonly BadgeSizeEnum = BadgeSizeEnum;
   protected readonly getParticipantBadgeType = getParticipantBadgeType;
 
   getInitials(): string {
@@ -216,6 +222,7 @@ export class ParticipantItem {
   }
 
   showLinkModal = signal(false);
+  showLinkPanel = signal(false);
   linkCopied = signal(false);
   accessUrl = signal<string>('');
   expiresAt = signal<string | null>(null);
@@ -236,32 +243,49 @@ export class ParticipantItem {
   openLinkModal(): void {
     this.linkCopied.set(false);
     this.showLinkModal.set(true);
-
-    // Charger l'access_url depuis l'API
-    if (this.participant?.id && !this.accessUrl()) {
-      this.loadingAccessUrl.set(true);
-      this.consultationService
-        .getParticipantAccessUrl(this.participant.id)
-        .subscribe({
-          next: (response) => {
-            this.accessUrl.set(response.access_url);
-            this.expiresAt.set(response.expires_at);
-            this.loadingAccessUrl.set(false);
-          },
-          error: (error) => {
-            this.loadingAccessUrl.set(false);
-            this.toasterService.show(
-              'error',
-              this.t.instant('participantItem.errorLoadingLink')
-            );
-            this.closeLinkModal();
-          },
-        });
-    }
+    this.loadAccessUrl(() => this.closeLinkModal());
   }
 
   closeLinkModal(): void {
     this.showLinkModal.set(false);
+  }
+
+  /** Compact layout: the link expands under the participant instead. */
+  toggleLinkPanel(): void {
+    if (this.showLinkPanel()) {
+      this.showLinkPanel.set(false);
+      return;
+    }
+    this.linkCopied.set(false);
+    this.showLinkPanel.set(true);
+    this.loadAccessUrl(() => this.showLinkPanel.set(false));
+  }
+
+  /**
+   * The endpoint both returns and renews the token, so it is only called once
+   * per participant: the URL is kept until the component is destroyed.
+   */
+  private loadAccessUrl(onError: () => void): void {
+    if (!this.participant?.id || this.accessUrl()) return;
+
+    this.loadingAccessUrl.set(true);
+    this.consultationService
+      .getParticipantAccessUrl(this.participant.id)
+      .subscribe({
+        next: (response) => {
+          this.accessUrl.set(response.access_url);
+          this.expiresAt.set(response.expires_at);
+          this.loadingAccessUrl.set(false);
+        },
+        error: () => {
+          this.loadingAccessUrl.set(false);
+          this.toasterService.show(
+            'error',
+            this.t.instant('participantItem.errorLoadingLink')
+          );
+          onError();
+        },
+      });
   }
 
   copyLink(): void {

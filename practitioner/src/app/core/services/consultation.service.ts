@@ -33,6 +33,19 @@ import {
 import { PaginatedResponse } from '../models/global';
 import { VideoCallConfig } from './video-call.types';
 
+export interface ConsultationQueryParams {
+  page?: number;
+  page_size?: number;
+  group?: number;
+  beneficiary?: number;
+  created_by?: number;
+  owned_by?: number;
+  is_closed?: boolean;
+  scheduled?: boolean;
+  closed_at?: string;
+  search?: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -40,18 +53,9 @@ export class ConsultationService {
   private apiUrl = `${environment.apiUrl}`;
   http: HttpClient = inject(HttpClient);
 
-  getConsultations(params?: {
-    page?: number;
-    page_size?: number;
-    group?: number;
-    beneficiary?: number;
-    created_by?: number;
-    owned_by?: number;
-    is_closed?: boolean;
-    scheduled?: boolean;
-    closed_at?: string;
-    search?: string;
-  }): Observable<PaginatedResponse<Consultation>> {
+  getConsultations(
+    params?: ConsultationQueryParams
+  ): Observable<PaginatedResponse<Consultation>> {
     let httpParams = new HttpParams();
     if (params) {
       Object.entries(params).forEach(([key, value]) => {

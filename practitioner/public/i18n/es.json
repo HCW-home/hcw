@@ -64,7 +64,12 @@
     "ownedBy": "Propiedad de",
     "searchPractitioner": "Buscar profesional...",
     "group": "Grupo",
-    "allGroups": "Todos los grupos"
+    "allGroups": "Todos los grupos",
+    "columnFollowUp": "Seguimiento",
+    "columnCreatedAt": "Creado el",
+    "resultsSummary": "{{shown}} de {{total}} seguimientos",
+    "unassigned": "Sin asignar",
+    "noGroup": "Sin grupo"
   },
   "configuration": {
     "break": "Pausa",
@@ -726,7 +731,15 @@
     "viewMore": "Ver más",
     "errorLoading": "Error al cargar los contactos",
     "temporary": "temporal",
-    "practitioner": "facultativo"
+    "practitioner": "facultativo",
+    "columnContact": "Contacto",
+    "columnEmail": "Correo",
+    "columnPhone": "Teléfono",
+    "columnType": "Tipo",
+    "columnStatus": "Estado",
+    "typePatient": "Paciente",
+    "typePractitioner": "Facultativo",
+    "resultsSummary": "{{shown}} de {{total}} contactos"
   },
   "videoConsultation": {
     "connecting": "Conectando con la videollamada...",
@@ -823,18 +836,14 @@
     "noPatient": "No se ha asignado ningún paciente.",
     "unknownPatient": "Paciente desconocido",
     "unknown": "Desconocido",
-    "appointmentsCount": "Appointments - {{count}} item(s)",
     "newAppointment": "Nueva cita",
     "viewList": "Lista",
     "viewCalendar": "Calendario",
-    "filterActive": "Activo",
-    "filterCancelled": "Cancelado",
     "filterAll": "Todo",
     "filterUpcoming": "Próximamente",
     "filterPast": "Pasado",
     "loadingAppointments": "Cargando citas...",
     "noAppointments": "No se encontraron citas.",
-    "noFilteredAppointments": "No hay citas {{status}}",
     "createToGetStarted": "Crea una cita para comenzar.",
     "today": "Hoy",
     "expectedEnd": "Fin previsto:",
@@ -914,9 +923,16 @@
     "joinAppointment": "Unirse a la cita",
     "callPatientOnly": "Llamar solo al paciente",
     "error": "Error",
-    "filterDone": "Finalizadas",
     "statusCompleted": "Realizada",
-    "statusNoshow": "No asistió"
+    "statusNoshow": "No asistió",
+    "appointmentsTitle": "Citas",
+    "appointmentsSummary": "{{upcoming}} próximas · {{past}} pasadas",
+    "startingNow": "Ahora",
+    "startsInMinutes": "En {{minutes}} min",
+    "startsInHours": "En {{hours}} h",
+    "moreActions": "Más acciones",
+    "assignPractitioner": "Asignar un profesional",
+    "notProvided": "No indicado"
   },
   "appointmentFormModal": {
     "editAppointment": "Editar cita",
@@ -1050,7 +1066,10 @@
     "linkExpires": "Este enlace caduca el",
     "loadingLink": "Generando enlace de invitación...",
     "errorLoadingLink": "Error al generar el enlace de invitación.",
-    "temporary": "temporal"
+    "temporary": "temporal",
+    "linkShort": "Enlace",
+    "copyShort": "Copiar",
+    "copiedShort": "Copiado"
   },
   "messageList": {
     "messages": "Mensajes",
@@ -1112,7 +1131,7 @@
     "newReminder": "New Reminder",
     "recipient": "Recipient",
     "recipientPlaceholder": "Search by name or email...",
-    "title": "Title",
+    "title": "Recordatorios",
     "titlePlaceholder": "Reminder title",
     "description": "Description",
     "descriptionPlaceholder": "Reminder details",
@@ -1153,7 +1172,8 @@
     "until": "hasta el",
     "nextRun": "Próximo recordatorio",
     "createdBy": "Creado por",
-    "formHelper": "En la fecha y hora previstas, el contacto recibirá automáticamente este recordatorio por SMS o correo electrónico, según su canal de comunicación configurado."
+    "formHelper": "En la fecha y hora previstas, el contacto recibirá automáticamente este recordatorio por SMS o correo electrónico, según su canal de comunicación configurado.",
+    "summary": "{{count}} elemento(s)"
   },
   "elementType": {
     "title": "¿Qué tipo de elemento desea crear?",
@@ -1177,5 +1197,10 @@
     "remove": "Eliminar",
     "removeTitle": "Eliminar participante",
     "removeMessage": "¿Eliminar a {{name}} de esta cita? Se desconectará de la llamada."
+  },
+  "dataTable": {
+    "loading": "Cargando...",
+    "retry": "Reintentar",
+    "viewMore": "Ver más"
   }
 }

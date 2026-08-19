@@ -73,7 +73,7 @@ def auto_delete_temporary_users():
                 logger.info("Auto-delete of temporary users is disabled")
                 return
 
-            from consultations.utils import appointment_active_cutoff
+            from consultations.utils import appointment_active_q
 
             now = timezone.now()
             one_hour_ago = now - timedelta(hours=1)
@@ -81,8 +81,8 @@ def auto_delete_temporary_users():
                 temporary=True,
                 date_joined__lt=one_hour_ago
             ).exclude(
-                appointments_participating__status="scheduled",
-                appointments_participating__scheduled_at__gt=appointment_active_cutoff(),
+                appointment_active_q("appointments_participating")
+                & Q(appointments_participating__status="scheduled"),
             ).exclude(
                 # Keep users who still have an active reminder addressed to them
                 # whose schedule isn't exhausted yet (recurrence_end_at is the

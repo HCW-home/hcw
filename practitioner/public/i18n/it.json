@@ -91,7 +91,15 @@
     "viewMore": "Visualizza altro",
     "errorLoading": "Errore durante il caricamento dei contatti",
     "temporary": "temporaneo",
-    "practitioner": "professionista"
+    "practitioner": "professionista",
+    "columnContact": "Contatto",
+    "columnEmail": "Email",
+    "columnPhone": "Telefono",
+    "columnType": "Tipo",
+    "columnStatus": "Stato",
+    "typePatient": "Paziente",
+    "typePractitioner": "Professionista",
+    "resultsSummary": "{{shown}} di {{total}} contatti"
   },
   "consultationForm": {
     "pending": "In attesa",
@@ -244,18 +252,14 @@
     "noPatient": "Nessun paziente assegnato",
     "unknownPatient": "Paziente sconosciuto",
     "unknown": "Sconosciuto",
-    "appointmentsCount": "Appointments - {{count}} item(s)",
     "newAppointment": "Nuovo incarico",
     "viewList": "Lista",
     "viewCalendar": "Calendario",
-    "filterActive": "Attivo",
-    "filterCancelled": "Annullato",
     "filterAll": "Tutto",
     "filterUpcoming": "Prossimamente",
     "filterPast": "Passato",
     "loadingAppointments": "Caricamento appuntamenti in corso...",
     "noAppointments": "Nessun appuntamento trovato",
-    "noFilteredAppointments": "Nessun appuntamento {{status}}",
     "createToGetStarted": "Fissa un appuntamento per iniziare",
     "today": "Oggi",
     "expectedEnd": "Fine prevista:",
@@ -329,9 +333,16 @@
     "joinAppointment": "Unisciti all'appuntamento",
     "callPatientOnly": "Chiama solo il paziente",
     "error": "Errore",
-    "filterDone": "Conclusi",
     "statusCompleted": "Effettuato",
-    "statusNoshow": "Assente"
+    "statusNoshow": "Assente",
+    "appointmentsTitle": "Appuntamenti",
+    "appointmentsSummary": "{{upcoming}} in arrivo · {{past}} passati",
+    "startingNow": "Adesso",
+    "startsInMinutes": "Tra {{minutes}} min",
+    "startsInHours": "Tra {{hours}} h",
+    "moreActions": "Altre azioni",
+    "assignPractitioner": "Assegnare un medico",
+    "notProvided": "Non indicato"
   },
   "appointmentForm": {
     "online": "Video",
@@ -514,7 +525,10 @@
     "linkExpires": "Questo link scade il",
     "loadingLink": "Generazione del link di invito in corso...",
     "errorLoadingLink": "Errore durante la generazione del link di invito",
-    "temporary": "temporaneo"
+    "temporary": "temporaneo",
+    "linkShort": "Link",
+    "copyShort": "Copia",
+    "copiedShort": "Copiato"
   },
   "openIdCallback": {
     "authenticating": "Autenticazione in corso...",
@@ -639,7 +653,12 @@
     "ownedBy": "Di proprietà di",
     "searchPractitioner": "Ricerca professionista...",
     "group": "Gruppo",
-    "allGroups": "Tutti i gruppi"
+    "allGroups": "Tutti i gruppi",
+    "columnFollowUp": "Follow-up",
+    "columnCreatedAt": "Creato il",
+    "resultsSummary": "{{shown}} di {{total}} follow-up",
+    "unassigned": "Non assegnato",
+    "noGroup": "Nessun gruppo"
   },
   "configuration": {
     "tabSystemTest": "Test di sistema",
@@ -1112,7 +1131,7 @@
     "newReminder": "New Reminder",
     "recipient": "Recipient",
     "recipientPlaceholder": "Search by name or email...",
-    "title": "Title",
+    "title": "Promemoria",
     "titlePlaceholder": "Reminder title",
     "description": "Description",
     "descriptionPlaceholder": "Reminder details",
@@ -1153,7 +1172,8 @@
     "until": "fino al",
     "nextRun": "Prossimo promemoria",
     "createdBy": "Creato da",
-    "formHelper": "Alla data e ora previste, il contatto riceverà automaticamente questo promemoria via SMS o e-mail, in base al canale di comunicazione configurato."
+    "formHelper": "Alla data e ora previste, il contatto riceverà automaticamente questo promemoria via SMS o e-mail, in base al canale di comunicazione configurato.",
+    "summary": "{{count}} elemento/i"
   },
   "elementType": {
     "title": "Che tipo di elemento vuoi creare?",
@@ -1177,5 +1197,10 @@
     "remove": "Rimuovi",
     "removeTitle": "Rimuovi partecipante",
     "removeMessage": "Rimuovere {{name}} da questo appuntamento? Verrà disconnesso dalla chiamata."
+  },
+  "dataTable": {
+    "loading": "Caricamento...",
+    "retry": "Riprova",
+    "viewMore": "Visualizza altro"
   }
 }

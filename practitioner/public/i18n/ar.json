@@ -160,7 +160,12 @@
     "ownedBy": "يملكه",
     "searchPractitioner": "ابحث عن ممارس...",
     "group": "المجموعة",
-    "allGroups": "جميع المجموعات"
+    "allGroups": "جميع المجموعات",
+    "columnFollowUp": "المتابعة",
+    "columnCreatedAt": "تاريخ الإنشاء",
+    "resultsSummary": "{{shown}} من {{total}} متابعة",
+    "unassigned": "غير مُسند",
+    "noGroup": "بدون مجموعة"
   },
   "configuration": {
     "tabSystemTest": "اختبار النظام",
@@ -510,7 +515,15 @@
     "viewMore": "عرض المزيد",
     "errorLoading": "خطأ في تحميل جهات الاتصال",
     "temporary": "مؤقت",
-    "practitioner": "ممارس"
+    "practitioner": "ممارس",
+    "columnContact": "جهة الاتصال",
+    "columnEmail": "البريد الإلكتروني",
+    "columnPhone": "الهاتف",
+    "columnType": "النوع",
+    "columnStatus": "الحالة",
+    "typePatient": "مريض",
+    "typePractitioner": "ممارس",
+    "resultsSummary": "{{shown}} من {{total}} جهة اتصال"
   },
   "videoConsultation": {
     "connecting": "جارٍ الاتصال بمكالمة الفيديو...",
@@ -734,18 +747,14 @@
     "noPatient": "لم يتم إسناد مريض",
     "unknownPatient": "مريض غير معروف",
     "unknown": "غير معروف",
-    "appointmentsCount": "المواعيد - {{count}} عنصر",
     "newAppointment": "موعد جديد",
     "viewList": "قائمة",
     "viewCalendar": "تقويم",
-    "filterActive": "نشطة",
-    "filterCancelled": "ملغاة",
     "filterAll": "الكل",
     "filterUpcoming": "قادمة",
     "filterPast": "سابقة",
     "loadingAppointments": "جارٍ تحميل المواعيد...",
     "noAppointments": "لم يتم العثور على مواعيد",
-    "noFilteredAppointments": "لا توجد مواعيد {{status}}",
     "createToGetStarted": "أنشئ موعدًا للبدء",
     "today": "اليوم",
     "expectedEnd": "النهاية المتوقعة:",
@@ -834,9 +843,16 @@
     "chatLockedMixed": "لا يمكن لأي من المغلّفات (الشخصي أو عبر المجموعة) فك تشفير مفتاح هذه الاستشارة — فقد غُلّفت بمفاتيح لم تعد متطابقة.",
     "chatLockedAdminHint": "يرجى التواصل مع أحد المسؤولين لإعادة مزامنة وصولك.",
     "encryptionRequiredTitle": "التشفير مطلوب",
-    "filterDone": "منتهية",
     "statusCompleted": "مكتمل",
-    "statusNoshow": "لم يحضر"
+    "statusNoshow": "لم يحضر",
+    "appointmentsTitle": "المواعيد",
+    "appointmentsSummary": "{{upcoming}} قادمة · {{past}} سابقة",
+    "startingNow": "الآن",
+    "startsInMinutes": "خلال {{minutes}} دقيقة",
+    "startsInHours": "خلال {{hours}} ساعة",
+    "moreActions": "إجراءات أخرى",
+    "assignPractitioner": "تعيين ممارس",
+    "notProvided": "غير محدد"
   },
   "appointmentFormModal": {
     "editAppointment": "تعديل الموعد",
@@ -1167,7 +1183,10 @@
     "linkExpires": "تنتهي صلاحية هذا الرابط في",
     "loadingLink": "جارٍ إنشاء رابط الدعوة...",
     "errorLoadingLink": "خطأ في إنشاء رابط الدعوة",
-    "temporary": "مؤقت"
+    "temporary": "مؤقت",
+    "linkShort": "رابط",
+    "copyShort": "نسخ",
+    "copiedShort": "تم النسخ"
   },
   "messageList": {
     "messages": "الرسائل",
@@ -1229,7 +1248,7 @@
     "newReminder": "تذكير جديد",
     "recipient": "المستلم",
     "recipientPlaceholder": "ابحث بالاسم أو البريد الإلكتروني...",
-    "title": "العنوان",
+    "title": "التذكيرات",
     "titlePlaceholder": "عنوان التذكير",
     "description": "الوصف",
     "descriptionPlaceholder": "تفاصيل التذكير",
@@ -1270,7 +1289,8 @@
     "until": "حتى",
     "nextRun": "التذكير القادم",
     "createdBy": "أنشأه",
-    "formHelper": "في التاريخ والوقت المجدولين، ستستلم جهة الاتصال هذا التذكير تلقائيًا عبر الرسائل القصيرة أو البريد الإلكتروني، حسب قناة التواصل المُعدة لها."
+    "formHelper": "في التاريخ والوقت المجدولين، ستستلم جهة الاتصال هذا التذكير تلقائيًا عبر الرسائل القصيرة أو البريد الإلكتروني، حسب قناة التواصل المُعدة لها.",
+    "summary": "{{count}} عنصر"
   },
   "elementType": {
     "title": "ما نوع العنصر الذي تريد إنشاءه؟",
@@ -1294,5 +1314,10 @@
     "remove": "إزالة",
     "removeTitle": "إزالة مشارك",
     "removeMessage": "هل تريد إزالة {{name}} من هذا الموعد؟ سيتم قطع اتصاله بالمكالمة."
+  },
+  "dataTable": {
+    "loading": "جارٍ التحميل...",
+    "retry": "إعادة المحاولة",
+    "viewMore": "عرض المزيد"
   }
 }

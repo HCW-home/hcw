@@ -84,7 +84,9 @@
     .title-row {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 10px;
+      flex-wrap: wrap;
+      min-width: 0;
     }
 
     .card-actions {
@@ -100,21 +102,26 @@
     }
 
     .consultation-title {
-      font-size: 26px;
+      font-size: clamp(18px, 1.7vw, 22px);
       font-weight: 700;
+      letter-spacing: -0.025em;
       color: var(--slate-800);
       margin: 0;
+      min-width: 0;
     }
 
     .consultation-id {
       font-size: 14px;
       font-weight: 500;
       color: var(--slate-400);
+      font-variant-numeric: tabular-nums;
     }
 
     .created-date {
-      font-size: 15px;
-      color: var(--slate-500);
+      display: block;
+      margin-top: 10px;
+      font-size: 14px;
+      color: var(--slate-400);
     }
   }
 
@@ -150,7 +157,7 @@
   }
 
   .info-label {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--slate-500);
     text-transform: uppercase;
@@ -176,7 +183,7 @@
   }
 
   .info-sub {
-    font-size: 13px;
+    font-size: 14px;
     color: var(--slate-500);
   }
 
@@ -187,9 +194,124 @@
     margin-left: 4px;
 
     span {
-      font-size: 12px;
+      font-size: 14px;
       font-weight: 400;
       color: var(--primary-500);
+    }
+  }
+
+  // Read mode only: the cells lose their card look and become a single strip
+  // of ruled cells spanning the card. Edit mode keeps the padded form layout.
+  &:not(.editing) {
+    padding: 0;
+    overflow: hidden;
+
+    .info-header {
+      padding: 18px 18px 16px;
+      margin-bottom: 0;
+    }
+
+    .description {
+      margin: 0 18px 16px;
+    }
+
+    .info-grid {
+      // Two columns, so a row is either full or collapsed to one on a narrow
+      // card — never the ragged three-then-one that left rules hanging.
+      grid-template-columns: repeat(auto-fit, minmax(max(230px, 50%), 1fr));
+      gap: 0;
+      padding-top: 0;
+      border-top: none;
+      // Pulls the leftmost cell border out of the card, which clips it: only
+      // the rules *between* cells stay visible.
+      margin-left: -1px;
+    }
+
+    .info-item {
+      position: relative;
+      gap: 2px;
+      padding: 13px 16px;
+      background: transparent;
+      border-radius: 0;
+      border-top: 1px solid var(--slate-100);
+      border-left: 1px solid var(--slate-100);
+
+      // Room for the avatar, which is taken out of the flow to stay centred
+      // whatever the number of text lines.
+      &:has(app-user-avatar) {
+        padding-left: 59px;
+      }
+
+      // An odd number of cells would leave the last one alone on its row, with
+      // its rules stopping mid-card. Let it span instead so the strip always
+      // closes on a full-width line.
+      &:last-child:nth-child(odd) {
+        grid-column: 1 / -1;
+      }
+    }
+
+    // Flattened so the label, value and sub-line share one column next to the
+    // avatar instead of being nested two levels down.
+    .info-user,
+    .info-user-details {
+      display: contents;
+    }
+
+    app-user-avatar {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .info-label {
+      font-size: 14px;
+      letter-spacing: 0.02em;
+      color: var(--slate-400);
+    }
+
+    .info-value {
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .info-sub {
+      font-size: 14px;
+      color: var(--slate-400);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .info-placeholder {
+      font-size: 14px;
+      font-weight: 600;
+      font-style: normal;
+      color: var(--slate-400);
+    }
+
+    // Shortcut offered in place of a sub-line when the slot is still empty.
+    .info-action {
+      align-self: flex-start;
+      padding: 0;
+      border: none;
+      background: none;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--primary-600);
+      cursor: pointer;
+
+      &:hover {
+        color: var(--primary-700);
+        text-decoration: underline;
+      }
+    }
+
+    .beneficiary-manual-link {
+      margin-top: 6px;
     }
   }
 }
@@ -237,9 +359,8 @@
     .section-title-row {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       width: 100%;
-      justify-content: space-between;
       flex-wrap: wrap;
     }
 
@@ -248,6 +369,18 @@
       font-weight: 700;
       color: var(--slate-800);
       margin: 0;
+    }
+
+    // Totals of the whole consultation, independent from the active filter.
+    .section-count {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--slate-400);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .section-cta {
+      margin-left: auto;
     }
 
     .section-header-actions {
@@ -298,64 +431,35 @@
     }
   }
 
-  .view-toggle {
+  // Pill segmented control: a light track holding one raised white pill.
+  .segmented {
     display: flex;
     background: var(--slate-100);
-    border-radius: 8px;
-    padding: 4px;
+    border-radius: 9px;
+    padding: 3px;
+    gap: 2px;
 
-    .view-toggle-btn {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 12px;
+    .segmented-btn {
+      padding: 5px 12px;
       border: none;
       background: transparent;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--slate-600);
+      border-radius: 7px;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--slate-500);
       cursor: pointer;
-      transition: all 0.2s ease;
+      white-space: nowrap;
+      transition: all 0.16s ease;
 
       &:hover {
-        color: var(--slate-800);
+        color: var(--slate-700);
       }
 
       &.active {
         background: var(--White);
-        color: var(--slate-800);
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-      }
-    }
-  }
-
-  .status-filter,
-  .time-filter {
-    display: flex;
-    background: var(--slate-100);
-    border-radius: 8px;
-    padding: 4px;
-
-    .filter-btn {
-      padding: 8px 14px;
-      border: none;
-      background: transparent;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--slate-600);
-      cursor: pointer;
-      transition: all 0.2s ease;
-
-      &:hover {
-        color: var(--slate-800);
-      }
-
-      &.active {
-        background: var(--White);
-        color: var(--slate-800);
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        color: var(--primary-700);
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.1);
       }
     }
   }
@@ -454,7 +558,7 @@
     .fc-col-header-cell-cushion {
       color: var(--slate-600);
       font-weight: 600;
-      font-size: 13px;
+      font-size: 14px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
@@ -465,7 +569,7 @@
 
     .fc-timegrid-slot-label-cushion {
       color: var(--slate-500);
-      font-size: 12px;
+      font-size: 14px;
       font-weight: 500;
     }
   }
@@ -485,7 +589,7 @@
     border-radius: 6px;
     border: none;
     padding: 4px 8px;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 500;
     cursor: pointer;
     transition:
@@ -576,7 +680,7 @@
   .fc-more-link {
     color: var(--primary-600);
     font-weight: 600;
-    font-size: 12px;
+    font-size: 14px;
   }
 
   .fc-popover {
@@ -659,33 +763,38 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
-  min-width: 48px;
-  background: var(--primary-50);
-  border-radius: 12px;
+  width: 58px;
+  min-width: 58px;
+  padding: 7px 0 6px;
+  background: var(--White);
+  border: 1px solid var(--slate-200);
+  border-radius: 10px;
   flex-shrink: 0;
 
   .day {
-    font-size: 18px;
+    font-size: 21px;
     font-weight: 700;
     color: var(--primary-700);
     line-height: 1;
+    font-variant-numeric: tabular-nums;
   }
 
   .month {
-    font-size: 11px;
+    font-size: 14px;
     font-weight: 600;
-    color: var(--primary-600);
+    letter-spacing: 0.02em;
+    color: var(--slate-400);
     text-transform: uppercase;
+    margin-top: 3px;
   }
 }
 
 .appointment-card {
-  background: var(--slate-50);
-  border-radius: 16px;
-  padding: 24px;
-  border: 2px solid var(--slate-100);
+  background: linear-gradient(180deg, var(--slate-50), var(--White));
+  border-radius: 12px;
+  padding: 0;
+  overflow: visible;
+  border: 1px solid var(--slate-200);
   transition:
     border-color 0.3s ease,
     box-shadow 0.3s ease;
@@ -708,24 +817,26 @@
   .appointment-header {
     display: flex;
     align-items: flex-start;
-    margin-bottom: 12px;
+    padding: 14px 15px;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 14px;
 
     .appointment-info {
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      flex: 1;
+      gap: 8px;
+      flex: 1 1 220px;
+      min-width: 0;
 
       .appointment-info-top {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 7px;
+        flex-wrap: wrap;
       }
 
       .appointment-title {
-        font-size: 15px;
+        font-size: 16px;
         font-weight: 600;
         color: var(--slate-800);
       }
@@ -734,23 +845,35 @@
         display: flex;
         align-items: center;
         gap: 6px;
-        font-size: 14px;
-        font-weight: 500;
-        color: var(--slate-600);
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        color: var(--slate-800);
       }
 
       .appointment-type {
-        padding: 4px 10px;
-        border-radius: 6px;
-        font-size: 12px;
+        padding: 3px 9px;
+        border-radius: 20px;
+        font-size: 14px;
         font-weight: 600;
-        background: var(--slate-200);
+        background: var(--slate-100);
         color: var(--slate-600);
 
         &.online {
-          background: var(--primary-100);
+          background: var(--primary-50);
           color: var(--primary-700);
         }
+      }
+
+      // Relative reminder for an appointment happening soon.
+      .appointment-countdown {
+        padding: 3px 9px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 600;
+        background: var(--amber-50);
+        color: var(--amber-700);
+        white-space: nowrap;
       }
     }
   }
@@ -759,41 +882,123 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 13px;
+    font-size: 14px;
     color: var(--slate-500);
-    margin-bottom: 16px;
+    padding: 0 15px 12px;
   }
 
   .participants-section {
-    margin-bottom: 16px;
+    border-top: 1px solid var(--slate-100);
+    background: var(--slate-50);
+    padding: 12px 15px 14px;
+    // Last block of the card: follow the rounded corners (the card keeps
+    // overflow visible so the "..." menu can escape it).
+    border-radius: 0 0 11px 11px;
 
     .participants-label {
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 600;
-      color: var(--slate-500);
-      margin-bottom: 12px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: var(--slate-400);
+      margin-bottom: 9px;
       display: block;
     }
 
     .no-participants {
-      font-size: 13px;
+      font-size: 14px;
       color: var(--slate-400);
       font-style: italic;
     }
   }
 
-  .participants-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+  .participants-grid {
+    display: grid;
+    // Two columns at most: each track is at least half the row minus the gap,
+    // so a third can never fit. Falls back to one column under ~485px.
+    grid-template-columns: repeat(
+      auto-fit,
+      minmax(max(238px, calc(50% - 4.5px)), 1fr)
+    );
+    gap: 9px;
+    // Cells stretch, so expanding one participant's access link grows the whole
+    // row instead of leaving the neighbours short.
+    align-items: stretch;
   }
 
+  // Primary actions sit on the header row, secondary ones behind the "..." menu.
   .appointment-actions {
     display: flex;
-    gap: 8px;
-    padding-top: 16px;
-    border-top: 1px solid var(--slate-200);
-    flex-wrap: wrap;
+    align-items: center;
+    gap: 7px;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+}
+
+.appointment-menu {
+  position: relative;
+
+  .appointment-menu-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--slate-200);
+    background: var(--White);
+    border-radius: 9px;
+    color: var(--slate-500);
+    cursor: pointer;
+    transition: all 0.16s ease;
+
+    &:hover {
+      border-color: var(--primary-500);
+      color: var(--primary-600);
+    }
+  }
+
+  .appointment-menu-panel {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 20;
+    min-width: 190px;
+    padding: 5px;
+    background: var(--White);
+    border: 1px solid var(--slate-200);
+    border-radius: 10px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+
+    .appointment-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      width: 100%;
+      padding: 8px 10px;
+      border: none;
+      background: transparent;
+      border-radius: 7px;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--slate-700);
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.14s ease;
+
+      &:hover {
+        background: var(--slate-50);
+      }
+
+      &.danger {
+        color: var(--rose-600);
+
+        &:hover {
+          background: var(--rose-50);
+        }
+      }
+    }
   }
 }
 
@@ -837,7 +1042,7 @@
 
     .chat-locked-text {
       margin: 0;
-      font-size: 13px;
+      font-size: 14px;
       line-height: 1.5;
       color: rgba(255, 255, 255, 0.8);
       max-width: 360px;
@@ -935,23 +1140,23 @@
     .section-header-actions {
       width: 100%;
 
-      .view-toggle,
-      .status-filter,
-      .time-filter {
+      .segmented {
         width: 100%;
 
-        .view-toggle-btn,
-        .filter-btn {
+        .segmented-btn {
           flex: 1;
           text-align: center;
-          padding: 8px 6px;
-          font-size: 12px;
+          padding: 6px 6px;
+          font-size: 14px;
         }
       }
     }
   }
 
-  .appointment-actions {
+  // Narrow screens: the header actions drop under the appointment info.
+  .appointment-card .appointment-header .appointment-actions {
+    margin-left: 0;
+    width: 100%;
     flex-wrap: wrap;
 
     app-button {
@@ -965,6 +1170,29 @@
         text-overflow: ellipsis;
       }
     }
+  }
+}
+
+// Live indicator on the join button: the call is reachable right now.
+.appointment-card ::ng-deep .app-button.join-button::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--emerald-300);
+  animation: joinPulse 2.4s infinite;
+}
+
+@keyframes joinPulse {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
@@ -1005,7 +1233,7 @@
   }
 
   span {
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.5;
     color: var(--slate-700);
     flex: 1;
@@ -1042,7 +1270,7 @@
 
   .field-helper-text {
     display: block;
-    font-size: 12px;
+    font-size: 14px;
     color: var(--slate-500);
     margin-top: 6px;
     line-height: 1.4;
@@ -1102,7 +1330,7 @@
 
     .link-text {
       font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-      font-size: 12px;
+      font-size: 14px;
       color: var(--slate-700);
       background: var(--White);
       padding: 12px;
@@ -1123,7 +1351,7 @@
     background: var(--amber-50, #fffbeb);
     border: 1px solid var(--amber-200, #fde68a);
     border-radius: 8px;
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.5;
     color: var(--amber-800, #92400e);
 
@@ -1150,7 +1378,7 @@
     background: white;
     border: 2px solid var(--slate-200);
     border-radius: 8px;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
     color: var(--slate-600);
     cursor: pointer;

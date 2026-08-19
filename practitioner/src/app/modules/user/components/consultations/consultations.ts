@@ -8,27 +8,32 @@ import {
 } from '@angular/core';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Page } from '../../../../core/components/page/page';
-import { Button } from '../../../../shared/ui-components/button/button';
 import { Typography } from '../../../../shared/ui-components/typography/typography';
 import { Input } from '../../../../shared/ui-components/input/input';
 import { Tabs, TabItem } from '../../../../shared/components/tabs/tabs';
-import { ConsultationRowItem } from '../../../../shared/components/consultation-row-item/consultation-row-item';
 import {
-  ButtonSizeEnum,
-  ButtonStyleEnum,
-} from '../../../../shared/constants/button';
+  DataTable,
+  DataTableColumn,
+} from '../../../../shared/components/data-table/data-table';
+import { DataTableCellDirective } from '../../../../shared/components/data-table/data-table-cell.directive';
+import { UserAvatar } from '../../../../shared/components/user-avatar/user-avatar';
+import { LocalDatePipe } from '../../../../shared/pipes/local-date.pipe';
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
-import { BadgeTypeEnum } from '../../../../shared/constants/badge';
 import { Svg } from '../../../../shared/ui-components/svg/svg';
-import { ConsultationService } from '../../../../core/services/consultation.service';
+import {
+  ConsultationService,
+  ConsultationQueryParams,
+} from '../../../../core/services/consultation.service';
 import { UserWebSocketService } from '../../../../core/services/user-websocket.service';
 import { Consultation, Queue } from '../../../../core/models/consultation';
-import { Loader } from '../../../../shared/components/loader/loader';
 import { RoutePaths } from '../../../../core/constants/routes';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
+import {
+  formatConsultationId,
+  formatUserName,
+} from '../../../../shared/tools/helper';
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { TranslatePipe } from '@ngx-translate/core';
 import { TranslationService } from '../../../../core/services/translation.service';
@@ -44,21 +49,31 @@ interface TabCache {
   searchQuery: string;
   hasMore: boolean;
   currentPage: number;
+  total: number;
 }
+
+const EMPTY_TAB_CACHE: TabCache = {
+  data: [],
+  loaded: false,
+  searchQuery: '',
+  hasMore: false,
+  currentPage: 1,
+  total: 0,
+};
 
 @Component({
   selector: 'app-consultations',
   imports: [
-    CommonModule,
     FormsModule,
     Page,
-    Button,
     Typography,
     Input,
     Tabs,
     Svg,
-    Loader,
-    ConsultationRowItem,
+    DataTable,
+    DataTableCellDirective,
+    UserAvatar,
+    LocalDatePipe,
     TranslatePipe,
     UserSearchSelect,
   ],
@@ -75,27 +90,9 @@ export class Consultations implements OnInit, OnDestroy {
   private userWsService = inject(UserWebSocketService);
 
   private tabCache: Record<ConsultationTabType, TabCache> = {
-    active: {
-      data: [],
-      loaded: false,
-      searchQuery: '',
-      hasMore: false,
-      currentPage: 1,
-    },
-    past: {
-      data: [],
-      loaded: false,
-      searchQuery: '',
-      hasMore: false,
-      currentPage: 1,
-    },
-    overdue: {
-      data: [],
-      loaded: false,
-      searchQuery: '',
-      hasMore: false,
-      currentPage: 1,
-    },
+    active: { ...EMPTY_TAB_CACHE },
+    past: { ...EMPTY_TAB_CACHE },
+    overdue: { ...EMPTY_TAB_CACHE },
   };
 
   private pageSize = 20;
@@ -105,6 +102,7 @@ export class Consultations implements OnInit, OnDestroy {
   activeCount = signal(0);
   pastCount = signal(0);
   overdueCount = signal(0);
+  totalCount = signal(0);
   loading = signal<boolean>(false);
   loadingMore = signal<boolean>(false);
   hasMore = signal<boolean>(false);
@@ -132,10 +130,67 @@ export class Consultations implements OnInit, OnDestroy {
     return count;
   });
 
-  protected readonly ButtonSizeEnum = ButtonSizeEnum;
-  protected readonly ButtonStyleEnum = ButtonStyleEnum;
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
-  protected readonly BadgeTypeEnum = BadgeTypeEnum;
+
+  columns = computed<DataTableColumn[]>(() => {
+    // Read the language so headers are rebuilt when the user switches locale.
+    this.t.currentLanguage();
+    const columns: DataTableColumn[] = [
+      {
+        key: 'title',
+        label: this.t.instant('consultations.columnFollowUp'),
+        width: 'minmax(240px, 2.4fr)',
+        wrap: true,
+      },
+      {
+        key: 'patient',
+        label: this.t.instant('consultationRowItem.patient'),
+        width: 'minmax(150px, 1.2fr)',
+      },
+      {
+        key: 'createdBy',
+        label: this.t.instant('consultationRowItem.createdBy'),
+        width: 'minmax(120px, 1fr)',
+      },
+      {
+        key: 'practitioner',
+        label: this.t.instant('consultationRowItem.practitioner'),
+        width: 'minmax(120px, 1fr)',
+      },
+      {
+        key: 'group',
+        label: this.t.instant('consultations.group'),
+        width: 'minmax(120px, 1fr)',
+      },
+      {
+        key: 'created',
+        label: this.t.instant('consultations.columnCreatedAt'),
+        width: 'minmax(150px, 1.1fr)',
+      },
+    ];
+    if (this.activeTab() === 'past') {
+      columns.push({
+        key: 'closed',
+        label: this.t.instant('consultationRowItem.closed'),
+        width: 'minmax(150px, 1.1fr)',
+      });
+    }
+    columns.push({
+      key: 'chevron',
+      width: '24px',
+      align: 'end',
+      hideOnMobile: true,
+    });
+    return columns;
+  });
+
+  summaryText = computed(() => {
+    this.t.currentLanguage();
+    return this.t.instant('consultations.resultsSummary', {
+      shown: String(this.consultations().length),
+      total: String(this.totalCount()),
+    });
+  });
 
   constructor(
     private router: Router,
@@ -241,51 +296,39 @@ export class Consultations implements OnInit, OnDestroy {
     if (cache.loaded && cache.searchQuery === this.searchQuery) {
       this.consultations.set(cache.data);
       this.hasMore.set(cache.hasMore);
+      this.totalCount.set(cache.total);
       return;
     }
 
     this.loading.set(true);
     this.error.set(null);
 
-    const params: Record<string, any> = {
-      page_size: this.pageSize,
-      ...this.getFilterParams(),
-    };
-    if (currentTab === 'overdue') {
-      params['is_closed'] = false;
-      params['scheduled'] = false;
-    } else if (currentTab === 'active') {
-      params['is_closed'] = false;
-      params['scheduled'] = true;
-    } else {
-      params['is_closed'] = true;
-    }
-    if (this.searchQuery) {
-      params['search'] = this.searchQuery;
-    }
-
     this.consultationService
-      .getConsultations(params)
+      .getConsultations(this.buildQueryParams(currentTab))
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: response => {
           const hasMore = response.next !== null;
           this.consultations.set(response.results);
           this.hasMore.set(hasMore);
+          this.totalCount.set(response.count);
           this.tabCache[currentTab] = {
             data: response.results,
             loaded: true,
             searchQuery: this.searchQuery,
             hasMore,
             currentPage: 1,
+            total: response.count,
           };
           this.loading.set(false);
         },
         error: err => {
+          const message = getErrorMessage(err);
+          this.error.set(message);
           this.toasterService.show(
             'error',
             this.t.instant('consultations.errorLoading'),
-            getErrorMessage(err)
+            message
           );
           this.loading.set(false);
         },
@@ -301,26 +344,11 @@ export class Consultations implements OnInit, OnDestroy {
 
     this.loadingMore.set(true);
 
-    const params: Record<string, any> = {
-      page_size: this.pageSize,
-      page: nextPage,
-      ...this.getFilterParams(),
-    };
-    if (currentTab === 'overdue') {
-      params['is_closed'] = false;
-      params['scheduled'] = false;
-    } else if (currentTab === 'active') {
-      params['is_closed'] = false;
-      params['scheduled'] = true;
-    } else {
-      params['is_closed'] = true;
-    }
-    if (this.searchQuery) {
-      params['search'] = this.searchQuery;
-    }
-
     this.consultationService
-      .getConsultations(params)
+      .getConsultations({
+        ...this.buildQueryParams(currentTab),
+        page: nextPage,
+      })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: response => {
@@ -328,11 +356,13 @@ export class Consultations implements OnInit, OnDestroy {
           const newData = [...cache.data, ...response.results];
           this.consultations.set(newData);
           this.hasMore.set(hasMore);
+          this.totalCount.set(response.count);
           this.tabCache[currentTab] = {
             ...cache,
             data: newData,
             hasMore,
             currentPage: nextPage,
+            total: response.count,
           };
           this.loadingMore.set(false);
         },
@@ -373,51 +403,55 @@ export class Consultations implements OnInit, OnDestroy {
     this.loadConsultations();
   }
 
-  getStatusBadgeType(): BadgeTypeEnum {
-    switch (this.activeTab()) {
-      case 'active':
-        return BadgeTypeEnum.green;
-      case 'past':
-        return BadgeTypeEnum.gray;
-      case 'overdue':
-        return BadgeTypeEnum.orange;
-    }
+  protected readonly formatConsultationId = formatConsultationId;
+
+  getBeneficiaryName(consultation: Consultation): string {
+    return formatUserName(consultation.beneficiary);
   }
 
-  getStatusLabel(): string {
-    switch (this.activeTab()) {
-      case 'active':
-        return this.t.instant('consultations.statusActive');
-      case 'past':
-        return this.t.instant('consultations.statusClosed');
-      case 'overdue':
-        return this.t.instant('consultations.statusOverdue');
+  getCreatedByName(consultation: Consultation): string {
+    return formatUserName(consultation.created_by);
+  }
+
+  getOwnerName(consultation: Consultation): string {
+    return formatUserName(consultation.owned_by);
+  }
+
+  /** Rail colour: amber warns about an unassigned follow-up, grey marks a closed one. */
+  readonly rowAccent = (consultation: Consultation): string => {
+    if (this.activeTab() === 'past') return 'var(--slate-300)';
+    if (!consultation.owned_by) return 'var(--amber-400)';
+    return 'var(--emerald-500)';
+  };
+
+  readonly trackConsultation = (consultation: Consultation): number =>
+    consultation.id;
+
+  private buildQueryParams(tab: ConsultationTabType): ConsultationQueryParams {
+    const params: ConsultationQueryParams = {
+      page_size: this.pageSize,
+      ...this.getFilterParams(),
+    };
+    if (tab === 'overdue') {
+      params['is_closed'] = false;
+      params['scheduled'] = false;
+    } else if (tab === 'active') {
+      params['is_closed'] = false;
+      params['scheduled'] = true;
+    } else {
+      params['is_closed'] = true;
     }
+    if (this.searchQuery) {
+      params['search'] = this.searchQuery;
+    }
+    return params;
   }
 
   private invalidateCache(): void {
     this.tabCache = {
-      active: {
-        data: [],
-        loaded: false,
-        searchQuery: '',
-        hasMore: false,
-        currentPage: 1,
-      },
-      past: {
-        data: [],
-        loaded: false,
-        searchQuery: '',
-        hasMore: false,
-        currentPage: 1,
-      },
-      overdue: {
-        data: [],
-        loaded: false,
-        searchQuery: '',
-        hasMore: false,
-        currentPage: 1,
-      },
+      active: { ...EMPTY_TAB_CACHE },
+      past: { ...EMPTY_TAB_CACHE },
+      overdue: { ...EMPTY_TAB_CACHE },
     };
   }
 
@@ -474,7 +508,12 @@ export class Consultations implements OnInit, OnDestroy {
     const filters = this.getFilterParams();
 
     this.consultationService
-      .getConsultations({ is_closed: false, scheduled: true, page_size: 1, ...filters })
+      .getConsultations({
+        is_closed: false,
+        scheduled: true,
+        page_size: 1,
+        ...filters,
+      })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: response => this.activeCount.set(response.count),
@@ -488,7 +527,12 @@ export class Consultations implements OnInit, OnDestroy {
       });
 
     this.consultationService
-      .getConsultations({ is_closed: false, scheduled: false, page_size: 1, ...filters })
+      .getConsultations({
+        is_closed: false,
+        scheduled: false,
+        page_size: 1,
+        ...filters,
+      })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: response => this.overdueCount.set(response.count),

@@ -459,13 +459,11 @@
     "selectTimezone": "Zeitzone auswählen"
   },
   "consultationDetail": {
-    "filterCancelled": "Nicht verfügbar",
     "filterAll": "Alle",
     "filterUpcoming": "Demnächst",
     "filterPast": "Vergangenheit",
     "loadingAppointments": "Termine werden geladen...",
     "noAppointments": "Keine Termine gefunden",
-    "noFilteredAppointments": "Keine {{status}} Termine",
     "createToGetStarted": "Vereinbaren Sie einen Termin, um loszulegen.",
     "today": "Heute",
     "expectedEnd": "Erwartetes Ende:",
@@ -509,11 +507,9 @@
     "noPatient": "Kein Patient zugewiesen",
     "unknownPatient": "Unbekannter Patient",
     "unknown": "Unbekannt",
-    "appointmentsCount": "Termine - {{count}} Element(e)",
     "newAppointment": "Neuer Termin",
     "viewList": "Liste",
     "viewCalendar": "Kalender",
-    "filterActive": "Aktiv",
     "cancelAppointmentTitle": "Termin absagen",
     "cancelAppointmentMessage": "Sind Sie sicher, dass Sie diesen Termin absagen möchten?",
     "cancelAppointmentConfirm": "Termin absagen",
@@ -581,9 +577,16 @@
     "joinAppointment": "Termin beitreten",
     "callPatientOnly": "Nur Patient anrufen",
     "error": "Fehler",
-    "filterDone": "Abgeschlossen",
     "statusCompleted": "Durchgeführt",
-    "statusNoshow": "Nicht erschienen"
+    "statusNoshow": "Nicht erschienen",
+    "appointmentsTitle": "Termine",
+    "appointmentsSummary": "{{upcoming}} bevorstehend · {{past}} vergangen",
+    "startingNow": "Jetzt",
+    "startsInMinutes": "In {{minutes}} Min.",
+    "startsInHours": "In {{hours}} Std.",
+    "moreActions": "Weitere Aktionen",
+    "assignPractitioner": "Behandler zuweisen",
+    "notProvided": "Nicht angegeben"
   },
   "participantItem": {
     "unknown": "Unbekannt",
@@ -602,7 +605,10 @@
     "temporary": "vorübergehend",
     "statusConfirmed": "Bestätigt",
     "statusArrived": "Angekommen",
-    "pending": "Ausstehend"
+    "pending": "Ausstehend",
+    "linkShort": "Link",
+    "copyShort": "Kopieren",
+    "copiedShort": "Kopiert"
   },
   "messageList": {
     "messages": "Nachrichten",
@@ -674,7 +680,15 @@
     "noContactInfo": "Keine Kontaktinformationen",
     "online": "Online",
     "errorLoading": "Fehler beim Laden der Kontakte",
-    "temporary": "vorübergehend"
+    "temporary": "vorübergehend",
+    "columnContact": "Kontakt",
+    "columnEmail": "E-Mail",
+    "columnPhone": "Telefon",
+    "columnType": "Typ",
+    "columnStatus": "Status",
+    "typePatient": "Patient",
+    "typePractitioner": "Praktiker",
+    "resultsSummary": "{{shown}} von {{total}} Kontakten"
   },
   "preJoinLobby": {
     "settingUpDevices": "Geräte einrichten...",
@@ -759,7 +773,12 @@
     "beneficiary": "Begünstigter",
     "searchBeneficiary": "Begünstigten suchen...",
     "createdBy": "Erstellt von",
-    "searchCreator": "Suchersteller..."
+    "searchCreator": "Suchersteller...",
+    "columnFollowUp": "Folgeanfrage",
+    "columnCreatedAt": "Erstellt am",
+    "resultsSummary": "{{shown}} von {{total}} Folgeanfragen",
+    "unassigned": "Nicht zugewiesen",
+    "noGroup": "Keine Gruppe"
   },
   "footer": {
     "privacyPolicy": "Datenschutzrichtlinie",
@@ -1083,7 +1102,7 @@
     "newReminder": "Neue Erinnerung",
     "recipient": "Empfänger",
     "recipientPlaceholder": "Nach Name oder E-Mail suchen...",
-    "title": "Titel",
+    "title": "Erinnerungen",
     "titlePlaceholder": "Titel der Erinnerung",
     "description": "Beschreibung",
     "descriptionPlaceholder": "Details der Erinnerung",
@@ -1124,7 +1143,8 @@
     "until": "bis",
     "nextRun": "Nächste Erinnerung",
     "createdBy": "Erstellt von",
-    "formHelper": "Zum geplanten Zeitpunkt erhält der Kontakt diese Erinnerung automatisch per SMS oder E-Mail, je nach konfiguriertem Kommunikationskanal."
+    "formHelper": "Zum geplanten Zeitpunkt erhält der Kontakt diese Erinnerung automatisch per SMS oder E-Mail, je nach konfiguriertem Kommunikationskanal.",
+    "summary": "{{count}} Element(e)"
   },
   "elementType": {
     "title": "Welche Art von Element möchten Sie erstellen?",
@@ -1151,5 +1171,10 @@
     "remove": "Entfernen",
     "removeTitle": "Teilnehmer entfernen",
     "removeMessage": "{{name}} aus diesem Termin entfernen? Die Person wird aus dem Anruf getrennt."
+  },
+  "dataTable": {
+    "loading": "Wird geladen...",
+    "retry": "Wiederholen",
+    "viewMore": "Mehr anzeigen"
   }
 }

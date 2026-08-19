@@ -230,13 +230,16 @@
                 </app-typography>
               </div>
             </div>
-            <div class="consultations-list">
-              @if (loadingConsultations()) {
-              <div class="loading-state">
-                <app-loader></app-loader>
-              </div>
-              } @else if (consultations().length === 0) {
-              <div class="empty-state">
+            <app-data-table
+              [columns]="consultationColumns()"
+              [rows]="consultations()"
+              [minWidth]="760"
+              [loading]="loadingConsultations()"
+              [rowAccent]="consultationAccent"
+              [trackBy]="trackConsultation"
+              (rowClick)="viewConsultation($event)">
+
+              <div slot="empty" class="empty-state">
                 <app-svg
                   src="video"
                   [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
@@ -246,15 +249,54 @@
                   {{ 'patientDetail.noConsultationsForPatient' | translate }}
                 </app-typography>
               </div>
-              } @else { @for (consultation of consultations(); track
-              consultation.id) {
-              <app-consultation-row-item
-                [consultation]="consultation"
-                [showClosedDate]="!!consultation.closed_at"
-                (rowClick)="viewConsultation($event)">
-              </app-consultation-row-item>
-              } }
-            </div>
+
+              <ng-template appDataTableCell="title" let-row>
+                <div class="cell-title">
+                  <span class="title-text">
+                    {{ row.title || ('consultationRowItem.untitledConsultation'
+                    | translate) }}
+                  </span>
+                  <span class="title-ref"
+                    >{{ formatConsultationId(row.id) }}</span
+                  >
+                </div>
+              </ng-template>
+
+              <ng-template appDataTableCell="practitioner" let-row>
+                @if (row.owned_by) {
+                <span>{{ formatUserName(row.owned_by) }}</span>
+                } @else {
+                <span class="cell-muted"
+                  >{{ 'consultations.unassigned' | translate }}</span
+                >
+                }
+              </ng-template>
+
+              <ng-template appDataTableCell="status" let-row>
+                <app-badge [type]="getConsultationBadgeType(!!row.closed_at)">
+                  {{ (row.closed_at ? 'consultations.statusClosed' :
+                  'consultations.statusActive') | translate }}
+                </app-badge>
+              </ng-template>
+
+              <ng-template appDataTableCell="created" let-row>
+                <span class="cell-date"
+                  >{{ row.created_at | localDate:'d MMM y, HH:mm' }}</span
+                >
+              </ng-template>
+
+              <ng-template appDataTableCell="closed" let-row>
+                <span class="cell-date"
+                  >{{ (row.closed_at | localDate:'d MMM y, HH:mm') || '-' }}</span
+                >
+              </ng-template>
+
+              <ng-template appDataTableCell="chevron">
+                <app-svg
+                  src="chevron-right"
+                  [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--slate-300)'}"></app-svg>
+              </ng-template>
+            </app-data-table>
           </div>
         </div>
         } @if (activeTab() === 'appointments') {
