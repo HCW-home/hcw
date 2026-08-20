@@ -318,6 +318,8 @@
     "statusNoshow": "No asistió"
   },
   "appointments": {
+    "newBookableSlot": "Nueva franja reservable",
+    "moreCreateActions": "Otras acciones de creación",
     "consultation": "Consulta",
     "errorUpdatingAppointment": "Error al actualizar la cita",
     "appointmentsCount": "Citas - {{count}} elemento(s)",

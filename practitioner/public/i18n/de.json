@@ -244,6 +244,8 @@
     "subtitle": "Portal für medizinische Fachkräfte zur Verwaltung von Nachsorgeterminen und Patientenversorgung."
   },
   "appointments": {
+    "newBookableSlot": "Neues buchbares Zeitfenster",
+    "moreCreateActions": "Weitere Erstellungsaktionen",
     "cancel": "Absagen",
     "cancelError": "Fehler beim Absagen des Termins",
     "cancelSuccess": "Termin erfolgreich abgesagt",

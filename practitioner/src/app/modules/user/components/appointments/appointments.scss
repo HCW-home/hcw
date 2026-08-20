@@ -6,20 +6,171 @@
 
 .calendar-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
 
-  .header-left {
-    display: flex;
-    align-items: center;
+  .header-controls {
     gap: 16px;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
   }
 
-  .header-controls {
+  // Views and the creation button close the toolbar, pushed to its end.
+  .header-actions {
+    gap: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    margin-left: auto;
+    align-items: center;
+  }
+
+  .toolbar-divider {
+    width: 1px;
+    height: 26px;
+    flex: 0 0 auto;
+    background: var(--slate-200);
+  }
+}
+
+.create-menu {
+  position: relative;
+  flex: 0 0 auto;
+
+  .create-split {
+    display: flex;
+    overflow: hidden;
+    border-radius: 10px;
+    align-items: stretch;
+    box-shadow: 0 1px 2px rgba(var(--primary-500-rgb), 0.25);
+  }
+
+  .create-primary,
+  .create-toggle {
+    border: none;
+    height: 36px;
+    cursor: pointer;
+    color: var(--White);
+    font-family: inherit;
+    background: var(--primary-600);
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background: var(--primary-700);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--primary-300);
+      outline-offset: 2px;
+    }
+  }
+
+  .create-primary {
+    gap: 7px;
+    display: flex;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 0 14px;
+    align-items: center;
+    white-space: nowrap;
+  }
+
+  .create-toggle {
+    width: 32px;
     display: flex;
     align-items: center;
-    gap: 16px;
+    justify-content: center;
+    // Hairline between the two halves, drawn inside so both keep the same
+    // hover background.
+    box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.28);
+  }
+
+  .create-dropdown {
+    top: calc(100% + 7px);
+    right: 0;
+    z-index: 100;
+    width: 306px;
+    overflow: hidden;
+    position: absolute;
+    border-radius: 13px;
+    background: var(--White);
+    border: 1px solid var(--slate-200);
+    box-shadow: 0 14px 36px rgba(20, 60, 90, 0.16);
+    animation: menu-fade-in 0.15s ease;
+  }
+
+  .create-item {
+    gap: 11px;
+    width: 100%;
+    border: none;
+    display: flex;
+    cursor: pointer;
+    text-align: left;
+    padding: 11px 13px;
+    font-family: inherit;
+    align-items: flex-start;
+    background: var(--White);
+    border-bottom: 1px solid var(--slate-100);
+    transition: background-color 0.15s ease;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover {
+      background: var(--slate-50);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--primary-400);
+      outline-offset: -2px;
+    }
+
+    // Same colour per element type as the creation-choice modal.
+    .item-icon {
+      width: 30px;
+      height: 30px;
+      display: flex;
+      flex: 0 0 auto;
+      border-radius: 9px;
+      align-items: center;
+      justify-content: center;
+
+      &.appointment {
+        color: var(--primary-600);
+        background: var(--primary-50);
+      }
+
+      &.reminder {
+        color: #8b5cf6;
+        background: #f3e8ff;
+      }
+
+      &.slot {
+        color: var(--emerald-600);
+        background: var(--emerald-50);
+      }
+    }
+
+    .item-text {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .item-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--slate-800);
+    }
+
+    .item-desc {
+      margin-top: 2px;
+      font-size: 11.5px;
+      line-height: 1.45;
+      color: var(--slate-500);
+    }
   }
 }
 

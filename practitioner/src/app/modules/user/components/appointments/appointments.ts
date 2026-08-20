@@ -253,6 +253,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
 
   practitioners = signal<PractitionerOption[]>([]);
   practitionerDropdownOpen = signal(false);
+  createMenuOpen = signal(false);
 
   private readonly pageSize = 20;
   private listCurrentPage = 1;
@@ -387,6 +388,10 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     const dropdownEl = this.el.nativeElement.querySelector('.practitioner-selector');
     if (dropdownEl && !dropdownEl.contains(target)) {
       this.practitionerDropdownOpen.set(false);
+    }
+    const createMenuEl = this.el.nativeElement.querySelector('.create-menu');
+    if (createMenuEl && !createMenuEl.contains(target)) {
+      this.createMenuOpen.set(false);
     }
   }
 
@@ -1345,6 +1350,20 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     this.elementTypeModalOpen.set(false);
     this.selectedStartDate.set(null);
     this.selectedEndDate.set(null);
+  }
+
+  toggleCreateMenu(event: MouseEvent): void {
+    event.stopPropagation();
+    this.createMenuOpen.update(open => !open);
+  }
+
+  // Toolbar creation: no calendar selection to inherit, so the form opens on
+  // a blank date.
+  createFromMenu(type: ElementType): void {
+    this.createMenuOpen.set(false);
+    this.selectedStartDate.set(null);
+    this.selectedEndDate.set(null);
+    this.onElementTypeSelected(type);
   }
 
   onElementTypeSelected(type: ElementType): void {

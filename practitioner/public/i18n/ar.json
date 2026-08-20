@@ -973,6 +973,8 @@
     "statusNoshow": "لم يحضر"
   },
   "appointments": {
+    "newBookableSlot": "فترة جديدة قابلة للحجز",
+    "moreCreateActions": "إجراءات إنشاء أخرى",
     "errorUpdatingAppointment": "خطأ أثناء تحديث الموعد",
     "appointmentsCount": "المواعيد - {{count}} عنصر",
     "bookableSlotsCount": "الفترات القابلة للحجز - {{count}} عنصر",

@@ -973,6 +973,8 @@
     "statusNoshow": "No show"
   },
   "appointments": {
+    "newBookableSlot": "New bookable slot",
+    "moreCreateActions": "More creation actions",
     "errorUpdatingAppointment": "Error updating the appointment",
     "appointmentsCount": "Appointments - {{count}} item(s)",
     "bookableSlotsCount": "Bookable slots - {{count}} item(s)",

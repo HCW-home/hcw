@@ -973,6 +973,8 @@
     "statusNoshow": "Не з'явився"
   },
   "appointments": {
+    "newBookableSlot": "Новий доступний слот",
+    "moreCreateActions": "Інші дії створення",
     "errorUpdatingAppointment": "Помилка оновлення прийому",
     "appointmentsCount": "Прийоми - {{count}} елемент(ів)",
     "bookableSlotsCount": "Доступні слоти - {{count}} елемент(ів)",

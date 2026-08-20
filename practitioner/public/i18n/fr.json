@@ -162,6 +162,8 @@
     "statusNoshow": "Absent"
   },
   "appointments": {
+    "newBookableSlot": "Nouveau créneau réservable",
+    "moreCreateActions": "Autres actions de création",
     "errorUpdatingAppointment": "Erreur lors de la mise à jour du rendez-vous",
     "appointmentsCount": "Rendez-vous - {{count}} élément(s)",
     "bookableSlotsCount": "Créneaux réservables - {{count}} élément(s)",

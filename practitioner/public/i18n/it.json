@@ -490,6 +490,8 @@
     "statusNoshow": "Assente"
   },
   "appointments": {
+    "newBookableSlot": "Nuova fascia prenotabile",
+    "moreCreateActions": "Altre azioni di creazione",
     "consultation": "Consultazione",
     "errorUpdatingAppointment": "Errore durante l'aggiornamento dell'appuntamento",
     "appointmentsCount": "Appuntamenti - {{count}} elemento/i",

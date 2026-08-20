@@ -1,22 +1,6 @@
 <app-page>
   <div class="appointments-container">
     <div class="calendar-header">
-      <div class="header-left">
-        <app-button
-          [text]="'appointments.createNew' | translate"
-          [style]="ButtonStyleEnum.primary"
-          [size]="ButtonSizeEnum.small"
-          leftIcon="plus"
-          (buttonClick)="openCreateAppointmentModal()">
-        </app-button>
-        <app-button
-          [text]="'reminders.newReminder' | translate"
-          [style]="ButtonStyleEnum.stroke"
-          [size]="ButtonSizeEnum.small"
-          leftIcon="plus"
-          (buttonClick)="openCreateReminderModal()">
-        </app-button>
-      </div>
       <div class="header-controls">
         @if (practitioners().length > 1) {
           <div class="practitioner-selector">
@@ -58,7 +42,8 @@
           <span class="current-date">{{ currentTitle() }}</span>
         </div>
 
-        @if (currentView() === 'list') {
+        <div class="header-actions">
+          @if (currentView() === 'list') {
           <div class="view-toggle time-filter">
             <button
               class="view-btn"
@@ -79,33 +64,123 @@
               {{ 'consultationDetail.filterAll' | translate }}
             </button>
           </div>
-        }
+          }
 
-        <div class="view-toggle">
-          <button
-            class="view-btn"
-            [class.active]="isActiveView('list')"
-            (click)="setView('list')">
-            {{ 'appointments.list' | translate }}
-          </button>
-          <button
-            class="view-btn"
-            [class.active]="isActiveView('timeGridDay')"
-            (click)="setView('timeGridDay')">
-            {{ 'appointments.day' | translate }}
-          </button>
-          <button
-            class="view-btn"
-            [class.active]="isActiveView('timeGridWeek')"
-            (click)="setView('timeGridWeek')">
-            {{ 'appointments.week' | translate }}
-          </button>
-          <button
-            class="view-btn"
-            [class.active]="isActiveView('dayGridMonth')"
-            (click)="setView('dayGridMonth')">
-            {{ 'appointments.month' | translate }}
-          </button>
+          <div class="view-toggle">
+            <button
+              class="view-btn"
+              [class.active]="isActiveView('list')"
+              (click)="setView('list')">
+              {{ 'appointments.list' | translate }}
+            </button>
+            <button
+              class="view-btn"
+              [class.active]="isActiveView('timeGridDay')"
+              (click)="setView('timeGridDay')">
+              {{ 'appointments.day' | translate }}
+            </button>
+            <button
+              class="view-btn"
+              [class.active]="isActiveView('timeGridWeek')"
+              (click)="setView('timeGridWeek')">
+              {{ 'appointments.week' | translate }}
+            </button>
+            <button
+              class="view-btn"
+              [class.active]="isActiveView('dayGridMonth')"
+              (click)="setView('dayGridMonth')">
+              {{ 'appointments.month' | translate }}
+            </button>
+          </div>
+
+          <span class="toolbar-divider"></span>
+
+          <div class="create-menu">
+            <div class="create-split">
+              <button
+                type="button"
+                class="create-primary"
+                (click)="createFromMenu('appointment')">
+                <app-svg
+                  src="plus"
+                  [svgStyle]="{'width.px': 15, 'height.px': 15}"></app-svg>
+                <span>{{ 'appointments.createNew' | translate }}</span>
+              </button>
+              <button
+                type="button"
+                class="create-toggle"
+                [attr.aria-expanded]="createMenuOpen()"
+                [attr.aria-label]="'appointments.moreCreateActions' | translate"
+                (click)="toggleCreateMenu($event)">
+                <app-svg
+                  src="chevron-down"
+                  [svgStyle]="{'width.px': 12, 'height.px': 12}"></app-svg>
+              </button>
+            </div>
+
+            @if (createMenuOpen()) {
+            <div class="create-dropdown">
+              <button
+                type="button"
+                class="create-item"
+                (click)="createFromMenu('appointment')">
+                <span class="item-icon appointment">
+                  <app-svg
+                    src="calendar"
+                    [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                </span>
+                <span class="item-text">
+                  <span class="item-title">
+                    {{ 'appointments.createNew' | translate }}
+                  </span>
+                  <span class="item-desc">
+                    {{ 'elementType.appointmentDesc' | translate }}
+                  </span>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                class="create-item"
+                (click)="createFromMenu('reminder')">
+                <span class="item-icon reminder">
+                  <app-svg
+                    src="bell"
+                    [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                </span>
+                <span class="item-text">
+                  <span class="item-title">
+                    {{ 'reminders.newReminder' | translate }}
+                  </span>
+                  <span class="item-desc">
+                    {{ 'elementType.reminderDesc' | translate }}
+                  </span>
+                </span>
+              </button>
+
+              @if (bookingSlotsEnabled()) {
+              <button
+                type="button"
+                class="create-item"
+                (click)="createFromMenu('slot')">
+                <span class="item-icon slot">
+                  <app-svg
+                    src="clock"
+                    [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                </span>
+                <span class="item-text">
+                  <span class="item-title">
+                    {{ 'appointments.newBookableSlot' | translate }}
+                  </span>
+                  <span class="item-desc">
+                    {{ 'elementType.slotDesc' | translate }}
+                  </span>
+                </span>
+              </button>
+              }
+            </div>
+            }
+          </div>
         </div>
       </div>
     </div>
