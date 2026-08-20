@@ -48,6 +48,11 @@
       color: #8b5cf6; // light violet, matches calendar reminder color
       background: #f3e8ff;
     }
+
+    &.slot {
+      color: var(--emerald-600);
+      background: var(--emerald-50);
+    }
   }
 
   .row-text {

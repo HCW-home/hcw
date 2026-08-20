@@ -9,6 +9,7 @@ import {
   effect,
   ElementRef,
   HostListener,
+  NgZone,
 } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -40,6 +41,7 @@ import { Button } from '../../../../shared/ui-components/button/button';
 import {
   ButtonStyleEnum,
   ButtonSizeEnum,
+  ButtonStateEnum,
 } from '../../../../shared/constants/button';
 import { ConsultationService } from '../../../../core/services/consultation.service';
 import { IncomingCallService } from '../../../../core/services/incoming-call.service';
@@ -49,6 +51,7 @@ import {
   Appointment,
   AppointmentStatus,
   AppointmentType,
+  BookingSlot,
   Participant,
   ParticipantStatus,
 } from '../../../../core/models/consultation';
@@ -74,6 +77,7 @@ import {
   ElementType,
 } from '../../../../shared/components/element-type-modal/element-type-modal';
 import { ReminderDetailModal } from '../../../../shared/components/reminder-detail-modal/reminder-detail-modal';
+import { BookingSlotFormModal } from '../../../../shared/components/booking-slot-form-modal/booking-slot-form-modal';
 import { ReminderCard } from '../../../../shared/components/reminder-card/reminder-card';
 import { Reminder, ReminderOccurrence } from '../../../../core/models/reminder';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
@@ -91,6 +95,32 @@ const PRACTITIONER_COLORS = [
 ];
 
 type CalendarView = 'dayGridMonth' | 'timeGridWeek' | 'timeGridDay' | 'list';
+
+// Sunday-first so the index matches Date#getDay().
+const BOOKING_SLOT_DAY_KEYS = [
+  'sunday',
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+] as const;
+type BookingSlotDayKey = (typeof BOOKING_SLOT_DAY_KEYS)[number];
+
+// Below this movement a press/release counts as a click, not a range drag.
+const CLICK_MOVE_TOLERANCE_PX = 4;
+
+// Display order of the day chips in the list view (Monday-first).
+const BOOKING_SLOT_DAY_LABELS: { key: BookingSlotDayKey; label: string }[] = [
+  { key: 'monday', label: 'configuration.dayMon' },
+  { key: 'tuesday', label: 'configuration.dayTue' },
+  { key: 'wednesday', label: 'configuration.dayWed' },
+  { key: 'thursday', label: 'configuration.dayThu' },
+  { key: 'friday', label: 'configuration.dayFri' },
+  { key: 'saturday', label: 'configuration.daySat' },
+  { key: 'sunday', label: 'configuration.daySun' },
+];
 type AppointmentTimeFilter = 'all' | 'upcoming' | 'past';
 
 @Component({
@@ -112,6 +142,7 @@ type AppointmentTimeFilter = 'all' | 'upcoming' | 'past';
     ReminderCard,
     ElementTypeModal,
     ReminderDetailModal,
+    BookingSlotFormModal,
   ],
   templateUrl: './appointments.html',
   styleUrl: './appointments.scss',
@@ -128,6 +159,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   private incomingCallService = inject(IncomingCallService);
   private activeCallService = inject(ActiveCallService);
   private confirmationService = inject(ConfirmationService);
+  private zone = inject(NgZone);
   private t = inject(TranslationService);
 
   protected readonly getAppointmentBadgeType = getAppointmentBadgeType;
@@ -135,6 +167,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   protected readonly BadgeTypeEnum = BadgeTypeEnum;
   protected readonly ButtonStyleEnum = ButtonStyleEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
+  protected readonly ButtonStateEnum = ButtonStateEnum;
   protected readonly AppointmentStatus = AppointmentStatus;
 
   constructor() {
@@ -178,6 +211,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   calendarEvents = signal<EventInput[]>([]);
   private appointmentCalendarEvents: EventInput[] = [];
   private reminderCalendarEvents: EventInput[] = [];
+  private bookingSlotCalendarEvents: EventInput[] = [];
   currentView = signal<CalendarView>('timeGridWeek');
   currentTitle = signal<string>('');
 
@@ -190,6 +224,16 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   elementTypeModalOpen = signal(false);
   reminderDetailModalOpen = signal(false);
   detailReminder = signal<Reminder | null>(null);
+
+  // Bookable slots (weekly availability) merged into this page: shown as
+  // dashed background zones on the grid and as a section of the list view.
+  // Bookable slots only make sense when the instance lets patients request a
+  // consultation, i.e. the same `has_reasons` gate the availability page used.
+  bookingSlotsEnabled = signal(false);
+  bookingSlots = signal<BookingSlot[]>([]);
+  isLoadingBookingSlots = signal(false);
+  bookingSlotModalOpen = signal(false);
+  editingBookingSlot = signal<BookingSlot | null>(null);
 
   reminders = signal<Reminder[]>([]);
   isLoadingReminders = signal(false);
@@ -234,6 +278,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     eventMouseEnter: this.handleEventMouseEnter.bind(this),
     eventMouseLeave: this.handleEventMouseLeave.bind(this),
     eventContent: this.renderEventContent.bind(this),
+    eventDidMount: this.handleEventDidMount.bind(this),
     dayCellClassNames: this.dayCellRotationClass.bind(this),
     dayHeaderClassNames: this.dayHeaderRotationClass.bind(this),
     slotMinTime: '00:00:00',
@@ -262,6 +307,74 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   @HostListener('window:resize')
   onResize(): void {
     this.updateCalendarHeight();
+  }
+
+  // Where the last press started, so a click can be told apart from a drag:
+  // FullCalendar reports both as a date selection.
+  private pointerDownAt: {
+    x: number;
+    y: number;
+    bookingSlotId: number | null;
+  } | null = null;
+
+  @HostListener('document:mousedown', ['$event'])
+  onDocumentMouseDown(event: MouseEvent): void {
+    if (event.button !== 0) {
+      return;
+    }
+    const target = event.target as HTMLElement | null;
+    const zoneEl = target?.closest('.hcw-booking-slot') as HTMLElement | null;
+    const slotId = zoneEl?.dataset['bookingSlotId'];
+    this.pointerDownAt = {
+      x: event.clientX,
+      y: event.clientY,
+      bookingSlotId: slotId ? Number(slotId) : null,
+    };
+
+    // FullCalendar renders its selection mirror as soon as the pointer goes
+    // down, which would flash a fake appointment over a zone the user is only
+    // clicking to edit. Hide it until the gesture proves to be a drag; the
+    // next press restores it, so unselect() never races with the un-hiding.
+    this.setSelectMirrorHidden(!!slotId);
+    if (slotId) {
+      this.watchPressForDrag();
+    }
+  }
+
+  private setSelectMirrorHidden(hidden: boolean): void {
+    const wrapper = this.el.nativeElement.querySelector(
+      '.calendar-wrapper'
+    ) as HTMLElement | null;
+    wrapper?.classList.toggle('hide-select-mirror', hidden);
+  }
+
+  // Outside Angular: a mousemove listener must not run change detection on
+  // every pixel of a drag.
+  private watchPressForDrag(): void {
+    this.zone.runOutsideAngular(() => {
+      const stop = (): void => {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      };
+      const onMove = (event: MouseEvent): void => {
+        const press = this.pointerDownAt;
+        if (!press) {
+          stop();
+          return;
+        }
+        if (
+          Math.abs(event.clientX - press.x) > CLICK_MOVE_TOLERANCE_PX ||
+          Math.abs(event.clientY - press.y) > CLICK_MOVE_TOLERANCE_PX
+        ) {
+          // It is a range drag after all: give the selection back its preview.
+          this.setSelectMirrorHidden(false);
+          stop();
+        }
+      };
+      const onUp = (): void => stop();
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
   }
 
   @HostListener('document:click', ['$event'])
@@ -324,6 +437,10 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
         next: (config) => {
           if (config.appointment_early_join_minutes) {
             this.appointmentEarlyJoinMinutes = config.appointment_early_join_minutes;
+          }
+          this.bookingSlotsEnabled.set(!!config.has_reasons);
+          if (config.has_reasons) {
+            this.loadBookingSlots();
           }
           this.rotationColors = config.calendar_rotation_colors ?? [];
           this.rotationAnchorDate = config.calendar_rotation_anchor_date ?? '';
@@ -753,6 +870,13 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     event: { title: string; extendedProps: Record<string, unknown> };
     timeText: string;
   }): { domNodes: HTMLElement[] } {
+    const bookingSlot = arg.event.extendedProps['bookingSlot'] as
+      | BookingSlot
+      | undefined;
+    if (bookingSlot) {
+      return { domNodes: [this.renderBookingSlotContent()] };
+    }
+
     const isReminder = !!arg.event.extendedProps['isReminder'];
     const bellPath =
       'M12 2a6 6 0 0 0-6 6v3.6L4.3 15a1 1 0 0 0 .9 1.5h13.6a1 1 0 0 0 .9-1.5L18 11.6V8a6 6 0 0 0-6-6zm0 20a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22z';
@@ -781,6 +905,50 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     container.appendChild(icon);
     container.appendChild(label);
     return { domNodes: [container] };
+  }
+
+  // The whole zone is clickable (see handleEventClick), so its content is just
+  // a label telling what the dashed area is.
+  private renderBookingSlotContent(): HTMLElement {
+    const clockPath =
+      'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm.5-13H11v6l5.2 3.1.8-1.3-4.5-2.7z';
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'fc-booking-slot-content';
+
+    const chip = document.createElement('span');
+    chip.className = 'fc-booking-slot-chip';
+
+    const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    icon.setAttribute('viewBox', '0 0 24 24');
+    icon.setAttribute('width', '11');
+    icon.setAttribute('height', '11');
+    icon.setAttribute('fill', 'currentColor');
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', clockPath);
+    icon.appendChild(path);
+
+    const label = document.createElement('span');
+    label.textContent = this.t.instant('appointments.bookableSlot');
+
+    chip.appendChild(icon);
+    chip.appendChild(label);
+    wrapper.appendChild(chip);
+    return wrapper;
+  }
+
+  private handleEventDidMount(arg: {
+    event: { extendedProps: Record<string, unknown> };
+    el: HTMLElement;
+  }): void {
+    const slot = arg.event.extendedProps['bookingSlot'] as
+      | BookingSlot
+      | undefined;
+    if (slot) {
+      // Read back on mousedown to know which zone was pressed.
+      arg.el.dataset['bookingSlotId'] = String(slot.id);
+      arg.el.title = this.t.instant('appointments.editBookableSlot');
+    }
   }
 
   private getPractitionerColorById(practitionerId: number | null): string {
@@ -888,9 +1056,121 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
 
   private recomputeCalendarEvents(): void {
     this.calendarEvents.set([
+      ...this.bookingSlotCalendarEvents,
       ...this.appointmentCalendarEvents,
       ...this.reminderCalendarEvents,
     ]);
+  }
+
+  loadBookingSlots(): void {
+    this.isLoadingBookingSlots.set(true);
+    this.consultationService
+      .getBookingSlots({ page_size: 100 })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: response => {
+          this.bookingSlots.set(response.results);
+          this.isLoadingBookingSlots.set(false);
+          this.refreshBookingSlotEvents();
+        },
+        error: err => {
+          this.isLoadingBookingSlots.set(false);
+          this.toasterService.show(
+            'error',
+            this.t.instant('configuration.errorLoadingSlots'),
+            getErrorMessage(err)
+          );
+        },
+      });
+  }
+
+  private refreshBookingSlotEvents(): void {
+    this.bookingSlotCalendarEvents = this.buildBookingSlotEvents();
+    this.recomputeCalendarEvents();
+  }
+
+  // A slot is a weekly recurrence: expand it into one background event per
+  // matching day of the visible range.
+  private buildBookingSlotEvents(): EventInput[] {
+    if (!this.bookingSlotsEnabled()) {
+      return [];
+    }
+
+    const view = this.currentView();
+    // Only the time grids can place a slot at its real hours; the month view
+    // would just tint whole days without conveying anything useful.
+    if (view !== 'timeGridWeek' && view !== 'timeGridDay') {
+      return [];
+    }
+
+    const range = this.currentDateRange;
+    if (!range) {
+      return [];
+    }
+
+    const events: EventInput[] = [];
+    const cursor = new Date(`${range.start}T00:00:00`);
+    const rangeEnd = new Date(`${range.end}T00:00:00`);
+
+    for (; cursor < rangeEnd; cursor.setDate(cursor.getDate() + 1)) {
+      const dayKey: BookingSlotDayKey = BOOKING_SLOT_DAY_KEYS[cursor.getDay()];
+      const dateKey = this.toDateKey(cursor);
+
+      this.bookingSlots().forEach(slot => {
+        if (!slot[dayKey]) {
+          return;
+        }
+        if (slot.valid_until && dateKey > slot.valid_until) {
+          return;
+        }
+        this.splitSlotAroundBreak(slot).forEach(([from, to], index) => {
+          events.push({
+            id: `booking-slot-${slot.id}-${dateKey}-${index}`,
+            start: `${dateKey}T${from}:00`,
+            end: `${dateKey}T${to}:00`,
+            display: 'background',
+            classNames: ['hcw-booking-slot'],
+            extendedProps: { isBookingSlot: true, bookingSlot: slot },
+          });
+        });
+      });
+    }
+
+    return events;
+  }
+
+  /** The break is not bookable, so it splits the slot into two zones. */
+  private splitSlotAroundBreak(slot: BookingSlot): [string, string][] {
+    const start = this.toClockTime(slot.start_time);
+    const end = this.toClockTime(slot.end_time);
+    const breakStart = slot.start_break ? this.toClockTime(slot.start_break) : '';
+    const breakEnd = slot.end_break ? this.toClockTime(slot.end_break) : '';
+
+    if (
+      breakStart &&
+      breakEnd &&
+      breakStart < breakEnd &&
+      breakStart > start &&
+      breakEnd < end
+    ) {
+      return [
+        [start, breakStart],
+        [breakEnd, end],
+      ];
+    }
+    return [[start, end]];
+  }
+
+  private toDateKey(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  /** "09:00:00" (API) -> "09:00". */
+  private toClockTime(time: string): string {
+    return time.substring(0, 5);
   }
 
   getAppointmentTypeLabel(type: AppointmentType | string): string {
@@ -937,6 +1217,14 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     clickInfo.jsEvent.preventDefault();
     clickInfo.jsEvent.stopPropagation();
 
+    const bookingSlot = clickInfo.event.extendedProps['bookingSlot'] as
+      | BookingSlot
+      | undefined;
+    if (bookingSlot) {
+      this.openEditBookingSlot(bookingSlot);
+      return;
+    }
+
     const occurrence = clickInfo.event.extendedProps['occurrence'] as
       | ReminderOccurrence
       | undefined;
@@ -976,6 +1264,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
       this.currentDateRange = { start: newStart, end: newEnd };
       this.loadAppointments();
       this.loadReminderOccurrences();
+      this.refreshBookingSlotEvents();
     }
   }
 
@@ -1015,12 +1304,41 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   }
 
   handleDateSelect(selectInfo: DateSelectArg): void {
+    const calendarApi = selectInfo.view.calendar;
+
+    // A click inside a bookable zone edits it. It has to be resolved here:
+    // FullCalendar reports the click as a date selection, and its own
+    // eventClick never fires for a background event because the selection
+    // mirror becomes the mouseup target.
+    const clickedSlot = this.clickedBookingSlot(selectInfo.jsEvent);
+    if (clickedSlot) {
+      calendarApi.unselect();
+      this.openEditBookingSlot(clickedSlot);
+      return;
+    }
+
     this.selectedStartDate.set(selectInfo.start);
     this.selectedEndDate.set(selectInfo.end);
     // Ask which kind of element to create before opening the relevant form.
     this.elementTypeModalOpen.set(true);
-    const calendarApi = selectInfo.view.calendar;
     calendarApi.unselect();
+  }
+
+  private clickedBookingSlot(jsEvent: MouseEvent | null): BookingSlot | null {
+    const press = this.pointerDownAt;
+    if (!press || press.bookingSlotId === null || !jsEvent) {
+      return null;
+    }
+    // Dragging a range that merely starts inside a zone still creates.
+    const moved =
+      Math.abs(jsEvent.clientX - press.x) > CLICK_MOVE_TOLERANCE_PX ||
+      Math.abs(jsEvent.clientY - press.y) > CLICK_MOVE_TOLERANCE_PX;
+    if (moved) {
+      return null;
+    }
+    return (
+      this.bookingSlots().find(slot => slot.id === press.bookingSlotId) ?? null
+    );
   }
 
   onElementTypeModalClosed(): void {
@@ -1033,6 +1351,10 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     this.elementTypeModalOpen.set(false);
     if (type === 'appointment') {
       this.openCreateAppointmentModal();
+    } else if (type === 'slot') {
+      // Keep the dragged range: it prefills the slot hours and weekday.
+      this.editingBookingSlot.set(null);
+      this.bookingSlotModalOpen.set(true);
     } else {
       this.editingReminder.set(null);
       this.createReminderModalOpen.set(true);
@@ -1202,6 +1524,10 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
         this.loadReminderOccurrences();
       }
     }
+
+    // The zones only exist in the time grids, so every view change re-expands
+    // them (or clears them).
+    this.refreshBookingSlotEvents();
   }
 
   isActiveView(view: CalendarView): boolean {
@@ -1408,6 +1734,82 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     this.selectedStartDate.set(null);
     this.selectedEndDate.set(null);
     this.createReminderModalOpen.set(true);
+  }
+
+  openCreateBookingSlot(): void {
+    this.editingBookingSlot.set(null);
+    this.selectedStartDate.set(null);
+    this.selectedEndDate.set(null);
+    this.bookingSlotModalOpen.set(true);
+  }
+
+  openEditBookingSlot(slot: BookingSlot): void {
+    this.selectedStartDate.set(null);
+    this.selectedEndDate.set(null);
+    this.editingBookingSlot.set(slot);
+    this.bookingSlotModalOpen.set(true);
+  }
+
+  onBookingSlotModalClosed(): void {
+    this.bookingSlotModalOpen.set(false);
+    this.editingBookingSlot.set(null);
+    this.selectedStartDate.set(null);
+    this.selectedEndDate.set(null);
+  }
+
+  onBookingSlotSaved(): void {
+    this.loadBookingSlots();
+  }
+
+  async confirmDeleteBookingSlot(slot: BookingSlot): Promise<void> {
+    const confirmed = await this.confirmationService.confirm({
+      title: this.t.instant('configuration.deleteSlotTitle'),
+      message: this.t.instant('configuration.deleteSlotMessage'),
+      confirmText: this.t.instant('configuration.deleteConfirm'),
+      cancelText: this.t.instant('configuration.deleteCancel'),
+      confirmStyle: 'danger',
+    });
+    if (!confirmed) {
+      return;
+    }
+
+    this.consultationService
+      .deleteBookingSlot(slot.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.toasterService.show(
+            'success',
+            this.t.instant('configuration.slotDeleted'),
+            this.t.instant('configuration.slotDeletedMessage')
+          );
+          this.loadBookingSlots();
+        },
+        error: err => {
+          this.toasterService.show(
+            'error',
+            this.t.instant('configuration.errorDeletingSlot'),
+            getErrorMessage(err)
+          );
+        },
+      });
+  }
+
+  getSlotTimeRange(slot: BookingSlot): string {
+    return `${this.toClockTime(slot.start_time)} - ${this.toClockTime(slot.end_time)}`;
+  }
+
+  getSlotBreakRange(slot: BookingSlot): string {
+    if (!slot.start_break || !slot.end_break) {
+      return this.t.instant('configuration.noBreak');
+    }
+    return `${this.toClockTime(slot.start_break)} - ${this.toClockTime(slot.end_break)}`;
+  }
+
+  getSlotActiveDays(slot: BookingSlot): string[] {
+    return BOOKING_SLOT_DAY_LABELS.filter(day => slot[day.key]).map(day =>
+      this.t.instant(day.label)
+    );
   }
 
   openEditReminderModal(reminder: Reminder): void {

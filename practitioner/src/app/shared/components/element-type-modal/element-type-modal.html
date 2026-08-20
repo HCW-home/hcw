@@ -50,5 +50,30 @@
         src="chevron-right"
         [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
     </button>
+
+    @if (showSlotOption) {
+    <button
+      type="button"
+      class="element-type-row"
+      (click)="select('slot')">
+      <span class="row-icon slot">
+        <app-svg
+          src="clock"
+          [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
+      </span>
+      <span class="row-text">
+        <span class="row-title">
+          {{ 'elementType.slot' | translate }}
+        </span>
+        <span class="row-desc">
+          {{ 'elementType.slotDesc' | translate }}
+        </span>
+      </span>
+      <app-svg
+        class="row-chevron"
+        src="chevron-right"
+        [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+    </button>
+    }
   </div>
 </app-modal>

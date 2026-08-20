@@ -238,10 +238,6 @@ export class Dashboard implements OnInit, OnDestroy {
     this.router.navigate(['/app/consultations/new']);
   }
 
-  navigateToAvailability(): void {
-    this.router.navigate(['/app/availability']);
-  }
-
   formatConsultationId(id: number): string {
     return `#${String(id).padStart(6, '0')}`;
   }

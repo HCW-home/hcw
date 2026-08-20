@@ -118,6 +118,11 @@
 
     @if (!loading() && currentView() === 'list') {
     <div class="list-view">
+      <div class="list-section-header">
+        <h3 class="list-section-title">
+          {{ 'appointments.appointmentsCount' | translate: { count: appointments().length } }}
+        </h3>
+      </div>
       @if (appointments().length === 0) {
       <div class="empty-state">
         <app-svg
@@ -276,6 +281,92 @@
             [disabled]="isLoadingMoreReminders()"
             (buttonClick)="loadMoreReminders()">
           </app-button>
+        </div>
+        }
+      </div>
+      }
+    </div>
+    }
+
+    @if (!loading() && currentView() === 'list' && bookingSlotsEnabled()) {
+    <div class="booking-slots-section">
+      <div class="booking-slots-header">
+        <h3 class="list-section-title">
+          {{ 'appointments.bookableSlotsCount' | translate: { count: bookingSlots().length } }}
+        </h3>
+        <app-button
+          [text]="'configuration.addSlot' | translate"
+          leftIcon="plus"
+          [size]="ButtonSizeEnum.small"
+          [style]="ButtonStyleEnum.stroke"
+          (buttonClick)="openCreateBookingSlot()">
+        </app-button>
+      </div>
+
+      <div class="booking-slots-hint">
+        <app-svg src="info" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+        <span>{{ 'configuration.slotsInfoMessage' | translate }}</span>
+      </div>
+
+      @if (isLoadingBookingSlots()) {
+      <div class="reminders-loading">
+        <app-loader></app-loader>
+      </div>
+      } @else if (bookingSlots().length === 0) {
+      <div class="empty-state">
+        <app-svg
+          src="clock"
+          [svgStyle]="{'width.px': 48, 'height.px': 48}"></app-svg>
+        <span>{{ 'configuration.noSlotsTitle' | translate }}</span>
+      </div>
+      } @else {
+      <div class="booking-slots-list">
+        @for (slot of bookingSlots(); track slot.id) {
+        <div class="booking-slot-card">
+          <div class="slot-icon">
+            <app-svg
+              src="clock"
+              [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
+          </div>
+          <div class="slot-body">
+            <span class="slot-time">{{ getSlotTimeRange(slot) }}</span>
+            <div class="slot-days">
+              @for (day of getSlotActiveDays(slot); track day) {
+              <span class="day-tag">{{ day }}</span>
+              } @empty {
+              <span class="slot-meta-item">
+                {{ 'configuration.noActiveDays' | translate }}
+              </span>
+              }
+            </div>
+            <div class="slot-meta">
+              <span class="slot-meta-item">
+                {{ 'configuration.break' | translate }}: {{ getSlotBreakRange(slot) }}
+              </span>
+              <span class="slot-meta-item">
+                @if (slot.valid_until) {
+                {{ 'configuration.validUntil' | translate: { date: slot.valid_until } }}
+                } @else {
+                {{ 'configuration.noExpiration' | translate }}
+                }
+              </span>
+            </div>
+          </div>
+          <div class="slot-actions">
+            <app-button
+              leftIcon="edit"
+              [size]="ButtonSizeEnum.small"
+              [style]="ButtonStyleEnum.stroke"
+              (buttonClick)="openEditBookingSlot(slot)">
+            </app-button>
+            <app-button
+              leftIcon="trash"
+              [size]="ButtonSizeEnum.small"
+              [style]="ButtonStyleEnum.stroke"
+              [state]="ButtonStateEnum.error"
+              (buttonClick)="confirmDeleteBookingSlot(slot)">
+            </app-button>
+          </div>
         </div>
         }
       </div>
@@ -459,9 +550,22 @@
 
     <app-element-type-modal
       [isOpen]="elementTypeModalOpen()"
+      [showSlotOption]="bookingSlotsEnabled()"
       (closed)="onElementTypeModalClosed()"
       (typeSelected)="onElementTypeSelected($event)">
     </app-element-type-modal>
+
+    @if (bookingSlotsEnabled()) {
+    <app-booking-slot-form-modal
+      [isOpen]="bookingSlotModalOpen()"
+      [editingSlot]="editingBookingSlot()"
+      [initialStartDate]="selectedStartDate()"
+      [initialEndDate]="selectedEndDate()"
+      (closed)="onBookingSlotModalClosed()"
+      (slotSaved)="onBookingSlotSaved()"
+      (slotDeleted)="onBookingSlotSaved()">
+    </app-booking-slot-form-modal>
+    }
 
     <app-reminder-detail-modal
       [isOpen]="reminderDetailModalOpen()"

@@ -88,12 +88,6 @@ export class Sidebar implements OnInit, OnDestroy {
           ) {
             return false;
           }
-          if (
-            !config?.has_reasons &&
-            item.path === `/${RoutePaths.AVAILABILITY}`
-          ) {
-            return false;
-          }
           return true;
         });
       },

@@ -26,10 +26,4 @@ export const MenuItems: Sidebar[] = [
     path: `/${RoutePaths.APPOINTMENTS}`,
     icon: 'clock.svg',
   },
-  {
-    name: 'sidebar.availability',
-    subtitle: 'sidebar.availabilitySubtitle',
-    path: `/${RoutePaths.AVAILABILITY}`,
-    icon: 'calendar-days.svg',
-  },
 ];

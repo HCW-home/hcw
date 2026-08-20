@@ -5,7 +5,7 @@ import { ModalComponent } from '../modal/modal.component';
 import { Svg } from '../../ui-components/svg/svg';
 import { TranslatePipe } from '@ngx-translate/core';
 
-export type ElementType = 'appointment' | 'reminder';
+export type ElementType = 'appointment' | 'reminder' | 'slot';
 
 @Component({
   selector: 'app-element-type-modal',
@@ -15,6 +15,9 @@ export type ElementType = 'appointment' | 'reminder';
 })
 export class ElementTypeModal {
   @Input() isOpen = false;
+  // Bookable slots are only offered when the instance allows patients to
+  // request consultations.
+  @Input() showSlotOption = true;
 
   @Output() closed = new EventEmitter<void>();
   @Output() typeSelected = new EventEmitter<ElementType>();

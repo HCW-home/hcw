@@ -41,8 +41,7 @@ import {
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { TranslationService } from '../../../../core/services/translation.service';
 import { Badge } from '../../../../shared/components/badge/badge';
-import { BadgeTypeEnum } from '../../../../shared/constants/badge';
-import { ConsultationRowItem } from '../../../../shared/components/consultation-row-item/consultation-row-item';
+import { BadgeTypeEnum, BadgeSizeEnum } from '../../../../shared/constants/badge';
 import {
   DataTable,
   DataTableColumn,
@@ -64,6 +63,15 @@ import {
 import { getErrorMessage } from '../../../../core/utils/error-helper';
 import { LocalDatePipe } from '../../../../shared/pipes/local-date.pipe';
 
+/** One cell of the personal-information grid. */
+interface PatientInfoField {
+  label: string;
+  value: string;
+  /** True when the value is a fallback label, so it renders muted. */
+  empty: boolean;
+  badge?: string;
+}
+
 @Component({
   selector: 'app-patient-detail',
   imports: [
@@ -78,7 +86,6 @@ import { LocalDatePipe } from '../../../../shared/pipes/local-date.pipe';
     ModalComponent,
     AddEditPatient,
     Badge,
-    ConsultationRowItem,
     DataTable,
     DataTableCellDirective,
     ReminderCard,
@@ -90,6 +97,7 @@ import { LocalDatePipe } from '../../../../shared/pipes/local-date.pipe';
   ],
   templateUrl: './patient-detail.html',
   styleUrl: './patient-detail.scss',
+  providers: [LocalDatePipe],
 })
 export class PatientDetail implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
@@ -101,6 +109,7 @@ export class PatientDetail implements OnInit, OnDestroy {
   private confirmationService = inject(ConfirmationService);
   private t = inject(TranslationService);
   private userService = inject(UserService);
+  private localDate = inject(LocalDatePipe);
 
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
@@ -110,6 +119,7 @@ export class PatientDetail implements OnInit, OnDestroy {
   protected readonly getConsultationBadgeType = getConsultationBadgeType;
   protected readonly getAppointmentBadgeType = getAppointmentBadgeType;
   protected readonly BadgeTypeEnum = BadgeTypeEnum;
+  protected readonly BadgeSizeEnum = BadgeSizeEnum;
 
   patientId: number | null = null;
   appointmentPanel = viewChild(AppointmentPanel);
@@ -126,6 +136,11 @@ export class PatientDetail implements OnInit, OnDestroy {
   patient = signal<IUser | null>(null);
   healthMetrics = signal<IHealthMetric[]>([]);
   consultations = signal<Consultation[]>([]);
+
+  // Totals reported by the API, so the tab pills stay right past the first page.
+  consultationsCount = signal(0);
+  appointmentsCount = signal(0);
+  remindersCount = signal(0);
 
   protected readonly formatConsultationId = formatConsultationId;
   protected readonly formatUserName = formatUserName;
@@ -168,6 +183,55 @@ export class PatientDetail implements OnInit, OnDestroy {
 
   readonly trackConsultation = (consultation: Consultation): number =>
     consultation.id;
+
+  /** The attribute grid of the overview tab, empty values included. */
+  personalFields = computed<PatientInfoField[]>(() => {
+    const patient = this.patient();
+    if (!patient) return [];
+    // Read the language so labels are rebuilt when the user switches locale.
+    this.t.currentLanguage();
+
+    const notProvided = this.t.instant('patientDetail.notProvided');
+    const fields: PatientInfoField[] = [];
+    const push = (labelKey: string, value: string, badge?: string): void => {
+      fields.push({
+        label: this.t.instant(labelKey),
+        value: value || notProvided,
+        empty: !value,
+        badge,
+      });
+    };
+
+    push('patientDetail.emailLabel', patient.email);
+    if (patient.mobile_phone_number) {
+      push('patientDetail.phoneLabel', patient.mobile_phone_number);
+    }
+    if (patient.street || patient.city) {
+      push('patientDetail.address', this.formatAddress(patient));
+    }
+    push(
+      'patientDetail.communicationMethod',
+      this.getCommunicationMethodLabel(patient.communication_method),
+      this.t.instant('patientDetail.defaultChannel')
+    );
+    push('patientDetail.language', this.getLanguageName(patient));
+    push('patientDetail.timezone', patient.timezone);
+    if (patient.main_organisation) {
+      push('patientDetail.organisation', patient.main_organisation.name);
+    }
+
+    const lastLogin = patient.last_login
+      ? this.localDate.transform(patient.last_login, 'medium')
+      : '';
+    fields.push({
+      label: this.t.instant('patientDetail.lastLogin'),
+      value: lastLogin || this.t.instant('patientDetail.never'),
+      empty: !lastLogin,
+    });
+
+    return fields;
+  });
+
   reminders = signal<Reminder[]>([]);
 
   showReminderModal = signal(false);
@@ -182,14 +246,17 @@ export class PatientDetail implements OnInit, OnDestroy {
       {
         id: 'consultations',
         label: this.t.instant('patientDetail.tabConsultations'),
+        count: this.consultationsCount(),
       },
       {
         id: 'appointments',
         label: this.t.instant('patientDetail.tabAppointments'),
+        count: this.appointmentsCount(),
       },
       {
         id: 'reminders',
         label: this.t.instant('patientDetail.tabReminders'),
+        count: this.remindersCount(),
       },
     ];
   }
@@ -215,6 +282,7 @@ export class PatientDetail implements OnInit, OnDestroy {
         this.patientId = +params['id'];
         this.loadPatient();
         this.loadConsultations();
+        this.loadAppointmentsCount();
         this.loadReminders();
       }
     });
@@ -260,6 +328,7 @@ export class PatientDetail implements OnInit, OnDestroy {
       .subscribe({
         next: response => {
           this.consultations.set(response.results);
+          this.consultationsCount.set(response.count);
           this.loadingConsultations.set(false);
         },
         error: err => {
@@ -273,6 +342,27 @@ export class PatientDetail implements OnInit, OnDestroy {
       });
   }
 
+
+  /**
+   * The appointments tab pill needs the total before its panel is mounted, so
+   * it is fetched here rather than read from the panel.
+   */
+  loadAppointmentsCount(): void {
+    if (!this.patientId) return;
+
+    this.consultationService
+      .getAppointments({
+        consultation__beneficiary: this.patientId,
+        page_size: 1,
+      })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: response => this.appointmentsCount.set(response.count),
+        error: () => {
+          // A badge is not worth a toaster: keep the previous count.
+        },
+      });
+  }
 
   // When creating an appointment from the contact page, pre-add the contact
   // as a participant.
@@ -308,6 +398,7 @@ export class PatientDetail implements OnInit, OnDestroy {
     this.showAppointmentModal.set(false);
     this.editingAppointment.set(null);
     this.appointmentPanel()?.reload();
+    this.loadAppointmentsCount();
   }
 
 
@@ -325,6 +416,7 @@ export class PatientDetail implements OnInit, OnDestroy {
       .subscribe({
         next: response => {
           this.reminders.set(response.results);
+          this.remindersCount.set(response.count);
           this.loadingReminders.set(false);
         },
         error: err => {
@@ -378,6 +470,7 @@ export class PatientDetail implements OnInit, OnDestroy {
           this.reminders.set(
             this.reminders().filter(r => r.id !== reminder.id)
           );
+          this.remindersCount.set(this.reminders().length);
           this.toasterService.show(
             'success',
             this.t.instant('reminders.deleted')
@@ -407,7 +500,9 @@ export class PatientDetail implements OnInit, OnDestroy {
   }
 
   setActiveTab(tab: string): void {
-    this.activeTab.set(tab as 'overview' | 'consultations' | 'appointments');
+    this.activeTab.set(
+      tab as 'overview' | 'consultations' | 'appointments' | 'reminders'
+    );
     this.router.navigate([], { fragment: tab, replaceUrl: true });
   }
 
@@ -465,15 +560,26 @@ export class PatientDetail implements OnInit, OnDestroy {
       case 'manual':
         return this.t.instant('patientDetail.manualContact');
       default:
-        return method || '-';
+        return method || '';
     }
+  }
+
+  /** Street, postal code, city and country joined as one readable line. */
+  private formatAddress(patient: IUser): string {
+    const locality = [patient.postal_code, patient.city]
+      .filter(part => !!part)
+      .join(' ');
+    const address = [patient.street, locality]
+      .filter(part => !!part)
+      .join(', ');
+    return patient.country ? `${address} - ${patient.country}` : address;
   }
 
   getLanguageName(patient: IUser): string {
     if (patient.languages && patient.languages.length > 0) {
       return patient.languages.map(l => l.name).join(', ');
     }
-    return '-';
+    return '';
   }
 
 

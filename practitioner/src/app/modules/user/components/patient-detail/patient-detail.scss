@@ -70,34 +70,60 @@
   padding: 24px;
 }
 
-// Info grid pattern (same as consultation-detail)
+// Attribute grid: one outer frame, cells separated by hairlines. The container
+// clips the trailing right and bottom borders, so no cell needs an exception.
 .info-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  background: var(--White);
+  border: 1px solid var(--slate-100);
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .info-item {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 16px;
-  background: var(--slate-50);
-  border-radius: 12px;
+  flex: 1 1 190px;
+  min-width: 190px;
+  padding: 12px 14px;
+  border-right: 1px solid var(--slate-100);
+  border-bottom: 1px solid var(--slate-100);
+}
+
+// Fills whatever is left of the last row so it lines up with the rows above.
+.info-filler {
+  flex: 999 1 190px;
+  min-width: 190px;
 }
 
 .info-label {
-  font-size: 12px;
+  display: block;
+  font-size: 10px;
   font-weight: 600;
-  color: var(--slate-500);
+  color: var(--slate-400);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.07em;
+}
+
+.info-value-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  margin-top: 5px;
 }
 
 .info-value {
-  font-size: 15px;
+  font-size: 13.5px;
   font-weight: 600;
   color: var(--slate-800);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &.is-empty {
+    font-weight: 500;
+    color: var(--slate-500);
+  }
 }
 
 // Sections
@@ -113,13 +139,6 @@
       margin-top: 0;
     }
   }
-}
-
-.consultations-preview {
-  background: var(--White);
-  border-radius: 16px;
-  border: 1px solid var(--slate-100);
-  overflow: hidden;
 }
 
 .empty-state {
@@ -307,8 +326,8 @@
     }
   }
 
-  .info-grid {
-    grid-template-columns: 1fr;
+  .info-item {
+    flex-basis: 100%;
   }
 
   .appointment-item {

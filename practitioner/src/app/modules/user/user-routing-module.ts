@@ -10,7 +10,6 @@ import { UserProfile } from './components/user-profile/user-profile';
 import { Patients } from './components/patients/patients';
 import { PatientDetail } from './components/patient-detail/patient-detail';
 import { Appointments } from './components/appointments/appointments';
-import { Availability } from './components/availability/availability';
 import { canDeactivateVideoCall } from './guards/video-call.guard';
 import { redirectIfPatientManagementDisabled } from './guards/patient-management.guard';
 
@@ -68,11 +67,6 @@ const routes: Routes = [
         path: RoutePaths.APPOINTMENTS,
         pathMatch: 'full',
         component: Appointments,
-      },
-      {
-        path: RoutePaths.AVAILABILITY,
-        pathMatch: 'full',
-        component: Availability,
       },
     ],
   },

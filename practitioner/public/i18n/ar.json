@@ -211,8 +211,6 @@
     "speakerError": "خطأ في مكبر الصوت",
     "speakerTestFailed": "تعذّر تشغيل الصوت التجريبي",
     "speakerSetupFailed": "فشل إعداد اختبار مكبر الصوت",
-    "loadingAvailability": "جارٍ تحميل التوفر...",
-    "availabilitySlots": "فترات التوفر",
     "addSlot": "إضافة فترة",
     "slotsInfoMessage": "تُستخدم هذه الفترات فقط للسماح للمرضى بطلب الاستشارات. وهي لا تمنع زملاءك من إسناد مواعيد لك خارج هذه الفترات.",
     "break": "استراحة",
@@ -221,8 +219,6 @@
     "noExpiration": "بدون تاريخ انتهاء",
     "noActiveDays": "لا توجد أيام نشطة",
     "noSlotsTitle": "لم يتم إعداد أي فترات توفر",
-    "noSlotsDescription": "أنشئ فترات زمنية لتحديد أوقات توفرك للمواعيد",
-    "createFirstSlot": "إنشاء أول فترة",
     "createNewSlot": "إنشاء فترة زمنية جديدة",
     "editTimeSlot": "تعديل الفترة الزمنية",
     "slotUpdated": "تم تحديث الفترة الزمنية",
@@ -230,7 +226,6 @@
     "slotCreated": "تم إنشاء الفترة الزمنية",
     "slotCreatedMessage": "تم إنشاء الفترة الزمنية بنجاح",
     "errorSavingSlot": "خطأ في حفظ الفترة الزمنية",
-    "failedToSaveSlot": "تعذّر حفظ الفترة الزمنية",
     "validationError": "خطأ في التحقق",
     "fillRequiredFields": "يرجى تعبئة جميع حقول الفترة الزمنية المطلوبة",
     "deleteSlotTitle": "حذف الفترة الزمنية",
@@ -240,23 +235,14 @@
     "slotDeleted": "تم حذف الفترة الزمنية",
     "slotDeletedMessage": "تم حذف الفترة الزمنية بنجاح",
     "errorDeletingSlot": "خطأ في حذف الفترة الزمنية",
-    "failedToDeleteSlot": "تعذّر حذف الفترة الزمنية",
     "errorLoadingSlots": "خطأ في تحميل فترات الحجز",
-    "fieldRequired": "{{field}} مطلوب",
     "dayMon": "الإثنين",
     "dayTue": "الثلاثاء",
     "dayWed": "الأربعاء",
     "dayThu": "الخميس",
     "dayFri": "الجمعة",
     "daySat": "السبت",
-    "daySun": "الأحد",
-    "dayMonday": "الإثنين",
-    "dayTuesday": "الثلاثاء",
-    "dayWednesday": "الأربعاء",
-    "dayThursday": "الخميس",
-    "dayFriday": "الجمعة",
-    "daySaturday": "السبت",
-    "daySunday": "الأحد"
+    "daySun": "الأحد"
   },
   "confirmPresence": {
     "loadingAppointments": "جارٍ تحميل المواعيد...",
@@ -411,8 +397,6 @@
     "appointmentsSubtitle": "جدولة المواعيد وإدارتها",
     "configurationTitle": "الإعدادات",
     "configurationSubtitle": "إدارة إعدادات النظام والتوفر",
-    "availabilityTitle": "التوفر",
-    "availabilitySubtitle": "إدارة جدولك وفترات الحجز",
     "profileTitle": "الملف الشخصي",
     "profileSubtitle": "إدارة إعدادات حسابك",
     "systemTestTitle": "اختبار النظام",
@@ -427,8 +411,6 @@
     "patientsSubtitle": "المستفيدون والمتعاونون",
     "appointments": "المواعيد / التذكيرات",
     "appointmentsSubtitle": "الجدولة والإدارة",
-    "availability": "التوفر",
-    "availabilitySubtitle": "إدارة جدولك",
     "practitioner": "ممارس"
   },
   "footer": {
@@ -436,6 +418,7 @@
     "termsAndConditions": "الشروط والأحكام"
   },
   "slotModal": {
+    "deleteSlot": "حذف الفترة",
     "timeSettings": "إعدادات الوقت",
     "startTime": "وقت البداية",
     "endTime": "وقت النهاية",
@@ -591,6 +574,7 @@
     "failedAccessDevices": "تعذّر الوصول إلى أجهزة الوسائط."
   },
   "consultationForm": {
+    "edit": "تعديل",
     "backToConsultations": "العودة إلى المتابعات",
     "consultationDetails": "تفاصيل المتابعة",
     "selectBeneficiary": "اختر المستفيد",
@@ -863,6 +847,7 @@
     "createNewAppointment": "إنشاء موعد جديد"
   },
   "appointmentForm": {
+    "createAppointment": "إنشاء الموعد",
     "appointmentType": "نوع الموعد",
     "online": "فيديو",
     "inPerson": "حضوريًا",
@@ -938,12 +923,9 @@
     "tabOverview": "نظرة عامة",
     "tabConsultations": "المتابعات",
     "tabAppointments": "المواعيد",
-    "totalConsultations": "إجمالي المتابعات",
     "lastLogin": "آخر تسجيل دخول",
-    "never": "أبدًا",
-    "recentConsultations": "المتابعات الأخيرة",
-    "viewAll": "عرض الكل",
-    "noConsultationsFound": "لم يتم العثور على متابعات",
+    "never": "لم يتصل مطلقًا",
+    "notProvided": "غير محدد",
     "closed": "مغلقة",
     "active": "نشطة",
     "consultationHistory": "سجل المتابعات",
@@ -969,6 +951,7 @@
     "phoneLabel": "الهاتف",
     "address": "العنوان",
     "communicationMethod": "التواصل",
+    "defaultChannel": "القناة الافتراضية",
     "language": "اللغة",
     "timezone": "المنطقة الزمنية",
     "organisation": "المؤسسة",
@@ -990,6 +973,11 @@
     "statusNoshow": "لم يحضر"
   },
   "appointments": {
+    "errorUpdatingAppointment": "خطأ أثناء تحديث الموعد",
+    "appointmentsCount": "المواعيد - {{count}} عنصر",
+    "bookableSlotsCount": "الفترات القابلة للحجز - {{count}} عنصر",
+    "bookableSlot": "قابل للحجز",
+    "editBookableSlot": "تعديل هذه الفترة القابلة للحجز",
     "appointmentsCount": "{{count}} موعد",
     "createNew": "موعد جديد",
     "today": "اليوم",
@@ -1297,6 +1285,8 @@
     "summary": "{{count}} عنصر"
   },
   "elementType": {
+    "slot": "فترة قابلة للحجز",
+    "slotDesc": "حدد الأوقات التي يمكن لمرضاك طلب استشارة خلالها.",
     "title": "ما نوع العنصر الذي تريد إنشاءه؟",
     "appointment": "موعد",
     "appointmentDesc": "جدولة اجتماع بالفيديو أو حضوري مع مشاركين.",

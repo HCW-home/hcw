@@ -211,8 +211,6 @@
     "speakerError": "Speaker Error",
     "speakerTestFailed": "Failed to play test sound",
     "speakerSetupFailed": "Speaker test setup failed",
-    "loadingAvailability": "Loading availability...",
-    "availabilitySlots": "Availability Slots",
     "addSlot": "Add Slot",
     "slotsInfoMessage": "These slots are only used to allow patients to request consultations. They do not prevent your colleagues from assigning you appointments outside these slots.",
     "break": "Break",
@@ -221,8 +219,6 @@
     "noExpiration": "No expiration",
     "noActiveDays": "No active days",
     "noSlotsTitle": "No availability slots configured",
-    "noSlotsDescription": "Create time slots to define when you are available for appointments",
-    "createFirstSlot": "Create First Slot",
     "createNewSlot": "Create New Time Slot",
     "editTimeSlot": "Edit Time Slot",
     "slotUpdated": "Time Slot Updated",
@@ -230,7 +226,6 @@
     "slotCreated": "Time Slot Created",
     "slotCreatedMessage": "Time slot created successfully",
     "errorSavingSlot": "Error Saving Time Slot",
-    "failedToSaveSlot": "Failed to save time slot",
     "validationError": "Validation Error",
     "fillRequiredFields": "Please fill in all required time slot fields",
     "deleteSlotTitle": "Delete Time Slot",
@@ -240,23 +235,14 @@
     "slotDeleted": "Time Slot Deleted",
     "slotDeletedMessage": "Time slot deleted successfully",
     "errorDeletingSlot": "Error Deleting Time Slot",
-    "failedToDeleteSlot": "Failed to delete time slot",
     "errorLoadingSlots": "Error Loading Booking Slots",
-    "fieldRequired": "{{field}} is required",
     "dayMon": "Mon",
     "dayTue": "Tue",
     "dayWed": "Wed",
     "dayThu": "Thu",
     "dayFri": "Fri",
     "daySat": "Sat",
-    "daySun": "Sun",
-    "dayMonday": "Monday",
-    "dayTuesday": "Tuesday",
-    "dayWednesday": "Wednesday",
-    "dayThursday": "Thursday",
-    "dayFriday": "Friday",
-    "daySaturday": "Saturday",
-    "daySunday": "Sunday"
+    "daySun": "Sun"
   },
   "confirmPresence": {
     "loadingAppointments": "Loading appointments...",
@@ -411,8 +397,6 @@
     "appointmentsSubtitle": "Schedule and manage appointments",
     "configurationTitle": "Configuration",
     "configurationSubtitle": "Manage your system settings and availability",
-    "availabilityTitle": "Availability",
-    "availabilitySubtitle": "Manage your schedule and booking slots",
     "profileTitle": "Profile",
     "profileSubtitle": "Manage your account settings",
     "systemTestTitle": "System Test",
@@ -427,8 +411,6 @@
     "patientsSubtitle": "Beneficiaries & collaborators",
     "appointments": "Appointments / Reminders",
     "appointmentsSubtitle": "Schedule & manage",
-    "availability": "Availability",
-    "availabilitySubtitle": "Manage your schedule",
     "practitioner": "Practitioner"
   },
   "footer": {
@@ -436,6 +418,7 @@
     "termsAndConditions": "Terms & Conditions"
   },
   "slotModal": {
+    "deleteSlot": "Delete slot",
     "timeSettings": "Time Settings",
     "startTime": "Start Time",
     "endTime": "End Time",
@@ -591,6 +574,7 @@
     "failedAccessDevices": "Failed to access media devices."
   },
   "consultationForm": {
+    "edit": "Edit",
     "backToConsultations": "Back to follow-ups",
     "consultationDetails": "Follow-up Details",
     "selectBeneficiary": "Select Beneficiary",
@@ -863,6 +847,7 @@
     "createNewAppointment": "Create New Appointment"
   },
   "appointmentForm": {
+    "createAppointment": "Create Appointment",
     "appointmentType": "Appointment Type",
     "online": "Video",
     "inPerson": "In Person",
@@ -938,12 +923,9 @@
     "tabOverview": "Overview",
     "tabConsultations": "Follow-ups",
     "tabAppointments": "Appointments",
-    "totalConsultations": "Total Follow-ups",
     "lastLogin": "Last Login",
-    "never": "Never",
-    "recentConsultations": "Recent Follow-ups",
-    "viewAll": "View all",
-    "noConsultationsFound": "No follow-ups found",
+    "never": "Never connected",
+    "notProvided": "Not provided",
     "closed": "Closed",
     "active": "Active",
     "consultationHistory": "Follow-up History",
@@ -969,6 +951,7 @@
     "phoneLabel": "Phone",
     "address": "Address",
     "communicationMethod": "Communication",
+    "defaultChannel": "Default channel",
     "language": "Language",
     "timezone": "Timezone",
     "organisation": "Organisation",
@@ -990,6 +973,11 @@
     "statusNoshow": "No show"
   },
   "appointments": {
+    "errorUpdatingAppointment": "Error updating the appointment",
+    "appointmentsCount": "Appointments - {{count}} item(s)",
+    "bookableSlotsCount": "Bookable slots - {{count}} item(s)",
+    "bookableSlot": "Bookable",
+    "editBookableSlot": "Edit this bookable slot",
     "appointmentsCount": "{{count}} appointments",
     "createNew": "New Appointment",
     "today": "Today",
@@ -1297,6 +1285,8 @@
     "summary": "{{count}} item(s)"
   },
   "elementType": {
+    "slot": "Bookable slot",
+    "slotDesc": "Define the time ranges during which your patients can request a consultation.",
     "title": "What type of element do you want to create?",
     "appointment": "Appointment",
     "appointmentDesc": "Schedule a video or in-person meeting with participants.",

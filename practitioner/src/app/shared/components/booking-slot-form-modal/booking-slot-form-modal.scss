@@ -1,0 +1,72 @@
+.slot-modal-content {
+  width: 100%;
+  background: var(--White);
+}
+
+.slot-modal-header {
+  display: flex;
+  align-items: center;
+  padding: 20px 24px;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--slate-200);
+}
+
+.slot-modal-form {
+  gap: 24px;
+  display: flex;
+  padding: 24px;
+  flex-direction: column;
+
+  .form-section {
+    gap: 16px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .time-inputs {
+    gap: 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+    @media (max-width: 600px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .form-field {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .days-grid {
+    gap: 12px;
+    display: grid;
+    // Narrow enough for the seven days to sit on a single row.
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  }
+
+  .day-item {
+    display: flex;
+    align-items: center;
+  }
+}
+
+.slot-modal-actions {
+  gap: 12px;
+  bottom: 0;
+  flex-wrap: wrap;
+  z-index: 1;
+  display: flex;
+  padding: 16px 24px;
+  position: sticky;
+  align-items: center;
+  justify-content: flex-end;
+  margin: 0 -24px -24px;
+  background: var(--White);
+  border-top: 1px solid var(--slate-100);
+
+  // Destructive action kept away from the confirm buttons.
+  .delete-action {
+    margin-right: auto;
+  }
+}

@@ -211,8 +211,6 @@
     "speakerError": "Помилка динаміка",
     "speakerTestFailed": "Не вдалося відтворити тестовий звук",
     "speakerSetupFailed": "Не вдалося налаштувати тест динаміка",
-    "loadingAvailability": "Завантаження доступності...",
-    "availabilitySlots": "Слоти доступності",
     "addSlot": "Додати слот",
     "slotsInfoMessage": "Ці слоти використовуються лише для того, щоб дозволити пацієнтам запитувати консультації. Вони не заважають вашим колегам призначати вам прийоми поза цими слотами.",
     "break": "Перерва",
@@ -221,8 +219,6 @@
     "noExpiration": "Без терміну дії",
     "noActiveDays": "Немає активних днів",
     "noSlotsTitle": "Слоти доступності не налаштовано",
-    "noSlotsDescription": "Створіть часові слоти, щоб визначити, коли ви доступні для прийомів",
-    "createFirstSlot": "Створити перший слот",
     "createNewSlot": "Створити новий часовий слот",
     "editTimeSlot": "Редагувати часовий слот",
     "slotUpdated": "Часовий слот оновлено",
@@ -230,7 +226,6 @@
     "slotCreated": "Часовий слот створено",
     "slotCreatedMessage": "Часовий слот успішно створено",
     "errorSavingSlot": "Помилка збереження часового слота",
-    "failedToSaveSlot": "Не вдалося зберегти часовий слот",
     "validationError": "Помилка перевірки",
     "fillRequiredFields": "Будь ласка, заповніть усі обов'язкові поля часового слота",
     "deleteSlotTitle": "Видалити часовий слот",
@@ -240,23 +235,14 @@
     "slotDeleted": "Часовий слот видалено",
     "slotDeletedMessage": "Часовий слот успішно видалено",
     "errorDeletingSlot": "Помилка видалення часового слота",
-    "failedToDeleteSlot": "Не вдалося видалити часовий слот",
     "errorLoadingSlots": "Помилка завантаження слотів запису",
-    "fieldRequired": "{{field}} є обов'язковим",
     "dayMon": "Пн",
     "dayTue": "Вт",
     "dayWed": "Ср",
     "dayThu": "Чт",
     "dayFri": "Пт",
     "daySat": "Сб",
-    "daySun": "Нд",
-    "dayMonday": "Понеділок",
-    "dayTuesday": "Вівторок",
-    "dayWednesday": "Середа",
-    "dayThursday": "Четвер",
-    "dayFriday": "П'ятниця",
-    "daySaturday": "Субота",
-    "daySunday": "Неділя"
+    "daySun": "Нд"
   },
   "confirmPresence": {
     "loadingAppointments": "Завантаження прийомів...",
@@ -411,8 +397,6 @@
     "appointmentsSubtitle": "Плануйте та керуйте прийомами",
     "configurationTitle": "Конфігурація",
     "configurationSubtitle": "Керуйте налаштуваннями системи та доступністю",
-    "availabilityTitle": "Доступність",
-    "availabilitySubtitle": "Керуйте своїм розкладом та слотами запису",
     "profileTitle": "Профіль",
     "profileSubtitle": "Керуйте налаштуваннями свого облікового запису",
     "systemTestTitle": "Тестування системи",
@@ -427,8 +411,6 @@
     "patientsSubtitle": "Бенефіціари та співробітники",
     "appointments": "Прийоми / Нагадування",
     "appointmentsSubtitle": "Планування та керування",
-    "availability": "Доступність",
-    "availabilitySubtitle": "Керуйте своїм розкладом",
     "practitioner": "Лікар"
   },
   "footer": {
@@ -436,6 +418,7 @@
     "termsAndConditions": "Умови та положення"
   },
   "slotModal": {
+    "deleteSlot": "Видалити слот",
     "timeSettings": "Налаштування часу",
     "startTime": "Час початку",
     "endTime": "Час закінчення",
@@ -591,6 +574,7 @@
     "failedAccessDevices": "Не вдалося отримати доступ до медіапристроїв."
   },
   "consultationForm": {
+    "edit": "Редагувати",
     "backToConsultations": "Назад до спостережень",
     "consultationDetails": "Деталі спостереження",
     "selectBeneficiary": "Виберіть бенефіціара",
@@ -863,6 +847,7 @@
     "createNewAppointment": "Створити новий прийом"
   },
   "appointmentForm": {
+    "createAppointment": "Створити прийом",
     "appointmentType": "Тип прийому",
     "online": "Відео",
     "inPerson": "Особисто",
@@ -938,12 +923,9 @@
     "tabOverview": "Огляд",
     "tabConsultations": "Спостереження",
     "tabAppointments": "Прийоми",
-    "totalConsultations": "Усього спостережень",
     "lastLogin": "Останній вхід",
-    "never": "Ніколи",
-    "recentConsultations": "Останні спостереження",
-    "viewAll": "Переглянути всі",
-    "noConsultationsFound": "Спостережень не знайдено",
+    "never": "Ніколи не входив",
+    "notProvided": "Не вказано",
     "closed": "Закрите",
     "active": "Активне",
     "consultationHistory": "Історія спостережень",
@@ -969,6 +951,7 @@
     "phoneLabel": "Телефон",
     "address": "Адреса",
     "communicationMethod": "Зв'язок",
+    "defaultChannel": "Канал за замовчуванням",
     "language": "Мова",
     "timezone": "Часовий пояс",
     "organisation": "Організація",
@@ -990,6 +973,11 @@
     "statusNoshow": "Не з'явився"
   },
   "appointments": {
+    "errorUpdatingAppointment": "Помилка оновлення прийому",
+    "appointmentsCount": "Прийоми - {{count}} елемент(ів)",
+    "bookableSlotsCount": "Доступні слоти - {{count}} елемент(ів)",
+    "bookableSlot": "Доступно",
+    "editBookableSlot": "Редагувати цей слот",
     "appointmentsCount": "{{count}} прийомів",
     "createNew": "Новий прийом",
     "today": "Сьогодні",
@@ -1069,6 +1057,7 @@
     "unknownParticipant": "Анонімний учасник"
   },
   "userProfile": {
+    "customFields": "Додаткові поля",
     "loadingProfile": "Завантаження профілю...",
     "personalInformation": "Особиста інформація",
     "firstName": "Ім'я",
@@ -1296,6 +1285,8 @@
     "summary": "{{count}} елемент(ів)"
   },
   "elementType": {
+    "slot": "Доступний слот",
+    "slotDesc": "Визначте години, коли ваші пацієнти можуть попросити консультацію.",
     "title": "Який тип елемента ви хочете створити?",
     "appointment": "Прийом",
     "appointmentDesc": "Заплануйте відео- або особисту зустріч з учасниками.",

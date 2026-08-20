@@ -255,6 +255,154 @@
   }
 }
 
+.list-section-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--slate-100);
+}
+
+.list-section-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--slate-800);
+}
+
+.booking-slots-section {
+  margin-top: 24px;
+  padding: 24px;
+  border-radius: 20px;
+  background: var(--White);
+  border: 1px solid var(--slate-100);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+
+  .booking-slots-header {
+    gap: 16px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    justify-content: space-between;
+  }
+
+  .booking-slots-hint {
+    gap: 8px;
+    display: flex;
+    font-size: 13px;
+    padding: 10px 14px;
+    line-height: 1.45;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    align-items: flex-start;
+    color: var(--slate-600);
+    background: var(--slate-50);
+
+    app-svg {
+      flex: 0 0 auto;
+      margin-top: 1px;
+      color: var(--slate-400);
+    }
+  }
+
+  .reminders-loading {
+    display: flex;
+    padding: 32px;
+    justify-content: center;
+  }
+
+  .empty-state {
+    gap: 12px;
+    display: flex;
+    padding: 48px 24px;
+    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+    color: var(--slate-400);
+
+    span {
+      font-size: 14px;
+      color: var(--slate-500);
+    }
+  }
+
+  .booking-slots-list {
+    gap: 12px;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.booking-slot-card {
+  gap: 16px;
+  display: flex;
+  padding: 16px 20px;
+  align-items: center;
+  border-radius: 16px;
+  background: var(--slate-50);
+  border: 1px solid var(--slate-100);
+
+  .slot-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    flex: 0 0 auto;
+    border-radius: 12px;
+    align-items: center;
+    justify-content: center;
+    color: var(--emerald-600);
+    background: var(--emerald-50);
+  }
+
+  .slot-body {
+    gap: 6px;
+    display: flex;
+    min-width: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+  }
+
+  .slot-time {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--slate-800);
+  }
+
+  .slot-days {
+    gap: 6px;
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .day-tag {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 6px;
+    color: var(--slate-600);
+    background: var(--slate-200);
+  }
+
+  .slot-meta {
+    gap: 12px;
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .slot-meta-item {
+    font-size: 12.5px;
+    color: var(--slate-500);
+  }
+
+  .slot-actions {
+    gap: 8px;
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+  }
+
+  @media (max-width: 640px) {
+    flex-wrap: wrap;
+  }
+}
+
 .reminders-section {
   background: var(--White);
   border-radius: 20px;
@@ -616,6 +764,54 @@
       -apple-system,
       BlinkMacSystemFont,
       sans-serif;
+  }
+
+  // While a press on a bookable zone may still turn out to be a click, the
+  // selection preview stays hidden (see setSelectMirrorHidden).
+  .hide-select-mirror {
+    .fc-highlight,
+    .fc-event-mirror {
+      display: none;
+    }
+  }
+
+  // Bookable slots: dashed zones behind the events. Clicking one edits it,
+  // dragging across it still creates an appointment.
+  .fc-bg-event.hcw-booking-slot {
+    opacity: 1;
+    cursor: pointer;
+    border-radius: 6px;
+    background: rgba(16, 185, 129, 0.07);
+    border: 1px dashed var(--emerald-400);
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background: rgba(16, 185, 129, 0.14);
+    }
+  }
+
+  .fc-booking-slot-content {
+    inset: 0;
+    display: flex;
+    position: absolute;
+    pointer-events: none;
+  }
+
+  .fc-booking-slot-chip {
+    gap: 4px;
+    border: none;
+    display: flex;
+    font-size: 10.5px;
+    font-weight: 600;
+    margin: 3px 0 0 4px;
+    padding: 2px 7px 2px 5px;
+    align-items: center;
+    align-self: flex-start;
+    border-radius: 7px;
+    font-family: inherit;
+    white-space: nowrap;
+    color: var(--emerald-700);
+    background: var(--emerald-100);
   }
 
   .fc-event-custom {
