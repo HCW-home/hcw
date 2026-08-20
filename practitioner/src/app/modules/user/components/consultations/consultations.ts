@@ -22,6 +22,12 @@ import { UserAvatar } from '../../../../shared/components/user-avatar/user-avata
 import { LocalDatePipe } from '../../../../shared/pipes/local-date.pipe';
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
 import { Svg } from '../../../../shared/ui-components/svg/svg';
+import { Button } from '../../../../shared/ui-components/button/button';
+import {
+  ButtonSizeEnum,
+  ButtonStyleEnum,
+} from '../../../../shared/constants/button';
+import { CreateConsultationModal } from '../create-consultation-modal/create-consultation-modal';
 import {
   ConsultationService,
   ConsultationQueryParams,
@@ -70,6 +76,8 @@ const EMPTY_TAB_CACHE: TabCache = {
     Input,
     Tabs,
     Svg,
+    Button,
+    CreateConsultationModal,
     DataTable,
     DataTableCellDirective,
     UserAvatar,
@@ -130,7 +138,11 @@ export class Consultations implements OnInit, OnDestroy {
     return count;
   });
 
+  showCreateConsultationModal = signal(false);
+
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
+  protected readonly ButtonSizeEnum = ButtonSizeEnum;
+  protected readonly ButtonStyleEnum = ButtonStyleEnum;
 
   columns = computed<DataTableColumn[]>(() => {
     // Read the language so headers are rebuilt when the user switches locale.
@@ -387,6 +399,20 @@ export class Consultations implements OnInit, OnDestroy {
       consultation.id,
       'edit',
     ]);
+  }
+
+  openCreateConsultation(): void {
+    this.showCreateConsultationModal.set(true);
+  }
+
+  closeCreateConsultation(): void {
+    this.showCreateConsultationModal.set(false);
+  }
+
+  onConsultationCreated(): void {
+    this.showCreateConsultationModal.set(false);
+    this.invalidateCache();
+    this.loadConsultations();
   }
 
   createConsultation() {

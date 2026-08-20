@@ -22,6 +22,15 @@
           <span class="filter-count">{{ activeFilterCount() }}</span>
           }
         </button>
+
+        <app-button
+          class="new-consultation-action"
+          [text]="'header.newConsultation' | translate"
+          leftIcon="plus"
+          [size]="ButtonSizeEnum.medium"
+          [style]="ButtonStyleEnum.primary"
+          (buttonClick)="openCreateConsultation()">
+        </app-button>
       </div>
       @if (showFilters()) {
       <div class="filters-wrapper">
@@ -224,4 +233,12 @@
       </ng-template>
     </app-data-table>
   </div>
+
+  @if (showCreateConsultationModal()) {
+  <app-create-consultation-modal
+    [isOpen]="showCreateConsultationModal()"
+    (consultationCreated)="onConsultationCreated()"
+    (closed)="closeCreateConsultation()">
+  </app-create-consultation-modal>
+  }
 </app-page>
