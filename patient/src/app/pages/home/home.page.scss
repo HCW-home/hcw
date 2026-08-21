@@ -378,13 +378,6 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
-
-    &.has-expanded-chat .timeline-item:not(.expanded) {
-      opacity: 0.4;
-      pointer-events: none;
-      filter: grayscale(0.3);
-      transition: opacity 0.3s, filter 0.3s;
-    }
   }
 
   .timeline-item {
@@ -404,6 +397,12 @@
     &.highlighted {
       box-shadow: 0 0 0 2px var(--app-teal), var(--shadow-md);
       animation: pulse 1.5s ease-in-out;
+    }
+
+    // Only one chat is open at a time: mark the open card instead of dimming
+    // the others, which must stay readable and clickable.
+    &.expanded {
+      box-shadow: 0 0 0 2px var(--app-teal), var(--shadow-md);
     }
   }
 
