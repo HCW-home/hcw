@@ -148,3 +148,18 @@ export function toFormData<T extends object>(data: Partial<T>): FormData {
 
   return formData;
 }
+
+/** Display name for a user, falling back to the email then to a dash. */
+export function formatUserName(
+  user?: { first_name?: string; last_name?: string; email?: string } | null
+): string {
+  if (!user) return '-';
+  const fullName =
+    `${user.first_name?.trim() || ''} ${user.last_name?.trim() || ''}`.trim();
+  return fullName || user.email || '-';
+}
+
+/** Human readable reference of a consultation, e.g. #000029. */
+export function formatConsultationId(id: number): string {
+  return `#${String(id).padStart(6, '0')}`;
+}

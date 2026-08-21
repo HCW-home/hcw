@@ -9,7 +9,7 @@ from .models import (
     Reminder,
     Request,
 )
-from .utils import appointment_active_cutoff
+from .utils import appointment_active_q
 from django.db.models import Exists, OuterRef, Subquery, Value
 from django.db.models.functions import Coalesce
 from django.utils import timezone
@@ -82,8 +82,8 @@ class ConsultationFilter(django_filters.FilterSet):
         # occurrence (recurrences included).
         has_future_appt = Exists(
             Appointment.objects.filter(
+                appointment_active_q(),
                 consultation=OuterRef('pk'),
-                scheduled_at__gte=appointment_active_cutoff(),
                 status=AppointmentStatus.scheduled,
             )
         )
@@ -131,11 +131,14 @@ class AppointmentFilter(django_filters.FilterSet):
         }
 
     def filter_future(self, queryset, name, value):
-        cutoff = appointment_active_cutoff()
+        # "Past" is the exact complement of "still active", so an appointment
+        # running long (explicit end_expected_at) stays in the upcoming list
+        # until it is actually over.
+        active = appointment_active_q()
         if value is True:
-            return queryset.filter(scheduled_at__gte=cutoff)
+            return queryset.filter(active)
         elif value is False:
-            return queryset.filter(scheduled_at__lt=cutoff)
+            return queryset.exclude(active)
         return queryset
 
 

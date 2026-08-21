@@ -1,0 +1,787 @@
+// Styles moved verbatim from consultation-detail.scss when the appointments
+// block became a shared component; the consultation page keeps only what the
+// reminders section still needs.
+:host {
+  display: block;
+}
+
+.appointments-section {
+  background: var(--White);
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--slate-100);
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+    justify-content: space-between;
+
+    .section-title-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      flex-wrap: wrap;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--slate-800);
+      margin: 0;
+    }
+
+    // Totals of the whole consultation, independent from the active filter.
+    .section-count {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--slate-400);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .section-cta {
+      margin-left: auto;
+    }
+
+    .section-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+
+      .calendar-nav {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        .nav-btn {
+          width: 36px;
+          height: 36px;
+          border: 1px solid var(--slate-200);
+          background: var(--White);
+          border-radius: 10px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s ease;
+          color: var(--slate-600);
+
+          &:hover {
+            background: var(--slate-50);
+            border-color: var(--slate-300);
+          }
+
+          &.today-btn {
+            width: auto;
+            padding: 0 16px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--slate-700);
+          }
+        }
+
+        .calendar-title {
+          font-size: 16px;
+          font-weight: 600;
+          color: var(--slate-800);
+          margin-left: 8px;
+        }
+      }
+    }
+  }
+
+  // Pill segmented control: a light track holding one raised white pill.
+  .segmented {
+    display: flex;
+    background: var(--slate-100);
+    border-radius: 9px;
+    padding: 3px;
+    gap: 2px;
+
+    .segmented-btn {
+      padding: 5px 12px;
+      border: none;
+      background: transparent;
+      border-radius: 7px;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--slate-500);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.16s ease;
+
+      &:hover {
+        color: var(--slate-700);
+      }
+
+      &.active {
+        background: var(--White);
+        color: var(--primary-700);
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.1);
+      }
+    }
+  }
+
+  .calendar-container {
+    position: relative;
+
+    .calendar-loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      border-radius: 12px;
+    }
+
+    .calendar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+
+      .calendar-nav {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        .nav-btn {
+          width: 36px;
+          height: 36px;
+          border: 1px solid var(--slate-200);
+          background: var(--White);
+          border-radius: 10px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s ease;
+          color: var(--slate-600);
+
+          &:hover {
+            background: var(--slate-50);
+            border-color: var(--slate-300);
+          }
+
+          &.today-btn {
+            width: auto;
+            padding: 0 16px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--slate-700);
+          }
+        }
+      }
+
+      .calendar-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--slate-800);
+      }
+    }
+
+    full-calendar {
+      display: block;
+    }
+  }
+}
+
+:host ::ng-deep {
+  .fc {
+    font-family:
+      'Source Sans Pro',
+      -apple-system,
+      BlinkMacSystemFont,
+      sans-serif;
+  }
+
+  .fc-theme-standard td,
+  .fc-theme-standard th {
+    border-color: var(--slate-100);
+  }
+
+  .fc-theme-standard .fc-scrollgrid {
+    border-color: var(--slate-100);
+  }
+
+  .fc-col-header-cell {
+    background: var(--slate-50);
+    padding: 12px 0;
+
+    .fc-col-header-cell-cushion {
+      color: var(--slate-600);
+      font-weight: 600;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  }
+
+  .fc-timegrid-slot {
+    height: 48px;
+
+    .fc-timegrid-slot-label-cushion {
+      color: var(--slate-500);
+      font-size: 14px;
+      font-weight: 500;
+    }
+  }
+
+  .fc-timegrid-now-indicator-line {
+    border-color: var(--primary-500);
+    border-width: 2px;
+  }
+
+  .fc-timegrid-now-indicator-arrow {
+    border-color: var(--primary-500);
+    border-top-color: transparent;
+    border-bottom-color: transparent;
+  }
+
+  .fc-event {
+    border-radius: 6px;
+    border: none;
+    padding: 4px 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease;
+    overflow: hidden;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .fc-event-main {
+      padding: 2px 0;
+      overflow: hidden;
+    }
+
+    .fc-event-time {
+      font-weight: 600;
+      opacity: 0.9;
+      white-space: nowrap;
+    }
+
+    .fc-event-title {
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: block;
+    }
+
+    .fc-event-main-frame {
+      overflow: hidden;
+    }
+
+    .fc-event-title-container {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .fc-timegrid-event {
+    .fc-event-main {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+  }
+
+  .fc-daygrid-event {
+    margin: 2px 4px;
+    padding: 4px 8px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .fc-daygrid-day-number {
+    color: var(--slate-700);
+    font-weight: 500;
+    padding: 8px;
+  }
+
+  .fc-daygrid-day.fc-day-today {
+    background: rgba(var(--primary-500-rgb), 0.05);
+
+    .fc-daygrid-day-number {
+      background: var(--primary-500);
+      color: var(--White);
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  .fc-timegrid-col.fc-day-today {
+    background: rgba(var(--primary-500-rgb), 0.03);
+  }
+
+  .fc-daygrid-day-events {
+    padding: 4px;
+    overflow: hidden;
+  }
+
+  .fc-more-link {
+    color: var(--primary-600);
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .fc-popover {
+    border-radius: 12px;
+    border: 1px solid var(--slate-200);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    overflow: hidden;
+
+    .fc-popover-header {
+      background: var(--slate-50);
+      padding: 12px 16px;
+      font-weight: 600;
+      color: var(--slate-700);
+    }
+
+    .fc-popover-body {
+      padding: 8px;
+    }
+  }
+
+  .fc-scrollgrid-sync-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  gap: 12px;
+  color: var(--slate-400);
+
+  .empty-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--slate-500);
+  }
+
+  .empty-text {
+    font-size: 14px;
+    color: var(--slate-400);
+  }
+}
+
+.appointments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  .load-more-container {
+    display: flex;
+    justify-content: flex-start;
+    padding-top: 8px;
+  }
+}
+
+.appointment-date-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  min-width: 58px;
+  padding: 7px 0 6px;
+  background: var(--White);
+  border: 1px solid var(--slate-200);
+  border-radius: 10px;
+  flex-shrink: 0;
+
+  .day {
+    font-size: 21px;
+    font-weight: 700;
+    color: var(--primary-700);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .month {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--slate-400);
+    text-transform: uppercase;
+    margin-top: 3px;
+  }
+}
+
+.appointment-card {
+  background: linear-gradient(180deg, var(--slate-50), var(--White));
+  border-radius: 12px;
+  padding: 0;
+  overflow: visible;
+  border: 1px solid var(--slate-200);
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+
+  &.highlighted {
+    border-color: var(--primary-500);
+    box-shadow: 0 0 16px rgba(99, 102, 241, 0.25);
+    animation: highlight-pulse 2s ease-out;
+  }
+
+  @keyframes highlight-pulse {
+    0% {
+      box-shadow: 0 0 24px rgba(99, 102, 241, 0.4);
+    }
+    100% {
+      box-shadow: 0 0 16px rgba(99, 102, 241, 0.25);
+    }
+  }
+
+  .appointment-header {
+    display: flex;
+    align-items: flex-start;
+    padding: 14px 15px;
+    flex-wrap: wrap;
+    gap: 14px;
+
+    .appointment-info {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1 1 220px;
+      min-width: 0;
+
+      .appointment-info-top {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        flex-wrap: wrap;
+      }
+
+      .appointment-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--slate-800);
+      }
+
+      .date-time {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        color: var(--slate-800);
+      }
+
+      .appointment-type {
+        padding: 3px 9px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 600;
+        background: var(--slate-100);
+        color: var(--slate-600);
+
+        &.online {
+          background: var(--primary-50);
+          color: var(--primary-700);
+        }
+      }
+
+      // Relative reminder for an appointment happening soon.
+      .appointment-countdown {
+        padding: 3px 9px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 600;
+        background: var(--amber-50);
+        color: var(--amber-700);
+        white-space: nowrap;
+      }
+    }
+  }
+
+  .expected-end {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: var(--slate-500);
+    padding: 0 15px 12px;
+  }
+
+  .participants-section {
+    border-top: 1px solid var(--slate-100);
+    background: var(--slate-50);
+    padding: 12px 15px 14px;
+    // Last block of the card: follow the rounded corners (the card keeps
+    // overflow visible so the "..." menu can escape it).
+    border-radius: 0 0 11px 11px;
+
+    .participants-label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: var(--slate-400);
+      margin-bottom: 9px;
+      display: block;
+    }
+
+    .no-participants {
+      font-size: 14px;
+      color: var(--slate-400);
+      font-style: italic;
+    }
+  }
+
+  .participants-grid {
+    display: grid;
+    // Two columns at most: each track is at least half the row minus the gap,
+    // so a third can never fit. Falls back to one column under ~485px.
+    grid-template-columns: repeat(
+      auto-fit,
+      minmax(max(238px, calc(50% - 4.5px)), 1fr)
+    );
+    gap: 9px;
+    // Cells stretch, so expanding one participant's access link grows the whole
+    // row instead of leaving the neighbours short.
+    align-items: stretch;
+  }
+
+  // Primary actions sit on the header row, secondary ones behind the "..." menu.
+  .appointment-actions {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+}
+
+.appointment-menu {
+  position: relative;
+
+  .appointment-menu-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--slate-200);
+    background: var(--White);
+    border-radius: 9px;
+    color: var(--slate-500);
+    cursor: pointer;
+    transition: all 0.16s ease;
+
+    &:hover {
+      border-color: var(--primary-500);
+      color: var(--primary-600);
+    }
+  }
+
+  .appointment-menu-panel {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 20;
+    min-width: 190px;
+    padding: 5px;
+    background: var(--White);
+    border: 1px solid var(--slate-200);
+    border-radius: 10px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+
+    .appointment-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      width: 100%;
+      padding: 8px 10px;
+      border: none;
+      background: transparent;
+      border-radius: 7px;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--slate-700);
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.14s ease;
+
+      &:hover {
+        background: var(--slate-50);
+      }
+
+      &.danger {
+        color: var(--rose-600);
+
+        &:hover {
+          background: var(--rose-50);
+        }
+      }
+    }
+  }
+}
+
+.appointment-card ::ng-deep .app-button.join-button::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--emerald-300);
+  animation: joinPulse 2.4s infinite;
+}
+
+@keyframes joinPulse {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.join-button-container {
+  position: relative;
+  display: inline-block;
+  z-index: 10;
+}
+
+.join-error-bubble {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 280px;
+  max-width: 320px;
+  padding: 12px 16px;
+  background: var(--White);
+  border: 1px solid var(--amber-200);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  z-index: 9999;
+  animation: slideDown 0.2s ease-out;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 16px;
+    width: 12px;
+    height: 12px;
+    background: var(--White);
+    border-left: 1px solid var(--amber-200);
+    border-top: 1px solid var(--amber-200);
+    transform: rotate(45deg);
+  }
+
+  span {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--slate-700);
+    flex: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+  text-align: center;
+  gap: 16px;
+
+  &.small {
+    padding: 32px 16px;
+  }
+
+  .loading-text {
+    font-size: 14px;
+    color: var(--slate-500);
+  }
+}
+
+@media (max-width: 768px) {
+  .appointments-section {
+    padding: 20px;
+
+    .section-header-actions {
+      width: 100%;
+
+      .segmented {
+        width: 100%;
+
+        .segmented-btn {
+          flex: 1;
+          text-align: center;
+          padding: 6px 6px;
+          font-size: 14px;
+        }
+      }
+    }
+  }
+
+  // Narrow screens: the header actions drop under the appointment info.
+  .appointment-card .appointment-header .appointment-actions {
+    margin-left: 0;
+    width: 100%;
+    flex-wrap: wrap;
+
+    app-button {
+      flex: 1 1 auto;
+      min-width: 0;
+
+      ::ng-deep button {
+        width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+  }
+}

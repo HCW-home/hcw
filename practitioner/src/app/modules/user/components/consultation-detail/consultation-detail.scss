@@ -52,16 +52,24 @@
   border: 1px solid var(--slate-100);
 
   &.editing {
-    border: 2px solid var(--primary-200);
+    border-color: var(--primary-200);
+
+    // The form sits under a ruled header, as in the read-only strip.
+    .info-header {
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--slate-100);
+    }
   }
 
-  .inline-edit-title {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .description-edit {
-    margin-bottom: 28px;
+  .edit-eyebrow {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--slate-400);
   }
 
   .info-placeholder {
@@ -84,7 +92,9 @@
     .title-row {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 10px;
+      flex-wrap: wrap;
+      min-width: 0;
     }
 
     .card-actions {
@@ -100,20 +110,164 @@
     }
 
     .consultation-title {
-      font-size: 26px;
+      font-size: clamp(18px, 1.7vw, 22px);
       font-weight: 700;
+      letter-spacing: -0.025em;
       color: var(--slate-800);
       margin: 0;
+      min-width: 0;
     }
 
     .consultation-id {
       font-size: 14px;
       font-weight: 500;
       color: var(--slate-400);
+      font-variant-numeric: tabular-nums;
     }
 
     .created-date {
+      display: block;
+      margin-top: 10px;
+      font-size: 14px;
+      color: var(--slate-400);
+    }
+  }
+
+  // Edit mode: labelled fields laid out in rows, in place of the read-only
+  // strip of cells.
+  .edit-form {
+    gap: 20px;
+    display: flex;
+    flex-direction: column;
+
+    .edit-row {
+      display: grid;
+      gap: 16px;
+      align-items: start;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+
+      &.three {
+        grid-template-columns: repeat(auto-fit, minmax(248px, 1fr));
+      }
+    }
+
+    .edit-field {
+      gap: 8px;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+
+      &.full-width {
+        grid-column: 1 / -1;
+      }
+    }
+
+    .edit-label {
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 20px;
+      letter-spacing: 0.32px;
+      color: var(--slate-800);
+
+      .required-indicator {
+        color: var(--rose-500);
+        margin-left: 2px;
+      }
+    }
+
+    // Label, optional qualifier and character count share one baseline.
+    .edit-label-row {
+      gap: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+    }
+
+    .edit-hint {
+      font-size: 13px;
+      line-height: 18px;
+      color: var(--slate-500);
+    }
+
+    .edit-count {
+      font-size: 13px;
+      margin-left: auto;
+      color: var(--slate-400);
+      font-variant-numeric: tabular-nums;
+    }
+
+    // Titled block, in place of the bare rule that used to split the form.
+    .edit-section {
+      gap: 16px;
+      display: flex;
+      padding-top: 20px;
+      flex-direction: column;
+      border-top: 1px solid var(--slate-100);
+    }
+
+    .edit-section-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--slate-700);
+    }
+
+    // The creator cannot be changed: shown as a read-only chip the height of
+    // the field beside it.
+    .readonly-user {
+      gap: 10px;
+      display: flex;
+      padding: 8px 12px;
+      align-items: center;
+      border-radius: 12px;
+      background: var(--slate-50);
+      border: 1px solid var(--slate-100);
+    }
+
+    .readonly-user-name {
+      font-size: 14px;
+      font-weight: 600;
+      flex: 0 0 auto;
+      color: var(--slate-800);
+    }
+
+    .readonly-user-meta {
+      min-width: 0;
+      font-size: 13px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      color: var(--slate-500);
+    }
+
+    .edit-toggle-card {
+      gap: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      padding: 14px 16px;
+      align-items: center;
+      border-radius: 12px;
+      background: var(--slate-50);
+      border: 1px solid var(--slate-100);
+    }
+
+    .edit-toggle-text {
+      gap: 2px;
+      min-width: 0;
+      display: flex;
+      flex: 1 1 240px;
+      flex-direction: column;
+    }
+
+    .edit-toggle-title {
       font-size: 15px;
+      font-weight: 600;
+      color: var(--slate-800);
+    }
+
+    .edit-toggle-sub {
+      font-size: 13px;
+      line-height: 18px;
       color: var(--slate-500);
     }
   }
@@ -176,7 +330,7 @@
   }
 
   .info-sub {
-    font-size: 13px;
+    font-size: 14px;
     color: var(--slate-500);
   }
 
@@ -187,9 +341,115 @@
     margin-left: 4px;
 
     span {
-      font-size: 12px;
+      font-size: 14px;
       font-weight: 400;
       color: var(--primary-500);
+    }
+  }
+
+  // Read mode only: the cells lose their card look and become a single strip
+  // of ruled cells spanning the card. Edit mode keeps the padded form layout.
+  &:not(.editing) {
+    padding: 0;
+    overflow: hidden;
+
+    .info-header {
+      padding: 18px 18px 16px;
+      margin-bottom: 0;
+    }
+
+    .description {
+      margin: 0 18px 16px;
+    }
+
+    .info-grid {
+      // Two columns, so a row is either full or collapsed to one on a narrow
+      // card — never the ragged three-then-one that left rules hanging.
+      grid-template-columns: repeat(auto-fit, minmax(max(230px, 50%), 1fr));
+      gap: 0;
+      padding-top: 0;
+      border-top: none;
+      // Pulls the leftmost cell border out of the card, which clips it: only
+      // the rules *between* cells stay visible.
+      margin-left: -1px;
+    }
+
+    .info-item {
+      gap: 2px;
+      padding: 13px 16px;
+      background: transparent;
+      border-radius: 0;
+      border-top: 1px solid var(--slate-100);
+      border-left: 1px solid var(--slate-100);
+
+      // An odd number of cells would leave the last one alone on its row, with
+      // its rules stopping mid-card. Let it span instead so the strip always
+      // closes on a full-width line.
+      &:last-child:nth-child(odd) {
+        grid-column: 1 / -1;
+      }
+    }
+
+    // The label keeps the cell's left edge whether or not someone is assigned;
+    // the avatar sits beside the name and sub-line, not beside the label.
+    .info-user {
+      gap: 8px;
+      align-items: center;
+    }
+
+    // Matches the label/content rhythm the flattened layout used to give.
+    .info-user-details {
+      gap: 2px;
+    }
+
+    .info-label {
+      font-size: 12px;
+      letter-spacing: 0.02em;
+      color: var(--slate-400);
+    }
+
+    .info-value {
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .info-sub {
+      font-size: 14px;
+      color: var(--slate-400);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .info-placeholder {
+      font-size: 14px;
+      font-weight: 600;
+      font-style: normal;
+      color: var(--slate-400);
+    }
+
+    // Shortcut offered in place of a sub-line when the slot is still empty.
+    .info-action {
+      align-self: flex-start;
+      padding: 0;
+      border: none;
+      background: none;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--primary-600);
+      cursor: pointer;
+
+      &:hover {
+        color: var(--primary-700);
+        text-decoration: underline;
+      }
+    }
+
+    .beneficiary-manual-link {
+      margin-top: 6px;
     }
   }
 }
@@ -218,7 +478,6 @@
   }
 }
 
-.appointments-section,
 .reminders-section {
   background: var(--White);
   border-radius: 20px;
@@ -237,9 +496,8 @@
     .section-title-row {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       width: 100%;
-      justify-content: space-between;
       flex-wrap: wrap;
     }
 
@@ -248,6 +506,18 @@
       font-weight: 700;
       color: var(--slate-800);
       margin: 0;
+    }
+
+    // Totals of the whole consultation, independent from the active filter.
+    .section-count {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--slate-400);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .section-cta {
+      margin-left: auto;
     }
 
     .section-header-actions {
@@ -298,64 +568,35 @@
     }
   }
 
-  .view-toggle {
+  // Pill segmented control: a light track holding one raised white pill.
+  .segmented {
     display: flex;
     background: var(--slate-100);
-    border-radius: 8px;
-    padding: 4px;
+    border-radius: 9px;
+    padding: 3px;
+    gap: 2px;
 
-    .view-toggle-btn {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 12px;
+    .segmented-btn {
+      padding: 5px 12px;
       border: none;
       background: transparent;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--slate-600);
+      border-radius: 7px;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--slate-500);
       cursor: pointer;
-      transition: all 0.2s ease;
+      white-space: nowrap;
+      transition: all 0.16s ease;
 
       &:hover {
-        color: var(--slate-800);
+        color: var(--slate-700);
       }
 
       &.active {
         background: var(--White);
-        color: var(--slate-800);
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-      }
-    }
-  }
-
-  .status-filter,
-  .time-filter {
-    display: flex;
-    background: var(--slate-100);
-    border-radius: 8px;
-    padding: 4px;
-
-    .filter-btn {
-      padding: 8px 14px;
-      border: none;
-      background: transparent;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--slate-600);
-      cursor: pointer;
-      transition: all 0.2s ease;
-
-      &:hover {
-        color: var(--slate-800);
-      }
-
-      &.active {
-        background: var(--White);
-        color: var(--slate-800);
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        color: var(--primary-700);
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.1);
       }
     }
   }
@@ -429,180 +670,6 @@
   }
 }
 
-:host ::ng-deep {
-  .fc {
-    font-family:
-      'Source Sans Pro',
-      -apple-system,
-      BlinkMacSystemFont,
-      sans-serif;
-  }
-
-  .fc-theme-standard td,
-  .fc-theme-standard th {
-    border-color: var(--slate-100);
-  }
-
-  .fc-theme-standard .fc-scrollgrid {
-    border-color: var(--slate-100);
-  }
-
-  .fc-col-header-cell {
-    background: var(--slate-50);
-    padding: 12px 0;
-
-    .fc-col-header-cell-cushion {
-      color: var(--slate-600);
-      font-weight: 600;
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-  }
-
-  .fc-timegrid-slot {
-    height: 48px;
-
-    .fc-timegrid-slot-label-cushion {
-      color: var(--slate-500);
-      font-size: 12px;
-      font-weight: 500;
-    }
-  }
-
-  .fc-timegrid-now-indicator-line {
-    border-color: var(--primary-500);
-    border-width: 2px;
-  }
-
-  .fc-timegrid-now-indicator-arrow {
-    border-color: var(--primary-500);
-    border-top-color: transparent;
-    border-bottom-color: transparent;
-  }
-
-  .fc-event {
-    border-radius: 6px;
-    border: none;
-    padding: 4px 8px;
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    transition:
-      transform 0.15s ease,
-      box-shadow 0.15s ease;
-    overflow: hidden;
-
-    &:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-
-    .fc-event-main {
-      padding: 2px 0;
-      overflow: hidden;
-    }
-
-    .fc-event-time {
-      font-weight: 600;
-      opacity: 0.9;
-      white-space: nowrap;
-    }
-
-    .fc-event-title {
-      font-weight: 500;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      display: block;
-    }
-
-    .fc-event-main-frame {
-      overflow: hidden;
-    }
-
-    .fc-event-title-container {
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-  }
-
-  .fc-timegrid-event {
-    .fc-event-main {
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-  }
-
-  .fc-daygrid-event {
-    margin: 2px 4px;
-    padding: 4px 8px;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-
-  .fc-daygrid-day-number {
-    color: var(--slate-700);
-    font-weight: 500;
-    padding: 8px;
-  }
-
-  .fc-daygrid-day.fc-day-today {
-    background: rgba(var(--primary-500-rgb), 0.05);
-
-    .fc-daygrid-day-number {
-      background: var(--primary-500);
-      color: var(--White);
-      border-radius: 50%;
-      width: 28px;
-      height: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-  }
-
-  .fc-timegrid-col.fc-day-today {
-    background: rgba(var(--primary-500-rgb), 0.03);
-  }
-
-  .fc-daygrid-day-events {
-    padding: 4px;
-    overflow: hidden;
-  }
-
-  .fc-more-link {
-    color: var(--primary-600);
-    font-weight: 600;
-    font-size: 12px;
-  }
-
-  .fc-popover {
-    border-radius: 12px;
-    border: 1px solid var(--slate-200);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-    overflow: hidden;
-
-    .fc-popover-header {
-      background: var(--slate-50);
-      padding: 12px 16px;
-      font-weight: 600;
-      color: var(--slate-700);
-    }
-
-    .fc-popover-body {
-      padding: 8px;
-    }
-  }
-
-  .fc-scrollgrid-sync-inner {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-}
 
 .empty-state {
   display: flex;
@@ -626,17 +693,6 @@
   }
 }
 
-.appointments-list {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-
-  .load-more-container {
-    display: flex;
-    justify-content: flex-start;
-    padding-top: 8px;
-  }
-}
 
 .reminders-section {
   margin-top: 24px;
@@ -654,148 +710,8 @@
   }
 }
 
-.appointment-date-box {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  min-width: 48px;
-  background: var(--primary-50);
-  border-radius: 12px;
-  flex-shrink: 0;
 
-  .day {
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--primary-700);
-    line-height: 1;
-  }
 
-  .month {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--primary-600);
-    text-transform: uppercase;
-  }
-}
-
-.appointment-card {
-  background: var(--slate-50);
-  border-radius: 16px;
-  padding: 24px;
-  border: 2px solid var(--slate-100);
-  transition:
-    border-color 0.3s ease,
-    box-shadow 0.3s ease;
-
-  &.highlighted {
-    border-color: var(--primary-500);
-    box-shadow: 0 0 16px rgba(99, 102, 241, 0.25);
-    animation: highlight-pulse 2s ease-out;
-  }
-
-  @keyframes highlight-pulse {
-    0% {
-      box-shadow: 0 0 24px rgba(99, 102, 241, 0.4);
-    }
-    100% {
-      box-shadow: 0 0 16px rgba(99, 102, 241, 0.25);
-    }
-  }
-
-  .appointment-header {
-    display: flex;
-    align-items: flex-start;
-    margin-bottom: 12px;
-    flex-wrap: wrap;
-    gap: 12px;
-
-    .appointment-info {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      flex: 1;
-
-      .appointment-info-top {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-
-      .appointment-title {
-        font-size: 15px;
-        font-weight: 600;
-        color: var(--slate-800);
-      }
-
-      .date-time {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 14px;
-        font-weight: 500;
-        color: var(--slate-600);
-      }
-
-      .appointment-type {
-        padding: 4px 10px;
-        border-radius: 6px;
-        font-size: 12px;
-        font-weight: 600;
-        background: var(--slate-200);
-        color: var(--slate-600);
-
-        &.online {
-          background: var(--primary-100);
-          color: var(--primary-700);
-        }
-      }
-    }
-  }
-
-  .expected-end {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    color: var(--slate-500);
-    margin-bottom: 16px;
-  }
-
-  .participants-section {
-    margin-bottom: 16px;
-
-    .participants-label {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--slate-500);
-      margin-bottom: 12px;
-      display: block;
-    }
-
-    .no-participants {
-      font-size: 13px;
-      color: var(--slate-400);
-      font-style: italic;
-    }
-  }
-
-  .participants-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .appointment-actions {
-    display: flex;
-    gap: 8px;
-    padding-top: 16px;
-    border-top: 1px solid var(--slate-200);
-    flex-wrap: wrap;
-  }
-}
 
 .messages-sidebar {
   position: sticky;
@@ -837,7 +753,7 @@
 
     .chat-locked-text {
       margin: 0;
-      font-size: 13px;
+      font-size: 14px;
       line-height: 1.5;
       color: rgba(255, 255, 255, 0.8);
       max-width: 360px;
@@ -894,134 +810,8 @@
   }
 }
 
-@media (max-width: 768px) {
-  .consultation-detail {
-    padding: 20px;
-  }
 
-  .consultation-info-card {
-    .info-header {
-      .header-top-row {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-
-      .card-actions {
-        width: 100%;
-        flex-wrap: wrap;
-
-        app-button {
-          flex: 1 1 auto;
-          min-width: 0;
-
-          ::ng-deep button {
-            width: 100%;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-          }
-        }
-      }
-    }
-
-    .info-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  .appointments-section {
-    padding: 20px;
-
-    .section-header-actions {
-      width: 100%;
-
-      .view-toggle,
-      .status-filter,
-      .time-filter {
-        width: 100%;
-
-        .view-toggle-btn,
-        .filter-btn {
-          flex: 1;
-          text-align: center;
-          padding: 8px 6px;
-          font-size: 12px;
-        }
-      }
-    }
-  }
-
-  .appointment-actions {
-    flex-wrap: wrap;
-
-    app-button {
-      flex: 1 1 auto;
-      min-width: 0;
-
-      ::ng-deep button {
-        width: 100%;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-    }
-  }
-}
-
-.join-button-container {
-  position: relative;
-  display: inline-block;
-  z-index: 10;
-}
-
-.join-error-bubble {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  min-width: 280px;
-  max-width: 320px;
-  padding: 12px 16px;
-  background: var(--White);
-  border: 1px solid var(--amber-200);
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  z-index: 9999;
-  animation: slideDown 0.2s ease-out;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: -6px;
-    left: 16px;
-    width: 12px;
-    height: 12px;
-    background: var(--White);
-    border-left: 1px solid var(--amber-200);
-    border-top: 1px solid var(--amber-200);
-    transform: rotate(45deg);
-  }
-
-  span {
-    font-size: 13px;
-    line-height: 1.5;
-    color: var(--slate-700);
-    flex: 1;
-  }
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+// Live indicator on the join button: the call is reachable right now.
 
 .call-appointment-modal-footer {
   display: flex;
@@ -1042,7 +832,7 @@
 
   .field-helper-text {
     display: block;
-    font-size: 12px;
+    font-size: 14px;
     color: var(--slate-500);
     margin-top: 6px;
     line-height: 1.4;
@@ -1102,7 +892,7 @@
 
     .link-text {
       font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-      font-size: 12px;
+      font-size: 14px;
       color: var(--slate-700);
       background: var(--White);
       padding: 12px;
@@ -1123,7 +913,7 @@
     background: var(--amber-50, #fffbeb);
     border: 1px solid var(--amber-200, #fde68a);
     border-radius: 8px;
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.5;
     color: var(--amber-800, #92400e);
 
@@ -1139,41 +929,39 @@
   }
 }
 
-.beneficiary-type-toggle {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
 
-  .type-btn {
-    flex: 1;
-    padding: 8px 12px;
-    background: white;
-    border: 2px solid var(--slate-200);
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--slate-600);
-    cursor: pointer;
-    transition: all 0.2s;
-
-    &:hover {
-      border-color: var(--primary-300);
-    }
-
-    &.active {
-      background: var(--primary-50);
-      border-color: var(--primary-500);
-      color: var(--primary-700);
-    }
+@media (max-width: 768px) {
+  .consultation-detail {
+    padding: 20px;
   }
-}
 
-// When the external-contact beneficiary makes the PATIENT item span the whole
-// grid row, keep its content at a readable, left-aligned width instead of
-// stretching the selects/toggle edge to edge.
-.info-item.full-width {
-  app-external-contact-form,
-  .beneficiary-type-toggle {
-    max-width: 520px;
+  .consultation-info-card {
+    .info-header {
+      .header-top-row {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .card-actions {
+        width: 100%;
+        flex-wrap: wrap;
+
+        app-button {
+          flex: 1 1 auto;
+          min-width: 0;
+
+          ::ng-deep button {
+            width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+        }
+      }
+    }
+
+    .info-grid {
+      grid-template-columns: 1fr;
+    }
   }
 }

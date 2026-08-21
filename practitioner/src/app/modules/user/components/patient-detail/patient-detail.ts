@@ -1,4 +1,12 @@
-import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  signal,
+  computed,
+  inject,
+  viewChild,
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Subject, takeUntil, forkJoin } from 'rxjs';
@@ -33,19 +41,36 @@ import {
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { TranslationService } from '../../../../core/services/translation.service';
 import { Badge } from '../../../../shared/components/badge/badge';
-import { BadgeTypeEnum } from '../../../../shared/constants/badge';
-import { ConsultationRowItem } from '../../../../shared/components/consultation-row-item/consultation-row-item';
+import { BadgeTypeEnum, BadgeSizeEnum } from '../../../../shared/constants/badge';
+import {
+  DataTable,
+  DataTableColumn,
+} from '../../../../shared/components/data-table/data-table';
+import { DataTableCellDirective } from '../../../../shared/components/data-table/data-table-cell.directive';
 import { ReminderCard } from '../../../../shared/components/reminder-card/reminder-card';
 import { ReminderFormModal } from '../../../../shared/components/reminder-form-modal/reminder-form-modal';
 import { AppointmentFormModal } from '../consultation-detail/appointment-form-modal/appointment-form-modal';
+import { AppointmentPanel } from '../../../../shared/components/appointment-panel/appointment-panel';
+import { UserService } from '../../../../core/services/user.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { Reminder } from '../../../../core/models/reminder';
 import {
+  formatConsultationId,
+  formatUserName,
   getConsultationBadgeType,
   getAppointmentBadgeType,
 } from '../../../../shared/tools/helper';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
 import { LocalDatePipe } from '../../../../shared/pipes/local-date.pipe';
+
+/** One cell of the personal-information grid. */
+interface PatientInfoField {
+  label: string;
+  value: string;
+  /** True when the value is a fallback label, so it renders muted. */
+  empty: boolean;
+  badge?: string;
+}
 
 @Component({
   selector: 'app-patient-detail',
@@ -61,15 +86,18 @@ import { LocalDatePipe } from '../../../../shared/pipes/local-date.pipe';
     ModalComponent,
     AddEditPatient,
     Badge,
-    ConsultationRowItem,
+    DataTable,
+    DataTableCellDirective,
     ReminderCard,
     ReminderFormModal,
     AppointmentFormModal,
+    AppointmentPanel,
     UserAvatar,
     LocalDatePipe,
   ],
   templateUrl: './patient-detail.html',
   styleUrl: './patient-detail.scss',
+  providers: [LocalDatePipe],
 })
 export class PatientDetail implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
@@ -80,6 +108,8 @@ export class PatientDetail implements OnInit, OnDestroy {
   private toasterService = inject(ToasterService);
   private confirmationService = inject(ConfirmationService);
   private t = inject(TranslationService);
+  private userService = inject(UserService);
+  private localDate = inject(LocalDatePipe);
 
   protected readonly TypographyTypeEnum = TypographyTypeEnum;
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
@@ -89,21 +119,119 @@ export class PatientDetail implements OnInit, OnDestroy {
   protected readonly getConsultationBadgeType = getConsultationBadgeType;
   protected readonly getAppointmentBadgeType = getAppointmentBadgeType;
   protected readonly BadgeTypeEnum = BadgeTypeEnum;
+  protected readonly BadgeSizeEnum = BadgeSizeEnum;
 
   patientId: number | null = null;
+  appointmentPanel = viewChild(AppointmentPanel);
+  /** Signed-in practitioner, so participant cards can label themselves "Me". */
+  currentUser = signal<IUser | null>(null);
   activeTab = signal<
     'overview' | 'consultations' | 'appointments' | 'reminders'
   >('overview');
   showEditModal = signal(false);
   loading = signal(true);
   loadingConsultations = signal(false);
-  loadingAppointments = signal(false);
   loadingReminders = signal(false);
 
   patient = signal<IUser | null>(null);
   healthMetrics = signal<IHealthMetric[]>([]);
   consultations = signal<Consultation[]>([]);
-  appointments = signal<Appointment[]>([]);
+
+  // Totals reported by the API, so the tab pills stay right past the first page.
+  consultationsCount = signal(0);
+  appointmentsCount = signal(0);
+  remindersCount = signal(0);
+
+  protected readonly formatConsultationId = formatConsultationId;
+  protected readonly formatUserName = formatUserName;
+
+  consultationColumns = computed<DataTableColumn[]>(() => {
+    // Read the language so headers are rebuilt when the user switches locale.
+    this.t.currentLanguage();
+    return [
+      {
+        key: 'title',
+        label: this.t.instant('consultations.columnFollowUp'),
+        width: 'minmax(220px, 2.2fr)',
+      },
+      {
+        key: 'practitioner',
+        label: this.t.instant('consultationRowItem.practitioner'),
+        width: 'minmax(130px, 1.2fr)',
+      },
+      {
+        key: 'status',
+        label: this.t.instant('consultationRowItem.status'),
+        width: 'minmax(100px, 0.8fr)',
+      },
+      {
+        key: 'created',
+        label: this.t.instant('consultations.columnCreatedAt'),
+        width: 'minmax(150px, 1.1fr)',
+      },
+      {
+        key: 'closed',
+        label: this.t.instant('consultationRowItem.closed'),
+        width: 'minmax(150px, 1.1fr)',
+      },
+      { key: 'chevron', width: '24px', align: 'end', hideOnMobile: true },
+    ];
+  });
+
+  readonly consultationAccent = (consultation: Consultation): string =>
+    consultation.closed_at ? 'var(--slate-300)' : 'var(--emerald-500)';
+
+  readonly trackConsultation = (consultation: Consultation): number =>
+    consultation.id;
+
+  /** The attribute grid of the overview tab, empty values included. */
+  personalFields = computed<PatientInfoField[]>(() => {
+    const patient = this.patient();
+    if (!patient) return [];
+    // Read the language so labels are rebuilt when the user switches locale.
+    this.t.currentLanguage();
+
+    const notProvided = this.t.instant('patientDetail.notProvided');
+    const fields: PatientInfoField[] = [];
+    const push = (labelKey: string, value: string, badge?: string): void => {
+      fields.push({
+        label: this.t.instant(labelKey),
+        value: value || notProvided,
+        empty: !value,
+        badge,
+      });
+    };
+
+    push('patientDetail.emailLabel', patient.email);
+    if (patient.mobile_phone_number) {
+      push('patientDetail.phoneLabel', patient.mobile_phone_number);
+    }
+    if (patient.street || patient.city) {
+      push('patientDetail.address', this.formatAddress(patient));
+    }
+    push(
+      'patientDetail.communicationMethod',
+      this.getCommunicationMethodLabel(patient.communication_method),
+      this.t.instant('patientDetail.defaultChannel')
+    );
+    push('patientDetail.language', this.getLanguageName(patient));
+    push('patientDetail.timezone', patient.timezone);
+    if (patient.main_organisation) {
+      push('patientDetail.organisation', patient.main_organisation.name);
+    }
+
+    const lastLogin = patient.last_login
+      ? this.localDate.transform(patient.last_login, 'medium')
+      : '';
+    fields.push({
+      label: this.t.instant('patientDetail.lastLogin'),
+      value: lastLogin || this.t.instant('patientDetail.never'),
+      empty: !lastLogin,
+    });
+
+    return fields;
+  });
+
   reminders = signal<Reminder[]>([]);
 
   showReminderModal = signal(false);
@@ -118,14 +246,17 @@ export class PatientDetail implements OnInit, OnDestroy {
       {
         id: 'consultations',
         label: this.t.instant('patientDetail.tabConsultations'),
+        count: this.consultationsCount(),
       },
       {
         id: 'appointments',
         label: this.t.instant('patientDetail.tabAppointments'),
+        count: this.appointmentsCount(),
       },
       {
         id: 'reminders',
         label: this.t.instant('patientDetail.tabReminders'),
+        count: this.remindersCount(),
       },
     ];
   }
@@ -142,12 +273,16 @@ export class PatientDetail implements OnInit, OnDestroy {
       }
     });
 
+    this.userService.currentUser$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(user => this.currentUser.set(user));
+
     this.route.params.pipe(takeUntil(this.destroy$)).subscribe(params => {
       if (params['id']) {
         this.patientId = +params['id'];
         this.loadPatient();
         this.loadConsultations();
-        this.loadAppointments();
+        this.loadAppointmentsCount();
         this.loadReminders();
       }
     });
@@ -193,6 +328,7 @@ export class PatientDetail implements OnInit, OnDestroy {
       .subscribe({
         next: response => {
           this.consultations.set(response.results);
+          this.consultationsCount.set(response.count);
           this.loadingConsultations.set(false);
         },
         error: err => {
@@ -206,25 +342,24 @@ export class PatientDetail implements OnInit, OnDestroy {
       });
   }
 
-  loadAppointments(): void {
+
+  /**
+   * The appointments tab pill needs the total before its panel is mounted, so
+   * it is fetched here rather than read from the panel.
+   */
+  loadAppointmentsCount(): void {
     if (!this.patientId) return;
 
-    this.loadingAppointments.set(true);
     this.consultationService
-      .getAppointments({ consultation__beneficiary: this.patientId })
+      .getAppointments({
+        consultation__beneficiary: this.patientId,
+        page_size: 1,
+      })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: response => {
-          this.appointments.set(response.results);
-          this.loadingAppointments.set(false);
-        },
-        error: err => {
-          this.toasterService.show(
-            'error',
-            this.t.instant('patientDetail.errorLoadingAppointments'),
-            getErrorMessage(err)
-          );
-          this.loadingAppointments.set(false);
+        next: response => this.appointmentsCount.set(response.count),
+        error: () => {
+          // A badge is not worth a toaster: keep the previous count.
         },
       });
   }
@@ -262,42 +397,10 @@ export class PatientDetail implements OnInit, OnDestroy {
   onAppointmentSaved(): void {
     this.showAppointmentModal.set(false);
     this.editingAppointment.set(null);
-    this.loadAppointments();
+    this.appointmentPanel()?.reload();
+    this.loadAppointmentsCount();
   }
 
-  async deleteAppointment(appointment: Appointment): Promise<void> {
-    const confirmed = await this.confirmationService.confirm({
-      title: this.t.instant('patientDetail.deleteAppointmentTitle'),
-      message: this.t.instant('patientDetail.deleteAppointmentMessage'),
-      confirmText: this.t.instant('reminders.delete'),
-      cancelText: this.t.instant('reminders.cancel'),
-      confirmStyle: 'danger',
-    });
-
-    if (!confirmed) return;
-
-    this.consultationService
-      .deleteAppointment(appointment.id)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => {
-          this.appointments.set(
-            this.appointments().filter(a => a.id !== appointment.id)
-          );
-          this.toasterService.show(
-            'success',
-            this.t.instant('patientDetail.appointmentDeleted')
-          );
-        },
-        error: error => {
-          this.toasterService.show(
-            'error',
-            this.t.instant('patientDetail.errorDeletingAppointment'),
-            getErrorMessage(error)
-          );
-        },
-      });
-  }
 
   loadReminders(): void {
     if (!this.patientId) return;
@@ -313,6 +416,7 @@ export class PatientDetail implements OnInit, OnDestroy {
       .subscribe({
         next: response => {
           this.reminders.set(response.results);
+          this.remindersCount.set(response.count);
           this.loadingReminders.set(false);
         },
         error: err => {
@@ -366,6 +470,7 @@ export class PatientDetail implements OnInit, OnDestroy {
           this.reminders.set(
             this.reminders().filter(r => r.id !== reminder.id)
           );
+          this.remindersCount.set(this.reminders().length);
           this.toasterService.show(
             'success',
             this.t.instant('reminders.deleted')
@@ -395,7 +500,9 @@ export class PatientDetail implements OnInit, OnDestroy {
   }
 
   setActiveTab(tab: string): void {
-    this.activeTab.set(tab as 'overview' | 'consultations' | 'appointments');
+    this.activeTab.set(
+      tab as 'overview' | 'consultations' | 'appointments' | 'reminders'
+    );
     this.router.navigate([], { fragment: tab, replaceUrl: true });
   }
 
@@ -411,21 +518,6 @@ export class PatientDetail implements OnInit, OnDestroy {
     this.router.navigate([RoutePaths.USER, 'consultations', consultation.id]);
   }
 
-  getAppointmentType(type: string): string {
-    const appointmentType = type?.toLowerCase();
-    switch (appointmentType) {
-      case 'online':
-        return this.t.instant('patientDetail.videoCall');
-      case 'inperson':
-        return this.t.instant('patientDetail.inPerson');
-      case 'in_person':
-        return this.t.instant('patientDetail.inPerson');
-      case 'phone':
-        return this.t.instant('patientDetail.phoneCall');
-      default:
-        return type;
-    }
-  }
 
   openEditModal(): void {
     this.showEditModal.set(true);
@@ -468,35 +560,28 @@ export class PatientDetail implements OnInit, OnDestroy {
       case 'manual':
         return this.t.instant('patientDetail.manualContact');
       default:
-        return method || '-';
+        return method || '';
     }
+  }
+
+  /** Street, postal code, city and country joined as one readable line. */
+  private formatAddress(patient: IUser): string {
+    const locality = [patient.postal_code, patient.city]
+      .filter(part => !!part)
+      .join(' ');
+    const address = [patient.street, locality]
+      .filter(part => !!part)
+      .join(', ');
+    return patient.country ? `${address} - ${patient.country}` : address;
   }
 
   getLanguageName(patient: IUser): string {
     if (patient.languages && patient.languages.length > 0) {
       return patient.languages.map(l => l.name).join(', ');
     }
-    return '-';
+    return '';
   }
 
-  getAppointmentStatusLabel(status: string): string {
-    switch (status?.toLowerCase()) {
-      case 'scheduled':
-        return this.t.instant('patientDetail.statusScheduled');
-      case 'cancelled':
-        return this.t.instant('patientDetail.statusCancelled');
-      case 'completed':
-        return this.t.instant('patientDetail.statusCompleted');
-      case 'noshow':
-        return this.t.instant('patientDetail.statusNoshow');
-      case 'draft':
-        return this.t.instant('patientDetail.statusDraft');
-      case 'in_progress':
-        return this.t.instant('patientDetail.statusInProgress');
-      default:
-        return status;
-    }
-  }
 
   canEditPatient(): boolean {
     const patient = this.patient();

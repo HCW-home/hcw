@@ -73,6 +73,8 @@ export interface IOpenIDConfig {
   communication_methods: string[];
   consultation_auto_delete_hours: number;
   appointment_early_join_minutes: number;
+  default_appointment_duration_in_minutes: number;
+  call_limit_join_minutes: number;
   enable_video_recording: boolean;
   enable_live_transcription: boolean;
   force_temporary_patients: boolean;

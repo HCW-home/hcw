@@ -658,8 +658,12 @@ export class HomePage implements OnInit, OnDestroy {
       this.closeChat();
       return;
     }
+    // Only one chat stays open at a time: close the previous one first so its
+    // last_read_at is flushed and the websocket filter is released.
+    if (this.expandedConsultationId()) {
+      this.closeChat();
+    }
     const lastReadAt = this.findLastReadAt(consultationId);
-    console.log('[openChat] consultationId:', consultationId, 'lastReadAt:', lastReadAt);
     this.chatUnreadSeparator.set(lastReadAt);
     this.expandedConsultationId.set(consultationId);
     this.chatMessages.set([]);
@@ -743,8 +747,11 @@ export class HomePage implements OnInit, OnDestroy {
         }
         if (!consultPrivPem) continue;
 
-        this.chatConsultationPrivateKey =
+        const consultationKey =
           await this.encryptionService.importPrivateKey(consultPrivPem);
+        // A late unwrap must not overwrite the key of the chat that took over.
+        if (this.expandedConsultationId() !== consultation.id) return;
+        this.chatConsultationPrivateKey = consultationKey;
         return;
       } catch (err) {
         console.warn('Consultation key unwrap failed for entry', err);
@@ -811,13 +818,13 @@ export class HomePage implements OnInit, OnDestroy {
 
     const consultation = this.consultations().find(c => c.id === id);
     await this.ensureChatConsultationKey(consultation);
+    if (this.expandedConsultationId() !== id) return;
 
     this.chatCurrentPage = 1;
     this.consultationService.getConsultationMessagesPaginated(id, 1)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: async response => {
-          this.chatHasMore.set(!!response.next);
           const currentUserId = this.currentUser()?.pk;
           const msgs: Message[] = await Promise.all(
             response.results.map(async msg => {
@@ -843,7 +850,11 @@ export class HomePage implements OnInit, OnDestroy {
               };
             }),
           );
+          // The user may have switched to another chat while we were
+          // decrypting: drop the stale response instead of overwriting it.
+          if (this.expandedConsultationId() !== id) return;
           msgs.reverse();
+          this.chatHasMore.set(!!response.next);
           this.chatMessages.set(msgs);
         }
       });
@@ -860,7 +871,6 @@ export class HomePage implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: async response => {
-          this.chatHasMore.set(!!response.next);
           const currentUserId = this.currentUser()?.pk;
           const olderMsgs: Message[] = (
             await Promise.all(
@@ -891,8 +901,12 @@ export class HomePage implements OnInit, OnDestroy {
               }),
             )
           ).reverse();
-          this.chatMessages.update(msgs => [...olderMsgs, ...msgs]);
           this.isChatLoadingMore.set(false);
+          // Another consultation took over while paginating: these older
+          // messages no longer belong to the visible chat.
+          if (this.expandedConsultationId() !== id) return;
+          this.chatHasMore.set(!!response.next);
+          this.chatMessages.update(msgs => [...olderMsgs, ...msgs]);
         },
         error: () => {
           this.chatCurrentPage--;

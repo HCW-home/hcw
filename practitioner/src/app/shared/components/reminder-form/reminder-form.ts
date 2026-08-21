@@ -33,8 +33,8 @@ import { Input as InputComponent } from '../../ui-components/input/input';
 import { Textarea } from '../../ui-components/textarea/textarea';
 import { Select } from '../../ui-components/select/select';
 import { Checkbox } from '../../ui-components/checkbox/checkbox';
-import { UserSelectOrCreate } from '../user-select-or-create/user-select-or-create';
-import { ExternalContactForm } from '../external-contact-form/external-contact-form';
+import { ContactPicker } from '../contact-picker/contact-picker';
+import { ContactSelection } from '../../models/contact-picker';
 import { ButtonStyleEnum, ButtonSizeEnum } from '../../constants/button';
 import { SelectOption } from '../../models/select';
 import { extractDateFromISO, extractTimeFromISO } from '../../tools/helper';
@@ -53,8 +53,7 @@ import { TranslationService } from '../../../core/services/translation.service';
     Textarea,
     CommonModule,
     InputComponent,
-    UserSelectOrCreate,
-    ExternalContactForm,
+    ContactPicker,
     ReactiveFormsModule,
     FormsModule,
     TranslatePipe,
@@ -83,9 +82,9 @@ export class ReminderForm implements OnInit, OnChanges, OnDestroy {
   isSubmitting = signal(false);
   currentUser = signal<IUser | null>(null);
   selectedRecipient = signal<IUser | null>(null);
-  // Toggle between picking an existing user and entering an external contact.
+  // True when the picker holds a temporary contact instead of an account.
   isExternalRecipient = signal(false);
-  externalContactRef = viewChild<ExternalContactForm>('externalContactRef');
+  recipientPickerRef = viewChild<ContactPicker>('recipientPickerRef');
   // Stable reference for the search-select initial value: computed once so it
   // does not re-trigger the select's effect (which would re-impose the
   // recipient after the user clears it).
@@ -221,23 +220,22 @@ export class ReminderForm implements OnInit, OnChanges, OnDestroy {
     }
   }
 
-  onRecipientSelected(user: IUser | null): void {
-    // recipient_id is bound via formControlName; just keep the resolved user.
-    this.selectedRecipient.set(user);
-  }
+  onRecipientSelection(selection: ContactSelection | null): void {
+    const isGuest = selection?.kind === 'guest';
+    this.isExternalRecipient.set(isGuest);
+    this.selectedRecipient.set(
+      selection?.kind === 'user' ? selection.user : null
+    );
 
-  setRecipientType(external: boolean): void {
-    this.isExternalRecipient.set(external);
+    // A temporary contact feeds temporary_recipient instead of recipient_id,
+    // so the id must stop being required.
     const recipientControl = this.reminderForm.get('recipient_id');
-    if (external) {
-      // Drop the existing-user selection so only one source feeds the backend.
+    if (isGuest) {
       recipientControl?.clearValidators();
-      recipientControl?.setValue(null);
-      this.selectedRecipient.set(null);
     } else {
       recipientControl?.setValidators([Validators.required]);
     }
-    recipientControl?.updateValueAndValidity();
+    recipientControl?.updateValueAndValidity({ emitEvent: false });
   }
 
   getFieldError(fieldName: string): string {
@@ -263,6 +261,8 @@ export class ReminderForm implements OnInit, OnChanges, OnDestroy {
       recurrence_count: 5,
     });
     this.selectedRecipient.set(null);
+    this.isExternalRecipient.set(false);
+    this.recipientPickerRef()?.reset();
     this.backendErrors.set({});
   }
 
@@ -279,10 +279,10 @@ export class ReminderForm implements OnInit, OnChanges, OnDestroy {
     const useExternal = this.isExternalRecipient() && !this.lockRecipient;
     let temporaryRecipient: ITemporaryParticipant | null = null;
     if (useExternal) {
-      const ref = this.externalContactRef();
-      ref?.markAllTouched();
-      if (!ref || !ref.isValid()) return;
-      temporaryRecipient = ref.buildPayload();
+      const picker = this.recipientPickerRef();
+      picker?.markAllTouched();
+      if (!picker || !picker.isValid()) return;
+      temporaryRecipient = picker.buildGuestPayload();
       if (!temporaryRecipient) return;
     }
 

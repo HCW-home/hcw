@@ -1,22 +1,6 @@
 <app-page>
   <div class="appointments-container">
     <div class="calendar-header">
-      <div class="header-left">
-        <app-button
-          [text]="'appointments.createNew' | translate"
-          [style]="ButtonStyleEnum.primary"
-          [size]="ButtonSizeEnum.small"
-          leftIcon="plus"
-          (buttonClick)="openCreateAppointmentModal()">
-        </app-button>
-        <app-button
-          [text]="'reminders.newReminder' | translate"
-          [style]="ButtonStyleEnum.stroke"
-          [size]="ButtonSizeEnum.small"
-          leftIcon="plus"
-          (buttonClick)="openCreateReminderModal()">
-        </app-button>
-      </div>
       <div class="header-controls">
         @if (practitioners().length > 1) {
           <div class="practitioner-selector">
@@ -58,7 +42,8 @@
           <span class="current-date">{{ currentTitle() }}</span>
         </div>
 
-        @if (currentView() === 'list') {
+        <div class="header-actions">
+          @if (currentView() === 'list') {
           <div class="view-toggle time-filter">
             <button
               class="view-btn"
@@ -79,33 +64,123 @@
               {{ 'consultationDetail.filterAll' | translate }}
             </button>
           </div>
-        }
+          }
 
-        <div class="view-toggle">
-          <button
-            class="view-btn"
-            [class.active]="isActiveView('list')"
-            (click)="setView('list')">
-            {{ 'appointments.list' | translate }}
-          </button>
-          <button
-            class="view-btn"
-            [class.active]="isActiveView('timeGridDay')"
-            (click)="setView('timeGridDay')">
-            {{ 'appointments.day' | translate }}
-          </button>
-          <button
-            class="view-btn"
-            [class.active]="isActiveView('timeGridWeek')"
-            (click)="setView('timeGridWeek')">
-            {{ 'appointments.week' | translate }}
-          </button>
-          <button
-            class="view-btn"
-            [class.active]="isActiveView('dayGridMonth')"
-            (click)="setView('dayGridMonth')">
-            {{ 'appointments.month' | translate }}
-          </button>
+          <div class="view-toggle">
+            <button
+              class="view-btn"
+              [class.active]="isActiveView('list')"
+              (click)="setView('list')">
+              {{ 'appointments.list' | translate }}
+            </button>
+            <button
+              class="view-btn"
+              [class.active]="isActiveView('timeGridDay')"
+              (click)="setView('timeGridDay')">
+              {{ 'appointments.day' | translate }}
+            </button>
+            <button
+              class="view-btn"
+              [class.active]="isActiveView('timeGridWeek')"
+              (click)="setView('timeGridWeek')">
+              {{ 'appointments.week' | translate }}
+            </button>
+            <button
+              class="view-btn"
+              [class.active]="isActiveView('dayGridMonth')"
+              (click)="setView('dayGridMonth')">
+              {{ 'appointments.month' | translate }}
+            </button>
+          </div>
+
+          <span class="toolbar-divider"></span>
+
+          <div class="create-menu">
+            <div class="create-split">
+              <button
+                type="button"
+                class="create-primary"
+                (click)="createFromMenu('appointment')">
+                <app-svg
+                  src="plus"
+                  [svgStyle]="{'width.px': 15, 'height.px': 15}"></app-svg>
+                <span>{{ 'appointments.createNew' | translate }}</span>
+              </button>
+              <button
+                type="button"
+                class="create-toggle"
+                [attr.aria-expanded]="createMenuOpen()"
+                [attr.aria-label]="'appointments.moreCreateActions' | translate"
+                (click)="toggleCreateMenu($event)">
+                <app-svg
+                  src="chevron-down"
+                  [svgStyle]="{'width.px': 12, 'height.px': 12}"></app-svg>
+              </button>
+            </div>
+
+            @if (createMenuOpen()) {
+            <div class="create-dropdown">
+              <button
+                type="button"
+                class="create-item"
+                (click)="createFromMenu('appointment')">
+                <span class="item-icon appointment">
+                  <app-svg
+                    src="calendar"
+                    [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                </span>
+                <span class="item-text">
+                  <span class="item-title">
+                    {{ 'appointments.createNew' | translate }}
+                  </span>
+                  <span class="item-desc">
+                    {{ 'elementType.appointmentDesc' | translate }}
+                  </span>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                class="create-item"
+                (click)="createFromMenu('reminder')">
+                <span class="item-icon reminder">
+                  <app-svg
+                    src="bell"
+                    [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                </span>
+                <span class="item-text">
+                  <span class="item-title">
+                    {{ 'reminders.newReminder' | translate }}
+                  </span>
+                  <span class="item-desc">
+                    {{ 'elementType.reminderDesc' | translate }}
+                  </span>
+                </span>
+              </button>
+
+              @if (bookingSlotsEnabled()) {
+              <button
+                type="button"
+                class="create-item"
+                (click)="createFromMenu('slot')">
+                <span class="item-icon slot">
+                  <app-svg
+                    src="clock"
+                    [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                </span>
+                <span class="item-text">
+                  <span class="item-title">
+                    {{ 'appointments.newBookableSlot' | translate }}
+                  </span>
+                  <span class="item-desc">
+                    {{ 'elementType.slotDesc' | translate }}
+                  </span>
+                </span>
+              </button>
+              }
+            </div>
+            }
+          </div>
         </div>
       </div>
     </div>
@@ -118,6 +193,11 @@
 
     @if (!loading() && currentView() === 'list') {
     <div class="list-view">
+      <div class="list-section-header">
+        <h3 class="list-section-title">
+          {{ 'appointments.appointmentsCount' | translate: { count: appointments().length } }}
+        </h3>
+      </div>
       @if (appointments().length === 0) {
       <div class="empty-state">
         <app-svg
@@ -276,6 +356,92 @@
             [disabled]="isLoadingMoreReminders()"
             (buttonClick)="loadMoreReminders()">
           </app-button>
+        </div>
+        }
+      </div>
+      }
+    </div>
+    }
+
+    @if (!loading() && currentView() === 'list' && bookingSlotsEnabled()) {
+    <div class="booking-slots-section">
+      <div class="booking-slots-header">
+        <h3 class="list-section-title">
+          {{ 'appointments.bookableSlotsCount' | translate: { count: bookingSlots().length } }}
+        </h3>
+        <app-button
+          [text]="'configuration.addSlot' | translate"
+          leftIcon="plus"
+          [size]="ButtonSizeEnum.small"
+          [style]="ButtonStyleEnum.stroke"
+          (buttonClick)="openCreateBookingSlot()">
+        </app-button>
+      </div>
+
+      <div class="booking-slots-hint">
+        <app-svg src="info" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+        <span>{{ 'configuration.slotsInfoMessage' | translate }}</span>
+      </div>
+
+      @if (isLoadingBookingSlots()) {
+      <div class="reminders-loading">
+        <app-loader></app-loader>
+      </div>
+      } @else if (bookingSlots().length === 0) {
+      <div class="empty-state">
+        <app-svg
+          src="clock"
+          [svgStyle]="{'width.px': 48, 'height.px': 48}"></app-svg>
+        <span>{{ 'configuration.noSlotsTitle' | translate }}</span>
+      </div>
+      } @else {
+      <div class="booking-slots-list">
+        @for (slot of bookingSlots(); track slot.id) {
+        <div class="booking-slot-card">
+          <div class="slot-icon">
+            <app-svg
+              src="clock"
+              [svgStyle]="{'width.px': 20, 'height.px': 20}"></app-svg>
+          </div>
+          <div class="slot-body">
+            <span class="slot-time">{{ getSlotTimeRange(slot) }}</span>
+            <div class="slot-days">
+              @for (day of getSlotActiveDays(slot); track day) {
+              <span class="day-tag">{{ day }}</span>
+              } @empty {
+              <span class="slot-meta-item">
+                {{ 'configuration.noActiveDays' | translate }}
+              </span>
+              }
+            </div>
+            <div class="slot-meta">
+              <span class="slot-meta-item">
+                {{ 'configuration.break' | translate }}: {{ getSlotBreakRange(slot) }}
+              </span>
+              <span class="slot-meta-item">
+                @if (slot.valid_until) {
+                {{ 'configuration.validUntil' | translate: { date: slot.valid_until } }}
+                } @else {
+                {{ 'configuration.noExpiration' | translate }}
+                }
+              </span>
+            </div>
+          </div>
+          <div class="slot-actions">
+            <app-button
+              leftIcon="edit"
+              [size]="ButtonSizeEnum.small"
+              [style]="ButtonStyleEnum.stroke"
+              (buttonClick)="openEditBookingSlot(slot)">
+            </app-button>
+            <app-button
+              leftIcon="trash"
+              [size]="ButtonSizeEnum.small"
+              [style]="ButtonStyleEnum.stroke"
+              [state]="ButtonStateEnum.error"
+              (buttonClick)="confirmDeleteBookingSlot(slot)">
+            </app-button>
+          </div>
         </div>
         }
       </div>
@@ -459,9 +625,22 @@
 
     <app-element-type-modal
       [isOpen]="elementTypeModalOpen()"
+      [showSlotOption]="bookingSlotsEnabled()"
       (closed)="onElementTypeModalClosed()"
       (typeSelected)="onElementTypeSelected($event)">
     </app-element-type-modal>
+
+    @if (bookingSlotsEnabled()) {
+    <app-booking-slot-form-modal
+      [isOpen]="bookingSlotModalOpen()"
+      [editingSlot]="editingBookingSlot()"
+      [initialStartDate]="selectedStartDate()"
+      [initialEndDate]="selectedEndDate()"
+      (closed)="onBookingSlotModalClosed()"
+      (slotSaved)="onBookingSlotSaved()"
+      (slotDeleted)="onBookingSlotSaved()">
+    </app-booking-slot-form-modal>
+    }
 
     <app-reminder-detail-modal
       [isOpen]="reminderDetailModalOpen()"

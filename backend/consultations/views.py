@@ -1921,12 +1921,12 @@ class DashboardPractitionerView(APIView):
 
         ctx = {"request": request}
 
-        from .utils import appointment_active_cutoff
+        from .utils import appointment_active_q
 
         overdue_qs = annotate_unassigned_request(
             consultations_qs.active.exclude(
-                appointments__scheduled_at__gte=appointment_active_cutoff(),
-                appointments__status=AppointmentStatus.scheduled,
+                appointment_active_q("appointments")
+                & Q(appointments__status=AppointmentStatus.scheduled),
             ).distinct()
         ).order_by("-_unassigned_request", "-created_at")
         overdue_total = overdue_qs.count()

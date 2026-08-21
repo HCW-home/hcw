@@ -1,3 +1,6 @@
 <div class="badge" [ngClass]="[type(), size()]">
+  @if (dot()) {
+    <span class="badge-dot"></span>
+  }
   <span class="badge-text"><ng-content></ng-content></span>
 </div>

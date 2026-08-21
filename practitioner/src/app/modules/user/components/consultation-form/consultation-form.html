@@ -38,50 +38,22 @@
 
           <div class="form-group">
             <label class="form-label">{{ 'consultationForm.selectBeneficiary' | translate }}</label>
-            <div class="beneficiary-type-toggle">
-              <button
-                type="button"
-                class="type-btn"
-                [class.active]="!isExternalBeneficiary()"
-                (click)="setBeneficiaryType(false)">
-                {{ 'appointmentForm.existingUser' | translate }}
-              </button>
-              <button
-                type="button"
-                class="type-btn"
-                [class.active]="isExternalBeneficiary()"
-                (click)="setBeneficiaryType(true)">
-                {{ 'appointmentForm.externalGuest' | translate }}
-              </button>
-            </div>
-
-            @if (!isExternalBeneficiary()) {
-            <app-select
+            <app-contact-picker
+              #beneficiaryPickerRef
               [placeholder]="'consultationForm.searchByNameOrEmail' | translate"
-              [options]="[]"
-              [asyncSearch]="beneficiarySearchFn"
-              [initialOption]="beneficiaryInitialOption()"
-              [clearable]="true"
-              [creatable]="true"
-              [createOptionLabel]="'consultationForm.addPatient' | translate"
-              (createItem)="openAddPatientModal($event)"
+              [helperText]="'consultationForm.beneficiaryHelperText' | translate"
+              [meUser]="currentUser()"
+              [initialUser]="selectedBeneficiary()"
+              [backendErrors]="externalBeneficiaryErrors()"
+              (selectionChange)="onBeneficiarySelection($event)"
               formControlName="beneficiary_id">
-            </app-select>
-            <span class="field-helper-text">
-              {{ 'consultationForm.beneficiaryHelperText' | translate }}
-            </span>
-            } @else {
-            <app-external-contact-form
-              #externalBeneficiaryRef
-              [backendErrors]="externalBeneficiaryErrors()">
-            </app-external-contact-form>
-            }
+            </app-contact-picker>
           </div>
 
           <div class="form-group visibility-toggle">
             <app-checkbox
               [label]="'consultationForm.visibleByPatient' | translate"
-              [disabled]="!consultationForm.get('beneficiary_id')?.value"
+              [disabled]="!consultationForm.get('beneficiary_id')?.value && !isExternalBeneficiary()"
               formControlName="visible_by_patient">
             </app-checkbox>
           </div>
@@ -383,18 +355,4 @@
     </app-appointment-form-modal>
   }
 
-  @if (isAddPatientModalOpen()) {
-  <app-modal
-    [isOpen]="isAddPatientModalOpen()"
-    size="large"
-    [showCloseButton]="false"
-    [bodyPadding]="false"
-    (closed)="closeAddPatientModal()">
-    <app-add-edit-patient
-      [initialName]="newPatientInitialName()"
-      (saved)="onPatientCreated($event)"
-      (cancelled)="closeAddPatientModal()">
-    </app-add-edit-patient>
-  </app-modal>
-  }
 </app-page>

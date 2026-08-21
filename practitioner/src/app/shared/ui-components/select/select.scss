@@ -49,16 +49,16 @@
   position: relative;
   border-radius: 12px;
   background: var(--White);
-  border: 2px solid var(--slate-200);
+  border: 1px solid var(--slate-200);
 
 
   &.has-value {
-    border: 2px solid var(--primary-400);
+    border: 1px solid var(--primary-400);
   }
 
   &.invalid {
     color: var(--rose-500);
-    border: 2px solid var(--rose-500);
+    border: 1px solid var(--rose-500);
   }
 
   &.disabled {
@@ -176,13 +176,13 @@
     max-height: 200px;
     position: fixed;
     background: var(--White);
-    border: 2px solid var(--slate-100);
+    border: 1px solid var(--slate-100);
     border-top: none;
     border-radius: 0 0 12px 12px;
     box-shadow: 0px 2px 20px 0 rgba(43, 43, 43, 0.10);
 
     :host(.drop-up) & {
-      border-top: 2px solid var(--slate-100);
+      border-top: 1px solid var(--slate-100);
       border-bottom: none;
       border-radius: 12px 12px 0 0;
       box-shadow: 0px -2px 20px 0 rgba(43, 43, 43, 0.10);

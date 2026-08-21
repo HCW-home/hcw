@@ -1,0 +1,94 @@
+<div class="data-table" [class.dt-responsive]="responsive()">
+  <ng-content select="[slot=tabs]"></ng-content>
+
+  @if (loading()) {
+  <div class="dt-state">
+    <app-loader></app-loader>
+    <span class="dt-state-text">{{ 'dataTable.loading' | translate }}</span>
+  </div>
+  } @else if (error()) {
+  <div class="dt-state dt-state--error">
+    <app-svg
+      src="alert-circle"
+      [svgStyle]="{'width.px': 40, 'height.px': 40, 'color': 'var(--rose-500)'}"></app-svg>
+    <span class="dt-state-text dt-state-text--error">{{ error() }}</span>
+    <app-button
+      [text]="'dataTable.retry' | translate"
+      [size]="ButtonSizeEnum.medium"
+      [style]="ButtonStyleEnum.stroke"
+      (buttonClick)="retry.emit()">
+    </app-button>
+  </div>
+  } @else if (!rows().length) {
+  <ng-content select="[slot=empty]"></ng-content>
+  } @else {
+  <div class="dt-scroll">
+    <div
+      class="dt-inner"
+      [class.dt-railed]="hasRail()"
+      [style.min-width.px]="minWidth()">
+      <div class="dt-head" [style.grid-template-columns]="gridTemplate()">
+        @for (column of columns(); track column.key) {
+        <div
+          class="dt-th"
+          [class.dt-end]="column.align === 'end'"
+          [class.dt-center]="column.align === 'center'">
+          {{ column.label }}
+        </div>
+        }
+      </div>
+
+      @for (row of rows(); track trackRow(row, $index); let rowIndex = $index) {
+      <div
+        class="dt-row"
+        [class.dt-clickable]="clickable()"
+        [class.dt-highlighted]="isHighlighted(row)"
+        [style.grid-template-columns]="gridTemplate()"
+        [attr.role]="clickable() ? 'button' : null"
+        [attr.tabindex]="clickable() ? 0 : null"
+        (click)="onRowClick(row)"
+        (keydown)="onRowKeydown($event, row)">
+        @if (hasRail()) {
+        <span class="dt-rail" [style.background]="accentFor(row)"></span>
+        }
+        @for (column of columns(); track column.key) {
+        <div
+          class="dt-td"
+          [class.dt-end]="column.align === 'end'"
+          [class.dt-center]="column.align === 'center'"
+          [class.dt-hide-mobile]="column.hideOnMobile"
+          [class.dt-wrap]="column.wrap"
+          [class.dt-no-label]="!column.label">
+          <span class="dt-label">{{ column.label }}</span>
+          <div class="dt-value">
+            <ng-container
+              [ngTemplateOutlet]="templateFor(column.key)"
+              [ngTemplateOutletContext]="{ $implicit: row, index: rowIndex }">
+            </ng-container>
+          </div>
+        </div>
+        }
+      </div>
+      }
+    </div>
+  </div>
+
+  @if (summary() || hasMore()) {
+  <div class="dt-foot">
+    @if (summary()) {
+    <span class="dt-summary">{{ summary() }}</span>
+    } @if (hasMore()) {
+    <div class="dt-more">
+      <app-button
+        [text]="'dataTable.viewMore' | translate"
+        [style]="ButtonStyleEnum.stroke"
+        [size]="ButtonSizeEnum.small"
+        [loading]="loadingMore()"
+        [disabled]="loadingMore()"
+        (buttonClick)="loadMore.emit()">
+      </app-button>
+    </div>
+    }
+  </div>
+  } }
+</div>

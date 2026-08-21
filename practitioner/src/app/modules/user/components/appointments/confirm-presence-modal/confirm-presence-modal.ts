@@ -6,7 +6,7 @@ import {
   OnChanges,
   SimpleChanges,
   inject,
-  signal,
+  signal, OnDestroy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
@@ -50,7 +50,7 @@ import { RoutePaths } from '../../../../../core/constants/routes';
     TranslatePipe,
   ],
 })
-export class ConfirmPresenceModal implements OnChanges {
+export class ConfirmPresenceModal implements OnChanges, OnDestroy {
   private destroy$ = new Subject<void>();
   private consultationService = inject(ConsultationService);
   private authService = inject(Auth);

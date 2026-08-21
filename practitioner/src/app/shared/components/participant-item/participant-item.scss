@@ -17,11 +17,6 @@
   background: var(--White);
   border-radius: 8px;
   border: 1px solid var(--slate-100);
-
-  &.pending {
-    border-style: dashed;
-    background: var(--slate-25, #fafafa);
-  }
 }
 
 .participant-row {
@@ -97,8 +92,8 @@
 
   .participant-contact {
     display: block;
-    font-size: 12px;
-    line-height: 16px;
+    font-size: 14px;
+    line-height: 18px;
     color: var(--slate-500);
     white-space: nowrap;
     overflow: hidden;
@@ -116,8 +111,8 @@
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      font-size: 11px;
-      line-height: 16px;
+      font-size: 14px;
+      line-height: 18px;
       color: var(--slate-500);
 
       app-svg {
@@ -170,7 +165,7 @@
 
   .link-text {
     font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-    font-size: 12px;
+    font-size: 14px;
     color: var(--slate-700);
     background: var(--White);
     padding: 12px;
@@ -191,7 +186,7 @@
   background: var(--amber-50, #fffbeb);
   border: 1px solid var(--amber-200, #fde68a);
   border-radius: 8px;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.5;
   color: var(--amber-800, #92400e);
 
@@ -214,7 +209,7 @@
   background: var(--blue-50, #eff6ff);
   border: 1px solid var(--blue-200, #bfdbfe);
   border-radius: 8px;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--blue-800, #1e40af);
 
   app-svg {
@@ -224,5 +219,199 @@
 
   span {
     flex: 1;
+  }
+}
+
+
+// ---------------------------------------------------------------------------
+// Compact layout (appointment cards): one participant per narrow grid cell,
+// with the access link expanding in place instead of opening a modal.
+// ---------------------------------------------------------------------------
+.participant-item.compact {
+  --participant-indent: 38px;
+
+  // Fills the stretched grid cell so neighbouring cards match its height.
+  height: 100%;
+  gap: 0;
+  padding: 9px 11px;
+  border-radius: 10px;
+  border-color: var(--slate-200);
+
+  .participant-row {
+    gap: 10px;
+  }
+
+  .participant-details {
+    .participant-name {
+      font-size: 14px;
+      line-height: 18px;
+    }
+
+    .participant-contact {
+      font-size: 14px;
+      line-height: 18px;
+      color: var(--slate-400);
+    }
+
+    // Tighter than the default layout: the card lives in a narrow grid cell,
+    // so the meta items wrap instead of spreading out.
+    .participant-meta {
+      gap: 2px 10px;
+      margin-top: 2px;
+    }
+  }
+
+  .participant-actions {
+    gap: 6px;
+  }
+}
+
+// The cell is narrower than the stacking threshold below, but the compact card
+// is designed to stay on a single row: the name truncates instead.
+@container (max-width: 400px) {
+  .participant-item.compact {
+    .participant-row {
+      flex-wrap: nowrap;
+    }
+
+    .participant-actions {
+      width: auto;
+      padding-left: 0;
+      justify-content: flex-end;
+      flex-wrap: nowrap;
+    }
+  }
+}
+
+.link-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--amber-200);
+  background: var(--amber-50);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--amber-700);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.16s ease;
+
+  app-svg {
+    display: inline-flex;
+    color: var(--amber-600);
+  }
+
+  &:hover {
+    background: var(--amber-100);
+    border-color: var(--amber-400);
+  }
+
+  &.open {
+    background: var(--amber-100);
+    border-color: var(--amber-300);
+  }
+}
+
+.participant-link-panel {
+  margin-top: 9px;
+  padding-top: 9px;
+  border-top: 1px dashed var(--slate-200);
+
+  .link-panel-loading {
+    font-size: 14px;
+    color: var(--slate-500);
+  }
+
+  .link-panel-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+  }
+
+  .link-panel-url {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 6px 8px;
+    background: var(--slate-50);
+    border: 1px solid var(--slate-100);
+    border-radius: 7px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 14px;
+    color: var(--slate-600);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .link-panel-copy {
+    flex: 0 0 auto;
+    height: 30px;
+    padding: 0 10px;
+    border: 1px solid var(--slate-200);
+    background: var(--White);
+    border-radius: 8px;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--slate-600);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.16s ease;
+
+    &:hover {
+      border-color: var(--primary-500);
+      color: var(--primary-600);
+    }
+
+    &.copied {
+      background: var(--emerald-50);
+      border-color: var(--emerald-200);
+      color: var(--emerald-700);
+    }
+  }
+
+  .link-panel-expiry {
+    margin-top: 7px;
+    font-size: 14px;
+    color: var(--slate-400);
+  }
+}
+
+// Stand-in avatars for contacts that have no account yet: a rounded square
+// rather than the usual circle, tinted like their row in the contact picker.
+.guest-avatar {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  flex: 0 0 auto;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 12px;
+  align-items: center;
+  justify-content: center;
+
+  &.small {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+    border-radius: 9px;
+  }
+
+  // An access link the practitioner hands over.
+  &.link {
+    color: var(--amber-700);
+    background: var(--amber-100);
+  }
+
+  // An invitation the platform sends by e-mail or SMS.
+  &.invited {
+    color: var(--emerald-700);
+    background: var(--emerald-100);
   }
 }

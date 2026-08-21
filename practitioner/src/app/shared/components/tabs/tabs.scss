@@ -1,31 +1,40 @@
 .tabs-container {
   .tabs {
     display: flex;
+    gap: 2px;
+    padding: 0 clamp(8px, 1vw, 12px);
     border-bottom: 1px solid var(--slate-100);
+    overflow-x: auto;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
 
     .tab {
-      flex: 1;
-      padding: 16px 24px;
+      flex: 0 0 auto;
+      padding: 14px 14px 12px;
       background: none;
       border: none;
       cursor: pointer;
       transition: all 0.2s ease;
       position: relative;
 
-      &:hover:not(.active) {
-        background: var(--slate-50);
+      &:hover:not(.active) .tab-label {
+        color: var(--slate-700);
       }
 
       .tab-content {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 8px;
+        gap: 7px;
       }
 
       .tab-label {
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 600;
+        white-space: nowrap;
         color: var(--slate-500);
         transition: color 0.2s ease;
       }
@@ -33,10 +42,11 @@
       .tab-count {
         padding: 2px 8px;
         border-radius: 9999px;
-        font-size: 12px;
-        font-weight: 700;
+        font-size: 11px;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
         background: var(--slate-100);
-        color: var(--slate-600);
+        color: var(--slate-500);
         transition: all 0.2s ease;
 
         &.active {
@@ -52,11 +62,12 @@
 
       .tab-indicator {
         position: absolute;
-        bottom: 0;
+        bottom: -1px;
         left: 0;
         right: 0;
         height: 2px;
         background: var(--primary-500);
+        border-radius: 2px 2px 0 0;
       }
 
       &.active {

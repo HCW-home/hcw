@@ -14,4 +14,6 @@ export type BadgeSize = `${BadgeSizeEnum}`;
 export class Badge {
   type = input<BadgeType>(BadgeTypeEnum.gray);
   size = input<BadgeSize>(BadgeSizeEnum.small);
+  /** Adds a status dot before the label, tinted to match the badge type. */
+  dot = input<boolean>(false);
 }

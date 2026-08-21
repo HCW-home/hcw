@@ -22,6 +22,15 @@
           <span class="filter-count">{{ activeFilterCount() }}</span>
           }
         </button>
+
+        <app-button
+          class="new-consultation-action"
+          [text]="'header.newConsultation' | translate"
+          leftIcon="plus"
+          [size]="ButtonSizeEnum.medium"
+          [style]="ButtonStyleEnum.primary"
+          (buttonClick)="openCreateConsultation()">
+        </app-button>
       </div>
       @if (showFilters()) {
       <div class="filters-wrapper">
@@ -57,7 +66,10 @@
             >{{ 'consultations.group' | translate }}</label
           >
           <div class="filter-select-wrapper">
-            <select class="filter-select" [value]="filterGroup() || ''" (change)="onGroupChange($event)">
+            <select
+              class="filter-select"
+              [value]="filterGroup() || ''"
+              (change)="onGroupChange($event)">
               <option value="">
                 {{ 'consultations.allGroups' | translate }}
               </option>
@@ -75,98 +87,158 @@
       }
     </div>
 
-    <div class="consultations-card">
+    <app-data-table
+      [columns]="columns()"
+      [rows]="consultations()"
+      [minWidth]="1120"
+      [loading]="loading()"
+      [loadingMore]="loadingMore()"
+      [error]="error()"
+      [summary]="summaryText()"
+      [hasMore]="hasMore()"
+      [rowAccent]="rowAccent"
+      [trackBy]="trackConsultation"
+      (rowClick)="viewConsultationDetails($event)"
+      (loadMore)="loadMore()"
+      (retry)="retryLoadConsultations()">
+
       <app-tabs
+        slot="tabs"
         [tabs]="tabItems"
         [activeTab]="activeTab()"
         (tabChange)="setActiveTab($event)">
       </app-tabs>
 
-      <div class="consultations-list">
-        @if (loading()) {
-        <div class="loading-state">
-          <app-loader></app-loader>
-          <app-typography
-            [variant]="TypographyTypeEnum['body-regular']"
-            color="var(--slate-500)">
-            {{ 'consultations.loading' | translate }}
-          </app-typography>
+      <div slot="empty" class="empty-state">
+        @if (activeTab() === 'overdue') {
+        <app-svg
+          src="alert-circle"
+          [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
+        <app-typography
+          [variant]="TypographyTypeEnum['body-l-medium']"
+          color="var(--slate-400)">
+          {{ 'consultations.noOverdue' | translate }}
+        </app-typography>
+        <app-typography
+          [variant]="TypographyTypeEnum['body-regular']"
+          color="var(--slate-500)">
+          @if (searchQuery) { {{ 'consultations.tryDifferentSearch' | translate
+          }} } @else { {{ 'consultations.overdueWillAppear' | translate }} }
+        </app-typography>
+        } @else {
+        <app-svg
+          src="calendar"
+          [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
+        <app-typography
+          [variant]="TypographyTypeEnum['body-l-medium']"
+          color="var(--slate-400)">
+          {{ 'consultations.noConsultations' | translate }}
+        </app-typography>
+        <app-typography
+          [variant]="TypographyTypeEnum['body-regular']"
+          color="var(--slate-500)">
+          @if (searchQuery) { {{ 'consultations.tryDifferentSearch' | translate
+          }} } @else if (activeTab() === 'active') { {{
+          'consultations.activeWillAppear' | translate }} } @else { {{
+          'consultations.pastWillAppear' | translate }} }
+        </app-typography>
+        }
+      </div>
+
+      <ng-template appDataTableCell="title" let-row>
+        <div class="cell-title">
+          <span class="title-text">
+            {{ row.title || ('consultationRowItem.untitledConsultation' |
+            translate) }}
+          </span>
+          <span class="title-ref">{{ formatConsultationId(row.id) }}</span>
         </div>
-        } @else if (error()) {
-        <div class="error-state">
-          <app-svg
-            src="alert-circle"
-            [svgStyle]="{'width.px': 48, 'height.px': 48, 'color': 'var(--rose-500)'}"></app-svg>
-          <app-typography
-            [variant]="TypographyTypeEnum['body-l-medium']"
-            color="var(--rose-500)">
-            {{ error() }}
-          </app-typography>
-          <app-button
-            [text]="'consultations.retry' | translate"
-            [size]="ButtonSizeEnum.medium"
-            [style]="ButtonStyleEnum.stroke"
-            (buttonClick)="retryLoadConsultations()">
-          </app-button>
-        </div>
-        } @else if (consultations().length === 0) {
-        <div class="empty-state">
-          @if (activeTab() === 'overdue') {
-          <app-svg
-            src="alert-circle"
-            [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
-          <app-typography
-            [variant]="TypographyTypeEnum['body-l-medium']"
-            color="var(--slate-400)">
-            {{ 'consultations.noOverdue' | translate }}
-          </app-typography>
-          <app-typography
-            [variant]="TypographyTypeEnum['body-regular']"
-            color="var(--slate-500)">
-            @if (searchQuery) { {{ 'consultations.tryDifferentSearch' |
-            translate }} } @else { {{ 'consultations.overdueWillAppear' |
-            translate }} }
-          </app-typography>
-          } @else {
-          <app-svg
-            src="calendar"
-            [svgStyle]="{'width.px': 48, 'height.px': 48, 'opacity': 0.3}"></app-svg>
-          <app-typography
-            [variant]="TypographyTypeEnum['body-l-medium']"
-            color="var(--slate-400)">
-            {{ 'consultations.noConsultations' | translate }}
-          </app-typography>
-          <app-typography
-            [variant]="TypographyTypeEnum['body-regular']"
-            color="var(--slate-500)">
-            @if (searchQuery) { {{ 'consultations.tryDifferentSearch' |
-            translate }} } @else if (activeTab() === 'active') { {{
-            'consultations.activeWillAppear' | translate }} } @else { {{
-            'consultations.pastWillAppear' | translate }} }
-          </app-typography>
+        @if (row.unread_count || !row.owned_by || row.temporary) {
+        <div class="title-flags">
+          @if (row.unread_count) {
+          <span class="flag flag--unread">
+            <span class="flag-dot"></span>
+            {{ row.unread_count }} {{ (row.unread_count === 1 ?
+            'consultationRowItem.unreadMessage' :
+            'consultationRowItem.unreadMessages') | translate }}
+          </span>
+          } @if (!row.owned_by) {
+          <span class="flag flag--warning">
+            {{ 'consultationRowItem.noOwner' | translate }}
+          </span>
+          } @if (row.temporary) {
+          <span class="flag flag--muted">
+            {{ 'consultationRowItem.temporary' | translate }}
+          </span>
           }
         </div>
-        } @else { @for (consultation of consultations(); track consultation.id)
-        {
-        <app-consultation-row-item
-          [consultation]="consultation"
-          [showClosedDate]="activeTab() === 'past'"
-          [showDescription]="activeTab() === 'past'"
-          (rowClick)="viewConsultationDetails($event)">
-        </app-consultation-row-item>
-        } @if (hasMore()) {
-        <div class="load-more-container">
-          <app-button
-            [text]="'consultations.viewMore' | translate"
-            [style]="ButtonStyleEnum.text"
-            [size]="ButtonSizeEnum.medium"
-            [loading]="loadingMore()"
-            [disabled]="loadingMore()"
-            (buttonClick)="loadMore()">
-          </app-button>
+        }
+      </ng-template>
+
+      <ng-template appDataTableCell="patient" let-row>
+        @if (row.beneficiary) {
+        <div class="cell-user">
+          <app-user-avatar
+            size="sm"
+            [firstName]="row.beneficiary.first_name"
+            [lastName]="row.beneficiary.last_name"
+            [email]="row.beneficiary.email"
+            [picture]="row.beneficiary.picture || ''">
+          </app-user-avatar>
+          <span class="cell-user-name">{{ getBeneficiaryName(row) }}</span>
         </div>
-        } }
-      </div>
-    </div>
+        } @else {
+        <span class="cell-muted">-</span>
+        }
+      </ng-template>
+
+      <ng-template appDataTableCell="createdBy" let-row>
+        {{ getCreatedByName(row) }}
+      </ng-template>
+
+      <ng-template appDataTableCell="practitioner" let-row>
+        @if (row.owned_by) {
+        <span>{{ getOwnerName(row) }}</span>
+        } @else {
+        <span class="cell-muted"
+          >{{ 'consultations.unassigned' | translate }}</span
+        >
+        }
+      </ng-template>
+
+      <ng-template appDataTableCell="group" let-row>
+        @if (row.group) {
+        <span>{{ row.group.name }}</span>
+        } @else {
+        <span class="cell-muted">{{ 'consultations.noGroup' | translate }}</span>
+        }
+      </ng-template>
+
+      <ng-template appDataTableCell="created" let-row>
+        <span class="cell-date"
+          >{{ row.created_at | localDate:'d MMM y, HH:mm' }}</span
+        >
+      </ng-template>
+
+      <ng-template appDataTableCell="closed" let-row>
+        <span class="cell-date"
+          >{{ (row.closed_at | localDate:'d MMM y, HH:mm') || '-' }}</span
+        >
+      </ng-template>
+
+      <ng-template appDataTableCell="chevron">
+        <app-svg
+          src="chevron-right"
+          [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--slate-300)'}"></app-svg>
+      </ng-template>
+    </app-data-table>
   </div>
+
+  @if (showCreateConsultationModal()) {
+  <app-create-consultation-modal
+    [isOpen]="showCreateConsultationModal()"
+    (consultationCreated)="onConsultationCreated()"
+    (closed)="closeCreateConsultation()">
+  </app-create-consultation-modal>
+  }
 </app-page>

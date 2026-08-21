@@ -263,6 +263,9 @@ const ICON_MAP: Record<string, string> = {
   'captions': 'lucideClosedCaption',
   'captions.svg': 'lucideClosedCaption',
   'svg/captions.svg': 'lucideClosedCaption',
+  more: 'heroEllipsisHorizontal',
+  'more.svg': 'heroEllipsisHorizontal',
+  'svg/more.svg': 'heroEllipsisHorizontal',
 };
 
 @Component({

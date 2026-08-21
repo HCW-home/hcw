@@ -8,13 +8,13 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
 })
 export class UserAvatar {
-  @Input() firstName: string = '';
-  @Input() lastName: string = '';
-  @Input() email: string = '';
-  @Input() picture: string = '';
+  @Input() firstName = '';
+  @Input() lastName = '';
+  @Input() email = '';
+  @Input() picture = '';
   @Input() isOnline: boolean | undefined = undefined;
   @Input() size: 'sm' | 'md' | 'lg' = 'md';
-  @Input() isCurrentUser: boolean = false;
+  @Input() isCurrentUser = false;
 
   get initials(): string {
     const first = this.firstName?.charAt(0) || '';

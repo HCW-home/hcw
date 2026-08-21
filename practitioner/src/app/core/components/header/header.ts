@@ -334,7 +334,6 @@ export class Header implements OnInit, OnDestroy {
     } else if (url.includes('/consultations')) {
       this.pageTitle.set(this.t.instant('header.consultationsTitle'));
       this.pageSubtitle.set(this.t.instant('header.consultationsSubtitle'));
-      this.showNewConsultationButton.set(true);
     } else if (url.match(/\/patients\/\d/)) {
       this.pageTitle.set(this.t.instant('header.patientDetailTitle'));
       this.pageSubtitle.set('');
@@ -345,9 +344,6 @@ export class Header implements OnInit, OnDestroy {
     } else if (url.includes('/appointments')) {
       this.pageTitle.set(this.t.instant('header.appointmentsTitle'));
       this.pageSubtitle.set(this.t.instant('header.appointmentsSubtitle'));
-    } else if (url.includes('/availability')) {
-      this.pageTitle.set(this.t.instant('header.availabilityTitle'));
-      this.pageSubtitle.set(this.t.instant('header.availabilitySubtitle'));
     } else if (url.includes('/profile')) {
       this.pageTitle.set(this.t.instant('header.profileTitle'));
       this.pageSubtitle.set(this.t.instant('header.profileSubtitle'));

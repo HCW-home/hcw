@@ -5,6 +5,20 @@
   align-items: center;
   justify-content: center;
 
+  .badge-dot {
+    width: 5px;
+    height: 5px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  // The dot has no text node of its own, so it inherits the badge colour and
+  // each type only has to set it once, next to the label colour.
+  &:has(.badge-dot) {
+    gap: 5px;
+  }
+
   &.small {
     padding: 4px 10px;
     border-radius: 12px;
@@ -33,12 +47,20 @@
     .badge-text {
       color: var(--emerald-600);
     }
+
+    .badge-dot {
+      color: var(--emerald-600);
+    }
   }
 
   &.blue {
     background: var(--primary-100);
 
     .badge-text {
+      color: var(--primary-700);
+    }
+
+    .badge-dot {
       color: var(--primary-700);
     }
   }
@@ -49,12 +71,20 @@
     .badge-text {
       color: var(--rose-600);
     }
+
+    .badge-dot {
+      color: var(--rose-600);
+    }
   }
 
   &.orange {
     background: var(--amber-100);
 
     .badge-text {
+      color: var(--amber-700);
+    }
+
+    .badge-dot {
       color: var(--amber-700);
     }
   }
@@ -65,12 +95,20 @@
     .badge-text {
       color: var(--purple-700);
     }
+
+    .badge-dot {
+      color: var(--purple-700);
+    }
   }
 
   &.gray {
     background: var(--slate-100);
 
     .badge-text {
+      color: var(--slate-700);
+    }
+
+    .badge-dot {
       color: var(--slate-700);
     }
   }

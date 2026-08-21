@@ -28,7 +28,7 @@ import {
   ButtonSizeEnum,
   ButtonStateEnum,
 } from '../../constants/button';
-import { BadgeTypeEnum } from '../../constants/badge';
+import { BadgeTypeEnum, BadgeSizeEnum } from '../../constants/badge';
 import { getParticipantBadgeType } from '../../tools/helper';
 
 @Component({
@@ -57,6 +57,16 @@ export class ParticipantItem {
   @Input() isPending = false;
   @Input() currentUser: any = null;
   @Input() appointmentCancelled = false;
+  /**
+   * Dense card layout used inside the appointment cards: single detail line,
+   * small avatar, and the access link expanded inline instead of in a modal.
+   */
+  @Input() compact = false;
+  /**
+   * Access link affordance. Hidden where the link is not actionable yet, such
+   * as the appointment form, whose participants are still being edited.
+   */
+  @Input() showAccessLink = true;
 
   @Output() remove = new EventEmitter<void>();
 
@@ -64,7 +74,53 @@ export class ParticipantItem {
   protected readonly ButtonSizeEnum = ButtonSizeEnum;
   protected readonly ButtonStateEnum = ButtonStateEnum;
   protected readonly BadgeTypeEnum = BadgeTypeEnum;
+  protected readonly BadgeSizeEnum = BadgeSizeEnum;
   protected readonly getParticipantBadgeType = getParticipantBadgeType;
+
+  /**
+   * A contact invited through a link the practitioner hands over: there is no
+   * address to display and nothing to wait for, so it reads like the contact
+   * picker's card rather than a pending invitation.
+   */
+  get isLinkOnlyPending(): boolean {
+    const pending = this.pendingParticipant;
+    return (
+      !!pending &&
+      !pending.user_id &&
+      pending.communication_method === 'manual'
+    );
+  }
+
+  /**
+   * A pending contact who will receive an access link by e-mail or SMS: same
+   * green convention as the "Invite …" row of the contact picker.
+   */
+  get isInvitedPending(): boolean {
+    const pending = this.pendingParticipant;
+    return (
+      !!pending &&
+      !pending.user_id &&
+      !!pending.communication_method &&
+      pending.communication_method !== 'manual'
+    );
+  }
+
+  /** Either flavour of contact that has no account yet. */
+  get isGuestPending(): boolean {
+    return this.isLinkOnlyPending || this.isInvitedPending;
+  }
+
+  /** No name and no address: the link glyph stands in for the initials. */
+  get showLinkAvatar(): boolean {
+    const pending = this.pendingParticipant;
+    if (!this.isLinkOnlyPending || !pending) return false;
+    return (
+      !pending.first_name &&
+      !pending.last_name &&
+      !pending.email &&
+      !pending.mobile_phone_number
+    );
+  }
 
   getInitials(): string {
     if (this.participant?.user) {
@@ -116,17 +172,38 @@ export class ParticipantItem {
 
       const name =
         `${this.pendingParticipant.first_name || ''} ${this.pendingParticipant.last_name || ''}`.trim();
-      return (
-        name ||
+      if (name) return name;
+      // Whatever the link is sent to identifies the contact: address or number.
+      const address =
         this.pendingParticipant.email ||
-        this.t.instant('participantItem.participant')
-      );
+        this.pendingParticipant.mobile_phone_number;
+      if (address) return address;
+      if (this.isLinkOnlyPending) {
+        return this.t.instant('contactPicker.guestWithoutContact');
+      }
+      return this.t.instant('participantItem.participant');
     }
 
     return this.t.instant('participantItem.unknown');
   }
 
   getContact(): string {
+    if (this.isLinkOnlyPending) {
+      return this.t.instant('participantItem.linkManual');
+    }
+
+    if (this.isInvitedPending) {
+      const address =
+        this.pendingParticipant?.email ||
+        this.pendingParticipant?.mobile_phone_number ||
+        '';
+      // Without a name the address is already the title: no point repeating it.
+      if (address && address !== this.getDisplayName()) {
+        return `${address} · ${this.t.instant(this.deliveryKey('contactPicker'))}`;
+      }
+      return this.t.instant(this.deliveryKey('participantItem'));
+    }
+
     let contact = '';
 
     if (this.participant?.user) {
@@ -147,6 +224,17 @@ export class ParticipantItem {
     }
 
     return contact;
+  }
+
+  /**
+   * How the access link reaches the contact. The contactPicker wording runs
+   * inline after the address, the participantItem one stands on its own.
+   */
+  private deliveryKey(namespace: 'contactPicker' | 'participantItem'): string {
+    const method = this.pendingParticipant?.communication_method;
+    if (method === 'email') return `${namespace}.linkSentByEmail`;
+    if (method === 'whatsapp') return `${namespace}.linkSentByWhatsApp`;
+    return `${namespace}.linkSentBySms`;
   }
 
   isOnline(): boolean {
@@ -216,12 +304,16 @@ export class ParticipantItem {
   }
 
   showLinkModal = signal(false);
+  showLinkPanel = signal(false);
   linkCopied = signal(false);
   accessUrl = signal<string>('');
   expiresAt = signal<string | null>(null);
   loadingAccessUrl = signal(false);
 
   hasAccessUrl(): boolean {
+    if (!this.showAccessLink) {
+      return false;
+    }
     // Don't show the access link for cancelled participants or cancelled appointments
     if (this.appointmentCancelled || this.participant?.status === 'cancelled') {
       return false;
@@ -236,32 +328,49 @@ export class ParticipantItem {
   openLinkModal(): void {
     this.linkCopied.set(false);
     this.showLinkModal.set(true);
-
-    // Charger l'access_url depuis l'API
-    if (this.participant?.id && !this.accessUrl()) {
-      this.loadingAccessUrl.set(true);
-      this.consultationService
-        .getParticipantAccessUrl(this.participant.id)
-        .subscribe({
-          next: (response) => {
-            this.accessUrl.set(response.access_url);
-            this.expiresAt.set(response.expires_at);
-            this.loadingAccessUrl.set(false);
-          },
-          error: (error) => {
-            this.loadingAccessUrl.set(false);
-            this.toasterService.show(
-              'error',
-              this.t.instant('participantItem.errorLoadingLink')
-            );
-            this.closeLinkModal();
-          },
-        });
-    }
+    this.loadAccessUrl(() => this.closeLinkModal());
   }
 
   closeLinkModal(): void {
     this.showLinkModal.set(false);
+  }
+
+  /** Compact layout: the link expands under the participant instead. */
+  toggleLinkPanel(): void {
+    if (this.showLinkPanel()) {
+      this.showLinkPanel.set(false);
+      return;
+    }
+    this.linkCopied.set(false);
+    this.showLinkPanel.set(true);
+    this.loadAccessUrl(() => this.showLinkPanel.set(false));
+  }
+
+  /**
+   * The endpoint both returns and renews the token, so it is only called once
+   * per participant: the URL is kept until the component is destroyed.
+   */
+  private loadAccessUrl(onError: () => void): void {
+    if (!this.participant?.id || this.accessUrl()) return;
+
+    this.loadingAccessUrl.set(true);
+    this.consultationService
+      .getParticipantAccessUrl(this.participant.id)
+      .subscribe({
+        next: (response) => {
+          this.accessUrl.set(response.access_url);
+          this.expiresAt.set(response.expires_at);
+          this.loadingAccessUrl.set(false);
+        },
+        error: () => {
+          this.loadingAccessUrl.set(false);
+          this.toasterService.show(
+            'error',
+            this.t.instant('participantItem.errorLoadingLink')
+          );
+          onError();
+        },
+      });
   }
 
   copyLink(): void {

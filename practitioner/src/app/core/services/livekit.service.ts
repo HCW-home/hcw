@@ -286,7 +286,7 @@ export class LiveKitService implements OnDestroy {
     }
   }
 
-  async enableCamera(enable: boolean = true): Promise<void> {
+  async enableCamera(enable = true): Promise<void> {
     if (!this.room?.localParticipant) {
       this.errorSubject.next('Not connected to room');
       return;
@@ -301,7 +301,7 @@ export class LiveKitService implements OnDestroy {
     }
   }
 
-  async enableMicrophone(enable: boolean = true): Promise<void> {
+  async enableMicrophone(enable = true): Promise<void> {
     if (!this.room?.localParticipant) {
       this.errorSubject.next('Not connected to room');
       return;
