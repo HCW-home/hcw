@@ -22,6 +22,44 @@ services:
         condition: service_healthy
     restart: "no"
 
+  provision:
+    image: docker.io/iabsis/hcw6-backend:${TAG:-latest}
+    command: python manage.py bootstrap_tenant
+    environment:
+      - DJANGOSECRET_KEY=abcd
+      - REDIS_HOST=redis
+      - DATABASE_HOST=db
+      - DATABASE_USER=hcw
+      - DATABASE_PASSWORD=hcw
+      # Tenant and public URLs
+      - TENANT_SCHEMA=${TENANT_SCHEMA:-default}
+      - TENANT_NAME=${TENANT_NAME:-HCW@Home}
+      - TENANT_PRIMARY_DOMAIN=${TENANT_PRIMARY_DOMAIN:-localhost}
+      - TENANT_PATIENT_DOMAIN=${TENANT_PATIENT_DOMAIN:-}
+      - TENANT_ADMIN_DOMAIN=${TENANT_ADMIN_DOMAIN:-}
+      - PRACTITIONER_BASE_URL=${PRACTITIONER_BASE_URL:-http://localhost:8080}
+      - PATIENT_BASE_URL=${PATIENT_BASE_URL:-http://localhost:8081}
+      # Superuser
+      - SUPERUSER_EMAIL=${SUPERUSER_EMAIL:-admin@example.com}
+      - SUPERUSER_PASSWORD=${SUPERUSER_PASSWORD:-admin}
+      # LiveKit media server, skipped when the three values are empty
+      - LIVEKIT_URL=${LIVEKIT_URL:-}
+      - LIVEKIT_API_KEY=${LIVEKIT_API_KEY:-}
+      - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET:-}
+      # Sender of the email messaging provider
+      - MESSAGING_FROM_EMAIL=${MESSAGING_FROM_EMAIL:-}
+      # Keycloak / OpenID Connect, skipped when client id or server url is empty
+      - SSO_PROVIDER_ID=${SSO_PROVIDER_ID:-openid}
+      - SSO_NAME=${SSO_NAME:-Keycloak}
+      - SSO_CLIENT_ID=${SSO_CLIENT_ID:-}
+      - SSO_CLIENT_SECRET=${SSO_CLIENT_SECRET:-}
+      - SSO_SERVER_URL=${SSO_SERVER_URL:-}
+      - SSO_DISABLE_PASSWORD_LOGIN=${SSO_DISABLE_PASSWORD_LOGIN:-false}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
+
   api:
     build:
       context: backend
@@ -138,4 +176,3 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
-
