@@ -85,7 +85,7 @@ This must be the **publicly reachable** URL of this backend. It is used for two 
 !!! warning "Set it before submitting templates"
     The URL is baked into every approved template. Changing it later flags all validations as
     **Content changed**, and they must be submitted again. The same applies to the **site name**,
-    which signs the templates that end on a variable.
+    which signs every template.
 
 ### 2. Create the provider
 
@@ -119,10 +119,10 @@ Use the **Test connection** action to verify the credentials.
     coming back rejected hours later. Adjust the wording under *Messaging > Template overrides*
     and submit again.
 
-    Two cases are handled automatically and need no rewording:
+    Two things are handled automatically and need no rewording:
 
-    - a body **ending** on a variable is signed with the site name, since Meta requires static
-      text last;
+    - every body is **signed with the site name**, so all WhatsApp messages close the same way.
+      This also satisfies Meta, which refuses a body ending on a variable;
     - two variables separated only by a space are **merged into a single one** (`{{1}}` carrying
       both the first and last name, for instance).
 

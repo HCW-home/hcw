@@ -229,15 +229,16 @@ class MessageAdmin(ModelAdmin):
     @display(
         description=_("Status"),
         label={
-            MessageStatus.failed: "danger",
-            MessageStatus.sent: "info",
             MessageStatus.pending: "dark",
+            MessageStatus.sending: "warning",
+            MessageStatus.sent: "info",
             MessageStatus.delivered: "info",
             MessageStatus.read: "success",
+            MessageStatus.failed: "danger",
         },
     )
     def display_status(self, instance):
-        return instance.status
+        return instance.status, instance.get_status_display()
 
     @display(
         description=_("Rendering is valid"),
@@ -415,7 +416,6 @@ class TemplateValidationAdmin(ModelAdmin):
         "messaging_provider",
         "display_status",
         "display_rejection_reason",
-        "display_is_outdated",
         "external_template_id",
         "created_at",
         "validated_at",
@@ -485,20 +485,27 @@ class TemplateValidationAdmin(ModelAdmin):
     ]
 
     actions = ["validate_templates", "check_validation_status"]
-    actions_list = ["generate_whatsapp_validations"]
+    actions_list = ["generate_whatsapp_validations", "check_pending_validations"]
 
     @display(
         description=_("Status"),
         label={
+            # Nothing submitted yet, nothing to report: neutral.
             TemplateValidationStatus.created: "dark",
-            TemplateValidationStatus.pending: "warning",
+            TemplateValidationStatus.unused: "dark",
+            # Under review at Meta, only waiting is needed.
+            TemplateValidationStatus.pending: "info",
             TemplateValidationStatus.validated: "success",
-            TemplateValidationStatus.rejected: "danger",
+            # Needs a resubmission to be usable again.
             TemplateValidationStatus.outdated: "warning",
+            TemplateValidationStatus.rejected: "danger",
+            TemplateValidationStatus.failed: "danger",
         },
     )
     def display_status(self, instance):
-        return instance.get_status_display()
+        # Unfold colours from the first item and displays the second, so the
+        # badge stays translated while still matching the raw status.
+        return instance.status, instance.get_status_display()
 
     @display(
         description=_("Content changed"),
@@ -597,3 +604,40 @@ class TemplateValidationAdmin(ModelAdmin):
 
     def has_generate_whatsapp_validations_permission(self, request):
         return request.user.has_perm("messaging.add_templatevalidation")
+
+    @action(
+        description=_("Check pending validations"),
+        url_path="check-pending-validations",
+        permissions=["check_pending_validations"],
+    )
+    def check_pending_validations(self, request):
+        """Refresh every template still awaiting the provider's approval.
+
+        Approval is asynchronous and can take hours, so the whole pending batch
+        is worth polling at once rather than selecting rows by hand.
+        """
+        pending = self.get_queryset(request).filter(
+            status=TemplateValidationStatus.pending,
+        ).exclude(external_template_id="")
+
+        count = pending.count()
+        if not count:
+            messages.warning(request, _("No template is awaiting validation."))
+            return redirect(
+                reverse_lazy("admin:messaging_templatevalidation_changelist")
+            )
+
+        for template_validation in pending:
+            template_messaging_provider_task.delay(
+                template_validation.pk, "check_template_validation"
+            )
+
+        messages.success(
+            request,
+            _("Checking status for %(count)d pending template(s).")
+            % {"count": count},
+        )
+        return redirect(reverse_lazy("admin:messaging_templatevalidation_changelist"))
+
+    def has_check_pending_validations_permission(self, request):
+        return request.user.has_perm("messaging.change_templatevalidation")

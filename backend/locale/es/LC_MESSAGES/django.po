@@ -1887,6 +1887,18 @@ msgstr "Comprobar el estado de validación"
 msgid "Checking status for %(count)d template(s)."
 msgstr "Comprobando el estado de la(s) plantilla(s) %(count)d."
 
+#: messaging/admin.py
+msgid "Check pending validations"
+msgstr "Comprobar las validaciones pendientes"
+
+#: messaging/admin.py
+msgid "No template is awaiting validation."
+msgstr "Ninguna plantilla está pendiente de validación."
+
+#: messaging/admin.py
+msgid "Checking status for %(count)d pending template(s)."
+msgstr "Comprobando el estado de %(count)d plantilla(s) pendiente(s)."
+
 #: messaging/admin.py:543
 msgid "Generate WhatsApp validations"
 msgstr "Generar validaciones de WhatsApp"

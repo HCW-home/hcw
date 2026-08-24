@@ -1905,6 +1905,18 @@ msgstr "Vérifier les états de validation"
 msgid "Checking status for %(count)d template(s)."
 msgstr "Vérification de l'état du ou des modèles %(count)d."
 
+#: messaging/admin.py
+msgid "Check pending validations"
+msgstr "Vérifier les validations en attente"
+
+#: messaging/admin.py
+msgid "No template is awaiting validation."
+msgstr "Aucun template n'est en attente de validation."
+
+#: messaging/admin.py
+msgid "Checking status for %(count)d pending template(s)."
+msgstr "Vérification de l'état de %(count)d template(s) en attente."
+
 #: messaging/admin.py:543
 msgid "Generate WhatsApp validations"
 msgstr "Générer les validations Whatsapp"
@@ -2078,7 +2090,7 @@ msgstr "Syntaxe de modèle Jinja2 invalide : {}"
 
 #: messaging/models.py:556
 msgid "Created"
-msgstr "Créé le"
+msgstr "Créé"
 
 #: messaging/models.py:557
 msgid "Pending"

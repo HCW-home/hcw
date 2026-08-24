@@ -1851,6 +1851,18 @@ msgstr "Перевірити статус перевірки"
 msgid "Checking status for %(count)d template(s)."
 msgstr "Перевірка статусу для %(count)d шаблону(ів)."
 
+#: messaging/admin.py
+msgid "Check pending validations"
+msgstr "Перевірити валідації, що очікують"
+
+#: messaging/admin.py
+msgid "No template is awaiting validation."
+msgstr "Жоден шаблон не очікує на валідацію."
+
+#: messaging/admin.py
+msgid "Checking status for %(count)d pending template(s)."
+msgstr "Перевірка стану %(count)d шаблонів, що очікують."
+
 #: messaging/admin.py:543
 msgid "Generate WhatsApp validations"
 msgstr "Згенерувати перевірки WhatsApp"

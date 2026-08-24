@@ -192,7 +192,7 @@ def build_content(
     """
     body_source = get_localized(template, "template_content", language_code)
     body, fragments, _ = to_placeholders(body_source)
-    body = close_trailing_variable(body)
+    body = append_signature(body)
 
     if with_action:
         fragments.append(LINK_TOKEN_EXPRESSION)
@@ -200,24 +200,21 @@ def build_content(
     return body, fragments
 
 
-def close_trailing_variable(body: str) -> str:
-    """Close a body that would otherwise end on a variable, which Meta rejects.
+def append_signature(body: str) -> str:
+    """Sign every WhatsApp body with the site name.
 
-    Several notifications legitimately end on their payload (a code, a reminder
-    text, an appointment time). Rather than reword every template in every
-    language, sign the message: the site name is resolved here, at submission
-    time, so what Meta approves is static text.
+    Consistency is the point: the recipient sees the same closing line whatever
+    the notification. It also happens to fix a hard Meta constraint, since
+    several notifications legitimately end on their payload (a code, a reminder
+    text, an appointment time) and a body may not end on a variable. The site
+    name is resolved here, at submission time, so what Meta approves is static
+    text.
     """
     from constance import config
 
-    if not _TRAILING_PLACEHOLDER_RE.search(body.strip()):
-        return body
-
     site_name = str(config.site_name or "").strip()
     if not site_name:
-        logger.warning(
-            "site_name is empty, cannot close a template body ending on a variable"
-        )
+        logger.warning("site_name is empty, WhatsApp templates cannot be signed")
         return body
 
     return f"{body.rstrip()}\n\n\u2014 {site_name}"

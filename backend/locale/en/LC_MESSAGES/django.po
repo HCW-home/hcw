@@ -1693,6 +1693,18 @@ msgstr ""
 msgid "Checking status for %(count)d template(s)."
 msgstr ""
 
+#: messaging/admin.py
+msgid "Check pending validations"
+msgstr ""
+
+#: messaging/admin.py
+msgid "No template is awaiting validation."
+msgstr ""
+
+#: messaging/admin.py
+msgid "Checking status for %(count)d pending template(s)."
+msgstr ""
+
 #: messaging/admin.py:543
 msgid "Generate WhatsApp validations"
 msgstr ""

@@ -1804,6 +1804,18 @@ msgstr "التحقق من حالة المصادقة"
 msgid "Checking status for %(count)d template(s)."
 msgstr "جارٍ التحقق من حالة %(count)d قالب."
 
+#: messaging/admin.py
+msgid "Check pending validations"
+msgstr "التحقق من عمليات التحقق المعلّقة"
+
+#: messaging/admin.py
+msgid "No template is awaiting validation."
+msgstr "لا يوجد قالب في انتظار التحقق."
+
+#: messaging/admin.py
+msgid "Checking status for %(count)d pending template(s)."
+msgstr "جارٍ التحقق من حالة %(count)d قالب معلّق."
+
 #: messaging/admin.py:543
 msgid "Generate WhatsApp validations"
 msgstr "إنشاء عمليات تحقق واتساب"

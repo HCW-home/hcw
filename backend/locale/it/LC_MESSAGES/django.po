@@ -1896,6 +1896,18 @@ msgstr "Verifica lo stato di convalida"
 msgid "Checking status for %(count)d template(s)."
 msgstr "Verifica dello stato del/dei modello/i %(count)d."
 
+#: messaging/admin.py
+msgid "Check pending validations"
+msgstr "Verifica le validazioni in sospeso"
+
+#: messaging/admin.py
+msgid "No template is awaiting validation."
+msgstr "Nessun template è in attesa di validazione."
+
+#: messaging/admin.py
+msgid "Checking status for %(count)d pending template(s)."
+msgstr "Verifica dello stato di %(count)d template in sospeso."
+
 #: messaging/admin.py:543
 msgid "Generate WhatsApp validations"
 msgstr "Genera convalide WhatsApp"
