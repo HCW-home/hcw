@@ -32,12 +32,6 @@
     </div>
 
     @if (isOpen()) {
-    <button
-      type="button"
-      class="dropdown-backdrop"
-      tabindex="-1"
-      [attr.aria-label]="'common.close' | translate"
-      (click)="closeDropdown()"></button>
     <div
       class="dropdown"
       [style.top]="dropdownStyle().top"

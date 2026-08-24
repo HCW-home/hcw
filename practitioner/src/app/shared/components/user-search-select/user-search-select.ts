@@ -74,6 +74,7 @@ export class UserSearchSelect
   private searchSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
   private userService = inject(UserService);
+  private hostRef = inject<ElementRef<HTMLElement>>(ElementRef);
 
   onChange: (value: number | null) => void = () => {};
   onTouched: () => void = () => {};
@@ -93,9 +94,15 @@ export class UserSearchSelect
       .subscribe(query => {
         this.performSearch(query);
       });
+
+    // Closing on an outside click is done from the document rather than with an
+    // overlay: an overlay covers the search field too, so it would steal the
+    // first click and prevent placing the caret or selecting the typed text.
+    document.addEventListener('mousedown', this.onDocumentMouseDown, true);
   }
 
   ngOnDestroy(): void {
+    document.removeEventListener('mousedown', this.onDocumentMouseDown, true);
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -214,6 +221,16 @@ export class UserSearchSelect
   closeDropdown(): void {
     this.showDropdown.set(false);
   }
+
+  /** Close the result list when the pointer goes down anywhere else. */
+  private onDocumentMouseDown = (event: MouseEvent): void => {
+    if (!this.showDropdown()) return;
+    const target = event.target as Node | null;
+    // The dropdown is rendered inside the host, so a single containment test
+    // covers both the field and the result rows.
+    if (target && this.hostRef.nativeElement.contains(target)) return;
+    this.closeDropdown();
+  };
 
   getUserDisplayName(user: IUser): string {
     const name = `${user.first_name || ''} ${user.last_name || ''}`.trim();

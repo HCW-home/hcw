@@ -84,19 +84,6 @@
   }
 }
 
-.dropdown-backdrop {
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border: none;
-  padding: 0;
-  z-index: 9999;
-  cursor: default;
-  position: fixed;
-  background: transparent;
-}
-
 .dropdown {
   z-index: 10000;
   position: fixed;

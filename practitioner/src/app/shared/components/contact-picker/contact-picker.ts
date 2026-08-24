@@ -146,6 +146,7 @@ export class ContactPicker
   private destroy$ = new Subject<void>();
   private searchSubject = new Subject<string>();
   private fb = inject(FormBuilder);
+  private hostRef = inject<ElementRef<HTMLElement>>(ElementRef);
   private authService = inject(Auth);
   private userService = inject(UserService);
   private t = inject(TranslationService);
@@ -211,6 +212,10 @@ export class ContactPicker
     // follow the field when any ancestor scrolls.
     window.addEventListener('scroll', this.updateDropdownPosition, true);
     window.addEventListener('resize', this.updateDropdownPosition);
+    // Closing on an outside click is done from the document rather than with an
+    // overlay: an overlay covers the search field too, so it would steal the
+    // first click and prevent placing the caret or selecting the typed text.
+    document.addEventListener('mousedown', this.onDocumentMouseDown, true);
   }
 
   ngAfterViewInit(): void {
@@ -228,6 +233,7 @@ export class ContactPicker
   ngOnDestroy(): void {
     window.removeEventListener('scroll', this.updateDropdownPosition, true);
     window.removeEventListener('resize', this.updateDropdownPosition);
+    document.removeEventListener('mousedown', this.onDocumentMouseDown, true);
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -517,6 +523,16 @@ export class ContactPicker
     this.isOpen.set(false);
     this.onTouched();
   }
+
+  /** Close the result list when the pointer goes down anywhere else. */
+  private onDocumentMouseDown = (event: MouseEvent): void => {
+    if (!this.isOpen()) return;
+    const target = event.target as Node | null;
+    // The dropdown is rendered inside the host, so a single containment test
+    // covers both the field and the result rows.
+    if (target && this.hostRef.nativeElement.contains(target)) return;
+    this.closeDropdown();
+  };
 
   private search(query: string): void {
     const trimmed = query.trim();
