@@ -67,6 +67,7 @@ ever looks at `scheduled` appointments, a manual status is never overwritten.
 |--------|------|-------------|
 | Base URL of patient frontend | `PATIENT_BASE_URL` | The public URL where the patient application is hosted (e.g., `https://patient.example.com`). Used to generate invitation links sent to patients. |
 | Base URL of practitioner frontend | `PRACTITIONER_BASE_URL` | The public URL where the practitioner application is hosted (e.g., `https://practitioner.example.com`). Used in notification emails sent to practitioners. |
+| Public base URL of this backend | `BACKEND_BASE_URL` | The publicly reachable URL of the backend itself (e.g., `https://api.example.com`). Used as the static base of WhatsApp call-to-action buttons and of the Twilio delivery status webhook, so it must be reachable from the internet. Changing it invalidates already approved WhatsApp templates, see [Messaging Providers](messaging-providers.md#whatsapp). |
 
 ## Uploads
 

@@ -69,8 +69,11 @@ WhatsApp messages are sent through **Twilio**. Unlike SMS or email, WhatsApp onl
 recipient. Each notification therefore has to be submitted to Meta for approval, per language,
 before it can be delivered.
 
-If no approved template is available for a notification, the message is **not** sent over
-WhatsApp: the platform falls back to the SMS providers, using the same phone number.
+At send time the platform looks for an approved template matching the notification, the provider
+and the recipient's language, falling back to the base language then to the site default. If it
+finds none — or if the template has been edited since approval — the message is **not** sent over
+WhatsApp and the platform falls back to the SMS providers, using the same phone number. Nothing is
+lost, and no API call is wasted on a delivery that Meta would refuse.
 
 ### 1. Set the backend base URL
 
@@ -98,7 +101,9 @@ This must be the **publicly reachable** URL of this backend. It is used for two 
 | Auth token | The Twilio *Auth Token* |
 | From phone | The WhatsApp-enabled Twilio number, e.g. `+14155238886` |
 
-Use the **Test connection** action to verify the credentials.
+Use the **Test connection** action to verify the credentials. As for SMS, *Included prefixes* and
+*Excluded prefixes* restrict the provider to certain country codes, and *Priority* orders it
+against the other WhatsApp providers.
 
 ### 3. Submit the templates for approval
 
@@ -109,8 +114,21 @@ Use the **Test connection** action to verify the credentials.
 2. Select the entries and run **Submit templates for validation**. This creates the Twilio Content
    template and sends it to WhatsApp for approval. The *Variable expressions* field then shows which
    template expression each `{{1}}`, `{{2}}`… placeholder stands for.
-3. Run **Check validation status** until the status becomes **Validated**. Approval by Meta usually
-   takes a few minutes but can take up to 24 hours.
+3. **Check pending validations** refreshes every template still awaiting approval, without
+   selecting anything. Approval by Meta usually takes a few minutes but can take up to 24 hours, so
+   expect to run it more than once. *Check validation status* does the same on a hand-picked
+   selection.
+
+Only templates in the **Validated** state are used for sending.
+
+| Status | Meaning |
+|--------|---------|
+| **Created** | Generated locally, not submitted yet. |
+| **Pending** | Submitted, waiting for Meta's decision. |
+| **Validated** | Approved and in use. |
+| **Outdated** | The template text, the backend URL or the site name changed since approval. Submit again. |
+| **Rejected** | Refused by Meta. The reason is shown in its own column and kept in the logs. |
+| **Failed** | Never reached Meta: local pre-check, missing credentials or Twilio error. See the logs. |
 
 !!! note "Templates rejected by Meta"
     Meta refuses a body that **starts with a variable** or puts **two variables side by side**.
@@ -129,6 +147,11 @@ Use the **Test connection** action to verify the credentials.
     Jinja conditions are also supported: a whole `{% if %}...{% endif %}` block becomes one
     variable, resolved when the message is sent.
 
+!!! warning "A rejection reason is only reported once"
+    Meta drops the reason as soon as a template is resubmitted, and each status check overwrites
+    the stored provider response. The reason is therefore also written to the validation **logs**
+    when the rejection is first seen — that copy is the one that survives.
+
 Whenever a template's text is edited, its validations are flagged **Outdated** and are no longer
 used for sending until they have been submitted and approved again.
 
@@ -139,3 +162,11 @@ platform passes with every message. The *Delivered at* and *Read at* fields of
 **Messaging > Messages** are filled from these callbacks. The endpoint requires a valid
 `X-Twilio-Signature`, so the backend must be reachable from the internet for statuses to progress
 beyond *Sent*.
+
+### 5. Inviting a contact over WhatsApp
+
+Once an active WhatsApp provider exists, typing a phone number in the practitioner's contact picker
+offers **two invitations**, *by SMS* and *on WhatsApp*, instead of one. The practitioner picks the
+channel, which sets the contact's communication method; it can still be changed afterwards under
+*Contact details*. With a single phone provider configured, a single invitation is offered and it
+names the channel actually in use.
