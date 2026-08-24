@@ -132,13 +132,19 @@ export class AddEditPatient implements OnInit, OnDestroy {
     ];
   }
 
-  private readonly communicationMethodLabels: Record<string, string> = {
-    [CommunicationMethodEnum.SMS]: 'SMS',
-    [CommunicationMethodEnum.EMAIL]: 'Email',
-    [CommunicationMethodEnum.WHATSAPP]: 'WhatsApp',
-    [CommunicationMethodEnum.PUSH]: 'Push Notification',
-    [CommunicationMethodEnum.MANUAL]: 'Manual',
+  // Labels are shared with the profile screen, which already translates them.
+  private readonly communicationMethodLabelKeys: Record<string, string> = {
+    [CommunicationMethodEnum.SMS]: 'userProfile.commSms',
+    [CommunicationMethodEnum.EMAIL]: 'userProfile.commEmail',
+    [CommunicationMethodEnum.WHATSAPP]: 'userProfile.commWhatsApp',
+    [CommunicationMethodEnum.PUSH]: 'userProfile.commPush',
+    [CommunicationMethodEnum.MANUAL]: 'userProfile.commManual',
   };
+
+  private communicationMethodLabel(method: string): string {
+    const key = this.communicationMethodLabelKeys[method];
+    return key ? this.t.instant(key) : method;
+  }
 
   get isEditMode(): boolean {
     return !!this.patient();
@@ -228,7 +234,7 @@ export class AddEditPatient implements OnInit, OnDestroy {
     // contact field mandatory instead of greying the option out.
     this.communicationMethodOptions = this.availableCommunicationMethods.map(method => ({
       value: method,
-      label: this.communicationMethodLabels[method] || method,
+      label: this.communicationMethodLabel(method),
     }));
   }
 
