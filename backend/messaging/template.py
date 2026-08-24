@@ -100,13 +100,15 @@ DEFAULT_NOTIFICATION_MESSAGES = {
     },
     "new_message_notification": {
         "template_subject": _("New message in consultation"),
+        # Opens on static text: a WhatsApp template body may not start with a
+        # variable, and Meta validates every language separately.
         "template_content": _(
-            "{{ obj.created_by.name }} sent you a message "
+            "New message from {{ obj.created_by.name }} "
             'in consultation "{{ obj.consultation.title }}": '
             "{{ obj.content }}"
         ),
         "template_content_html": _(
-            "<p>{{ obj.created_by.name }} sent you a message "
+            "<p>New message from {{ obj.created_by.name }} "
             'in consultation "{{ obj.consultation.title }}":</p>'
             "<p>{{ obj.content }}</p>"
         ),

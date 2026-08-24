@@ -50,6 +50,17 @@
           </div>
         </div>
       </div>
+      @if (canEditPatient()) {
+      <div class="header-actions">
+        <app-button
+          [text]="'common.edit' | translate"
+          leftIcon="edit"
+          [style]="ButtonStyleEnum.stroke"
+          [size]="ButtonSizeEnum.small"
+          (buttonClick)="openEditModal()">
+        </app-button>
+      </div>
+      }
     </div>
 
     <div class="detail-card">
@@ -68,14 +79,6 @@
               color="var(--slate-800)">
               {{ 'patientDetail.personalInfo' | translate }}
             </app-typography>
-            @if (canEditPatient()) {
-            <app-button
-              [text]="'common.edit' | translate"
-              [style]="ButtonStyleEnum.text"
-              [size]="ButtonSizeEnum.small"
-              (buttonClick)="openEditModal()">
-            </app-button>
-            }
           </div>
           <div class="info-grid">
             @for (field of personalFields(); track field.label) {

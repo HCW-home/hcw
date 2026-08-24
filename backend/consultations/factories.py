@@ -15,6 +15,7 @@ from consultations.models import (
     Participant,
     Queue,
     Reason,
+    Reminder,
     Request,
     RequestStatus,
     Type,
@@ -162,6 +163,20 @@ class ParticipantFactory(DjangoModelFactory):
     user = factory.SubFactory(UserFactory)
     is_invited = True
     is_confirmed = False
+
+
+class ReminderFactory(DjangoModelFactory):
+    class Meta:
+        model = Reminder
+
+    title = factory.Sequence(lambda n: f"Reminder {n}")
+    description = "Take your medication"
+    consultation = factory.SubFactory(ConsultationFactory)
+    recipient = factory.SubFactory(PatientFactory)
+    created_by = factory.SubFactory(DoctorFactory)
+    scheduled_at = factory.LazyFunction(
+        lambda: timezone.now() + timedelta(days=1)
+    )
 
 
 class BookingSlotFactory(DjangoModelFactory):

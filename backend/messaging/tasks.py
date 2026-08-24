@@ -11,6 +11,7 @@ from modeltranslation.utils import get_translation_fields
 
 from . import providers
 from .models import (
+    CommunicationMethod,
     Message,
     MessageStatus,
     MessagingProvider,
@@ -21,6 +22,54 @@ from .models import (
 
 # Set up logging
 logger = logging.getLogger(__name__)
+
+
+def _send_with_channel(message, communication_method) -> bool:
+    """Try every active provider of a communication method, by priority.
+
+    Returns whether one of them accepted the message.
+    """
+    messaging_providers = MessagingProvider.objects.filter(
+        communication_method=communication_method, is_active=True
+    ).order_by("priority", "id")
+
+    if not messaging_providers.exists():
+        message.task_logs += (
+            f"No active provider for communication method: {communication_method}\n"
+        )
+        message.save()
+        return False
+
+    logger.info(
+        f"Found {messaging_providers.count()} providers for {communication_method}"
+    )
+
+    for messaging_provider in messaging_providers:
+        logger.info(
+            f"Trying provider: {messaging_provider.name} (priority: {messaging_provider.priority})"
+        )
+
+        try:
+            messaging_provider.instance.send(message)
+            message.status = MessageStatus.sent
+            message.provider_name = messaging_provider.name
+            message.sent_at = timezone.now()
+            message.save()
+            return True
+
+        except Exception as e:
+            error_msg = f"Exception with provider {messaging_provider.name}: {str(e)}\n"
+            message.task_logs += error_msg
+            message.save()
+            logger.error(error_msg)
+            logger.error(traceback.format_exc())
+            continue
+
+    message.task_logs += (
+        f"All providers failed for communication method: {communication_method}\n"
+    )
+    message.save()
+    return False
 
 
 @app.task(bind=True)
@@ -38,45 +87,28 @@ def send_message(self, message_id):
     message.error_message = None
     message.save()
 
-    # Get all active providers for this communication method, ordered by priority
-    messaging_providers = MessagingProvider.objects.filter(
-        communication_method=message.validated_communication_method, is_active=True
-    ).order_by("priority", "id")
-
-    if not messaging_providers.exists():
+    communication_method = message.validated_communication_method
+    if not communication_method:
         message.status = MessageStatus.failed
-        message.error_message = f"Unable to find active communication for {message.validated_communication_method}"
+        message.error_message = "No communication method to send this message"
         message.save()
         return
 
-    logger.info(
-        f"Found {messaging_providers.count()} providers for {message.validated_communication_method}"
-    )
+    if _send_with_channel(message, communication_method):
+        return
 
-    # Try each provider in order
-    for messaging_provider in messaging_providers:
-        logger.info(
-            f"Trying provider: {messaging_provider.name} (priority: {messaging_provider.priority})"
-        )
-
-        try:
-            # Get the provider class
-            messaging_provider.instance.send(message)
-            message.status = MessageStatus.sent
-            message.save()
+    # WhatsApp can be structurally unavailable while the recipient stays
+    # perfectly reachable: no approved template for the event or the language,
+    # or a closed 24h session window. The phone number works for SMS either
+    # way, and SMS bodies already embed the action label and access link.
+    if communication_method == CommunicationMethod.whatsapp and message.phone_number:
+        message.task_logs += "Falling back to SMS after WhatsApp delivery failed\n"
+        message.save()
+        if _send_with_channel(message, CommunicationMethod.sms):
             return
 
-        except Exception as e:
-            error_msg = f"Exception with provider {messaging_provider.name}: {str(e)}\n"
-            message.task_logs += error_msg
-            message.save()
-            logger.error(error_msg)
-            logger.error(traceback.format_exc())
-            continue
-
-    # All providers failed
-    message.task_logs += f"All providers failed for communication method: {message.communication_method}\n"
     message.status = MessageStatus.failed
+    message.error_message = f"Unable to send message using {communication_method}"
     message.save()
 
 
@@ -124,7 +156,7 @@ def cleanup_old_message_logs(days=30):
     return {"cleaned_count": updated_count}
 
 
-@app.task
+@app.task(bind=True)
 def template_messaging_provider_task(self, template_validation_id, action):
     """
     Celery task to submit or check a template validation with the messaging provider.

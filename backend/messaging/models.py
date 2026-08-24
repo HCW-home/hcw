@@ -2,6 +2,7 @@ from datetime import timedelta
 import hashlib
 import logging
 import mimetypes
+import secrets
 import uuid
 from importlib import import_module
 from typing import Dict, Optional, Sequence, Tuple
@@ -617,6 +618,15 @@ class TemplateValidation(ModelCeleryAbstract):
         blank=True,
         help_text=_("MD5 hash of template content at last validation submission"),
     )
+    variable_expressions = models.JSONField(
+        default=list,
+        blank=True,
+        help_text=_(
+            "Ordered template expressions behind the provider's positional "
+            "placeholders ({{1}}, {{2}}...), as submitted for approval. Replayed "
+            "at send time so the numbering can never drift."
+        ),
+    )
 
     class Meta:
         verbose_name = _("template validation")
@@ -636,13 +646,23 @@ class TemplateValidation(ModelCeleryAbstract):
         )
 
     def compute_content_hash(self) -> str:
-        """Compute MD5 hash of the resolved template content for the given language."""
+        """Compute MD5 hash of the resolved template content for the given language.
+
+        The backend base URL is part of the hash because it is baked into the
+        approved call-to-action button: changing it silently breaks every link
+        already approved, so the validation must show up as outdated.
+        """
+        from .whatsapp_content import get_localized
+
         tpl = self.template
         parts = [
-            str(getattr(tpl, f"template_subject_{self.language_code}", "") or ""),
-            str(getattr(tpl, f"template_content_{self.language_code}", "") or ""),
-            str(getattr(tpl, f"template_content_html_{self.language_code}", "") or ""),
+            get_localized(tpl, "template_subject", self.language_code),
+            get_localized(tpl, "template_content", self.language_code),
+            get_localized(tpl, "template_content_html", self.language_code),
             str(tpl.action_label or ""),
+            str(config.backend_base_url or ""),
+            # Signs bodies that would otherwise end on a variable.
+            str(config.site_name or ""),
         ]
         return hashlib.md5("|".join(parts).encode()).hexdigest()
 
@@ -652,6 +672,17 @@ class TemplateValidation(ModelCeleryAbstract):
         if not self.content_hash:
             return True
         return self.content_hash != self.compute_content_hash()
+
+    @property
+    def rejection_reason(self) -> str:
+        """Why the provider turned the template down, when it says so.
+
+        Read straight from the stored approval payload rather than duplicated in
+        a column: it only ever exists alongside a `rejected` status and is only
+        read for display.
+        """
+        approval = (self.validation_response or {}).get("whatsapp_approval") or {}
+        return (approval.get("whatsapp") or {}).get("rejection_reason") or ""
 
 
 class MessageStatus(models.TextChoices):
@@ -855,6 +886,34 @@ class Message(ModelCeleryAbstract):
             )
 
         return full_url
+
+    # A WhatsApp call-to-action button can only append a variable suffix to a
+    # static base URL, and an approved template carries a single base. The
+    # button therefore points at a backend redirector keyed by this token,
+    # which resolves to the patient or practitioner deep link indifferently.
+    link_token = models.CharField(
+        _("link token"), max_length=32, blank=True, null=True, unique=True
+    )
+    link_target = models.TextField(_("link target"), blank=True, null=True)
+
+    def ensure_link_token(self) -> str:
+        """Mint the opaque handle identifying this message in public URLs."""
+        if not self.link_token:
+            self.link_token = secrets.token_urlsafe(12)
+        return self.link_token
+
+    def freeze_access_link(self) -> str:
+        """Freeze the resolved access link on the message.
+
+        Freezing matters: `access_link` only mints `one_time_auth_token` when
+        the user has none, so recomputing it later would hand out whichever
+        token another message minted since. Resolving it once at send time
+        keeps the exact expiry semantics of the SMS channel.
+        """
+        self.ensure_link_token()
+        if not self.link_target:
+            self.link_target = self.access_link
+        return self.link_target
 
     @property
     def render_content(self):
@@ -1113,54 +1172,67 @@ class Message(ModelCeleryAbstract):
     def language(self):
         return self.sent_to.preferred_language or settings.LANGUAGE_CODE
 
+    def _render_template_string(self, template_str: str, autoescape: bool = False):
+        """Render a Jinja2 string with this message's locale, timezone and context.
+
+        Shared by the template fields and by the per-expression rendering the
+        WhatsApp provider needs to fill positional Content variables.
+        """
+        with (
+            translation.override(self.language),
+            timezone.override(self.sent_to.user_tz),
+        ):
+            # Only escape interpolated values for HTML output; plain-text
+            # fields (subject, text body for SMS/WhatsApp) must stay literal
+            # so values like "O'Brien" are not turned into HTML entities.
+            env = jinja2.Environment(
+                extensions=['jinja2.ext.i18n'],
+                autoescape=autoescape,
+            )
+            env.install_gettext_callables(
+                translation.gettext,
+                translation.ngettext,
+                newstyle=True,
+            )
+            env.filters['localtime'] = timezone.localtime
+            env.filters.update(register.filters)
+
+            return env.from_string(template_str).render(
+                {
+                    "obj": self.content_object,
+                    "config": config,
+                    "action": self.action,
+                    "action_label": self.action_label,
+                    "access_link": self.access_link,
+                }
+            )
+
+    def render_fragment(self, fragment: str) -> str:
+        """Render a raw Jinja2 fragment, e.g. "{{ obj.title }}" or a whole
+        "{% if %}...{% endif %}" block."""
+        return self._render_template_string(fragment)
+
     def render(self, field: str):
         if not self.template_system_name:
             return getattr(self, field.replace("template_", ""))
 
         try:
-            obj = self.content_object
             logger.debug(
                 "render: message_id=%s field=%s template=%s language=%s",
                 self.pk, field, self.template_system_name, self.language,
             )
 
-            with (
-                translation.override(self.language),
-                timezone.override(self.sent_to.user_tz),
-            ):
-                # Only escape interpolated values for HTML output; plain-text
-                # fields (subject, text body for SMS/WhatsApp) must stay literal
-                # so values like "O'Brien" are not turned into HTML entities.
-                env = jinja2.Environment(
-                    extensions=['jinja2.ext.i18n'],
-                    autoescape=field == "template_content_html",
-                )
-                env.install_gettext_callables(
-                    translation.gettext,
-                    translation.ngettext,
-                    newstyle=True,
-                )
-                env.filters['localtime'] = timezone.localtime
-                env.filters.update(register.filters)
+            template_str = str(getattr(self.template, field))
+            logger.debug(
+                "render: template_str for field=%s length=%d",
+                field, len(template_str) if template_str else 0,
+            )
 
-                template_str = str(getattr(self.template, field))
-                logger.debug(
-                    "render: template_str for field=%s length=%d",
-                    field, len(template_str) if template_str else 0,
-                )
-
-                text_template = env.from_string(template_str)
-                result = text_template.render(
-                    {
-                        "obj": obj,
-                        "config": config,
-                        "action": self.action,
-                        "action_label": self.action_label,
-                        "access_link": self.access_link,
-                    }
-                )
-                logger.debug("render: field=%s result length=%d", field, len(result) if result else 0)
-                return result
+            result = self._render_template_string(
+                template_str, autoescape=field == "template_content_html"
+            )
+            logger.debug("render: field=%s result length=%d", field, len(result) if result else 0)
+            return result
 
         except Exception as e:
             logger.exception("render failed: message_id=%s field=%s error=%s", self.pk, field, e)

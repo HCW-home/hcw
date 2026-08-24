@@ -30,6 +30,12 @@
     gap: 20px;
     align-items: center;
   }
+
+  .header-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
 }
 
 .patient-info {
@@ -314,6 +320,10 @@
   }
 
   .patient-header {
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+
     .header-left {
       flex-direction: column;
       align-items: center;
@@ -323,6 +333,20 @@
     .patient-info .patient-contact {
       flex-direction: column;
       align-items: center;
+    }
+
+    .header-actions {
+      width: 100%;
+      justify-content: center;
+
+      app-button {
+        flex: 1 1 auto;
+        min-width: 0;
+
+        ::ng-deep button {
+          width: 100%;
+        }
+      }
     }
   }
 

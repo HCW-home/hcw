@@ -881,6 +881,15 @@ CONSTANCE_CONFIG = {
         "http://localhost:4200",
         gettext_noop("Base URL of practitioner frontend"),
     ),
+    "backend_base_url": (
+        "http://localhost:8000",
+        gettext_noop(
+            "Public base URL of this backend. Used as the static base of WhatsApp "
+            "call-to-action buttons and of the Twilio delivery status webhook, so it "
+            "must be reachable from the internet. Changing it invalidates already "
+            "approved WhatsApp templates."
+        ),
+    ),
     "appointment_first_reminder": (
         "1440",
         gettext_noop(
@@ -1188,7 +1197,11 @@ CONSTANCE_CONFIG = {
 # template translates them for display via {% trans fieldset.title %}.
 CONSTANCE_CONFIG_FIELDSETS = {
     gettext_noop("General Options"): ("site_name",),
-    gettext_noop("URLs"): ("patient_base_url", "practitioner_base_url"),
+    gettext_noop("URLs"): (
+        "patient_base_url",
+        "practitioner_base_url",
+        "backend_base_url",
+    ),
     gettext_noop("Scheduling"): (
         "appointment_first_reminder",
         "appointment_last_reminder",

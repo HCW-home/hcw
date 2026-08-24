@@ -1,6 +1,6 @@
 import { Component, input, output, inject, OnInit, OnDestroy, effect, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormControl } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormControl, AbstractControl, ValidatorFn } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { Typography } from '../../../../shared/ui-components/typography/typography';
 import { Button } from '../../../../shared/ui-components/button/button';
@@ -117,6 +117,7 @@ export class AddEditPatient implements OnInit, OnDestroy {
   timezoneOptions: SelectOption[] = TIMEZONE_OPTIONS;
   communicationMethodOptions: SelectOption[] = [];
   private availableCommunicationMethods: string[] = [];
+  private communicationMethodPickedByUser = false;
   customFields = signal<CustomField[]>([]);
   forceTemporaryPatients = false;
 
@@ -170,6 +171,7 @@ export class AddEditPatient implements OnInit, OnDestroy {
         if (!this.isEditMode) {
           this.autoSelectCommunicationMethod();
         }
+        this.applyContactRequirements();
 
         this.forceTemporaryPatients = !!config?.force_temporary_patients;
         this.applyForceTemporaryPatients();
@@ -196,84 +198,101 @@ export class AddEditPatient implements OnInit, OnDestroy {
   private setupCommunicationMethodAutoSelect(): void {
     this.form.get('email')?.valueChanges
       .pipe(takeUntil(this.destroy$))
-      .subscribe(() => {
-        this.updateCommunicationMethodOptions();
-        if (!this.isEditMode) {
-          this.autoSelectCommunicationMethod();
-        }
-      });
+      .subscribe(() => this.onContactChannelChanged());
 
     this.form.get('mobile_phone_number')?.valueChanges
       .pipe(takeUntil(this.destroy$))
-      .subscribe(() => {
-        this.updateCommunicationMethodOptions();
-        if (!this.isEditMode) {
-          this.autoSelectCommunicationMethod();
-        }
+      .subscribe(() => this.onContactChannelChanged());
+
+    // Programmatic updates are patched with emitEvent false, so only a manual
+    // pick reaches this handler. Once it happens, auto-selection steps aside.
+    this.form.get('communication_method')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((method: string) => {
+        this.communicationMethodPickedByUser = !!method;
+        this.applyContactRequirements();
       });
+
+    this.applyContactRequirements();
+  }
+
+  private onContactChannelChanged(): void {
+    if (!this.isEditMode) {
+      this.autoSelectCommunicationMethod();
+    }
+    this.applyContactRequirements();
   }
 
   private updateCommunicationMethodOptions(): void {
-    const email = this.form.get('email')?.value?.trim();
-    const phone = this.form.get('mobile_phone_number')?.value?.trim();
-    const hasEmail = !!email;
-    const hasPhone = !!phone;
+    // Every configured method stays selectable: picking one makes the matching
+    // contact field mandatory instead of greying the option out.
+    this.communicationMethodOptions = this.availableCommunicationMethods.map(method => ({
+      value: method,
+      label: this.communicationMethodLabels[method] || method,
+    }));
+  }
 
-    this.communicationMethodOptions = this.availableCommunicationMethods.map(method => {
-      let disabled = false;
-      if (method === CommunicationMethodEnum.EMAIL && !hasEmail) {
-        disabled = true;
-      }
-      if ((method === CommunicationMethodEnum.SMS || method === CommunicationMethodEnum.WHATSAPP) && !hasPhone) {
-        disabled = true;
-      }
-      return {
-        value: method,
-        label: this.communicationMethodLabels[method] || method,
-        disabled,
-      };
-    });
+  // Pre-fills the method while the practitioner has not picked one: email when
+  // an address is typed first, SMS when only a phone number is known.
+  private autoSelectCommunicationMethod(): void {
+    if (this.communicationMethodPickedByUser || !this.availableCommunicationMethods.length) return;
 
-    // If current selection is now disabled, clear it
-    const currentMethod = this.form.get('communication_method')?.value;
-    if (currentMethod) {
-      const currentOption = this.communicationMethodOptions.find(o => o.value === currentMethod);
-      if (currentOption?.disabled) {
-        this.form.patchValue({ communication_method: '' }, { emitEvent: false });
-      }
+    const hasEmail = !!this.form.get('email')?.value?.trim();
+    const hasPhone = !!this.form.get('mobile_phone_number')?.value?.trim();
+    const current = this.form.get('communication_method')?.value;
+
+    // Keep the previous guess as long as the channel it needs is still filled in,
+    // so the first channel entered wins even once the other one is added.
+    if (current && this.isMethodSatisfied(current, hasEmail, hasPhone)) return;
+
+    const next = this.pickDefaultMethod(hasEmail, hasPhone);
+    if (next !== current) {
+      this.form.patchValue({ communication_method: next }, { emitEvent: false });
     }
   }
 
-  private autoSelectCommunicationMethod(): void {
-    if (!this.availableCommunicationMethods.length) return;
+  private isMethodSatisfied(method: string, hasEmail: boolean, hasPhone: boolean): boolean {
+    if (method === CommunicationMethodEnum.EMAIL) return hasEmail;
+    if (method === CommunicationMethodEnum.SMS || method === CommunicationMethodEnum.WHATSAPP) return hasPhone;
+    // Manual and push are only fallbacks while no channel has been entered.
+    return !hasEmail && !hasPhone;
+  }
 
-    const email = this.form.get('email')?.value?.trim();
-    const phone = this.form.get('mobile_phone_number')?.value?.trim();
-    const hasEmail = !!email;
-    const hasPhone = !!phone;
+  private pickDefaultMethod(hasEmail: boolean, hasPhone: boolean): string {
+    const supports = (method: string): boolean => this.availableCommunicationMethods.includes(method);
 
-    const phoneMethodsAvailable = this.availableCommunicationMethods.filter(
-      m => m === CommunicationMethodEnum.SMS || m === CommunicationMethodEnum.WHATSAPP
+    if (hasEmail && supports(CommunicationMethodEnum.EMAIL)) return CommunicationMethodEnum.EMAIL;
+    if (hasPhone && supports(CommunicationMethodEnum.SMS)) return CommunicationMethodEnum.SMS;
+    if (hasPhone && supports(CommunicationMethodEnum.WHATSAPP)) return CommunicationMethodEnum.WHATSAPP;
+    if (!hasEmail && !hasPhone && supports(CommunicationMethodEnum.MANUAL)) return CommunicationMethodEnum.MANUAL;
+    return '';
+  }
+
+  get isEmailRequired(): boolean {
+    return this.form?.get('communication_method')?.value === CommunicationMethodEnum.EMAIL;
+  }
+
+  get isPhoneRequired(): boolean {
+    const method = this.form?.get('communication_method')?.value;
+    return method === CommunicationMethodEnum.SMS || method === CommunicationMethodEnum.WHATSAPP;
+  }
+
+  // The selected method decides which contact field the form insists on.
+  private applyContactRequirements(): void {
+    const emailControl = this.form?.get('email');
+    const phoneControl = this.form?.get('mobile_phone_number');
+    if (!emailControl || !phoneControl) return;
+
+    this.setValidators(
+      emailControl,
+      this.isEmailRequired ? [Validators.required, Validators.email] : [Validators.email]
     );
+    this.setValidators(phoneControl, this.isPhoneRequired ? [Validators.required] : []);
+  }
 
-    if (hasPhone && phoneMethodsAvailable.length > 1) {
-      return;
-    }
-
-    if (hasPhone && phoneMethodsAvailable.length === 1) {
-      this.form.patchValue({ communication_method: phoneMethodsAvailable[0] }, { emitEvent: false });
-      return;
-    }
-
-    if (hasEmail && this.availableCommunicationMethods.includes(CommunicationMethodEnum.EMAIL)) {
-      this.form.patchValue({ communication_method: CommunicationMethodEnum.EMAIL }, { emitEvent: false });
-      return;
-    }
-
-    if (!hasEmail && !hasPhone && this.availableCommunicationMethods.includes(CommunicationMethodEnum.MANUAL)) {
-      this.form.patchValue({ communication_method: CommunicationMethodEnum.MANUAL }, { emitEvent: false });
-      return;
-    }
+  private setValidators(control: AbstractControl, validators: ValidatorFn[]): void {
+    control.setValidators(validators);
+    control.updateValueAndValidity({ emitEvent: false });
   }
 
   private loadCustomFields(): void {
@@ -376,6 +395,8 @@ export class AddEditPatient implements OnInit, OnDestroy {
       temporary: p?.temporary || false
     });
 
+    this.communicationMethodPickedByUser = !!p?.communication_method;
+    this.applyContactRequirements();
     this.applyForceTemporaryPatients();
 
     // Repopulate custom field values

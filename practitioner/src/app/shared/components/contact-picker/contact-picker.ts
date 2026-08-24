@@ -39,6 +39,14 @@ import { Loader } from '../loader/loader';
 import { ModalComponent } from '../modal/modal.component';
 import { SelectOption } from '../../models/select';
 import { ContactChannel, ContactSelection } from '../../models/contact-picker';
+
+/** An "invite this number/address" row of the dropdown. */
+interface InviteOption {
+  method: string;
+  icon: string;
+  title: string;
+  hint: string;
+}
 import { TIMEZONE_OPTIONS } from '../../constants/timezone';
 
 /** Languages a temporary contact can be invited in. */
@@ -362,14 +370,57 @@ export class ContactPicker
     });
   }
 
-  get inviteHint(): string {
-    if (this.detectedChannel === 'email') {
-      return this.t.instant('contactPicker.inviteByEmailHint');
+  /** Phone-based methods the organisation has actually enabled, SMS first. */
+  private get phoneInviteMethods(): string[] {
+    const methods = this.availableCommunicationMethods();
+    return ['sms', 'whatsapp'].filter(method => methods.includes(method));
+  }
+
+  /**
+   * One invite row per channel the link can go out on. A phone number reaches
+   * the contact over SMS, WhatsApp or both, and the two are not
+   * interchangeable, so the practitioner picks rather than inherits a default.
+   */
+  get inviteOptions(): InviteOption[] {
+    const channel = this.detectedChannel;
+    if (!this.canInvite || !channel) return [];
+
+    const query = this.query().trim();
+    if (channel === 'email') {
+      return [
+        {
+          method: 'email',
+          icon: 'plus',
+          title: this.t.instant('contactPicker.invite', { query }),
+          hint: this.t.instant('contactPicker.inviteByEmailHint'),
+        },
+      ];
     }
-    if (this.detectedChannel === 'sms') {
-      return this.t.instant('contactPicker.inviteBySmsHint');
-    }
-    return '';
+
+    const methods = this.phoneInviteMethods;
+    // With a single channel there is nothing to arbitrate: keep the plain
+    // wording and let the subtitle name the channel.
+    const named = methods.length > 1;
+    return methods.map(method => {
+      const whatsapp = method === 'whatsapp';
+      return {
+        method,
+        icon: named ? (whatsapp ? 'message-circle' : 'message-square') : 'plus',
+        title: this.t.instant(
+          named
+            ? whatsapp
+              ? 'contactPicker.inviteByWhatsApp'
+              : 'contactPicker.inviteBySms'
+            : 'contactPicker.invite',
+          { query }
+        ),
+        hint: this.t.instant(
+          whatsapp
+            ? 'contactPicker.inviteByWhatsAppHint'
+            : 'contactPicker.inviteBySmsHint'
+        ),
+      };
+    });
   }
 
   get selectedName(): string {
@@ -442,7 +493,7 @@ export class ContactPicker
 
   get detailsTitle(): string {
     return this.detailsOpen()
-      ? this.t.instant('contactPicker.invitationDetails')
+      ? this.t.instant('contactPicker.contactDetails')
       : this.t.instant('contactPicker.addNameLanguage');
   }
 
@@ -602,10 +653,10 @@ export class ContactPicker
   }
 
   /** Invite the typed e-mail or mobile number: an access link will be sent. */
-  invite(): void {
+  invite(method?: string): void {
     const channel = this.detectedChannel;
     if (!channel || !this.supportedChannels.has(channel)) return;
-    this.startGuest(channel, this.query().trim());
+    this.startGuest(channel, this.query().trim(), method);
   }
 
   /**
@@ -628,7 +679,11 @@ export class ContactPicker
     this.startGuest('manual', '');
   }
 
-  private startGuest(channel: ContactChannel, raw: string): void {
+  private startGuest(
+    channel: ContactChannel,
+    raw: string,
+    method?: string
+  ): void {
     const detected = this.detectChannel(raw);
     this.selectedUser.set(null);
     this.guestChannel.set(channel);
@@ -636,7 +691,7 @@ export class ContactPicker
     this.guestPhone.set(detected === 'sms' ? raw : '');
 
     const patch: Record<string, unknown> = {
-      communication_method: this.defaultCommunicationMethod(channel),
+      communication_method: method || this.defaultCommunicationMethod(channel),
     };
     if (!detected && raw) {
       const [first, ...rest] = raw.split(/\s+/);

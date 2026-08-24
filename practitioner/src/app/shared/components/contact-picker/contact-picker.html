@@ -61,19 +61,19 @@
       </div>
       } }
 
-      @if (canInvite) {
-      <button type="button" class="dropdown-row action invite" (click)="invite()">
+      @for (option of inviteOptions; track option.method) {
+      <button
+        type="button"
+        class="dropdown-row action invite"
+        (click)="invite(option.method)">
         <span class="row-avatar invite">
           <app-svg
-            src="plus"
+            [src]="option.icon"
             [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
         </span>
         <span class="row-text">
-          <span class="row-title invite"
-            >{{ 'contactPicker.invite' | translate: { query: query().trim() }
-            }}</span
-          >
-          <span class="row-subtitle">{{ inviteHint }}</span>
+          <span class="row-title invite">{{ option.title }}</span>
+          <span class="row-subtitle">{{ option.hint }}</span>
         </span>
       </button>
       }

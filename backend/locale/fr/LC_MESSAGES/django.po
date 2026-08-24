@@ -2420,20 +2420,12 @@ msgid "New message in consultation"
 msgstr "Nouveau message dans votre suivi"
 
 #: messaging/template.py:104
-msgid ""
-"{{ obj.created_by.name }} sent you a message in consultation \"{{ "
-"obj.consultation.title }}\": {{ obj.content }}"
-msgstr ""
-"{{ obj.created_by.name }} vous a envoyé un message dans la consultation \"{{"
-" obj.consultation.title }}\" : {{ obj.content }}"
+msgid "New message from {{ obj.created_by.name }} in consultation \"{{ obj.consultation.title }}\": {{ obj.content }}"
+msgstr "Nouveau message de {{ obj.created_by.name }} dans la consultation \"{{ obj.consultation.title }}\" : {{ obj.content }}"
 
 #: messaging/template.py:109
-msgid ""
-"<p>{{ obj.created_by.name }} sent you a message in consultation \"{{ "
-"obj.consultation.title }}\":</p><p>{{ obj.content }}</p>"
-msgstr ""
-"<p>{{ obj.created_by.name }} vous a envoyé un message dans la consultation "
-"\"{{ obj.consultation.title }}\" : </p><p>{{ obj.content }}</p>"
+msgid "<p>New message from {{ obj.created_by.name }} in consultation \"{{ obj.consultation.title }}\":</p><p>{{ obj.content }}</p>"
+msgstr "<p>Nouveau message de {{ obj.created_by.name }} dans la consultation \"{{ obj.consultation.title }}\" :</p><p>{{ obj.content }}</p>"
 
 #: messaging/template.py:116
 msgid "Click here to answer"

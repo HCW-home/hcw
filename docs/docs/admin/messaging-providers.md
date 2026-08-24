@@ -64,5 +64,78 @@ Use the **Test connection** action on the provider to verify the credentials and
 
 ## WhatsApp
 
-!!! warning
-    WhatsApp integration is not yet functional. This feature is planned for a future release.
+WhatsApp messages are sent through **Twilio**. Unlike SMS or email, WhatsApp only accepts
+**pre-approved message templates** outside of a 24-hour conversation window opened by the
+recipient. Each notification therefore has to be submitted to Meta for approval, per language,
+before it can be delivered.
+
+If no approved template is available for a notification, the message is **not** sent over
+WhatsApp: the platform falls back to the SMS providers, using the same phone number.
+
+### 1. Set the backend base URL
+
+> **Menu:** Settings > Constance > URLs > **Backend base URL**
+
+This must be the **publicly reachable** URL of this backend. It is used for two things:
+
+- the static base of the WhatsApp button URLs (`https://<backend>/r/<token>`), which redirect the
+  recipient to the patient or practitioner application;
+- the delivery status webhook Twilio calls back.
+
+!!! warning "Set it before submitting templates"
+    The URL is baked into every approved template. Changing it later flags all validations as
+    **Content changed**, and they must be submitted again. The same applies to the **site name**,
+    which signs the templates that end on a variable.
+
+### 2. Create the provider
+
+> **Menu:** Messaging > Messaging providers > add a provider
+
+| Field | Value |
+|-------|-------|
+| Name | Twilio WhatsApp |
+| Account SID | The Twilio *Account SID* |
+| Auth token | The Twilio *Auth Token* |
+| From phone | The WhatsApp-enabled Twilio number, e.g. `+14155238886` |
+
+Use the **Test connection** action to verify the credentials.
+
+### 3. Submit the templates for approval
+
+> **Menu:** Messaging > Template validations
+
+1. **Generate WhatsApp validations** creates one entry per notification, language and WhatsApp
+   provider.
+2. Select the entries and run **Submit templates for validation**. This creates the Twilio Content
+   template and sends it to WhatsApp for approval. The *Variable expressions* field then shows which
+   template expression each `{{1}}`, `{{2}}`… placeholder stands for.
+3. Run **Check validation status** until the status becomes **Validated**. Approval by Meta usually
+   takes a few minutes but can take up to 24 hours.
+
+!!! note "Templates rejected by Meta"
+    Meta refuses a body that **starts with a variable** or puts **two variables side by side**.
+    Templates are checked against these rules *before* submission: a non-compliant template is
+    marked **Failed** immediately, with the reason and the offending body in its logs, instead of
+    coming back rejected hours later. Adjust the wording under *Messaging > Template overrides*
+    and submit again.
+
+    Two cases are handled automatically and need no rewording:
+
+    - a body **ending** on a variable is signed with the site name, since Meta requires static
+      text last;
+    - two variables separated only by a space are **merged into a single one** (`{{1}}` carrying
+      both the first and last name, for instance).
+
+    Jinja conditions are also supported: a whole `{% if %}...{% endif %}` block becomes one
+    variable, resolved when the message is sent.
+
+Whenever a template's text is edited, its validations are flagged **Outdated** and are no longer
+used for sending until they have been submitted and approved again.
+
+### 4. Delivery status
+
+Twilio reports delivery progress to `https://<backend>/messaging/twilio/status/<token>`, which the
+platform passes with every message. The *Delivered at* and *Read at* fields of
+**Messaging > Messages** are filled from these callbacks. The endpoint requires a valid
+`X-Twilio-Signature`, so the backend must be reachable from the internet for statuses to progress
+beyond *Sent*.

@@ -2,13 +2,33 @@ import base64
 import json
 import logging
 import re
-from typing import TYPE_CHECKING, Any, Dict, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import requests
+from constance import config
+from django.conf import settings
+from django.utils import timezone
 
 from . import BaseMessagingProvider
+from ..whatsapp_content import (
+    LINK_TOKEN_EXPRESSION,
+    build_content,
+    check_meta_compliance,
+    render_examples,
+    render_variables,
+)
 
 logger = logging.getLogger(__name__)
+
+CONTENT_API_URL = "https://content.twilio.com/v1/Content"
+MESSAGES_API_URL = "https://api.twilio.com/2010-04-01/Accounts/{account_sid}/Messages.json"
+
+# WhatsApp caps call-to-action button labels at 20 characters.
+BUTTON_TITLE_MAX_LENGTH = 20
+
+# Meta template names and Twilio friendly names accept lowercase alphanumerics
+# and underscores only.
+_UNSAFE_NAME_RE = re.compile(r"[^a-z0-9_]+")
 
 
 class ProviderException(Exception): ...
@@ -16,6 +36,10 @@ class ProviderException(Exception): ...
 
 if TYPE_CHECKING:
     from ..models import Message, TemplateValidation
+
+
+def _safe_name(value: str) -> str:
+    return _UNSAFE_NAME_RE.sub("_", value.lower()).strip("_")
 
 
 class Main(BaseMessagingProvider):
@@ -29,118 +53,6 @@ class Main(BaseMessagingProvider):
         "included_prefixes",
     ]
 
-    def _get_factory_for_model(self, model_string: str):
-        """
-        Get the factory class for a given model string (e.g., 'consultations.Participant')
-
-        Args:
-            model_string: The model string in format 'app_label.ModelName'
-
-        Returns:
-            Factory class or None if not found
-        """
-        logger.info(f"Looking for factory for model: {model_string}")
-
-        factory_mapping = {
-            'consultations.Participant': 'consultations.factories.ParticipantFactory',
-            'consultations.Appointment': 'consultations.factories.AppointmentFactory',
-            'consultations.Consultation': 'consultations.factories.ConsultationFactory',
-            'consultations.Message': 'consultations.factories.MessageFactory',
-            'users.User': 'users.factories.UserFactory',
-        }
-
-        factory_path = factory_mapping.get(model_string)
-        if not factory_path:
-            logger.warning(f"No factory mapping found for model: {model_string}")
-            return None
-
-        module_path, factory_name = factory_path.rsplit('.', 1)
-        try:
-            module = __import__(module_path, fromlist=[factory_name])
-            factory = getattr(module, factory_name)
-            logger.info(f"Successfully loaded factory: {factory_name}")
-            return factory
-        except (ImportError, AttributeError) as e:
-            logger.error(f"Failed to import factory {factory_name}: {e}")
-            return None
-
-    def _generate_template_examples(self, template_validation: "TemplateValidation") -> Dict[str, str]:
-        """
-        Generate example values for template variables using factories
-
-        Args:
-            template_validation: The TemplateValidation instance
-
-        Returns:
-            Dictionary mapping variable placeholders ({{1}}, {{2}}, etc.) to example values
-        """
-        from ..template import DEFAULT_NOTIFICATION_MESSAGES
-        from jinja2 import Template as Jinja2Template
-
-        logger.info(f"Generating template examples for event_type: {template_validation.event_type}")
-
-        event_type = template_validation.event_type
-        template = template_validation.template
-
-        # Get model info from DEFAULT_NOTIFICATION_MESSAGES
-        notification_config = DEFAULT_NOTIFICATION_MESSAGES.get(event_type, {})
-        model_string = notification_config.get('model')
-
-        if not model_string:
-            logger.warning(f"No model found in notification config for event_type: {event_type}")
-            return {}
-
-        # Get the factory for this model
-        factory_class = self._get_factory_for_model(model_string)
-        if not factory_class:
-            logger.warning(f"No factory class found for model: {model_string}")
-            return {}
-
-        # Create an example object using the factory (without saving to DB)
-        try:
-            example_obj = factory_class.build()
-            logger.info(f"Successfully created example object: {type(example_obj).__name__}")
-        except Exception as e:
-            logger.error(f"Failed to build example object: {e}")
-            return {}
-
-        # Extract template subject and content for the language
-        template_subject = str(getattr(template, f'template_subject_{template_validation.language_code}', '') or template.template_subject or '')
-        template_content = str(getattr(template, f'template_content_{template_validation.language_code}', '') or template.template_content)
-
-        logger.debug(f"Template subject: {template_subject[:100]}...")
-        logger.debug(f"Template content: {template_content[:100]}...")
-
-        # Combine subject and content to extract all variables (subject first, then body)
-        full_template_text = template_subject + '\n' + template_content
-
-        # Extract all variables from the template using regex
-        # Match patterns like {{ obj.something }} or {{ object.something }}
-        variable_pattern = re.compile(r'\{\{\s*(obj|object)\.([^}|]+?)(?:\|[^}]+)?\s*\}\}')
-        variables = variable_pattern.findall(full_template_text)
-
-        logger.info(f"Found {len(variables)} variables in template: {variables}")
-
-        examples = {}
-        variable_index = 1
-
-        for var_prefix, var_path in variables:
-            # Create a simple Jinja2 template to render this specific variable
-            try:
-                jinja_template = Jinja2Template(f'{{{{ {var_prefix}.{var_path} }}}}')
-                value = jinja_template.render({var_prefix: example_obj, 'obj': example_obj, 'object': example_obj})
-
-                # Store with Twilio's variable format: {{1}}, {{2}}, etc.
-                examples[f'{{{{{variable_index}}}}}'] = str(value)
-                logger.debug(f"Variable {variable_index}: {var_prefix}.{var_path} = {value}")
-                variable_index += 1
-            except Exception as e:
-                logger.error(f"Failed to render variable {var_prefix}.{var_path}: {e}")
-                continue
-
-        logger.info(f"Generated {len(examples)} example values: {examples}")
-        return examples
-
     def _get_auth_header(self):
         account_sid = self.messaging_provider.account_sid
         auth_token = self.messaging_provider.auth_token
@@ -150,7 +62,68 @@ class Main(BaseMessagingProvider):
         encoded_credentials = base64.b64encode(credentials.encode()).decode()
         return f"Basic {encoded_credentials}"
 
+    @staticmethod
+    def _whatsapp_address(phone: str) -> str:
+        """Twilio addresses WhatsApp endpoints with a `whatsapp:` scheme."""
+        phone = (phone or "").strip()
+        if phone.startswith("whatsapp:"):
+            return phone
+        return f"whatsapp:{phone}"
+
+    @staticmethod
+    def _backend_base_url() -> str:
+        base = (config.backend_base_url or "").strip().rstrip("/")
+        if not base:
+            raise ProviderException(
+                "backend_base_url is not configured, WhatsApp links and delivery "
+                "callbacks cannot be built"
+            )
+        return base
+
+    # ------------------------------------------------------------------ send
+
+    @staticmethod
+    def _language_candidates(language: str) -> List[str]:
+        """Preferred language first, then its base form, then the site default."""
+        candidates: List[str] = []
+        for lang in (
+            language,
+            (language or "").split("-")[0],
+            settings.LANGUAGE_CODE,
+            settings.LANGUAGE_CODE.split("-")[0],
+        ):
+            if lang and lang not in candidates:
+                candidates.append(lang)
+        return candidates
+
+    def _resolve_validation(self, message: "Message") -> Optional["TemplateValidation"]:
+        """Find the approved template to use for this message, if any."""
+        from ..models import TemplateValidation, TemplateValidationStatus
+
+        approved = TemplateValidation.objects.filter(
+            messaging_provider=self.messaging_provider,
+            event_type=message.template_system_name,
+            status=TemplateValidationStatus.validated,
+        ).exclude(external_template_id="")
+
+        by_language = {validation.language_code: validation for validation in approved}
+        for language in self._language_candidates(message.language):
+            if language in by_language:
+                return by_language[language]
+        return None
+
+    def _status_callback_url(self, message: "Message") -> Optional[str]:
+        try:
+            base = self._backend_base_url()
+        except ProviderException:
+            return None
+        if not message.link_token:
+            return None
+        return f"{base}/messaging/twilio/status/{message.link_token}"
+
     def send(self, message: "Message"):
+        logger.info(f"Sending WhatsApp via Twilio to {message.phone_number}")
+
         if not message.phone_number:
             raise ProviderException("Missing recipient phone")
 
@@ -161,26 +134,104 @@ class Main(BaseMessagingProvider):
 
         auth_header = self._get_auth_header()
         if not auth_header:
-            raise ProviderException("No authentication header")
+            raise ProviderException(
+                "Missing Twilio credentials (account_sid or auth_token)"
+            )
 
-        account_sid = self.messaging_provider.account_sid
+        from_phone = self.messaging_provider.from_phone
+        if not from_phone:
+            raise ProviderException("Missing from_phone configuration")
 
-        url = f"https://api.twilio.com/2010-04-01/Accounts/{account_sid}/Messages.json"
+        # Outside the 24h customer service window WhatsApp only accepts
+        # pre-approved templates, so we never attempt a free-form send: failing
+        # here costs no API call and lets the dispatcher fall back to SMS.
+        if not message.template_system_name:
+            raise ProviderException(
+                "WhatsApp requires an approved template, this message has no template"
+            )
+
+        validation = self._resolve_validation(message)
+        if not validation:
+            raise ProviderException(
+                f"No approved WhatsApp template for '{message.template_system_name}' "
+                f"in language '{message.language}'"
+            )
+
+        if validation.is_outdated:
+            raise ProviderException(
+                f"Approved WhatsApp template for '{message.template_system_name}' "
+                f"[{validation.language_code}] no longer matches the current template "
+                "content, resubmit it for validation"
+            )
+
+        # The approved template froze a placeholder ordering; replay the exact
+        # one that was submitted. Validations approved before the ordering was
+        # persisted, or drifting from the current template, would silently send
+        # wrong or empty values.
+        expressions = validation.variable_expressions or []
+        _, expected_expressions = build_content(
+            validation.template,
+            validation.language_code,
+            with_action=bool(validation.template.action),
+        )
+        if expressions != expected_expressions:
+            raise ProviderException(
+                f"Approved WhatsApp template for '{message.template_system_name}' "
+                f"[{validation.language_code}] does not match the current template "
+                "variables, resubmit it for validation"
+            )
+
+        message.ensure_link_token()
+        if LINK_TOKEN_EXPRESSION in expressions:
+            message.freeze_access_link()
+        # Persist the token before calling Twilio: the delivery callback may
+        # land before the response is even processed.
+        message.save()
+
+        variables = render_variables(message, expressions)
 
         data = {
-            "From": self.messaging_provider.from_phone,
-            "To": message.phone_number,
-            "Body": message.content,
+            "From": self._whatsapp_address(from_phone),
+            "To": self._whatsapp_address(message.phone_number),
+            "ContentSid": validation.external_template_id,
         }
+        if variables:
+            data["ContentVariables"] = json.dumps(variables)
+
+        status_callback = self._status_callback_url(message)
+        if status_callback:
+            data["StatusCallback"] = status_callback
 
         headers = {
             "Authorization": auth_header,
             "Content-Type": "application/x-www-form-urlencoded",
         }
 
+        url = MESSAGES_API_URL.format(
+            account_sid=self.messaging_provider.account_sid
+        )
+        logger.info(f"Sending POST request to Twilio Messages API: {url}")
         response = requests.post(url, data=data, headers=headers)
+        logger.info(f"Twilio response status: {response.status_code}")
 
-        message.task_logs += response.text
+        message.task_logs += (
+            f"Twilio WhatsApp API response: {response.status_code}\n"
+            f"Content template: {validation.external_template_id} "
+            f"[{validation.language_code}]\n"
+            f"Response body: {response.text}\n"
+        )
+
+        if response.status_code != 201:
+            message.save()
+            raise ProviderException(
+                f"Twilio API error: {response.status_code} - {response.text}"
+            )
+
+        response_data = response.json() if response.content else {}
+        # provider_name and sent_at are stamped by the dispatcher on success.
+        message.external_message_id = response_data.get("sid", "")
+        message.save()
+        logger.info("WhatsApp message sent successfully via Twilio")
 
     def test_connection(self) -> Tuple[bool, Any]:
         try:
@@ -206,195 +257,166 @@ class Main(BaseMessagingProvider):
         except Exception as e:
             return (False, str(e))
 
-    def validate_template(
-        self, template_validation: "TemplateValidation"
-    ) -> Tuple[bool, str, Dict[str, Any]]:
-        """
-        Submit a WhatsApp template for validation with Twilio
+    # ------------------------------------------------------- template review
 
-        Args:
-            template (Template): The template to validate
+    def validate_template(self, template_validation: "TemplateValidation"):
+        """Create the Twilio Content Template and submit it to WhatsApp."""
+        from ..models import TemplateValidationStatus
 
-        Returns:
-            Tuple[bool, str, Dict[str, Any]]: (success, external_template_id, response_data)
-        """
-        from ..template import DEFAULT_NOTIFICATION_MESSAGES
-
-        logger.info(f"Starting template validation for: {template_validation.event_type} (language: {template_validation.language_code})")
+        event_type = template_validation.event_type
+        language = template_validation.language_code
+        logger.info(
+            f"Starting template validation for: {event_type} (language: {language})"
+        )
 
         auth_header = self._get_auth_header()
-        url = "https://content.twilio.com/v1/Content"
-
-        # Generate example values for template variables
-        template_examples = self._generate_template_examples(template_validation)
-        logger.info(f"Template examples generated: {template_examples}")
-
-        # Get template content with the appropriate language
-        template_content = str(
-            getattr(
-                template_validation.template,
-                f'template_content_{template_validation.language_code}',
-                ''
-            ) or template_validation.template.template_content
-        )
-
-        # Get template subject if it exists
-        template_subject = template_validation.template.template_subject
-        template_subject_lang = ""
-        if template_subject:
-            template_subject_lang = str(
-                getattr(
-                    template_validation.template,
-                    f'template_subject_{template_validation.language_code}',
-                    ''
-                ) or template_subject
+        if not auth_header:
+            template_validation.task_logs += (
+                "Missing Twilio credentials (account_sid or auth_token)\n"
             )
+            template_validation.status = TemplateValidationStatus.failed
+            template_validation.save()
+            return
 
-        # Check if template has an action (call-to-action template)
-        event_config = DEFAULT_NOTIFICATION_MESSAGES.get(template_validation.event_type, {})
-        has_action = 'action' in event_config
-        action_label = str(event_config.get('action_label', '')) if has_action else ''
+        template = template_validation.template
+        has_action = bool(template.action)
 
-        # Truncate action label to 25 characters (Twilio limit)
-        if action_label and len(action_label) > 25:
-            logger.warning(f"Action label too long ({len(action_label)} chars), truncating to 25 chars")
-            action_label = action_label[:25]
+        body, expressions = build_content(template, language, with_action=has_action)
 
-        logger.info(f"Template has action: {has_action}")
-        if has_action:
-            logger.info(f"Action label: {action_label}")
-
-        # Replace Jinja2 variables with Twilio's variable format
-        # Replace {{ obj.something }} or {{ object.something }} with {{1}}, {{2}}, etc.
-        # Process subject first, then body to maintain correct variable numbering
-        variable_index = 1
-        def replace_var(match):
-            nonlocal variable_index
-            replacement = f'{{{{{variable_index}}}}}'
-            variable_index += 1
-            return replacement
-
-        # Replace variables in subject (if exists)
-        template_subject_with_twilio_vars = ""
-        if template_subject_lang:
-            template_subject_with_twilio_vars = re.sub(
-                r'\{\{\s*(obj|object)\.([^}|]+?)(?:\|[^}]+)?\s*\}\}',
-                replace_var,
-                template_subject_lang
+        # Fail here rather than burning a submission: Meta answers hours later
+        # and its own message ("Invalid parameter") does not say which template.
+        problems = check_meta_compliance(body)
+        if problems:
+            template_validation.task_logs += (
+                "Not submitted, WhatsApp would reject this template:\n"
+                + "".join(f"  - {problem}\n" for problem in problems)
+                + f"  body: {body}\n"
             )
+            template_validation.variable_expressions = expressions
+            template_validation.status = TemplateValidationStatus.failed
+            template_validation.save()
+            return
 
-        # Replace variables in body
-        template_content_with_twilio_vars = re.sub(
-            r'\{\{\s*(obj|object)\.([^}|]+?)(?:\|[^}]+)?\s*\}\}',
-            replace_var,
-            template_content
-        )
+        example_factory = template.factory_instance
+        example_obj = example_factory.build() if example_factory else None
+        if not example_obj:
+            template_validation.task_logs += (
+                f"Warning: no factory found for model '{template.model}', sample "
+                "values sent to Meta will be generic\n"
+            )
+        examples = render_examples(expressions, example_obj)
 
-        # Prepare template data based on whether it has an action
         if has_action:
-            # Use call-to-action template
-            logger.info("Preparing call-to-action template")
-            content_data = {
-                "friendly_name": template_validation.event_type,
-                "language": template_validation.language_code,
-                "variables": template_examples,
-                "types": {
-                    "twilio/call-to-action": {
-                        "body": template_content_with_twilio_vars,
-                        "actions": [
-                            {
-                                "title": str(action_label),
-                                "type": "URL",
-                                "url": "https://example.com"  # Dynamic URL will be set at send time
-                            }
-                        ]
-                    }
-                },
+            action_label = str(template.action_label or "")
+            if len(action_label) > BUTTON_TITLE_MAX_LENGTH:
+                logger.warning(
+                    f"Action label too long ({len(action_label)} chars), truncating "
+                    f"to {BUTTON_TITLE_MAX_LENGTH} chars"
+                )
+                action_label = action_label[:BUTTON_TITLE_MAX_LENGTH]
+
+            # WhatsApp only allows a variable at the very end of a button URL, and
+            # an approved template carries a single static base. Pointing at the
+            # backend redirector keeps one base for patients and practitioners
+            # alike.
+            link_index = expressions.index(LINK_TOKEN_EXPRESSION) + 1
+            button_url = "%s/r/%s" % (
+                self._backend_base_url(),
+                "{{%d}}" % link_index,
+            )
+            types = {
+                "twilio/call-to-action": {
+                    "body": body,
+                    "actions": [
+                        {
+                            "type": "URL",
+                            "title": action_label,
+                            "url": button_url,
+                        }
+                    ],
+                }
             }
-
-            # Add header if there's a subject
-            if template_subject_with_twilio_vars:
-                content_data["types"]["twilio/call-to-action"]["header"] = template_subject_with_twilio_vars
         else:
-            # Use regular text template
-            logger.info("Preparing text template")
-            content_data = {
-                "friendly_name": template_validation.event_type,
-                "language": template_validation.language_code,
-                "variables": template_examples,
-                "types": {
-                    "twilio/text": {
-                        "body": template_content_with_twilio_vars
-                    }
-                },
-            }
+            button_url = None
+            types = {"twilio/text": {"body": body}}
 
-            # Add header if there's a subject
-            if template_subject_with_twilio_vars:
-                content_data["types"]["twilio/text"]["header"] = template_subject_with_twilio_vars
+        content_data = {
+            "friendly_name": _safe_name(f"{event_type}_{language}"),
+            "language": language,
+            "variables": examples,
+            "types": types,
+        }
 
         logger.info(f"Content data to send: {json.dumps(content_data, indent=2)}")
 
         headers = {"Authorization": auth_header, "Content-Type": "application/json"}
 
-        logger.info(f"Sending POST request to Twilio Content API: {url}")
-        response = requests.post(url, json=content_data, headers=headers)
+        logger.info(f"Sending POST request to Twilio Content API: {CONTENT_API_URL}")
+        response = requests.post(CONTENT_API_URL, json=content_data, headers=headers)
         logger.info(f"Twilio response status: {response.status_code}")
         logger.debug(f"Twilio response content: {response.text}")
 
         response_data = response.json() if response.content else {}
-        logger.info(f"Twilio response data: {json.dumps(response_data, indent=2)}")
-
-        from ..models import TemplateValidationStatus
 
         template_validation.validation_response = response_data
+        template_validation.variable_expressions = expressions
 
-        # Check if the request was successful
         if response.status_code >= 400:
-            logger.error(f"Twilio API error: {response_data.get('message', 'Unknown error')}")
+            logger.error(
+                f"Twilio API error: {response_data.get('message', 'Unknown error')}"
+            )
+            template_validation.task_logs += (
+                f"Content creation failed: {response.status_code} - {response.text}\n"
+            )
             template_validation.status = TemplateValidationStatus.failed
             template_validation.save()
-            logger.info(f"Template validation saved with status: {template_validation.status}")
             return
 
         template_validation.external_template_id = response_data.get("sid", "")
-        logger.info(f"Template external_template_id: {template_validation.external_template_id}")
+        logger.info(
+            f"Template external_template_id: {template_validation.external_template_id}"
+        )
+        if button_url:
+            template_validation.task_logs += f"Button URL: {button_url}\n"
 
-        # Submit the Content Template to WhatsApp for approval
-        if template_validation.external_template_id:
-            logger.info("Submitting template to WhatsApp for approval")
-            self._submit_template_to_whatsapp(template_validation, auth_header)
-        else:
+        if not template_validation.external_template_id:
             logger.warning("No external_template_id found, skipping WhatsApp submission")
+            template_validation.task_logs += (
+                "Content created but Twilio returned no SID, skipping WhatsApp "
+                "submission\n"
+            )
+            template_validation.status = TemplateValidationStatus.failed
+            template_validation.save()
+            return
+
+        logger.info("Submitting template to WhatsApp for approval")
+        if not self._submit_template_to_whatsapp(template_validation, auth_header):
+            return
 
         template_validation.status = TemplateValidationStatus.pending
         template_validation.save()
-        logger.info(f"Template validation saved with status: {template_validation.status}")
+        logger.info(
+            f"Template validation saved with status: {template_validation.status}"
+        )
 
-    def _submit_template_to_whatsapp(self, template_validation: "TemplateValidation", auth_header: str):
-        """
-        Submit the created Content Template to WhatsApp for approval
+    def _submit_template_to_whatsapp(
+        self, template_validation: "TemplateValidation", auth_header: str
+    ) -> bool:
+        """Submit the created Content Template to WhatsApp for approval."""
+        from ..models import TemplateValidationStatus
 
-        Args:
-            template_validation: The TemplateValidation instance
-            auth_header: Authorization header for Twilio API
-        """
         content_sid = template_validation.external_template_id
-        url = f"https://content.twilio.com/v1/Content/{content_sid}/ApprovalRequests/whatsapp"
+        url = f"{CONTENT_API_URL}/{content_sid}/ApprovalRequests/whatsapp"
 
         logger.info(f"Submitting template to WhatsApp: content_sid={content_sid}")
-        logger.info(f"WhatsApp submission URL: {url}")
 
         headers = {"Authorization": auth_header, "Content-Type": "application/json"}
 
-        # Submit to WhatsApp
         # Valid categories: UTILITY (transactional), MARKETING, AUTHENTICATION (OTP)
         payload = {
-            "name": template_validation.event_type,
-            "category": "UTILITY"
+            "name": _safe_name(template_validation.event_type),
+            "category": "UTILITY",
         }
-
-        logger.info(f"WhatsApp submission payload: {json.dumps(payload, indent=2)}")
 
         try:
             response = requests.post(url, json=payload, headers=headers)
@@ -402,97 +424,120 @@ class Main(BaseMessagingProvider):
             logger.debug(f"WhatsApp submission response content: {response.text}")
 
             response_data = response.json() if response.content else {}
-            logger.info(f"WhatsApp submission response data: {json.dumps(response_data, indent=2)}")
 
-            # Update validation response with submission info
-            if template_validation.validation_response:
-                template_validation.validation_response['whatsapp_submission'] = response_data
-            else:
-                template_validation.validation_response = {'whatsapp_submission': response_data}
+            template_validation.validation_response = {
+                **(template_validation.validation_response or {}),
+                "whatsapp_submission": response_data,
+            }
 
-            # Check if WhatsApp submission failed
             if response.status_code >= 400:
-                from ..models import TemplateValidationStatus
-                logger.error(f"WhatsApp submission failed with error: {response_data.get('message', 'Unknown error')}")
+                logger.error(
+                    "WhatsApp submission failed with error: "
+                    f"{response_data.get('message', 'Unknown error')}"
+                )
+                template_validation.task_logs += (
+                    f"WhatsApp submission failed: {response.status_code} - "
+                    f"{response.text}\n"
+                )
                 template_validation.status = TemplateValidationStatus.failed
                 template_validation.save()
-                logger.info("Template validation status set to failed due to WhatsApp submission error")
-            else:
-                template_validation.save()
-                logger.info("WhatsApp submission successful, validation response updated")
+                return False
+
+            template_validation.save()
+            logger.info("WhatsApp submission successful, validation response updated")
+            return True
+
         except Exception as e:
-            from ..models import TemplateValidationStatus
             logger.error(f"WhatsApp submission failed with exception: {e}", exc_info=True)
-            # Set status to failed on exception
-            if template_validation.validation_response:
-                template_validation.validation_response['whatsapp_submission_error'] = str(e)
-            else:
-                template_validation.validation_response = {'whatsapp_submission_error': str(e)}
+            template_validation.validation_response = {
+                **(template_validation.validation_response or {}),
+                "whatsapp_submission_error": str(e),
+            }
+            template_validation.task_logs += f"WhatsApp submission failed: {e}\n"
             template_validation.status = TemplateValidationStatus.failed
             template_validation.save()
+            return False
 
-    def check_template_validation(
-        self, template_validation: "TemplateValidation"
-    ) -> Tuple[bool, str, Dict[str, Any]]:
-        """
-        Check the validation status of a WhatsApp template with Twilio
-
-        Args:
-            external_template_id (str): The Twilio Content SID
-
-        Returns:
-            Tuple[bool, str, Dict[str, Any]]: (is_validated, status, response_data)
-        """
+    def check_template_validation(self, template_validation: "TemplateValidation"):
+        """Refresh the WhatsApp approval status of a submitted template."""
+        from ..models import TemplateValidationStatus
 
         auth_header = self._get_auth_header()
+        if not auth_header:
+            template_validation.task_logs += (
+                "Missing Twilio credentials (account_sid or auth_token)\n"
+            )
+            template_validation.status = TemplateValidationStatus.failed
+            template_validation.save()
+            return
 
-        url = f"https://content.twilio.com/v1/Content/{template_validation.external_template_id}"
+        if not template_validation.external_template_id:
+            template_validation.task_logs += (
+                "No external template ID, submit the template for validation first\n"
+            )
+            return
 
+        url = f"{CONTENT_API_URL}/{template_validation.external_template_id}"
         headers = {"Authorization": auth_header}
         response = requests.get(url, headers=headers)
         response_data = response.json() if response.content else {}
 
         logger.info(f"Check validation response: {json.dumps(response_data, indent=2)}")
 
-        from ..models import TemplateValidationStatus
+        if response.status_code >= 400:
+            template_validation.task_logs += (
+                f"Status check failed: {response.status_code} - {response.text}\n"
+            )
+            template_validation.status = TemplateValidationStatus.failed
+            template_validation.save()
+            return
 
-        # Get approval requests link from the response
         approval_fetch_url = response_data.get("links", {}).get("approval_fetch")
 
         status = ""
+        rejection_reason = ""
+        approval_data: Dict[str, Any] = {}
         if approval_fetch_url:
-            # Fetch approval requests to get WhatsApp status
             logger.info(f"Fetching approval requests from: {approval_fetch_url}")
             approval_response = requests.get(approval_fetch_url, headers=headers)
             approval_data = approval_response.json() if approval_response.content else {}
             logger.info(f"Approval requests response: {json.dumps(approval_data, indent=2)}")
 
-            # Get WhatsApp approval status directly from the response
             whatsapp_data = approval_data.get("whatsapp", {})
             status = whatsapp_data.get("status", "").lower()
+            rejection_reason = whatsapp_data.get("rejection_reason") or ""
             logger.info(f"WhatsApp approval status: {status}")
         else:
             logger.warning("No approval_fetch URL found in response")
 
-        if not status:
-            logger.warning(f"WhatsApp approval status not found")
-
-        # Map Twilio WhatsApp approval statuses to our understanding
-        # Possible statuses: approved, pending, rejected
         if status == "approved":
             template_validation.status = TemplateValidationStatus.validated
             if not template_validation.validated_at:
-                from django.utils import timezone
                 template_validation.validated_at = timezone.now()
         elif status == "pending":
             template_validation.status = TemplateValidationStatus.pending
         elif status == "rejected":
             template_validation.status = TemplateValidationStatus.rejected
+            # Keep a dated trace: the next check overwrites the approval payload,
+            # and Meta drops the reason once the template is resubmitted.
+            template_validation.task_logs += (
+                f"Rejected by WhatsApp: {rejection_reason or 'no reason given'}\n"
+            )
         else:
-            # If no WhatsApp approval status found, keep current status or set to created
             logger.warning(f"Unknown or missing WhatsApp approval status: {status}")
-            if not template_validation.status or template_validation.status == TemplateValidationStatus.created:
+            template_validation.task_logs += (
+                "No WhatsApp approval status returned by Twilio\n"
+            )
+            if (
+                not template_validation.status
+                or template_validation.status == TemplateValidationStatus.created
+            ):
                 template_validation.status = TemplateValidationStatus.created
 
-        template_validation.validation_response = response_data
+        # Merge rather than overwrite so the submission trace is not lost.
+        template_validation.validation_response = {
+            **(template_validation.validation_response or {}),
+            **response_data,
+            "whatsapp_approval": approval_data,
+        }
         template_validation.save()

@@ -145,6 +145,8 @@ class MessageAdmin(ModelAdmin):
         "action",
         "action_label",
         "access_link",
+        "link_token",
+        "link_target",
     ]
 
     fieldsets = [
@@ -196,6 +198,8 @@ class MessageAdmin(ModelAdmin):
                     "action",
                     "action_label",
                     "access_link",
+                    "link_token",
+                    "link_target",
                     "content_type",
                     "object_id",
                     "additionnal_link_args",
@@ -410,6 +414,7 @@ class TemplateValidationAdmin(ModelAdmin):
         "language_code",
         "messaging_provider",
         "display_status",
+        "display_rejection_reason",
         "display_is_outdated",
         "external_template_id",
         "created_at",
@@ -439,6 +444,8 @@ class TemplateValidationAdmin(ModelAdmin):
         "external_template_id",
         "content_hash",
         "display_is_outdated",
+        "variable_expressions",
+        "display_rejection_reason",
     ]
 
     fieldsets = [
@@ -453,10 +460,14 @@ class TemplateValidationAdmin(ModelAdmin):
                     "external_template_id",
                     "content_hash",
                     "display_is_outdated",
+                    "variable_expressions",
                 ],
             },
         ),
-        (_("Status"), {"fields": ["status", "task_logs"]}),
+        (
+            _("Status"),
+            {"fields": ["status", "display_rejection_reason", "task_logs"]},
+        ),
         (
             _("Validation Response"),
             {
@@ -498,6 +509,10 @@ class TemplateValidationAdmin(ModelAdmin):
     )
     def display_is_outdated(self, instance):
         return str(instance.is_outdated)
+
+    @display(description=_("Rejection reason"))
+    def display_rejection_reason(self, instance):
+        return instance.rejection_reason or "-"
 
     def get_queryset(self, request):
         """Filter templates based on communication method and provider capabilities"""
