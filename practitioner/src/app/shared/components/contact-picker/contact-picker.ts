@@ -162,6 +162,7 @@ export class ContactPicker
   addAccountModalOpen = signal(false);
   newAccountName = signal('');
   availableCommunicationMethods = signal<string[]>([]);
+  forceTemporaryPatients = signal(false);
   dropdownStyle = signal<{
     top?: string;
     bottom?: string;
@@ -327,9 +328,17 @@ export class ContactPicker
     );
   }
 
+  /**
+   * The full contact form creates a regular account, which makes no sense
+   * when the instance only allows temporary patients.
+   */
+  get canOpenContactForm(): boolean {
+    return !this.forceTemporaryPatients();
+  }
+
   /** True when "create the contact" opens the full form instead of a guest. */
   get createContactOpensForm(): boolean {
-    return this.detectedChannel !== null;
+    return this.canOpenContactForm && this.detectedChannel !== null;
   }
 
   /**
@@ -589,7 +598,7 @@ export class ContactPicker
    * has no channel, so it becomes a contact whose link is shared manually.
    */
   createContact(): void {
-    if (this.detectedChannel) {
+    if (this.createContactOpensForm) {
       this.openAddAccountModal();
       return;
     }
@@ -651,6 +660,7 @@ export class ContactPicker
   }
 
   openAddAccountModal(): void {
+    if (!this.canOpenContactForm) return;
     this.newAccountName.set(this.query().trim());
     this.isOpen.set(false);
     this.addAccountModalOpen.set(true);
@@ -863,6 +873,7 @@ export class ContactPicker
           this.availableCommunicationMethods.set(
             config?.communication_methods || []
           );
+          this.forceTemporaryPatients.set(!!config?.force_temporary_patients);
         },
       });
   }

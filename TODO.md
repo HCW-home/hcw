@@ -15,3 +15,5 @@ le gris de l'email est trop clair
 l'email doit avoir la même taille que tous les sous éléments (sous titre de la page) et sous titre dans la sidebar
 
 ne pas griser quand un chat est ouvert http://localhost:8001/home
+
+vérifier que quand l'option pas de gestion des contact est actif on ne peut pas créer des contacts
