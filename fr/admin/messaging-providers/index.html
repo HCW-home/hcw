@@ -875,6 +875,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#5-inviting-a-contact-over-whatsapp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Inviting a contact over WhatsApp
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1369,6 +1380,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#5-inviting-a-contact-over-whatsapp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Inviting a contact over WhatsApp
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1468,8 +1490,11 @@
 <strong>pre-approved message templates</strong> outside of a 24-hour conversation window opened by the
 recipient. Each notification therefore has to be submitted to Meta for approval, per language,
 before it can be delivered.</p>
-<p>If no approved template is available for a notification, the message is <strong>not</strong> sent over
-WhatsApp: the platform falls back to the SMS providers, using the same phone number.</p>
+<p>At send time the platform looks for an approved template matching the notification, the provider
+and the recipient's language, falling back to the base language then to the site default. If it
+finds none — or if the template has been edited since approval — the message is <strong>not</strong> sent over
+WhatsApp and the platform falls back to the SMS providers, using the same phone number. Nothing is
+lost, and no API call is wasted on a delivery that Meta would refuse.</p>
 <h3 id="1-set-the-backend-base-url">1. Set the backend base URL</h3>
 <blockquote>
 <p><strong>Menu:</strong> Settings &gt; Constance &gt; URLs &gt; <strong>Backend base URL</strong></p>
@@ -1516,7 +1541,9 @@ which signs every template.</p>
 </tr>
 </tbody>
 </table>
-<p>Use the <strong>Test connection</strong> action to verify the credentials.</p>
+<p>Use the <strong>Test connection</strong> action to verify the credentials. As for SMS, <em>Included prefixes</em> and
+<em>Excluded prefixes</em> restrict the provider to certain country codes, and <em>Priority</em> orders it
+against the other WhatsApp providers.</p>
 <h3 id="3-submit-the-templates-for-approval">3. Submit the templates for approval</h3>
 <blockquote>
 <p><strong>Menu:</strong> Messaging &gt; Template validations</p>
@@ -1527,9 +1554,46 @@ which signs every template.</p>
 <li>Select the entries and run <strong>Submit templates for validation</strong>. This creates the Twilio Content
    template and sends it to WhatsApp for approval. The <em>Variable expressions</em> field then shows which
    template expression each <code>{{1}}</code>, <code>{{2}}</code>… placeholder stands for.</li>
-<li>Run <strong>Check validation status</strong> until the status becomes <strong>Validated</strong>. Approval by Meta usually
-   takes a few minutes but can take up to 24 hours.</li>
+<li><strong>Check pending validations</strong> refreshes every template still awaiting approval, without
+   selecting anything. Approval by Meta usually takes a few minutes but can take up to 24 hours, so
+   expect to run it more than once. <em>Check validation status</em> does the same on a hand-picked
+   selection.</li>
 </ol>
+<p>Only templates in the <strong>Validated</strong> state are used for sending.</p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Created</strong></td>
+<td>Generated locally, not submitted yet.</td>
+</tr>
+<tr>
+<td><strong>Pending</strong></td>
+<td>Submitted, waiting for Meta's decision.</td>
+</tr>
+<tr>
+<td><strong>Validated</strong></td>
+<td>Approved and in use.</td>
+</tr>
+<tr>
+<td><strong>Outdated</strong></td>
+<td>The template text, the backend URL or the site name changed since approval. Submit again.</td>
+</tr>
+<tr>
+<td><strong>Rejected</strong></td>
+<td>Refused by Meta. The reason is shown in its own column and kept in the logs.</td>
+</tr>
+<tr>
+<td><strong>Failed</strong></td>
+<td>Never reached Meta: local pre-check, missing credentials or Twilio error. See the logs.</td>
+</tr>
+</tbody>
+</table>
 <div class="admonition note">
 <p class="admonition-title">Templates rejected by Meta</p>
 <p>Meta refuses a body that <strong>starts with a variable</strong> or puts <strong>two variables side by side</strong>.
@@ -1547,6 +1611,12 @@ and submit again.</p>
 <p>Jinja conditions are also supported: a whole <code>{% if %}...{% endif %}</code> block becomes one
 variable, resolved when the message is sent.</p>
 </div>
+<div class="admonition warning">
+<p class="admonition-title">A rejection reason is only reported once</p>
+<p>Meta drops the reason as soon as a template is resubmitted, and each status check overwrites
+the stored provider response. The reason is therefore also written to the validation <strong>logs</strong>
+when the rejection is first seen — that copy is the one that survives.</p>
+</div>
 <p>Whenever a template's text is edited, its validations are flagged <strong>Outdated</strong> and are no longer
 used for sending until they have been submitted and approved again.</p>
 <h3 id="4-delivery-status">4. Delivery status</h3>
@@ -1555,6 +1625,12 @@ platform passes with every message. The <em>Delivered at</em> and <em>Read at</e
 <strong>Messaging &gt; Messages</strong> are filled from these callbacks. The endpoint requires a valid
 <code>X-Twilio-Signature</code>, so the backend must be reachable from the internet for statuses to progress
 beyond <em>Sent</em>.</p>
+<h3 id="5-inviting-a-contact-over-whatsapp">5. Inviting a contact over WhatsApp</h3>
+<p>Once an active WhatsApp provider exists, typing a phone number in the practitioner's contact picker
+offers <strong>two invitations</strong>, <em>by SMS</em> and <em>on WhatsApp</em>, instead of one. The practitioner picks the
+channel, which sets the contact's communication method; it can still be changed afterwards under
+<em>Contact details</em>. With a single phone provider configured, a single invitation is offered and it
+names the channel actually in use.</p>
 
 
 

@@ -1540,6 +1540,11 @@ ever looks at <code>scheduled</code> appointments, a manual status is never over
 <td><code>PRACTITIONER_BASE_URL</code></td>
 <td>The public URL where the practitioner application is hosted (e.g., <code>https://practitioner.example.com</code>). Used in notification emails sent to practitioners.</td>
 </tr>
+<tr>
+<td>Public base URL of this backend</td>
+<td><code>BACKEND_BASE_URL</code></td>
+<td>The publicly reachable URL of the backend itself (e.g., <code>https://api.example.com</code>). Used as the static base of WhatsApp call-to-action buttons and of the Twilio delivery status webhook, so it must be reachable from the internet. Changing it invalidates already approved WhatsApp templates, see <a href="../messaging-providers/#whatsapp">Messaging Providers</a>.</td>
+</tr>
 </tbody>
 </table>
 <h2 id="uploads">Uploads</h2>
