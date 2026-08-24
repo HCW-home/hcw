@@ -42,6 +42,14 @@
       <div class="dropdown-hint">{{ dropdownHintKey | translate }}</div>
       }
 
+      <!-- Right under the field: the hint is about what is being typed, so it
+      must not sit below the results where it reads as a comment on them. -->
+      @if (phoneHintKey) {
+      <div class="dropdown-hint phone-hint">
+        {{ phoneHintKey | translate: { example: phoneFormatExample } }}
+      </div>
+      }
+
       @if (isLoading()) {
       <div class="dropdown-loading">
         <app-loader></app-loader>
@@ -59,11 +67,7 @@
       <div class="dropdown-hint">
         {{ 'contactPicker.noResult' | translate: { query: query() } }}
       </div>
-      } } @if (phoneHintKey) {
-      <div class="dropdown-hint phone-hint">
-        {{ phoneHintKey | translate: { example: phoneFormatExample } }}
-      </div>
-      }
+      } }
 
       @for (option of inviteOptions; track option.method) {
       <button
