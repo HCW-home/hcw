@@ -13,6 +13,8 @@ from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 from users.models import CommunicationMethod, Language, Speciality
+from users.phone import MAX_PHONE_LENGTH
+from users.validators import validate_phone_number
 
 from .models import (
     Appointment,
@@ -228,6 +230,8 @@ class ParticipantSerializer(serializers.Serializer):
     mobile_phone_number = serializers.CharField(
         write_only=True,
         required=False,
+        max_length=MAX_PHONE_LENGTH,
+        validators=[validate_phone_number],
     )
     communication_method = serializers.ChoiceField(
         choices=CommunicationMethod.values,
@@ -321,8 +325,11 @@ class ParticipantSerializer(serializers.Serializer):
         }
 
         if data.get("mobile_phone_number"):
-            user, __ = User.objects.get_or_create(
-                mobile_phone_number=data["mobile_phone_number"],
+            # Normalised lookup: a number typed with spaces must map to the
+            # existing account instead of creating a duplicate that then
+            # violates the unique constraint on save().
+            user, __ = User.objects.get_or_create_by_phone(
+                data["mobile_phone_number"],
                 defaults=user_defaults,
             )
         elif data.get("email"):

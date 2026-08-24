@@ -59,7 +59,11 @@
       <div class="dropdown-hint">
         {{ 'contactPicker.noResult' | translate: { query: query() } }}
       </div>
-      } }
+      } } @if (phoneHintKey) {
+      <div class="dropdown-hint phone-hint">
+        {{ phoneHintKey | translate: { example: phoneFormatExample } }}
+      </div>
+      }
 
       @for (option of inviteOptions; track option.method) {
       <button

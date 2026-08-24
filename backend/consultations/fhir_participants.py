@@ -45,9 +45,7 @@ def get_or_create_patient_user(
     if email:
         user, _ = User.objects.get_or_create_by_email(email, defaults=defaults)
     elif phone:
-        user, _ = User.objects.get_or_create(
-            mobile_phone_number=phone, defaults=defaults,
-        )
+        user, _ = User.objects.get_or_create_by_phone(phone, defaults=defaults)
     else:
         # Anonymous contact: no lookup key (mirrors the native "manual contact").
         user = User.objects.create(**defaults)

@@ -1,4 +1,3 @@
-import re
 import uuid
 from zoneinfo import ZoneInfo, available_timezones
 
@@ -23,6 +22,8 @@ from core.storage import TenantUploadTo
 
 from .abstracts import ModelOwnerAbstract
 from .managers import UserManager
+from .phone import MAX_PHONE_LENGTH, normalize_phone_number
+from .validators import validate_phone_number
 
 import secrets
 
@@ -229,7 +230,13 @@ class User(AbstractUser):
     communication_method = models.CharField(
         choices=CommunicationMethod.choices, default=CommunicationMethod.email
     )
-    mobile_phone_number = models.CharField(null=True, blank=True, unique=True)
+    mobile_phone_number = models.CharField(
+        max_length=MAX_PHONE_LENGTH,
+        null=True,
+        blank=True,
+        unique=True,
+        validators=[validate_phone_number],
+    )
     timezone = models.CharField(
         max_length=63,
         choices=[(tz, tz) for tz in sorted(available_timezones())],
@@ -356,13 +363,14 @@ class User(AbstractUser):
 
     @staticmethod
     def normalize_phone_number(value):
-        """Strip spaces and common separators from a phone number, keeping a
-        leading '+'. Stores a canonical form so search and SMS sending match
-        regardless of how the number was typed (e.g. '06 12 34 56 78')."""
-        if not value:
-            return None
-        cleaned = re.sub(r"[\s\-.() ]", "", value.strip())
-        return cleaned or None
+        """Canonical (E.164) form of a phone number, e.g. '+33612345678'.
+
+        Keeping a single form per real number is what lets search, SMS sending
+        and the unique constraint all agree regardless of how the number was
+        typed (e.g. '06 12 34 56 78'). Numbers that cannot be parsed keep the
+        legacy separator-free form; see users/phone.py.
+        """
+        return normalize_phone_number(value)
 
     def save(self, *args, **kwargs):
         if self.temporary and not self.one_time_auth_token:

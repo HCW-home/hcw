@@ -113,6 +113,13 @@
   border-bottom: 1px solid var(--slate-100);
 }
 
+// Actionable guidance rather than a dead end: stands out from the plain
+// "no result" line above it.
+.phone-hint {
+  color: var(--slate-700);
+  background: var(--slate-50);
+}
+
 .dropdown-loading {
   display: flex;
   padding: 16px;

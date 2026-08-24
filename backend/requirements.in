@@ -29,6 +29,7 @@ python-dotenv
 psycopg
 itsdangerous
 Pillow
+phonenumbers
 factory-boy
 livekit-api
 django-clamd

@@ -82,6 +82,7 @@ from allauth.socialaccount.models import SocialApp
 
 from .filters import UserFilter
 from .models import HealthMetric, Language, Organisation, Speciality, Term, User, WebPushSubscription, DAVAppPassword
+from .phone import phone_lookup_variants
 from .serializers import (
     HealthMetricSerializer,
     LanguageSerializer,
@@ -1229,21 +1230,26 @@ class UserViewSet(viewsets.ModelViewSet):
         return (practitioners_qs | patients_qs).distinct()
 
     def filter_queryset(self, queryset):
-        """Run the default SearchFilter, then also match phone numbers ignoring
-        spaces/separators: the search term is normalized the same way numbers
-        are stored, so '06 12 34 56 78' and '0612345678' both match."""
+        """Run the default SearchFilter, then also match phone numbers however
+        they were typed: the term is canonicalised the same way numbers are
+        stored, so '06 12 34 56 78', '0612345678' and '+33612345678' all match.
+
+        Both the canonical and the legacy separator-free forms are tried, so a
+        row written before the E.164 migration is still found.
+        """
         visible = self.get_queryset()
         filtered = super().filter_queryset(queryset)
 
         search = self.request.query_params.get("search")
-        normalized = User.normalize_phone_number(search) if search else None
-        # Only attempt a phone match when the term actually contains digits and
-        # differs from the raw term (otherwise SearchFilter already covered it).
-        if normalized and any(c.isdigit() for c in normalized):
-            phone_matches = visible.filter(
-                mobile_phone_number__icontains=normalized
-            )
-            return (filtered | phone_matches).distinct()
+        variants = phone_lookup_variants(search) if search else []
+        # Only attempt a phone match when the term actually contains digits
+        # (otherwise SearchFilter already covered it).
+        variants = [v for v in variants if any(c.isdigit() for c in v)]
+        if variants:
+            phone_filter = Q()
+            for variant in variants:
+                phone_filter |= Q(mobile_phone_number__icontains=variant)
+            return (filtered | visible.filter(phone_filter)).distinct()
         return filtered
 
     def _filter_practitioners(self, base_queryset, current_user):
@@ -1318,10 +1324,13 @@ class UserViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         """
         Create a new user or merge with existing temporary user.
-        If a temporary user with the same email exists, update it instead.
+        If a temporary user with the same email or phone number exists, update
+        it instead.
         """
         email = request.data.get('email')
+        phone = request.data.get('mobile_phone_number')
 
+        existing_user = None
         if email:
             # Case-insensitive lookup: the same person typed with a different
             # case must reuse their account, not get a second one.
@@ -1329,20 +1338,29 @@ class UserViewSet(viewsets.ModelViewSet):
                 email__iexact=email.strip(), temporary=True
             ).order_by("-is_active", "pk").first()
 
-            if existing_user is not None:
-                # Update the existing temporary user with new data
-                serializer = self.get_serializer(existing_user, data=request.data, partial=True)
-                serializer.is_valid(raise_exception=True)
+        if existing_user is None and phone:
+            # Same reasoning for the phone number, which is unique too: the
+            # contact picker creates SMS/WhatsApp contacts without an email, so
+            # without this they could never be promoted and would instead block
+            # every later creation on that number.
+            existing_user = User.objects.filter(
+                mobile_phone_number__in=phone_lookup_variants(phone), temporary=True
+            ).order_by("-is_active", "pk").first()
 
-                # Promote temporary -> permanent, unless the toggle forces temporary accounts.
-                if not constance_config.force_temporary_patients:
-                    serializer.validated_data['temporary'] = False
+        if existing_user is not None:
+            # Update the existing temporary user with new data
+            serializer = self.get_serializer(existing_user, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
 
-                # Save the updated user
-                serializer.save(created_by=request.user)
+            # Promote temporary -> permanent, unless the toggle forces temporary accounts.
+            if not constance_config.force_temporary_patients:
+                serializer.validated_data['temporary'] = False
 
-                headers = self.get_success_headers(serializer.data)
-                return Response(serializer.data, status=status.HTTP_200_OK, headers=headers)
+            # Save the updated user
+            serializer.save(created_by=request.user)
+
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_200_OK, headers=headers)
 
         # Normal user creation
         return super().create(request, *args, **kwargs)
@@ -1601,6 +1619,11 @@ class AppConfigView(APIView):
                 "primary_color_practitioner": main_org.primary_color_practitioner if main_org else None,
                 "languages": languages,
                 "communication_methods": communication_methods,
+                # Region used to read a number typed in national format. Empty
+                # means only the international +XX notation is accepted, which
+                # the front-ends must know to stop offering an SMS invite for a
+                # number the API will reject.
+                "default_phone_region": constance_config.default_phone_region or "",
                 "vapid_public_key": settings.WEBPUSH_VAPID_PUBLIC_KEY,
                 "consultation_auto_delete_hours": int(constance_config.consultation_auto_delete_hours),
                 "appointment_early_join_minutes": int(constance_config.appointment_early_join_minutes),

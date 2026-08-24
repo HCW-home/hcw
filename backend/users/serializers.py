@@ -15,6 +15,8 @@ from rest_framework.response import Response
 
 from .forms import CustomAllAuthPasswordResetForm
 from .models import HealthMetric, Language, Organisation, Speciality, Term, WebPushSubscription, DAVAppPassword
+from .phone import MAX_PHONE_LENGTH, phone_lookup_variants
+from .validators import validate_phone_number
 
 UserModel = get_user_model()
 
@@ -73,7 +75,13 @@ class UserDetailsSerializer(CustomFieldsMixin, serializers.ModelSerializer):
     specialities = SpecialitySerializer(many=True, read_only=True)
 
     is_online = serializers.BooleanField(read_only=True)
-    mobile_phone_number = serializers.CharField(allow_null=True, allow_blank=True, required=False)
+    mobile_phone_number = serializers.CharField(
+        allow_null=True,
+        allow_blank=True,
+        required=False,
+        max_length=MAX_PHONE_LENGTH,
+        validators=[validate_phone_number],
+    )
 
     languages_ids = serializers.PrimaryKeyRelatedField(
         many=True,
@@ -210,12 +218,32 @@ class UserDetailsSerializer(CustomFieldsMixin, serializers.ModelSerializer):
             )
 
     def validate_mobile_phone_number(self, value):
-        if self.instance and value:
-            if self.instance.mobile_phone_number != value:
-                if UserModel.objects.filter(mobile_phone_number=value).exclude(pk=self.instance.pk).exists():
-                    raise serializers.ValidationError(
-                        "A user with this phone number already exists."
-                    )
+        """Reject a number already taken, comparing canonical forms.
+
+        The field is redeclared above as a plain CharField, which drops the
+        UniqueValidator DRF would have derived from `unique=True` — so this is
+        the only uniqueness check, and it must also run on creation. It has to
+        compare normalised values: the column stores the canonical form, so
+        querying the raw input misses the duplicate and the constraint then
+        fails at save() time as an unhandled IntegrityError (500 instead of 400).
+        """
+        if not value:
+            return value
+
+        normalized = UserModel.normalize_phone_number(value)
+        if not normalized:
+            return value
+
+        duplicates = UserModel.objects.filter(
+            mobile_phone_number__in=phone_lookup_variants(value)
+        )
+        if self.instance:
+            duplicates = duplicates.exclude(pk=self.instance.pk)
+
+        if duplicates.exists():
+            raise serializers.ValidationError(
+                _("A user with this phone number already exists.")
+            )
         return value
 
     def validate_email(self, value):

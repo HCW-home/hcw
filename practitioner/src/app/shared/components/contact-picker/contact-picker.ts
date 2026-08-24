@@ -38,6 +38,11 @@ import { Checkbox } from '../../ui-components/checkbox/checkbox';
 import { Loader } from '../loader/loader';
 import { ModalComponent } from '../modal/modal.component';
 import { SelectOption } from '../../models/select';
+import {
+  isPhoneAcceptable,
+  looksLikePhone,
+  normalizePhone,
+} from '../../tools/phone-number-validator';
 import { ContactChannel, ContactSelection } from '../../models/contact-picker';
 
 /** An "invite this number/address" row of the dropdown. */
@@ -54,6 +59,16 @@ const GUEST_LANGUAGES = ['fr', 'en', 'de'] as const;
 
 /** Feeds unique input ids so the label can be associated with the field. */
 let nextPickerId = 0;
+
+/**
+ * Country code used to illustrate the international format in the hint shown
+ * when a number is typed without one. Purely an example: with no
+ * `default_phone_region` the real country cannot be inferred from the digits.
+ */
+const EXAMPLE_COUNTRY_CODE = '+33';
+
+/** Stand-in national number, used when too little has been typed to echo. */
+const EXAMPLE_NATIONAL_NUMBER = '612345678';
 
 /** Keep in sync with the .dropdown max-height in the stylesheet. */
 const DROPDOWN_MAX_HEIGHT = 320;
@@ -172,6 +187,8 @@ export class ContactPicker
   newAccountName = signal('');
   availableCommunicationMethods = signal<string[]>([]);
   forceTemporaryPatients = signal(false);
+  /** Region used to read national numbers; empty = only +XX is accepted. */
+  defaultPhoneRegion = signal<string>('');
   dropdownStyle = signal<{
     top?: string;
     bottom?: string;
@@ -398,6 +415,10 @@ export class ContactPicker
     }
 
     const methods = this.phoneInviteMethods;
+    // Show the number in the form it will actually be stored and messaged in,
+    // so the practitioner sees which country code was applied to what they
+    // typed before committing to the invite.
+    const display = this.normalizedQueryPhone || query;
     // With a single channel there is nothing to arbitrate: keep the plain
     // wording and let the subtitle name the channel.
     const named = methods.length > 1;
@@ -412,7 +433,7 @@ export class ContactPicker
               ? 'contactPicker.inviteByWhatsApp'
               : 'contactPicker.inviteBySms'
             : 'contactPicker.invite',
-          { query }
+          { query: display }
         ),
         hint: this.t.instant(
           whatsapp
@@ -688,7 +709,13 @@ export class ContactPicker
     this.selectedUser.set(null);
     this.guestChannel.set(channel);
     this.guestEmail.set(detected === 'email' ? raw : '');
-    this.guestPhone.set(detected === 'sms' ? raw : '');
+    // Hand the API the canonical form rather than the raw input, so what was
+    // shown in the invite row is what gets stored.
+    this.guestPhone.set(
+      detected === 'sms'
+        ? normalizePhone(raw, this.defaultPhoneRegion()) || raw
+        : ''
+    );
 
     const patch: Record<string, unknown> = {
       communication_method: method || this.defaultCommunicationMethod(channel),
@@ -850,8 +877,56 @@ export class ContactPicker
     const trimmed = (value || '').trim();
     if (!trimmed) return null;
     if (/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(trimmed)) return 'email';
-    if (/^\+?[0-9][0-9\s().-]{5,}$/.test(trimmed)) return 'sms';
+    // Only claim the SMS channel for a number the API will actually accept.
+    // Matching a looser shape here would offer an invite that then fails
+    // server-side — in particular a national number when the tenant has no
+    // default region and therefore requires the +XX notation.
+    if (isPhoneAcceptable(trimmed, this.defaultPhoneRegion())) return 'sms';
     return null;
+  }
+
+  /** E.164 form of the typed number, i.e. exactly what the API will store. */
+  private get normalizedQueryPhone(): string | null {
+    return normalizePhone(this.query().trim(), this.defaultPhoneRegion());
+  }
+
+  /**
+   * Why a number that was typed cannot be invited yet, or null when there is
+   * nothing to explain.
+   *
+   * Digits that are not a usable number otherwise produce a bare "no account
+   * matches", which leaves the practitioner with no idea that the entry was
+   * understood as a phone number nor what it is missing — most often the
+   * country code, since a national number is ambiguous without one.
+   */
+  get phoneHintKey(): string | null {
+    const query = this.query().trim();
+    if (!query || !looksLikePhone(query)) return null;
+    if (isPhoneAcceptable(query, this.defaultPhoneRegion())) return null;
+    if (!this.defaultPhoneRegion() && !query.startsWith('+')) {
+      return 'contactPicker.phoneNeedsCountryCode';
+    }
+    return 'contactPicker.phoneIncomplete';
+  }
+
+  /**
+   * What the typed number should look like once the country code is added.
+   *
+   * Built from what the practitioner actually typed rather than a fixed
+   * sample, so the correction to make is obvious: the leading trunk '0' is
+   * dropped, which is the part people get wrong. EXAMPLE_COUNTRY_CODE is only
+   * an illustration — the real code depends on the contact's country, which is
+   * exactly what cannot be guessed here.
+   */
+  get phoneFormatExample(): string {
+    const digits = this.query().replace(/\D/g, '');
+    const national = digits.startsWith('0') ? digits.slice(1) : digits;
+    // Echoing back too few digits would produce something like '+336', which
+    // reads as the expected length. Show a complete number instead.
+    if (national.length < 6) {
+      return `${EXAMPLE_COUNTRY_CODE}${EXAMPLE_NATIONAL_NUMBER}`;
+    }
+    return `${EXAMPLE_COUNTRY_CODE}${national}`;
   }
 
   private defaultCommunicationMethod(channel: ContactChannel): string {
@@ -945,6 +1020,7 @@ export class ContactPicker
             config?.communication_methods || []
           );
           this.forceTemporaryPatients.set(!!config?.force_temporary_patients);
+          this.defaultPhoneRegion.set(config?.default_phone_region || '');
         },
       });
   }

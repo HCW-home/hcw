@@ -767,7 +767,9 @@
     "temporaryNotice": "El paciente será eliminado automáticamente cuando se borren todas sus consultas.",
     "customFields": "información adicional",
     "timezone": "Zona horaria",
-    "selectTimezone": "Seleccionar zona horaria"
+    "selectTimezone": "Seleccionar zona horaria",
+    "phoneNotInternational": "Introduce el número en formato internacional, por ejemplo +33612345678.",
+    "invalidPhoneNumber": "Número de teléfono no válido."
   },
   "patients": {
     "tabPatients": "Pacientes",
@@ -1344,7 +1346,9 @@
       "fr": "Francés",
       "en": "Inglés",
       "de": "Alemán"
-    }
+    },
+    "phoneNeedsCountryCode": "Para una invitación por teléfono, introduce el prefijo del país y quita el 0 inicial, por ejemplo {{example}}.",
+    "phoneIncomplete": "Este número de teléfono parece incompleto."
   },
   "activateEncryption": {
     "confirm": "Activar",

@@ -71,6 +71,8 @@ export interface IOpenIDConfig {
   primary_color_patient: string | null;
   primary_color_practitioner: string | null;
   communication_methods: string[];
+  /** Region for national numbers; empty means only +XX is accepted. */
+  default_phone_region: string;
   consultation_auto_delete_hours: number;
   appointment_early_join_minutes: number;
   default_appointment_duration_in_minutes: number;

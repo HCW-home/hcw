@@ -481,7 +481,9 @@
     "genderOther": "Other",
     "genderUnknown": "Unknown",
     "timezone": "Timezone",
-    "selectTimezone": "Select timezone"
+    "selectTimezone": "Select timezone",
+    "phoneNotInternational": "Enter the number in international format, for example +33612345678.",
+    "invalidPhoneNumber": "Invalid phone number."
   },
   "patients": {
     "searchPlaceholder": "Search contacts...",
@@ -1357,6 +1359,8 @@
       "fr": "French",
       "en": "English",
       "de": "German"
-    }
+    },
+    "phoneNeedsCountryCode": "For an invitation by phone, enter the country code and drop the leading 0, for example {{example}}.",
+    "phoneIncomplete": "This phone number looks incomplete."
   }
 }

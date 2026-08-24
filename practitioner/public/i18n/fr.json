@@ -516,7 +516,9 @@
     "genderOther": "Autre",
     "genderUnknown": "Non précisé",
     "timezone": "Fuseau horaire",
-    "selectTimezone": "Sélectionner un fuseau horaire"
+    "selectTimezone": "Sélectionner un fuseau horaire",
+    "phoneNotInternational": "Saisissez le numéro au format international, par exemple +33612345678.",
+    "invalidPhoneNumber": "Numéro de téléphone invalide."
   },
   "patients": {
     "searchPlaceholder": "Rechercher des contacts...",
@@ -1240,7 +1242,9 @@
       "fr": "Français",
       "en": "English",
       "de": "Deutsch"
-    }
+    },
+    "phoneNeedsCountryCode": "Pour un envoi par téléphone, saisissez l'indicatif du pays et retirez le 0 initial, par exemple {{example}}.",
+    "phoneIncomplete": "Ce numéro de téléphone semble incomplet."
   },
   "forgotPassword": {
     "title": "Mot de passe oublié ?",

@@ -481,7 +481,9 @@
     "genderOther": "آخر",
     "genderUnknown": "غير معروف",
     "timezone": "المنطقة الزمنية",
-    "selectTimezone": "اختر المنطقة الزمنية"
+    "selectTimezone": "اختر المنطقة الزمنية",
+    "phoneNotInternational": "أدخل الرقم بالصيغة الدولية، على سبيل المثال ‎+33612345678.",
+    "invalidPhoneNumber": "رقم هاتف غير صالح."
   },
   "patients": {
     "searchPlaceholder": "ابحث في جهات الاتصال...",
@@ -1357,6 +1359,8 @@
       "fr": "الفرنسية",
       "en": "الإنجليزية",
       "de": "الألمانية"
-    }
+    },
+    "phoneNeedsCountryCode": "للدعوة عبر الهاتف، أدخل رمز الدولة واحذف الصفر الأول، على سبيل المثال {{example}}.",
+    "phoneIncomplete": "يبدو رقم الهاتف هذا غير مكتمل."
   }
 }

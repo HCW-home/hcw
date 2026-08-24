@@ -14,6 +14,7 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+import phonenumbers
 from boto3.s3.transfer import TransferConfig
 from botocore.config import Config
 from celery.schedules import crontab
@@ -1013,6 +1014,16 @@ CONSTANCE_CONFIG = {
             "Force all newly created patients to be temporary users (no permanent patient accounts)"
         ),
     ),
+    "default_phone_region": (
+        "",
+        gettext_noop(
+            "Country used to read phone numbers typed in national format, such as "
+            "0612345678. Leave on 'International only' to require the +XX notation "
+            "instead, which is the only unambiguous form when users come from "
+            "several countries."
+        ),
+        "default_phone_region_select",
+    ),
     "primary_video_provider": (
         "livekit",
         gettext_noop(
@@ -1229,7 +1240,10 @@ CONSTANCE_CONFIG_FIELDSETS = {
         "enable_live_transcription",
         "whisper_model",
     ),
-    gettext_noop("Patient Management"): ("force_temporary_patients",),
+    gettext_noop("Patient Management"): (
+        "force_temporary_patients",
+        "default_phone_region",
+    ),
     gettext_noop("Encryption"): (
         "encryption_enabled",
         "master_public_key",
@@ -1372,8 +1386,26 @@ ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 
 
+# Region codes phonenumbers can actually parse against, e.g. ('FR', 'FR (+33)').
+# Built from the library rather than hand-listed so the choices can never drift
+# from what parsing accepts: the codes are case-sensitive and use ISO 3166-1
+# alpha-2 ('GB', not 'UK'), and a free-text typo like 'fr' would silently stop
+# every national number on the tenant from being normalised.
+PHONE_REGION_CHOICES = [("", _("International only (+XX)"))] + [
+    (region, f"{region} (+{phonenumbers.country_code_for_region(region)})")
+    for region in sorted(phonenumbers.SUPPORTED_REGIONS)
+]
+
 CONSTANCE_ADDITIONAL_FIELDS = {
     **UNFOLD_CONSTANCE_ADDITIONAL_FIELDS,
+    "default_phone_region_select": [
+        "django.forms.fields.ChoiceField",
+        {
+            "widget": "django.forms.Select",
+            "required": False,
+            "choices": PHONE_REGION_CHOICES,
+        },
+    ],
     "users_visibility_select": [
         "django.forms.fields.ChoiceField",
         {

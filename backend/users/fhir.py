@@ -6,6 +6,8 @@ the two resources and forces scope on create/update.
 """
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from constance import config as constance_config
 from django.db.models import Q
 from fhir.resources.R4B.patient import Patient as FhirPatient
@@ -22,6 +24,7 @@ from fhir_server.references import (
 from fhir_server.search import DateParam, IdentifierParam, RefParam, StringParam, TokenParam
 
 from .models import Gender, Language, Organisation, Speciality, User
+from .phone import phone_lookup_variants
 
 
 _GENDER_TO_FHIR = {
@@ -159,6 +162,26 @@ def _apply_communication(instance, comm_list, *, post_save_callbacks: list) -> N
         instance.languages.set(list(Language.objects.filter(code__in=codes)))
 
     post_save_callbacks.append(_reconcile)
+
+
+@dataclass
+class PhoneTokenParam(TokenParam):
+    """Token search on a phone number, matching whatever notation was sent.
+
+    Numbers are stored in E.164, so a plain token match on '0612345678' would
+    never find '+33612345678'. Expand the search to every form the number can
+    legitimately have before delegating to the standard token matching.
+    """
+
+    def to_q(self, raw_value: str, modifier: str | None) -> Q:
+        expanded = []
+        for value in (v.strip() for v in raw_value.split(",")):
+            if not value:
+                continue
+            for variant in phone_lookup_variants(value) or [value]:
+                if variant not in expanded:
+                    expanded.append(variant)
+        return super().to_q(",".join(expanded), modifier)
 
 
 class _BaseUserFhirMapper(FhirResourceMapper):
@@ -344,7 +367,7 @@ class PatientFhirMapper(_BaseUserFhirMapper):
             resource_type="Patient",
         ),
         "email": TokenParam(field="email"),
-        "phone": TokenParam(field="mobile_phone_number"),
+        "phone": PhoneTokenParam(field="mobile_phone_number"),
         "birthdate": DateParam(field="date_of_birth"),
         "gender": TokenParam(field="gender"),
         "address-city": StringParam(field="city"),
@@ -383,7 +406,7 @@ class PractitionerFhirMapper(_BaseUserFhirMapper):
             resource_type="Practitioner",
         ),
         "email": TokenParam(field="email"),
-        "phone": TokenParam(field="mobile_phone_number"),
+        "phone": PhoneTokenParam(field="mobile_phone_number"),
         "active": TokenParam(field="is_active"),
         "specialty": RefParam(field="specialities"),
         "_lastUpdated": DateParam(field="updated_at"),

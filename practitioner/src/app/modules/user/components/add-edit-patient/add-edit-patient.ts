@@ -18,6 +18,7 @@ import { IOpenIDConfig } from '../../../../core/models/admin-auth';
 import { ToasterService } from '../../../../core/services/toaster.service';
 import { IUser, ILanguage } from '../../models/user';
 import { CommunicationMethodEnum, CommunicationMethodOptions } from '../../constants/user';
+import { phoneValidator } from '../../../../shared/tools/phone-number-validator';
 import { CustomField } from '../../../../core/models/consultation';
 import { SelectOption } from '../../../../shared/models/select';
 import { TIMEZONE_OPTIONS } from '../../../../shared/constants/timezone';
@@ -117,6 +118,8 @@ export class AddEditPatient implements OnInit, OnDestroy {
   timezoneOptions: SelectOption[] = TIMEZONE_OPTIONS;
   communicationMethodOptions: SelectOption[] = [];
   private availableCommunicationMethods: string[] = [];
+  /** Region used to read national numbers; empty = only +XX is accepted. */
+  private defaultPhoneRegion = '';
   private communicationMethodPickedByUser = false;
   customFields = signal<CustomField[]>([]);
   forceTemporaryPatients = false;
@@ -167,6 +170,9 @@ export class AddEditPatient implements OnInit, OnDestroy {
           value: lang.code,
           label: lang.name
         }));
+
+        this.defaultPhoneRegion = config.default_phone_region || '';
+        this.applyContactRequirements();
 
         this.availableCommunicationMethods = config.communication_methods || [];
         if (!this.availableCommunicationMethods.includes(CommunicationMethodEnum.MANUAL)) {
@@ -293,7 +299,11 @@ export class AddEditPatient implements OnInit, OnDestroy {
       emailControl,
       this.isEmailRequired ? [Validators.required, Validators.email] : [Validators.email]
     );
-    this.setValidators(phoneControl, this.isPhoneRequired ? [Validators.required] : []);
+    // Always check the format, whether or not a number is mandatory: an
+    // unusable number must not reach the API, which would reject it anyway.
+    const phoneRules: ValidatorFn[] = [phoneValidator(this.defaultPhoneRegion)];
+    if (this.isPhoneRequired) phoneRules.unshift(Validators.required);
+    this.setValidators(phoneControl, phoneRules);
   }
 
   private setValidators(control: AbstractControl, validators: ValidatorFn[]): void {
@@ -524,6 +534,12 @@ export class AddEditPatient implements OnInit, OnDestroy {
     }
     if (field?.errors?.['email']) {
       return this.t.instant('addEditPatient.invalidEmail');
+    }
+    if (field?.errors?.['phoneNotInternational']) {
+      return this.t.instant('addEditPatient.phoneNotInternational');
+    }
+    if (field?.errors?.['invalidPhoneNumber']) {
+      return this.t.instant('addEditPatient.invalidPhoneNumber');
     }
     return '';
   }

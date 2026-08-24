@@ -517,7 +517,9 @@
     "temporaryNotice": "Der Patient wird automatisch gelöscht, wenn alle seine Konsultationen gelöscht werden.",
     "customFields": "Weitere Informationen",
     "timezone": "Zeitzone",
-    "selectTimezone": "Zeitzone auswählen"
+    "selectTimezone": "Zeitzone auswählen",
+    "phoneNotInternational": "Geben Sie die Nummer im internationalen Format ein, zum Beispiel +33612345678.",
+    "invalidPhoneNumber": "Ungültige Telefonnummer."
   },
   "consultationDetail": {
     "accessLinkIntro": "Dieser Link ist persönlich: Er ermöglicht {{name}} die Anmeldung in der Anwendung und darf nur an diese Person weitergegeben werden.",
@@ -1344,7 +1346,9 @@
       "fr": "Französisch",
       "en": "Englisch",
       "de": "Deutsch"
-    }
+    },
+    "phoneNeedsCountryCode": "Für eine Einladung per Telefon geben Sie die Ländervorwahl an und lassen die führende 0 weg, zum Beispiel {{example}}.",
+    "phoneIncomplete": "Diese Telefonnummer scheint unvollständig zu sein."
   },
   "activateEncryption": {
     "confirm": "Aktivieren",
