@@ -39,6 +39,8 @@ from .template import DEFAULT_NOTIFICATION_MESSAGES, NOTIFICATION_CHOICES
 @admin.register(MessagingProvider)
 class MessagingProviderAdmin(ModelAdmin):
     list_display = ["name", "get_from", "priority", "is_active", "communication_method"]
+    list_editable = ["is_active"]
+    list_filter = ["is_active", "communication_method"]
     readonly_fields = ["communication_method"]
 
     fieldsets = [

@@ -48,6 +48,8 @@ class ServerAdmin(ModelAdmin):
         "url",
         "is_active",
     ]
+    list_editable = ["is_active"]
+    list_filter = ["is_active", "type"]
 
     actions_submit_line = ["save_and_test"]
 
