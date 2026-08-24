@@ -1484,7 +1484,7 @@ WhatsApp: the platform falls back to the SMS providers, using the same phone num
 <p class="admonition-title">Set it before submitting templates</p>
 <p>The URL is baked into every approved template. Changing it later flags all validations as
 <strong>Content changed</strong>, and they must be submitted again. The same applies to the <strong>site name</strong>,
-which signs the templates that end on a variable.</p>
+which signs every template.</p>
 </div>
 <h3 id="2-create-the-provider">2. Create the provider</h3>
 <blockquote>
@@ -1537,10 +1537,10 @@ Templates are checked against these rules <em>before</em> submission: a non-comp
 marked <strong>Failed</strong> immediately, with the reason and the offending body in its logs, instead of
 coming back rejected hours later. Adjust the wording under <em>Messaging &gt; Template overrides</em>
 and submit again.</p>
-<p>Two cases are handled automatically and need no rewording:</p>
+<p>Two things are handled automatically and need no rewording:</p>
 <ul>
-<li>a body <strong>ending</strong> on a variable is signed with the site name, since Meta requires static
-  text last;</li>
+<li>every body is <strong>signed with the site name</strong>, so all WhatsApp messages close the same way.
+  This also satisfies Meta, which refuses a body ending on a variable;</li>
 <li>two variables separated only by a space are <strong>merged into a single one</strong> (<code>{{1}}</code> carrying
   both the first and last name, for instance).</li>
 </ul>
