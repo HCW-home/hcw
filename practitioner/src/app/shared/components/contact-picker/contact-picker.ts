@@ -378,11 +378,22 @@ export class ContactPicker
    */
   private get canOfferGuestActions(): boolean {
     if (this.isLoading()) return false;
-    const query = this.query().trim().toLowerCase();
+    const raw = this.query().trim();
+    const query = raw.toLowerCase();
     if (!query) return true;
-    const digits = this.phoneDigits(query);
+    const region = this.defaultPhoneRegion();
+    const normalized = normalizePhone(raw, region);
+    const digits = this.phoneDigits(raw);
     return !this.results().some(user => {
       if ((user.email || '').trim().toLowerCase() === query) return true;
+      // Compare canonical forms, not raw digits: "0699554229" and
+      // "+33699554229" are the same number, yet their digits differ (trunk 0
+      // against country code) and the account would be offered as an invite
+      // right under the very row it already matches.
+      if (normalized) {
+        const userNormalized = normalizePhone(user.mobile_phone_number, region);
+        if (userNormalized) return userNormalized === normalized;
+      }
       return !!digits && this.phoneDigits(user.mobile_phone_number) === digits;
     });
   }
