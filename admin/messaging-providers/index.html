@@ -828,6 +828,56 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="WhatsApp">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-set-the-backend-base-url" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Set the backend base URL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-create-the-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Create the provider
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-submit-the-templates-for-approval" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Submit the templates for approval
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-delivery-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Delivery status
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -1272,6 +1322,56 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="WhatsApp">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-set-the-backend-base-url" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Set the backend base URL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-create-the-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Create the provider
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-submit-the-templates-for-approval" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Submit the templates for approval
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-delivery-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Delivery status
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -1364,10 +1464,97 @@
 <h4 id="3-test">3. Test</h4>
 <p>Use the <strong>Test connection</strong> action on the provider to verify the credentials and that the configured service name exists in your OVH account.</p>
 <h2 id="whatsapp">WhatsApp</h2>
+<p>WhatsApp messages are sent through <strong>Twilio</strong>. Unlike SMS or email, WhatsApp only accepts
+<strong>pre-approved message templates</strong> outside of a 24-hour conversation window opened by the
+recipient. Each notification therefore has to be submitted to Meta for approval, per language,
+before it can be delivered.</p>
+<p>If no approved template is available for a notification, the message is <strong>not</strong> sent over
+WhatsApp: the platform falls back to the SMS providers, using the same phone number.</p>
+<h3 id="1-set-the-backend-base-url">1. Set the backend base URL</h3>
+<blockquote>
+<p><strong>Menu:</strong> Settings &gt; Constance &gt; URLs &gt; <strong>Backend base URL</strong></p>
+</blockquote>
+<p>This must be the <strong>publicly reachable</strong> URL of this backend. It is used for two things:</p>
+<ul>
+<li>the static base of the WhatsApp button URLs (<code>https://&lt;backend&gt;/r/&lt;token&gt;</code>), which redirect the
+  recipient to the patient or practitioner application;</li>
+<li>the delivery status webhook Twilio calls back.</li>
+</ul>
 <div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>WhatsApp integration is not yet functional. This feature is planned for a future release.</p>
+<p class="admonition-title">Set it before submitting templates</p>
+<p>The URL is baked into every approved template. Changing it later flags all validations as
+<strong>Content changed</strong>, and they must be submitted again. The same applies to the <strong>site name</strong>,
+which signs the templates that end on a variable.</p>
 </div>
+<h3 id="2-create-the-provider">2. Create the provider</h3>
+<blockquote>
+<p><strong>Menu:</strong> Messaging &gt; Messaging providers &gt; add a provider</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Twilio WhatsApp</td>
+</tr>
+<tr>
+<td>Account SID</td>
+<td>The Twilio <em>Account SID</em></td>
+</tr>
+<tr>
+<td>Auth token</td>
+<td>The Twilio <em>Auth Token</em></td>
+</tr>
+<tr>
+<td>From phone</td>
+<td>The WhatsApp-enabled Twilio number, e.g. <code>+14155238886</code></td>
+</tr>
+</tbody>
+</table>
+<p>Use the <strong>Test connection</strong> action to verify the credentials.</p>
+<h3 id="3-submit-the-templates-for-approval">3. Submit the templates for approval</h3>
+<blockquote>
+<p><strong>Menu:</strong> Messaging &gt; Template validations</p>
+</blockquote>
+<ol>
+<li><strong>Generate WhatsApp validations</strong> creates one entry per notification, language and WhatsApp
+   provider.</li>
+<li>Select the entries and run <strong>Submit templates for validation</strong>. This creates the Twilio Content
+   template and sends it to WhatsApp for approval. The <em>Variable expressions</em> field then shows which
+   template expression each <code>{{1}}</code>, <code>{{2}}</code>… placeholder stands for.</li>
+<li>Run <strong>Check validation status</strong> until the status becomes <strong>Validated</strong>. Approval by Meta usually
+   takes a few minutes but can take up to 24 hours.</li>
+</ol>
+<div class="admonition note">
+<p class="admonition-title">Templates rejected by Meta</p>
+<p>Meta refuses a body that <strong>starts with a variable</strong> or puts <strong>two variables side by side</strong>.
+Templates are checked against these rules <em>before</em> submission: a non-compliant template is
+marked <strong>Failed</strong> immediately, with the reason and the offending body in its logs, instead of
+coming back rejected hours later. Adjust the wording under <em>Messaging &gt; Template overrides</em>
+and submit again.</p>
+<p>Two cases are handled automatically and need no rewording:</p>
+<ul>
+<li>a body <strong>ending</strong> on a variable is signed with the site name, since Meta requires static
+  text last;</li>
+<li>two variables separated only by a space are <strong>merged into a single one</strong> (<code>{{1}}</code> carrying
+  both the first and last name, for instance).</li>
+</ul>
+<p>Jinja conditions are also supported: a whole <code>{% if %}...{% endif %}</code> block becomes one
+variable, resolved when the message is sent.</p>
+</div>
+<p>Whenever a template's text is edited, its validations are flagged <strong>Outdated</strong> and are no longer
+used for sending until they have been submitted and approved again.</p>
+<h3 id="4-delivery-status">4. Delivery status</h3>
+<p>Twilio reports delivery progress to <code>https://&lt;backend&gt;/messaging/twilio/status/&lt;token&gt;</code>, which the
+platform passes with every message. The <em>Delivered at</em> and <em>Read at</em> fields of
+<strong>Messaging &gt; Messages</strong> are filled from these callbacks. The endpoint requires a valid
+<code>X-Twilio-Signature</code>, so the backend must be reachable from the internet for statuses to progress
+beyond <em>Sent</em>.</p>
 
 
 
