@@ -165,6 +165,14 @@ services:
       <<: *backend-env
     volumes: *uploads-volume
     depends_on: *backend-depends
+    healthcheck:
+      # /api/health/ answers before tenant resolution and probes PostgreSQL and
+      # Redis. Turns unhealthy while MAINTENANCE is on, which is intended.
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:8000/api/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   admin:
     build:
@@ -175,9 +183,17 @@ services:
     environment:
       BACKEND_URL: ${BACKEND_URL:-http://api:8000}
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     ports:
       - "${ADMIN_PORT:-8082}:8080"
+    healthcheck:
+      # Served by Nginx itself, stays green even when the api is down
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:8080/healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   celery:
     entrypoint: celery -A core.celery worker --loglevel=info
@@ -187,6 +203,14 @@ services:
       <<: *backend-env
     volumes: *uploads-volume
     depends_on: *backend-depends
+    healthcheck:
+      # Round trip through the broker, targeting this worker only: a healthy
+      # sibling must not be able to mask a dead one.
+      test: ["CMD-SHELL", "celery -A core.celery inspect ping -d celery@$$(hostname) --timeout 10 > /dev/null"]
+      interval: 60s
+      timeout: 20s
+      retries: 3
+      start_period: 60s
 
   scheduler:
     entrypoint: celery -A core beat --loglevel=info
@@ -195,6 +219,14 @@ services:
     environment:
       <<: *backend-env
     depends_on: *backend-depends
+    healthcheck:
+      # Celery beat has no remote control API: check the process is still there.
+      # The [c] pattern keeps pgrep from matching its own shell.
+      test: ["CMD-SHELL", "pgrep -f '[c]elery.*beat' > /dev/null"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   patient:
     build:
@@ -205,9 +237,17 @@ services:
     environment:
       BACKEND_URL: ${BACKEND_URL:-http://api:8000}
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     ports:
       - "${PATIENT_PORT:-8081}:8081"
+    healthcheck:
+      # Serves the SPA locally, no backend call involved
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:8081/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   practitioner:
     build:
@@ -218,9 +258,17 @@ services:
     environment:
       BACKEND_URL: ${BACKEND_URL:-http://api:8000}
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     ports:
       - "${PRACTITIONER_PORT:-8080}:8080"
+    healthcheck:
+      # Serves the SPA locally, no backend call involved
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:8080/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   db:
     image: docker.io/postgres:15
