@@ -1,0 +1,114 @@
+name: Tests
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+# Cancel superseded runs when a branch or PR is pushed again.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (Django)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: backend
+
+    services:
+      # django-tenants requires PostgreSQL: the schema-per-tenant model rules
+      # out SQLite. The role created by POSTGRES_USER is a superuser, so it can
+      # CREATE SCHEMA for the test tenants.
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: hcw
+          POSTGRES_USER: hcw
+          POSTGRES_PASSWORD: hcw
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      # Some signals call .delay() outside transaction.on_commit
+      # (users/signals.py, encryption_admin/signals.py), so the Celery broker
+      # must be reachable during the test run.
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      # Test-only values, never used outside CI.
+      DJANGOSECRET_KEY: ci-only-secret-key
+      # Keeps CACHES on LocMemCache instead of Redis (see core/settings.py).
+      DEBUG: "True"
+      ALLOWED_HOST: 127.0.0.1
+      DATABASE_NAME: hcw
+      DATABASE_USER: hcw
+      DATABASE_PASSWORD: hcw
+      DATABASE_HOST: 127.0.0.1
+      DATABASE_PORT: "5432"
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: "6379"
+      ENCRYPTION_KEY: c3ab8ff13720e8ad9047dd39466b3c8974e592c2fb383d4a3960714caef0c4f2
+      # No S3_* variables here: settings.py raises ImproperlyConfigured on a
+      # partial S3 configuration, and none at all means local file storage.
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # Not using `make test`: the Makefile target hardcodes ../venv/bin/python.
+      # Not using --parallel either: core/test_runner.py patches
+      # TenantTestCase.setUpClass with a global cleanup of stale `test` tenants,
+      # which would race across workers.
+      - name: Run tests
+        run: python manage.py test --verbosity 2
+
+  frontend:
+    name: Build ${{ matrix.project }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      # A broken practitioner build should not hide the patient result.
+      fail-fast: false
+      matrix:
+        project: [practitioner, patient]
+    defaults:
+      run:
+        working-directory: ${{ matrix.project }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: yarn
+          cache-dependency-path: ${{ matrix.project }}/yarn.lock
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build
+        run: yarn build
