@@ -47,6 +47,8 @@ nav:
     - End-to-End Encryption: admin/encryption.md
     - FHIR R4 Integration: admin/fhir.md
     - Advanced Options: admin/advanced-options.md
+  - Development:
+    - Guidelines: development/guidelines.md
   - Deployment:
     - Docker Compose: deployment/docker-compose.md
     - Debian Packages: deployment/debian.md
