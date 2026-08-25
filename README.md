@@ -72,7 +72,7 @@ HCW@Home is a scalable, institution-level secure teleconsultation system for typ
 
 | Category | Technology |
 |----------|-----------|
-| **Backend** | Django 5.2 + Django REST Framework |
+| **Backend** | Django 6.0 + Django REST Framework |
 | **ASGI Server** | Daphne + Django Channels |
 | **Practitioner Frontend** | Angular 20, FullCalendar |
 | **Patient Frontend** | Ionic Angular + Capacitor (iOS/Android) |

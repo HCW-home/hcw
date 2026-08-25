@@ -452,7 +452,7 @@ class ConsultationKey(models.Model):
         verbose_name_plural = _("consultation keys")
         constraints = [
             models.CheckConstraint(
-                check=(
+                condition=(
                     models.Q(user__isnull=False, queue__isnull=True)
                     | models.Q(user__isnull=True, queue__isnull=False)
                 ),

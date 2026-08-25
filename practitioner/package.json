@@ -32,9 +32,9 @@
     "google-libphonenumber": "^3.2.42",
     "livekit-client": "^2.16.0",
     "mediasoup-client": "^3.7.16",
-    "socket.io-client": "^4.8.1",
     "ngx-mask": "^20.0.3",
     "rxjs": "~7.8.0",
+    "socket.io-client": "^4.8.1",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
   },
@@ -60,5 +60,8 @@
     "typescript": "~5.8.2",
     "typescript-eslint": "8.32.1"
   },
-  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e",
+  "resolutions": {
+    "prettier-eslint/**/minimatch": "^9.0.7"
+  }
 }

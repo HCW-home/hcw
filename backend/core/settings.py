@@ -100,6 +100,7 @@ SHARED_APPS = (
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.postgres",
     "import_export",
     "django_celery_beat",
     "corsheaders",
@@ -255,7 +256,6 @@ LOCALE_PATHS = [
 TIME_ZONE = os.getenv("DEFAULT_TIME_ZONE", "UTC")
 
 USE_I18N = True
-USE_L10N = True
 
 USE_TZ = True
 

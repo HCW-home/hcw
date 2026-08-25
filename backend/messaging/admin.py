@@ -10,6 +10,7 @@ from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.utils.functional import cached_property
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from import_export.admin import ImportExportModelAdmin
 from modeltranslation.admin import TabbedTranslationAdmin
@@ -280,7 +281,7 @@ class MessageAdmin(ModelAdmin):
     @display(description=_("Rendered HTML content"))
     def display_render_content_html(self, instance):
         try:
-            return format_html(instance.render_content_html)
+            return mark_safe(instance.render_content_html)
         except Exception as e:
             return f"Unable to render: {e}"
 

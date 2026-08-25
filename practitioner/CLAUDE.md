@@ -97,7 +97,7 @@ This is an Angular 20 application with a modular architecture:
 - Test files follow `*.spec.ts` convention
 
 ### Backend Architecture (Django)
-The backend is a Django 5.2 REST API with advanced real-time capabilities:
+The backend is a Django 6.0 REST API with advanced real-time capabilities:
 
 #### Core Django Apps
 - **api/**: REST API endpoints and serializers
