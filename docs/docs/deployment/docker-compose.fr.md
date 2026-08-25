@@ -127,6 +127,19 @@ Cela cree des utilisateurs de test (mot de passe : `Test1234`). Voir le [README]
 | **db** | interne | PostgreSQL 15 |
 | **redis** | interne | Redis 7 |
 
+## Sondes de sante
+
+Chaque service au long cours declare une sonde de sante : `docker compose ps` reflete donc l'etat reel, et les frontends ne demarrent qu'une fois l'API disponible.
+
+| Service | Sonde |
+|---------|-------|
+| **api** | `GET /api/health/`, execute avant la resolution du tenant, verifie PostgreSQL et Redis. Rapporte unhealthy tant que `MAINTENANCE=True` |
+| **celery** | `celery inspect ping` cible sur ce worker uniquement, pour qu'une replique saine ne masque pas un worker mort |
+| **scheduler** | Celery Beat n'expose pas d'API de controle : le processus beat est verifie avec `pgrep` |
+| **practitioner**, **patient**, **admin** | Requete Nginx locale, sans appel au backend : restent verts meme si l'API est arretee |
+| **db** | `pg_isready` |
+| **redis** | `redis-cli ping` |
+
 ## Volumes persistants
 
 Les donnees sont stockees dans le dossier `./data/` :
