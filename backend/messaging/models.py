@@ -652,14 +652,14 @@ class TemplateValidation(ModelCeleryAbstract):
         approved call-to-action button: changing it silently breaks every link
         already approved, so the validation must show up as outdated.
         """
-        from .whatsapp_content import get_localized
+        from .whatsapp_content import get_action_label, get_localized
 
         tpl = self.template
         parts = [
             get_localized(tpl, "template_subject", self.language_code),
             get_localized(tpl, "template_content", self.language_code),
             get_localized(tpl, "template_content_html", self.language_code),
-            str(tpl.action_label or ""),
+            get_action_label(tpl, self.language_code),
             str(config.backend_base_url or ""),
             # Signs bodies that would otherwise end on a variable.
             str(config.site_name or ""),

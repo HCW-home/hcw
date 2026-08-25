@@ -14,6 +14,7 @@ from ..whatsapp_content import (
     LINK_TOKEN_EXPRESSION,
     build_content,
     check_meta_compliance,
+    get_action_label,
     render_examples,
     render_variables,
 )
@@ -307,7 +308,7 @@ class Main(BaseMessagingProvider):
         examples = render_examples(expressions, example_obj)
 
         if has_action:
-            action_label = str(template.action_label or "")
+            action_label = get_action_label(template, language)
             if len(action_label) > BUTTON_TITLE_MAX_LENGTH:
                 logger.warning(
                     f"Action label too long ({len(action_label)} chars), truncating "
