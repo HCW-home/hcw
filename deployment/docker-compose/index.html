@@ -536,6 +536,15 @@
 </a>
 </li>
 <li class="md-nav__item">
+<a class="md-nav__link" href="#health-checks">
+<span class="md-ellipsis">
+      
+        Health Checks
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="#persistent-volumes">
 <span class="md-ellipsis">
       
@@ -669,6 +678,15 @@
 <span class="md-ellipsis">
       
         Services and Ports
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#health-checks">
+<span class="md-ellipsis">
+      
+        Health Checks
       
     </span>
 </a>
@@ -828,6 +846,42 @@
 <td><strong>redis</strong></td>
 <td>internal</td>
 <td>Redis 7</td>
+</tr>
+</tbody>
+</table>
+<h2 id="health-checks">Health Checks</h2>
+<p>Every long running service declares a health check, so <code>docker compose ps</code> reports the real state and the frontends only start once the API answers.</p>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Probe</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>api</strong></td>
+<td><code>GET /api/health/</code>, which runs before tenant resolution and checks PostgreSQL and Redis. Reported unhealthy while <code>MAINTENANCE=True</code></td>
+</tr>
+<tr>
+<td><strong>celery</strong></td>
+<td><code>celery inspect ping</code> against this worker only, so a healthy replica cannot mask a dead one</td>
+</tr>
+<tr>
+<td><strong>scheduler</strong></td>
+<td>Celery Beat has no remote control API: the beat process is checked with <code>pgrep</code></td>
+</tr>
+<tr>
+<td><strong>practitioner</strong>, <strong>patient</strong>, <strong>admin</strong></td>
+<td>Local Nginx request, no backend call, so they stay green when the API is down</td>
+</tr>
+<tr>
+<td><strong>db</strong></td>
+<td><code>pg_isready</code></td>
+</tr>
+<tr>
+<td><strong>redis</strong></td>
+<td><code>redis-cli ping</code></td>
 </tr>
 </tbody>
 </table>

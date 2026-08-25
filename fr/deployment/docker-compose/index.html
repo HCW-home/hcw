@@ -536,6 +536,15 @@
 </a>
 </li>
 <li class="md-nav__item">
+<a class="md-nav__link" href="#sondes-de-sante">
+<span class="md-ellipsis">
+      
+        Sondes de sante
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="#volumes-persistants">
 <span class="md-ellipsis">
       
@@ -669,6 +678,15 @@
 <span class="md-ellipsis">
       
         Services et ports
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#sondes-de-sante">
+<span class="md-ellipsis">
+      
+        Sondes de sante
       
     </span>
 </a>
@@ -828,6 +846,42 @@
 <td><strong>redis</strong></td>
 <td>interne</td>
 <td>Redis 7</td>
+</tr>
+</tbody>
+</table>
+<h2 id="sondes-de-sante">Sondes de sante</h2>
+<p>Chaque service au long cours declare une sonde de sante : <code>docker compose ps</code> reflete donc l'etat reel, et les frontends ne demarrent qu'une fois l'API disponible.</p>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Sonde</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>api</strong></td>
+<td><code>GET /api/health/</code>, execute avant la resolution du tenant, verifie PostgreSQL et Redis. Rapporte unhealthy tant que <code>MAINTENANCE=True</code></td>
+</tr>
+<tr>
+<td><strong>celery</strong></td>
+<td><code>celery inspect ping</code> cible sur ce worker uniquement, pour qu'une replique saine ne masque pas un worker mort</td>
+</tr>
+<tr>
+<td><strong>scheduler</strong></td>
+<td>Celery Beat n'expose pas d'API de controle : le processus beat est verifie avec <code>pgrep</code></td>
+</tr>
+<tr>
+<td><strong>practitioner</strong>, <strong>patient</strong>, <strong>admin</strong></td>
+<td>Requete Nginx locale, sans appel au backend : restent verts meme si l'API est arretee</td>
+</tr>
+<tr>
+<td><strong>db</strong></td>
+<td><code>pg_isready</code></td>
+</tr>
+<tr>
+<td><strong>redis</strong></td>
+<td><code>redis-cli ping</code></td>
 </tr>
 </tbody>
 </table>
