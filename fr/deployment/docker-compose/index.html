@@ -849,8 +849,18 @@
 <td><code>./data/redis_data/</code></td>
 <td>Donnees Redis</td>
 </tr>
+<tr>
+<td><code>./data/uploads/</code></td>
+<td>Fichiers envoyes (<code>MEDIA_ROOT</code>), partages entre <code>api</code> et <code>celery</code>. Inutilise si S3 est configure</td>
+</tr>
 </tbody>
 </table>
+<div class="admonition warning">
+<p class="admonition-title">Permissions des uploads</p>
+<p>Les conteneurs backend tournent avec l'uid 1000. Creez le dossier avec le bon proprietaire avant le premier demarrage, sinon tous les envois de fichiers echouent :
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-6-1" id="__codelineno-6-1" name="__codelineno-6-1"></a>mkdir<span class="w"> </span>-p<span class="w"> </span>data/uploads<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sudo<span class="w"> </span>chown<span class="w"> </span><span class="m">1000</span>:1000<span class="w"> </span>data/uploads
+</code></pre></div></p>
+</div>
 </article>
 </div>
 <script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>

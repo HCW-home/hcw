@@ -849,8 +849,18 @@
 <td><code>./data/redis_data/</code></td>
 <td>Redis data</td>
 </tr>
+<tr>
+<td><code>./data/uploads/</code></td>
+<td>Uploads (<code>MEDIA_ROOT</code>), shared by <code>api</code> and <code>celery</code>. Unused when S3 is configured</td>
+</tr>
 </tbody>
 </table>
+<div class="admonition warning">
+<p class="admonition-title">Uploads permissions</p>
+<p>The backend containers run as uid 1000. Create the directory with the right owner before the first start, otherwise every upload fails:
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-6-1" id="__codelineno-6-1" name="__codelineno-6-1"></a>mkdir<span class="w"> </span>-p<span class="w"> </span>data/uploads<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sudo<span class="w"> </span>chown<span class="w"> </span><span class="m">1000</span>:1000<span class="w"> </span>data/uploads
+</code></pre></div></p>
+</div>
 </article>
 </div>
 <script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
