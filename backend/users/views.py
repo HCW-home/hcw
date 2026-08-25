@@ -71,9 +71,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from core.throttling import (
+    EmailVerifyRateThrottle,
     LoginRateThrottle,
     OpenIDRateThrottle,
+    PasswordResetConfirmRateThrottle,
     PasswordResetRateThrottle,
+    RegistrationDailyRateThrottle,
+    RegistrationRateThrottle,
     VerificationCodeIPRateThrottle,
     VerificationCodeRateThrottle,
 )
@@ -1730,6 +1734,8 @@ class PasswordResetView(DjRestAuthPasswordResetView):
 class PasswordResetConfirmView(DjRestAuthPasswordResetConfirmView):
     """Password reset confirm endpoint controlled by DISABLE_PASSWORD_LOGIN setting for practitioners."""
 
+    throttle_classes = [PasswordResetConfirmRateThrottle]
+
     def post(self, request, *args, **kwargs):
         # For password reset confirm, we can't easily check user type before validation
         # So we allow the reset to proceed - the practitioner shouldn't have received the email anyway
@@ -1739,6 +1745,8 @@ class PasswordResetConfirmView(DjRestAuthPasswordResetConfirmView):
 
 class RegisterView(DjRestAuthRegisterView):
     """Registration endpoint controlled by ENABLE_REGISTRATION setting."""
+
+    throttle_classes = [RegistrationRateThrottle, RegistrationDailyRateThrottle]
 
     def create(self, request, *args, **kwargs):
         if not constance_config.enable_registration:
@@ -1777,6 +1785,7 @@ class EmailVerifyView(APIView):
 
     permission_classes = []
     authentication_classes = []
+    throttle_classes = [EmailVerifyRateThrottle]
 
     def get(self, request):
         token = request.query_params.get("token")

@@ -1,4 +1,3 @@
-import base64
 import uuid
 from datetime import timedelta
 from xml.etree import ElementTree as ET
@@ -12,7 +11,9 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
 from consultations.models import Appointment, AppointmentStatus, Participant
-from users.models import User, DAVAppPassword
+from core.throttling import ratelimit
+from dav.auth import require_auth
+from users.models import User
 
 DAV = "DAV:"
 CALDAV = "urn:ietf:params:xml:ns:caldav"
@@ -151,35 +152,9 @@ def _parse_ics_datetime(value):
         return None
 
 
-def _get_user_from_request(request):
-    """Authenticate via Basic Auth with email:password or DAVAppPassword."""
-    from django.contrib.auth import authenticate
-
-    auth_header = request.META.get("HTTP_AUTHORIZATION", "")
-    if not auth_header.startswith("Basic "):
-        return None
-    try:
-        decoded = base64.b64decode(auth_header[6:]).decode("utf-8")
-        username, _, password = decoded.partition(":")
-        if not password:
-            return None
-    except Exception:
-        return None
-    
-    user = authenticate(request, username=username, password=password)
-    if user:
-        return user
-    return DAVAppPassword.authenticate(username, password)
-
-
 def _require_auth(request):
     """Return user or an HTTP 401 response."""
-    user = _get_user_from_request(request)
-    if user is None:
-        response = HttpResponse("Unauthorized", status=401)
-        response["WWW-Authenticate"] = 'Basic realm="HCW CalDAV"'
-        return None, response
-    return user, None
+    return require_auth(request, realm="HCW CalDAV")
 
 
 def _get_user_appointments(user):
@@ -210,6 +185,14 @@ def _href_for_appointment(appointment):
     return f"/dav/calendar/appointment-{appointment.pk}@{domain}.ics"
 
 
+# All methods are throttled, not only the ones that read credentials: Basic Auth
+# replays the app password on every request, so any unthrottled method is a
+# guessing oracle. The cap is per IP and per method, sized for a real client's
+# first sync (PROPFIND, multiget REPORT, then one GET per resource).
+@method_decorator(
+    ratelimit(rate="60/min", scope="caldav"),
+    name="dispatch",
+)
 @method_decorator(csrf_exempt, name="dispatch")
 class CalDAVCalendarView(View):
     """Handle calendar collection: PROPFIND, REPORT, GET, PUT, DELETE."""

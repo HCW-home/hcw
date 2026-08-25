@@ -1,4 +1,3 @@
-import base64
 from xml.etree import ElementTree as ET
 
 from django.http import HttpResponse
@@ -7,7 +6,7 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
 from core.throttling import ratelimit
-from users.models import DAVAppPassword
+from dav.auth import require_auth
 
 DAV = "DAV:"
 CARDDAV = "urn:ietf:params:xml:ns:carddav"
@@ -29,34 +28,9 @@ def _multistatus_response(multistatus):
     response["DAV"] = "1, calendar-access, addressbook"
     return response
 
-def _get_user_from_request(request):
-    """Authenticate via Basic Auth with email:password or DAVAppPassword."""
-    from django.contrib.auth import authenticate
-
-    auth_header = request.META.get("HTTP_AUTHORIZATION", "")
-    if not auth_header.startswith("Basic "):
-        return None
-    try:
-        decoded = base64.b64decode(auth_header[6:]).decode("utf-8")
-        username, _, password = decoded.partition(":")
-        if not password:
-            return None
-    except Exception:
-        return None
-    
-    user = authenticate(request, username=username, password=password)
-    if user:
-        return user
-    return DAVAppPassword.authenticate(username, password)
-
 def _require_auth(request):
     """Return user or an HTTP 401 response."""
-    user = _get_user_from_request(request)
-    if user is None:
-        response = HttpResponse("Unauthorized", status=401)
-        response["WWW-Authenticate"] = 'Basic realm="HCW DAV"'
-        return None, response
-    return user, None
+    return require_auth(request, realm="HCW DAV")
 
 @method_decorator(
     ratelimit(rate="30/min", methods=["OPTIONS", "PROPFIND"], scope="dav"),

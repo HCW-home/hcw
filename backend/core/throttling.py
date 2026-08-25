@@ -48,6 +48,29 @@ class PasswordResetRateThrottle(IPRateThrottle):
     scope = "password_reset"
 
 
+class PasswordResetConfirmRateThrottle(IPRateThrottle):
+    scope = "password_reset_confirm"
+
+
+class EmailVerifyRateThrottle(IPRateThrottle):
+    scope = "email_verify"
+
+
+class RegistrationRateThrottle(IPRateThrottle):
+    """Burst cap on sign-ups.
+
+    Pair it with ``RegistrationDailyRateThrottle``: a per-minute cap alone still
+    leaves room to create thousands of accounts a day (and to send as many
+    verification emails from this instance).
+    """
+
+    scope = "registration"
+
+
+class RegistrationDailyRateThrottle(IPRateThrottle):
+    scope = "registration_day"
+
+
 class AnonymousTokenRateThrottle(IPRateThrottle):
     scope = "anonymous_token"
 

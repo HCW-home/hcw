@@ -298,10 +298,17 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "login": "5/min",
         "password_reset": "3/min",
+        "password_reset_confirm": "10/min",
         "verification_code": "3/min",
         "verification_code_ip": "10/min",
         "anonymous_token": "5/min",
         "openid": "10/min",
+        "email_verify": "10/min",
+        # Sign-ups are capped per minute and per day. The daily cap is what
+        # actually blocks mass account creation; it stays loose enough for the
+        # legitimate case of several patients registering behind one NAT.
+        "registration": "5/min",
+        "registration_day": "50/day",
     },
 }
 
