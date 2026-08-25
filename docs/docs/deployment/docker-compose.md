@@ -135,4 +135,11 @@ Data is stored in the `./data/` directory:
 |------|---------|
 | `./data/postgres_data/` | PostgreSQL data |
 | `./data/redis_data/` | Redis data |
+| `./data/uploads/` | Uploads (`MEDIA_ROOT`), shared by `api` and `celery`. Unused when S3 is configured |
+
+!!! warning "Uploads permissions"
+    The backend containers run as uid 1000. Create the directory with the right owner before the first start, otherwise every upload fails:
+    ```bash
+    mkdir -p data/uploads && sudo chown 1000:1000 data/uploads
+    ```
 

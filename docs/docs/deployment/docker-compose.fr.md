@@ -135,3 +135,10 @@ Les donnees sont stockees dans le dossier `./data/` :
 |--------|---------|
 | `./data/postgres_data/` | Donnees PostgreSQL |
 | `./data/redis_data/` | Donnees Redis |
+| `./data/uploads/` | Fichiers envoyes (`MEDIA_ROOT`), partages entre `api` et `celery`. Inutilise si S3 est configure |
+
+!!! warning "Permissions des uploads"
+    Les conteneurs backend tournent avec l'uid 1000. Creez le dossier avec le bon proprietaire avant le premier demarrage, sinon tous les envois de fichiers echouent :
+    ```bash
+    mkdir -p data/uploads && sudo chown 1000:1000 data/uploads
+    ```
