@@ -1301,7 +1301,10 @@ class UserViewSet(viewsets.ModelViewSet):
             if user_orgs:
                 creator_filter |= Q(created_by__organisations__id__in=user_orgs)
             creator_filter |= Q(created_by=current_user)
-            return qs.filter(org_filter | creator_filter).distinct()
+            # No .distinct() here: get_queryset() ORs this with the
+            # practitioners queryset, and Django refuses to combine a distinct
+            # query with a non-distinct one. Dedup happens in get_queryset().
+            return qs.filter(org_filter | creator_filter)
 
         return qs
 
