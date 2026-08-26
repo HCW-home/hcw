@@ -28,7 +28,10 @@ export class ModalComponent implements AfterViewChecked, OnDestroy {
   titleHelp = input<string>('');
   size = input<'small' | 'medium' | 'large' | 'xlarge'>('medium');
   showCloseButton = input<boolean>(true);
-  closeOnBackdropClick = input<boolean>(true);
+  // Clicking the backdrop does not dismiss the modal by default: forms are
+  // often long and a stray click outside would silently discard the input.
+  // Opt in explicitly for lightweight, read-only modals.
+  closeOnBackdropClick = input<boolean>(false);
   // The body is padded by default so plain content lines up with the
   // header/footer. Set to false for full-bleed content (embedded
   // components that manage their own spacing, images, ...).

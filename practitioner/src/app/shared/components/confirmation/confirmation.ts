@@ -52,10 +52,4 @@ export class Confirmation {
   onCancel(): void {
     this.confirmationService.handleCancel();
   }
-
-  onBackdropClick(event: MouseEvent): void {
-    if ((event.target as HTMLElement).classList.contains('confirmation-backdrop')) {
-      this.onCancel();
-    }
-  }
 }
