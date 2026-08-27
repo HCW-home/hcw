@@ -585,6 +585,7 @@
   },
   "practitioner": {
     "notFound": "لم يتم العثور على الممارس",
+    "backToResults": "العودة إلى النتائج",
     "organisation": "المؤسسة",
     "additionalInfo": "معلومات إضافية",
     "contact": "التواصل",

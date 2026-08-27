@@ -32,10 +32,13 @@ export class SearchResultCardComponent implements OnChanges, OnDestroy {
   @Input() selected = false;
   // What the main button does: start a booking, or open the practitioner sheet.
   @Input() primaryAction: 'book' | 'details' = 'book';
+  // Grows the card to hold the projected detail content instead of a new block.
+  @Input() expanded = false;
 
   @Output() itemClick = new EventEmitter<SearchItem>();
   @Output() book = new EventEmitter<BookingIntent>();
   @Output() details = new EventEmitter<SearchItem>();
+  @Output() collapse = new EventEmitter<void>();
 
   private destroy$ = new Subject<void>();
 
@@ -91,6 +94,11 @@ export class SearchResultCardComponent implements OnChanges, OnDestroy {
   onDetails(event: Event): void {
     event.stopPropagation();
     this.details.emit(this.item);
+  }
+
+  onBack(event: Event): void {
+    event.stopPropagation();
+    this.collapse.emit();
   }
 
   onBook(event: Event, slot: Slot | null = null): void {

@@ -129,7 +129,6 @@ body {
   ion-app:has(app-video-consultation),
   ion-app:has(app-home),
   ion-app:has(app-map),
-  ion-app:has(app-practitioner-profile),
   ion-app:has(app-new-request),
   ion-app:has(app-notifications),
   ion-app:has(app-profile) {
@@ -140,14 +139,12 @@ body {
 
   /* On the dashboard the nav bar and footer span the full viewport width; the
      page content is centered by the page itself (home .main-content max-width,
-     map .map-layout max-width, profile .profile-container max-width,
+     map .map-layout max-width,
      new-request .main-content max-width). */
   ion-app:has(app-home) ion-header ion-toolbar,
   ion-app:has(app-home) ion-footer,
   ion-app:has(app-map) ion-header ion-toolbar,
   ion-app:has(app-map) ion-footer,
-  ion-app:has(app-practitioner-profile) ion-header ion-toolbar,
-  ion-app:has(app-practitioner-profile) ion-footer,
   ion-app:has(app-new-request) ion-header ion-toolbar,
   ion-app:has(app-new-request) ion-footer,
   ion-app:has(app-notifications) ion-header ion-toolbar,
@@ -368,3 +365,31 @@ ion-alert.ios {
 .font-medium { font-weight: var(--app-font-weight-medium) !important; }
 .font-semibold { font-weight: var(--app-font-weight-semibold) !important; }
 .font-bold { font-weight: var(--app-font-weight-bold) !important; }
+
+// Square back button shown inside the page content (wizard, public sheets)
+// instead of the toolbar, so the branded header stays identical everywhere.
+.page-back-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 1px solid var(--app-border);
+  border-radius: 9px;
+  background: var(--app-surface);
+  color: var(--app-ink-2);
+  cursor: pointer;
+  transition: background 0.15s var(--app-ease), border-color 0.15s var(--app-ease);
+
+  ion-icon {
+    font-size: 18px;
+  }
+
+  &:hover {
+    background: var(--app-surface-muted);
+    border-color: var(--app-teal);
+    color: var(--app-teal-dark);
+  }
+}

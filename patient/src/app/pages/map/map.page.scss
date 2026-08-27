@@ -327,6 +327,18 @@ app-search-bar {
   }
 }
 
+// The expanded card carries far more than a result row, so it takes room from
+// the map. The width transition runs the same way back when it collapses.
+.map-body--detail {
+  .map-panel {
+    flex: 0 0 34%;
+  }
+}
+
+.map-body .map-panel {
+  transition: flex-basis 0.28s var(--app-ease);
+}
+
 // ---------------------------------------------------------------------------
 // Responsive
 // ---------------------------------------------------------------------------

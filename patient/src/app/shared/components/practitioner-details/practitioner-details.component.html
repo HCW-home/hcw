@@ -1,0 +1,84 @@
+<!-- Extra information about a practitioner — job title, contact, organisation
+     and public custom fields. The identity and the bookable slots are already
+     rendered by the result card this sits in, so they are not repeated. -->
+@if (isLoading()) {
+  <div class="details-loading">
+    <ion-spinner name="crescent"></ion-spinner>
+  </div>
+} @else if (notFound()) {
+  <p class="details-empty">{{ 'practitioner.notFound' | translate }}</p>
+} @else if (practitioner(); as p) {
+  <div class="details-container">
+
+    @if (p.job_title) {
+      <p class="details-job">{{ p.job_title }}</p>
+    }
+
+    @if (p.email || p.mobile_phone_number || formatAddress(p)) {
+      <section class="details-section">
+        <h3 class="section-title">{{ 'practitioner.contact' | translate }}</h3>
+        <div class="detail-rows">
+          @if (p.email) {
+            <div class="detail-row">
+              <ion-icon name="mail-outline"></ion-icon>
+              <a [href]="'mailto:' + p.email">{{ p.email }}</a>
+            </div>
+          }
+          @if (p.mobile_phone_number) {
+            <div class="detail-row">
+              <ion-icon name="call-outline"></ion-icon>
+              <a [href]="'tel:' + p.mobile_phone_number">{{ p.mobile_phone_number }}</a>
+            </div>
+          }
+          @if (formatAddress(p)) {
+            <div class="detail-row">
+              <ion-icon name="location-outline"></ion-icon>
+              <span>{{ formatAddress(p) }}</span>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    @if (p.main_organisation) {
+      <section class="details-section">
+        <h3 class="section-title">{{ 'practitioner.organisation' | translate }}</h3>
+        <div class="org-head">
+          @if (p.main_organisation.logo_color) {
+            <img [src]="p.main_organisation.logo_color" [alt]="p.main_organisation.name" class="org-logo" />
+          } @else {
+            <div class="org-avatar">
+              <ion-icon name="business"></ion-icon>
+            </div>
+          }
+          <span class="org-name">{{ p.main_organisation.name }}</span>
+        </div>
+        @if (p.main_organisation.phone) {
+          <div class="detail-rows">
+            <div class="detail-row">
+              <ion-icon name="call-outline"></ion-icon>
+              <a [href]="'tel:' + p.main_organisation.phone">{{ p.main_organisation.phone }}</a>
+            </div>
+          </div>
+        }
+      </section>
+    }
+
+    @if (hasPublicCustomFields(p)) {
+      <section class="details-section">
+        <h3 class="section-title">{{ 'practitioner.additionalInfo' | translate }}</h3>
+        <div class="field-list">
+          @for (field of p.public_custom_fields; track field.field) {
+            @if (field.value) {
+              <div class="field-row">
+                <span class="field-label">{{ field.field_name }}</span>
+                <span class="field-value">{{ field.value }}</span>
+              </div>
+            }
+          }
+        </div>
+      </section>
+    }
+
+  </div>
+}

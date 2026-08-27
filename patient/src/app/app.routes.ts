@@ -117,7 +117,9 @@ export const routes: Routes = [
     canDeactivate: [canDeactivateVideoCall],
   },
   {
+    // The practitioner sheet is the map page with that result expanded, so this
+    // URL and /map render the same screen.
     path: 'practitioners/:pk/public',
-    loadComponent: () => import('./pages/practitioner-profile/practitioner-profile.page').then(m => m.PractitionerProfilePage),
+    loadComponent: () => import('./pages/map/map.page').then(m => m.MapPage),
   },
 ];

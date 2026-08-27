@@ -1,4 +1,10 @@
-<div class="org-card" [class.selected]="selected" (click)="onCardClick()">
+<div class="org-card" [class.selected]="selected" [class.expanded]="expanded" (click)="onCardClick()">
+  @if (expanded) {
+    <button class="oc-back" type="button" (click)="onBack($event)">
+      <ion-icon name="arrow-back-outline"></ion-icon>
+      <span>{{ 'practitioner.backToResults' | translate }}</span>
+    </button>
+  }
   <div class="oc-top">
     @if (item.logo) {
       <img [src]="item.logo" [alt]="item.name" class="oc-logo" [class.oc-logo--doctor]="item.type === 'doctor'" />
@@ -29,6 +35,12 @@
       }
     </div>
   </div>
+
+  @if (expanded) {
+    <div class="oc-details">
+      <ng-content></ng-content>
+    </div>
+  }
 
   @if (item.type === 'doctor') {
     <div class="oc-booking">

@@ -104,6 +104,9 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
   private pendingSlot: Slot | null = null;
   private visitedDoctorStep = false;
   private initializedOnce = false;
+  // Opened straight on a practitioner (from their sheet): the search step was
+  // never shown, so it must not be revealed on the way back.
+  private enteredOnDoctor = false;
 
   stepTitle = computed(() => {
     switch (this.currentStep()) {
@@ -175,6 +178,7 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
     const specialityId = Number(this.readParam(params, 'speciality_id'));
 
     if (doctorId && specialityId) {
+      this.enteredOnDoctor = true;
       this.startBooking(doctorId, specialityId, this.slotFromParams(params, doctorId));
       return;
     }
@@ -549,7 +553,13 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
         }
         break;
       case 2:
-        this.currentStep.set(1);
+        // Nothing to go back to inside the wizard when it started here: leave
+        // it and land back on the page that opened it.
+        if (this.enteredOnDoctor) {
+          this.leaveToDoctor();
+        } else {
+          this.currentStep.set(1);
+        }
         break;
       case 3:
         this.currentStep.set(2);
@@ -570,6 +580,21 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
         break;
       }
     }
+  }
+
+  /**
+   * Back out of a wizard that was opened straight on a practitioner: pop the
+   * history when there is one, otherwise go to that practitioner's sheet, which
+   * is where the wizard would have been opened from.
+   */
+  private leaveToDoctor(): void {
+    if (window.history.length > 1) {
+      this.navCtrl.back();
+      return;
+    }
+
+    const pk = this.selectedDoctor()?.pk;
+    this.navCtrl.navigateBack(pk ? ['/practitioners', pk, 'public'] : '/map');
   }
 
   async confirmCancel(): Promise<void> {

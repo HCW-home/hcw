@@ -1,5 +1,3 @@
-<app-header [pageTitle]="'map.title' | translate"></app-header>
-
 <ion-content class="map-content">
   @if (isPublicEnabled() === null) {
     <div class="loading-container">
@@ -31,7 +29,7 @@
 
       <app-search-bar
         (search)="onSearch($event)"
-        (practitionerSelected)="goToProfile($event)"
+        (practitionerSelected)="openDetails($event)"
       ></app-search-bar>
 
       @if (hasSearched()) {
@@ -55,7 +53,7 @@
         </label>
       </div>
 
-      <div class="map-body">
+      <div class="map-body" [class.map-body--detail]="detailPk() !== null">
         <div class="list-panel">
           @if (isLoading()) {
             <div class="loading-container">
@@ -67,16 +65,27 @@
               <p class="empty-text">{{ 'map.noResults' | translate }}</p>
             </div>
           } @else {
+            <!-- Picking a result hides the others and grows its own card to
+                 hold the full practitioner sheet, rather than swapping the
+                 panel for a new block. -->
             <div class="org-list">
               @for (item of items(); track item.id) {
-                <app-search-result-card
-                  [item]="item"
-                  [selected]="isSelected(item)"
-                  primaryAction="details"
-                  (itemClick)="onItemSelected($event)"
-                  (details)="goToProfile($event)"
-                  (book)="goToBooking($event)"
-                ></app-search-result-card>
+                @if (!detailPk() || isDetail(item)) {
+                  <app-search-result-card
+                    [item]="item"
+                    [selected]="isSelected(item)"
+                    [expanded]="isDetail(item)"
+                    [primaryAction]="isDetail(item) ? 'book' : 'details'"
+                    (itemClick)="onItemSelected($event)"
+                    (details)="openDetails($event)"
+                    (collapse)="closeDetails()"
+                    (book)="goToBooking($event)"
+                  >
+                    @if (isDetail(item)) {
+                      <app-practitioner-details [pk]="detailPk()!"></app-practitioner-details>
+                    }
+                  </app-search-result-card>
+                }
               }
             </div>
           }

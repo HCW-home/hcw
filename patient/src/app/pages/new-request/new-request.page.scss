@@ -35,32 +35,6 @@
   box-shadow: var(--shadow-sm);
 }
 
-.wizard-back {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  flex-shrink: 0;
-  padding: 0;
-  border: 1px solid var(--app-border);
-  border-radius: 9px;
-  background: var(--app-surface);
-  color: var(--app-ink-2);
-  cursor: pointer;
-  transition: background 0.15s var(--app-ease), border-color 0.15s var(--app-ease);
-
-  ion-icon {
-    font-size: 18px;
-  }
-
-  &:hover {
-    background: var(--app-surface-muted);
-    border-color: var(--app-teal);
-    color: var(--app-teal-dark);
-  }
-}
-
 .wizard-progress {
   flex: 1;
   min-width: 0;

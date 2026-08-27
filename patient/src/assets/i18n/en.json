@@ -585,6 +585,7 @@
   },
   "practitioner": {
     "notFound": "Practitioner not found",
+    "backToResults": "Back to results",
     "organisation": "Organisation",
     "additionalInfo": "Additional information",
     "contact": "Contact",

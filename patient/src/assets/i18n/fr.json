@@ -585,6 +585,7 @@
   },
   "practitioner": {
     "notFound": "Praticien introuvable",
+    "backToResults": "Retour aux résultats",
     "organisation": "Organisation",
     "additionalInfo": "Informations complémentaires",
     "contact": "Contact",

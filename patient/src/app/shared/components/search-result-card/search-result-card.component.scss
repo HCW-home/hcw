@@ -21,6 +21,76 @@
     border-color: var(--app-teal);
     box-shadow: 0 0 0 2px var(--app-teal), var(--shadow-md);
   }
+
+  // Holding the whole sheet: the card stops behaving like a list row.
+  &.expanded {
+    cursor: default;
+    box-shadow: var(--shadow-md);
+    animation: cardGrow 0.28s var(--app-ease);
+  }
+}
+
+// The card keeps its position and unfolds in place, so the sheet reads as the
+// same block growing rather than a new one taking over.
+@keyframes cardGrow {
+  from {
+    transform: scale(0.985);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes detailsUnfold {
+  from {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    max-height: 2400px;
+    transform: none;
+  }
+}
+
+.oc-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 18px 0;
+  padding: 6px 10px 6px 6px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--app-ink-3);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s var(--app-ease), color 0.15s var(--app-ease);
+
+  ion-icon {
+    font-size: 17px;
+  }
+
+  &:hover {
+    background: var(--app-surface-muted);
+    color: var(--app-teal-dark);
+  }
+}
+
+.oc-details {
+  padding: 0 18px 4px;
+  overflow: hidden;
+  animation: detailsUnfold 0.32s var(--app-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .org-card.expanded,
+  .oc-details {
+    animation: none;
+  }
 }
 
 .oc-top {

@@ -519,6 +519,7 @@
   },
   "practitioner": {
     "notFound": "Professionista non trovato",
+    "backToResults": "Torna ai risultati",
     "organisation": "Organizzazione",
     "additionalInfo": "Informazioni aggiuntive",
     "contact": "Contatti",

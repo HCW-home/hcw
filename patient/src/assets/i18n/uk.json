@@ -573,6 +573,7 @@
   },
   "practitioner": {
     "notFound": "Лікаря не знайдено",
+    "backToResults": "Назад до результатів",
     "organisation": "Організація",
     "additionalInfo": "Додаткова інформація",
     "contact": "Контакти",
