@@ -328,29 +328,51 @@ class User(AbstractUser):
             not self.email and not self.mobile_phone_number
         )
 
-    def issue_email_verification_code(self) -> int:
-        """Mint a fresh code proving this user controls their email address.
+    def issue_verification_code(self) -> int:
+        """Mint a fresh code proving this user controls their email or phone.
 
         ``one_time_auth_token`` is cleared on purpose. That token is the only
         way into AnonymousTokenAuthView, and the timestamp written here opens
         its five-minute grace period, during which the token alone buys a
-        session with no code at all. Dropping it keeps a code issued to verify
-        an address from ever being traded for one. The password reset flow
+        session with no code at all. Dropping it keeps a code issued to claim
+        an account from ever being traded for one. The password reset flow
         takes the same precaution (see users/forms.py).
+
+        The clearing goes through a queryset update rather than ``save()``:
+        ``save()`` mints a replacement token for any ``temporary`` user (see
+        below), which would silently undo the precaution for exactly the
+        accounts this flow creates.
         """
         self.verification_code = generate_verification_code()
         self.verification_code_created_at = timezone.now()
         self.verification_attempts = 0
-        self.one_time_auth_token = None
         self.save(
             update_fields=[
                 "verification_code",
                 "verification_code_created_at",
                 "verification_attempts",
-                "one_time_auth_token",
             ]
         )
+        self.one_time_auth_token = None
+        type(self).objects.filter(pk=self.pk).update(one_time_auth_token=None)
         return self.verification_code
+
+    @property
+    def authenticates_without_code(self) -> bool:
+        """Whether a magic-link token alone is enough to sign this user in.
+
+        Invited participants (`temporary`) rely on it: the link in their
+        invitation is the whole credential, and asking them for a code would
+        add a message and a step to every invitation. Accounts no channel can
+        reach automatically have no choice either — no code could be delivered
+        to them.
+
+        Two places must agree on this, or the account is left wide open:
+        AnonymousTokenAuthView, which decides whether to ask for a code, and
+        SendVerificationCodeView, which must not hand the token to an anonymous
+        caller when the token alone is the credential.
+        """
+        return self.requires_manual_access or self.temporary
 
     @property
     def name(self) -> str:

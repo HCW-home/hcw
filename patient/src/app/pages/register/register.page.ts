@@ -23,6 +23,7 @@ import { TranslationService } from "../../core/services/translation.service";
 import { LanguageSelectorComponent } from "../../shared/components/language-selector/language-selector.component";
 import { AuthBrandingComponent } from '../../shared/components/auth-branding/auth-branding.component';
 import { ActivatedRoute } from "@angular/router";
+import { identifierValidator } from "../../shared/tools/identifier";
 
 @Component({
   selector: "app-register",
@@ -44,10 +45,10 @@ import { ActivatedRoute } from "@angular/router";
 export class RegisterPage implements OnInit {
   private t = inject(TranslationService);
   registerForm: FormGroup;
-  showPassword = false;
-  showConfirmPassword = false;
   registrationEnabled = true;
   loading = true;
+  /** Action carried over from a link, replayed after signing in. */
+  returnAction: string | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -57,19 +58,10 @@ export class RegisterPage implements OnInit {
     private toastCtrl: ToastController,
     private route: ActivatedRoute,
   ) {
-    this.registerForm = this.fb.group(
-      {
-        first_name: ["", [Validators.required, Validators.minLength(2)]],
-        last_name: ["", [Validators.required, Validators.minLength(2)]],
-        email: ["", [Validators.required, Validators.email]],
-        password1: ["", [Validators.required, Validators.minLength(8)]],
-        password2: ["", [Validators.required]],
-      },
-      { validators: this.passwordMatchValidator },
-    );
+    this.registerForm = this.fb.group({
+      identifier: ["", [Validators.required]],
+    });
   }
-
-  private returnAction: string | null = null;
 
   ngOnInit() {
     this.returnAction = this.route.snapshot.queryParamMap.get('action');
@@ -79,6 +71,9 @@ export class RegisterPage implements OnInit {
       next: (config: any) => {
         this.registrationEnabled =
           !!config?.registration_enabled && !config?.force_temporary_patients;
+        this.registerForm
+          .get('identifier')
+          ?.addValidators(identifierValidator(config?.default_phone_region));
         this.loading = false;
       },
       error: () => {
@@ -86,28 +81,6 @@ export class RegisterPage implements OnInit {
         this.loading = false;
       },
     });
-  }
-
-  passwordMatchValidator(form: FormGroup) {
-    const password = form.get("password1");
-    const confirmPassword = form.get("password2");
-    if (
-      password &&
-      confirmPassword &&
-      password.value !== confirmPassword.value
-    ) {
-      confirmPassword.setErrors({ passwordMismatch: true });
-      return { passwordMismatch: true };
-    }
-    return null;
-  }
-
-  togglePassword() {
-    this.showPassword = !this.showPassword;
-  }
-
-  toggleConfirmPassword() {
-    this.showConfirmPassword = !this.showConfirmPassword;
   }
 
   async onRegister() {
@@ -121,22 +94,20 @@ export class RegisterPage implements OnInit {
       this.authService.register(this.registerForm.value).subscribe({
         next: async () => {
           await loading.dismiss();
-          // The code was mailed out: send the user straight to where they
-          // type it in, carrying the address so they need not retype it.
-          this.navCtrl.navigateRoot(["/verify-email"], {
-            queryParams: { email: this.registerForm.value.email },
+          // The code is on its way: send the user straight to where they type
+          // it in, carrying the identifier so they need not retype it.
+          this.navCtrl.navigateRoot(["/verify"], {
+            queryParams: { identifier: this.registerForm.value.identifier },
           });
         },
         error: async (error) => {
           await loading.dismiss();
           let errorMessage = this.t.instant('register.registrationFailed');
           if (error.error) {
-            if (error.error.email) {
-              errorMessage = error.error.email[0];
-            } else if (error.error.username) {
-              errorMessage = error.error.username[0];
-            } else if (error.error.password1) {
-              errorMessage = error.error.password1[0];
+            if (error.error.identifier) {
+              errorMessage = error.error.identifier[0];
+            } else if (error.error.detail) {
+              errorMessage = error.error.detail;
             } else if (error.error.non_field_errors) {
               errorMessage = error.error.non_field_errors[0];
             }

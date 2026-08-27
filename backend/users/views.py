@@ -59,15 +59,16 @@ from drf_spectacular.utils import (
 from itsdangerous import URLSafeTimedSerializer
 from mediaserver.exceptions import NoMediaServerAvailable
 from mediaserver.models import Server
-from messaging.models import Message
+from messaging.models import CommunicationMethod, Message
 from messaging.serializers import MessageSerializer
-from rest_framework import filters, status, viewsets
+from rest_framework import filters, serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from core.authentication import TenantRefreshToken
 from core.throttling import (
     EmailVerifyCodeRateThrottle,
     EmailVerifyRateThrottle,
@@ -76,6 +77,7 @@ from core.throttling import (
     PasswordResetConfirmRateThrottle,
     PasswordResetRateThrottle,
     RegistrationDailyRateThrottle,
+    RegistrationIdentifierRateThrottle,
     RegistrationRateThrottle,
     VerificationCodeIPRateThrottle,
     VerificationCodeRateThrottle,
@@ -86,6 +88,7 @@ from allauth.socialaccount.models import SocialApp
 from .filters import UserFilter
 from .models import HealthMetric, Language, Organisation, Speciality, Term, User, WebPushSubscription, DAVAppPassword
 from .phone import phone_lookup_variants
+from .identifier import EMAIL, resolve_identifier
 from .verification import (
     EMAIL_VERIFICATION_CODE_TTL,
     MAX_VERIFICATION_ATTEMPTS,
@@ -94,6 +97,7 @@ from .verification import (
 )
 from .serializers import (
     HealthMetricSerializer,
+    RegisterSerializer,
     LanguageSerializer,
     OrganisationSerializer,
     SpecialitySerializer,
@@ -1751,51 +1755,109 @@ class PasswordResetConfirmView(DjRestAuthPasswordResetConfirmView):
         return super().post(request, *args, **kwargs)
 
 
-class RegisterView(DjRestAuthRegisterView):
-    """Registration endpoint controlled by ENABLE_REGISTRATION setting."""
+class IdentifierSerializer(serializers.Serializer):
+    identifier = serializers.CharField()
 
-    throttle_classes = [RegistrationRateThrottle, RegistrationDailyRateThrottle]
 
-    def create(self, request, *args, **kwargs):
+class VerifyCodeSerializer(IdentifierSerializer):
+    code = serializers.CharField()
+
+
+class RegisterView(APIView):
+    """Sign up from a single field: an email address or a phone number.
+
+    Deliberately not a dj-rest-auth ``RegisterView`` any more. Its
+    ``perform_create`` mints a JWT and runs allauth's ``complete_signup``, both
+    of which assume an email address and neither of which this flow uses — and
+    the JWT would be minted on the *existing* account when the serializer
+    silently returns one.
+    """
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    throttle_classes = [
+        RegistrationRateThrottle,
+        RegistrationDailyRateThrottle,
+        RegistrationIdentifierRateThrottle,
+    ]
+
+    @extend_schema(request=IdentifierSerializer, responses={201: None})
+    def post(self, request):
         if not constance_config.enable_registration:
             return Response(
-                {"detail": "Registration is currently disabled."},
+                {"detail": _("Registration is currently disabled.")},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        super().create(request, *args, **kwargs)
 
-        # Send the verification code
-        email = request.data.get("email")
-        if email:
-            user = User.objects.find_by_email(email)
-            if user and not user.email_verified:
-                send_email_verification_code(user)
+        serializer = RegisterSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save(request)
+
+        # An identifier already in use is not an error: the serializer returned
+        # the existing account, and sending the code turns this into a sign-in.
+        # Skipping it because the account was already verified would leave the
+        # person waiting on the code screen for a message that never comes.
+        # Practitioners are the exception — the verify endpoint refuses them,
+        # so a code would be useless.
+        if not user.is_practitioner:
+            send_verification_code(user, channel_for(request.data.get("identifier")))
 
         return Response(
-            {
-                "detail": _(
-                    "A verification code has been sent to your email address."
-                )
-            },
+            {"detail": _("A verification code has been sent to you.")},
             status=status.HTTP_201_CREATED,
         )
 
 
-def send_email_verification_code(user):
-    """Issue a code for ``user`` and hand it to the messaging pipeline."""
-    user.issue_email_verification_code()
+def channel_for(identifier):
+    """Delivery channel matching the identifier someone typed, or None."""
+    try:
+        kind, _value = resolve_identifier(identifier)
+    except serializers.ValidationError:
+        return None
+    return CommunicationMethod.email if kind == EMAIL else CommunicationMethod.sms
+
+
+# Both carry the code and neither carries a link; they differ only in what
+# they tell the reader they are doing.
+SIGN_UP_TEMPLATE = "email_verification"
+SIGN_IN_TEMPLATE = "your_authentication_code"
+CODE_TEMPLATES = [SIGN_UP_TEMPLATE, SIGN_IN_TEMPLATE]
+
+
+def send_verification_code(user, channel=None):
+    """Issue a code for ``user`` and hand it to the messaging pipeline.
+
+    ``channel`` is pinned on the message rather than inherited from the
+    account: someone the clinic already knows as an email contact may well sign
+    up with their phone, and the code has to reach the identifier they just
+    used, not the one already on file.
+
+    An account already claimed by its owner is signing in, whatever screen the
+    request came from — telling them to "finish creating your account" would be
+    plainly wrong. Verification is what marks an account claimed, so this reads
+    the same pair it sets.
+    """
+    claimed = user.is_active and not user.temporary
+    user.issue_verification_code()
     with translation.override(user.preferred_language):
         Message.objects.create(
             sent_to=user,
-            template_system_name="email_verification",
+            template_system_name=(
+                SIGN_IN_TEMPLATE if claimed else SIGN_UP_TEMPLATE
+            ),
             content_type=ContentType.objects.get_for_model(user),
             object_id=user.pk,
             in_notification=False,
+            communication_method=channel,
         )
 
 
-class EmailVerifyView(APIView):
-    """Verify a user email address with the 6-digit code they received."""
+class AccountVerifyView(APIView):
+    """Claim an account with the 6-digit code sent to its email or phone.
+
+    On success the caller is signed in: holding the code proves control of the
+    channel, which is the same proof the passwordless login flow accepts.
+    """
 
     permission_classes = [AllowAny]
     authentication_classes = []
@@ -1804,33 +1866,43 @@ class EmailVerifyView(APIView):
     def invalid(self):
         """Every failure answers the same way.
 
-        Telling "unknown address" apart from "wrong code" would turn the
-        endpoint into an account oracle. Translated per request, not once at
-        import time, so the recipient's language is honoured.
+        Telling "unknown account" apart from "wrong code" would turn the
+        endpoint into an oracle. Translated per request, not once at import
+        time, so the recipient's language is honoured.
         """
         return Response(
             {"detail": _("Invalid or expired verification code.")},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+    @extend_schema(request=VerifyCodeSerializer, responses={200: None})
     def post(self, request):
-        email = (request.data.get("email") or "").strip()
-        code = request.data.get("code")
-
-        if not email or not code:
+        serializer = VerifyCodeSerializer(data=request.data)
+        if not serializer.is_valid():
             return self.invalid()
 
-        user = User.objects.find_by_email(email)
+        try:
+            kind, _value = resolve_identifier(serializer.validated_data["identifier"])
+            user = User.objects.find_by_identifier(
+                serializer.validated_data["identifier"]
+            )
+        except serializers.ValidationError:
+            return self.invalid()
         if user is None:
             return self.invalid()
+
+        # This route signs people in, so it must not become a way around the
+        # SSO-only policy that LoginView and PasswordResetView enforce for
+        # practitioners.
+        if user.is_practitioner:
+            return self.invalid()
+
+        code = serializer.validated_data["code"]
 
         with transaction.atomic():
             # Re-read under a row lock: without it, concurrent guesses all read
             # the same attempt counter and get far more than three tries.
             user = User.objects.select_for_update().get(pk=user.pk)
-
-            if user.email_verified:
-                return Response({"detail": _("Email already verified.")})
 
             expired = (
                 not user.verification_code_created_at
@@ -1855,8 +1927,25 @@ class EmailVerifyView(APIView):
                 )
                 return self.invalid()
 
-            user.email_verified = True
-            user.is_active = True
+            # Only past this point is the caller known to hold the code. Any
+            # short-circuit above it would hand out a session for free.
+            if kind == EMAIL:
+                user.email_verified = True
+            # Follow the identifier they just proved they own. It matters for
+            # an account the clinic already knew by email whose owner signs up
+            # with their phone: without this they would keep receiving
+            # everything on the address they chose not to use, and onboarding
+            # would offer the wrong channel back to them.
+            user.communication_method = (
+                CommunicationMethod.email if kind == EMAIL else CommunicationMethod.sms
+            )
+            # Claiming an account with a code makes it the holder's own, so it
+            # is no longer the throwaway an invitation created.
+            user.temporary = False
+            # Activating is for finishing a sign-up, not for bringing back an
+            # account somebody disabled on purpose.
+            if not user.last_login:
+                user.is_active = True
             user.verification_code = None
             user.verification_attempts = 0
             # verification_code_created_at is deliberately left alone: refreshing
@@ -1864,38 +1953,60 @@ class EmailVerifyView(APIView):
             user.save(
                 update_fields=[
                     "email_verified",
+                    "communication_method",
+                    "temporary",
                     "is_active",
                     "verification_code",
                     "verification_attempts",
                 ]
             )
             user.received_messages.filter(
-                template_system_name="email_verification"
+                template_system_name__in=CODE_TEMPLATES
             ).delete()
 
-        return Response({"detail": _("Email verified successfully.")})
+        if not user.is_active:
+            return self.invalid()
+
+        refresh = TenantRefreshToken.for_user(user)
+        return Response(
+            {
+                "detail": _("Account verified successfully."),
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+            }
+        )
 
 
-class EmailVerificationResendView(APIView):
-    """Send a new email verification code."""
+class VerificationResendView(APIView):
+    """Send a new verification code to an email address or phone number."""
 
     permission_classes = [AllowAny]
     authentication_classes = []
     throttle_classes = [VerificationCodeRateThrottle, VerificationCodeIPRateThrottle]
 
+    @extend_schema(request=IdentifierSerializer, responses={200: None})
     def post(self, request):
-        email = (request.data.get("email") or "").strip()
+        serializer = IdentifierSerializer(data=request.data)
+        user = None
+        if serializer.is_valid():
+            try:
+                user = User.objects.find_by_identifier(
+                    serializer.validated_data["identifier"]
+                )
+            except serializers.ValidationError:
+                user = None
 
-        user = User.objects.find_by_email(email) if email else None
-        if user is not None and not user.email_verified:
-            send_email_verification_code(user)
+        if user is not None and not user.is_practitioner:
+            send_verification_code(
+                user, channel_for(request.data.get("identifier"))
+            )
 
-        # Same answer whether the address is unknown, already verified or just
+        # Same answer whether the account is unknown, already verified or just
         # got a code: nothing here should confirm that an account exists.
         return Response(
             {
                 "detail": _(
-                    "If this address needs verification, a code has been sent."
+                    "If this account needs verification, a code has been sent."
                 )
             }
         )
@@ -2081,7 +2192,8 @@ class UserDashboardView(APIView):
 
 class SendVerificationCodeView(APIView):
     """
-    Generate and send a verification code to a contact's email for passwordless authentication.
+    Generate and send a verification code to a contact's email address or
+    phone number for passwordless authentication.
     """
 
     permission_classes = [AllowAny]
@@ -2089,21 +2201,8 @@ class SendVerificationCodeView(APIView):
 
     @extend_schema(
         summary="Send Verification Code",
-        description="Generate and send a verification code for passwordless authentication. Automatically detects if the email belongs to a contact or user.",
-        request={
-            "application/json": {
-                "type": "object",
-                "properties": {
-                    "email": {
-                        "type": "string",
-                        "format": "email",
-                        "description": "Email address to send the verification code to",
-                        "example": "user@example.com",
-                    },
-                },
-                "required": ["email"],
-            }
-        },
+        description="Generate and send a verification code for passwordless authentication. The identifier is either an email address or a phone number; `email` is still accepted for older clients.",
+        request=IdentifierSerializer,
         responses={
             200: {
                 "description": "Verification code sent successfully",
@@ -2122,17 +2221,25 @@ class SendVerificationCodeView(APIView):
         },
     )
     def post(self, request):
-        email = request.data.get("email")
+        # `email` stays accepted: it is what older clients send, and an address
+        # is a valid identifier anyway.
+        identifier = request.data.get("identifier") or request.data.get("email")
 
-        if not email:
+        if not identifier:
             return Response(
-                {"error": "email is required"}, status=status.HTTP_400_BAD_REQUEST
+                {"error": "identifier is required"},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Resolve the account case-insensitively. Legacy duplicates (same address
-        # stored with a different case) must not turn into a 500 here: send the
-        # code to the account the person actually signs in with.
-        user_instance = User.objects.find_by_email(email)
+        # Resolve case-insensitively for an address, across stored formats for a
+        # number. Legacy duplicates must not turn into a 500 here: send the code
+        # to the account the person actually signs in with.
+        try:
+            user_instance = User.objects.find_by_identifier(identifier)
+        except serializers.ValidationError:
+            # Unknown-shaped input answers like an unknown account, so this
+            # endpoint cannot be used to probe which identifiers exist.
+            user_instance = None
 
         if user_instance is None:
             return Response(
@@ -2162,15 +2269,18 @@ class SendVerificationCodeView(APIView):
                 template_system_name="your_authentication_code",
                 content_type=ContentType.objects.get_for_model(user_instance),
                 object_id=user_instance.pk,
+                communication_method=channel_for(identifier),
             )
 
-        return Response(
-            {
-                "detail": "Verification code sent successfully",
-                "auth_token": user_instance.one_time_auth_token,
-            },
-            status=status.HTTP_200_OK,
-        )
+        payload = {"detail": "Verification code sent successfully"}
+        # Handing the token back to an anonymous caller is only safe when a code
+        # is still required afterwards. For an account that signs in on the
+        # token alone, returning it here would be the whole credential: this
+        # response plus one more request would take the account over.
+        if not user_instance.authenticates_without_code:
+            payload["auth_token"] = user_instance.one_time_auth_token
+
+        return Response(payload, status=status.HTTP_200_OK)
 
 
 # -- FHIR Patient / Practitioner -------------------------------------------

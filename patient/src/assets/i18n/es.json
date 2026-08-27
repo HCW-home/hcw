@@ -133,9 +133,7 @@
     "title": "Iniciar sesión",
     "subtitle": "Inicia sesión en su cuenta.",
     "platformDescription": "Su plataforma segura de telemedicina para consultas remotas con su proveedor de atención médica.",
-    "emailPlaceholder": "Correo electrónico",
     "passwordPlaceholder": "Contraseña",
-    "emailRequired": "Se requiere un correo electrónico válido.",
     "passwordMinLength": "La contraseña debe tener al menos 6 caracteres.",
     "forgotPassword": "¿Olvidó tu contraseña?",
     "noAccount": "¿No tiene una cuenta?",
@@ -156,25 +154,23 @@
     "tooManyAttempts": "Demasiados intentos. Por favor, solicite un nuevo código.",
     "invalidVerificationCode": "Código de verificación no válido.",
     "codeSent": "Código de verificación enviado.",
-    "genericError": "Se ha producido un error. Por favor, inténtelo de nuevo."
+    "genericError": "Se ha producido un error. Por favor, inténtelo de nuevo.",
+    "identifierPlaceholder": "Correo electrónico o teléfono",
+    "identifierRequired": "Introduzca un correo electrónico o un teléfono válido",
+    "phoneNeedsCountryCode": "Añada su prefijo de país, por ejemplo +34612345678"
   },
   "register": {
     "platformDescription": "Crea su cuenta y comienza hoy mismo tus consultas de telemedicina.",
     "title": "Crear una cuenta",
     "subtitle": "Regístrate para empezar",
-    "firstName": "Nombre",
-    "lastName": "Apellido",
-    "firstNameRequired": "Se requiere el nombre de pila.",
-    "emailPlaceholder": "Correo electrónico",
-    "emailInvalid": "Por favor, introduzca un correo electrónico válido.",
-    "passwordPlaceholder": "Contraseña",
-    "passwordMinLength": "La contraseña debe tener al menos 8 caracteres.",
-    "confirmPassword": "confirmar Contraseña",
-    "passwordsMismatch": "Las contraseñas no coinciden",
     "registrationDisabled": "El registro está actualmente deshabilitado.",
     "hasAccount": "¿Ya tiene una cuenta?",
     "creatingAccount": "Creando cuenta...",
-    "registrationFailed": "El registro ha fallado. Por favor, inténtelo de nuevo."
+    "registrationFailed": "El registro ha fallado. Por favor, inténtelo de nuevo.",
+    "identifierPlaceholder": "Correo electrónico o teléfono",
+    "identifierHelp": "Le enviaremos un código de 6 dígitos para confirmarlo.",
+    "identifierInvalid": "Introduzca un correo electrónico o un teléfono válido",
+    "phoneNeedsCountryCode": "Añada su prefijo de país, por ejemplo +34612345678"
   },
   "forgotPassword": {
     "title": "¿Olvidó tu contraseña?",
@@ -203,22 +199,6 @@
     "resetFailed": "No se pudo restablecer la contraseña. Inténtelo de nuevo.",
     "linkExpired": "El enlace de restablecimiento ha caducado o no es válido.",
     "invalidResetLink": "Enlace de restablecimiento no válido"
-  },
-  "verifyEmail": {
-    "title": "Verificación de correo electrónico",
-    "success": "Tu dirección de correo electrónico ha sido verificada correctamente.",
-    "goToLogin": "Ir a Iniciar sesión",
-    "verificationFailed": "No se ha podido enviar el código de verificación. Inténtelo de nuevo.",
-    "codeSentTo": "Introduzca el código de 6 dígitos que enviamos a su dirección de correo electrónico.",
-    "emailPlaceholder": "Correo electrónico",
-    "enterCode": "Introduzca el código de 6 dígitos",
-    "invalidCode": "Código de verificación no válido o caducado.",
-    "invalidCodeFormat": "Introduzca un código válido de 6 dígitos",
-    "verifyCode": "Verificar",
-    "didntReceiveCode": "¿No ha recibido el código?",
-    "resendCode": "Reenviar código",
-    "sendingCode": "Enviando...",
-    "codeSent": "Código de verificación enviado."
   },
   "verifyInvite": {
     "verifyingCode": "Verificando tu código...",
@@ -542,5 +522,32 @@
     "additionalInfo": "Información adicional",
     "contact": "Contacto",
     "profile": "Perfil"
+  },
+  "verifyAccount": {
+    "title": "Confirme su cuenta",
+    "identifierPlaceholder": "Correo electrónico o teléfono",
+    "invalidIdentifier": "Introduzca un correo electrónico o un teléfono válido",
+    "phoneNeedsCountryCode": "Añada su prefijo de país, por ejemplo +34612345678",
+    "codeSentTo": "Introduzca el código de 6 dígitos que acabamos de enviarle.",
+    "enterCode": "Introduzca el código de 6 dígitos",
+    "invalidCode": "Código no válido o caducado.",
+    "invalidCodeFormat": "Introduzca un código válido de 6 dígitos",
+    "verifyCode": "Confirmar",
+    "didntReceiveCode": "¿No ha recibido el código?",
+    "resendCode": "Reenviar código",
+    "sendingCode": "Enviando...",
+    "codeSent": "Código enviado.",
+    "sendFailed": "No se ha podido enviar el código. Inténtelo de nuevo.",
+    "backToLogin": "Volver a iniciar sesión"
+  },
+  "onboarding": {
+    "firstName": "Nombre",
+    "lastName": "Apellidos",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "passwordConfirm": "Confirmar contraseña",
+    "passwordOptional": "Opcional. Siempre podrá iniciar sesión con un código.",
+    "passwordsMismatch": "Las contraseñas no coinciden",
+    "passwordRejected": "Esta contraseña ha sido rechazada. Pruebe con una más larga."
   }
 }

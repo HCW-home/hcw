@@ -1,0 +1,105 @@
+<ion-content class="verify-account-content" [scrollY]="false">
+  <div class="auth-card">
+    <app-auth-branding />
+    <div class="right-side">
+      <div class="right-content">
+        <h2>{{ 'verifyAccount.title' | translate }}</h2>
+
+        <div class="step-animate">
+          @if (knownIdentifier) {
+            <div class="identifier-display">
+              <ion-text color="medium">{{ identifier }}</ion-text>
+            </div>
+          }
+
+          <ion-text class="code-sent-message" color="medium">
+            {{ 'verifyAccount.codeSentTo' | translate }}
+          </ion-text>
+
+          @if (errorMessage) {
+            <ion-text color="danger" class="error-message">
+              <span class="error-text">{{ errorMessage }}</span>
+            </ion-text>
+          }
+
+          <form [formGroup]="verifyForm" (ngSubmit)="submitCode()" class="verify-form">
+            @if (!knownIdentifier) {
+              <ion-item lines="full" class="input-item">
+                <ion-icon name="mail-outline" slot="start"></ion-icon>
+                <ion-input
+                  type="text"
+                  [placeholder]="'verifyAccount.identifierPlaceholder' | translate"
+                  formControlName="identifier">
+                </ion-input>
+              </ion-item>
+              @if (verifyForm.get('identifier')?.touched && verifyForm.get('identifier')?.errors; as errors) {
+                <ion-text color="danger" class="error-message">
+                  <span class="error-text">
+                    @if (errors['phoneNeedsCountryCode']) {
+                      {{ 'verifyAccount.phoneNeedsCountryCode' | translate }}
+                    } @else {
+                      {{ 'verifyAccount.invalidIdentifier' | translate }}
+                    }
+                  </span>
+                </ion-text>
+              }
+            }
+
+            <ion-item lines="full" class="input-item">
+              <ion-icon name="keypad-outline" slot="start"></ion-icon>
+              <ion-input
+                type="text"
+                [placeholder]="'verifyAccount.enterCode' | translate"
+                formControlName="code"
+                maxlength="6"
+                inputmode="numeric">
+              </ion-input>
+            </ion-item>
+            @if (verifyForm.get('code')?.invalid && verifyForm.get('code')?.touched) {
+              <ion-text color="danger" class="error-message">
+                <span class="error-text">{{ 'verifyAccount.invalidCodeFormat' | translate }}</span>
+              </ion-text>
+            }
+
+            <ion-button
+              expand="block"
+              shape="round"
+              type="submit"
+              [disabled]="verifyForm.invalid || isLoading"
+              class="action-button">
+              @if (isLoading) {
+                <ion-spinner name="crescent" class="button-spinner"></ion-spinner>
+              }
+              {{ 'verifyAccount.verifyCode' | translate }}
+            </ion-button>
+          </form>
+
+          <div class="resend-code">
+            <ion-text class="resend-text" color="medium">
+              {{ 'verifyAccount.didntReceiveCode' | translate }}
+            </ion-text>
+            <ion-text
+              color="primary"
+              (click)="resendCode()"
+              [class.disabled]="isResending"
+              class="link-text">
+              @if (isResending) {
+                {{ 'verifyAccount.sendingCode' | translate }}
+              } @else {
+                {{ 'verifyAccount.resendCode' | translate }}
+              }
+            </ion-text>
+          </div>
+
+          <div class="login-link">
+            <ion-text color="primary" (click)="goToLogin()" class="link-text">
+              {{ 'verifyAccount.backToLogin' | translate }}
+            </ion-text>
+          </div>
+        </div>
+
+        <app-language-selector></app-language-selector>
+      </div>
+    </div>
+  </div>
+</ion-content>

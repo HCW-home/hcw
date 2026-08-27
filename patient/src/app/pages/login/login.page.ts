@@ -23,6 +23,7 @@ import { Capacitor } from "@capacitor/core";
 import { TranslatePipe } from "@ngx-translate/core";
 import { MobileAppService } from "../../core/services/mobile-app.service";
 import { AuthService } from "../../core/services/auth.service";
+import { identifierValidator } from "../../shared/tools/identifier";
 import { TranslationService } from "../../core/services/translation.service";
 import { ActionHandlerService } from "../../core/services/action-handler.service";
 import { DeeplinkService } from "../../core/services/deeplink.service";
@@ -54,9 +55,9 @@ export class LoginPage implements OnInit {
 
   @ViewChild('passwordInput') passwordInput!: IonInput;
 
-  step: 'email' | 'credentials' | 'verification' = 'email';
+  step: 'identifier' | 'credentials' | 'verification' = 'identifier';
 
-  emailForm: FormGroup;
+  identifierForm: FormGroup;
   passwordForm: FormGroup;
   verificationForm: FormGroup;
 
@@ -89,8 +90,8 @@ export class LoginPage implements OnInit {
     private loadingCtrl: LoadingController,
     private toastCtrl: ToastController,
   ) {
-    this.emailForm = this.fb.group({
-      email: ["", [Validators.required, Validators.email]],
+    this.identifierForm = this.fb.group({
+      identifier: ["", [Validators.required]],
     });
     this.passwordForm = this.fb.group({
       password: ["", [Validators.required, Validators.minLength(6)]],
@@ -100,20 +101,20 @@ export class LoginPage implements OnInit {
     });
   }
 
-  get email(): string {
-    return this.emailForm.get('email')?.value || '';
+  get identifier(): string {
+    return this.identifierForm.get('identifier')?.value || '';
   }
 
   ngOnInit() {
     const email = this.route.snapshot.queryParamMap.get("email");
     const action = this.route.snapshot.queryParamMap.get("action");
     if (email) {
-      this.emailForm.patchValue({ email });
+      this.identifierForm.patchValue({ identifier: email });
     }
     // Coming from a link received by mail/SMS: the recipient already knows
-    // which account they own, so skip the email step. Depending on the config,
+    // which account they own, so skip the first step. Depending on the config,
     // onContinue() then shows the password form or sends the code straight away.
-    const skipEmailStep = !!email && !!action && this.emailForm.valid;
+    const skipEmailStep = !!email && !!action && this.identifierForm.valid;
     this.authService.getConfig().subscribe({
       next: (config: any) => {
         // getConfig() emits null when the backend is unreachable; guard so the
@@ -128,6 +129,9 @@ export class LoginPage implements OnInit {
           !!config.registration_enabled && !config.force_temporary_patients;
         this.passwordLoginDisabled = !!config.force_temporary_patients;
         this.patientPasswordLoginEnabled = !!config.enable_patient_password_login;
+        this.identifierForm
+          .get('identifier')
+          ?.addValidators(identifierValidator(config.default_phone_region));
         // Only offer the native app on a certified instance — deep-linking to
         // an uncertified one would fail.
         this.showDeeplinkBanner =
@@ -163,21 +167,22 @@ export class LoginPage implements OnInit {
   }
 
   onContinue() {
-    if (this.emailForm.invalid) {
+    if (this.identifierForm.invalid) {
       return;
     }
     this.errorMessage = null;
-    if (this.canUsePasswordLogin) {
+    // Password login is email-only on the API side, so someone signing in with
+    // a phone number goes straight to the code, whatever the instance allows.
+    if (this.canUsePasswordLogin && this.identifier.includes('@')) {
       this.step = 'credentials';
       setTimeout(() => this.passwordInput?.setFocus(), 300);
     } else {
-      // No password login for patients: send the email/SMS code straight away.
       this.sendCode();
     }
   }
 
   goBack() {
-    this.step = 'email';
+    this.step = 'identifier';
     this.errorMessage = null;
     this.passwordForm.reset();
     this.verificationForm.reset();
@@ -189,7 +194,7 @@ export class LoginPage implements OnInit {
   }
 
   async onLogin() {
-    if (this.emailForm.invalid || this.passwordForm.invalid) {
+    if (this.identifierForm.invalid || this.passwordForm.invalid) {
       return;
     }
 
@@ -200,7 +205,7 @@ export class LoginPage implements OnInit {
     await loading.present();
 
     const credentials = {
-      email: this.email,
+      email: this.identifier,
       password: this.passwordForm.get('password')?.value,
     };
 
@@ -226,7 +231,7 @@ export class LoginPage implements OnInit {
     this.isLoading = true;
     this.errorMessage = null;
 
-    this.authService.sendVerificationCode(this.email).subscribe({
+    this.authService.sendVerificationCode(this.identifier).subscribe({
       next: (response) => {
         this.isLoading = false;
         this.authToken = response.auth_token;
@@ -286,7 +291,7 @@ export class LoginPage implements OnInit {
     this.isResending = true;
     this.errorMessage = null;
 
-    this.authService.sendVerificationCode(this.email).subscribe({
+    this.authService.sendVerificationCode(this.identifier).subscribe({
       next: async (response) => {
         this.isResending = false;
         this.authToken = response.auth_token;
@@ -328,6 +333,6 @@ export class LoginPage implements OnInit {
   }
 
   forgotPassword(): void {
-    this.navCtrl.navigateForward("/forgot-password", { queryParams: { email: this.email } });
+    this.navCtrl.navigateForward("/forgot-password", { queryParams: { email: this.identifier } });
   }
 }

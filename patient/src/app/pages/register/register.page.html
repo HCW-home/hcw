@@ -21,90 +21,31 @@
           (ngSubmit)="onRegister()"
           class="register-form step-animate"
         >
-          <div class="name-row">
-            <ion-item lines="full" class="input-item">
-              <ion-icon name="person-outline" slot="start"></ion-icon>
-              <ion-input
-                type="text"
-                [placeholder]="'register.firstName' | translate"
-                formControlName="first_name"
-              >
-              </ion-input>
-            </ion-item>
-
-            <ion-item lines="full" class="input-item">
-              <ion-input
-                type="text"
-                [placeholder]="'register.lastName' | translate"
-                formControlName="last_name"
-              >
-              </ion-input>
-            </ion-item>
-          </div>
-          @if (registerForm.get('first_name')?.invalid &&
-          registerForm.get('first_name')?.touched) {
-          <ion-text color="danger" class="error-message">
-            <span class="error-text">{{ 'register.firstNameRequired' | translate }}</span>
-          </ion-text>
-          }
-
           <ion-item lines="full" class="input-item">
             <ion-icon name="mail-outline" slot="start"></ion-icon>
-            <ion-input type="email" [placeholder]="'register.emailPlaceholder' | translate" formControlName="email">
+            <ion-input
+              type="text"
+              [placeholder]="'register.identifierPlaceholder' | translate"
+              formControlName="identifier"
+            >
             </ion-input>
           </ion-item>
-          @if (registerForm.get('email')?.invalid &&
-          registerForm.get('email')?.touched) {
+          @if (registerForm.get('identifier')?.touched &&
+          registerForm.get('identifier')?.errors; as errors) {
           <ion-text color="danger" class="error-message">
-            <span class="error-text">{{ 'register.emailInvalid' | translate }}</span>
+            <span class="error-text">
+              @if (errors['phoneNeedsCountryCode']) {
+                {{ 'register.phoneNeedsCountryCode' | translate }}
+              } @else {
+                {{ 'register.identifierInvalid' | translate }}
+              }
+            </span>
           </ion-text>
           }
 
-          <ion-item lines="full" class="input-item">
-            <ion-icon name="lock-closed-outline" slot="start"></ion-icon>
-            <ion-input
-              [type]="showPassword ? 'text' : 'password'"
-              [placeholder]="'register.passwordPlaceholder' | translate"
-              formControlName="password1"
-            >
-            </ion-input>
-            <ion-icon
-              [name]="showPassword ? 'eye-off-outline' : 'eye-outline'"
-              slot="end"
-              (click)="togglePassword()"
-              class="password-toggle"
-            >
-            </ion-icon>
-          </ion-item>
-          @if (registerForm.get('password1')?.invalid &&
-          registerForm.get('password1')?.touched) {
-          <ion-text color="danger" class="error-message">
-            <span class="error-text">{{ 'register.passwordMinLength' | translate }}</span>
+          <ion-text color="medium" class="helper-text">
+            <small>{{ 'register.identifierHelp' | translate }}</small>
           </ion-text>
-          }
-
-          <ion-item lines="full" class="input-item">
-            <ion-icon name="lock-closed-outline" slot="start"></ion-icon>
-            <ion-input
-              [type]="showConfirmPassword ? 'text' : 'password'"
-              [placeholder]="'register.confirmPassword' | translate"
-              formControlName="password2"
-            >
-            </ion-input>
-            <ion-icon
-              [name]="showConfirmPassword ? 'eye-off-outline' : 'eye-outline'"
-              slot="end"
-              (click)="toggleConfirmPassword()"
-              class="password-toggle"
-            >
-            </ion-icon>
-          </ion-item>
-          @if (registerForm.get('password2')?.errors?.['passwordMismatch'] &&
-          registerForm.get('password2')?.touched) {
-          <ion-text color="danger" class="error-message">
-            <span class="error-text">{{ 'register.passwordsMismatch' | translate }}</span>
-          </ion-text>
-          }
 
           <ion-button
             expand="block"

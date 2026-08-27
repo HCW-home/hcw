@@ -2381,10 +2381,6 @@ msgstr "<p>Нове повідомлення від {{ obj.created_by.name }} у
 msgid "Click here to answer"
 msgstr "Натисніть тут, щоб відповісти"
 
-#: messaging/template.py:119
-msgid "Verify your email address"
-msgstr "Підтвердіть свою електронну адресу"
-
 #: messaging/template.py:130 messaging/template.py:140
 msgid "Reset your password"
 msgstr "Скиньте свій пароль"
@@ -2784,22 +2780,38 @@ msgstr "Щоб завершити створення облікового зап
 msgid "<p>To finish creating your account, please use this verification code: <strong>{{ obj.verification_code }}</strong></p>"
 msgstr "<p>Щоб завершити створення облікового запису, скористайтеся цим кодом підтвердження: <strong>{{ obj.verification_code }}</strong></p>"
 
-#: users/views.py:1770
-msgid "A verification code has been sent to your email address."
-msgstr "Код підтвердження надіслано на вашу електронну адресу."
-
 #: users/views.py:1801
 msgid "Invalid or expired verification code."
 msgstr "Недійсний або застарілий код підтвердження."
 
-#: users/views.py:1818
-msgid "Email already verified."
-msgstr "Електронну адресу вже підтверджено."
+#: messaging/template.py:122
+msgid "{% if obj.email %}Verify your email address{% else %}Verify your phone number{% endif %}"
+msgstr "{% if obj.email %}Підтвердьте свою електронну адресу{% else %}Підтвердьте свій номер телефону{% endif %}"
 
-#: users/views.py:1870
-msgid "Email verified successfully."
-msgstr "Електронну адресу успішно підтверджено."
+#: users/views.py:1786
+msgid "Registration is currently disabled."
+msgstr "Реєстрацію наразі вимкнено."
 
-#: users/views.py:1886
-msgid "If this address needs verification, a code has been sent."
-msgstr "Якщо цю адресу потрібно підтвердити, код надіслано."
+#: users/views.py:1801
+msgid "A verification code has been sent to you."
+msgstr "Вам надіслано код підтвердження."
+
+#: users/views.py:1912
+msgid "Account verified successfully."
+msgstr "Обліковий запис успішно підтверджено."
+
+#: users/views.py:1943
+msgid "If this account needs verification, a code has been sent."
+msgstr "Якщо цей обліковий запис потрібно підтвердити, код надіслано."
+
+#: users/serializers.py:345
+msgid "This instance cannot send text messages. Use an email address."
+msgstr "Ця інстанція не може надсилати SMS. Скористайтеся електронною поштою."
+
+#: users/identifier.py:34
+msgid "Enter your email address or phone number."
+msgstr "Введіть свою електронну адресу або номер телефону."
+
+#: users/identifier.py:45
+msgid "Enter a valid email address."
+msgstr "Введіть дійсну електронну адресу."

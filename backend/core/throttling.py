@@ -40,6 +40,39 @@ class IPRateThrottle(SimpleRateThrottle):
         return self.cache_format % {"scope": self.scope, "ident": ident}
 
 
+class IdentifierRateThrottle(SimpleRateThrottle):
+    """Throttle by client IP plus the account being targeted.
+
+    Keying on the identifier as well as the IP prevents a single address or
+    number from being spammed with codes; pair it with an IP-only throttle to
+    also cap how many distinct accounts one IP can target.
+
+    The identifier is canonicalised before hashing. Without that,
+    '+33 6 12 34 56 78', '0612345678' and '+33612345678' would be three
+    separate buckets for one person, and the limit could be walked around by
+    adding a space.
+    """
+
+    def get_cache_key(self, request, view):
+        raw = request.data.get("identifier") or request.data.get("email")
+        if not raw:
+            return None  # Nothing to throttle on this dimension.
+
+        try:
+            from users.identifier import resolve_identifier
+
+            _kind, ident = resolve_identifier(raw)
+        except Exception:
+            # Unparseable input never reaches an account, but it still must not
+            # slip past the throttle: fall back to the raw string.
+            ident = str(raw).strip().lower()
+
+        return self.cache_format % {
+            "scope": self.scope,
+            "ident": f"{get_client_ip(request)}:{ident}",
+        }
+
+
 class LoginRateThrottle(IPRateThrottle):
     scope = "login"
 
@@ -56,22 +89,15 @@ class EmailVerifyRateThrottle(IPRateThrottle):
     scope = "email_verify"
 
 
-class EmailVerifyCodeRateThrottle(SimpleRateThrottle):
-    """Throttle email-verification attempts per IP + target email.
+class EmailVerifyCodeRateThrottle(IdentifierRateThrottle):
+    """Cap how fast one account can be hammered with code guesses.
 
     The per-account attempt counter already burns the code after a few wrong
-    guesses; this caps how fast one address can be hammered from rotating IPs,
-    which the IP-only throttle above cannot see.
+    guesses; this covers the same account being retried from rotating IPs,
+    which the IP-only throttle cannot see.
     """
 
     scope = "email_verify_code"
-
-    def get_cache_key(self, request, view):
-        email = (request.data.get("email") or "").strip().lower()
-        if not email:
-            return None  # Nothing to throttle on this dimension.
-        ident = f"{get_client_ip(request)}:{email}"
-        return self.cache_format % {"scope": self.scope, "ident": ident}
 
 
 class RegistrationRateThrottle(IPRateThrottle):
@@ -89,6 +115,16 @@ class RegistrationDailyRateThrottle(IPRateThrottle):
     scope = "registration_day"
 
 
+class RegistrationIdentifierRateThrottle(IdentifierRateThrottle):
+    """Cap sign-ups aimed at one identifier.
+
+    The IP throttles above are not enough now that signing up sends a billable
+    SMS: they let one address or number be targeted from many IPs.
+    """
+
+    scope = "registration_identifier"
+
+
 class AnonymousTokenRateThrottle(IPRateThrottle):
     scope = "anonymous_token"
 
@@ -101,22 +137,14 @@ class VerificationCodeIPRateThrottle(IPRateThrottle):
     scope = "verification_code_ip"
 
 
-class VerificationCodeRateThrottle(SimpleRateThrottle):
-    """Throttle verification-code requests per IP + target email.
+class VerificationCodeRateThrottle(IdentifierRateThrottle):
+    """Cap how often a code can be sent to one account.
 
-    Keying on the email as well as the IP prevents a single address from being
-    spammed with codes. Pair it with ``VerificationCodeIPRateThrottle`` to also
-    cap how many distinct emails one IP can target.
+    Pair it with ``VerificationCodeIPRateThrottle`` to also cap how many
+    distinct accounts one IP can target.
     """
 
     scope = "verification_code"
-
-    def get_cache_key(self, request, view):
-        email = (request.data.get("email") or "").strip().lower()
-        if not email:
-            return None  # Nothing to throttle on this dimension.
-        ident = f"{get_client_ip(request)}:{email}"
-        return self.cache_format % {"scope": self.scope, "ident": ident}
 
 
 _PERIODS = {"s": 1, "m": 60, "h": 3600, "d": 86400}

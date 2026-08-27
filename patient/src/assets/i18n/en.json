@@ -32,9 +32,7 @@
     "title": "Sign In",
     "subtitle": "Sign in to your account",
     "platformDescription": "Your secure telemedicine platform for remote consultations with your healthcare provider.",
-    "emailPlaceholder": "Email",
     "passwordPlaceholder": "Password",
-    "emailRequired": "Valid email is required",
     "passwordMinLength": "Password must be at least 6 characters",
     "forgotPassword": "Forgot Password?",
     "noAccount": "Don't have an account?",
@@ -55,25 +53,23 @@
     "tooManyAttempts": "Too many attempts. Please request a new code.",
     "invalidVerificationCode": "Invalid verification code.",
     "codeSent": "Verification code sent.",
-    "genericError": "An error occurred. Please try again."
+    "genericError": "An error occurred. Please try again.",
+    "identifierPlaceholder": "Email or phone number",
+    "identifierRequired": "Enter a valid email address or phone number",
+    "phoneNeedsCountryCode": "Add your country code, for example +33612345678"
   },
   "register": {
     "platformDescription": "Create your account and start your telemedicine consultations today.",
     "title": "Create Account",
     "subtitle": "Sign up to get started",
-    "firstName": "First Name",
-    "lastName": "Last Name",
-    "firstNameRequired": "First name is required",
-    "emailPlaceholder": "Email",
-    "emailInvalid": "Please enter a valid email",
-    "passwordPlaceholder": "Password",
-    "passwordMinLength": "Password must be at least 8 characters",
-    "confirmPassword": "Confirm Password",
-    "passwordsMismatch": "Passwords do not match",
     "registrationDisabled": "Registration is currently disabled.",
     "hasAccount": "Already have an account?",
     "creatingAccount": "Creating account...",
-    "registrationFailed": "Registration failed. Please try again."
+    "registrationFailed": "Registration failed. Please try again.",
+    "identifierPlaceholder": "Email or phone number",
+    "identifierHelp": "We will send you a 6-digit code to confirm it.",
+    "identifierInvalid": "Enter a valid email address or phone number",
+    "phoneNeedsCountryCode": "Add your country code, for example +33612345678"
   },
   "forgotPassword": {
     "title": "Forgot Password?",
@@ -102,22 +98,6 @@
     "resetFailed": "Failed to reset password. Please try again.",
     "linkExpired": "Reset link has expired or is invalid",
     "invalidResetLink": "Invalid reset link"
-  },
-  "verifyEmail": {
-    "title": "Email Verification",
-    "success": "Your email address has been verified successfully.",
-    "goToLogin": "Go to Login",
-    "verificationFailed": "Could not send the verification code. Please try again.",
-    "codeSentTo": "Enter the 6-digit code we sent to your email address.",
-    "emailPlaceholder": "Email address",
-    "enterCode": "Enter 6-digit code",
-    "invalidCode": "Invalid or expired verification code.",
-    "invalidCodeFormat": "Please enter a valid 6-digit code",
-    "verifyCode": "Verify",
-    "didntReceiveCode": "Didn't receive the code?",
-    "resendCode": "Resend code",
-    "sendingCode": "Sending...",
-    "codeSent": "Verification code sent."
   },
   "verifyInvite": {
     "verifyingCode": "Verifying your code...",
@@ -310,7 +290,15 @@
     "encryptionNewPassphrase": "New passphrase",
     "encryptionInvalidPassphrase": "Invalid passphrase. Please try again.",
     "save": "Save and continue",
-    "errorMessage": "Unable to save your preferences. Please try again."
+    "errorMessage": "Unable to save your preferences. Please try again.",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "email": "Email",
+    "password": "Password",
+    "passwordConfirm": "Confirm password",
+    "passwordOptional": "Optional. You can always sign in with a code instead.",
+    "passwordsMismatch": "Passwords do not match",
+    "passwordRejected": "This password was refused. Try a longer one."
   },
   "activateEncryption": {
     "title": "Activate encryption",
@@ -600,5 +588,22 @@
     "additionalInfo": "Additional information",
     "contact": "Contact",
     "profile": "Profile"
+  },
+  "verifyAccount": {
+    "title": "Confirm your account",
+    "identifierPlaceholder": "Email or phone number",
+    "invalidIdentifier": "Enter a valid email address or phone number",
+    "phoneNeedsCountryCode": "Add your country code, for example +33612345678",
+    "codeSentTo": "Enter the 6-digit code we just sent you.",
+    "enterCode": "Enter 6-digit code",
+    "invalidCode": "Invalid or expired code.",
+    "invalidCodeFormat": "Please enter a valid 6-digit code",
+    "verifyCode": "Confirm",
+    "didntReceiveCode": "Didn't receive the code?",
+    "resendCode": "Resend code",
+    "sendingCode": "Sending...",
+    "codeSent": "Code sent.",
+    "sendFailed": "Could not send the code. Please try again.",
+    "backToLogin": "Back to sign in"
   }
 }

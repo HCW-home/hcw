@@ -31,9 +31,7 @@
     "title": "Anmelden",
     "subtitle": "Melden Sie sich bei Ihrem Konto an",
     "platformDescription": "Ihre sichere Telemedizin-Plattform fuer Fernkonsultationen mit Ihrem Arzt.",
-    "emailPlaceholder": "E-Mail",
     "passwordPlaceholder": "Passwort",
-    "emailRequired": "Eine gueltige E-Mail-Adresse ist erforderlich",
     "passwordMinLength": "Das Passwort muss mindestens 6 Zeichen lang sein",
     "forgotPassword": "Passwort vergessen?",
     "noAccount": "Noch kein Konto?",
@@ -54,25 +52,23 @@
     "tooManyAttempts": "Zu viele Versuche. Bitte fordern Sie einen neuen Code an.",
     "invalidVerificationCode": "Ungueltiger Bestaetigungscode.",
     "codeSent": "Bestaetigungscode gesendet.",
-    "genericError": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+    "genericError": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+    "identifierPlaceholder": "E-Mail oder Telefonnummer",
+    "identifierRequired": "Geben Sie eine gültige E-Mail-Adresse oder Telefonnummer ein",
+    "phoneNeedsCountryCode": "Fügen Sie Ihre Ländervorwahl hinzu, zum Beispiel +49612345678"
   },
   "register": {
     "platformDescription": "Erstellen Sie Ihr Konto und beginnen Sie noch heute mit Ihren Telemedizin-Konsultationen.",
     "title": "Konto erstellen",
     "subtitle": "Registrieren Sie sich, um loszulegen",
-    "firstName": "Vorname",
-    "lastName": "Nachname",
-    "firstNameRequired": "Der Vorname ist erforderlich",
-    "emailPlaceholder": "E-Mail",
-    "emailInvalid": "Bitte geben Sie eine gueltige E-Mail-Adresse ein",
-    "passwordPlaceholder": "Passwort",
-    "passwordMinLength": "Das Passwort muss mindestens 8 Zeichen lang sein",
-    "confirmPassword": "Passwort bestaetigen",
-    "passwordsMismatch": "Die Passwoerter stimmen nicht ueberein",
     "registrationDisabled": "Die Registrierung ist derzeit deaktiviert.",
     "hasAccount": "Bereits ein Konto?",
     "creatingAccount": "Konto wird erstellt...",
-    "registrationFailed": "Registrierung fehlgeschlagen. Bitte versuchen Sie es erneut."
+    "registrationFailed": "Registrierung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+    "identifierPlaceholder": "E-Mail oder Telefonnummer",
+    "identifierHelp": "Wir senden Ihnen einen 6-stelligen Code zur Bestätigung.",
+    "identifierInvalid": "Geben Sie eine gültige E-Mail-Adresse oder Telefonnummer ein",
+    "phoneNeedsCountryCode": "Fügen Sie Ihre Ländervorwahl hinzu, zum Beispiel +49612345678"
   },
   "forgotPassword": {
     "title": "Passwort vergessen?",
@@ -101,22 +97,6 @@
     "resetFailed": "Passwort zuruecksetzen fehlgeschlagen. Bitte versuchen Sie es erneut.",
     "linkExpired": "Der Zuruecksetzungslink ist abgelaufen oder ungueltig",
     "invalidResetLink": "Ungueltiger Zuruecksetzungslink"
-  },
-  "verifyEmail": {
-    "title": "E-Mail-Verifizierung",
-    "success": "Ihre E-Mail-Adresse wurde erfolgreich verifiziert.",
-    "goToLogin": "Zur Anmeldung",
-    "verificationFailed": "Der Bestätigungscode konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
-    "codeSentTo": "Geben Sie den 6-stelligen Code ein, den wir an Ihre E-Mail-Adresse gesendet haben.",
-    "emailPlaceholder": "E-Mail-Adresse",
-    "enterCode": "6-stelligen Code eingeben",
-    "invalidCode": "Ungültiger oder abgelaufener Bestätigungscode.",
-    "invalidCodeFormat": "Bitte geben Sie einen gültigen 6-stelligen Code ein",
-    "verifyCode": "Bestätigen",
-    "didntReceiveCode": "Code nicht erhalten?",
-    "resendCode": "Code erneut senden",
-    "sendingCode": "Wird gesendet...",
-    "codeSent": "Bestätigungscode gesendet."
   },
   "verifyInvite": {
     "verifyingCode": "Code wird ueberprueft...",
@@ -541,5 +521,32 @@
     "additionalInfo": "Weitere Informationen",
     "contact": "Kontakt",
     "profile": "Profil"
+  },
+  "verifyAccount": {
+    "title": "Bestätigen Sie Ihr Konto",
+    "identifierPlaceholder": "E-Mail oder Telefonnummer",
+    "invalidIdentifier": "Geben Sie eine gültige E-Mail-Adresse oder Telefonnummer ein",
+    "phoneNeedsCountryCode": "Fügen Sie Ihre Ländervorwahl hinzu, zum Beispiel +49612345678",
+    "codeSentTo": "Geben Sie den 6-stelligen Code ein, den wir Ihnen gesendet haben.",
+    "enterCode": "6-stelligen Code eingeben",
+    "invalidCode": "Ungültiger oder abgelaufener Code.",
+    "invalidCodeFormat": "Bitte geben Sie einen gültigen 6-stelligen Code ein",
+    "verifyCode": "Bestätigen",
+    "didntReceiveCode": "Code nicht erhalten?",
+    "resendCode": "Code erneut senden",
+    "sendingCode": "Wird gesendet...",
+    "codeSent": "Code gesendet.",
+    "sendFailed": "Der Code konnte nicht gesendet werden. Bitte erneut versuchen.",
+    "backToLogin": "Zurück zur Anmeldung"
+  },
+  "onboarding": {
+    "firstName": "Vorname",
+    "lastName": "Nachname",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "passwordConfirm": "Passwort bestätigen",
+    "passwordOptional": "Optional. Sie können sich weiterhin mit einem Code anmelden.",
+    "passwordsMismatch": "Passwörter stimmen nicht überein",
+    "passwordRejected": "Dieses Passwort wurde abgelehnt. Versuchen Sie ein längeres."
   }
 }

@@ -310,6 +310,7 @@ REST_FRAMEWORK = {
         # legitimate case of several patients registering behind one NAT.
         "registration": "5/min",
         "registration_day": "50/day",
+        "registration_identifier": "3/min",
     },
 }
 

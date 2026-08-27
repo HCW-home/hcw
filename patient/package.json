@@ -38,6 +38,7 @@
     "@types/leaflet": "^1.9.21",
     "ionicons": "^7.0.0",
     "leaflet": "^1.9.4",
+    "libphonenumber-js": "^1.13.11",
     "livekit-client": "^2.16.0",
     "mediasoup-client": "^3.7.16",
     "rxjs": "~7.8.0",

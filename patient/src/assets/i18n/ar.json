@@ -32,9 +32,7 @@
     "title": "تسجيل الدخول",
     "subtitle": "سجّل الدخول إلى حسابك",
     "platformDescription": "منصتك الآمنة للطب عن بُعد لإجراء الاستشارات مع مقدم الرعاية الصحية الخاص بك.",
-    "emailPlaceholder": "البريد الإلكتروني",
     "passwordPlaceholder": "كلمة المرور",
-    "emailRequired": "يجب إدخال بريد إلكتروني صالح",
     "passwordMinLength": "يجب ألا تقل كلمة المرور عن 6 أحرف",
     "forgotPassword": "هل نسيت كلمة المرور؟",
     "noAccount": "ليس لديك حساب؟",
@@ -55,25 +53,23 @@
     "tooManyAttempts": "عدد المحاولات كبير جدًا. يرجى طلب رمز جديد.",
     "invalidVerificationCode": "رمز التحقق غير صالح.",
     "codeSent": "تم إرسال رمز التحقق.",
-    "genericError": "حدث خطأ. يرجى المحاولة مرة أخرى."
+    "genericError": "حدث خطأ. يرجى المحاولة مرة أخرى.",
+    "identifierPlaceholder": "البريد الإلكتروني أو رقم الهاتف",
+    "identifierRequired": "أدخل بريدًا إلكترونيًا أو رقم هاتف صالحًا",
+    "phoneNeedsCountryCode": "أضف رمز بلدك، على سبيل المثال ‎+966612345678"
   },
   "register": {
     "platformDescription": "أنشئ حسابك وابدأ استشاراتك عن بُعد اليوم.",
     "title": "إنشاء حساب",
     "subtitle": "سجّل للبدء",
-    "firstName": "الاسم الأول",
-    "lastName": "اسم العائلة",
-    "firstNameRequired": "الاسم الأول مطلوب",
-    "emailPlaceholder": "البريد الإلكتروني",
-    "emailInvalid": "يرجى إدخال بريد إلكتروني صالح",
-    "passwordPlaceholder": "كلمة المرور",
-    "passwordMinLength": "يجب ألا تقل كلمة المرور عن 8 أحرف",
-    "confirmPassword": "تأكيد كلمة المرور",
-    "passwordsMismatch": "كلمتا المرور غير متطابقتين",
     "registrationDisabled": "التسجيل معطّل حاليًا.",
     "hasAccount": "لديك حساب بالفعل؟",
     "creatingAccount": "جارٍ إنشاء الحساب...",
-    "registrationFailed": "فشل إنشاء الحساب. يرجى المحاولة مرة أخرى."
+    "registrationFailed": "فشل إنشاء الحساب. يرجى المحاولة مرة أخرى.",
+    "identifierPlaceholder": "البريد الإلكتروني أو رقم الهاتف",
+    "identifierHelp": "سنرسل لك رمزًا مكوّنًا من 6 أرقام للتأكيد.",
+    "identifierInvalid": "أدخل بريدًا إلكترونيًا أو رقم هاتف صالحًا",
+    "phoneNeedsCountryCode": "أضف رمز بلدك، على سبيل المثال ‎+966612345678"
   },
   "forgotPassword": {
     "title": "هل نسيت كلمة المرور؟",
@@ -102,22 +98,6 @@
     "resetFailed": "تعذّر إعادة تعيين كلمة المرور. يرجى المحاولة مرة أخرى.",
     "linkExpired": "انتهت صلاحية رابط إعادة التعيين أو أنه غير صالح",
     "invalidResetLink": "رابط إعادة التعيين غير صالح"
-  },
-  "verifyEmail": {
-    "title": "التحقق من البريد الإلكتروني",
-    "success": "تم التحقق من عنوان بريدك الإلكتروني بنجاح.",
-    "goToLogin": "الانتقال إلى تسجيل الدخول",
-    "verificationFailed": "تعذّر إرسال رمز التحقق. يرجى المحاولة مرة أخرى.",
-    "codeSentTo": "أدخل الرمز المكوّن من 6 أرقام الذي أرسلناه إلى بريدك الإلكتروني.",
-    "emailPlaceholder": "البريد الإلكتروني",
-    "enterCode": "أدخل الرمز المكوّن من 6 أرقام",
-    "invalidCode": "رمز التحقق غير صالح أو منتهي الصلاحية.",
-    "invalidCodeFormat": "يرجى إدخال رمز صالح مكوّن من 6 أرقام",
-    "verifyCode": "تحقق",
-    "didntReceiveCode": "لم تستلم الرمز؟",
-    "resendCode": "إعادة إرسال الرمز",
-    "sendingCode": "جارٍ الإرسال...",
-    "codeSent": "تم إرسال رمز التحقق."
   },
   "verifyInvite": {
     "verifyingCode": "جارٍ التحقق من الرمز...",
@@ -310,7 +290,15 @@
     "encryptionNewPassphrase": "عبارة المرور الجديدة",
     "encryptionInvalidPassphrase": "عبارة المرور غير صحيحة. يرجى المحاولة مرة أخرى.",
     "save": "حفظ ومتابعة",
-    "errorMessage": "تعذّر حفظ تفضيلاتك. يرجى المحاولة مرة أخرى."
+    "errorMessage": "تعذّر حفظ تفضيلاتك. يرجى المحاولة مرة أخرى.",
+    "firstName": "الاسم الأول",
+    "lastName": "اسم العائلة",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "passwordConfirm": "تأكيد كلمة المرور",
+    "passwordOptional": "اختياري. يمكنك دائمًا تسجيل الدخول برمز.",
+    "passwordsMismatch": "كلمتا المرور غير متطابقتين",
+    "passwordRejected": "تم رفض كلمة المرور هذه. جرّب واحدة أطول."
   },
   "activateEncryption": {
     "title": "تفعيل التشفير",
@@ -600,5 +588,22 @@
     "additionalInfo": "معلومات إضافية",
     "contact": "التواصل",
     "profile": "الملف الشخصي"
+  },
+  "verifyAccount": {
+    "title": "أكّد حسابك",
+    "identifierPlaceholder": "البريد الإلكتروني أو رقم الهاتف",
+    "invalidIdentifier": "أدخل بريدًا إلكترونيًا أو رقم هاتف صالحًا",
+    "phoneNeedsCountryCode": "أضف رمز بلدك، على سبيل المثال ‎+966612345678",
+    "codeSentTo": "أدخل الرمز المكوّن من 6 أرقام الذي أرسلناه للتو.",
+    "enterCode": "أدخل الرمز المكوّن من 6 أرقام",
+    "invalidCode": "رمز غير صالح أو منتهي الصلاحية.",
+    "invalidCodeFormat": "يرجى إدخال رمز صالح مكوّن من 6 أرقام",
+    "verifyCode": "تأكيد",
+    "didntReceiveCode": "لم تستلم الرمز؟",
+    "resendCode": "إعادة إرسال الرمز",
+    "sendingCode": "جارٍ الإرسال...",
+    "codeSent": "تم إرسال الرمز.",
+    "sendFailed": "تعذّر إرسال الرمز. يرجى المحاولة مرة أخرى.",
+    "backToLogin": "العودة إلى تسجيل الدخول"
   }
 }

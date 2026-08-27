@@ -1,50 +1,25 @@
 .onboarding-content {
-  --background: linear-gradient(135deg, var(--app-background-secondary) 0%, var(--ion-color-primary-bg) 50%, var(--app-background-secondary) 100%);
-
-  &::part(scroll) {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100%;
-    padding: 24px 0;
-  }
-
-  .auth-card {
-    display: flex;
-    width: 90%;
-    max-width: 900px;
-    min-height: 520px;
+  // Plain page, like the other post-login screens (terms,
+  // activate-encryption): the framed card on a tinted background belongs to
+  // the pre-login flow, where the branding panel sits next to it.
+  .onboarding-container {
+    width: 100%;
+    max-width: 480px;
     margin: 0 auto;
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
-    background: #fff;
-  }
+    padding: 32px 20px;
 
-  .right-side {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 40px;
+    h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--app-text-primary);
+      margin: 0 0 4px;
+    }
 
-    .right-content {
-      width: 100%;
-      max-width: 360px;
-
-      h2 {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--app-text-primary);
-        margin: 0 0 4px;
-      }
-
-      .subtitle {
-        font-size: 0.9rem;
-        color: var(--app-text-secondary);
-        margin: 0 0 24px;
-        display: block;
-      }
+    .subtitle {
+      font-size: 0.9rem;
+      color: var(--app-text-secondary);
+      margin: 0 0 24px;
+      display: block;
     }
   }
 
@@ -101,22 +76,7 @@
 }
 
 @media (max-width: 700px) {
-  .onboarding-content {
-    .auth-card {
-      flex-direction: column;
-      width: 100%;
-      margin: 0;
-      border-radius: 0;
-      box-shadow: none;
-      min-height: 100%;
-    }
-
-    .right-side {
-      padding: 24px;
-
-      .right-content {
-        max-width: 100%;
-      }
-    }
+  .onboarding-content .onboarding-container {
+    padding: 24px 16px;
   }
 }

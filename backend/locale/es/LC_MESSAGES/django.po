@@ -2420,10 +2420,6 @@ msgstr "<p>Nuevo mensaje de {{ obj.created_by.name }} en la consulta \"{{ obj.co
 msgid "Click here to answer"
 msgstr "Haz clic aquí para responder"
 
-#: messaging/template.py:119
-msgid "Verify your email address"
-msgstr "Verifica tu dirección de correo electrónico"
-
 #: messaging/template.py:130 messaging/template.py:140
 msgid "Reset your password"
 msgstr "Restablecer su contraseña"
@@ -2822,22 +2818,38 @@ msgstr "Para terminar de crear su cuenta, utilice este código de verificación:
 msgid "<p>To finish creating your account, please use this verification code: <strong>{{ obj.verification_code }}</strong></p>"
 msgstr "<p>Para terminar de crear su cuenta, utilice este código de verificación: <strong>{{ obj.verification_code }}</strong></p>"
 
-#: users/views.py:1770
-msgid "A verification code has been sent to your email address."
-msgstr "Se ha enviado un código de verificación a su correo electrónico."
-
 #: users/views.py:1801
 msgid "Invalid or expired verification code."
 msgstr "Código de verificación no válido o caducado."
 
-#: users/views.py:1818
-msgid "Email already verified."
-msgstr "Correo electrónico ya verificado."
+#: messaging/template.py:122
+msgid "{% if obj.email %}Verify your email address{% else %}Verify your phone number{% endif %}"
+msgstr "{% if obj.email %}Verifique su correo electrónico{% else %}Verifique su número de teléfono{% endif %}"
 
-#: users/views.py:1870
-msgid "Email verified successfully."
-msgstr "Correo electrónico verificado correctamente."
+#: users/views.py:1786
+msgid "Registration is currently disabled."
+msgstr "El registro está desactivado actualmente."
 
-#: users/views.py:1886
-msgid "If this address needs verification, a code has been sent."
-msgstr "Si esta dirección necesita verificación, se ha enviado un código."
+#: users/views.py:1801
+msgid "A verification code has been sent to you."
+msgstr "Se le ha enviado un código de verificación."
+
+#: users/views.py:1912
+msgid "Account verified successfully."
+msgstr "Cuenta verificada correctamente."
+
+#: users/views.py:1943
+msgid "If this account needs verification, a code has been sent."
+msgstr "Si esta cuenta necesita verificación, se ha enviado un código."
+
+#: users/serializers.py:345
+msgid "This instance cannot send text messages. Use an email address."
+msgstr "Esta instancia no puede enviar SMS. Utilice un correo electrónico."
+
+#: users/identifier.py:34
+msgid "Enter your email address or phone number."
+msgstr "Introduzca su correo electrónico o su número de teléfono."
+
+#: users/identifier.py:45
+msgid "Enter a valid email address."
+msgstr "Introduzca un correo electrónico válido."

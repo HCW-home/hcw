@@ -191,9 +191,7 @@
     "title": "Registrazione",
     "subtitle": "Accedi al tuo account",
     "platformDescription": "La tua piattaforma di telemedicina sicura per consultazioni a distanza con il tuo medico.",
-    "emailPlaceholder": "E-mail",
     "passwordPlaceholder": "Password",
-    "emailRequired": "È richiesto un indirizzo email valido",
     "passwordMinLength": "La password deve essere lunga almeno 6 caratteri.",
     "forgotPassword": "Ha dimenticato la password?",
     "noAccount": "Non hai un account?",
@@ -214,25 +212,23 @@
     "tooManyAttempts": "Troppi tentativi. Richiedi un nuovo codice.",
     "invalidVerificationCode": "Codice di verifica non valido.",
     "codeSent": "Codice di verifica inviato.",
-    "genericError": "Si è verificato un errore. Riprova."
+    "genericError": "Si è verificato un errore. Riprova.",
+    "identifierPlaceholder": "Email o numero di telefono",
+    "identifierRequired": "Inserisci un indirizzo email o un numero di telefono valido",
+    "phoneNeedsCountryCode": "Aggiungi il prefisso internazionale, ad esempio +39612345678"
   },
   "register": {
     "platformDescription": "Crea il tuo account e inizia oggi stesso le tue consulenze di telemedicina.",
     "title": "Creare un account",
     "subtitle": "Registrati per iniziare",
-    "firstName": "Nome",
-    "lastName": "Cognome",
-    "firstNameRequired": "È richiesto il nome di battesimo",
-    "emailPlaceholder": "E-mail",
-    "emailInvalid": "Inserisci un indirizzo email valido.",
-    "passwordPlaceholder": "Password",
-    "passwordMinLength": "La password deve essere lunga almeno 8 caratteri.",
-    "confirmPassword": "Conferma password",
-    "passwordsMismatch": "Le password non corrispondono",
     "registrationDisabled": "La registrazione è attualmente disabilitata.",
     "hasAccount": "Hai già un account?",
     "creatingAccount": "Creazione dell'account in corso...",
-    "registrationFailed": "Registrazione non riuscita. Riprova."
+    "registrationFailed": "Registrazione non riuscita. Riprova.",
+    "identifierPlaceholder": "Email o numero di telefono",
+    "identifierHelp": "Ti invieremo un codice a 6 cifre per confermarlo.",
+    "identifierInvalid": "Inserisci un indirizzo email o un numero di telefono valido",
+    "phoneNeedsCountryCode": "Aggiungi il prefisso internazionale, ad esempio +39612345678"
   },
   "forgotPassword": {
     "title": "Ha dimenticato la password?",
@@ -261,22 +257,6 @@
     "resetFailed": "Impossibile reimpostare la password. Riprova.",
     "linkExpired": "Il link di reimpostazione è scaduto o non è valido.",
     "invalidResetLink": "Collegamento di ripristino non valido"
-  },
-  "verifyEmail": {
-    "title": "Verifica dell'e-mail",
-    "success": "Il tuo indirizzo email è stato verificato con successo.",
-    "goToLogin": "Vai al login",
-    "verificationFailed": "Impossibile inviare il codice di verifica. Riprova.",
-    "codeSentTo": "Inserisci il codice a 6 cifre inviato al tuo indirizzo email.",
-    "emailPlaceholder": "Indirizzo email",
-    "enterCode": "Inserisci il codice a 6 cifre",
-    "invalidCode": "Codice di verifica non valido o scaduto.",
-    "invalidCodeFormat": "Inserisci un codice valido a 6 cifre",
-    "verifyCode": "Verifica",
-    "didntReceiveCode": "Non hai ricevuto il codice?",
-    "resendCode": "Invia di nuovo il codice",
-    "sendingCode": "Invio in corso...",
-    "codeSent": "Codice di verifica inviato."
   },
   "home": {
     "nextAppointment": "Prossimo appuntamento",
@@ -542,5 +522,32 @@
     "additionalInfo": "Informazioni aggiuntive",
     "contact": "Contatti",
     "profile": "Profilo"
+  },
+  "verifyAccount": {
+    "title": "Conferma il tuo account",
+    "identifierPlaceholder": "Email o numero di telefono",
+    "invalidIdentifier": "Inserisci un indirizzo email o un numero di telefono valido",
+    "phoneNeedsCountryCode": "Aggiungi il prefisso internazionale, ad esempio +39612345678",
+    "codeSentTo": "Inserisci il codice a 6 cifre che ti abbiamo appena inviato.",
+    "enterCode": "Inserisci il codice a 6 cifre",
+    "invalidCode": "Codice non valido o scaduto.",
+    "invalidCodeFormat": "Inserisci un codice valido a 6 cifre",
+    "verifyCode": "Conferma",
+    "didntReceiveCode": "Non hai ricevuto il codice?",
+    "resendCode": "Invia di nuovo il codice",
+    "sendingCode": "Invio in corso...",
+    "codeSent": "Codice inviato.",
+    "sendFailed": "Impossibile inviare il codice. Riprova.",
+    "backToLogin": "Torna all'accesso"
+  },
+  "onboarding": {
+    "firstName": "Nome",
+    "lastName": "Cognome",
+    "email": "Email",
+    "password": "Password",
+    "passwordConfirm": "Conferma password",
+    "passwordOptional": "Facoltativa. Potrai sempre accedere con un codice.",
+    "passwordsMismatch": "Le password non corrispondono",
+    "passwordRejected": "Password rifiutata. Provane una più lunga."
   }
 }

@@ -2416,10 +2416,6 @@ msgstr "<p>Neue Nachricht von {{ obj.created_by.name }} in der Beratung \"{{ obj
 msgid "Click here to answer"
 msgstr "Klicken Sie hier, um zu antworten."
 
-#: messaging/template.py:119
-msgid "Verify your email address"
-msgstr "Bestätigen Sie Ihre E-Mail-Adresse"
-
 #: messaging/template.py:130 messaging/template.py:140
 msgid "Reset your password"
 msgstr "Setzen Sie Ihr Passwort zurück"
@@ -2815,22 +2811,38 @@ msgstr "Um die Erstellung Ihres Kontos abzuschließen, verwenden Sie bitte diese
 msgid "<p>To finish creating your account, please use this verification code: <strong>{{ obj.verification_code }}</strong></p>"
 msgstr "<p>Um die Erstellung Ihres Kontos abzuschließen, verwenden Sie bitte diesen Bestätigungscode: <strong>{{ obj.verification_code }}</strong></p>"
 
-#: users/views.py:1770
-msgid "A verification code has been sent to your email address."
-msgstr "Ein Bestätigungscode wurde an Ihre E-Mail-Adresse gesendet."
-
 #: users/views.py:1801
 msgid "Invalid or expired verification code."
 msgstr "Ungültiger oder abgelaufener Bestätigungscode."
 
-#: users/views.py:1818
-msgid "Email already verified."
-msgstr "E-Mail-Adresse bereits bestätigt."
+#: messaging/template.py:122
+msgid "{% if obj.email %}Verify your email address{% else %}Verify your phone number{% endif %}"
+msgstr "{% if obj.email %}Bestätigen Sie Ihre E-Mail-Adresse{% else %}Bestätigen Sie Ihre Telefonnummer{% endif %}"
 
-#: users/views.py:1870
-msgid "Email verified successfully."
-msgstr "E-Mail-Adresse erfolgreich bestätigt."
+#: users/views.py:1786
+msgid "Registration is currently disabled."
+msgstr "Die Registrierung ist derzeit deaktiviert."
 
-#: users/views.py:1886
-msgid "If this address needs verification, a code has been sent."
-msgstr "Falls diese Adresse bestätigt werden muss, wurde ein Code gesendet."
+#: users/views.py:1801
+msgid "A verification code has been sent to you."
+msgstr "Ein Bestätigungscode wurde an Sie gesendet."
+
+#: users/views.py:1912
+msgid "Account verified successfully."
+msgstr "Konto erfolgreich bestätigt."
+
+#: users/views.py:1943
+msgid "If this account needs verification, a code has been sent."
+msgstr "Falls dieses Konto bestätigt werden muss, wurde ein Code gesendet."
+
+#: users/serializers.py:345
+msgid "This instance cannot send text messages. Use an email address."
+msgstr "Diese Instanz kann keine SMS senden. Verwenden Sie eine E-Mail-Adresse."
+
+#: users/identifier.py:34
+msgid "Enter your email address or phone number."
+msgstr "Geben Sie Ihre E-Mail-Adresse oder Telefonnummer ein."
+
+#: users/identifier.py:45
+msgid "Enter a valid email address."
+msgstr "Geben Sie eine gültige E-Mail-Adresse ein."

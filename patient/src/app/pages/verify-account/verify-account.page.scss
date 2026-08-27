@@ -1,4 +1,4 @@
-.verify-email-content {
+.verify-account-content {
   --background: linear-gradient(135deg, var(--app-background-secondary) 0%, var(--ion-color-primary-bg) 50%, var(--app-background-secondary) 100%);
 
   &::part(scroll) {
@@ -80,7 +80,7 @@
     }
   }
 
-  .email-display {
+  .identifier-display {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -144,43 +144,21 @@
     font-weight: 600;
   }
 
-  .status-container {
+  .login-link {
     text-align: center;
-    padding: 20px 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
+    margin-top: 16px;
 
-    .status-icon {
-      font-size: 48px;
-    }
-
-    ion-spinner {
-      width: 48px;
-      height: 48px;
-    }
-
-    p {
-      font-size: 0.95rem;
-      color: var(--app-text-primary);
-      line-height: 1.5;
-      margin: 0;
-    }
-
-    .action-button {
-      width: 100%;
-      margin-top: 12px;
-      --background: var(--ion-color-primary);
-      --padding-top: 14px;
-      --padding-bottom: 14px;
-      font-weight: 600;
+    .link-text {
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
     }
   }
+
 }
 
 @media (max-width: 700px) {
-  .verify-email-content {
+  .verify-account-content {
     .auth-card {
       flex-direction: column;
       width: 100%;

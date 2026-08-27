@@ -2159,10 +2159,6 @@ msgstr ""
 msgid "Click here to answer"
 msgstr ""
 
-#: messaging/template.py:119
-msgid "Verify your email address"
-msgstr ""
-
 #: messaging/template.py:130 messaging/template.py:140
 msgid "Reset your password"
 msgstr ""
@@ -2492,22 +2488,38 @@ msgstr ""
 msgid "<p>To finish creating your account, please use this verification code: <strong>{{ obj.verification_code }}</strong></p>"
 msgstr ""
 
-#: users/views.py:1770
-msgid "A verification code has been sent to your email address."
-msgstr ""
-
 #: users/views.py:1801
 msgid "Invalid or expired verification code."
 msgstr ""
 
-#: users/views.py:1818
-msgid "Email already verified."
+#: messaging/template.py:122
+msgid "{% if obj.email %}Verify your email address{% else %}Verify your phone number{% endif %}"
 msgstr ""
 
-#: users/views.py:1870
-msgid "Email verified successfully."
+#: users/views.py:1786
+msgid "Registration is currently disabled."
 msgstr ""
 
-#: users/views.py:1886
-msgid "If this address needs verification, a code has been sent."
+#: users/views.py:1801
+msgid "A verification code has been sent to you."
+msgstr ""
+
+#: users/views.py:1912
+msgid "Account verified successfully."
+msgstr ""
+
+#: users/views.py:1943
+msgid "If this account needs verification, a code has been sent."
+msgstr ""
+
+#: users/serializers.py:345
+msgid "This instance cannot send text messages. Use an email address."
+msgstr ""
+
+#: users/identifier.py:34
+msgid "Enter your email address or phone number."
+msgstr ""
+
+#: users/identifier.py:45
+msgid "Enter a valid email address."
 msgstr ""

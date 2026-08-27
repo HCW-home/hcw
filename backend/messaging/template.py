@@ -118,7 +118,13 @@ DEFAULT_NOTIFICATION_MESSAGES = {
         "action_label": _("Click here to answer"),
     },
     "email_verification": {
-        "template_subject": _("Verify your email address"),
+        # Conditional rather than a flat wording: the identifier may be a phone
+        # number now, and a subject overridden in the database would not be
+        # touched by a change to the default anyway.
+        "template_subject": _(
+            "{% if obj.email %}Verify your email address"
+            "{% else %}Verify your phone number{% endif %}"
+        ),
         # No "action" on purpose: the recipient types the code back into the
         # app instead of following a link. Leaving one out also keeps
         # Message.access_link from minting a one_time_auth_token, which would
@@ -132,7 +138,7 @@ DEFAULT_NOTIFICATION_MESSAGES = {
             "code: <strong>{{ obj.verification_code }}</strong></p>"
         ),
         "model": "users.User",
-        "helper_text": "Message sent to user containing the code to verify their email address after registration",
+        "helper_text": "Message sent to user containing the code to verify their email address or phone number after registration",
     },
     "reset_password": {
         "template_subject": _("Reset your password"),

@@ -32,9 +32,7 @@
     "title": "Se connecter",
     "subtitle": "Connectez-vous à votre compte",
     "platformDescription": "Votre plateforme de télémédecine sécurisée pour des consultations à distance avec votre professionnel de santé.",
-    "emailPlaceholder": "E-mail",
     "passwordPlaceholder": "Mot de passe",
-    "emailRequired": "Un e-mail valide est requis",
     "passwordMinLength": "Le mot de passe doit contenir au moins 6 caractères",
     "forgotPassword": "Mot de passe oublié ?",
     "noAccount": "Vous n'avez pas de compte ?",
@@ -55,25 +53,23 @@
     "tooManyAttempts": "Trop de tentatives. Veuillez demander un nouveau code.",
     "invalidVerificationCode": "Code de vérification invalide.",
     "codeSent": "Code de vérification envoyé.",
-    "genericError": "Une erreur est survenue. Veuillez réessayer."
+    "genericError": "Une erreur est survenue. Veuillez réessayer.",
+    "identifierPlaceholder": "E-mail ou numéro de téléphone",
+    "identifierRequired": "Saisissez une adresse e-mail ou un numéro de téléphone valide",
+    "phoneNeedsCountryCode": "Ajoutez votre indicatif pays, par exemple +33612345678"
   },
   "register": {
     "platformDescription": "Créez votre compte et commencez vos consultations de télémédecine dès aujourd'hui.",
     "title": "Créer un compte",
     "subtitle": "Inscrivez-vous pour commencer",
-    "firstName": "Prénom",
-    "lastName": "Nom",
-    "firstNameRequired": "Le prénom est requis",
-    "emailPlaceholder": "E-mail",
-    "emailInvalid": "Veuillez entrer un e-mail valide",
-    "passwordPlaceholder": "Mot de passe",
-    "passwordMinLength": "Le mot de passe doit contenir au moins 8 caractères",
-    "confirmPassword": "Confirmer le mot de passe",
-    "passwordsMismatch": "Les mots de passe ne correspondent pas",
     "registrationDisabled": "L'inscription est actuellement désactivée.",
     "hasAccount": "Vous avez déjà un compte ?",
     "creatingAccount": "Création du compte...",
-    "registrationFailed": "Échec de l'inscription. Veuillez réessayer."
+    "registrationFailed": "Échec de l'inscription. Veuillez réessayer.",
+    "identifierPlaceholder": "E-mail ou numéro de téléphone",
+    "identifierHelp": "Nous vous enverrons un code à 6 chiffres pour le confirmer.",
+    "identifierInvalid": "Saisissez une adresse e-mail ou un numéro de téléphone valide",
+    "phoneNeedsCountryCode": "Ajoutez votre indicatif pays, par exemple +33612345678"
   },
   "forgotPassword": {
     "title": "Mot de passe oublié ?",
@@ -102,22 +98,6 @@
     "resetFailed": "Échec de la réinitialisation du mot de passe. Veuillez réessayer.",
     "linkExpired": "Le lien de réinitialisation a expiré ou est invalide",
     "invalidResetLink": "Lien de réinitialisation invalide"
-  },
-  "verifyEmail": {
-    "title": "Vérification de l'e-mail",
-    "success": "Votre adresse e-mail a été vérifiée avec succès.",
-    "goToLogin": "Aller à la connexion",
-    "verificationFailed": "Impossible d'envoyer le code de vérification. Veuillez réessayer.",
-    "codeSentTo": "Saisissez le code à 6 chiffres envoyé à votre adresse e-mail.",
-    "emailPlaceholder": "Adresse e-mail",
-    "enterCode": "Entrez le code à 6 chiffres",
-    "invalidCode": "Code de vérification invalide ou expiré.",
-    "invalidCodeFormat": "Veuillez entrer un code valide à 6 chiffres",
-    "verifyCode": "Vérifier",
-    "didntReceiveCode": "Vous n'avez pas reçu le code ?",
-    "resendCode": "Renvoyer le code",
-    "sendingCode": "Envoi...",
-    "codeSent": "Code de vérification envoyé."
   },
   "verifyInvite": {
     "verifyingCode": "Vérification du code...",
@@ -310,7 +290,15 @@
     "encryptionNewPassphrase": "Nouvelle phrase de passe",
     "encryptionInvalidPassphrase": "Phrase de passe invalide. Veuillez réessayer.",
     "save": "Enregistrer et continuer",
-    "errorMessage": "Impossible de sauvegarder vos préférences. Veuillez réessayer."
+    "errorMessage": "Impossible de sauvegarder vos préférences. Veuillez réessayer.",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "passwordConfirm": "Confirmez le mot de passe",
+    "passwordOptional": "Facultatif. Vous pourrez toujours vous connecter avec un code.",
+    "passwordsMismatch": "Les mots de passe ne correspondent pas",
+    "passwordRejected": "Ce mot de passe a été refusé. Essayez-en un plus long."
   },
   "activateEncryption": {
     "title": "Activer le chiffrement",
@@ -600,5 +588,22 @@
     "additionalInfo": "Informations complémentaires",
     "contact": "Contact",
     "profile": "Profil"
+  },
+  "verifyAccount": {
+    "title": "Confirmez votre compte",
+    "identifierPlaceholder": "E-mail ou numéro de téléphone",
+    "invalidIdentifier": "Saisissez une adresse e-mail ou un numéro de téléphone valide",
+    "phoneNeedsCountryCode": "Ajoutez votre indicatif pays, par exemple +33612345678",
+    "codeSentTo": "Saisissez le code à 6 chiffres que nous venons de vous envoyer.",
+    "enterCode": "Entrez le code à 6 chiffres",
+    "invalidCode": "Code invalide ou expiré.",
+    "invalidCodeFormat": "Veuillez entrer un code valide à 6 chiffres",
+    "verifyCode": "Confirmer",
+    "didntReceiveCode": "Vous n'avez pas reçu le code ?",
+    "resendCode": "Renvoyer le code",
+    "sendingCode": "Envoi...",
+    "codeSent": "Code envoyé.",
+    "sendFailed": "Impossible d'envoyer le code. Veuillez réessayer.",
+    "backToLogin": "Retour à la connexion"
   }
 }

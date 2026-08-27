@@ -177,14 +177,10 @@ class AnonymousTokenAuthView(APIView):
 
             now = timezone.now()
 
-            # Users without an email cannot receive a verification code (the
-            # code flow is email-only on the patient side), so they always
-            # authenticate via the magic-link token alone. Same for users
-            # explicitly configured with `manual` communication.
-            is_manual_access = (
-                not user.email
-                or user.communication_method == "manual"
-            )
+            # Narrower than the "no email" test used before: an account
+            # reachable by SMS now goes through the code flow, which is what
+            # makes phone-only sign-up as safe as the email one.
+            is_manual_access = user.authenticates_without_code
 
             if is_manual_access:
                 # For temporary users without contact info, use longer expiry period
@@ -204,9 +200,17 @@ class AnonymousTokenAuthView(APIView):
                 user.verification_code_created_at = now
                 user.save(update_fields=["verification_code_created_at"])
             else:
-                # For regular users, use grace period + verification code flow
+                # For regular users, use grace period + verification code flow.
+                #
+                # A pending code closes the window. The grace period exists so
+                # that a magic link just delivered by message works on the
+                # first tap; SendVerificationCodeView writes the same timestamp
+                # but hands the token straight back to its caller, so without
+                # this guard that response plus one request would authenticate
+                # without ever using the code it just sent.
                 token_within_grace = (
-                    user.verification_code_created_at
+                    user.verification_code is None
+                    and user.verification_code_created_at
                     and (now - user.verification_code_created_at) < TOKEN_GRACE_PERIOD
                 )
 

@@ -88,6 +88,15 @@ class UserManager(BaseUserManager):
 
         return matches[0] if matches else None
 
+    def find_by_identifier(self, identifier):
+        """Return the account owning this email or phone number, or None."""
+        from .identifier import EMAIL, resolve_identifier
+
+        kind, value = resolve_identifier(identifier)
+        if kind == EMAIL:
+            return self.find_by_email(value)
+        return self.find_by_phone(value)
+
     def get_or_create_by_phone(self, phone, defaults=None):
         """``get_or_create`` on the canonical form of a phone number.
 
