@@ -44,6 +44,24 @@ export function canSetAppointmentOutcome(appointment: Appointment): boolean {
   return new Date(appointment.scheduled_at) <= new Date();
 }
 
+/**
+ * Consultation id of an appointment, whatever shape the API used.
+ *
+ * List endpoints expose a flat `consultation_id`, while the participant detail
+ * endpoint nests the whole consultation object; reading either field blindly
+ * ends up printing "[object Object]".
+ */
+export function getAppointmentConsultationId(
+  appointment: Appointment | null | undefined
+): number | null {
+  if (!appointment) return null;
+  if (appointment.consultation_id) return appointment.consultation_id;
+
+  const consultation = appointment.consultation;
+  if (!consultation) return null;
+  return typeof consultation === 'object' ? consultation.id : consultation;
+}
+
 export function getParticipantStatusLabel(participant: Participant): string {
   if (participant.status) {
     return participant.status;

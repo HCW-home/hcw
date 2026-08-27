@@ -81,12 +81,15 @@ export interface Appointment {
   title?: string | null;
   scheduled_at: string;
   end_expected_at: string | null;
-  consultation: number;
+  // The list endpoints return the consultation as a bare id, while the
+  // participant detail endpoint nests the whole object: read it through
+  // getAppointmentConsultationId() instead of using it directly.
+  consultation?: number | Consultation | null;
   created_by: User;
   status: AppointmentStatus;
   created_at: string;
   participants: Participant[];
-  consultation_id: number;
+  consultation_id?: number | null;
   consultation_title?: string | null;
   // Server-side answer to "may the current user join this call?"
   can_join?: boolean;

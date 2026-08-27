@@ -28,6 +28,7 @@ import { NotificationService } from '../../services/notification.service';
 import { UserWebSocketService } from '../../services/user-websocket.service';
 import { Auth } from '../../services/auth';
 import { BrowserNotificationService } from '../../services/browser-notification.service';
+import { getAppointmentConsultationId } from '../../../shared/tools/helper';
 import { ActionHandlerService } from '../../services/action-handler.service';
 import { ConsultationService } from '../../services/consultation.service';
 import { ActiveCallService } from '../../services/active-call.service';
@@ -162,12 +163,9 @@ export class Header implements OnInit, OnDestroy {
                   if (action === 'join' && id) {
                     this.consultationService.getParticipantById(id).subscribe({
                       next: participant => {
-                        const consultation =
-                          participant.appointment.consultation;
-                        const consultationId =
-                          typeof consultation === 'object'
-                            ? (consultation as { id: number }).id
-                            : consultation;
+                        const consultationId = getAppointmentConsultationId(
+                          participant.appointment
+                        );
                         this.router.navigate(
                           [
                             '/',
@@ -514,11 +512,9 @@ export class Header implements OnInit, OnDestroy {
     if (action === 'message' && id && model === 'consultations.Participant') {
       this.consultationService.getParticipantById(id).subscribe({
         next: participant => {
-          const consultation = participant.appointment.consultation;
-          const consultationId =
-            typeof consultation === 'object'
-              ? (consultation as { id: number }).id
-              : consultation;
+          const consultationId = getAppointmentConsultationId(
+            participant.appointment
+          );
           if (consultationId) {
             this.router.navigate([
               '/',

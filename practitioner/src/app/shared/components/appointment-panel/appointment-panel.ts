@@ -57,6 +57,7 @@ import {
 import { BadgeTypeEnum, BadgeSizeEnum } from '../../constants/badge';
 import {
   getAppointmentBadgeType,
+  getAppointmentConsultationId,
   canSetAppointmentOutcome,
   parseDateWithoutTimezone,
 } from '../../tools/helper';
@@ -643,7 +644,7 @@ export class AppointmentPanel implements OnInit, OnDestroy {
 
     this.activeCallService.startCall({
       appointmentId,
-      consultationId: appointment.consultation_id,
+      consultationId: getAppointmentConsultationId(appointment) ?? undefined,
     });
     this.incomingCallService.setActiveCall(appointmentId);
   }

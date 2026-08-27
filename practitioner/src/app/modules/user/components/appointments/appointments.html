@@ -231,12 +231,12 @@
               (appointment.end_expected_at) { - {{ appointment.end_expected_at |
               localDate:'HH:mm' }} }
             </span>
-            @if (appointment.consultation_id || appointment.consultation) {
+            @if (hasConsultation(appointment)) {
             <span class="consultation-link">
               <app-svg
                 src="stethoscope"
                 [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
-              {{ 'appointments.consultation' | translate }} #{{ appointment.consultation_id || appointment.consultation }}
+              {{ 'appointments.consultation' | translate }} #{{ getConsultationId(appointment) }}
             </span>
             }
           </div>

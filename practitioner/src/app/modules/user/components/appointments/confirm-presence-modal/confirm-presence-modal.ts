@@ -36,6 +36,7 @@ import { ConfirmationService } from '../../../../../core/services/confirmation.s
 import { ActiveCallService } from '../../../../../core/services/active-call.service';
 import { IncomingCallService } from '../../../../../core/services/incoming-call.service';
 import { RoutePaths } from '../../../../../core/constants/routes';
+import { getAppointmentConsultationId } from '../../../../../shared/tools/helper';
 
 @Component({
   selector: 'app-confirm-presence-modal',
@@ -91,8 +92,12 @@ export class ConfirmPresenceModal implements OnChanges, OnDestroy {
     return this.appointment?.type === AppointmentType.ONLINE;
   }
 
+  get consultationId(): number | null {
+    return getAppointmentConsultationId(this.appointment);
+  }
+
   get hasConsultation(): boolean {
-    return !!(this.appointment?.consultation_id || this.appointment?.consultation);
+    return this.consultationId !== null;
   }
 
   get modalTitle(): string {
@@ -263,7 +268,7 @@ export class ConfirmPresenceModal implements OnChanges, OnDestroy {
 
   viewInConsultation(): void {
     if (!this.appointment) return;
-    const consultationId = this.appointment.consultation_id || this.appointment.consultation;
+    const consultationId = this.consultationId;
     if (consultationId) {
       this.onClose();
       this.router.navigate(

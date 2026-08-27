@@ -28,6 +28,7 @@ import { LanguageSelector } from '../../../../shared/components/language-selecto
 import { AuthBranding } from '../../../../shared/components/auth-branding/auth-branding';
 import { UserService } from '../../../../core/services/user.service';
 import { ThemeService } from '../../../../core/services/theme.service';
+import { getAppointmentConsultationId } from '../../../../shared/tools/helper';
 
 interface LoginForm {
   email: FormControl<string>;
@@ -172,11 +173,9 @@ export class Login implements OnInit {
     if (action === 'join' && id) {
       this.consultationService.getParticipantById(id).subscribe({
         next: participant => {
-          const consultation = participant.appointment.consultation;
-          const consultationId =
-            typeof consultation === 'object'
-              ? (consultation as { id: number }).id
-              : consultation;
+          const consultationId = getAppointmentConsultationId(
+            participant.appointment
+          );
           this.router.navigate(
             ['/', RoutePaths.USER, RoutePaths.CONSULTATIONS, consultationId],
             {

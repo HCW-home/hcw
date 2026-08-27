@@ -83,7 +83,7 @@
         </app-svg>
         <span class="info-text">
           {{ 'confirmPresenceModal.consultation' | translate }}
-          #{{ appointment.consultation_id || appointment.consultation }}
+          #{{ consultationId }}
           @if (appointment.consultation_title) {
             — {{ appointment.consultation_title }}
           }

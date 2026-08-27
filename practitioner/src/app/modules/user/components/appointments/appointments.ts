@@ -58,6 +58,7 @@ import {
 import { RoutePaths } from '../../../../core/constants/routes';
 import {
   getAppointmentBadgeType,
+  getAppointmentConsultationId,
   canSetAppointmentOutcome,
   parseDateWithoutTimezone,
 } from '../../../../shared/tools/helper';
@@ -2179,8 +2180,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     event.stopPropagation();
     this.closeContextMenu();
 
-    const consultationId =
-      appointment.consultation_id || appointment.consultation;
+    const consultationId = this.getConsultationId(appointment);
     if (consultationId) {
       this.router.navigate([RoutePaths.USER, 'consultations', consultationId], {
         queryParams: { appointmentId: appointment.id },
@@ -2188,8 +2188,12 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
+  getConsultationId(appointment: Appointment): number | null {
+    return getAppointmentConsultationId(appointment);
+  }
+
   hasConsultation(appointment: Appointment): boolean {
-    return !!(appointment.consultation_id || appointment.consultation);
+    return this.getConsultationId(appointment) !== null;
   }
 
   setAppointmentTimeFilter(filter: AppointmentTimeFilter): void {

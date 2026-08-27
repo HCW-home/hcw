@@ -1314,6 +1314,12 @@ class BookingSlotSerializer(serializers.ModelSerializer):
 class AppointmentDetailSerializer(serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(read_only=True)
     consultation = ConsultationSerializer(read_only=True)
+    # Kept alongside the nested consultation so this payload can be consumed
+    # exactly like the one from AppointmentSerializer.
+    consultation_id = serializers.IntegerField(read_only=True)
+    consultation_title = serializers.CharField(
+        source="consultation.title", read_only=True, default=None
+    )
     participants = ParticipantReadSerializer(
         many=True, read_only=True, source="participant_set"
     )
@@ -1327,6 +1333,8 @@ class AppointmentDetailSerializer(serializers.ModelSerializer):
             "end_expected_at",
             "type",
             "consultation",
+            "consultation_id",
+            "consultation_title",
             "created_by",
             "status",
             "created_at",
