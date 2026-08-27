@@ -717,6 +717,10 @@ msgstr ""
 "Die Beratung konnte nicht abgeschlossen werden, der Termin ist für die "
 "Zukunft geplant."
 
+#: consultations/views.py:331
+msgid "Unable to close consultation with upcoming reminders"
+msgstr "Die Beratung kann nicht abgeschlossen werden, solange Erinnerungen ausstehen"
+
 #: consultations/views.py:386 consultations/views.py:433
 #: consultations/views.py:656 consultations/views.py:802
 #: consultations/views.py:860 consultations/views.py:937 users/views.py:653

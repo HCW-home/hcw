@@ -602,3 +602,67 @@ class ReminderOccurrenceTests(_ReminderBase):
         self.assertEqual(resp.status_code, 200)
         ids = [o["reminder_id"] for o in resp.data]
         self.assertEqual(ids, [mine.id])
+
+
+class ConsultationCloseWithRemindersTests(_ReminderBase):
+    def setUp(self):
+        super().setUp()
+        self.consultation = Consultation.objects.create(
+            title="Follow-up",
+            created_by=self.practitioner,
+            beneficiary=self.patient,
+        )
+        self.url = reverse("consultation-close", args=[self.consultation.id])
+
+    def _mk_reminder(self, **kw):
+        defaults = dict(
+            title="R",
+            consultation=self.consultation,
+            recipient=self.patient,
+            created_by=self.practitioner,
+            scheduled_at=timezone.now() + timedelta(days=1),
+        )
+        defaults.update(kw)
+        return Reminder.objects.create(**defaults)
+
+    def test_close_blocked_by_upcoming_reminder(self):
+        self._mk_reminder()
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, 400, response.data)
+        self.consultation.refresh_from_db()
+        self.assertIsNone(self.consultation.closed_at)
+
+    def test_close_allowed_without_reminder(self):
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, 200, response.data)
+        self.consultation.refresh_from_db()
+        self.assertIsNotNone(self.consultation.closed_at)
+
+    def test_close_allowed_when_reminder_exhausted(self):
+        reminder = self._mk_reminder()
+        reminder.is_active = False
+        reminder.next_run_at = None
+        reminder.save(update_fields=["is_active", "next_run_at"])
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, 200, response.data)
+
+    def test_close_allowed_when_reminder_belongs_to_another_consultation(self):
+        other = Consultation.objects.create(
+            title="Other",
+            created_by=self.practitioner,
+            beneficiary=self.patient,
+        )
+        self._mk_reminder(consultation=other)
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, 200, response.data)
+
+    def test_close_allowed_when_only_past_occurrence_pending(self):
+        # Overdue but not yet delivered: the task will fire it within the
+        # minute, so it is not an "upcoming" reminder.
+        reminder = self._mk_reminder()
+        past = timezone.now() - timedelta(hours=1)
+        Reminder.objects.filter(pk=reminder.pk).update(
+            scheduled_at=past, next_run_at=past
+        )
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, 200, response.data)

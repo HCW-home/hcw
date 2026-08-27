@@ -710,6 +710,10 @@ msgid "Unable to close consultation with appointment scheduled in future"
 msgstr ""
 "Impossible de fermer la consultation avec un rendez-vous prévu dans le futur"
 
+#: consultations/views.py:331
+msgid "Unable to close consultation with upcoming reminders"
+msgstr "Impossible de fermer la consultation avec des rappels à venir"
+
 #: consultations/views.py:386 consultations/views.py:433
 #: consultations/views.py:656 consultations/views.py:802
 #: consultations/views.py:860 consultations/views.py:937 users/views.py:653

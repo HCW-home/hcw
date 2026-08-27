@@ -68,7 +68,8 @@ export class ConfirmPresenceModal implements OnChanges, OnDestroy {
   @Input() myParticipantId: number | null = null;
 
   @Output() closed = new EventEmitter<void>();
-  @Output() presenceConfirmed = new EventEmitter<void>();
+  // Carries the answered appointment so the host can bring it into view.
+  @Output() presenceConfirmed = new EventEmitter<Appointment | null>();
   @Output() editRequested = new EventEmitter<number>();
   @Output() appointmentCancelled = new EventEmitter<void>();
 
@@ -204,7 +205,7 @@ export class ConfirmPresenceModal implements OnChanges, OnDestroy {
             this.t.instant('confirmPresenceModal.confirmSuccess'),
             this.t.instant('confirmPresenceModal.confirmSuccessMessage')
           );
-          this.presenceConfirmed.emit();
+          this.presenceConfirmed.emit(this.appointment);
           this.onClose();
         },
         error: () => {
@@ -233,7 +234,7 @@ export class ConfirmPresenceModal implements OnChanges, OnDestroy {
             this.t.instant('confirmPresenceModal.declineSuccess'),
             this.t.instant('confirmPresenceModal.declineSuccessMessage')
           );
-          this.presenceConfirmed.emit();
+          this.presenceConfirmed.emit(this.appointment);
           this.onClose();
         },
         error: () => {

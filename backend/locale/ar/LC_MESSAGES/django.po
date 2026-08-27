@@ -689,6 +689,10 @@ msgstr "المستلم مطلوب."
 msgid "Unable to close consultation with appointment scheduled in future"
 msgstr "لا يمكن إغلاق استشارة لها موعد مجدول في المستقبل"
 
+#: consultations/views.py:331
+msgid "Unable to close consultation with upcoming reminders"
+msgstr "لا يمكن إغلاق استشارة لها تذكيرات قادمة"
+
 #: consultations/views.py:386 consultations/views.py:433
 #: consultations/views.py:656 consultations/views.py:802
 #: consultations/views.py:860 consultations/views.py:937 users/views.py:653

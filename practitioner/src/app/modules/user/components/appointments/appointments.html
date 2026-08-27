@@ -597,9 +597,9 @@
       [appointment]="confirmPresenceAppointment()"
       [myParticipantId]="confirmPresenceMyParticipantId()"
       (closed)="onConfirmPresenceModalClosed()"
-      (presenceConfirmed)="onPresenceConfirmed()"
+      (presenceConfirmed)="onPresenceConfirmed($event)"
       (editRequested)="onEditFromModal($event)"
-      (appointmentCancelled)="onPresenceConfirmed()">
+      (appointmentCancelled)="onAppointmentCancelled()">
     </app-confirm-presence-modal>
 
     <app-appointment-form-modal

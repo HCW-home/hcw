@@ -321,6 +321,20 @@ class ConsultationViewSet(FhirViewSetMixin, CreatedByMixin, viewsets.ModelViewSe
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # An active reminder still has a pending occurrence when next_run_at is
+        # in the future; closing would leave messages scheduled on a dead case.
+        if consultation.reminders.filter(
+            is_active=True, next_run_at__gt=now
+        ).exists():
+            return Response(
+                {
+                    "error": _(
+                        "Unable to close consultation with upcoming reminders"
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         consultation.closed_at = timezone.now()
         consultation.save()
 

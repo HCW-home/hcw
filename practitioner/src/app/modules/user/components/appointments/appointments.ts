@@ -1733,8 +1733,40 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     this.confirmPresenceMyParticipantId.set(null);
   }
 
-  onPresenceConfirmed(): void {
+  onPresenceConfirmed(appointment: Appointment | null): void {
+    // The answered appointment often sits in another week than the one on
+    // screen (the modal is usually reached from an invitation link), so bring
+    // the calendar to it instead of only refreshing the current range.
+    if (appointment && this.goToAppointmentDate(appointment)) {
+      // The range changed: handleDatesSet reloads everything by itself.
+      return;
+    }
     this.loadAppointments();
+  }
+
+  onAppointmentCancelled(): void {
+    this.loadAppointments();
+  }
+
+  /**
+   * Move the calendar to the date of an appointment.
+   *
+   * Returns true when the visible range actually moved, i.e. when the
+   * datesSet handler is going to reload the data on its own.
+   */
+  private goToAppointmentDate(appointment: Appointment): boolean {
+    const calendarApi = this.calendarComponent()?.getApi();
+    if (!calendarApi) return false;
+
+    const date = parseDateWithoutTimezone(appointment.scheduled_at);
+    if (!date) return false;
+
+    // activeEnd is exclusive, so a date on that boundary is not displayed yet.
+    const view = calendarApi.view;
+    if (date >= view.activeStart && date < view.activeEnd) return false;
+
+    calendarApi.gotoDate(date);
+    return true;
   }
 
   onEditFromModal(appointmentId: number): void {
