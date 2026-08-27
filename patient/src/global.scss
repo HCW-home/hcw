@@ -110,14 +110,20 @@ body {
     margin: 0 auto;
   }
 
-  /* Full-width pages: no framed container / shadow. Auth + video call, plus the
-     patient dashboard and the whole booking funnel — search, practitioner
-     profile and the request wizard (design: full-width nav bar, content
-     centered on the page background — no visible card-like container; the
-     search needs the room for its results + map split view). */
+  /* Full-width pages: no framed container / shadow. Auth and first-login, video
+     call, plus the patient dashboard and the whole booking funnel — search,
+     practitioner profile and the request wizard (design: full-width nav bar,
+     content centered on the page background — no visible card-like container;
+     the search needs the room for its results + map split view).
+
+     These are element selectors, so a page renamed without touching this list
+     silently falls back to the framed container. Keep them in step with the
+     `selector:` of each page component. */
   ion-app:has(app-login),
   ion-app:has(app-register),
-  ion-app:has(app-verify-email),
+  ion-app:has(app-verify-account),
+  ion-app:has(app-verify-invite),
+  ion-app:has(app-onboarding),
   ion-app:has(app-forgot-password),
   ion-app:has(app-reset-password),
   ion-app:has(app-video-consultation),
