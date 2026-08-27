@@ -539,6 +539,7 @@
     "typeOrganisation": "Facility",
     "noSlots": "No availability",
     "bookButton": "Book an appointment",
+    "detailsButton": "Details",
     "suggestSpecialities": "Specialities",
     "suggestPractitioners": "Practitioners",
     "suggestOrganisations": "Facilities",

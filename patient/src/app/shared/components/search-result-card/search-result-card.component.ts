@@ -30,9 +30,12 @@ import { Slot } from '../../../core/models/consultation.model';
 export class SearchResultCardComponent implements OnChanges, OnDestroy {
   @Input({ required: true }) item!: SearchItem;
   @Input() selected = false;
+  // What the main button does: start a booking, or open the practitioner sheet.
+  @Input() primaryAction: 'book' | 'details' = 'book';
 
   @Output() itemClick = new EventEmitter<SearchItem>();
   @Output() book = new EventEmitter<BookingIntent>();
+  @Output() details = new EventEmitter<SearchItem>();
 
   private destroy$ = new Subject<void>();
 
@@ -83,6 +86,11 @@ export class SearchResultCardComponent implements OnChanges, OnDestroy {
 
   onCardClick(): void {
     this.itemClick.emit(this.item);
+  }
+
+  onDetails(event: Event): void {
+    event.stopPropagation();
+    this.details.emit(this.item);
   }
 
   onBook(event: Event, slot: Slot | null = null): void {

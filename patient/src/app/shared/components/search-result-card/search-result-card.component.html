@@ -61,10 +61,17 @@
           </div>
         }
       </div>
-      <button class="rdv-button" type="button" (click)="onBook($event)">
-        <ion-icon name="calendar-outline"></ion-icon>
-        <span>{{ 'map.bookButton' | translate }}</span>
-      </button>
+      @if (primaryAction === 'details') {
+        <button class="rdv-button" type="button" (click)="onDetails($event)">
+          <ion-icon name="information-circle-outline"></ion-icon>
+          <span>{{ 'map.detailsButton' | translate }}</span>
+        </button>
+      } @else {
+        <button class="rdv-button" type="button" (click)="onBook($event)">
+          <ion-icon name="calendar-outline"></ion-icon>
+          <span>{{ 'map.bookButton' | translate }}</span>
+        </button>
+      }
     </div>
   }
 </div>

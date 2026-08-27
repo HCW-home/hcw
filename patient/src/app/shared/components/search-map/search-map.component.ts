@@ -34,6 +34,8 @@ const doctorIcon = L.divIcon({
 // Centred on Switzerland until results give it something to frame.
 const DEFAULT_VIEW: [number, number] = [46.8, 8.2];
 const DEFAULT_ZOOM = 8;
+// Close enough to read the street when a single result is put in focus.
+const FOCUS_ZOOM = 15;
 
 /**
  * Leaflet view of a set of directory results. Hosts only hand it the items and
@@ -53,7 +55,8 @@ export class SearchMapComponent implements AfterViewInit, OnChanges, OnDestroy {
   @ViewChild('canvas', { static: true }) canvas!: ElementRef<HTMLDivElement>;
 
   private map?: L.Map;
-  private markers: L.Marker[] = [];
+  // Keyed by item id so a host can bring one result into focus.
+  private markers = new Map<string, L.Marker>();
   private resizeObserver?: ResizeObserver;
   // Points waiting to be framed: the map can be laid out at zero size while the
   // results panel unfolds, and fitBounds needs a real box to pick a zoom.
@@ -82,6 +85,30 @@ export class SearchMapComponent implements AfterViewInit, OnChanges, OnDestroy {
     this.map?.remove();
   }
 
+  /**
+   * Centre the map on one result and open its popup.
+   *
+   * Silently does nothing for an item without coordinates, which simply has no
+   * marker on the map.
+   */
+  focusItem(item: SearchItem): void {
+    const marker = this.markers.get(item.id);
+    if (!this.map || !marker) return;
+
+    // An explicit focus outranks the initial framing of the whole result set.
+    this.pendingPoints = [];
+
+    // Stacked layouts put the map above the list, so it can sit off-screen when
+    // a result far down is picked. 'nearest' leaves it alone when it is visible.
+    this.canvas.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    this.map.invalidateSize();
+    this.map.setView(marker.getLatLng(), Math.max(this.map.getZoom(), FOCUS_ZOOM), {
+      animate: true,
+    });
+    marker.openPopup();
+  }
+
   private observeResize(): void {
     if (typeof ResizeObserver === 'undefined') return;
     this.resizeObserver = new ResizeObserver(() => {
@@ -108,7 +135,7 @@ export class SearchMapComponent implements AfterViewInit, OnChanges, OnDestroy {
         .bindPopup(this.popupContent(item));
 
       marker.on('click', () => this.markerSelected.emit(item));
-      this.markers.push(marker);
+      this.markers.set(item.id, marker);
       points.push(L.latLng(coords.lat, coords.lng));
     }
 
@@ -144,6 +171,6 @@ export class SearchMapComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   private clearMarkers(): void {
     this.markers.forEach(marker => marker.remove());
-    this.markers = [];
+    this.markers.clear();
   }
 }

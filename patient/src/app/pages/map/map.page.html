@@ -72,7 +72,9 @@
                 <app-search-result-card
                   [item]="item"
                   [selected]="isSelected(item)"
-                  (itemClick)="goToProfile($event)"
+                  primaryAction="details"
+                  (itemClick)="onItemSelected($event)"
+                  (details)="goToProfile($event)"
                   (book)="goToBooking($event)"
                 ></app-search-result-card>
               }

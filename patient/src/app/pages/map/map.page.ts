@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, viewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   IonContent,
@@ -46,6 +46,8 @@ export class MapPage implements OnInit, OnDestroy {
 
   onlineBookingOnly = signal(false);
   selectedItemId = signal<string | null>(null);
+
+  searchMap = viewChild(SearchMapComponent);
 
   isAuthenticated = signal(false);
   canViewMap = computed(() => this.isPublicEnabled() || this.isAuthenticated());
@@ -147,6 +149,13 @@ export class MapPage implements OnInit, OnDestroy {
 
   isSelected(item: SearchItem): boolean {
     return this.selectedItemId() === item.id;
+  }
+
+  // Picking a result from the list only highlights it and brings it into view;
+  // the practitioner sheet is reached through the card's details button.
+  onItemSelected(item: SearchItem): void {
+    this.selectedItemId.set(item.id);
+    this.searchMap()?.focusItem(item);
   }
 
   onMarkerSelected(item: SearchItem): void {
