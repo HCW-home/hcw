@@ -5,12 +5,7 @@
       <div class="right-content">
         <h2>{{ 'verifyEmail.title' | translate }}</h2>
 
-        @if (isLoading) {
-          <div class="status-container step-animate">
-            <ion-spinner name="crescent" color="primary"></ion-spinner>
-            <ion-text color="medium">{{ 'verifyEmail.verifying' | translate }}</ion-text>
-          </div>
-        } @else if (success) {
+        @if (success) {
           <div class="status-container success step-animate">
             <ion-icon name="checkmark-circle-outline" color="success" class="status-icon"></ion-icon>
             <p>{{ 'verifyEmail.success' | translate }}</p>
@@ -23,16 +18,81 @@
             </ion-button>
           </div>
         } @else {
-          <div class="status-container error step-animate">
-            <ion-icon name="close-circle-outline" color="danger" class="status-icon"></ion-icon>
-            <ion-text color="danger">{{ errorMessage }}</ion-text>
-            <ion-button
-              expand="block"
-              shape="round"
-              (click)="goToLogin()"
-              class="action-button">
-              {{ 'verifyEmail.goToLogin' | translate }}
-            </ion-button>
+          <div class="step-animate">
+            @if (knownEmail) {
+              <div class="email-display">
+                <ion-text color="medium">{{ email }}</ion-text>
+              </div>
+            }
+
+            <ion-text class="code-sent-message" color="medium">
+              {{ 'verifyEmail.codeSentTo' | translate }}
+            </ion-text>
+
+            @if (errorMessage) {
+              <ion-text color="danger" class="error-message">
+                <span class="error-text">{{ errorMessage }}</span>
+              </ion-text>
+            }
+
+            <form [formGroup]="verifyForm" (ngSubmit)="submitCode()" class="verify-form">
+              @if (!knownEmail) {
+                <ion-item lines="full" class="input-item">
+                  <ion-icon name="mail-outline" slot="start"></ion-icon>
+                  <ion-input
+                    type="email"
+                    [placeholder]="'verifyEmail.emailPlaceholder' | translate"
+                    formControlName="email"
+                    inputmode="email">
+                  </ion-input>
+                </ion-item>
+              }
+
+              <ion-item lines="full" class="input-item">
+                <ion-icon name="keypad-outline" slot="start"></ion-icon>
+                <ion-input
+                  type="text"
+                  [placeholder]="'verifyEmail.enterCode' | translate"
+                  formControlName="code"
+                  maxlength="6"
+                  inputmode="numeric">
+                </ion-input>
+              </ion-item>
+              @if (verifyForm.get('code')?.invalid && verifyForm.get('code')?.touched) {
+                <ion-text color="danger" class="error-message">
+                  <span class="error-text">{{ 'verifyEmail.invalidCodeFormat' | translate }}</span>
+                </ion-text>
+              }
+
+              <ion-button
+                expand="block"
+                shape="round"
+                type="submit"
+                [disabled]="verifyForm.invalid || isLoading"
+                class="action-button">
+                @if (isLoading) {
+                  <ion-spinner name="crescent" class="button-spinner"></ion-spinner>
+                }
+                {{ 'verifyEmail.verifyCode' | translate }}
+              </ion-button>
+            </form>
+
+            <div class="resend-code">
+              <ion-text class="resend-text" color="medium">
+                {{ 'verifyEmail.didntReceiveCode' | translate }}
+              </ion-text>
+              <ion-text
+                color="primary"
+                (click)="resendCode()"
+                [class.disabled]="isResending"
+                class="link-text">
+                @if (isResending) {
+                  {{ 'verifyEmail.sendingCode' | translate }}
+                } @else {
+                  {{ 'verifyEmail.resendCode' | translate }}
+                }
+              </ion-text>
+            </div>
           </div>
         }
 

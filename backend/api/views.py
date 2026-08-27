@@ -1,4 +1,3 @@
-import secrets
 from datetime import timedelta
 
 from constance import config
@@ -16,8 +15,8 @@ from rest_framework.views import APIView
 from core.authentication import TenantRefreshToken
 from core.throttling import AnonymousTokenRateThrottle
 from users.models import User
+from users.verification import MAX_VERIFICATION_ATTEMPTS, generate_verification_code
 
-MAX_VERIFICATION_ATTEMPTS = getattr(django_settings, "MAX_VERIFICATION_ATTEMPTS", 3)
 TOKEN_GRACE_PERIOD = timedelta(
     minutes=getattr(django_settings, "TOKEN_GRACE_PERIOD_MINUTES", 5)
 )
@@ -218,7 +217,7 @@ class AnonymousTokenAuthView(APIView):
                 else:
                     # Grace period expired: verification code required
                     if not verification_code:
-                        user.verification_code = 100000 + secrets.randbelow(900000)
+                        user.verification_code = generate_verification_code()
                         user.verification_attempts = 0
                         user.save(
                             update_fields=["verification_code", "verification_attempts"]

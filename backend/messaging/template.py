@@ -119,14 +119,20 @@ DEFAULT_NOTIFICATION_MESSAGES = {
     },
     "email_verification": {
         "template_subject": _("Verify your email address"),
-        "template_content": _("We are requiring to verify your email address."),
+        # No "action" on purpose: the recipient types the code back into the
+        # app instead of following a link. Leaving one out also keeps
+        # Message.access_link from minting a one_time_auth_token, which would
+        # reopen the grace period this flow deliberately closes.
+        "template_content": _(
+            "To finish creating your account, please use this verification "
+            "code: {{ obj.verification_code }}"
+        ),
         "template_content_html": _(
-            "<p>We are requiring to verify your email address.</p>"
+            "<p>To finish creating your account, please use this verification "
+            "code: <strong>{{ obj.verification_code }}</strong></p>"
         ),
         "model": "users.User",
-        "helper_text": "Message sent to user to verify their email address after registration",
-        "action": "verify-email",
-        "action_label": _("Verify my email"),
+        "helper_text": "Message sent to user containing the code to verify their email address after registration",
     },
     "reset_password": {
         "template_subject": _("Reset your password"),

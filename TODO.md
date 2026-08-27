@@ -19,3 +19,5 @@ ne pas griser quand un chat est ouvert http://localhost:8001/home
 vérifier que quand l'option pas de gestion des contact est actif on ne peut pas créer des contacts
 
 il n'existe pas de mécanisme pour accepter un rdv en tant que praticien
+
+ne pas autoriser fermer un case si y a des rappels à venir

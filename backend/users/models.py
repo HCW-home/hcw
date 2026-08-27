@@ -24,6 +24,7 @@ from .abstracts import ModelOwnerAbstract
 from .managers import UserManager
 from .phone import MAX_PHONE_LENGTH, normalize_phone_number
 from .validators import validate_phone_number
+from .verification import generate_verification_code
 
 import secrets
 
@@ -271,12 +272,6 @@ class User(AbstractUser):
         default=False,
         help_text="Whether the user's email address has been verified",
     )
-    email_verification_token = models.CharField(
-        max_length=256,
-        blank=True,
-        null=True,
-        help_text="Token used for email verification",
-    )
 
     created_by = models.ForeignKey(
         "self",
@@ -332,6 +327,30 @@ class User(AbstractUser):
         return self.communication_method == CommunicationMethod.manual or (
             not self.email and not self.mobile_phone_number
         )
+
+    def issue_email_verification_code(self) -> int:
+        """Mint a fresh code proving this user controls their email address.
+
+        ``one_time_auth_token`` is cleared on purpose. That token is the only
+        way into AnonymousTokenAuthView, and the timestamp written here opens
+        its five-minute grace period, during which the token alone buys a
+        session with no code at all. Dropping it keeps a code issued to verify
+        an address from ever being traded for one. The password reset flow
+        takes the same precaution (see users/forms.py).
+        """
+        self.verification_code = generate_verification_code()
+        self.verification_code_created_at = timezone.now()
+        self.verification_attempts = 0
+        self.one_time_auth_token = None
+        self.save(
+            update_fields=[
+                "verification_code",
+                "verification_code_created_at",
+                "verification_attempts",
+                "one_time_auth_token",
+            ]
+        )
+        return self.verification_code
 
     @property
     def name(self) -> str:

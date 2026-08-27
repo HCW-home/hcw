@@ -6,24 +6,7 @@
         <h2>{{ 'register.title' | translate }}</h2>
         <p class="subtitle">{{ 'register.subtitle' | translate }}</p>
 
-        @if (loading) { } @else if (successMessage) {
-        <div class="success-container step-animate">
-          <ion-icon
-            name="mail-outline"
-            color="success"
-            class="success-icon"
-          ></ion-icon>
-          <p>{{ successMessage }}</p>
-          <ion-button
-            expand="block"
-            shape="round"
-            (click)="goToLogin()"
-            class="action-button"
-          >
-            {{ 'common.signIn' | translate }}
-          </ion-button>
-        </div>
-        } @else if (!registrationEnabled) {
+        @if (loading) { } @else if (!registrationEnabled) {
         <div class="disabled-container">
           <ion-icon
             name="close-circle-outline"

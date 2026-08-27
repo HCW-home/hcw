@@ -56,6 +56,94 @@
     animation: fadeSlideIn 0.3s ease-out;
   }
 
+  .verify-form {
+    .input-item {
+      margin-bottom: 16px;
+      --background: var(--app-input-background, #f7f8fa);
+      --border-radius: 10px;
+      --padding-start: 16px;
+      --padding-end: 16px;
+      --inner-padding-end: 16px;
+      border-radius: 10px;
+
+      ion-icon {
+        margin-right: 10px;
+        color: var(--app-text-tertiary);
+      }
+
+      ion-input {
+        --padding-top: 14px;
+        --padding-bottom: 14px;
+        color: var(--app-input-text);
+        --placeholder-color: var(--app-input-placeholder);
+      }
+    }
+  }
+
+  .email-display {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 10px 16px;
+    background: var(--app-input-background, #f7f8fa);
+    border-radius: 10px;
+  }
+
+  .code-sent-message {
+    display: block;
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  .error-message {
+    display: block;
+    margin-bottom: 12px;
+
+    .error-text {
+      font-size: 0.75rem;
+    }
+  }
+
+  .resend-code {
+    text-align: center;
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+
+    .resend-text {
+      font-size: 0.85rem;
+    }
+
+    .link-text {
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+
+      &.disabled {
+        opacity: 0.5;
+        pointer-events: none;
+      }
+    }
+  }
+
+  .button-spinner {
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+  }
+
+  .action-button {
+    width: 100%;
+    margin-top: 12px;
+    --background: var(--ion-color-primary);
+    --padding-top: 14px;
+    --padding-bottom: 14px;
+    font-weight: 600;
+  }
+
   .status-container {
     text-align: center;
     padding: 20px 0;

@@ -3,6 +3,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, Spec
 from . import views
 from users.views import (
     RegisterView,
+    EmailVerificationResendView,
     EmailVerifyView,
     LoginView,
     PasswordChangeView,
@@ -33,4 +34,5 @@ urlpatterns = [
     path('auth/token/', views.AnonymousTokenAuthView.as_view(), name='anonymous_token_auth'),
     path('auth/registration/', RegisterView.as_view(), name='rest_register'),
     path('auth/verify-email/', EmailVerifyView.as_view(), name='email_verify'),
+    path('auth/verify-email/resend/', EmailVerificationResendView.as_view(), name='email_verify_resend'),
 ]

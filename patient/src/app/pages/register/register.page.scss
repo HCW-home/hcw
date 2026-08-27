@@ -152,35 +152,6 @@
     }
   }
 
-  .success-container {
-    text-align: center;
-    padding: 20px 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-
-    .success-icon {
-      font-size: 48px;
-    }
-
-    p {
-      font-size: 0.95rem;
-      color: var(--app-text-primary);
-      line-height: 1.5;
-      margin: 0;
-    }
-
-    .action-button {
-      width: 100%;
-      margin-top: 12px;
-      --background: var(--ion-color-primary);
-      --padding-top: 14px;
-      --padding-bottom: 14px;
-      font-weight: 600;
-    }
-  }
-
   .disabled-container {
     text-align: center;
     padding: 20px 0;

@@ -2163,18 +2163,6 @@ msgstr ""
 msgid "Verify your email address"
 msgstr ""
 
-#: messaging/template.py:120
-msgid "We are requiring to verify your email address."
-msgstr ""
-
-#: messaging/template.py:122
-msgid "<p>We are requiring to verify your email address.</p>"
-msgstr ""
-
-#: messaging/template.py:127
-msgid "Verify my email"
-msgstr ""
-
 #: messaging/template.py:130 messaging/template.py:140
 msgid "Reset your password"
 msgstr ""
@@ -2490,12 +2478,36 @@ msgstr ""
 msgid "%(user_name)s left the meeting #%(consultation_id)s"
 msgstr ""
 
-#: users/views.py:1722
-msgid "A verification email has been sent to your email address."
-msgstr ""
-
 #: users/views.py:2062
 msgid ""
 "Access URL is only available for patients without any automatic channel "
 "(email/SMS/WhatsApp) or with manual communication"
+msgstr ""
+
+#: messaging/template.py:126
+msgid "To finish creating your account, please use this verification code: {{ obj.verification_code }}"
+msgstr ""
+
+#: messaging/template.py:130
+msgid "<p>To finish creating your account, please use this verification code: <strong>{{ obj.verification_code }}</strong></p>"
+msgstr ""
+
+#: users/views.py:1770
+msgid "A verification code has been sent to your email address."
+msgstr ""
+
+#: users/views.py:1801
+msgid "Invalid or expired verification code."
+msgstr ""
+
+#: users/views.py:1818
+msgid "Email already verified."
+msgstr ""
+
+#: users/views.py:1870
+msgid "Email verified successfully."
+msgstr ""
+
+#: users/views.py:1886
+msgid "If this address needs verification, a code has been sent."
 msgstr ""

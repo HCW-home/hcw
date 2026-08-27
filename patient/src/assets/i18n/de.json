@@ -72,7 +72,6 @@
     "registrationDisabled": "Die Registrierung ist derzeit deaktiviert.",
     "hasAccount": "Bereits ein Konto?",
     "creatingAccount": "Konto wird erstellt...",
-    "verificationEmailSent": "Eine Bestaetigungs-E-Mail wurde an Ihre Adresse gesendet.",
     "registrationFailed": "Registrierung fehlgeschlagen. Bitte versuchen Sie es erneut."
   },
   "forgotPassword": {
@@ -105,11 +104,19 @@
   },
   "verifyEmail": {
     "title": "E-Mail-Verifizierung",
-    "verifying": "Ihre E-Mail-Adresse wird verifiziert...",
     "success": "Ihre E-Mail-Adresse wurde erfolgreich verifiziert.",
     "goToLogin": "Zur Anmeldung",
-    "invalidLink": "Ungueltiger oder fehlender Verifizierungslink.",
-    "verificationFailed": "E-Mail-Verifizierung fehlgeschlagen. Der Link ist moeglicherweise ungueltig oder abgelaufen."
+    "verificationFailed": "Der Bestätigungscode konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
+    "codeSentTo": "Geben Sie den 6-stelligen Code ein, den wir an Ihre E-Mail-Adresse gesendet haben.",
+    "emailPlaceholder": "E-Mail-Adresse",
+    "enterCode": "6-stelligen Code eingeben",
+    "invalidCode": "Ungültiger oder abgelaufener Bestätigungscode.",
+    "invalidCodeFormat": "Bitte geben Sie einen gültigen 6-stelligen Code ein",
+    "verifyCode": "Bestätigen",
+    "didntReceiveCode": "Code nicht erhalten?",
+    "resendCode": "Code erneut senden",
+    "sendingCode": "Wird gesendet...",
+    "codeSent": "Bestätigungscode gesendet."
   },
   "verifyInvite": {
     "verifyingCode": "Code wird ueberprueft...",

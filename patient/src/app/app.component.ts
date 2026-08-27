@@ -156,9 +156,12 @@ export class AppComponent implements OnInit, OnDestroy {
     const uid = urlParams.get("uid");
     const token = urlParams.get("token");
 
-    if (action === "verify-email" && token) {
+    // Verification now happens with a code typed into the app. Links sent
+    // before that change still carry ?token=, which is ignored: the page only
+    // needs the address to let the recipient ask for a fresh code.
+    if (action === "verify-email") {
       this.navCtrl.navigateRoot(["/verify-email"], {
-        queryParams: { token },
+        queryParams: email ? { email } : {},
       });
       return;
     }

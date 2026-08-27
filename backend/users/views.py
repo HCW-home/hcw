@@ -5,9 +5,6 @@ logger = logging.getLogger(__name__)
 import os
 import random
 import uuid
-import secrets
-
-import uuid
 
 from django.utils.translation import gettext as _
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
@@ -46,6 +43,7 @@ from dj_rest_auth.views import PasswordResetConfirmView as DjRestAuthPasswordRes
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
+from django.db import transaction
 from django.db.models import Q
 from django.http import FileResponse
 from django.shortcuts import render
@@ -71,6 +69,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from core.throttling import (
+    EmailVerifyCodeRateThrottle,
     EmailVerifyRateThrottle,
     LoginRateThrottle,
     OpenIDRateThrottle,
@@ -87,6 +86,12 @@ from allauth.socialaccount.models import SocialApp
 from .filters import UserFilter
 from .models import HealthMetric, Language, Organisation, Speciality, Term, User, WebPushSubscription, DAVAppPassword
 from .phone import phone_lookup_variants
+from .verification import (
+    EMAIL_VERIFICATION_CODE_TTL,
+    MAX_VERIFICATION_ATTEMPTS,
+    codes_match,
+    generate_verification_code,
+)
 from .serializers import (
     HealthMetricSerializer,
     LanguageSerializer,
@@ -1759,58 +1764,141 @@ class RegisterView(DjRestAuthRegisterView):
             )
         super().create(request, *args, **kwargs)
 
-        # Send email verification message
+        # Send the verification code
         email = request.data.get("email")
         if email:
             user = User.objects.find_by_email(email)
             if user and not user.email_verified:
-                user.email_verification_token = str(uuid.uuid4())
-                user.save(update_fields=["email_verification_token"])
-                Message.objects.create(
-                    sent_to=user,
-                    template_system_name="email_verification",
-                    content_type=ContentType.objects.get_for_model(user),
-                    object_id=user.pk,
-                    in_notification=False,
-                    additionnal_link_args={"token": user.email_verification_token},
-                )
+                send_email_verification_code(user)
 
         return Response(
             {
-                "detail": _("A verification email has been sent to your email address.")
+                "detail": _(
+                    "A verification code has been sent to your email address."
+                )
             },
             status=status.HTTP_201_CREATED,
         )
 
 
+def send_email_verification_code(user):
+    """Issue a code for ``user`` and hand it to the messaging pipeline."""
+    user.issue_email_verification_code()
+    with translation.override(user.preferred_language):
+        Message.objects.create(
+            sent_to=user,
+            template_system_name="email_verification",
+            content_type=ContentType.objects.get_for_model(user),
+            object_id=user.pk,
+            in_notification=False,
+        )
+
+
 class EmailVerifyView(APIView):
-    """Verify user email address via token."""
+    """Verify a user email address with the 6-digit code they received."""
 
-    permission_classes = []
+    permission_classes = [AllowAny]
     authentication_classes = []
-    throttle_classes = [EmailVerifyRateThrottle]
+    throttle_classes = [EmailVerifyRateThrottle, EmailVerifyCodeRateThrottle]
 
-    def get(self, request):
-        token = request.query_params.get("token")
-        if not token:
-            return Response(
-                {"detail": "Verification token is required."},
-                status=status.HTTP_400_BAD_REQUEST,
+    def invalid(self):
+        """Every failure answers the same way.
+
+        Telling "unknown address" apart from "wrong code" would turn the
+        endpoint into an account oracle. Translated per request, not once at
+        import time, so the recipient's language is honoured.
+        """
+        return Response(
+            {"detail": _("Invalid or expired verification code.")},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    def post(self, request):
+        email = (request.data.get("email") or "").strip()
+        code = request.data.get("code")
+
+        if not email or not code:
+            return self.invalid()
+
+        user = User.objects.find_by_email(email)
+        if user is None:
+            return self.invalid()
+
+        with transaction.atomic():
+            # Re-read under a row lock: without it, concurrent guesses all read
+            # the same attempt counter and get far more than three tries.
+            user = User.objects.select_for_update().get(pk=user.pk)
+
+            if user.email_verified:
+                return Response({"detail": _("Email already verified.")})
+
+            expired = (
+                not user.verification_code_created_at
+                or timezone.now() - user.verification_code_created_at
+                > EMAIL_VERIFICATION_CODE_TTL
             )
+            if (
+                user.verification_code is None
+                or expired
+                or user.verification_attempts >= MAX_VERIFICATION_ATTEMPTS
+            ):
+                return self.invalid()
 
-        user = User.objects.filter(email_verification_token=token).first()
-        if not user:
-            return Response(
-                {"detail": "Invalid or expired verification token."},
-                status=status.HTTP_400_BAD_REQUEST,
+            if not codes_match(user.verification_code, code):
+                user.verification_attempts += 1
+                # Burn the code on the last allowed try so a fresh one has to be
+                # requested instead of the counter being the only guard.
+                if user.verification_attempts >= MAX_VERIFICATION_ATTEMPTS:
+                    user.verification_code = None
+                user.save(
+                    update_fields=["verification_attempts", "verification_code"]
+                )
+                return self.invalid()
+
+            user.email_verified = True
+            user.is_active = True
+            user.verification_code = None
+            user.verification_attempts = 0
+            # verification_code_created_at is deliberately left alone: refreshing
+            # it would open AnonymousTokenAuthView's grace period.
+            user.save(
+                update_fields=[
+                    "email_verified",
+                    "is_active",
+                    "verification_code",
+                    "verification_attempts",
+                ]
             )
+            user.received_messages.filter(
+                template_system_name="email_verification"
+            ).delete()
 
-        user.email_verified = True
-        user.email_verification_token = None
-        user.is_active = True
-        user.save(update_fields=["email_verified", "email_verification_token", "is_active"])
+        return Response({"detail": _("Email verified successfully.")})
 
-        return Response({"detail": "Email verified successfully."})
+
+class EmailVerificationResendView(APIView):
+    """Send a new email verification code."""
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    throttle_classes = [VerificationCodeRateThrottle, VerificationCodeIPRateThrottle]
+
+    def post(self, request):
+        email = (request.data.get("email") or "").strip()
+
+        user = User.objects.find_by_email(email) if email else None
+        if user is not None and not user.email_verified:
+            send_email_verification_code(user)
+
+        # Same answer whether the address is unknown, already verified or just
+        # got a code: nothing here should confirm that an account exists.
+        return Response(
+            {
+                "detail": _(
+                    "If this address needs verification, a code has been sent."
+                )
+            }
+        )
 
 
 class TestRTCView(APIView):
@@ -2053,7 +2141,7 @@ class SendVerificationCodeView(APIView):
             )
 
         # Generate a verification code (6 digits)
-        user_instance.verification_code = 100000 + secrets.randbelow(900000)
+        user_instance.verification_code = generate_verification_code()
         user_instance.verification_code_created_at = timezone.now()
 
         user_instance.one_time_auth_token = str(uuid.uuid4())

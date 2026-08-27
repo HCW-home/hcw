@@ -2424,18 +2424,6 @@ msgstr "Haz clic aquí para responder"
 msgid "Verify your email address"
 msgstr "Verifica tu dirección de correo electrónico"
 
-#: messaging/template.py:120
-msgid "We are requiring to verify your email address."
-msgstr "Necesitamos verificar su dirección de correo electrónico."
-
-#: messaging/template.py:122
-msgid "<p>We are requiring to verify your email address.</p>"
-msgstr "<p>Necesitamos verificar su dirección de correo electrónico.</p>"
-
-#: messaging/template.py:127
-msgid "Verify my email"
-msgstr "Verificar mi correo electrónico"
-
 #: messaging/template.py:130 messaging/template.py:140
 msgid "Reset your password"
 msgstr "Restablecer su contraseña"
@@ -2818,10 +2806,6 @@ msgstr "La consulta ya está cerrada."
 msgid "%(user_name)s left the meeting #%(consultation_id)s"
 msgstr "%(user_name)s abandonó la reunión #%(consultation_id)s"
 
-#: users/views.py:1722
-msgid "A verification email has been sent to your email address."
-msgstr "Se ha enviado un correo electrónico de verificación a su dirección."
-
 #: users/views.py:2062
 msgid ""
 "Access URL is only available for patients without any automatic channel "
@@ -2829,3 +2813,31 @@ msgid ""
 msgstr ""
 "La URL de acceso solo está disponible para pacientes sin ningún canal "
 "automático (correo electrónico/SMS/WhatsApp) o con comunicación manual"
+
+#: messaging/template.py:126
+msgid "To finish creating your account, please use this verification code: {{ obj.verification_code }}"
+msgstr "Para terminar de crear su cuenta, utilice este código de verificación: {{ obj.verification_code }}"
+
+#: messaging/template.py:130
+msgid "<p>To finish creating your account, please use this verification code: <strong>{{ obj.verification_code }}</strong></p>"
+msgstr "<p>Para terminar de crear su cuenta, utilice este código de verificación: <strong>{{ obj.verification_code }}</strong></p>"
+
+#: users/views.py:1770
+msgid "A verification code has been sent to your email address."
+msgstr "Se ha enviado un código de verificación a su correo electrónico."
+
+#: users/views.py:1801
+msgid "Invalid or expired verification code."
+msgstr "Código de verificación no válido o caducado."
+
+#: users/views.py:1818
+msgid "Email already verified."
+msgstr "Correo electrónico ya verificado."
+
+#: users/views.py:1870
+msgid "Email verified successfully."
+msgstr "Correo electrónico verificado correctamente."
+
+#: users/views.py:1886
+msgid "If this address needs verification, a code has been sent."
+msgstr "Si esta dirección necesita verificación, se ha enviado un código."

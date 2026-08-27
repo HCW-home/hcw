@@ -304,6 +304,7 @@ REST_FRAMEWORK = {
         "anonymous_token": "5/min",
         "openid": "10/min",
         "email_verify": "10/min",
+        "email_verify_code": "10/min",
         # Sign-ups are capped per minute and per day. The daily cap is what
         # actually blocks mass account creation; it stays loose enough for the
         # legitimate case of several patients registering behind one NAT.

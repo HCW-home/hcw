@@ -174,7 +174,6 @@
     "registrationDisabled": "El registro está actualmente deshabilitado.",
     "hasAccount": "¿Ya tiene una cuenta?",
     "creatingAccount": "Creando cuenta...",
-    "verificationEmailSent": "Se ha enviado un correo electrónico de verificación a su dirección de correo electrónico.",
     "registrationFailed": "El registro ha fallado. Por favor, inténtelo de nuevo."
   },
   "forgotPassword": {
@@ -207,11 +206,19 @@
   },
   "verifyEmail": {
     "title": "Verificación de correo electrónico",
-    "verifying": "Verificando tu dirección de correo electrónico...",
     "success": "Tu dirección de correo electrónico ha sido verificada correctamente.",
     "goToLogin": "Ir a Iniciar sesión",
-    "invalidLink": "Enlace de verificación no válido o faltante.",
-    "verificationFailed": "Falló la verificación del correo electrónico. El enlace puede ser inválido o haber caducado."
+    "verificationFailed": "No se ha podido enviar el código de verificación. Inténtelo de nuevo.",
+    "codeSentTo": "Introduzca el código de 6 dígitos que enviamos a su dirección de correo electrónico.",
+    "emailPlaceholder": "Correo electrónico",
+    "enterCode": "Introduzca el código de 6 dígitos",
+    "invalidCode": "Código de verificación no válido o caducado.",
+    "invalidCodeFormat": "Introduzca un código válido de 6 dígitos",
+    "verifyCode": "Verificar",
+    "didntReceiveCode": "¿No ha recibido el código?",
+    "resendCode": "Reenviar código",
+    "sendingCode": "Enviando...",
+    "codeSent": "Código de verificación enviado."
   },
   "verifyInvite": {
     "verifyingCode": "Verificando tu código...",

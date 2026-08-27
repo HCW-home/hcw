@@ -232,7 +232,6 @@
     "registrationDisabled": "La registrazione è attualmente disabilitata.",
     "hasAccount": "Hai già un account?",
     "creatingAccount": "Creazione dell'account in corso...",
-    "verificationEmailSent": "Un'email di verifica è stata inviata al tuo indirizzo email.",
     "registrationFailed": "Registrazione non riuscita. Riprova."
   },
   "forgotPassword": {
@@ -265,11 +264,19 @@
   },
   "verifyEmail": {
     "title": "Verifica dell'e-mail",
-    "verifying": "Verifica del tuo indirizzo email in corso...",
     "success": "Il tuo indirizzo email è stato verificato con successo.",
     "goToLogin": "Vai al login",
-    "invalidLink": "Collegamento di verifica non valido o mancante.",
-    "verificationFailed": "Verifica dell'indirizzo email non riuscita. Il link potrebbe essere non valido o scaduto."
+    "verificationFailed": "Impossibile inviare il codice di verifica. Riprova.",
+    "codeSentTo": "Inserisci il codice a 6 cifre inviato al tuo indirizzo email.",
+    "emailPlaceholder": "Indirizzo email",
+    "enterCode": "Inserisci il codice a 6 cifre",
+    "invalidCode": "Codice di verifica non valido o scaduto.",
+    "invalidCodeFormat": "Inserisci un codice valido a 6 cifre",
+    "verifyCode": "Verifica",
+    "didntReceiveCode": "Non hai ricevuto il codice?",
+    "resendCode": "Invia di nuovo il codice",
+    "sendingCode": "Invio in corso...",
+    "codeSent": "Codice di verifica inviato."
   },
   "home": {
     "nextAppointment": "Prossimo appuntamento",

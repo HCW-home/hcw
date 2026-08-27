@@ -91,8 +91,14 @@ export class AuthService {
     return firstValueFrom(this.getConfig());
   }
 
-  verifyEmail(token: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/auth/verify-email/`, { params: { token } });
+  verifyEmailCode(data: { email: string; code: string }): Observable<{ detail: string }> {
+    return this.http.post<{ detail: string }>(`${this.apiUrl}/auth/verify-email/`, data);
+  }
+
+  resendVerificationEmail(email: string): Observable<{ detail: string }> {
+    return this.http.post<{ detail: string }>(
+      `${this.apiUrl}/auth/verify-email/resend/`, { email }
+    );
   }
 
   forgotPassword(data: { email: string }): Observable<any> {

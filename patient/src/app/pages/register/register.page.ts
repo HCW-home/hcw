@@ -48,7 +48,6 @@ export class RegisterPage implements OnInit {
   showConfirmPassword = false;
   registrationEnabled = true;
   loading = true;
-  successMessage: string | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -120,11 +119,13 @@ export class RegisterPage implements OnInit {
       await loading.present();
 
       this.authService.register(this.registerForm.value).subscribe({
-        next: async (response) => {
+        next: async () => {
           await loading.dismiss();
-          this.successMessage =
-            response.detail ||
-            this.t.instant('register.verificationEmailSent');
+          // The code was mailed out: send the user straight to where they
+          // type it in, carrying the address so they need not retype it.
+          this.navCtrl.navigateRoot(["/verify-email"], {
+            queryParams: { email: this.registerForm.value.email },
+          });
         },
         error: async (error) => {
           await loading.dismiss();

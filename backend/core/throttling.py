@@ -56,6 +56,24 @@ class EmailVerifyRateThrottle(IPRateThrottle):
     scope = "email_verify"
 
 
+class EmailVerifyCodeRateThrottle(SimpleRateThrottle):
+    """Throttle email-verification attempts per IP + target email.
+
+    The per-account attempt counter already burns the code after a few wrong
+    guesses; this caps how fast one address can be hammered from rotating IPs,
+    which the IP-only throttle above cannot see.
+    """
+
+    scope = "email_verify_code"
+
+    def get_cache_key(self, request, view):
+        email = (request.data.get("email") or "").strip().lower()
+        if not email:
+            return None  # Nothing to throttle on this dimension.
+        ident = f"{get_client_ip(request)}:{email}"
+        return self.cache_format % {"scope": self.scope, "ident": ident}
+
+
 class RegistrationRateThrottle(IPRateThrottle):
     """Burst cap on sign-ups.
 
