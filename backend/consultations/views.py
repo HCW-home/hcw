@@ -51,6 +51,7 @@ from .fhir import AppointmentFhirMapper, EncounterFhirMapper, PrescriptionFhirMa
 from fhir_server.mixins import FhirViewSetMixin
 from .filters import AppointmentFilter, ConsultationFilter, ReminderFilter
 from .models import (
+    JOINABLE_APPOINTMENT_STATUSES,
     Appointment,
     AppointmentStatus,
     BookingSlot,
@@ -664,6 +665,17 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
         if appointment.type != Type.online:
             return Response(
                 {"detail": _("Cannot join consultation if not online")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        # Completed and no-show appointments stay open: qualifying a call is a
+        # bookkeeping act, not a lock, so participants can go back in. Only a
+        # cancelled or still-draft appointment has no room to enter.
+        if appointment.status not in JOINABLE_APPOINTMENT_STATUSES:
+            return Response(
+                {
+                    "detail": _("Cannot join a cancelled or draft appointment"),
+                    "code": "not_joinable",
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 

@@ -370,3 +370,52 @@ class CanJoinFlagTests(_OutcomeBase):
         self.consultation.closed_at = timezone.now()
         self.consultation.save(update_fields=["closed_at"])
         self.assertFalse(self._detail(appointment).data["can_join"])
+
+    def test_completed_appointment_can_still_be_joined(self):
+        """Qualifying a call must not lock participants out of it."""
+        appointment = self._appointment(status=AppointmentStatus.completed)
+        self.assertTrue(self._detail(appointment).data["can_join"])
+
+    def test_noshow_appointment_can_still_be_joined(self):
+        appointment = self._appointment(status=AppointmentStatus.noshow)
+        self.assertTrue(self._detail(appointment).data["can_join"])
+
+    def test_cancelled_appointment_cannot_be_joined(self):
+        appointment = self._appointment(status=AppointmentStatus.cancelled)
+        self.assertFalse(self._detail(appointment).data["can_join"])
+
+    def test_draft_appointment_cannot_be_joined(self):
+        appointment = self._appointment(status=AppointmentStatus.draft)
+        self.assertFalse(self._detail(appointment).data["can_join"])
+
+
+class JoinAfterOutcomeTests(_OutcomeBase):
+    """The join endpoint follows the same rule as the can_join flag."""
+
+    def _join(self, appointment):
+        url = reverse("appointment-join", kwargs={"pk": appointment.pk})
+        with patch(
+            "consultations.views.Server.get_or_pin_for_room",
+            return_value=_mocked_server(),
+        ):
+            return self.client.get(url)
+
+    def test_completed_appointment_is_rejoinable(self):
+        appointment = self._appointment(
+            when=self._past(), status=AppointmentStatus.completed
+        )
+        self.assertEqual(self._join(appointment).status_code, 200)
+
+    def test_noshow_appointment_is_rejoinable(self):
+        appointment = self._appointment(
+            when=self._past(), status=AppointmentStatus.noshow
+        )
+        self.assertEqual(self._join(appointment).status_code, 200)
+
+    def test_cancelled_appointment_is_refused(self):
+        appointment = self._appointment(
+            when=self._past(), status=AppointmentStatus.cancelled
+        )
+        response = self._join(appointment)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data["code"], "not_joinable")

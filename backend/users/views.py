@@ -15,6 +15,7 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from core.channel_groups import user_group
 from consultations.models import (
+    JOINABLE_APPOINTMENT_STATUSES,
     Appointment,
     Consultation,
     Participant,
@@ -2138,13 +2139,16 @@ class UserDashboardView(APIView):
             user,
         )
 
-        # Next upcoming appointment within the active join window
+        # Next upcoming appointment within the active join window. A completed
+        # or no-show appointment stays listed while that window lasts: it is
+        # what carries the join button, and a call must remain rejoinable after
+        # it has been qualified.
         next_appointment = (
             Appointment.objects.filter(
                 participant__user=user,
                 participant__is_active=True,
                 scheduled_at__gte=active_cutoff,
-                status="scheduled",
+                status__in=JOINABLE_APPOINTMENT_STATUSES,
             )
             .distinct()
             .order_by("scheduled_at")
@@ -2159,7 +2163,7 @@ class UserDashboardView(APIView):
                 participant__user=user,
                 participant__is_active=True,
                 scheduled_at__gte=active_cutoff,
-                status="scheduled",
+                status__in=JOINABLE_APPOINTMENT_STATUSES,
             )
             .distinct()
             .order_by("scheduled_at")

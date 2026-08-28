@@ -208,6 +208,18 @@ class AppointmentStatus(models.TextChoices):
     cancelled = "cancelled", _("Cancelled")
 
 
+# Statuses whose call room stays reachable. Qualifying an appointment —
+# completed or no-show, set by hand or by the outcome task — must never lock
+# participants out: a call that dropped, or one closed too early, has to be
+# rejoinable. Only a cancelled appointment and a draft one (never sent to its
+# participants) have no room to enter.
+JOINABLE_APPOINTMENT_STATUSES = (
+    AppointmentStatus.scheduled,
+    AppointmentStatus.completed,
+    AppointmentStatus.noshow,
+)
+
+
 class Appointment(models.Model):
     room_uuid = models.UUIDField(
         _("room UUID"), default=uuid.uuid4, editable=False, unique=True

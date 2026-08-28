@@ -17,6 +17,7 @@ from users.phone import MAX_PHONE_LENGTH
 from users.validators import validate_phone_number
 
 from .models import (
+    JOINABLE_APPOINTMENT_STATUSES,
     Appointment,
     AppointmentStatus,
     BookingSlot,
@@ -693,11 +694,15 @@ class AppointmentSerializer(serializers.ModelSerializer):
 
         Mirrors the guard in the `join` endpoints so every front-end entry point
         can hide the button from a single flag instead of restating the rule.
+        An appointment already qualified as completed or no-show stays joinable:
+        the call can always be resumed.
         """
         request = self.context.get("request")
         if not request or not request.user.is_authenticated:
             return False
         if obj.type != Type.online:
+            return False
+        if obj.status not in JOINABLE_APPOINTMENT_STATUSES:
             return False
         if obj.consultation_id and obj.consultation.closed_at:
             return False
