@@ -161,6 +161,11 @@ export class ConsultationService {
     return this.api.get<IParticipantDetail>(`/user/participants/${id}/`);
   }
 
+  /** One message, to resolve the conversation a `message` deep link targets. */
+  getMessageById(id: number): Observable<ConsultationMessage> {
+    return this.api.get<ConsultationMessage>(`/messages/${id}/`);
+  }
+
   confirmParticipantPresence(participantId: number, isConfirmed: boolean | null): Observable<IParticipantDetail> {
     return this.api.patch<IParticipantDetail>(
       `/user/participants/${participantId}/`,

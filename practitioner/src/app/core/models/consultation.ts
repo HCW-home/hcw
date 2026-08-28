@@ -122,6 +122,7 @@ export interface MessageAttachment {
 
 export interface ConsultationMessage {
   id: number;
+  consultation?: number;
   content: string | null;
   attachment: MessageAttachment | null;
   recording_url: string | null;

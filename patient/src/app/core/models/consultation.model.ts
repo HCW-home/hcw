@@ -124,6 +124,8 @@ export interface Appointment {
   created_by: User;
   created_at: string;
   participants?: Participant[];
+  // Server-side answer to "may the current user join this call?"
+  can_join?: boolean;
 }
 
 export interface Participant {

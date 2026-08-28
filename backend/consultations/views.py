@@ -1789,7 +1789,15 @@ class MessageViewSet(viewsets.ModelViewSet):
 
     serializer_class = ConsultationMessageSerializer
     permission_classes = [IsAuthenticated]
-    http_method_names = ["post", "patch", "delete", "head", "options"]
+    http_method_names = ["get", "post", "patch", "delete", "head", "options"]
+
+    def list(self, request, *args, **kwargs):
+        """Not exposed: messages are read through their consultation.
+
+        Only the detail route answers GET, for the notification deep links that
+        carry a message id and need the conversation it belongs to.
+        """
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def get_queryset(self):
         user = self.request.user

@@ -43,6 +43,7 @@ export class VerifyInvite implements OnInit, OnDestroy {
   authToken: string | null = null;
   action: string | null = null;
   actionId: string | null = null;
+  actionModel: string | null = null;
   isLoading = true;
   requiresVerification = false;
   errorMessage: string | null = null;
@@ -76,6 +77,7 @@ export class VerifyInvite implements OnInit, OnDestroy {
     this.authToken = this.route.snapshot.queryParamMap.get('auth');
     this.action = this.route.snapshot.queryParamMap.get('action');
     this.actionId = this.route.snapshot.queryParamMap.get('id');
+    this.actionModel = this.route.snapshot.queryParamMap.get('model');
 
     if (this.authToken) {
       this.authenticateWithToken();
@@ -172,11 +174,7 @@ export class VerifyInvite implements OnInit, OnDestroy {
       this.t.instant('verifyInvite.authTitle'),
       this.t.instant('verifyInvite.authSuccess')
     );
-    const route = this.actionHandler.getRouteForAction(
-      this.action,
-      this.actionId
-    );
-    this.router.navigateByUrl(route);
+    this.actionHandler.handleAction(this.action, this.actionId, this.actionModel);
   }
 
   resendVerificationCode(): void {

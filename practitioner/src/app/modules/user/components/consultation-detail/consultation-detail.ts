@@ -207,6 +207,7 @@ export class ConsultationDetail implements OnInit, OnDestroy {
   editingAppointment = signal<Appointment | null>(null);
 
   private pendingJoinAppointmentId: number | null = null;
+  private appointmentsLoaded = false;
   private recentlyModifiedAppointmentIds = new Set<number>();
 
 
@@ -481,13 +482,26 @@ export class ConsultationDetail implements OnInit, OnDestroy {
 
   private checkPendingJoin(): void {
     if (!this.pendingJoinAppointmentId) return;
+    // Only act once the panel has answered: its list is what carries the
+    // scheduled time the early-join check needs.
+    if (!this.appointmentsLoaded) return;
 
-    const appointment = this.appointments().find(a => a.id === this.pendingJoinAppointmentId);
-    if (appointment) {
-      const appointmentId = this.pendingJoinAppointmentId;
-      this.pendingJoinAppointmentId = null;
+    const appointmentId = this.pendingJoinAppointmentId;
+    this.pendingJoinAppointmentId = null;
+
+    if (this.appointments().some(a => a.id === appointmentId)) {
       this.appointmentPanel()?.joinVideoCall(appointmentId);
+      return;
     }
+
+    // The appointment is out of the panel's current view — another time filter,
+    // or simply a later page. The call itself does not depend on that list, so
+    // open the lobby rather than dropping the deep link on the floor.
+    this.activeCallService.startCall({
+      appointmentId,
+      consultationId: this.consultationId,
+    });
+    this.incomingCallService.setActiveCall(appointmentId);
   }
 
 
@@ -1822,6 +1836,7 @@ export class ConsultationDetail implements OnInit, OnDestroy {
 
   onAppointmentsLoaded(appointments: Appointment[]): void {
     this.appointments.set(appointments);
+    this.appointmentsLoaded = true;
 
     if (this.pendingHighlightAppointmentId !== null) {
       const id = this.pendingHighlightAppointmentId;

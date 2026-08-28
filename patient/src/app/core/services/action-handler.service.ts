@@ -82,6 +82,23 @@ export class ActionHandlerService {
       return;
     }
 
+    // A `message` link carries the message, not the conversation: resolve it so
+    // the chat actually opens instead of just landing on the dashboard.
+    if (action === 'message' && id) {
+      this.consultationService.getMessageById(Number(id)).subscribe({
+        next: (message) =>
+          this.navigate(
+            '/home',
+            message.consultation
+              ? { openChat: String(message.consultation) }
+              : undefined,
+            mode,
+          ),
+        error: () => this.navigate('/home', undefined, mode),
+      });
+      return;
+    }
+
     const actionRoute = this.getRouteWithParams(action, id);
     this.navigate(actionRoute.path, actionRoute.queryParams, mode);
   }
@@ -93,10 +110,14 @@ export class ActionHandlerService {
     mode: ActionNavigationMode,
   ): void {
     const appointment = participant.appointment;
+    // can_join is the server's own answer — it also covers a closed
+    // consultation and a roster the patient is no longer on. Older payloads
+    // without the flag fall back to the status rule.
+    const reachable = appointment
+      ? appointment.can_join ?? isJoinableAppointmentStatus(appointment.status)
+      : false;
     const canJoin =
-      appointment &&
-      isJoinableAppointmentStatus(appointment.status) &&
-      (action === 'join' || this.isJoinable(appointment));
+      reachable && (action === 'join' || this.isJoinable(appointment!));
 
     if (!canJoin) {
       this.navigate(`/confirm-presence/${participantId}`, undefined, mode);

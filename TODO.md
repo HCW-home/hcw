@@ -22,3 +22,6 @@ Quand on créer un rdv, propose de ne pas créer de consultation (donc pas de ch
 Dans la vue map https://iabsis.consult.hcw-at-home.com/map, une sélection l'affiche sur la carte
 
 Lien de présence non fonctionnel
+
+
+Problème de permission quand on est supposé voir les messages.

@@ -388,6 +388,15 @@ class CanJoinFlagTests(_OutcomeBase):
         appointment = self._appointment(status=AppointmentStatus.draft)
         self.assertFalse(self._detail(appointment).data["can_join"])
 
+    def test_participant_detail_carries_the_flag(self):
+        """The invitation deep links read this payload to pick the lobby."""
+        appointment = self._appointment(status=AppointmentStatus.completed)
+        url = reverse("participant-detail", kwargs={"pk": self.doc_participant.pk})
+
+        response = self.client.get(url)
+
+        self.assertTrue(response.data["appointment"]["can_join"])
+
 
 class JoinAfterOutcomeTests(_OutcomeBase):
     """The join endpoint follows the same rule as the can_join flag."""

@@ -639,6 +639,28 @@ class ConsultationSerializer(CustomFieldsMixin, serializers.ModelSerializer):
         return None
 
 
+def appointment_can_join(appointment, request):
+    """Whether the requesting user is allowed into this appointment's call.
+
+    Mirrors the guard in the `join` endpoints so every front-end entry point can
+    hide the button from a single flag instead of restating the rule. An
+    appointment already qualified as completed or no-show stays joinable: the
+    call can always be resumed.
+    """
+    if not request or not request.user.is_authenticated:
+        return False
+    if appointment.type != Type.online:
+        return False
+    if appointment.status not in JOINABLE_APPOINTMENT_STATUSES:
+        return False
+    if appointment.consultation_id and appointment.consultation.closed_at:
+        return False
+    return any(
+        p.user_id == request.user.pk and p.is_active
+        for p in appointment.participant_set.all()
+    )
+
+
 class AppointmentSerializer(serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(read_only=True)
     consultation_id = serializers.IntegerField(required=False, allow_null=True)
@@ -690,26 +712,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_by", "created_at"]
 
     def get_can_join(self, obj):
-        """Whether the requesting user is allowed into this appointment's call.
-
-        Mirrors the guard in the `join` endpoints so every front-end entry point
-        can hide the button from a single flag instead of restating the rule.
-        An appointment already qualified as completed or no-show stays joinable:
-        the call can always be resumed.
-        """
-        request = self.context.get("request")
-        if not request or not request.user.is_authenticated:
-            return False
-        if obj.type != Type.online:
-            return False
-        if obj.status not in JOINABLE_APPOINTMENT_STATUSES:
-            return False
-        if obj.consultation_id and obj.consultation.closed_at:
-            return False
-        return any(
-            p.user_id == request.user.pk and p.is_active
-            for p in obj.participant_set.all()
-        )
+        return appointment_can_join(obj, self.context.get("request"))
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -1180,13 +1183,16 @@ class AttachmentMetadataSerializer(serializers.Serializer):
 
 class ConsultationMessageSerializer(serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(default=serializers.CurrentUserDefault())
-    # consultation = serializers.PrimaryKeyRelatedField(read_only=True)
+    # Read-only: notification deep links carry a message id and need the
+    # conversation it belongs to in order to open anything.
+    consultation = serializers.PrimaryKeyRelatedField(read_only=True)
     attachment = serializers.SerializerMethodField()
 
     class Meta:
         model = Message
         fields = [
             "id",
+            "consultation",
             "content",
             "attachment",
             "recording_url",
@@ -1328,6 +1334,7 @@ class AppointmentDetailSerializer(serializers.ModelSerializer):
     participants = ParticipantReadSerializer(
         many=True, read_only=True, source="participant_set"
     )
+    can_join = serializers.SerializerMethodField()
 
     class Meta:
         model = Appointment
@@ -1344,7 +1351,11 @@ class AppointmentDetailSerializer(serializers.ModelSerializer):
             "status",
             "created_at",
             "participants",
+            "can_join",
         ]
+
+    def get_can_join(self, obj):
+        return appointment_can_join(obj, self.context.get("request"))
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

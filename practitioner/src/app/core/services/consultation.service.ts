@@ -542,6 +542,11 @@ export class ConsultationService {
     );
   }
 
+  /** One message, to resolve the consultation a `message` deep link targets. */
+  getMessageById(id: string): Observable<ConsultationMessage> {
+    return this.http.get<ConsultationMessage>(`${this.apiUrl}/messages/${id}/`);
+  }
+
   confirmParticipantPresence(
     participantId: string,
     isConfirmed: boolean | null
