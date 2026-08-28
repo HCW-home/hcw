@@ -15,15 +15,15 @@ export const MenuItems: Sidebar[] = [
     icon: 'stethoscope.svg',
   },
   {
-    name: 'sidebar.patients',
-    subtitle: 'sidebar.patientsSubtitle',
-    path: `/${RoutePaths.PATIENTS}`,
-    icon: 'user.svg',
-  },
-  {
     name: 'sidebar.appointments',
     subtitle: 'sidebar.appointmentsSubtitle',
     path: `/${RoutePaths.APPOINTMENTS}`,
     icon: 'clock.svg',
+  },
+  {
+    name: 'sidebar.patients',
+    subtitle: 'sidebar.patientsSubtitle',
+    path: `/${RoutePaths.PATIENTS}`,
+    icon: 'user.svg',
   },
 ];
