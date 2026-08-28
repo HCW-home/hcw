@@ -19,6 +19,7 @@ from boto3.s3.transfer import TransferConfig
 from botocore.config import Config
 from celery.schedules import crontab
 from django.core.exceptions import ImproperlyConfigured
+from django.templatetags.static import static
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import gettext_noop
@@ -274,6 +275,8 @@ LANGUAGES = (
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = "static/"
+
+STATICFILES_DIRS = [BASE_DIR / "core/static"]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -541,6 +544,8 @@ SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 # Unfold Admin Configuration
 UNFOLD = {
     "SHOW_LANGUAGES": True,
+    # Unfold dropped its django-modeltranslation tab styling in 0.104
+    "STYLES": [lambda request: static("css/modeltranslation-tabs.css")],
     "SITE_TITLE": _("HCW@Home Admin"),
     "SITE_HEADER": _("HCW@Home Administration"),
     "SITE_URL": "/",
