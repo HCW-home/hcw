@@ -20,3 +20,5 @@ Dans fr/admin/consultations/reason/1/change/, il faudrait une nouvelle option po
 Quand on créer un rdv, propose de ne pas créer de consultation (donc pas de chat)
 
 Dans la vue map https://iabsis.consult.hcw-at-home.com/map, une sélection l'affiche sur la carte
+
+Lien de présence non fonctionnel

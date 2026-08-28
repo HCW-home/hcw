@@ -25,6 +25,7 @@ import {
   DashboardNextAppointment,
   AppointmentType,
   AppointmentStatus,
+  isJoinableAppointmentStatus,
 } from '../../../../core/models/consultation';
 import { getErrorMessage } from '../../../../core/utils/error-helper';
 import { getAppointmentBadgeType, parseDateWithoutTimezone } from '../../../../shared/tools/helper';
@@ -263,7 +264,10 @@ export class Dashboard implements OnInit, OnDestroy {
     if (appointment.can_join !== undefined) {
       return appointment.can_join;
     }
-    return this.isOnlineAppointment(appointment.type);
+    return (
+      isJoinableAppointmentStatus(appointment.status) &&
+      this.isOnlineAppointment(appointment.type)
+    );
   }
 
   viewAppointment(appointment: Appointment): void {

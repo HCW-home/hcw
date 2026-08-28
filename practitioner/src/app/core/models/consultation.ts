@@ -75,6 +75,22 @@ export enum AppointmentType {
   INPERSON = 'inPerson',
 }
 
+/**
+ * Statuses whose call room stays reachable, mirroring the backend rule behind
+ * `can_join`. Qualifying an appointment as completed or no-show is bookkeeping,
+ * not a lock: the call must remain rejoinable. Only a cancelled appointment and
+ * a draft one — never sent to its participants — have no room to enter.
+ */
+export function isJoinableAppointmentStatus(
+  status: AppointmentStatus | string | null | undefined
+): boolean {
+  return (
+    status === AppointmentStatus.SCHEDULED ||
+    status === AppointmentStatus.COMPLETED ||
+    status === AppointmentStatus.NOSHOW
+  );
+}
+
 export interface Appointment {
   id: number;
   type: AppointmentType;

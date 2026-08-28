@@ -29,6 +29,7 @@ import {
   AppointmentType,
   Participant,
   ParticipantStatus,
+  isJoinableAppointmentStatus,
 } from '../../../../../core/models/consultation';
 import { IUser } from '../../../models/user';
 import {
@@ -266,9 +267,11 @@ export class ConfirmPresenceModal implements OnChanges, OnDestroy {
    */
   get canJoin(): boolean {
     if (!this.appointment) return false;
-    if (this.appointment.status !== AppointmentStatus.SCHEDULED) return false;
     if (this.appointment.can_join !== undefined) return this.appointment.can_join;
-    return this.isOnlineAppointment;
+    return (
+      isJoinableAppointmentStatus(this.appointment.status) &&
+      this.isOnlineAppointment
+    );
   }
 
   /** A cancelled appointment is replaced by a new one rather than amended. */

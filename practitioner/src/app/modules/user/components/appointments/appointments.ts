@@ -54,6 +54,7 @@ import {
   BookingSlot,
   Participant,
   ParticipantStatus,
+  isJoinableAppointmentStatus,
 } from '../../../../core/models/consultation';
 import { RoutePaths } from '../../../../core/constants/routes';
 import {
@@ -2136,10 +2137,10 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     // roster" — the backend rejects a join from a non-participant. Older
     // payloads without the flag fall back to the local rule.
     if (appointment.can_join !== undefined) {
-      return appointment.can_join && appointment.status === AppointmentStatus.SCHEDULED;
+      return appointment.can_join;
     }
     return (
-      appointment.status === AppointmentStatus.SCHEDULED &&
+      isJoinableAppointmentStatus(appointment.status) &&
       appointment.type === AppointmentType.ONLINE
     );
   }

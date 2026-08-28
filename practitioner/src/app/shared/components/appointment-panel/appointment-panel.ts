@@ -40,6 +40,7 @@ import {
   Appointment,
   AppointmentStatus,
   AppointmentType,
+  isJoinableAppointmentStatus,
 } from '../../../core/models/consultation';
 import { IUser } from '../../../modules/user/models/user';
 import { PaginatedResponse } from '../../../core/models/global';
@@ -602,9 +603,11 @@ export class AppointmentPanel implements OnInit, OnDestroy {
    * payloads without the flag fall back to the local rule.
    */
   canJoinVideoCall(appointment: Appointment): boolean {
-    if (appointment.status !== AppointmentStatus.SCHEDULED) return false;
     if (appointment.can_join !== undefined) return appointment.can_join;
-    return appointment.type === AppointmentType.ONLINE;
+    return (
+      isJoinableAppointmentStatus(appointment.status) &&
+      appointment.type === AppointmentType.ONLINE
+    );
   }
 
   joinVideoCall(appointmentId: number): void {

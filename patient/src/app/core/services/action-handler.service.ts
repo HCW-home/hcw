@@ -2,7 +2,11 @@ import { inject, Injectable } from '@angular/core';
 import { NavController } from '@ionic/angular/standalone';
 import { AuthService } from './auth.service';
 import { ConsultationService } from './consultation.service';
-import { Appointment, IParticipantDetail } from '../models/consultation.model';
+import {
+  Appointment,
+  IParticipantDetail,
+  isJoinableAppointmentStatus,
+} from '../models/consultation.model';
 
 export interface ActionConfig {
   route: string;
@@ -91,7 +95,7 @@ export class ActionHandlerService {
     const appointment = participant.appointment;
     const canJoin =
       appointment &&
-      appointment.status === 'scheduled' &&
+      isJoinableAppointmentStatus(appointment.status) &&
       (action === 'join' || this.isJoinable(appointment));
 
     if (!canJoin) {
