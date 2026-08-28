@@ -1,0 +1,82 @@
+{% extends "admin/change_form.html" %}
+
+{% load i18n unfold %}
+
+{% comment %}
+Unfold renders fieldset tabs and inline tabs in two separate navigation bars.
+Here both are merged into a single bar, styled like the native changeform tab
+navigation, so the form exposes one flat level of tabs: one per fieldset, plus
+one per inline.
+
+The links carry no href on purpose: a hash in the URL is picked up by Unfold's
+getCurrentTab() and would move its own "activeTab" away from "general", which
+is the value every fieldset and inline is rendered against.
+{% endcomment %}
+
+{% block extrahead %}
+    {{ block.super }}
+
+    <style>
+        /* Each inline sits in its own tab, whose label already names it */
+        #changeform-tabs [data-inline-type] > fieldset > h2 {
+            display: none;
+        }
+    </style>
+{% endblock %}
+
+{% block field_sets %}
+    {% with tabs=adminform|tabs %}
+        {% if tabs %}
+            <div id="changeform-tabs" class="flex flex-col gap-6" x-data="{ activeChangeformTab: '{{ tabs|tabs_active }}' }">
+                <div id="tabs-wrapper" class="flex items-start flex-col md:flex-row md:items-center">
+                    <div class="flex flex-row grow">
+                        <nav id="tabs-items" class="bg-base-100 flex flex-row font-medium gap-1 p-1 rounded-default text-important md:w-auto *:flex *:flex-row *:gap-1 *:cursor-pointer *:font-medium *:whitespace-nowrap *:items-center *:px-2.5 *:py-[5px] *:rounded-default *:hover:bg-base-700/[.06] dark:bg-white/[.06] *:dark:hover:bg-white/[.06] [&>.active]:bg-white [&>.active]:shadow-xs [&>.active]:dark:bg-base-700 [&>.active]:hover:bg-white [&>.active]:dark:hover:bg-base-700">
+                            {% for fieldset in tabs %}
+                                <a x-on:click="activeChangeformTab = '{{ fieldset.name|unicoded_slugify }}'" x-bind:class="{'active': activeChangeformTab == '{{ fieldset.name|unicoded_slugify }}'}">
+                                    {{ fieldset.name }}
+
+                                    {% include "unfold/helpers/tab_error_count.html" with error_count=fieldset|tabs_errors_count %}
+                                </a>
+                            {% endfor %}
+
+                            {% for inline_admin_formset in inline_admin_formsets %}
+                                <a x-on:click="activeChangeformTab = 'inline-{{ inline_admin_formset.formset.prefix|slugify }}'" x-bind:class="{'active': activeChangeformTab == 'inline-{{ inline_admin_formset.formset.prefix|slugify }}'}">
+                                    {% if inline_admin_formset.formset.max_num == 1 %}
+                                        {{ inline_admin_formset.opts.verbose_name|capfirst }}
+                                    {% else %}
+                                        {{ inline_admin_formset.opts.verbose_name_plural|capfirst }}
+                                    {% endif %}
+
+                                    {% include "unfold/helpers/inline_count.html" with inline=inline_admin_formset %}
+
+                                    {% include "unfold/helpers/tab_error_count.html" with error_count=inline_admin_formset.error_count %}
+                                </a>
+                            {% endfor %}
+                        </nav>
+                    </div>
+                </div>
+
+                {% for fieldset in tabs %}
+                    <div x-show="activeChangeformTab == '{{ fieldset.name|unicoded_slugify }}'">
+                        {% include "admin/includes/fieldset.html" %}
+                    </div>
+                {% endfor %}
+
+                {% for inline_admin_formset in inline_admin_formsets %}
+                    <div x-show="activeChangeformTab == 'inline-{{ inline_admin_formset.formset.prefix|slugify }}'">
+                        {% include inline_admin_formset.opts.template %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            {{ block.super }}
+        {% endif %}
+    {% endwith %}
+{% endblock %}
+
+{% block inline_field_sets %}
+    {# Inlines are rendered above, inside the tabs, whenever the tabs are used #}
+    {% if not adminform|tabs %}
+        {{ block.super }}
+    {% endif %}
+{% endblock %}

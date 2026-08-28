@@ -883,6 +883,48 @@ app-search-bar {
     font-family: inherit;
   }
 
+  // The sign in / sign up form, dressed as one of the wizard's own cards.
+  .auth-panel {
+    max-width: 460px;
+    margin: var(--app-spacing-xl) auto 0;
+    padding: var(--app-spacing-2xl);
+    background: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-sm);
+    text-align: left;
+  }
+
+  .auth-panel-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--app-spacing-md);
+    margin-bottom: var(--app-spacing-lg);
+
+    h3 {
+      margin: 0;
+      font-size: 1.0625rem;
+      font-weight: 700;
+      color: var(--app-ink-1);
+    }
+  }
+
+  .auth-panel-back {
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--app-teal-dark);
+    font-family: inherit;
+    font-size: .875rem;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
   .choice-cards {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -963,6 +1005,10 @@ app-search-bar {
     }
 
     .choice-card {
+      padding: var(--app-spacing-xl);
+    }
+
+    .auth-panel {
       padding: var(--app-spacing-xl);
     }
   }

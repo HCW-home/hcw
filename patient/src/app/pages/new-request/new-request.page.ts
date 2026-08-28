@@ -21,6 +21,7 @@ import { SpecialityService } from '../../core/services/speciality.service';
 import { DoctorService } from '../../core/services/doctor.service';
 import { ConsultationService, ConsultationRequestData } from '../../core/services/consultation.service';
 import { AuthService } from '../../core/services/auth.service';
+import { AuthFormComponent, AuthFormMode } from '../../shared/components/auth-form/auth-form.component';
 import { PractitionerSearchService } from '../../core/services/practitioner-search.service';
 import { Speciality, Doctor } from '../../core/models/doctor.model';
 import { Reason, Slot, CustomField } from '../../core/models/consultation.model';
@@ -61,6 +62,7 @@ interface BookingDraft {
     SearchBarComponent,
     SearchMapComponent,
     SearchResultCardComponent,
+    AuthFormComponent,
     TranslatePipe
   ]
 })
@@ -69,6 +71,8 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
   private t = inject(TranslationService);
 
   currentStep = signal(1);
+  // Which form the sign-in step shows, if the user picked one yet.
+  authMode = signal<AuthFormMode | null>(null);
   totalSteps = 6;
   isLoading = signal(false);
   isSubmitting = signal(false);
@@ -472,27 +476,48 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
   proceedToRecapOrAuth(): void {
     this.loadCustomFields();
     if (!this.authService.isAuthenticatedValue) {
-      this.currentStep.set(5);
-      this.authService.getConfig().subscribe({
-        next: (config: any) => {
-          if (!config) return;
-          this.registrationEnabled.set(!!config.registration_enabled && !config.force_temporary_patients);
-        },
-      });
+      this.showAuthStep();
       return;
     }
     this.currentStep.set(6);
   }
 
-  goToLogin(): void {
-    this.saveDraftAndRedirect('/login');
+  /** Ask for a sign in, inside the wizard, on a fresh choice of form. */
+  private showAuthStep(): void {
+    this.authMode.set(null);
+    this.currentStep.set(5);
+    this.authService.getConfig().subscribe({
+      next: (config: any) => {
+        if (!config) return;
+        this.registrationEnabled.set(!!config.registration_enabled && !config.force_temporary_patients);
+      },
+    });
   }
 
-  goToRegister(): void {
-    this.saveDraftAndRedirect('/register');
+  setAuthMode(mode: AuthFormMode): void {
+    this.authMode.set(mode);
   }
 
-  private saveDraftAndRedirect(path: string): void {
+  clearAuthMode(): void {
+    this.authMode.set(null);
+  }
+
+  // Signed in without ever leaving the wizard: straight on to the recap.
+  onAuthenticated(): void {
+    this.authMode.set(null);
+    this.currentStep.set(6);
+  }
+
+  // Resetting a password does need another page, so the request is stashed and
+  // replayed when the user comes back signed in.
+  goToForgotPassword(identifier: string): void {
+    this.saveDraft();
+    this.router.navigate(['/forgot-password'], {
+      queryParams: { email: identifier, action: 'completeBooking' },
+    });
+  }
+
+  private saveDraft(): void {
     const draft: BookingDraft = {
       speciality: this.selectedSpeciality(),
       doctor: this.selectedDoctor(),
@@ -505,7 +530,6 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
       sessionStorage.setItem(BOOKING_DRAFT_KEY, JSON.stringify(draft));
     } catch {
     }
-    this.router.navigate([path], { queryParams: { action: 'completeBooking' } });
   }
 
   private tryRestoreDraft(): boolean {
@@ -567,8 +591,13 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
       case 4:
         this.currentStep.set(this.visitedDoctorStep ? 3 : 2);
         break;
-      case 5: 
-        this.currentStep.set(4);
+      case 5:
+        // Inside a form: step back to the choice between signing in and up.
+        if (this.authMode()) {
+          this.clearAuthMode();
+        } else {
+          this.currentStep.set(4);
+        }
         break;
       case 6: {
         const reason = this.selectedReason();
@@ -634,7 +663,10 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
     }
 
     if (!this.authService.isAuthenticatedValue) {
-      this.saveDraftAndRedirect("/login");
+      // The session lapsed between the sign-in step and the submission: ask
+      // again here, the request is kept as it stands.
+      this.saveDraft();
+      this.showAuthStep();
       return;
     }
 

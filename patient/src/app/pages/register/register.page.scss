@@ -93,65 +93,6 @@
     }
   }
 
-  .step-animate {
-    animation: fadeSlideIn 0.3s ease-out;
-  }
-
-  .register-form {
-    .name-row {
-      display: flex;
-      gap: 12px;
-
-      .input-item {
-        flex: 1;
-      }
-    }
-
-    .input-item {
-      margin-bottom: 12px;
-      --background: var(--app-input-background, #f7f8fa);
-      --border-radius: 10px;
-      --padding-start: 16px;
-      --padding-end: 16px;
-      --inner-padding-end: 16px;
-      border-radius: 10px;
-
-      ion-icon {
-        margin-right: 10px;
-        color: var(--app-text-tertiary);
-      }
-
-      ion-input {
-        --padding-top: 12px;
-        --padding-bottom: 12px;
-        color: var(--app-input-text);
-        --placeholder-color: var(--app-input-placeholder);
-      }
-
-      .password-toggle {
-        cursor: pointer;
-      }
-    }
-
-    .error-message {
-      display: block;
-      margin: -8px 0 8px 16px;
-
-      .error-text {
-        font-size: 0.75rem;
-      }
-    }
-
-    .action-button {
-      --background: var(--ion-color-primary);
-      --padding-top: 14px;
-      --padding-bottom: 14px;
-      font-weight: 600;
-      font-size: 1rem;
-      margin-top: 16px;
-    }
-  }
-
   .disabled-container {
     text-align: center;
     padding: 20px 0;
@@ -171,24 +112,6 @@
     }
   }
 
-  .login-link {
-    text-align: center;
-    margin-top: 24px;
-    display: flex;
-    justify-content: center;
-    gap: 4px;
-
-    .login-text {
-      font-size: 0.9rem;
-      color: var(--app-text-secondary);
-    }
-
-    .link-text {
-      font-size: 0.9rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-  }
 }
 
 @media (max-width: 700px) {
@@ -232,11 +155,6 @@
       .right-content {
         max-width: 100%;
       }
-    }
-
-    .register-form .name-row {
-      flex-direction: column;
-      gap: 0;
     }
   }
 }

@@ -150,8 +150,8 @@ class UserChangeFormWithLocation(UserChangeForm):
 class PractitionerCustomFieldInline(NonrelatedStackedInline):
     model = CustomFieldValue
     extra = 0
-    verbose_name = "Custom field value"
-    verbose_name_plural = "Custom fields (Practitioner)"
+    verbose_name = _("Custom field")
+    verbose_name_plural = _("Custom fields")
     fields = ["custom_field", "value"]
 
     def get_form_queryset(self, obj):
@@ -185,7 +185,8 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
     list_editable = ["is_active"]
     ordering = ["email"]
     readonly_fields = ("last_login", "date_joined", "one_time_auth_token", "verification_code",
-                        "verification_code_created_at", "verification_attempts", "accepted_term")
+                        "verification_code_created_at", "verification_attempts", "accepted_term",
+                        "created_by")
     search_fields = ("first_name", "last_name", "email")
     # export_form_class = SelectableFieldsExportForm
 
@@ -208,56 +209,68 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
         "specialities",
     )
     filter_horizontal = ()
-    autocomplete_fields = ["main_organisation", "organisations", "specialities", "languages", "created_by"]
+    autocomplete_fields = ["main_organisation", "organisations", "specialities", "languages"]
 
+    # Each fieldset carrying the "tab" class is rendered as a tab by Unfold
     fieldsets = (
         (
-            _("Personal info"),
-            {"fields": ("email", "first_name", "last_name", "job_title", "password")},
-        ),
-        (
-            _("Permissions"),
+            _("Authentication"),
             {
+                "classes": ["tab"],
                 "fields": (
+                    "email",
+                    "mobile_phone_number",
+                    "password",
                     "is_active",
                     "is_staff",
                     "is_superuser",
                     "is_practitioner",
                     "temporary",
+                    "is_first_login",
                     "created_by",
-                    # "user_permissions",
+                    "accepted_term",
+                    "one_time_auth_token",
+                    "verification_code",
+                    "verification_code_created_at",
+                    "verification_attempts",
+                    "last_login",
+                    "date_joined",
                 ),
             },
         ),
         (
-            "Additional Info",
+            _("Profile"),
             {
+                "classes": ["tab"],
                 "fields": (
-                    "street",
-                    "city",
-                    "postal_code",
-                    "country",
-                    "location",
-                    "app_preferences",
-                    "mobile_phone_number",
-                    "communication_method",
-                    "timezone",
-                    "preferred_language",
-                    "languages",
-                    "specialities",
+                    "first_name",
+                    "last_name",
+                    "job_title",
+                    "picture",
                     "main_organisation",
                     "organisations",
-                    "picture",
-                )
+                    "specialities",
+                    "languages",
+                    "preferred_language",
+                    "communication_method",
+                    "app_preferences",
+                ),
             },
         ),
         (
-            "Authentication",
-            {"fields": ("one_time_auth_token", "verification_code",
-                        "is_first_login", "verification_code_created_at", "verification_attempts",
-                        "accepted_term")},
+            _("Location"),
+            {
+                "classes": ["tab"],
+                "fields": (
+                    "street",
+                    "postal_code",
+                    "city",
+                    "country",
+                    "location",
+                    "timezone",
+                ),
+            },
         ),
-        (_("Important dates"), {"fields": ("last_login", "date_joined")}),
     )
 
     add_fieldsets = (

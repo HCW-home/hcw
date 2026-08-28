@@ -2875,3 +2875,19 @@ msgstr "Saisissez votre adresse e-mail ou votre numéro de téléphone."
 #: users/identifier.py:45
 msgid "Enter a valid email address."
 msgstr "Saisissez une adresse e-mail valide."
+
+#: users/admin.py
+msgid "Profile"
+msgstr "Profil"
+
+#: users/admin.py
+msgid "Location"
+msgstr "Emplacement"
+
+#: users/admin.py
+msgid "Custom field"
+msgstr "Champ personnalisé"
+
+#: users/admin.py
+msgid "Custom fields"
+msgstr "Champs personnalisés"

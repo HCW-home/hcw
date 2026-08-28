@@ -239,23 +239,45 @@
             <h2 class="step-title">{{ 'newRequest.signInToContinue' | translate }}</h2>
             <p class="step-description">{{ 'newRequest.signInToContinueDesc' | translate }}</p>
 
-            <div class="choice-cards" [class.single-choice]="!registrationEnabled()">
-              <div class="choice-card" (click)="goToLogin()">
-                <ion-icon name="log-in-outline"></ion-icon>
-                <h3>{{ 'newRequest.loginTitle' | translate }}</h3>
-                <p>{{ 'newRequest.loginDesc' | translate }}</p>
-                <button class="primary-action">{{ 'login.title' | translate }}</button>
-              </div>
-
-              @if (registrationEnabled()) {
-                <div class="choice-card" (click)="goToRegister()">
-                  <ion-icon name="person-add-outline"></ion-icon>
-                  <h3>{{ 'newRequest.registerTitle' | translate }}</h3>
-                  <p>{{ 'newRequest.registerDesc' | translate }}</p>
-                  <button class="secondary-action">{{ 'login.signUp' | translate }}</button>
+            <!-- The form is hosted here rather than on /login: leaving the
+                 wizard for another page would drop the request being built. -->
+            @if (authMode(); as mode) {
+              <div class="auth-panel">
+                <div class="auth-panel-head">
+                  <h3>
+                    {{ (mode === 'register' ? 'newRequest.registerTitle' : 'newRequest.loginTitle') | translate }}
+                  </h3>
+                  <button type="button" class="auth-panel-back" (click)="clearAuthMode()">
+                    {{ 'common.back' | translate }}
+                  </button>
                 </div>
-              }
-            </div>
+                <app-auth-form
+                  [mode]="mode"
+                  [showModeSwitch]="registrationEnabled()"
+                  (authenticated)="onAuthenticated()"
+                  (modeChange)="setAuthMode($event)"
+                  (forgotPassword)="goToForgotPassword($event)">
+                </app-auth-form>
+              </div>
+            } @else {
+              <div class="choice-cards" [class.single-choice]="!registrationEnabled()">
+                <div class="choice-card" (click)="setAuthMode('login')">
+                  <ion-icon name="log-in-outline"></ion-icon>
+                  <h3>{{ 'newRequest.loginTitle' | translate }}</h3>
+                  <p>{{ 'newRequest.loginDesc' | translate }}</p>
+                  <button class="primary-action">{{ 'login.title' | translate }}</button>
+                </div>
+
+                @if (registrationEnabled()) {
+                  <div class="choice-card" (click)="setAuthMode('register')">
+                    <ion-icon name="person-add-outline"></ion-icon>
+                    <h3>{{ 'newRequest.registerTitle' | translate }}</h3>
+                    <p>{{ 'newRequest.registerDesc' | translate }}</p>
+                    <button class="secondary-action">{{ 'login.signUp' | translate }}</button>
+                  </div>
+                }
+              </div>
+            }
           </div>
         }
 

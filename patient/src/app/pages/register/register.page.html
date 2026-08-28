@@ -16,57 +16,12 @@
           <p>{{ 'register.registrationDisabled' | translate }}</p>
         </div>
         } @else {
-        <form
-          [formGroup]="registerForm"
-          (ngSubmit)="onRegister()"
-          class="register-form step-animate"
-        >
-          <ion-item lines="full" class="input-item">
-            <ion-icon name="mail-outline" slot="start"></ion-icon>
-            <ion-input
-              type="text"
-              [placeholder]="'register.identifierPlaceholder' | translate"
-              formControlName="identifier"
-            >
-            </ion-input>
-          </ion-item>
-          @if (registerForm.get('identifier')?.touched &&
-          registerForm.get('identifier')?.errors; as errors) {
-          <ion-text color="danger" class="error-message">
-            <span class="error-text">
-              @if (errors['phoneNeedsCountryCode']) {
-                {{ 'register.phoneNeedsCountryCode' | translate }}
-              } @else {
-                {{ 'register.identifierInvalid' | translate }}
-              }
-            </span>
-          </ion-text>
-          }
-
-          <ion-text color="medium" class="helper-text">
-            <small>{{ 'register.identifierHelp' | translate }}</small>
-          </ion-text>
-
-          <ion-button
-            expand="block"
-            shape="round"
-            type="submit"
-            [disabled]="registerForm.invalid"
-            class="action-button"
-          >
-            {{ 'register.title' | translate }}
-          </ion-button>
-        </form>
+        <app-auth-form
+          mode="register"
+          (authenticated)="onAuthenticated()"
+          (modeChange)="goToLogin()">
+        </app-auth-form>
         }
-
-        <div class="login-link">
-          <ion-text class="login-text" color="medium">
-            {{ 'register.hasAccount' | translate }}
-          </ion-text>
-          <ion-text color="primary" (click)="goToLogin()" class="link-text">
-            {{ 'common.signIn' | translate }}
-          </ion-text>
-        </div>
 
         <app-language-selector></app-language-selector>
       </div>
