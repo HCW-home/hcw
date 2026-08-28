@@ -54,6 +54,7 @@ export interface IUser {
   communication_method: CommunicationMethodType;
   mobile_phone_number?: string;
   preferred_language?: number | null;
+  preferred_language_name?: string;
   timezone: string;
   street?: string;
   city?: string;

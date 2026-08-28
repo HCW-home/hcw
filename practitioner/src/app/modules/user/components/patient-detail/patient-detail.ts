@@ -579,6 +579,9 @@ export class PatientDetail implements OnInit, OnDestroy {
     if (patient.languages && patient.languages.length > 0) {
       return patient.languages.map(l => l.name).join(', ');
     }
+    if (patient.preferred_language_name) {
+      return patient.preferred_language_name;
+    }
     return '';
   }
 

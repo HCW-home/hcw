@@ -70,6 +70,7 @@ class UserDetailsSerializer(CustomFieldsMixin, serializers.ModelSerializer):
     organisations = OrganisationSerializer(many=True, read_only=True)
     languages = LanguageSerializer(many=True, read_only=True)
     specialities = SpecialitySerializer(many=True, read_only=True)
+    preferred_language_name = serializers.SerializerMethodField()
 
     is_online = serializers.BooleanField(read_only=True)
     mobile_phone_number = serializers.CharField(
@@ -113,6 +114,7 @@ class UserDetailsSerializer(CustomFieldsMixin, serializers.ModelSerializer):
             "main_organisation",
             "organisations",
             "preferred_language",
+            "preferred_language_name",
             "languages_ids",
             "languages",
             "is_online",
@@ -136,6 +138,7 @@ class UserDetailsSerializer(CustomFieldsMixin, serializers.ModelSerializer):
             "encrypted_private_key",
             "encryption_passphrase_pending",
             "encryption_key_lost",
+            "preferred_language_name",
         ]
 
     def get_encrypted_private_key(self, obj):
@@ -147,6 +150,12 @@ class UserDetailsSerializer(CustomFieldsMixin, serializers.ModelSerializer):
         ):
             return None
         return obj.encrypted_private_key or None
+
+    def get_preferred_language_name(self, obj):
+        if obj.preferred_language:
+            lang_dict = dict(settings.LANGUAGES)
+            return lang_dict.get(obj.preferred_language, obj.preferred_language)
+        return None
 
     def _custom_field_target(self, instance):
         """Custom fields are scoped to the user role: practitioner vs patient."""
