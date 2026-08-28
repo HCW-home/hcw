@@ -13,10 +13,10 @@
         <link rel="canonical" href="https://hcw-at-home.com/docs/admin/advanced-options/">
       
       
-        <link rel="prev" href="../reasons/">
+        <link rel="prev" href="../fhir/">
       
       
-        <link rel="next" href="../../deployment/docker-compose/">
+        <link rel="next" href="../../development/guidelines/">
       
       
         
@@ -763,6 +763,90 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../sso/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Single Sign-On (SSO)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../encryption/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    End-to-End Encryption
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fhir/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FHIR R4 Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -867,6 +951,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Scheduling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#appointment-outcome" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appointment outcome
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -925,10 +1026,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#sso-configuration" class="md-nav__link">
+  <a href="#patient-management" class="md-nav__link">
     <span class="md-ellipsis">
       
-        SSO Configuration
+        Patient Management
       
     </span>
   </a>
@@ -983,7 +1084,7 @@
   <span class="md-ellipsis">
     
   
-    Deployment
+    Development
   
 
     
@@ -996,6 +1097,95 @@
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/guidelines/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guidelines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1048,6 +1238,34 @@
     
   
     Debian Packages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/environment-variables/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment Variables
   
 
     
@@ -1136,6 +1354,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Scheduling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#appointment-outcome" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appointment outcome
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1194,10 +1429,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#sso-configuration" class="md-nav__link">
+  <a href="#patient-management" class="md-nav__link">
     <span class="md-ellipsis">
       
-        SSO Configuration
+        Patient Management
       
     </span>
   </a>
@@ -1325,8 +1560,36 @@
 <td>10</td>
 <td>How early participants are allowed to join the video room before the scheduled start time.</td>
 </tr>
+<tr>
+<td>Automatically mark past online appointments as completed or no-show</td>
+<td><code>ENABLE_APPOINTMENT_OUTCOME_DETECTION</code></td>
+<td>TRUE</td>
+<td>Once an online appointment is over, it is marked <strong>completed</strong> when at least two participants joined the call, and <strong>no show</strong> otherwise. A status set by hand is never overwritten, and in-person appointments are always qualified manually.</td>
+</tr>
+<tr>
+<td>Lookback window for automatic outcome detection, in days</td>
+<td><code>APPOINTMENT_OUTCOME_LOOKBACK_DAYS</code></td>
+<td>7</td>
+<td>Only appointments scheduled within this many days back are qualified automatically. Protects older records from being rewritten when the feature is turned on.</td>
+</tr>
 </tbody>
 </table>
+<h3 id="appointment-outcome">Appointment outcome</h3>
+<p>An appointment carries one of five statuses: <code>draft</code>, <code>scheduled</code>, <code>completed</code>,
+<code>noshow</code>, <code>cancelled</code>.</p>
+<p>Attendance is recorded on the participants: joining the call stamps the
+participant as <em>arrived</em>. The appointment itself stays <code>scheduled</code> for the whole
+call, and is qualified afterwards by a periodic task, once the join window
+(<code>CALL_LIMIT_JOIN_MINUTES</code> after the expected end) has elapsed:</p>
+<ul>
+<li>at least two participants arrived (or every participant, for a
+  one-participant appointment) → <strong>completed</strong></li>
+<li>otherwise → <strong>no show</strong></li>
+</ul>
+<p>In-person appointments have no join step, so they are never qualified
+automatically: a practitioner sets their outcome from the appointment list. The
+same manual action corrects an automatic decision — and because the task only
+ever looks at <code>scheduled</code> appointments, a manual status is never overwritten.</p>
 <h2 id="security">Security</h2>
 <table>
 <thead>
@@ -1365,6 +1628,11 @@
 <td>Base URL of practitioner frontend</td>
 <td><code>PRACTITIONER_BASE_URL</code></td>
 <td>The public URL where the practitioner application is hosted (e.g., <code>https://practitioner.example.com</code>). Used in notification emails sent to practitioners.</td>
+</tr>
+<tr>
+<td>Public base URL of this backend</td>
+<td><code>BACKEND_BASE_URL</code></td>
+<td>The publicly reachable URL of the backend itself (e.g., <code>https://api.example.com</code>). Used as the static base of WhatsApp call-to-action buttons and of the Twilio delivery status webhook, so it must be reachable from the internet. Changing it invalidates already approved WhatsApp templates, see <a href="../messaging-providers/#whatsapp">Messaging Providers</a>.</td>
 </tr>
 </tbody>
 </table>
@@ -1443,9 +1711,25 @@
 </tr>
 </tbody>
 </table>
-<h2 id="sso-configuration">SSO Configuration</h2>
-<p>OpenID Connect (SSO) can be configured to delegate authentication to an external identity provider (Keycloak, Azure AD, etc.). Practitioners log in via the "Sign in with..." button, and accounts are automatically created on first login.</p>
-<p><img alt="SSO configuration" src="../../assets/images/admin-sso-configuration.png" /></p>
+<h2 id="patient-management">Patient Management</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Code</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Force all newly created patients to be temporary users</td>
+<td><code>FORCE_TEMPORARY_PATIENTS</code></td>
+<td>FALSE</td>
+<td>When enabled, every newly created patient is forced to be a temporary user (no permanent patient accounts). The <code>temporary</code> toggle in the patient creation modal is locked on. Existing permanent patients are not converted and can still be edited without changing their status. The "Patients" menu entry is hidden from the practitioner sidebar, and on the patient app the self-registration page and password login are disabled — only magic-link access remains. Sending <code>temporary=false</code> to the API returns HTTP 400.</td>
+</tr>
+</tbody>
+</table>
 
 
 

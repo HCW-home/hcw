@@ -10,19 +10,19 @@
       
       
       
-        <link rel="canonical" href="https://hcw-at-home.com/docs/admin/messaging-providers/">
+        <link rel="canonical" href="https://hcw-at-home.com/docs/admin/encryption/">
       
       
-        <link rel="prev" href="../organizations/">
+        <link rel="prev" href="../sso/">
       
       
-        <link rel="next" href="../media-servers/">
+        <link rel="next" href="../fhir/">
       
       
         
           <link rel="alternate" href="./" hreflang="en">
         
-          <link rel="alternate" href="../../fr/admin/messaging-providers/" hreflang="fr">
+          <link rel="alternate" href="../../fr/admin/encryption/" hreflang="fr">
         
       
       
@@ -31,7 +31,7 @@
     
     
       
-        <title>Messaging Providers - HCW@Home Documentation</title>
+        <title>End-to-End Encryption - HCW@Home Documentation</title>
       
     
     
@@ -84,7 +84,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#messaging-providers" class="md-skip">
+        <a href="#end-to-end-encryption" class="md-skip">
           Skip to content
         </a>
       
@@ -120,7 +120,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Messaging Providers
+              End-to-End Encryption
             
           </span>
         </div>
@@ -159,7 +159,7 @@
           </li>
         
           <li class="md-select__item">
-            <a href="../../fr/admin/messaging-providers/" hreflang="fr" class="md-select__link">
+            <a href="../../fr/admin/encryption/" hreflang="fr" class="md-select__link">
               Francais
             </a>
           </li>
@@ -679,37 +679,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Messaging Providers
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../messaging-providers/" class="md-nav__link">
         
   
   
@@ -725,176 +698,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#email" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Email
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#sms" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        SMS
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="SMS">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#ovh-sms" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        OVH SMS
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="OVH SMS">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-create-the-api-token" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Create the API token
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-fill-in-the-provider-in-hughome" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Fill in the provider in HUG@Home
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-test" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Test
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#whatsapp" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        WhatsApp
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="WhatsApp">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-set-the-backend-base-url" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Set the backend base URL
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-create-the-provider" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Create the provider
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-submit-the-templates-for-approval" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Submit the templates for approval
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-delivery-status" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Delivery status
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-inviting-a-contact-over-whatsapp" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Inviting a contact over WhatsApp
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -988,10 +791,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../encryption/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    End-to-End Encryption
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1007,6 +837,175 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-encrypted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is encrypted
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-encryption-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How encryption works
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How encryption works">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#each-follow-up-has-its-own-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Each follow-up has its own key
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#personal-keys-encrypted-with-a-passphrase" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Personal keys, encrypted with a passphrase
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#queue-keys-shared-by-every-member" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Queue keys, shared by every member
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-the-server-can-and-cannot-see" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the server can and cannot see
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enabling-encryption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabling encryption
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#browser-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Browser status
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-users-to-a-queue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding users to a queue
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recovering-from-a-lost-passphrase" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recovering from a lost passphrase
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#disabling-encryption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Disabling encryption
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#re-provisioning-missing-keypairs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Re-provisioning missing keypairs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#limitations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limitations
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1336,10 +1335,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#email" class="md-nav__link">
+  <a href="#what-is-encrypted" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Email
+        What is encrypted
       
     </span>
   </a>
@@ -1347,34 +1346,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#sms" class="md-nav__link">
+  <a href="#how-encryption-works" class="md-nav__link">
     <span class="md-ellipsis">
       
-        SMS
+        How encryption works
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="SMS">
+    <nav class="md-nav" aria-label="How encryption works">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#ovh-sms" class="md-nav__link">
+  <a href="#each-follow-up-has-its-own-key" class="md-nav__link">
     <span class="md-ellipsis">
       
-        OVH SMS
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="OVH SMS">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-create-the-api-token" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Create the API token
+        Each follow-up has its own key
       
     </span>
   </a>
@@ -1382,10 +1369,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-fill-in-the-provider-in-hughome" class="md-nav__link">
+  <a href="#personal-keys-encrypted-with-a-passphrase" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Fill in the provider in HUG@Home
+        Personal keys, encrypted with a passphrase
       
     </span>
   </a>
@@ -1393,18 +1380,24 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-test" class="md-nav__link">
+  <a href="#queue-keys-shared-by-every-member" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Test
+        Queue keys, shared by every member
       
     </span>
   </a>
   
 </li>
         
-      </ul>
-    </nav>
+          <li class="md-nav__item">
+  <a href="#what-the-server-can-and-cannot-see" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the server can and cannot see
+      
+    </span>
+  </a>
   
 </li>
         
@@ -1414,74 +1407,79 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#whatsapp" class="md-nav__link">
+  <a href="#enabling-encryption" class="md-nav__link">
     <span class="md-ellipsis">
       
-        WhatsApp
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="WhatsApp">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-set-the-backend-base-url" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Set the backend base URL
+        Enabling encryption
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#2-create-the-provider" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#browser-status" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Create the provider
+        Browser status
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#3-submit-the-templates-for-approval" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#adding-users-to-a-queue" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Submit the templates for approval
+        Adding users to a queue
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#4-delivery-status" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#recovering-from-a-lost-passphrase" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Delivery status
+        Recovering from a lost passphrase
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#5-inviting-a-contact-over-whatsapp" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#disabling-encryption" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5. Inviting a contact over WhatsApp
+        Disabling encryption
       
     </span>
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
+      
+        <li class="md-nav__item">
+  <a href="#re-provisioning-missing-keypairs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Re-provisioning missing keypairs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#limitations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limitations
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1502,224 +1500,131 @@
 
 
 
-<h1 id="messaging-providers">Messaging Providers</h1>
-<p>Messaging providers are used to send notifications, invitations, and reminders to patients and practitioners.</p>
+<h1 id="end-to-end-encryption">End-to-End Encryption</h1>
+<p>HCW@Home can encrypt the <strong>content of follow-ups</strong> (chat messages and attachments) so that the server only ever stores ciphertext. Decryption keys live in the participants' browsers.</p>
 <blockquote>
-<p><strong>Menu:</strong> Messaging &gt; Messaging providers</p>
+<p><strong>Menu:</strong> Settings &gt; Encryption</p>
 </blockquote>
-<p><img alt="Messaging providers" src="../../assets/images/admin-messaging-provider-list.png" /></p>
-<h2 id="email">Email</h2>
-<p>An SMTP provider can be configured to send emails (invitations, appointment reminders, password reset, etc.).</p>
-<h2 id="sms">SMS</h2>
-<p>An SMS gateway can be configured to send SMS notifications to patients who do not have an email address or for urgent reminders.</p>
-<h3 id="ovh-sms">OVH SMS</h3>
-<p>To send SMS through OVH, you first need an OVH SMS account, then an API token (application key, application secret and consumer key) authorized for the SMS endpoints.</p>
-<h4 id="1-create-the-api-token">1. Create the API token</h4>
-<p>Open the following URL while logged in to your OVH account. It pre-fills the <strong>exact</strong> access rules the integration needs:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>https://auth.eu.ovhcloud.com/api/createToken?GET=/sms/&amp;GET=/sms/*/jobs&amp;POST=/sms/*/jobs
-</code></pre></div>
-<div class="admonition warning">
-<p class="admonition-title">Access rules must match exactly</p>
-<p>OVH matches token access rules on the exact path. The integration calls <code>GET /sms</code> (list services) and <code>POST /sms/{service}/jobs/</code> (send), so the token <strong>must</strong> be granted <code>GET /sms/</code>, <code>GET /sms/*/jobs</code> and <code>POST /sms/*/jobs</code>. A token granted only <code>GET /sms</code> (or with a different path) returns <code>403 NOT_GRANTED_CALL</code>.</p>
-</div>
-<p>On the token creation page:</p>
-<ul>
-<li>The <strong>Application name</strong> and <strong>Application description</strong> are free text — they only help you identify what the key is used for.</li>
-<li>Set <strong>Validity</strong> to <strong>Unlimited</strong>, otherwise the token will stop working after the expiry date.</li>
-</ul>
-<p><img alt="Create OVH API key" src="../../assets/images/ovh-create-api-key.png" /></p>
-<div class="admonition danger">
-<p class="admonition-title">Copy the credentials immediately</p>
-<p>After validation, OVH shows the <strong>Application Key</strong>, <strong>Application Secret</strong> and <strong>Consumer Key</strong> <strong>only once</strong>. Copy all three before leaving the page — they cannot be displayed again afterwards.</p>
-</div>
-<p><img alt="OVH API key created" src="../../assets/images/ovh-created-api-key.png" /></p>
-<h4 id="2-fill-in-the-provider-in-hughome">2. Fill in the provider in HUG@Home</h4>
-<blockquote>
-<p><strong>Menu:</strong> Messaging &gt; Messaging providers &gt; add/edit the OVH provider</p>
-</blockquote>
+<p><img alt="Encryption settings" src="../../assets/images/admin-encryption.png" /></p>
+<p>The toggle is platform-wide: once enabled, every new follow-up is created encrypted and the server rejects any attempt to create one in clear.</p>
+<h2 id="what-is-encrypted">What is encrypted</h2>
 <table>
 <thead>
 <tr>
-<th>Field</th>
-<th>Value</th>
+<th>Item</th>
+<th>State when encryption is on</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Application key</td>
-<td>The <em>Application Key</em> from OVH</td>
+<td>Message text content</td>
+<td><strong>Encrypted</strong> (AES-GCM, base64 in DB)</td>
 </tr>
 <tr>
-<td>Application secret</td>
-<td>The <em>Application Secret</em> from OVH</td>
+<td>Message attachments</td>
+<td><strong>Encrypted</strong> (AES-GCM blob on disk)</td>
 </tr>
 <tr>
-<td>Consumer key</td>
-<td>The <em>Consumer Key</em> from OVH</td>
+<td>Attachment file name and MIME type</td>
+<td><strong>Encrypted</strong> in <code>encrypted_attachment_metadata</code></td>
 </tr>
 <tr>
-<td>Service name</td>
-<td>The SMS service name as shown in OVH (e.g. <code>sms-xxxxxxx-1</code>)</td>
+<td>Follow-up title, description, custom fields</td>
+<td>In clear</td>
 </tr>
 <tr>
-<td>Sender ID</td>
-<td>The registered sender name (see below), or leave empty</td>
+<td>Participants (beneficiary, owner, queue)</td>
+<td>In clear (relations only)</td>
+</tr>
+<tr>
+<td>Appointments, reasons, profiles</td>
+<td>In clear</td>
+</tr>
+<tr>
+<td>Video recordings, transcripts</td>
+<td>In clear</td>
 </tr>
 </tbody>
 </table>
-<div class="admonition note">
-<p class="admonition-title">Sender ID</p>
-<p>The <strong>Sender ID</strong> is the name displayed to the SMS recipient. It must be a sender <strong>registered and validated in your OVH account</strong> beforehand — OVH validates senders manually, which can take a few hours.</p>
-<p>If you leave the field <strong>empty</strong>, OVH will send from a <strong>short number</strong> instead of a named sender.</p>
-</div>
-<h4 id="3-test">3. Test</h4>
-<p>Use the <strong>Test connection</strong> action on the provider to verify the credentials and that the configured service name exists in your OVH account.</p>
-<h2 id="whatsapp">WhatsApp</h2>
-<p>WhatsApp messages are sent through <strong>Twilio</strong>. Unlike SMS or email, WhatsApp only accepts
-<strong>pre-approved message templates</strong> outside of a 24-hour conversation window opened by the
-recipient. Each notification therefore has to be submitted to Meta for approval, per language,
-before it can be delivered.</p>
-<p>At send time the platform looks for an approved template matching the notification, the provider
-and the recipient's language, falling back to the base language then to the site default. If it
-finds none — or if the template has been edited since approval — the message is <strong>not</strong> sent over
-WhatsApp and the platform falls back to the SMS providers, using the same phone number. Nothing is
-lost, and no API call is wasted on a delivery that Meta would refuse.</p>
-<h3 id="1-set-the-backend-base-url">1. Set the backend base URL</h3>
-<blockquote>
-<p><strong>Menu:</strong> Settings &gt; Constance &gt; URLs &gt; <strong>Backend base URL</strong></p>
-</blockquote>
-<p>This must be the <strong>publicly reachable</strong> URL of this backend. It is used for two things:</p>
+<p>This is content-level encryption, not metadata encryption. An operator with database access can see who talked to whom and when, but cannot read the messages.</p>
+<h2 id="how-encryption-works">How encryption works</h2>
+<h3 id="each-follow-up-has-its-own-key">Each follow-up has its own key</h3>
+<p>Every follow-up is encrypted with a <strong>unique random key</strong> generated in the practitioner's browser the moment the follow-up is created. That key is what actually encrypts every message and every attachment of that follow-up. Two follow-ups never share the same key.</p>
+<p>That same key is then <strong>encrypted once for each participant</strong> so that they can decrypt it later. There are five participants per encrypted follow-up:</p>
 <ul>
-<li>the static base of the WhatsApp button URLs (<code>https://&lt;backend&gt;/r/&lt;token&gt;</code>), which redirect the
-  recipient to the patient or practitioner application;</li>
-<li>the delivery status webhook Twilio calls back.</li>
+<li>the <strong>patient</strong> (<code>beneficiary</code>)</li>
+<li>the <strong>assigned practitioner</strong> (<code>owned_by</code>)</li>
+<li>the <strong>creator</strong> (<code>created_by</code>)</li>
+<li>the <strong>queue</strong> the follow-up belongs to</li>
+<li>the <strong>master key</strong> (platform recovery)</li>
 </ul>
-<div class="admonition warning">
-<p class="admonition-title">Set it before submitting templates</p>
-<p>The URL is baked into every approved template. Changing it later flags all validations as
-<strong>Content changed</strong>, and they must be submitted again. The same applies to the <strong>site name</strong>,
-which signs every template.</p>
-</div>
-<h3 id="2-create-the-provider">2. Create the provider</h3>
-<blockquote>
-<p><strong>Menu:</strong> Messaging &gt; Messaging providers &gt; add a provider</p>
-</blockquote>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Value</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Name</td>
-<td>Twilio WhatsApp</td>
-</tr>
-<tr>
-<td>Account SID</td>
-<td>The Twilio <em>Account SID</em></td>
-</tr>
-<tr>
-<td>Auth token</td>
-<td>The Twilio <em>Auth Token</em></td>
-</tr>
-<tr>
-<td>From phone</td>
-<td>The WhatsApp-enabled Twilio number, e.g. <code>+14155238886</code></td>
-</tr>
-</tbody>
-</table>
-<p>Use the <strong>Test connection</strong> action to verify the credentials. As for SMS, <em>Included prefixes</em> and
-<em>Excluded prefixes</em> restrict the provider to certain country codes, and <em>Priority</em> orders it
-against the other WhatsApp providers.</p>
-<h3 id="3-submit-the-templates-for-approval">3. Submit the templates for approval</h3>
-<blockquote>
-<p><strong>Menu:</strong> Messaging &gt; Template validations</p>
-</blockquote>
+<p>When the follow-up is saved, the server receives only the encrypted versions of the key — one per participant — and stores them alongside the follow-up. The clear key never leaves the browser. The server therefore holds the encrypted messages, the encrypted copies of the follow-up key, but nothing it can decrypt by itself.</p>
+<h3 id="personal-keys-encrypted-with-a-passphrase">Personal keys, encrypted with a passphrase</h3>
+<p>To decrypt their copy of the follow-up key, every user needs a <strong>personal private key</strong>. This key is generated server-side the first time encryption is enabled (or when a new user is created afterwards). Before being stored on the server, it is itself encrypted with a passphrase that only the user knows.</p>
+<p>The passphrase is generated once at provisioning time and sent to the user through their declared communication channel (email, SMS, WhatsApp, or to their creating practitioner when the patient is in <em>manual</em> contact mode). It is <strong>never stored</strong> on the server.</p>
+<p>When a user logs in for the first time after encryption is enabled, they enter their passphrase once. The server returns their encrypted private key, the browser unlocks it locally and keeps the unlocked key in the browser's secure storage (IndexedDB, marked non-extractable). On subsequent logins from the same browser, no passphrase is needed.</p>
+<h3 id="queue-keys-shared-by-every-member">Queue keys, shared by every member</h3>
+<p>A queue has a single private key, generated server-side at provisioning. That key is <strong>encrypted once for every member</strong> of the queue, and once more for the master key. When a member is added or removed later, only their encrypted copy is added or deleted — the queue key itself does not change, so existing follow-ups remain readable by all current members.</p>
+<p>Because the queue key is itself a few kilobytes large, it cannot be encrypted directly with a single asymmetric operation. The platform uses <strong>envelope encryption</strong> internally: a fresh symmetric key encrypts the queue key, and that small symmetric key is encrypted for each recipient. This is invisible to the admin — the only consequence is that wrapping the queue key for a new member requires the master key (held only in the admin's browser).</p>
+<h3 id="what-the-server-can-and-cannot-see">What the server can and cannot see</h3>
+<p>The server can see who participates in which follow-up, when messages are exchanged, and the size of each message — that's the metadata. The actual content of messages, attachment file names, and attachment bodies are <strong>encrypted blobs</strong> the server cannot read.</p>
+<p>There is no backdoor. If every personal passphrase, every browser copy, and the master key are all lost simultaneously, the data is permanently unreadable.</p>
+<h2 id="enabling-encryption">Enabling encryption</h2>
 <ol>
-<li><strong>Generate WhatsApp validations</strong> creates one entry per notification, language and WhatsApp
-   provider.</li>
-<li>Select the entries and run <strong>Submit templates for validation</strong>. This creates the Twilio Content
-   template and sends it to WhatsApp for approval. The <em>Variable expressions</em> field then shows which
-   template expression each <code>{{1}}</code>, <code>{{2}}</code>… placeholder stands for.</li>
-<li><strong>Check pending validations</strong> refreshes every template still awaiting approval, without
-   selecting anything. Approval by Meta usually takes a few minutes but can take up to 24 hours, so
-   expect to run it more than once. <em>Check validation status</em> does the same on a hand-picked
-   selection.</li>
-</ol>
-<p>Only templates in the <strong>Validated</strong> state are used for sending.</p>
-<table>
-<thead>
-<tr>
-<th>Status</th>
-<th>Meaning</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Created</strong></td>
-<td>Generated locally, not submitted yet.</td>
-</tr>
-<tr>
-<td><strong>Pending</strong></td>
-<td>Submitted, waiting for Meta's decision.</td>
-</tr>
-<tr>
-<td><strong>Validated</strong></td>
-<td>Approved and in use.</td>
-</tr>
-<tr>
-<td><strong>Outdated</strong></td>
-<td>The template text, the backend URL or the site name changed since approval. Submit again.</td>
-</tr>
-<tr>
-<td><strong>Rejected</strong></td>
-<td>Refused by Meta. The reason is shown in its own column and kept in the logs.</td>
-</tr>
-<tr>
-<td><strong>Failed</strong></td>
-<td>Never reached Meta: local pre-check, missing credentials or Twilio error. See the logs.</td>
-</tr>
-</tbody>
-</table>
-<div class="admonition note">
-<p class="admonition-title">Templates rejected by Meta</p>
-<p>Meta refuses a body that <strong>starts with a variable</strong> or puts <strong>two variables side by side</strong>.
-Templates are checked against these rules <em>before</em> submission: a non-compliant template is
-marked <strong>Failed</strong> immediately, with the reason and the offending body in its logs, instead of
-coming back rejected hours later. Adjust the wording under <em>Messaging &gt; Template overrides</em>
-and submit again.</p>
-<p>Two things are handled automatically and need no rewording:</p>
+<li>
+<p><strong>Generate the master key</strong> — Click <em>Generate master key</em> on the Encryption settings page. Your browser:</p>
 <ul>
-<li>every body is <strong>signed with the site name</strong>, so all WhatsApp messages close the same way.
-  This also satisfies Meta, which refuses a body ending on a variable;</li>
-<li>two variables separated only by a space are <strong>merged into a single one</strong> (<code>{{1}}</code> carrying
-  both the first and last name, for instance).</li>
+<li>Generates an RSA-4096 keypair locally.</li>
+<li>Downloads <code>master-private-key.pem</code> automatically (your offline backup).</li>
+<li>Stores the same key non-extractable in this browser's IndexedDB (<code>hcw-master-key</code>).</li>
+<li>Uploads only the public key to the server.</li>
 </ul>
-<p>Jinja conditions are also supported: a whole <code>{% if %}...{% endif %}</code> block becomes one
-variable, resolved when the message is sent.</p>
-</div>
-<div class="admonition warning">
-<p class="admonition-title">A rejection reason is only reported once</p>
-<p>Meta drops the reason as soon as a template is resubmitted, and each status check overwrites
-the stored provider response. The reason is therefore also written to the validation <strong>logs</strong>
-when the rejection is first seen — that copy is the one that survives.</p>
-</div>
-<p>Whenever a template's text is edited, its validations are flagged <strong>Outdated</strong> and are no longer
-used for sending until they have been submitted and approved again.</p>
-<h3 id="4-delivery-status">4. Delivery status</h3>
-<p>Twilio reports delivery progress to <code>https://&lt;backend&gt;/messaging/twilio/status/&lt;token&gt;</code>, which the
-platform passes with every message. The <em>Delivered at</em> and <em>Read at</em> fields of
-<strong>Messaging &gt; Messages</strong> are filled from these callbacks. The endpoint requires a valid
-<code>X-Twilio-Signature</code>, so the backend must be reachable from the internet for statuses to progress
-beyond <em>Sent</em>.</p>
-<h3 id="5-inviting-a-contact-over-whatsapp">5. Inviting a contact over WhatsApp</h3>
-<p>Once an active WhatsApp provider exists, typing a phone number in the practitioner's contact picker
-offers <strong>two invitations</strong>, <em>by SMS</em> and <em>on WhatsApp</em>, instead of one. The practitioner picks the
-channel, which sets the contact's communication method; it can still be changed afterwards under
-<em>Contact details</em>. With a single phone provider configured, a single invitation is offered and it
-names the channel actually in use.</p>
+<p>Keep the <code>.pem</code> file safe (password manager, sealed envelope). The server never sees the private master key, and no one can decrypt the recovery envelope without it.</p>
+</li>
+<li>
+<p><strong>Enable encryption</strong> — Click <em>Enable encryption</em>. A background job is dispatched that:</p>
+<ul>
+<li>Generates a keypair for every active user (with a random passphrase emailed/SMSed/handed to the practitioner of manual-contact patients).</li>
+<li>Generates a keypair for every queue, wrapped for the master and for each member.</li>
+</ul>
+</li>
+<li>
+<p><strong>Users activate their key</strong> — At their next login, every user is forced through <code>/activate-encryption</code> and must enter the passphrase they received. The browser pulls the encrypted private key from the server, decrypts it, and stores it non-extractable in IndexedDB.</p>
+</li>
+</ol>
+<p>After this, all new follow-ups are encrypted automatically and existing users can read their messages.</p>
+<h2 id="browser-status">Browser status</h2>
+<p>The Encryption settings page shows two statuses:</p>
+<ul>
+<li><strong>Server status</strong> — Whether the master public key is configured server-side, with its fingerprint.</li>
+<li><strong>Browser status</strong> — Whether the master private key is loaded in <em>this</em> browser's IndexedDB, with verification that the fingerprint matches the server's.</li>
+</ul>
+<p>If a different admin needs to manage queue memberships from another machine, they can click <em>Import master key (.pem) into this browser</em> and select the backup <code>.pem</code> file. The browser does a functional encrypt/decrypt round-trip with the server's public key to verify the keypair before storing it non-extractable.</p>
+<h2 id="adding-users-to-a-queue">Adding users to a queue</h2>
+<p>When you add a user to a queue from the queue admin page, the page contains JavaScript that:</p>
+<ol>
+<li>Reads the queue's <code>encrypted_queue_private_key_master</code> from the form.</li>
+<li>Reads the master private key from this browser's IndexedDB.</li>
+<li>Decrypts the queue private key (envelope decryption, in memory).</li>
+<li>Fetches the new member's public key from the server.</li>
+<li>Re-wraps the queue private key for that member's pubkey.</li>
+<li>Fills the hidden <code>encrypted_queue_private_key</code> field on the membership row.</li>
+<li>Submits the form normally.</li>
+</ol>
+<p>The server never sees the queue private key in clear during this operation. <strong>The admin must have imported the master key in this browser</strong> (see the Encryption settings page).</p>
+<h2 id="recovering-from-a-lost-passphrase">Recovering from a lost passphrase</h2>
+<p>A user who has forgotten their passphrase can click <em>I forgot my passphrase</em> on the activation screen. The server generates a brand-new keypair and returns the new passphrase one time. The user keeps access to all messages going forward, but loses access to messages encrypted under the previous public key until a colleague (or the admin via the master key) rewraps each follow-up's symmetric key for the new public key. A "Resync key" banner is shown to colleagues on affected follow-ups.</p>
+<p>The master recovery envelope is the safety net: even if every user keypair is lost, the admin who holds the master <code>.pem</code> can decrypt every follow-up by importing the master key in their browser and using a recovery flow (out of scope of v1, mechanism documented for the future).</p>
+<h2 id="disabling-encryption">Disabling encryption</h2>
+<p>Disabling the platform toggle does <strong>not</strong> decrypt anything. Existing encrypted follow-ups remain encrypted and readable by users who hold their key; new follow-ups are created in clear. To bring older follow-ups back online for a new device, the user simply re-imports their key (same passphrase).</p>
+<h2 id="re-provisioning-missing-keypairs">Re-provisioning missing keypairs</h2>
+<p>If a user or queue was created before encryption was enabled — or if a worker error skipped one — click <strong>Re-provision missing keypairs</strong> on the Encryption settings page. The job is idempotent: it only fills in the gaps for users and queues whose <code>public_key</code> is null.</p>
+<h2 id="limitations">Limitations</h2>
+<ul>
+<li><strong>History migration</strong> is out of scope. Messages sent before activation stay in clear in their (unencrypted) follow-ups.</li>
+<li><strong>Queue key rotation</strong> is manual: there is no automatic rotation if a member leaves. They keep access to past follow-ups until the queue is regenerated.</li>
+<li><strong>Server fingerprint validation</strong> of envelopes is not enforced — a malicious client could store fake fingerprints. This does not break confidentiality, only the desync banner UX.</li>
+</ul>
 
 
 

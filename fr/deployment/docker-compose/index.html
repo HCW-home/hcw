@@ -7,7 +7,7 @@
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
 <meta content="Documentation for HCW@Home V6 teleconsultation platform" name="description"/>
 <link href="https://hcw-at-home.com/docs/fr/deployment/docker-compose/" rel="canonical"/>
-<link href="../../admin/advanced-options/" rel="prev"/>
+<link href="../../development/guidelines/" rel="prev"/>
 <link href="../debian/" rel="next"/>
 <link href="../../../deployment/docker-compose/" hreflang="en" rel="alternate"/>
 <link href="./" hreflang="fr" rel="alternate"/>
@@ -348,6 +348,42 @@
 </a>
 </li>
 <li class="md-nav__item">
+<a class="md-nav__link" href="../../admin/sso/">
+<span class="md-ellipsis">
+    
+  
+    Single Sign-On (SSO)
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../admin/encryption/">
+<span class="md-ellipsis">
+    
+  
+    End-to-End Encryption
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../admin/fhir/">
+<span class="md-ellipsis">
+    
+  
+    FHIR R4 Integration
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="../../admin/advanced-options/">
 <span class="md-ellipsis">
     
@@ -362,9 +398,47 @@
 </ul>
 </nav>
 </li>
-<li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
-<input checked="" class="md-nav__toggle md-toggle" id="__nav_4" type="checkbox"/>
+<li class="md-nav__item md-nav__item--section md-nav__item--nested">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_4" type="checkbox"/>
 <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+<span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_4_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_4">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Development
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../development/guidelines/">
+<span class="md-ellipsis">
+    
+  
+    Guidelines
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+<input checked="" class="md-nav__toggle md-toggle" id="__nav_5" type="checkbox"/>
+<label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
 <span class="md-ellipsis">
     
   
@@ -375,8 +449,8 @@
   </span>
 <span class="md-nav__icon md-icon"></span>
 </label>
-<nav aria-expanded="true" aria-labelledby="__nav_4_label" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_4">
+<nav aria-expanded="true" aria-labelledby="__nav_5_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_5">
 <span class="md-nav__icon md-icon"></span>
             
   
@@ -500,6 +574,15 @@
 </a>
 </li>
 <li class="md-nav__item">
+<a class="md-nav__link" href="#sondes-de-sante">
+<span class="md-ellipsis">
+      
+        Sondes de sante
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="#volumes-persistants">
 <span class="md-ellipsis">
       
@@ -517,6 +600,18 @@
     
   
     Debian Packages
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../environment-variables/">
+<span class="md-ellipsis">
+    
+  
+    Environment Variables
   
 
     
@@ -626,6 +721,15 @@
 </a>
 </li>
 <li class="md-nav__item">
+<a class="md-nav__link" href="#sondes-de-sante">
+<span class="md-ellipsis">
+      
+        Sondes de sante
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="#volumes-persistants">
 <span class="md-ellipsis">
       
@@ -703,6 +807,7 @@
 <p>Recuperer les images :</p>
 <div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="nv">TAG</span><span class="o">=</span><span class="m">0</span>.10.0<span class="w"> </span>docker<span class="w"> </span>compose<span class="w"> </span>pull
 </code></pre></div>
+<p>Adaptez ensuite les blocs <code>environment:</code> de <code>docker-compose.yml</code> a votre installation. Les services <code>api</code>, <code>celery</code>, <code>scheduler</code> et <code>migrate</code> doivent tous partager les memes reglages de base de donnees, de Redis et de cle secrete. Voir <a href="../environment-variables/">Variables d'environnement</a> pour la reference complete.</p>
 <div class="admonition warning">
 <p class="admonition-title">Securite</p>
 <p>Ne jamais utiliser les valeurs par defaut de <code>DJANGOSECRET_KEY</code> en production. Generez une cle avec : <code>echo -n "votre phrase secrete" | sha256sum</code></p>
@@ -782,6 +887,42 @@
 </tr>
 </tbody>
 </table>
+<h2 id="sondes-de-sante">Sondes de sante</h2>
+<p>Chaque service au long cours declare une sonde de sante : <code>docker compose ps</code> reflete donc l'etat reel, et les frontends ne demarrent qu'une fois l'API disponible.</p>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Sonde</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>api</strong></td>
+<td><code>GET /api/health/</code>, execute avant la resolution du tenant, verifie PostgreSQL et Redis. Rapporte unhealthy tant que <code>MAINTENANCE=True</code></td>
+</tr>
+<tr>
+<td><strong>celery</strong></td>
+<td><code>celery inspect ping</code> cible sur ce worker uniquement, pour qu'une replique saine ne masque pas un worker mort</td>
+</tr>
+<tr>
+<td><strong>scheduler</strong></td>
+<td>Celery Beat n'expose pas d'API de controle : le processus beat est verifie avec <code>pgrep</code></td>
+</tr>
+<tr>
+<td><strong>practitioner</strong>, <strong>patient</strong>, <strong>admin</strong></td>
+<td>Requete Nginx locale, sans appel au backend : restent verts meme si l'API est arretee</td>
+</tr>
+<tr>
+<td><strong>db</strong></td>
+<td><code>pg_isready</code></td>
+</tr>
+<tr>
+<td><strong>redis</strong></td>
+<td><code>redis-cli ping</code></td>
+</tr>
+</tbody>
+</table>
 <h2 id="volumes-persistants">Volumes persistants</h2>
 <p>Les donnees sont stockees dans le dossier <code>./data/</code> :</p>
 <table>
@@ -800,8 +941,18 @@
 <td><code>./data/redis_data/</code></td>
 <td>Donnees Redis</td>
 </tr>
+<tr>
+<td><code>./data/uploads/</code></td>
+<td>Fichiers envoyes (<code>MEDIA_ROOT</code>), partages entre <code>api</code> et <code>celery</code>. Inutilise si S3 est configure</td>
+</tr>
 </tbody>
 </table>
+<div class="admonition warning">
+<p class="admonition-title">Permissions des uploads</p>
+<p>Les conteneurs backend tournent avec l'uid 1000. Creez le dossier avec le bon proprietaire avant le premier demarrage, sinon tous les envois de fichiers echouent :
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-6-1" id="__codelineno-6-1" name="__codelineno-6-1"></a>mkdir<span class="w"> </span>-p<span class="w"> </span>data/uploads<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sudo<span class="w"> </span>chown<span class="w"> </span><span class="m">1000</span>:1000<span class="w"> </span>data/uploads
+</code></pre></div></p>
+</div>
 </article>
 </div>
 <script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>

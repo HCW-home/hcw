@@ -22,6 +22,20 @@
         <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/admin/advanced-options/"/>
     </url>
     <url>
+        <loc>https://hcw-at-home.com/docs/admin/encryption/</loc>
+        <lastmod>2026-08-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/admin/encryption/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/admin/encryption/"/>
+    </url>
+    <url>
+        <loc>https://hcw-at-home.com/docs/admin/fhir/</loc>
+        <lastmod>2026-08-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/admin/fhir/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/admin/fhir/"/>
+    </url>
+    <url>
         <loc>https://hcw-at-home.com/docs/admin/media-servers/</loc>
         <lastmod>2026-08-28</lastmod>
         <changefreq>daily</changefreq>
@@ -50,6 +64,13 @@
         <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/admin/reasons/"/>
     </url>
     <url>
+        <loc>https://hcw-at-home.com/docs/admin/sso/</loc>
+        <lastmod>2026-08-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/admin/sso/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/admin/sso/"/>
+    </url>
+    <url>
         <loc>https://hcw-at-home.com/docs/admin/terms/</loc>
         <lastmod>2026-08-28</lastmod>
         <changefreq>daily</changefreq>
@@ -76,6 +97,20 @@
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/deployment/docker-compose/"/>
         <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/deployment/docker-compose/"/>
+    </url>
+    <url>
+        <loc>https://hcw-at-home.com/docs/deployment/environment-variables/</loc>
+        <lastmod>2026-08-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/deployment/environment-variables/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/deployment/environment-variables/"/>
+    </url>
+    <url>
+        <loc>https://hcw-at-home.com/docs/development/guidelines/</loc>
+        <lastmod>2026-08-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/development/guidelines/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/development/guidelines/"/>
     </url>
     <url>
         <loc>https://hcw-at-home.com/docs/use-cases/appointment-management/</loc>
@@ -133,6 +168,20 @@
         <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/admin/advanced-options/"/>
     </url>
     <url>
+        <loc>https://hcw-at-home.com/docs/fr/admin/encryption/</loc>
+        <lastmod>2026-08-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/admin/encryption/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/admin/encryption/"/>
+    </url>
+    <url>
+        <loc>https://hcw-at-home.com/docs/fr/admin/fhir/</loc>
+        <lastmod>2026-08-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/admin/fhir/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/admin/fhir/"/>
+    </url>
+    <url>
         <loc>https://hcw-at-home.com/docs/fr/admin/media-servers/</loc>
         <lastmod>2026-08-28</lastmod>
         <changefreq>daily</changefreq>
@@ -161,6 +210,13 @@
         <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/admin/reasons/"/>
     </url>
     <url>
+        <loc>https://hcw-at-home.com/docs/fr/admin/sso/</loc>
+        <lastmod>2026-08-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/admin/sso/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/admin/sso/"/>
+    </url>
+    <url>
         <loc>https://hcw-at-home.com/docs/fr/admin/terms/</loc>
         <lastmod>2026-08-28</lastmod>
         <changefreq>daily</changefreq>
@@ -187,6 +243,20 @@
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/deployment/docker-compose/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/deployment/docker-compose/"/>
+    </url>
+    <url>
+        <loc>https://hcw-at-home.com/docs/fr/deployment/environment-variables/</loc>
+        <lastmod>2026-08-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/deployment/environment-variables/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/deployment/environment-variables/"/>
+    </url>
+    <url>
+        <loc>https://hcw-at-home.com/docs/fr/development/guidelines/</loc>
+        <lastmod>2026-08-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/development/guidelines/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/development/guidelines/"/>
     </url>
     <url>
         <loc>https://hcw-at-home.com/docs/fr/use-cases/appointment-management/</loc>

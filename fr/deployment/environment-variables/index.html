@@ -1,0 +1,2286 @@
+
+<!doctype html>
+<html lang="fr" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for HCW@Home V6 teleconsultation platform">
+      
+      
+      
+        <link rel="canonical" href="https://hcw-at-home.com/docs/fr/deployment/environment-variables/">
+      
+      
+        <link rel="prev" href="../debian/">
+      
+      
+      
+        
+          <link rel="alternate" href="../../../deployment/environment-variables/" hreflang="en">
+        
+          <link rel="alternate" href="./" hreflang="fr">
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Environment Variables - HCW@Home Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/css/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#variables-denvironnement" class="md-skip">
+          Aller au contenu
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="En-tête">
+    <a href="../../" title="HCW@Home Documentation" class="md-header__button md-logo" aria-label="HCW@Home Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            HCW@Home Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Environment Variables
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="teal"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+      <div class="md-header__option">
+  <div class="md-select">
+    
+    <button class="md-header__button md-icon" aria-label="Sélectionner la langue">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m12.87 15.07-2.54-2.51.03-.03A17.5 17.5 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2zm-2.62 7 1.62-4.33L19.12 17z"/></svg>
+    </button>
+    <div class="md-select__inner">
+      <ul class="md-select__list">
+        
+          <li class="md-select__item">
+            <a href="../../../deployment/environment-variables/" hreflang="en" class="md-select__link">
+              English
+            </a>
+          </li>
+        
+          <li class="md-select__item">
+            <a href="./" hreflang="fr" class="md-select__link">
+              Francais
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</div>
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Rechercher" placeholder="Rechercher" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Recherche">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Effacer" aria-label="Effacer" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initialisation de la recherche
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../" title="HCW@Home Documentation" class="md-nav__button md-logo" aria-label="HCW@Home Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    HCW@Home Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Get Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use Cases
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Use Cases
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../use-cases/appointment-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Appointment Management
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../use-cases/video-call-scheduling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Video Call Scheduling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../use-cases/followup-chat/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Follow-up and Chat
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../use-cases/slot-booking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Slot Booking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Administration
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Administration
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../admin/users/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Users
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../admin/terms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Terms of Use
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../admin/organizations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Organizations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../admin/messaging-providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Messaging Providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../admin/media-servers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Media Servers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../admin/reasons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consultation Reasons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../admin/sso/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Single Sign-On (SSO)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../admin/encryption/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    End-to-End Encryption
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../admin/fhir/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FHIR R4 Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../admin/advanced-options/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Advanced Options
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/guidelines/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guidelines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deployment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../docker-compose/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker Compose
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../debian/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Debian Packages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment Variables
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table des matières">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table des matières
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#ou-les-definir" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ou les definir
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#django" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Django
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mode-maintenance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mode maintenance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#base-de-donnees" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Base de donnees
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#redis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redis
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#messagerie" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Messagerie
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#authentification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authentification
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stockage-des-fichiers-s3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stockage des fichiers (S3)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enregistrement-des-appels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enregistrement des appels
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#serveurs-media" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Serveurs media
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#transcription-en-direct" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Transcription en direct
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notifications-push" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notifications push
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#antivirus-clamav" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Antivirus (ClamAV)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#serveur-fhir" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Serveur FHIR
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#applications-mobiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Applications mobiles
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conteneurs-frontend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conteneurs frontend
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variables-obsoletes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Variables obsoletes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exemple-minimal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exemple minimal
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table des matières">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table des matières
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#ou-les-definir" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ou les definir
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#django" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Django
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mode-maintenance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mode maintenance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#base-de-donnees" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Base de donnees
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#redis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redis
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#messagerie" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Messagerie
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#authentification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authentification
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stockage-des-fichiers-s3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stockage des fichiers (S3)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enregistrement-des-appels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enregistrement des appels
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#serveurs-media" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Serveurs media
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#transcription-en-direct" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Transcription en direct
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notifications-push" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notifications push
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#antivirus-clamav" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Antivirus (ClamAV)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#serveur-fhir" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Serveur FHIR
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#applications-mobiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Applications mobiles
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conteneurs-frontend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conteneurs frontend
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variables-obsoletes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Variables obsoletes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exemple-minimal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exemple minimal
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="variables-denvironnement">Variables d'environnement</h1>
+<p>Toute la configuration du backend qui doit etre connue <strong>avant</strong> le demarrage de Django (base de donnees, Redis, secrets, stockage) passe par des variables d'environnement. Le reste — nom du site, rappels, regles de visibilite, activation de l'enregistrement, SSO — se configure a chaud depuis l'interface d'administration, voir <a href="../../admin/advanced-options/">Options avancees</a>.</p>
+<h2 id="ou-les-definir">Ou les definir</h2>
+<table>
+<thead>
+<tr>
+<th>Deploiement</th>
+<th>Emplacement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Paquets Debian</strong></td>
+<td><code>/etc/hcw/backend.conf</code>, charge par systemd (<code>EnvironmentFile=</code>) pour les services <code>hcw</code>, <code>hcw-celery</code> et <code>hcw-scheduler</code></td>
+</tr>
+<tr>
+<td><strong>Docker Compose</strong></td>
+<td>Le bloc <code>environment:</code> de chaque service dans <code>docker-compose.yml</code></td>
+</tr>
+<tr>
+<td><strong>Developpement</strong></td>
+<td><code>backend/.env</code>, charge automatiquement au demarrage. Copiez <code>backend/.env-dist</code> pour partir d'un modele</td>
+</tr>
+</tbody>
+</table>
+<p>Le backend charge <code>backend/.env</code> s'il existe, puis se rabat sur l'environnement du processus. Les variables definies dans l'environnement reel fonctionnent toujours, meme sans fichier <code>.env</code>.</p>
+<div class="admonition warning">
+<p class="admonition-title">Redemarrage necessaire</p>
+<p>Les variables d'environnement sont lues une seule fois au demarrage du processus. Apres toute modification, redemarrez l'API, le worker Celery <strong>et</strong> le scheduler : ils tournent chacun dans leur propre processus et doivent partager la meme configuration.</p>
+</div>
+<h2 id="django">Django</h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Defaut</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DJANGOSECRET_KEY</code></td>
+<td><em>(aucun)</em></td>
+<td><strong>Obligatoire.</strong> Cle secrete utilisee pour signer les sessions, les jetons et les liens de reinitialisation de mot de passe. Generez-la avec <code>echo -n "votre phrase secrete" \| sha256sum</code>. La modifier invalide toutes les sessions actives.</td>
+</tr>
+<tr>
+<td><code>DEBUG</code></td>
+<td><code>False</code></td>
+<td>Mettre exactement <code>True</code> pour activer le mode debug. Il bascule aussi le cache de Redis vers la memoire locale et accepte toutes les origines CORS. A ne jamais activer en production.</td>
+</tr>
+<tr>
+<td><code>ALLOWED_HOST</code></td>
+<td><em>(aucun)</em></td>
+<td>Nom d'hote principal pour lequel le backend accepte de repondre.</td>
+</tr>
+<tr>
+<td><code>ALLOWED_HOSTS</code></td>
+<td><em>(vide)</em></td>
+<td>Liste de noms d'hotes supplementaires separes par des virgules, ajoutes a <code>ALLOWED_HOST</code>. Utilisez <code>*</code> pour tout accepter (developpement uniquement).</td>
+</tr>
+<tr>
+<td><code>CSRF_TRUSTED_ORIGINS</code></td>
+<td><em>(vide)</em></td>
+<td>Liste d'origines separees par des virgules, <strong>schema inclus</strong> (ex. <code>https://admin.example.com</code>). Necessaire pour l'administration Django derriere HTTPS.</td>
+</tr>
+<tr>
+<td><code>CORS_ALLOWED_ORIGINS</code></td>
+<td><em>(vide)</em></td>
+<td>Liste d'origines navigateur supplementaires autorisees a appeler l'API, separees par des virgules. Les origines Capacitor des applications mobiles sont toujours autorisees.</td>
+</tr>
+<tr>
+<td><code>DEFAULT_TIME_ZONE</code></td>
+<td><code>UTC</code></td>
+<td>Fuseau horaire applique par defaut aux nouveaux utilisateurs, ex. <code>Europe/Zurich</code>.</td>
+</tr>
+<tr>
+<td><code>STATIC_ROOT</code></td>
+<td><code>statics</code></td>
+<td>Repertoire ou <code>collectstatic</code> ecrit les fichiers statiques. Le paquet Debian utilise <code>/usr/share/hcw/backend/statics/</code>.</td>
+</tr>
+<tr>
+<td><code>MEDIA_ROOT</code></td>
+<td><code>upload</code></td>
+<td>Repertoire de stockage des fichiers envoyes lorsque S3 n'est pas configure. Utilisez toujours un chemin absolu : l'API et le worker Celery ne sont pas lances depuis le meme repertoire de travail.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="mode-maintenance">Mode maintenance</h2>
+<p>Le mode maintenance fait repondre <code>503</code> a toutes les requetes HTTP sans toucher a la base de donnees ni a Redis, ce qui le rend utilisable meme si la base est indisponible.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Defaut</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MAINTENANCE</code></td>
+<td><code>False</code></td>
+<td>Mettre <code>True</code> pour activer le mode maintenance.</td>
+</tr>
+<tr>
+<td><code>MAINTENANCE_MESSAGE</code></td>
+<td><code>The service is temporarily unavailable for maintenance. Please try again later.</code></td>
+<td>Message renvoye aux clients.</td>
+</tr>
+<tr>
+<td><code>MAINTENANCE_RETRY_AFTER</code></td>
+<td><code>300</code></td>
+<td>Valeur de l'en-tete <code>Retry-After</code>, en secondes.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="base-de-donnees">Base de donnees</h2>
+<p>PostgreSQL est obligatoire : le multi-tenancy repose sur les schemas PostgreSQL.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Defaut</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DATABASE_NAME</code></td>
+<td><em>(aucun)</em></td>
+<td>Nom de la base.</td>
+</tr>
+<tr>
+<td><code>DATABASE_USER</code></td>
+<td><em>(aucun)</em></td>
+<td>Utilisateur de la base. Il doit etre proprietaire de la base pour pouvoir creer les schemas des tenants.</td>
+</tr>
+<tr>
+<td><code>DATABASE_PASSWORD</code></td>
+<td><em>(aucun)</em></td>
+<td>Mot de passe de l'utilisateur.</td>
+</tr>
+<tr>
+<td><code>DATABASE_HOST</code></td>
+<td><em>(aucun)</em></td>
+<td>Nom d'hote ou adresse IP du serveur.</td>
+</tr>
+<tr>
+<td><code>DATABASE_PORT</code></td>
+<td><em>(aucun)</em></td>
+<td>Port du serveur, generalement <code>5432</code>.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="redis">Redis</h2>
+<p>Redis sert de broker Celery, de cache et de couche de canaux pour les WebSockets.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Defaut</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>REDIS_HOST</code></td>
+<td><code>127.0.0.1</code></td>
+<td>Nom d'hote Redis.</td>
+</tr>
+<tr>
+<td><code>REDIS_PORT</code></td>
+<td><code>6379</code></td>
+<td>Port Redis.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="messagerie">Messagerie</h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Defaut</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>EMAIL_HOST</code></td>
+<td><em>(aucun)</em></td>
+<td>Nom d'hote du serveur SMTP.</td>
+</tr>
+<tr>
+<td><code>EMAIL_PORT</code></td>
+<td><code>25</code></td>
+<td>Port SMTP.</td>
+</tr>
+<tr>
+<td><code>EMAIL_HOST_USER</code></td>
+<td><em>(aucun)</em></td>
+<td>Identifiant SMTP, si l'authentification est requise.</td>
+</tr>
+<tr>
+<td><code>EMAIL_HOST_PASSWORD</code></td>
+<td><em>(aucun)</em></td>
+<td>Mot de passe SMTP.</td>
+</tr>
+<tr>
+<td><code>EMAIL_USE_TLS</code></td>
+<td><em>(desactive)</em></td>
+<td>Active STARTTLS, typiquement sur le port 587.</td>
+</tr>
+<tr>
+<td><code>EMAIL_USE_SSL</code></td>
+<td><em>(desactive)</em></td>
+<td>Active TLS implicite, typiquement sur le port 465. Exclusif avec <code>EMAIL_USE_TLS</code>.</td>
+</tr>
+<tr>
+<td><code>DEFAULT_FROM_EMAIL</code></td>
+<td><em>(aucun)</em></td>
+<td>Adresse expediteur utilisee pour tous les emails sortants.</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="admonition-title">Options TLS/SSL</p>
+<p><code>EMAIL_USE_TLS</code> et <code>EMAIL_USE_SSL</code> sont actives par <strong>n'importe quelle</strong> valeur non vide, y compris <code>False</code> ou <code>0</code>. Pour les desactiver, retirez completement la variable de la configuration.</p>
+</div>
+<h2 id="authentification">Authentification</h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Defaut</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ACCESS_TOKEN_LIFETIME</code></td>
+<td><code>3600</code></td>
+<td>Duree de vie du jeton JWT d'acces <strong>en minutes</strong> (le defaut represente donc 60 heures). Mettez <code>60</code> pour une duree de vie d'une heure.</td>
+</tr>
+<tr>
+<td><code>REFRESH_TOKEN_LIFETIME_DAYS</code></td>
+<td><code>1</code></td>
+<td>Duree de vie du jeton de rafraichissement, en jours. Ces jetons sont renouveles a chaque utilisation.</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">SSO et connexion par mot de passe</p>
+<p>Les fournisseurs OpenID Connect et l'option « SSO uniquement » ne se configurent plus par variables d'environnement. Definissez-les depuis l'interface d'administration, voir <a href="../../admin/sso/">Single Sign-On</a> et <a href="../../admin/advanced-options/">Options avancees</a>.</p>
+</div>
+<h2 id="stockage-des-fichiers-s3">Stockage des fichiers (S3)</h2>
+<p>Lorsque S3 est configure, les fichiers envoyes (pieces jointes, logos, enregistrements) sont stockes sur un service compatible S3 plutot que sur le disque local.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Defaut</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>S3_BUCKET_NAME</code></td>
+<td><em>(aucun)</em></td>
+<td>Nom du bucket.</td>
+</tr>
+<tr>
+<td><code>S3_ENDPOINT_URL</code></td>
+<td><em>(aucun)</em></td>
+<td>Endpoint du service, ex. <code>https://s3.example.com</code> pour MinIO ou Ceph.</td>
+</tr>
+<tr>
+<td><code>S3_ACCESS_KEY</code></td>
+<td><em>(aucun)</em></td>
+<td>Cle d'acces.</td>
+</tr>
+<tr>
+<td><code>S3_SECRET_KEY</code></td>
+<td><em>(aucun)</em></td>
+<td>Cle secrete.</td>
+</tr>
+<tr>
+<td><code>S3_REGION</code></td>
+<td><code>us-east-1</code></td>
+<td>Region.</td>
+</tr>
+<tr>
+<td><code>S3_VERIFY</code></td>
+<td><em>(active)</em></td>
+<td>Mettre exactement <code>false</code> pour ne pas verifier le certificat TLS (certificats auto-signes).</td>
+</tr>
+<tr>
+<td><code>S3_ADDRESSING_STYLE</code></td>
+<td><code>auto</code></td>
+<td>Style d'adressage : <code>auto</code>, <code>path</code> ou <code>virtual</code>. Les deploiements MinIO et Ceph dont le bucket n'est pas un sous-domaine DNS necessitent <code>path</code>.</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="admonition-title">Tout ou rien</p>
+<p><code>S3_BUCKET_NAME</code>, <code>S3_ENDPOINT_URL</code>, <code>S3_ACCESS_KEY</code> et <code>S3_SECRET_KEY</code> doivent etre definies ensemble. Une configuration partielle interrompt le demarrage avec une erreur <code>ImproperlyConfigured</code> plutot que de basculer silencieusement sur le stockage local, ce qui rendrait illisibles par un processus les fichiers ecrits par un autre.</p>
+</div>
+<h2 id="enregistrement-des-appels">Enregistrement des appels</h2>
+<p>Les enregistrements sont deposes sur S3 par le serveur media. Par defaut ils reutilisent les reglages <code>S3_*</code> ci-dessus ; ne definissez les variables <code>LIVEKIT_S3_*</code> que pour les stocker sur un bucket ou un serveur different.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Defaut</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>LIVEKIT_S3_BUCKET_NAME</code></td>
+<td>valeur de <code>S3_BUCKET_NAME</code></td>
+<td>Bucket dedie aux enregistrements.</td>
+</tr>
+<tr>
+<td><code>LIVEKIT_S3_ENDPOINT_URL</code></td>
+<td>valeur de <code>S3_ENDPOINT_URL</code></td>
+<td>Endpoint dedie aux enregistrements.</td>
+</tr>
+<tr>
+<td><code>LIVEKIT_S3_ACCESS_KEY</code></td>
+<td>valeur de <code>S3_ACCESS_KEY</code></td>
+<td>Cle d'acces.</td>
+</tr>
+<tr>
+<td><code>LIVEKIT_S3_SECRET_KEY</code></td>
+<td>valeur de <code>S3_SECRET_KEY</code></td>
+<td>Cle secrete.</td>
+</tr>
+<tr>
+<td><code>LIVEKIT_S3_REGION</code></td>
+<td>valeur de <code>S3_REGION</code></td>
+<td>Region.</td>
+</tr>
+<tr>
+<td><code>RECORDING_CHECK_INITIAL_DELAY</code></td>
+<td><code>120</code></td>
+<td>Secondes d'attente apres la fin de l'appel avant de chercher le fichier sur S3.</td>
+</tr>
+<tr>
+<td><code>RECORDING_CHECK_MAX_RETRIES</code></td>
+<td><code>4</code></td>
+<td>Nombre de nouvelles tentatives apres la premiere verification.</td>
+</tr>
+<tr>
+<td><code>RECORDING_CHECK_RETRY_DELAY</code></td>
+<td><code>30</code></td>
+<td>Secondes entre deux tentatives.</td>
+</tr>
+</tbody>
+</table>
+<p>L'enregistrement lui-meme s'active par tenant depuis l'interface d'administration (<code>ENABLE_VIDEO_RECORDING</code>).</p>
+<h2 id="serveurs-media">Serveurs media</h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Defaut</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ROOM_SERVER_PIN_TTL</code></td>
+<td><code>86400</code></td>
+<td>Duree, en secondes, pendant laquelle l'association salle / serveur media reste en cache. Doit depasser la duree du plus long appel possible, enregistrement compris.</td>
+</tr>
+</tbody>
+</table>
+<p>Les serveurs media eux-memes se declarent depuis l'interface d'administration, voir <a href="../../admin/media-servers/">Serveurs media</a>.</p>
+<h2 id="transcription-en-direct">Transcription en direct</h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Defaut</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>WHISPER_LIVE_URL</code></td>
+<td><code>ws://127.0.0.1:9090</code></td>
+<td>URL WebSocket du serveur whisper-live.</td>
+</tr>
+<tr>
+<td><code>WHISPER_LIVE_API_KEY</code></td>
+<td><em>(vide)</em></td>
+<td>Doit correspondre au <code>--api_key</code> passe au serveur whisper-live. Laisser vide pour desactiver l'authentification.</td>
+</tr>
+</tbody>
+</table>
+<p>La transcription s'active par tenant depuis l'interface d'administration (<code>ENABLE_LIVE_TRANSCRIPTION</code>).</p>
+<h2 id="notifications-push">Notifications push</h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Defaut</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>WEBPUSH_VAPID_PUBLIC_KEY</code></td>
+<td><em>(aucun)</em></td>
+<td>Cle publique VAPID pour le web push navigateur.</td>
+</tr>
+<tr>
+<td><code>WEBPUSH_VAPID_PRIVATE_KEY</code></td>
+<td><em>(aucun)</em></td>
+<td>Cle privee VAPID correspondante.</td>
+</tr>
+<tr>
+<td><code>WEBPUSH_VAPID_CLAIMS_EMAIL</code></td>
+<td><code>mailto:admin@hcw-at-home.com</code></td>
+<td>Adresse de contact transmise au service de push, sous forme <code>mailto:</code>.</td>
+</tr>
+<tr>
+<td><code>GOOGLE_APPLICATION_CREDENTIALS</code></td>
+<td><em>(aucun)</em></td>
+<td>Chemin du fichier JSON de compte de service Firebase, lu par le SDK Firebase. Necessaire aux notifications des applications mobiles natives (FCM).</td>
+</tr>
+</tbody>
+</table>
+<h2 id="antivirus-clamav">Antivirus (ClamAV)</h2>
+<p>Les fichiers envoyes ne sont analyses que si l'une de ces variables est definie. <code>CLAMD_SOCKET</code> a la priorite sur les variables TCP.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Defaut</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CLAMD_SOCKET</code></td>
+<td><em>(aucun)</em></td>
+<td>Chemin de la socket Unix de clamd, ex. <code>/var/run/clamav/clamd.ctl</code>.</td>
+</tr>
+<tr>
+<td><code>CLAMD_TCP_ADDR</code></td>
+<td><code>127.0.0.1</code></td>
+<td>Nom d'hote de clamd, en connexion TCP.</td>
+</tr>
+<tr>
+<td><code>CLAMD_TCP_SOCKET</code></td>
+<td><code>3310</code></td>
+<td>Port TCP de clamd.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="serveur-fhir">Serveur FHIR</h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Defaut</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>FHIR_SYSTEM_SCHEME</code></td>
+<td><code>https</code></td>
+<td>Schema utilise dans les URL <code>Identifier.system</code> derivees.</td>
+</tr>
+<tr>
+<td><code>FHIR_SYSTEM_PATH</code></td>
+<td><em>(vide)</em></td>
+<td>Chemin optionnel ajoute apres le domaine du tenant, ex. <code>/fhir</code>. Doit commencer par <code>/</code>.</td>
+</tr>
+<tr>
+<td><code>FHIR_SYSTEM_BASE_URL</code></td>
+<td><em>(aucun)</em></td>
+<td>Force une URL de base canonique unique pour tous les tenants, en contournant la derivation par tenant.</td>
+</tr>
+<tr>
+<td><code>FHIR_DEFAULT_COUNT</code></td>
+<td><code>20</code></td>
+<td>Nombre de ressources par page de Bundle par defaut.</td>
+</tr>
+<tr>
+<td><code>FHIR_MAX_COUNT</code></td>
+<td><code>100</code></td>
+<td>Borne superieure du parametre de recherche <code>_count</code>.</td>
+</tr>
+<tr>
+<td><code>FHIR_STRICT_SEARCH</code></td>
+<td><code>False</code></td>
+<td>Mettre <code>True</code> pour rejeter les parametres de recherche inconnus au lieu de les ignorer.</td>
+</tr>
+<tr>
+<td><code>FHIR_INCLUDE_NARRATIVE</code></td>
+<td><code>True</code></td>
+<td>Inclut la narration lisible <code>text</code> dans les ressources renvoyees.</td>
+</tr>
+<tr>
+<td><code>FHIR_BUNDLE_TOTAL_MODE</code></td>
+<td><code>accurate</code></td>
+<td><code>accurate</code> renvoie le <code>total</code> exact dans les Bundles, <code>none</code> l'omet (moins couteux sur de gros volumes).</td>
+</tr>
+</tbody>
+</table>
+<p>Voir <a href="../../admin/fhir/">Integration FHIR R4</a> pour le detail de la derivation des URL.</p>
+<h2 id="applications-mobiles">Applications mobiles</h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Defaut</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MOBILE_ANDROID_PACKAGE</code></td>
+<td><code>com.healthcare.patient</code></td>
+<td>Nom du paquet Android utilise pour le lien profond vers l'application native.</td>
+</tr>
+<tr>
+<td><code>MOBILE_ANDROID_STORE_URL</code></td>
+<td>URL Google Play du paquet par defaut</td>
+<td>Lien vers le store propose lorsque l'application n'est pas installee.</td>
+</tr>
+<tr>
+<td><code>MOBILE_IOS_STORE_URL</code></td>
+<td><em>(vide)</em></td>
+<td>Lien App Store. Laisser vide pour masquer la banniere iOS.</td>
+</tr>
+<tr>
+<td><code>IABSIS_PUBLIC_KEY_B64</code></td>
+<td><em>(cle Iabsis)</em></td>
+<td>Cle publique Ed25519 en base64 servant a verifier la signature de l'instance. A ne modifier que si vous signez vos instances avec votre propre cle et distribuez une application native correspondante.</td>
+</tr>
+</tbody>
+</table>
+<p>Chaque tenant peut surcharger les valeurs <code>MOBILE_*</code> depuis l'interface d'administration.</p>
+<h2 id="conteneurs-frontend">Conteneurs frontend</h2>
+<p>Les images patient, praticien et administration sont des conteneurs Nginx qui relaient <code>/api</code> et <code>/ws</code> vers le backend.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Concerne</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>BACKEND_URL</code></td>
+<td><code>patient</code>, <code>practitioner</code>, <code>admin</code></td>
+<td>URL interne de l'API, ex. <code>http://api:8000</code>. Substituee dans la configuration Nginx au demarrage du conteneur.</td>
+</tr>
+<tr>
+<td><code>TAG</code></td>
+<td><code>docker compose</code></td>
+<td>Tag des images a recuperer, ex. <code>TAG=0.10.0 docker compose pull</code>. Vaut <code>latest</code> par defaut.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="variables-obsoletes">Variables obsoletes</h2>
+<p><code>backend/.env-dist</code> liste encore quelques variables qui ne sont plus lues par le code. Elles ne sont conservees que pour la compatibilite avec les anciens fichiers de configuration et peuvent etre supprimees.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Remplacement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>USERS_VISIBILITY</code></td>
+<td>Option <code>USERS_VISIBILITY</code> dans <a href="../../admin/advanced-options/">Options avancees</a></td>
+</tr>
+<tr>
+<td><code>OPENID_NAME</code>, <code>OPENID_CLIENT_ID</code>, <code>OPENID_SECRET</code>, <code>OPENID_CONFIGURATION_URL</code></td>
+<td>Configuration <a href="../../admin/sso/">Single Sign-On</a> dans l'interface d'administration</td>
+</tr>
+<tr>
+<td><code>DISABLE_PASSWORD_LOGIN</code></td>
+<td>Option <code>DISABLE_PASSWORD_LOGIN</code> dans <a href="../../admin/advanced-options/">Options avancees</a></td>
+</tr>
+<tr>
+<td><code>ENABLE_REGISTRATION</code></td>
+<td>Option <code>ENABLE_REGISTRATION</code> dans <a href="../../admin/advanced-options/">Options avancees</a></td>
+</tr>
+<tr>
+<td><code>ENCRYPTION_KEY</code></td>
+<td>Plus utilisee. Les cles de chiffrement de bout en bout sont gerees par utilisateur, voir <a href="../../admin/encryption/">Chiffrement de bout en bout</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="exemple-minimal">Exemple minimal</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Django</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="na">DJANGOSECRET_KEY</span><span class="o">=</span><span class="s">change-me</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="na">DEBUG</span><span class="o">=</span><span class="s">False</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="na">ALLOWED_HOST</span><span class="o">=</span><span class="s">hcw.example.com</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="na">ALLOWED_HOSTS</span><span class="o">=</span><span class="s">patient.example.com,admin.example.com</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="na">CSRF_TRUSTED_ORIGINS</span><span class="o">=</span><span class="s">https://admin.example.com</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="na">STATIC_ROOT</span><span class="o">=</span><span class="s">/usr/share/hcw/backend/statics/</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="na">MEDIA_ROOT</span><span class="o">=</span><span class="s">/var/lib/hcw/uploads</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="na">DEFAULT_TIME_ZONE</span><span class="o">=</span><span class="s">Europe/Zurich</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1"># Base de donnees</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="na">DATABASE_NAME</span><span class="o">=</span><span class="s">hcw</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="na">DATABASE_USER</span><span class="o">=</span><span class="s">hcw</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="na">DATABASE_PASSWORD</span><span class="o">=</span><span class="s">change-me</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="na">DATABASE_HOST</span><span class="o">=</span><span class="s">127.0.0.1</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="na">DATABASE_PORT</span><span class="o">=</span><span class="s">5432</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="c1"># Redis</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="na">REDIS_HOST</span><span class="o">=</span><span class="s">127.0.0.1</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="na">REDIS_PORT</span><span class="o">=</span><span class="s">6379</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="c1"># Messagerie</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="na">EMAIL_HOST</span><span class="o">=</span><span class="s">smtp.example.com</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="na">EMAIL_PORT</span><span class="o">=</span><span class="s">587</span>
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="na">EMAIL_USE_TLS</span><span class="o">=</span><span class="s">1</span>
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="na">EMAIL_HOST_USER</span><span class="o">=</span><span class="s">hcw@example.com</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="na">EMAIL_HOST_PASSWORD</span><span class="o">=</span><span class="s">change-me</span>
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="na">DEFAULT_FROM_EMAIL</span><span class="o">=</span><span class="s">no-reply@example.com</span>
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.sections", "navigation.expand", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copi\u00e9 dans le presse-papier", "clipboard.copy": "Copier dans le presse-papier", "search.result.more.one": "1 de plus sur cette page", "search.result.more.other": "# de plus sur cette page", "search.result.none": "Aucun document trouv\u00e9", "search.result.one": "1 document trouv\u00e9", "search.result.other": "# documents trouv\u00e9s", "search.result.placeholder": "Taper pour d\u00e9marrer la recherche", "search.result.term.missing": "Non trouv\u00e9", "select.version": "S\u00e9lectionner la version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
