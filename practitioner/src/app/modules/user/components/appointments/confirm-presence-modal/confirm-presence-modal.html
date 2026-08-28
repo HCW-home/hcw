@@ -1,173 +1,192 @@
 <app-modal
   [isOpen]="isOpen"
-  [title]="modalTitle"
-  size="small"
+  [title]="dateTitle"
+  size="medium"
+  [closeOnBackdropClick]="true"
   (closed)="onClose()">
   @if (appointment) {
-  <div class="modal-content">
-    <div class="top-actions">
+  <div class="appointment-modal">
+    <div class="summary">
+      <div class="summary-badges">
+        <app-badge
+          [type]="isOnlineAppointment ? BadgeTypeEnum.purple : BadgeTypeEnum.blue"
+          [size]="BadgeSizeEnum.medium">
+          {{ typeLabel }}
+        </app-badge>
+        <app-badge
+          [type]="statusBadgeType"
+          [size]="BadgeSizeEnum.medium"
+          [dot]="true">
+          {{ statusLabel }}
+        </app-badge>
+        @if (countdown; as label) {
+        <span class="summary-countdown">{{ label }}</span>
+        }
+      </div>
+      @if (appointment.title) {
+      <div class="summary-subject">{{ appointment.title }}</div>
+      }
+      @if (metaLine) {
+      <div class="summary-meta">{{ metaLine }}</div>
+      }
+    </div>
+
+    <div class="actions">
+      @if (canJoin) {
       <app-button
-        [size]="ButtonSizeEnum.small"
-        [style]="ButtonStyleEnum.stroke"
-        [state]="ButtonStateEnum.error"
-        [text]="'confirmPresenceModal.cancel' | translate"
-        (buttonClick)="cancelAppointment()">
+        [size]="ButtonSizeEnum.medium"
+        [style]="ButtonStyleEnum.primary"
+        [text]="'confirmPresenceModal.join' | translate"
+        leftIcon="video"
+        (buttonClick)="joinCall()">
       </app-button>
+      }
+      @if (canEdit) {
       <app-button
-        [size]="ButtonSizeEnum.small"
+        [size]="ButtonSizeEnum.medium"
         [style]="ButtonStyleEnum.stroke"
         [text]="'confirmPresenceModal.edit' | translate"
         leftIcon="edit"
         (buttonClick)="editAppointment()">
       </app-button>
-      @if (isOnlineAppointment) {
-        <app-button
-          [size]="ButtonSizeEnum.small"
-          [style]="ButtonStyleEnum.primary"
-          [text]="'confirmPresenceModal.join' | translate"
-          leftIcon="video"
-          [disabled]="isJoining()"
-          [loading]="isJoining()"
-          (buttonClick)="joinCall()">
-        </app-button>
+      }
+      @if (canCancel) {
+      <button
+        type="button"
+        class="overflow-trigger"
+        [class.open]="cancelConfirmOpen()"
+        [attr.aria-expanded]="cancelConfirmOpen()"
+        [title]="'consultationDetail.moreActions' | translate"
+        [attr.aria-label]="'consultationDetail.moreActions' | translate"
+        (click)="toggleCancelConfirm()">
+        <app-svg
+          src="more"
+          [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
+      </button>
       }
     </div>
 
-    @if (tooEarlyError()) {
-      <div class="too-early-inline">
-        <app-svg src="clock" [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--amber-600)'}"></app-svg>
-        <span>{{ 'confirmPresenceModal.tooEarlyToJoin' | translate: { time: tooEarlyError()!.time, minutes: tooEarlyError()!.minutes } }}</span>
-      </div>
+    @if (tooEarlyError(); as tooEarly) {
+    <div class="notice too-early">
+      <app-svg
+        src="clock"
+        [svgStyle]="{'width.px': 16, 'height.px': 16, 'color': 'var(--amber-600)'}"></app-svg>
+      <span
+        >{{ 'confirmPresenceModal.tooEarlyToJoin' | translate: { time:
+        tooEarly.time, minutes: tooEarly.minutes } }}</span
+      >
+    </div>
     }
 
-    <div class="appointment-details">
-      @if (appointment.title) {
-      <div class="appointment-title">{{ appointment.title }}</div>
-      }
-      <div class="info-row">
-        <app-svg
-          [src]="appointment.type === AppointmentType.ONLINE ? 'video' : 'calendar'"
-          [svgStyle]="{ 'width.px': 18, 'height.px': 18, color: 'var(--slate-500)' }">
-        </app-svg>
-        <span class="info-text">
-          {{ appointment.type === AppointmentType.ONLINE ?
-          ('confirmPresenceModal.videoConsultation' | translate) :
-          ('confirmPresenceModal.inPersonVisit' | translate) }}
-        </span>
-      </div>
-      <div class="info-row">
-        <app-svg
-          src="calendar"
-          [svgStyle]="{ 'width.px': 18, 'height.px': 18, color: 'var(--slate-500)' }">
-        </app-svg>
-        <span class="info-text">
-          {{ appointment.scheduled_at | localDate : 'fullDate' }}
-        </span>
-      </div>
-      <div class="info-row">
-        <app-svg
-          src="clock"
-          [svgStyle]="{ 'width.px': 18, 'height.px': 18, color: 'var(--slate-500)' }">
-        </app-svg>
-        <span class="info-text">
-          {{ appointment.scheduled_at | localDate : 'HH:mm' }}
-          @if (appointment.end_expected_at) { - {{
-          appointment.end_expected_at | localDate : 'HH:mm' }} }
-        </span>
-      </div>
-      @if (hasConsultation) {
-      <div class="info-row">
-        <app-svg
-          src="stethoscope"
-          [svgStyle]="{ 'width.px': 18, 'height.px': 18, color: 'var(--slate-500)' }">
-        </app-svg>
-        <span class="info-text">
-          {{ 'confirmPresenceModal.consultation' | translate }}
-          #{{ consultationId }}
-          @if (appointment.consultation_title) {
-            — {{ appointment.consultation_title }}
-          }
-        </span>
-        <a class="consultation-link" (click)="viewInConsultation()">
-          {{ 'confirmPresenceModal.viewInConsultation' | translate }}
-        </a>
-      </div>
-      }
+    @if (cancelConfirmOpen()) {
+    <div class="notice cancel-confirm">
+      <span class="cancel-confirm-text"
+        >{{ 'confirmPresenceModal.cancelInlineMessage' | translate }}</span
+      >
+      <button
+        type="button"
+        class="cancel-confirm-action"
+        [disabled]="isCancelling()"
+        (click)="cancelAppointment()">
+        {{ 'confirmPresenceModal.cancelConfirm' | translate }}
+      </button>
     </div>
+    }
 
-    @if (appointment.participants && appointment.participants.length > 0) {
-    <div class="participants-section">
-      <span class="participants-title">
-        {{ 'confirmPresenceModal.participants' | translate }} ({{
-        appointment.participants.length }})
+    @if (showPresenceRow) {
+    <div class="presence">
+      <span class="presence-label">{{ presenceLabel }}</span>
+      <span class="presence-actions">
+        <button
+          type="button"
+          class="presence-btn confirm"
+          [class.selected]="presenceAnswer === 'confirmed'"
+          [disabled]="isAnswering"
+          (click)="confirmPresence()">
+          <app-svg
+            src="check"
+            [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
+          {{ 'confirmPresenceModal.confirm' | translate }}
+        </button>
+        <button
+          type="button"
+          class="presence-btn decline"
+          [class.selected]="presenceAnswer === 'declined'"
+          [disabled]="isAnswering"
+          (click)="declinePresence()">
+          <app-svg
+            src="close"
+            [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
+          {{ 'confirmPresenceModal.decline' | translate }}
+        </button>
       </span>
-      <div class="participants-list">
-        @for (p of appointment.participants; track p.id) {
-        <div class="participant-entry">
-          <div class="participant-row">
-            <span class="participant-name">{{ getParticipantName(p) }}</span>
-            @if (p.id === myParticipantId) {
-              <span class="participant-actions">
-                <a class="action-link confirm-link"
-                  [class.disabled]="isConfirming() || isDeclining()"
-                  (click)="confirmPresence()">
-                  {{ 'confirmPresenceModal.confirm' | translate }}
-                </a>
-                <span class="action-separator">|</span>
-                <a class="action-link decline-link"
-                  [class.disabled]="isConfirming() || isDeclining()"
-                  (click)="declinePresence()">
-                  {{ 'confirmPresenceModal.decline' | translate }}
-                </a>
-              </span>
-            }
-            <span
-              class="participant-badge"
-              [style.background-color]="getParticipantStatusColor(p.status)">
-              {{ getParticipantStatusLabel(p.status) }}
-            </span>
-          </div>
-          @if (requiresManualAccess(p)) {
-          <div class="participant-access">
-            @if (isLoadingAccessUrl(p)) {
-              <span class="access-loading">
-                {{ 'participantItem.loadingLink' | translate }}
-              </span>
-            } @else if (getAccessUrl(p)) {
-              <app-svg
-                src="link"
-                [svgStyle]="{ 'width.px': 14, 'height.px': 14, color: 'var(--slate-400)' }">
-              </app-svg>
-              <code class="access-url">{{ getAccessUrl(p) }}</code>
-              <button
-                type="button"
-                class="access-copy"
-                [title]="'participantItem.copyLink' | translate"
-                (click)="copyAccessUrl(p)">
-                <app-svg
-                  [src]="copiedParticipantId() === p.id ? 'check' : 'copy'"
-                  [svgStyle]="{ 'width.px': 14, 'height.px': 14 }">
-                </app-svg>
-                <span>
-                  {{ (copiedParticipantId() === p.id ? 'participantItem.copied' :
-                  'participantItem.copyLink') | translate }}
-                </span>
-              </button>
-            }
-          </div>
-          }
-        </div>
+    </div>
+    }
+
+    @if (hasConsultation) {
+    <section class="block">
+      <span class="block-label"
+        >{{ 'confirmPresenceModal.attachedTo' | translate }}</span
+      >
+      <button
+        type="button"
+        class="consultation-card"
+        (click)="viewInConsultation()">
+        <span class="consultation-icon">
+          <app-svg
+            src="stethoscope"
+            [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+        </span>
+        <span class="consultation-text">
+          <span class="consultation-title">{{ consultationTitle }}</span>
+          <span class="consultation-meta">
+            {{ 'confirmPresenceModal.consultation' | translate }} {{
+            consultationRef }}
+          </span>
+        </span>
+        <app-svg
+          class="consultation-chevron"
+          src="chevron-right"
+          [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+      </button>
+    </section>
+    }
+
+    <section class="block">
+      <div class="block-header">
+        <span class="block-label"
+          >{{ 'confirmPresenceModal.participants' | translate }}</span
+        >
+        @if (participants().length) {
+        <span class="block-count"
+          >{{ participants().length }} · {{ participantsSummary }}</span
+        >
         }
       </div>
-    </div>
-    }
-
+      @if (participants().length) {
+      <div class="participants-list">
+        @for (participant of participants(); track participant.id) {
+        <app-participant-item
+          [participant]="participant"
+          [currentUser]="currentUser"
+          [compact]="true"
+          [appointmentCancelled]="appointment.status === AppointmentStatus.CANCELLED"></app-participant-item>
+        }
+      </div>
+      } @else {
+      <span class="no-participants"
+        >{{ 'consultationDetail.noParticipantsAdded' | translate }}</span
+      >
+      }
+    </section>
   </div>
   }
 
   <div modal-footer class="modal-actions">
+    @if (createdLabel) {
+    <span class="created-meta">{{ createdLabel }}</span>
+    }
     <app-button
-      [block]="true"
       [size]="ButtonSizeEnum.medium"
       [style]="ButtonStyleEnum.stroke"
       [text]="'confirmPresenceModal.close' | translate"
