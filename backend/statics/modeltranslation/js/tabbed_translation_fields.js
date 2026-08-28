@@ -211,7 +211,7 @@ var google, django, gettext;
         var tabsContainer = $("<div></div>"),
           tabsList = $(`<ul class='${selectors["tabUlClass"]}'></ul>`),
           insertionPoint,
-          activeTab = 0;
+          activeTab = getActiveTabIndex(lang);
         tabsContainer.append(tabsList);
         $.each(lang, function (lang, el) {
           var container = selectors["tabContainer"](el),
@@ -406,7 +406,7 @@ var google, django, gettext;
         var tabsContainer = $("<td></td>"),
           tabsList = $("<ul></ul>"),
           insertionPoint,
-          activeTab = 0;
+          activeTab = getActiveTabIndex(lang);
         tabsContainer.append(tabsList);
 
         $.each(lang, function (lang, el) {
@@ -470,16 +470,9 @@ var google, django, gettext;
       languages: [],
       $select: $("<select id='modeltranslation-main-switch' class='modeltranslation-switch'>"),
 
-      init: function (groupedTranslations, tabs) {
+      init: function (languages, tabs) {
         var self = this;
-        $.each(groupedTranslations, function (id, languages) {
-          $.each(languages, function (lang) {
-            if ($.inArray(lang, self.languages) < 0) {
-              self.languages.push(lang);
-            }
-          });
-        });
-        $.each(this.languages, function (idx, language) {
+        $.each(languages, function (idx, language) {
           self.$select.append(
             $(
               '<option value="' +
@@ -492,7 +485,6 @@ var google, django, gettext;
         });
         this.update(tabs);
         selectors["mainHeader"]().append("&nbsp;").append(self.$select);
-
       },
 
       update: function (tabs) {
@@ -520,8 +512,9 @@ var google, django, gettext;
           .filter(":parents(.tabular)")
           .filter(":parents(.empty-form)"),
       });
+      var languages = getLanguages($(".mt").filter("input, textarea, select"));
       MainSwitch.init(
-        grouper.groupedTranslations,
+        languages,
         createTabs(grouper.groupedTranslations)
       );
 
@@ -545,5 +538,38 @@ var google, django, gettext;
         });
       });
     }
+
+    function getLanguages (mtFields) {
+      let languages = [];
+      $.each(mtFields, function (_idx, el) {
+          const ids = $(el).attr("id").split("_");
+          const lang = ids[ids.length - 1];
+          if ($.inArray(lang, languages) < 0) {
+            languages.push(lang);
+          }
+        });
+      return languages;
+    }
+
   });
 })();
+
+
+function getActiveTabIndex($lang) {
+  if (window.MODELTRANSLATION_AUTO_SELECT_CURRENT_LANGUAGE ?? true) {
+    const documentLang = getDocumentLang().toLowerCase();
+    const idx = Object.keys($lang).findIndex(l => l == documentLang);
+    return idx !== -1 ? idx : 0;
+  } else {
+    return 0
+  }
+}
+
+
+function getDocumentLang() {
+  let lang = document.documentElement.lang.replace(/-/g, "_");
+  if (lang === "id") {
+    lang = "ind";
+  }
+  return lang
+}

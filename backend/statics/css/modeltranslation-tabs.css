@@ -1,0 +1,101 @@
+/*
+ * Styling for django-modeltranslation tabbed translation fields.
+ *
+ * django-unfold shipped these rules until 0.102, where django-modeltranslation
+ * support was deprecated and the CSS removed (commit afd814a). Without them the
+ * plain jQuery UI theme bundled with modeltranslation takes over and clashes
+ * with the Unfold admin design.
+ *
+ * The `.ui-tabs.ui-tabs` doubling is deliberate: modeltranslation's stylesheet
+ * is injected through the ModelAdmin media, which Unfold renders *after* the
+ * UNFOLD["STYLES"] entries. The extra class bumps specificity above theirs so
+ * load order stops mattering.
+ */
+
+.ui-tabs.ui-tabs {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+}
+
+.ui-tabs.ui-tabs .ui-tabs-nav {
+    display: flex;
+    gap: 0.5rem;
+    margin: 0.75rem auto 0 0.75rem;
+    padding: 0.25rem;
+    border: 0;
+    border-radius: var(--border-radius, 6px);
+    background-color: var(--color-base-100);
+}
+
+.ui-tabs.ui-tabs .ui-tabs-nav::after {
+    display: none;
+}
+
+.ui-tabs.ui-tabs .ui-tabs-nav li {
+    top: 0;
+    margin: 0;
+    border: 0;
+}
+
+.ui-tabs.ui-tabs .ui-tabs-nav li a {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin: 0;
+    padding: 0.25rem 0.625rem;
+    border: 0;
+    border-radius: var(--border-radius, 6px);
+    background: transparent;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-base-400);
+}
+
+.ui-tabs.ui-tabs .ui-tabs-nav li a:hover {
+    background-color: color-mix(in oklab, var(--color-base-700) 4%, transparent);
+    color: var(--color-base-700);
+}
+
+.ui-tabs.ui-tabs .ui-tabs-nav li.ui-tabs-active a,
+.ui-tabs.ui-tabs .ui-tabs-nav li.ui-tabs-selected a {
+    margin-top: 0;
+    padding: 0.25rem 0.625rem;
+    background-color: var(--color-white);
+    color: var(--color-base-700);
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.ui-tabs.ui-tabs .ui-tabs-nav li.ui-tabs-active a:hover,
+.ui-tabs.ui-tabs .ui-tabs-nav li.ui-tabs-selected a:hover {
+    background-color: var(--color-white);
+}
+
+.ui-tabs.ui-tabs .ui-tabs-panel {
+    padding: 0;
+}
+
+/* Marker for tabs holding a field with validation errors */
+.ui-tabs.ui-tabs .ui-tab-has-errors a::after {
+    position: static;
+    margin-left: 0.25rem;
+    font-size: 1.2rem;
+    color: var(--color-red-600, #ba2121);
+}
+
+.dark .ui-tabs.ui-tabs .ui-tabs-nav {
+    background-color: color-mix(in oklab, var(--color-white) 4%, transparent);
+}
+
+.dark .ui-tabs.ui-tabs .ui-tabs-nav li a:hover {
+    background-color: color-mix(in oklab, var(--color-white) 4%, transparent);
+    color: var(--color-white);
+}
+
+.dark .ui-tabs.ui-tabs .ui-tabs-nav li.ui-tabs-active a,
+.dark .ui-tabs.ui-tabs .ui-tabs-nav li.ui-tabs-selected a,
+.dark .ui-tabs.ui-tabs .ui-tabs-nav li.ui-tabs-active a:hover,
+.dark .ui-tabs.ui-tabs .ui-tabs-nav li.ui-tabs-selected a:hover {
+    background-color: var(--color-base-900);
+    color: var(--color-white);
+}
