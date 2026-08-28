@@ -53,6 +53,12 @@ export class WebSocketService implements OnDestroy {
     this.reconnectAttempts = 0;
 
     if (this.ws) {
+      // Detach handlers first: the close event fires asynchronously and would
+      // otherwise emit a state change after the intentional disconnect.
+      this.ws.onopen = null;
+      this.ws.onmessage = null;
+      this.ws.onerror = null;
+      this.ws.onclose = null;
       this.ws.close(1000, 'Client disconnect');
       this.ws = null;
     }

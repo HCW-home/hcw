@@ -57,6 +57,7 @@ export class UserWebSocketService implements OnDestroy {
   }
 
   async connect(): Promise<void> {
+    this.intentionalDisconnect = false;
     const state = this.wsService.getState();
     if (state === WebSocketState.CONNECTED || state === WebSocketState.CONNECTING) {
       return;
@@ -112,8 +113,9 @@ export class UserWebSocketService implements OnDestroy {
           this.effectiveStateSubject.next(WebSocketState.CONNECTING);
         }
       } else if (state === WebSocketState.DISCONNECTED || state === WebSocketState.FAILED) {
+        // Stay silent until connect() is called again: after a logout the
+        // socket close event can still emit a disconnected state.
         if (this.intentionalDisconnect) {
-          this.intentionalDisconnect = false;
           return;
         }
 
@@ -192,6 +194,15 @@ export class UserWebSocketService implements OnDestroy {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
+  }
+
+  /**
+   * True once a connection has been established, until it is either closed
+   * intentionally (logout) or definitively lost. Used to tell an unexpected
+   * disconnection apart from a normal not-connected state.
+   */
+  get hasBeenConnected(): boolean {
+    return this.wasConnected;
   }
 
   getConnectionState(): Observable<WebSocketState> {
