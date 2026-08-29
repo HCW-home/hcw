@@ -32,14 +32,21 @@ def _fmt(dt):
     return dt.astimezone(ZoneInfo("UTC")).strftime("%Y%m%dT%H%M%SZ")
 
 
-def _appointment_to_vcalendar(appointment):
+def _appointment_to_vcalendar(appointment, allowed_consultation_ids=frozenset()):
     end_at = appointment.end_expected_at or (
         appointment.scheduled_at + timedelta(hours=1)
     )
     domain = getattr(settings, "SITE_DOMAIN", "hcw.local")
 
+    # Being on the roster puts the appointment in the subscriber's calendar,
+    # but the follow-up behind it is only described to someone the consultation
+    # itself would let in — see `consultation_access_q`. A guest invited to a
+    # single call gets the event, not the medical context.
     description = ""
-    if appointment.consultation:
+    if (
+        appointment.consultation
+        and appointment.consultation_id in allowed_consultation_ids
+    ):
         if appointment.consultation.title:
             description += f"Consultation: {appointment.consultation.title}"
         if appointment.consultation.description:
@@ -173,6 +180,25 @@ def _get_user_appointments(user):
     )
 
 
+def _accessible_consultation_ids(user, appointments):
+    """Which of ``appointments``' consultations ``user`` may actually read.
+
+    Resolved once per response instead of per event: the calendar scope is the
+    appointment roster, which is wider than the consultation access rule.
+    """
+    from consultations.models import Consultation
+    from consultations.utils import consultation_access_q
+
+    ids = {a.consultation_id for a in appointments if a.consultation_id}
+    if not ids:
+        return frozenset()
+    return frozenset(
+        Consultation.objects.filter(pk__in=ids)
+        .filter(consultation_access_q(user))
+        .values_list("pk", flat=True)
+    )
+
+
 def _appointment_etag(appointment):
     # Use updated_at so any change (title rename, status, participants, ...)
     # invalidates the etag and triggers a re-fetch by CalDAV clients.
@@ -290,7 +316,8 @@ class CalDAVCalendarView(View):
         if err:
             return err
 
-        appointments = _get_user_appointments(user)
+        appointments = list(_get_user_appointments(user))
+        allowed_consultation_ids = _accessible_consultation_ids(user, appointments)
 
         # Parse request body for calendar-multiget
         requested_hrefs = set()
@@ -318,7 +345,7 @@ class CalDAVCalendarView(View):
 
             ET.SubElement(prop, _tag(DAV, "getetag")).text = _appointment_etag(appt)
             caldata = ET.SubElement(prop, _tag(CALDAV, "calendar-data"))
-            caldata.text = _appointment_to_vcalendar(appt)
+            caldata.text = _appointment_to_vcalendar(appt, allowed_consultation_ids)
 
             ET.SubElement(propstat, _tag(DAV, "status")).text = "HTTP/1.1 200 OK"
 
@@ -332,7 +359,8 @@ class CalDAVCalendarView(View):
         filename = kwargs.get("filename")
         if not filename:
             # Return full calendar as ICS
-            appointments = _get_user_appointments(user)
+            appointments = list(_get_user_appointments(user))
+            allowed_consultation_ids = _accessible_consultation_ids(user, appointments)
             lines = [
                 "BEGIN:VCALENDAR",
                 "VERSION:2.0",
@@ -340,7 +368,7 @@ class CalDAVCalendarView(View):
                 "CALSCALE:GREGORIAN",
             ]
             for appt in appointments:
-                vcal = _appointment_to_vcalendar(appt)
+                vcal = _appointment_to_vcalendar(appt, allowed_consultation_ids)
                 # Extract VEVENT from each VCALENDAR
                 in_vevent = False
                 for line in vcal.split("\r\n"):
@@ -359,7 +387,9 @@ class CalDAVCalendarView(View):
         if not appointment:
             return HttpResponse(status=404)
 
-        ics = _appointment_to_vcalendar(appointment)
+        ics = _appointment_to_vcalendar(
+            appointment, _accessible_consultation_ids(user, [appointment])
+        )
         response = HttpResponse(ics, content_type="text/calendar; charset=utf-8")
         response["ETag"] = _appointment_etag(appointment)
         return response

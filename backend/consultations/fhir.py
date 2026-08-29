@@ -201,10 +201,21 @@ class AppointmentFhirMapper(FhirResourceMapper):
                 }]
             }
 
+        # The Appointment read scope is wider than the consultation one, so the
+        # follow-up's own wording is only used as a fallback description for a
+        # reader the consultation would let in. The Encounter reference itself
+        # stays: a link is not the content, and the Encounter route enforces
+        # its own scope.
         description = None
         supporting_info = []
         if instance.consultation_id and instance.consultation:
-            description = instance.consultation.description or instance.consultation.title
+            from .utils import can_access_consultation
+
+            user = getattr((context or {}).get("request"), "user", None)
+            if can_access_consultation(user, instance.consultation):
+                description = (
+                    instance.consultation.description or instance.consultation.title
+                )
             enc_ref = build_reference("Encounter", instance.consultation_id)
             if enc_ref:
                 supporting_info.append(enc_ref)
@@ -321,7 +332,7 @@ class AppointmentFhirMapper(FhirResourceMapper):
             code = parsed.appointmentType.coding[0].code
             instance.type = _CODE_TO_TYPE.get(code, instance.type or Type.online)
 
-        instance.consultation = self._resolve_encounter_reference(parsed)
+        instance.consultation = self._resolve_encounter_reference(parsed, user)
 
         ext_sys = get_external_identifier_system("Appointment")
         if ext_sys:
@@ -347,12 +358,20 @@ class AppointmentFhirMapper(FhirResourceMapper):
             instance._fhir_contained = contained
         return instance
 
-    def _resolve_encounter_reference(self, parsed):
+    def _resolve_encounter_reference(self, parsed, user):
+        """Resolve `supportingInformation: Encounter/<id>` within ``user``'s reach.
+
+        Scoped to `accessible_by`: hanging an appointment onto a consultation
+        is a write on that consultation, and the roster of the new appointment
+        would otherwise hand its author read access to a follow-up they were
+        never part of. An out-of-reach Encounter answers 404 like a missing
+        one, so the reference cannot be used to probe for existence.
+        """
         for ref in (parsed.supportingInformation or []):
             rtype, ident = parse_reference(getattr(ref, "reference", "") or "")
             if rtype == "Encounter" and ident:
                 try:
-                    return Consultation.objects.get(pk=int(ident))
+                    return Consultation.objects.accessible_by(user).get(pk=int(ident))
                 except (Consultation.DoesNotExist, ValueError):
                     raise FhirOperationError(
                         f"Referenced Encounter/{ident} not found.",
@@ -1116,7 +1135,12 @@ class PrescriptionFhirMapper(FhirResourceMapper):
         rtype, ident = parse_reference(enc_ref or "")
         if rtype == "Encounter" and ident:
             try:
-                instance.consultation = Consultation.objects.get(pk=int(ident))
+                # Scoped like the Appointment mapper: prescribing into a
+                # consultation is a write on it, so an out-of-reach Encounter
+                # answers 404 rather than accepting the row.
+                instance.consultation = Consultation.objects.accessible_by(user).get(
+                    pk=int(ident)
+                )
             except (Consultation.DoesNotExist, ValueError):
                 raise FhirOperationError(
                     f"Encounter/{ident} not found in current tenant.",

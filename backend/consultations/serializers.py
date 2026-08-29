@@ -643,6 +643,45 @@ class ConsultationSerializer(CustomFieldsMixin, serializers.ModelSerializer):
         return None
 
 
+def accessible_consultation(context, consultation):
+    """Return ``consultation`` if the requesting user may read it, else None.
+
+    The appointment scopes are wider than the consultation rule — a plain
+    participant, a colleague visible through ``users_visibility`` — so every
+    payload that carries consultation content behind an appointment has to ask
+    this before handing it out.
+
+    Memoised on the serializer context: a page repeats the same handful of
+    consultations and each check costs a query.
+    """
+    from .utils import can_access_consultation
+
+    if consultation is None:
+        return None
+    cache = context.setdefault("_consultation_access", {})
+    if consultation.pk not in cache:
+        user = getattr(context.get("request"), "user", None)
+        cache[consultation.pk] = can_access_consultation(user, consultation)
+    return consultation if cache[consultation.pk] else None
+
+
+def check_consultation_authority(context, consultation_pk):
+    """Raise unless the requesting user may write on this consultation.
+
+    Hanging an appointment, a reminder or a prescription on a consultation is a
+    write on that consultation, so it takes the `accessible_by` scope and not
+    the wider read one. Left unchecked it is also a *read* grant: the author
+    lands on the roster of what they just created, which opens the follow-up
+    back to them. An out-of-reach consultation is reported as missing rather
+    than forbidden, so the field cannot be used to probe for existence.
+    """
+    if consultation_pk is None:
+        return
+    user = context["request"].user
+    if not Consultation.objects.accessible_by(user).filter(pk=consultation_pk).exists():
+        raise serializers.ValidationError(_("Consultation not found."))
+
+
 def appointment_can_join(appointment, request):
     """Whether the requesting user is allowed into this appointment's call.
 
@@ -670,9 +709,10 @@ class AppointmentSerializer(serializers.ModelSerializer):
     consultation_id = serializers.IntegerField(required=False, allow_null=True)
     # Optional: an appointment without a schedule is immediate and starts now.
     scheduled_at = serializers.DateTimeField(required=False, allow_null=True)
-    consultation_title = serializers.CharField(
-        source="consultation.title", read_only=True, default=None
-    )
+    # The appointment read scope is wider than the consultation one (plain
+    # participants, colleagues visible through `users_visibility`), so the title
+    # is only handed out to someone the consultation itself would let in.
+    consultation_title = serializers.SerializerMethodField()
     participants = ParticipantReadSerializer(
         many=True, read_only=True, required=False, source="participant_set"
     )
@@ -717,6 +757,14 @@ class AppointmentSerializer(serializers.ModelSerializer):
 
     def get_can_join(self, obj):
         return appointment_can_join(obj, self.context.get("request"))
+
+    def get_consultation_title(self, obj):
+        consultation = accessible_consultation(self.context, obj.consultation)
+        return consultation.title if consultation else None
+
+    def validate_consultation_id(self, value):
+        check_consultation_authority(self.context, value)
+        return value
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -1333,13 +1381,15 @@ class BookingSlotSerializer(serializers.ModelSerializer):
 
 class AppointmentDetailSerializer(serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(read_only=True)
-    consultation = ConsultationSerializer(read_only=True)
+    # Being on an appointment roster does not by itself open the consultation
+    # behind it: a guest invited to a single call must not read the follow-up.
+    # Both the nested object and the title are gated on the access rule; the
+    # bare id stays so the client can still route to the chat it may open.
+    consultation = serializers.SerializerMethodField()
     # Kept alongside the nested consultation so this payload can be consumed
     # exactly like the one from AppointmentSerializer.
     consultation_id = serializers.IntegerField(read_only=True)
-    consultation_title = serializers.CharField(
-        source="consultation.title", read_only=True, default=None
-    )
+    consultation_title = serializers.SerializerMethodField()
     participants = ParticipantReadSerializer(
         many=True, read_only=True, source="participant_set"
     )
@@ -1365,6 +1415,16 @@ class AppointmentDetailSerializer(serializers.ModelSerializer):
 
     def get_can_join(self, obj):
         return appointment_can_join(obj, self.context.get("request"))
+
+    def get_consultation(self, obj):
+        consultation = accessible_consultation(self.context, obj.consultation)
+        if consultation is None:
+            return None
+        return ConsultationSerializer(consultation, context=self.context).data
+
+    def get_consultation_title(self, obj):
+        consultation = accessible_consultation(self.context, obj.consultation)
+        return consultation.title if consultation else None
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -1616,6 +1676,10 @@ class PrescriptionSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "created_by", "created_at", "updated_at"]
 
+    def validate_consultation(self, value):
+        check_consultation_authority(self.context, value.pk if value else None)
+        return value
+
 
 class ReminderSerializer(serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(read_only=True)
@@ -1676,6 +1740,10 @@ class ReminderSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+
+    def validate_consultation_id(self, value):
+        check_consultation_authority(self.context, value.pk if value else None)
+        return value
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

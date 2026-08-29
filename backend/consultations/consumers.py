@@ -57,6 +57,19 @@ class AppointmentTranscriptionConsumer(TenantConsumerMixin, AsyncWebsocketConsum
         # Namespaces segment timestamps, which restart at 0 on each whisper session
         self.session_seq = 0
 
+        # The pk comes straight from the URL: without this check anyone
+        # authenticated could stream into a stranger's call, have their lines
+        # written to that appointment's transcript and pushed to its real
+        # participants. Attendance is the rule here, as it is for `join`.
+        # Checked last so `disconnect` finds the state above initialised.
+        if not await self._is_active_participant():
+            logger.warning(
+                f"Transcription WS refused: appointment={self.appointment_pk} "
+                f"user={self.user.pk} is not an active participant"
+            )
+            await self.close(code=4003)
+            return
+
         await self.accept()
         logger.info(
             f"Transcription WS connected: appointment={self.appointment_pk} user={self.user.pk}"
@@ -488,6 +501,21 @@ class AppointmentTranscriptionConsumer(TenantConsumerMixin, AsyncWebsocketConsum
             logger.info(f"Transcript saved for appointment {self.appointment_pk}: {len(existing)} lines")
 
     @sync_to_async
+    def _is_active_participant(self):
+        """Whether the connecting user is on this appointment's roster."""
+        from consultations.models import Participant
+
+        with self.tenant_scope():
+            try:
+                return Participant.objects.filter(
+                    appointment_id=int(self.appointment_pk),
+                    user=self.user,
+                    is_active=True,
+                ).exists()
+            except (TypeError, ValueError):
+                return False
+
+    @sync_to_async
     def _get_speaker_name(self):
         """Get the display name of the current user."""
         return self.user.name or self.user.email or str(self.user.pk)
@@ -522,13 +550,40 @@ class ConsultationConsumer(TenantConsumerMixin, AsyncWebsocketConsumer):
             return
 
         self.consultation_pk = self.scope["url_route"]["kwargs"]["consultation_pk"]
+
+        # Subscribing to a consultation's stream is reading it. Without this the
+        # pk from the URL is taken on trust, and anything ever published to the
+        # group reaches every authenticated user who guessed a number.
+        if not await self._can_access_consultation(user):
+            await self.close(code=4003)
+            return
+
         await self.channel_layer.group_add(
             consultation_group(self.consultation_pk, self.schema_name),
             self.channel_name,
         )
         await self.accept()
 
+    @sync_to_async
+    def _can_access_consultation(self, user):
+        from consultations.models import Consultation
+        from consultations.utils import consultation_access_q
+
+        with self.tenant_scope():
+            try:
+                return (
+                    Consultation.objects.filter(pk=int(self.consultation_pk))
+                    .filter(consultation_access_q(user))
+                    .exists()
+                )
+            except (TypeError, ValueError):
+                return False
+
     async def disconnect(self, close_code):
+        # `connect` can bail out before joining the group (unauthenticated, or
+        # turned away by the access check), and Channels still calls this.
+        if getattr(self, "consultation_pk", None) is None:
+            return
         await self.channel_layer.group_discard(
             consultation_group(self.consultation_pk, self.schema_name),
             self.channel_name,

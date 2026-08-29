@@ -758,28 +758,11 @@ class MessageAttachmentView(APIView):
 
         user = request.user
 
-        # Check if user has permission to access this consultation. Mirrors
-        # ConsultationViewSet / MessageViewSet: owner, creator, beneficiary,
-        # queue member, or someone the appointment rosters let in.
-        from consultations.models import Participant
-        from consultations.utils import roster_participant_q
+        # Same rule as ConsultationViewSet / MessageViewSet: owner, creator,
+        # beneficiary, queue member, or someone the appointment rosters let in.
+        from consultations.utils import can_access_consultation
 
-        consultation = message.consultation
-
-        has_access = (
-            consultation.created_by_id == user.id
-            or consultation.owned_by_id == user.id
-            or consultation.beneficiary_id == user.id
-            or (
-                consultation.group_id
-                and consultation.group.users.filter(id=user.id).exists()
-            )
-            or Participant.objects.filter(
-                roster_participant_q(consultation), user=user
-            ).exists()
-        )
-
-        if not has_access:
+        if not can_access_consultation(user, message.consultation):
             return Response(
                 {"detail": "You don't have permission to access this message."},
                 status=status.HTTP_403_FORBIDDEN,

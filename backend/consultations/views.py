@@ -69,7 +69,7 @@ from .models import (
     Type,
 )
 from .paginations import ConsultationPagination
-from .utils import roster_access_q, roster_participant_q
+from .utils import consultation_access_q, roster_access_q, roster_participant_q
 from .permissions import IsPractitioner
 from .serializers import (
     AppointmentAddParticipantsSerializer,
@@ -183,6 +183,12 @@ class ConsultationViewSet(FhirViewSetMixin, CreatedByMixin, viewsets.ModelViewSe
     ordering = ["-_unassigned_request", "-created_at"]
     ordering_fields = ["created_at", "updated_at", "closed_at"]
 
+    # Actions that alter the consultation itself, as opposed to reading it or
+    # tracking one's own state in it (`mark_read`, `join`, `messages`).
+    WRITE_ACTIONS = frozenset(
+        {"update", "partial_update", "destroy", "close", "reopen"}
+    )
+
     def get_queryset(self):
         user = self.request.user
         # Listing surfaces temporary follow-ups too, so their chats remain easy
@@ -196,26 +202,21 @@ class ConsultationViewSet(FhirViewSetMixin, CreatedByMixin, viewsets.ModelViewSe
                 ))
                 | roster_access_q(user)
             ).distinct()
-        else:
-            qs = Consultation.objects.filter(
-                Q(owned_by=user)
-                | Q(created_by=user)
-                | Q(group__users=user)
-                # A practitioner can be the beneficiary of a follow-up — asking
-                # for one themselves, or being cared for by a colleague. The
-                # message endpoint already lets them read its messages, so
-                # 404ing the consultation is an inconsistency, not a
-                # protection. `visible_by_patient` still applies: it is what
-                # hides a follow-up from the person it concerns. Detail only,
-                # so their own care stays out of the professional list.
-                | Q(beneficiary=user, visible_by_patient=True)
-                | Q(
-                    temporary=True,
-                    appointments__participant__user=user,
-                    appointments__participant__is_active=True,
-                )
-                | roster_access_q(user)
+        elif self.action in self.WRITE_ACTIONS:
+            # Reading a follow-up is not authority over it: a practitioner put
+            # on one appointment's roster takes part in the care, which is why
+            # they reach the chat, but rewriting or closing the case belongs to
+            # the people `accessible_by` names.
+            qs = Consultation.objects.accessible_by(
+                user, include_temporary=True
             ).distinct()
+        else:
+            # A practitioner can be the beneficiary of a follow-up — asking for
+            # one themselves, or being cared for by a colleague. The message
+            # endpoint already lets them read its messages, so 404ing the
+            # consultation is an inconsistency, not a protection. Detail only,
+            # so their own care stays out of the professional list.
+            qs = Consultation.objects.filter(consultation_access_q(user)).distinct()
         qs = annotate_unread_count(qs, user)
         qs = annotate_unassigned_request(qs)
         return qs
@@ -1814,13 +1815,7 @@ class MessageViewSet(viewsets.ModelViewSet):
 
         # Return messages from consultations the user has access to
         return Message.objects.filter(
-            consultation__in=Consultation.objects.filter(
-                Q(created_by=user)
-                | Q(owned_by=user)
-                | Q(group__users=user)
-                | Q(beneficiary=user)
-                | roster_access_q(user)
-            )
+            consultation__in=Consultation.objects.filter(consultation_access_q(user))
         ).distinct()
 
     def update(self, request, *args, **kwargs):

@@ -106,3 +106,50 @@ def roster_participant_q(consultation):
     return on_roster & (
         Q(is_consultation_visible=True) | Q(user__is_practitioner=True)
     )
+
+
+def consultation_access_q(user):
+    """Q on Consultation matching every consultation ``user`` may read.
+
+    The single expression of the access rule: a consultation opens to its
+    creator, its owner, its beneficiary, the members of its queue, or the
+    rosters of its appointments (see :func:`roster_access_q`). Anything reading
+    consultation content — a queryset, a nested serializer, a socket — must
+    gate on this and nothing wider.
+
+    ``visible_by_patient`` is what hides a follow-up from the person it
+    concerns, so the beneficiary branch carries it. A temporary consultation is
+    the chat container of a single appointment, so its own participants reach
+    it without the visibility flag: the flag exists to keep a guest out of the
+    *medical follow-up*, which a temporary consultation is not.
+    """
+    return (
+        Q(created_by=user)
+        | Q(owned_by=user)
+        | Q(beneficiary=user, visible_by_patient=True)
+        | Q(group__users=user)
+        | Q(
+            temporary=True,
+            appointments__participant__user=user,
+            appointments__participant__is_active=True,
+        )
+        | roster_access_q(user)
+    )
+
+
+def can_access_consultation(user, consultation):
+    """Whether ``user`` may read ``consultation``.
+
+    Single-instance counterpart of :func:`consultation_access_q`, for the code
+    that already holds the consultation (nested serializers, socket handshakes)
+    and cannot express the rule as a queryset filter.
+    """
+    from .models import Consultation
+
+    if consultation is None or not getattr(user, "is_authenticated", False):
+        return False
+    return (
+        Consultation.objects.filter(pk=consultation.pk)
+        .filter(consultation_access_q(user))
+        .exists()
+    )
