@@ -41,8 +41,11 @@ def get_users_to_notification_consultation(consultation: Consultation):
     if consultation.created_by:
         users_to_notify_pks.add(consultation.created_by.pk)
 
-    # Add beneficiary user
-    if consultation.beneficiary:
+    # Add beneficiary user. `visible_by_patient` is what hides a follow-up from
+    # the person it concerns, and both consultation querysets honour it: pushing
+    # them message payloads they cannot open would leak the very content that
+    # flag exists to withhold.
+    if consultation.beneficiary and consultation.visible_by_patient:
         users_to_notify_pks.add(consultation.beneficiary.pk)
 
     # Add users from group (queue)
@@ -52,21 +55,18 @@ def get_users_to_notification_consultation(consultation: Consultation):
 
     # Add participants who can access the consultation chat.
     #
-    # This must mirror UserConsultationsViewSet.get_queryset (detail/messages
-    # access): an active participant of a *temporary* consultation can use the
-    # chat without the explicit is_consultation_visible flag, while on regular
-    # consultations the flag is still required. Keeping both rules in sync is
+    # This must mirror the consultation querysets (detail / messages access):
+    # roster_participant_q covers the visible participants and the
+    # practitioners, and an active participant of a *temporary* consultation
+    # can use the chat without any flag at all. Keeping the rules in sync is
     # what makes the WebSocket echo reach a temporary patient in real time
     # (otherwise they only saw messages after a manual page refresh).
     from django.db.models import Q
 
     from .models import Participant
+    from .utils import roster_participant_q
 
-    participant_filter = Q(
-        appointment__consultation=consultation,
-        is_active=True,
-        is_consultation_visible=True,
-    )
+    participant_filter = roster_participant_q(consultation)
     if consultation.temporary:
         participant_filter |= Q(
             appointment__consultation=consultation,

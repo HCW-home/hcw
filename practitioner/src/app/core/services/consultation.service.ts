@@ -253,6 +253,8 @@ export class ConsultationService {
     consultation__created_by?: number;
     consultation__owned_by?: number;
     status?: string;
+    /** Comma-separated statuses, e.g. PLANNED_APPOINTMENT_STATUSES. */
+    status_in?: string;
     scheduled_at__date__gte?: string;
     scheduled_at__date__lte?: string;
     future?: boolean;

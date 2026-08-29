@@ -76,6 +76,19 @@ export enum AppointmentType {
 }
 
 /**
+ * Statuses an appointment must carry to belong on a planning, as the `status_in`
+ * filter expects them. A cancelled or still-draft appointment is not a
+ * commitment; a past one qualified as completed or no-show still is — filtering
+ * on `scheduled` alone made yesterday's appointments vanish from the calendar as
+ * soon as the outcome task ran.
+ */
+export const PLANNED_APPOINTMENT_STATUSES = [
+  AppointmentStatus.SCHEDULED,
+  AppointmentStatus.COMPLETED,
+  AppointmentStatus.NOSHOW,
+].join(',');
+
+/**
  * Statuses whose call room stays reachable, mirroring the backend rule behind
  * `can_join`. Qualifying an appointment as completed or no-show is bookkeeping,
  * not a lock: the call must remain rejoinable. Only a cancelled appointment and

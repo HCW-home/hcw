@@ -17,6 +17,12 @@ class ConsultationManager(models.Manager):
         return ConsultationQuerySet(self.model, using=self._db)
 
     def accessible_by(self, user, include_temporary=False):
+        """Consultations ``user`` has authority over.
+
+        This is the scope that also decides who may rewrite an appointment, so
+        it stays narrow: a practitioner merely put on a roster reads the
+        consultation (see ``roster_access_q``) without being able to alter it.
+        """
         qs = self.filter(
             Q(owned_by=user)
             | Q(created_by=user)

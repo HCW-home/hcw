@@ -145,6 +145,10 @@ class ConsultationUserSerializer(serializers.ModelSerializer):
             "timezone",
             "temporary",
             "specialities",
+            # Read by the front to mint an encryption envelope for a colleague
+            # put on a roster: they reach the chat without the explicit
+            # visibility flag, so they need the key too.
+            "is_practitioner",
             "public_key",
             "public_key_fingerprint",
         ]
@@ -1096,11 +1100,16 @@ class AppointmentCreateSerializer(AppointmentSerializer):
         if not dont_invite_me:
             participant_users.add(self.context["request"].user)
 
-        # Create participants from consultation
+        # Create participants from consultation. Someone auto-invited here can
+        # also be listed in participants_ids with an explicit visibility flag —
+        # a practitioner picked as a participant who happens to be the
+        # beneficiary, for instance. Their row is only created once, so that
+        # flag has to be read here or the access asked for is silently lost.
         for participant_user in participant_users:
             Participant.objects.create(
                 appointment=appointment,
                 user=participant_user,
+                is_consultation_visible=visibility_map.get(participant_user.pk, False),
             )
 
         # Users from participants_ids

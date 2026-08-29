@@ -54,6 +54,7 @@ import {
   BookingSlot,
   Participant,
   ParticipantStatus,
+  PLANNED_APPOINTMENT_STATUSES,
   isJoinableAppointmentStatus,
 } from '../../../../core/models/consultation';
 import { RoutePaths } from '../../../../core/constants/routes';
@@ -700,7 +701,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     const requests = selected.map(p =>
       this.consultationService.getAppointments({
         page_size: 100,
-        status: AppointmentStatus.SCHEDULED,
+        status_in: PLANNED_APPOINTMENT_STATUSES,
         scheduled_at__date__gte: this.currentDateRange!.start,
         scheduled_at__date__lte: this.currentDateRange!.end,
         participant_user: p.user.pk,
@@ -749,7 +750,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     const timeFilter = this.appointmentTimeFilter();
     const params: Record<string, unknown> = {
       page_size: this.pageSize,
-      status: AppointmentStatus.SCHEDULED,
+      status_in: PLANNED_APPOINTMENT_STATUSES,
     };
 
     if (timeFilter === 'upcoming') {
@@ -806,7 +807,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     const params: Record<string, unknown> = {
       page_size: this.pageSize,
       page: this.listCurrentPage,
-      status: AppointmentStatus.SCHEDULED,
+      status_in: PLANNED_APPOINTMENT_STATUSES,
     };
 
     if (timeFilter === 'upcoming') {

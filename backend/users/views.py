@@ -760,9 +760,9 @@ class MessageAttachmentView(APIView):
 
         # Check if user has permission to access this consultation. Mirrors
         # ConsultationViewSet / MessageViewSet: owner, creator, beneficiary,
-        # queue member, or an active visible participant of any of the
-        # consultation's appointments.
+        # queue member, or someone the appointment rosters let in.
         from consultations.models import Participant
+        from consultations.utils import roster_participant_q
 
         consultation = message.consultation
 
@@ -775,10 +775,7 @@ class MessageAttachmentView(APIView):
                 and consultation.group.users.filter(id=user.id).exists()
             )
             or Participant.objects.filter(
-                appointment__consultation=consultation,
-                user=user,
-                is_active=True,
-                is_consultation_visible=True,
+                roster_participant_q(consultation), user=user
             ).exists()
         )
 

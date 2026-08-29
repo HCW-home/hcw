@@ -72,3 +72,37 @@ def is_appointment_active(appointment, now=None):
         + timedelta(minutes=int(config.default_appointment_duration_in_minutes))
     )
     return end + timedelta(minutes=join_limit) >= now
+
+
+def roster_access_q(user, prefix="appointments"):
+    """Q on Consultation matching the rosters that open it to ``user``.
+
+    ``is_consultation_visible`` is what keeps a guest invited to a single call
+    out of the medical follow-up, so for anyone but a practitioner the flag is
+    still required. A practitioner put on an appointment's roster is a
+    colleague taking part in the care, and the consultation is where the chat
+    lives: being on the roster is the invitation. Without that, adding a second
+    practitioner gave them a call they could join and a conversation they could
+    not read.
+
+    ``prefix`` is the relation to traverse from the queried model, e.g. the
+    default ``"appointments"`` for a Consultation queryset.
+    """
+    field = f"{prefix}__participant__"
+    on_roster = Q(**{f"{field}user": user, f"{field}is_active": True})
+    if getattr(user, "is_practitioner", False):
+        return on_roster
+    return on_roster & Q(**{f"{field}is_consultation_visible": True})
+
+
+def roster_participant_q(consultation):
+    """Q on Participant matching the roster rows that open ``consultation``.
+
+    Participant-side counterpart of :func:`roster_access_q`, for the code that
+    starts from the roster rather than from the consultation (real-time fan-out,
+    encryption key allow-list).
+    """
+    on_roster = Q(appointment__consultation=consultation, is_active=True)
+    return on_roster & (
+        Q(is_consultation_visible=True) | Q(user__is_practitioner=True)
+    )

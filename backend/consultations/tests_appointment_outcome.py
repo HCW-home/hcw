@@ -428,3 +428,46 @@ class JoinAfterOutcomeTests(_OutcomeBase):
         response = self._join(appointment)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data["code"], "not_joinable")
+
+
+class PlanningStatusFilterTests(_OutcomeBase):
+    """The planning keeps a past appointment once its outcome is recorded."""
+
+    def _list(self, **params):
+        return self.client.get(reverse("appointment-list"), params)
+
+    def test_status_in_returns_qualified_appointments(self):
+        completed = self._appointment(
+            when=self._past(), status=AppointmentStatus.completed
+        )
+        noshow = self._appointment(when=self._past(), status=AppointmentStatus.noshow)
+        scheduled = self._appointment()
+
+        response = self._list(status_in="scheduled,completed,noshow")
+
+        self.assertEqual(response.status_code, 200)
+        returned = {row["id"] for row in response.data["results"]}
+        self.assertEqual(
+            returned, {completed.pk, noshow.pk, scheduled.pk}
+        )
+
+    def test_status_in_leaves_cancelled_out(self):
+        cancelled = self._appointment(status=AppointmentStatus.cancelled)
+        scheduled = self._appointment()
+
+        response = self._list(status_in="scheduled,completed,noshow")
+
+        returned = {row["id"] for row in response.data["results"]}
+        self.assertIn(scheduled.pk, returned)
+        self.assertNotIn(cancelled.pk, returned)
+
+    def test_the_old_scheduled_filter_dropped_them(self):
+        """Documents the regression: filtering on `scheduled` hid yesterday."""
+        completed = self._appointment(
+            when=self._past(), status=AppointmentStatus.completed
+        )
+
+        response = self._list(status="scheduled")
+
+        returned = {row["id"] for row in response.data["results"]}
+        self.assertNotIn(completed.pk, returned)

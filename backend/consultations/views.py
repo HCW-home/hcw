@@ -69,6 +69,7 @@ from .models import (
     Type,
 )
 from .paginations import ConsultationPagination
+from .utils import roster_access_q, roster_participant_q
 from .permissions import IsPractitioner
 from .serializers import (
     AppointmentAddParticipantsSerializer,
@@ -189,22 +190,31 @@ class ConsultationViewSet(FhirViewSetMixin, CreatedByMixin, viewsets.ModelViewSe
         # access additionally allows temporary consultations attached to an
         # appointment the user owns or participates in.
         if self.action == "list":
-            qs = Consultation.objects.accessible_by(user, include_temporary=True)
+            qs = Consultation.objects.filter(
+                Q(pk__in=Consultation.objects.accessible_by(
+                    user, include_temporary=True
+                ))
+                | roster_access_q(user)
+            ).distinct()
         else:
             qs = Consultation.objects.filter(
                 Q(owned_by=user)
                 | Q(created_by=user)
                 | Q(group__users=user)
+                # A practitioner can be the beneficiary of a follow-up — asking
+                # for one themselves, or being cared for by a colleague. The
+                # message endpoint already lets them read its messages, so
+                # 404ing the consultation is an inconsistency, not a
+                # protection. `visible_by_patient` still applies: it is what
+                # hides a follow-up from the person it concerns. Detail only,
+                # so their own care stays out of the professional list.
+                | Q(beneficiary=user, visible_by_patient=True)
                 | Q(
                     temporary=True,
                     appointments__participant__user=user,
                     appointments__participant__is_active=True,
                 )
-                | Q(
-                    appointments__participant__user=user,
-                    appointments__participant__is_active=True,
-                    appointments__participant__is_consultation_visible=True,
-                )
+                | roster_access_q(user)
             ).distinct()
         qs = annotate_unread_count(qs, user)
         qs = annotate_unassigned_request(qs)
@@ -258,9 +268,7 @@ class ConsultationViewSet(FhirViewSetMixin, CreatedByMixin, viewsets.ModelViewSe
         allowed_user_ids.discard(None)
         allowed_user_ids.update(
             Participant.objects.filter(
-                appointment__consultation=consultation,
-                is_active=True,
-                is_consultation_visible=True,
+                roster_participant_q(consultation)
             ).values_list("user_id", flat=True)
         )
 
@@ -1811,11 +1819,7 @@ class MessageViewSet(viewsets.ModelViewSet):
                 | Q(owned_by=user)
                 | Q(group__users=user)
                 | Q(beneficiary=user)
-                | Q(
-                    appointments__participant__user=user,
-                    appointments__participant__is_active=True,
-                    appointments__participant__is_consultation_visible=True,
-                )
+                | roster_access_q(user)
             )
         ).distinct()
 

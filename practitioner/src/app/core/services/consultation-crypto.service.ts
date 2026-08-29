@@ -109,11 +109,16 @@ export class ConsultationCryptoService {
     for (const participant of participants) {
       const userId = participant.user?.id;
       const pubkey = participant.user?.public_key;
+      // Same rule as the server's roster access: the visibility flag opens the
+      // chat to a guest, while a practitioner on the roster is in by virtue of
+      // being on it. Both need a key, or the conversation stays unreadable.
+      const readsTheChat =
+        participant.is_consultation_visible || !!participant.user?.is_practitioner;
       if (
         !userId
         || !pubkey
         || !participant.is_active
-        || !participant.is_consultation_visible
+        || !readsTheChat
         || participant.has_consultation_key
         || seenUserIds.has(userId)
       ) {
