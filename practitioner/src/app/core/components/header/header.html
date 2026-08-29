@@ -71,7 +71,7 @@
             </app-typography>
           </div>
           } @else { @for (notification of notificationService.notifications();
-          track notification.id) {
+          track notification.id ?? 'ws-' + $index) {
           <div
             class="notification-item"
             [ngClass]="{'unread': isNotificationUnread(notification)}"
@@ -206,7 +206,7 @@
             </app-typography>
           </div>
           } @else { @for (notification of notificationService.notifications();
-          track notification.id) {
+          track notification.id ?? 'ws-' + $index) {
           <div
             class="notification-item"
             [ngClass]="{'unread': isNotificationUnread(notification)}"

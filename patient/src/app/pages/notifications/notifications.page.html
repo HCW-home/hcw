@@ -17,7 +17,7 @@
       </div>
 
       <div class="timeline-list">
-        @for (notification of notifications; track notification.id) {
+        @for (notification of notifications; track notification.id ?? 'ws-' + $index) {
           <div class="timeline-item" [class.unread]="!notification.isRead" (click)="onNotificationClick(notification)">
             <div class="notification-icon-wrapper" [attr.data-color]="notification.color">
               <ion-icon [name]="notification.icon"></ion-icon>

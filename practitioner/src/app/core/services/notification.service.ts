@@ -111,7 +111,7 @@ export class NotificationService {
   handleWebSocketNotification(event: NotificationEvent): void {
     console.log('[NotificationService] Handling WS notification:', event);
     const notification: INotification = {
-      id: event.id ?? Date.now(),
+      id: event.id ?? null,
       content: event.render_content_html,
       subject: event.render_subject,
       communication_method: 'websocket',

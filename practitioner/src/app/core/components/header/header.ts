@@ -425,7 +425,7 @@ export class Header implements OnInit, OnDestroy {
   }
 
   onNotificationClick(notification: INotification) {
-    if (notification.status !== NotificationStatus.READ) {
+    if (notification.id !== null && notification.status !== NotificationStatus.READ) {
       this.notificationService.markAsRead(notification.id).subscribe();
     }
     this.closeNotifications();

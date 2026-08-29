@@ -320,6 +320,7 @@ class WebsocketConsumer(UserOnlineStatusMixin, AsyncJsonWebsocketConsumer):
         await self.send_json(
             {
                 "event": "notification",
+                "id": event.get("id"),
                 "render_content_html": event["render_content_html"],
                 "access_link": event["access_link"],
                 "render_subject": event["render_subject"],

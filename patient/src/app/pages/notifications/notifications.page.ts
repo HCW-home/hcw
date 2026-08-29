@@ -19,7 +19,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { TranslationService } from '../../core/services/translation.service';
 
 interface DisplayNotification {
-  id: number;
+  id: number | null;
   title: string;
   message: string;
   icon: string;
@@ -90,24 +90,24 @@ export class NotificationsPage implements OnInit, OnDestroy {
 
   private setupRealtimeNotifications(): void {
     const sub = this.userWs.notifications$.subscribe(event => {
-      const data = event.data;
+      const createdAt = event.created_at || new Date().toISOString();
       const notification: INotification = {
-        id: Date.now(),
-        subject: (data['title'] as string) || this.t.instant('notifications.newNotification'),
-        content: (data['message'] as string) || '',
-        communication_method: 'push',
-        status: NotificationStatus.PENDING,
-        sent_at: null,
-        delivered_at: null,
+        id: event.id ?? null,
+        subject: event.render_subject || this.t.instant('notifications.newNotification'),
+        content: event.render_content_html || '',
+        communication_method: 'websocket',
+        status: NotificationStatus.DELIVERED,
+        sent_at: createdAt,
+        delivered_at: createdAt,
         read_at: null,
         failed_at: null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        created_at: createdAt,
+        updated_at: createdAt,
         sent_by: null,
         object_model: null,
         object_pk: null,
-        access_link: null,
-        action_label: null
+        access_link: event.access_link ?? null,
+        action_label: event.action_label ?? null
       };
       this.notifications.unshift(this.mapNotification(notification));
     });
@@ -221,7 +221,9 @@ export class NotificationsPage implements OnInit, OnDestroy {
   async onNotificationClick(notification: DisplayNotification) {
     if (!notification.isRead) {
       notification.isRead = true;
-      this.notificationService.markAsRead(notification.id).subscribe();
+      if (notification.id !== null) {
+        this.notificationService.markAsRead(notification.id).subscribe();
+      }
     }
 
     let action: string | null = null;
