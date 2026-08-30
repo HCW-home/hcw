@@ -56,26 +56,14 @@ def get_users_to_notification_consultation(consultation: Consultation):
     # Add participants who can access the consultation chat.
     #
     # This must mirror the consultation querysets (detail / messages access):
-    # roster_participant_q covers the visible participants and the
-    # practitioners, and an active participant of a *temporary* consultation
-    # can use the chat without any flag at all. Keeping the rules in sync is
-    # what makes the WebSocket echo reach a temporary patient in real time
-    # (otherwise they only saw messages after a manual page refresh).
-    from django.db.models import Q
-
+    # roster_participant_q is the visibility box, and pushing a message payload
+    # to someone that box keeps out would leak the very content it withholds.
     from .models import Participant
     from .utils import roster_participant_q
 
-    participant_filter = roster_participant_q(consultation)
-    if consultation.temporary:
-        participant_filter |= Q(
-            appointment__consultation=consultation,
-            is_active=True,
-        )
-
-    notify_user_pks = Participant.objects.filter(participant_filter).values_list(
-        "user_id", flat=True
-    )
+    notify_user_pks = Participant.objects.filter(
+        roster_participant_q(consultation)
+    ).values_list("user_id", flat=True)
     users_to_notify_pks.update(notify_user_pks)
 
     return users_to_notify_pks

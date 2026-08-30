@@ -1,4 +1,5 @@
 import csv
+import hashlib
 import json
 import logging
 import os
@@ -36,6 +37,10 @@ RESOURCE_KEYWORDS = ("ps-libreacces", "personne", "activite")
 # in the resource extras.
 PARQUET_URL_EXTRA = "analysis:parsing:parquet_url"
 CHECKSUM_EXTRA = "analysis:checksum"
+
+# Downloads are cached under a name derived from the dataset checksum, so that
+# consecutive runs reuse the file instead of piling up ~800 MB temporaries.
+CACHE_DIR_NAME = "rpps-import-cache"
 
 STATE_VERSION = 1
 PROGRESS_INTERVAL = 5.0  # seconds between two progress lines
@@ -241,9 +246,19 @@ class Command(BaseCommand):
 
         self.state_path = self._resolve_state_path(options)
         state = self._load_state(options)
-        source = self._resolve_source(options, state)
+        specs = self._parse_filter_specs(options)
+        source = self._resolve_source(options, specs)
 
-        key = self._state_key(source, options)
+        # A filter may target a column the import does not otherwise read.
+        source["columns"] = USED_COLUMNS + [
+            column for column, _, _ in specs if column not in USED_COLUMNS
+        ]
+        # The tabular API filters server-side; the file sources filter here.
+        source["predicates"] = (
+            [] if source["kind"] == "api" else self._local_predicates(specs)
+        )
+
+        key = self._state_key(source, options, specs)
         if state and state.get("key") != key:
             self.stdout.write(
                 self.style.WARNING(
@@ -268,7 +283,7 @@ class Command(BaseCommand):
 
     # ── Source resolution ───────────────────────────────────────────────
 
-    def _resolve_source(self, options, state):
+    def _resolve_source(self, options, specs):
         kind = options["source"]
 
         if options.get("file"):
@@ -296,9 +311,7 @@ class Command(BaseCommand):
             if kind == "auto":
                 kind = "parquet" if options["url"].endswith(".parquet") else "txt"
             source = {"kind": kind, "checksum": options["url"], "resource_id": options["url"]}
-            source["path"] = self._reuse_or_download(
-                options["url"], source, state, options
-            )
+            source["path"] = self._fetch_source_file(options["url"], source)
             return source
 
         resource = self._discover_resource()
@@ -324,7 +337,7 @@ class Command(BaseCommand):
 
         if kind == "api":
             source["rid"] = resource["id"]
-            source["filters"] = self._build_api_filters(options)
+            source["filters"] = self._api_filters(options, specs)
             return source
 
         if kind == "parquet":
@@ -338,7 +351,7 @@ class Command(BaseCommand):
         else:
             url = resource["url"]
 
-        source["path"] = self._reuse_or_download(url, source, state, options)
+        source["path"] = self._fetch_source_file(url, source)
         return source
 
     def _discover_resource(self):
@@ -358,59 +371,72 @@ class Command(BaseCommand):
             "dataset. Use --url to provide a direct download URL."
         )
 
-    def _reuse_or_download(self, url, source, state, options):
-        """Download the source file, or reuse the one from an interrupted run."""
-        if state and state.get("key", {}).get("kind") == source["kind"]:
-            path = state.get("source_path")
-            size = state.get("source_size")
-            if (
-                state.get("key", {}).get("checksum") == source["checksum"]
-                and path
-                and os.path.exists(path)
-                and os.path.getsize(path) == size
-            ):
-                self.stdout.write(f"Reusing already downloaded file: {path}")
-                return path
+    def _fetch_source_file(self, url, source):
+        """Return the local copy of the source, downloading it once per release."""
+        suffix = ".parquet" if url.lower().endswith(".parquet") else ".txt"
+        path = self._cache_path(source["checksum"], suffix)
+        if os.path.exists(path):
+            self.stdout.write(f"Reusing cached file: {path}")
+            return path
 
-        return self._download(url, options)
+        self._download(url, path)
+        self._purge_cache(keep=path)
+        return path
 
-    def _download(self, url, options):
+    def _cache_path(self, checksum, suffix):
+        cache_dir = os.path.join(tempfile.gettempdir(), CACHE_DIR_NAME)
+        os.makedirs(cache_dir, exist_ok=True)
+        # The checksum may be a URL, so hash it into a safe file name.
+        digest = hashlib.sha1(str(checksum).encode()).hexdigest()[:16]
+        return os.path.join(cache_dir, f"{digest}{suffix}")
+
+    def _purge_cache(self, keep):
+        """Drop the files of previous dataset releases."""
+        cache_dir = os.path.dirname(keep)
+        for name in os.listdir(cache_dir):
+            path = os.path.join(cache_dir, name)
+            if path == keep or not os.path.isfile(path):
+                continue
+            try:
+                os.remove(path)
+                self.stdout.write(f"Removed outdated cached file: {path}")
+            except OSError as exc:
+                self.stderr.write(f"Could not remove {path}: {exc}")
+
+    def _download(self, url, target):
         self.stdout.write(f"Downloading {url}...")
         resp = http_requests.get(url, stream=True, timeout=300)
         resp.raise_for_status()
 
         expected = int(resp.headers.get("content-length") or 0)
-        if url.lower().endswith(".parquet"):
-            suffix = ".parquet"
-        elif ".zip" in url.lower():
-            suffix = ".zip"
-        else:
-            suffix = ".txt"
-
-        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
+        # Download aside, then move into place: an interrupted run never leaves
+        # a truncated file behind that the next one would happily read.
+        partial = f"{target}.part"
         total = 0
         last_print = time.monotonic()
-        for chunk in resp.iter_content(chunk_size=1024 * 256):
-            tmp.write(chunk)
-            total += len(chunk)
-            now = time.monotonic()
-            if now - last_print >= PROGRESS_INTERVAL:
-                last_print = now
-                done = f"{total / 1024 / 1024:.0f} MB"
-                if expected:
-                    done += f" / {expected / 1024 / 1024:.0f} MB"
-                self.stdout.write(f"  {done}", ending="\r")
-                self.stdout.flush()
-        tmp.close()
+        with open(partial, "wb") as handle:
+            for chunk in resp.iter_content(chunk_size=1024 * 256):
+                handle.write(chunk)
+                total += len(chunk)
+                now = time.monotonic()
+                if now - last_print >= PROGRESS_INTERVAL:
+                    last_print = now
+                    done = f"{total / 1024 / 1024:.0f} MB"
+                    if expected:
+                        done += f" / {expected / 1024 / 1024:.0f} MB"
+                    self.stdout.write(f"  {done}", ending="\r")
+                    self.stdout.flush()
         self.stdout.write(f"Downloaded {total / 1024 / 1024:.1f} MB")
 
-        if zipfile.is_zipfile(tmp.name):
-            return self._extract_zip(tmp.name)
-        return tmp.name
+        if zipfile.is_zipfile(partial):
+            self._extract_zip(partial, target)
+            os.remove(partial)
+        else:
+            os.replace(partial, target)
+        return target
 
-    def _extract_zip(self, zip_path):
+    def _extract_zip(self, zip_path, target):
         self.stdout.write("Extracting ZIP...")
-        tmpdir = tempfile.mkdtemp()
         with zipfile.ZipFile(zip_path, "r") as zf:
             names = zf.namelist()
             txt_files = [
@@ -418,10 +444,13 @@ class Command(BaseCommand):
             ]
             if not txt_files:
                 raise CommandError(f"No .txt/.csv file found in ZIP: {names}")
-            target = txt_files[0]
-            zf.extract(target, tmpdir)
-            self.stdout.write(f"Extracted: {target}")
-            return os.path.join(tmpdir, target)
+            member = txt_files[0]
+            self.stdout.write(f"Extracting: {member}")
+            with zf.open(member) as source_file, open(f"{target}.part", "wb") as out:
+                while chunk := source_file.read(1024 * 256):
+                    out.write(chunk)
+        os.replace(f"{target}.part", target)
+        return target
 
     def _import_parquet_module(self, required=True):
         try:
@@ -434,18 +463,69 @@ class Command(BaseCommand):
             )
         return parquet_dataset
 
-    def _build_api_filters(self, options):
-        filters = {}
-        if options.get("profession_code"):
-            filters[f"{COL_CODE_PROFESSION}__exact"] = options["profession_code"]
+    def _parse_filter_specs(self, options):
+        """Turn --departement and --filter into (column, operator, value)."""
+        specs = []
+
+        departement = (options.get("departement") or "").strip().upper()
+        if departement:
+            if not DEPARTEMENT_RE.match(departement):
+                raise CommandError(
+                    f"Invalid --departement {departement!r}, expected something "
+                    "like 75, 2A or 974"
+                )
+            # INSEE commune codes are 5 characters wide, so the department is a
+            # prefix range: 75 -> 75000..75999, 974 -> 97400..97499.
+            padding = 5 - len(departement)
+            specs.append(
+                (COL_CODE_COMMUNE, "greater", departement + "0" * padding)
+            )
+            specs.append(
+                (COL_CODE_COMMUNE, "less", departement + "9" * padding)
+            )
+
         for raw in options.get("filters") or []:
             if "=" not in raw:
                 raise CommandError(
                     f"Invalid --filter {raw!r}, expected COLUMN__OPERATOR=VALUE"
                 )
             name, value = raw.split("=", 1)
-            filters[name.strip()] = value.strip()
+            if "__" not in name:
+                raise CommandError(
+                    f"Invalid --filter {raw!r}: no operator, expected "
+                    "COLUMN__OPERATOR=VALUE"
+                )
+            column, operator = name.strip().rsplit("__", 1)
+            if operator != "isnull" and operator not in LOCAL_FILTER_OPERATORS:
+                raise CommandError(
+                    f"Unsupported filter operator {operator!r}, pick one of: "
+                    f"{', '.join(sorted(LOCAL_FILTER_OPERATORS))}, isnull"
+                )
+            specs.append((column, operator, value.strip()))
+
+        return specs
+
+    def _api_filters(self, options, specs):
+        filters = {
+            f"{column}__{operator}": value for column, operator, value in specs
+        }
+        if options.get("profession_code"):
+            filters[f"{COL_CODE_PROFESSION}__exact"] = options["profession_code"]
         return filters
+
+    def _local_predicates(self, specs):
+        return [
+            (column, self._predicate(operator, value))
+            for column, operator, value in specs
+        ]
+
+    def _predicate(self, operator, value):
+        if operator == "isnull":
+            wants_null = value.lower() in ("true", "1", "yes")
+            return lambda cell: (not cell) if wants_null else bool(cell)
+        compare = LOCAL_FILTER_OPERATORS[operator]
+        # An empty cell is this dataset's NULL: like in SQL, it matches nothing.
+        return lambda cell: bool(cell) and compare(cell, value)
 
     # ── Row iteration ───────────────────────────────────────────────────
 
@@ -464,15 +544,17 @@ class Command(BaseCommand):
         return None
 
     def _iter_rows(self, source, options, start):
+        columns = source["columns"]
         if source["kind"] == "parquet":
-            return self._iter_parquet(source["path"], start)
+            return self._iter_parquet(source["path"], columns, start)
         if source["kind"] == "api":
             return self._iter_tabular_api(
-                source["rid"], source["filters"], options["page_size"], start
+                source["rid"], source["filters"], columns,
+                options["page_size"], start,
             )
-        return self._iter_flat_file(source["path"], start)
+        return self._iter_flat_file(source["path"], columns, start)
 
-    def _iter_flat_file(self, path, start):
+    def _iter_flat_file(self, path, columns, start):
         encoding = self._detect_encoding(path)
         with open(path, "r", encoding=encoding, errors="replace") as f:
             reader = csv.reader(f, delimiter="|")
@@ -481,7 +563,7 @@ class Command(BaseCommand):
                 raise CommandError("Empty file")
 
             positions = {}
-            for name in USED_COLUMNS:
+            for name in columns:
                 if name not in header:
                     raise CommandError(f"Missing column in file header: {name}")
                 positions[name] = header.index(name)
@@ -496,23 +578,23 @@ class Command(BaseCommand):
                     name: _text(raw[pos]) for name, pos in positions.items()
                 }
 
-    def _iter_parquet(self, path, start):
+    def _iter_parquet(self, path, columns, start):
         module = self._import_parquet_module()
         dataset = module.dataset(path, format="parquet")
-        missing = [c for c in USED_COLUMNS if c not in dataset.schema.names]
+        missing = [c for c in columns if c not in dataset.schema.names]
         if missing:
             raise CommandError(f"Missing columns in Parquet file: {missing}")
 
         index = 0
-        scanner = dataset.scanner(columns=USED_COLUMNS, batch_size=8192)
+        scanner = dataset.scanner(columns=columns, batch_size=8192)
         for batch in scanner.to_batches():
             rows = batch.num_rows
             # Skip whole batches without materialising them when resuming.
             if index + rows <= start:
                 index += rows
                 continue
-            columns = {
-                name: batch.column(name).to_pylist() for name in USED_COLUMNS
+            values_by_column = {
+                name: batch.column(name).to_pylist() for name in columns
             }
             for offset in range(rows):
                 index += 1
@@ -520,10 +602,10 @@ class Command(BaseCommand):
                     continue
                 yield index, {
                     name: _text(values[offset])
-                    for name, values in columns.items()
+                    for name, values in values_by_column.items()
                 }
 
-    def _iter_tabular_api(self, rid, filters, page_size, start):
+    def _iter_tabular_api(self, rid, filters, columns, page_size, start):
         url = TABULAR_API_URL.format(rid=rid)
         # Resume on a page boundary, then drop the rows already imported.
         page = start // page_size + 1
@@ -540,7 +622,7 @@ class Command(BaseCommand):
                 index += 1
                 if index <= start:
                     continue
-                yield index, {name: _text(row.get(name)) for name in USED_COLUMNS}
+                yield index, {name: _text(row.get(name)) for name in columns}
             if not (payload.get("links") or {}).get("next"):
                 return
             page += 1
@@ -552,8 +634,15 @@ class Command(BaseCommand):
                 resp = http_requests.get(url, params=params, timeout=60)
                 if resp.status_code == 429 or resp.status_code >= 500:
                     raise http_requests.HTTPError(f"HTTP {resp.status_code}")
+                if resp.status_code == 400:
+                    # Unknown column or operator: retrying will not help.
+                    raise CommandError(
+                        f"Tabular API rejected the request: {resp.text}"
+                    )
                 resp.raise_for_status()
                 return resp.json()
+            except CommandError:
+                raise
             except Exception as exc:
                 if attempt == TABULAR_MAX_RETRIES:
                     raise CommandError(f"Tabular API request failed: {exc}")
@@ -587,7 +676,7 @@ class Command(BaseCommand):
             tempfile.gettempdir(), f"import_rpps.{schema}.state.json"
         )
 
-    def _state_key(self, source, options):
+    def _state_key(self, source, options, specs):
         """Identity of a run: saved progress is only reused for the same one."""
         return {
             "version": STATE_VERSION,
@@ -597,7 +686,8 @@ class Command(BaseCommand):
             "checksum": source.get("checksum"),
             "profession_code": options.get("profession_code") or None,
             "filters": sorted(
-                f"{k}={v}" for k, v in (source.get("filters") or {}).items()
+                f"{column}__{operator}={value}"
+                for column, operator, value in specs
             ),
         }
 
@@ -629,11 +719,6 @@ class Command(BaseCommand):
             "total": total,
             "stats": stats,
             "source_path": source.get("path"),
-            "source_size": (
-                os.path.getsize(source["path"])
-                if source.get("path") and os.path.exists(source["path"])
-                else None
-            ),
             "updated_at": timezone.now().isoformat(),
         }
         tmp_path = f"{self.state_path}.tmp"
@@ -695,6 +780,7 @@ class Command(BaseCommand):
 
     def _import_rows(self, source, custom_fields, options, key, start, stats):
         profession_filter = options.get("profession_code")
+        predicates = source["predicates"]
         batch_size = options["batch_size"]
         dry_run = options["dry_run"]
 
@@ -757,6 +843,11 @@ class Command(BaseCommand):
                 continue
 
             if profession_filter and row[COL_CODE_PROFESSION] != profession_filter:
+                continue
+
+            # Filtered out rows must not mark the practitioner as seen: another
+            # activity row of theirs may still match.
+            if any(not matches(row[column]) for column, matches in predicates):
                 continue
 
             if rpps in seen_rpps:

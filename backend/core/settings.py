@@ -476,7 +476,15 @@ CACHES = {
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}",
         "KEY_FUNCTION": "django_tenants.cache.make_key",
         "REVERSE_KEY_FUNCTION": "django_tenants.cache.reverse_key",
-    }
+    },
+    # State belonging to a shared external resource rather than to a tenant,
+    # such as the Nominatim backoff. Keys are not prefixed by the schema, and
+    # this always goes to Redis so that every worker process sees the same
+    # value: Celery needs Redis anyway.
+    "shared": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}",
+    },
 }
 STATIC_ROOT = os.getenv("STATIC_ROOT", "statics")
 

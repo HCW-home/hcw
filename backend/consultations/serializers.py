@@ -770,6 +770,14 @@ class AppointmentSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         request = self.context.get("request")
 
+        # The id follows the title: left in place it is an invitation for the
+        # client to link to the follow-up and open its chat, both of which
+        # answer 404 for someone the consultation does not let in.
+        if data.get("consultation_id") and not accessible_consultation(
+            self.context, instance.consultation
+        ):
+            data["consultation_id"] = None
+
         if request and request.user.is_authenticated:
             user_tz = request.user.user_tz
 
@@ -856,13 +864,25 @@ class AppointmentSerializer(serializers.ModelSerializer):
             )
             new_users = set(user.id for user in participants_ids)
 
-            # Add new participants or reactivate existing ones
+            # Add new participants or reactivate existing ones. An explicit
+            # visibility entry is a decision, so it also applies downwards:
+            # a participant removed while visible and added back with the box
+            # unticked would otherwise keep the follow-up their row still
+            # carried.
             for user_id in new_users - existing_users:
-                AppointmentSerializer.add_or_reactivate_participant(
+                stated = user_id in visibility_map
+                visible = visibility_map.get(user_id, False)
+                participant = AppointmentSerializer.add_or_reactivate_participant(
                     appointment,
                     user_id,
-                    visibility_map.get(user_id, False),
+                    visible,
+                    downgrade_visibility=stated,
                 )
+                if (
+                    not participant.is_consultation_visible
+                    and participant.appointment.consultation_id
+                ):
+                    AppointmentSerializer._revoke_consultation_key(participant)
 
             # Deactivate removed participants
             removed_users = existing_users - new_users
@@ -1025,22 +1045,45 @@ class AppointmentAddParticipantsSerializer(serializers.Serializer):
 
         added = []
         for user in self.validated_data.get("participants_ids", []):
+            # The modal always states the box's value, so an entry in the map
+            # is a decision either way: honour it downwards too, or someone
+            # added back with the box unticked keeps the access their previous
+            # row was granted.
+            stated = user.pk in visibility_map
+            visible = visibility_map.get(user.pk, False)
             added.append(
-                AppointmentSerializer.add_or_reactivate_participant(
-                    appointment, user, visibility_map.get(user.pk, False)
-                )
+                self._attach(appointment, user, visible, downgrade=stated)
             )
 
         for temp_participant in self.validated_data.get("temporary_participants", []):
             user = ParticipantSerializer.resolve_user(temp_participant, request_user)
             added.append(
-                AppointmentSerializer.add_or_reactivate_participant(
+                self._attach(
                     appointment,
                     user,
                     temp_participant.get("is_consultation_visible", False),
+                    downgrade=True,
                 )
             )
         return added
+
+    @staticmethod
+    def _attach(appointment, user, visible, downgrade):
+        """Add the participant and keep their consultation key in step.
+
+        Revoking reads the row's resulting state, not what was asked for: a
+        payload that leaves visibility unstated keeps an existing grant, and
+        dropping the key there would leave a reader unable to decrypt.
+        """
+        participant = AppointmentSerializer.add_or_reactivate_participant(
+            appointment, user, visible, downgrade_visibility=downgrade
+        )
+        if (
+            not participant.is_consultation_visible
+            and participant.appointment.consultation_id
+        ):
+            AppointmentSerializer._revoke_consultation_key(participant)
+        return participant
 
 
 class AppointmentCreateSerializer(AppointmentSerializer):
@@ -1218,7 +1261,17 @@ class AppointmentCreateSerializer(AppointmentSerializer):
         if not constance_config.master_public_key:
             return
 
-        user_recipients = list(participant_users)
+        # Only the participants the visibility box let in read this chat, so
+        # only they get an envelope: wrapping the key for someone the access
+        # rule keeps out would hand them the conversation anyway.
+        visible_ids = set(
+            Participant.objects.filter(
+                appointment=appointment,
+                is_active=True,
+                is_consultation_visible=True,
+            ).values_list("user_id", flat=True)
+        )
+        user_recipients = [u for u in participant_users if u.pk in visible_ids]
         for u in (consultation.owned_by, consultation.created_by, consultation.beneficiary):
             if u and u not in user_recipients:
                 user_recipients.append(u)
@@ -1383,12 +1436,13 @@ class AppointmentDetailSerializer(serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(read_only=True)
     # Being on an appointment roster does not by itself open the consultation
     # behind it: a guest invited to a single call must not read the follow-up.
-    # Both the nested object and the title are gated on the access rule; the
-    # bare id stays so the client can still route to the chat it may open.
+    # The nested object, the title and the bare id are all gated on the access
+    # rule — handing out the id alone was enough for the client to offer a link
+    # to the follow-up and a chat that both answered 404.
     consultation = serializers.SerializerMethodField()
     # Kept alongside the nested consultation so this payload can be consumed
     # exactly like the one from AppointmentSerializer.
-    consultation_id = serializers.IntegerField(read_only=True)
+    consultation_id = serializers.SerializerMethodField()
     consultation_title = serializers.SerializerMethodField()
     participants = ParticipantReadSerializer(
         many=True, read_only=True, source="participant_set"
@@ -1421,6 +1475,10 @@ class AppointmentDetailSerializer(serializers.ModelSerializer):
         if consultation is None:
             return None
         return ConsultationSerializer(consultation, context=self.context).data
+
+    def get_consultation_id(self, obj):
+        consultation = accessible_consultation(self.context, obj.consultation)
+        return consultation.pk if consultation else None
 
     def get_consultation_title(self, obj):
         consultation = accessible_consultation(self.context, obj.consultation)

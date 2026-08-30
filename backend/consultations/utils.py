@@ -77,22 +77,25 @@ def is_appointment_active(appointment, now=None):
 def roster_access_q(user, prefix="appointments"):
     """Q on Consultation matching the rosters that open it to ``user``.
 
-    ``is_consultation_visible`` is what keeps a guest invited to a single call
-    out of the medical follow-up, so for anyone but a practitioner the flag is
-    still required. A practitioner put on an appointment's roster is a
-    colleague taking part in the care, and the consultation is where the chat
-    lives: being on the roster is the invitation. Without that, adding a second
-    practitioner gave them a call they could join and a conversation they could
-    not read.
+    ``is_consultation_visible`` decides alone, whoever the participant is: it
+    is the box the organiser ticks when adding someone, and a practitioner is
+    no exception — unticking it and still handing them the follow-up would make
+    the choice a decoration. The box defaults to ticked, so a colleague added
+    to an appointment does get the chat unless it is explicitly taken away, and
+    the practitioners who carry the case reach it as owner, creator or member
+    of its queue rather than through a roster row.
 
     ``prefix`` is the relation to traverse from the queried model, e.g. the
     default ``"appointments"`` for a Consultation queryset.
     """
     field = f"{prefix}__participant__"
-    on_roster = Q(**{f"{field}user": user, f"{field}is_active": True})
-    if getattr(user, "is_practitioner", False):
-        return on_roster
-    return on_roster & Q(**{f"{field}is_consultation_visible": True})
+    return Q(
+        **{
+            f"{field}user": user,
+            f"{field}is_active": True,
+            f"{field}is_consultation_visible": True,
+        }
+    )
 
 
 def roster_participant_q(consultation):
@@ -102,9 +105,10 @@ def roster_participant_q(consultation):
     starts from the roster rather than from the consultation (real-time fan-out,
     encryption key allow-list).
     """
-    on_roster = Q(appointment__consultation=consultation, is_active=True)
-    return on_roster & (
-        Q(is_consultation_visible=True) | Q(user__is_practitioner=True)
+    return Q(
+        appointment__consultation=consultation,
+        is_active=True,
+        is_consultation_visible=True,
     )
 
 
@@ -118,21 +122,17 @@ def consultation_access_q(user):
     gate on this and nothing wider.
 
     ``visible_by_patient`` is what hides a follow-up from the person it
-    concerns, so the beneficiary branch carries it. A temporary consultation is
-    the chat container of a single appointment, so its own participants reach
-    it without the visibility flag: the flag exists to keep a guest out of the
-    *medical follow-up*, which a temporary consultation is not.
+    concerns, so the beneficiary branch carries it. A temporary consultation —
+    the chat container spun up for an appointment booked outside any follow-up
+    — is no exception: its participants are on a roster like any other, so the
+    visibility box decides there too. Whoever booked the appointment owns that
+    container and reaches it as its creator.
     """
     return (
         Q(created_by=user)
         | Q(owned_by=user)
         | Q(beneficiary=user, visible_by_patient=True)
         | Q(group__users=user)
-        | Q(
-            temporary=True,
-            appointments__participant__user=user,
-            appointments__participant__is_active=True,
-        )
         | roster_access_q(user)
     )
 

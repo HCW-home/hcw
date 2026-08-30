@@ -552,10 +552,8 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
 
         A consultation stays listed until it is closed (closed_at). The patient
         reaches it either as beneficiary (visible_by_patient) or as an active,
-        consultation-visible participant of one of its appointments. Detail /
-        messages access additionally allows temporary consultations the user is
-        an active participant of, so the appointment chat works even without the
-        consultation-visible flag.
+        consultation-visible participant of one of its appointments — the same
+        rule for the list and for detail / messages, temporary follow-up or not.
         """
         from consultations.views import annotate_unread_count
 
@@ -579,11 +577,6 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             qs = Consultation.objects.filter(
                 Q(beneficiary=user, visible_by_patient=True)
-                | Q(
-                    temporary=True,
-                    appointments__participant__user=user,
-                    appointments__participant__is_active=True,
-                )
                 | Q(
                     appointments__participant__user=user,
                     appointments__participant__is_active=True,
@@ -1104,6 +1097,17 @@ class UserAppointmentsViewSet(viewsets.ReadOnlyModelViewSet):
         channel_layer = get_channel_layer()
         active_participants = appointment.participant_set.filter(is_active=True)
 
+        # The event carries the follow-up id, and the client opens its chat
+        # with it: only tell the participants the consultation lets in, or the
+        # ring answered by someone on the roster alone lands on a 404.
+        from consultations.signals import get_users_to_notification_consultation
+
+        consultation_readers = (
+            get_users_to_notification_consultation(appointment.consultation)
+            if appointment.consultation
+            else set()
+        )
+
         for participant in active_participants:
             if participant.user.pk == request.user.pk:
                 continue
@@ -1112,7 +1116,11 @@ class UserAppointmentsViewSet(viewsets.ReadOnlyModelViewSet):
                 user_group(participant.user.pk),
                 {
                     "type": "appointment",
-                    "consultation_id": appointment.consultation.pk if appointment.consultation else None,
+                    "consultation_id": (
+                        appointment.consultation.pk
+                        if participant.user.pk in consultation_readers
+                        else None
+                    ),
                     "appointment_id": appointment.pk,
                     "state": "participant_joined",
                     "data": {

@@ -246,7 +246,9 @@
             </button>
           }
 
-          @if (!isMinimized) {
+          <!-- No follow-up in reach means no conversation to open: the chat
+               would only load a consultation the server refuses. -->
+          @if (!isMinimized && consultationId) {
             <!-- Chat -->
             <button
               class="control-button chat-control"
@@ -280,7 +282,7 @@
         </div>
       </div>
 
-      @if (showChat() && !isMinimized) {
+      @if (showChat() && !isMinimized && consultationId) {
         <div class="chat-panel">
           <app-message-list
             [messages]="messages"

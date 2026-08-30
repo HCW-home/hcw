@@ -73,16 +73,23 @@ class ParticipantVisibilityTests(_Base):
         client.force_authenticate(user=third_party)
         self.assertEqual(self._detail(client).status_code, 200)
 
-    def test_a_practitioner_on_the_roster_gets_in_without_the_flag(self):
-        """Adding a colleague to an appointment is what invites them to the chat."""
+    def test_a_practitioner_without_the_flag_stays_out(self):
+        """Unticking the box is a decision, and it holds for a colleague too.
+
+        Adding a practitioner to one appointment invites them to that call; the
+        follow-up behind it is only opened by the visibility flag.
+        """
         third_party = User.objects.create_user(
             email="third@example.com", is_practitioner=True
         )
         self._create_appointment(participants_ids=[third_party.pk])
 
+        self.assertFalse(
+            Participant.objects.get(user=third_party).is_consultation_visible
+        )
         client = APIClient()
         client.force_authenticate(user=third_party)
-        self.assertEqual(self._detail(client).status_code, 200)
+        self.assertEqual(self._detail(client).status_code, 404)
 
     def test_a_guest_still_needs_the_flag(self):
         """The flag keeps someone invited to one call out of the follow-up.
@@ -132,12 +139,17 @@ class ParticipantVisibilityTests(_Base):
             Participant.objects.get(user=self.colleague).is_consultation_visible
         )
 
-    def test_roster_practitioner_finds_it_in_their_list(self):
+    def test_visible_practitioner_finds_it_in_their_list(self):
         """Reachable by direct link only would not be much of an access."""
         third_party = User.objects.create_user(
             email="third@example.com", is_practitioner=True
         )
-        self._create_appointment(participants_ids=[third_party.pk])
+        self._create_appointment(
+            participants_ids=[third_party.pk],
+            participants_visibility=[
+                {"user_id": third_party.pk, "is_consultation_visible": True}
+            ],
+        )
 
         client = APIClient()
         client.force_authenticate(user=third_party)
@@ -148,8 +160,8 @@ class ParticipantVisibilityTests(_Base):
             self.consultation.pk, [row["id"] for row in response.data["results"]]
         )
 
-    def test_roster_practitioner_cannot_rewrite_the_appointment(self):
-        """Reading the follow-up is not authority over it."""
+    def test_practitioner_without_the_flag_cannot_rewrite_the_appointment(self):
+        """Being on one roster is not authority over the case behind it."""
         third_party = User.objects.create_user(
             email="third@example.com", is_practitioner=True
         )
@@ -189,6 +201,63 @@ class ParticipantVisibilityTests(_Base):
             Participant.objects.get(user=third_party).is_consultation_visible
         )
 
+    def test_add_participants_action_honours_an_unticked_box(self):
+        third_party = User.objects.create_user(
+            email="third@example.com", is_practitioner=True
+        )
+        appointment_id = self._create_appointment().data["id"]
+
+        self._add_participants(appointment_id, third_party, visible=False)
+
+        self.assertFalse(
+            Participant.objects.get(user=third_party).is_consultation_visible
+        )
+        client = APIClient()
+        client.force_authenticate(user=third_party)
+        self.assertEqual(self._detail(client).status_code, 404)
+
+    def test_adding_someone_back_unticked_takes_the_access_away(self):
+        """Re-adding is a fresh decision, not a return to the previous one.
+
+        The row is reused when a removed participant comes back, and it still
+        carried the visibility granted the first time.
+        """
+        third_party = User.objects.create_user(
+            email="third@example.com", is_practitioner=True
+        )
+        appointment_id = self._create_appointment(
+            participants_ids=[third_party.pk],
+            participants_visibility=[
+                {"user_id": third_party.pk, "is_consultation_visible": True}
+            ],
+        ).data["id"]
+        participant = Participant.objects.get(user=third_party)
+        participant.is_active = False
+        participant.save(update_fields=["is_active"])
+
+        self._add_participants(appointment_id, third_party, visible=False)
+
+        participant.refresh_from_db()
+        self.assertTrue(participant.is_active)
+        self.assertFalse(participant.is_consultation_visible)
+        client = APIClient()
+        client.force_authenticate(user=third_party)
+        self.assertEqual(self._detail(client).status_code, 404)
+
+    def _add_participants(self, appointment_id, user, visible):
+        response = self.client.post(
+            reverse("appointment-add-participants", kwargs={"pk": appointment_id}),
+            {
+                "participants_ids": [user.pk],
+                "participants_visibility": [
+                    {"user_id": user.pk, "is_consultation_visible": visible}
+                ],
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.data)
+        return response
+
 
 class RealtimeFanOutTests(_Base):
     """Who the message WebSocket events reach, mirroring who may read them."""
@@ -214,14 +283,14 @@ class RealtimeFanOutTests(_Base):
 
         self.assertIn(third_party.pk, self._notified())
 
-    def test_practitioner_on_the_roster_is_notified_without_the_flag(self):
+    def test_practitioner_without_the_flag_is_not_notified(self):
         """Chat access and real-time delivery answer the same question."""
         third_party = User.objects.create_user(
             email="third@example.com", is_practitioner=True
         )
         self._create_appointment(participants_ids=[third_party.pk])
 
-        self.assertIn(third_party.pk, self._notified())
+        self.assertNotIn(third_party.pk, self._notified())
 
     def test_guest_without_the_flag_is_not_notified(self):
         guest = User.objects.create_user(email="guest@example.com")
@@ -259,12 +328,11 @@ class BeneficiaryAccessTests(_Base):
         )
 
 
-class RosterPractitionerAuthorityTests(_Base):
-    """Reading a follow-up is not authority over it.
+class RosterPractitionerWithoutTheFlagTests(_Base):
+    """A colleague added to one appointment with the box unticked.
 
-    A practitioner on one appointment's roster is in the care, which is why the
-    consultation opens to them; rewriting or closing the case is a different
-    question, and it stays with the people `accessible_by` names.
+    They take part in that call and nothing else: the follow-up behind it stays
+    closed, in reading as in writing.
     """
 
     def setUp(self):
@@ -279,8 +347,8 @@ class RosterPractitionerAuthorityTests(_Base):
     def _url(self, name="consultation-detail"):
         return reverse(name, kwargs={"pk": self.consultation.pk})
 
-    def test_they_still_read_it(self):
-        self.assertEqual(self._detail(self.third_party_client).status_code, 200)
+    def test_they_do_not_read_it(self):
+        self.assertEqual(self._detail(self.third_party_client).status_code, 404)
 
     def test_they_cannot_rewrite_it(self):
         response = self.third_party_client.patch(
@@ -313,11 +381,11 @@ class RosterPractitionerAuthorityTests(_Base):
         self.consultation.refresh_from_db()
         self.assertEqual(self.consultation.title, "Renamed")
 
-    def test_marking_read_stays_open_to_a_reader(self):
-        """Tracking your own read position is not altering the case."""
+    def test_they_cannot_mark_it_read(self):
+        """Nothing to read means no read position to track either."""
         response = self.third_party_client.post(self._url("consultation-mark-read"))
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 404)
 
 
 class NestedConsultationTests(_Base):
@@ -348,6 +416,9 @@ class NestedConsultationTests(_Base):
         appointment = response.data["results"][0]["appointment"]
         self.assertIsNone(appointment["consultation"])
         self.assertIsNone(appointment["consultation_title"])
+        # The bare id is what the client routes on: left in place it offers a
+        # link to the follow-up and loads its chat, both answering 404.
+        self.assertIsNone(appointment["consultation_id"])
 
     def test_the_flag_brings_the_consultation_back(self):
         __, client = self._guest_on_the_roster(visible=True)
@@ -355,6 +426,7 @@ class NestedConsultationTests(_Base):
         response = client.get(reverse("user-participants-list"))
         appointment = response.data["results"][0]["appointment"]
         self.assertEqual(appointment["consultation"]["id"], self.consultation.pk)
+        self.assertEqual(appointment["consultation_id"], self.consultation.pk)
         self.assertEqual(appointment["consultation_title"], "Follow-up")
 
     def test_appointment_list_hides_the_title_from_a_guest(self):
@@ -363,6 +435,119 @@ class NestedConsultationTests(_Base):
         response = client.get(reverse("user-appointments-list"))
         self.assertEqual(response.status_code, 200)
         self.assertIsNone(response.data["results"][0]["consultation_title"])
+        self.assertIsNone(response.data["results"][0]["consultation_id"])
+
+    def test_practitioner_appointment_list_hides_the_id_too(self):
+        """The practitioner API serves the same appointment through its own
+        serializer, and the modal reads the id from there."""
+        third_party = User.objects.create_user(
+            email="third@example.com", is_practitioner=True
+        )
+        self._create_appointment(participants_ids=[third_party.pk])
+        client = APIClient()
+        client.force_authenticate(user=third_party)
+
+        response = client.get(reverse("appointment-list"))
+
+        self.assertEqual(response.status_code, 200)
+        row = next(
+            r for r in response.data["results"] if r["participants"]
+        )
+        self.assertIsNone(row["consultation_id"])
+        self.assertIsNone(row["consultation_title"])
+
+    def test_the_flag_puts_the_id_back_for_a_practitioner(self):
+        third_party = User.objects.create_user(
+            email="third@example.com", is_practitioner=True
+        )
+        self._create_appointment(
+            participants_ids=[third_party.pk],
+            participants_visibility=[
+                {"user_id": third_party.pk, "is_consultation_visible": True}
+            ],
+        )
+        client = APIClient()
+        client.force_authenticate(user=third_party)
+
+        response = client.get(reverse("appointment-list"))
+
+        row = response.data["results"][0]
+        self.assertEqual(row["consultation_id"], self.consultation.pk)
+
+
+class TemporaryConsultationTests(TenantTestCase):
+    """The chat spun up for an appointment booked outside any follow-up.
+
+    Its participants sit on a roster like any other, so the visibility box
+    decides there too; whoever booked the appointment owns the container and
+    reaches it as its creator.
+    """
+
+    def setUp(self):
+        self.owner = User.objects.create_user(
+            email="owner@example.com", is_practitioner=True
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.owner)
+        self.guest = User.objects.create_user(
+            email="third@example.com", is_practitioner=True
+        )
+        self.guest_client = APIClient()
+        self.guest_client.force_authenticate(user=self.guest)
+
+    def _book(self, visible=None):
+        """An online appointment with no follow-up: a temporary one is created."""
+        payload = {
+            "scheduled_at": (timezone.now() + timedelta(hours=1)).isoformat(),
+            "type": Type.online,
+            "participants_ids": [self.guest.pk],
+        }
+        if visible is not None:
+            payload["participants_visibility"] = [
+                {"user_id": self.guest.pk, "is_consultation_visible": visible}
+            ]
+        response = self.client.post(
+            reverse("appointment-list"), payload, format="json"
+        )
+        self.assertEqual(response.status_code, 201, response.data)
+        consultation = Consultation.objects.get(
+            appointments__id=response.data["id"]
+        )
+        self.assertTrue(consultation.temporary)
+        return consultation
+
+    def _detail(self, client, consultation):
+        return client.get(
+            reverse("consultation-detail", kwargs={"pk": consultation.pk})
+        )
+
+    def test_the_box_decides_here_too(self):
+        consultation = self._book(visible=False)
+
+        self.assertEqual(
+            self._detail(self.guest_client, consultation).status_code, 404
+        )
+
+    def test_the_flag_opens_the_appointment_chat(self):
+        consultation = self._book(visible=True)
+
+        self.assertEqual(
+            self._detail(self.guest_client, consultation).status_code, 200
+        )
+
+    def test_whoever_booked_it_still_reads_it(self):
+        consultation = self._book(visible=False)
+
+        self.assertEqual(self._detail(self.client, consultation).status_code, 200)
+
+    def test_the_fan_out_follows(self):
+        from consultations.signals import get_users_to_notification_consultation
+
+        consultation = self._book(visible=False)
+
+        notified = get_users_to_notification_consultation(consultation)
+        self.assertIn(self.owner.pk, notified)
+        self.assertNotIn(self.guest.pk, notified)
 
 
 class ConsultationAttachmentTests(_Base):

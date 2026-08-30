@@ -82,9 +82,20 @@ class CalDAVConsultationLeakTests(_CalDAVBase):
         self.assertIn("Consultation: Follow-up", body)
         self.assertIn("Check pulse", body)
 
-    def test_roster_practitioner_reads_it_without_the_flag(self):
-        """The sanctioned exemption: a colleague on the roster is in the care."""
+    def test_practitioner_without_the_flag_reads_no_more_than_a_guest(self):
+        """The visibility box holds for a colleague too."""
         __, token = self._subscriber("colleague@example.com", is_practitioner=True)
+
+        body = self._calendar("colleague@example.com", token).content.decode()
+
+        self.assertIn("SUMMARY:Weekly call", body)
+        self.assertNotIn("Follow-up", body)
+        self.assertNotIn("Check pulse", body)
+
+    def test_the_flag_brings_the_consultation_back_for_a_practitioner(self):
+        __, token = self._subscriber(
+            "colleague@example.com", is_practitioner=True, visible=True
+        )
 
         body = self._calendar("colleague@example.com", token).content.decode()
 

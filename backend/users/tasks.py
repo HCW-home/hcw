@@ -1,8 +1,11 @@
 import logging
+import random
+import time
 from datetime import timedelta
 
 import requests as http_requests
 from django.contrib.contenttypes.models import ContentType
+from django.core.cache import caches
 from django_tenants.utils import get_tenant_model, tenant_context
 
 from constance import config
@@ -17,9 +20,67 @@ logger = logging.getLogger(__name__)
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 NOMINATIM_HEADERS = {"User-Agent": "HCW-Home/1.0"}
 
-@app.task(bind=True, max_retries=3, default_retry_delay=60)
+# Nominatim's usage policy caps public use at one request per second and answers
+# 429 beyond that. Bulk imports create one geocoding task per saved record, so
+# the limit is reached easily: when it is, every geocoding task steps back at
+# once instead of hammering on. The pause lives in the schema-agnostic cache
+# because the quota belongs to our IP, not to a tenant.
+NOMINATIM_RATE_LIMIT = "1/s"
+NOMINATIM_COOLDOWN_KEY = "nominatim:cooldown_until"
+NOMINATIM_COOLDOWN_SECONDS = 120
+NOMINATIM_MAX_COOLDOWN_SECONDS = 1800
+# Tasks must not all wake up on the same second, or the pause ends on a burst
+# that earns a new 429 straight away.
+NOMINATIM_WAKEUP_JITTER_SECONDS = 60
+# Giving up loses nothing: `manage.py geocode` picks up every object still
+# missing its location.
+NOMINATIM_MAX_RETRIES = 24
+
+
+def geocoding_pause_remaining():
+    """Seconds left before geocoding may resume, 0 when it can run now."""
+    until = caches["shared"].get(NOMINATIM_COOLDOWN_KEY)
+    if not until:
+        return 0
+    return max(0, int(until - time.time()))
+
+
+def pause_geocoding(retry_after=None):
+    """Hold every geocoding task back, widening the pause on repeated 429s."""
+    try:
+        delay = max(int(retry_after), NOMINATIM_COOLDOWN_SECONDS)
+    except (TypeError, ValueError):
+        delay = max(NOMINATIM_COOLDOWN_SECONDS, geocoding_pause_remaining() * 2)
+    delay = min(delay, NOMINATIM_MAX_COOLDOWN_SECONDS)
+
+    caches["shared"].set(
+        NOMINATIM_COOLDOWN_KEY, time.time() + delay, timeout=delay + 60
+    )
+    return delay
+
+
+def _wakeup_delay(pause):
+    return pause + random.uniform(0, NOMINATIM_WAKEUP_JITTER_SECONDS)
+
+
+@app.task(
+    bind=True,
+    max_retries=NOMINATIM_MAX_RETRIES,
+    default_retry_delay=60,
+    rate_limit=NOMINATIM_RATE_LIMIT,
+)
 def geocode_location(self, app_label, model_name, object_id, schema_name):
     """Geocode an object's address fields using Nominatim (OpenStreetMap)."""
+    # Checked first: while geocoding is paused, a task costs one rescheduling
+    # and not a single query nor request.
+    paused_for = geocoding_pause_remaining()
+    if paused_for:
+        logger.info(
+            f"Geocoding paused for {paused_for}s, postponing "
+            f"{app_label}.{model_name} pk={object_id}"
+        )
+        raise self.retry(countdown=_wakeup_delay(paused_for))
+
     TenantModel = get_tenant_model()
     try:
         tenant = TenantModel.objects.get(schema_name=schema_name)
@@ -47,6 +108,19 @@ def geocode_location(self, app_label, model_name, object_id, schema_name):
                 headers=NOMINATIM_HEADERS,
                 timeout=10,
             )
+        except Exception as exc:
+            logger.warning(f"Nominatim request failed for '{address}': {exc}")
+            raise self.retry(exc=exc)
+
+        if resp.status_code == 429:
+            pause = pause_geocoding(resp.headers.get("Retry-After"))
+            logger.warning(
+                f"Nominatim answered 429, pausing every geocoding task for "
+                f"{pause}s"
+            )
+            raise self.retry(countdown=_wakeup_delay(pause))
+
+        try:
             resp.raise_for_status()
             results = resp.json()
         except Exception as exc:

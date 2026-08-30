@@ -17,11 +17,13 @@ class ConsultationManager(models.Manager):
         return ConsultationQuerySet(self.model, using=self._db)
 
     def accessible_by(self, user, include_temporary=False):
-        """Consultations ``user`` has authority over.
+        """Consultations ``user`` takes part in professionally.
 
-        This is the scope that also decides who may rewrite an appointment, so
-        it stays narrow: a practitioner merely put on a roster reads the
-        consultation (see ``roster_access_q``) without being able to alter it.
+        Owner, creator, queue members and the participants the visibility flag
+        let in — the people the case belongs to. This is also the scope that
+        decides who may rewrite an appointment or close a follow-up, so it
+        stays narrower than plain read access: ``consultation_access_q`` adds
+        the beneficiary, who reads their own care without any say over it.
         """
         qs = self.filter(
             Q(owned_by=user)

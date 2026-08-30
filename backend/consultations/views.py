@@ -69,7 +69,7 @@ from .models import (
     Type,
 )
 from .paginations import ConsultationPagination
-from .utils import consultation_access_q, roster_access_q, roster_participant_q
+from .utils import consultation_access_q, roster_participant_q
 from .permissions import IsPractitioner
 from .serializers import (
     AppointmentAddParticipantsSerializer,
@@ -184,29 +184,19 @@ class ConsultationViewSet(FhirViewSetMixin, CreatedByMixin, viewsets.ModelViewSe
     ordering_fields = ["created_at", "updated_at", "closed_at"]
 
     # Actions that alter the consultation itself, as opposed to reading it or
-    # tracking one's own state in it (`mark_read`, `join`, `messages`).
+    # tracking one's own state in it (`mark_read`, `join`, `messages`), which
+    # the wider read scope covers.
     WRITE_ACTIONS = frozenset(
         {"update", "partial_update", "destroy", "close", "reopen"}
     )
 
     def get_queryset(self):
         user = self.request.user
-        # Listing surfaces temporary follow-ups too, so their chats remain easy
-        # to find; the row item flags them as temporary in the UI. Detail/messages
-        # access additionally allows temporary consultations attached to an
-        # appointment the user owns or participates in.
-        if self.action == "list":
-            qs = Consultation.objects.filter(
-                Q(pk__in=Consultation.objects.accessible_by(
-                    user, include_temporary=True
-                ))
-                | roster_access_q(user)
-            ).distinct()
-        elif self.action in self.WRITE_ACTIONS:
-            # Reading a follow-up is not authority over it: a practitioner put
-            # on one appointment's roster takes part in the care, which is why
-            # they reach the chat, but rewriting or closing the case belongs to
-            # the people `accessible_by` names.
+        # Listing and writing share the `accessible_by` scope: the people the
+        # case belongs to. Temporary follow-ups are listed too, so their chats
+        # remain easy to find; the row item flags them as temporary in the UI.
+        # Detail / messages access is deliberately wider — see the else branch.
+        if self.action == "list" or self.action in self.WRITE_ACTIONS:
             qs = Consultation.objects.accessible_by(
                 user, include_temporary=True
             ).distinct()
@@ -727,6 +717,17 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
         channel_layer = get_channel_layer()
         active_participants = appointment.participant_set.filter(is_active=True)
 
+        # The event carries the follow-up id, and the client opens its chat
+        # with it: only tell the participants the consultation lets in, or the
+        # ring answered by someone on the roster alone lands on a 404.
+        from consultations.signals import get_users_to_notification_consultation
+
+        consultation_readers = (
+            get_users_to_notification_consultation(appointment.consultation)
+            if appointment.consultation
+            else set()
+        )
+
         for participant in active_participants:
             if participant.user.pk == request.user.pk:
                 continue
@@ -735,7 +736,11 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
                 user_group(participant.user.pk),
                 {
                     "type": "appointment",
-                    "consultation_id": appointment.consultation.pk if appointment.consultation else None,
+                    "consultation_id": (
+                        appointment.consultation.pk
+                        if participant.user.pk in consultation_readers
+                        else None
+                    ),
                     "appointment_id": appointment.pk,
                     "state": "participant_joined",
                     "data": {
