@@ -359,6 +359,7 @@
     "cancelSuccess": "Cita cancelada con éxito",
     "cancelError": "Error al cancelar la cita",
     "practitioners": "Profesionales",
+    "searchPractitioner": "Buscar un profesional...",
     "statusNoshow": "No asistió",
     "markCompleted": "Marcar como realizada",
     "markNoshow": "Marcar como no asistió",

@@ -2,32 +2,66 @@
   <div class="appointments-container">
     <div class="calendar-header">
       <div class="header-controls">
-        @if (practitioners().length > 1) {
-          <div class="practitioner-selector">
-            <button class="practitioner-toggle" (click)="togglePractitionerDropdown($event)">
-              <div class="practitioner-dots">
-                @for (p of practitioners(); track p.user.pk) {
-                  @if (p.selected) {
-                    <span class="dot" [style.background]="p.color"></span>
+        <div class="practitioner-selector">
+          <button class="practitioner-toggle" (click)="togglePractitionerDropdown($event)">
+            <div class="practitioner-dots">
+              @for (p of practitioners(); track p.user.pk) {
+                <span class="dot" [style.background]="p.color"></span>
+              }
+            </div>
+            <span>{{ 'appointments.practitioners' | translate }} ({{ getSelectedPractitionerCount() }})</span>
+            <app-svg src="chevron-down" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
+          </button>
+          @if (practitionerDropdownOpen()) {
+            <div class="practitioner-dropdown">
+              <div class="practitioner-search">
+                <app-svg src="svg/search.svg" [svgStyle]="{'width.px': 16, 'height.px': 16}"></app-svg>
+                <input
+                  type="search"
+                  name="practitioner-search-field"
+                  autocomplete="new-password"
+                  [placeholder]="'appointments.searchPractitioner' | translate"
+                  [value]="practitionerQuery()"
+                  (input)="onPractitionerSearchInput($event)">
+              </div>
+
+              <div class="practitioner-options" (scroll)="onPractitionerResultsScroll($event)">
+                @if (!practitionerQuery().trim()) {
+                  @for (p of practitioners(); track p.user.pk) {
+                    <label class="practitioner-option">
+                      <input type="checkbox" checked (change)="togglePractitioner(p.user)">
+                      <span class="color-dot" [style.background]="p.color"></span>
+                      <span class="practitioner-name">{{ practitionerName(p.user) }}</span>
+                    </label>
+                  }
+                  @if (practitioners().length && practitionerSearchRows().length) {
+                    <div class="practitioner-separator"></div>
                   }
                 }
-              </div>
-              <span>{{ 'appointments.practitioners' | translate }} ({{ getSelectedPractitionerCount() }})</span>
-              <app-svg src="chevron-down" [svgStyle]="{'width.px': 14, 'height.px': 14}"></app-svg>
-            </button>
-            @if (practitionerDropdownOpen()) {
-              <div class="practitioner-dropdown">
-                @for (p of practitioners(); track p.user.pk) {
-                  <label class="practitioner-option" (click)="$event.stopPropagation()">
-                    <input type="checkbox" [checked]="p.selected" (change)="togglePractitioner(p)">
-                    <span class="color-dot" [style.background]="p.color"></span>
-                    <span class="practitioner-name">{{ p.user.first_name }} {{ p.user.last_name }}</span>
+
+                @for (user of practitionerSearchRows(); track user.pk) {
+                  <label class="practitioner-option">
+                    <input
+                      type="checkbox"
+                      [checked]="isPractitionerSelected(user)"
+                      (change)="togglePractitioner(user)">
+                    <span class="practitioner-name">{{ practitionerName(user) }}</span>
                   </label>
                 }
+
+                @if (practitionerSearching()) {
+                  <div class="practitioner-loading">
+                    <app-loader></app-loader>
+                  </div>
+                } @else if (!practitionerSearchRows().length && practitionerQuery().trim()) {
+                  <div class="practitioner-empty">
+                    {{ 'userSearchSelect.noUsersFoundFor' | translate: { query: practitionerQuery() } }}
+                  </div>
+                }
               </div>
-            }
-          </div>
-        }
+            </div>
+          }
+        </div>
 
         <div class="nav-controls">
           <button class="nav-btn" (click)="navigatePrev()">

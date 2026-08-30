@@ -1015,6 +1015,7 @@
     "cancelSuccess": "Прийом успішно скасовано",
     "cancelError": "Помилка скасування прийому",
     "practitioners": "Лікарі",
+    "searchPractitioner": "Пошук лікаря...",
     "consultation": "Консультація",
     "statusNoshow": "Не з'явився",
     "markCompleted": "Позначити як проведену",

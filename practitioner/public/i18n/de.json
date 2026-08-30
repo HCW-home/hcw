@@ -285,6 +285,7 @@
     "errorLoadingAppointments": "Fehler beim Laden der Termine",
     "confirmPresence": "Anwesenheit bestätigen",
     "practitioners": "Behandler",
+    "searchPractitioner": "Behandler suchen...",
     "statusNoshow": "Nicht erschienen",
     "markCompleted": "Als durchgeführt markieren",
     "markNoshow": "Als nicht erschienen markieren",

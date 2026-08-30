@@ -1015,6 +1015,7 @@
     "cancelSuccess": "تم إلغاء الموعد بنجاح",
     "cancelError": "خطأ في إلغاء الموعد",
     "practitioners": "الممارسون",
+    "searchPractitioner": "البحث عن ممارس...",
     "consultation": "الاستشارة",
     "statusNoshow": "لم يحضر",
     "markCompleted": "تعليم كمكتمل",

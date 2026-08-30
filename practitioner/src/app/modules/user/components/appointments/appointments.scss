@@ -213,7 +213,7 @@
     position: absolute;
     top: calc(100% + 6px);
     left: 0;
-    min-width: 240px;
+    width: 280px;
     background: var(--White);
     border: 1px solid var(--slate-200);
     border-radius: 12px;
@@ -221,6 +221,58 @@
     z-index: 100;
     padding: 6px;
     animation: menu-fade-in 0.15s ease;
+
+    .practitioner-search {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 10px;
+      height: 34px;
+      border: 1px solid var(--slate-200);
+      border-radius: 8px;
+      color: var(--slate-400);
+
+      &:focus-within {
+        border-color: var(--primary-500);
+      }
+
+      input {
+        flex: 1;
+        min-width: 0;
+        border: none;
+        outline: none;
+        background: transparent;
+        font-size: 13px;
+        color: var(--slate-700);
+
+        &::-webkit-search-cancel-button {
+          cursor: pointer;
+        }
+      }
+    }
+
+    .practitioner-options {
+      max-height: 280px;
+      overflow-y: auto;
+      margin-top: 6px;
+    }
+
+    .practitioner-separator {
+      height: 1px;
+      margin: 6px 4px;
+      background: var(--slate-200);
+    }
+
+    .practitioner-loading,
+    .practitioner-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 10px;
+      font-size: 12px;
+      color: var(--slate-500);
+      text-align: center;
+    }
 
     .practitioner-option {
       display: flex;

@@ -113,6 +113,16 @@ export class UserService {
     });
   }
 
+  /**
+   * Fetch a known set of users by primary key, used to restore a selection
+   * persisted as ids without listing the whole directory.
+   */
+  getUsersByIds(ids: number[]): Observable<PaginatedResponse<IUser>> {
+    return this.http.get<PaginatedResponse<IUser>>(`${this.apiUrl}/users/`, {
+      params: { id_in: ids.join(','), page_size: ids.length },
+    });
+  }
+
   getLanguages(): Observable<ILanguage[]> {
     return this.http.get<ILanguage[]>(`${this.apiUrl}/languages/`);
   }

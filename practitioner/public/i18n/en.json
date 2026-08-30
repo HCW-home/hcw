@@ -1015,6 +1015,7 @@
     "cancelSuccess": "Appointment cancelled successfully",
     "cancelError": "Error cancelling appointment",
     "practitioners": "Practitioners",
+    "searchPractitioner": "Search a practitioner...",
     "consultation": "Consultation",
     "statusNoshow": "No show",
     "markCompleted": "Mark as completed",

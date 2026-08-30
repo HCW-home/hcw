@@ -4,6 +4,7 @@ import {
   OnDestroy,
   AfterViewInit,
   signal,
+  computed,
   inject,
   viewChild,
   effect,
@@ -13,7 +14,8 @@ import {
 } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { Subject, forkJoin, takeUntil } from 'rxjs';
+import { Subject, forkJoin, of, takeUntil } from 'rxjs';
+import { debounceTime, switchMap } from 'rxjs/operators';
 import { FormsModule } from '@angular/forms';
 import {
   FullCalendarModule,
@@ -86,10 +88,10 @@ import { Reminder, ReminderOccurrence } from '../../../../core/models/reminder';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { IUser } from '../../../user/models/user';
 
+/** A practitioner whose agenda is currently shown on the calendar. */
 interface PractitionerOption {
   user: IUser;
   color: string;
-  selected: boolean;
 }
 
 const PRACTITIONER_COLORS = [
@@ -254,8 +256,17 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   tooEarlyError = signal<{ appointmentId: number; time: string; minutes: number } | null>(null);
   appointmentEarlyJoinMinutes = 5; // Default value
 
+  // Only the practitioners displayed on the calendar; the others are reached
+  // through the search box instead of being listed upfront.
   practitioners = signal<PractitionerOption[]>([]);
   practitionerDropdownOpen = signal(false);
+  practitionerQuery = signal('');
+  practitionerResults = signal<IUser[]>([]);
+  practitionerSearching = signal(false);
+  practitionerHasMore = signal(false);
+  private practitionerPage = 1;
+  private practitionerRequestId = 0;
+  private practitionerSearch$ = new Subject<string>();
   createMenuOpen = signal(false);
 
   private readonly pageSize = 20;
@@ -514,29 +525,47 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
+  /**
+   * Restore the saved selection (self by default) by fetching only those
+   * users: the full directory is far too large to list upfront.
+   */
   private loadPractitioners(): void {
-    this.userService.searchUsers('', 1, 100, undefined, undefined, true)
-      .pipe(takeUntil(this.destroy$))
+    this.practitionerSearch$
+      .pipe(debounceTime(300), takeUntil(this.destroy$))
+      .subscribe(query => this.runPractitionerSearch(query));
+
+    this.userService
+      .getCurrentUser()
+      .pipe(
+        switchMap(currentUser => {
+          const saved = this.readSelectedPractitioners();
+          const ids = saved ?? (currentUser ? [currentUser.pk] : []);
+          return ids.length
+            ? this.userService.getUsersByIds(ids)
+            : of({ results: [] as IUser[] });
+        }),
+        takeUntil(this.destroy$)
+      )
       .subscribe({
         next: response => {
-          const currentUser = this.userService.currentUserValue;
-          const savedSelection = this.readSelectedPractitioners();
           this.practitioners.set(
             response.results.map((user, index) => ({
               user,
               color: PRACTITIONER_COLORS[index % PRACTITIONER_COLORS.length],
-              // Restore last selection if any, otherwise default to self.
-              selected: savedSelection
-                ? savedSelection.includes(user.pk)
-                : user.pk === currentUser?.pk,
             }))
           );
-          this.loadAppointments();
-          if (this.currentView() !== 'list') {
-            this.loadReminderOccurrences();
-          }
+          this.reloadPractitionerData();
         },
+        error: () => this.reloadPractitionerData(),
       });
+  }
+
+  /** Refresh everything that depends on the practitioner selection. */
+  private reloadPractitionerData(): void {
+    this.loadAppointments();
+    if (this.currentView() !== 'list') {
+      this.loadReminderOccurrences();
+    }
   }
 
   // Key inside the user's app_preferences JSON (persisted server-side).
@@ -552,9 +581,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private persistSelectedPractitioners(): void {
-    const ids = this.practitioners()
-      .filter(p => p.selected)
-      .map(p => p.user.pk);
+    const ids = this.practitioners().map(p => p.user.pk);
     const current = this.userService.currentUserValue?.app_preferences ?? {};
     const app_preferences = {
       ...current,
@@ -571,26 +598,112 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
 
   togglePractitionerDropdown(event: MouseEvent): void {
     event.stopPropagation();
-    this.practitionerDropdownOpen.update(v => !v);
-  }
-
-  togglePractitioner(practitioner: PractitionerOption): void {
-    this.practitioners.update(list =>
-      list.map(p =>
-        p.user.pk === practitioner.user.pk
-          ? { ...p, selected: !p.selected }
-          : p
-      )
-    );
-    this.persistSelectedPractitioners();
-    this.loadAppointments();
-    if (this.currentView() !== 'list') {
-      this.loadReminderOccurrences();
+    const open = !this.practitionerDropdownOpen();
+    this.practitionerDropdownOpen.set(open);
+    if (open && this.practitionerResults().length === 0) {
+      this.runPractitionerSearch(this.practitionerQuery());
     }
   }
 
+  onPractitionerSearchInput(event: Event): void {
+    const query = (event.target as HTMLInputElement).value || '';
+    this.practitionerQuery.set(query);
+    this.practitionerSearch$.next(query);
+  }
+
+  /** Reset paging and fetch the first page matching the typed term. */
+  private runPractitionerSearch(query: string): void {
+    this.practitionerPage = 1;
+    this.practitionerSearching.set(true);
+    this.fetchPractitionerPage(query, true);
+  }
+
+  /** Next page, appended as the result list is scrolled to the bottom. */
+  loadMorePractitioners(): void {
+    if (this.practitionerSearching() || !this.practitionerHasMore()) return;
+    this.practitionerPage += 1;
+    this.practitionerSearching.set(true);
+    this.fetchPractitionerPage(this.practitionerQuery(), false);
+  }
+
+  onPractitionerResultsScroll(event: Event): void {
+    const el = event.target as HTMLElement;
+    if (el.scrollHeight - el.scrollTop - el.clientHeight < 50) {
+      this.loadMorePractitioners();
+    }
+  }
+
+  private fetchPractitionerPage(query: string, replace: boolean): void {
+    const requestId = ++this.practitionerRequestId;
+    this.userService
+      .searchUsers(query, this.practitionerPage, 20, undefined, undefined, true)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: response => {
+          // Drop a page that another search has already superseded.
+          if (requestId !== this.practitionerRequestId) return;
+          this.practitionerResults.update(current =>
+            replace ? response.results : [...current, ...response.results]
+          );
+          this.practitionerHasMore.set(response.next !== null);
+          this.practitionerSearching.set(false);
+        },
+        error: () => {
+          if (requestId === this.practitionerRequestId) {
+            this.practitionerSearching.set(false);
+          }
+        },
+      });
+  }
+
+  /**
+   * Result rows: with no search term the already-selected practitioners are
+   * pinned above, so they are not listed twice.
+   */
+  practitionerSearchRows = computed<IUser[]>(() => {
+    const results = this.practitionerResults();
+    if (this.practitionerQuery().trim()) {
+      return results;
+    }
+    const selected = new Set(this.practitioners().map(p => p.user.pk));
+    return results.filter(user => !selected.has(user.pk));
+  });
+
+  isPractitionerSelected(user: IUser): boolean {
+    return this.practitioners().some(p => p.user.pk === user.pk);
+  }
+
+  practitionerName(user: IUser): string {
+    const name = `${user.first_name || ''} ${user.last_name || ''}`.trim();
+    return name || user.email || user.username || '';
+  }
+
+  /** First colour not already taken by the current selection. */
+  private nextPractitionerColor(): string {
+    const used = new Set(this.practitioners().map(p => p.color));
+    return (
+      PRACTITIONER_COLORS.find(color => !used.has(color)) ??
+      PRACTITIONER_COLORS[this.practitioners().length % PRACTITIONER_COLORS.length]
+    );
+  }
+
+  togglePractitioner(user: IUser): void {
+    if (this.isPractitionerSelected(user)) {
+      this.practitioners.update(list =>
+        list.filter(p => p.user.pk !== user.pk)
+      );
+    } else {
+      this.practitioners.update(list => [
+        ...list,
+        { user, color: this.nextPractitionerColor() },
+      ]);
+    }
+    this.persistSelectedPractitioners();
+    this.reloadPractitionerData();
+  }
+
   getSelectedPractitionerCount(): number {
-    return this.practitioners().filter(p => p.selected).length;
+    return this.practitioners().length;
   }
 
   getPractitionerColor(appointment: Appointment): string {
@@ -688,7 +801,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
 
     this.loading.set(true);
 
-    const selected = this.practitioners().filter(p => p.selected);
+    const selected = this.practitioners();
 
     if (selected.length === 0) {
       this.appointments.set([]);
@@ -1984,9 +2097,7 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
     if (!this.currentDateRange) return;
     // Show reminders created by the selected practitioners (same selection as
     // the appointments). Empty selection -> no reminders.
-    const createdByIds = this.practitioners()
-      .filter(p => p.selected)
-      .map(p => p.user.pk);
+    const createdByIds = this.practitioners().map(p => p.user.pk);
     if (createdByIds.length === 0) {
       this.reminderCalendarEvents = [];
       this.recomputeCalendarEvents();
