@@ -44,3 +44,4 @@ tenant-schemas-celery
 drf-spectacular-sidecar
 honcho
 watchfiles
+pyarrow
