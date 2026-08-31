@@ -372,8 +372,8 @@ class MapView(APIView):
         at least one currently-valid booking slot, and return no
         organisation at all — only practitioners hold slots.
       - `search`: free-text search across practitioner/org name, address
-        and main organisation. When provided the bounding box is
-        ignored, matching the previous per-endpoint behavior.
+        and main organisation. It narrows the bounding box rather than
+        replacing it, so panning the map keeps the terms in effect.
     """
 
     def get_permissions(self):
@@ -430,17 +430,15 @@ class MapView(APIView):
         qs = Organisation.objects.exclude(
             location__isnull=True
         ).exclude(location="")
-        if search or location:
-            if location:
-                qs = qs.filter(
-                    Q(city__icontains=location)
-                    | Q(street__icontains=location)
-                    | Q(postal_code__icontains=location)
-                    | Q(country__icontains=location)
-                )
-            if search:
-                qs = qs.filter(Q(name__icontains=search))
-            return list(qs)
+        if location:
+            qs = qs.filter(
+                Q(city__icontains=location)
+                | Q(street__icontains=location)
+                | Q(postal_code__icontains=location)
+                | Q(country__icontains=location)
+            )
+        if search:
+            qs = qs.filter(Q(name__icontains=search))
         if bounds is None:
             return list(qs)
         return [org for org in qs if self._location_in_bounds(org.location, bounds)]
@@ -465,40 +463,54 @@ class MapView(APIView):
                 & (Q(slots__valid_until__isnull=True) | Q(slots__valid_until__gte=today))
             ).distinct()
  
-        if search or location:
-            if location:
-                qs = qs.filter(
-                    Q(street__icontains=location)
-                    | Q(city__icontains=location)
-                    | Q(postal_code__icontains=location)
-                    | Q(country__icontains=location)
-                    | Q(main_organisation__street__icontains=location)
-                    | Q(main_organisation__city__icontains=location)
-                    | Q(main_organisation__postal_code__icontains=location)
-                    | Q(main_organisation__country__icontains=location)
-                )
-            if search:
-                name_matches = list(qs.filter(
-                    Q(first_name__icontains=search) | Q(last_name__icontains=search)
-                ).distinct())
-                name_match_ids = {u.pk for u in name_matches}
-                other_matches = list(qs.filter(
-                    Q(specialities__name__icontains=search)
-                    | Q(specialities__reasons__name__icontains=search)
-                ).exclude(pk__in=name_match_ids).distinct())
-                return name_matches + other_matches
-            return list(qs.distinct())
- 
-        if bounds is None:
-            return list(qs)
-        kept = []
-        for user in qs:
-            loc = user.location or (
-                user.main_organisation.location if user.main_organisation else None
+        if location:
+            qs = qs.filter(
+                Q(street__icontains=location)
+                | Q(city__icontains=location)
+                | Q(postal_code__icontains=location)
+                | Q(country__icontains=location)
+                | Q(main_organisation__street__icontains=location)
+                | Q(main_organisation__city__icontains=location)
+                | Q(main_organisation__postal_code__icontains=location)
+                | Q(main_organisation__country__icontains=location)
             )
-            if self._location_in_bounds(loc, bounds):
-                kept.append(user)
-        return kept
+
+        if search:
+            # Name hits come first: someone typing a name wants that person
+            # before everyone sharing their speciality.
+            name_matches = list(qs.filter(
+                Q(first_name__icontains=search) | Q(last_name__icontains=search)
+            ).distinct())
+            name_match_ids = {u.pk for u in name_matches}
+            other_matches = list(qs.filter(
+                Q(specialities__name__icontains=search)
+                | Q(specialities__reasons__name__icontains=search)
+            ).exclude(pk__in=name_match_ids).distinct())
+            practitioners = name_matches + other_matches
+        else:
+            practitioners = list(qs.distinct())
+
+        return self._within_bounds(practitioners, bounds)
+
+    @classmethod
+    def _within_bounds(cls, practitioners, bounds):
+        """Keep those placed inside the box, on the same location the map
+        draws them at: their own, or their main organisation's."""
+        if bounds is None:
+            return practitioners
+        return [
+            user
+            for user in practitioners
+            if cls._location_in_bounds(
+                user.location
+                or (
+                    user.main_organisation.location
+                    if user.main_organisation
+                    else None
+                ),
+                bounds,
+            )
+        ]
 
 
 class PublicPractitionerView(APIView):

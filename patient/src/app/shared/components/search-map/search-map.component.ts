@@ -11,9 +11,10 @@ import {
   ViewChild,
 } from '@angular/core';
 import * as L from 'leaflet';
+import { Subject, debounceTime, takeUntil } from 'rxjs';
 
 import { PractitionerSearchService } from '../../../core/services/practitioner-search.service';
-import { SearchItem } from '../../../core/models/search.model';
+import { MapBounds, SearchItem } from '../../../core/models/search.model';
 
 const orgIcon = L.divIcon({
   className: 'map-marker-org',
@@ -36,6 +37,12 @@ const DEFAULT_VIEW: [number, number] = [46.8, 8.2];
 const DEFAULT_ZOOM = 8;
 // Close enough to read the street when a single result is put in focus.
 const FOCUS_ZOOM = 15;
+// Browsing the map is a stream of small moves; only the settled view is worth
+// a request.
+const BROWSE_DEBOUNCE_MS = 400;
+// How long a view the component set itself keeps raising zoom events. Covers
+// Leaflet's 250ms zoom animation with room to spare.
+const PROGRAMMATIC_MOVE_MS = 800;
 
 /**
  * Leaflet view of a set of directory results. Hosts only hand it the items and
@@ -51,6 +58,9 @@ const FOCUS_ZOOM = 15;
 export class SearchMapComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() items: SearchItem[] = [];
   @Output() markerSelected = new EventEmitter<SearchItem>();
+  // Emitted when the user has browsed to another area, so the host can search
+  // it. Never raised for a view this component set itself.
+  @Output() boundsChanged = new EventEmitter<MapBounds>();
 
   @ViewChild('canvas', { static: true }) canvas!: ElementRef<HTMLDivElement>;
 
@@ -58,6 +68,13 @@ export class SearchMapComponent implements AfterViewInit, OnChanges, OnDestroy {
   // Keyed by item id so a host can bring one result into focus.
   private markers = new Map<string, L.Marker>();
   private resizeObserver?: ResizeObserver;
+  private destroy$ = new Subject<void>();
+  private browsed$ = new Subject<void>();
+  // Results are framed until the user takes over the view: past that point,
+  // refreshing them must not pull the map from under them.
+  private autoFrame = true;
+  // Timestamp up to which a zoom is the component's own doing, not a gesture.
+  private programmaticUntil = 0;
   // Points waiting to be framed: the map can be laid out at zero size while the
   // results panel unfolds, and fitBounds needs a real box to pick a zoom.
   private pendingPoints: L.LatLng[] = [];
@@ -72,6 +89,7 @@ export class SearchMapComponent implements AfterViewInit, OnChanges, OnDestroy {
 
     this.render();
     this.observeResize();
+    this.watchBrowsing();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -81,8 +99,57 @@ export class SearchMapComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
     this.resizeObserver?.disconnect();
     this.map?.remove();
+  }
+
+  /**
+   * Frame the next set of results again, for a host starting a new search:
+   * those results describe another place, so the browsed view no longer holds.
+   */
+  resetFraming(): void {
+    this.autoFrame = true;
+  }
+
+  // Dragging can only come from a gesture. Zooming cannot be told apart on its
+  // own — fitBounds and setView raise it too — so it counts as browsing only
+  // outside the window in which the component moved the view itself.
+  private watchBrowsing(): void {
+    if (!this.map) return;
+
+    this.map.on('dragend', () => this.onBrowsed());
+    this.map.on('zoomend', () => {
+      if (Date.now() < this.programmaticUntil) return;
+      this.onBrowsed();
+    });
+
+    this.browsed$
+      .pipe(debounceTime(BROWSE_DEBOUNCE_MS), takeUntil(this.destroy$))
+      .subscribe(() => this.emitBounds());
+  }
+
+  private onBrowsed(): void {
+    this.autoFrame = false;
+    this.browsed$.next();
+  }
+
+  private emitBounds(): void {
+    if (!this.map) return;
+    const bounds = this.map.getBounds();
+    this.boundsChanged.emit({
+      latMin: bounds.getSouth(),
+      latMax: bounds.getNorth(),
+      lngMin: bounds.getWest(),
+      lngMax: bounds.getEast(),
+    });
+  }
+
+  // Marks the zoom events the next view change is about to raise as the
+  // component's own, so they are not mistaken for browsing.
+  private markProgrammaticMove(): void {
+    this.programmaticUntil = Date.now() + PROGRAMMATIC_MOVE_MS;
   }
 
   /**
@@ -105,6 +172,7 @@ export class SearchMapComponent implements AfterViewInit, OnChanges, OnDestroy {
     // Measure before centring: a stale size makes Leaflet centre on the wrong
     // half of the panel.
     this.map.invalidateSize();
+    this.markProgrammaticMove();
     this.map.setView(marker.getLatLng(), Math.max(this.map.getZoom(), FOCUS_ZOOM), {
       animate: true,
     });
@@ -144,7 +212,9 @@ export class SearchMapComponent implements AfterViewInit, OnChanges, OnDestroy {
       points.push(L.latLng(coords.lat, coords.lng));
     }
 
-    this.pendingPoints = points;
+    // Results that land while the user is browsing are theirs to look at where
+    // they are: only an untouched view still gets framed.
+    this.pendingPoints = this.autoFrame ? points : [];
     this.fitToPoints();
   }
 
@@ -158,6 +228,7 @@ export class SearchMapComponent implements AfterViewInit, OnChanges, OnDestroy {
       return;
     }
 
+    this.markProgrammaticMove();
     this.map.fitBounds(L.latLngBounds(this.pendingPoints), { padding: [50, 50], maxZoom: 14 });
     // Framed once; later resizes must not undo a manual pan or zoom.
     this.pendingPoints = [];

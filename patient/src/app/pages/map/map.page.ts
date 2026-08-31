@@ -16,7 +16,7 @@ import { SearchBarComponent } from '../../shared/components/search-bar/search-ba
 import { SearchMapComponent } from '../../shared/components/search-map/search-map.component';
 import { SearchResultCardComponent } from '../../shared/components/search-result-card/search-result-card.component';
 import { PractitionerDetailsComponent } from '../../shared/components/practitioner-details/practitioner-details.component';
-import { BookingIntent, SearchItem, SearchQuery } from '../../core/models/search.model';
+import { BookingIntent, MapBounds, SearchItem, SearchQuery } from '../../core/models/search.model';
 
 @Component({
   selector: 'app-map',
@@ -39,6 +39,8 @@ export class MapPage implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   // Kept so the online-booking toggle can re-run the very same search.
   private lastQuery: SearchQuery | null = null;
+  // Area the user browsed to, once they moved the map away from the results.
+  private mapBounds: MapBounds | null = null;
 
   items = signal<SearchItem[]>([]);
   isLoading = signal(false);
@@ -129,8 +131,21 @@ export class MapPage implements OnInit, OnDestroy {
 
   onSearch(query: SearchQuery): void {
     this.lastQuery = query;
+    // New terms answer for themselves, wherever the map was left: the area is
+    // dropped and the map frames whatever comes back.
+    this.mapBounds = null;
+    this.searchMap()?.resetFraming();
     this.hasSearched.set(true);
     this.syncUrl();
+    this.runSearch();
+  }
+
+  // Browsing the map re-runs the search over the area now on screen, keeping
+  // the terms. Left alone while a practitioner sheet is open: it hides the
+  // list the results would land in.
+  onBoundsChanged(bounds: MapBounds): void {
+    if (!this.hasSearched() || this.detailPk() !== null) return;
+    this.mapBounds = bounds;
     this.runSearch();
   }
 
@@ -176,7 +191,15 @@ export class MapPage implements OnInit, OnDestroy {
 
     this.isLoading.set(true);
     this.searchService
-      .search({ ...query, hasSlots: this.onlineBookingOnly() })
+      .search({
+        ...query,
+        // Browsing the map is itself an answer to "where", so the typed
+        // location steps aside instead of intersecting with the visible area
+        // and returning nothing.
+        where: this.mapBounds ? '' : query.where,
+        hasSlots: this.onlineBookingOnly(),
+        bounds: this.mapBounds,
+      })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: items => {

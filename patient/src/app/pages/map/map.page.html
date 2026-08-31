@@ -97,6 +97,7 @@
           class="map-panel"
           [items]="items()"
           (markerSelected)="onMarkerSelected($event)"
+          (boundsChanged)="onBoundsChanged($event)"
         ></app-search-map>
       </div>
       }

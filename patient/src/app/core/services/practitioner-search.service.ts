@@ -50,6 +50,12 @@ export class PractitionerSearchService {
     if (query.hasSlots) {
       params['has_slots'] = true;
     }
+    if (query.bounds) {
+      params['lat_min'] = query.bounds.latMin.toFixed(6);
+      params['lat_max'] = query.bounds.latMax.toFixed(6);
+      params['lng_min'] = query.bounds.lngMin.toFixed(6);
+      params['lng_max'] = query.bounds.lngMax.toFixed(6);
+    }
 
     return this.api
       .get<{ organisations: SearchOrganisation[]; practitioners: SearchDoctor[] }>('/map/', params)

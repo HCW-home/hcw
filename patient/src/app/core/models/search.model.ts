@@ -42,11 +42,21 @@ export interface SearchItem {
   doctor?: SearchDoctor;
 }
 
+// Visible area of the map, in the shape the directory endpoint expects.
+export interface MapBounds {
+  latMin: number;
+  latMax: number;
+  lngMin: number;
+  lngMax: number;
+}
+
 export interface SearchQuery {
   who: string;
   where: string;
   // Only keep practitioners with online booking open.
   hasSlots?: boolean;
+  // Narrows the search to what the map currently shows; the terms still apply.
+  bounds?: MapBounds | null;
   limit?: number;
 }
 
