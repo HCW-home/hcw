@@ -245,6 +245,8 @@
     .rdv-button {
       width: auto;
       flex-shrink: 0;
+      // Holds the right edge even when no slot area is there to push it.
+      margin-left: auto;
     }
   }
 }
@@ -258,20 +260,6 @@
     width: 20px;
     height: 20px;
     color: var(--app-teal);
-  }
-}
-
-.oc-note {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--app-ink-3);
-
-  ion-icon {
-    font-size: 17px;
-    color: var(--app-ink-4);
-    flex-shrink: 0;
   }
 }
 

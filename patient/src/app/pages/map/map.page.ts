@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, signal, computed, viewChild } from '@angular/core';
 import { Location } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import {
   IonContent,
   IonIcon,
@@ -47,6 +47,9 @@ export class MapPage implements OnInit, OnDestroy {
 
   onlineBookingOnly = signal(false);
   selectedItemId = signal<string | null>(null);
+  // Terms read back from the URL, to refill the bar on a shared search link.
+  initialWho = signal('');
+  initialWhere = signal('');
   // Practitioner whose full sheet replaces the result list, if any.
   detailPk = signal<number | null>(null);
 
@@ -71,7 +74,31 @@ export class MapPage implements OnInit, OnDestroy {
     const pk = Number(this.route.snapshot.paramMap.get('pk'));
     if (pk) {
       this.openDetailsForPk(pk);
+      return;
     }
+
+    this.restoreSearchFromUrl();
+  }
+
+  // A search link reopens on its own results: the terms go back into the bar
+  // and the search runs again.
+  private restoreSearchFromUrl(): void {
+    const params = this.route.snapshot.queryParamMap;
+    const who = this.readParam(params, 'who');
+    const where = this.readParam(params, 'where');
+    if (!who && !where) return;
+
+    this.initialWho.set(who);
+    this.initialWhere.set(where);
+    this.onlineBookingOnly.set(this.readParam(params, 'booking') === 'online');
+    this.onSearch({ who, where });
+  }
+
+  // Query params are whatever the URL holds: a hand-edited or stale link can
+  // carry a literal "undefined", which must not be taken for a value.
+  private readParam(params: ParamMap, name: string): string {
+    const value = params.get(name) ?? '';
+    return value === 'undefined' || value === 'null' ? '' : value;
   }
 
   ngOnDestroy(): void {
@@ -103,6 +130,7 @@ export class MapPage implements OnInit, OnDestroy {
   onSearch(query: SearchQuery): void {
     this.lastQuery = query;
     this.hasSearched.set(true);
+    this.syncUrl();
     this.runSearch();
   }
 
@@ -110,8 +138,30 @@ export class MapPage implements OnInit, OnDestroy {
     if (this.onlineBookingOnly() === value) return;
     this.onlineBookingOnly.set(value);
     if (this.hasSearched()) {
+      this.syncUrl();
       this.runSearch();
     }
+  }
+
+  // The address bar carries the running search so it can be shared or
+  // reloaded. Replaced rather than pushed: refining a search is not a step
+  // back through, and the page would not replay it on a popstate anyway.
+  private syncUrl(): void {
+    this.location.replaceState(this.searchUrl());
+  }
+
+  private searchUrl(): string {
+    const queryParams: Record<string, string> = {};
+    if (this.lastQuery?.who) {
+      queryParams['who'] = this.lastQuery.who;
+    }
+    if (this.lastQuery?.where) {
+      queryParams['where'] = this.lastQuery.where;
+    }
+    if (this.onlineBookingOnly()) {
+      queryParams['booking'] = 'online';
+    }
+    return this.router.serializeUrl(this.router.createUrlTree(['/map'], { queryParams }));
   }
 
   private runSearch(): void {
@@ -174,7 +224,7 @@ export class MapPage implements OnInit, OnDestroy {
 
   closeDetails(): void {
     if (this.detailPk() !== null) {
-      this.location.replaceState('/map');
+      this.location.replaceState(this.searchUrl());
     }
     this.detailPk.set(null);
   }
