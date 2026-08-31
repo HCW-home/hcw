@@ -13,6 +13,7 @@ import { UserWebSocketService } from "./core/services/user-websocket.service";
 import { NotificationService } from "./core/services/notification.service";
 import { IncomingCallService } from "./core/services/incoming-call.service";
 import { ActionHandlerService } from "./core/services/action-handler.service";
+import { PendingActionService } from "./core/services/pending-action.service";
 import { ConsultationService } from "./core/services/consultation.service";
 import { IncomingCallComponent } from "./shared/components/incoming-call/incoming-call.component";
 import { OfflineIndicatorComponent } from "./shared/components/offline-indicator/offline-indicator.component";
@@ -45,6 +46,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private userWsService: UserWebSocketService,
     private incomingCallService: IncomingCallService,
     private actionHandler: ActionHandlerService,
+    private pendingActionService: PendingActionService,
     private consultationService: ConsultationService,
     private navCtrl: NavController,
     private router: Router,
@@ -171,6 +173,15 @@ export class AppComponent implements OnInit, OnDestroy {
         queryParams: { uid, token },
       });
       return;
+    }
+
+    // The query string travels no further than the page it is handed to: the
+    // register page keeps the action but not its id, and the terms, onboarding
+    // and encryption gates each restart from a bare route. Storing the action
+    // lets whichever page finally lets the user in replay it; it is dropped
+    // again as soon as it reaches its destination.
+    if (action) {
+      this.pendingActionService.save({ action, id: actionId, email });
     }
 
     if (authToken || email) {

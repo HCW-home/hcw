@@ -5,6 +5,10 @@ import { RoutePaths } from '../constants/routes';
 import { ConsultationService } from './consultation.service';
 import { ActiveCallService } from './active-call.service';
 import { IncomingCallService } from './incoming-call.service';
+import { PendingActionService } from './pending-action.service';
+import { UserService } from './user.service';
+import { ToasterService } from './toaster.service';
+import { TranslationService } from './translation.service';
 import { getAppointmentConsultationId } from '../../shared/tools/helper';
 
 export interface IActionConfig {
@@ -20,6 +24,18 @@ const ACTION_ROUTES: Record<string, IActionConfig> = {
   'consultation': { route: `/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`, requiresAuth: true, appendId: true },
 };
 
+/**
+ * Routes that interrupt an action instead of fulfilling it: the login page and
+ * the three gates every authenticated route goes through. Reaching one of them
+ * means the action is still owed to the user.
+ */
+const INTERRUPTING_ROUTES: string[] = [
+  RoutePaths.AUTH,
+  RoutePaths.CGU,
+  RoutePaths.ONBOARDING,
+  RoutePaths.ACTIVATE_ENCRYPTION,
+];
+
 const DEFAULT_ACTION: IActionConfig = { route: `/${RoutePaths.USER}/${RoutePaths.DASHBOARD}`, requiresAuth: true, appendId: false };
 
 @Injectable({
@@ -30,6 +46,10 @@ export class ActionHandlerService {
   private consultationService = inject(ConsultationService);
   private activeCallService = inject(ActiveCallService);
   private incomingCallService = inject(IncomingCallService);
+  private pendingActionService = inject(PendingActionService);
+  private userService = inject(UserService);
+  private toasterService = inject(ToasterService);
+  private t = inject(TranslationService);
 
   /**
    * Run a deep-link action (`?action=...&id=...&model=...`).
@@ -52,7 +72,48 @@ export class ActionHandlerService {
       this.openConversation(id, model);
       return;
     }
-    this.router.navigateByUrl(this.getRouteForAction(action, id));
+    this.clearWhenLanded(
+      this.router.navigateByUrl(this.getRouteForAction(action, id))
+    );
+  }
+
+  /**
+   * Replay the action of the link that brought the user here, if there is one.
+   *
+   * Called by every page that hands an authenticated user over to the
+   * application — login, OpenID callback, terms, onboarding, encryption
+   * activation — so the link survives however many steps stand between it and
+   * its destination. Returns false when nothing was pending, leaving the
+   * caller free to go to its own default page.
+   */
+  runPendingAction(): boolean {
+    const pending = this.pendingActionService.peek();
+    if (!pending) {
+      return false;
+    }
+
+    this.handleAction(pending.action, pending.id, pending.model);
+    if (pending.email) {
+      this.warnOnRecipientMismatch(pending.email);
+    }
+    return true;
+  }
+
+  /** Tell the user when the link they followed was addressed to someone else. */
+  warnOnRecipientMismatch(email: string): void {
+    this.userService.getCurrentUser().subscribe({
+      next: user => {
+        if (!user?.email || user.email.toLowerCase() === email.toLowerCase()) {
+          return;
+        }
+        this.toasterService.show(
+          'warning',
+          this.t.instant('header.emailMismatch'),
+          this.t.instant('header.emailMismatchMessage', { email })
+        );
+      },
+      error: () => undefined,
+    });
   }
 
   getRouteForAction(action: string | null, id: string | null = null): string {
@@ -88,7 +149,9 @@ export class ActionHandlerService {
       next: participant => {
         const appointment = participant.appointment;
         if (!appointment || appointment.can_join === false) {
-          this.router.navigate(['/', RoutePaths.CONFIRM_PRESENCE, participantId]);
+          this.clearWhenLanded(
+            this.router.navigate(['/', RoutePaths.CONFIRM_PRESENCE, participantId])
+          );
           return;
         }
 
@@ -97,18 +160,26 @@ export class ActionHandlerService {
           ? ['/', RoutePaths.USER, RoutePaths.CONSULTATIONS, consultationId]
           : ['/', RoutePaths.USER, RoutePaths.APPOINTMENTS];
 
-        this.router
-          .navigate(target, { queryParams: { appointmentId: appointment.id } })
-          .then(() => {
-            this.activeCallService.startCall({
-              appointmentId: appointment.id,
-              consultationId: consultationId ?? undefined,
-            });
-            this.incomingCallService.setActiveCall(appointment.id);
+        this.clearWhenLanded(
+          this.router.navigate(target, { queryParams: { appointmentId: appointment.id } })
+        ).then(landed => {
+          // A gate sent the user to the terms, onboarding or encryption page:
+          // starting the call now would ring behind a page they cannot leave,
+          // and the action is still stored for that page to replay.
+          if (!landed) {
+            return;
+          }
+          this.activeCallService.startCall({
+            appointmentId: appointment.id,
+            consultationId: consultationId ?? undefined,
           });
+          this.incomingCallService.setActiveCall(appointment.id);
+        });
       },
       error: () => {
-        this.router.navigate(['/', RoutePaths.CONFIRM_PRESENCE, participantId]);
+        this.clearWhenLanded(
+          this.router.navigate(['/', RoutePaths.CONFIRM_PRESENCE, participantId])
+        );
       },
     });
   }
@@ -134,19 +205,53 @@ export class ActionHandlerService {
     consultation$.subscribe({
       next: consultationId => {
         if (consultationId) {
-          this.router.navigate([
-            '/',
-            RoutePaths.USER,
-            RoutePaths.CONSULTATIONS,
-            consultationId,
-          ]);
+          this.clearWhenLanded(
+            this.router.navigate([
+              '/',
+              RoutePaths.USER,
+              RoutePaths.CONSULTATIONS,
+              consultationId,
+            ])
+          );
         } else {
-          this.router.navigate(['/', RoutePaths.USER, RoutePaths.CONSULTATIONS]);
+          this.clearWhenLanded(
+            this.router.navigate(['/', RoutePaths.USER, RoutePaths.CONSULTATIONS])
+          );
         }
       },
       error: () => {
-        this.router.navigate(['/', RoutePaths.USER, RoutePaths.CONSULTATIONS]);
+        this.clearWhenLanded(
+          this.router.navigate(['/', RoutePaths.USER, RoutePaths.CONSULTATIONS])
+        );
       },
     });
+  }
+
+  /**
+   * Forget the stored action once its destination is actually reached.
+   *
+   * Two things can stand in the way. A `canMatch` guard — the one asking for a
+   * token — cancels the navigation, which resolves to false. A `canActivate`
+   * guard returning a UrlTree instead hands the pending promise over to the
+   * redirect, so the promise still resolves to true while the user is left on
+   * the terms, onboarding or encryption page; only the URL tells that apart.
+   * In both cases the action stays stored, which is what lets the page that
+   * finally clears the way replay it.
+   */
+  private clearWhenLanded(navigation: Promise<boolean>): Promise<boolean> {
+    return navigation.then(navigated => {
+      const landed = navigated && !this.isOnInterruptingRoute();
+      if (landed) {
+        this.pendingActionService.clear();
+      }
+      return landed;
+    });
+  }
+
+  private isOnInterruptingRoute(): boolean {
+    const path = this.router.url.split(/[?#]/)[0];
+    return INTERRUPTING_ROUTES.some(
+      route => path === `/${route}` || path.startsWith(`/${route}/`)
+    );
   }
 }

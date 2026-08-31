@@ -93,7 +93,7 @@ export class LoginPage implements OnInit {
 
     if (action) {
       this.actionHandler.navigateToAction(action, id);
-    } else {
+    } else if (!this.actionHandler.runPendingAction()) {
       this.navCtrl.navigateRoot("/home");
     }
   }

@@ -170,7 +170,7 @@ export class Login implements OnInit {
 
     if (action) {
       this.actionHandler.handleAction(action, id, model);
-    } else {
+    } else if (!this.actionHandler.runPendingAction()) {
       this.router.navigate([`/${RoutePaths.USER}`, RoutePaths.DASHBOARD]);
     }
   }

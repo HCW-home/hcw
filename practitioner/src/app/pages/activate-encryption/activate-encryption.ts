@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { ActionHandlerService } from '../../core/services/action-handler.service';
 import {
   FormBuilder,
   FormGroup,
@@ -39,6 +40,7 @@ import { ButtonTypeEnum, ButtonStyleEnum } from '../../shared/constants/button';
 })
 export class ActivateEncryptionPage implements OnInit {
   private router = inject(Router);
+  private actionHandler = inject(ActionHandlerService);
   private fb = inject(FormBuilder);
   private userService = inject(UserService);
   private encryptionService = inject(EncryptionService);
@@ -78,7 +80,12 @@ export class ActivateEncryptionPage implements OnInit {
         this.user.pk,
         this.form.value.passphrase,
       );
-      this.router.navigate([`/${RoutePaths.USER}`]);
+      // The link that started the login is replayed here: a gate crossed
+      // on the way in cancelled its navigation, and the action waited for
+      // this page to clear.
+      if (!this.actionHandler.runPendingAction()) {
+        this.router.navigate([`/${RoutePaths.USER}`]);
+      }
     } catch {
       this.saving.set(false);
       this.toasterService.show(

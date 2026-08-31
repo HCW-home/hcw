@@ -59,6 +59,11 @@ export class RegisterPage implements OnInit {
   // Verifying the code signs the brand-new account in, so carry on where the
   // user was headed. FirstLoginGuard sends them to onboarding if needed.
   onAuthenticated(): void {
+    // The stored action still carries the id the query string dropped on the
+    // way here, so it is preferred over the bare action name.
+    if (this.actionHandler.runPendingAction()) {
+      return;
+    }
     if (this.returnAction) {
       this.actionHandler.navigateToAction(this.returnAction, null);
     } else {
