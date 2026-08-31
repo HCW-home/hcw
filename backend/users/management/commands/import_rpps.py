@@ -12,6 +12,7 @@ import requests as http_requests
 from django.contrib.contenttypes.models import ContentType
 from django.core.management.base import BaseCommand, CommandError
 from django.db import connection, transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from consultations.models import CustomField, CustomFieldValue
@@ -155,7 +156,12 @@ def _humanize_duration(seconds):
 
 
 class Command(BaseCommand):
-    help = "Import practitioners from the RPPS dataset (data.gouv.fr)"
+    help = (
+        "Import practitioners from the RPPS dataset (data.gouv.fr). "
+        "Practitioners nobody can reach — no postal address, no email and no "
+        "phone number, neither on their own rows nor through their structure — "
+        "are left out."
+    )
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -269,10 +275,12 @@ class Command(BaseCommand):
             state = None
 
         start = state.get("position", 0) if state else 0
-        stats = state.get("stats") if state else None
-        stats = dict(stats) if stats else {
-            "created": 0, "updated": 0, "skipped": 0, "errors": 0
+        stats = {
+            "created": 0, "updated": 0, "skipped": 0,
+            "unreachable": 0, "errors": 0,
         }
+        if state and state.get("stats"):
+            stats.update(state["stats"])
         if start:
             self.stdout.write(
                 self.style.WARNING(f"Resuming at row {start:,} of the source.")
@@ -750,7 +758,7 @@ class Command(BaseCommand):
             message += f" · ETA {_humanize_duration((total - position) / rate)}"
         message += (
             f" · +{stats['created']} ~{stats['updated']} "
-            f"!{stats['errors']}"
+            f"-{stats['unreachable']} !{stats['errors']}"
         )
         self.stdout.write(message, ending="\n" if final else "\r")
         self.stdout.flush()
@@ -806,18 +814,32 @@ class Command(BaseCommand):
                 ).values_list("value", "object_id")
             )
 
+        # Structures already known to record a postal address: a practitioner
+        # whose own row carries no contact detail is still reachable through
+        # one of them.
+        addressed = set(
+            Organisation.objects.exclude(
+                Q(postal_code__isnull=True) | Q(postal_code="")
+            ).values_list("pk", flat=True)
+        )
+        self._orgs_with_address = {
+            structure for structure, pk in existing_orgs.items() if pk in addressed
+        }
+
         # Pre-load specialities
         speciality_cache = {s.name: s for s in Speciality.objects.all()}
 
-        # Pre-load existing emails for deduplication. Compared lowercased: the
-        # database uniqueness is case-sensitive but every lookup in the app is
-        # not, so "John@x.org" next to "john@x.org" would create an account
-        # nobody can log into.
-        self._existing_emails = set(
-            User.objects.filter(email__isnull=False)
-            .values_list("email", flat=True)
-        )
-        self._existing_emails = {email.lower() for email in self._existing_emails}
+        # Pre-load who holds which address. Compared lowercased: the database
+        # uniqueness is case-sensitive but every lookup in the app is not, so
+        # "John@x.org" next to "john@x.org" would create an account nobody can
+        # log into.
+        self._email_owner = {
+            email.lower(): (pk, imported)
+            for email, pk, imported in User.objects.filter(
+                email__isnull=False
+            ).values_list("email", "pk", "imported")
+        }
+        self._shared_emails = set()
 
         # Only the first activity row of a practitioner is imported. When
         # resuming, the rows already handled are exactly the ones sitting in the
@@ -850,9 +872,21 @@ class Command(BaseCommand):
             if any(not matches(row[column]) for column, matches in predicates):
                 continue
 
+            structure = row[COL_ID_STRUCTURE]
+            if structure and self._row_has_address(row):
+                self._orgs_with_address.add(structure)
+
             if rpps in seen_rpps:
                 stats["skipped"] += 1
                 continue
+
+            if not self._is_reachable(row):
+                stats["unreachable"] += 1
+                # Deliberately not marked as seen: a later activity row of the
+                # same practitioner may carry the contact details this one
+                # lacks, and that row should still bring them in.
+                continue
+
             seen_rpps.add(rpps)
 
             batch.append(row)
@@ -888,6 +922,8 @@ class Command(BaseCommand):
                 f"  Created: {stats['created']}\n"
                 f"  Updated: {stats['updated']}\n"
                 f"  Skipped (duplicates): {stats['skipped']}\n"
+                f"  Skipped (no address, email nor phone): "
+                f"{stats['unreachable']}\n"
                 f"  Errors: {stats['errors']}"
             )
         )
@@ -956,6 +992,7 @@ class Command(BaseCommand):
                         postal_code=postal_code or None,
                         country=country or None,
                         phone=phone or None,
+                        email=email or None,
                     )
             else:
                 organisation = Organisation.objects.create(
@@ -965,6 +1002,7 @@ class Command(BaseCommand):
                     postal_code=postal_code or None,
                     country=country or None,
                     phone=phone or None,
+                    email=email or None,
                     imported=True,
                 )
                 existing_orgs[id_structure] = organisation.pk
@@ -993,14 +1031,18 @@ class Command(BaseCommand):
             "imported": True,
         }
 
+        claimed_email = None
         if rpps in existing_rpps:
             user_pk = existing_rpps[rpps]
             user = User.objects.filter(pk=user_pk).first()
             if user:
-                User.objects.filter(pk=user_pk).update(
-                    **user_data,
-                    main_organisation=organisation,
-                )
+                claimed_email = self._claim_email(email, user_pk)
+                fields = dict(user_data, main_organisation=organisation)
+                # Only ever write an address, never wipe one: the dataset says
+                # nothing about a practitioner whose site has no email.
+                if claimed_email:
+                    fields["email"] = claimed_email
+                User.objects.filter(pk=user_pk).update(**fields)
                 user.refresh_from_db()
                 stats["updated"] += 1
             else:
@@ -1008,9 +1050,9 @@ class Command(BaseCommand):
                 del existing_rpps[rpps]
 
         if rpps not in existing_rpps:
-            unique_email = self._deduplicate_email(email)
+            claimed_email = self._claim_email(email, None)
             user = User(
-                email=unique_email,
+                email=claimed_email,
                 main_organisation=organisation,
                 **user_data,
             )
@@ -1018,6 +1060,9 @@ class Command(BaseCommand):
             user.save()
             existing_rpps[rpps] = user.pk
             stats["created"] += 1
+
+        if claimed_email:
+            self._email_owner[claimed_email] = (user.pk, True)
 
         if organisation:
             user.organisations.add(organisation)
@@ -1041,6 +1086,26 @@ class Command(BaseCommand):
                 speciality_cache[spec_name] = spec
             user.specialities.add(speciality_cache[spec_name])
 
+    def _row_has_address(self, row):
+        return bool(
+            row[COL_CODE_POSTAL] or row[COL_COMMUNE] or row[COL_LIBELLE_VOIE]
+        )
+
+    def _is_reachable(self, row):
+        """Is there any way to contact that practitioner?
+
+        The dataset lists an activity even when it records nothing to reach the
+        person by: those rows describe a registration, not a place of practice,
+        and importing them fills the directory with entries no patient can act
+        on.
+        """
+        if self._row_has_address(row):
+            return True
+        if row[COL_EMAIL] or row[COL_TELEPHONE]:
+            return True
+        structure = row[COL_ID_STRUCTURE]
+        return bool(structure) and structure in self._orgs_with_address
+
     def _build_street(self, row):
         parts = [
             row[COL_NUMERO_VOIE],
@@ -1060,22 +1125,27 @@ class Command(BaseCommand):
         city = re.sub(r"^\d{5}\s*", "", city)
         return city.title() if city else None
 
-    def _deduplicate_email(self, email):
-        """Add +N suffix to email local part if it already exists.
+    def _claim_email(self, email, current_pk):
+        """Hand the address to a practitioner only if nobody else is behind it.
 
-        Existing addresses are tracked lowercased, so a case variant of a known
-        address is treated as a duplicate rather than a new account.
+        The dataset publishes the address of the *site*, so every colleague of a
+        practice carries the same one. The Organisation keeps it in every case;
+        a practitioner only gets it while they turn out to be its sole holder,
+        which is the reality for someone practising alone. As soon as a second
+        practitioner shows up on it, it is taken back from the first rather than
+        turned into a "+1" alias nobody can receive mail at.
         """
-        if not email:
+        if not email or email in self._shared_emails:
             return None
-        if email.lower() not in self._existing_emails:
-            self._existing_emails.add(email.lower())
+
+        owner_pk, owner_imported = self._email_owner.get(email, (None, False))
+        if owner_pk is None or owner_pk == current_pk:
             return email
-        local, domain = email.rsplit("@", 1)
-        counter = 1
-        while True:
-            candidate = f"{local}+{counter}@{domain}"
-            if candidate.lower() not in self._existing_emails:
-                self._existing_emails.add(candidate.lower())
-                return candidate
-            counter += 1
+        if not owner_imported:
+            # An account this import does not own: leave it well alone.
+            return None
+
+        User.objects.filter(pk=owner_pk).update(email=None)
+        del self._email_owner[email]
+        self._shared_emails.add(email)
+        return None

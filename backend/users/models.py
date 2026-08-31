@@ -71,6 +71,10 @@ class Organisation(models.Model):
     postal_code = models.CharField(max_length=10, blank=True, null=True)
     country = models.CharField(max_length=50, blank=True, null=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
+    # RPPS publishes one email per site, shared by everyone practising there,
+    # so it describes the structure and not a person. Not unique: groups and
+    # chains reuse a single address across several sites.
+    email = models.EmailField(blank=True, null=True)
     login_text_patient = models.TextField(blank=True, null=True)
     login_text_practitioner = models.TextField(blank=True, null=True)
     footer_patient = models.TextField(blank=True, null=True)

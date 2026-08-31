@@ -369,7 +369,8 @@ class MapView(APIView):
         (all four required; ignored otherwise).
       - `speciality`: speciality id to restrict practitioners.
       - `has_slots`: when truthy, restrict practitioners to those with
-        at least one currently-valid booking slot.
+        at least one currently-valid booking slot, and return no
+        organisation at all — only practitioners hold slots.
       - `search`: free-text search across practitioner/org name, address
         and main organisation. When provided the bounding box is
         ignored, matching the previous per-endpoint behavior.
@@ -388,7 +389,11 @@ class MapView(APIView):
         has_slots_raw = request.query_params.get("has_slots") or ""
         has_slots = has_slots_raw.lower() in ("true", "1")
  
-        organisations = self._build_organisations(bounds, search, location)
+        # Slots hang off practitioners, never off an organisation, so a search
+        # narrowed to open online booking has nothing to say about facilities.
+        organisations = (
+            [] if has_slots else self._build_organisations(bounds, search, location)
+        )
         practitioners = self._build_practitioners(
             bounds, search, speciality, has_slots, location
         )
