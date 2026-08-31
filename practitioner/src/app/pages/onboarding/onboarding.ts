@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { ActionHandlerService } from '../../core/services/action-handler.service';
 import {
   FormBuilder,
   FormGroup,
@@ -44,6 +45,7 @@ import { ButtonTypeEnum, ButtonStyleEnum } from '../../shared/constants/button';
 })
 export class OnboardingPage implements OnInit, OnDestroy {
   private router = inject(Router);
+  private actionHandler = inject(ActionHandlerService);
   private fb = inject(FormBuilder);
   private userService = inject(UserService);
   private authService = inject(Auth);
@@ -248,7 +250,12 @@ export class OnboardingPage implements OnInit, OnDestroy {
             this.t.setLanguage(formValue.preferred_language);
           }
           localStorage.setItem('show_onboarding_hint', 'true');
-          this.router.navigate([`/${RoutePaths.USER}`]);
+          // The link that started the login is replayed here: a gate crossed
+          // on the way in cancelled its navigation, and the action waited for
+          // this page to clear.
+          if (!this.actionHandler.runPendingAction()) {
+            this.router.navigate([`/${RoutePaths.USER}`]);
+          }
         },
         error: () => {
           this.saving.set(false);

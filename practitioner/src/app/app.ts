@@ -6,15 +6,13 @@ import { OfflineIndicatorComponent } from './core/components/offline-indicator.c
 import { MaintenanceOverlayComponent } from './core/components/maintenance-overlay.component';
 import { Confirmation } from './shared/components/confirmation/confirmation';
 import { Auth } from './core/services/auth';
-import { TranslationService } from './core/services/translation.service';
 import { UserWebSocketService } from './core/services/user-websocket.service';
 import { ActionHandlerService } from './core/services/action-handler.service';
+import { PendingActionService } from './core/services/pending-action.service';
 import { IncomingCallService } from './core/services/incoming-call.service';
 import { BrowserNotificationService } from './core/services/browser-notification.service';
 import { PushNotificationService } from './core/services/push-notification.service';
 import { AppUpdateService } from './core/services/app-update.service';
-import { UserService } from './core/services/user.service';
-import { ToasterService } from './core/services/toaster.service';
 import { PipWrapper } from './shared/components/pip-wrapper/pip-wrapper';
 import { RoutePaths } from './core/constants/routes';
 
@@ -30,15 +28,13 @@ export class App implements OnInit, OnDestroy {
 
   constructor(
     private authService: Auth,
-    private translationService: TranslationService,
     private userWsService: UserWebSocketService,
     private actionHandler: ActionHandlerService,
+    private pendingActionService: PendingActionService,
     private incomingCallService: IncomingCallService,
     private browserNotificationService: BrowserNotificationService,
     private pushNotificationService: PushNotificationService,
     private appUpdateService: AppUpdateService,
-    private userService: UserService,
-    private toasterService: ToasterService,
     private router: Router
   ) {}
 
@@ -109,6 +105,15 @@ export class App implements OnInit, OnDestroy {
       return;
     }
 
+    // The query string reaches the page it is handed to and no further: an
+    // OpenID login leaves through the provider's own redirect URI, and the
+    // terms, onboarding and encryption gates each restart from a bare route.
+    // Storing the action lets whichever page finally lets the user in replay
+    // it; it is dropped again as soon as it reaches its destination.
+    if (action) {
+      this.pendingActionService.save({ action, id, model, email });
+    }
+
     if (authToken) {
       if (this.authService.isLoggedIn()) {
         // Already authenticated — handle the action directly without re-login
@@ -126,7 +131,7 @@ export class App implements OnInit, OnDestroy {
       // gives — but the action still runs rather than being swallowed.
       if (this.authService.isLoggedIn()) {
         this.actionHandler.handleAction(action, id, model);
-        this.warnOnRecipientMismatch(email);
+        this.actionHandler.warnOnRecipientMismatch(email);
         return;
       }
       this.router.navigate([`/${RoutePaths.AUTH}`], {
@@ -135,28 +140,6 @@ export class App implements OnInit, OnDestroy {
     } else if (action && id) {
       this.actionHandler.handleAction(action, id, model);
     }
-  }
-
-  /** Tell the user when the link they followed was addressed to someone else. */
-  private warnOnRecipientMismatch(email: string): void {
-    this.userService
-      .getCurrentUser()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: user => {
-          if (!user?.email || user.email.toLowerCase() === email.toLowerCase()) {
-            return;
-          }
-          this.toasterService.show(
-            'warning',
-            this.translationService.instant('header.emailMismatch'),
-            this.translationService.instant('header.emailMismatchMessage', {
-              email,
-            })
-          );
-        },
-        error: () => undefined,
-      });
   }
 
   ngOnDestroy(): void {

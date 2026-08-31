@@ -17,6 +17,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../core/services/auth.service';
 import { EncryptionService } from '../../core/services/encryption.service';
 import { TranslationService } from '../../core/services/translation.service';
+import { ActionHandlerService } from '../../core/services/action-handler.service';
 
 @Component({
   selector: 'app-activate-encryption',
@@ -39,6 +40,7 @@ export class ActivateEncryptionPage implements OnInit {
   private authService = inject(AuthService);
   private encryptionService = inject(EncryptionService);
   private navCtrl = inject(NavController);
+  private actionHandler = inject(ActionHandlerService);
   private alertCtrl = inject(AlertController);
   private toastCtrl = inject(ToastController);
   private t = inject(TranslationService);
@@ -63,7 +65,12 @@ export class ActivateEncryptionPage implements OnInit {
     this.saving.set(true);
     try {
       await this.encryptionService.activatePassphrase(user.pk, this.passphrase);
-      this.navCtrl.navigateRoot('/home');
+      // The link that started the login is replayed here: a gate crossed on
+      // the way in turned its navigation back, and the action waited for
+      // this page to clear.
+      if (!this.actionHandler.runPendingAction()) {
+        this.navCtrl.navigateRoot('/home');
+      }
     } catch (err) {
       console.error('activate-encryption submit failed', err);
       this.saving.set(false);

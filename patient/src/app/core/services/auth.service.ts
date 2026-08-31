@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment';
 import { User, LoginRequest, LoginResponse, RegisterRequest, MagicLinkRequest, MagicLinkVerify, TokenAuthRequest, TokenAuthResponse } from '../models/user.model';
 import { StorageService } from './storage.service';
 import { TranslationService } from './translation.service';
+import { PendingActionService } from './pending-action.service';
 
 @Injectable({
   providedIn: 'root'
@@ -19,6 +20,7 @@ export class AuthService {
   public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
   public authReady: Promise<void>;
   private translationService = inject(TranslationService);
+  private pendingActionService = inject(PendingActionService);
 
   constructor(
     private http: HttpClient,
@@ -183,6 +185,8 @@ export class AuthService {
   }
 
   async logout() {
+    // A link followed but never opened must not resurface at the next login.
+    this.pendingActionService.clear();
     // Call backend to blacklist the refresh token
     const refreshToken = await this.storage.get('refresh_token');
     if (refreshToken) {

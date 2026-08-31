@@ -20,6 +20,7 @@ import { Subject, firstValueFrom } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { EncryptionService } from '../../core/services/encryption.service';
 import { TranslationService } from '../../core/services/translation.service';
+import { ActionHandlerService } from '../../core/services/action-handler.service';
 import { User } from '../../core/models/user.model';
 import { TIMEZONES } from '../../core/constants/timezone';
 
@@ -47,6 +48,7 @@ export class OnboardingPage implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private encryptionService = inject(EncryptionService);
   private navCtrl = inject(NavController);
+  private actionHandler = inject(ActionHandlerService);
   private toastCtrl = inject(ToastController);
   private t = inject(TranslationService);
 
@@ -236,7 +238,12 @@ export class OnboardingPage implements OnInit, OnDestroy {
         if (this.preferredLanguage) {
           this.t.setLanguage(this.preferredLanguage);
         }
-        this.navCtrl.navigateRoot('/home');
+        // The link that started the login is replayed here: a gate crossed on
+          // the way in turned its navigation back, and the action waited for
+          // this page to clear.
+        if (!this.actionHandler.runPendingAction()) {
+          this.navCtrl.navigateRoot('/home');
+        }
       },
       error: async (error: any) => {
         this.saving.set(false);

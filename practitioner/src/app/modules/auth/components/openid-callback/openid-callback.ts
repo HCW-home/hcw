@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
 import { Auth } from '../../../../core/services/auth';
 import { RoutePaths } from '../../../../core/constants/routes';
+import { ActionHandlerService } from '../../../../core/services/action-handler.service';
 import { TranslationService } from '../../../../core/services/translation.service';
 import { Typography } from '../../../../shared/ui-components/typography/typography';
 import { TypographyTypeEnum } from '../../../../shared/constants/typography';
@@ -19,6 +20,7 @@ export class OpenIdCallback implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private authService = inject(Auth);
+  private actionHandler = inject(ActionHandlerService);
   private t = inject(TranslationService);
 
   errorMessage = '';
@@ -59,7 +61,16 @@ export class OpenIdCallback implements OnInit {
                 config
               );
             }
-            this.router.navigate([`/${RoutePaths.USER}`, RoutePaths.DASHBOARD]);
+            // The provider's redirect URI cannot carry the parameters of the
+            // link that started the login, so the action stored before leaving
+            // is what brings the user to their destination instead of the
+            // dashboard.
+            if (!this.actionHandler.runPendingAction()) {
+              this.router.navigate([
+                `/${RoutePaths.USER}`,
+                RoutePaths.DASHBOARD,
+              ]);
+            }
           },
           error: err => {
             const message =
