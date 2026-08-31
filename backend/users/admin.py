@@ -204,6 +204,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
     ]
 
     list_filter = BaseUserAdmin.list_filter + (
+        "is_practitioner",
         "imported",
         "languages",
         "specialities",
