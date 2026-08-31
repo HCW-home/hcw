@@ -2101,6 +2101,14 @@ class UserDashboardView(APIView):
                         status=RequestStatus.accepted,
                         appointment__status="scheduled",
                     )
+                    # An upcoming appointment only keeps the request on the
+                    # dashboard while its follow-up is still open; once the
+                    # consultation is closed the card, appointment included,
+                    # has to disappear.
+                    & (
+                        Q(consultation__isnull=True)
+                        | Q(consultation__closed_at__isnull=True)
+                    )
                 )
             )
             .order_by("-id")
@@ -2127,12 +2135,21 @@ class UserDashboardView(APIView):
             user,
         )
 
+        # An appointment whose consultation is closed belongs to a finished
+        # follow-up: the patient dashboard must not surface it any more,
+        # neither as the next appointment nor as an orphan one. Appointments
+        # with no consultation at all stay visible.
+        open_consultation_q = Q(consultation__isnull=True) | Q(
+            consultation__closed_at__isnull=True
+        )
+
         # Next upcoming appointment within the active join window. A completed
         # or no-show appointment stays listed while that window lasts: it is
         # what carries the join button, and a call must remain rejoinable after
         # it has been qualified.
         next_appointment = (
             Appointment.objects.filter(
+                open_consultation_q,
                 participant__user=user,
                 participant__is_active=True,
                 scheduled_at__gte=active_cutoff,
@@ -2148,6 +2165,7 @@ class UserDashboardView(APIView):
             .exclude(
                 consultation__request__in=user_requests,
             ).filter(
+                open_consultation_q,
                 participant__user=user,
                 participant__is_active=True,
                 scheduled_at__gte=active_cutoff,
