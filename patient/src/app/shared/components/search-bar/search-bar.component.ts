@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, computed, signal } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, computed, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonIcon, IonSpinner } from '@ionic/angular/standalone';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -59,6 +59,10 @@ export class SearchBarComponent implements OnInit, OnDestroy {
   private suggestInput$ = new Subject<string>();
   private specialitiesLoaded = false;
 
+  // Kept so clearing a field can hand the caret straight back to it.
+  private whoInput = viewChild<ElementRef<HTMLInputElement>>('whoInput');
+  private whereInput = viewChild<ElementRef<HTMLInputElement>>('whereInput');
+
   whoQuery = signal('');
   whereQuery = signal('');
 
@@ -118,6 +122,22 @@ export class SearchBarComponent implements OnInit, OnDestroy {
   onWhoFocus(): void {
     this.loadSpecialitiesOnce();
     this.suggestOpen.set(true);
+  }
+
+  // Emptying the term drops the practitioner and facility hits it produced;
+  // the panel stays open on the plain speciality picker.
+  clearWho(): void {
+    this.whoQuery.set('');
+    this.suggestPractitioners.set([]);
+    this.suggestOrganisations.set([]);
+    this.suggestInput$.next('');
+    this.whoInput()?.nativeElement.focus();
+    this.suggestOpen.set(true);
+  }
+
+  clearWhere(): void {
+    this.whereQuery.set('');
+    this.whereInput()?.nativeElement.focus();
   }
 
   closeSuggestions(): void {

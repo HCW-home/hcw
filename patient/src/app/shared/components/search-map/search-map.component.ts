@@ -102,6 +102,8 @@ export class SearchMapComponent implements AfterViewInit, OnChanges, OnDestroy {
     // a result far down is picked. 'nearest' leaves it alone when it is visible.
     this.canvas.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
+    // Measure before centring: a stale size makes Leaflet centre on the wrong
+    // half of the panel.
     this.map.invalidateSize();
     this.map.setView(marker.getLatLng(), Math.max(this.map.getZoom(), FOCUS_ZOOM), {
       animate: true,
@@ -132,7 +134,10 @@ export class SearchMapComponent implements AfterViewInit, OnChanges, OnDestroy {
         icon: item.type === 'organisation' ? orgIcon : doctorIcon,
       })
         .addTo(this.map)
-        .bindPopup(this.popupContent(item));
+        // autoPan would shift the view to fit the popup in, which is precisely
+        // what pushed a focused marker off centre. The marker is centred, so
+        // its popup has the whole upper half of the panel to open into.
+        .bindPopup(this.popupContent(item), { autoPan: false });
 
       marker.on('click', () => this.markerSelected.emit(item));
       this.markers.set(item.id, marker);

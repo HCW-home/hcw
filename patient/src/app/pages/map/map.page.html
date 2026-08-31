@@ -28,6 +28,8 @@
       </div>
 
       <app-search-bar
+        [who]="initialWho()"
+        [where]="initialWhere()"
         (search)="onSearch($event)"
         (practitionerSelected)="openDetails($event)"
       ></app-search-bar>

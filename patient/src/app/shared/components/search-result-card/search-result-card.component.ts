@@ -63,6 +63,21 @@ export class SearchResultCardComponent implements OnChanges, OnDestroy {
   hasPrevDay = computed(() => this.dateIndex() > 0);
   hasNextDay = computed(() => this.dateIndex() < (this.slots()?.dates.length ?? 0) - 1);
 
+  // The expanded sheet books through its own slot chips, so it carries no
+  // button of its own.
+  showPrimaryButton(): boolean {
+    return !this.expanded;
+  }
+
+  // A practitioner with no availability is left silent rather than labelled, so
+  // the footer is dropped entirely once it holds neither slots nor a button.
+  showBookingArea(): boolean {
+    return (
+      this.item?.type === 'doctor' &&
+      (this.isLoadingSlots() || this.hasSlots() || this.showPrimaryButton())
+    );
+  }
+
   constructor(private searchService: PractitionerSearchService) {}
 
   ngOnChanges(changes: SimpleChanges): void {

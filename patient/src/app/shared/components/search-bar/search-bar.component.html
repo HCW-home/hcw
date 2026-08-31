@@ -6,6 +6,7 @@
   <div class="search-bar-field">
     <ion-icon name="search-outline"></ion-icon>
     <input
+      #whoInput
       type="text"
       [placeholder]="'map.searchWhoPlaceholder' | translate"
       [value]="whoQuery()"
@@ -14,11 +15,22 @@
       (keyup.enter)="submit()"
       (keyup.escape)="closeSuggestions()"
     />
+    @if (whoQuery()) {
+      <button
+        class="search-bar-clear"
+        type="button"
+        [attr.aria-label]="'common.clear' | translate"
+        (click)="clearWho()"
+      >
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    }
   </div>
   <div class="search-bar-divider"></div>
   <div class="search-bar-field">
     <ion-icon name="location-outline"></ion-icon>
     <input
+      #whereInput
       type="text"
       [placeholder]="'map.searchLocationPlaceholder' | translate"
       [value]="whereQuery()"
@@ -26,6 +38,16 @@
       (focus)="closeSuggestions()"
       (keyup.enter)="submit()"
     />
+    @if (whereQuery()) {
+      <button
+        class="search-bar-clear"
+        type="button"
+        [attr.aria-label]="'common.clear' | translate"
+        (click)="clearWhere()"
+      >
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    }
   </div>
   <button class="search-bar-button" type="button" (click)="submit()">
     <ion-icon name="search-outline"></ion-icon>

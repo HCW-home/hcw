@@ -42,19 +42,18 @@
     </div>
   }
 
-  @if (item.type === 'doctor') {
+  <!-- A practitioner with no availability says nothing at all, so the whole
+       footer disappears once neither slots nor a button are left to show. -->
+  @if (showBookingArea()) {
     <div class="oc-booking">
-      <div class="oc-slot-area">
-        @if (isLoadingSlots()) {
+      @if (isLoadingSlots()) {
+        <div class="oc-slot-area">
           <div class="oc-slots-loading">
             <ion-spinner name="crescent"></ion-spinner>
           </div>
-        } @else if (!hasSlots()) {
-          <div class="oc-note">
-            <ion-icon name="calendar-outline"></ion-icon>
-            <span>{{ 'map.noSlots' | translate }}</span>
-          </div>
-        } @else {
+        </div>
+      } @else if (hasSlots()) {
+        <div class="oc-slot-area">
           <div class="day-nav">
             <button class="day-arrow" type="button" [disabled]="!hasPrevDay()" (click)="prevDay($event)">
               <ion-icon name="chevron-back-outline"></ion-icon>
@@ -71,18 +70,20 @@
               </button>
             }
           </div>
+        </div>
+      }
+      @if (showPrimaryButton()) {
+        @if (primaryAction === 'details') {
+          <button class="rdv-button" type="button" (click)="onDetails($event)">
+            <ion-icon name="information-circle-outline"></ion-icon>
+            <span>{{ 'map.detailsButton' | translate }}</span>
+          </button>
+        } @else {
+          <button class="rdv-button" type="button" (click)="onBook($event)">
+            <ion-icon name="calendar-outline"></ion-icon>
+            <span>{{ 'map.bookButton' | translate }}</span>
+          </button>
         }
-      </div>
-      @if (primaryAction === 'details') {
-        <button class="rdv-button" type="button" (click)="onDetails($event)">
-          <ion-icon name="information-circle-outline"></ion-icon>
-          <span>{{ 'map.detailsButton' | translate }}</span>
-        </button>
-      } @else {
-        <button class="rdv-button" type="button" (click)="onBook($event)">
-          <ion-icon name="calendar-outline"></ion-icon>
-          <span>{{ 'map.bookButton' | translate }}</span>
-        </button>
       }
     </div>
   }
