@@ -32,6 +32,7 @@ from . import providers
 from .abstracts import ModelCeleryAbstract
 from .providers import BaseMessagingProvider
 from .template import DEFAULT_NOTIFICATION_MESSAGES, NOTIFICATION_CHOICES
+from .whatsapp_content import get_action_label, get_localized
 
 logger = logging.getLogger(__name__)
 
@@ -652,8 +653,6 @@ class TemplateValidation(ModelCeleryAbstract):
         approved call-to-action button: changing it silently breaks every link
         already approved, so the validation must show up as outdated.
         """
-        from .whatsapp_content import get_action_label, get_localized
-
         tpl = self.template
         parts = [
             get_localized(tpl, "template_subject", self.language_code),
@@ -840,7 +839,9 @@ class Message(ModelCeleryAbstract):
     @property
     def action_label(self):
         if self.template:
-            return self.template.action_label
+            # Not a modeltranslation field: the built-in templates store a lazy
+            # string, which would otherwise resolve under the active locale.
+            return get_action_label(self.template, self.language)
 
     additionnal_link_args = models.JSONField(blank=True, null=True)
 
@@ -1170,7 +1171,9 @@ class Message(ModelCeleryAbstract):
 
     @property
     def language(self):
-        return self.sent_to.preferred_language or settings.LANGUAGE_CODE
+        if self.sent_to and self.sent_to.preferred_language:
+            return self.sent_to.preferred_language
+        return settings.LANGUAGE_CODE
 
     def _render_template_string(self, template_str: str, autoescape: bool = False):
         """Render a Jinja2 string with this message's locale, timezone and context.
@@ -1222,7 +1225,12 @@ class Message(ModelCeleryAbstract):
                 self.pk, field, self.template_system_name, self.language,
             )
 
-            template_str = str(getattr(self.template, field))
+            # modeltranslation resolves a translated field against the
+            # *active* language, and the built-in defaults are lazy strings:
+            # read outside the override they yield the worker locale (or the
+            # locale of whichever request happens to trigger the render)
+            # instead of the recipient's.
+            template_str = get_localized(self.template, field, self.language)
             logger.debug(
                 "render: template_str for field=%s length=%d",
                 field, len(template_str) if template_str else 0,
