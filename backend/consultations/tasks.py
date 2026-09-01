@@ -295,6 +295,29 @@ def check_recording_ready(self, recording_id):
     )
 
 
+def _temporary_consultation_expiry(consultation, join_limit, default_duration):
+    """Return the moment a temporary consultation stops being reachable.
+
+    That is the end of its latest non-cancelled appointment plus the rejoin
+    window (`call_limit_join_minutes`). Effective end is
+    `appointment.end_expected_at` when set, otherwise
+    `scheduled_at + default_appointment_duration_in_minutes`. A temporary
+    consultation without any appointment falls back to its creation date.
+    """
+    appt = (
+        consultation.appointments.exclude(status=AppointmentStatus.cancelled)
+        .order_by("-scheduled_at")
+        .first()
+    )
+    if not appt:
+        return consultation.created_at
+
+    end = appt.end_expected_at or (
+        appt.scheduled_at + timedelta(minutes=default_duration)
+    )
+    return end + timedelta(minutes=join_limit)
+
+
 @app.task
 def auto_delete_closed_consultations():
     TenantModel = get_tenant_model()
@@ -312,36 +335,25 @@ def auto_delete_closed_consultations():
             logger.info(f"Auto-deleted {count} closed consultation(s) older than {hours}h")
 
             # Belt-and-suspenders: temporary consultations that somehow stayed
-            # open past the join window are also dropped once their effective
-            # end + call_limit + auto_delete_hours has elapsed. Only when
-            # auto-close is enabled; otherwise temporaries are meant to persist
-            # until closed manually, so we leave them untouched.
-            if not config.auto_close_temporary_consultations:
+            # open past their auto-close deadline are also dropped once
+            # auto_delete_hours has elapsed on top of it. Only when auto-close
+            # is configured; otherwise temporaries are meant to persist until
+            # closed manually, so we leave them untouched.
+            close_delay = int(config.auto_close_temporary_consultations_minutes)
+            if close_delay <= 0:
                 continue
             join_limit = int(config.call_limit_join_minutes)
             default_duration = int(config.default_appointment_duration_in_minutes)
-            delete_threshold = timedelta(hours=hours)
+            delete_threshold = timedelta(minutes=close_delay) + timedelta(hours=hours)
 
             temp_qs = Consultation.objects.filter(
                 temporary=True, closed_at__isnull=True
             )
             temp_deleted = 0
             for consultation in temp_qs:
-                appt = (
-                    consultation.appointments.exclude(
-                        status=AppointmentStatus.cancelled
-                    )
-                    .order_by("-scheduled_at")
-                    .first()
+                expires_at = _temporary_consultation_expiry(
+                    consultation, join_limit, default_duration
                 )
-                if appt:
-                    end = appt.end_expected_at or (
-                        appt.scheduled_at + timedelta(minutes=default_duration)
-                    )
-                    expires_at = end + timedelta(minutes=join_limit)
-                else:
-                    expires_at = consultation.created_at
-
                 if now >= expires_at + delete_threshold:
                     consultation.delete()
                     temp_deleted += 1
@@ -354,54 +366,43 @@ def auto_delete_closed_consultations():
 
 @app.task
 def auto_close_temporary_consultations():
-    """Close temporary consultations whose appointment join window has elapsed.
+    """Close temporary consultations left open past their configured delay.
 
-    No-op unless the `auto_close_temporary_consultations` setting is enabled;
-    when disabled, temporary consultations stay open until closed manually.
+    No-op unless `auto_close_temporary_consultations_minutes` is greater than
+    zero; at zero, temporary consultations stay open until closed manually.
 
-    For each temp consultation we look at its latest non-cancelled appointment.
-    Effective end is `appointment.end_expected_at` when set, otherwise
-    `scheduled_at + default_appointment_duration_in_minutes`. The consultation
-    is closed once `now >= effective_end + call_limit_join_minutes`.
+    The delay runs from the end of the appointment join window, so a
+    consultation is never closed while participants can still rejoin the call:
+    `now >= effective_end + call_limit_join_minutes + delay`.
     """
     TenantModel = get_tenant_model()
     for tenant in TenantModel.objects.exclude(schema_name="public"):
         with tenant_context(tenant):
-            if not config.auto_close_temporary_consultations:
+            close_delay = int(config.auto_close_temporary_consultations_minutes)
+            if close_delay <= 0:
                 continue
             now = timezone.now()
             join_limit = int(config.call_limit_join_minutes)
             default_duration = int(config.default_appointment_duration_in_minutes)
+            close_threshold = timedelta(minutes=close_delay)
 
             qs = Consultation.objects.filter(
                 temporary=True, closed_at__isnull=True
             )
             closed = 0
             for consultation in qs:
-                appt = (
-                    consultation.appointments.exclude(
-                        status=AppointmentStatus.cancelled
-                    )
-                    .order_by("-scheduled_at")
-                    .first()
+                expires_at = _temporary_consultation_expiry(
+                    consultation, join_limit, default_duration
                 )
-                if not appt:
-                    consultation.closed_at = now
-                    consultation.save(update_fields=["closed_at"])
-                    closed += 1
-                    continue
-
-                end = appt.end_expected_at or (
-                    appt.scheduled_at + timedelta(minutes=default_duration)
-                )
-                if now >= end + timedelta(minutes=join_limit):
+                if now >= expires_at + close_threshold:
                     consultation.closed_at = now
                     consultation.save(update_fields=["closed_at"])
                     closed += 1
 
             if closed:
                 logger.info(
-                    f"Auto-closed {closed} temporary consultation(s) past join window"
+                    f"Auto-closed {closed} temporary consultation(s) more than "
+                    f"{close_delay}min past their join window"
                 )
 
 

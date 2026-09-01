@@ -165,13 +165,15 @@ msgstr "тимчасовий"
 
 #: consultations/models.py:151
 msgid ""
-"Auto-created for an online Appointment without explicit consultation; hidden"
-" from practitioner and patient lists, auto-closed once the appointment join "
-"window has elapsed."
+"Auto-created for an online Appointment without explicit consultation; "
+"hidden from practitioner and patient lists, auto-closed once the delay "
+"configured in auto_close_temporary_consultations_minutes has elapsed on "
+"top of the appointment join window."
 msgstr ""
-"Створено автоматично для онлайн-запису без явної консультації; приховано зі "
-"списків лікаря та пацієнта, автоматично закривається після завершення "
-"періоду приєднання до запису."
+"Створено автоматично для онлайн-запису без явної консультації; приховано "
+"зі списків лікаря та пацієнта, автоматично закривається після завершення "
+"затримки, налаштованої в auto_close_temporary_consultations_minutes, "
+"додатково до періоду приєднання до запису."
 
 #: consultations/models.py:168
 msgid ""
@@ -1024,16 +1026,12 @@ msgstr ""
 "вимкнути)"
 
 #: core/settings.py:905
-#| msgid ""
-#| "Auto-created for an online Appointment without explicit consultation; hidden"
-#| " from practitioner and patient lists, auto-closed once the appointment join "
-#| "window has elapsed."
 msgid ""
-"Automatically close temporary appointment-chat consultations once the "
-"appointment join window has elapsed"
+"Minutes after the appointment join window closes before a temporary "
+"appointment-chat consultation is automatically closed (0 to disable)"
 msgstr ""
-"Автоматично закривати тимчасові консультації-чати запису після завершення "
-"періоду приєднання до запису"
+"Хвилини після завершення періоду приєднання до запису, перш ніж тимчасова "
+"консультація-чат запису буде автоматично закрита (0 — вимкнено)"
 
 #: core/settings.py:910
 msgid "Automatically delete temporary users with no future appointments"

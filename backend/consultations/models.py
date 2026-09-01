@@ -151,7 +151,8 @@ class Consultation(models.Model):
         help_text=_(
             "Auto-created for an online Appointment without explicit consultation; "
             "hidden from practitioner and patient lists, auto-closed once the "
-            "appointment join window has elapsed."
+            "delay configured in auto_close_temporary_consultations_minutes has "
+            "elapsed on top of the appointment join window."
         ),
     )
 

@@ -169,13 +169,16 @@ msgstr "temporaire"
 
 #: consultations/models.py:151
 msgid ""
-"Auto-created for an online Appointment without explicit consultation; hidden"
-" from practitioner and patient lists, auto-closed once the appointment join "
-"window has elapsed."
+"Auto-created for an online Appointment without explicit consultation; "
+"hidden from practitioner and patient lists, auto-closed once the delay "
+"configured in auto_close_temporary_consultations_minutes has elapsed on "
+"top of the appointment join window."
 msgstr ""
 "Créée automatiquement pour un rendez-vous en ligne sans consultation "
 "explicite ; masquée des listes du praticien et du patient, clôturée "
-"automatiquement une fois la fenêtre de connexion au rendez-vous écoulée."
+"automatiquement une fois écoulé le délai configuré dans "
+"auto_close_temporary_consultations_minutes en plus de la fenêtre de "
+"connexion au rendez-vous."
 
 #: consultations/models.py:168
 msgid ""
@@ -1047,16 +1050,13 @@ msgstr ""
 " (0 pour désactiver)"
 
 #: core/settings.py:905
-#| msgid ""
-#| "Auto-created for an online Appointment without explicit consultation; hidden"
-#| " from practitioner and patient lists, auto-closed once the appointment join "
-#| "window has elapsed."
 msgid ""
-"Automatically close temporary appointment-chat consultations once the "
-"appointment join window has elapsed"
+"Minutes after the appointment join window closes before a temporary "
+"appointment-chat consultation is automatically closed (0 to disable)"
 msgstr ""
-"Clôturer automatiquement les consultations temporaires de discussion de "
-"rendez-vous une fois la fenêtre de connexion au rendez-vous écoulée"
+"Minutes après la fermeture de la fenêtre de connexion au rendez-vous "
+"avant la clôture automatique d'une consultation temporaire de discussion "
+"de rendez-vous (0 pour désactiver)"
 
 #: core/settings.py:910
 msgid "Automatically delete temporary users with no future appointments"
