@@ -17,6 +17,7 @@ from messaging.models import Message
 from django_tenants.utils import get_tenant_model, tenant_context
 
 from .assignments import AssignmentManager
+from .utils import is_immediate_appointment
 from .models import (
     Appointment,
     AppointmentRecording,
@@ -54,27 +55,25 @@ def handle_invites(appointment_id):
     participants = Participant.objects.filter(is_invited=True, appointment=appointment)
 
     if appointment.status == AppointmentStatus.scheduled:
-        if (
+        rescheduled = bool(
             appointment.previous_scheduled_at
             and appointment.previous_scheduled_at != appointment.scheduled_at
-        ):
-            template_system_name = "appointment_updated"
+        )
+        if rescheduled:
             participants = participants.filter(is_active=True)
         else:
             participants = participants.filter(is_notified=False)
-            # Appointment created inside the last-reminder window: the "join now"
-            # reminder would never reach them in time, so invite them to join
-            # straight away instead of asking to confirm their presence.
-            try:
-                last_reminder = int(config.appointment_last_reminder)
-            except (TypeError, ValueError):
-                last_reminder = 0
-            if appointment.scheduled_at <= timezone.now() + timedelta(
-                minutes=last_reminder
-            ):
-                template_system_name = "invitation_to_ongoing_appointment"
-            else:
-                template_system_name = "invitation_to_appointment"
+
+        # Appointment landing inside the window it can already be joined in:
+        # asking to confirm a presence, or announcing a move to a time that is
+        # already here, would both be answered after the call is over. Invite
+        # them to join straight away instead.
+        if is_immediate_appointment(appointment):
+            template_system_name = "invitation_to_ongoing_appointment"
+        elif rescheduled:
+            template_system_name = "appointment_updated"
+        else:
+            template_system_name = "invitation_to_appointment"
     elif appointment.status == AppointmentStatus.cancelled:
         template_system_name = "appointment_cancelled"
     else:
