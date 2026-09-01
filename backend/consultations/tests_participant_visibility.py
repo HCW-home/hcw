@@ -388,6 +388,121 @@ class RosterPractitionerWithoutTheFlagTests(_Base):
         self.assertEqual(response.status_code, 404)
 
 
+class InvitedPractitionerRosterTests(_Base):
+    """A practitioner invited to a call manages that call's roster.
+
+    Sitting on the roster is not authority over the follow-up behind it, but it
+    is enough to grow the meeting: whoever needs a colleague in the room is
+    rarely the one who booked it, and chasing the organiser mid-call is not an
+    option.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.invited = User.objects.create_user(
+            email="invited@example.com", is_practitioner=True
+        )
+        self.appointment_id = self._create_appointment(
+            participants_ids=[self.invited.pk]
+        ).data["id"]
+        self.invited_client = APIClient()
+        self.invited_client.force_authenticate(user=self.invited)
+        self.newcomer = User.objects.create_user(
+            email="newcomer@example.com", is_practitioner=True
+        )
+
+    def _add(self, client, appointment_id, user, visible=False):
+        return client.post(
+            reverse("appointment-add-participants", kwargs={"pk": appointment_id}),
+            {
+                "participants_ids": [user.pk],
+                "participants_visibility": [
+                    {"user_id": user.pk, "is_consultation_visible": visible}
+                ],
+            },
+            format="json",
+        )
+
+    def _remove(self, client, appointment_id, user):
+        return client.post(
+            reverse("appointment-remove-participant", kwargs={"pk": appointment_id}),
+            {"user_id": user.pk},
+            format="json",
+        )
+
+    def test_they_add_a_participant(self):
+        """The box unticked keeps them out of the follow-up, not out of the call."""
+        self.assertFalse(
+            Participant.objects.get(user=self.invited).is_consultation_visible
+        )
+
+        response = self._add(self.invited_client, self.appointment_id, self.newcomer)
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertTrue(
+            Participant.objects.filter(
+                user=self.newcomer, appointment_id=self.appointment_id, is_active=True
+            ).exists()
+        )
+
+    def test_they_remove_a_participant(self):
+        self._add(self.invited_client, self.appointment_id, self.newcomer)
+
+        response = self._remove(self.invited_client, self.appointment_id, self.newcomer)
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertFalse(
+            Participant.objects.get(
+                user=self.newcomer, appointment_id=self.appointment_id
+            ).is_active
+        )
+
+    def test_being_taken_off_the_call_takes_the_rights_with_it(self):
+        """The scope reads ``is_active``, so a removed row grants nothing."""
+        participant = Participant.objects.get(user=self.invited)
+        participant.is_active = False
+        participant.save(update_fields=["is_active"])
+
+        response = self._add(self.invited_client, self.appointment_id, self.newcomer)
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_an_outsider_still_cannot_add(self):
+        outsider = User.objects.create_user(
+            email="outsider@example.com", is_practitioner=True
+        )
+        client = APIClient()
+        client.force_authenticate(user=outsider)
+
+        response = self._add(client, self.appointment_id, self.newcomer)
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_a_guest_on_the_roster_cannot_add(self):
+        """Managing the roster is a practitioner's job, not every attendee's."""
+        guest = User.objects.create_user(email="guest@example.com")
+        appointment_id = self._create_appointment(
+            participants_ids=[guest.pk]
+        ).data["id"]
+        client = APIClient()
+        client.force_authenticate(user=guest)
+
+        response = self._add(client, appointment_id, self.newcomer)
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_the_follow_up_behind_it_stays_closed(self):
+        """Roster rights stop at the call: the case itself is untouched."""
+        response = self.invited_client.post(
+            reverse("appointment-set-status", kwargs={"pk": self.appointment_id}),
+            {"status": "completed"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(self._detail(self.invited_client).status_code, 404)
+
+
 class NestedConsultationTests(_Base):
     """A consultation nested in an appointment payload obeys the same rule.
 
@@ -539,6 +654,31 @@ class TemporaryConsultationTests(TenantTestCase):
         consultation = self._book(visible=False)
 
         self.assertEqual(self._detail(self.client, consultation).status_code, 200)
+
+    def test_an_invited_practitioner_grows_the_ad_hoc_call(self):
+        """There is no follow-up to be a member of: the roster is all there is.
+
+        ``accessible_by`` filters temporary consultations out, so the roster
+        branch is what lets a guest practitioner add anyone here.
+        """
+        consultation = self._book(visible=False)
+        appointment_id = consultation.appointments.get().pk
+        newcomer = User.objects.create_user(
+            email="newcomer@example.com", is_practitioner=True
+        )
+
+        response = self.guest_client.post(
+            reverse("appointment-add-participants", kwargs={"pk": appointment_id}),
+            {"participants_ids": [newcomer.pk]},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertTrue(
+            Participant.objects.filter(
+                user=newcomer, appointment_id=appointment_id, is_active=True
+            ).exists()
+        )
 
     def test_the_fan_out_follows(self):
         from consultations.signals import get_users_to_notification_consultation

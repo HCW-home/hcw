@@ -575,21 +575,28 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
             return AppointmentCreateSerializer
         return AppointmentSerializer
 
+    # Rewriting an appointment or deciding its outcome belongs to the people
+    # who carry the case. Growing or trimming the call roster is also open to
+    # the practitioners invited to it: someone brought into a meeting needs to
+    # pull a colleague in without chasing the organiser.
+    ROSTER_ACTIONS = frozenset({"add_participants", "remove_participant"})
+    WRITE_ACTIONS = frozenset({"create", "update", "partial_update", "set_status"})
+
     def get_queryset(self):
         user = self.request.user
 
-        # For create, update, partial_update and the participant moderation
-        # actions: restrict to creator or consultation access. Read actions use
-        # a wider scope that also covers plain participants, which must not be
-        # able to alter the roster.
-        if self.action in [
-            "create",
-            "update",
-            "partial_update",
-            "add_participants",
-            "remove_participant",
-            "set_status",
-        ]:
+        if self.action in self.ROSTER_ACTIONS:
+            # The roster branch does not go through accessible_by, so it also
+            # covers the temporary consultation of an ad-hoc call, which that
+            # manager filters out. IsPractitioner already turns patients and
+            # guests away, so a roster row reaching here is a practitioner's.
+            return Appointment.objects.filter(
+                Q(created_by=user)
+                | Q(consultation__in=Consultation.objects.accessible_by(user))
+                | Q(participant__user=user, participant__is_active=True)
+            ).distinct()
+
+        if self.action in self.WRITE_ACTIONS:
             return Appointment.objects.filter(
                 Q(created_by=user)
                 | Q(consultation__in=Consultation.objects.accessible_by(user))
