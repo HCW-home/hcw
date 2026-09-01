@@ -532,11 +532,23 @@ WEBPUSH_VAPID_CLAIMS_EMAIL = os.getenv(
 
 ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")
 
+# channels_redis waits for messages with a blocking BZPOPMIN whose server-side
+# timeout is 5s (RedisChannelLayer.brpop_timeout). Since redis-py 8.0 the client
+# defaults to a 5s socket_timeout, so the socket read aborts at the exact moment
+# Redis is about to answer, raising "Timeout reading from <host>" on every idle
+# websocket. Keep the socket timeout well above the blocking timeout.
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [(REDIS_HOST, REDIS_PORT)],
+            "hosts": [
+                {
+                    "host": REDIS_HOST,
+                    "port": int(REDIS_PORT),
+                    "socket_timeout": 30,
+                    "socket_connect_timeout": 5,
+                }
+            ],
         },
     },
 }
@@ -943,6 +955,13 @@ CONSTANCE_CONFIG = {
             "Default duration in minutes for an appointment without an explicit end time"
         ),
     ),
+    "disable_presence_confirmation": (
+        False,
+        gettext_noop(
+            "Never ask participants to confirm their presence: appointment "
+            "invitations and updates are still sent, without the confirmation request"
+        ),
+    ),
     "enable_appointment_outcome_detection": (
         True,
         gettext_noop(
@@ -1241,6 +1260,7 @@ CONSTANCE_CONFIG_FIELDSETS = {
         "appointment_early_join_minutes",
         "call_limit_join_minutes",
         "default_appointment_duration_in_minutes",
+        "disable_presence_confirmation",
         "enable_appointment_outcome_detection",
         "appointment_outcome_lookback_days",
     ),
