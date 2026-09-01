@@ -484,7 +484,7 @@
     "selectTimezone": "Select timezone",
     "phoneNotInternational": "Enter the number in international format, for example +33612345678.",
     "invalidPhoneNumber": "Invalid phone number.",
-    "hiddenContactUseFollowUp": "This contact comes from another organization. Their information can be used in a follow-up."
+    "hiddenContactUseFollowUp": "This contact comes from another organization. Their information can be used by inviting them via a link."
   },
   "patients": {
     "searchPlaceholder": "Search contacts...",
