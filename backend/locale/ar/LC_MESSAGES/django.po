@@ -169,12 +169,15 @@ msgstr "مؤقت"
 
 #: consultations/models.py:151
 msgid ""
-"Auto-created for an online Appointment without explicit consultation; hidden "
-"from practitioner and patient lists, auto-closed once the appointment join "
-"window has elapsed."
+"Auto-created for an online Appointment without explicit consultation; "
+"hidden from practitioner and patient lists, auto-closed once the delay "
+"configured in auto_close_temporary_consultations_minutes has elapsed on "
+"top of the appointment join window."
 msgstr ""
-"يُنشأ تلقائيًا لموعد عبر الإنترنت بدون استشارة صريحة؛ مخفي من قوائم الممارس "
-"والمريض، ويُغلق تلقائيًا بعد انقضاء نافذة الانضمام إلى الموعد."
+"يُنشأ تلقائيًا لموعد عبر الإنترنت بدون استشارة صريحة؛ مخفي من قوائم "
+"الممارس والمريض، ويُغلق تلقائيًا بعد انقضاء المهلة المضبوطة في "
+"auto_close_temporary_consultations_minutes إضافةً إلى نافذة الانضمام إلى "
+"الموعد."
 
 #: consultations/models.py:168
 msgid ""
@@ -1013,11 +1016,11 @@ msgstr "عدد الساعات بعد الإغلاق قبل حذف المتابع
 
 #: core/settings.py:905
 msgid ""
-"Automatically close temporary appointment-chat consultations once the "
-"appointment join window has elapsed"
+"Minutes after the appointment join window closes before a temporary "
+"appointment-chat consultation is automatically closed (0 to disable)"
 msgstr ""
-"إغلاق استشارات محادثة الموعد المؤقتة تلقائيًا بعد انقضاء نافذة الانضمام إلى "
-"الموعد"
+"عدد الدقائق بعد انقضاء نافذة الانضمام إلى الموعد قبل الإغلاق التلقائي "
+"لاستشارة محادثة الموعد المؤقتة (0 للتعطيل)"
 
 #: core/settings.py:910
 msgid "Automatically delete temporary users with no future appointments"

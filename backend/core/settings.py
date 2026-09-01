@@ -980,10 +980,11 @@ CONSTANCE_CONFIG = {
             "Hours after closure before a follow-up is automatically deleted (0 to disable)"
         ),
     ),
-    "auto_close_temporary_consultations": (
-        True,
+    "auto_close_temporary_consultations_minutes": (
+        60,
         gettext_noop(
-            "Automatically close temporary appointment-chat consultations once the appointment join window has elapsed"
+            "Minutes after the appointment join window closes before a temporary "
+            "appointment-chat consultation is automatically closed (0 to disable)"
         ),
     ),
     "temporary_user_auto_delete": (
@@ -1264,7 +1265,7 @@ CONSTANCE_CONFIG_FIELDSETS = {
         "enable_appointment_outcome_detection",
         "appointment_outcome_lookback_days",
     ),
-    gettext_noop("Data Retention"): ("consultation_auto_delete_hours", "auto_close_temporary_consultations", "temporary_user_auto_delete"),
+    gettext_noop("Data Retention"): ("consultation_auto_delete_hours", "auto_close_temporary_consultations_minutes", "temporary_user_auto_delete"),
     gettext_noop("Security"): ("temporary_participant_token_expiry_hours", "instance_signature"),
     gettext_noop("Mobile App"): (
         "enable_deeplink",

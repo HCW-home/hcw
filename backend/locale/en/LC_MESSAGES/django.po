@@ -163,9 +163,10 @@ msgstr ""
 
 #: consultations/models.py:151
 msgid ""
-"Auto-created for an online Appointment without explicit consultation; hidden "
-"from practitioner and patient lists, auto-closed once the appointment join "
-"window has elapsed."
+"Auto-created for an online Appointment without explicit consultation; "
+"hidden from practitioner and patient lists, auto-closed once the delay "
+"configured in auto_close_temporary_consultations_minutes has elapsed on "
+"top of the appointment join window."
 msgstr ""
 
 #: consultations/models.py:168
@@ -988,8 +989,8 @@ msgstr ""
 
 #: core/settings.py:905
 msgid ""
-"Automatically close temporary appointment-chat consultations once the "
-"appointment join window has elapsed"
+"Minutes after the appointment join window closes before a temporary "
+"appointment-chat consultation is automatically closed (0 to disable)"
 msgstr ""
 
 #: core/settings.py:910

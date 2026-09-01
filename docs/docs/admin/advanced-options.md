@@ -18,6 +18,7 @@ The advanced configuration section provides fine-grained control over platform b
 | Option | Code | Default | Description |
 |--------|------|---------|-------------|
 | Hours after closure before a follow-up is automatically deleted (0 to disable) | `TEMPORARY_USER_DELETE_HOURS` | 0 | Defines how long a closed follow-up and its associated temporary user are kept before automatic deletion. Set to 0 to disable automatic deletion. |
+| Minutes after the appointment join window closes before a temporary appointment-chat consultation is automatically closed (0 to disable) | `AUTO_CLOSE_TEMPORARY_CONSULTATIONS_MINUTES` | 0 | Temporary follow-ups are created automatically when an online appointment is booked without an explicit follow-up, so the appointment chat still works. This delay starts once the appointment join window has closed (end of the appointment plus `CALL_LIMIT_JOIN_MINUTES`), so the chat is never closed while participants can still rejoin the call. Set to 0 to keep them open until closed manually. |
 | Automatically delete temporary users with no future appointments | `TEMPORARY_USER_AUTO_DELETE` | FALSE | When enabled, temporary patient accounts that have no upcoming appointments are automatically removed. |
 
 ## General Options

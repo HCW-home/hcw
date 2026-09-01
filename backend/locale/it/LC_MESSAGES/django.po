@@ -169,13 +169,16 @@ msgstr "temporaneo"
 
 #: consultations/models.py:151
 msgid ""
-"Auto-created for an online Appointment without explicit consultation; hidden"
-" from practitioner and patient lists, auto-closed once the appointment join "
-"window has elapsed."
+"Auto-created for an online Appointment without explicit consultation; "
+"hidden from practitioner and patient lists, auto-closed once the delay "
+"configured in auto_close_temporary_consultations_minutes has elapsed on "
+"top of the appointment join window."
 msgstr ""
 "Creata automaticamente per un appuntamento online senza consultazione "
-"esplicita; nascosta dagli elenchi del professionista e del paziente, chiusa "
-"automaticamente una volta trascorsa la finestra di accesso all'appuntamento."
+"esplicita; nascosta dagli elenchi del professionista e del paziente, "
+"chiusa automaticamente una volta trascorso il ritardo configurato in "
+"auto_close_temporary_consultations_minutes oltre alla finestra di accesso "
+"all'appuntamento."
 
 #: consultations/models.py:168
 msgid ""
@@ -1047,16 +1050,13 @@ msgstr ""
 "(0 per disattivare)"
 
 #: core/settings.py:905
-#| msgid ""
-#| "Auto-created for an online Appointment without explicit consultation; hidden"
-#| " from practitioner and patient lists, auto-closed once the appointment join "
-#| "window has elapsed."
 msgid ""
-"Automatically close temporary appointment-chat consultations once the "
-"appointment join window has elapsed"
+"Minutes after the appointment join window closes before a temporary "
+"appointment-chat consultation is automatically closed (0 to disable)"
 msgstr ""
-"Chiudi automaticamente le consultazioni temporanee di chat dell'appuntamento"
-" una volta trascorsa la finestra di accesso all'appuntamento"
+"Minuti dopo la chiusura della finestra di accesso all'appuntamento prima "
+"che una consultazione temporanea di chat dell'appuntamento venga chiusa "
+"automaticamente (0 per disattivare)"
 
 #: core/settings.py:910
 msgid "Automatically delete temporary users with no future appointments"
