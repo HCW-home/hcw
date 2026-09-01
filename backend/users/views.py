@@ -1367,8 +1367,36 @@ class UserViewSet(viewsets.ModelViewSet):
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_200_OK, headers=headers)
 
+        hidden_field = self._find_hidden_conflict(email, phone, request.user)
+        if hidden_field:
+            return Response(
+                {
+                    "detail": _("A contact with this information already exists but is not visible to you."),
+                    "field": hidden_field,
+                    "code": "contact_hidden",
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
+
         # Normal user creation
         return super().create(request, *args, **kwargs)
+    
+    def _find_hidden_conflict(self, email, phone, current_user):
+        candidates = User.objects.filter(is_active=True, is_practitioner=False)
+        match = None
+
+        if email:
+            match = candidates.filter(email__iexact=email.strip()).first()
+        if match is None and phone:
+            match = candidates.filter(mobile_phone_number__in=phone_lookup_variants(phone)).first()
+        if match is None:
+            return None
+
+        visible = self._filter_patients(self.queryset.filter(is_active=True), current_user)
+        if visible.filter(pk=match.pk).exists():
+            return None
+
+        return "email" if email and match.email and match.email.lower() == email.strip().lower() else "mobile_phone_number"
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)

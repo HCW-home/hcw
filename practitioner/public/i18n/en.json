@@ -483,7 +483,8 @@
     "timezone": "Timezone",
     "selectTimezone": "Select timezone",
     "phoneNotInternational": "Enter the number in international format, for example +33612345678.",
-    "invalidPhoneNumber": "Invalid phone number."
+    "invalidPhoneNumber": "Invalid phone number.",
+    "hiddenContactUseFollowUp": "This contact comes from another organization. Their information can be used in a follow-up."
   },
   "patients": {
     "searchPlaceholder": "Search contacts...",

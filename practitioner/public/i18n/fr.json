@@ -524,7 +524,8 @@
     "timezone": "Fuseau horaire",
     "selectTimezone": "Sélectionner un fuseau horaire",
     "phoneNotInternational": "Saisissez le numéro au format international, par exemple +33612345678.",
-    "invalidPhoneNumber": "Numéro de téléphone invalide."
+    "invalidPhoneNumber": "Numéro de téléphone invalide.",
+    "hiddenContactUseFollowUp": "Ce contact provient d’une autre organisation. Ses informations peuvent être utilisées dans un suivi."
   },
   "patients": {
     "searchPlaceholder": "Rechercher des contacts...",

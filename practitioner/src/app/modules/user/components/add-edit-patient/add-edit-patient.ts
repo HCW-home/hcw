@@ -544,7 +544,18 @@ export class AddEditPatient implements OnInit, OnDestroy {
     return '';
   }
 
-  private setServerErrors(error: { error?: Record<string, string | string[]> }): void {
+  private setServerErrors(error: { error?: Record<string, string | string[]> } & { error?: { code?: string; field?: string } }): void {
+    const body = error.error as { code?: string; field?: string } | undefined;
+
+    if (body?.code === 'contact_hidden' && body.field) {
+      const control = this.form.get(body.field);
+      if (control) {
+        control.setErrors({ serverError: this.t.instant('addEditPatient.hiddenContactUseFollowUp') });
+        control.markAsTouched();
+      }
+      return;
+    }
+
     if (error.error && typeof error.error === 'object') {
       for (const [field, messages] of Object.entries(error.error)) {
         const control = this.form.get(field);
