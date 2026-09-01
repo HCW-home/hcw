@@ -31,7 +31,11 @@ from modeltranslation.utils import get_translation_fields
 from . import providers
 from .abstracts import ModelCeleryAbstract
 from .providers import BaseMessagingProvider
-from .template import DEFAULT_NOTIFICATION_MESSAGES, NOTIFICATION_CHOICES
+from .template import (
+    DEFAULT_NOTIFICATION_MESSAGES,
+    NOTIFICATION_CHOICES,
+    PRESENCE_ACTION,
+)
 from .whatsapp_content import get_action_label, get_localized
 
 logger = logging.getLogger(__name__)
@@ -237,8 +241,20 @@ class Template(models.Model):
 
     @property
     def action(self):
+        """The call-to-action this template links to, or None when it has none.
+
+        ``disable_presence_confirmation`` drops the presence request instance
+        wide: the appointment is still announced, only nothing asks the
+        recipient to answer whether they will be there. Resolved here rather
+        than at each call site so every channel — the email button, the SMS
+        link, the WhatsApp call-to-action — agrees on it.
+        """
         if not self._action:
-            self._action = DEFAULT_NOTIFICATION_MESSAGES[self.event_type].get("action")
+            self._action = (
+                DEFAULT_NOTIFICATION_MESSAGES.get(self.event_type) or {}
+            ).get("action")
+        if self._action == PRESENCE_ACTION and config.disable_presence_confirmation:
+            return None
         return self._action
 
     action_label = models.CharField(
@@ -842,6 +858,7 @@ class Message(ModelCeleryAbstract):
             # Not a modeltranslation field: the built-in templates store a lazy
             # string, which would otherwise resolve under the active locale.
             return get_action_label(self.template, self.language)
+        return None
 
     additionnal_link_args = models.JSONField(blank=True, null=True)
 

@@ -74,6 +74,37 @@ def is_appointment_active(appointment, now=None):
     return end + timedelta(minutes=join_limit) >= now
 
 
+def _config_minutes(name):
+    """Read a constance delay in minutes, treating anything unusable as zero."""
+    try:
+        return int(getattr(config, name))
+    except (TypeError, ValueError):
+        return 0
+
+
+def is_immediate_appointment(appointment, now=None):
+    """Whether ``appointment`` starts too soon to ask anyone to confirm.
+
+    Confirming a presence only means something while there is still time to
+    act on the answer. An appointment scheduled inside the window it can
+    already be joined in — the default appointment duration — is effectively
+    immediate: the answer would come back once the call is over, so the
+    invitation carries a join link instead of a presence request. The
+    last-reminder delay widens the window when it is the longer of the two,
+    since a reminder due before the invitation is even read would not reach
+    the participant in time either.
+    """
+    if appointment is None or appointment.scheduled_at is None:
+        return False
+
+    now = now or timezone.now()
+    minutes = max(
+        _config_minutes("default_appointment_duration_in_minutes"),
+        _config_minutes("appointment_last_reminder"),
+    )
+    return appointment.scheduled_at <= now + timedelta(minutes=minutes)
+
+
 def roster_access_q(user, prefix="appointments"):
     """Q on Consultation matching the rosters that open it to ``user``.
 

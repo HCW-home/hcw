@@ -86,8 +86,15 @@ def get_action_label(template: "Template", language_code: str) -> str:
     language happens to be active on the thread. Pinning it to the validation's
     own language keeps both the approved button text and the content hash
     stable, wherever they are computed from.
+
+    A template whose action is switched off has no button, hence no label: the
+    empty string is what stops the renderers from emitting one, and what makes
+    an already approved WhatsApp validation show up as outdated.
     """
     from django.utils import translation
+
+    if not template.action:
+        return ""
 
     with translation.override(language_code):
         return str(template.action_label or "")

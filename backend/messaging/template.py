@@ -1,6 +1,11 @@
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
+# The call-to-action that asks a participant to answer whether they will
+# attend. Named because ``disable_presence_confirmation`` switches exactly
+# these templates' button off.
+PRESENCE_ACTION = "presence"
+
 DEFAULT_NOTIFICATION_MESSAGES = {
     "appointment_first_reminder": {
         "template_subject": _(
@@ -39,7 +44,7 @@ DEFAULT_NOTIFICATION_MESSAGES = {
             """<p>Your consultation has been successfully scheduled.</p>"""
             """<p>Appointment is scheduled for <strong>{{ obj.appointment.scheduled_at|localtime|date }}</strong> at <strong>{{ obj.appointment.scheduled_at|localtime|time }}</strong> ({{ obj.appointment.scheduled_at }})</p>"""
         ),
-        "action": "presence",
+        "action": PRESENCE_ACTION,
         "action_label": _("Confirm your presence"),
         "model": "consultations.Participant",
         "helper_text": "Message sent to participant with invitation to join a consultation at a later time",
@@ -82,7 +87,7 @@ DEFAULT_NOTIFICATION_MESSAGES = {
             """at <strong>{{ obj.appointment.previous_scheduled_at|localtime|time }}</strong> is now scheduled for """
             """<strong>{{ obj.appointment.scheduled_at|localtime|date }}</strong> at <strong>{{ obj.appointment.scheduled_at|localtime|time }}</strong></p>"""
         ),
-        "action": "presence",
+        "action": PRESENCE_ACTION,
         "action_label": _("Confirm your presence"),
         "model": "consultations.Participant",
         "helper_text": "Message sent to participant when appointment date and time is updated",

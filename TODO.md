@@ -16,3 +16,9 @@ la confirmation d'un RDV ne renvoi pas sur la bonne semaine
 
 Dans fr/admin/consultations/reason/1/change/, il faudrait une nouvelle option pour ne créer qu'un rendez-vous
 Quand on créer un rdv, propose de ne pas créer de consultation (donc pas de chat) (coté raison + interface practitioner)
+
+Lien cliquable dans le chat
+
+Ajouter blur ou background pour le call
+
+Confirm the presence envoyé pour un meeting immédiat
