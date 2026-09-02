@@ -2,6 +2,7 @@
 
 import json
 from datetime import timedelta
+from unittest.mock import MagicMock, patch
 
 from django.urls import reverse
 from django.utils import timezone
@@ -501,6 +502,108 @@ class InvitedPractitionerRosterTests(_Base):
 
         self.assertEqual(response.status_code, 404)
         self.assertEqual(self._detail(self.invited_client).status_code, 404)
+
+
+def _mocked_server():
+    """Stand-in for a media server able to mute remotely."""
+    server = MagicMock()
+    server.instance.supports_remote_mute.return_value = True
+    server.instance.mute_participant.return_value = 1
+    return server
+
+
+class CallModerationTests(_Base):
+    """Muting a microphone belongs to whoever is in the room.
+
+    Echo and feedback are heard by the people on the call, not by the organiser
+    who booked it, so a practitioner invited to the meeting may silence a
+    participant — practitioner or patient alike.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.invited = User.objects.create_user(
+            email="invited@example.com", is_practitioner=True
+        )
+        self.noisy = User.objects.create_user(email="noisy@example.com")
+        self.appointment_id = self._create_appointment(
+            participants_ids=[self.invited.pk, self.noisy.pk]
+        ).data["id"]
+        self.invited_client = APIClient()
+        self.invited_client.force_authenticate(user=self.invited)
+
+    def _mute(self, client, target, muted=True, appointment_id=None):
+        with patch(
+            "consultations.views.Server.get_or_pin_for_room",
+            return_value=_mocked_server(),
+        ):
+            return client.post(
+                reverse(
+                    "appointment-mute-participant",
+                    kwargs={"pk": appointment_id or self.appointment_id},
+                ),
+                {"target_user_id": target.pk, "muted": muted},
+                format="json",
+            )
+
+    def test_an_invited_practitioner_mutes_a_patient(self):
+        response = self._mute(self.invited_client, self.noisy)
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data["status"], "muted")
+
+    def test_an_invited_practitioner_unmutes(self):
+        response = self._mute(self.invited_client, self.noisy, muted=False)
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data["status"], "unmuted")
+
+    def test_a_colleague_can_be_muted_too(self):
+        """Feedback does not care about the role of whoever is causing it."""
+        response = self._mute(self.invited_client, self.owner)
+
+        self.assertEqual(response.status_code, 200, response.data)
+
+    def test_the_owner_still_mutes(self):
+        response = self._mute(self.client, self.noisy)
+
+        self.assertEqual(response.status_code, 200, response.data)
+
+    def test_a_removed_practitioner_no_longer_mutes(self):
+        participant = Participant.objects.get(
+            user=self.invited, appointment_id=self.appointment_id
+        )
+        participant.is_active = False
+        participant.save(update_fields=["is_active"])
+
+        response = self._mute(self.invited_client, self.noisy)
+
+        self.assertEqual(response.status_code, 403, response.data)
+
+    def test_a_practitioner_outside_the_call_does_not_mute(self):
+        """The read scope reaches a visible colleague's appointments.
+
+        Being able to see a meeting is not being in it, and moderation is for
+        the room.
+        """
+        outsider = User.objects.create_user(
+            email="outsider@example.com", is_practitioner=True
+        )
+        client = APIClient()
+        client.force_authenticate(user=outsider)
+
+        response = self._mute(client, self.noisy)
+
+        self.assertIn(response.status_code, (403, 404), response.data)
+
+    def test_a_patient_on_the_roster_does_not_mute(self):
+        """Moderation stays a practitioner's tool."""
+        client = APIClient()
+        client.force_authenticate(user=self.noisy)
+
+        response = self._mute(client, self.invited)
+
+        self.assertEqual(response.status_code, 403, response.data)
 
 
 class NestedConsultationTests(_Base):

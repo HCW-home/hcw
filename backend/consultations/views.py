@@ -991,10 +991,8 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
         cannot mute themselves (e.g. on speakerphone, or a patient who joined
         with help and is now alone)."""
         appointment = self.get_object()
-        consultation = appointment.consultation
 
-        # Only practitioners may moderate the call.
-        if not self._is_doctor(request.user, consultation, appointment):
+        if not self._can_moderate_call(request.user, appointment):
             return Response(
                 {"error": _("Only practitioners can mute participants")},
                 status=status.HTTP_403_FORBIDDEN,
@@ -1255,6 +1253,20 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
         }
         for user_pk in recipient_pks:
             async_to_sync(channel_layer.group_send)(user_group(user_pk), payload)
+
+    def _can_moderate_call(self, user, appointment):
+        """Whether ``user`` may act on who is heard in this call.
+
+        The people who carry the case, plus the practitioners actually invited
+        to the meeting: a howling microphone is heard by whoever is in the room,
+        and silencing it cannot wait for the organiser. Being a colleague the
+        directory makes visible is not enough — the read scope of
+        ``get_queryset`` reaches appointments one has nothing to do with, so
+        moderation asks for a roster row.
+        """
+        if self._is_doctor(user, appointment.consultation, appointment):
+            return True
+        return appointment.participant_set.filter(user=user, is_active=True).exists()
 
     def _is_doctor(self, user, consultation, appointment=None):
         """Check if user is a doctor (in Queue group)"""
