@@ -59,6 +59,9 @@ export class PreJoinLobbyComponent implements OnInit, OnDestroy {
 
   cameraEnabled = signal(true);
   microphoneEnabled = signal(true);
+  backgroundBlurSupported = signal(false);
+  backgroundBlurEnabled = signal(false);
+  isTogglingBackgroundBlur = signal(false);
   audioLevel = signal(0);
 
   cameraOptions: DeviceOption[] = [];
@@ -160,6 +163,13 @@ export class PreJoinLobbyComponent implements OnInit, OnDestroy {
       // Attach video preview after loading is done so the <video> element exists in the DOM
       if (cameraStarted && this.cameraEnabled()) {
         this.attachVideoPreview();
+        try {
+          this.backgroundBlurSupported.set(
+            await this.mediaDeviceService.supportsBackgroundBlur(),
+          );
+        } catch {
+          this.backgroundBlurSupported.set(false);
+        }
       }
     }
   }
@@ -219,6 +229,23 @@ export class PreJoinLobbyComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  async toggleBackgroundBlur(): Promise<void> {
+    if (this.isTogglingBackgroundBlur() || !this.cameraEnabled()) return;
+
+    this.isTogglingBackgroundBlur.set(true);
+    try {
+      const enabled = !this.backgroundBlurEnabled();
+      await this.mediaDeviceService.setBackgroundBlur(enabled);
+      this.backgroundBlurEnabled.set(enabled);
+      this.attachVideoPreview();
+    } catch {
+      this.backgroundBlurEnabled.set(false);
+    } finally {
+      this.isTogglingBackgroundBlur.set(false);
+      this.cdr.markForCheck();
+    }
+  }
+
   async onCameraChange(event: CustomEvent): Promise<void> {
     this.selectedCameraId = event.detail.value;
     if (this.cameraEnabled() && this.selectedCameraId) {
@@ -256,6 +283,7 @@ export class PreJoinLobbyComponent implements OnInit, OnDestroy {
     this.join.emit({
       cameraEnabled: this.cameraEnabled(),
       microphoneEnabled: this.microphoneEnabled(),
+      backgroundBlurEnabled: this.backgroundBlurEnabled(),
       cameraDeviceId: this.selectedCameraId,
       microphoneDeviceId: this.selectedMicrophoneId,
       speakerDeviceId: this.selectedSpeakerId,

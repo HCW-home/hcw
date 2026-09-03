@@ -403,6 +403,40 @@ export class LiveKitService implements OnDestroy {
     await this.room.switchActiveDevice('audiooutput', deviceId);
   }
 
+  async supportsBackgroundBlur(): Promise<boolean> {
+    const { supportsBackgroundProcessors } = await import('@livekit/track-processors');
+    return supportsBackgroundProcessors();
+  }
+
+  async setBackgroundBlur(enabled: boolean): Promise<void> {
+    const cameraPublication = this.room?.localParticipant.getTrackPublication(Track.Source.Camera);
+    const cameraTrack = cameraPublication?.track as LocalVideoTrack | undefined;
+    if (!cameraTrack) {
+      throw new Error('Camera must be enabled to change the background blur');
+    }
+
+    if (!enabled) {
+      if (cameraTrack.getProcessor()) {
+        await cameraTrack.stopProcessor();
+      }
+      return;
+    }
+
+    const { BackgroundProcessor, supportsBackgroundProcessors } =
+      await import('@livekit/track-processors');
+    if (!supportsBackgroundProcessors()) {
+      throw new Error('Background blur is not supported by this browser');
+    }
+
+    const processor = BackgroundProcessor({ mode: 'background-blur', blurRadius: 12 });
+    try {
+      await cameraTrack.setProcessor(processor, true);
+    } catch (error) {
+      await processor.destroy();
+      throw error;
+    }
+  }
+
   async disconnect(): Promise<void> {
     if (this.room) {
       console.log('[LiveKitService] disconnect() called - disconnecting room');

@@ -40,6 +40,21 @@
           [disabled]="permissionDenied()">
           <ion-icon [name]="cameraEnabled() ? 'videocam' : 'videocam-off'" slot="icon-only"></ion-icon>
         </ion-button>
+        @if (backgroundBlurSupported()) {
+          <ion-button
+            [color]="backgroundBlurEnabled() ? 'primary' : 'light'"
+            class="toggle-btn"
+            (click)="toggleBackgroundBlur()"
+            [disabled]="!cameraEnabled() || isTogglingBackgroundBlur()"
+            [attr.aria-label]="'videoConsultation.backgroundBlur' | translate"
+            [title]="'videoConsultation.backgroundBlur' | translate">
+            @if (isTogglingBackgroundBlur()) {
+              <ion-spinner name="crescent" slot="icon-only"></ion-spinner>
+            } @else {
+              <ion-icon name="sparkles-outline" slot="icon-only"></ion-icon>
+            }
+          </ion-button>
+        }
         <ion-button
           [color]="microphoneEnabled() ? 'light' : 'danger'"
           class="toggle-btn"

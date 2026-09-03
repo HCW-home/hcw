@@ -459,6 +459,8 @@
     "connectedToConsultation": "Mit Konsultation verbunden",
     "failedJoin": "Beitritt zum Videoanruf fehlgeschlagen",
     "failedToggleCamera": "Kamera umschalten fehlgeschlagen",
+    "backgroundBlur": "Hintergrund weichzeichnen",
+    "failedToggleBackgroundBlur": "Die Hintergrundunschärfe konnte nicht geändert werden",
     "failedToggleMic": "Mikrofon umschalten fehlgeschlagen",
     "failedToggleScreen": "Bildschirmfreigabe umschalten fehlgeschlagen",
     "switchingCamera": "Kamera wird gewechselt...",

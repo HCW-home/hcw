@@ -463,6 +463,8 @@
     "connectedToConsultation": "Conectado con la consulta",
     "failedJoin": "No se pudo unir a la videollamada.",
     "failedToggleCamera": "No se pudo cambiar la cámara",
+    "backgroundBlur": "Desenfoque de fondo",
+    "failedToggleBackgroundBlur": "No se pudo cambiar el desenfoque de fondo",
     "failedToggleMic": "No se pudo activar el micrófono.",
     "failedToggleScreen": "No se pudo activar/desactivar la función de compartir pantalla.",
     "switchingCamera": "Cambiando de cámara...",

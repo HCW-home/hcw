@@ -109,5 +109,7 @@ export interface VideoCallImpl {
   switchCamera(deviceId: string): Promise<void>;
   switchMicrophone(deviceId: string): Promise<void>;
   switchSpeaker(deviceId: string): Promise<void>;
+  supportsBackgroundBlur(): Promise<boolean>;
+  setBackgroundBlur(enabled: boolean): Promise<void>;
   isConnected(): boolean;
 }
