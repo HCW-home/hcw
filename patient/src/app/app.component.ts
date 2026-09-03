@@ -23,6 +23,7 @@ import { PushNotificationService } from "./core/services/push-notification.servi
 import { BrowserNotificationService } from "./core/services/browser-notification.service";
 import { AppUpdateService } from "./core/services/app-update.service";
 import { DeeplinkService } from "./core/services/deeplink.service";
+import { KeyboardService } from "./core/services/keyboard.service";
 
 @Component({
   selector: "app-root",
@@ -38,6 +39,7 @@ export class AppComponent implements OnInit, OnDestroy {
   private browserNotificationService = inject(BrowserNotificationService);
   private appUpdateService = inject(AppUpdateService);
   private deeplinkService = inject(DeeplinkService);
+  private keyboardService = inject(KeyboardService);
 
   private notificationService = inject(NotificationService);
 
@@ -54,6 +56,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.unregisterServiceWorkerOnNative();
+    this.keyboardService.initialize();
     this.deeplinkService.initialize();
     this.handleDeepLinks();
     this.setupWebSocketSubscriptions();
