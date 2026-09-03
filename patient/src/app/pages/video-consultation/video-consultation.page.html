@@ -124,6 +124,21 @@
             }
           </div>
           <div class="top-actions">
+            @if (backgroundBlurSupported) {
+              <ion-button
+                fill="clear"
+                [color]="isBackgroundBlurEnabled ? 'primary' : 'light'"
+                (click)="toggleBackgroundBlur()"
+                [disabled]="!isCameraEnabled || isTogglingBackgroundBlur"
+                [attr.aria-label]="'videoConsultation.backgroundBlur' | translate"
+                [title]="'videoConsultation.backgroundBlur' | translate">
+                @if (isTogglingBackgroundBlur) {
+                  <ion-spinner name="crescent" slot="icon-only"></ion-spinner>
+                } @else {
+                  <ion-icon name="sparkles-outline" slot="icon-only"></ion-icon>
+                }
+              </ion-button>
+            }
             <ion-button
               fill="clear"
               color="light"

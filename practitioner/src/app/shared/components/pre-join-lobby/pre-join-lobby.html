@@ -45,6 +45,17 @@
                   <app-svg src="camera-off" [svgStyle]="{'width.px': 22, 'height.px': 22}"></app-svg>
                 }
               </button>
+              @if (backgroundBlurSupported()) {
+                <button
+                  class="toggle-btn"
+                  [class.active]="backgroundBlurEnabled()"
+                  [disabled]="!cameraEnabled() || isTogglingBackgroundBlur()"
+                  (click)="toggleBackgroundBlur()"
+                  [attr.aria-label]="'videoConsultation.backgroundBlur' | translate"
+                  [title]="'videoConsultation.backgroundBlur' | translate">
+                  <app-svg src="blur" [svgStyle]="{'width.px': 22, 'height.px': 22}"></app-svg>
+                </button>
+              }
               <button
                 class="toggle-btn"
                 [class.off]="!microphoneEnabled()"

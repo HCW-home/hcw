@@ -463,6 +463,8 @@
     "connectedToConsultation": "Collegato alla consultazione",
     "failedJoin": "Impossibile partecipare alla videochiamata",
     "failedToggleCamera": "Impossibile attivare/disattivare la fotocamera",
+    "backgroundBlur": "Sfocatura dello sfondo",
+    "failedToggleBackgroundBlur": "Impossibile modificare la sfocatura dello sfondo",
     "failedToggleMic": "Impossibile attivare/disattivare il microfono",
     "failedToggleScreen": "Impossibile attivare/disattivare la condivisione dello schermo",
     "switchingCamera": "Cambio fotocamera in corso...",

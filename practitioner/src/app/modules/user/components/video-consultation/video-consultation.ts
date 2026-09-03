@@ -104,6 +104,9 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   isCameraEnabled = false;
   isMicrophoneEnabled = false;
   isScreenShareEnabled = false;
+  backgroundBlurSupported = false;
+  isBackgroundBlurEnabled = false;
+  isTogglingBackgroundBlur = false;
   isRecording = false;
   /** True while a start/stop recording request is awaiting backend confirmation. */
   isRecordingLoading = false;
@@ -507,6 +510,17 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
         // Microphone not available, continue without it
       }
 
+      if (settings.backgroundBlurEnabled && settings.cameraEnabled) {
+        try {
+          if (await this.videoCallService.supportsBackgroundBlur()) {
+            await this.videoCallService.setBackgroundBlur(true);
+            this.isBackgroundBlurEnabled = true;
+          }
+        } catch {
+          // A preview effect failure must not prevent joining the call.
+        }
+      }
+
       if (settings.speakerDeviceId) {
         try {
           await this.videoCallService.switchSpeaker(settings.speakerDeviceId);
@@ -516,6 +530,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       }
 
       this.phase.set('in-call');
+      void this.updateBackgroundBlurSupport();
       this.activeCameraId = settings.cameraDeviceId || '';
       this.activeMicId = settings.microphoneDeviceId || '';
       await this.loadDevices();
@@ -544,6 +559,35 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     } catch (error) {
       this.toasterService.show('error', this.t.instant('videoConsultation.microphoneError'), this.t.instant('videoConsultation.failedToggleMicrophone'));
     }
+  }
+
+  async toggleBackgroundBlur(): Promise<void> {
+    if (this.isTogglingBackgroundBlur || !this.isCameraEnabled) return;
+
+    this.isTogglingBackgroundBlur = true;
+    try {
+      const enabled = !this.isBackgroundBlurEnabled;
+      await this.videoCallService.setBackgroundBlur(enabled);
+      this.isBackgroundBlurEnabled = enabled;
+    } catch {
+      this.toasterService.show(
+        'error',
+        this.t.instant('videoConsultation.backgroundBlurError'),
+        this.t.instant('videoConsultation.failedToggleBackgroundBlur'),
+      );
+    } finally {
+      this.isTogglingBackgroundBlur = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  private async updateBackgroundBlurSupport(): Promise<void> {
+    try {
+      this.backgroundBlurSupported = await this.videoCallService.supportsBackgroundBlur();
+    } catch {
+      this.backgroundBlurSupported = false;
+    }
+    this.cdr.markForCheck();
   }
 
   async loadDevices(): Promise<void> {

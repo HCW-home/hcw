@@ -315,6 +315,14 @@ export class MediasoupService implements VideoCallImpl {
     // the mediasoup signaling layer is not involved.
   }
 
+  async supportsBackgroundBlur(): Promise<boolean> {
+    return false;
+  }
+
+  async setBackgroundBlur(_enabled: boolean): Promise<void> {
+    throw new Error('Background blur is not supported by this video provider');
+  }
+
   isConnected(): boolean {
     return this.connectionStatus.value === 'connected';
   }

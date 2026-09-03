@@ -517,6 +517,8 @@
     "connectedToConsultation": "Підключено до консультації",
     "failedJoin": "Не вдалося приєднатися до відеодзвінка",
     "failedToggleCamera": "Не вдалося перемкнути камеру",
+    "backgroundBlur": "Розмиття фону",
+    "failedToggleBackgroundBlur": "Не вдалося змінити розмиття фону",
     "failedToggleMic": "Не вдалося перемкнути мікрофон",
     "failedToggleScreen": "Не вдалося перемкнути демонстрацію екрана",
     "switchingCamera": "Перемикання камери...",

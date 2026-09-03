@@ -19,8 +19,6 @@ Quand on créer un rdv, propose de ne pas créer de consultation (donc pas de ch
 
 Lien cliquable dans le chat
 
-Ajouter blur ou background pour le call
-
 Switching Camera ne fonctionne pas dans l'interface patient + front camera by default
 
 Drop down pour le switching microphone

@@ -87,6 +87,14 @@ export class LiveKitAdapter implements VideoCallImpl {
     return this.inner.switchSpeaker(deviceId);
   }
 
+  supportsBackgroundBlur(): Promise<boolean> {
+    return this.inner.supportsBackgroundBlur();
+  }
+
+  setBackgroundBlur(enabled: boolean): Promise<void> {
+    return this.inner.setBackgroundBlur(enabled);
+  }
+
   isConnected(): boolean {
     return this.inner.isConnected();
   }

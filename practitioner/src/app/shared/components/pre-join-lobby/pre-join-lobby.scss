@@ -150,6 +150,10 @@
     background-color: #ef4444;
   }
 
+  &.active {
+    background-color: var(--primary-500);
+  }
+
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;

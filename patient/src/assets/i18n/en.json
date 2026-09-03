@@ -497,6 +497,8 @@
     "connectedToConsultation": "Connected to consultation",
     "failedJoin": "Failed to join video call",
     "failedToggleCamera": "Failed to toggle camera",
+    "backgroundBlur": "Background blur",
+    "failedToggleBackgroundBlur": "Failed to toggle background blur",
     "failedToggleMic": "Failed to toggle microphone",
     "failedToggleScreen": "Failed to toggle screen share",
     "switchingCamera": "Switching camera...",

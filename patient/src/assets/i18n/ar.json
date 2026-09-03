@@ -497,6 +497,8 @@
     "connectedToConsultation": "تم الاتصال بالاستشارة",
     "failedJoin": "تعذّر الانضمام إلى مكالمة الفيديو",
     "failedToggleCamera": "تعذّر تبديل حالة الكاميرا",
+    "backgroundBlur": "تمويه الخلفية",
+    "failedToggleBackgroundBlur": "تعذّر تغيير تمويه الخلفية",
     "failedToggleMic": "تعذّر تبديل حالة الميكروفون",
     "failedToggleScreen": "تعذّر تبديل مشاركة الشاشة",
     "switchingCamera": "جارٍ تبديل الكاميرا...",

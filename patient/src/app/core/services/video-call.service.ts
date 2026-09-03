@@ -97,6 +97,14 @@ export class VideoCallService implements OnDestroy {
     return this.requireImpl().switchSpeaker(deviceId);
   }
 
+  async supportsBackgroundBlur(): Promise<boolean> {
+    return this.impl?.supportsBackgroundBlur() ?? false;
+  }
+
+  async setBackgroundBlur(enabled: boolean): Promise<void> {
+    return this.requireImpl().setBackgroundBlur(enabled);
+  }
+
   isConnected(): boolean {
     return this.impl?.isConnected() ?? false;
   }

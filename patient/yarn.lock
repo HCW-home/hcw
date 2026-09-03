@@ -2251,6 +2251,13 @@
   dependencies:
     "@bufbuild/protobuf" "^1.10.0"
 
+"@livekit/track-processors@^0.7.0":
+  version "0.7.2"
+  resolved "https://registry.yarnpkg.com/@livekit/track-processors/-/track-processors-0.7.2.tgz#27e5220641351ce371a6d7299e018dd4ed9293f8"
+  integrity sha512-lzARBKTbBwqycdR/SwTu6//N0l20BzfDd7grxCXl07676SwRApNtZAK1GJjL1m3dCM3KBqH1aVxjMpNcbOw5uQ==
+  dependencies:
+    "@mediapipe/tasks-vision" "0.10.14"
+
 "@lmdb/lmdb-darwin-arm64@3.4.2":
   version "3.4.2"
   resolved "https://registry.yarnpkg.com/@lmdb/lmdb-darwin-arm64/-/lmdb-darwin-arm64-3.4.2.tgz#316848b41e26cf0ddb379fad193d49052f09d7df"
@@ -2297,6 +2304,11 @@
   integrity sha512-qC72D4+CDdjGqJvkFMMEAtancHUQ7/d/tAiHf64z8MopFDmcrtbcJuerDtFceuAfQJ2pDSfCKCtbqoGBNnwg0w==
   dependencies:
     "@lukeed/csprng" "^1.1.0"
+
+"@mediapipe/tasks-vision@0.10.14":
+  version "0.10.14"
+  resolved "https://registry.yarnpkg.com/@mediapipe/tasks-vision/-/tasks-vision-0.10.14.tgz#16c5ddc513408f2a416ccc6ce8ccc797ee02da3b"
+  integrity sha512-vOifgZhkndgybdvoRITzRkIueWWSiCKuEUXXK6Q4FaJsFvRJuwgg++vqFUMlL0Uox62U5aEXFhHxlhV7Ja5e3Q==
 
 "@modelcontextprotocol/sdk@1.30.0":
   version "1.30.0"

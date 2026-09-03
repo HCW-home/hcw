@@ -497,6 +497,8 @@
     "connectedToConsultation": "Connecté à la consultation",
     "failedJoin": "Échec de la connexion à l'appel vidéo",
     "failedToggleCamera": "Échec de l'activation de la caméra",
+    "backgroundBlur": "Flou d'arrière-plan",
+    "failedToggleBackgroundBlur": "Impossible de modifier le flou d'arrière-plan",
     "failedToggleMic": "Échec de l'activation du microphone",
     "failedToggleScreen": "Échec du partage d'écran",
     "switchingCamera": "Changement de caméra...",
