@@ -45,7 +45,9 @@ export class MediaDeviceService implements OnDestroy {
   async startVideoPreview(deviceId?: string): Promise<MediaStream> {
     this.stopVideoPreview();
     const constraints: MediaStreamConstraints = {
-      video: deviceId ? { deviceId: { exact: deviceId } } : true,
+      video: deviceId
+        ? { deviceId: { exact: deviceId } }
+        : { facingMode: { ideal: 'user' } },
     };
     this.previewStream = await navigator.mediaDevices.getUserMedia(constraints);
     return this.previewStream;
@@ -117,6 +119,10 @@ export class MediaDeviceService implements OnDestroy {
 
   getPreviewStream(): MediaStream | null {
     return this.previewStream;
+  }
+
+  getPreviewCameraId(): string | null {
+    return this.previewStream?.getVideoTracks()[0]?.getSettings().deviceId ?? null;
   }
 
   isSpeakerSelectionSupported(): boolean {

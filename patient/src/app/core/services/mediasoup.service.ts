@@ -166,7 +166,7 @@ export class MediasoupService implements VideoCallImpl {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: this.cameraDeviceId
           ? { deviceId: { ideal: this.cameraDeviceId } }
-          : true,
+          : { facingMode: { ideal: 'user' } },
       });
       const track = stream.getVideoTracks()[0];
       this.webcamProducer = await this.sendTransport.produce({
@@ -295,6 +295,8 @@ export class MediasoupService implements VideoCallImpl {
   async switchCamera(deviceId: string): Promise<void> {
     this.cameraDeviceId = deviceId;
     if (this.cameraEnabled.value) {
+      // Mobile browsers generally cannot hold the front and rear cameras at
+      // once, so release the active capture before opening the next one.
       await this.enableCamera(false);
       await this.enableCamera(true);
     }

@@ -124,7 +124,11 @@
             }
           </div>
           <div class="top-actions">
-            <ion-button fill="clear" color="light" (click)="switchCamera()">
+            <ion-button
+              fill="clear"
+              color="light"
+              (click)="switchCamera()"
+              [disabled]="!isCameraEnabled || isSwitchingCamera">
               <ion-icon name="camera-reverse-outline" slot="icon-only"></ion-icon>
             </ion-button>
           </div>
