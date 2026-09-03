@@ -130,7 +130,10 @@ export class PreJoinLobbyComponent implements OnInit, OnDestroy {
       this.updateDeviceOptions(devices);
 
       if (devices.cameras.length > 0) {
-        this.selectedCameraId = devices.cameras[0].deviceId;
+        // Keep the camera selected by facingMode (front-facing by default)
+        // instead of assuming the browser's first enumerated camera is front.
+        this.selectedCameraId =
+          this.mediaDeviceService.getPreviewCameraId() || devices.cameras[0].deviceId;
       } else {
         this.cameraEnabled.set(false);
       }

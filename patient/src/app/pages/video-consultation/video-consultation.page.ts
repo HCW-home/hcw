@@ -74,6 +74,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
   isMicrophoneEnabled = false;
   isScreenShareEnabled = false;
   isSpeakerOn = true;
+  isSwitchingCamera = false;
 
   callDuration = 0;
   formattedDuration = '00:00';
@@ -561,8 +562,30 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     }
   }
 
-  switchCamera(): void {
-    this.showToast(this.t.instant('videoConsultation.switchingCamera'));
+  async switchCamera(): Promise<void> {
+    if (this.isSwitchingCamera || !this.isCameraEnabled) return;
+
+    this.isSwitchingCamera = true;
+    try {
+      const devices = (await navigator.mediaDevices.enumerateDevices())
+        .filter(device => device.kind === 'videoinput');
+      if (devices.length < 2) return;
+
+      const currentDeviceId =
+        this.localVideoTrack?.mediaStreamTrack.getSettings().deviceId;
+      const currentIndex = devices.findIndex(device => device.deviceId === currentDeviceId);
+      // Browsers list their default device first. If getSettings() withholds
+      // the current id, selecting the second entry still performs a switch.
+      const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % devices.length : 1;
+
+      await this.showToast(this.t.instant('videoConsultation.switchingCamera'));
+      await this.videoCallService.switchCamera(devices[nextIndex].deviceId);
+    } catch {
+      await this.showToast(this.t.instant('videoConsultation.failedToggleCamera'));
+    } finally {
+      this.isSwitchingCamera = false;
+      this.cdr.markForCheck();
+    }
   }
 
   async endCall(): Promise<void> {

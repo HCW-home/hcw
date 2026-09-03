@@ -97,7 +97,9 @@ export class LiveKitService implements OnDestroy {
         },
         videoCaptureDefaults: {
           resolution: { width: 1280, height: 720 },
-          ...(deviceIds?.camera ? { deviceId: deviceIds.camera } : {}),
+          ...(deviceIds?.camera
+            ? { deviceId: deviceIds.camera }
+            : { facingMode: 'user' as const }),
         },
         audioCaptureDefaults: {
           ...(deviceIds?.microphone ? { deviceId: deviceIds.microphone } : {}),

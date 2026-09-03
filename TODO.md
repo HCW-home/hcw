@@ -21,4 +21,10 @@ Lien cliquable dans le chat
 
 Ajouter blur ou background pour le call
 
-Confirm the presence envoyé pour un meeting immédiat
+Switching Camera ne fonctionne pas dans l'interface patient + front camera by default
+
+Drop down pour le switching microphone
+
+Retourner dans la consultation une fois l'appel terminé (médecin) et proposer automatiquement de clotûrer la consultation
+
+Quand le patient a été assigné à une consultation, il a eu un écran vide
