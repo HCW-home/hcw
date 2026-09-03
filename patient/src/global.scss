@@ -81,6 +81,23 @@
   box-sizing: border-box;
 }
 
+/* On-screen keyboard
+ * ---------------------------------------------------------------------------
+ * KeyboardService measures the band of the viewport the keyboard covers and
+ * publishes it here. It stays 0 whenever the platform resizes the web view on
+ * its own (Android adjustResize, iOS native resize) and only becomes non-zero
+ * where the keyboard simply overlays the page: Android 15 edge-to-edge, mobile
+ * browsers and PWAs. Padding the page instead of the individual layouts makes
+ * every screen — chat, forms, wizards — shrink above the keyboard the same way
+ * a natively resized web view would. */
+:root {
+  --app-keyboard-height: 0px;
+}
+
+.ion-page {
+  padding-bottom: var(--app-keyboard-height);
+}
+
 body {
   font-family: var(--ion-font-family), serif;
   background-color: var(--app-background);

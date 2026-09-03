@@ -11,6 +11,7 @@ import {
   SimpleChanges,
   AfterViewChecked,
   OnInit,
+  effect,
   inject
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -23,6 +24,7 @@ import {
 import { TranslatePipe } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 import { ConsultationService } from '../../../core/services/consultation.service';
+import { KeyboardService } from '../../../core/services/keyboard.service';
 import { TranslationService } from '../../../core/services/translation.service';
 
 export interface MessageAttachment {
@@ -80,6 +82,7 @@ export interface DeleteMessageData {
 })
 export class MessageListComponent implements OnInit, OnChanges, OnDestroy, AfterViewChecked {
   private t = inject(TranslationService);
+  private keyboard = inject(KeyboardService);
 
   @Input() messages: Message[] = [];
   @Input() headerTitle = '';
@@ -113,7 +116,15 @@ export class MessageListComponent implements OnInit, OnChanges, OnDestroy, After
   newMessage = '';
   selectedFile: File | null = null;
 
-  constructor(private consultationService: ConsultationService) {}
+  constructor(private consultationService: ConsultationService) {
+    // Opening the keyboard shortens the list without moving its scroll
+    // position, which leaves the reader on older messages while they type.
+    // Re-pin to the newest one once the new height has been laid out.
+    effect(() => {
+      this.keyboard.height();
+      setTimeout(() => this.scrollToBottom(), 50);
+    });
+  }
 
   ngOnInit(): void {
     this.isInitialLoad = true;

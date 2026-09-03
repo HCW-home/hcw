@@ -688,10 +688,16 @@
   // Mobile — chat takes over the screen (keeps the functional chat usable)
   @media (max-width: 768px) {
     &.home-content--chat-open {
+      // Only the message list scrolls: the page around it is sized to the
+      // visible area, so nothing can be pushed out of reach by the keyboard.
+      --overflow: hidden;
+
       .main-content {
         padding: var(--app-spacing-sm);
-        padding-bottom: 0;
-        min-height: calc(100vh - 120px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        // 100% of the content area, which the .ion-page keyboard padding has
+        // already shrunk — no viewport unit, which would ignore the keyboard.
+        height: 100%;
         display: flex;
         flex-direction: column;
 
@@ -725,7 +731,7 @@
       .timeline-item.expanded {
         flex: 1;
         min-height: 0;
-        overflow: visible;
+        overflow: hidden;
         border: none;
         box-shadow: none;
         border-radius: 0;
@@ -737,13 +743,51 @@
         }
       }
 
+      // The chat has to stretch through the consultation-info shell, whose
+      // inner markup belongs to that component — hence ::ng-deep. Without a
+      // continuous flex chain down to app-message-list the chat keeps its own
+      // height and its input ends up under the fold.
+      app-consultation-info {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+
+        ::ng-deep .cc-collapsible,
+        ::ng-deep .cc-detail {
+          flex: 1;
+          min-height: 0;
+        }
+
+        // Vertical room is scarce once the keyboard is up; the shell around the
+        // chat gives back what it can.
+        ::ng-deep .cc-detail {
+          gap: 10px;
+          padding: 12px 14px;
+        }
+      }
+
       .inline-chat {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
         margin-top: 0;
 
         app-message-list {
-          height: calc(100vh - 200px);
+          flex: 1;
+          min-height: 0;
+          height: auto;
         }
       }
     }
+  }
+}
+
+// Mobile fullscreen chat — the dashboard footer would eat the room the message
+// list needs. It is a sibling of ion-content, hence the host-level selector.
+@media (max-width: 768px) {
+  :host:has(.home-content--chat-open) app-footer {
+    display: none;
   }
 }

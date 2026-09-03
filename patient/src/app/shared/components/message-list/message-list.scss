@@ -300,6 +300,11 @@
     color: var(--app-text-primary);
     outline: none;
     font-family: inherit;
+
+    // Same anti-zoom guard as the composer below.
+    @media (max-width: 768px) {
+      font-size: 16px;
+    }
   }
 
   .edit-actions {
@@ -453,6 +458,9 @@
 
   .message-input {
     flex: 1;
+    // Zero width lets the field shrink instead of pushing the send button out
+    // of the row on narrow screens.
+    min-width: 0;
     padding: 10px 14px;
     border: 1px solid var(--app-border-color);
     border-radius: 20px;
@@ -461,6 +469,12 @@
     color: var(--app-text-primary);
     outline: none;
     font-family: inherit;
+
+    // Under 16px iOS zooms into the field on focus, which pushes the rest of
+    // the chat off-screen and leaves the typed line half hidden.
+    @media (max-width: 768px) {
+      font-size: 16px;
+    }
 
     &:focus {
       border-color: var(--ion-color-primary);
