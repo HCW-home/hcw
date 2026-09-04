@@ -51,7 +51,8 @@
       <ion-item>
         <ion-input
           [(ngModel)]="newHost"
-          [placeholder]="'instancePicker.hostPlaceholder' | translate"
+          [label]="'instancePicker.hostPlaceholder' | translate"
+          labelPlacement="floating"
           autocomplete="url"
           autocapitalize="off"
           inputmode="url"

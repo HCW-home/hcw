@@ -80,3 +80,17 @@
     padding: 24px 16px;
   }
 }
+
+/* Required marker. The label used to carry a literal <ion-text>*</ion-text>,
+ * which cannot survive the move to ion-input's own [label] property. Drawing
+ * it from CSS keeps the visual cue for sighted users, while the field's
+ * required attribute is what assistive tech actually announces — so the
+ * asterisk is decorative and correctly absent from the accessible name. */
+ion-input[required],
+ion-select[required],
+ion-textarea[required] {
+  &::part(label)::after {
+    content: ' *';
+    color: var(--ion-color-danger);
+  }
+}

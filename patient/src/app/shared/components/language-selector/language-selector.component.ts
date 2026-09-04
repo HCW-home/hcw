@@ -13,6 +13,12 @@ import { TranslationService, AppLanguage } from '../../../core/services/translat
 export class LanguageSelectorComponent {
   private translationService = inject(TranslationService);
 
+  /* Getter rather than the translate pipe: this component only imports the
+   * Ionic pieces it needs, not TranslateModule. */
+  get languageLabel(): string {
+    return this.translationService.instant('common.language');
+  }
+
   get currentLanguageCode(): string {
     return this.translationService.currentLanguage();
   }

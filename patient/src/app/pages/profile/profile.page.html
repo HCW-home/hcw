@@ -43,8 +43,9 @@
 
       <ion-list class="form-list">
         <ion-item lines="none" [class.has-error]="getFieldError('mobile_phone_number')">
-          <ion-label position="stacked">{{ 'profile.phoneNumber' | translate }}</ion-label>
           <ion-input
+            [label]="'profile.phoneNumber' | translate"
+            labelPlacement="stacked"
             [(ngModel)]="editedUser.mobile_phone_number"
             type="tel"
             [placeholder]="'profile.phonePlaceholder' | translate">
@@ -56,8 +57,9 @@
           </ion-text>
         }
         <ion-item lines="none" [class.has-error]="getFieldError('communication_method')">
-          <ion-label position="stacked">{{ 'profile.communicationMethod' | translate }}</ion-label>
-          <ion-select [(ngModel)]="editedUser.communication_method" [placeholder]="'profile.selectMethod' | translate">
+          <ion-select
+            [label]="'profile.communicationMethod' | translate"
+            labelPlacement="stacked" [(ngModel)]="editedUser.communication_method" [placeholder]="'profile.selectMethod' | translate">
             @for (method of communicationMethods; track method) {
               <ion-select-option [value]="method">
                 @switch (method) {
@@ -78,8 +80,9 @@
           </ion-text>
         }
         <ion-item lines="none" [class.has-error]="getFieldError('preferred_language')">
-          <ion-label position="stacked">{{ 'profile.preferredLanguage' | translate }}</ion-label>
-          <ion-select [(ngModel)]="editedUser.preferred_language" [placeholder]="'profile.selectLanguage' | translate">
+          <ion-select
+            [label]="'profile.preferredLanguage' | translate"
+            labelPlacement="stacked" [(ngModel)]="editedUser.preferred_language" [placeholder]="'profile.selectLanguage' | translate">
             @for (lang of availableLanguages(); track lang.code) {
               <ion-select-option [value]="lang.code">{{ lang.nativeName }}</ion-select-option>
             }
@@ -91,8 +94,9 @@
           </ion-text>
         }
         <ion-item lines="none" [class.has-error]="getFieldError('timezone')">
-          <ion-label position="stacked">{{ 'profile.timezone' | translate }}</ion-label>
-          <ion-select [(ngModel)]="editedUser.timezone" [placeholder]="'profile.selectTimezone' | translate" interface="action-sheet">
+          <ion-select
+            [label]="'profile.timezone' | translate"
+            labelPlacement="stacked" [(ngModel)]="editedUser.timezone" [placeholder]="'profile.selectTimezone' | translate" interface="action-sheet">
             @for (tz of timezones; track tz) {
               <ion-select-option [value]="tz">{{ tz }}</ion-select-option>
             }

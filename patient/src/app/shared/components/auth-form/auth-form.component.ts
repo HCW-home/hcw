@@ -114,6 +114,33 @@ export class AuthFormComponent implements OnInit, OnChanges {
     return this.identifierForm.get('identifier')?.value || '';
   }
 
+  /* Error copy for ion-input's errorText. Ionic renders it in a role="alert"
+   * wired to the field through aria-describedby, and only shows it once the
+   * control is both touched and invalid — so the template no longer needs its
+   * own @if block or aria plumbing. */
+  get identifierErrorText(): string {
+    const errors = this.identifierForm.get('identifier')?.errors;
+    if (!errors) return '';
+    if (errors['phoneNeedsCountryCode']) {
+      return this.t.instant('login.phoneNeedsCountryCode');
+    }
+    return this.t.instant(
+      this.mode === 'register' ? 'register.identifierInvalid' : 'login.identifierRequired'
+    );
+  }
+
+  get passwordErrorText(): string {
+    return this.passwordForm.get('password')?.errors
+      ? this.t.instant('login.passwordMinLength')
+      : '';
+  }
+
+  get verificationCodeErrorText(): string {
+    return this.verificationForm.get('verification_code')?.errors
+      ? this.t.instant('login.invalidCode')
+      : '';
+  }
+
   /** Password login is email-only and has to be enabled for patients. */
   get canUsePasswordLogin(): boolean {
     return this.patientPasswordLoginEnabled && !this.passwordLoginDisabled;

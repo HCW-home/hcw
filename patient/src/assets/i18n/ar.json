@@ -28,7 +28,8 @@
     "reload": "إعادة التحميل",
     "offline": "انقطع الاتصال بالخادم",
     "reconnecting": "انقطع الاتصال بالخادم. جارٍ إعادة الاتصال...",
-    "required": "مطلوب"
+    "required": "مطلوب",
+    "language": "اللغة"
   },
   "login": {
     "title": "تسجيل الدخول",
@@ -60,7 +61,10 @@
     "identifierRequired": "أدخل بريدًا إلكترونيًا أو رقم هاتف صالحًا",
     "phoneNeedsCountryCode": "أضف رمز بلدك، على سبيل المثال ‎+966612345678",
     "showPassword": "إظهار كلمة المرور",
-    "hidePassword": "إخفاء كلمة المرور"
+    "hidePassword": "إخفاء كلمة المرور",
+    "identifierLabel": "البريد الإلكتروني أو رقم الهاتف",
+    "passwordLabel": "كلمة المرور",
+    "verificationCodeLabel": "رمز التحقق"
   },
   "register": {
     "platformDescription": "أنشئ حسابك وابدأ استشاراتك عن بُعد اليوم.",
@@ -73,7 +77,8 @@
     "identifierPlaceholder": "البريد الإلكتروني أو رقم الهاتف",
     "identifierHelp": "سنرسل لك رمزًا مكوّنًا من 6 أرقام للتأكيد.",
     "identifierInvalid": "أدخل بريدًا إلكترونيًا أو رقم هاتف صالحًا",
-    "phoneNeedsCountryCode": "أضف رمز بلدك، على سبيل المثال ‎+966612345678"
+    "phoneNeedsCountryCode": "أضف رمز بلدك، على سبيل المثال ‎+966612345678",
+    "identifierLabel": "البريد الإلكتروني أو رقم الهاتف"
   },
   "forgotPassword": {
     "title": "هل نسيت كلمة المرور؟",
@@ -223,7 +228,8 @@
     "cancelConfirmTitle": "إلغاء هذا الطلب؟",
     "cancelConfirmMessage": "ستفقد المعلومات التي أدخلتها.",
     "cancelConfirmStay": "متابعة الطلب",
-    "cancelConfirmLeave": "مغادرة"
+    "cancelConfirmLeave": "مغادرة",
+    "symptomLabel": "صف الأعراض التي تشعر بها"
   },
   "profile": {
     "changeServer": "تغيير الخادم",

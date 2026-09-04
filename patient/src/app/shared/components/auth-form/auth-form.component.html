@@ -6,23 +6,13 @@
       <ion-icon name="mail-outline" slot="start"></ion-icon>
       <ion-input
         type="text"
+        [label]="(mode === 'register' ? 'register.identifierLabel' : 'login.identifierLabel') | translate"
+        labelPlacement="floating"
         [placeholder]="(mode === 'register' ? 'register.identifierPlaceholder' : 'login.identifierPlaceholder') | translate"
+        [errorText]="identifierErrorText"
         formControlName="identifier">
       </ion-input>
     </ion-item>
-    @if (identifierForm.get('identifier')?.touched && identifierForm.get('identifier')?.errors; as errors) {
-      <ion-text color="danger" class="error-message">
-        <span class="error-text">
-          @if (errors['phoneNeedsCountryCode']) {
-            {{ 'login.phoneNeedsCountryCode' | translate }}
-          } @else if (mode === 'register') {
-            {{ 'register.identifierInvalid' | translate }}
-          } @else {
-            {{ 'login.identifierRequired' | translate }}
-          }
-        </span>
-      </ion-text>
-    }
 
     @if (mode === 'register') {
       <ion-text color="medium" class="helper-text">
@@ -61,7 +51,10 @@
         <ion-input
           #passwordInput
           [type]="showPassword ? 'text' : 'password'"
+          [label]="'login.passwordLabel' | translate"
+          labelPlacement="floating"
           [placeholder]="'login.passwordPlaceholder' | translate"
+          [errorText]="passwordErrorText"
           formControlName="password">
         </ion-input>
         <button
@@ -77,11 +70,7 @@
           </ion-icon>
         </button>
       </ion-item>
-      @if (passwordForm.get('password')?.invalid && passwordForm.get('password')?.touched) {
-        <ion-text color="danger" class="error-message">
-          <span class="error-text">{{ 'login.passwordMinLength' | translate }}</span>
-        </ion-text>
-      }
+
 
       @if (!passwordLoginDisabled) {
         <div class="forgot-password">
@@ -137,7 +126,9 @@
     </ion-text>
 
     @if (errorMessage) {
-      <ion-text color="danger" class="error-message">
+      <!-- Global submit failures are not tied to one field, so they need their
+           own live region; per-field errors come from ion-input's errorText. -->
+      <ion-text color="danger" class="error-message" role="alert">
         <span class="error-text">{{ errorMessage }}</span>
       </ion-text>
     }
@@ -147,17 +138,16 @@
         <ion-icon name="keypad-outline" slot="start"></ion-icon>
         <ion-input
           type="text"
+          [label]="'login.verificationCodeLabel' | translate"
+          labelPlacement="floating"
           [placeholder]="'login.enterVerificationCode' | translate"
+          [errorText]="verificationCodeErrorText"
           formControlName="verification_code"
           maxlength="6"
           inputmode="numeric">
         </ion-input>
       </ion-item>
-      @if (verificationForm.get('verification_code')?.invalid && verificationForm.get('verification_code')?.touched) {
-        <ion-text color="danger" class="error-message">
-          <span class="error-text">{{ 'login.invalidCode' | translate }}</span>
-        </ion-text>
-      }
+
 
       <ion-button
         expand="block"
