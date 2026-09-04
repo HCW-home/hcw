@@ -105,6 +105,43 @@ describe('AuthFormComponent accessibility', () => {
     expect(toggle?.getAttribute('aria-pressed')).toBe('false');
   });
 
+  it('stays quiet when an empty required field is merely touched', async () => {
+    fixture.componentInstance.mode = 'login';
+    await settle();
+
+    const control = fixture.componentInstance.identifierForm.get('identifier');
+    control?.markAsTouched();
+    await settle();
+
+    /* Ionic reveals errorText as soon as a control is touched and invalid, and
+     * an empty required field is invalid from the outset. Reporting it here
+     * turned the label red and printed "enter a valid email" before the user
+     * had typed anything. */
+    expect(fixture.componentInstance.identifierErrorText)
+      .withContext('an untouched-but-empty field is not an error yet')
+      .toBe('');
+
+    const input: HTMLElement = fixture.nativeElement.querySelector('ion-input');
+    expect(input.classList.contains('has-error')).toBe(false);
+  });
+
+  it('reports a genuine validation failure', async () => {
+    fixture.componentInstance.step = 'credentials';
+    await settle();
+
+    const control = fixture.componentInstance.passwordForm.get('password');
+    control?.setValue('abc');
+    control?.markAsTouched();
+    await settle();
+
+    expect(fixture.componentInstance.passwordErrorText).toBeTruthy();
+
+    const input: HTMLElement = fixture.nativeElement.querySelector('ion-input');
+    expect(input.classList.contains('has-error'))
+      .withContext('a real failure must still turn the field red')
+      .toBe(true);
+  });
+
   it('uses buttons, not ion-text, for the in-form navigation links', async () => {
     fixture.componentInstance.step = 'credentials';
     fixture.componentInstance.patientPasswordLoginEnabled = true;

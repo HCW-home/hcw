@@ -10,6 +10,7 @@
         labelPlacement="floating"
         [placeholder]="(mode === 'register' ? 'register.identifierPlaceholder' : 'login.identifierPlaceholder') | translate"
         [errorText]="identifierErrorText"
+        [class.has-error]="!!identifierErrorText"
         formControlName="identifier">
       </ion-input>
     </ion-item>
@@ -55,6 +56,7 @@
           labelPlacement="floating"
           [placeholder]="'login.passwordPlaceholder' | translate"
           [errorText]="passwordErrorText"
+          [class.has-error]="!!passwordErrorText"
           formControlName="password">
         </ion-input>
         <button
@@ -142,6 +144,7 @@
           labelPlacement="floating"
           [placeholder]="'login.enterVerificationCode' | translate"
           [errorText]="verificationCodeErrorText"
+          [class.has-error]="!!verificationCodeErrorText"
           formControlName="verification_code"
           maxlength="6"
           inputmode="numeric">
