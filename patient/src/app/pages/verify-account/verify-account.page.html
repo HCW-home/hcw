@@ -24,12 +24,21 @@
 
           <form [formGroup]="verifyForm" (ngSubmit)="submitCode()" class="verify-form">
             @if (!knownIdentifier) {
+              <!-- Associated through aria-labelledby on the control, not for/id: Ionic
+                   generates its own id for the inner native input and offers no way to
+                   set it, so a for attribute here would point at nothing. -->
+              <!-- eslint-disable-next-line @angular-eslint/template/label-has-associated-control -->
+              <label class="field-label" id="verify-account-field-1-label">{{ 'verifyAccount.identifierPlaceholder' | translate }}</label>
+              <!-- Associated through aria-labelledby on the control, not for/id: Ionic
+                   generates its own id for the inner native input and offers no way to
+                   set it, so a for attribute here would point at nothing. -->
+              <!-- eslint-disable-next-line @angular-eslint/template/label-has-associated-control -->
+              <label class="field-label" id="verify-account-field-2-label">{{ 'verifyAccount.enterCode' | translate }}</label>
               <ion-item lines="full" class="input-item">
                 <ion-icon name="mail-outline" slot="start" aria-hidden="true"></ion-icon>
                 <ion-input
                   type="text"
-                  [label]="'verifyAccount.identifierPlaceholder' | translate"
-                  labelPlacement="floating"
+                  aria-labelledby="verify-account-field-1-label"
                   formControlName="identifier">
                 </ion-input>
               </ion-item>
@@ -50,8 +59,7 @@
               <ion-icon name="keypad-outline" slot="start" aria-hidden="true"></ion-icon>
               <ion-input
                 type="text"
-                [label]="'verifyAccount.enterCode' | translate"
-                labelPlacement="floating"
+                aria-labelledby="verify-account-field-2-label"
                 formControlName="code"
                 maxlength="6"
                 inputmode="numeric">

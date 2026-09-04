@@ -489,6 +489,22 @@ button.link-text:disabled {
   cursor: default;
 }
 
+/* Field labels sitting above their control, outside the filled container.
+ *
+ * Ionic's own label placements all render inside the input box: "floating"
+ * animates the label up into the field once text is entered, and "stacked"
+ * stacks it inside the same rounded surface. Both put the label within the
+ * grey card, which reads as cramped. A plain <label for> above the ion-item
+ * keeps the box for input alone, and gives an explicit for/id association
+ * rather than relying on Ionic's internal wiring. */
+.field-label {
+  display: block;
+  margin: 0 0 6px 4px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--app-text-secondary);
+}
+
 /* Floating and stacked labels on fields that already sit inside a styled
  * container.
  *
