@@ -287,7 +287,14 @@ app-search-bar {
   gap: var(--app-spacing-sm);
 }
 
+// Now a real <button>; these resets keep the previous <div> rendering.
 .reason-item {
+  width: 100%;
+  background: none;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  text-align: start;
   display: flex;
   align-items: center;
   gap: var(--app-spacing-md);
@@ -493,7 +500,14 @@ app-search-bar {
   gap: var(--app-spacing-md);
 }
 
+// Now a real <button>; these resets keep the previous <div> rendering.
 .doctor-card {
+  width: 100%;
+  background: none;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  text-align: start;
   margin: 0;
   cursor: pointer;
   transition: border-color 0.2s var(--app-ease), box-shadow 0.2s var(--app-ease);
@@ -948,7 +962,8 @@ app-search-bar {
     border: 1px solid var(--app-border);
     border-radius: var(--radius-card);
     box-shadow: var(--shadow-sm);
-    cursor: pointer;
+    // No cursor:pointer — the card itself is no longer clickable; its
+    // inner button is.
     transition:
       border-color .2s var(--app-ease),
       box-shadow .2s var(--app-ease),

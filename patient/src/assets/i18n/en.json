@@ -27,7 +27,8 @@
     "appNeedsReload": "The application needs to be reloaded to continue",
     "reload": "Reload",
     "offline": "Server connection lost",
-    "reconnecting": "Server connection lost. Reconnecting..."
+    "reconnecting": "Server connection lost. Reconnecting...",
+    "required": "required"
   },
   "login": {
     "title": "Sign In",
@@ -329,7 +330,9 @@
     "typePlaceholder": "Type a message...",
     "today": "Today",
     "yesterday": "Yesterday",
-    "unreadMessages": "Unread messages"
+    "unreadMessages": "Unread messages",
+    "openImage": "Open image {{name}}",
+    "downloadAttachment": "Download {{name}}"
   },
   "preJoinLobby": {
     "settingUp": "Setting up your devices...",

@@ -42,17 +42,22 @@
             <span class="section-badge">{{ items().length }} {{ 'common.total' | translate }}</span>
           }
         </div>
-        <label class="online-toggle">
-          <span>{{ 'map.onlineBooking' | translate }}</span>
+        <!-- Not a <label>: it wraps a button, not a form control, so the
+             association has to go through aria-labelledby instead. -->
+        <div class="online-toggle">
+          <span id="online-booking-label">{{ 'map.onlineBooking' | translate }}</span>
           <button
             type="button"
             class="toggle-switch"
+            role="switch"
+            aria-labelledby="online-booking-label"
+            [attr.aria-checked]="onlineBookingOnly()"
             [class.active]="onlineBookingOnly()"
             (click)="setOnlineBookingOnly(!onlineBookingOnly())"
           >
-            <span class="toggle-knob"></span>
+            <span class="toggle-knob" aria-hidden="true"></span>
           </button>
-        </label>
+        </div>
       </div>
 
       <div class="map-body" [class.map-body--detail]="detailPk() !== null">

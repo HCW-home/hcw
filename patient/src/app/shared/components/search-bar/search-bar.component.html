@@ -1,5 +1,7 @@
 @if (suggestOpen()) {
-  <div class="suggest-backdrop" (click)="closeSuggestions()"></div>
+  <!-- Pointer-only dismissal surface. aria-hidden keeps it out of the a11y
+       tree; keyboard users close the suggestions with Escape instead. -->
+  <div class="suggest-backdrop" (click)="closeSuggestions()" aria-hidden="true"></div>
 }
 
 <div class="search-bar">

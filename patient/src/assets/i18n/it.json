@@ -78,7 +78,9 @@
     "typePlaceholder": "Digita un messaggio...",
     "today": "Oggi",
     "yesterday": "Ieri",
-    "unreadMessages": "Messaggi non letti"
+    "unreadMessages": "Messaggi non letti",
+    "openImage": "Apri l'immagine {{name}}",
+    "downloadAttachment": "Scarica {{name}}"
   },
   "preJoinLobby": {
     "settingUp": "Configurazione dei dispositivi...",
@@ -186,7 +188,8 @@
     "appNeedsReload": "L'applicazione deve essere ricaricata per continuare",
     "reload": "Ricaricare",
     "offline": "Connessione al server persa",
-    "reconnecting": "Connessione al server persa. Riconnessione in corso..."
+    "reconnecting": "Connessione al server persa. Riconnessione in corso...",
+    "required": "obbligatorio"
   },
   "login": {
     "title": "Registrazione",

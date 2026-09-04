@@ -73,7 +73,15 @@
     overflow: hidden;
   }
 
+  // Now a real <button> so the row is keyboard operable; these resets keep it
+  // rendering exactly like the <div> it replaced.
   .timeline-item {
+    width: 100%;
+    background: none;
+    border: 0;
+    font: inherit;
+    color: inherit;
+    text-align: start;
     display: flex;
     align-items: flex-start;
     gap: 12px;

@@ -27,7 +27,8 @@
     "appNeedsReload": "يجب إعادة تحميل التطبيق للمتابعة",
     "reload": "إعادة التحميل",
     "offline": "انقطع الاتصال بالخادم",
-    "reconnecting": "انقطع الاتصال بالخادم. جارٍ إعادة الاتصال..."
+    "reconnecting": "انقطع الاتصال بالخادم. جارٍ إعادة الاتصال...",
+    "required": "مطلوب"
   },
   "login": {
     "title": "تسجيل الدخول",
@@ -329,7 +330,9 @@
     "typePlaceholder": "اكتب رسالة...",
     "today": "اليوم",
     "yesterday": "أمس",
-    "unreadMessages": "رسائل غير مقروءة"
+    "unreadMessages": "رسائل غير مقروءة",
+    "openImage": "فتح الصورة {{name}}",
+    "downloadAttachment": "تنزيل {{name}}"
   },
   "preJoinLobby": {
     "settingUp": "جارٍ إعداد أجهزتك...",

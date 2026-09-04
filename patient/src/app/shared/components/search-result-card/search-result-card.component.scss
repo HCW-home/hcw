@@ -6,6 +6,9 @@
 }
 
 .org-card {
+  // Anchors .oc-name-button::after, which stretches the click target back over
+  // the whole card now that the card itself is no longer a click handler.
+  position: relative;
   background: var(--app-surface);
   border: 1px solid var(--app-border);
   border-radius: var(--radius-card);
@@ -160,6 +163,50 @@
   &:hover {
     color: var(--app-teal-dark);
   }
+
+  // The real control. Looks like plain heading text; ::after re-creates the
+  // full-card hit area so pointer behaviour is unchanged.
+  .oc-name-button {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    color: inherit;
+    text-align: inherit;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: var(--radius-card);
+    }
+
+    // Card-wide outline, since the button's own box is only the name.
+    &:focus-visible {
+      outline: none;
+
+      &::after {
+        outline: 3px solid var(--app-focus-ring);
+        outline-offset: -3px;
+      }
+    }
+  }
+}
+
+// Buttons inside the expanded sheet must sit above the stretched hit area,
+// otherwise ::after would swallow their clicks.
+.oc-back,
+.day-arrow,
+.slot-chip,
+.rdv-button {
+  position: relative;
+  z-index: 1;
 }
 
 // Same two-tone chip system as the dashboard cards: brand tint for people,
