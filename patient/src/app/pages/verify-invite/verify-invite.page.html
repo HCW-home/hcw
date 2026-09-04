@@ -63,8 +63,7 @@
               <ion-text class="resend-text" color="medium">
                 {{ 'verifyInvite.didntReceive' | translate }}
               </ion-text>
-              <ion-text
-                color="primary"
+              <button type="button"
                 (click)="resendVerificationCode()"
                 [class.disabled]="isResending"
                 class="link-text">
@@ -73,16 +72,16 @@
                 } @else {
                   {{ 'verifyInvite.resendCode' | translate }}
                 }
-              </ion-text>
+              </button>
             </div>
 
             <div class="login-link">
               <ion-text class="link-text" color="medium">
                 {{ 'verifyInvite.havingTrouble' | translate }}
               </ion-text>
-              <ion-text color="primary" (click)="goToLogin()" class="link-text">
+              <button type="button" (click)="goToLogin()" class="link-text">
                 {{ 'verifyInvite.signInManually' | translate }}
-              </ion-text>
+              </button>
             </div>
           </div>
         }

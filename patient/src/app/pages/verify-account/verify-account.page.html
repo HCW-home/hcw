@@ -78,8 +78,7 @@
             <ion-text class="resend-text" color="medium">
               {{ 'verifyAccount.didntReceiveCode' | translate }}
             </ion-text>
-            <ion-text
-              color="primary"
+            <button type="button"
               (click)="resendCode()"
               [class.disabled]="isResending"
               class="link-text">
@@ -88,13 +87,13 @@
               } @else {
                 {{ 'verifyAccount.resendCode' | translate }}
               }
-            </ion-text>
+            </button>
           </div>
 
           <div class="login-link">
-            <ion-text color="primary" (click)="goToLogin()" class="link-text">
+            <button type="button" (click)="goToLogin()" class="link-text">
               {{ 'verifyAccount.backToLogin' | translate }}
-            </ion-text>
+            </button>
           </div>
         </div>
 

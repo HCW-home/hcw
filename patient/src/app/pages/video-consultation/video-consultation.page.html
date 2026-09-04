@@ -5,8 +5,8 @@
     }
 
     @if (phase() === 'connecting') {
-      <div class="connecting-overlay">
-        <ion-spinner name="crescent" color="light"></ion-spinner>
+      <div class="connecting-overlay" role="status">
+        <ion-spinner name="crescent" color="light" aria-hidden="true"></ion-spinner>
         <ion-text color="light">{{ 'videoConsultation.connecting' | translate }}</ion-text>
       </div>
     }
@@ -17,13 +17,15 @@
           <video #localVideo autoplay playsinline muted class="tile-video" [appMediaTrack]="localVideoTrack" [trackMuted]="true" [class.hidden]="!isCameraEnabled"></video>
           @if (!isCameraEnabled) {
             <div class="camera-off-placeholder">
-              <ion-icon name="videocam-off"></ion-icon>
+              <ion-icon name="videocam-off" aria-hidden="true"></ion-icon>
+              <span class="sr-only">{{ 'videoConsultation.cameraOff' | translate }}</span>
             </div>
           }
           <div class="participant-label">
             <ion-text>{{ 'videoConsultation.you' | translate }}</ion-text>
             @if (!isMicrophoneEnabled) {
-              <ion-icon name="mic-off" class="muted-icon"></ion-icon>
+              <ion-icon name="mic-off" class="muted-icon" aria-hidden="true"></ion-icon>
+              <span class="sr-only">{{ 'videoConsultation.micMuted' | translate }}</span>
             }
           </div>
         </div>
@@ -67,7 +69,8 @@
               <div class="participant-label">
                 <ion-text>{{ participant.name }}</ion-text>
                 @if (!participant.isMicrophoneEnabled) {
-                  <ion-icon name="mic-off" class="muted-icon"></ion-icon>
+                  <ion-icon name="mic-off" class="muted-icon" aria-hidden="true"></ion-icon>
+                  <span class="sr-only">{{ 'videoConsultation.micMuted' | translate }}</span>
                 }
               </div>
             </div>
@@ -91,7 +94,7 @@
             }
           }
         } @else {
-          <div class="video-tile waiting-tile">
+          <div class="video-tile waiting-tile" role="status">
             <div class="camera-off-placeholder">
               <ion-avatar class="participant-avatar">
                 <div class="avatar-initials">?</div>
@@ -111,7 +114,10 @@
         <div class="top-bar">
           <div class="call-info">
             @if (connectionStatus === 'connected') {
-              <ion-chip color="success" class="duration-chip">
+              <!-- Ticks every second: keep it out of the a11y tree, otherwise a
+                   screen reader would talk over the consultation nonstop. The
+                   duration is announced once when the call ends. -->
+              <ion-chip color="success" class="duration-chip" aria-hidden="true">
                 <ion-icon name="ellipse" class="recording-dot"></ion-icon>
                 <ion-text>{{ formattedDuration }}</ion-text>
               </ion-chip>
@@ -131,11 +137,12 @@
                 (click)="toggleBackgroundBlur()"
                 [disabled]="!isCameraEnabled || isTogglingBackgroundBlur"
                 [attr.aria-label]="'videoConsultation.backgroundBlur' | translate"
+                [attr.aria-pressed]="isBackgroundBlurEnabled"
                 [title]="'videoConsultation.backgroundBlur' | translate">
                 @if (isTogglingBackgroundBlur) {
                   <ion-spinner name="crescent" slot="icon-only"></ion-spinner>
                 } @else {
-                  <ion-icon name="sparkles-outline" slot="icon-only"></ion-icon>
+                  <ion-icon name="sparkles-outline" slot="icon-only" aria-hidden="true"></ion-icon>
                 }
               </ion-button>
             }
@@ -143,8 +150,9 @@
               fill="clear"
               color="light"
               (click)="switchCamera()"
-              [disabled]="!isCameraEnabled || isSwitchingCamera">
-              <ion-icon name="camera-reverse-outline" slot="icon-only"></ion-icon>
+              [disabled]="!isCameraEnabled || isSwitchingCamera"
+              [attr.aria-label]="'videoConsultation.switchCamera' | translate">
+              <ion-icon name="camera-reverse-outline" slot="icon-only" aria-hidden="true"></ion-icon>
             </ion-button>
           </div>
         </div>
@@ -154,29 +162,36 @@
             <ion-button
               [color]="!isMicrophoneEnabled ? 'danger' : 'light'"
               class="control-button"
-              (click)="toggleMicrophone()">
-              <ion-icon [name]="!isMicrophoneEnabled ? 'mic-off' : 'mic'" slot="icon-only"></ion-icon>
+              (click)="toggleMicrophone()"
+              [attr.aria-label]="'videoConsultation.microphone' | translate"
+              [attr.aria-pressed]="isMicrophoneEnabled">
+              <ion-icon [name]="!isMicrophoneEnabled ? 'mic-off' : 'mic'" slot="icon-only" aria-hidden="true"></ion-icon>
             </ion-button>
 
             <ion-button
               [color]="!isCameraEnabled ? 'danger' : 'light'"
               class="control-button"
-              (click)="toggleCamera()">
-              <ion-icon [name]="!isCameraEnabled ? 'videocam-off' : 'videocam'" slot="icon-only"></ion-icon>
+              (click)="toggleCamera()"
+              [attr.aria-label]="'videoConsultation.camera' | translate"
+              [attr.aria-pressed]="isCameraEnabled">
+              <ion-icon [name]="!isCameraEnabled ? 'videocam-off' : 'videocam'" slot="icon-only" aria-hidden="true"></ion-icon>
             </ion-button>
 
             <ion-button
               color="danger"
               class="control-button end-call"
-              (click)="endCall()">
-              <ion-icon name="call" slot="icon-only"></ion-icon>
+              (click)="endCall()"
+              [attr.aria-label]="'videoConsultation.endCall' | translate">
+              <ion-icon name="call" slot="icon-only" aria-hidden="true"></ion-icon>
             </ion-button>
 
             <ion-button
               [color]="isScreenShareEnabled ? 'primary' : 'light'"
               class="control-button"
-              (click)="toggleScreenShare()">
-              <ion-icon name="desktop-outline" slot="icon-only"></ion-icon>
+              (click)="toggleScreenShare()"
+              [attr.aria-label]="'videoConsultation.screenShare' | translate"
+              [attr.aria-pressed]="isScreenShareEnabled">
+              <ion-icon name="desktop-outline" slot="icon-only" aria-hidden="true"></ion-icon>
             </ion-button>
 
             @if (chatAvailable()) {
@@ -184,11 +199,16 @@
                 <ion-button
                   [color]="showChat() ? 'primary' : 'light'"
                   class="control-button"
-                  (click)="openChat()">
-                  <ion-icon name="chatbubble-outline" slot="icon-only"></ion-icon>
+                  (click)="openChat()"
+                  [attr.aria-label]="unreadCount() > 0
+                    ? ('videoConsultation.chatWithUnread' | translate:{ count: unreadCount() })
+                    : ('videoConsultation.chat' | translate)"
+                  [attr.aria-pressed]="showChat()"
+                  [attr.aria-expanded]="showChat()">
+                  <ion-icon name="chatbubble-outline" slot="icon-only" aria-hidden="true"></ion-icon>
                 </ion-button>
                 @if (unreadCount() > 0) {
-                  <ion-badge color="danger" class="unread-badge">{{ unreadCount() > 9 ? '9+' : unreadCount() }}</ion-badge>
+                  <ion-badge color="danger" class="unread-badge" aria-hidden="true">{{ unreadCount() > 9 ? '9+' : unreadCount() }}</ion-badge>
                 }
               </div>
             }
@@ -196,16 +216,16 @@
         </div>
 
       @if (phase() === 'in-call' && connectionStatus === 'disconnected' && !isLoading && callDuration > 0) {
-        <div class="call-ended-overlay">
-          <ion-icon name="checkmark-circle" color="success"></ion-icon>
+        <div class="call-ended-overlay" role="alert">
+          <ion-icon name="checkmark-circle" color="success" aria-hidden="true"></ion-icon>
           <ion-text>{{ 'videoConsultation.consultationEnded' | translate }}</ion-text>
           <ion-text color="medium">{{ 'videoConsultation.duration' | translate:{ duration: formattedDuration } }}</ion-text>
         </div>
       }
 
       @if (connectionStatus === 'failed') {
-        <div class="call-failed-overlay">
-          <ion-icon name="alert-circle" color="danger"></ion-icon>
+        <div class="call-failed-overlay" role="alert">
+          <ion-icon name="alert-circle" color="danger" aria-hidden="true"></ion-icon>
           <ion-text>{{ 'videoConsultation.connectionFailed' | translate }}</ion-text>
           @if (errorMessage) {
             <ion-text color="medium" class="error-message">{{ errorMessage }}</ion-text>
@@ -220,11 +240,13 @@
       }
 
       @if (showChat()) {
-        <div class="chat-panel">
+        <div class="chat-panel" role="dialog" aria-modal="true"
+             [attr.aria-label]="'videoConsultation.chat' | translate">
           <div class="chat-header">
             <ion-text class="chat-title">{{ 'videoConsultation.chat' | translate }}</ion-text>
-            <ion-button fill="clear" size="small" (click)="openChat()">
-              <ion-icon name="close" slot="icon-only"></ion-icon>
+            <ion-button fill="clear" size="small" (click)="openChat()"
+                        [attr.aria-label]="'common.close' | translate">
+              <ion-icon name="close" slot="icon-only" aria-hidden="true"></ion-icon>
             </ion-button>
           </div>
           <app-message-list

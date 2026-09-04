@@ -17,6 +17,10 @@ const DEFAULT_FALLBACK: AppLanguage[] = [
 const STORAGE_KEY = 'app_language';
 const DEFAULT_LANGUAGE = 'en';
 
+/* Languages written right-to-left. Ionic mirrors its own components off the
+ * documentElement dir, so setting the attribute is all that is needed here. */
+const RTL_LANGUAGES = ['ar', 'he', 'fa', 'ur'];
+
 const NATIVE_NAMES: Record<string, string> = {
   en: 'English',
   fr: 'Français',
@@ -103,6 +107,7 @@ export class TranslationService {
     this.currentLanguageSignal.set(langCode);
     localStorage.setItem(STORAGE_KEY, langCode);
     document.documentElement.lang = langCode;
+    document.documentElement.dir = RTL_LANGUAGES.includes(langCode) ? 'rtl' : 'ltr';
   }
 
   getCurrentLanguage(): AppLanguage | undefined {
