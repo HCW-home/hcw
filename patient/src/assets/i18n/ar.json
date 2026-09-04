@@ -57,7 +57,9 @@
     "genericError": "حدث خطأ. يرجى المحاولة مرة أخرى.",
     "identifierPlaceholder": "البريد الإلكتروني أو رقم الهاتف",
     "identifierRequired": "أدخل بريدًا إلكترونيًا أو رقم هاتف صالحًا",
-    "phoneNeedsCountryCode": "أضف رمز بلدك، على سبيل المثال ‎+966612345678"
+    "phoneNeedsCountryCode": "أضف رمز بلدك، على سبيل المثال ‎+966612345678",
+    "showPassword": "إظهار كلمة المرور",
+    "hidePassword": "إخفاء كلمة المرور"
   },
   "register": {
     "platformDescription": "أنشئ حسابك وابدأ استشاراتك عن بُعد اليوم.",
@@ -514,7 +516,15 @@
     "messageUpdated": "تم تحديث الرسالة",
     "failedUpdate": "تعذّر تحديث الرسالة",
     "messageDeleted": "تم حذف الرسالة",
-    "failedDelete": "تعذّر حذف الرسالة"
+    "failedDelete": "تعذّر حذف الرسالة",
+    "microphone": "الميكروفون",
+    "camera": "الكاميرا",
+    "endCall": "إنهاء المكالمة",
+    "screenShare": "مشاركة الشاشة",
+    "switchCamera": "تبديل الكاميرا",
+    "chatWithUnread": "المحادثة، {{count}} رسائل غير مقروءة",
+    "micMuted": "الميكروفون مكتوم",
+    "cameraOff": "الكاميرا مغلقة"
   },
   "videoCall": {
     "leaveCallTitle": "مغادرة مكالمة الفيديو؟",

@@ -22,9 +22,9 @@
             <ion-text color="medium" class="server-host">
               {{ 'instancePicker.currentServer' | translate: { host: activeHost } }}
             </ion-text>
-            <ion-text color="primary" (click)="changeServer()" class="link-text">
+            <button type="button" (click)="changeServer()" class="link-text">
               {{ 'instancePicker.changeServer' | translate }}
-            </ion-text>
+            </button>
           </div>
         }
 

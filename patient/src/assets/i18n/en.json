@@ -57,7 +57,9 @@
     "genericError": "An error occurred. Please try again.",
     "identifierPlaceholder": "Email or phone number",
     "identifierRequired": "Enter a valid email address or phone number",
-    "phoneNeedsCountryCode": "Add your country code, for example +33612345678"
+    "phoneNeedsCountryCode": "Add your country code, for example +33612345678",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "register": {
     "platformDescription": "Create your account and start your telemedicine consultations today.",
@@ -514,7 +516,15 @@
     "messageUpdated": "Message updated",
     "failedUpdate": "Failed to update message",
     "messageDeleted": "Message deleted",
-    "failedDelete": "Failed to delete message"
+    "failedDelete": "Failed to delete message",
+    "microphone": "Microphone",
+    "camera": "Camera",
+    "endCall": "End call",
+    "screenShare": "Share screen",
+    "switchCamera": "Switch camera",
+    "chatWithUnread": "Chat, {{count}} unread messages",
+    "micMuted": "Microphone muted",
+    "cameraOff": "Camera off"
   },
   "videoCall": {
     "leaveCallTitle": "Leave video call?",

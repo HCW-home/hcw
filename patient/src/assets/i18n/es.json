@@ -158,7 +158,9 @@
     "genericError": "Se ha producido un error. Por favor, inténtelo de nuevo.",
     "identifierPlaceholder": "Correo electrónico o teléfono",
     "identifierRequired": "Introduzca un correo electrónico o un teléfono válido",
-    "phoneNeedsCountryCode": "Añada su prefijo de país, por ejemplo +34612345678"
+    "phoneNeedsCountryCode": "Añada su prefijo de país, por ejemplo +34612345678",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña"
   },
   "register": {
     "platformDescription": "Crea su cuenta y comienza hoy mismo tus consultas de telemedicina.",
@@ -480,7 +482,15 @@
     "messageUpdated": "Mensaje actualizado",
     "failedUpdate": "No se pudo actualizar el mensaje",
     "messageDeleted": "Mensaje eliminado",
-    "failedDelete": "No se pudo eliminar el mensaje."
+    "failedDelete": "No se pudo eliminar el mensaje.",
+    "microphone": "Micrófono",
+    "camera": "Cámara",
+    "endCall": "Colgar",
+    "screenShare": "Compartir pantalla",
+    "switchCamera": "Cambiar de cámara",
+    "chatWithUnread": "Chat, {{count}} mensajes sin leer",
+    "micMuted": "Micrófono silenciado",
+    "cameraOff": "Cámara desactivada"
   },
   "videoCall": {
     "leaveCallTitle": "¿Abandonar la videollamada?",

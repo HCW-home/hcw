@@ -410,3 +410,102 @@ ion-alert.ios {
     color: var(--app-teal-dark);
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * Accessibility primitives
+ * ---------------------------------------------------------------------------
+ * Shared building blocks for WCAG 2.1 AA conformance. Kept global because they
+ * apply across every page and component.
+ */
+
+/* Visible to assistive technology only. Not display:none and not
+ * visibility:hidden — both of those drop the node from the accessibility tree,
+ * which defeats the purpose. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Keyboard focus indicator (WCAG 2.4.7).
+ *
+ * The ring colour is a fixed dark teal rather than var(--ion-color-primary):
+ * the primary is overwritten at runtime from per-instance server config
+ * (app.component.ts applyPrimaryColor), so deriving the ring from it would let
+ * a light brand colour produce an invisible focus ring. */
+:root {
+  --app-focus-ring: #0b4f5f;
+}
+
+:focus-visible {
+  outline: 3px solid var(--app-focus-ring);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Mouse and touch activation must not paint the ring. */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Ionic components hide their internals behind shadow roots, so the global
+ * rule above never reaches the real focusable node. Targeting the host makes
+ * the browser draw the ring around the component itself. */
+ion-button:focus-visible,
+ion-select:focus-visible,
+ion-checkbox:focus-visible,
+ion-toggle:focus-visible,
+ion-radio:focus-visible,
+ion-card[button]:focus-visible {
+  outline: 3px solid var(--app-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Buttons that are styled to read as inline text links. Used wherever a click
+ * handler used to sit on a non-focusable <ion-text>; the element is now a real
+ * <button> so it is reachable by keyboard, and this strips the native chrome
+ * so the appearance is unchanged. */
+/* :where() keeps this at zero specificity so per-component .link-text rules
+ * (font-size, font-weight, colour) still win without needing !important. */
+:where(button.link-text) {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: var(--ion-color-primary);
+  cursor: pointer;
+  text-align: inherit;
+}
+
+button.link-text:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Skip link — first tab stop on every page, hidden until focused (WCAG 2.4.1).
+ * Named .a11y-skip-link, not .skip-link: confirm-presence already uses that
+ * class for an unrelated "skip this step" business link. */
+.a11y-skip-link {
+  position: absolute;
+  top: -100px;
+  inset-inline-start: 8px;
+  z-index: 10000;
+  padding: 12px 20px;
+  border-radius: 0 0 8px 8px;
+  background: var(--app-focus-ring);
+  color: #ffffff;
+  font-weight: 600;
+  text-decoration: none;
+  transition: top 0.15s var(--app-ease);
+
+  &:focus {
+    top: 0;
+  }
+}

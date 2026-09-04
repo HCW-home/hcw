@@ -50,9 +50,9 @@
   <div class="step-animate">
     <div class="identifier-display">
       <ion-text color="medium">{{ identifier }}</ion-text>
-      <ion-text color="primary" (click)="resetToIdentifier()" class="link-text change-link">
+      <button type="button" (click)="resetToIdentifier()" class="link-text change-link">
         {{ 'login.backToEmail' | translate }}
-      </ion-text>
+      </button>
     </div>
 
     <form [formGroup]="passwordForm" (ngSubmit)="onLogin()" class="auth-form">
@@ -64,12 +64,18 @@
           [placeholder]="'login.passwordPlaceholder' | translate"
           formControlName="password">
         </ion-input>
-        <ion-icon
-          [name]="showPassword ? 'eye-off-outline' : 'eye-outline'"
+        <button
+          type="button"
           slot="end"
-          (click)="togglePassword()"
-          class="password-toggle">
-        </ion-icon>
+          class="password-toggle"
+          [attr.aria-label]="(showPassword ? 'login.hidePassword' : 'login.showPassword') | translate"
+          [attr.aria-pressed]="showPassword"
+          (click)="togglePassword()">
+          <ion-icon
+            [name]="showPassword ? 'eye-off-outline' : 'eye-outline'"
+            aria-hidden="true">
+          </ion-icon>
+        </button>
       </ion-item>
       @if (passwordForm.get('password')?.invalid && passwordForm.get('password')?.touched) {
         <ion-text color="danger" class="error-message">
@@ -79,9 +85,9 @@
 
       @if (!passwordLoginDisabled) {
         <div class="forgot-password">
-          <ion-text color="primary" (click)="onForgotPassword()" class="link-text">
+          <button type="button" (click)="onForgotPassword()" class="link-text">
             {{ 'login.forgotPassword' | translate }}
-          </ion-text>
+          </button>
         </div>
       }
 
@@ -121,9 +127,9 @@
   <div class="step-animate">
     <div class="identifier-display">
       <ion-text color="medium">{{ identifier }}</ion-text>
-      <ion-text color="primary" (click)="resetToIdentifier()" class="link-text change-link">
+      <button type="button" (click)="resetToIdentifier()" class="link-text change-link">
         {{ 'login.backToEmail' | translate }}
-      </ion-text>
+      </button>
     </div>
 
     <ion-text class="code-sent-message" color="medium">
@@ -170,17 +176,17 @@
       <ion-text class="resend-text" color="medium">
         {{ 'login.didntReceiveCode' | translate }}
       </ion-text>
-      <ion-text
-        color="primary"
+      <button
+        type="button"
         (click)="resendCode()"
-        [class.disabled]="isResending"
+        [disabled]="isResending"
         class="link-text">
         @if (isResending) {
           {{ 'login.sendingCode' | translate }}
         } @else {
           {{ 'login.resendCode' | translate }}
         }
-      </ion-text>
+      </button>
     </div>
   </div>
 }
@@ -189,16 +195,16 @@
   @if (mode === 'login' && registrationEnabled) {
     <div class="mode-switch">
       <ion-text class="switch-text" color="medium">{{ 'login.noAccount' | translate }}</ion-text>
-      <ion-text color="primary" (click)="switchTo('register')" class="link-text">
+      <button type="button" (click)="switchTo('register')" class="link-text">
         {{ 'login.signUp' | translate }}
-      </ion-text>
+      </button>
     </div>
   } @else if (mode === 'register') {
     <div class="mode-switch">
       <ion-text class="switch-text" color="medium">{{ 'register.hasAccount' | translate }}</ion-text>
-      <ion-text color="primary" (click)="switchTo('login')" class="link-text">
+      <button type="button" (click)="switchTo('login')" class="link-text">
         {{ 'common.signIn' | translate }}
-      </ion-text>
+      </button>
     </div>
   }
 }

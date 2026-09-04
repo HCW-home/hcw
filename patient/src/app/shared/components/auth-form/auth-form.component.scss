@@ -43,8 +43,23 @@
       --placeholder-color: var(--app-input-placeholder);
     }
 
+    /* Real <button> so the toggle is keyboard reachable; stripped back to look
+     * exactly like the bare icon it replaced. */
     .password-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: 0;
+      padding: 0;
+      margin: 0;
       cursor: pointer;
+      color: var(--app-input-placeholder);
+
+      ion-icon {
+        font-size: 20px;
+        pointer-events: none;
+      }
     }
   }
 

@@ -216,7 +216,9 @@
     "genericError": "Si è verificato un errore. Riprova.",
     "identifierPlaceholder": "Email o numero di telefono",
     "identifierRequired": "Inserisci un indirizzo email o un numero di telefono valido",
-    "phoneNeedsCountryCode": "Aggiungi il prefisso internazionale, ad esempio +39612345678"
+    "phoneNeedsCountryCode": "Aggiungi il prefisso internazionale, ad esempio +39612345678",
+    "showPassword": "Mostra password",
+    "hidePassword": "Nascondi password"
   },
   "register": {
     "platformDescription": "Crea il tuo account e inizia oggi stesso le tue consulenze di telemedicina.",
@@ -480,7 +482,15 @@
     "messageUpdated": "Messaggio aggiornato",
     "failedUpdate": "Impossibile aggiornare il messaggio",
     "messageDeleted": "Messaggio eliminato",
-    "failedDelete": "Impossibile eliminare il messaggio"
+    "failedDelete": "Impossibile eliminare il messaggio",
+    "microphone": "Microfono",
+    "camera": "Fotocamera",
+    "endCall": "Termina chiamata",
+    "screenShare": "Condividi schermo",
+    "switchCamera": "Cambia fotocamera",
+    "chatWithUnread": "Chat, {{count}} messaggi non letti",
+    "micMuted": "Microfono disattivato",
+    "cameraOff": "Fotocamera disattivata"
   },
   "videoCall": {
     "leaveCallTitle": "Uscire dalla videochiamata?",

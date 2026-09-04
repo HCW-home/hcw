@@ -56,7 +56,9 @@
     "genericError": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
     "identifierPlaceholder": "E-Mail oder Telefonnummer",
     "identifierRequired": "Geben Sie eine gültige E-Mail-Adresse oder Telefonnummer ein",
-    "phoneNeedsCountryCode": "Fügen Sie Ihre Ländervorwahl hinzu, zum Beispiel +49612345678"
+    "phoneNeedsCountryCode": "Fügen Sie Ihre Ländervorwahl hinzu, zum Beispiel +49612345678",
+    "showPassword": "Passwort anzeigen",
+    "hidePassword": "Passwort ausblenden"
   },
   "register": {
     "platformDescription": "Erstellen Sie Ihr Konto und beginnen Sie noch heute mit Ihren Telemedizin-Konsultationen.",
@@ -476,7 +478,15 @@
     "messageUpdated": "Nachricht aktualisiert",
     "failedUpdate": "Aktualisierung der Nachricht fehlgeschlagen",
     "messageDeleted": "Nachricht geloescht",
-    "failedDelete": "Loeschen der Nachricht fehlgeschlagen"
+    "failedDelete": "Loeschen der Nachricht fehlgeschlagen",
+    "microphone": "Mikrofon",
+    "camera": "Kamera",
+    "endCall": "Anruf beenden",
+    "screenShare": "Bildschirm teilen",
+    "switchCamera": "Kamera wechseln",
+    "chatWithUnread": "Chat, {{count}} ungelesene Nachrichten",
+    "micMuted": "Mikrofon stummgeschaltet",
+    "cameraOff": "Kamera aus"
   },
   "videoCall": {
     "leaveCallTitle": "Videoanruf verlassen?",

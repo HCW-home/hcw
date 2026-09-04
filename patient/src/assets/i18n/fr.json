@@ -57,7 +57,9 @@
     "genericError": "Une erreur est survenue. Veuillez réessayer.",
     "identifierPlaceholder": "E-mail ou numéro de téléphone",
     "identifierRequired": "Saisissez une adresse e-mail ou un numéro de téléphone valide",
-    "phoneNeedsCountryCode": "Ajoutez votre indicatif pays, par exemple +33612345678"
+    "phoneNeedsCountryCode": "Ajoutez votre indicatif pays, par exemple +33612345678",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe"
   },
   "register": {
     "platformDescription": "Créez votre compte et commencez vos consultations de télémédecine dès aujourd'hui.",
@@ -514,7 +516,15 @@
     "messageUpdated": "Message mis à jour",
     "failedUpdate": "Échec de la mise à jour du message",
     "messageDeleted": "Message supprimé",
-    "failedDelete": "Échec de la suppression du message"
+    "failedDelete": "Échec de la suppression du message",
+    "microphone": "Microphone",
+    "camera": "Caméra",
+    "endCall": "Raccrocher",
+    "screenShare": "Partager l'écran",
+    "switchCamera": "Changer de caméra",
+    "chatWithUnread": "Discussion, {{count}} messages non lus",
+    "micMuted": "Microphone coupé",
+    "cameraOff": "Caméra désactivée"
   },
   "videoCall": {
     "leaveCallTitle": "Quitter l'appel vidéo ?",
