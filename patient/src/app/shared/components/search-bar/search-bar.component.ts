@@ -50,6 +50,8 @@ export class SearchBarComponent implements OnInit, OnDestroy {
     this.whereQuery.set(value ?? '');
   }
 
+  // Renaming this output would change the component's public API; unrelated to a11y work.
+  // eslint-disable-next-line @angular-eslint/no-output-native
   @Output() search = new EventEmitter<SearchQuery>();
   // A practitioner suggestion is a direct hit: the host decides whether that
   // opens their profile or starts a booking.

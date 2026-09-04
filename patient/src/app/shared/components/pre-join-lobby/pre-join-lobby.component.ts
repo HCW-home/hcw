@@ -54,6 +54,8 @@ export class PreJoinLobbyComponent implements OnInit, OnDestroy {
   private t = inject(TranslationService);
 
   @Output() join = new EventEmitter<IPreJoinSettings>();
+  // Renaming this output would change the component's public API; unrelated to a11y work.
+  // eslint-disable-next-line @angular-eslint/no-output-native
   @Output() close = new EventEmitter<void>();
   @ViewChild('videoPreview') videoPreviewRef!: ElementRef<HTMLVideoElement>;
 
