@@ -119,8 +119,14 @@ export class AuthFormComponent implements OnInit, OnChanges {
    * control is both touched and invalid — so the template no longer needs its
    * own @if block or aria plumbing. */
   get identifierErrorText(): string {
-    const errors = this.identifierForm.get('identifier')?.errors;
+    const control = this.identifierForm.get('identifier');
+    const errors = control?.errors;
     if (!errors) return '';
+    /* An empty field is not an error yet. Ionic shows errorText as soon as the
+     * control is touched, so returning a message for `required` would scold the
+     * user for merely tabbing through an untouched form. Only speak up once
+     * something has actually been typed. */
+    if (errors['required'] && !control?.value) return '';
     if (errors['phoneNeedsCountryCode']) {
       return this.t.instant('login.phoneNeedsCountryCode');
     }
@@ -130,15 +136,17 @@ export class AuthFormComponent implements OnInit, OnChanges {
   }
 
   get passwordErrorText(): string {
-    return this.passwordForm.get('password')?.errors
-      ? this.t.instant('login.passwordMinLength')
-      : '';
+    const control = this.passwordForm.get('password');
+    if (!control?.errors) return '';
+    if (control.errors['required'] && !control.value) return '';
+    return this.t.instant('login.passwordMinLength');
   }
 
   get verificationCodeErrorText(): string {
-    return this.verificationForm.get('verification_code')?.errors
-      ? this.t.instant('login.invalidCode')
-      : '';
+    const control = this.verificationForm.get('verification_code');
+    if (!control?.errors) return '';
+    if (control.errors['required'] && !control.value) return '';
+    return this.t.instant('login.invalidCode');
   }
 
   /** Password login is email-only and has to be enabled for patients. */

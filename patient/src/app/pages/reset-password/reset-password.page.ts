@@ -64,15 +64,20 @@ export class ResetPasswordPage implements OnInit, OnDestroy {
   /* Feeds ion-input's errorText, which renders it in a role="alert" tied to
    * the field — replacing the hand-rolled error blocks this template used. */
   get passwordErrorText(): string {
-    return this.resetPasswordForm.get('password')?.errors
-      ? this.t.instant('resetPassword.passwordMinLength')
-      : '';
+    const control = this.resetPasswordForm.get('password');
+    if (!control?.errors) return '';
+    /* An empty field is not an error yet — Ionic shows errorText as soon as the
+     * control is touched, so reporting `required` here would scold the user for
+     * tabbing past a field they had not filled in. */
+    if (control.errors['required'] && !control.value) return '';
+    return this.t.instant('resetPassword.passwordMinLength');
   }
 
   get confirmPasswordErrorText(): string {
-    return this.resetPasswordForm.get('confirmPassword')?.errors
-      ? this.t.instant('resetPassword.confirmRequired')
-      : '';
+    const control = this.resetPasswordForm.get('confirmPassword');
+    if (!control?.errors) return '';
+    if (control.errors['required'] && !control.value) return '';
+    return this.t.instant('resetPassword.confirmRequired');
   }
 
   ngOnInit(): void {
