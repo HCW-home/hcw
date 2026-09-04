@@ -1,4 +1,7 @@
-<ion-content class="video-consultation-content" [scrollY]="false">
+<ion-content id="main-content" role="main" class="video-consultation-content" [scrollY]="false">
+  <!-- The call fills the screen and shows no page title, but the document
+       still needs one h1 for screen-reader navigation. -->
+  <h1 class="sr-only">{{ 'videoConsultation.title' | translate }}</h1>
   <div class="video-container">
     @if (phase() === 'lobby') {
       <app-pre-join-lobby (join)="onJoinFromLobby($event)" (close)="onLobbyClose()"></app-pre-join-lobby>

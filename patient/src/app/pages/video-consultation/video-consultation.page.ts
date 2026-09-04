@@ -21,6 +21,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { VideoCallService } from '../../core/services/video-call.service';
 import { AttachableTrack, ConnectionStatus, ParticipantInfo, VideoCallConfig } from '../../core/services/video-call.types';
 import { TranslationService } from '../../core/services/translation.service';
+import { LiveAnnouncerService } from '../../core/services/live-announcer.service';
 import { ConsultationService } from '../../core/services/consultation.service';
 import { ConsultationWebSocketService } from '../../core/services/consultation-websocket.service';
 import { ConsultationCryptoService } from '../../core/services/consultation-crypto.service';
@@ -57,6 +58,7 @@ import { IPreJoinSettings } from '../../core/models/media-device.model';
 })
 export class VideoConsultationPage implements OnInit, OnDestroy {
   private t = inject(TranslationService);
+  private announcer = inject(LiveAnnouncerService);
 
   @ViewChild('localVideo') localVideoRef!: ElementRef<HTMLVideoElement>;
   @ViewChild('localScreenShare') localScreenShareRef!: ElementRef<HTMLVideoElement>;
@@ -295,9 +297,13 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     this.videoCallService.connectionStatus$
       .pipe(takeUntil(this.destroy$))
       .subscribe(status => {
+        const previous = this.connectionStatus;
         this.connectionStatus = status;
         if (status === 'connected' && !this.durationTimer) {
           this.startDurationTimer();
+        }
+        if (status !== previous) {
+          this.announceConnectionStatus(status);
         }
         this.cdr.markForCheck();
       });
@@ -318,6 +324,7 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
     this.videoCallService.participants$
       .pipe(takeUntil(this.destroy$))
       .subscribe(participants => {
+        this.announceParticipantChanges(participants);
         this.participants = participants;
         this.cdr.markForCheck();
       });
@@ -838,6 +845,43 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
       case 'disconnected': return this.t.instant('videoConsultation.disconnected');
       case 'failed': return this.t.instant('videoConsultation.connectionFailedStatus');
       default: return '';
+    }
+  }
+
+  /* Screen-reader announcements for events that are otherwise conveyed only
+   * by a visual change. Both are called from the subscriptions above, before
+   * the backing field is replaced, so the previous state is still available. */
+  private announceConnectionStatus(status: string): void {
+    switch (status) {
+      case 'connected':
+        this.announcer.announce(this.t.instant('videoConsultation.connectedToConsultation'));
+        break;
+      case 'reconnecting':
+        this.announcer.announce(this.t.instant('videoConsultation.reconnecting'), 'assertive');
+        break;
+      case 'disconnected':
+        this.announcer.announce(this.t.instant('videoConsultation.disconnected'), 'assertive');
+        break;
+      case 'failed':
+        this.announcer.announce(this.t.instant('videoConsultation.connectionFailed'), 'assertive');
+        break;
+    }
+  }
+
+  private announceParticipantChanges(next: Map<string, ParticipantInfo>): void {
+    for (const [identity, participant] of next) {
+      if (!this.participants.has(identity)) {
+        this.announcer.announce(
+          this.t.instant('videoConsultation.participantJoined', { name: participant.name })
+        );
+      }
+    }
+    for (const [identity, participant] of this.participants) {
+      if (!next.has(identity)) {
+        this.announcer.announce(
+          this.t.instant('videoConsultation.participantLeft', { name: participant.name })
+        );
+      }
     }
   }
 

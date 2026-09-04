@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
 import { IonButton, IonIcon, IonAvatar } from '@ionic/angular/standalone';
@@ -16,6 +16,9 @@ import { callOutline, closeOutline } from 'ionicons/icons';
 })
 export class IncomingCallComponent implements OnInit, OnDestroy {
   incomingCall: IncomingCallData | null = null;
+  @ViewChild('acceptButton', { read: ElementRef }) acceptButton?: ElementRef<HTMLElement>;
+  /* Where focus was before the call took over the screen. */
+  private previousFocus: HTMLElement | null = null;
   private destroy$ = new Subject<void>();
 
   constructor(private incomingCallService: IncomingCallService) {
@@ -26,7 +29,21 @@ export class IncomingCallComponent implements OnInit, OnDestroy {
     this.incomingCallService.incomingCall$
       .pipe(takeUntil(this.destroy$))
       .subscribe(call => {
+        const appearing = !this.incomingCall && !!call;
+        const dismissed = !!this.incomingCall && !call;
         this.incomingCall = call;
+
+        /* This overlay is a plain div, not an ion-modal, so nothing moves
+         * focus into it. Without this a keyboard user stays parked behind the
+         * call and cannot reach Accept. */
+        if (appearing) {
+          const active = document.activeElement;
+          this.previousFocus = active instanceof HTMLElement ? active : null;
+          setTimeout(() => this.acceptButton?.nativeElement.focus(), 0);
+        } else if (dismissed) {
+          this.previousFocus?.focus();
+          this.previousFocus = null;
+        }
       });
   }
 

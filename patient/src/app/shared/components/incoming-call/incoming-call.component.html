@@ -1,6 +1,10 @@
 @if (incomingCall) {
+  <!-- alertdialog, not dialog: an incoming call takes over the screen and
+       needs announcing the moment it appears. Labelled by the caller name and
+       described by the "is calling" line, so a screen reader reads both. -->
   <div class="incoming-call-overlay">
-    <div class="incoming-call-container">
+    <div class="incoming-call-container" role="alertdialog" aria-modal="true"
+         aria-labelledby="incoming-call-name" aria-describedby="incoming-call-label">
       <div class="caller-info">
         <div class="avatar-wrapper">
           <div class="pulse-ring"></div>
@@ -15,11 +19,12 @@
             </div>
           }
         </div>
-        <h2 class="caller-name">{{ incomingCall.callerName }}</h2>
-        <p class="call-label">{{ 'incomingCall.isCalling' | translate }}</p>
+        <h2 class="caller-name" id="incoming-call-name">{{ incomingCall.callerName }}</h2>
+        <p class="call-label" id="incoming-call-label">{{ 'incomingCall.isCalling' | translate }}</p>
       </div>
       <div class="actions">
         <ion-button
+          #acceptButton
           class="action-button action-button--accept"
           (click)="onAccept()"
           color="success"

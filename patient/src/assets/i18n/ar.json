@@ -29,7 +29,8 @@
     "offline": "انقطع الاتصال بالخادم",
     "reconnecting": "انقطع الاتصال بالخادم. جارٍ إعادة الاتصال...",
     "required": "مطلوب",
-    "language": "اللغة"
+    "language": "اللغة",
+    "skipToContent": "تخطي إلى المحتوى الرئيسي"
   },
   "login": {
     "title": "تسجيل الدخول",
@@ -171,7 +172,8 @@
     "appointmentNotFound": "لم يتم العثور على الموعد",
     "failedToLoadParticipant": "تعذّر تحميل معلومات المشارك",
     "statusCompleted": "مكتمل",
-    "statusNoshow": "لم يحضر"
+    "statusNoshow": "لم يحضر",
+    "title": "الرئيسية"
   },
   "newRequest": {
     "selectSpecialty": "اختر التخصص",
@@ -533,7 +535,10 @@
     "switchCamera": "تبديل الكاميرا",
     "chatWithUnread": "المحادثة، {{count}} رسائل غير مقروءة",
     "micMuted": "الميكروفون مكتوم",
-    "cameraOff": "الكاميرا مغلقة"
+    "cameraOff": "الكاميرا مغلقة",
+    "participantJoined": "انضم {{name}} إلى الاستشارة",
+    "participantLeft": "غادر {{name}} الاستشارة",
+    "title": "استشارة بالفيديو"
   },
   "videoCall": {
     "leaveCallTitle": "مغادرة مكالمة الفيديو؟",

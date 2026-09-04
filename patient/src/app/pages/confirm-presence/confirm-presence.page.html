@@ -1,6 +1,6 @@
 <app-header [pageTitle]="'confirmPresence.title' | translate" [showBackButton]="true"></app-header>
 
-<ion-content class="presence-content">
+<ion-content id="main-content" role="main" class="presence-content">
   <div class="presence-container">
     @if (isLoading) {
       <div class="loading-state">

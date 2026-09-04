@@ -1,4 +1,4 @@
-<ion-content class="verify-content" [scrollY]="false">
+<ion-content id="main-content" role="main" class="verify-content" [scrollY]="false">
   <div class="auth-card">
     <app-auth-branding />
     <div class="right-side">
@@ -29,7 +29,7 @@
           </div>
         } @else if (requiresVerification) {
           <div class="verification-state step-animate">
-            <h2>{{ 'verifyInvite.verificationRequired' | translate }}</h2>
+            <h1>{{ 'verifyInvite.verificationRequired' | translate }}</h1>
             <p class="subtitle">{{ 'verifyInvite.codeSentMessage' | translate }}</p>
 
             <form [formGroup]="verificationForm" (ngSubmit)="submitVerificationCode()" class="verification-form">

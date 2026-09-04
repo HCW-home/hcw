@@ -1,7 +1,10 @@
 @if (isOffline) {
-  <div class="offline-indicator">
+  <!-- role=status rather than a LiveAnnouncer call: the banner's own text is
+       already the message, so letting the live region wrap it avoids saying
+       the same thing twice. -->
+  <div class="offline-indicator" role="status">
     <div class="offline-content">
-      <ion-icon [name]="isReconnecting ? 'sync-outline' : 'cloud-offline-outline'" [class.spin]="isReconnecting"></ion-icon>
+      <ion-icon [name]="isReconnecting ? 'sync-outline' : 'cloud-offline-outline'" [class.spin]="isReconnecting" aria-hidden="true"></ion-icon>
       <span>
         {{ (isReconnecting ? 'common.reconnecting' : 'common.offline') | translate }}
       </span>

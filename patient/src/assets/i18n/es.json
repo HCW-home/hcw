@@ -130,7 +130,8 @@
     "reconnecting": "Se perdió la conexión con el servidor. Reconectando...",
     "cancel": "Cancelar",
     "required": "obligatorio",
-    "language": "Idioma"
+    "language": "Idioma",
+    "skipToContent": "Ir al contenido principal"
   },
   "login": {
     "title": "Iniciar sesión",
@@ -271,7 +272,8 @@
     "failedToLoadParticipant": "No se pudo cargar la información del participante.",
     "statusActive": "Activo",
     "statusCompleted": "Realizada",
-    "statusNoshow": "No asistida"
+    "statusNoshow": "No asistida",
+    "title": "Inicio"
   },
   "newRequest": {
     "selectSpecialty": "Seleccione especialidad",
@@ -499,7 +501,10 @@
     "switchCamera": "Cambiar de cámara",
     "chatWithUnread": "Chat, {{count}} mensajes sin leer",
     "micMuted": "Micrófono silenciado",
-    "cameraOff": "Cámara desactivada"
+    "cameraOff": "Cámara desactivada",
+    "participantJoined": "{{name}} se ha unido a la consulta",
+    "participantLeft": "{{name}} ha salido de la consulta",
+    "title": "Consulta por vídeo"
   },
   "videoCall": {
     "leaveCallTitle": "¿Abandonar la videollamada?",

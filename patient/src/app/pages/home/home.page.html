@@ -1,6 +1,9 @@
 <app-header></app-header>
 
-<ion-content class="home-content" [class.home-content--chat-open]="expandedConsultationId()">
+<ion-content id="main-content" role="main" class="home-content" [class.home-content--chat-open]="expandedConsultationId()">
+  <!-- app-header renders without a pageTitle here, so the page would otherwise
+       have no h1 at all. -->
+  <h1 class="sr-only">{{ 'home.title' | translate }}</h1>
   <ion-refresher slot="fixed" (ionRefresh)="refreshData($any($event))">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
