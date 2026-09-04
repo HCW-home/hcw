@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { ActiveCallService } from '../../../core/services/active-call.service';
 import { ConsultationService } from '../../../core/services/consultation.service';
 import { ConsultationWebSocketService } from '../../../core/services/consultation-websocket.service';
@@ -17,14 +18,21 @@ import { IncomingCallService } from '../../../core/services/incoming-call.servic
 import { ToasterService } from '../../../core/services/toaster.service';
 import { TranslationService } from '../../../core/services/translation.service';
 import { UserService } from '../../../core/services/user.service';
-import { VideoConsultationComponent } from '../../../modules/user/components/video-consultation/video-consultation';
+import {
+  LeaveReason,
+  VideoConsultationComponent,
+} from '../../../modules/user/components/video-consultation/video-consultation';
 import {
   Message,
   SendMessageData,
   EditMessageData,
   DeleteMessageData,
 } from '../message-list/message-list';
-import { ConsultationMessage } from '../../../core/models/consultation';
+import {
+  AppointmentStatus,
+  ConsultationMessage,
+} from '../../../core/models/consultation';
+import { RoutePaths } from '../../../core/constants/routes';
 import { IUser } from '../../../modules/user/models/user';
 import { getErrorMessage } from '../../../core/utils/error-helper';
 
@@ -49,6 +57,7 @@ export class PipWrapper {
   private destroyRef = inject(DestroyRef);
   private cryptoService = inject(ConsultationCryptoService);
   private encryptionService = inject(EncryptionService);
+  private router = inject(Router);
 
   private mode: InteractionMode = 'none';
   private startClientX = 0;
@@ -408,9 +417,88 @@ export class PipWrapper {
     this.mode = 'none';
   }
 
-  onCallEnded(): void {
+  onCallJoined(consultationId: number | null): void {
+    // Null means the call carries no follow-up, or one this user may not read:
+    // linking to it would land on a 404.
+    if (consultationId === null) return;
+
+    // Late-bind so the PiP chat opens on the right follow-up even when the
+    // call was started from the appointments list, which knows the appointment
+    // only.
+    this.activeCallService.setConsultationId(consultationId);
+
+    // Navigating between two `consultations/:id` reuses the route, so
+    // `canDeactivateVideoCall` never runs and the call stays fullscreen. The
+    // PiP itself lives outside the router-outlet, so nothing here can tear the
+    // call down.
+    //
+    // Already on that follow-up: the only change is dropping a `?join=true`
+    // deep link, and a Back onto it would fire a second startCall() mid-call.
+    const target = `/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}/${consultationId}`;
+    const replaceUrl = this.router.url.split('?')[0] === target;
+    void this.router.navigate(
+      [`/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`, consultationId],
+      { replaceUrl }
+    );
+  }
+
+  onCallEnded(reason: LeaveReason): void {
+    // Read the binding before endCall(): the effect above clears it as soon as
+    // the active call signal goes null.
+    const consultationId = this.boundConsultationId;
+
     this.activeCallService.endCall();
     this.incomingCallService.clearActiveCall();
+
+    // A lobby cancellation never joined, and a server removal already means the
+    // follow-up was closed: neither ends a meeting.
+    if (reason !== 'user' || consultationId === null) return;
+    this.offerToCloseTemporaryConsultation(consultationId);
+  }
+
+  /**
+   * A temporary follow-up exists only for the call that just ended, so put its
+   * closing form up rather than leaving a dead chat behind until the auto-close
+   * task picks it up. The form itself lives on the follow-up page — it also
+   * takes the clinical notes — and `close=true` is what opens it.
+   *
+   * The follow-up is re-read rather than reused from bootstrap: a colleague may
+   * have closed it during the call, and an early join means the appointment can
+   * still be ahead — both of which the backend answers with a 400 on close.
+   */
+  private offerToCloseTemporaryConsultation(consultationId: number): void {
+    this.consultationService
+      .getConsultation(consultationId, true)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: consultation => {
+          if (!consultation.temporary || consultation.closed_at) return;
+
+          // Mirrors the backend rule: closing is refused while an appointment
+          // is still scheduled ahead. Asking then failing is worse than saying
+          // nothing.
+          const next = consultation.next_appointment;
+          if (
+            next &&
+            next.status === AppointmentStatus.SCHEDULED &&
+            new Date(next.scheduled_at).getTime() > Date.now()
+          ) {
+            return;
+          }
+
+          // Joining took us to that page, so this is a no-op navigation
+          // carrying the flag; it only moves when the call was left from
+          // somewhere else.
+          // `close` stands alone: merging would carry over a leftover
+          // `join=true` deep link and ring a second call.
+          void this.router.navigate(
+            [`/${RoutePaths.USER}/${RoutePaths.CONSULTATIONS}`, consultationId],
+            { queryParams: { close: 'true' } }
+          );
+        },
+        // A follow-up we cannot read is not ours to close.
+        error: () => undefined,
+      });
   }
 
   onToggleSize(): void {

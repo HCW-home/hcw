@@ -2240,7 +2240,13 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
-    this.activeCallService.startCall({ appointmentId: appointment.id });
+    // Hand over the follow-up when the row already carries it, so the call
+    // window binds its chat from the lobby instead of waiting for the join
+    // response.
+    this.activeCallService.startCall({
+      appointmentId: appointment.id,
+      consultationId: this.getConsultationId(appointment) ?? undefined,
+    });
     this.incomingCallService.setActiveCall(appointment.id);
   }
 
@@ -2317,7 +2323,13 @@ export class Appointments implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
-    this.activeCallService.startCall({ appointmentId: appointment.id });
+    // Hand over the follow-up when the row already carries it, so the call
+    // window binds its chat from the lobby instead of waiting for the join
+    // response.
+    this.activeCallService.startCall({
+      appointmentId: appointment.id,
+      consultationId: this.getConsultationId(appointment) ?? undefined,
+    });
     this.incomingCallService.setActiveCall(appointment.id);
   }
 

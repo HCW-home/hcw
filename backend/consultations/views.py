@@ -622,17 +622,28 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
             200: {
                 "type": "object",
                 "properties": {
+                    "provider": {"type": "string", "description": "Media server provider"},
                     "url": {"type": "string", "description": "Media server URL"},
                     "token": {
                         "type": "string",
                         "description": "JWT token for RTC connection",
                     },
-                    "room": {"type": "string", "description": "Test room name"},
+                    "room": {"type": "string", "description": "Room name"},
+                    "consultation_id": {
+                        "type": "integer",
+                        "nullable": True,
+                        "description": (
+                            "Follow-up behind the call, or null when the "
+                            "consultation does not let this user in."
+                        ),
+                    },
                 },
                 "example": {
+                    "provider": "livekit",
                     "url": "wss://livekit.example.com",
                     "token": "<jwt-token>",
-                    "room": "usertest_123",
+                    "room": "3f1c0f9e-1d5a-4d3f-9a2b-8c7d6e5f4a3b",
+                    "consultation_id": 42,
                 },
             },
             500: {
@@ -641,7 +652,7 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
                 "example": {"detail": "No media server available."},
             },
         },
-        description="Get RTC test connection information for the authenticated user. Returns server URL, JWT token, and room name for testing WebRTC connection.",
+        description="Join the appointment call. Returns the media server URL, a JWT token, the room name and the follow-up the call belongs to.",
     )
     @action(detail=True, methods=["get"])
     def join(self, request, pk=None):
@@ -767,6 +778,17 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
                 event="participant_joined",
                 content=_("%(user_name)s joined the meeting") % {"user_name": user_name},
             )
+
+        # The client opens the follow-up behind the call as soon as the join
+        # succeeds, and it does not always know its id (deep link, incoming
+        # call). Hand it out under the same rule as the websocket payload
+        # above — `AppointmentSerializer` blanks it for the same reason — or it
+        # points at a 404 for someone the consultation does not let in.
+        call_info["consultation_id"] = (
+            appointment.consultation.pk
+            if appointment.consultation and request.user.pk in consultation_readers
+            else None
+        )
 
         return Response(call_info)
 

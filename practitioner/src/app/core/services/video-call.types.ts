@@ -9,6 +9,12 @@ export interface VideoCallConfig {
   room: string;
   identity?: string;
   displayName?: string;
+  /**
+   * Follow-up behind the call, as resolved server-side by the join endpoint.
+   * Null when the consultation does not let this user in: never link to it in
+   * that case, it would answer 404.
+   */
+  consultation_id?: number | null;
 }
 
 export type ConnectionStatus =

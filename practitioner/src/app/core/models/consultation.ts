@@ -164,6 +164,9 @@ export interface Consultation {
   group_id?: number;
   visible_by_patient: boolean;
   temporary?: boolean;
+  // First non-cancelled appointment still ahead. The backend refuses to close
+  // a follow-up while one of them is still scheduled in the future.
+  next_appointment?: Appointment | null;
   custom_fields?: CustomFieldValue[];
   unread_count?: number;
   last_read_at?: string;
