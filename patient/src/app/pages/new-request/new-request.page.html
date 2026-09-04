@@ -8,13 +8,13 @@
          every step already renders it as its own heading. -->
     <div class="wizard-bar">
       <button class="page-back-button" type="button" (click)="goBack()" [attr.aria-label]="'common.back' | translate">
-        <ion-icon name="arrow-back-outline"></ion-icon>
+        <ion-icon name="arrow-back-outline" aria-hidden="true"></ion-icon>
       </button>
       <div class="wizard-progress">
         <span class="wizard-progress-fill" [style.width.%]="progress() * 100"></span>
       </div>
       <button class="wizard-cancel" type="button" (click)="confirmCancel()">
-        <ion-icon name="close-outline"></ion-icon>
+        <ion-icon name="close-outline" aria-hidden="true"></ion-icon>
         <span>{{ 'newRequest.cancelRequest' | translate }}</span>
       </button>
     </div>
@@ -61,7 +61,7 @@
                     </div>
                   } @else if (searchResults().length === 0) {
                     <div class="empty-state">
-                      <ion-icon name="business-outline"></ion-icon>
+                      <ion-icon name="business-outline" aria-hidden="true"></ion-icon>
                       <span>{{ 'map.noResults' | translate }}</span>
                     </div>
                   } @else {
@@ -98,16 +98,16 @@
               @for (reason of reasons(); track reason.id) {
                 <button type="button" class="reason-item" (click)="selectReason(reason)">
                   <div class="reason-icon">
-                    <ion-icon name="clipboard-outline"></ion-icon>
+                    <ion-icon name="clipboard-outline" aria-hidden="true"></ion-icon>
                   </div>
                   <div class="reason-details">
                     <p class="reason-name">{{ reason.name }}</p>
                     <p class="reason-type">
                       @if (reason.assignment_method === 'appointment') {
-                        <ion-icon name="calendar-outline"></ion-icon>
+                        <ion-icon name="calendar-outline" aria-hidden="true"></ion-icon>
                         {{ 'newRequest.scheduled' | translate }}
                       } @else {
-                        <ion-icon name="flash-outline"></ion-icon>
+                        <ion-icon name="flash-outline" aria-hidden="true"></ion-icon>
                         {{ 'newRequest.immediate' | translate }}
                       }
                       @if (reason.duration) {
@@ -115,13 +115,13 @@
                       }
                     </p>
                   </div>
-                  <ion-icon name="chevron-forward-outline" class="reason-arrow"></ion-icon>
+                  <ion-icon name="chevron-forward-outline" class="reason-arrow" aria-hidden="true"></ion-icon>
                 </button>
               }
             </div>
             @if (reasons().length === 0) {
               <div class="empty-state">
-                <ion-icon name="information-circle-outline"></ion-icon>
+                <ion-icon name="information-circle-outline" aria-hidden="true"></ion-icon>
                 <span>{{ 'newRequest.noReasons' | translate }}</span>
               </div>
             }
@@ -162,7 +162,7 @@
             </div>
             @if (doctors().length === 0) {
               <div class="empty-state">
-                <ion-icon name="information-circle-outline"></ion-icon>
+                <ion-icon name="information-circle-outline" aria-hidden="true"></ion-icon>
                 <span>{{ 'newRequest.noDoctors' | translate }}</span>
               </div>
             }
@@ -187,12 +187,14 @@
             <p class="step-description">{{ 'newRequest.selectTimeSlotDesc' | translate }}</p>
 
             <div class="week-navigation">
-              <ion-button fill="clear" (click)="previousWeek()" [disabled]="!canGoPreviousWeek()">
-                <ion-icon name="chevron-back-outline" slot="icon-only"></ion-icon>
+              <ion-button fill="clear" (click)="previousWeek()" [disabled]="!canGoPreviousWeek()"
+                          [attr.aria-label]="'newRequest.previousWeek' | translate">
+                <ion-icon name="chevron-back-outline" slot="icon-only" aria-hidden="true"></ion-icon>
               </ion-button>
               <span class="week-label">{{ formatDisplayDate(weekDates()[0]) }} - {{ formatDisplayDate(weekDates()[weekDates().length - 1]) }}</span>
-              <ion-button fill="clear" (click)="nextWeek()">
-                <ion-icon name="chevron-forward-outline" slot="icon-only"></ion-icon>
+              <ion-button fill="clear" (click)="nextWeek()"
+                          [attr.aria-label]="'newRequest.nextWeek' | translate">
+                <ion-icon name="chevron-forward-outline" slot="icon-only" aria-hidden="true"></ion-icon>
               </ion-button>
             </div>
 
@@ -299,7 +301,7 @@
                   @if (selectedSpeciality()?.icon) {
                     <img [src]="selectedSpeciality()?.icon" [alt]="selectedSpeciality()?.name" class="review-speciality-icon-img">
                   } @else {
-                    <ion-icon name="medical-outline"></ion-icon>
+                    <ion-icon name="medical-outline" aria-hidden="true"></ion-icon>
                   }
                 </div>
                 <div class="review-details">
@@ -310,7 +312,7 @@
 
               <div class="review-item">
                 <div class="review-icon">
-                  <ion-icon name="clipboard-outline"></ion-icon>
+                  <ion-icon name="clipboard-outline" aria-hidden="true"></ion-icon>
                 </div>
                 <div class="review-details">
                   <p class="review-label">{{ 'newRequest.reason' | translate }}</p>
@@ -320,7 +322,7 @@
 
               <div class="review-item">
                 <div class="review-icon">
-                  <ion-icon name="time-outline"></ion-icon>
+                  <ion-icon name="time-outline" aria-hidden="true"></ion-icon>
                 </div>
                 <div class="review-details">
                   <p class="review-label">{{ 'newRequest.preferredTime' | translate }}</p>
@@ -330,7 +332,7 @@
 
               <div class="review-item">
                 <div class="review-icon">
-                  <ion-icon name="person-outline"></ion-icon>
+                  <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
                 </div>
                 <div class="review-details">
                   <p class="review-label">{{ 'newRequest.preferredDoctor' | translate }}</p>

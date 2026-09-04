@@ -62,7 +62,8 @@
     "profileUpdateFailed": "No se pudo actualizar el perfil.",
     "selectImageFile": "Seleccione un archivo de imagen.",
     "pictureUpdated": "Foto de perfil actualizada",
-    "pictureUploadFailed": "No se pudo subir la foto de perfil."
+    "pictureUploadFailed": "No se pudo subir la foto de perfil.",
+    "changePhoto": "Cambiar foto de perfil"
   },
   "requestDetail": {
     "notFound": "Solicitud no encontrada",
@@ -131,7 +132,9 @@
     "cancel": "Cancelar",
     "required": "obligatorio",
     "language": "Idioma",
-    "skipToContent": "Ir al contenido principal"
+    "skipToContent": "Ir al contenido principal",
+    "previous": "Anterior",
+    "next": "Siguiente"
   },
   "login": {
     "title": "Iniciar sesión",
@@ -325,7 +328,9 @@
     "cancelConfirmMessage": "Se perderá la información introducida.",
     "cancelConfirmStay": "Continuar la solicitud",
     "cancelConfirmLeave": "Salir",
-    "symptomLabel": "Describa sus síntomas"
+    "symptomLabel": "Describa sus síntomas",
+    "previousWeek": "Semana anterior",
+    "nextWeek": "Semana siguiente"
   },
   "messageList": {
     "messages": "Mensajes",
@@ -343,7 +348,12 @@
     "yesterday": "Ayer",
     "unreadMessages": "Mensajes no leídos",
     "openImage": "Abrir la imagen {{name}}",
-    "downloadAttachment": "Descargar {{name}}"
+    "downloadAttachment": "Descargar {{name}}",
+    "editMessage": "Editar mensaje",
+    "deleteMessage": "Eliminar mensaje",
+    "removeFile": "Quitar archivo",
+    "attachFile": "Adjuntar un archivo",
+    "send": "Enviar mensaje"
   },
   "preJoinLobby": {
     "settingUp": "Configurando tus dispositivos...",

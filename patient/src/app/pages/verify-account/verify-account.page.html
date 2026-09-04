@@ -25,7 +25,7 @@
           <form [formGroup]="verifyForm" (ngSubmit)="submitCode()" class="verify-form">
             @if (!knownIdentifier) {
               <ion-item lines="full" class="input-item">
-                <ion-icon name="mail-outline" slot="start"></ion-icon>
+                <ion-icon name="mail-outline" slot="start" aria-hidden="true"></ion-icon>
                 <ion-input
                   type="text"
                   [label]="'verifyAccount.identifierPlaceholder' | translate"
@@ -47,7 +47,7 @@
             }
 
             <ion-item lines="full" class="input-item">
-              <ion-icon name="keypad-outline" slot="start"></ion-icon>
+              <ion-icon name="keypad-outline" slot="start" aria-hidden="true"></ion-icon>
               <ion-input
                 type="text"
                 [label]="'verifyAccount.enterCode' | translate"

@@ -6,7 +6,7 @@
   <div class="ar-sep"></div>
   <div class="ar-main">
     <div class="ar-type">
-      <ion-icon [name]="typeIcon"></ion-icon>
+      <ion-icon [name]="typeIcon" aria-hidden="true"></ion-icon>
       <span>{{ typeLabel }}</span>
       @if (isCancelled) {
         <span class="ar-cancelled-badge">{{ 'appointmentDetail.statusCancelled' | translate }}</span>

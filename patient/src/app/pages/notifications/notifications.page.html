@@ -11,7 +11,7 @@
       <div class="section-header">
         <span class="section-badge">{{ notifications.length }} {{ 'common.total' | translate }}</span>
         <button class="mark-all-btn" (click)="markAllAsRead()">
-          <ion-icon name="checkmark-circle-outline"></ion-icon>
+          <ion-icon name="checkmark-circle-outline" aria-hidden="true"></ion-icon>
           <span>{{ 'notifications.markAllRead' | translate }}</span>
         </button>
       </div>
@@ -20,7 +20,7 @@
         @for (notification of notifications; track notification.id ?? 'ws-' + $index) {
           <button type="button" class="timeline-item" [class.unread]="!notification.isRead" (click)="onNotificationClick(notification)">
             <div class="notification-icon-wrapper" [attr.data-color]="notification.color">
-              <ion-icon [name]="notification.icon"></ion-icon>
+              <ion-icon [name]="notification.icon" aria-hidden="true"></ion-icon>
             </div>
             <div class="notification-body">
               <div class="notification-header-row">
@@ -50,7 +50,7 @@
 
     @if (notifications.length === 0) {
       <div class="empty-state">
-        <ion-icon name="notifications-off-outline" class="empty-icon"></ion-icon>
+        <ion-icon name="notifications-off-outline" class="empty-icon" aria-hidden="true"></ion-icon>
         <h2 class="empty-title">{{ 'notifications.noNotifications' | translate }}</h2>
         <p class="empty-subtitle">{{ 'notifications.noNotificationsYet' | translate }}</p>
       </div>

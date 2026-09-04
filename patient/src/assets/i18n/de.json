@@ -29,7 +29,9 @@
     "reconnecting": "Serververbindung unterbrochen. Verbindungsversuch...",
     "required": "erforderlich",
     "language": "Sprache",
-    "skipToContent": "Zum Hauptinhalt springen"
+    "skipToContent": "Zum Hauptinhalt springen",
+    "previous": "Zurück",
+    "next": "Weiter"
   },
   "login": {
     "title": "Anmelden",
@@ -223,7 +225,9 @@
     "cancelConfirmMessage": "Die eingegebenen Informationen gehen verloren.",
     "cancelConfirmStay": "Anfrage fortsetzen",
     "cancelConfirmLeave": "Verlassen",
-    "symptomLabel": "Beschreiben Sie Ihre Symptome"
+    "symptomLabel": "Beschreiben Sie Ihre Symptome",
+    "previousWeek": "Vorherige Woche",
+    "nextWeek": "Nächste Woche"
   },
   "instancePicker": {
     "title": "Wählen Sie Ihre Instanz",
@@ -288,7 +292,8 @@
     "profileUpdateFailed": "Profil-Aktualisierung fehlgeschlagen",
     "selectImageFile": "Bitte waehlen Sie eine Bilddatei",
     "pictureUpdated": "Profilbild aktualisiert",
-    "pictureUploadFailed": "Hochladen des Profilbilds fehlgeschlagen"
+    "pictureUploadFailed": "Hochladen des Profilbilds fehlgeschlagen",
+    "changePhoto": "Profilbild ändern"
   },
   "messageList": {
     "messages": "Nachrichten",
@@ -305,7 +310,12 @@
     "yesterday": "Gestern",
     "unreadMessages": "Ungelesene Nachrichten",
     "openImage": "Bild {{name}} öffnen",
-    "downloadAttachment": "{{name}} herunterladen"
+    "downloadAttachment": "{{name}} herunterladen",
+    "editMessage": "Nachricht bearbeiten",
+    "deleteMessage": "Nachricht löschen",
+    "removeFile": "Datei entfernen",
+    "attachFile": "Datei anhängen",
+    "send": "Nachricht senden"
   },
   "preJoinLobby": {
     "settingUp": "Ihre Geraete werden eingerichtet...",

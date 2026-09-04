@@ -1,8 +1,8 @@
 <ion-header *ngIf="canCancel">
   <ion-toolbar>
     <ion-buttons slot="start">
-      <ion-button (click)="cancel()">
-        <ion-icon name="arrow-back-outline" slot="icon-only"></ion-icon>
+      <ion-button (click)="cancel()" [attr.aria-label]="'common.back' | translate">
+        <ion-icon name="arrow-back-outline" slot="icon-only" aria-hidden="true"></ion-icon>
       </ion-button>
     </ion-buttons>
     <ion-title>{{ 'instancePicker.changeServer' | translate }}</ion-title>
@@ -18,7 +18,7 @@
       <ion-list>
         <ion-item-sliding *ngFor="let instance of instances">
           <ion-item button (click)="select(instance.host)">
-            <ion-icon name="business-outline" slot="start"></ion-icon>
+            <ion-icon name="business-outline" slot="start" aria-hidden="true"></ion-icon>
             <ion-label>
               <h2>{{ instance.name || instance.host }}</h2>
               <p *ngIf="instance.name">{{ instance.host }}</p>
@@ -30,7 +30,7 @@
               [attr.aria-label]="'instancePicker.removeInstance' | translate"
               (click)="remove(instance.host, $event)"
             >
-              <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+              <ion-icon name="trash-outline" slot="icon-only" aria-hidden="true"></ion-icon>
             </ion-button>
           </ion-item>
           <ion-item-options side="end">

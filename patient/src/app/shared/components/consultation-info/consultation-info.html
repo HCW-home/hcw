@@ -1,11 +1,11 @@
 <div class="cc-collapsible" [class.open]="expanded">
   <button class="cc-discuter" (click)="onToggle($event)">
-    <ion-icon class="cc-discuter-icon" name="chatbubbles-outline"></ion-icon>
+    <ion-icon class="cc-discuter-icon" name="chatbubbles-outline" aria-hidden="true"></ion-icon>
     <span class="cc-discuter-label">{{ 'home.accessConsultation' | translate }}</span>
     @if (unreadCount > 0 && !expanded) {
       <span class="cc-unread-badge">{{ unreadCount }}</span>
     }
-    <ion-icon class="cc-chevron" name="chevron-down-outline"></ion-icon>
+    <ion-icon class="cc-chevron" name="chevron-down-outline" aria-hidden="true"></ion-icon>
   </button>
 
   @if (expanded) {

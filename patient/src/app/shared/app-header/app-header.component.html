@@ -26,7 +26,7 @@
       @if (currentUser()) {
         <ion-buttons slot="end">
           <ion-button class="notification-btn" (click)="goToNotifications()">
-            <ion-icon name="notifications-outline"></ion-icon>
+            <ion-icon name="notifications-outline" aria-hidden="true"></ion-icon>
             @if (unreadNotificationCount() > 0) {
               <span class="notification-badge">{{
                 unreadNotificationCount() > 9 ? "9+" : unreadNotificationCount()

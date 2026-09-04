@@ -62,7 +62,8 @@
     "emailLabel": "E-mail",
     "phoneNumber": "Numero di telefono",
     "phonePlaceholder": "Inserisci il numero di telefono",
-    "communicationMethod": "Metodo di comunicazione"
+    "communicationMethod": "Metodo di comunicazione",
+    "changePhoto": "Cambia foto profilo"
   },
   "messageList": {
     "messages": "Messaggi",
@@ -80,7 +81,12 @@
     "yesterday": "Ieri",
     "unreadMessages": "Messaggi non letti",
     "openImage": "Apri l'immagine {{name}}",
-    "downloadAttachment": "Scarica {{name}}"
+    "downloadAttachment": "Scarica {{name}}",
+    "editMessage": "Modifica messaggio",
+    "deleteMessage": "Elimina messaggio",
+    "removeFile": "Rimuovi file",
+    "attachFile": "Allega un file",
+    "send": "Invia messaggio"
   },
   "preJoinLobby": {
     "settingUp": "Configurazione dei dispositivi...",
@@ -191,7 +197,9 @@
     "reconnecting": "Connessione al server persa. Riconnessione in corso...",
     "required": "obbligatorio",
     "language": "Lingua",
-    "skipToContent": "Vai al contenuto principale"
+    "skipToContent": "Vai al contenuto principale",
+    "previous": "Precedente",
+    "next": "Successivo"
   },
   "login": {
     "title": "Registrazione",
@@ -360,7 +368,9 @@
     "cancelConfirmMessage": "Le informazioni inserite andranno perse.",
     "cancelConfirmStay": "Continua la richiesta",
     "cancelConfirmLeave": "Esci",
-    "symptomLabel": "Descrivi i tuoi sintomi"
+    "symptomLabel": "Descrivi i tuoi sintomi",
+    "previousWeek": "Settimana precedente",
+    "nextWeek": "Settimana successiva"
   },
   "incomingCall": {
     "isCalling": "sta chiamando...",

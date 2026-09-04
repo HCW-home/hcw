@@ -20,19 +20,19 @@
         <div class="detail-rows">
           @if (p.email) {
             <div class="detail-row">
-              <ion-icon name="mail-outline"></ion-icon>
+              <ion-icon name="mail-outline" aria-hidden="true"></ion-icon>
               <a [href]="'mailto:' + p.email">{{ p.email }}</a>
             </div>
           }
           @if (p.mobile_phone_number) {
             <div class="detail-row">
-              <ion-icon name="call-outline"></ion-icon>
+              <ion-icon name="call-outline" aria-hidden="true"></ion-icon>
               <a [href]="'tel:' + p.mobile_phone_number">{{ p.mobile_phone_number }}</a>
             </div>
           }
           @if (formatAddress(p)) {
             <div class="detail-row">
-              <ion-icon name="location-outline"></ion-icon>
+              <ion-icon name="location-outline" aria-hidden="true"></ion-icon>
               <span>{{ formatAddress(p) }}</span>
             </div>
           }
@@ -48,7 +48,7 @@
             <img [src]="p.main_organisation.logo_color" [alt]="p.main_organisation.name" class="org-logo" />
           } @else {
             <div class="org-avatar">
-              <ion-icon name="business"></ion-icon>
+              <ion-icon name="business" aria-hidden="true"></ion-icon>
             </div>
           }
           <span class="org-name">{{ p.main_organisation.name }}</span>
@@ -56,7 +56,7 @@
         @if (p.main_organisation.phone) {
           <div class="detail-rows">
             <div class="detail-row">
-              <ion-icon name="call-outline"></ion-icon>
+              <ion-icon name="call-outline" aria-hidden="true"></ion-icon>
               <a [href]="'tel:' + p.main_organisation.phone">{{ p.main_organisation.phone }}</a>
             </div>
           </div>

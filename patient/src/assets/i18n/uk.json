@@ -29,7 +29,9 @@
     "reconnecting": "З'єднання із сервером втрачено. Повторне підключення...",
     "required": "обов'язково",
     "language": "Мова",
-    "skipToContent": "Перейти до основного вмісту"
+    "skipToContent": "Перейти до основного вмісту",
+    "previous": "Назад",
+    "next": "Далі"
   },
   "login": {
     "title": "Увійти",
@@ -224,7 +226,9 @@
     "cancelConfirmMessage": "Введену інформацію буде втрачено.",
     "cancelConfirmStay": "Продовжити запит",
     "cancelConfirmLeave": "Вийти",
-    "symptomLabel": "Опишіть ваші симптоми"
+    "symptomLabel": "Опишіть ваші симптоми",
+    "previousWeek": "Попередній тиждень",
+    "nextWeek": "Наступний тиждень"
   },
   "instancePicker": {
     "title": "Оберіть свій сервер",
@@ -306,7 +310,8 @@
     "encryptionPassphraseChanged": "Кодову фразу оновлено",
     "encryptionInvalidOldPassphrase": "Поточна кодова фраза невірна",
     "encryptionNewPassphraseTitle": "Згенеровано нову кодову фразу",
-    "encryptionNewPassphraseMessage": "Збережіть цю кодову фразу зараз — вона показується лише один раз."
+    "encryptionNewPassphraseMessage": "Збережіть цю кодову фразу зараз — вона показується лише один раз.",
+    "changePhoto": "Змінити фото профілю"
   },
   "onboarding": {
     "title": "Ласкаво просимо!",
@@ -360,7 +365,12 @@
     "yesterday": "Вчора",
     "unreadMessages": "Непрочитані повідомлення",
     "openImage": "Відкрити зображення {{name}}",
-    "downloadAttachment": "Завантажити {{name}}"
+    "downloadAttachment": "Завантажити {{name}}",
+    "editMessage": "Редагувати повідомлення",
+    "deleteMessage": "Видалити повідомлення",
+    "removeFile": "Видалити файл",
+    "attachFile": "Прикріпити файл",
+    "send": "Надіслати повідомлення"
   },
   "preJoinLobby": {
     "settingUp": "Налаштування ваших пристроїв...",

@@ -1,7 +1,7 @@
 <div class="org-card" [class.selected]="selected" [class.expanded]="expanded">
   @if (expanded) {
     <button class="oc-back" type="button" (click)="onBack($event)">
-      <ion-icon name="arrow-back-outline"></ion-icon>
+      <ion-icon name="arrow-back-outline" aria-hidden="true"></ion-icon>
       <span>{{ 'practitioner.backToResults' | translate }}</span>
     </button>
   }
@@ -26,19 +26,19 @@
           </button>
         </h3>
         <span class="type-chip" [class.type-chip--doctor]="item.type === 'doctor'">
-          <ion-icon [name]="item.type === 'doctor' ? 'person' : 'business'"></ion-icon>
+          <ion-icon [name]="item.type === 'doctor' ? 'person' : 'business'" aria-hidden="true"></ion-icon>
           {{ (item.type === 'doctor' ? 'map.typeDoctor' : 'map.typeOrganisation') | translate }}
         </span>
       </div>
       @if (item.specialities) {
         <p class="oc-meta oc-meta--spec">
-          <ion-icon name="medkit-outline"></ion-icon>
+          <ion-icon name="medkit-outline" aria-hidden="true"></ion-icon>
           <span>{{ item.specialities }}</span>
         </p>
       }
       @if (item.subtitle) {
         <p class="oc-meta">
-          <ion-icon name="location-outline"></ion-icon>
+          <ion-icon name="location-outline" aria-hidden="true"></ion-icon>
           <span>{{ item.subtitle }}</span>
         </p>
       }
@@ -64,12 +64,14 @@
       } @else if (hasSlots()) {
         <div class="oc-slot-area">
           <div class="day-nav">
-            <button class="day-arrow" type="button" [disabled]="!hasPrevDay()" (click)="prevDay($event)">
-              <ion-icon name="chevron-back-outline"></ion-icon>
+            <button class="day-arrow" type="button" [disabled]="!hasPrevDay()" (click)="prevDay($event)"
+                    [attr.aria-label]="'common.previous' | translate">
+              <ion-icon name="chevron-back-outline" aria-hidden="true"></ion-icon>
             </button>
             <span class="day-label">{{ currentDate() | localDate: 'EEE d MMM' }}</span>
-            <button class="day-arrow" type="button" [disabled]="!hasNextDay()" (click)="nextDay($event)">
-              <ion-icon name="chevron-forward-outline"></ion-icon>
+            <button class="day-arrow" type="button" [disabled]="!hasNextDay()" (click)="nextDay($event)"
+                    [attr.aria-label]="'common.next' | translate">
+              <ion-icon name="chevron-forward-outline" aria-hidden="true"></ion-icon>
             </button>
           </div>
           <div class="slot-chips">
@@ -84,12 +86,12 @@
       @if (showPrimaryButton()) {
         @if (primaryAction === 'details') {
           <button class="rdv-button" type="button" (click)="onDetails($event)">
-            <ion-icon name="information-circle-outline"></ion-icon>
+            <ion-icon name="information-circle-outline" aria-hidden="true"></ion-icon>
             <span>{{ 'map.detailsButton' | translate }}</span>
           </button>
         } @else {
           <button class="rdv-button" type="button" (click)="onBook($event)">
-            <ion-icon name="calendar-outline"></ion-icon>
+            <ion-icon name="calendar-outline" aria-hidden="true"></ion-icon>
             <span>{{ 'map.bookButton' | translate }}</span>
           </button>
         }

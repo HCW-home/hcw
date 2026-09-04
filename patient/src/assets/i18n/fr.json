@@ -30,7 +30,9 @@
     "reconnecting": "Connexion au serveur perdue. Reconnexion en cours...",
     "required": "obligatoire",
     "language": "Langue",
-    "skipToContent": "Aller au contenu principal"
+    "skipToContent": "Aller au contenu principal",
+    "previous": "Précédent",
+    "next": "Suivant"
   },
   "login": {
     "title": "Se connecter",
@@ -231,7 +233,9 @@
     "cancelConfirmMessage": "Les informations saisies seront perdues.",
     "cancelConfirmStay": "Continuer la demande",
     "cancelConfirmLeave": "Quitter",
-    "symptomLabel": "Décrivez vos symptômes"
+    "symptomLabel": "Décrivez vos symptômes",
+    "previousWeek": "Semaine précédente",
+    "nextWeek": "Semaine suivante"
   },
   "profile": {
     "changeServer": "Changer de serveur",
@@ -286,7 +290,8 @@
     "encryptionPassphraseChanged": "Phrase de passe mise à jour",
     "encryptionInvalidOldPassphrase": "La phrase de passe actuelle est incorrecte",
     "encryptionNewPassphraseTitle": "Nouvelle phrase de passe générée",
-    "encryptionNewPassphraseMessage": "Enregistrez cette phrase de passe maintenant — elle ne sera affichée qu'une seule fois."
+    "encryptionNewPassphraseMessage": "Enregistrez cette phrase de passe maintenant — elle ne sera affichée qu'une seule fois.",
+    "changePhoto": "Changer la photo de profil"
   },
   "onboarding": {
     "title": "Bienvenue !",
@@ -340,7 +345,12 @@
     "yesterday": "Hier",
     "unreadMessages": "Messages non lus",
     "openImage": "Ouvrir l'image {{name}}",
-    "downloadAttachment": "Télécharger {{name}}"
+    "downloadAttachment": "Télécharger {{name}}",
+    "editMessage": "Modifier le message",
+    "deleteMessage": "Supprimer le message",
+    "removeFile": "Retirer le fichier",
+    "attachFile": "Joindre un fichier",
+    "send": "Envoyer le message"
   },
   "preJoinLobby": {
     "settingUp": "Configuration de vos appareils...",

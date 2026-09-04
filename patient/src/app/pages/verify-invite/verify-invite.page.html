@@ -16,7 +16,7 @@
           </div>
         } @else if (errorMessage) {
           <div class="error-state">
-            <ion-icon name="alert-circle-outline" class="error-icon"></ion-icon>
+            <ion-icon name="alert-circle-outline" class="error-icon" aria-hidden="true"></ion-icon>
             <ion-text class="error-title" color="danger">{{ 'verifyInvite.authFailed' | translate }}</ion-text>
             <ion-text class="error-message" color="medium">{{ errorMessage }}</ion-text>
             <ion-button
@@ -34,7 +34,7 @@
 
             <form [formGroup]="verificationForm" (ngSubmit)="submitVerificationCode()" class="verification-form">
               <ion-item lines="full" class="input-item">
-                <ion-icon name="keypad-outline" slot="start"></ion-icon>
+                <ion-icon name="keypad-outline" slot="start" aria-hidden="true"></ion-icon>
                 <ion-input
                   type="text"
                   [label]="'verifyInvite.enterCode' | translate"
