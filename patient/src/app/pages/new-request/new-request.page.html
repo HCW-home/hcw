@@ -346,7 +346,8 @@
                 <h3 class="review-title">{{ 'newRequest.additionalInfo' | translate }}</h3>
                 @for (field of customFields(); track field.id) {
                   <div class="custom-field-item">
-                    <label class="custom-field-label" [attr.for]="'custom-field-' + field.id">
+                    <label class="custom-field-label" [attr.for]="'custom-field-' + field.id"
+                           [attr.id]="'custom-field-' + field.id + '-label'">
                       {{ field.name }}
                       @if (field.required) {
                         <span class="required-mark" aria-hidden="true">*</span>
@@ -362,9 +363,10 @@
                           [(ngModel)]="customFieldValues[field.id]">
                       }
                       @case ('long_text') {
+                        <!-- The .custom-field-label above already names this
+                             control, so no second label inside the box. -->
                         <ion-textarea
-                          [label]="field.name"
-                          labelPlacement="stacked"
+                          [attr.aria-labelledby]="'custom-field-' + field.id + '-label'"
                           [placeholder]="field.name"
                           [rows]="3"
                           [(ngModel)]="customFieldValues[field.id]"
@@ -402,10 +404,14 @@
             }
 
             <div class="comment-section">
+              <!-- Associated through aria-labelledby on the control, not for/id: Ionic
+                   generates its own id for the inner native input and offers no way to
+                   set it, so a for attribute here would point at nothing. -->
+              <!-- eslint-disable-next-line @angular-eslint/template/label-has-associated-control -->
+              <label class="field-label" id="new-request-comment-label">{{ 'newRequest.symptomLabel' | translate }}</label>
               <ion-textarea
                 [(ngModel)]="comment"
-                [label]="'newRequest.symptomLabel' | translate"
-                labelPlacement="stacked"
+                aria-labelledby="new-request-comment-label"
                 [placeholder]="'newRequest.symptomPlaceholder' | translate"
                 [rows]="4"
                 class="comment-input">

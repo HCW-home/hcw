@@ -33,12 +33,16 @@
             <p class="subtitle">{{ 'verifyInvite.codeSentMessage' | translate }}</p>
 
             <form [formGroup]="verificationForm" (ngSubmit)="submitVerificationCode()" class="verification-form">
+              <!-- Associated through aria-labelledby on the control, not for/id: Ionic
+                   generates its own id for the inner native input and offers no way to
+                   set it, so a for attribute here would point at nothing. -->
+              <!-- eslint-disable-next-line @angular-eslint/template/label-has-associated-control -->
+              <label class="field-label" id="verify-invite-field-1-label">{{ 'verifyInvite.enterCode' | translate }}</label>
               <ion-item lines="full" class="input-item">
                 <ion-icon name="keypad-outline" slot="start" aria-hidden="true"></ion-icon>
                 <ion-input
                   type="text"
-                  [label]="'verifyInvite.enterCode' | translate"
-                  labelPlacement="floating"
+                  aria-labelledby="verify-invite-field-1-label"
                   formControlName="verification_code"
                   maxlength="6"
                   inputmode="numeric">

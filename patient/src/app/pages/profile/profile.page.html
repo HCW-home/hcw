@@ -43,10 +43,14 @@
       <h2 class="card-title">{{ 'profile.personalInformation' | translate }}</h2>
 
       <ion-list class="form-list">
+        <!-- Associated through aria-labelledby on the control, not for/id: Ionic
+             generates its own id for the inner native input and offers no way to
+             set it, so a for attribute here would point at nothing. -->
+        <!-- eslint-disable-next-line @angular-eslint/template/label-has-associated-control -->
+        <label class="field-label" id="profile-field-1-label">{{ 'profile.phoneNumber' | translate }}</label>
         <ion-item lines="none" [class.has-error]="getFieldError('mobile_phone_number')">
           <ion-input
-            [label]="'profile.phoneNumber' | translate"
-            labelPlacement="stacked"
+            aria-labelledby="profile-field-1-label"
             [(ngModel)]="editedUser.mobile_phone_number"
             type="tel"
             [placeholder]="'profile.phonePlaceholder' | translate">
@@ -57,10 +61,15 @@
             <small>{{ getFieldError('mobile_phone_number') }}</small>
           </ion-text>
         }
+        <!-- Associated through aria-labelledby on the control, not for/id: Ionic
+             generates its own id for the inner native input and offers no way to
+             set it, so a for attribute here would point at nothing. -->
+        <!-- eslint-disable-next-line @angular-eslint/template/label-has-associated-control -->
+        <label class="field-label" id="profile-field-2-label">{{ 'profile.communicationMethod' | translate }}</label>
         <ion-item lines="none" [class.has-error]="getFieldError('communication_method')">
           <ion-select
-            [label]="'profile.communicationMethod' | translate"
-            labelPlacement="stacked" [(ngModel)]="editedUser.communication_method" [placeholder]="'profile.selectMethod' | translate">
+          aria-labelledby="profile-field-2-label"
+          [(ngModel)]="editedUser.communication_method" [placeholder]="'profile.selectMethod' | translate">
             @for (method of communicationMethods; track method) {
               <ion-select-option [value]="method">
                 @switch (method) {
@@ -80,10 +89,15 @@
             <small>{{ getFieldError('communication_method') }}</small>
           </ion-text>
         }
+        <!-- Associated through aria-labelledby on the control, not for/id: Ionic
+             generates its own id for the inner native input and offers no way to
+             set it, so a for attribute here would point at nothing. -->
+        <!-- eslint-disable-next-line @angular-eslint/template/label-has-associated-control -->
+        <label class="field-label" id="profile-field-3-label">{{ 'profile.preferredLanguage' | translate }}</label>
         <ion-item lines="none" [class.has-error]="getFieldError('preferred_language')">
           <ion-select
-            [label]="'profile.preferredLanguage' | translate"
-            labelPlacement="stacked" [(ngModel)]="editedUser.preferred_language" [placeholder]="'profile.selectLanguage' | translate">
+          aria-labelledby="profile-field-3-label"
+          [(ngModel)]="editedUser.preferred_language" [placeholder]="'profile.selectLanguage' | translate">
             @for (lang of availableLanguages(); track lang.code) {
               <ion-select-option [value]="lang.code">{{ lang.nativeName }}</ion-select-option>
             }
@@ -94,10 +108,15 @@
             <small>{{ getFieldError('preferred_language') }}</small>
           </ion-text>
         }
+        <!-- Associated through aria-labelledby on the control, not for/id: Ionic
+             generates its own id for the inner native input and offers no way to
+             set it, so a for attribute here would point at nothing. -->
+        <!-- eslint-disable-next-line @angular-eslint/template/label-has-associated-control -->
+        <label class="field-label" id="profile-field-4-label">{{ 'profile.timezone' | translate }}</label>
         <ion-item lines="none" [class.has-error]="getFieldError('timezone')">
           <ion-select
-            [label]="'profile.timezone' | translate"
-            labelPlacement="stacked" [(ngModel)]="editedUser.timezone" [placeholder]="'profile.selectTimezone' | translate" interface="action-sheet">
+          aria-labelledby="profile-field-4-label"
+          [(ngModel)]="editedUser.timezone" [placeholder]="'profile.selectTimezone' | translate" interface="action-sheet">
             @for (tz of timezones; track tz) {
               <ion-select-option [value]="tz">{{ tz }}</ion-select-option>
             }

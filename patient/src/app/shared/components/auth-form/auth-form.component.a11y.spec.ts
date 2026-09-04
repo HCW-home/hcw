@@ -82,15 +82,30 @@ describe('AuthFormComponent accessibility', () => {
     expect(inputs.length).toBeGreaterThan(0);
 
     inputs.forEach(input => {
-      /* Angular binds [label] as a DOM property, not an attribute, so read the
-       * property here — getAttribute('label') would be null even when set. */
-      const named =
-        (input as HTMLElement & { label?: string }).label ||
-        input.getAttribute('aria-label') ||
-        input.getAttribute('aria-labelledby');
+      /* Labels sit above the field as their own <label>, associated by
+       * aria-labelledby rather than for/id — Ionic generates the inner input's
+       * id itself and gives no way to set it. Assert both the reference and
+       * that it resolves to a real element. */
+      /* Ionic strips aria-labelledby from the host and re-applies it to the
+       * inner native input, so look there first. In Material mode that input
+       * lives in the light DOM, not a shadow root. */
+      const nativeInput =
+        input.querySelector('input, textarea') ??
+        input.shadowRoot?.querySelector('input, textarea');
+      const labelledBy =
+        nativeInput?.getAttribute('aria-labelledby') ?? input.getAttribute('aria-labelledby');
+      const named = labelledBy || input.getAttribute('aria-label');
       expect(named)
         .withContext(`ion-input[${input.getAttribute('formcontrolname')}] has no accessible name`)
         .toBeTruthy();
+
+      if (labelledBy) {
+        const target = fixture.nativeElement.querySelector(`#${labelledBy}`);
+        expect(target)
+          .withContext(`aria-labelledby="${labelledBy}" points at nothing`)
+          .toBeTruthy();
+        expect(target?.textContent?.trim()).toBeTruthy();
+      }
     });
   });
 
