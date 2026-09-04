@@ -122,12 +122,6 @@
 // Suggestions — speciality picker on focus, three columns once typing starts
 // ---------------------------------------------------------------------------
 
-.suggest-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 20;
-}
-
 .suggest-panel {
   position: absolute;
   top: calc(100% + 8px);
