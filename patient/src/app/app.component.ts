@@ -282,12 +282,41 @@ export class AppComponent implements OnInit, OnDestroy {
       });
   }
 
+  /* WCAG relative luminance, used to keep a per-instance brand colour legible. */
+  private relativeLuminance(r: number, g: number, b: number): number {
+    const channel = (v: number) => {
+      const c = v / 255;
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    };
+    return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+  }
+
+  private contrastOnWhite(r: number, g: number, b: number): number {
+    return 1.05 / (this.relativeLuminance(r, g, b) + 0.05);
+  }
+
   private applyPrimaryColor(hex: string): void {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
+    let r = parseInt(hex.slice(1, 3), 16);
+    let g = parseInt(hex.slice(3, 5), 16);
+    let b = parseInt(hex.slice(5, 7), 16);
     const toHex = (v: number) => Math.min(255, Math.max(0, Math.round(v))).toString(16).padStart(2, "0");
     const mix = (v: number, target: number, w: number) => Math.round(v + (target - v) * w);
+
+    /* The primary is used for links and `color="primary"` text, so a light
+     * brand colour from instance config would silently undo the 4.5:1 contrast
+     * the stylesheet guarantees (WCAG 1.4.3). Darken towards black until it
+     * clears the threshold, preserving hue. Capped so a pathological value
+     * cannot loop; by 40 steps of 5% the colour is essentially black and has
+     * long since passed. */
+    let guard = 0;
+    while (this.contrastOnWhite(r, g, b) < 4.5 && guard < 40) {
+      r = mix(r, 0, 0.05);
+      g = mix(g, 0, 0.05);
+      b = mix(b, 0, 0.05);
+      guard++;
+    }
+    hex = `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+
     const lighten = (w: number) => `#${toHex(mix(r, 255, w))}${toHex(mix(g, 255, w))}${toHex(mix(b, 255, w))}`;
     const darken = (w: number) => `#${toHex(mix(r, 0, w))}${toHex(mix(g, 0, w))}${toHex(mix(b, 0, w))}`;
 

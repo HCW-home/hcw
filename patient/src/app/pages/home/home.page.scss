@@ -500,7 +500,7 @@
 
     &.status-warning {
       background: #fdf1dd;
-      color: #b06f00;
+      color: #8a5700;   // was #b06f00, 3.67:1 on #fdf1dd
 
       ion-icon {
         color: #f39200;
@@ -593,7 +593,7 @@
 
     &.cc-note-waiting {
       background: #fdf1dd;
-      color: #b06f00;
+      color: #8a5700;   // was #b06f00, 3.67:1 on #fdf1dd
 
       ion-icon {
         color: #f39200;

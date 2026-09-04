@@ -3,25 +3,35 @@
 
 /** Ionic CSS Variables **/
 :root {
-  // Primary brand colors - Cyan/Teal theme from wireframe
-  --ion-color-primary: #0891b2;
-  --ion-color-primary-rgb: 8, 145, 178;
+  // Primary brand colors - Cyan/Teal theme from wireframe.
+  //
+  // Darkened from #0891b2 to #0e7490 (the former -shade) for WCAG 1.4.3: the
+  // old value sat at 3.68:1 on white, under the 4.5:1 needed for text, and it
+  // is used for links and `color="primary"` copy throughout. #0e7490 reaches
+  // 5.36:1 and stays in the same cyan family. Same reasoning below for
+  // secondary, success and danger; warning already passed at 9.78:1 with its
+  // black contrast colour and is untouched.
+  --ion-color-primary: #0e7490;
+  --ion-color-primary-rgb: 14, 116, 144;
   --ion-color-primary-contrast: #ffffff;
   --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #0e7490;
-  --ion-color-primary-tint: #22d3ee;
+  --ion-color-primary-shade: #0c667f;
+  --ion-color-primary-tint: #26829b;
 
-  // Additional primary variants
-  --ion-color-primary-light: #22d3ee;
-  --ion-color-primary-dark: #0e7490;
+  // Additional primary variants.
+  // -light and -tint are for coloured surfaces with white text on top; never
+  // use them as a text colour on a light background (#26829b is 3.4:1 there).
+  --ion-color-primary-light: #26829b;
+  --ion-color-primary-dark: #0c667f;
   --ion-color-primary-bg: #ecfeff;
 
-  --ion-color-secondary: #06b6d4;
-  --ion-color-secondary-rgb: 6, 182, 212;
+  // Was #06b6d4 at 2.43:1 — failed even the 3:1 non-text threshold.
+  --ion-color-secondary: #0f766e;
+  --ion-color-secondary-rgb: 15, 118, 110;
   --ion-color-secondary-contrast: #ffffff;
   --ion-color-secondary-contrast-rgb: 255, 255, 255;
-  --ion-color-secondary-shade: #0891b2;
-  --ion-color-secondary-tint: #22d3ee;
+  --ion-color-secondary-shade: #0d6861;
+  --ion-color-secondary-tint: #27847c;
 
   --ion-color-tertiary: #6366f1;
   --ion-color-tertiary-rgb: 99, 102, 241;
@@ -30,12 +40,13 @@
   --ion-color-tertiary-shade: #4f46e5;
   --ion-color-tertiary-tint: #818cf8;
 
-  --ion-color-success: #10b981;
-  --ion-color-success-rgb: 16, 185, 129;
+  // Was #10b981 at 2.54:1 with white text on top.
+  --ion-color-success: #047857;
+  --ion-color-success-rgb: 4, 120, 87;
   --ion-color-success-contrast: #ffffff;
   --ion-color-success-contrast-rgb: 255, 255, 255;
-  --ion-color-success-shade: #059669;
-  --ion-color-success-tint: #34d399;
+  --ion-color-success-shade: #046a4d;
+  --ion-color-success-tint: #1d8668;
 
   --ion-color-warning: #f59e0b;
   --ion-color-warning-rgb: 245, 158, 11;
@@ -44,12 +55,14 @@
   --ion-color-warning-shade: #d97706;
   --ion-color-warning-tint: #fbbf24;
 
-  --ion-color-danger: #ef4444;
-  --ion-color-danger-rgb: 239, 68, 68;
+  // Was #ef4444 at 3.76:1. Carries every form error message, so it has to
+  // clear the text threshold rather than the UI one.
+  --ion-color-danger: #b91c1c;
+  --ion-color-danger-rgb: 185, 28, 28;
   --ion-color-danger-contrast: #ffffff;
   --ion-color-danger-contrast-rgb: 255, 255, 255;
-  --ion-color-danger-shade: #dc2626;
-  --ion-color-danger-tint: #f87171;
+  --ion-color-danger-shade: #a31919;
+  --ion-color-danger-tint: #c03333;
 
   --ion-color-dark: #222428;
   --ion-color-dark-rgb: 34, 36, 40;
@@ -58,8 +71,10 @@
   --ion-color-dark-shade: #1e2023;
   --ion-color-dark-tint: #383a3e;
 
-  --ion-color-medium: #92949C;
-  --ion-color-medium-rgb: 146, 148, 156;
+  // Was #92949C at 3.03:1 on white; it is applied to running text via
+  // color="medium" in ~31 places, so it needs the 4.5:1 text threshold.
+  --ion-color-medium: #5b6878;
+  --ion-color-medium-rgb: 91, 104, 120;
   --ion-color-medium-contrast: #ffffff;
   --ion-color-medium-contrast-rgb: 255, 255, 255;
   --ion-color-medium-shade: #808289;
@@ -77,8 +92,8 @@
   --app-background-secondary: #f1f5f9;
   --app-text-primary: #0f172a;
   --app-text-secondary: #64748b;
-  --app-text-tertiary: #94a3b8;
-  --app-text-muted: #94a3b8;
+  --app-text-tertiary: #5b6878;   // was #94a3b8, 2.56:1
+  --app-text-muted: #5b6878;      // was #94a3b8, 2.56:1
   --app-border-color: #e2e8f0;
   --app-card-background: #ffffff;
   --app-card-shadow: rgba(0, 0, 0, 0.08);
@@ -156,9 +171,9 @@
   --app-ink-1: #0d1319;            // primary text
   --app-ink-2: #2e3842;            // secondary text
   --app-ink-3: #6b7783;            // tertiary text
-  --app-ink-4: #96a2b0;            // muted / labels
+  --app-ink-4: #5b6878;            // muted / labels — was #96a2b0, 2.60:1
   --app-danger: #c20510;           // cancelled / refused text and icons
-  --app-danger-soft: #d0656c;      // secondary text inside a cancelled block
+  --app-danger-soft: #b3454d;      // secondary text inside a cancelled block — was #d0656c, 3.65:1
   // Brand accents — mapped onto the instance's DYNAMIC primary color, which is
   // set at runtime by app.component.applyPrimaryColor() from
   // config.primary_color_patient. Never hardcode the brand hue here.
