@@ -4028,6 +4028,11 @@ awaitqueue@^3.3.1:
   dependencies:
     debug "^4.4.3"
 
+axe-core@^4.1.3, axe-core@^4.13.0:
+  version "4.13.0"
+  resolved "https://registry.yarnpkg.com/axe-core/-/axe-core-4.13.0.tgz#f868ecb1bd61d982321760e51d841ab497ab86d0"
+  integrity sha512-UzGt8zg7Ny8djbYMhxl2zuEevVa7r2gJjYY5Lwr1xM7+XU2nd6CkIWFTVcCIbAP63vSz71NaVyyuSk9lHKcy0A==
+
 axobject-query@4.1.0:
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/axobject-query/-/axobject-query-4.1.0.tgz#28768c76d0e3cff21bc62a9e2d0b6ac30042a1ee"
@@ -6525,6 +6530,14 @@ istanbul-reports@^3.0.5:
   dependencies:
     html-escaper "^2.0.0"
     istanbul-lib-report "^3.0.0"
+
+jasmine-axe@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/jasmine-axe/-/jasmine-axe-1.1.0.tgz#7bef9c0bd2764f21735459b4cc0e54dd24cd1a0a"
+  integrity sha512-t3uCFU1oUHVUyWNeOgG4F/3rnatMJDGFQrybUldFaApUuirR6B6JGjXOlin5pzA5cd8zvBli33Kb27UlTNRcjw==
+  dependencies:
+    axe-core "^4.1.3"
+    lodash.merge "^4.6.2"
 
 jasmine-core@^4.1.0:
   version "4.6.1"

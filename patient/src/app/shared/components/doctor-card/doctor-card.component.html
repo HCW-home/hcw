@@ -18,7 +18,7 @@
 
         @if (doctor.rating) {
           <div class="rating">
-            <ion-icon name="star" class="rating-star"></ion-icon>
+            <ion-icon name="star" class="rating-star" aria-hidden="true"></ion-icon>
             <ion-text class="rating-value">{{ doctor.rating }}</ion-text>
             <ion-text class="rating-reviews" color="medium">({{ doctor.reviews_count }} reviews)</ion-text>
           </div>

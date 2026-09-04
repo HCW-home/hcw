@@ -6,7 +6,7 @@
 
 <div class="search-bar">
   <div class="search-bar-field">
-    <ion-icon name="search-outline"></ion-icon>
+    <ion-icon name="search-outline" aria-hidden="true"></ion-icon>
     <input
       #whoInput
       type="text"
@@ -24,13 +24,13 @@
         [attr.aria-label]="'common.clear' | translate"
         (click)="clearWho()"
       >
-        <ion-icon name="close-outline"></ion-icon>
+        <ion-icon name="close-outline" aria-hidden="true"></ion-icon>
       </button>
     }
   </div>
   <div class="search-bar-divider"></div>
   <div class="search-bar-field">
-    <ion-icon name="location-outline"></ion-icon>
+    <ion-icon name="location-outline" aria-hidden="true"></ion-icon>
     <input
       #whereInput
       type="text"
@@ -47,12 +47,12 @@
         [attr.aria-label]="'common.clear' | translate"
         (click)="clearWhere()"
       >
-        <ion-icon name="close-outline"></ion-icon>
+        <ion-icon name="close-outline" aria-hidden="true"></ion-icon>
       </button>
     }
   </div>
   <button class="search-bar-button" type="button" (click)="submit()">
-    <ion-icon name="search-outline"></ion-icon>
+    <ion-icon name="search-outline" aria-hidden="true"></ion-icon>
     <span>{{ 'map.searchButton' | translate }}</span>
   </button>
 </div>
@@ -61,7 +61,7 @@
   <div class="suggest-panel" [class.suggest-panel--columns]="isSuggestSearching()">
     @if (!hasSuggestions() && !isSuggestLoading()) {
       <div class="suggest-empty">
-        <ion-icon name="search-outline"></ion-icon>
+        <ion-icon name="search-outline" aria-hidden="true"></ion-icon>
         <span>{{ 'map.suggestEmpty' | translate }}</span>
       </div>
     } @else {

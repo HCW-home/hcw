@@ -6,7 +6,7 @@
   } @else if (!canViewMap()) {
     <div class="state-wrap">
       <div class="state-card">
-        <ion-icon name="lock-closed-outline" class="state-icon state-icon--danger"></ion-icon>
+        <ion-icon name="lock-closed-outline" class="state-icon state-icon--danger" aria-hidden="true"></ion-icon>
         <h2 class="state-title">{{ 'map.disabled' | translate }}</h2>
         <p class="state-text">{{ 'map.disabledMessage' | translate }}</p>
       </div>
@@ -20,7 +20,7 @@
 
       <div class="hero-text">
         <span class="search-hero-eyebrow">
-          <ion-icon name="search-outline"></ion-icon>
+          <ion-icon name="search-outline" aria-hidden="true"></ion-icon>
           {{ 'map.title' | translate }}
         </span>
         <h1 class="search-hero-title">{{ 'map.searchTitle' | translate }}</h1>
@@ -68,7 +68,7 @@
             </div>
           } @else if (items().length === 0) {
             <div class="empty-state">
-              <ion-icon name="business-outline" class="empty-icon"></ion-icon>
+              <ion-icon name="business-outline" class="empty-icon" aria-hidden="true"></ion-icon>
               <p class="empty-text">{{ 'map.noResults' | translate }}</p>
             </div>
           } @else {

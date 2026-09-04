@@ -3,7 +3,7 @@
 @if (step === 'identifier') {
   <form [formGroup]="identifierForm" (ngSubmit)="onContinue()" class="auth-form step-animate">
     <ion-item lines="full" class="input-item">
-      <ion-icon name="mail-outline" slot="start"></ion-icon>
+      <ion-icon name="mail-outline" slot="start" aria-hidden="true"></ion-icon>
       <ion-input
         type="text"
         [label]="(mode === 'register' ? 'register.identifierLabel' : 'login.identifierLabel') | translate"
@@ -47,7 +47,7 @@
 
     <form [formGroup]="passwordForm" (ngSubmit)="onLogin()" class="auth-form">
       <ion-item lines="full" class="input-item">
-        <ion-icon name="lock-closed-outline" slot="start"></ion-icon>
+        <ion-icon name="lock-closed-outline" slot="start" aria-hidden="true"></ion-icon>
         <ion-input
           #passwordInput
           [type]="showPassword ? 'text' : 'password'"
@@ -105,7 +105,7 @@
         <ion-spinner name="crescent" class="button-spinner"></ion-spinner>
         {{ 'login.sendingCode' | translate }}
       } @else {
-        <ion-icon name="mail-outline" slot="start"></ion-icon>
+        <ion-icon name="mail-outline" slot="start" aria-hidden="true"></ion-icon>
         {{ 'login.sendCode' | translate }}
       }
     </ion-button>
@@ -135,7 +135,7 @@
 
     <form [formGroup]="verificationForm" (ngSubmit)="submitVerificationCode()" class="auth-form">
       <ion-item lines="full" class="input-item">
-        <ion-icon name="keypad-outline" slot="start"></ion-icon>
+        <ion-icon name="keypad-outline" slot="start" aria-hidden="true"></ion-icon>
         <ion-input
           type="text"
           [label]="'login.verificationCodeLabel' | translate"

@@ -5,7 +5,7 @@
         <span class="header-title">{{ headerTitle }}</span>
       }
       <span class="connection-status" [class.connected]="isConnected" [class.disconnected]="!isConnected">
-        <ion-icon [name]="isConnected ? 'wifi-outline' : 'cloud-offline-outline'"></ion-icon>
+        <ion-icon [name]="isConnected ? 'wifi-outline' : 'cloud-offline-outline'" aria-hidden="true"></ion-icon>
         {{ isConnected ? ('messageList.connected' | translate) : ('messageList.disconnected' | translate) }}
       </span>
     </div>
@@ -20,7 +20,7 @@
     }
     @if (messages.length === 0 && !isLoadingMore) {
       <div class="no-messages">
-        <ion-icon name="chatbubbles-outline" class="empty-icon"></ion-icon>
+        <ion-icon name="chatbubbles-outline" class="empty-icon" aria-hidden="true"></ion-icon>
         <span>{{ 'messageList.noMessages' | translate }}</span>
       </div>
     } @else {
@@ -53,14 +53,16 @@
                 (keyup.enter)="saveEdit()"
               />
               <div class="edit-actions">
-                <ion-button fill="clear" size="small" (click)="cancelEdit(); $event.stopPropagation()">
-                  <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+                <ion-button fill="clear" size="small" (click)="cancelEdit(); $event.stopPropagation()"
+                            [attr.aria-label]="'common.cancel' | translate">
+                  <ion-icon slot="icon-only" name="close-outline" aria-hidden="true"></ion-icon>
                 </ion-button>
-                <ion-button fill="clear" size="small" (click)="saveEdit(); $event.stopPropagation()" [disabled]="!editContent.trim() || isEditing">
+                <ion-button fill="clear" size="small" (click)="saveEdit(); $event.stopPropagation()" [disabled]="!editContent.trim() || isEditing"
+                            [attr.aria-label]="'common.save' | translate">
                   @if (isEditing) {
                     <ion-spinner name="dots"></ion-spinner>
                   } @else {
-                    <ion-icon slot="icon-only" name="checkmark-circle-outline" color="success"></ion-icon>
+                    <ion-icon slot="icon-only" name="checkmark-circle-outline" color="success" aria-hidden="true"></ion-icon>
                   }
                 </ion-button>
               </div>
@@ -74,13 +76,15 @@
                   <span class="message-edited">{{ 'messageList.edited' | translate }}</span>
                 }
                 @if (canEditMessage(message)) {
-                  <button class="edit-button" (click)="startEdit(message); $event.stopPropagation()">
-                    <ion-icon name="create-outline"></ion-icon>
+                  <button type="button" class="edit-button" (click)="startEdit(message); $event.stopPropagation()"
+                          [attr.aria-label]="'messageList.editMessage' | translate">
+                    <ion-icon name="create-outline" aria-hidden="true"></ion-icon>
                   </button>
                 }
                 @if (canDeleteMessage(message)) {
-                  <button class="delete-button" (click)="onDeleteClick(message); $event.stopPropagation()">
-                    <ion-icon name="trash-outline"></ion-icon>
+                  <button type="button" class="delete-button" (click)="onDeleteClick(message); $event.stopPropagation()"
+                          [attr.aria-label]="'messageList.deleteMessage' | translate">
+                    <ion-icon name="trash-outline" aria-hidden="true"></ion-icon>
                   </button>
                 }
               </div>
@@ -125,10 +129,11 @@
 
   @if (selectedFile) {
     <div class="selected-file-preview">
-      <ion-icon name="attach-outline"></ion-icon>
+      <ion-icon name="attach-outline" aria-hidden="true"></ion-icon>
       <span class="file-name">{{ selectedFile.name }}</span>
-      <ion-button fill="clear" size="small" (click)="removeSelectedFile()">
-        <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+      <ion-button fill="clear" size="small" (click)="removeSelectedFile()"
+                  [attr.aria-label]="'messageList.removeFile' | translate">
+        <ion-icon slot="icon-only" name="close-outline" aria-hidden="true"></ion-icon>
       </ion-button>
     </div>
   }
@@ -140,8 +145,9 @@
       class="file-input-hidden"
       (change)="onFileSelected($event)"
     />
-    <ion-button fill="clear" class="attach-btn" [disabled]="!isConnected" (click)="openFilePicker()">
-      <ion-icon slot="icon-only" name="attach-outline"></ion-icon>
+    <ion-button fill="clear" class="attach-btn" [disabled]="!isConnected" (click)="openFilePicker()"
+                [attr.aria-label]="'messageList.attachFile' | translate">
+      <ion-icon slot="icon-only" name="attach-outline" aria-hidden="true"></ion-icon>
     </ion-button>
     <input
       type="text"
@@ -155,8 +161,9 @@
       fill="solid"
       class="send-btn"
       [disabled]="(!newMessage.trim() && !selectedFile) || !isConnected"
-      (click)="onSendMessage()">
-      <ion-icon slot="icon-only" name="arrow-up"></ion-icon>
+      (click)="onSendMessage()"
+      [attr.aria-label]="'messageList.send' | translate">
+      <ion-icon slot="icon-only" name="arrow-up" aria-hidden="true"></ion-icon>
     </ion-button>
   </div>
 </div>

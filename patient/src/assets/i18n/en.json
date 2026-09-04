@@ -30,7 +30,9 @@
     "reconnecting": "Server connection lost. Reconnecting...",
     "required": "required",
     "language": "Language",
-    "skipToContent": "Skip to main content"
+    "skipToContent": "Skip to main content",
+    "previous": "Previous",
+    "next": "Next"
   },
   "login": {
     "title": "Sign In",
@@ -231,7 +233,9 @@
     "cancelConfirmMessage": "The information you entered will be lost.",
     "cancelConfirmStay": "Continue request",
     "cancelConfirmLeave": "Leave",
-    "symptomLabel": "Describe your symptoms"
+    "symptomLabel": "Describe your symptoms",
+    "previousWeek": "Previous week",
+    "nextWeek": "Next week"
   },
   "profile": {
     "changeServer": "Change server",
@@ -286,7 +290,8 @@
     "encryptionPassphraseChanged": "Passphrase updated",
     "encryptionInvalidOldPassphrase": "The current passphrase is incorrect",
     "encryptionNewPassphraseTitle": "New passphrase generated",
-    "encryptionNewPassphraseMessage": "Save this passphrase now — it is shown only once."
+    "encryptionNewPassphraseMessage": "Save this passphrase now — it is shown only once.",
+    "changePhoto": "Change profile photo"
   },
   "onboarding": {
     "title": "Welcome!",
@@ -340,7 +345,12 @@
     "yesterday": "Yesterday",
     "unreadMessages": "Unread messages",
     "openImage": "Open image {{name}}",
-    "downloadAttachment": "Download {{name}}"
+    "downloadAttachment": "Download {{name}}",
+    "editMessage": "Edit message",
+    "deleteMessage": "Delete message",
+    "removeFile": "Remove file",
+    "attachFile": "Attach a file",
+    "send": "Send message"
   },
   "preJoinLobby": {
     "settingUp": "Setting up your devices...",

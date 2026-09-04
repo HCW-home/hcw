@@ -12,7 +12,7 @@
     @if (hasReasons()) {
       <div class="new-request-action">
         <button class="card-btn card-btn-outline" [class.card-btn-active]="searchOpen()" (click)="toggleSearch()">
-          <ion-icon [name]="searchOpen() ? 'close-outline' : 'add-outline'"></ion-icon>
+          <ion-icon [name]="searchOpen() ? 'close-outline' : 'add-outline'" aria-hidden="true"></ion-icon>
           <span>{{ 'home.requestConsultation' | translate }}</span>
         </button>
       </div>
@@ -26,7 +26,7 @@
       >
         <div class="home-search-head">
           <span class="home-search-title">
-            <ion-icon name="search-outline"></ion-icon>
+            <ion-icon name="search-outline" aria-hidden="true"></ion-icon>
             {{ 'map.searchTitle' | translate }}
           </span>
           <p class="home-search-subtitle">{{ 'map.searchSubtitle' | translate }}</p>
@@ -36,7 +36,7 @@
             (click)="closeSearch()"
             [attr.aria-label]="'common.close' | translate"
           >
-            <ion-icon name="close-outline"></ion-icon>
+            <ion-icon name="close-outline" aria-hidden="true"></ion-icon>
           </button>
         </div>
 
@@ -57,7 +57,7 @@
           <span class="next-appointment-label">
             <span class="pulse-dot"></span>
             {{ 'home.nextAppointment' | translate }} ·
-            <ion-icon [name]="nextAppointment()!.type === 'online' ? 'videocam-outline' : 'location-outline'"></ion-icon>
+            <ion-icon [name]="nextAppointment()!.type === 'online' ? 'videocam-outline' : 'location-outline'" aria-hidden="true"></ion-icon>
             {{ nextAppointment()!.type === 'online' ? ('common.videoCall' | translate) : ('common.inPerson' | translate) }}
           </span>
           <span class="next-appointment-date">
@@ -69,12 +69,12 @@
         </div>
         @if (nextAppointment()!.type === 'online') {
           <button class="join-button" (click)="joinNextAppointment()">
-            <ion-icon name="videocam"></ion-icon>
+            <ion-icon name="videocam" aria-hidden="true"></ion-icon>
             <span>{{ 'common.join' | translate }}</span>
           </button>
         } @else {
           <div class="in-person-badge">
-            <ion-icon name="location-outline"></ion-icon>
+            <ion-icon name="location-outline" aria-hidden="true"></ion-icon>
             <span>{{ 'common.inPerson' | translate }}</span>
           </div>
         }
@@ -98,10 +98,10 @@
       } @else if (hasNoItems()) {
         <div class="empty-state">
           @if (!hasReasons()) {
-            <ion-icon name="mail-open-outline" class="empty-icon"></ion-icon>
+            <ion-icon name="mail-open-outline" class="empty-icon" aria-hidden="true"></ion-icon>
             <p class="empty-text">{{ 'home.noInvitations' | translate }}</p>
           } @else {
-            <ion-icon name="document-text-outline" class="empty-icon"></ion-icon>
+            <ion-icon name="document-text-outline" class="empty-icon" aria-hidden="true"></ion-icon>
             <p class="empty-text">{{ 'home.noPendingRequests' | translate }}</p>
           }
         </div>
@@ -115,12 +115,12 @@
                  [class.expanded]="hasConsultation(request) && isConsultationExpanded(request.consultation!.id)">
               <div class="cc-header">
                 <span class="type-chip type-chip--request">
-                  <ion-icon name="document-text-outline"></ion-icon>
+                  <ion-icon name="document-text-outline" aria-hidden="true"></ion-icon>
                   {{ 'home.myRequest' | translate }}
                 </span>
                 <h3 class="cc-title">{{ getReasonName(request) }}</h3>
                 <span class="status-badge status-{{ getStatusConfig(request.status).color }}">
-                  <ion-icon [name]="getStatusIcon(request.status)"></ion-icon>
+                  <ion-icon [name]="getStatusIcon(request.status)" aria-hidden="true"></ion-icon>
                   {{ getStatusConfig(request.status).label }}
                 </span>
                 @if (getRequestAppointmentCount(request) > 0) {
@@ -141,7 +141,7 @@
               } @else {
                 <div class="cc-appointments">
                   <div class="cc-empty-row">
-                    <ion-icon name="calendar-outline"></ion-icon>
+                    <ion-icon name="calendar-outline" aria-hidden="true"></ion-icon>
                     <span>{{ 'home.noAppointment' | translate }}</span>
                   </div>
                 </div>
@@ -149,13 +149,13 @@
 
               @if (isStatusRequested(request)) {
                 <div class="cc-note cc-note-waiting">
-                  <ion-icon name="hourglass-outline"></ion-icon>
+                  <ion-icon name="hourglass-outline" aria-hidden="true"></ion-icon>
                   <span>{{ 'home.awaitingAssignment' | translate }}</span>
                 </div>
               }
               @if ((isStatusRefused(request) || isStatusCancelled(request)) && request.refused_reason) {
                 <div class="cc-note cc-note-refused">
-                  <ion-icon name="close-circle-outline"></ion-icon>
+                  <ion-icon name="close-circle-outline" aria-hidden="true"></ion-icon>
                   <span>{{ request.refused_reason }}</span>
                 </div>
               }
@@ -192,7 +192,7 @@
             <div class="timeline-item consult-card" [class.expanded]="isConsultationExpanded(consultation.id)">
               <div class="cc-header">
                 <span class="type-chip type-chip--suivi">
-                  <ion-icon name="chatbubbles-outline"></ion-icon>
+                  <ion-icon name="chatbubbles-outline" aria-hidden="true"></ion-icon>
                   {{ 'home.followUp' | translate }}
                 </span>
                 <h3 class="cc-title">{{ formatConsultationTitle(consultation) }}</h3>
@@ -210,7 +210,7 @@
               } @else {
                 <div class="cc-appointments">
                   <div class="cc-empty-row">
-                    <ion-icon name="calendar-outline"></ion-icon>
+                    <ion-icon name="calendar-outline" aria-hidden="true"></ion-icon>
                     <span>{{ 'home.noAppointment' | translate }}</span>
                   </div>
                 </div>
@@ -246,7 +246,7 @@
             <div class="timeline-item consult-card">
               <div class="cc-header">
                 <span class="type-chip type-chip--appt">
-                  <ion-icon name="videocam-outline"></ion-icon>
+                  <ion-icon name="videocam-outline" aria-hidden="true"></ion-icon>
                   {{ 'appointments.defaultTitle' | translate }}
                 </span>
                 <h3 class="cc-title">{{ appointment.title || ('appointments.defaultTitle' | translate) }}</h3>
@@ -255,7 +255,7 @@
                 <app-appointment-info [appointment]="appointment"></app-appointment-info>
               </div>
               <div class="cc-note">
-                <ion-icon name="chatbubbles-outline"></ion-icon>
+                <ion-icon name="chatbubbles-outline" aria-hidden="true"></ion-icon>
                 <span>{{ 'home.noFollowUp' | translate }}</span>
               </div>
             </div>

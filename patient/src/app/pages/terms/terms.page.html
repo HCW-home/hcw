@@ -15,7 +15,7 @@
   <ion-footer class="terms-footer ion-no-border">
     <div class="footer-inner">
       <div class="language-selector">
-        <ion-icon name="globe-outline"></ion-icon>
+        <ion-icon name="globe-outline" aria-hidden="true"></ion-icon>
         <select [(ngModel)]="selectedLanguage" (ngModelChange)="onLanguageChange($event)">
           @for (lang of availableLanguages(); track lang.code) {
             <option [value]="lang.code">{{ lang.nativeName }}</option>

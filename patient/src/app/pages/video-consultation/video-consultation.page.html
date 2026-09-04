@@ -37,7 +37,7 @@
           <div class="video-tile screen-share-tile local-screen-share">
             <video #localScreenShare autoplay playsinline muted class="tile-video" [appMediaTrack]="localScreenShareTrack" [trackMuted]="true"></video>
             <div class="participant-label">
-              <ion-icon name="desktop-outline"></ion-icon>
+              <ion-icon name="desktop-outline" aria-hidden="true"></ion-icon>
               <ion-text>{{ 'videoConsultation.yourScreen' | translate }}</ion-text>
             </div>
           </div>
@@ -63,7 +63,7 @@
               </audio>
               @if (!participant.isCameraEnabled) {
                 <div class="camera-off-placeholder">
-                  <ion-icon name="videocam-off"></ion-icon>
+                  <ion-icon name="videocam-off" aria-hidden="true"></ion-icon>
                   <ion-avatar class="participant-avatar">
                     <div class="avatar-initials">{{ participant.name.charAt(0) }}</div>
                   </ion-avatar>
@@ -90,7 +90,7 @@
                   [trackMuted]="true">
                 </video>
                 <div class="participant-label">
-                  <ion-icon name="desktop-outline"></ion-icon>
+                  <ion-icon name="desktop-outline" aria-hidden="true"></ion-icon>
                   <ion-text>{{ 'videoConsultation.participantScreen' | translate:{ name: participant.name } }}</ion-text>
                 </div>
               </div>
@@ -121,13 +121,13 @@
                    screen reader would talk over the consultation nonstop. The
                    duration is announced once when the call ends. -->
               <ion-chip color="success" class="duration-chip" aria-hidden="true">
-                <ion-icon name="ellipse" class="recording-dot"></ion-icon>
+                <ion-icon name="ellipse" class="recording-dot" aria-hidden="true"></ion-icon>
                 <ion-text>{{ formattedDuration }}</ion-text>
               </ion-chip>
             }
             @if (isScreenShareEnabled) {
               <ion-chip color="warning">
-                <ion-icon name="desktop-outline"></ion-icon>
+                <ion-icon name="desktop-outline" aria-hidden="true"></ion-icon>
                 <ion-text>{{ 'videoConsultation.sharing' | translate }}</ion-text>
               </ion-chip>
             }

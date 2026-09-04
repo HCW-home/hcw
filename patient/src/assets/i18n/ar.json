@@ -30,7 +30,9 @@
     "reconnecting": "انقطع الاتصال بالخادم. جارٍ إعادة الاتصال...",
     "required": "مطلوب",
     "language": "اللغة",
-    "skipToContent": "تخطي إلى المحتوى الرئيسي"
+    "skipToContent": "تخطي إلى المحتوى الرئيسي",
+    "previous": "السابق",
+    "next": "التالي"
   },
   "login": {
     "title": "تسجيل الدخول",
@@ -231,7 +233,9 @@
     "cancelConfirmMessage": "ستفقد المعلومات التي أدخلتها.",
     "cancelConfirmStay": "متابعة الطلب",
     "cancelConfirmLeave": "مغادرة",
-    "symptomLabel": "صف الأعراض التي تشعر بها"
+    "symptomLabel": "صف الأعراض التي تشعر بها",
+    "previousWeek": "الأسبوع السابق",
+    "nextWeek": "الأسبوع التالي"
   },
   "profile": {
     "changeServer": "تغيير الخادم",
@@ -286,7 +290,8 @@
     "encryptionPassphraseChanged": "تم تحديث عبارة المرور",
     "encryptionInvalidOldPassphrase": "عبارة المرور الحالية غير صحيحة",
     "encryptionNewPassphraseTitle": "تم توليد عبارة مرور جديدة",
-    "encryptionNewPassphraseMessage": "احفظ عبارة المرور هذه الآن — لن تُعرض إلا مرة واحدة."
+    "encryptionNewPassphraseMessage": "احفظ عبارة المرور هذه الآن — لن تُعرض إلا مرة واحدة.",
+    "changePhoto": "تغيير صورة الملف الشخصي"
   },
   "onboarding": {
     "title": "مرحبًا بك!",
@@ -340,7 +345,12 @@
     "yesterday": "أمس",
     "unreadMessages": "رسائل غير مقروءة",
     "openImage": "فتح الصورة {{name}}",
-    "downloadAttachment": "تنزيل {{name}}"
+    "downloadAttachment": "تنزيل {{name}}",
+    "editMessage": "تعديل الرسالة",
+    "deleteMessage": "حذف الرسالة",
+    "removeFile": "إزالة الملف",
+    "attachFile": "إرفاق ملف",
+    "send": "إرسال الرسالة"
   },
   "preJoinLobby": {
     "settingUp": "جارٍ إعداد أجهزتك...",

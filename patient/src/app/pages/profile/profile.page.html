@@ -23,15 +23,16 @@
             <div class="avatar-placeholder">{{ getInitials() }}</div>
           }
         </div>
-        <button class="edit-photo-btn" type="button" (click)="openAvatarFilePicker()">
-          <ion-icon name="camera-outline"></ion-icon>
+        <button class="edit-photo-btn" type="button" (click)="openAvatarFilePicker()"
+                [attr.aria-label]="'profile.changePhoto' | translate">
+          <ion-icon name="camera-outline" aria-hidden="true"></ion-icon>
         </button>
       </div>
       <div class="profile-identity">
         <h1 class="user-name">{{ currentUser?.first_name }} {{ currentUser?.last_name }}</h1>
         @if (currentUser?.email) {
           <p class="user-email">
-            <ion-icon name="mail-outline"></ion-icon>
+            <ion-icon name="mail-outline" aria-hidden="true"></ion-icon>
             <span>{{ currentUser?.email }}</span>
           </p>
         }
@@ -129,13 +130,13 @@
             [class.danger-item]="item.color === 'danger'"
             (click)="handleMenuItemClick(item)">
             <span class="menu-icon">
-              <ion-icon [name]="item.icon"></ion-icon>
+              <ion-icon [name]="item.icon" aria-hidden="true"></ion-icon>
             </span>
             <span class="menu-label">{{ item.title }}</span>
             @if (item.badge) {
               <span class="menu-badge">{{ item.badge }}</span>
             }
-            <ion-icon name="chevron-forward-outline" class="menu-arrow"></ion-icon>
+            <ion-icon name="chevron-forward-outline" class="menu-arrow" aria-hidden="true"></ion-icon>
           </button>
         }
       </div>
