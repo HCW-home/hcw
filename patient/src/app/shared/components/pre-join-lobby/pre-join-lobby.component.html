@@ -72,6 +72,7 @@
               [value]="selectedCameraId"
               (ionChange)="onCameraChange($event)"
               interface="action-sheet"
+              [attr.aria-label]="'preJoinLobby.camera' | translate"
               [placeholder]="'preJoinLobby.selectCamera' | translate">
               @for (option of cameraOptions; track option.value) {
                 <ion-select-option [value]="option.value">{{ option.label }}</ion-select-option>
@@ -87,6 +88,7 @@
               [value]="selectedMicrophoneId"
               (ionChange)="onMicrophoneChange($event)"
               interface="action-sheet"
+              [attr.aria-label]="'preJoinLobby.microphone' | translate"
               [placeholder]="'preJoinLobby.selectMicrophone' | translate">
               @for (option of microphoneOptions; track option.value) {
                 <ion-select-option [value]="option.value">{{ option.label }}</ion-select-option>
@@ -102,6 +104,7 @@
               [value]="selectedSpeakerId"
               (ionChange)="onSpeakerChange($event)"
               interface="action-sheet"
+              [attr.aria-label]="'preJoinLobby.speaker' | translate"
               [placeholder]="'preJoinLobby.selectSpeaker' | translate">
               @for (option of speakerOptions; track option.value) {
                 <ion-select-option [value]="option.value">{{ option.label }}</ion-select-option>

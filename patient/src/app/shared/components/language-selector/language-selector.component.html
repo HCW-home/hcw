@@ -1,8 +1,11 @@
 <div class="language-selector">
-  <ion-icon name="globe-outline" class="globe-icon"></ion-icon>
+  <ion-icon name="globe-outline" class="globe-icon" aria-hidden="true"></ion-icon>
+  <!-- Visible label is the globe icon alone, so the name has to come from
+       aria-label rather than a rendered [label]. -->
   <ion-select
     [value]="currentLanguageCode"
     interface="popover"
+    [attr.aria-label]="languageLabel"
     (ionChange)="onLanguageChange($any($event))">
     @for (lang of availableLanguages; track lang.code) {
       <ion-select-option [value]="lang.code">{{ lang.nativeName }}</ion-select-option>

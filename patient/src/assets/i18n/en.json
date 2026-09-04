@@ -28,7 +28,8 @@
     "reload": "Reload",
     "offline": "Server connection lost",
     "reconnecting": "Server connection lost. Reconnecting...",
-    "required": "required"
+    "required": "required",
+    "language": "Language"
   },
   "login": {
     "title": "Sign In",
@@ -60,7 +61,10 @@
     "identifierRequired": "Enter a valid email address or phone number",
     "phoneNeedsCountryCode": "Add your country code, for example +33612345678",
     "showPassword": "Show password",
-    "hidePassword": "Hide password"
+    "hidePassword": "Hide password",
+    "identifierLabel": "Email or phone number",
+    "passwordLabel": "Password",
+    "verificationCodeLabel": "Verification code"
   },
   "register": {
     "platformDescription": "Create your account and start your telemedicine consultations today.",
@@ -73,7 +77,8 @@
     "identifierPlaceholder": "Email or phone number",
     "identifierHelp": "We will send you a 6-digit code to confirm it.",
     "identifierInvalid": "Enter a valid email address or phone number",
-    "phoneNeedsCountryCode": "Add your country code, for example +33612345678"
+    "phoneNeedsCountryCode": "Add your country code, for example +33612345678",
+    "identifierLabel": "Email or phone number"
   },
   "forgotPassword": {
     "title": "Forgot Password?",
@@ -223,7 +228,8 @@
     "cancelConfirmTitle": "Cancel this request?",
     "cancelConfirmMessage": "The information you entered will be lost.",
     "cancelConfirmStay": "Continue request",
-    "cancelConfirmLeave": "Leave"
+    "cancelConfirmLeave": "Leave",
+    "symptomLabel": "Describe your symptoms"
   },
   "profile": {
     "changeServer": "Change server",

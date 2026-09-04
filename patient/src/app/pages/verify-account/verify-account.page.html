@@ -28,7 +28,8 @@
                 <ion-icon name="mail-outline" slot="start"></ion-icon>
                 <ion-input
                   type="text"
-                  [placeholder]="'verifyAccount.identifierPlaceholder' | translate"
+                  [label]="'verifyAccount.identifierPlaceholder' | translate"
+                  labelPlacement="floating"
                   formControlName="identifier">
                 </ion-input>
               </ion-item>
@@ -49,7 +50,8 @@
               <ion-icon name="keypad-outline" slot="start"></ion-icon>
               <ion-input
                 type="text"
-                [placeholder]="'verifyAccount.enterCode' | translate"
+                [label]="'verifyAccount.enterCode' | translate"
+                labelPlacement="floating"
                 formControlName="code"
                 maxlength="6"
                 inputmode="numeric">

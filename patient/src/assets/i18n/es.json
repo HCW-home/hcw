@@ -129,7 +129,8 @@
     "offline": "Se perdió la conexión con el servidor.",
     "reconnecting": "Se perdió la conexión con el servidor. Reconectando...",
     "cancel": "Cancelar",
-    "required": "obligatorio"
+    "required": "obligatorio",
+    "language": "Idioma"
   },
   "login": {
     "title": "Iniciar sesión",
@@ -161,7 +162,10 @@
     "identifierRequired": "Introduzca un correo electrónico o un teléfono válido",
     "phoneNeedsCountryCode": "Añada su prefijo de país, por ejemplo +34612345678",
     "showPassword": "Mostrar contraseña",
-    "hidePassword": "Ocultar contraseña"
+    "hidePassword": "Ocultar contraseña",
+    "identifierLabel": "Correo electrónico o teléfono",
+    "passwordLabel": "Contraseña",
+    "verificationCodeLabel": "Código de verificación"
   },
   "register": {
     "platformDescription": "Crea su cuenta y comienza hoy mismo tus consultas de telemedicina.",
@@ -174,7 +178,8 @@
     "identifierPlaceholder": "Correo electrónico o teléfono",
     "identifierHelp": "Le enviaremos un código de 6 dígitos para confirmarlo.",
     "identifierInvalid": "Introduzca un correo electrónico o un teléfono válido",
-    "phoneNeedsCountryCode": "Añada su prefijo de país, por ejemplo +34612345678"
+    "phoneNeedsCountryCode": "Añada su prefijo de país, por ejemplo +34612345678",
+    "identifierLabel": "Correo electrónico o teléfono"
   },
   "forgotPassword": {
     "title": "¿Olvidó tu contraseña?",
@@ -317,7 +322,8 @@
     "cancelConfirmTitle": "¿Cancelar la solicitud?",
     "cancelConfirmMessage": "Se perderá la información introducida.",
     "cancelConfirmStay": "Continuar la solicitud",
-    "cancelConfirmLeave": "Salir"
+    "cancelConfirmLeave": "Salir",
+    "symptomLabel": "Describa sus síntomas"
   },
   "messageList": {
     "messages": "Mensajes",

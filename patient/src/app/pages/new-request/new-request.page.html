@@ -402,6 +402,8 @@
             <div class="comment-section">
               <ion-textarea
                 [(ngModel)]="comment"
+                [label]="'newRequest.symptomLabel' | translate"
+                labelPlacement="stacked"
                 [placeholder]="'newRequest.symptomPlaceholder' | translate"
                 [rows]="4"
                 class="comment-input">

@@ -61,6 +61,20 @@ export class ResetPasswordPage implements OnInit, OnDestroy {
     });
   }
 
+  /* Feeds ion-input's errorText, which renders it in a role="alert" tied to
+   * the field — replacing the hand-rolled error blocks this template used. */
+  get passwordErrorText(): string {
+    return this.resetPasswordForm.get('password')?.errors
+      ? this.t.instant('resetPassword.passwordMinLength')
+      : '';
+  }
+
+  get confirmPasswordErrorText(): string {
+    return this.resetPasswordForm.get('confirmPassword')?.errors
+      ? this.t.instant('resetPassword.confirmRequired')
+      : '';
+  }
+
   ngOnInit(): void {
     this.uid = this.route.snapshot.queryParamMap.get('uid');
     this.token = this.route.snapshot.queryParamMap.get('token');

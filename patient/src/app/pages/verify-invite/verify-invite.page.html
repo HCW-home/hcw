@@ -37,7 +37,8 @@
                 <ion-icon name="keypad-outline" slot="start"></ion-icon>
                 <ion-input
                   type="text"
-                  [placeholder]="'verifyInvite.enterCode' | translate"
+                  [label]="'verifyInvite.enterCode' | translate"
+                  labelPlacement="floating"
                   formControlName="verification_code"
                   maxlength="6"
                   inputmode="numeric">

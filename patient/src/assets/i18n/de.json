@@ -27,7 +27,8 @@
     "videoCall": "Videoanruf",
     "offline": "Serververbindung unterbrochen",
     "reconnecting": "Serververbindung unterbrochen. Verbindungsversuch...",
-    "required": "erforderlich"
+    "required": "erforderlich",
+    "language": "Sprache"
   },
   "login": {
     "title": "Anmelden",
@@ -59,7 +60,10 @@
     "identifierRequired": "Geben Sie eine gültige E-Mail-Adresse oder Telefonnummer ein",
     "phoneNeedsCountryCode": "Fügen Sie Ihre Ländervorwahl hinzu, zum Beispiel +49612345678",
     "showPassword": "Passwort anzeigen",
-    "hidePassword": "Passwort ausblenden"
+    "hidePassword": "Passwort ausblenden",
+    "identifierLabel": "E-Mail oder Telefonnummer",
+    "passwordLabel": "Passwort",
+    "verificationCodeLabel": "Bestätigungscode"
   },
   "register": {
     "platformDescription": "Erstellen Sie Ihr Konto und beginnen Sie noch heute mit Ihren Telemedizin-Konsultationen.",
@@ -72,7 +76,8 @@
     "identifierPlaceholder": "E-Mail oder Telefonnummer",
     "identifierHelp": "Wir senden Ihnen einen 6-stelligen Code zur Bestätigung.",
     "identifierInvalid": "Geben Sie eine gültige E-Mail-Adresse oder Telefonnummer ein",
-    "phoneNeedsCountryCode": "Fügen Sie Ihre Ländervorwahl hinzu, zum Beispiel +49612345678"
+    "phoneNeedsCountryCode": "Fügen Sie Ihre Ländervorwahl hinzu, zum Beispiel +49612345678",
+    "identifierLabel": "E-Mail oder Telefonnummer"
   },
   "forgotPassword": {
     "title": "Passwort vergessen?",
@@ -215,7 +220,8 @@
     "cancelConfirmTitle": "Anfrage abbrechen?",
     "cancelConfirmMessage": "Die eingegebenen Informationen gehen verloren.",
     "cancelConfirmStay": "Anfrage fortsetzen",
-    "cancelConfirmLeave": "Verlassen"
+    "cancelConfirmLeave": "Verlassen",
+    "symptomLabel": "Beschreiben Sie Ihre Symptome"
   },
   "instancePicker": {
     "title": "Wählen Sie Ihre Instanz",

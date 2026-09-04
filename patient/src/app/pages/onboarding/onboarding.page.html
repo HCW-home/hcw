@@ -10,10 +10,9 @@
 
       <div class="onboarding-form">
         <ion-item lines="full" class="input-item">
-          <ion-label position="stacked">
-            {{ 'onboarding.firstName' | translate }}
-          </ion-label>
           <ion-input
+            [label]="'onboarding.firstName' | translate"
+            labelPlacement="stacked"
             type="text"
             [(ngModel)]="firstName"
             autocomplete="given-name">
@@ -21,10 +20,9 @@
         </ion-item>
 
         <ion-item lines="full" class="input-item">
-          <ion-label position="stacked">
-            {{ 'onboarding.lastName' | translate }}
-          </ion-label>
           <ion-input
+            [label]="'onboarding.lastName' | translate"
+            labelPlacement="stacked"
             type="text"
             [(ngModel)]="lastName"
             autocomplete="family-name">
@@ -32,10 +30,9 @@
         </ion-item>
 
         <ion-item lines="full" class="input-item">
-          <ion-label position="stacked">
-            {{ 'onboarding.preferredLanguage' | translate }}
-          </ion-label>
           <ion-select
+            [label]="'onboarding.preferredLanguage' | translate"
+            labelPlacement="stacked"
             [(ngModel)]="preferredLanguage"
             (ngModelChange)="onLanguageChange($event)"
             [interface]="'popover'">
@@ -48,11 +45,10 @@
         </ion-item>
 
         <ion-item lines="full" class="input-item">
-          <ion-label position="stacked">
-            {{ 'onboarding.communicationMethod' | translate }}
-            <ion-text color="danger">*</ion-text>
-          </ion-label>
           <ion-select
+            [label]="'onboarding.communicationMethod' | translate"
+            required
+            labelPlacement="stacked"
             [(ngModel)]="communicationMethod"
             [interface]="'popover'"
             [placeholder]="'profile.selectMethod' | translate">
@@ -74,11 +70,10 @@
 
         @if (showMobilePhone) {
           <ion-item lines="full" class="input-item">
-            <ion-label position="stacked">
-              {{ 'onboarding.mobilePhone' | translate }}
-              <ion-text color="danger">*</ion-text>
-            </ion-label>
             <ion-input
+              [label]="'onboarding.mobilePhone' | translate"
+              required
+              labelPlacement="stacked"
               type="tel"
               [(ngModel)]="mobilePhoneNumber"
               placeholder="+1 234 567 8900">
@@ -88,11 +83,10 @@
 
         @if (showEmail) {
           <ion-item lines="full" class="input-item">
-            <ion-label position="stacked">
-              {{ 'onboarding.email' | translate }}
-              <ion-text color="danger">*</ion-text>
-            </ion-label>
             <ion-input
+              [label]="'onboarding.email' | translate"
+              required
+              labelPlacement="stacked"
               type="email"
               [(ngModel)]="email"
               inputmode="email">
@@ -101,11 +95,10 @@
         }
 
         <ion-item lines="full" class="input-item">
-          <ion-label position="stacked">
-            {{ 'onboarding.timezone' | translate }}
-            <ion-text color="danger">*</ion-text>
-          </ion-label>
           <ion-select
+            [label]="'onboarding.timezone' | translate"
+            required
+            labelPlacement="stacked"
             [(ngModel)]="timezone"
             [interface]="'popover'">
             @for (tz of timezones; track tz) {
@@ -116,11 +109,10 @@
 
         @if (requiresPassphrase()) {
           <ion-item lines="full" class="input-item">
-            <ion-label position="stacked">
-              {{ 'onboarding.encryptionPassphrase' | translate }}
-              <ion-text color="danger">*</ion-text>
-            </ion-label>
             <ion-input
+              [label]="'onboarding.encryptionPassphrase' | translate"
+              required
+              labelPlacement="stacked"
               type="password"
               [(ngModel)]="encryptionPassphrase"
               autocomplete="off">
@@ -145,10 +137,9 @@
 
         @if (passwordLoginOffered()) {
           <ion-item lines="full" class="input-item">
-            <ion-label position="stacked">
-              {{ 'onboarding.password' | translate }}
-            </ion-label>
             <ion-input
+              [label]="'onboarding.password' | translate"
+              labelPlacement="stacked"
               type="password"
               [(ngModel)]="password"
               autocomplete="new-password">
@@ -157,10 +148,9 @@
 
           @if (password) {
             <ion-item lines="full" class="input-item">
-              <ion-label position="stacked">
-                {{ 'onboarding.passwordConfirm' | translate }}
-              </ion-label>
               <ion-input
+                [label]="'onboarding.passwordConfirm' | translate"
+                labelPlacement="stacked"
                 type="password"
                 [(ngModel)]="passwordConfirm"
                 autocomplete="new-password">

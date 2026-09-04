@@ -27,7 +27,8 @@
     "reload": "Перезавантажити",
     "offline": "З'єднання із сервером втрачено",
     "reconnecting": "З'єднання із сервером втрачено. Повторне підключення...",
-    "required": "обов'язково"
+    "required": "обов'язково",
+    "language": "Мова"
   },
   "login": {
     "title": "Увійти",
@@ -59,7 +60,10 @@
     "identifierRequired": "Введіть дійсну електронну адресу або номер телефону",
     "phoneNeedsCountryCode": "Додайте код країни, наприклад +380612345678",
     "showPassword": "Показати пароль",
-    "hidePassword": "Приховати пароль"
+    "hidePassword": "Приховати пароль",
+    "identifierLabel": "Електронна пошта або телефон",
+    "passwordLabel": "Пароль",
+    "verificationCodeLabel": "Код підтвердження"
   },
   "register": {
     "platformDescription": "Створіть обліковий запис і розпочніть свої телемедичні консультації вже сьогодні.",
@@ -72,7 +76,8 @@
     "identifierPlaceholder": "Електронна пошта або номер телефону",
     "identifierHelp": "Ми надішлемо вам 6-значний код для підтвердження.",
     "identifierInvalid": "Введіть дійсну електронну адресу або номер телефону",
-    "phoneNeedsCountryCode": "Додайте код країни, наприклад +380612345678"
+    "phoneNeedsCountryCode": "Додайте код країни, наприклад +380612345678",
+    "identifierLabel": "Електронна пошта або телефон"
   },
   "forgotPassword": {
     "title": "Забули пароль?",
@@ -216,7 +221,8 @@
     "cancelConfirmTitle": "Скасувати запит?",
     "cancelConfirmMessage": "Введену інформацію буде втрачено.",
     "cancelConfirmStay": "Продовжити запит",
-    "cancelConfirmLeave": "Вийти"
+    "cancelConfirmLeave": "Вийти",
+    "symptomLabel": "Опишіть ваші симптоми"
   },
   "instancePicker": {
     "title": "Оберіть свій сервер",

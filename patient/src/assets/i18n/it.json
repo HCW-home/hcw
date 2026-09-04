@@ -189,7 +189,8 @@
     "reload": "Ricaricare",
     "offline": "Connessione al server persa",
     "reconnecting": "Connessione al server persa. Riconnessione in corso...",
-    "required": "obbligatorio"
+    "required": "obbligatorio",
+    "language": "Lingua"
   },
   "login": {
     "title": "Registrazione",
@@ -221,7 +222,10 @@
     "identifierRequired": "Inserisci un indirizzo email o un numero di telefono valido",
     "phoneNeedsCountryCode": "Aggiungi il prefisso internazionale, ad esempio +39612345678",
     "showPassword": "Mostra password",
-    "hidePassword": "Nascondi password"
+    "hidePassword": "Nascondi password",
+    "identifierLabel": "E-mail o numero di telefono",
+    "passwordLabel": "Password",
+    "verificationCodeLabel": "Codice di verifica"
   },
   "register": {
     "platformDescription": "Crea il tuo account e inizia oggi stesso le tue consulenze di telemedicina.",
@@ -234,7 +238,8 @@
     "identifierPlaceholder": "Email o numero di telefono",
     "identifierHelp": "Ti invieremo un codice a 6 cifre per confermarlo.",
     "identifierInvalid": "Inserisci un indirizzo email o un numero di telefono valido",
-    "phoneNeedsCountryCode": "Aggiungi il prefisso internazionale, ad esempio +39612345678"
+    "phoneNeedsCountryCode": "Aggiungi il prefisso internazionale, ad esempio +39612345678",
+    "identifierLabel": "E-mail o numero di telefono"
   },
   "forgotPassword": {
     "title": "Ha dimenticato la password?",
@@ -352,7 +357,8 @@
     "cancelConfirmTitle": "Annullare la richiesta?",
     "cancelConfirmMessage": "Le informazioni inserite andranno perse.",
     "cancelConfirmStay": "Continua la richiesta",
-    "cancelConfirmLeave": "Esci"
+    "cancelConfirmLeave": "Esci",
+    "symptomLabel": "Descrivi i tuoi sintomi"
   },
   "incomingCall": {
     "isCalling": "sta chiamando...",
