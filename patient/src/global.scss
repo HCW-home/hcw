@@ -505,6 +505,20 @@ button.link-text:disabled {
   color: var(--app-text-secondary);
 }
 
+/* Validation messages, rendered below the field rather than inside it.
+ *
+ * ion-input's own errorText paints the message within the filled container,
+ * which crowds the box and pushes the input around as messages appear and
+ * disappear. Rendering it ourselves keeps the box a fixed size and the message
+ * clearly attached underneath. role="alert" and aria-describedby are set in
+ * the templates, so screen readers still get what Ionic used to provide. */
+.field-error {
+  display: block;
+  margin: -8px 0 12px 4px;
+  font-size: 0.75rem;
+  color: var(--ion-color-danger);
+}
+
 /* Floating and stacked labels on fields that already sit inside a styled
  * container.
  *
@@ -517,12 +531,12 @@ ion-item ion-textarea {
   --highlight-height: 0;
 }
 
-/* Ionic turns the label red via --highlight-color-invalid as soon as a control
- * is touched and invalid — and an empty required field is invalid the moment
- * it is focused and left, before anything has been typed. The components
- * suppress the message in that case (their *ErrorText getters return '' when
- * the only error is `required` on an empty value), so the colour has to be
- * suppressed too, otherwise the field turns red with nothing to explain why.
+/* Ionic tints a control via --highlight-color-invalid as soon as it is touched
+ * and invalid — and an empty required field is invalid the moment it is
+ * focused and left, before anything has been typed. The components suppress
+ * the message in that case (their *ErrorText getters return '' when the only
+ * error is `required` on an empty value), so the tint has to go too, otherwise
+ * the field turns red with nothing to explain why.
  *
  * .has-error is bound from the component whenever a message is genuinely
  * shown, so real validation failures still turn red. */
