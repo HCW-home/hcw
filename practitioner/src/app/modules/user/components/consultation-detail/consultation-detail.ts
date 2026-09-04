@@ -207,6 +207,8 @@ export class ConsultationDetail implements OnInit, OnDestroy {
   editingAppointment = signal<Appointment | null>(null);
 
   private pendingJoinAppointmentId: number | null = null;
+  /** A `close=true` deep link waiting for the follow-up to be loaded. */
+  private pendingCloseConsultation = false;
   private appointmentsLoaded = false;
   private recentlyModifiedAppointmentIds = new Set<number>();
 
@@ -468,6 +470,11 @@ export class ConsultationDetail implements OnInit, OnDestroy {
     this.route.queryParams
       .pipe(takeUntil(this.destroy$))
       .subscribe(queryParams => {
+        if (queryParams['close'] === 'true') {
+          this.pendingCloseConsultation = true;
+          this.checkPendingClose();
+        }
+
         if (queryParams['appointmentId']) {
           const appointmentId = +queryParams['appointmentId'];
           this.pendingHighlightAppointmentId = appointmentId;
@@ -478,6 +485,28 @@ export class ConsultationDetail implements OnInit, OnDestroy {
           }
         }
       });
+  }
+
+  /**
+   * Leaving the call of a temporary follow-up hands us `close=true`: the same
+   * form as the header button, notes included, rather than a bare yes/no.
+   *
+   * Retried after the follow-up loads: the flag can land before it, and
+   * `closeConsultation()` needs it.
+   */
+  private checkPendingClose(): void {
+    if (!this.pendingCloseConsultation) return;
+    if (!this.consultation()) return;
+
+    this.pendingCloseConsultation = false;
+    // Clear the flag so a reload does not put the form back up. Same as the
+    // appointments deep link does once it has been acted on.
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {},
+      replaceUrl: true,
+    });
+    this.closeConsultation();
   }
 
   private checkPendingJoin(): void {
@@ -623,6 +652,18 @@ export class ConsultationDetail implements OnInit, OnDestroy {
     this.wsService.consultationUpdated$
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
+        this.loadConsultation(true);
+      });
+
+    // The user socket is the one that actually carries consultation post_save,
+    // so this is what reflects a close — ours, a colleague's, or the auto-close
+    // task's. Filtering on the state matters: the same stream also carries
+    // `request_assigned`.
+    this.userWsService.consultationEvent$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(event => {
+        if (event.consultation_id !== this.consultationId) return;
+        if (event.state !== 'updated') return;
         this.loadConsultation(true);
       });
 
@@ -911,6 +952,7 @@ export class ConsultationDetail implements OnInit, OnDestroy {
           }
           this.consultation.set(consultation);
           this.isLoadingConsultation.set(false);
+          this.checkPendingClose();
           if (consultation.is_encrypted) {
             this.loadConsultationKey(consultation);
           } else {

@@ -9,7 +9,13 @@ from django.utils import timezone
 from django_tenants.test.cases import TenantTestCase
 from rest_framework.test import APIClient
 
-from consultations.models import Consultation, Participant, Type
+from consultations.models import (
+    Appointment,
+    AppointmentStatus,
+    Consultation,
+    Participant,
+    Type,
+)
 from users.models import User
 
 
@@ -863,3 +869,69 @@ class ConsultationAttachmentTests(_Base):
 
         self.assertEqual(response.status_code, 201, response.data)
         self.assertTrue(self.consultation.appointments.exists())
+
+
+class JoinConsultationIdTests(_Base):
+    """The join payload hands out the follow-up id under the access rule.
+
+    The client opens the follow-up behind the call as soon as it joins, so the
+    id travels with the connection info. It follows the same rule as
+    `AppointmentSerializer`: handed to whoever the consultation lets in, blanked
+    for everyone else, or it points at a 404.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.invited = User.objects.create_user(
+            email="invited@example.com", is_practitioner=True
+        )
+        self.appointment_id = self._create_appointment(
+            participants_ids=[self.invited.pk],
+        ).data["id"]
+        # Bypassing the serializer: it refuses a past `scheduled_at`, and a
+        # created appointment starts as a draft, which has no room to enter.
+        Appointment.objects.filter(pk=self.appointment_id).update(
+            status=AppointmentStatus.scheduled, scheduled_at=timezone.now()
+        )
+        self.invited_client = APIClient()
+        self.invited_client.force_authenticate(user=self.invited)
+
+    def _join(self, client):
+        server = MagicMock()
+        server.instance.appointment_participant_info.return_value = {
+            "provider": "livekit",
+            "url": "wss://livekit.example.com",
+            "token": "token",
+            "room": "room",
+        }
+        with patch(
+            "consultations.views.Server.get_or_pin_for_room", return_value=server
+        ):
+            return client.get(
+                reverse("appointment-join", kwargs={"pk": self.appointment_id})
+            )
+
+    def test_the_owner_gets_the_follow_up_id(self):
+        response = self._join(self.client)
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data["consultation_id"], self.consultation.pk)
+
+    def test_a_participant_kept_out_of_the_follow_up_gets_none(self):
+        """On the roster is not in the follow-up: `is_consultation_visible` is."""
+        response = self._join(self.invited_client)
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertIsNone(response.data["consultation_id"])
+
+    def test_the_flag_hands_the_id_over(self):
+        participant = Participant.objects.get(
+            user=self.invited, appointment_id=self.appointment_id
+        )
+        participant.is_consultation_visible = True
+        participant.save(update_fields=["is_consultation_visible"])
+
+        response = self._join(self.invited_client)
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data["consultation_id"], self.consultation.pk)

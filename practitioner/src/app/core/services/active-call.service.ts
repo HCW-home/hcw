@@ -26,6 +26,22 @@ export class ActiveCallService {
     this._isFullscreen.set(true);
   }
 
+  /**
+   * Late-binds the follow-up to a call started from an appointment alone
+   * (appointments list, incoming call, deep link): its id only comes back with
+   * the join response. Patching the signal is what makes the PiP bind its chat
+   * to the right follow-up.
+   *
+   * Keeps the same reference when nothing changes, so the signal stays quiet.
+   */
+  setConsultationId(consultationId: number): void {
+    this._activeCall.update(call =>
+      call && call.consultationId !== consultationId
+        ? { ...call, consultationId }
+        : call
+    );
+  }
+
   endCall(): void {
     this._activeCall.set(null);
     this._isFullscreen.set(false);

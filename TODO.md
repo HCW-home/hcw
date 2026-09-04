@@ -26,3 +26,5 @@ Drop down pour le switching microphone
 Retourner dans la consultation une fois l'appel terminé (médecin) et proposer automatiquement de clotûrer la consultation
 
 Quand le patient a été assigné à une consultation, il a eu un écran vide
+
+Fusionner nouveau rendez-vous et nouveau suivi (la modale)

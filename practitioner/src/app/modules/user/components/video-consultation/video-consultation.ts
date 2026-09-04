@@ -58,6 +58,14 @@ interface CaptionEntry {
   isFinal: boolean;
 }
 
+/**
+ * Why the call window is going away. The host reacts differently to each: only
+ * a deliberate departure from an established call ends a meeting — a lobby
+ * cancellation never joined, and a server removal already means the follow-up
+ * was closed.
+ */
+export type LeaveReason = 'user' | 'server' | 'lobby';
+
 @Component({
   selector: 'app-video-consultation',
   standalone: true,
@@ -85,7 +93,9 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   @Input() messages: Message[] = [];
   @Input() isLoadingMore = false;
   @Input() hasMore = true;
-  @Output() leave = new EventEmitter<void>();
+  @Output() leave = new EventEmitter<LeaveReason>();
+  /** Follow-up the call belongs to, emitted once the call is established. */
+  @Output() joined = new EventEmitter<number | null>();
   @Output() toggleSize = new EventEmitter<void>();
   @Output() sendMessage = new EventEmitter<SendMessageData>();
   @Output() editMessage = new EventEmitter<EditMessageData>();
@@ -472,7 +482,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   }
 
   onLobbyClose(): void {
-    this.leave.emit();
+    this.leave.emit('lobby');
   }
 
   async onJoinFromLobby(settings: IPreJoinSettings): Promise<void> {
@@ -530,6 +540,9 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       }
 
       this.phase.set('in-call');
+      // The follow-up is only known for sure here: a call started from the
+      // appointments list carries no consultation id, the join response does.
+      this.joined.emit(this.consultationId ?? config.consultation_id ?? null);
       void this.updateBackgroundBlurSupport();
       this.activeCameraId = settings.cameraDeviceId || '';
       this.activeMicId = settings.microphoneDeviceId || '';
@@ -796,7 +809,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       this.activeRemoteTranscriptions.clear();
       this.ownMicTranscriptionAt.clear();
       await this.videoCallService.disconnect();
-      this.leave.emit();
+      this.leave.emit('user');
     }
   }
 
@@ -816,7 +829,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       this.t.instant('videoCall.callEndedTitle'),
       this.t.instant('videoCall.callEndedByServer')
     );
-    this.leave.emit();
+    this.leave.emit('server');
   }
 
   onToggleSize(): void {

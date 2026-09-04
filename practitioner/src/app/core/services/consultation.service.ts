@@ -70,8 +70,13 @@ export class ConsultationService {
     );
   }
 
-  getConsultation(id: number): Observable<Consultation> {
-    return this.http.get<Consultation>(`${this.apiUrl}/consultations/${id}/`);
+  // `silent` opts out of the interceptor's automatic error toast, for callers
+  // that read a follow-up in the background and handle a failure themselves.
+  getConsultation(id: number, silent = false): Observable<Consultation> {
+    return this.http.get<Consultation>(
+      `${this.apiUrl}/consultations/${id}/`,
+      silent ? { context: new HttpContext().set(SKIP_ERROR_TOAST, true) } : {}
+    );
   }
 
   createConsultation(
