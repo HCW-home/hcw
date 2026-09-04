@@ -26,6 +26,8 @@ export class ConsultationInfoComponent {
   @Input({ required: true }) consultation!: Consultation;
   @Input() unreadCount = 0;
   @Input() expanded = false;
+  // Renaming this output would change the component's public API; unrelated to a11y work.
+  // eslint-disable-next-line @angular-eslint/no-output-native
   @Output() toggle = new EventEmitter<Consultation>();
 
   get title(): string {

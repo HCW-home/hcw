@@ -112,3 +112,13 @@ jobs:
 
       - name: Build
         run: yarn build
+
+      # Patient only: practitioner has the accessibility ruleset enabled but
+      # ships no lint script, and no browser test setup.
+      - name: Lint
+        if: matrix.project == 'patient'
+        run: yarn lint
+
+      - name: Test
+        if: matrix.project == 'patient'
+        run: yarn test --watch=false --browsers=ChromeHeadlessCI
