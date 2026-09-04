@@ -94,9 +94,11 @@
               @if (message.attachment && !isMessageDeleted(message)) {
                 @if (isImageAttachment(message.attachment)) {
                   @if (getImageUrl(message.id)) {
-                    <div class="message-image-attachment" (click)="openImageViewer(message)">
+                    <button type="button" class="message-image-attachment"
+                            (click)="openImageViewer(message)"
+                            [attr.aria-label]="'messageList.openImage' | translate:{ name: message.attachment.file_name }">
                       <img [src]="getImageUrl(message.id)" [alt]="message.attachment.file_name" class="attachment-image-preview">
-                    </div>
+                    </button>
                   } @else {
                     <div class="message-attachment loading">
                       <ion-spinner name="crescent"></ion-spinner>
@@ -104,11 +106,13 @@
                     </div>
                   }
                 } @else {
-                  <div class="message-attachment downloadable" (click)="downloadAttachment(message)">
-                    <ion-icon [name]="getAttachmentIcon(message.attachment)"></ion-icon>
+                  <button type="button" class="message-attachment downloadable"
+                          (click)="downloadAttachment(message)"
+                          [attr.aria-label]="'messageList.downloadAttachment' | translate:{ name: message.attachment.file_name }">
+                    <ion-icon [name]="getAttachmentIcon(message.attachment)" aria-hidden="true"></ion-icon>
                     <span class="attachment-name">{{ message.attachment.file_name }}</span>
-                    <ion-icon name="download-outline" class="attachment-action-icon"></ion-icon>
-                  </div>
+                    <ion-icon name="download-outline" class="attachment-action-icon" aria-hidden="true"></ion-icon>
+                  </button>
                 }
               }
             </div>
@@ -158,12 +162,21 @@
 </div>
 
 @if (viewingImage()) {
+  <!-- Backdrop dismissal is pointer-only; Escape is handled by the component's
+       document keydown listener, and the header carries a real close button.
+       No aria-hidden here: this element wraps the dialog, so hiding it would
+       hide the dialog too. The lint rules below want a keyboard handler on the
+       backdrop itself, which would add a bogus focus stop. -->
+  <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
   <div class="image-viewer-overlay" (click)="closeImageViewer()">
-    <div class="image-viewer-content" (click)="$event.stopPropagation()">
+    <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events -->
+    <div class="image-viewer-content" (click)="$event.stopPropagation()"
+         role="dialog" aria-modal="true" aria-labelledby="image-viewer-title">
       <div class="image-viewer-header">
-        <span class="image-viewer-title">{{ viewingImage()?.fileName }}</span>
-        <ion-button fill="clear" (click)="closeImageViewer()">
-          <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+        <span class="image-viewer-title" id="image-viewer-title">{{ viewingImage()?.fileName }}</span>
+        <ion-button fill="clear" (click)="closeImageViewer()"
+                    [attr.aria-label]="'common.close' | translate">
+          <ion-icon slot="icon-only" name="close-outline" aria-hidden="true"></ion-icon>
         </ion-button>
       </div>
       <img [src]="viewingImage()?.url" [alt]="viewingImage()?.fileName" class="full-image">

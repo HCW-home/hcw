@@ -128,7 +128,8 @@
     "reload": "Recargar",
     "offline": "Se perdió la conexión con el servidor.",
     "reconnecting": "Se perdió la conexión con el servidor. Reconectando...",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "required": "obligatorio"
   },
   "login": {
     "title": "Iniciar sesión",
@@ -332,7 +333,9 @@
     "typePlaceholder": "Escribe un mensaje...",
     "today": "Hoy",
     "yesterday": "Ayer",
-    "unreadMessages": "Mensajes no leídos"
+    "unreadMessages": "Mensajes no leídos",
+    "openImage": "Abrir la imagen {{name}}",
+    "downloadAttachment": "Descargar {{name}}"
   },
   "preJoinLobby": {
     "settingUp": "Configurando tus dispositivos...",

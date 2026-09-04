@@ -18,7 +18,7 @@
 
       <div class="timeline-list">
         @for (notification of notifications; track notification.id ?? 'ws-' + $index) {
-          <div class="timeline-item" [class.unread]="!notification.isRead" (click)="onNotificationClick(notification)">
+          <button type="button" class="timeline-item" [class.unread]="!notification.isRead" (click)="onNotificationClick(notification)">
             <div class="notification-icon-wrapper" [attr.data-color]="notification.color">
               <ion-icon [name]="notification.icon"></ion-icon>
             </div>
@@ -32,17 +32,18 @@
                 <div class="notification-sender">{{ 'notifications.sentBy' | translate:{ name: notification.senderName } }}</div>
               }
               @if (notification.actionLabel && notification.objectModel) {
+                <!-- Rendered as a span, not a button: the whole row is now the
+                     button and nesting buttons is invalid HTML. It triggered
+                     the same onNotificationClick as the row anyway. -->
                 <div class="notification-action">
-                  <button class="action-btn" (click)="onNotificationClick(notification); $event.stopPropagation()">
-                    {{ notification.actionLabel }}
-                  </button>
+                  <span class="action-btn">{{ notification.actionLabel }}</span>
                 </div>
               }
             </div>
             @if (!notification.isRead) {
               <div class="unread-dot"></div>
             }
-          </div>
+          </button>
         }
       </div>
     }

@@ -12,7 +12,8 @@ import {
   AfterViewChecked,
   OnInit,
   effect,
-  inject
+  inject,
+  HostListener
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -111,6 +112,8 @@ export class MessageListComponent implements OnInit, OnChanges, OnDestroy, After
   private previousMessagesLength = 0;
 
   viewingImage = signal<{ url: string; fileName: string } | null>(null);
+  /* Element that opened the viewer, so focus can be handed back on close. */
+  private imageViewerTrigger: HTMLElement | null = null;
   imageUrls = signal<Map<number, string>>(new Map());
 
   newMessage = '';
@@ -362,6 +365,8 @@ export class MessageListComponent implements OnInit, OnChanges, OnDestroy, After
   }
 
   openImageViewer(message: Message): void {
+    const active = document.activeElement;
+    this.imageViewerTrigger = active instanceof HTMLElement ? active : null;
     const url = this.getImageUrl(message.id);
     if (message.attachment && this.isImageAttachment(message.attachment) && url) {
       this.viewingImage.set({
@@ -371,8 +376,19 @@ export class MessageListComponent implements OnInit, OnChanges, OnDestroy, After
     }
   }
 
+  /* The viewer is a plain overlay div, not an ion-modal, so nothing closes it
+   * on Escape and nothing hands focus back. Both are done here. */
+  @HostListener('document:keydown.escape')
+  onEscapeKey(): void {
+    if (this.viewingImage()) {
+      this.closeImageViewer();
+    }
+  }
+
   closeImageViewer(): void {
     this.viewingImage.set(null);
+    this.imageViewerTrigger?.focus();
+    this.imageViewerTrigger = null;
   }
 
   canEditMessage(message: Message): boolean {

@@ -96,7 +96,7 @@
             <p class="step-description">{{ 'newRequest.selectReasonDesc' | translate }}</p>
             <div class="reason-list">
               @for (reason of reasons(); track reason.id) {
-                <div class="reason-item" (click)="selectReason(reason)">
+                <button type="button" class="reason-item" (click)="selectReason(reason)">
                   <div class="reason-icon">
                     <ion-icon name="clipboard-outline"></ion-icon>
                   </div>
@@ -116,7 +116,7 @@
                     </p>
                   </div>
                   <ion-icon name="chevron-forward-outline" class="reason-arrow"></ion-icon>
-                </div>
+                </button>
               }
             </div>
             @if (reasons().length === 0) {
@@ -134,9 +134,11 @@
             <p class="step-description">{{ 'newRequest.selectDoctorDesc' | translate }}</p>
             <div class="doctors-list">
               @for (doctor of doctors(); track doctor.id) {
-                <div
+                <button
+                  type="button"
                   class="doctor-card"
                   [class.selected]="isDoctorSelected(doctor)"
+                  [attr.aria-pressed]="isDoctorSelected(doctor)"
                   (click)="selectDoctor(doctor)">
                   <ion-card-content>
                     <div class="doctor-info">
@@ -155,7 +157,7 @@
                       </div>
                     </div>
                   </ion-card-content>
-                </div>
+                </button>
               }
             </div>
             @if (doctors().length === 0) {
@@ -261,19 +263,22 @@
               </div>
             } @else {
               <div class="choice-cards" [class.single-choice]="!registrationEnabled()">
-                <div class="choice-card" (click)="setAuthMode('login')">
-                  <ion-icon name="log-in-outline"></ion-icon>
+                <!-- The card is no longer the click target: each one already
+                     holds a real button doing the same thing, and nesting
+                     buttons is invalid HTML. The action moved onto them. -->
+                <div class="choice-card">
+                  <ion-icon name="log-in-outline" aria-hidden="true"></ion-icon>
                   <h3>{{ 'newRequest.loginTitle' | translate }}</h3>
                   <p>{{ 'newRequest.loginDesc' | translate }}</p>
-                  <button class="primary-action">{{ 'login.title' | translate }}</button>
+                  <button type="button" class="primary-action" (click)="setAuthMode('login')">{{ 'login.title' | translate }}</button>
                 </div>
 
                 @if (registrationEnabled()) {
-                  <div class="choice-card" (click)="setAuthMode('register')">
-                    <ion-icon name="person-add-outline"></ion-icon>
+                  <div class="choice-card">
+                    <ion-icon name="person-add-outline" aria-hidden="true"></ion-icon>
                     <h3>{{ 'newRequest.registerTitle' | translate }}</h3>
                     <p>{{ 'newRequest.registerDesc' | translate }}</p>
-                    <button class="secondary-action">{{ 'login.signUp' | translate }}</button>
+                    <button type="button" class="secondary-action" (click)="setAuthMode('register')">{{ 'login.signUp' | translate }}</button>
                   </div>
                 }
               </div>
@@ -339,21 +344,25 @@
                 <h3 class="review-title">{{ 'newRequest.additionalInfo' | translate }}</h3>
                 @for (field of customFields(); track field.id) {
                   <div class="custom-field-item">
-                    <label class="custom-field-label">
+                    <label class="custom-field-label" [attr.for]="'custom-field-' + field.id">
                       {{ field.name }}
                       @if (field.required) {
-                        <span class="required-mark">*</span>
+                        <span class="required-mark" aria-hidden="true">*</span>
+                        <span class="sr-only">{{ 'common.required' | translate }}</span>
                       }
                     </label>
                     @switch (field.field_type) {
                       @case ('short_text') {
                         <input type="text" class="custom-field-input"
+                          [id]="'custom-field-' + field.id"
                           [placeholder]="field.name"
                           [required]="field.required"
                           [(ngModel)]="customFieldValues[field.id]">
                       }
                       @case ('long_text') {
                         <ion-textarea
+                          [label]="field.name"
+                          labelPlacement="stacked"
                           [placeholder]="field.name"
                           [rows]="3"
                           [(ngModel)]="customFieldValues[field.id]"
@@ -362,17 +371,20 @@
                       }
                       @case ('date') {
                         <input type="date" class="custom-field-input"
+                          [id]="'custom-field-' + field.id"
                           [required]="field.required"
                           [(ngModel)]="customFieldValues[field.id]">
                       }
                       @case ('number') {
                         <input type="number" class="custom-field-input"
+                          [id]="'custom-field-' + field.id"
                           [placeholder]="field.name"
                           [required]="field.required"
                           [(ngModel)]="customFieldValues[field.id]">
                       }
                       @case ('list') {
                         <select class="custom-field-input"
+                          [id]="'custom-field-' + field.id"
                           [required]="field.required"
                           [(ngModel)]="customFieldValues[field.id]">
                           <option value="">--</option>

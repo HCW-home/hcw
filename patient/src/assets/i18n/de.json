@@ -26,7 +26,8 @@
     "reload": "Neu laden",
     "videoCall": "Videoanruf",
     "offline": "Serververbindung unterbrochen",
-    "reconnecting": "Serververbindung unterbrochen. Verbindungsversuch..."
+    "reconnecting": "Serververbindung unterbrochen. Verbindungsversuch...",
+    "required": "erforderlich"
   },
   "login": {
     "title": "Anmelden",
@@ -294,7 +295,9 @@
     "loadingImage": "Bild wird geladen...",
     "typePlaceholder": "Nachricht eingeben...",
     "yesterday": "Gestern",
-    "unreadMessages": "Ungelesene Nachrichten"
+    "unreadMessages": "Ungelesene Nachrichten",
+    "openImage": "Bild {{name}} öffnen",
+    "downloadAttachment": "{{name}} herunterladen"
   },
   "preJoinLobby": {
     "settingUp": "Ihre Geraete werden eingerichtet...",

@@ -27,7 +27,8 @@
     "appNeedsReload": "L'application doit être rechargée pour continuer",
     "reload": "Recharger",
     "offline": "Connexion au serveur perdue",
-    "reconnecting": "Connexion au serveur perdue. Reconnexion en cours..."
+    "reconnecting": "Connexion au serveur perdue. Reconnexion en cours...",
+    "required": "obligatoire"
   },
   "login": {
     "title": "Se connecter",
@@ -329,7 +330,9 @@
     "typePlaceholder": "Tapez un message...",
     "today": "Aujourd'hui",
     "yesterday": "Hier",
-    "unreadMessages": "Messages non lus"
+    "unreadMessages": "Messages non lus",
+    "openImage": "Ouvrir l'image {{name}}",
+    "downloadAttachment": "Télécharger {{name}}"
   },
   "preJoinLobby": {
     "settingUp": "Configuration de vos appareils...",

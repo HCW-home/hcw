@@ -1,4 +1,4 @@
-<div class="org-card" [class.selected]="selected" [class.expanded]="expanded" (click)="onCardClick()">
+<div class="org-card" [class.selected]="selected" [class.expanded]="expanded">
   @if (expanded) {
     <button class="oc-back" type="button" (click)="onBack($event)">
       <ion-icon name="arrow-back-outline"></ion-icon>
@@ -15,7 +15,16 @@
     }
     <div class="oc-main">
       <div class="oc-title-row">
-        <h3 class="oc-name">{{ item.name }}</h3>
+        <h3 class="oc-name">
+          <!-- Stretched button rather than a clickable card: the card already
+               contains six buttons, and nesting buttons is invalid HTML. This
+               keeps one focus stop carrying the accessible name, while ::after
+               preserves the whole-card click target. -->
+          <button type="button" class="oc-name-button" (click)="onCardClick()"
+                  [attr.aria-expanded]="expanded">
+            {{ item.name }}
+          </button>
+        </h3>
         <span class="type-chip" [class.type-chip--doctor]="item.type === 'doctor'">
           <ion-icon [name]="item.type === 'doctor' ? 'person' : 'business'"></ion-icon>
           {{ (item.type === 'doctor' ? 'map.typeDoctor' : 'map.typeOrganisation') | translate }}
