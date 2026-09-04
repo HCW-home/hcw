@@ -1,6 +1,6 @@
 <app-header [pageTitle]="'notifications.title' | translate" [showBackButton]="true"></app-header>
 
-<ion-content class="notifications-content">
+<ion-content id="main-content" role="main" class="notifications-content">
   <ion-refresher slot="fixed" (ionRefresh)="refreshNotifications($event)">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>

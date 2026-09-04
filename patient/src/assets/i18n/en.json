@@ -29,7 +29,8 @@
     "offline": "Server connection lost",
     "reconnecting": "Server connection lost. Reconnecting...",
     "required": "required",
-    "language": "Language"
+    "language": "Language",
+    "skipToContent": "Skip to main content"
   },
   "login": {
     "title": "Sign In",
@@ -171,7 +172,8 @@
     "appointmentNotFound": "Appointment not found",
     "failedToLoadParticipant": "Failed to load participant information",
     "statusCompleted": "Completed",
-    "statusNoshow": "Missed"
+    "statusNoshow": "Missed",
+    "title": "Home"
   },
   "newRequest": {
     "selectSpecialty": "Select Specialty",
@@ -533,7 +535,10 @@
     "switchCamera": "Switch camera",
     "chatWithUnread": "Chat, {{count}} unread messages",
     "micMuted": "Microphone muted",
-    "cameraOff": "Camera off"
+    "cameraOff": "Camera off",
+    "participantJoined": "{{name}} joined the consultation",
+    "participantLeft": "{{name}} left the consultation",
+    "title": "Video consultation"
   },
   "videoCall": {
     "leaveCallTitle": "Leave video call?",

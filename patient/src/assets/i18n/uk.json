@@ -28,7 +28,8 @@
     "offline": "З'єднання із сервером втрачено",
     "reconnecting": "З'єднання із сервером втрачено. Повторне підключення...",
     "required": "обов'язково",
-    "language": "Мова"
+    "language": "Мова",
+    "skipToContent": "Перейти до основного вмісту"
   },
   "login": {
     "title": "Увійти",
@@ -170,7 +171,8 @@
     "appointmentNotFound": "Прийом не знайдено",
     "failedToLoadParticipant": "Не вдалося завантажити інформацію про учасника",
     "statusCompleted": "Проведена",
-    "statusNoshow": "Не відбулася"
+    "statusNoshow": "Не відбулася",
+    "title": "Головна"
   },
   "newRequest": {
     "selectSpecialty": "Виберіть спеціальність",
@@ -553,7 +555,10 @@
     "switchCamera": "Змінити камеру",
     "chatWithUnread": "Чат, {{count}} непрочитаних повідомлень",
     "micMuted": "Мікрофон вимкнено",
-    "cameraOff": "Камеру вимкнено"
+    "cameraOff": "Камеру вимкнено",
+    "participantJoined": "{{name}} приєднався до консультації",
+    "participantLeft": "{{name}} залишив консультацію",
+    "title": "Відеоконсультація"
   },
   "videoCall": {
     "leaveCallTitle": "Залишити відеодзвінок?",

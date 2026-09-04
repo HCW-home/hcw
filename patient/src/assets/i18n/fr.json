@@ -29,7 +29,8 @@
     "offline": "Connexion au serveur perdue",
     "reconnecting": "Connexion au serveur perdue. Reconnexion en cours...",
     "required": "obligatoire",
-    "language": "Langue"
+    "language": "Langue",
+    "skipToContent": "Aller au contenu principal"
   },
   "login": {
     "title": "Se connecter",
@@ -171,7 +172,8 @@
     "appointmentNotFound": "Rendez-vous introuvable",
     "failedToLoadParticipant": "Échec du chargement des informations du participant",
     "statusCompleted": "Réalisé",
-    "statusNoshow": "Non honoré"
+    "statusNoshow": "Non honoré",
+    "title": "Accueil"
   },
   "newRequest": {
     "selectSpecialty": "Choisir une spécialité",
@@ -533,7 +535,10 @@
     "switchCamera": "Changer de caméra",
     "chatWithUnread": "Discussion, {{count}} messages non lus",
     "micMuted": "Microphone coupé",
-    "cameraOff": "Caméra désactivée"
+    "cameraOff": "Caméra désactivée",
+    "participantJoined": "{{name}} a rejoint la consultation",
+    "participantLeft": "{{name}} a quitté la consultation",
+    "title": "Consultation vidéo"
   },
   "videoCall": {
     "leaveCallTitle": "Quitter l'appel vidéo ?",

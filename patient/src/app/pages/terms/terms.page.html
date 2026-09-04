@@ -1,11 +1,11 @@
-<ion-content>
+<ion-content id="main-content" role="main">
   <div class="terms-container">
     @if (loading) {
       <div class="loading-wrapper">
         <ion-spinner name="crescent"></ion-spinner>
       </div>
     } @else if (term) {
-      <h2 class="terms-title">{{ term.name }}</h2>
+      <h1 class="terms-title">{{ term.name }}</h1>
       <div class="terms-content" [innerHTML]="term.content"></div>
     }
   </div>

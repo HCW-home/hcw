@@ -1,4 +1,7 @@
 <ion-app>
+  <!-- First tab stop on every page (WCAG 2.4.1). Hidden until focused; each
+       page's ion-content carries id="main-content" and role="main". -->
+  <a class="a11y-skip-link" href="#main-content">{{ skipToContentLabel }}</a>
   <app-offline-indicator></app-offline-indicator>
   <ion-router-outlet></ion-router-outlet>
 </ion-app>

@@ -28,7 +28,8 @@
     "offline": "Serververbindung unterbrochen",
     "reconnecting": "Serververbindung unterbrochen. Verbindungsversuch...",
     "required": "erforderlich",
-    "language": "Sprache"
+    "language": "Sprache",
+    "skipToContent": "Zum Hauptinhalt springen"
   },
   "login": {
     "title": "Anmelden",
@@ -169,7 +170,8 @@
     "appointmentNotFound": "Termin nicht gefunden",
     "failedToLoadParticipant": "Fehler beim Laden der Teilnehmerinformationen",
     "statusCompleted": "Durchgeführt",
-    "statusNoshow": "Nicht wahrgenommen"
+    "statusNoshow": "Nicht wahrgenommen",
+    "title": "Startseite"
   },
   "newRequest": {
     "selectSpecialty": "Fachgebiet waehlen",
@@ -495,7 +497,10 @@
     "switchCamera": "Kamera wechseln",
     "chatWithUnread": "Chat, {{count}} ungelesene Nachrichten",
     "micMuted": "Mikrofon stummgeschaltet",
-    "cameraOff": "Kamera aus"
+    "cameraOff": "Kamera aus",
+    "participantJoined": "{{name}} ist der Konsultation beigetreten",
+    "participantLeft": "{{name}} hat die Konsultation verlassen",
+    "title": "Videosprechstunde"
   },
   "videoCall": {
     "leaveCallTitle": "Videoanruf verlassen?",

@@ -1,11 +1,11 @@
-<ion-content class="onboarding-content" [scrollY]="true">
+<ion-content id="main-content" role="main" class="onboarding-content" [scrollY]="true">
   <div class="onboarding-container">
     @if (loading()) {
       <div class="loading-wrapper">
         <ion-spinner name="crescent"></ion-spinner>
       </div>
     } @else {
-      <h2>{{ 'onboarding.title' | translate }}</h2>
+      <h1>{{ 'onboarding.title' | translate }}</h1>
       <p class="subtitle">{{ 'onboarding.description' | translate }}</p>
 
       <div class="onboarding-form">

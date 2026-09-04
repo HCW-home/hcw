@@ -36,6 +36,12 @@ export class AppComponent implements OnInit, OnDestroy {
   private titleService = inject(Title);
   private translationService = inject(TranslationService);
   private pushNotificationService = inject(PushNotificationService);
+
+  /* Skip-link text. A getter rather than the translate pipe so it follows a
+   * language change without the template importing TranslateModule. */
+  get skipToContentLabel(): string {
+    return this.translationService.instant('common.skipToContent');
+  }
   private browserNotificationService = inject(BrowserNotificationService);
   private appUpdateService = inject(AppUpdateService);
   private deeplinkService = inject(DeeplinkService);

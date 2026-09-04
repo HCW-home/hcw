@@ -190,7 +190,8 @@
     "offline": "Connessione al server persa",
     "reconnecting": "Connessione al server persa. Riconnessione in corso...",
     "required": "obbligatorio",
-    "language": "Lingua"
+    "language": "Lingua",
+    "skipToContent": "Vai al contenuto principale"
   },
   "login": {
     "title": "Registrazione",
@@ -306,7 +307,8 @@
     "appointmentNotFound": "Appuntamento non trovato",
     "failedToLoadParticipant": "Impossibile caricare le informazioni del partecipante",
     "statusCompleted": "Effettuato",
-    "statusNoshow": "Non effettuato"
+    "statusNoshow": "Non effettuato",
+    "title": "Home"
   },
   "newRequest": {
     "selectSpecialty": "Seleziona Specialità",
@@ -499,7 +501,10 @@
     "switchCamera": "Cambia fotocamera",
     "chatWithUnread": "Chat, {{count}} messaggi non letti",
     "micMuted": "Microfono disattivato",
-    "cameraOff": "Fotocamera disattivata"
+    "cameraOff": "Fotocamera disattivata",
+    "participantJoined": "{{name}} è entrato nella consultazione",
+    "participantLeft": "{{name}} ha lasciato la consultazione",
+    "title": "Consulto video"
   },
   "videoCall": {
     "leaveCallTitle": "Uscire dalla videochiamata?",
