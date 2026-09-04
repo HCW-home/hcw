@@ -157,6 +157,33 @@ describe('AuthFormComponent accessibility', () => {
       .toBe(true);
   });
 
+  it('renders the error below the field, not inside it', async () => {
+    fixture.componentInstance.step = 'credentials';
+    await settle();
+
+    const control = fixture.componentInstance.passwordForm.get('password');
+    control?.setValue('abc');
+    control?.markAsTouched();
+    await settle();
+
+    /* Ionic's own errorText paints the message inside the filled container,
+     * which crowds the box and shifts the input as messages come and go. It is
+     * rendered as a sibling below instead. */
+    const item: HTMLElement = fixture.nativeElement.querySelector('ion-item');
+    const error: HTMLElement = fixture.nativeElement.querySelector('.field-error');
+    expect(error).withContext('error message should be rendered').toBeTruthy();
+    expect(item.contains(error))
+      .withContext('the message must sit outside the grey ion-item')
+      .toBe(false);
+    expect(error.getAttribute('role')).toBe('alert');
+
+    /* Ionic snapshots inherited aria-* at componentWillLoad and re-applies them
+     * to the native input; check the association survived that. */
+    const input: HTMLElement = fixture.nativeElement.querySelector('ion-input');
+    const native = input.querySelector('input') ?? input.shadowRoot?.querySelector('input');
+    expect(native?.getAttribute('aria-describedby')).toBe(error.id);
+  });
+
   it('uses buttons, not ion-text, for the in-form navigation links', async () => {
     fixture.componentInstance.step = 'credentials';
     fixture.componentInstance.patientPasswordLoginEnabled = true;
