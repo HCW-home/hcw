@@ -78,6 +78,8 @@ export class InstancePickerPage implements OnInit {
   async remove(host: string, event?: Event): Promise<void> {
     event?.stopPropagation();
     const alert = await this.alertCtrl.create({
+      // Confirmation dialogs must be answered, not dismissed by a stray click.
+      backdropDismiss: false,
       header: this.translate.instant('instancePicker.confirmRemoveTitle'),
       message: this.translate.instant('instancePicker.confirmRemoveMessage', { host }),
       buttons: [

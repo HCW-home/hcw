@@ -638,6 +638,8 @@ export class VideoConsultationPage implements OnInit, OnDestroy {
 
   async endCall(): Promise<void> {
     const alert = await this.alertCtrl.create({
+      // Confirmation dialogs must be answered, not dismissed by a stray click.
+      backdropDismiss: false,
       header: this.t.instant('videoConsultation.endCallHeader'),
       message: this.t.instant('videoConsultation.endCallMessage'),
       buttons: [

@@ -628,6 +628,8 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
 
   async confirmCancel(): Promise<void> {
     const alert = await this.alertCtrl.create({
+      // Confirmation dialogs must be answered, not dismissed by a stray click.
+      backdropDismiss: false,
       header: this.t.instant('newRequest.cancelConfirmTitle'),
       message: this.t.instant('newRequest.cancelConfirmMessage'),
       buttons: [

@@ -85,6 +85,8 @@ export class ActivateEncryptionPage implements OnInit {
 
   async forgotPassphrase(): Promise<void> {
     const alert = await this.alertCtrl.create({
+      // Confirmation dialogs must be answered, not dismissed by a stray click.
+      backdropDismiss: false,
       header: this.t.instant('activateEncryption.forgotTitle'),
       message: this.t.instant('activateEncryption.forgotConfirm'),
       buttons: [

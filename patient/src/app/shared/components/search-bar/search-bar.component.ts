@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, computed, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output, computed, inject, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonIcon, IonSpinner } from '@ionic/angular/standalone';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -62,6 +62,7 @@ export class SearchBarComponent implements OnInit, OnDestroy {
   private specialitiesLoaded = false;
 
   // Kept so clearing a field can hand the caret straight back to it.
+  private host = inject(ElementRef<HTMLElement>);
   private whoInput = viewChild<ElementRef<HTMLInputElement>>('whoInput');
   private whereInput = viewChild<ElementRef<HTMLInputElement>>('whereInput');
 
@@ -140,6 +141,20 @@ export class SearchBarComponent implements OnInit, OnDestroy {
   clearWhere(): void {
     this.whereQuery.set('');
     this.whereInput()?.nativeElement.focus();
+  }
+
+  /* Suggestions close when the pointer goes elsewhere, rather than through a
+   * full-screen backdrop element. A backdrop swallows the first click anywhere
+   * on the page, so the user has to click twice to reach anything — and it
+   * only ever worked for pointer users. Escape and choosing a suggestion close
+   * it too. */
+  @HostListener('document:pointerdown', ['$event'])
+  onDocumentPointerDown(event: Event): void {
+    if (!this.suggestOpen()) return;
+    const target = event.target;
+    if (target instanceof Node && !this.host.nativeElement.contains(target)) {
+      this.closeSuggestions();
+    }
   }
 
   closeSuggestions(): void {

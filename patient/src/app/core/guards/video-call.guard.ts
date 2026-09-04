@@ -16,6 +16,8 @@ export const canDeactivateVideoCall: CanDeactivateFn<VideoConsultationPage> = as
 
   return new Promise<boolean>(async (resolve) => {
     const alert = await alertCtrl.create({
+      // Confirmation dialogs must be answered, not dismissed by a stray click.
+      backdropDismiss: false,
       header: t.instant('videoCall.leaveCallTitle'),
       message: t.instant('videoCall.leaveCallMessage'),
       buttons: [

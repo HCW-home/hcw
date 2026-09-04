@@ -563,6 +563,8 @@ export class HomePage implements OnInit, OnDestroy {
     if (now < earliestJoin) {
       const time = scheduledAt.toLocaleString([], { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
       const alert = await this.alertController.create({
+        // Confirmation dialogs must be answered, not dismissed by a stray click.
+        backdropDismiss: false,
         header: this.t.instant('home.tooEarlyTitle'),
         message: this.t.instant('home.tooEarlyMessage', { time, minutes: this.appointmentEarlyJoinMinutes.toString() }),
         buttons: ['OK']
