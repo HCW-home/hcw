@@ -538,11 +538,19 @@ ion-item ion-textarea {
  * error is `required` on an empty value), so the tint has to go too, otherwise
  * the field turns red with nothing to explain why.
  *
+ * Reset --highlight-color rather than --highlight-color-invalid: Ionic also
+ * paints the text caret with it (`.has-focus input { caret-color:
+ * var(--highlight-color) }`), so pointing the invalid colour at the border
+ * grey made the caret vanish against the field background the moment the last
+ * character was deleted — it only came back once typing made the field valid
+ * again. The focused colour is what the field uses before it is ever touched,
+ * so the caret now stays the same throughout.
+ *
  * .has-error is bound from the component whenever a message is genuinely
  * shown, so real validation failures still turn red. */
 ion-input.ion-invalid.ion-touched:not(.has-error),
 ion-textarea.ion-invalid.ion-touched:not(.has-error) {
-  --highlight-color-invalid: var(--app-input-border, #e5e7eb);
+  --highlight-color: var(--highlight-color-focused);
 }
 
 /* Password reveal toggles. Formerly bare clickable <ion-icon>s, now real
