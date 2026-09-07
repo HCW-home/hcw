@@ -144,8 +144,8 @@ services:
       # LIVEKIT_URL is the address the browsers connect to, not an internal one:
       # it has to be reachable from outside the compose network.
       LIVEKIT_URL: ${LIVEKIT_URL:-ws://localhost:7880}
-      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:-apikey}
-      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:-devsecretdevsecretdevsecretdevsecret}
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:-devkey}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:-secret}
       # Sender of the email messaging provider, falls back to EMAIL_HOST_USER
       MESSAGING_FROM_EMAIL: ${MESSAGING_FROM_EMAIL:-}
       # Keycloak / OpenID Connect, skipped when client id or server url is empty
@@ -295,7 +295,7 @@ services:
     image: docker.io/livekit/livekit-server:latest
     # --config is not read from the default path when the file is mounted
     # elsewhere, so it is passed explicitly.
-    command: --config /etc/livekit.yaml
+    command:  --dev --bind 0.0.0.0
     restart: always
     volumes:
       - ./livekit/livekit.yaml:/etc/livekit.yaml:ro
@@ -308,9 +308,14 @@ services:
       - "${LIVEKIT_PORT:-7880}:7880"
       - "${LIVEKIT_RTC_TCP_PORT:-7881}:7881"
       - "${LIVEKIT_RTC_UDP_PORT:-7882}:7882/udp"
-      # TURN is disabled in livekit/livekit.yaml, uncomment both here when
-      # turning it on there.
-      # - "${LIVEKIT_TURN_UDP_PORT:-3478}:3478/udp"
+      # Embedded TURN server, plain UDP, no certificate needed.
+      - "${LIVEKIT_TURN_UDP_PORT:-3478}:3478/udp"
+      # The relay ports the TURN server hands out, matching turn.relay_range_*
+      # in livekit/livekit.yaml. Keep the two in sync: a relay port that is not
+      # published here is advertised to the clients but unreachable.
+      - "30000-30100:30000-30100/udp"
+      # TURN over TLS, off in livekit/livekit.yaml: uncomment when enabling it
+      # there, it needs a real domain and a certificate.
       # - "${LIVEKIT_TURN_TLS_PORT:-5349}:5349"
     depends_on:
       redis:
