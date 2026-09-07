@@ -1,0 +1,54 @@
+# LiveKit media server - HCW@Home.
+#
+# Runs as-is for a local development stack. Two things must be changed before
+# a real deployment:
+#   keys.iabsis  -> a real secret, matching the LIVEKIT_API_KEY /
+#                   LIVEKIT_API_SECRET given to `provision` in docker-compose.yml
+#   turn         -> enabled, see the block at the bottom
+port: 7880
+bind_addresses:
+  - ""
+rtc:
+  tcp_port: 7881
+  # Single multiplexed UDP port instead of a 50000-51000 range: every
+  # participant's media goes through it, so only one port has to be published
+  # and opened in the firewall. Mutually exclusive with port_range_start /
+  # port_range_end, which must stay unset.
+  udp_port: 7882
+  # Discovers the address to announce in the ICE candidates by itself, which is
+  # what a local run needs. On a host whose public IP cannot be detected, pin it
+  # by hand instead:
+  #   use_external_ip: false
+  #   node_ip: "203.0.113.10"
+  use_external_ip: true
+redis:
+  address: redis:6379
+  # Database 0 is already taken by the Celery broker: LiveKit keeps its room
+  # registry there and flushes keys it does not recognise, which would eat the
+  # queued tasks. Keep them apart.
+  db: 1
+keys:
+  # api key: api secret. The secret must be at least 32 characters. This one is
+  # a working placeholder so the stack runs out of the box: replace it before
+  # exposing the instance, and keep it in sync with LIVEKIT_API_KEY /
+  # LIVEKIT_API_SECRET in docker-compose.yml.
+  apikey: devsecretdevsecretdevsecretdevsecret
+# Embedded TURN server, off by default: it needs a real domain and a
+# certificate, neither of which exists locally. Direct connections cover a
+# local run, so nothing is lost here. Enable it on a public deployment, where
+# clients behind a restrictive NAT or firewall need the relay to connect at all.
+#
+# To enable it: set enabled to true, uncomment the four settings below, point
+# domain at a name resolving to this host, and uncomment the two matching port
+# mappings in docker-compose.yml. external_tls: true means TLS is terminated
+# upstream (nginx, HAProxy, a load balancer) and LiveKit receives plain TCP on
+# tls_port; set it to false to have LiveKit serve TLS itself, which then also
+# requires cert_file and key_file here.
+turn:
+  enabled: false
+  # domain: livekit.example.com
+  # tls_port: 5349
+  # udp_port: 3478
+  # external_tls: true
+logging:
+  level: info
