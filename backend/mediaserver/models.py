@@ -1,5 +1,6 @@
 from importlib import import_module
 from typing import Optional, Union
+from urllib.parse import urlparse
 from uuid import UUID
 import logging
 
@@ -27,6 +28,15 @@ def _round_robin_cache_key() -> str:
     return f"mediaserver:rr_index:{_current_schema()}"
 
 
+# Hosts that always designate the machine running this code, never a peer
+# reachable over the network.
+_LOOPBACK_HOSTS = {"localhost", "127.0.0.1", "::1"}
+
+
+def _is_loopback_url(url: str) -> bool:
+    return (urlparse(url).hostname or "").lower() in _LOOPBACK_HOSTS
+
+
 # Create your models here.
 class Server(models.Model):
     url = models.URLField(_("URL"))
@@ -52,6 +62,28 @@ class Server(models.Model):
         return self.module.Main(self)
 
     @classmethod
+    def _skips_reachability_probe(
+        cls, server: "Server", active_count: Optional[int] = None
+    ) -> bool:
+        """True when `server` is the only active one and sits on loopback.
+
+        A development stack advertises the media server as http://localhost:7880
+        because the browser only grants camera access in a secure context, which
+        localhost provides and a bare LAN IP does not. That URL describes the
+        browser's point of view, not this process's: inside the api container
+        localhost is the container itself, so the probe can only fail and would
+        disqualify the single server configured. Take it on trust instead.
+
+        Deliberately limited to a lone server: as soon as several are declared,
+        choosing between them is the whole point and each has to be probed.
+        """
+        if not _is_loopback_url(server.url):
+            return False
+        if active_count is None:
+            active_count = cls.objects.filter(is_active=True).count()
+        return active_count == 1
+
+    @classmethod
     def _round_robin_pick(cls) -> Optional["Server"]:
         """Pick the next reachable active server using a tenant-scoped round-robin index.
 
@@ -64,6 +96,9 @@ class Server(models.Model):
         active_server_count = len(active_servers)
         if active_server_count == 0:
             return None
+
+        if cls._skips_reachability_probe(active_servers[0], active_server_count):
+            return active_servers[0]
 
         for i in range(active_server_count):
             next_index = (1 + i + current_index) % active_server_count
@@ -110,6 +145,8 @@ class Server(models.Model):
         if pinned_pk is not None:
             server = cls.objects.filter(pk=pinned_pk, is_active=True).first()
             if server is not None:
+                if cls._skips_reachability_probe(server):
+                    return server
                 try:
                     server.instance.test_connection()
                     return server
