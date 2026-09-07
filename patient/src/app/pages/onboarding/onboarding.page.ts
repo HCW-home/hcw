@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import {
   IonContent,
   IonItem,
-  IonLabel,
   IonInput,
   IonSelect,
   IonSelectOption,
@@ -32,7 +31,6 @@ import { TIMEZONES } from '../../core/constants/timezone';
     FormsModule,
     IonContent,
     IonItem,
-    IonLabel,
     IonInput,
     IonSelect,
     IonSelectOption,

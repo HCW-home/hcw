@@ -31,7 +31,9 @@
             "inlineStyleLanguage": "scss",
             "allowedCommonJsDependencies": [
               "localforage",
-              "leaflet"
+              "leaflet",
+              "mediasoup-client",
+              "debug"
             ],
             "assets": [
               {
