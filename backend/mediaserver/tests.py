@@ -23,6 +23,10 @@ def _all_ok_property():
     return property(lambda self: _AlwaysOK())
 
 
+def _all_fail_property():
+    return property(lambda self: _AlwaysFail())
+
+
 def _selective_property(failing_pk):
     def _getter(self):
         return _AlwaysFail() if self.pk == failing_pk else _AlwaysOK()
@@ -92,3 +96,40 @@ class ServerPinningTests(TenantTestCase):
         found = Server.get_pinned_for_room(room_uuid)
         self.assertIsNotNone(found)
         self.assertEqual(found.pk, pinned.pk)
+
+
+class LoopbackServerTests(TenantTestCase):
+    """A lone server on localhost is trusted instead of being probed."""
+
+    def setUp(self):
+        cache.clear()
+
+    def tearDown(self):
+        cache.clear()
+
+    def test_lone_loopback_server_is_picked_without_probing(self):
+        server = ServerFactory(url="http://localhost:7880")
+        with patch.object(Server, "instance", new_callable=_all_fail_property):
+            picked = Server.get_server()
+        self.assertEqual(picked.pk, server.pk)
+
+    def test_lone_loopback_server_keeps_its_pin(self):
+        ServerFactory(url="http://localhost:7880")
+        room_uuid = uuid.uuid4()
+        with patch.object(Server, "instance", new_callable=_all_fail_property):
+            first = Server.get_or_pin_for_room(room_uuid)
+            second = Server.get_or_pin_for_room(room_uuid)
+        self.assertEqual(first.pk, second.pk)
+
+    def test_loopback_server_is_probed_when_not_alone(self):
+        ServerFactory(url="http://localhost:7880")
+        ServerFactory()
+        with patch.object(Server, "instance", new_callable=_all_fail_property):
+            with self.assertRaises(NoMediaServerAvailable):
+                Server.get_server()
+
+    def test_lone_remote_server_is_still_probed(self):
+        ServerFactory(url="https://media.example.com")
+        with patch.object(Server, "instance", new_callable=_all_fail_property):
+            with self.assertRaises(NoMediaServerAvailable):
+                Server.get_server()
