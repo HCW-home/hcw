@@ -19,6 +19,10 @@ Two deployment methods are supported:
 - [**Docker Compose**](deployment/docker-compose.md): containerized deployment, ideal for development and cloud environments
 - [**Debian Packages**](deployment/debian.md): native deployment on Debian/Ubuntu with systemd
 
+## User Guide
+
+The [User Guide](user-guide/index.md) walks practitioners through everyday use: signing in, creating a follow-up, running a video consultation and closing the file.
+
 ## Use Cases
 
 See the [Use Cases](use-cases/appointment-management.md) section to discover the scenarios supported by the solution.

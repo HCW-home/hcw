@@ -31,6 +31,17 @@ nav:
   - Get Started:
     - Overview: index.md
     - Architecture: architecture.md
+  - User Guide:
+    - Overview: user-guide/index.md
+    - Signing In: user-guide/signing-in.md
+    - Navigating the Platform: user-guide/navigation.md
+    - Creating a Follow-up: user-guide/create-follow-up.md
+    - Managing a Follow-up: user-guide/manage-follow-up.md
+    - Running a Video Consultation: user-guide/video-consultation.md
+    - Closing a Follow-up: user-guide/closing-follow-up.md
+    - Appointments and Calendar: user-guide/appointments.md
+    - Your Profile and Preferences: user-guide/profile.md
+    - What Participants See: user-guide/participants.md
   - Use Cases:
     - Appointment Management: use-cases/appointment-management.md
     - Video Call Scheduling: use-cases/video-call-scheduling.md
