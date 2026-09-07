@@ -141,6 +141,76 @@
         <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/use-cases/video-call-scheduling/"/>
     </url>
     <url>
+        <loc>https://hcw-at-home.com/docs/user-guide/</loc>
+        <lastmod>2026-09-07</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/user-guide/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/user-guide/"/>
+    </url>
+    <url>
+        <loc>https://hcw-at-home.com/docs/user-guide/appointments/</loc>
+        <lastmod>2026-09-07</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/user-guide/appointments/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/user-guide/appointments/"/>
+    </url>
+    <url>
+        <loc>https://hcw-at-home.com/docs/user-guide/closing-follow-up/</loc>
+        <lastmod>2026-09-07</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/user-guide/closing-follow-up/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/user-guide/closing-follow-up/"/>
+    </url>
+    <url>
+        <loc>https://hcw-at-home.com/docs/user-guide/create-follow-up/</loc>
+        <lastmod>2026-09-07</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/user-guide/create-follow-up/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/user-guide/create-follow-up/"/>
+    </url>
+    <url>
+        <loc>https://hcw-at-home.com/docs/user-guide/manage-follow-up/</loc>
+        <lastmod>2026-09-07</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/user-guide/manage-follow-up/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/user-guide/manage-follow-up/"/>
+    </url>
+    <url>
+        <loc>https://hcw-at-home.com/docs/user-guide/navigation/</loc>
+        <lastmod>2026-09-07</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/user-guide/navigation/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/user-guide/navigation/"/>
+    </url>
+    <url>
+        <loc>https://hcw-at-home.com/docs/user-guide/participants/</loc>
+        <lastmod>2026-09-07</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/user-guide/participants/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/user-guide/participants/"/>
+    </url>
+    <url>
+        <loc>https://hcw-at-home.com/docs/user-guide/profile/</loc>
+        <lastmod>2026-09-07</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/user-guide/profile/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/user-guide/profile/"/>
+    </url>
+    <url>
+        <loc>https://hcw-at-home.com/docs/user-guide/signing-in/</loc>
+        <lastmod>2026-09-07</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/user-guide/signing-in/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/user-guide/signing-in/"/>
+    </url>
+    <url>
+        <loc>https://hcw-at-home.com/docs/user-guide/video-consultation/</loc>
+        <lastmod>2026-09-07</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/user-guide/video-consultation/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/user-guide/video-consultation/"/>
+    </url>
+    <url>
         <loc>https://hcw-at-home.com/docs/fr/</loc>
         <lastmod>2026-09-07</lastmod>
         <changefreq>daily</changefreq>
@@ -285,5 +355,75 @@
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/use-cases/video-call-scheduling/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/use-cases/video-call-scheduling/"/>
+    </url>
+    <url>
+        <loc>https://hcw-at-home.com/docs/fr/user-guide/</loc>
+        <lastmod>2026-09-07</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/user-guide/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/user-guide/"/>
+    </url>
+    <url>
+        <loc>https://hcw-at-home.com/docs/fr/user-guide/appointments/</loc>
+        <lastmod>2026-09-07</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/user-guide/appointments/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/user-guide/appointments/"/>
+    </url>
+    <url>
+        <loc>https://hcw-at-home.com/docs/fr/user-guide/closing-follow-up/</loc>
+        <lastmod>2026-09-07</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/user-guide/closing-follow-up/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/user-guide/closing-follow-up/"/>
+    </url>
+    <url>
+        <loc>https://hcw-at-home.com/docs/fr/user-guide/create-follow-up/</loc>
+        <lastmod>2026-09-07</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/user-guide/create-follow-up/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/user-guide/create-follow-up/"/>
+    </url>
+    <url>
+        <loc>https://hcw-at-home.com/docs/fr/user-guide/manage-follow-up/</loc>
+        <lastmod>2026-09-07</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/user-guide/manage-follow-up/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/user-guide/manage-follow-up/"/>
+    </url>
+    <url>
+        <loc>https://hcw-at-home.com/docs/fr/user-guide/navigation/</loc>
+        <lastmod>2026-09-07</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/user-guide/navigation/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/user-guide/navigation/"/>
+    </url>
+    <url>
+        <loc>https://hcw-at-home.com/docs/fr/user-guide/participants/</loc>
+        <lastmod>2026-09-07</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/user-guide/participants/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/user-guide/participants/"/>
+    </url>
+    <url>
+        <loc>https://hcw-at-home.com/docs/fr/user-guide/profile/</loc>
+        <lastmod>2026-09-07</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/user-guide/profile/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/user-guide/profile/"/>
+    </url>
+    <url>
+        <loc>https://hcw-at-home.com/docs/fr/user-guide/signing-in/</loc>
+        <lastmod>2026-09-07</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/user-guide/signing-in/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/user-guide/signing-in/"/>
+    </url>
+    <url>
+        <loc>https://hcw-at-home.com/docs/fr/user-guide/video-consultation/</loc>
+        <lastmod>2026-09-07</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://hcw-at-home.com/docs/fr/user-guide/video-consultation/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://hcw-at-home.com/docs/user-guide/video-consultation/"/>
     </url>
 </urlset>
