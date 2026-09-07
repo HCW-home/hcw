@@ -143,7 +143,7 @@ services:
       # changed in both places at once for a real deployment.
       # LIVEKIT_URL is the address the browsers connect to, not an internal one:
       # it has to be reachable from outside the compose network.
-      LIVEKIT_URL: ${LIVEKIT_URL:-ws://localhost:7880}
+      LIVEKIT_URL: ${LIVEKIT_URL:-http://localhost:7880}
       LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:-devkey}
       LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:-secret}
       # Sender of the email messaging provider, falls back to EMAIL_HOST_USER
