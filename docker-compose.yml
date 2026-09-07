@@ -137,10 +137,15 @@ services:
       # Superuser, change the password before any real deployment
       SUPERUSER_EMAIL: ${SUPERUSER_EMAIL:-admin@example.com}
       SUPERUSER_PASSWORD: ${SUPERUSER_PASSWORD:-admin}
-      # LiveKit media server, skipped when the three values are empty
-      LIVEKIT_URL: ${LIVEKIT_URL:-}
-      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:-}
-      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:-}
+      # LiveKit media server, skipped when the three values are empty. The
+      # defaults match the livekit service and livekit/livekit.yaml, so a local
+      # stack has working video without a .env. The key and the secret MUST be
+      # changed in both places at once for a real deployment.
+      # LIVEKIT_URL is the address the browsers connect to, not an internal one:
+      # it has to be reachable from outside the compose network.
+      LIVEKIT_URL: ${LIVEKIT_URL:-ws://localhost:7880}
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:-apikey}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:-devsecretdevsecretdevsecretdevsecret}
       # Sender of the email messaging provider, falls back to EMAIL_HOST_USER
       MESSAGING_FROM_EMAIL: ${MESSAGING_FROM_EMAIL:-}
       # Keycloak / OpenID Connect, skipped when client id or server url is empty
@@ -286,9 +291,46 @@ services:
       timeout: 5s
       retries: 5
 
+  livekit:
+    image: docker.io/livekit/livekit-server:latest
+    # --config is not read from the default path when the file is mounted
+    # elsewhere, so it is passed explicitly.
+    command: --config /etc/livekit.yaml
+    restart: always
+    volumes:
+      - ./livekit/livekit.yaml:/etc/livekit.yaml:ro
+    # All the RTC media is multiplexed on the single UDP port 7882 (rtc.udp_port
+    # in livekit/livekit.yaml), so no port range has to be published here.
+    # The media ports still have to be mapped one-to-one: LiveKit advertises the
+    # numbers it reads from its own config in the ICE candidates, so Docker must
+    # not remap them.
+    ports:
+      - "${LIVEKIT_PORT:-7880}:7880"
+      - "${LIVEKIT_RTC_TCP_PORT:-7881}:7881"
+      - "${LIVEKIT_RTC_UDP_PORT:-7882}:7882/udp"
+      # TURN is disabled in livekit/livekit.yaml, uncomment both here when
+      # turning it on there.
+      # - "${LIVEKIT_TURN_UDP_PORT:-3478}:3478/udp"
+      # - "${LIVEKIT_TURN_TLS_PORT:-5349}:5349"
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      # Plain HTTP endpoint served by the signalling port, no auth needed.
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:7880/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
   redis:
     image: docker.io/redis:7
     restart: always
+    # Shared by three tenants of the same instance, each on its own database:
+    #   0 -> Celery broker, Django cache and the websocket channel layer
+    #   1 -> LiveKit room registry (livekit/livekit.yaml)
+    # LiveKit deletes the keys it does not own on the database it is given, so
+    # it must never point at 0.
     volumes:
       - ./data/redis_data:/data
     healthcheck:
