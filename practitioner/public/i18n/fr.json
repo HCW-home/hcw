@@ -525,7 +525,11 @@
     "selectTimezone": "Sélectionner un fuseau horaire",
     "phoneNotInternational": "Saisissez le numéro au format international, par exemple +33612345678.",
     "invalidPhoneNumber": "Numéro de téléphone invalide.",
-    "hiddenContactUseFollowUp": "Ce contact provient d’une autre organisation. Ses informations peuvent être utilisées en l'invitant via un lien."
+    "hiddenContactUseFollowUp": "Ce contact provient d’une autre organisation. Ses informations peuvent être utilisées en l'invitant via un lien.",
+    "requestAccessButton": "Demander l'accès",
+    "accessRequested": "Accès demandé",
+    "accessRequestedMessage": "Une demande de confirmation a été envoyée au patient.",
+    "errorRequestingAccess": "Échec de l'envoi de la demande d'accès"
   },
   "patients": {
     "searchPlaceholder": "Rechercher des contacts...",

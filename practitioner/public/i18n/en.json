@@ -484,7 +484,11 @@
     "selectTimezone": "Select timezone",
     "phoneNotInternational": "Enter the number in international format, for example +33612345678.",
     "invalidPhoneNumber": "Invalid phone number.",
-    "hiddenContactUseFollowUp": "This contact comes from another organization. Their information can be used by inviting them via a link."
+    "hiddenContactUseFollowUp": "This contact comes from another organization. Their information can be used by inviting them via a link.",
+    "requestAccessButton": "Request access",
+    "accessRequested": "Access requested",
+    "accessRequestedMessage": "A confirmation request has been sent to the patient.",
+    "errorRequestingAccess": "Failed to send the access request"
   },
   "patients": {
     "searchPlaceholder": "Search contacts...",

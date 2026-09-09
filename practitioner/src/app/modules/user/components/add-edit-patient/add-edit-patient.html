@@ -50,6 +50,24 @@
         [invalid]="isFieldInvalid('email')"
         [invalidMessage]="getFieldError('email')">
       </app-input>
+      @if (hiddenContact()?.field === 'email') {
+        <div class="hidden-contact-action">
+          @if (accessRequested()) {
+            <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--green-600)">
+              {{ 'addEditPatient.accessRequestedMessage' | translate }}
+            </app-typography>
+          } @else {
+            <app-button
+              [text]="'addEditPatient.requestAccessButton' | translate"
+              [style]="ButtonStyleEnum.stroke"
+              [size]="ButtonSizeEnum.small"
+              [loading]="isRequestingAccess()"
+              [disabled]="isRequestingAccess()"
+              (buttonClick)="requestAccess()">
+            </app-button>
+          }
+        </div>
+      }
     </div>
 
     <div class="form-row">
@@ -63,6 +81,24 @@
           [invalid]="isFieldInvalid('mobile_phone_number')"
           [invalidMessage]="getFieldError('mobile_phone_number')">
         </app-input>
+        @if (hiddenContact()?.field === 'mobile_phone_number') {
+          <div class="hidden-contact-action">
+            @if (accessRequested()) {
+              <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--green-600)">
+                {{ 'addEditPatient.accessRequestedMessage' | translate }}
+              </app-typography>
+            } @else {
+              <app-button
+                [text]="'addEditPatient.requestAccessButton' | translate"
+                [style]="ButtonStyleEnum.stroke"
+                [size]="ButtonSizeEnum.small"
+                [loading]="isRequestingAccess()"
+                [disabled]="isRequestingAccess()"
+                (buttonClick)="requestAccess()">
+              </app-button>
+            }
+          </div>
+        }
       </div>
       <div class="form-group">
         <app-select

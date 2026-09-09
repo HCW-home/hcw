@@ -48,6 +48,10 @@ export class AddEditPatient implements OnInit, OnDestroy {
   saved = output<IUser>();
   cancelled = output<void>();
 
+  hiddenContact = signal<{ field: string; email?: string; phone?: string } | null>(null);
+  isRequestingAccess = signal(false);
+  accessRequested = signal(false);
+
   constructor() {
     effect(() => {
       const patient = this.patient();
@@ -442,6 +446,7 @@ export class AddEditPatient implements OnInit, OnDestroy {
       return;
     }
 
+    this.hiddenContact.set(null);
     this.loading = true;
     const formValue = this.form.getRawValue();
 
@@ -544,6 +549,30 @@ export class AddEditPatient implements OnInit, OnDestroy {
     return '';
   }
 
+  requestAccess(): void {
+    const contact = this.hiddenContact();
+    if (!contact) {
+      return;
+    }
+    this.isRequestingAccess.set(true);
+    this.patientService.requestAccess({
+      email: contact.field === 'email' ? contact.email : undefined,
+      mobile_phone_number: contact.field === 'mobile_phone_number' ? contact.phone : undefined,
+    }).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: () => {
+        this.isRequestingAccess.set(false);
+        this.accessRequested.set(true);
+        this.toasterService.show('success', this.t.instant('addEditPatient.accessRequested'), this.t.instant('addEditPatient.accessRequestedMessage'));
+      },
+      error: (error) => {
+        this.isRequestingAccess.set(false);
+        this.toasterService.show('error', this.t.instant('addEditPatient.errorRequestingAccess'), getErrorMessage(error));
+      }
+    });
+  }
+
   private setServerErrors(error: { error?: Record<string, string | string[]> } & { error?: { code?: string; field?: string } }): void {
     const body = error.error as { code?: string; field?: string } | undefined;
 
@@ -553,9 +582,17 @@ export class AddEditPatient implements OnInit, OnDestroy {
         control.setErrors({ serverError: this.t.instant('addEditPatient.hiddenContactUseFollowUp') });
         control.markAsTouched();
       }
+      const formValue = this.form.getRawValue();
+      this.hiddenContact.set({
+        field: body.field,
+        email: formValue.email,
+        phone: formValue.mobile_phone_number,
+      });
+      this.accessRequested.set(false);
       return;
     }
 
+    this.hiddenContact.set(null);
     if (error.error && typeof error.error === 'object') {
       for (const [field, messages] of Object.entries(error.error)) {
         const control = this.form.get(field);
