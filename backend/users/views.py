@@ -87,7 +87,7 @@ from constance import config as constance_config
 from allauth.socialaccount.models import SocialApp
 
 from .filters import UserFilter
-from .models import HealthMetric, Language, Organisation, Speciality, Term, User, WebPushSubscription, DAVAppPassword
+from .models import HealthMetric, Language, Organisation, PatientVisibilityGrant, Speciality, Term, User, WebPushSubscription, DAVAppPassword
 from .phone import phone_lookup_variants
 from .identifier import EMAIL, resolve_identifier
 from .verification import (
@@ -1299,11 +1299,19 @@ class UserViewSet(viewsets.ModelViewSet):
             if user_orgs:
                 creator_filter |= Q(created_by__organisations__id__in=user_orgs)
             creator_filter |= Q(created_by=current_user)
+            grant_filter = Q(visibility_grants__confirmed_at__isnull=False)
+            if current_user.main_organisation_id:
+                grant_filter &= Q(
+                    visibility_grants__organisation=current_user.main_organisation
+                )
+            elif user_orgs:
+                grant_filter &= Q(visibility_grants__organisation__id__in=user_orgs)
+            else:
+                grant_filter = Q(pk__in=[])
             # No .distinct() here: get_queryset() ORs this with the
             # practitioners queryset, and Django refuses to combine a distinct
             # query with a non-distinct one. Dedup happens in get_queryset().
-            return qs.filter(org_filter | creator_filter)
-
+            return qs.filter(org_filter | creator_filter | grant_filter)
         return qs
 
     def _get_organization_filter(self, current_user):
@@ -1397,6 +1405,60 @@ class UserViewSet(viewsets.ModelViewSet):
             return None
 
         return "email" if email and match.email and match.email.lower() == email.strip().lower() else "mobile_phone_number"
+
+    @action(detail=False, methods=["post"], url_path="request-access")
+    def request_access(self, request):
+        """Request visibility on a hidden patient by exact email/phone match.
+
+        Creates an unconfirmed PatientVisibilityGrant and sends the patient a
+        confirmation link (see messaging template "patient_access_confirmation").
+        _filter_patients only honours grants once confirmed_at is set, so the
+        patient must click through before anything becomes visible.
+        """
+        email = request.data.get("email")
+        phone = request.data.get("mobile_phone_number")
+
+        if not request.user.main_organisation_id:
+            return Response(
+                {"detail": _("You must belong to an organisation to request access.")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        candidates = User.objects.filter(is_active=True, is_practitioner=False)
+        match = None
+        if email:
+            match = candidates.filter(email__iexact=email.strip()).first()
+        if match is None and phone:
+            match = candidates.filter(
+                mobile_phone_number__in=phone_lookup_variants(phone)
+            ).first()
+        if match is None:
+            return Response(
+                {"detail": _("No matching patient found.")},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        grant, created = PatientVisibilityGrant.objects.get_or_create(
+            patient=match,
+            organisation=request.user.main_organisation,
+            defaults={"requested_by": request.user},
+        )
+        if grant.confirmed_at is not None:
+            return Response(
+                {"detail": _("This patient is already visible to your organisation.")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if created:
+            from .tasks import send_patient_access_confirmation
+            transaction.on_commit(
+                lambda: send_patient_access_confirmation.delay(grant.pk)
+            )
+
+        return Response(
+            {"detail": _("A confirmation request has been sent to the patient.")},
+            status=status.HTTP_202_ACCEPTED,
+        )
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
@@ -2302,6 +2364,23 @@ class SendVerificationCodeView(APIView):
 
         return Response(payload, status=status.HTTP_200_OK)
 
+class PatientVisibilityGrantConfirmView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            grant = PatientVisibilityGrant.objects.select_related("patient").get(pk=pk)
+        except PatientVisibilityGrant.DoesNotExist:
+            return Response({"detail": _("Not found.")}, status=status.HTTP_404_NOT_FOUND)
+
+        if grant.patient_id != request.user.pk:
+            return Response({"detail": _("Not found.")}, status=status.HTTP_404_NOT_FOUND)
+
+        if grant.confirmed_at is None:
+            grant.confirmed_at = timezone.now()
+            grant.save(update_fields=["confirmed_at"])
+
+        return Response({"detail": _("Access confirmed.")})
 
 # -- FHIR Patient / Practitioner -------------------------------------------
 

@@ -499,6 +499,45 @@ class HealthMetric(models.Model):
 
     acknowledged_at = models.DateTimeField(blank=True, null=True)
 
+class PatientVisibilityGrant(models.Model):
+    """Extends a patient's visibility to another organisation, once confirmed.
+
+    Created with `confirmed_at=None` when a practitioner requests access to a
+    hidden patient by exact email/phone match. `_filter_patients` in
+    users/views.py only honours grants where `confirmed_at` is set, so the
+    patient must click the confirmation link sent to them before the grant
+    takes effect.
+    """
+
+    patient = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="visibility_grants",
+    )
+    organisation = models.ForeignKey(
+        "users.Organisation",
+        on_delete=models.CASCADE,
+        related_name="patient_grants",
+    )
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="requested_patient_visibility",
+    )
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["patient", "organisation"],
+                name="patient_visibility_grant_unique",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.patient} -> {self.organisation}"
 
 class DAVAppPassword(models.Model):
     """

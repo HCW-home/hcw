@@ -44,6 +44,20 @@ DEFAULT_NOTIFICATION_MESSAGES = {
         "model": "consultations.Participant",
         "helper_text": "Message sent to participant with invitation to join a consultation at a later time",
     },
+    "patient_access_confirmation": {
+        "template_subject": _("A practitioner would like to access your record"),
+        "template_content": _(
+            """{{ obj.requested_by.name }} from {{ obj.organisation.name }} would like to access your record. If you agree, follow the link below to confirm."""
+        ),
+        "template_content_html": _(
+            """<p><strong>{{ obj.requested_by.name }}</strong> from <strong>{{ obj.organisation.name }}</strong> would like to access your record.</p>"""
+            """<p>If you agree, follow the link below to confirm.</p>"""
+        ),
+        "action": "confirmVisibility",
+        "action_label": _("Confirm access"),
+        "model": "users.PatientVisibilityGrant",
+        "helper_text": "Message sent to a patient asking them to confirm sharing their record with another organisation",
+    },
     "invitation_to_ongoing_appointment": {
         "template_subject": _("A consultation is in progress - you are invited"),
         "template_content": _(
