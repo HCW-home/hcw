@@ -474,6 +474,19 @@
     "declined": "You have declined the appointment",
     "failedDecline": "Failed to decline"
   },
+  "confirmVisibility": {
+    "title": "Confirm Access",
+    "error": "Error",
+    "goToHome": "Go to Home",
+    "confirmed": "Access Confirmed",
+    "confirmedMessage": "The practitioner can now access your record.",
+    "explanation": "A practitioner would like to access your record. If you agree, confirm below.",
+    "confirmButton": "Confirm access",
+    "skipToHome": "Skip and go to home",
+    "invalidLink": "Invalid confirmation link",
+    "confirmSuccess": "Access confirmed successfully",
+    "failedConfirm": "Failed to confirm access"
+  },
   "terms": {
     "accept": "Accept",
     "acceptCheckbox": "I have read and accept the terms and conditions",

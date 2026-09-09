@@ -1,0 +1,57 @@
+<app-header [pageTitle]="'confirmVisibility.title' | translate" [showBackButton]="true"></app-header>
+<ion-content class="visibility-content">
+  <div class="visibility-container">
+    @if (errorMessage) {
+      <div class="error-state">
+        <ion-icon name="alert-circle-outline" class="error-icon"></ion-icon>
+        <ion-text class="error-title" color="danger">{{ 'confirmVisibility.error' | translate }}</ion-text>
+        <ion-text class="error-message" color="medium">{{ errorMessage }}</ion-text>
+        <ion-button expand="block" shape="round" (click)="goToHome()" class="action-button">
+          {{ 'confirmVisibility.goToHome' | translate }}
+        </ion-button>
+      </div>
+    } @else if (isDone) {
+      <div class="empty-state">
+        <ion-icon name="checkmark-circle-outline" class="success-icon"></ion-icon>
+        <ion-text class="success-title">{{ 'confirmVisibility.confirmed' | translate }}</ion-text>
+        <ion-text class="success-message" color="medium">
+          {{ 'confirmVisibility.confirmedMessage' | translate }}
+        </ion-text>
+        <ion-button expand="block" shape="round" (click)="goToHome()" class="action-button">
+          {{ 'confirmVisibility.goToHome' | translate }}
+        </ion-button>
+      </div>
+    } @else {
+      <div class="visibility-section">
+        <ion-card class="visibility-card">
+          <ion-card-content>
+            <ion-text class="section-subtitle" color="medium">
+              {{ 'confirmVisibility.explanation' | translate }}
+            </ion-text>
+            <div class="visibility-actions">
+              <ion-button
+                expand="block"
+                shape="round"
+                [disabled]="isConfirming"
+                (click)="confirm()"
+                class="confirm-button">
+                @if (isConfirming) {
+                  <ion-spinner name="crescent"></ion-spinner>
+                } @else {
+                  <ion-icon name="checkmark-outline" slot="start"></ion-icon>
+                  {{ 'confirmVisibility.confirmButton' | translate }}
+                }
+              </ion-button>
+            </div>
+          </ion-card-content>
+        </ion-card>
+        <div class="skip-link">
+          <ion-text color="primary" (click)="goToHome()" class="link-text">
+            {{ 'confirmVisibility.skipToHome' | translate }}
+          </ion-text>
+        </div>
+      </div>
+    }
+  </div>
+</ion-content>
+<app-footer></app-footer>

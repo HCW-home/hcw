@@ -29,6 +29,7 @@ const ACTION_ROUTES: Record<string, ActionConfig> = {
   'message': { route: '/home', requiresAuth: true, appendId: false },
   'consultation': { route: '/home', requiresAuth: true, appendId: false, idAsQueryParam: 'openChat' },
   'completeBooking': { route: '/new-request', requiresAuth: true, appendId: false },
+  'confirmVisibility': { route: '/confirm-visibility', requiresAuth: true, appendId: true },
 };
 
 const DEFAULT_ACTION: ActionConfig = { route: '/home', requiresAuth: true, appendId: false };

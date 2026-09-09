@@ -474,6 +474,19 @@
     "declined": "Vous avez décliné le rendez-vous",
     "failedDecline": "Échec du refus"
   },
+  "confirmVisibility": {
+    "title": "Confirmer l'accès",
+    "error": "Erreur",
+    "goToHome": "Aller à l'accueil",
+    "confirmed": "Accès confirmé",
+    "confirmedMessage": "Le praticien peut désormais accéder à votre dossier.",
+    "explanation": "Un praticien souhaite accéder à votre dossier. Si vous êtes d'accord, confirmez ci-dessous.",
+    "confirmButton": "Confirmer l'accès",
+    "skipToHome": "Passer et aller à l'accueil",
+    "invalidLink": "Lien de confirmation invalide",
+    "confirmSuccess": "Accès confirmé avec succès",
+    "failedConfirm": "Échec de la confirmation de l'accès"
+  },
   "terms": {
     "accept": "Accepter",
     "acceptCheckbox": "J'ai lu et j'accepte les conditions d'utilisation",

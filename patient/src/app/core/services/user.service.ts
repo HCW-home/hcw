@@ -18,4 +18,8 @@ export class UserService {
   searchUsers(params?: UserSearchParams): Observable<PaginatedResponse<User>> {
     return this.api.get<PaginatedResponse<User>>('/users/', params);
   }
+
+  confirmVisibilityGrant(grantId: number): Observable<{ detail: string }> {
+    return this.api.post<{ detail: string }>(`/patients/visibility-grants/${grantId}/confirm/`, {});
+  }
 }
