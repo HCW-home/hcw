@@ -137,6 +137,13 @@
   }
 }
 
-.hidden-contact-action {
-  margin-top: 8px;
+.hidden-contact-notice {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 12px;
+  background: var(--amber-50);
+  border: 1px solid var(--amber-200);
+  border-radius: 8px;
 }

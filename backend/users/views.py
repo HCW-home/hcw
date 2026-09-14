@@ -1454,6 +1454,10 @@ class UserViewSet(viewsets.ModelViewSet):
         if not requires_confirmation:
             grant.confirmed_at = timezone.now()
             grant.save(update_fields=["confirmed_at"])
+            from .tasks import send_patient_access_granted_notification
+            transaction.on_commit(
+                lambda: send_patient_access_granted_notification.delay(grant.pk)
+            )
             return Response(
                 {"detail": _("Access granted."), "immediate": True},
                 status=status.HTTP_200_OK,

@@ -581,7 +581,6 @@ export class AddEditPatient implements OnInit, OnDestroy {
     if (body?.code === 'contact_hidden' && body.field) {
       const control = this.form.get(body.field);
       if (control) {
-        control.setErrors({ serverError: this.t.instant('addEditPatient.hiddenContactUseFollowUp') });
         control.markAsTouched();
       }
       const formValue = this.form.getRawValue();
