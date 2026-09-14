@@ -529,6 +529,7 @@
     "requestAccessButton": "Demander l'accès",
     "accessRequested": "Accès demandé",
     "accessRequestedMessage": "Une demande de confirmation a été envoyée au patient.",
+    "accessGrantedMessage": "L'accès a été accordé immédiatement.",
     "errorRequestingAccess": "Échec de l'envoi de la demande d'accès"
   },
   "patients": {

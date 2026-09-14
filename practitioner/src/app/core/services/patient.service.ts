@@ -114,8 +114,8 @@ export class PatientService {
     );
   }
 
-  requestAccess(data: { email?: string; mobile_phone_number?: string }): Observable<{ detail: string }> {
-    return this.http.post<{ detail: string }>(`${this.apiUrl}/users/request-access/`, data, {
+  requestAccess(data: { email?: string; mobile_phone_number?: string }): Observable<{ detail: string; immediate: boolean }> {
+    return this.http.post<{ detail: string; immediate: boolean }>(`${this.apiUrl}/users/request-access/`, data, {
       context: new HttpContext().set(SKIP_ERROR_TOAST, true),
     });
   }

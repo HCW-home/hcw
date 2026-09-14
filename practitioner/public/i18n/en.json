@@ -488,6 +488,7 @@
     "requestAccessButton": "Request access",
     "accessRequested": "Access requested",
     "accessRequestedMessage": "A confirmation request has been sent to the patient.",
+    "accessGrantedMessage": "Access has been granted immediately.",
     "errorRequestingAccess": "Failed to send the access request"
   },
   "patients": {

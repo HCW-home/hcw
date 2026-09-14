@@ -51,6 +51,7 @@ export class AddEditPatient implements OnInit, OnDestroy {
   hiddenContact = signal<{ field: string; email?: string; phone?: string } | null>(null);
   isRequestingAccess = signal(false);
   accessRequested = signal(false);
+  accessGrantedImmediately = signal(false);
 
   constructor() {
     effect(() => {
@@ -561,10 +562,11 @@ export class AddEditPatient implements OnInit, OnDestroy {
     }).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
-      next: () => {
+      next: (response) => {
         this.isRequestingAccess.set(false);
         this.accessRequested.set(true);
-        this.toasterService.show('success', this.t.instant('addEditPatient.accessRequested'), this.t.instant('addEditPatient.accessRequestedMessage'));
+        this.accessGrantedImmediately.set(response.immediate);
+        this.toasterService.show('success', this.t.instant('addEditPatient.accessRequested'), response.detail);
       },
       error: (error) => {
         this.isRequestingAccess.set(false);

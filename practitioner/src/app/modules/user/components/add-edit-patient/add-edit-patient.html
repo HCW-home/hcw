@@ -54,7 +54,7 @@
         <div class="hidden-contact-action">
           @if (accessRequested()) {
             <app-typography [variant]="TypographyTypeEnum['body-s-regular']" color="var(--green-600)">
-              {{ 'addEditPatient.accessRequestedMessage' | translate }}
+              {{ (accessGrantedImmediately() ? 'addEditPatient.accessGrantedMessage' : 'addEditPatient.accessRequestedMessage') | translate }}
             </app-typography>
           } @else {
             <app-button

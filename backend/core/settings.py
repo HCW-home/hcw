@@ -1007,6 +1007,12 @@ CONSTANCE_CONFIG = {
         ),
         "patient_visibility_select",
     ),
+    "patient_visibility_requires_confirmation": (
+        False,
+        gettext_noop(
+            "When a practitioner requests access to a patient hidden from another organization, require the patient to confirm by link before the organization can see their profile. When disabled, access is granted immediately."
+        ),
+    ),
     "enable_video_recording": (
         False,
         gettext_noop("Enable video recording during appointments"),
@@ -1255,7 +1261,7 @@ CONSTANCE_CONFIG_FIELDSETS = {
     ),
     gettext_noop("Uploads"): ("max_upload_size_mb",),
     gettext_noop("Authentication"): ("disable_password_login", "enable_patient_password_login", "enable_registration"),
-    gettext_noop("Visibility"): ("users_visibility", "patient_visibility", "public_organisations"),
+    gettext_noop("Visibility"): ("users_visibility", "patient_visibility", "patient_visibility_requires_confirmation", "public_organisations"),
     gettext_noop("Video Features"): (
         "primary_video_provider",
         "enable_video_recording",

@@ -1410,10 +1410,11 @@ class UserViewSet(viewsets.ModelViewSet):
     def request_access(self, request):
         """Request visibility on a hidden patient by exact email/phone match.
 
-        Creates an unconfirmed PatientVisibilityGrant and sends the patient a
-        confirmation link (see messaging template "patient_access_confirmation").
-        _filter_patients only honours grants once confirmed_at is set, so the
-        patient must click through before anything becomes visible.
+        When `patient_visibility_requires_confirmation` is enabled, creates an
+        unconfirmed PatientVisibilityGrant and sends the patient a confirmation
+        link (see messaging template "patient_access_confirmation"); the patient
+        must click through before anything becomes visible. When disabled
+        (default), the grant is confirmed immediately.
         """
         email = request.data.get("email")
         phone = request.data.get("mobile_phone_number")
@@ -1438,6 +1439,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
+        requires_confirmation = config.patient_visibility_requires_confirmation
         grant, created = PatientVisibilityGrant.objects.get_or_create(
             patient=match,
             organisation=request.user.main_organisation,
@@ -1449,14 +1451,24 @@ class UserViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if created:
-            from .tasks import send_patient_access_confirmation
-            transaction.on_commit(
-                lambda: send_patient_access_confirmation.delay(grant.pk)
+        if not requires_confirmation:
+            grant.confirmed_at = timezone.now()
+            grant.save(update_fields=["confirmed_at"])
+            return Response(
+                {"detail": _("Access granted."), "immediate": True},
+                status=status.HTTP_200_OK,
             )
 
+        from .tasks import send_patient_access_confirmation
+        transaction.on_commit(
+            lambda: send_patient_access_confirmation.delay(grant.pk)
+        )
+
         return Response(
-            {"detail": _("A confirmation request has been sent to the patient.")},
+            {
+                "detail": _("A confirmation request has been sent to the patient."),
+                "immediate": False,
+            },
             status=status.HTTP_202_ACCEPTED,
         )
 
