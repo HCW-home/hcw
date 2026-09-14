@@ -194,3 +194,24 @@ def send_patient_access_confirmation(grant_id):
         content_type=ContentType.objects.get_for_model(grant),
         object_id=grant.pk,
     )
+
+@app.task
+def send_patient_access_granted_notification(grant_id):
+    from .models import PatientVisibilityGrant
+    try:
+        grant = PatientVisibilityGrant.objects.select_related(
+            "patient", "organisation", "requested_by"
+        ).get(pk=grant_id)
+    except PatientVisibilityGrant.DoesNotExist:
+        logger.warning(f"PatientVisibilityGrant pk={grant_id} not found")
+        return
+    Message.objects.create(
+        communication_method=grant.patient.communication_method,
+        recipient_phone=grant.patient.mobile_phone_number,
+        recipient_email=grant.patient.email,
+        sent_to=grant.patient,
+        sent_by=grant.requested_by,
+        template_system_name="patient_access_granted_notification",
+        content_type=ContentType.objects.get_for_model(grant),
+        object_id=grant.pk,
+    )
