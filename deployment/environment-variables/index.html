@@ -16,8 +16,6 @@
         <link rel="prev" href="../debian/">
       
       
-        <link rel="next" href="../encryption-at-rest/">
-      
       
         
           <link rel="alternate" href="./" hreflang="en">
@@ -1573,17 +1571,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#encryption-at-rest" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Encryption at Rest
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#call-recording" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1632,17 +1619,6 @@
     <span class="md-ellipsis">
       
         Antivirus (ClamAV)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#geocoding" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Geocoding
       
     </span>
   </a>
@@ -1708,34 +1684,6 @@
   
 </nav>
       
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../encryption-at-rest/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Encryption at Rest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
     </li>
   
 
@@ -1863,17 +1811,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#encryption-at-rest" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Encryption at Rest
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#call-recording" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1922,17 +1859,6 @@
     <span class="md-ellipsis">
       
         Antivirus (ClamAV)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#geocoding" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Geocoding
       
     </span>
   </a>
@@ -2316,39 +2242,6 @@
 <p class="admonition-title">All or nothing</p>
 <p><code>S3_BUCKET_NAME</code>, <code>S3_ENDPOINT_URL</code>, <code>S3_ACCESS_KEY</code> and <code>S3_SECRET_KEY</code> must be set together. A partial configuration aborts startup with an <code>ImproperlyConfigured</code> error rather than silently falling back to local storage, which would make files written by one process unreadable by another.</p>
 </div>
-<h2 id="encryption-at-rest">Encryption at Rest</h2>
-<p>Message attachments can be encrypted where they are stored, on the local filesystem or on S3. Follow <a href="../encryption-at-rest/">Encryption at Rest</a> to turn it on: attachments encrypted with a lost key are lost.</p>
-<table>
-<thead>
-<tr>
-<th>Variable</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>BLOB_ENCRYPTION</code></td>
-<td><code>False</code></td>
-<td>Exactly <code>True</code> puts the encrypting storage in place: encrypted attachments are decrypted on read.</td>
-</tr>
-<tr>
-<td><code>BLOB_ENCRYPT_WRITES</code></td>
-<td>value of <code>BLOB_ENCRYPTION</code></td>
-<td>Exactly <code>True</code> encrypts new attachments. <code>False</code> with <code>BLOB_ENCRYPTION=True</code> writes them in clear while still reading encrypted ones, the intermediate step of a rollout or a rollback.</td>
-</tr>
-<tr>
-<td><code>BLOB_ENCRYPTION_KEY</code></td>
-<td><em>(none)</em></td>
-<td>Required with <code>BLOB_ENCRYPTION=True</code>: at least 32 characters, different from <code>DJANGOSECRET_KEY</code>.</td>
-</tr>
-<tr>
-<td><code>BLOB_ENCRYPTION_OLD_KEY</code></td>
-<td><em>(none)</em></td>
-<td>Previous key, still accepted on read during a key rotation.</td>
-</tr>
-</tbody>
-</table>
 <h2 id="call-recording">Call Recording</h2>
 <p>Recordings are pushed to S3 by the media server. By default they reuse the <code>S3_*</code> settings above; set the <code>LIVEKIT_S3_*</code> variables only to store them on a different bucket or server.</p>
 <table>
@@ -2504,36 +2397,6 @@
 </tr>
 </tbody>
 </table>
-<h2 id="geocoding">Geocoding</h2>
-<p>Practitioner and organisation addresses are turned into coordinates by <a href="https://nominatim.org/">Nominatim</a>, so that they can be placed on the patient map. The public instance is used by default; its usage policy caps callers at one request per second, which is slow for large imports. Set <code>NOMINATIM_URL</code> to use your own instance instead.</p>
-<table>
-<thead>
-<tr>
-<th>Variable</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>NOMINATIM_URL</code></td>
-<td><code>https://nominatim.openstreetmap.org/search</code></td>
-<td>Nominatim instance to query. Either the root URL or the full <code>/search</code> endpoint.</td>
-</tr>
-<tr>
-<td><code>NOMINATIM_USER_AGENT</code></td>
-<td><code>HCW-Home/1.0</code></td>
-<td>Identifies the caller, as the public instance requires.</td>
-</tr>
-<tr>
-<td><code>NOMINATIM_RATE_LIMIT</code></td>
-<td><code>1/s</code></td>
-<td>Pace of the geocoding requests, in Celery rate limit syntax (<code>1/s</code>, <code>20/s</code>, <code>600/m</code>). Leave empty for no limit, which only makes sense on an instance you own.</td>
-</tr>
-</tbody>
-</table>
-<p>Each tenant can override <code>NOMINATIM_URL</code> from the admin interface, under Configuration &gt; Geocoding; the field starts on the value of the variable, and emptying it comes back to it. The pace is not overridable, as the geocoding workers are shared by every tenant.</p>
-<p>The map search box in the admin interface always queries the public instance, whatever these variables say.</p>
 <h2 id="fhir-server">FHIR Server</h2>
 <table>
 <thead>
