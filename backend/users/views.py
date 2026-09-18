@@ -13,6 +13,7 @@ from allauth.socialaccount.providers.openid_connect.views import (
 )
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from core.blobcrypto import BlobDecryptionError
 from core.channel_groups import user_group
 from consultations.models import (
     JOINABLE_APPOINTMENT_STATUSES,
@@ -68,7 +69,6 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.authentication import JWTAuthentication
 from core.authentication import TenantRefreshToken
 from core.throttling import (
     EmailVerifyCodeRateThrottle,
@@ -559,7 +559,6 @@ class UserParticipantViewSet(viewsets.ModelViewSet):
 
 
 class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
-    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     pagination_class = UniversalPagination
     serializer_class = ConsultationSerializer
@@ -730,7 +729,6 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class MessageAttachmentView(APIView):
-    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
@@ -798,7 +796,9 @@ class MessageAttachmentView(APIView):
             response = FileResponse(attachment_file, content_type=content_type)
             response["Content-Disposition"] = f'inline; filename="{file_name}"'
             return response
-        except FileNotFoundError:
+        except (FileNotFoundError, BlobDecryptionError):
+            # A file that cannot be decrypted (wrong key, damaged file) is
+            # logged by the storage: a 404 beats serving binary noise.
             return Response(
                 {"detail": "Attachment file not found."},
                 status=status.HTTP_404_NOT_FOUND,
@@ -971,7 +971,6 @@ class UserNotificationsMarkAllReadView(APIView):
 
 
 class WebPushSubscribeView(APIView):
-    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -984,7 +983,6 @@ class WebPushSubscribeView(APIView):
 
 
 class WebPushUnsubscribeView(APIView):
-    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -1006,7 +1004,6 @@ class WebPushUnsubscribeView(APIView):
 
 
 class UserAppointmentsViewSet(viewsets.ReadOnlyModelViewSet):
-    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     pagination_class = UniversalPagination
     serializer_class = AppointmentSerializer
@@ -2019,7 +2016,6 @@ class VerificationResendView(APIView):
 
 
 class TestRTCView(APIView):
-    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
@@ -2065,7 +2061,6 @@ class TestRTCView(APIView):
 
 
 class UserDashboardView(APIView):
-    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     @extend_schema(

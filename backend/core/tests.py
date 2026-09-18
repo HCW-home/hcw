@@ -29,6 +29,11 @@ class DebugMediaServeTests(SimpleTestCase):
                 self.request, "another_tenant/messages_attachment/scan.jpg"
             )
 
+    def test_attachments_from_before_tenants_are_covered(self):
+        """They were stored at the root, without a schema folder."""
+        with self.assertRaises(Http404):
+            debug_media_serve(self.request, "messages_attachment/scan.jpg")
+
     def test_other_media_still_goes_through(self):
         """Logos and avatars have no access rule; only attachments do."""
         with self.assertRaises(Http404) as caught:

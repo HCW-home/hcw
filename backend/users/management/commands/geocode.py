@@ -6,12 +6,16 @@ from django.core.management.base import BaseCommand
 from django.db.models import Q
 
 from users.models import Organisation, User
-from users.tasks import geocoding_pause_remaining, pause_geocoding
+from users.tasks import (
+    geocoding_pause_remaining,
+    nominatim_headers,
+    nominatim_min_interval,
+    nominatim_url,
+    pause_geocoding,
+)
 
 logger = logging.getLogger(__name__)
 
-NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
-NOMINATIM_HEADERS = {"User-Agent": "HCW-Home/1.0"}
 NOMINATIM_ATTEMPTS = 2
 
 
@@ -101,7 +105,9 @@ class Command(BaseCommand):
             else:
                 failed += 1
 
-            time.sleep(1)
+            # The tasks are rate limited by Celery; this command is not, so it
+            # holds itself to the same pace.
+            time.sleep(nominatim_min_interval())
 
         self.stdout.write(
             f"  {name}: geocoded={geocoded}, cached={cached}, failed={failed}"
@@ -129,9 +135,9 @@ class Command(BaseCommand):
 
             try:
                 resp = http_requests.get(
-                    NOMINATIM_URL,
+                    nominatim_url(),
                     params={"q": address, "format": "json", "limit": 1},
-                    headers=NOMINATIM_HEADERS,
+                    headers=nominatim_headers(),
                     timeout=10,
                 )
             except Exception as exc:
