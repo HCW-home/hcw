@@ -88,6 +88,7 @@ from allauth.socialaccount.models import SocialApp
 
 from .filters import UserFilter
 from .models import HealthMetric, Language, Organisation, Speciality, Term, User, WebPushSubscription, DAVAppPassword
+from .permissions import CONTACT_FIELDS, CanManageUser, check_contact_changes
 from .phone import phone_lookup_variants
 from .identifier import EMAIL, resolve_identifier
 from .verification import (
@@ -100,6 +101,7 @@ from .serializers import (
     HealthMetricSerializer,
     RegisterSerializer,
     LanguageSerializer,
+    ManagedUserSerializer,
     OrganisationSerializer,
     SpecialitySerializer,
     TermSerializer,
@@ -1210,63 +1212,45 @@ class UserAppointmentsViewSet(viewsets.ReadOnlyModelViewSet):
         return Response({"detail": _("Left successfully")})
 
 
-class UserViewSet(viewsets.ModelViewSet):
+class ManagedUserViewSetMixin:
+    """Common ground of the endpoints serving `User` rows to practitioners.
+
+    /api/users/, /api/patients/ and /api/practitioners/ (the last two also as
+    /api/fhir/Patient and /api/fhir/Practitioner) are three views of the same
+    table. Only the first one used to apply the visibility settings and refuse
+    to modify staff or colleagues, which turned the other two into a way
+    around both (audit C-02). Rows are filtered here, and writes are vetted by
+    CanManageUser and ManagedUserSerializer.
     """
-    ViewSet for users - read only with GET endpoint
-    Supports search by first name, last name, and email
-    Visibility controlled by USERS_VISIBILITY / PATIENT_VISIBILITY settings.
-    Authenticated practitioners only; the public map listing now lives at
-    /api/map/.
-    """
 
-    queryset = User.objects.all()
-    serializer_class = UserDetailsSerializer
-    pagination_class = UniversalPagination
-    permission_classes = [IsAuthenticated, IsPractitioner]
-    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
-    search_fields = [
-        "first_name", "last_name", "email", "mobile_phone_number",
-        "street", "city", "postal_code", "country",
-        "main_organisation__name", "main_organisation__city",
-    ]
-    filterset_class = UserFilter
+    serializer_class = ManagedUserSerializer
+    permission_classes = [IsAuthenticated, IsPractitioner, CanManageUser]
 
-    def get_queryset(self):
-        """
-        Filter users based on visibility settings:
-        - USERS_VISIBILITY controls practitioner visibility
-        - PATIENT_VISIBILITY controls patient visibility
-        """
-        base_queryset = self.queryset.filter(is_active=True)
-        current_user = self.request.user
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
 
-        practitioners_qs = self._filter_practitioners(base_queryset, current_user)
-        patients_qs = self._filter_patients(base_queryset, current_user)
+    # FHIR writes bypass the serializer: the mapper copies the payload onto the
+    # instance and these hooks save it.
 
-        return (practitioners_qs | patients_qs).distinct()
+    def perform_fhir_create(self, mapper, instance, payload, context):
+        # A create listing the identifier of an existing user updates that
+        # user instead (FHIR upsert), so it is vetted as an update.
+        if instance.pk is not None:
+            self._check_fhir_write(instance)
+        super().perform_fhir_create(mapper, instance, payload, context)
 
-    def filter_queryset(self, queryset):
-        """Run the default SearchFilter, then also match phone numbers however
-        they were typed: the term is canonicalised the same way numbers are
-        stored, so '06 12 34 56 78', '0612345678' and '+33612345678' all match.
+    def perform_fhir_update(self, mapper, instance, payload, context):
+        self._check_fhir_write(instance)
+        super().perform_fhir_update(mapper, instance, payload, context)
 
-        Both the canonical and the legacy separator-free forms are tried, so a
-        row written before the E.164 migration is still found.
-        """
-        visible = self.get_queryset()
-        filtered = super().filter_queryset(queryset)
-
-        search = self.request.query_params.get("search")
-        variants = phone_lookup_variants(search) if search else []
-        # Only attempt a phone match when the term actually contains digits
-        # (otherwise SearchFilter already covered it).
-        variants = [v for v in variants if any(c.isdigit() for c in v)]
-        if variants:
-            phone_filter = Q()
-            for variant in variants:
-                phone_filter |= Q(mobile_phone_number__icontains=variant)
-            return (filtered | visible.filter(phone_filter)).distinct()
-        return filtered
+    def _check_fhir_write(self, instance):
+        # `instance` already carries the payload: read the stored row back to
+        # know whose account this is and what actually changes.
+        stored = User.objects.get(pk=instance.pk)
+        self.check_object_permissions(self.request, stored)
+        check_contact_changes(
+            stored, {field: getattr(instance, field) for field in CONTACT_FIELDS}
+        )
 
     def _filter_practitioners(self, base_queryset, current_user):
         """Filter practitioners based on USERS_VISIBILITY setting."""
@@ -1313,9 +1297,9 @@ class UserViewSet(viewsets.ModelViewSet):
             if user_orgs:
                 creator_filter |= Q(created_by__organisations__id__in=user_orgs)
             creator_filter |= Q(created_by=current_user)
-            # No .distinct() here: get_queryset() ORs this with the
-            # practitioners queryset, and Django refuses to combine a distinct
-            # query with a non-distinct one. Dedup happens in get_queryset().
+            # No .distinct() here: UserViewSet.get_queryset() ORs this with
+            # the practitioners queryset, and Django refuses to combine a
+            # distinct query with a non-distinct one. Callers dedup.
             return qs.filter(org_filter | creator_filter)
 
         return qs
@@ -1339,6 +1323,66 @@ class UserViewSet(viewsets.ModelViewSet):
         for f in filters[1:]:
             combined |= f
         return combined
+
+
+class UserViewSet(ManagedUserViewSetMixin, viewsets.ModelViewSet):
+    """
+    ViewSet for users - read only with GET endpoint
+    Supports search by first name, last name, and email
+    Visibility controlled by USERS_VISIBILITY / PATIENT_VISIBILITY settings.
+    Authenticated practitioners only; the public map listing now lives at
+    /api/map/.
+    """
+
+    queryset = User.objects.all()
+    pagination_class = UniversalPagination
+    # No DELETE: removing the row would cascade to every consultation,
+    # appointment and message the user created (audit C-02).
+    http_method_names = ["get", "post", "put", "patch", "head", "options"]
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
+    search_fields = [
+        "first_name", "last_name", "email", "mobile_phone_number",
+        "street", "city", "postal_code", "country",
+        "main_organisation__name", "main_organisation__city",
+    ]
+    filterset_class = UserFilter
+
+    def get_queryset(self):
+        """
+        Filter users based on visibility settings:
+        - USERS_VISIBILITY controls practitioner visibility
+        - PATIENT_VISIBILITY controls patient visibility
+        """
+        base_queryset = self.queryset.filter(is_active=True)
+        current_user = self.request.user
+
+        practitioners_qs = self._filter_practitioners(base_queryset, current_user)
+        patients_qs = self._filter_patients(base_queryset, current_user)
+
+        return (practitioners_qs | patients_qs).distinct()
+
+    def filter_queryset(self, queryset):
+        """Run the default SearchFilter, then also match phone numbers however
+        they were typed: the term is canonicalised the same way numbers are
+        stored, so '06 12 34 56 78', '0612345678' and '+33612345678' all match.
+
+        Both the canonical and the legacy separator-free forms are tried, so a
+        row written before the E.164 migration is still found.
+        """
+        visible = self.get_queryset()
+        filtered = super().filter_queryset(queryset)
+
+        search = self.request.query_params.get("search")
+        variants = phone_lookup_variants(search) if search else []
+        # Only attempt a phone match when the term actually contains digits
+        # (otherwise SearchFilter already covered it).
+        variants = [v for v in variants if any(c.isdigit() for c in v)]
+        if variants:
+            phone_filter = Q()
+            for variant in variants:
+                phone_filter |= Q(mobile_phone_number__icontains=variant)
+            return (filtered | visible.filter(phone_filter)).distinct()
+        return filtered
 
     def create(self, request, *args, **kwargs):
         """
@@ -1367,6 +1411,8 @@ class UserViewSet(viewsets.ModelViewSet):
             ).order_by("-is_active", "pk").first()
 
         if existing_user is not None:
+            # This rewrites an existing account: same checks as a PATCH on it.
+            self.check_object_permissions(request, existing_user)
             # Update the existing temporary user with new data
             serializer = self.get_serializer(existing_user, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
@@ -1383,57 +1429,6 @@ class UserViewSet(viewsets.ModelViewSet):
 
         # Normal user creation
         return super().create(request, *args, **kwargs)
-
-    def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
-
-    def update(self, request, *args, **kwargs):
-        """Prevent updating users with superuser, staff access, or users in groups."""
-        user = self.get_object()
-
-        # Prevent updating superusers and staff users
-        if user.is_superuser or user.is_staff:
-            return Response(
-                {"detail": "Cannot update users with portal or super admin access."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
-        # Prevent updating users who belong to any group
-        if user.groups.exists():
-            return Response(
-                {"detail": "Cannot update users who belong to a group."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
-        # Prevent a practitioner from updating another practitioner
-        if request.user.is_practitioner and user.is_practitioner:
-            return Response(
-                {"detail": "Cannot update another practitioner."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
-        return super().update(request, *args, **kwargs)
-
-    def partial_update(self, request, *args, **kwargs):
-        """Prevent partially updating users with superuser, staff access, or users in groups."""
-        user = self.get_object()
-
-        # Prevent updating superusers and staff users
-        if user.is_superuser or user.is_staff:
-            return Response(
-                {"detail": "Cannot update users with portal or super admin access."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
-
-        # Prevent a practitioner from updating another practitioner
-        if request.user.is_practitioner and user.is_practitioner:
-            return Response(
-                {"detail": "Cannot update another practitioner."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
-        return super().partial_update(request, *args, **kwargs)
 
 
 class OpenIDAdapter(OpenIDConnectOAuth2Adapter):
@@ -2311,22 +2306,22 @@ from fhir_server.mixins import FhirViewSetMixin  # noqa: E402
 from .fhir import PatientFhirMapper, PractitionerFhirMapper  # noqa: E402
 
 
-class PatientViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
+class PatientViewSet(ManagedUserViewSetMixin, FhirViewSetMixin, viewsets.ModelViewSet):
     """
-    FHIR R4 Patient endpoint. All requests run through the HCW permission
-    model (`IsAuthenticated, IsPractitioner`) and return FHIR responses
-    when the client requests `application/fhir+json`.
+    FHIR R4 Patient endpoint. All requests run through the same rules as
+    /api/users/ (`ManagedUserViewSetMixin`) and return FHIR responses when
+    the client requests `application/fhir+json`. DELETE only deactivates.
     """
 
     queryset = User.objects.filter(is_practitioner=False)
-    serializer_class = UserDetailsSerializer
-    permission_classes = [IsAuthenticated, IsPractitioner]
     pagination_class = UniversalPagination
     fhir_class = PatientFhirMapper
     http_method_names = ["get", "post", "put", "patch", "delete", "head", "options"]
 
     def get_queryset(self):
-        return self.queryset.filter(is_active=True)
+        return self._filter_patients(
+            self.queryset.filter(is_active=True), self.request.user
+        ).distinct()
 
     @action(detail=True, methods=["post"])
     def access_url(self, request, pk=None):
@@ -2373,18 +2368,25 @@ class PatientViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
         })
 
 
-class PractitionerViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
-    """FHIR R4 Practitioner endpoint (users with `is_practitioner=True`)."""
+class PractitionerViewSet(ManagedUserViewSetMixin, FhirViewSetMixin, viewsets.ModelViewSet):
+    """FHIR R4 Practitioner endpoint (users with `is_practitioner=True`).
+
+    Read-only. Practitioners are never created through the API (see
+    consultations/fhir_participants.py) and each one edits their own profile
+    through /api/auth/user/, so a write here could only be a practitioner
+    rewriting a colleague's or an administrator's account (audit C-02).
+    """
 
     queryset = User.objects.filter(is_practitioner=True)
-    serializer_class = UserDetailsSerializer
-    permission_classes = [IsAuthenticated, IsPractitioner]
     pagination_class = UniversalPagination
     fhir_class = PractitionerFhirMapper
-    http_method_names = ["get", "post", "put", "patch", "delete", "head", "options"]
+    http_method_names = ["get", "head", "options"]
 
     def get_queryset(self):
-        return self.queryset.filter(is_active=True)
+        return self._filter_practitioners(
+            self.queryset.filter(is_active=True), self.request.user
+        ).distinct()
+
 
 class DAVAppPasswordViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]

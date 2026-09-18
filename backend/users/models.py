@@ -379,6 +379,25 @@ class User(AbstractUser):
         return self.requires_manual_access or self.temporary
 
     @property
+    def is_claimed(self) -> bool:
+        """Whether the owner has made this account their own.
+
+        Practitioners create accounts for the people they invite and type in
+        the email and phone number that sign-in codes and links are sent to.
+        Until the owner verifies their email, goes through onboarding, sets a
+        password or signs in with one, the account is nothing more than that
+        contact card and a typo in it can still be corrected. From then on
+        those details are the owner's credentials: whoever rewrites them
+        receives the next code and signs in as the owner.
+        """
+        return bool(
+            self.email_verified
+            or not self.is_first_login
+            or self.last_login
+            or (self.password and self.has_usable_password())
+        )
+
+    @property
     def name(self) -> str:
         if self.first_name or self.last_name:
             if self.email:

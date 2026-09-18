@@ -16,7 +16,14 @@ This page focuses on the **external integration story**: how a third-party syste
 | `User` (practitioner) | `Practitioner` | `/api/fhir/Practitioner` | `/api/practitioners/` |
 | `Prescription` | `MedicationRequest` | `/api/fhir/MedicationRequest` | `/api/prescriptions/` |
 
-Each endpoint supports the full FHIR REST suite: `read`, `search-type`, `create`, `update`, `patch`, `delete`. `DELETE` is **always a soft delete** (status flipped to `cancelled` / `closed` rather than a row deletion).
+Each endpoint supports the full FHIR REST suite: `read`, `search-type`, `create`, `update`, `patch`, `delete`, except `Practitioner`, which is **read-only** (`read`, `search-type`): practitioners are managed from the admin and edit their own profile in the app. `DELETE` is **always a soft delete** (status flipped to `cancelled` / `closed` rather than a row deletion).
+
+`Patient` writes follow the rules of the native patient endpoints:
+
+- the caller only sees, and therefore only modifies, the patients the `patient_visibility` setting grants them (`users_visibility` does the same for `Practitioner` reads);
+- accounts with staff or superuser access, accounts belonging to a group and practitioners cannot be modified or deleted (**403**);
+- once patients have claimed their account (verified email, completed onboarding, or a password set or used to sign in), their email and phone number can no longer be changed by anyone else (**400**);
+- a `create` whose identifier matches a patient outside the caller's scope is refused (**403**) instead of updating that patient.
 
 > The native routes (`/api/appointments/` …) are dual-mode: native JSON by default, FHIR on demand. The `/api/fhir/…` routes are **always FHIR**. The examples in the rest of this page use the native `?format=fhir` form, but every one of them works identically against the `/api/fhir/…` route — just drop the `?format=fhir` / `Content-Type` opt-in.
 
@@ -87,7 +94,7 @@ The 201 response echoes both identifiers — the canonical HCW one and the exter
 
 If no identifier under the configured external system is provided, the field stays `NULL`. HCW does not synthesize one.
 
-The same shape applies when creating an `Encounter` (Consultation), `Patient`, `Practitioner`, or `MedicationRequest` (Prescription).
+The same shape applies when creating an `Encounter` (Consultation), `Patient`, or `MedicationRequest` (Prescription).
 
 ## Reading a resource by its external identifier
 
@@ -144,7 +151,7 @@ Authorization: Token <token>
 Accept: application/fhir+json
 ```
 
-Returns `204 No Content`. The Appointment is **not** removed from the database — its `status` is flipped to `cancelled`. The same soft semantics apply on Encounter (`closed_at` set), Patient/Practitioner (`is_active=False`), and MedicationRequest (`status=cancelled`).
+Returns `204 No Content`. The Appointment is **not** removed from the database — its `status` is flipped to `cancelled`. The same soft semantics apply on Encounter (`closed_at` set), Patient (`is_active=False`), and MedicationRequest (`status=cancelled`).
 
 ## Appointment status mapping
 
