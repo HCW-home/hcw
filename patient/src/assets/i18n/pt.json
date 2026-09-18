@@ -168,6 +168,7 @@
         "statusActive": "Ativo",
         "statusClosed": "Encerrado",
         "statusDraft": "Rascunho",
-        "tooEarlyTitle": "Reunião ainda não está disponível"
+        "tooEarlyTitle": "Reunião ainda não está disponível",
+        "tooEarlyMessage": "A reunião está marcada para {{time}}. Apenas pode juntar-se {{minutes}} minutos antes da hora marcada."
     }
 }
