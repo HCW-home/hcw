@@ -1345,6 +1345,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#geocoding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Geocoding
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#video-features" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1620,6 +1631,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/encryption-at-rest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Encryption at Rest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1741,6 +1780,17 @@
     <span class="md-ellipsis">
       
         Uploads
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#geocoding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Geocoding
       
     </span>
   </a>
@@ -2002,6 +2052,31 @@ ever looks at <code>scheduled</code> appointments, a manual status is never over
 </tr>
 </tbody>
 </table>
+<h2 id="geocoding">Geocoding</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Code</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Nominatim instance turning addresses into map coordinates</td>
+<td><code>NOMINATIM_URL</code></td>
+<td>Value of the <code>NOMINATIM_URL</code> environment variable</td>
+<td>Practitioner and organisation addresses are geocoded so patients can find them on the map. Either the root URL of a <a href="https://nominatim.org/">Nominatim</a> instance or its <code>/search</code> endpoint. Leave empty to fall back to the environment variable, which itself defaults to the public OpenStreetMap instance.</td>
+</tr>
+</tbody>
+</table>
+<p>The public instance is capped at one request per second by its usage policy, so
+an installation geocoding many addresses is better served by its own instance.
+How fast the geocoding may query it is not set here but in the
+<code>NOMINATIM_RATE_LIMIT</code> environment variable, since the workers doing the
+geocoding are shared by every tenant — see
+<a href="../../deployment/environment-variables/#geocoding">Environment Variables</a>.</p>
 <h2 id="video-features">Video Features</h2>
 <table>
 <thead>

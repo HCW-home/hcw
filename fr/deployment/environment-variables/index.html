@@ -16,6 +16,8 @@
         <link rel="prev" href="../debian/">
       
       
+        <link rel="next" href="../encryption-at-rest/">
+      
       
         
           <link rel="alternate" href="../../../deployment/environment-variables/" hreflang="en">
@@ -1571,6 +1573,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#chiffrement-au-repos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chiffrement au repos
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#enregistrement-des-appels" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1619,6 +1632,17 @@
     <span class="md-ellipsis">
       
         Antivirus (ClamAV)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#geocodage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Geocodage
       
     </span>
   </a>
@@ -1684,6 +1708,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../encryption-at-rest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Encryption at Rest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -1811,6 +1863,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#chiffrement-au-repos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chiffrement au repos
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#enregistrement-des-appels" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1859,6 +1922,17 @@
     <span class="md-ellipsis">
       
         Antivirus (ClamAV)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#geocodage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Geocodage
       
     </span>
   </a>
@@ -2242,6 +2316,39 @@
 <p class="admonition-title">Tout ou rien</p>
 <p><code>S3_BUCKET_NAME</code>, <code>S3_ENDPOINT_URL</code>, <code>S3_ACCESS_KEY</code> et <code>S3_SECRET_KEY</code> doivent etre definies ensemble. Une configuration partielle interrompt le demarrage avec une erreur <code>ImproperlyConfigured</code> plutot que de basculer silencieusement sur le stockage local, ce qui rendrait illisibles par un processus les fichiers ecrits par un autre.</p>
 </div>
+<h2 id="chiffrement-au-repos">Chiffrement au repos</h2>
+<p>Les pieces jointes des messages peuvent etre chiffrees la ou elles sont stockees, sur le disque local ou sur S3. Suivez <a href="../encryption-at-rest/">Chiffrement au repos</a> pour l'activer : les pieces jointes chiffrees avec une cle perdue sont perdues.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Defaut</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>BLOB_ENCRYPTION</code></td>
+<td><code>False</code></td>
+<td>Exactement <code>True</code> met en place le stockage chiffrant : les pieces jointes chiffrees sont dechiffrees a la lecture.</td>
+</tr>
+<tr>
+<td><code>BLOB_ENCRYPT_WRITES</code></td>
+<td>valeur de <code>BLOB_ENCRYPTION</code></td>
+<td>Exactement <code>True</code> chiffre les nouvelles pieces jointes. <code>False</code> avec <code>BLOB_ENCRYPTION=True</code> les ecrit en clair tout en lisant les chiffrees, l'etape intermediaire d'une activation ou d'un retour arriere.</td>
+</tr>
+<tr>
+<td><code>BLOB_ENCRYPTION_KEY</code></td>
+<td><em>(aucun)</em></td>
+<td>Obligatoire avec <code>BLOB_ENCRYPTION=True</code> : au moins 32 caracteres, differente de <code>DJANGOSECRET_KEY</code>.</td>
+</tr>
+<tr>
+<td><code>BLOB_ENCRYPTION_OLD_KEY</code></td>
+<td><em>(aucun)</em></td>
+<td>Cle precedente, encore acceptee en lecture pendant une rotation.</td>
+</tr>
+</tbody>
+</table>
 <h2 id="enregistrement-des-appels">Enregistrement des appels</h2>
 <p>Les enregistrements sont deposes sur S3 par le serveur media. Par defaut ils reutilisent les reglages <code>S3_*</code> ci-dessus ; ne definissez les variables <code>LIVEKIT_S3_*</code> que pour les stocker sur un bucket ou un serveur different.</p>
 <table>
@@ -2397,6 +2504,36 @@
 </tr>
 </tbody>
 </table>
+<h2 id="geocodage">Geocodage</h2>
+<p>Les adresses des praticiens et des organisations sont converties en coordonnees par <a href="https://nominatim.org/">Nominatim</a>, afin de les placer sur la carte des patients. L'instance publique est utilisee par defaut ; sa politique d'usage limite chaque appelant a une requete par seconde, ce qui est lent sur les gros imports. Definir <code>NOMINATIM_URL</code> pour utiliser sa propre instance.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Defaut</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NOMINATIM_URL</code></td>
+<td><code>https://nominatim.openstreetmap.org/search</code></td>
+<td>Instance Nominatim interrogee. Au choix l'URL racine ou le point d'entree <code>/search</code> complet.</td>
+</tr>
+<tr>
+<td><code>NOMINATIM_USER_AGENT</code></td>
+<td><code>HCW-Home/1.0</code></td>
+<td>Identifie l'appelant, comme l'exige l'instance publique.</td>
+</tr>
+<tr>
+<td><code>NOMINATIM_RATE_LIMIT</code></td>
+<td><code>1/s</code></td>
+<td>Rythme des requetes de geocodage, dans la syntaxe des limites de debit Celery (<code>1/s</code>, <code>20/s</code>, <code>600/m</code>). Laisser vide pour ne pas limiter, ce qui n'a de sens que sur une instance vous appartenant.</td>
+</tr>
+</tbody>
+</table>
+<p>Chaque tenant peut surcharger <code>NOMINATIM_URL</code> depuis l'interface d'administration, dans Configuration &gt; Geocodage ; le champ part de la valeur de la variable, et le vider y revient. Le rythme n'est pas surchargeable, les workers de geocodage etant partages par tous les tenants.</p>
+<p>Le champ de recherche de la carte dans l'interface d'administration interroge toujours l'instance publique, quelles que soient ces variables.</p>
 <h2 id="serveur-fhir">Serveur FHIR</h2>
 <table>
 <thead>

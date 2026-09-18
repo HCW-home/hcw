@@ -1,6 +1,6 @@
 
 <!doctype html>
-<html lang="fr" class="no-js">
+<html lang="en" class="no-js">
   <head>
     
       <meta charset="utf-8">
@@ -10,19 +10,17 @@
       
       
       
-        <link rel="canonical" href="https://hcw-at-home.com/docs/fr/user-guide/">
+        <link rel="canonical" href="https://hcw-at-home.com/docs/deployment/encryption-at-rest/">
       
       
-        <link rel="prev" href="../architecture/">
+        <link rel="prev" href="../environment-variables/">
       
-      
-        <link rel="next" href="signing-in/">
       
       
         
-          <link rel="alternate" href="../../user-guide/" hreflang="en">
+          <link rel="alternate" href="./" hreflang="en">
         
-          <link rel="alternate" href="./" hreflang="fr">
+          <link rel="alternate" href="../../fr/deployment/encryption-at-rest/" hreflang="fr">
         
       
       
@@ -31,7 +29,7 @@
     
     
       
-        <title>Overview - HCW@Home Documentation</title>
+        <title>Encryption at Rest - HCW@Home Documentation</title>
       
     
     
@@ -84,8 +82,8 @@
     <div data-md-component="skip">
       
         
-        <a href="#user-guide" class="md-skip">
-          Aller au contenu
+        <a href="#encryption-at-rest" class="md-skip">
+          Skip to content
         </a>
       
     </div>
@@ -99,8 +97,8 @@
   
 
 <header class="md-header md-header--shadow" data-md-component="header">
-  <nav class="md-header__inner md-grid" aria-label="En-tête">
-    <a href="../" title="HCW@Home Documentation" class="md-header__button md-logo" aria-label="HCW@Home Documentation" data-md-component="logo">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="HCW@Home Documentation" class="md-header__button md-logo" aria-label="HCW@Home Documentation" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -120,7 +118,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Overview
+              Encryption at Rest
             
           </span>
         </div>
@@ -146,20 +144,20 @@
       <div class="md-header__option">
   <div class="md-select">
     
-    <button class="md-header__button md-icon" aria-label="Sélectionner la langue">
+    <button class="md-header__button md-icon" aria-label="Select language">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m12.87 15.07-2.54-2.51.03-.03A17.5 17.5 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2zm-2.62 7 1.62-4.33L19.12 17z"/></svg>
     </button>
     <div class="md-select__inner">
       <ul class="md-select__list">
         
           <li class="md-select__item">
-            <a href="../../user-guide/" hreflang="en" class="md-select__link">
+            <a href="./" hreflang="en" class="md-select__link">
               English
             </a>
           </li>
         
           <li class="md-select__item">
-            <a href="./" hreflang="fr" class="md-select__link">
+            <a href="../../fr/deployment/encryption-at-rest/" hreflang="fr" class="md-select__link">
               Francais
             </a>
           </li>
@@ -180,16 +178,16 @@
   <label class="md-search__overlay" for="__search"></label>
   <div class="md-search__inner" role="search">
     <form class="md-search__form" name="search">
-      <input type="text" class="md-search__input" name="query" aria-label="Rechercher" placeholder="Rechercher" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
       <label class="md-search__icon md-icon" for="__search">
         
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
         
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
       </label>
-      <nav class="md-search__options" aria-label="Recherche">
+      <nav class="md-search__options" aria-label="Search">
         
-        <button type="reset" class="md-search__icon md-icon" title="Effacer" aria-label="Effacer" tabindex="-1">
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
           
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
         </button>
@@ -200,7 +198,7 @@
       <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
         <div class="md-search-result" data-md-component="search-result">
           <div class="md-search-result__meta">
-            Initialisation de la recherche
+            Initializing search
           </div>
           <ol class="md-search-result__list" role="presentation"></ol>
         </div>
@@ -236,7 +234,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../" title="HCW@Home Documentation" class="md-nav__button md-logo" aria-label="HCW@Home Documentation" data-md-component="logo">
+    <a href="../.." title="HCW@Home Documentation" class="md-nav__button md-logo" aria-label="HCW@Home Documentation" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -308,7 +306,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -336,7 +334,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../architecture/" class="md-nav__link">
+      <a href="../../architecture/" class="md-nav__link">
         
   
   
@@ -368,8 +366,6 @@
       
   
   
-    
-  
   
   
     
@@ -382,11 +378,13 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
@@ -407,7 +405,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -422,37 +420,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Overview
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../user-guide/" class="md-nav__link">
         
   
   
@@ -468,59 +439,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table des matières">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table des matières
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#follow-ups-and-appointments" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Follow-ups and appointments
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#beneficiaries-guests-and-colleagues" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Beneficiaries, guests and colleagues
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#contents" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Contents
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -533,7 +451,7 @@
   
   
     <li class="md-nav__item">
-      <a href="signing-in/" class="md-nav__link">
+      <a href="../../user-guide/signing-in/" class="md-nav__link">
         
   
   
@@ -561,7 +479,7 @@
   
   
     <li class="md-nav__item">
-      <a href="navigation/" class="md-nav__link">
+      <a href="../../user-guide/navigation/" class="md-nav__link">
         
   
   
@@ -589,7 +507,7 @@
   
   
     <li class="md-nav__item">
-      <a href="create-follow-up/" class="md-nav__link">
+      <a href="../../user-guide/create-follow-up/" class="md-nav__link">
         
   
   
@@ -617,7 +535,7 @@
   
   
     <li class="md-nav__item">
-      <a href="manage-follow-up/" class="md-nav__link">
+      <a href="../../user-guide/manage-follow-up/" class="md-nav__link">
         
   
   
@@ -645,7 +563,7 @@
   
   
     <li class="md-nav__item">
-      <a href="video-consultation/" class="md-nav__link">
+      <a href="../../user-guide/video-consultation/" class="md-nav__link">
         
   
   
@@ -673,7 +591,7 @@
   
   
     <li class="md-nav__item">
-      <a href="closing-follow-up/" class="md-nav__link">
+      <a href="../../user-guide/closing-follow-up/" class="md-nav__link">
         
   
   
@@ -701,7 +619,7 @@
   
   
     <li class="md-nav__item">
-      <a href="appointments/" class="md-nav__link">
+      <a href="../../user-guide/appointments/" class="md-nav__link">
         
   
   
@@ -729,7 +647,7 @@
   
   
     <li class="md-nav__item">
-      <a href="profile/" class="md-nav__link">
+      <a href="../../user-guide/profile/" class="md-nav__link">
         
   
   
@@ -757,7 +675,7 @@
   
   
     <li class="md-nav__item">
-      <a href="participants/" class="md-nav__link">
+      <a href="../../user-guide/participants/" class="md-nav__link">
         
   
   
@@ -846,7 +764,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../use-cases/appointment-management/" class="md-nav__link">
+      <a href="../../use-cases/appointment-management/" class="md-nav__link">
         
   
   
@@ -874,7 +792,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../use-cases/video-call-scheduling/" class="md-nav__link">
+      <a href="../../use-cases/video-call-scheduling/" class="md-nav__link">
         
   
   
@@ -902,7 +820,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../use-cases/followup-chat/" class="md-nav__link">
+      <a href="../../use-cases/followup-chat/" class="md-nav__link">
         
   
   
@@ -930,7 +848,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../use-cases/slot-booking/" class="md-nav__link">
+      <a href="../../use-cases/slot-booking/" class="md-nav__link">
         
   
   
@@ -1019,7 +937,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../admin/users/" class="md-nav__link">
+      <a href="../../admin/users/" class="md-nav__link">
         
   
   
@@ -1047,7 +965,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../admin/terms/" class="md-nav__link">
+      <a href="../../admin/terms/" class="md-nav__link">
         
   
   
@@ -1075,7 +993,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../admin/organizations/" class="md-nav__link">
+      <a href="../../admin/organizations/" class="md-nav__link">
         
   
   
@@ -1103,7 +1021,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../admin/messaging-providers/" class="md-nav__link">
+      <a href="../../admin/messaging-providers/" class="md-nav__link">
         
   
   
@@ -1131,7 +1049,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../admin/media-servers/" class="md-nav__link">
+      <a href="../../admin/media-servers/" class="md-nav__link">
         
   
   
@@ -1159,7 +1077,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../admin/reasons/" class="md-nav__link">
+      <a href="../../admin/reasons/" class="md-nav__link">
         
   
   
@@ -1187,7 +1105,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../admin/sso/" class="md-nav__link">
+      <a href="../../admin/sso/" class="md-nav__link">
         
   
   
@@ -1215,7 +1133,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../admin/encryption/" class="md-nav__link">
+      <a href="../../admin/encryption/" class="md-nav__link">
         
   
   
@@ -1243,7 +1161,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../admin/fhir/" class="md-nav__link">
+      <a href="../../admin/fhir/" class="md-nav__link">
         
   
   
@@ -1271,7 +1189,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../admin/advanced-options/" class="md-nav__link">
+      <a href="../../admin/advanced-options/" class="md-nav__link">
         
   
   
@@ -1360,7 +1278,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/guidelines/" class="md-nav__link">
+      <a href="../../development/guidelines/" class="md-nav__link">
         
   
   
@@ -1392,8 +1310,10 @@
       
   
   
+    
   
   
+  
     
     
     
@@ -1404,13 +1324,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
         
           
           <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
@@ -1431,7 +1349,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1449,7 +1367,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../deployment/docker-compose/" class="md-nav__link">
+      <a href="../docker-compose/" class="md-nav__link">
         
   
   
@@ -1477,7 +1395,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../deployment/debian/" class="md-nav__link">
+      <a href="../debian/" class="md-nav__link">
         
   
   
@@ -1505,7 +1423,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../deployment/environment-variables/" class="md-nav__link">
+      <a href="../environment-variables/" class="md-nav__link">
         
   
   
@@ -1530,10 +1448,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../deployment/encryption-at-rest/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Encryption at Rest
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1549,6 +1494,92 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-encrypted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is encrypted
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#turning-it-on" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Turning it on
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rotating-the-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rotating the key
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#turning-it-off" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Turning it off
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limits
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1574,7 +1605,7 @@
                   <div class="md-sidebar__inner">
                     
 
-<nav class="md-nav md-nav--secondary" aria-label="Table des matières">
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
   
   
@@ -1583,15 +1614,15 @@
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
-      Table des matières
+      Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#follow-ups-and-appointments" class="md-nav__link">
+  <a href="#what-is-encrypted" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Follow-ups and appointments
+        What is encrypted
       
     </span>
   </a>
@@ -1599,10 +1630,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#beneficiaries-guests-and-colleagues" class="md-nav__link">
+  <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Beneficiaries, guests and colleagues
+        Configuration
       
     </span>
   </a>
@@ -1610,10 +1641,43 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#contents" class="md-nav__link">
+  <a href="#turning-it-on" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Contents
+        Turning it on
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rotating-the-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rotating the key
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#turning-it-off" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Turning it off
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limits
       
     </span>
   </a>
@@ -1637,84 +1701,161 @@
 
 
 
-<h1 id="user-guide">User Guide</h1>
-<p>This guide walks practitioners through everyday use of HCW@Home: signing in,
-creating a follow-up, inviting participants, running a video consultation and
-closing the file afterwards.</p>
-<p>It describes the <strong>practitioner portal</strong>. Patients and external guests use a
-separate, simplified application — see <a href="participants/">What participants see</a>.</p>
-<h2 id="follow-ups-and-appointments">Follow-ups and appointments</h2>
-<p>Two objects structure the whole platform. Understanding the difference makes
-everything else obvious.</p>
+<h1 id="encryption-at-rest">Encryption at Rest</h1>
+<p>HCW@Home can encrypt message attachments where they are stored, on the uploads volume or on S3, so that a stolen disk, a leaked backup or a copy of the bucket does not expose them.</p>
+<div class="admonition note">
+<p class="admonition-title">Not end-to-end encryption</p>
+<p>This protects the files on the storage medium. The backend holds the key and reads the files as before, which is why nothing changes for users. To hide content from the server itself, see <a href="../../admin/encryption/">End-to-End Encryption</a>. Both can be combined.</p>
+</div>
+<h2 id="what-is-encrypted">What is encrypted</h2>
 <table>
 <thead>
 <tr>
-<th></th>
-<th>Follow-up</th>
-<th>Appointment</th>
+<th>Stored item</th>
+<th>At rest</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>What it is</td>
-<td>A file that groups everything shared with a beneficiary</td>
-<td>A single meeting at a date and time</td>
+<td>Message attachments, including those of deleted messages</td>
+<td><strong>Encrypted</strong></td>
 </tr>
 <tr>
-<td>Contains</td>
-<td>Appointments, chat messages, shared documents</td>
-<td>Participants, a video room or a place</td>
+<td>Organisation logos, speciality icons, profile pictures</td>
+<td>In clear: the frontends and the emails link to them directly</td>
 </tr>
 <tr>
-<td>Lifetime</td>
-<td>Stays open until you close it</td>
-<td>Ends when the meeting is over</td>
+<td>Call recordings</td>
+<td>In clear: the media server writes them to S3 itself. Rely on the bucket's server-side encryption</td>
 </tr>
 <tr>
-<td>Chat</td>
-<td>Yes, before, during and after the appointments</td>
-<td>Only through its follow-up</td>
-</tr>
-<tr>
-<td>PDF export</td>
-<td>Yes</td>
-<td>—</td>
+<td>Database content (messages, follow-ups, users)</td>
+<td>Not covered: encrypt the database volume and its backups</td>
 </tr>
 </tbody>
 </table>
-<p>A follow-up can contain several appointments — an initial consultation, then a
-check-up two weeks later — and the chat history stays available between them.</p>
-<div class="admonition tip">
-<p class="admonition-title">Always work inside a follow-up</p>
-<p>Creating a bare appointment from the <strong>Calendar</strong> menu is possible, and the
-platform attaches a temporary follow-up to it so its chat works — but that
-file closes on its own shortly after the meeting. For any real care
-relationship, create a follow-up and schedule the appointment inside it.</p>
+<p>Each file is encrypted with AES-256-GCM in 64 KiB chunks, under its own key derived from <code>BLOB_ENCRYPTION_KEY</code>. Attachments are always downloaded through the backend, which decrypts them on the fly: no extra request, no measurable slowdown.</p>
+<p>On S3, this complements the bucket's server-side encryption (SSE-S3, SSE-KMS) rather than replacing it: server-side encryption protects the provider's disks, while the key used here never leaves HCW@Home, so a leaked access key or a bucket opened by mistake exposes nothing either.</p>
+<h2 id="configuration">Configuration</h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>BLOB_ENCRYPTION</code></td>
+<td><code>False</code></td>
+<td><code>True</code> puts the encrypting storage in place: encrypted attachments are decrypted on read.</td>
+</tr>
+<tr>
+<td><code>BLOB_ENCRYPT_WRITES</code></td>
+<td>value of <code>BLOB_ENCRYPTION</code></td>
+<td><code>False</code> keeps writing new attachments in clear while still reading encrypted ones: the intermediate step used to turn encryption on or off without downtime.</td>
+</tr>
+<tr>
+<td><code>BLOB_ENCRYPTION_KEY</code></td>
+<td><em>(none)</em></td>
+<td>Required with <code>BLOB_ENCRYPTION=True</code>. At least 32 characters, and different from <code>DJANGOSECRET_KEY</code>.</td>
+</tr>
+<tr>
+<td><code>BLOB_ENCRYPTION_OLD_KEY</code></td>
+<td><em>(none)</em></td>
+<td>The previous key, still accepted on read during a key rotation.</td>
+</tr>
+</tbody>
+</table>
+<p>The API, the Celery worker and the scheduler must all get the same values. Generate a key with:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import secrets; print(secrets.token_urlsafe(48))"</span>
+</code></pre></div>
+<div class="admonition danger">
+<p class="admonition-title">Keep the key safe</p>
+<p>There is no recovery: attachments encrypted with a lost key are lost. Keep the key with your backups, but <strong>not in the same place</strong> as the uploads backup, or a stolen backup carries its own key.</p>
 </div>
-<h2 id="beneficiaries-guests-and-colleagues">Beneficiaries, guests and colleagues</h2>
-<p>Everyone you invite falls into one of two categories:</p>
-<ul>
-<li><strong>Existing account</strong> — someone who already has an account on the platform: a
-  registered patient, or a colleague. They sign in normally and keep their
-  history.</li>
-<li><strong>Temporary guest</strong> — someone with no account. The platform creates a
-  temporary identity for them, reachable through a personal link, an email or an
-  SMS. No real name is required: any identifier you can recognise is enough.</li>
-</ul>
-<p>When your administrator has configured a retention delay, temporary guests and
-their data are removed automatically once the follow-up is closed.</p>
-<h2 id="contents">Contents</h2>
+<h2 id="turning-it-on">Turning it on</h2>
+<p>Attachments already stored stay in clear until <code>encrypt_blobs</code> converts them. It rewrites each file in place, atomically, and never touches the database: it can be interrupted and run again at any time, files already done are skipped.</p>
 <ol>
-<li><a href="signing-in/">Signing In</a></li>
-<li><a href="navigation/">Navigating the Platform</a></li>
-<li><a href="create-follow-up/">Creating a Follow-up</a></li>
-<li><a href="manage-follow-up/">Managing a Follow-up</a></li>
-<li><a href="video-consultation/">Running a Video Consultation</a></li>
-<li><a href="closing-follow-up/">Closing a Follow-up</a></li>
-<li><a href="appointments/">Appointments and Calendar</a></li>
-<li><a href="profile/">Your Profile and Preferences</a></li>
-<li><a href="participants/">What participants see</a></li>
+<li>Set <code>BLOB_ENCRYPTION=True</code>, <code>BLOB_ENCRYPT_WRITES=False</code> and <code>BLOB_ENCRYPTION_KEY</code>, then restart every backend process. Nothing is encrypted yet, but every process can now read encrypted files.</li>
+<li>Encrypt the attachments already stored:
+    <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>encrypt_blobs
+</code></pre></div></li>
+<li>Set <code>BLOB_ENCRYPT_WRITES=True</code> (or remove it), restart, and run <code>python manage.py encrypt_blobs</code> once more for the attachments uploaded in between.</li>
 </ol>
+<p>The intermediate step matters because processes restart one after the other: one not restarted yet could not read an encrypted file, so nothing gets encrypted before all of them can.</p>
+<p>Where to run the command:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Docker Compose</label><label for="__tabbed_1_2">Debian</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>api<span class="w"> </span>python<span class="w"> </span>manage.py<span class="w"> </span>encrypt_blobs
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">cd</span><span class="w"> </span>/usr/share/hcw/backend
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>sudo<span class="w"> </span>-u<span class="w"> </span>hcw<span class="w"> </span>sh<span class="w"> </span>-c<span class="w"> </span><span class="s1">'set -a; . /etc/hcw/backend.conf; ./venv/bin/python manage.py encrypt_blobs'</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--dry-run</code></td>
+<td>List the files that would be converted, change nothing.</td>
+</tr>
+<tr>
+<td><code>--schema &lt;name&gt;</code></td>
+<td>Only the attachments of one tenant.</td>
+</tr>
+<tr>
+<td><code>--limit &lt;n&gt;</code></td>
+<td>Stop after converting <code>n</code> files.</td>
+</tr>
+<tr>
+<td><code>--old-key &lt;key&gt;</code></td>
+<td>Also accept this previous key, for this run only.</td>
+</tr>
+<tr>
+<td><code>--decrypt</code></td>
+<td>Decrypt instead, to turn encryption off.</td>
+</tr>
+</tbody>
+</table>
+<p>A file the command cannot decrypt (unknown key, damaged file) is reported, left untouched, and makes the command exit with an error.</p>
+<h2 id="rotating-the-key">Rotating the key</h2>
+<ol>
+<li>Move the current key to <code>BLOB_ENCRYPTION_OLD_KEY</code>, put a new one in <code>BLOB_ENCRYPTION_KEY</code>, restart. New attachments use the new key, both keys are accepted on read.</li>
+<li>Run <code>python manage.py encrypt_blobs</code>: it re-encrypts the attachments still under the old key. Every file records which key encrypted it, so an interrupted run resumes where it stopped.</li>
+<li>Remove <code>BLOB_ENCRYPTION_OLD_KEY</code> and restart.</li>
+</ol>
+<h2 id="turning-it-off">Turning it off</h2>
+<ol>
+<li>Set <code>BLOB_ENCRYPT_WRITES=False</code>, restart.</li>
+<li>Decrypt everything:
+    <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>encrypt_blobs<span class="w"> </span>--decrypt
+</code></pre></div></li>
+<li>Set <code>BLOB_ENCRYPTION=False</code>, restart.</li>
+</ol>
+<div class="admonition warning">
+<p class="admonition-title">Starting without the key</p>
+<p>As soon as a storage holds an encrypted file, a <code>.blob-encryption</code> file is written at its root. While it exists, <code>manage.py migrate</code> and <code>manage.py check --database default</code> fail when <code>BLOB_ENCRYPTION</code> is off, since attachments would then be served encrypted. <code>encrypt_blobs --decrypt</code> removes it once every file is decrypted.</p>
+<p>With a wrong <code>BLOB_ENCRYPTION_KEY</code>, attachments encrypted under another key answer 404 and the backend logs <code>Cannot decrypt stored file ... unknown key</code>.</p>
+</div>
+<h2 id="limits">Limits</h2>
+<ul>
+<li>Converting the files already stored does not erase their earlier copies: backups and snapshots taken before, previous object versions on a versioned S3 bucket, and the disk blocks the clear files occupied keep the plaintext until they are purged or overwritten.</li>
+<li>File names are not encrypted: the name given at upload (e.g. <code>blood-test.pdf</code>) stays readable in the storage path, as does the approximate size of each file.</li>
+<li>Logos, speciality icons and profile pictures stay in clear, see above.</li>
+<li>Call recordings, the database, Redis and logs are not covered by this setting.</li>
+</ul>
 
 
 
@@ -1764,7 +1905,7 @@ their data are removed automatically once the follow-up is closed.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copi\u00e9 dans le presse-papier", "clipboard.copy": "Copier dans le presse-papier", "search.result.more.one": "1 de plus sur cette page", "search.result.more.other": "# de plus sur cette page", "search.result.none": "Aucun document trouv\u00e9", "search.result.one": "1 document trouv\u00e9", "search.result.other": "# documents trouv\u00e9s", "search.result.placeholder": "Taper pour d\u00e9marrer la recherche", "search.result.term.missing": "Non trouv\u00e9", "select.version": "S\u00e9lectionner la version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
