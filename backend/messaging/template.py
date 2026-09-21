@@ -69,6 +69,17 @@ DEFAULT_NOTIFICATION_MESSAGES = {
         "model": "users.PatientVisibilityGrant",
         "helper_text": "Message sent to a patient informing them that a practitioner from another organisation has accessed their record without requiring confirmation",
     },
+    "patient_access_confirmed_notification": {
+        "template_subject": _("Your patient has confirmed access"),
+        "template_content": _(
+            """{{ obj.patient.first_name }} {{ obj.patient.last_name }} has confirmed sharing their record with {{ obj.organisation.name }}."""
+        ),
+        "template_content_html": _(
+            """<p><strong>{{ obj.patient.first_name }} {{ obj.patient.last_name }}</strong> has confirmed sharing their record with <strong>{{ obj.organisation.name }}</strong>.</p>"""
+        ),
+        "model": "users.PatientVisibilityGrant",
+        "helper_text": "Message sent to the requesting practitioner when the patient confirms sharing their record",
+    },
     "invitation_to_ongoing_appointment": {
         "template_subject": _("A consultation is in progress - you are invited"),
         "template_content": _(

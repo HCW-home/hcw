@@ -2388,6 +2388,10 @@ class PatientVisibilityGrantConfirmView(APIView):
         if grant.confirmed_at is None:
             grant.confirmed_at = timezone.now()
             grant.save(update_fields=["confirmed_at"])
+            from .tasks import send_patient_access_confirmed_notification
+            transaction.on_commit(
+                lambda: send_patient_access_confirmed_notification.delay(grant.pk)
+            )
 
         return Response({"detail": _("Access confirmed.")})
 
