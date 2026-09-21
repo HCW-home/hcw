@@ -2376,6 +2376,23 @@ class SendVerificationCodeView(APIView):
 class PatientVisibilityGrantConfirmView(APIView):
     permission_classes = [IsAuthenticated]
 
+    def get(self, request, pk):
+        try:
+            grant = PatientVisibilityGrant.objects.select_related(
+                "organisation", "requested_by"
+            ).get(pk=pk)
+        except PatientVisibilityGrant.DoesNotExist:
+            return Response({"detail": _("Not found.")}, status=status.HTTP_404_NOT_FOUND)
+
+        if grant.patient_id != request.user.pk:
+            return Response({"detail": _("Not found.")}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response({
+            "organisation_name": grant.organisation.name,
+            "requested_by_name": grant.requested_by.name if grant.requested_by else None,
+            "confirmed": grant.confirmed_at is not None,
+        })
+
     def post(self, request, pk):
         try:
             grant = PatientVisibilityGrant.objects.select_related("patient").get(pk=pk)

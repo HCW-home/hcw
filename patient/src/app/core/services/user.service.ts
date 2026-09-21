@@ -22,4 +22,8 @@ export class UserService {
   confirmVisibilityGrant(grantId: number): Observable<{ detail: string }> {
     return this.api.post<{ detail: string }>(`/patients/visibility-grants/${grantId}/confirm/`, {});
   }
+
+  getVisibilityGrant(grantId: number): Observable<{ organisation_name: string; requested_by_name: string | null; confirmed: boolean }> {
+    return this.api.get<{ organisation_name: string; requested_by_name: string | null; confirmed: boolean }>(`/patients/visibility-grants/${grantId}/confirm/`);
+  }
 }

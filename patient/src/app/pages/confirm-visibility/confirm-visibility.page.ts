@@ -42,9 +42,12 @@ export class ConfirmVisibilityPage implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   private t = inject(TranslationService);
 
+  isLoading = true;
   isConfirming = false;
   isDone = false;
   errorMessage: string | null = null;
+  organisationName: string | null = null;
+  requestedByName: string | null = null;
   private grantId: number | null = null;
 
   constructor(
@@ -58,8 +61,27 @@ export class ConfirmVisibilityPage implements OnInit, OnDestroy {
     const idParam = this.route.snapshot.paramMap.get('id');
     this.grantId = idParam ? parseInt(idParam, 10) : null;
     if (!this.grantId) {
+      this.isLoading = false;
       this.errorMessage = this.t.instant('confirmVisibility.invalidLink');
+      return;
     }
+    this.userService.getVisibilityGrant(this.grantId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (grant) => {
+          this.isLoading = false;
+          if (grant.confirmed) {
+            this.isDone = true;
+            return;
+          }
+          this.organisationName = grant.organisation_name;
+          this.requestedByName = grant.requested_by_name;
+        },
+        error: () => {
+          this.isLoading = false;
+          this.errorMessage = this.t.instant('confirmVisibility.failedLoad');
+        }
+      });
   }
 
   ngOnDestroy(): void {
