@@ -1288,18 +1288,8 @@ class UserViewSet(viewsets.ModelViewSet):
             org_filter = self._get_organization_filter(current_user)
             if org_filter is None:
                 return qs.filter(created_by=current_user)
-            # Patients rarely have a main_organisation/organisations set,
-            # so also match via their creator's organisation (`created_by__*`).
-            user_orgs = list(current_user.organisations.values_list("id", flat=True))
-            creator_filter = Q()
-            if current_user.main_organisation_id:
-                creator_filter |= Q(
-                    created_by__main_organisation=current_user.main_organisation
-                )
-            if user_orgs:
-                creator_filter |= Q(created_by__organisations__id__in=user_orgs)
-            creator_filter |= Q(created_by=current_user)
             grant_filter = Q(visibility_grants__confirmed_at__isnull=False)
+            user_orgs = list(current_user.organisations.values_list("id", flat=True))
             if current_user.main_organisation_id:
                 grant_filter &= Q(
                     visibility_grants__organisation=current_user.main_organisation
@@ -1311,7 +1301,7 @@ class UserViewSet(viewsets.ModelViewSet):
             # No .distinct() here: get_queryset() ORs this with the
             # practitioners queryset, and Django refuses to combine a distinct
             # query with a non-distinct one. Dedup happens in get_queryset().
-            return qs.filter(org_filter | creator_filter | grant_filter)
+            return qs.filter(org_filter | Q(created_by=current_user) | grant_filter)
         return qs
 
     def _get_organization_filter(self, current_user):
@@ -1371,7 +1361,8 @@ class UserViewSet(viewsets.ModelViewSet):
 
             # Save the updated user
             serializer.save(created_by=request.user)
-
+            if request.user.main_organisation_id:
+                existing_user.organisations.add(request.user.main_organisation)
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_200_OK, headers=headers)
 
@@ -1477,7 +1468,9 @@ class UserViewSet(viewsets.ModelViewSet):
         )
 
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
+        user = serializer.save(created_by=self.request.user)
+        if self.request.user.main_organisation_id:
+            user.organisations.add(self.request.user.main_organisation)
 
     def update(self, request, *args, **kwargs):
         """Prevent updating users with superuser, staff access, or users in groups."""
