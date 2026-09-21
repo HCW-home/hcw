@@ -126,7 +126,6 @@ class ProtectedAccountTests(_AccountTakeoverBase):
         self.assert_email_cannot_be_rewritten(staff)
 
     def test_group_member_email_cannot_be_rewritten(self):
-        # PATCH on /api/users/ used to skip this check (PUT had it).
         member = User.objects.create_user(email="desk@example.com")
         member.groups.add(Group.objects.create(name="Front desk"))
         self.assert_email_cannot_be_rewritten(member)
@@ -314,7 +313,7 @@ class ClaimedAccountContactTests(_AccountTakeoverBase):
             self.patient_resource(self.patient, ATTACKER_EMAIL),
         )
         self.assertEqual(response.status_code, 400, response.data)
-        self.assertEqual(response.data["resourceType"], "OperationOutcome")
+        self.assertEqual(response.data["issue"][0]["diagnostics"], LOCKED)
         self.patient.refresh_from_db()
         self.assertEqual(self.patient.email, "patient@example.com")
 
@@ -357,30 +356,30 @@ class ClaimedAccountContactTests(_AccountTakeoverBase):
                     email=f"{claim.replace(' ', '-')}@example.com", **fields
                 )
                 response = self.patch("patient-detail", {"email": ATTACKER_EMAIL}, user)
-                self.assertEqual(response.status_code, 400, response.data)
+                self.assertEqual(response.data.get("email"), [LOCKED])
         with self.subTest(claim="password set"):
             user = User.objects.create_user(
                 email="password@example.com", password="a-patient-password"
             )
             response = self.patch("patient-detail", {"email": ATTACKER_EMAIL}, user)
-            self.assertEqual(response.status_code, 400, response.data)
+            self.assertEqual(response.data.get("email"), [LOCKED])
 
     def test_claim_cannot_be_undone_by_a_third_party(self):
         claims = {
-            "onboarding done": ({"is_first_login": False}, {"is_first_login": True}),
-            "signed in": ({"last_login": timezone.now()}, {"last_login": None}),
+            "onboarding done": ("is_first_login", False, True),
+            "signed in": ("last_login", timezone.now(), None),
         }
-        for claim, (fields, reset) in claims.items():
+        for claim, (field, claimed, unclaimed) in claims.items():
             with self.subTest(claim=claim):
                 user = User.objects.create_user(
-                    email=f"{claim.replace(' ', '-')}@example.com", **fields
+                    email=f"{claim.replace(' ', '-')}@example.com", **{field: claimed}
                 )
-                response = self.patch("patient-detail", reset, user)
+                response = self.patch("patient-detail", {field: unclaimed}, user)
                 self.assertEqual(response.status_code, 200, response.data)
                 user.refresh_from_db()
-                self.assertTrue(user.is_claimed)
+                self.assertNotEqual(getattr(user, field), unclaimed)
                 response = self.patch("patient-detail", {"email": ATTACKER_EMAIL}, user)
-                self.assertEqual(response.status_code, 400, response.data)
+                self.assertEqual(response.data.get("email"), [LOCKED])
 
     def test_a_typo_can_be_fixed_before_the_account_is_claimed(self):
         typo = User.objects.create_user(
@@ -407,8 +406,11 @@ class VisibilityTests(_AccountTakeoverBase):
         self.colleague = User.objects.create_user(
             email="colleague@example.com", is_practitioner=True
         )
+        # Manual, so that its access link is handed out to whoever reaches it.
         self.their_patient = User.objects.create_user(
-            email="their-patient@example.com", created_by=self.colleague
+            email="their-patient@example.com",
+            created_by=self.colleague,
+            communication_method="manual",
         )
 
     def test_someone_elses_patient_is_out_of_reach(self):
@@ -416,13 +418,13 @@ class VisibilityTests(_AccountTakeoverBase):
         attempts = {
             "retrieve": lambda: self.client.get(url),
             "patch": lambda: self.client.patch(url, {"first_name": "X"}, format="json"),
-            "delete": lambda: self.client.delete(url),
             "access url": lambda: self.client.post(
                 reverse("patient-access-url", args=[self.their_patient.pk])
             ),
             "fhir read": lambda: self.fhir(
                 "get", reverse("fhir-patient-item", args=[self.their_patient.pk])
             ),
+            "delete": lambda: self.client.delete(url),
         }
         for route, attempt in attempts.items():
             with self.subTest(route=route):
