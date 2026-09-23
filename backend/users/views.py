@@ -1305,24 +1305,15 @@ class UserViewSet(viewsets.ModelViewSet):
         return qs
 
     def _get_organization_filter(self, current_user):
-        """Build a Q filter for matching organizations."""
-        user_orgs = list(current_user.organisations.values_list("id", flat=True))
-        has_main_org = current_user.main_organisation is not None
-        has_orgs = len(user_orgs) > 0
-
-        if not has_main_org and not has_orgs:
+        """Build a Q filter matching records whose organisations (main_organisation
+        or the organisations M2M) overlap with current_user's own set of
+        organisations (main_organisation and/or the organisations M2M)."""
+        user_org_ids = set(current_user.organisations.values_list("id", flat=True))
+        if current_user.main_organisation_id:
+            user_org_ids.add(current_user.main_organisation_id)
+        if not user_org_ids:
             return None
-
-        filters = []
-        if has_main_org:
-            filters.append(Q(main_organisation=current_user.main_organisation))
-        if has_orgs:
-            filters.append(Q(organisations__id__in=user_orgs))
-
-        combined = filters[0]
-        for f in filters[1:]:
-            combined |= f
-        return combined
+        return Q(organisations__id__in=user_org_ids) | Q(main_organisation__id__in=user_org_ids)
 
     def create(self, request, *args, **kwargs):
         """
