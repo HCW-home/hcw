@@ -1285,23 +1285,21 @@ class UserViewSet(viewsets.ModelViewSet):
             return qs.filter(created_by=current_user)
 
         elif visibility == "organization":
+            combined = Q(created_by=current_user)
+            combined |= Q(
+                visibility_grants__confirmed_at__isnull=False,
+                visibility_grants__organisation__isnull=True,
+                visibility_grants__requested_by=current_user,
+            )
             org_filter = self._get_organization_filter(current_user)
-            if org_filter is None:
-                return qs.filter(created_by=current_user)
-            grant_filter = Q(visibility_grants__confirmed_at__isnull=False)
-            user_orgs = list(current_user.organisations.values_list("id", flat=True))
-            if current_user.main_organisation_id:
-                grant_filter &= Q(
-                    visibility_grants__organisation=current_user.main_organisation
-                )
-            elif user_orgs:
-                grant_filter &= Q(visibility_grants__organisation__id__in=user_orgs)
-            else:
-                grant_filter = Q(pk__in=[])
-            # No .distinct() here: get_queryset() ORs this with the
-            # practitioners queryset, and Django refuses to combine a distinct
-            # query with a non-distinct one. Dedup happens in get_queryset().
-            return qs.filter(org_filter | Q(created_by=current_user) | grant_filter)
+            if org_filter is not None:
+                combined |= org_filter
+                if current_user.main_organisation_id:
+                    combined |= Q(
+                        visibility_grants__confirmed_at__isnull=False,
+                        visibility_grants__organisation=current_user.main_organisation,
+                    )
+            return qs.filter(combined)
         return qs
 
     def _get_organization_filter(self, current_user):
@@ -1392,20 +1390,16 @@ class UserViewSet(viewsets.ModelViewSet):
     def request_access(self, request):
         """Request visibility on a hidden patient by exact email/phone match.
 
-        When `patient_visibility_requires_confirmation` is enabled, creates an
-        unconfirmed PatientVisibilityGrant and sends the patient a confirmation
-        link (see messaging template "patient_access_confirmation"); the patient
-        must click through before anything becomes visible. When disabled
+        A practitioner who belongs to an organisation shares access with the
+        whole organisation; a practitioner who belongs to none gets a
+        personal grant instead, visible only to themself. Either way, when
+        `patient_visibility_requires_confirmation` is enabled, the grant
+        stays unconfirmed until the patient clicks the confirmation link
+        (see messaging template "patient_access_confirmation"). Disabled
         (default), the grant is confirmed immediately.
         """
         email = request.data.get("email")
         phone = request.data.get("mobile_phone_number")
-
-        if not request.user.main_organisation_id:
-            return Response(
-                {"detail": _("You must belong to an organisation to request access.")},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
 
         candidates = User.objects.filter(is_active=True, is_practitioner=False)
         match = None
@@ -1421,18 +1415,27 @@ class UserViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        requires_confirmation = config.patient_visibility_requires_confirmation
-        grant, created = PatientVisibilityGrant.objects.get_or_create(
-            patient=match,
-            organisation=request.user.main_organisation,
-            defaults={"requested_by": request.user},
-        )
+        organisation = request.user.main_organisation
+        if organisation is not None:
+            grant, _created = PatientVisibilityGrant.objects.get_or_create(
+                patient=match,
+                organisation=organisation,
+                defaults={"requested_by": request.user},
+            )
+        else:
+            grant, _created = PatientVisibilityGrant.objects.get_or_create(
+                patient=match,
+                organisation=None,
+                requested_by=request.user,
+            )
+
         if grant.confirmed_at is not None:
             return Response(
-                {"detail": _("This patient is already visible to your organisation.")},
+                {"detail": _("This patient is already visible to you.")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        requires_confirmation = config.patient_visibility_requires_confirmation
         if not requires_confirmation:
             grant.confirmed_at = timezone.now()
             grant.save(update_fields=["confirmed_at"])
@@ -2379,7 +2382,7 @@ class PatientVisibilityGrantConfirmView(APIView):
             return Response({"detail": _("Not found.")}, status=status.HTTP_404_NOT_FOUND)
 
         return Response({
-            "organisation_name": grant.organisation.name,
+            "organisation_name": grant.organisation.name if grant.organisation else None,
             "requested_by_name": grant.requested_by.name if grant.requested_by else None,
             "confirmed": grant.confirmed_at is not None,
         })

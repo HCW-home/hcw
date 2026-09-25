@@ -30,10 +30,14 @@
         <ion-card class="visibility-card">
           <ion-card-content>
             <ion-text class="section-subtitle" color="medium">
-              @if (requestedByName) {
+              @if (requestedByName && organisationName) {
                 {{ 'confirmVisibility.explanationWithName' | translate: { name: requestedByName, organisation: organisationName } }}
-              } @else {
+              } @else if (requestedByName) {
+                {{ 'confirmVisibility.explanationPersonal' | translate: { name: requestedByName } }}
+              } @else if (organisationName) {
                 {{ 'confirmVisibility.explanation' | translate: { organisation: organisationName } }}
+              } @else {
+                {{ 'confirmVisibility.explanationGeneric' | translate }}
               }
             </ion-text>
             <div class="visibility-actions">

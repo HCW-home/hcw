@@ -482,6 +482,8 @@
     "confirmedMessage": "The practitioner can now access your record.",
     "explanation": "A practitioner from {{ organisation }} would like to access your record. If you agree, confirm below.",
     "explanationWithName": "{{ name }} from {{ organisation }} would like to access your record. If you agree, confirm below.",
+    "explanationPersonal": "{{ name }} would like to access your record. If you agree, confirm below.",
+    "explanationGeneric": "A practitioner would like to access your record. If you agree, confirm below.",
     "failedLoad": "Failed to load the request",
     "confirmButton": "Confirm access",
     "skipToHome": "Skip and go to home",
