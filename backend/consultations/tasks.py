@@ -1,5 +1,7 @@
+import json
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 import boto3
 from asgiref.sync import async_to_sync
@@ -11,13 +13,17 @@ from constance import config
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
+from django.core.cache import cache
+from django.core.files.base import ContentFile
+from django.db import transaction
 from django.db.models import Count, Q
-from django.utils import timezone
+from django.utils import timezone, translation
+from django.utils.translation import gettext
 from messaging.models import Message
 from django_tenants.utils import get_tenant_model, tenant_context
 
 from .assignments import AssignmentManager
-from .utils import is_immediate_appointment
+from .utils import is_immediate_appointment, transcription_active_key
 from .models import (
     Appointment,
     AppointmentRecording,
@@ -292,6 +298,73 @@ def check_recording_ready(self, recording_id):
 
     logger.info(
         f"Recording message created for AppointmentRecording {recording_id}: message {message.id}"
+    )
+
+
+@app.task
+def post_transcript(appointment_id):
+    """
+    Post in the chat, as a text file, the live transcript lines not posted yet.
+
+    Every transcription session schedules this when it stops. Nothing is posted
+    while the call is still flagged as transcribed: another session is running
+    then, and it will schedule this again when it stops in turn.
+    """
+    from .models import Message as ConsultationMessage
+
+    if cache.get(transcription_active_key(appointment_id)):
+        return
+
+    appointment = (
+        Appointment.objects.select_related("consultation__created_by")
+        .filter(pk=appointment_id)
+        .first()
+    )
+    if appointment is None or appointment.consultation is None:
+        return
+
+    lines = json.loads(appointment.transcript or "[]")
+    posted = appointment.transcript_posted_lines
+    new_lines = lines[posted:]
+    if not new_lines:
+        return
+
+    consultation = appointment.consultation
+    # Posted like the recordings, on behalf of the creator of the follow-up: in
+    # their language and their time zone.
+    author = consultation.created_by
+    tz = ZoneInfo(author.timezone or settings.TIME_ZONE)
+    with translation.override(author.preferred_language or settings.LANGUAGE_CODE):
+        content = gettext("Transcript: appointment on %(date)s") % {
+            "date": appointment.scheduled_at.astimezone(tz).strftime("%Y-%m-%d %H:%M")
+        }
+    text = "".join(
+        f"[{datetime.fromisoformat(line['timestamp']).astimezone(tz):%H:%M:%S}] "
+        f"{line['speaker']}: {line['text']}\n"
+        for line in new_lines
+    )
+
+    with transaction.atomic():
+        # Claimed first, so that a concurrent run of this task loses here rather
+        # than posting the same lines twice
+        if not Appointment.objects.filter(
+            pk=appointment.pk, transcript_posted_lines=posted
+        ).update(transcript_posted_lines=len(lines)):
+            return
+        message = ConsultationMessage.objects.create(
+            consultation=consultation,
+            created_by=author,
+            event="transcript_available",
+            content=content,
+            attachment=ContentFile(
+                text.encode("utf-8"),
+                name=f"transcript_appointment_{appointment.pk}_{timezone.now():%Y%m%d_%H%M%S}.txt",
+            ),
+        )
+
+    logger.info(
+        f"Transcript posted for appointment {appointment_id}: "
+        f"{len(new_lines)} lines in message {message.id}"
     )
 
 

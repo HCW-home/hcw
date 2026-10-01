@@ -81,7 +81,8 @@ When your administrator has enabled them:
 - **Record** starts and stops the session recording. The file is posted in the
   follow-up chat shortly after you stop it.
 - **Captions** turns on live transcription. The transcript is posted in the chat
-  in the same way.
+  as a text file about a minute after the last participant turns captions off
+  or leaves the call.
 
 !!! warning
     Recording and transcription are regulated by your local rules. Inform every

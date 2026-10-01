@@ -249,6 +249,19 @@ msgid "JSON array of transcript lines with timestamps and speakers"
 msgstr ""
 "Tableau JSON des lignes de transcription avec horodatages et intervenants"
 
+#: consultations/models.py:271
+msgid "transcript lines posted"
+msgstr "lignes de transcription publiées"
+
+#: consultations/models.py:273
+msgid "Number of transcript lines already posted in the consultation chat"
+msgstr "Nombre de lignes de transcription déjà publiées dans la discussion de la consultation"
+
+#: consultations/tasks.py:338
+#, python-format
+msgid "Transcript: appointment on %(date)s"
+msgstr "Transcription : rendez-vous du %(date)s"
+
 #: consultations/models.py:271 consultations/models.py:294
 #: consultations/models.py:334
 msgid "appointment"

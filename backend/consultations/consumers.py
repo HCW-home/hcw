@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import uuid
 
 import aiohttp
 from asgiref.sync import sync_to_async
@@ -9,6 +10,14 @@ from constance import config as constance_config
 from core.channel_groups import consultation_group, user_group
 from core.consumers import TenantConsumerMixin
 from django.conf import settings
+from django.core.cache import cache
+from django.db import transaction
+
+from consultations.utils import (
+    TRANSCRIPT_POST_DELAY,
+    TRANSCRIPTION_ACTIVITY_TTL,
+    transcription_active_key,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +33,9 @@ class AppointmentTranscriptionConsumer(TenantConsumerMixin, AsyncWebsocketConsum
     # Give up only after whisper-live has been unreachable for a couple of minutes
     MAX_RECONNECT_ATTEMPTS = 8
     MAX_RECONNECT_DELAY = 30
+    # Claims are renewed well within TRANSCRIPTION_ACTIVITY_TTL, so that they only
+    # lapse once the session is gone
+    HEARTBEAT_INTERVAL = 5
 
     async def connect(self):
         self.user = self.scope.get("user")
@@ -42,8 +54,15 @@ class AppointmentTranscriptionConsumer(TenantConsumerMixin, AsyncWebsocketConsum
         self.broadcast_worker = None
         self.broadcast_queue = None
         self.save_task = None
+        self.heartbeat_task = None
         self.consultation = None
+        # Participant heard on this stream: the user streaming it for their own
+        # microphone, otherwise the participant whose track they capture
+        self.speaker_pk = None
         self.speaker_name = None
+        # Whether this session captions and records the speaker, see _renew_claims
+        self.is_writer = False
+        self.lease_token = uuid.uuid4().hex
         self.user_pks = set()
         self.speaker_label = None
         self.language = "en"
@@ -115,6 +134,18 @@ class AppointmentTranscriptionConsumer(TenantConsumerMixin, AsyncWebsocketConsum
         if self.whisper_task is not None:
             return
 
+        speaker = await self._resolve_speaker(speaker_label)
+        if speaker is None:
+            logger.warning(
+                f"Transcription refused: appointment={self.appointment_pk} "
+                f"speaker_label={speaker_label!r} is not an active participant"
+            )
+            await self._send_json({
+                "event": "transcription_error",
+                "message": "Unknown speaker",
+            })
+            return
+
         self.speaker_label = speaker_label
         self.language = language
         self.stopping = False
@@ -130,13 +161,17 @@ class AppointmentTranscriptionConsumer(TenantConsumerMixin, AsyncWebsocketConsum
         self.consultation = await self._get_consultation()
         # Resolved once: hitting the DB on every segment refinement would stall the
         # read loop long enough for whisper to drop us on a keepalive ping timeout.
-        self.speaker_name = await self._get_speaker_name()
+        self.speaker_pk, self.speaker_name = speaker
         self.user_pks = await self._get_user_pks()
+        # Their own microphone is the cleanest source of a speaker: it takes over
+        # from the participants capturing their track.
+        self.is_writer = await self._renew_claims(take_over=not speaker_label)
 
         self.broadcast_queue = asyncio.Queue()
         self.whisper_task = asyncio.create_task(self._transcription_loop())
         self.broadcast_worker = asyncio.create_task(self._broadcast_worker())
         self.save_task = asyncio.create_task(self._periodic_save())
+        self.heartbeat_task = asyncio.create_task(self._heartbeat())
 
         logger.info(
             f"Transcription started: appointment={self.appointment_pk} language={language}"
@@ -331,6 +366,15 @@ class AppointmentTranscriptionConsumer(TenantConsumerMixin, AsyncWebsocketConsum
         except asyncio.CancelledError:
             pass
 
+    async def _heartbeat(self):
+        """Renew the claims of the session for as long as it runs."""
+        try:
+            while True:
+                await asyncio.sleep(self.HEARTBEAT_INTERVAL)
+                self.is_writer = await self._renew_claims()
+        except asyncio.CancelledError:
+            pass
+
     async def _broadcast_transcription(self, text: str, segment_id: int, is_final: bool):
         """Send the transcript to all consultation participants via their user WS."""
         from django.utils import timezone
@@ -345,20 +389,23 @@ class AppointmentTranscriptionConsumer(TenantConsumerMixin, AsyncWebsocketConsum
         elif line is not None:
             line["text"] = text
             line["is_final"] = is_final
-        else:
+        elif self.is_writer:
             self.transcript_segments[segment_id] = {
                 "timestamp": timezone.now().isoformat(),
                 "speaker": self.speaker_name,
-                "speaker_id": self.user.pk,
+                "speaker_id": self.speaker_pk,
                 "text": text,
                 "is_final": is_final,
             }
+        else:
+            # Another session captions and records this speaker
+            return
 
         event = {
             "type": "transcription",
             "appointment_id": int(self.appointment_pk),
             "text": text,
-            "speaker_id": self.user.pk,
+            "speaker_id": self.speaker_pk,
             "segment_id": segment_id,
             "is_final": is_final,
         }
@@ -429,9 +476,23 @@ class AppointmentTranscriptionConsumer(TenantConsumerMixin, AsyncWebsocketConsum
                 pass
             self.save_task = None
 
+        if self.heartbeat_task:
+            self.heartbeat_task.cancel()
+            try:
+                await self.heartbeat_task
+            except asyncio.CancelledError:
+                pass
+            self.heartbeat_task = None
+
         # Save accumulated transcript to the database
         if self.transcript_segments:
             await self._save_transcript(flush_all=True)
+
+        # Both a stop message and the disconnect that follows end up here
+        if self.speaker_pk is not None:
+            await self._release_claims()
+            await self._schedule_transcript_post()
+            self.speaker_pk = None
 
         logger.info(f"Transcription stopped: appointment={self.appointment_pk}")
 
@@ -444,6 +505,76 @@ class AppointmentTranscriptionConsumer(TenantConsumerMixin, AsyncWebsocketConsum
     def _whisper_model(self):
         with self.tenant_scope():
             return constance_config.whisper_model
+
+    def _writer_key(self):
+        return f"transcription_writer:{self.appointment_pk}:{self.speaker_pk}"
+
+    @sync_to_async
+    def _renew_claims(self, take_over=False):
+        """
+        Flag the call as transcribed and claim its speaker; True if this session holds them.
+
+        Every participant with captions on also transcribes the tracks of the
+        others, so a speaker is often heard on several sessions at once. Only one
+        of them captions and records the speaker, otherwise every line would show
+        up and be stored once per listener. Claims expire unless renewed, so that a
+        session that died without releasing them gets replaced.
+        """
+        writer_key = self._writer_key()
+        try:
+            with self.tenant_scope():
+                cache.set(
+                    transcription_active_key(self.appointment_pk),
+                    True,
+                    TRANSCRIPTION_ACTIVITY_TTL,
+                )
+                if take_over:
+                    cache.set(writer_key, self.lease_token, TRANSCRIPTION_ACTIVITY_TTL)
+                    return True
+                if cache.add(writer_key, self.lease_token, TRANSCRIPTION_ACTIVITY_TTL):
+                    return True
+                if cache.get(writer_key) == self.lease_token:
+                    cache.touch(writer_key, TRANSCRIPTION_ACTIVITY_TTL)
+                    return True
+                return False
+        except Exception as e:
+            # Better a line twice than a line lost
+            logger.warning(
+                f"Transcription claims not renewed (appointment={self.appointment_pk}): "
+                f"{type(e).__name__}: {e}"
+            )
+            return True
+
+    @sync_to_async
+    def _release_claims(self):
+        """Hand the speaker over to another session now rather than on expiry."""
+        writer_key = self._writer_key()
+        try:
+            with self.tenant_scope():
+                if cache.get(writer_key) == self.lease_token:
+                    cache.delete(writer_key)
+        except Exception as e:
+            logger.warning(
+                f"Transcription claims not released (appointment={self.appointment_pk}): "
+                f"{type(e).__name__}: {e}"
+            )
+
+    @sync_to_async
+    def _schedule_transcript_post(self):
+        """Have the transcript posted in the chat once nobody transcribes the call."""
+        from consultations.tasks import post_transcript
+
+        try:
+            # Within the tenant: the task inherits the schema of the connection
+            with self.tenant_scope():
+                post_transcript.apply_async(
+                    args=[int(self.appointment_pk)], countdown=TRANSCRIPT_POST_DELAY
+                )
+        except Exception as e:
+            logger.error(
+                f"Failed to schedule the transcript post "
+                f"(appointment={self.appointment_pk}): {type(e).__name__}: {e}"
+            )
 
     def _settled_segment_ids(self, flush_all: bool):
         """
@@ -476,9 +607,13 @@ class AppointmentTranscriptionConsumer(TenantConsumerMixin, AsyncWebsocketConsum
         if not segment_ids:
             return
 
-        with self.tenant_scope():
+        with self.tenant_scope(), transaction.atomic():
+            # Locked: the other sessions of the call append to the same transcript,
+            # possibly from another process.
             try:
-                appointment = Appointment.objects.get(pk=self.appointment_pk)
+                appointment = Appointment.objects.select_for_update().get(
+                    pk=self.appointment_pk
+                )
             except Appointment.DoesNotExist:
                 return
 
@@ -496,8 +631,11 @@ class AppointmentTranscriptionConsumer(TenantConsumerMixin, AsyncWebsocketConsum
                 existing.append(line)
                 self.saved_segment_ids.add(segment_id)
 
-            appointment.transcript = json_module.dumps(existing, ensure_ascii=False)
-            appointment.save(update_fields=["transcript"])
+            # Not save(): every save of an appointment is broadcast to its
+            # participants and requeues its invitations.
+            Appointment.objects.filter(pk=appointment.pk).update(
+                transcript=json_module.dumps(existing, ensure_ascii=False)
+            )
             logger.info(f"Transcript saved for appointment {self.appointment_pk}: {len(existing)} lines")
 
     @sync_to_async
@@ -516,9 +654,44 @@ class AppointmentTranscriptionConsumer(TenantConsumerMixin, AsyncWebsocketConsum
                 return False
 
     @sync_to_async
-    def _get_speaker_name(self):
-        """Get the display name of the current user."""
-        return self.user.name or self.user.email or str(self.user.pk)
+    def _resolve_speaker(self, speaker_label):
+        """
+        (pk, display name) of the participant heard, None if they are not in the call.
+
+        Browsers also transcribe the tracks they receive, for the clients that do
+        not transcribe themselves: those lines belong to the participant heard,
+        named by their LiveKit identity in speaker_label, not to the user streaming.
+        """
+        from consultations.models import Participant
+
+        if not speaker_label:
+            user = self.user
+        else:
+            # Only the practitioner app captures the tracks of others: anyone else
+            # streaming under another participant's name would put words in their mouth
+            if not self.user.is_practitioner:
+                return None
+            # LiveKit identities read "<schema>:<user pk>", or a bare pk outside a tenant
+            schema, __, pk = str(speaker_label).rpartition(":")
+            if schema and self.schema_name and schema != self.schema_name:
+                return None
+            with self.tenant_scope():
+                try:
+                    participant = (
+                        Participant.objects.select_related("user")
+                        .filter(
+                            appointment_id=int(self.appointment_pk),
+                            user_id=int(pk),
+                            is_active=True,
+                        )
+                        .first()
+                    )
+                except (TypeError, ValueError):
+                    return None
+            if participant is None:
+                return None
+            user = participant.user
+        return user.pk, user.name or user.email or str(user.pk)
 
     @sync_to_async
     def _get_consultation(self):

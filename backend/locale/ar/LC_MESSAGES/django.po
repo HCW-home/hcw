@@ -247,6 +247,19 @@ msgstr "النص المكتوب"
 msgid "JSON array of transcript lines with timestamps and speakers"
 msgstr "مصفوفة JSON لأسطر النص المكتوب مع الطوابع الزمنية والمتحدثين"
 
+#: consultations/models.py:271
+msgid "transcript lines posted"
+msgstr "أسطر النص المكتوب المنشورة"
+
+#: consultations/models.py:273
+msgid "Number of transcript lines already posted in the consultation chat"
+msgstr "عدد أسطر النص المكتوب المنشورة بالفعل في محادثة الاستشارة"
+
+#: consultations/tasks.py:338
+#, python-format
+msgid "Transcript: appointment on %(date)s"
+msgstr "النص المكتوب: موعد %(date)s"
+
 #: consultations/models.py:271 consultations/models.py:294
 #: consultations/models.py:334
 msgid "appointment"
