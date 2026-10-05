@@ -358,7 +358,8 @@ def post_transcript(appointment_id):
             content=content,
             attachment=ContentFile(
                 text.encode("utf-8"),
-                name=f"transcript_appointment_{appointment.pk}_{timezone.now():%Y%m%d_%H%M%S}.txt",
+                # Unique by construction: S3 storage overwrites a file of the same name
+                name=f"transcript_appointment_{appointment.pk}_lines_{posted + 1}-{len(lines)}.txt",
             ),
         )
 

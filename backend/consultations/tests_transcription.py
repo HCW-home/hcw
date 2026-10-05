@@ -300,11 +300,23 @@ class PostTranscriptTests(_TranscriptionBase):
 
     def setUp(self):
         super().setUp()
+        # Local files in a scratch directory, whatever storage the environment
+        # configures: S3 would both reach out to the bucket and overwrite files
         media_root = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, media_root, ignore_errors=True)
-        media_override = override_settings(MEDIA_ROOT=media_root)
-        media_override.enable()
-        self.addCleanup(media_override.disable)
+        storage_override = override_settings(
+            MEDIA_ROOT=media_root,
+            STORAGES={
+                "default": {
+                    "BACKEND": "django.core.files.storage.FileSystemStorage"
+                },
+                "staticfiles": {
+                    "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
+                },
+            },
+        )
+        storage_override.enable()
+        self.addCleanup(storage_override.disable)
 
     def _add_lines(self, *lines):
         """Append (speaker, text) lines as the transcription sessions write them."""
@@ -341,7 +353,11 @@ class PostTranscriptTests(_TranscriptionBase):
 
         [message] = self._posts()
         self.assertEqual(message.created_by, self.doctor)
-        self.assertTrue(message.attachment.name.endswith(".txt"))
+        self.assertTrue(
+            message.attachment.name.endswith(
+                f"transcript_appointment_{self.appointment.pk}_lines_1-2.txt"
+            )
+        )
         content = self._content(message)
         self.assertIn(f"] {self.doctor.name}: Bonjour\n", content)
         self.assertIn(f"] {self.patient.name}: Bonjour docteur\n", content)
