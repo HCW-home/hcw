@@ -83,6 +83,7 @@ When your administrator has enabled them:
 - **Captions** turns on live transcription. The transcript is posted in the chat
   as a text file about a minute after the last participant turns captions off
   or leaves the call.
+  in the same way.
 
 !!! warning
     Recording and transcription are regulated by your local rules. Inform every

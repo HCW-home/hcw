@@ -301,6 +301,29 @@ def check_recording_ready(self, recording_id):
     )
 
 
+def _temporary_consultation_expiry(consultation, join_limit, default_duration):
+    """Return the moment a temporary consultation stops being reachable.
+
+    That is the end of its latest non-cancelled appointment plus the rejoin
+    window (`call_limit_join_minutes`). Effective end is
+    `appointment.end_expected_at` when set, otherwise
+    `scheduled_at + default_appointment_duration_in_minutes`. A temporary
+    consultation without any appointment falls back to its creation date.
+    """
+    appt = (
+        consultation.appointments.exclude(status=AppointmentStatus.cancelled)
+        .order_by("-scheduled_at")
+        .first()
+    )
+    if not appt:
+        return consultation.created_at
+
+    end = appt.end_expected_at or (
+        appt.scheduled_at + timedelta(minutes=default_duration)
+    )
+    return end + timedelta(minutes=join_limit)
+
+
 @app.task
 def post_transcript(appointment_id):
     """

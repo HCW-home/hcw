@@ -9,6 +9,7 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models.fields import BLANK_CHOICE_DASH
+from django.db.models import Q
 from django.db.models.functions import Lower
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -503,6 +504,64 @@ class HealthMetric(models.Model):
 
     acknowledged_at = models.DateTimeField(blank=True, null=True)
 
+class PatientVisibilityGrant(models.Model):
+    """Extends a patient's visibility to another organisation, or to a single
+    organisation-less practitioner, once confirmed.
+
+    Two kinds of grant, distinguished by `organisation`:
+    - Organisation-wide: `organisation` is set. Created when a practitioner
+      who belongs to an organisation requests access; every practitioner of
+      that organisation gains visibility once confirmed.
+    - Personal: `organisation` is left empty. Created when a practitioner who
+      belongs to no organisation requests access; only `requested_by`
+      themself gains visibility once confirmed, no one else.
+
+    Created with `confirmed_at=None` when a practitioner requests access to a
+    hidden patient by exact email/phone match. `_filter_patients` in
+    users/views.py only honours grants where `confirmed_at` is set, so the
+    patient must click the confirmation link sent to them before the grant
+    takes effect (unless `patient_visibility_requires_confirmation` is
+    disabled, in which case it is confirmed immediately). Each grant is
+    independent: creating one never revokes another.
+    """
+
+    patient = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="visibility_grants",
+    )
+    organisation = models.ForeignKey(
+        "users.Organisation",
+        on_delete=models.CASCADE,
+        related_name="patient_grants",
+        null=True,
+        blank=True,
+    )
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="requested_patient_visibility",
+    )
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["patient", "organisation"],
+                condition=Q(organisation__isnull=False),
+                name="patient_visibility_grant_org_unique",
+            ),
+            models.UniqueConstraint(
+                fields=["patient", "requested_by"],
+                condition=Q(organisation__isnull=True),
+                name="patient_visibility_grant_personal_unique",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.patient} -> {self.organisation or self.requested_by}"
 
 class DAVAppPassword(models.Model):
     """

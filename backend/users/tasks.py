@@ -10,6 +10,7 @@ from django_tenants.utils import get_tenant_model, tenant_context
 
 from constance import config
 from django.db.models import F, Q
+from messaging.models import Message
 from django.utils import timezone
 from core.celery import app
 
@@ -170,3 +171,70 @@ def auto_delete_temporary_users():
             )
             count, _ = users.delete()
             logger.info(f"Auto-deleted {count} temporary user(s) with no future appointments, no future reminders and no consultations")
+
+@app.task
+def send_patient_access_confirmation(grant_id):
+    from .models import PatientVisibilityGrant
+    try:
+        grant = PatientVisibilityGrant.objects.select_related(
+            "patient", "organisation", "requested_by"
+        ).get(pk=grant_id)
+    except PatientVisibilityGrant.DoesNotExist:
+        logger.warning(f"PatientVisibilityGrant pk={grant_id} not found")
+        return
+    if grant.confirmed_at is not None:
+        return
+    Message.objects.create(
+        communication_method=grant.patient.communication_method,
+        recipient_phone=grant.patient.mobile_phone_number,
+        recipient_email=grant.patient.email,
+        sent_to=grant.patient,
+        sent_by=grant.requested_by,
+        template_system_name="patient_access_confirmation",
+        content_type=ContentType.objects.get_for_model(grant),
+        object_id=grant.pk,
+    )
+
+@app.task
+def send_patient_access_granted_notification(grant_id):
+    from .models import PatientVisibilityGrant
+    try:
+        grant = PatientVisibilityGrant.objects.select_related(
+            "patient", "organisation", "requested_by"
+        ).get(pk=grant_id)
+    except PatientVisibilityGrant.DoesNotExist:
+        logger.warning(f"PatientVisibilityGrant pk={grant_id} not found")
+        return
+    Message.objects.create(
+        communication_method=grant.patient.communication_method,
+        recipient_phone=grant.patient.mobile_phone_number,
+        recipient_email=grant.patient.email,
+        sent_to=grant.patient,
+        sent_by=grant.requested_by,
+        template_system_name="patient_access_granted_notification",
+        content_type=ContentType.objects.get_for_model(grant),
+        object_id=grant.pk,
+    )
+
+@app.task
+def send_patient_access_confirmed_notification(grant_id):
+    from .models import PatientVisibilityGrant
+    try:
+        grant = PatientVisibilityGrant.objects.select_related(
+            "patient", "organisation", "requested_by"
+        ).get(pk=grant_id)
+    except PatientVisibilityGrant.DoesNotExist:
+        logger.warning(f"PatientVisibilityGrant pk={grant_id} not found")
+        return
+    if grant.requested_by is None:
+        return
+    Message.objects.create(
+        communication_method=grant.requested_by.communication_method,
+        recipient_phone=grant.requested_by.mobile_phone_number,
+        recipient_email=grant.requested_by.email,
+        sent_to=grant.requested_by,
+        sent_by=grant.patient,
+        template_system_name="patient_access_confirmed_notification",
+        content_type=ContentType.objects.get_for_model(grant),
+        object_id=grant.pk,
+    )

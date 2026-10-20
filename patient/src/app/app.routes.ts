@@ -122,4 +122,12 @@ export const routes: Routes = [
     path: 'practitioners/:pk/public',
     loadComponent: () => import('./pages/map/map.page').then(m => m.MapPage),
   },
+  {
+    path: 'confirm-visibility',
+    loadComponent: () => import('./pages/confirm-visibility/confirm-visibility.page').then(m => m.ConfirmVisibilityPage)
+  },
+  {
+    path: 'confirm-visibility/:id',
+    loadComponent: () => import('./pages/confirm-visibility/confirm-visibility.page').then(m => m.ConfirmVisibilityPage)
+  },
 ];
