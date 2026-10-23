@@ -184,3 +184,18 @@ def can_access_consultation(user, consultation):
         .filter(consultation_access_q(user))
         .exists()
     )
+
+
+# Live transcription sessions flag their call as transcribed in the cache while
+# they run, renewing the flag well before it expires. The transcript is posted in
+# the chat a while after a session stops, and only once the flag is gone: until
+# then another session is still transcribing the call and will post it when it
+# stops in turn, and a short pause (captions toggled, microphones muted) does not
+# split the transcript into several messages.
+TRANSCRIPTION_ACTIVITY_TTL = 15
+TRANSCRIPT_POST_DELAY = 60
+
+
+def transcription_active_key(appointment_pk):
+    """Cache key flagging an appointment whose call is being transcribed."""
+    return f"transcription_active:{appointment_pk}"

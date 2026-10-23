@@ -267,6 +267,11 @@ class Appointment(models.Model):
         blank=True,
         help_text=_("JSON array of transcript lines with timestamps and speakers"),
     )
+    transcript_posted_lines = models.PositiveIntegerField(
+        _("transcript lines posted"),
+        default=0,
+        help_text=_("Number of transcript lines already posted in the consultation chat"),
+    )
 
     # Hidden from native API; only exposed via FHIR Appointment.identifier.
     external_id = models.CharField(

@@ -111,6 +111,8 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
   participants = new Map<string, ParticipantInfo>();
   localVideoTrack: AttachableTrack | null = null;
   localScreenShareTrack: AttachableTrack | null = null;
+  /** Microphone track published in the call, also fed to the local captions. */
+  private localAudioTrack: AttachableTrack | null = null;
   isCameraEnabled = false;
   isMicrophoneEnabled = false;
   isScreenShareEnabled = false;
@@ -292,18 +294,15 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       .subscribe(enabled => {
         this.isMicrophoneEnabled = enabled;
         this.cdr.markForCheck();
+        // Mic muted or unmuted while CC is on.
+        this.syncLocalTranscription().catch(() => {});
+      });
 
-        if (!this.showCaptions() || !this.appointmentId) return;
-
-        if (enabled) {
-          // Mic was unmuted while CC is on — start local transcription.
-          this.transcriptionService
-            .start(this.appointmentId, this.t.currentLanguage())
-            .catch(() => {});
-        } else {
-          // Mic was muted while CC is on — stop local transcription.
-          this.transcriptionService.stopLocal();
-        }
+    this.videoCallService.localAudioTrack$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(track => {
+        this.localAudioTrack = track;
+        this.syncLocalTranscription().catch(() => {});
       });
 
     this.videoCallService.isScreenShareEnabled$
@@ -347,17 +346,17 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
         if (event.appointment_id !== this.appointmentId) return;
         if (!this.showCaptions()) return;
 
-        // A single utterance can reach us twice: once from the speaker's own
-        // microphone session, and once from our own capture of their LiveKit track
-        // (needed for clients that do not transcribe themselves, like the patient
-        // app). speaker_label carries the identity of the audio source when the
-        // event comes from a remote capture.
+        // A speaker can be heard from their own microphone session and from the
+        // captures of their LiveKit track by other participants (needed for
+        // clients that do not transcribe themselves, like the patient app). The
+        // backend captions each speaker from a single source, but two may overlap
+        // while it hands a speaker over to their own microphone. speaker_label is
+        // only set on events from a remote capture; speaker_id always names the
+        // participant heard.
         const fromRemoteCapture = !!event.speaker_label;
-        const speakerId = fromRemoteCapture
-          ? Number(event.speaker_label)
-          : event.speaker_id;
+        const speakerId = event.speaker_id;
 
-        if (speakerId === null || Number.isNaN(speakerId)) return;
+        if (speakerId === null || speakerId === undefined) return;
 
         const now = Date.now();
         if (fromRemoteCapture) {
@@ -374,8 +373,11 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
         if (isMe) {
           speakerLabel = this.t.instant('videoConsultation.you');
         } else {
-          // Resolve the participant's display name from the current participants map.
-          const participant = this.participants.get(String(speakerId));
+          // Resolve the participant's display name from the current participants
+          // map, keyed by LiveKit identity rather than by user pk.
+          const participant = Array.from(this.participants.values()).find(
+            (p: ParticipantInfo) => this.userIdFromIdentity(p.identity) === speakerId
+          );
           const rawName = participant?.name;
           speakerLabel = rawName
             ? rawName.replace(/\s*\([^)]*@[^)]*\)\s*$/, '').trim() || rawName
@@ -628,6 +630,8 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       this.activeMicId = deviceId;
       this.showMicMenu = false;
       this.cdr.markForCheck();
+      // The call captures another device now: move the captions onto it.
+      this.syncLocalTranscription().catch(() => {});
     } catch (error) {
       this.toasterService.show('error', this.t.instant('videoConsultation.microphoneError'), this.t.instant('videoConsultation.failedToggleMicrophone'));
     }
@@ -724,7 +728,7 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
         this.isCaptionsLoading = true;
         this.cdr.markForCheck();
         try {
-          await this.transcriptionService.start(this.appointmentId, this.t.currentLanguage());
+          await this.syncLocalTranscription();
         } catch (error) {
           this.toasterService.show('error', this.t.instant('videoConsultation.captionsError'), this.t.instant('videoConsultation.failedStartCaptions'));
         } finally {
@@ -747,6 +751,20 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
     }, 0);
   }
 
+  /**
+   * Transcribe the microphone track published in the call while CC is on and the
+   * mic unmuted, so that the captions always follow the device selected there.
+   */
+  private async syncLocalTranscription(): Promise<void> {
+    if (!this.showCaptions() || !this.appointmentId) return;
+    const track = this.isMicrophoneEnabled ? this.localAudioTrack?.mediaStreamTrack : undefined;
+    if (track) {
+      await this.transcriptionService.start(this.appointmentId, this.t.currentLanguage(), track);
+    } else {
+      this.transcriptionService.stopLocal();
+    }
+  }
+
   private syncRemoteTranscriptions(participants: Map<string, ParticipantInfo>): void {
     if (!this.appointmentId) return;
     const language = this.t.currentLanguage();
@@ -762,8 +780,8 @@ export class VideoConsultationComponent implements OnInit, OnDestroy, AfterViewI
       const track = participant.audioTrack?.mediaStreamTrack ?? null;
       if (!track) continue;
 
-      // Use the LiveKit identity (= str(user.pk)) as speaker_label so the backend
-      // echoes back a stable, numeric-string key we can compare against currentUserId.
+      // The LiveKit identity names the participant heard: the backend resolves it
+      // to their user pk, sent back as speaker_id and stored with their lines.
       // The display name is resolved on the receiving side from the participants map.
       this.activeRemoteTranscriptions.add(identity);
       this.transcriptionService
