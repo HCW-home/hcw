@@ -1107,6 +1107,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../relatives/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Relatives and Caregivers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../sso/" class="md-nav__link">
         
   
@@ -2074,6 +2102,12 @@ ever looks at <code>scheduled</code> appointments, a manual status is never over
 <td><code>FORCE_TEMPORARY_PATIENTS</code></td>
 <td>FALSE</td>
 <td>When enabled, every newly created patient is forced to be a temporary user (no permanent patient accounts). The <code>temporary</code> toggle in the patient creation modal is locked on. Existing permanent patients are not converted and can still be edited without changing their status. The "Patients" menu entry is hidden from the practitioner sidebar, and on the patient app the self-registration page and password login are disabled — only magic-link access remains. Sending <code>temporary=false</code> to the API returns HTTP 400.</td>
+</tr>
+<tr>
+<td>Let patients manage their relatives on the patient app</td>
+<td><code>ENABLE_PATIENT_RELATIVES</code></td>
+<td>FALSE</td>
+<td>When enabled, patients can add relatives without an account of their own (children...), book appointments for them, and invite other relatives by email or SMS to share their follow-up. Caregivers read the follow-ups the patient reads and are put on the roster of the calls of a relative without contact details. Has no effect while <code>FORCE_TEMPORARY_PATIENTS</code> is enabled. See <a href="../relatives/">Relatives and Caregivers</a>.</td>
 </tr>
 </tbody>
 </table>
