@@ -27,7 +27,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
@@ -35,7 +35,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -1107,34 +1107,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../relatives/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Relatives and Caregivers
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../sso/" class="md-nav__link">
         
   
@@ -1366,6 +1338,17 @@
     <span class="md-ellipsis">
       
         Uploads
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#geocoding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Geocoding
       
     </span>
   </a>
@@ -1648,6 +1631,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/encryption-at-rest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Encryption at Rest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1769,6 +1780,17 @@
     <span class="md-ellipsis">
       
         Uploads
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#geocoding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Geocoding
       
     </span>
   </a>
@@ -2030,6 +2052,31 @@ ever looks at <code>scheduled</code> appointments, a manual status is never over
 </tr>
 </tbody>
 </table>
+<h2 id="geocoding">Geocoding</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Code</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Nominatim instance turning addresses into map coordinates</td>
+<td><code>NOMINATIM_URL</code></td>
+<td>Value of the <code>NOMINATIM_URL</code> environment variable</td>
+<td>Practitioner and organisation addresses are geocoded so patients can find them on the map. Either the root URL of a <a href="https://nominatim.org/">Nominatim</a> instance or its <code>/search</code> endpoint. Leave empty to fall back to the environment variable, which itself defaults to the public OpenStreetMap instance.</td>
+</tr>
+</tbody>
+</table>
+<p>The public instance is capped at one request per second by its usage policy, so
+an installation geocoding many addresses is better served by its own instance.
+How fast the geocoding may query it is not set here but in the
+<code>NOMINATIM_RATE_LIMIT</code> environment variable, since the workers doing the
+geocoding are shared by every tenant — see
+<a href="../../deployment/environment-variables/#geocoding">Environment Variables</a>.</p>
 <h2 id="video-features">Video Features</h2>
 <table>
 <thead>
@@ -2103,12 +2150,6 @@ ever looks at <code>scheduled</code> appointments, a manual status is never over
 <td>FALSE</td>
 <td>When enabled, every newly created patient is forced to be a temporary user (no permanent patient accounts). The <code>temporary</code> toggle in the patient creation modal is locked on. Existing permanent patients are not converted and can still be edited without changing their status. The "Patients" menu entry is hidden from the practitioner sidebar, and on the patient app the self-registration page and password login are disabled — only magic-link access remains. Sending <code>temporary=false</code> to the API returns HTTP 400.</td>
 </tr>
-<tr>
-<td>Let patients manage their relatives on the patient app</td>
-<td><code>ENABLE_PATIENT_RELATIVES</code></td>
-<td>FALSE</td>
-<td>When enabled, patients can add relatives without an account of their own (children...), book appointments for them, and invite other relatives by email or SMS to share their follow-up. Caregivers read the follow-ups the patient reads and are put on the roster of the calls of a relative without contact details. Has no effect while <code>FORCE_TEMPORARY_PATIENTS</code> is enabled. See <a href="../relatives/">Relatives and Caregivers</a>.</td>
-</tr>
 </tbody>
 </table>
 
@@ -2163,7 +2204,7 @@ ever looks at <code>scheduled</code> appointments, a manual status is never over
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
