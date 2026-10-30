@@ -92,10 +92,10 @@ from .permissions import CONTACT_FIELDS, CanManageUser, check_contact_changes
 from .phone import phone_lookup_variants
 from .identifier import EMAIL, resolve_identifier
 from .verification import (
-    EMAIL_VERIFICATION_CODE_TTL,
     MAX_VERIFICATION_ATTEMPTS,
+    VERIFICATION_CODE_TTL,
+    code_login_token,
     codes_match,
-    generate_verification_code,
 )
 from .serializers import (
     HealthMetricSerializer,
@@ -1930,20 +1930,26 @@ def send_verification_code(user, channel=None):
     request came from — telling them to "finish creating your account" would be
     plainly wrong. Verification is what marks an account claimed, so this reads
     the same pair it sets.
+
+    Asking again shortly after sends the same code, or nothing at all within
+    the resend delay (see ``User.issue_verification_code``).
     """
     claimed = user.is_active and not user.temporary
-    user.issue_verification_code()
-    with translation.override(user.preferred_language):
-        Message.objects.create(
-            sent_to=user,
-            template_system_name=(
-                SIGN_IN_TEMPLATE if claimed else SIGN_UP_TEMPLATE
-            ),
-            content_type=ContentType.objects.get_for_model(user),
-            object_id=user.pk,
-            in_notification=False,
-            communication_method=channel,
-        )
+    with transaction.atomic():
+        user = User.objects.select_for_update().get(pk=user.pk)
+        if not user.issue_verification_code():
+            return
+        with translation.override(user.preferred_language):
+            Message.objects.create(
+                sent_to=user,
+                template_system_name=(
+                    SIGN_IN_TEMPLATE if claimed else SIGN_UP_TEMPLATE
+                ),
+                content_type=ContentType.objects.get_for_model(user),
+                object_id=user.pk,
+                in_notification=False,
+                communication_method=channel,
+            )
 
 
 class AccountVerifyView(APIView):
@@ -1999,9 +2005,9 @@ class AccountVerifyView(APIView):
             user = User.objects.select_for_update().get(pk=user.pk)
 
             expired = (
-                not user.verification_code_created_at
-                or timezone.now() - user.verification_code_created_at
-                > EMAIL_VERIFICATION_CODE_TTL
+                not user.verification_code_issued_at
+                or timezone.now() - user.verification_code_issued_at
+                > VERIFICATION_CODE_TTL
             )
             if (
                 user.verification_code is None
@@ -2360,38 +2366,27 @@ class SendVerificationCodeView(APIView):
                 status=status.HTTP_200_OK,
             )
 
-        # Generate a verification code (6 digits)
-        user_instance.verification_code = generate_verification_code()
-        user_instance.verification_code_created_at = timezone.now()
-
-        user_instance.one_time_auth_token = str(uuid.uuid4())
-        user_instance.verification_attempts = 0
-        user_instance.save(
-            update_fields=[
-                "verification_code",
-                "verification_code_created_at",
-                "verification_attempts",
-                "one_time_auth_token",
-            ]
-        )
-
-        # Render HTML template
-        with translation.override(user_instance.preferred_language):
-            Message.objects.create(
-                sent_to=user_instance,
-                template_system_name="your_authentication_code",
-                content_type=ContentType.objects.get_for_model(user_instance),
-                object_id=user_instance.pk,
-                communication_method=channel_for(identifier),
-            )
+        # The magic link already delivered by message is left untouched: the
+        # caller gets a code login token of its own, so asking for a code
+        # breaks neither the links nor the tabs already out.
+        with transaction.atomic():
+            user_instance = User.objects.select_for_update().get(pk=user_instance.pk)
+            if user_instance.issue_verification_code(keep_auth_token=True):
+                with translation.override(user_instance.preferred_language):
+                    Message.objects.create(
+                        sent_to=user_instance,
+                        template_system_name="your_authentication_code",
+                        content_type=ContentType.objects.get_for_model(user_instance),
+                        object_id=user_instance.pk,
+                        communication_method=channel_for(identifier),
+                    )
 
         payload = {"detail": "Verification code sent successfully"}
-        # Handing the token back to an anonymous caller is only safe when a code
-        # is still required afterwards. For an account that signs in on the
-        # token alone, returning it here would be the whole credential: this
-        # response plus one more request would take the account over.
+        # Accounts that sign in on their magic link alone (invited participants,
+        # manual contacts) are not offered this way in: they get no token, so
+        # the login form cannot exchange their code for a session.
         if not user_instance.authenticates_without_code:
-            payload["auth_token"] = user_instance.one_time_auth_token
+            payload["auth_token"] = code_login_token(user_instance)
 
         return Response(payload, status=status.HTTP_200_OK)
 

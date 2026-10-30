@@ -90,10 +90,13 @@
             </ion-text>
             <button type="button"
               (click)="resendCode()"
-              [class.disabled]="isResending"
+              [disabled]="isResending || resendCountdown.running"
+              [class.disabled]="isResending || resendCountdown.running"
               class="link-text">
               @if (isResending) {
                 {{ 'verifyAccount.sendingCode' | translate }}
+              } @else if (resendCountdown.running) {
+                {{ 'verifyAccount.resendCodeIn' | translate: { seconds: resendCountdown.remaining } }}
               } @else {
                 {{ 'verifyAccount.resendCode' | translate }}
               }

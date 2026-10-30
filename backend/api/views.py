@@ -2,8 +2,9 @@ from datetime import timedelta
 
 from constance import config
 from consultations.models import Participant
-from django.conf import settings as django_settings
 from django.contrib.contenttypes.models import ContentType
+from django.core import signing
+from django.db import transaction
 from django.shortcuts import render
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema
@@ -15,10 +16,12 @@ from rest_framework.views import APIView
 from core.authentication import TenantRefreshToken
 from core.throttling import AnonymousTokenRateThrottle
 from users.models import User
-from users.verification import MAX_VERIFICATION_ATTEMPTS, generate_verification_code
-
-TOKEN_GRACE_PERIOD = timedelta(
-    minutes=getattr(django_settings, "TOKEN_GRACE_PERIOD_MINUTES", 5)
+from users.verification import (
+    MAX_VERIFICATION_ATTEMPTS,
+    TOKEN_GRACE_PERIOD,
+    VERIFICATION_CODE_TTL,
+    codes_match,
+    read_code_login_token,
 )
 
 
@@ -67,8 +70,12 @@ class IdentityView(APIView):
 class AnonymousTokenAuthView(APIView):
     """
     Authenticate using auth_token and return JWT token.
-    Within 5 minutes of token creation, no verification code is needed.
-    After 5 minutes, a verification code is sent by email and must be provided.
+
+    ``auth_token`` is either the magic link of an invitation or notification
+    (``one_time_auth_token``) or the code login token returned by
+    SendVerificationCodeView. A magic link signs its holder in on its own for a
+    few minutes after it is minted; past that, and always for a code login
+    token, a verification code is sent and must be provided.
     """
 
     permission_classes = [AllowAny]
@@ -76,14 +83,14 @@ class AnonymousTokenAuthView(APIView):
 
     @extend_schema(
         summary="Anonymous Token Authentication",
-        description="Authenticate using auth_token and return JWT token. Within 5 minutes of token creation, direct access is granted. After that, a verification code is required.",
+        description="Authenticate using auth_token and return JWT token. Within 5 minutes of a magic link being minted, direct access is granted. After that, and always for the token returned by send-verification-code, a verification code is required.",
         request={
             "application/json": {
                 "type": "object",
                 "properties": {
                     "auth_token": {
                         "type": "string",
-                        "description": "Authentication token from participant",
+                        "description": "Magic link token of the participant, or the token returned by send-verification-code",
                         "example": "550e8400-e29b-41d4-a716-446655440000",
                     },
                     "verification_code": {
@@ -147,6 +154,13 @@ class AnonymousTokenAuthView(APIView):
                                 "summary": "Invalid verification code",
                                 "value": {"error": "Invalid verification_code"},
                             },
+                            "expired_code": {
+                                "summary": "Expired verification code",
+                                "value": {
+                                    "error": "Verification code expired. Please request a new code.",
+                                    "code": "verification_code_expired",
+                                },
+                            },
                         }
                     }
                 },
@@ -173,16 +187,35 @@ class AnonymousTokenAuthView(APIView):
             )
 
         try:
-            user = User.objects.get(one_time_auth_token=auth_token)
+            code_login_user = read_code_login_token(auth_token)
+        except signing.SignatureExpired:
+            return self.code_expired()
+        except signing.BadSignature:
+            code_login_user = None
+        is_magic_link = code_login_user is None
+
+        with transaction.atomic():
+            # Locked: concurrent requests would otherwise each mint a code, or
+            # all read the same attempt counter and get far more than three
+            # tries.
+            users = User.objects.select_for_update()
+            try:
+                if is_magic_link:
+                    user = users.get(one_time_auth_token=auth_token)
+                else:
+                    user = users.get(pk=code_login_user)
+            except User.DoesNotExist:
+                return Response(
+                    {"error": "Invalid auth_token"},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
 
             now = timezone.now()
 
             # Narrower than the "no email" test used before: an account
             # reachable by SMS now goes through the code flow, which is what
             # makes phone-only sign-up as safe as the email one.
-            is_manual_access = user.authenticates_without_code
-
-            if is_manual_access:
+            if is_magic_link and user.authenticates_without_code:
                 # For temporary users without contact info, use longer expiry period
                 token_expiry = timedelta(hours=config.temporary_participant_token_expiry_hours)
                 token_valid = (
@@ -199,105 +232,114 @@ class AnonymousTokenAuthView(APIView):
                 # Token is valid, authenticate directly
                 user.verification_code_created_at = now
                 user.save(update_fields=["verification_code_created_at"])
+            elif is_magic_link and self.within_grace_period(user, now):
+                user.verification_code_created_at = now
+                user.save(update_fields=["verification_code_created_at"])
             else:
-                # For regular users, use grace period + verification code flow.
-                #
-                # A pending code closes the window. The grace period exists so
-                # that a magic link just delivered by message works on the
-                # first tap; SendVerificationCodeView writes the same timestamp
-                # but hands the token straight back to its caller, so without
-                # this guard that response plus one request would authenticate
-                # without ever using the code it just sent.
-                token_within_grace = (
-                    user.verification_code is None
-                    and user.verification_code_created_at
-                    and (now - user.verification_code_created_at) < TOKEN_GRACE_PERIOD
-                )
-
-                if token_within_grace:
-                    # Within grace period: direct authentication
-                    user.verification_code_created_at = now
-                    user.save(update_fields=["verification_code_created_at"])
-                else:
-                    # Grace period expired: verification code required
-                    if not verification_code:
-                        user.verification_code = generate_verification_code()
-                        user.verification_attempts = 0
-                        user.save(
-                            update_fields=["verification_code", "verification_attempts"]
-                        )
-
-                        Message.objects.create(
-                            sent_to=user,
-                            template_system_name="your_authentication_code",
-                            content_type=ContentType.objects.get_for_model(user),
-                            object_id=user.pk,
-                        )
-
-                        return Response(
-                            {
-                                "requires_verification": True,
-                                "message": "Verification code sent. Please provide verification_code in next request.",
-                            },
-                            status=status.HTTP_202_ACCEPTED,
-                        )
-
-                    if user.verification_attempts >= MAX_VERIFICATION_ATTEMPTS:
-                        user.verification_code = None
-
-                        user.received_messages.filter(
-                            template_system_name='your_authentication_code').delete()
-
-                        user.verification_attempts = 0
-                        user.save(
-                            update_fields=["verification_code", "verification_attempts"]
-                        )
-                        return Response(
-                            {
-                                "error": "Too many verification attempts. Please request a new code."
-                            },
-                            status=status.HTTP_429_TOO_MANY_REQUESTS,
-                        )
-
-                    if str(user.verification_code).zfill(6) != str(verification_code).zfill(
-                        6
-                    ):
-                        user.verification_attempts += 1
-                        user.save(update_fields=["verification_attempts"])
-                        return Response(
-                            {"error": "Invalid verification_code"},
-                            status=status.HTTP_401_UNAUTHORIZED,
-                        )
-
-                    # Successful verification: reset and start new grace period
-                    user.verification_code = None
-
-                    user.received_messages.filter(
-                        template_system_name='your_authentication_code').delete()
-                    
-                    user.verification_attempts = 0
-                    user.verification_code_created_at = now
-                    user.save(
-                        update_fields=[
-                            "verification_code",
-                            "verification_attempts",
-                            "verification_code_created_at",
-                        ]
-                    )
+                rejection = self.check_code(user, verification_code, now, is_magic_link)
+                if rejection is not None:
+                    return rejection
 
             refresh = TenantRefreshToken.for_user(user)
 
+        return Response(
+            {
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+                "user_id": user.id,
+                "tenant_id": refresh['tenant_id'],
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    @staticmethod
+    def within_grace_period(user, now):
+        """Whether the magic link alone signs its holder in right now.
+
+        The window opens when the link is minted, so a link just delivered by
+        message works on the first tap, and again once it has been confirmed
+        with a code. Any code issued since closes it: a pending one, and just
+        as much one burnt by wrong guesses. Otherwise wrong guesses would be a
+        way to get rid of the code and fall back on the link alone.
+        """
+        anchor = user.verification_code_created_at
+        if user.verification_code is not None or not anchor:
+            return False
+        issued_at = user.verification_code_issued_at
+        if issued_at is not None and issued_at >= anchor:
+            return False
+        return now - anchor < TOKEN_GRACE_PERIOD
+
+    def check_code(self, user, verification_code, now, is_magic_link):
+        """Send the code or check it; return the answer unless it signs in."""
+        if not verification_code:
+            # The same code goes out again while it is fresh, and nothing at
+            # all within the resend delay: a reloaded page or a second tab must
+            # not invalidate the code the person is about to type.
+            if user.issue_verification_code(keep_auth_token=True):
+                Message.objects.create(
+                    sent_to=user,
+                    template_system_name="your_authentication_code",
+                    content_type=ContentType.objects.get_for_model(user),
+                    object_id=user.pk,
+                )
             return Response(
                 {
-                    "access": str(refresh.access_token),
-                    "refresh": str(refresh),
-                    "user_id": user.id,
-                    "tenant_id": refresh['tenant_id'],
+                    "requires_verification": True,
+                    "message": "Verification code sent. Please provide verification_code in next request.",
                 },
-                status=status.HTTP_200_OK,
+                status=status.HTTP_202_ACCEPTED,
             )
 
-        except User.DoesNotExist:
+        if user.verification_attempts >= MAX_VERIFICATION_ATTEMPTS:
+            user.verification_code = None
+            user.received_messages.filter(
+                template_system_name="your_authentication_code"
+            ).delete()
+            user.verification_attempts = 0
+            user.save(update_fields=["verification_code", "verification_attempts"])
             return Response(
-                {"error": "Invalid auth_token"}, status=status.HTTP_401_UNAUTHORIZED
+                {"error": "Too many verification attempts. Please request a new code."},
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
             )
+
+        if (
+            user.verification_code is None
+            or not user.verification_code_issued_at
+            or now - user.verification_code_issued_at > VERIFICATION_CODE_TTL
+        ):
+            return self.code_expired()
+
+        if not codes_match(user.verification_code, verification_code):
+            user.verification_attempts += 1
+            user.save(update_fields=["verification_attempts"])
+            return Response(
+                {"error": "Invalid verification_code"},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        user.verification_code = None
+        user.received_messages.filter(
+            template_system_name="your_authentication_code"
+        ).delete()
+        user.verification_attempts = 0
+        update_fields = ["verification_code", "verification_attempts"]
+        # A magic link just confirmed with its code works on its own for a few
+        # minutes. Not after a code login token: that one went to whoever typed
+        # the address, and confirming it says nothing about the link.
+        if is_magic_link:
+            user.verification_code_created_at = now
+            update_fields.append("verification_code_created_at")
+        user.save(update_fields=update_fields)
+        return None
+
+    @staticmethod
+    def code_expired():
+        """Distinct from a wrong code, so the apps can say a new one is needed."""
+        return Response(
+            {
+                "error": "Verification code expired. Please request a new code.",
+                "code": "verification_code_expired",
+            },
+            status=status.HTTP_401_UNAUTHORIZED,
+        )

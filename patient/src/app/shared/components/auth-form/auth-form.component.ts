@@ -3,12 +3,14 @@ import {
   EventEmitter,
   Input,
   OnChanges,
+  OnDestroy,
   OnInit,
   Output,
   SimpleChanges,
   ViewChild,
   inject,
 } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   FormBuilder,
   FormGroup,
@@ -31,6 +33,7 @@ import { Observable } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { TranslationService } from '../../../core/services/translation.service';
 import { identifierValidator } from '../../tools/identifier';
+import { ResendCountdown, retryAfterSeconds } from '../../tools/resend-countdown';
 
 export type AuthFormMode = 'login' | 'register';
 
@@ -58,7 +61,7 @@ export type AuthFormMode = 'login' | 'register';
     TranslatePipe,
   ],
 })
-export class AuthFormComponent implements OnInit, OnChanges {
+export class AuthFormComponent implements OnInit, OnChanges, OnDestroy {
   @Input() mode: AuthFormMode = 'login';
   @Input() initialIdentifier = '';
   // The host already knows the account: go past the identifier step on its own.
@@ -90,6 +93,8 @@ export class AuthFormComponent implements OnInit, OnChanges {
   isLoading = false;
   isResending = false;
   errorMessage: string | null = null;
+  // Started by every code sent, the automatic one included.
+  resendCountdown = new ResendCountdown();
 
   private authToken: string | null = null;
 
@@ -191,6 +196,10 @@ export class AuthFormComponent implements OnInit, OnChanges {
     }
   }
 
+  ngOnDestroy(): void {
+    this.resendCountdown.stop();
+  }
+
   onContinue(): void {
     if (this.identifierForm.invalid) return;
     this.errorMessage = null;
@@ -214,6 +223,7 @@ export class AuthFormComponent implements OnInit, OnChanges {
     this.passwordForm.reset();
     this.verificationForm.reset();
     this.authToken = null;
+    this.resendCountdown.stop();
   }
 
   togglePassword(): void {
@@ -261,10 +271,15 @@ export class AuthFormComponent implements OnInit, OnChanges {
         this.isLoading = false;
         this.authToken = response.auth_token;
         this.step = 'verification';
+        this.resendCountdown.start();
       },
       error: error => {
         this.isLoading = false;
-        this.showError(error.error?.error || this.t.instant('login.genericError'));
+        this.showError(
+          error.status === 429
+            ? this.t.instant('login.tooManyRequests')
+            : error.error?.error || this.t.instant('login.genericError')
+        );
       },
     });
   }
@@ -278,6 +293,7 @@ export class AuthFormComponent implements OnInit, OnChanges {
         this.isLoading = false;
         this.authToken = null;
         this.step = 'verification';
+        this.resendCountdown.start();
       },
       error: error => {
         this.isLoading = false;
@@ -333,21 +349,30 @@ export class AuthFormComponent implements OnInit, OnChanges {
           this.authenticated.emit();
         }
       },
-      error: error => {
+      error: (error: HttpErrorResponse) => {
         this.isLoading = false;
-        if (error.status === 429) {
-          this.errorMessage = error.error?.error || this.t.instant('login.tooManyAttempts');
-        } else if (error.status === 401) {
-          this.errorMessage = error.error?.error || this.t.instant('login.invalidVerificationCode');
-        } else {
-          this.errorMessage = this.t.instant('login.genericError');
-        }
+        this.errorMessage = this.codeLoginError(error);
       },
     });
   }
 
+  /* The backend answers in English only; its `code` field tells an expired
+   * code apart from a wrong one. */
+  private codeLoginError(error: HttpErrorResponse): string {
+    if (error.status === 429) {
+      return this.t.instant('login.tooManyAttempts');
+    }
+    if (error.error?.code === 'verification_code_expired') {
+      return this.t.instant('login.codeExpired');
+    }
+    if (error.status === 401) {
+      return this.t.instant('login.invalidVerificationCode');
+    }
+    return this.t.instant('login.genericError');
+  }
+
   resendCode(): void {
-    if (this.isResending) return;
+    if (this.isResending || this.resendCountdown.running) return;
 
     this.isResending = true;
     this.errorMessage = null;
@@ -363,6 +388,7 @@ export class AuthFormComponent implements OnInit, OnChanges {
           this.authToken = response.auth_token;
         }
         this.verificationForm.reset();
+        this.resendCountdown.start();
         const toast = await this.toastCtrl.create({
           message: this.t.instant('login.codeSent'),
           duration: 2000,
@@ -371,9 +397,14 @@ export class AuthFormComponent implements OnInit, OnChanges {
         });
         await toast.present();
       },
-      error: () => {
+      error: (error: HttpErrorResponse) => {
         this.isResending = false;
-        this.showError(this.t.instant('login.genericError'));
+        if (error.status === 429) {
+          this.resendCountdown.start(retryAfterSeconds(error));
+          this.showError(this.t.instant('login.tooManyRequests'));
+        } else {
+          this.showError(this.t.instant('login.genericError'));
+        }
       },
     });
   }

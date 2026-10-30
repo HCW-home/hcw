@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import {
@@ -25,6 +25,7 @@ import { TranslationService } from '../../core/services/translation.service';
 import { identifierValidator } from '../../shared/tools/identifier';
 import { AuthBrandingComponent } from '../../shared/components/auth-branding/auth-branding.component';
 import { LanguageSelectorComponent } from '../../shared/components/language-selector/language-selector.component';
+import { ResendCountdown, retryAfterSeconds } from '../../shared/tools/resend-countdown';
 
 @Component({
   selector: 'app-verify-account',
@@ -46,12 +47,13 @@ import { LanguageSelectorComponent } from '../../shared/components/language-sele
     LanguageSelectorComponent,
   ]
 })
-export class VerifyAccountPage implements OnInit {
+export class VerifyAccountPage implements OnInit, OnDestroy {
   private t = inject(TranslationService);
   verifyForm: FormGroup;
   isLoading = false;
   isResending = false;
   errorMessage: string | null = null;
+  resendCountdown = new ResendCountdown();
 
   constructor(
     private fb: FormBuilder,
@@ -81,6 +83,10 @@ export class VerifyAccountPage implements OnInit {
     this.verifyForm
       .get('identifier')
       ?.addValidators(identifierValidator(config?.default_phone_region));
+  }
+
+  ngOnDestroy(): void {
+    this.resendCountdown.stop();
   }
 
   get identifier(): string {
@@ -116,7 +122,11 @@ export class VerifyAccountPage implements OnInit {
   }
 
   resendCode(): void {
-    if (this.isResending || this.verifyForm.get('identifier')?.invalid) {
+    if (
+      this.isResending ||
+      this.resendCountdown.running ||
+      this.verifyForm.get('identifier')?.invalid
+    ) {
       return;
     }
 
@@ -127,6 +137,7 @@ export class VerifyAccountPage implements OnInit {
       next: async () => {
         this.isResending = false;
         this.verifyForm.get('code')?.reset();
+        this.resendCountdown.start();
         const toast = await this.toastCtrl.create({
           message: this.t.instant('verifyAccount.codeSent'),
           duration: 2000,
@@ -135,10 +146,16 @@ export class VerifyAccountPage implements OnInit {
         });
         await toast.present();
       },
-      error: async () => {
+      error: async (error) => {
         this.isResending = false;
+        const throttled = error.status === 429;
+        if (throttled) {
+          this.resendCountdown.start(retryAfterSeconds(error));
+        }
         const toast = await this.toastCtrl.create({
-          message: this.t.instant('verifyAccount.sendFailed'),
+          message: this.t.instant(
+            throttled ? 'verifyAccount.tooManyRequests' : 'verifyAccount.sendFailed'
+          ),
           duration: 2000,
           position: 'top',
           color: 'danger',

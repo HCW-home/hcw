@@ -201,10 +201,13 @@
       <button
         type="button"
         (click)="resendCode()"
-        [disabled]="isResending"
+        [disabled]="isResending || resendCountdown.running"
+        [class.disabled]="isResending || resendCountdown.running"
         class="link-text">
         @if (isResending) {
           {{ 'login.sendingCode' | translate }}
+        } @else if (resendCountdown.running) {
+          {{ 'login.resendCodeIn' | translate: { seconds: resendCountdown.remaining } }}
         } @else {
           {{ 'login.resendCode' | translate }}
         }

@@ -14,19 +14,6 @@
               }
             </ion-text>
           </div>
-        } @else if (errorMessage) {
-          <div class="error-state">
-            <ion-icon name="alert-circle-outline" class="error-icon" aria-hidden="true"></ion-icon>
-            <ion-text class="error-title" color="danger">{{ 'verifyInvite.authFailed' | translate }}</ion-text>
-            <ion-text class="error-message" color="medium">{{ errorMessage }}</ion-text>
-            <ion-button
-              expand="block"
-              shape="round"
-              (click)="goToLogin()"
-              class="action-button">
-              {{ 'verifyInvite.goToLogin' | translate }}
-            </ion-button>
-          </div>
         } @else if (requiresVerification) {
           <div class="verification-state step-animate">
             <h1>{{ 'verifyInvite.verificationRequired' | translate }}</h1>
@@ -53,6 +40,12 @@
                   <span class="error-text">{{ 'verifyInvite.invalidCode' | translate }}</span>
                 </ion-text>
               }
+              @if (errorMessage) {
+                <!-- Not tied to the field: a wrong, expired or exhausted code. -->
+                <ion-text color="danger" class="error-message" role="alert">
+                  <span class="error-text">{{ errorMessage }}</span>
+                </ion-text>
+              }
 
               <ion-button
                 expand="block"
@@ -70,10 +63,13 @@
               </ion-text>
               <button type="button"
                 (click)="resendVerificationCode()"
-                [class.disabled]="isResending"
+                [disabled]="isResending || resendCountdown.running"
+                [class.disabled]="isResending || resendCountdown.running"
                 class="link-text">
                 @if (isResending) {
                   {{ 'verifyInvite.sending' | translate }}
+                } @else if (resendCountdown.running) {
+                  {{ 'verifyInvite.resendCodeIn' | translate: { seconds: resendCountdown.remaining } }}
                 } @else {
                   {{ 'verifyInvite.resendCode' | translate }}
                 }
@@ -88,6 +84,19 @@
                 {{ 'verifyInvite.signInManually' | translate }}
               </button>
             </div>
+          </div>
+        } @else if (errorMessage) {
+          <div class="error-state">
+            <ion-icon name="alert-circle-outline" class="error-icon" aria-hidden="true"></ion-icon>
+            <ion-text class="error-title" color="danger">{{ 'verifyInvite.authFailed' | translate }}</ion-text>
+            <ion-text class="error-message" color="medium">{{ errorMessage }}</ion-text>
+            <ion-button
+              expand="block"
+              shape="round"
+              (click)="goToLogin()"
+              class="action-button">
+              {{ 'verifyInvite.goToLogin' | translate }}
+            </ion-button>
           </div>
         }
 

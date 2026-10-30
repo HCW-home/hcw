@@ -11,6 +11,7 @@ from unittest.mock import patch
 
 from constance.test import override_config
 from django.conf import settings
+from django.core.cache import caches
 from django.db import connection
 from django.test import override_settings
 from django_tenants.test.cases import TenantTestCase
@@ -81,6 +82,10 @@ class NominatimRateLimitTests(TenantTestCase):
 @override_settings(CACHES=SHARED_LOCMEM)
 class GeocodingRequestTests(TenantTestCase):
     def setUp(self):
+        # The LocMem store outlives each test: a pause left behind by
+        # tests_geocode_backoff would make the task reschedule itself instead
+        # of querying Nominatim.
+        caches["shared"].clear()
         # Saving an address queues the very task under test; keep it off the
         # broker while setting the fixture up.
         queueing = patch.object(tasks.geocode_location, "delay")

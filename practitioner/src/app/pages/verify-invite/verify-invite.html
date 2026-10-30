@@ -14,29 +14,6 @@
           }
         </app-typography>
       </div>
-    } @else if (errorMessage) {
-      <div class="error-state">
-        <app-svg
-          src="error"
-          [svgStyle]="{ 'width.px': 48, 'height.px': 48, color: 'var(--error-500)' }">
-        </app-svg>
-        <app-typography
-          [variant]="TypographyTypeEnum['h6-semibold']"
-          color="var(--error-600)">
-          {{ 'verifyInvite.authFailed' | translate }}
-        </app-typography>
-        <app-typography
-          [variant]="TypographyTypeEnum['body-regular']"
-          color="var(--slate-500)">
-          {{ errorMessage }}
-        </app-typography>
-        <app-button
-          [block]="true"
-          [style]="ButtonStyleEnum.primary"
-          [text]="'verifyInvite.goToLogin' | translate"
-          (buttonClick)="goToLogin()">
-        </app-button>
-      </div>
     } @else if (requiresVerification) {
       <div class="verification-state">
         <app-svg
@@ -86,10 +63,12 @@
           </app-typography>
           <span
             class="resend-link"
-            [class.disabled]="isResending"
+            [class.disabled]="isResending || resendCountdown.running"
             (click)="resendVerificationCode()">
             @if (isResending) {
               {{ 'verifyInvite.sending' | translate }}
+            } @else if (resendCountdown.running) {
+              {{ 'verifyInvite.resendCodeIn' | translate: { seconds: resendCountdown.remaining } }}
             } @else {
               {{ 'verifyInvite.resendCode' | translate }}
             }
@@ -104,6 +83,29 @@
           </app-typography>
           <span class="action-link" (click)="goToLogin()">{{ 'verifyInvite.signInManually' | translate }}</span>
         </div>
+      </div>
+    } @else if (errorMessage) {
+      <div class="error-state">
+        <app-svg
+          src="error"
+          [svgStyle]="{ 'width.px': 48, 'height.px': 48, color: 'var(--error-500)' }">
+        </app-svg>
+        <app-typography
+          [variant]="TypographyTypeEnum['h6-semibold']"
+          color="var(--error-600)">
+          {{ 'verifyInvite.authFailed' | translate }}
+        </app-typography>
+        <app-typography
+          [variant]="TypographyTypeEnum['body-regular']"
+          color="var(--slate-500)">
+          {{ errorMessage }}
+        </app-typography>
+        <app-button
+          [block]="true"
+          [style]="ButtonStyleEnum.primary"
+          [text]="'verifyInvite.goToLogin' | translate"
+          (buttonClick)="goToLogin()">
+        </app-button>
       </div>
     }
   </div>

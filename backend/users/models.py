@@ -25,7 +25,12 @@ from .abstracts import ModelOwnerAbstract
 from .managers import UserManager
 from .phone import MAX_PHONE_LENGTH, normalize_phone_number
 from .validators import validate_phone_number
-from .verification import generate_verification_code
+from .verification import (
+    MAX_VERIFICATION_ATTEMPTS,
+    VERIFICATION_CODE_RESEND_DELAY,
+    VERIFICATION_CODE_REUSE_WINDOW,
+    generate_verification_code,
+)
 
 import secrets
 
@@ -270,7 +275,20 @@ class User(AbstractUser):
         help_text="Authentication token for appointment access",
     )
     verification_code = models.IntegerField(null=True, blank=True)
+    # Despite its name, this dates one_time_auth_token: it starts the grace
+    # period of a magic link and, for accounts signing in without a code, its
+    # expiry. The code itself is dated by the two fields below.
     verification_code_created_at = models.DateTimeField(null=True, blank=True)
+    verification_code_issued_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When the pending verification code was generated",
+    )
+    verification_code_sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When the pending verification code was last sent",
+    )
     verification_attempts = models.IntegerField(default=0)
 
     email_verified = models.BooleanField(
@@ -333,34 +351,59 @@ class User(AbstractUser):
             not self.email and not self.mobile_phone_number
         )
 
-    def issue_verification_code(self) -> int:
-        """Mint a fresh code proving this user controls their email or phone.
+    def issue_verification_code(self, keep_auth_token=False) -> bool:
+        """Make sure a code is pending for this user; return whether to send it.
 
-        ``one_time_auth_token`` is cleared on purpose. That token is the only
-        way into AnonymousTokenAuthView, and the timestamp written here opens
-        its five-minute grace period, during which the token alone buys a
-        session with no code at all. Dropping it keeps a code issued to claim
-        an account from ever being traded for one. The password reset flow
-        takes the same precaution (see users/forms.py).
+        A code asked for again while it is fresh goes out again unchanged, so
+        every message received in the meantime carries a code that works,
+        whichever one the person opens. Its attempt counter is left alone on
+        purpose: resetting it would hand out unlimited guesses on the very same
+        code. Within ``VERIFICATION_CODE_RESEND_DELAY`` of the last message,
+        nothing is sent at all, which absorbs reloads and extra tabs.
 
-        The clearing goes through a queryset update rather than ``save()``:
+        Callers hold a row lock (``select_for_update``). Two concurrent
+        requests would otherwise each mint a code, and only the one written
+        last would work.
+
+        Unless ``keep_auth_token`` is set, ``one_time_auth_token`` is cleared:
+        once an account is being claimed with a code, that code is the way in,
+        and a magic link still lying around must not stand in for it. The
+        password reset flow takes the same precaution (see users/forms.py). The
+        clearing goes through a queryset update rather than ``save()``:
         ``save()`` mints a replacement token for any ``temporary`` user (see
         below), which would silently undo the precaution for exactly the
         accounts this flow creates.
         """
-        self.verification_code = generate_verification_code()
-        self.verification_code_created_at = timezone.now()
-        self.verification_attempts = 0
-        self.save(
-            update_fields=[
-                "verification_code",
-                "verification_code_created_at",
-                "verification_attempts",
-            ]
+        now = timezone.now()
+        reusable = (
+            self.verification_code is not None
+            and self.verification_code_issued_at is not None
+            and now - self.verification_code_issued_at < VERIFICATION_CODE_REUSE_WINDOW
+            and self.verification_attempts < MAX_VERIFICATION_ATTEMPTS
         )
-        self.one_time_auth_token = None
-        type(self).objects.filter(pk=self.pk).update(one_time_auth_token=None)
-        return self.verification_code
+        recently_sent = (
+            self.verification_code_sent_at is not None
+            and now - self.verification_code_sent_at < VERIFICATION_CODE_RESEND_DELAY
+        )
+        send = not (reusable and recently_sent)
+        if not reusable:
+            self.verification_code = generate_verification_code()
+            self.verification_code_issued_at = now
+            self.verification_attempts = 0
+        if send:
+            self.verification_code_sent_at = now
+            self.save(
+                update_fields=[
+                    "verification_code",
+                    "verification_code_issued_at",
+                    "verification_code_sent_at",
+                    "verification_attempts",
+                ]
+            )
+        if not keep_auth_token:
+            self.one_time_auth_token = None
+            type(self).objects.filter(pk=self.pk).update(one_time_auth_token=None)
+        return send
 
     @property
     def authenticates_without_code(self) -> bool:
@@ -372,10 +415,10 @@ class User(AbstractUser):
         reach automatically have no choice either — no code could be delivered
         to them.
 
-        Two places must agree on this, or the account is left wide open:
-        AnonymousTokenAuthView, which decides whether to ask for a code, and
-        SendVerificationCodeView, which must not hand the token to an anonymous
-        caller when the token alone is the credential.
+        AnonymousTokenAuthView reads it to decide whether a magic link needs a
+        code. SendVerificationCodeView never hands that link to anyone, only a
+        token that always needs the code, and withholds even that from these
+        accounts.
         """
         return self.requires_manual_access or self.temporary
 
