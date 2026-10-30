@@ -102,6 +102,17 @@ When S3 is configured, uploads (attachments, logos, recordings) are stored on an
 !!! warning "All or nothing"
     `S3_BUCKET_NAME`, `S3_ENDPOINT_URL`, `S3_ACCESS_KEY` and `S3_SECRET_KEY` must be set together. A partial configuration aborts startup with an `ImproperlyConfigured` error rather than silently falling back to local storage, which would make files written by one process unreadable by another.
 
+## Encryption at Rest
+
+Message attachments can be encrypted where they are stored, on the local filesystem or on S3. Follow [Encryption at Rest](encryption-at-rest.md) to turn it on: attachments encrypted with a lost key are lost.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `BLOB_ENCRYPTION` | `False` | Exactly `True` puts the encrypting storage in place: encrypted attachments are decrypted on read. |
+| `BLOB_ENCRYPT_WRITES` | value of `BLOB_ENCRYPTION` | Exactly `True` encrypts new attachments. `False` with `BLOB_ENCRYPTION=True` writes them in clear while still reading encrypted ones, the intermediate step of a rollout or a rollback. |
+| `BLOB_ENCRYPTION_KEY` | *(none)* | Required with `BLOB_ENCRYPTION=True`: at least 32 characters, different from `DJANGOSECRET_KEY`. |
+| `BLOB_ENCRYPTION_OLD_KEY` | *(none)* | Previous key, still accepted on read during a key rotation. |
+
 ## Call Recording
 
 Recordings are pushed to S3 by the media server. By default they reuse the `S3_*` settings above; set the `LIVEKIT_S3_*` variables only to store them on a different bucket or server.
@@ -154,6 +165,20 @@ Uploads are scanned only when one of these variables is set. `CLAMD_SOCKET` take
 | `CLAMD_SOCKET` | *(none)* | Path to the clamd Unix socket, e.g. `/var/run/clamav/clamd.ctl`. |
 | `CLAMD_TCP_ADDR` | `127.0.0.1` | clamd hostname, when connecting over TCP. |
 | `CLAMD_TCP_SOCKET` | `3310` | clamd TCP port. |
+
+## Geocoding
+
+Practitioner and organisation addresses are turned into coordinates by [Nominatim](https://nominatim.org/), so that they can be placed on the patient map. The public instance is used by default; its usage policy caps callers at one request per second, which is slow for large imports. Set `NOMINATIM_URL` to use your own instance instead.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `NOMINATIM_URL` | `https://nominatim.openstreetmap.org/search` | Nominatim instance to query. Either the root URL or the full `/search` endpoint. |
+| `NOMINATIM_USER_AGENT` | `HCW-Home/1.0` | Identifies the caller, as the public instance requires. |
+| `NOMINATIM_RATE_LIMIT` | `1/s` | Pace of the geocoding requests, in Celery rate limit syntax (`1/s`, `20/s`, `600/m`). Leave empty for no limit, which only makes sense on an instance you own. |
+
+Each tenant can override `NOMINATIM_URL` from the admin interface, under Configuration > Geocoding; the field starts on the value of the variable, and emptying it comes back to it. The pace is not overridable, as the geocoding workers are shared by every tenant.
+
+The map search box in the admin interface always queries the public instance, whatever these variables say.
 
 ## FHIR Server
 

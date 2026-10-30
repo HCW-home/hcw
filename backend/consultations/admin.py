@@ -1,10 +1,19 @@
+import os
+
 from django import forms
 from django.contrib import admin
+from django.contrib.admin.utils import unquote
+from django.core.exceptions import PermissionDenied
 from django.forms.models import BaseInlineFormSet
+from django.http import FileResponse, Http404
+from django.urls import path, reverse
+from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from modeltranslation.admin import TabbedTranslationAdmin
 from unfold.admin import ModelAdmin, StackedInline, TabularInline
 from unfold.decorators import display
+from unfold.widgets import UnfoldAdminFileFieldWidget
+from core.blobcrypto import BlobDecryptionError
 from typing import DefaultDict
 from . import assignments
 from django.utils.functional import cached_property
@@ -179,7 +188,80 @@ class QueueAdmin(ModelAdmin, TabbedTranslationAdmin):
         )
 
 
-class MessageInline(TabularInline):
+def attachment_admin_url(message):
+    return reverse("admin:consultations_message_attachment", args=[message.pk])
+
+
+class _AttachmentLink:
+    """What the file widget template shows: the file, and where to get it."""
+
+    def __init__(self, field_file):
+        self.name = field_file.name
+        self.url = attachment_admin_url(field_file.instance)
+
+    def __str__(self):
+        return self.name
+
+
+class MessageAttachmentWidget(UnfoldAdminFileFieldWidget):
+    """File input linking to the admin download view, not to the file.
+
+    An attachment may be encrypted at rest, and then has no URL at all (see
+    core.storage.EncryptedStorage.url); a direct link to the storage would
+    skip the permission check anyway.
+    """
+
+    def is_initial(self, value):
+        return bool(value and getattr(getattr(value, "instance", None), "pk", None))
+
+    def format_value(self, value):
+        if self.is_initial(value):
+            return _AttachmentLink(value)
+        return None
+
+
+class MessageAttachmentAdminMixin:
+    """Link attachments to the admin download view, never to the file.
+
+    The admin renders a file through its URL, as a link and as a read-only
+    value, and an attachment encrypted at rest has none.
+    """
+
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        if db_field.name == "attachment":
+            kwargs["widget"] = MessageAttachmentWidget
+        return super().formfield_for_dbfield(db_field, request, **kwargs)
+
+    def get_fields(self, request, obj=None):
+        fields = super().get_fields(request, obj)
+        if obj is None or self.has_change_permission(request, obj):
+            return fields
+        # Read-only, the attachment would be rendered through its URL.
+        return list(
+            dict.fromkeys(
+                "attachment_link" if field == "attachment" else field
+                for field in fields
+            )
+        )
+
+    def get_readonly_fields(self, request, obj=None):
+        readonly_fields = super().get_readonly_fields(request, obj)
+        if obj is None or self.has_change_permission(request, obj):
+            return readonly_fields
+        return [*readonly_fields, "attachment_link"]
+
+    @display(description=_("attachment"))
+    def attachment_link(self, obj):
+        if not obj.attachment:
+            return None
+        return format_html(
+            '<a href="{}">{}</a>',
+            attachment_admin_url(obj),
+            os.path.basename(obj.attachment.name),
+        )
+
+
+class MessageInline(MessageAttachmentAdminMixin, TabularInline):
     model = Message
     extra = 0
     readonly_fields = ["created_at"]
@@ -292,15 +374,43 @@ class ReasonAdmin(ModelAdmin, TabbedTranslationAdmin):
 
 
 @admin.register(Message)
-class MessageAdmin(ModelAdmin):
+class MessageAdmin(MessageAttachmentAdminMixin, ModelAdmin):
     list_display = [
         "id",
         "consultation",
         "created_by",
         "content",
-        "attachment",
+        "attachment_link",
         "created_at",
     ]
+
+    def get_urls(self):
+        return [
+            path(
+                "<path:object_id>/attachment/",
+                self.admin_site.admin_view(self.attachment_view),
+                name="consultations_message_attachment",
+            ),
+        ] + super().get_urls()
+
+    def attachment_view(self, request, object_id):
+        """Serve an attachment read through the storage, decrypted if need be."""
+        message = self.get_object(request, unquote(object_id))
+        if message is None or not message.attachment:
+            raise Http404
+        if not self.has_view_permission(request, message):
+            raise PermissionDenied
+        try:
+            attachment = message.attachment.open("rb")
+        except (FileNotFoundError, BlobDecryptionError):
+            raise Http404
+        # Always a download: an uploaded HTML or SVG file must not render in
+        # the admin's origin.
+        return FileResponse(
+            attachment,
+            as_attachment=True,
+            filename=os.path.basename(message.attachment.name),
+        )
 
 
 @admin.register(Request)

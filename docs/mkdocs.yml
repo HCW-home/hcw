@@ -64,6 +64,7 @@ nav:
     - Docker Compose: deployment/docker-compose.md
     - Debian Packages: deployment/debian.md
     - Environment Variables: deployment/environment-variables.md
+    - Encryption at Rest: deployment/encryption-at-rest.md
 
 extra_css:
   - assets/css/extra.css

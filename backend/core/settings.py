@@ -22,10 +22,21 @@ from django.core.exceptions import ImproperlyConfigured
 from django.templatetags.static import static
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
-from django.utils.translation import gettext_noop
 from dotenv import load_dotenv
-from firebase_admin import initialize_app
+from firebase_admin import get_app, initialize_app
 from unfold.contrib.constance.settings import UNFOLD_CONSTANCE_ADDITIONAL_FIELDS
+
+
+def gettext_noop(message):
+    """Mark a string for makemessages, like django.utils.translation's.
+
+    That one reads settings.USE_I18N: called from here, it makes Django build
+    its settings out of this half-executed module, and an ImproperlyConfigured
+    raised further down (S3, BLOB_ENCRYPTION) then surfaces under manage.py as
+    an unrelated AttributeError instead of its own message.
+    """
+    return message
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -448,6 +459,18 @@ LOCATION_FIELD = {
     "provider.openstreetmap.max_zoom": 18,
 }
 
+# Geocoding. The public Nominatim instance is free, but its usage policy caps
+# use at one request per second, which makes bulk imports crawl. Pointing these
+# at a private instance lifts both the cap and the dependency on a third party.
+# Either the instance root or its /search endpoint may be given.
+NOMINATIM_URL = os.getenv(
+    "NOMINATIM_URL", "https://nominatim.openstreetmap.org/search"
+)
+NOMINATIM_USER_AGENT = os.getenv("NOMINATIM_USER_AGENT", "HCW-Home/1.0")
+# Celery rate limit syntax ("1/s", "20/s", "600/m"). Empty means no limit at
+# all, which only ever makes sense on an instance you own.
+NOMINATIM_RATE_LIMIT = os.getenv("NOMINATIM_RATE_LIMIT", "1/s") or None
+
 REDIS_HOST = os.getenv("REDIS_HOST") or "127.0.0.1"
 REDIS_PORT = os.getenv("REDIS_PORT") or "6379"
 
@@ -515,7 +538,13 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
-FIREBASE_APP = initialize_app()
+# manage.py loads this module a second time when the first attempt raised
+# ImproperlyConfigured, and a second initialize_app() would then fail with a
+# message hiding the real configuration error.
+try:
+    FIREBASE_APP = get_app()
+except ValueError:
+    FIREBASE_APP = initialize_app()
 
 FCM_DJANGO_SETTINGS = {
     "ONE_DEVICE_PER_USER": False,
@@ -1056,6 +1085,17 @@ CONSTANCE_CONFIG = {
             "Allow unauthenticated access to the organisations and reasons endpoints"
         ),
     ),
+    "nominatim_url": (
+        NOMINATIM_URL,
+        gettext_noop(
+            "Nominatim instance turning practitioner and organisation addresses "
+            "into map coordinates. Either the root URL of the instance or its "
+            "/search endpoint. Defaults to the NOMINATIM_URL environment "
+            "variable, which is used again if this field is left empty. How "
+            "fast it may be queried stays set by NOMINATIM_RATE_LIMIT, as the "
+            "geocoding workers are shared by every tenant."
+        ),
+    ),
     "force_temporary_patients": (
         False,
         gettext_noop(
@@ -1281,6 +1321,7 @@ CONSTANCE_CONFIG_FIELDSETS = {
         "mobile_ios_store_url",
     ),
     gettext_noop("Uploads"): ("max_upload_size_mb",),
+    gettext_noop("Geocoding"): ("nominatim_url",),
     gettext_noop("Authentication"): ("disable_password_login", "enable_patient_password_login", "enable_registration"),
     gettext_noop("Visibility"): ("users_visibility", "patient_visibility", "patient_visibility_requires_confirmation", "public_organisations"),
     gettext_noop("Video Features"): (
@@ -1352,6 +1393,13 @@ CONSTANCE_FIELDSET_DESCRIPTIONS = {
     ),
     gettext_noop("Uploads"): gettext_noop(
         "Maximum file size accepted for message attachments."
+    ),
+    gettext_noop("Geocoding"): gettext_noop(
+        "Which Nominatim instance turns addresses into the coordinates the "
+        "patient map is built on. Defaults to the NOMINATIM_URL env var, and "
+        "to the public OpenStreetMap instance when that is unset — the public "
+        "one is capped at one request per second, so a large user base is "
+        "better served by your own."
     ),
     gettext_noop("Authentication"): gettext_noop(
         "Toggles for password-based login and self-service registration. "
@@ -1598,6 +1646,15 @@ if _s3_missing and len(_s3_missing) < len(_S3_REQUIRED):
         % (", ".join(_s3_missing), ", ".join(_S3_REQUIRED))
     )
 
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
+
 if not _s3_missing:
     STORAGES = {
         "default": {
@@ -1624,6 +1681,54 @@ if not _s3_missing:
         },
         "staticfiles": {
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+
+# Encryption at rest of confidential uploads (message attachments), on top of
+# either storage above. Logos, speciality icons and profile pictures are linked
+# to by URL and stay in clear. Rollout, key rotation and rollback are described
+# in consultations/management/commands/encrypt_blobs.py.
+BLOB_ENCRYPTION = os.getenv("BLOB_ENCRYPTION", "False") == "True"
+# When off, files are still decrypted on read but written in clear: the step
+# that lets encryption be rolled out, or back, without downtime. Unset or
+# empty (as docker-compose.yml passes it), it follows BLOB_ENCRYPTION.
+BLOB_ENCRYPT_WRITES = (
+    os.getenv("BLOB_ENCRYPT_WRITES") or str(BLOB_ENCRYPTION)
+) == "True"
+BLOB_ENCRYPTION_KEY = os.getenv("BLOB_ENCRYPTION_KEY", "")
+# The previous key, still accepted on read while encrypt_blobs re-encrypts the
+# files written under it.
+BLOB_ENCRYPTION_OLD_KEY = os.getenv("BLOB_ENCRYPTION_OLD_KEY", "")
+
+if BLOB_ENCRYPT_WRITES and not BLOB_ENCRYPTION:
+    raise ImproperlyConfigured(
+        "BLOB_ENCRYPT_WRITES=True requires BLOB_ENCRYPTION=True, otherwise "
+        "nothing gets encrypted."
+    )
+
+if BLOB_ENCRYPTION:
+    # No fallback on DJANGOSECRET_KEY: it also signs sessions and defaults to
+    # a placeholder in docker-compose.yml. Files encrypted with it would only
+    # look protected, which is worse than knowing they are not.
+    if len(BLOB_ENCRYPTION_KEY) < 32:
+        raise ImproperlyConfigured(
+            "BLOB_ENCRYPTION=True requires BLOB_ENCRYPTION_KEY, at least 32 "
+            "characters long."
+        )
+    if BLOB_ENCRYPTION_KEY == SECRET_KEY:
+        raise ImproperlyConfigured(
+            "BLOB_ENCRYPTION_KEY must not be the same as DJANGOSECRET_KEY."
+        )
+    if BLOB_ENCRYPTION_OLD_KEY == BLOB_ENCRYPTION_KEY:
+        raise ImproperlyConfigured(
+            "BLOB_ENCRYPTION_OLD_KEY is the current key: set it to the "
+            "previous one, or leave it empty."
+        )
+    STORAGES["default"] = {
+        "BACKEND": "core.storage.EncryptedStorage",
+        "OPTIONS": {
+            "backend": STORAGES["default"]["BACKEND"],
+            "options": STORAGES["default"].get("OPTIONS", {}),
         },
     }
 

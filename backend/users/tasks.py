@@ -4,6 +4,7 @@ import time
 from datetime import timedelta
 
 import requests as http_requests
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.cache import caches
 from django_tenants.utils import get_tenant_model, tenant_context
@@ -18,15 +19,16 @@ from .models import User
 
 logger = logging.getLogger(__name__)
 
-NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
-NOMINATIM_HEADERS = {"User-Agent": "HCW-Home/1.0"}
-
+# Which Nominatim answers is per-tenant configuration (`nominatim_url` in the
+# admin), falling back on the NOMINATIM_URL setting. How fast it may be asked
+# stays deployment-wide, in NOMINATIM_RATE_LIMIT: the workers enforcing it are
+# shared by every tenant.
+#
 # Nominatim's usage policy caps public use at one request per second and answers
 # 429 beyond that. Bulk imports create one geocoding task per saved record, so
 # the limit is reached easily: when it is, every geocoding task steps back at
 # once instead of hammering on. The pause lives in the schema-agnostic cache
 # because the quota belongs to our IP, not to a tenant.
-NOMINATIM_RATE_LIMIT = "1/s"
 NOMINATIM_COOLDOWN_KEY = "nominatim:cooldown_until"
 NOMINATIM_COOLDOWN_SECONDS = 120
 NOMINATIM_MAX_COOLDOWN_SECONDS = 1800
@@ -36,6 +38,45 @@ NOMINATIM_WAKEUP_JITTER_SECONDS = 60
 # Giving up loses nothing: `manage.py geocode` picks up every object still
 # missing its location.
 NOMINATIM_MAX_RETRIES = 24
+
+# Seconds covered by one period of a Celery rate limit ("1/s", "600/m", ...).
+RATE_LIMIT_PERIODS = {"s": 1, "m": 60, "h": 3600}
+
+
+def nominatim_url():
+    """The search endpoint this tenant geocodes against.
+
+    A tenant may point the geocoding at its own instance from the admin;
+    clearing that field brings the NOMINATIM_URL setting back. A private
+    instance is usually known by its root URL, so both that and the full
+    /search endpoint are accepted.
+    """
+    url = (config.nominatim_url or settings.NOMINATIM_URL).strip().rstrip("/")
+    return url if url.endswith("/search") else f"{url}/search"
+
+
+def nominatim_headers():
+    """Nominatim asks every caller to identify itself with a User-Agent."""
+    return {"User-Agent": settings.NOMINATIM_USER_AGENT}
+
+
+def nominatim_min_interval():
+    """Seconds to leave between two requests, from the configured rate limit.
+
+    Celery holds the tasks to that limit on its own; code running outside a
+    worker, such as `manage.py geocode`, paces itself with this instead.
+    """
+    rate = settings.NOMINATIM_RATE_LIMIT
+    if not rate:
+        return 0
+    count, _, period = str(rate).partition("/")
+    try:
+        count = float(count)
+    except ValueError:
+        return 1
+    if count <= 0:
+        return 0
+    return RATE_LIMIT_PERIODS.get(period[:1] or "s", 1) / count
 
 
 def geocoding_pause_remaining():
@@ -68,7 +109,7 @@ def _wakeup_delay(pause):
     bind=True,
     max_retries=NOMINATIM_MAX_RETRIES,
     default_retry_delay=60,
-    rate_limit=NOMINATIM_RATE_LIMIT,
+    rate_limit=settings.NOMINATIM_RATE_LIMIT,
 )
 def geocode_location(self, app_label, model_name, object_id, schema_name):
     """Geocode an object's address fields using Nominatim (OpenStreetMap)."""
@@ -104,9 +145,9 @@ def geocode_location(self, app_label, model_name, object_id, schema_name):
 
         try:
             resp = http_requests.get(
-                NOMINATIM_URL,
+                nominatim_url(),
                 params={"q": address, "format": "json", "limit": 1},
-                headers=NOMINATIM_HEADERS,
+                headers=nominatim_headers(),
                 timeout=10,
             )
         except Exception as exc:

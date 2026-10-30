@@ -12,6 +12,7 @@ from rest_framework.response import Response
 
 from .forms import CustomAllAuthPasswordResetForm
 from .models import HealthMetric, Language, Organisation, Speciality, Term, WebPushSubscription, DAVAppPassword
+from .permissions import check_contact_changes
 from .phone import MAX_PHONE_LENGTH, phone_lookup_variants
 from .validators import validate_phone_number
 
@@ -132,6 +133,7 @@ class UserDetailsSerializer(CustomFieldsMixin, serializers.ModelSerializer):
             "encryption_key_lost",
         ]
         read_only_fields = [
+            "last_login",
             "is_practitioner",
             "public_key",
             "public_key_fingerprint",
@@ -348,6 +350,27 @@ class UserDetailsSerializer(CustomFieldsMixin, serializers.ModelSerializer):
                 )
             attrs["temporary"] = True
 
+        return attrs
+
+
+class ManagedUserSerializer(UserDetailsSerializer):
+    """Somebody else's account, as a practitioner edits it.
+
+    Serves /api/users/, /api/patients/ and /api/practitioners/. One's own
+    profile goes through /api/auth/user/ and UserDetailsSerializer instead.
+    The onboarding flag belongs to the owner, and so do the contact details
+    once they have claimed the account.
+    """
+
+    class Meta(UserDetailsSerializer.Meta):
+        read_only_fields = UserDetailsSerializer.Meta.read_only_fields + [
+            "is_first_login",
+        ]
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        if self.instance is not None:
+            check_contact_changes(self.instance, attrs)
         return attrs
 
 

@@ -102,6 +102,17 @@ Lorsque S3 est configure, les fichiers envoyes (pieces jointes, logos, enregistr
 !!! warning "Tout ou rien"
     `S3_BUCKET_NAME`, `S3_ENDPOINT_URL`, `S3_ACCESS_KEY` et `S3_SECRET_KEY` doivent etre definies ensemble. Une configuration partielle interrompt le demarrage avec une erreur `ImproperlyConfigured` plutot que de basculer silencieusement sur le stockage local, ce qui rendrait illisibles par un processus les fichiers ecrits par un autre.
 
+## Chiffrement au repos
+
+Les pieces jointes des messages peuvent etre chiffrees la ou elles sont stockees, sur le disque local ou sur S3. Suivez [Chiffrement au repos](encryption-at-rest.md) pour l'activer : les pieces jointes chiffrees avec une cle perdue sont perdues.
+
+| Variable | Defaut | Description |
+|----------|--------|-------------|
+| `BLOB_ENCRYPTION` | `False` | Exactement `True` met en place le stockage chiffrant : les pieces jointes chiffrees sont dechiffrees a la lecture. |
+| `BLOB_ENCRYPT_WRITES` | valeur de `BLOB_ENCRYPTION` | Exactement `True` chiffre les nouvelles pieces jointes. `False` avec `BLOB_ENCRYPTION=True` les ecrit en clair tout en lisant les chiffrees, l'etape intermediaire d'une activation ou d'un retour arriere. |
+| `BLOB_ENCRYPTION_KEY` | *(aucun)* | Obligatoire avec `BLOB_ENCRYPTION=True` : au moins 32 caracteres, differente de `DJANGOSECRET_KEY`. |
+| `BLOB_ENCRYPTION_OLD_KEY` | *(aucun)* | Cle precedente, encore acceptee en lecture pendant une rotation. |
+
 ## Enregistrement des appels
 
 Les enregistrements sont deposes sur S3 par le serveur media. Par defaut ils reutilisent les reglages `S3_*` ci-dessus ; ne definissez les variables `LIVEKIT_S3_*` que pour les stocker sur un bucket ou un serveur different.
@@ -154,6 +165,20 @@ Les fichiers envoyes ne sont analyses que si l'une de ces variables est definie.
 | `CLAMD_SOCKET` | *(aucun)* | Chemin de la socket Unix de clamd, ex. `/var/run/clamav/clamd.ctl`. |
 | `CLAMD_TCP_ADDR` | `127.0.0.1` | Nom d'hote de clamd, en connexion TCP. |
 | `CLAMD_TCP_SOCKET` | `3310` | Port TCP de clamd. |
+
+## Geocodage
+
+Les adresses des praticiens et des organisations sont converties en coordonnees par [Nominatim](https://nominatim.org/), afin de les placer sur la carte des patients. L'instance publique est utilisee par defaut ; sa politique d'usage limite chaque appelant a une requete par seconde, ce qui est lent sur les gros imports. Definir `NOMINATIM_URL` pour utiliser sa propre instance.
+
+| Variable | Defaut | Description |
+|----------|--------|-------------|
+| `NOMINATIM_URL` | `https://nominatim.openstreetmap.org/search` | Instance Nominatim interrogee. Au choix l'URL racine ou le point d'entree `/search` complet. |
+| `NOMINATIM_USER_AGENT` | `HCW-Home/1.0` | Identifie l'appelant, comme l'exige l'instance publique. |
+| `NOMINATIM_RATE_LIMIT` | `1/s` | Rythme des requetes de geocodage, dans la syntaxe des limites de debit Celery (`1/s`, `20/s`, `600/m`). Laisser vide pour ne pas limiter, ce qui n'a de sens que sur une instance vous appartenant. |
+
+Chaque tenant peut surcharger `NOMINATIM_URL` depuis l'interface d'administration, dans Configuration > Geocodage ; le champ part de la valeur de la variable, et le vider y revient. Le rythme n'est pas surchargeable, les workers de geocodage etant partages par tous les tenants.
+
+Le champ de recherche de la carte dans l'interface d'administration interroge toujours l'instance publique, quelles que soient ces variables.
 
 ## Serveur FHIR
 

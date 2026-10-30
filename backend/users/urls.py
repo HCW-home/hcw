@@ -49,16 +49,6 @@ urlpatterns = [
         name="patient_visibility_grant_confirm",
     ),
     path(
-        "api/practitioners/",
-        views.PractitionerViewSet.as_view({
-            "get": "list",
-            "post": "create",
-            "put": "update",
-            "delete": "destroy",
-        }),
-        name="practitioner-conditional",
-    ),
-    path(
         "api/practitioners/<int:pk>/public/",
         views.PublicPractitionerView.as_view(),
         name="practitioner-public",

@@ -3,6 +3,8 @@ import logging
 import traceback
 
 from django.conf import settings
+from django.core.exceptions import PermissionDenied as DjangoPermissionDenied
+from django.http import Http404
 from pydantic import ValidationError as PydanticValidationError
 from rest_framework import status
 from rest_framework.exceptions import (
@@ -122,6 +124,13 @@ def fhir_exception_handler(exc, context):
     # Non-FHIR requests keep the legacy handler.
     if not is_fhir_request(request):
         return custom_exception_handler(exc, context)
+
+    # Same translation as DRF's default handler: get_object() raises Django's
+    # Http404, which would otherwise end up as a 500 below.
+    if isinstance(exc, Http404):
+        exc = NotFound(*exc.args)
+    elif isinstance(exc, DjangoPermissionDenied):
+        exc = PermissionDenied(*exc.args)
 
     if isinstance(exc, FhirOperationError):
         outcome = _build_operation_outcome([_issue(

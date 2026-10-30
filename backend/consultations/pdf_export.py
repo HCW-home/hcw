@@ -174,10 +174,10 @@ def _get_attachment_image(attachment):
         ext = os.path.splitext(attachment.name)[1].lower()
         if ext not in IMAGE_EXTENSIONS:
             return None
-        path = attachment.path
-        if not os.path.exists(path):
-            return None
-        img = Image(path)
+        # Through the storage, not attachment.path: attachments may be
+        # encrypted at rest, or on S3, and then have no usable local path.
+        with attachment.open("rb") as fh:
+            img = Image(io.BytesIO(fh.read()))
         iw, ih = img.drawWidth, img.drawHeight
         if iw > MAX_IMAGE_WIDTH:
             ratio = MAX_IMAGE_WIDTH / iw

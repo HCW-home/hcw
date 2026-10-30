@@ -76,6 +76,19 @@ ever looks at `scheduled` appointments, a manual status is never overwritten.
 |--------|------|---------|-------------|
 | Maximum file upload size in MB (0 to disable limit) | `MAX_UPLOAD_SIZE_MB` | 10 | Maximum allowed file size for uploads in chat and consultations. Set to 0 to allow unlimited file sizes. |
 
+## Geocoding
+
+| Option | Code | Default | Description |
+|--------|------|---------|-------------|
+| Nominatim instance turning addresses into map coordinates | `NOMINATIM_URL` | Value of the `NOMINATIM_URL` environment variable | Practitioner and organisation addresses are geocoded so patients can find them on the map. Either the root URL of a [Nominatim](https://nominatim.org/) instance or its `/search` endpoint. Leave empty to fall back to the environment variable, which itself defaults to the public OpenStreetMap instance. |
+
+The public instance is capped at one request per second by its usage policy, so
+an installation geocoding many addresses is better served by its own instance.
+How fast the geocoding may query it is not set here but in the
+`NOMINATIM_RATE_LIMIT` environment variable, since the workers doing the
+geocoding are shared by every tenant — see
+[Environment Variables](../deployment/environment-variables.md#geocoding).
+
 ## Video Features
 
 | Option | Code | Default | Description |

@@ -214,6 +214,9 @@ class FhirViewSetMixin:
                 code="multiple-matches",
                 status_code=status.HTTP_412_PRECONDITION_FAILED,
             )
+        # Same object-level checks as get_object(): targeting a resource by
+        # identifier must not reach what targeting it by id would refuse.
+        self.check_object_permissions(request, matches[0])
         return matches[0]
 
     # -- response helpers ---------------------------------------------------

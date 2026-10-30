@@ -71,6 +71,15 @@ x-backend-env: &backend-env
   # MinIO/Ceph buckets that are not a DNS subdomain need "path".
   S3_ADDRESSING_STYLE: ${S3_ADDRESSING_STYLE:-auto}
 
+  ## Encryption at rest of message attachments, on the volume or on S3.
+  ## Follow docs/deployment/encryption-at-rest.md to turn it on: files
+  ## encrypted with a lost key are lost. BLOB_ENCRYPT_WRITES follows
+  ## BLOB_ENCRYPTION when left empty.
+  BLOB_ENCRYPTION: ${BLOB_ENCRYPTION:-False}
+  BLOB_ENCRYPT_WRITES: ${BLOB_ENCRYPT_WRITES:-}
+  BLOB_ENCRYPTION_KEY: ${BLOB_ENCRYPTION_KEY:-}
+  BLOB_ENCRYPTION_OLD_KEY: ${BLOB_ENCRYPTION_OLD_KEY:-}
+
   ## Tokens
   # Access token lifetime in MINUTES, refresh token lifetime in days.
   ACCESS_TOKEN_LIFETIME: ${ACCESS_TOKEN_LIFETIME:-3600}
