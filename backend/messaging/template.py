@@ -141,17 +141,20 @@ DEFAULT_NOTIFICATION_MESSAGES = {
     },
     "new_message_notification": {
         "template_subject": _("New message in consultation"),
-        # Opens on static text: a WhatsApp template body may not start with a
-        # variable, and Meta validates every language separately.
+        # Opens and closes on static text: a WhatsApp template body may neither
+        # start nor end with a variable, and Meta validates every language
+        # separately. The message itself is left out on purpose: email, SMS
+        # and push providers sit outside the platform, so a notification only
+        # says that a message is waiting there.
         "template_content": _(
             "New message from {{ obj.created_by.name }} "
-            'in consultation "{{ obj.consultation.title }}": '
-            "{{ obj.content }}"
+            'in consultation "{{ obj.consultation.title }}". '
+            "Open the consultation to read it."
         ),
         "template_content_html": _(
             "<p>New message from {{ obj.created_by.name }} "
-            'in consultation "{{ obj.consultation.title }}":</p>'
-            "<p>{{ obj.content }}</p>"
+            'in consultation "{{ obj.consultation.title }}".</p>'
+            "<p>Open the consultation to read it.</p>"
         ),
         "action": "message",
         "model": "consultations.Message",
