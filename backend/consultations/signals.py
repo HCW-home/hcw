@@ -1,8 +1,10 @@
 import logging
 
+import boto3
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from core.channel_groups import user_group
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
@@ -14,6 +16,7 @@ from users.services import user_online_service
 
 from .models import (
     Appointment,
+    AppointmentRecording,
     AppointmentStatus,
     Consultation,
     Message,
@@ -191,6 +194,73 @@ def consultation_deleted(sender, instance, **kwargs):
                 "state": "deleted",
             },
         )
+
+
+def _delete_after_commit(delete, name):
+    """Run ``delete(name)`` once the transaction dropping the reference commits.
+
+    Run before the commit, a rollback could leave a row pointing to a file that
+    is already gone. A failure is logged rather than raised: the row is deleted
+    either way, and failing the caller would not bring it back.
+    """
+    transaction.on_commit(lambda: delete(name), robust=True)
+
+
+def _delete_recording_object(key):
+    """Delete a recording from the bucket the LiveKit egress uploaded it to."""
+    s3 = boto3.client(
+        "s3",
+        endpoint_url=settings.LIVEKIT_S3_ENDPOINT_URL,
+        aws_access_key_id=settings.LIVEKIT_S3_ACCESS_KEY,
+        aws_secret_access_key=settings.LIVEKIT_S3_SECRET_KEY,
+        region_name=settings.LIVEKIT_S3_REGION,
+        config=boto3.session.Config(signature_version="s3v4"),
+    )
+    s3.delete_object(Bucket=settings.LIVEKIT_S3_BUCKET_NAME, Key=key)
+
+
+@receiver(pre_save, sender=Message)
+def delete_replaced_attachment(sender, instance, update_fields=None, **kwargs):
+    """Delete the file of an attachment the message stops pointing to.
+
+    Deleting a message only clears its attachment (soft delete): the file
+    would otherwise stay in the storage with nothing left to reach it.
+    """
+    if kwargs.get("raw") or instance._state.adding:
+        return
+    if update_fields is not None and "attachment" not in update_fields:
+        return
+    previous = (
+        Message.objects.filter(pk=instance.pk)
+        .values_list("attachment", flat=True)
+        .first()
+    )
+    if previous and previous != instance.attachment.name:
+        _delete_after_commit(instance.attachment.storage.delete, previous)
+
+
+@receiver(post_delete, sender=Message)
+def delete_attachment_file(sender, instance, **kwargs):
+    """Delete the attachment file along with its message.
+
+    Messages go with their follow-up, so this is what makes the automatic
+    deletion of closed follow-ups (consultation_auto_delete_hours) and of
+    temporary users reach the stored files.
+    """
+    if instance.attachment:
+        _delete_after_commit(
+            instance.attachment.storage.delete, instance.attachment.name
+        )
+
+
+@receiver(post_delete, sender=AppointmentRecording)
+def delete_recording_file(sender, instance, **kwargs):
+    """Delete the recording from S3 along with its row.
+
+    The row goes with its appointment, hence with the follow-up.
+    """
+    if instance.filepath and settings.LIVEKIT_S3_BUCKET_NAME:
+        _delete_after_commit(_delete_recording_object, instance.filepath)
 
 
 @receiver(post_save, sender=Request)
