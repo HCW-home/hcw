@@ -1,6 +1,6 @@
 site_name: HCW@Home Documentation
 site_description: Documentation for HCW@Home V6 teleconsultation platform
-site_url: https://hcw-at-home.com/docs
+site_url: https://docs-v6.hcw-at-home.com/
 
 theme:
   name: material
